@@ -1,13 +1,11 @@
-import React from "react";
-import { FormikProps, FieldArray, ArrayHelpers } from "formik";
+import React, { useState, useEffect } from "react";
+import { FormikProps, FieldArray, ArrayHelpers, ErrorMessage } from "formik";
 import { Text } from "@tremor/react";
 import { FiUsers } from "react-icons/fi";
-import { UserGroup } from "@/lib/types";
+import { UserGroup, User, UserRole } from "@/lib/types";
 import { useUserGroups } from "@/lib/hooks";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
-import { useState, useEffect } from "react";
 import { getCurrentUser } from "@/lib/user";
-import { User, UserRole } from "@/lib/types";
 
 export type IsPublicGroupSelectorFormType = {
   is_public: boolean;
@@ -23,7 +21,9 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
 }) => {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const isAdmin = currentUser?.role === UserRole.ADMIN;
+
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -35,49 +35,59 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         }
       } catch (error) {
         console.error("Error fetching current user:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchCurrentUser();
   }, []);
 
-  useEffect(() => {
-    formikProps.setFieldValue("is_public", false);
-  }, []);
+  if (isLoading || userGroupsIsLoading) {
+    return null; // or return a loading spinner if preferred
+  }
 
   return (
-    <div className="mt-4">
-      <BooleanFormField
-        name="is_public"
-        label="Is Public?"
-        disabled={!isAdmin}
-        subtext={
-          <>
-            If set, then {objectName}s indexed by this {objectName} will be
-            visible to <b>all users</b>. If turned off, then only users who
-            explicitly have been given access to the {objectName}s (e.g. through
-            a User Group) will have access.
-            {!isAdmin && (
+    <div>
+      {isAdmin && (
+        <>
+          <BooleanFormField
+            name="is_public"
+            label="Is Public?"
+            disabled={!isAdmin}
+            subtext={
               <span className="block mt-2 text-sm text-gray-500">
-                Curators can't create public {objectName}s.
+                If set, then {objectName}s indexed by this {objectName} will be
+                visible to <b>all users</b>. If turned off, then only users who
+                explicitly have been given access to the {objectName}s (e.g.
+                through a User Group) will have access.
               </span>
-            )}
-          </>
-        }
-      />
+            }
+          />
+        </>
+      )}
 
-      {!formikProps.values.is_public && (
+      {(!formikProps.values.is_public || !isAdmin) && (
         <>
           <Text className="mb-3">
-            If any groups are specified, then this {objectName} will only be
-            visible to the specified groups. If no groups are specified, then
-            the
-            {objectName} will be visible to all users.
+            {isAdmin ? (
+              <>
+                This {objectName} will be visible to the groups selected below:
+              </>
+            ) : (
+              <>
+                This {objectName} will be visible to the groups selected below
+                <br />
+                <b>curators must select one or more groups</b>:
+              </>
+            )}
           </Text>
           <FieldArray
             name="groups"
             render={(arrayHelpers: ArrayHelpers) => (
-              <div className="flex gap-2 flex-wrap">
-                {!userGroupsIsLoading &&
+              <div className="flex gap-2 flex-wrap mb-4">
+                {userGroupsIsLoading ? (
+                  <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+                ) : (
                   userGroups &&
                   userGroups.map((userGroup: UserGroup) => {
                     const ind = formikProps.values.groups.indexOf(userGroup.id);
@@ -109,9 +119,15 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                         </div>
                       </div>
                     );
-                  })}
+                  })
+                )}
               </div>
             )}
+          />
+          <ErrorMessage
+            name="groups"
+            component="div"
+            className="text-error text-sm mt-1"
           />
         </>
       )}

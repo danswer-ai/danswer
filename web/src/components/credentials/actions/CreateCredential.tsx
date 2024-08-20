@@ -1,13 +1,9 @@
-import React, { useState } from "react";
-import { Button, Card, Divider } from "@tremor/react";
+import React, { useState, useEffect } from "react";
+import { Button, Card } from "@tremor/react";
 import { ValidSources } from "@/lib/types";
-import { UserGroup } from "@/lib/types";
 import { FaAccusoft } from "react-icons/fa";
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
-import {
-  TextFormField,
-  BooleanFormField,
-} from "@/components/admin/connectors/Field";
+import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik, FormikHelpers, FormikProps } from "formik";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
@@ -18,6 +14,8 @@ import {
   credentialTemplates,
   getDisplayNameForCredentialKey,
 } from "@/lib/connectors/credentials";
+import { getCurrentUser } from "@/lib/user";
+import { User, UserRole } from "@/lib/types";
 import { PlusCircleIcon } from "../../icons/icons";
 import { GmailMain } from "@/app/admin/connectors/[connector]/pages/gmail/GmailPage";
 import { ActionType, dictionaryType } from "../types";
@@ -28,6 +26,32 @@ import {
   IsPublicGroupSelectorFormType,
   IsPublicGroupSelector,
 } from "@/components/IsPublicGroupSelector";
+
+const CreateButton = ({
+  onClick,
+  isSubmitting,
+  isAdmin,
+  groups,
+}: {
+  onClick: () => void;
+  isSubmitting: boolean;
+  isAdmin: boolean;
+  groups: number[];
+}) => (
+  <div className="flex justify-end w-full">
+    <Button
+      className="enabled:cursor-pointer disabled:cursor-not-allowed disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+      onClick={onClick}
+      type="button"
+      disabled={isSubmitting || (!isAdmin && groups.length === 0)}
+    >
+      <div className="flex items-center gap-x-1">
+        <PlusCircleIcon size={16} className="text-indigo-100" />
+        Create
+      </div>
+    </Button>
+  </div>
+);
 
 type formType = IsPublicGroupSelectorFormType & {
   name: string;
@@ -139,6 +163,28 @@ export default function CreateCredential({
     return <GDriveMain />;
   }
 
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const isAdmin = currentUser?.role === UserRole.ADMIN;
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+        } else {
+          console.error("Failed to fetch current user");
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
   const credentialTemplate: dictionaryType = credentialTemplates[sourceType];
   const validationSchema = createValidationSchema(credentialTemplate);
 
@@ -192,38 +238,35 @@ export default function CreateCredential({
                 }
               />
             ))}
-            {!swapConnector && (
-              <>
-                <div className="flex justify-between w-full">
-                  <Button
-                    className="bg-indigo-500 hover:bg-indigo-400"
-                    onClick={() =>
-                      handleSubmit(formikProps.values, formikProps, "create")
-                    }
-                    type="button"
-                    disabled={formikProps.isSubmitting}
-                  >
-                    <div className="flex items-center gap-x-1">
-                      <PlusCircleIcon size={16} className="text-indigo-100" />
-                      Create
-                    </div>
-                  </Button>
+            {!swapConnector && !isLoading && (
+              <div className="mt-4 flex flex-col sm:flex-row justify-between items-end">
+                <div className="w-full sm:w-auto mb-4 sm:mb-0">
+                  {isPaidEnterpriseFeaturesEnabled && (
+                    <>
+                      {isAdmin && (
+                        <AdvancedOptionsToggle
+                          showAdvancedOptions={showAdvancedOptions}
+                          setShowAdvancedOptions={setShowAdvancedOptions}
+                        />
+                      )}
+                      {(showAdvancedOptions || !isAdmin) && (
+                        <IsPublicGroupSelector
+                          formikProps={formikProps}
+                          objectName="credential"
+                        />
+                      )}
+                    </>
+                  )}
                 </div>
-                {isPaidEnterpriseFeaturesEnabled && (
-                  <div className="mt-4">
-                    <AdvancedOptionsToggle
-                      showAdvancedOptions={showAdvancedOptions}
-                      setShowAdvancedOptions={setShowAdvancedOptions}
-                    />
-                    {showAdvancedOptions && (
-                      <IsPublicGroupSelector
-                        formikProps={formikProps}
-                        objectName="credential"
-                      />
-                    )}
-                  </div>
-                )}
-              </>
+                <CreateButton
+                  onClick={() =>
+                    handleSubmit(formikProps.values, formikProps, "create")
+                  }
+                  isSubmitting={formikProps.isSubmitting}
+                  isAdmin={isAdmin}
+                  groups={formikProps.values.groups}
+                />
+              </div>
             )}
           </Card>
           {swapConnector && (

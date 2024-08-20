@@ -47,6 +47,10 @@ def get_cc_pair_full_info(
         raise HTTPException(
             status_code=404, detail="CC Pair not found for current user permissions"
         )
+    editable_cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id, db_session, user, get_editable=True
+    )
+    is_editable_for_current_user = editable_cc_pair is not None
 
     cc_pair_identifier = ConnectorCredentialPairIdentifier(
         connector_id=cc_pair.connector_id,
@@ -77,6 +81,7 @@ def get_cc_pair_full_info(
             db_session=db_session,
         ),
         num_docs_indexed=documents_indexed,
+        is_editable_for_current_user=is_editable_for_current_user,
     )
 
 

@@ -42,11 +42,10 @@ export function UserDropdown({
     });
   };
 
-  const showAdminPanel =
-    !user ||
-    user.role === UserRole.ADMIN ||
-    user.role === UserRole.CURATOR ||
-    user.role === UserRole.GLOBAL_CURATOR;
+  const showAdminPanel = !user || user.role === UserRole.ADMIN;
+  const showCuratorPanel =
+    user &&
+    (user.role === UserRole.CURATOR || user.role === UserRole.GLOBAL_CURATOR);
   const showLogout =
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
@@ -110,6 +109,18 @@ export function UserDropdown({
                 >
                   <LightSettingsIcon className="h-5 w-5 my-auto mr-2" />
                   Admin Panel
+                </Link>
+              </>
+            )}
+            {showCuratorPanel && (
+              <>
+                <Link
+                  href="/admin/indexing/status"
+                  className="flex py-3 px-4 cursor-pointer !
+                   rounded hover:bg-hover-light"
+                >
+                  <LightSettingsIcon className="h-5 w-5 my-auto mr-2" />
+                  Curator Panel
                 </Link>
               </>
             )}

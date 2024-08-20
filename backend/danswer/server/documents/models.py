@@ -194,6 +194,8 @@ class CCPairFullInfo(BaseModel):
     credential: CredentialSnapshot
     index_attempts: list[IndexAttemptSnapshot]
     latest_deletion_attempt: DeletionAttemptSnapshot | None
+    is_public: bool
+    is_editable_for_current_user: bool
 
     @classmethod
     def from_models(
@@ -202,6 +204,7 @@ class CCPairFullInfo(BaseModel):
         index_attempt_models: list[IndexAttempt],
         latest_deletion_attempt: DeletionAttemptSnapshot | None,
         num_docs_indexed: int,  # not ideal, but this must be computed separately
+        is_editable_for_current_user: bool,
     ) -> "CCPairFullInfo":
         return cls(
             id=cc_pair_model.id,
@@ -219,6 +222,8 @@ class CCPairFullInfo(BaseModel):
                 for index_attempt_model in index_attempt_models
             ],
             latest_deletion_attempt=latest_deletion_attempt,
+            is_public=cc_pair_model.is_public,
+            is_editable_for_current_user=is_editable_for_current_user,
         )
 
 

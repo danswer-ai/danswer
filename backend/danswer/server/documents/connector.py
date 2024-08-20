@@ -5,6 +5,7 @@ from typing import cast
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
 from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
@@ -378,6 +379,9 @@ def get_connector_indexing_status(
     secondary_index: bool = False,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    get_editable: bool = Query(
+        False, description="If true, return get_editable document sets"
+    ),
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
@@ -385,7 +389,7 @@ def get_connector_indexing_status(
     cc_pairs = get_connector_credential_pairs(
         db_session=db_session,
         user=user,
-        get_editable=False,
+        get_editable=get_editable,
     )
 
     cc_pair_identifiers = [

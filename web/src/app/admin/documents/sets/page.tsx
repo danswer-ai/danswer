@@ -98,6 +98,7 @@ interface DocumentFeedbackTableProps {
   documentSets: DocumentSet[];
   ccPairs: ConnectorIndexingStatus<any, any>[];
   refresh: () => void;
+  refreshEditable: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
@@ -105,6 +106,7 @@ const DocumentSetTable = ({
   documentSets,
   editableDocumentSets,
   refresh,
+  refreshEditable,
   setPopup,
 }: DocumentFeedbackTableProps & { editableDocumentSets: DocumentSet[] }) => {
   const [page, setPage] = useState(1);
@@ -254,6 +256,7 @@ const DocumentSetTable = ({
                             });
                           }
                           refresh();
+                          refreshEditable();
                         }}
                       />
                     ) : (
@@ -349,6 +352,7 @@ const Main = () => {
             editableDocumentSets={editableDocumentSets}
             ccPairs={ccPairs}
             refresh={refreshDocumentSets}
+            refreshEditable={refreshEditableDocumentSets}
             setPopup={setPopup}
           />
         </>

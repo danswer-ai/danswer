@@ -5,15 +5,29 @@ export const checkUserIsNoAuthUser = (userId: string) => {
 };
 
 // should be used client-side only
+let cachedUser: User | null = null;
+let cacheExpiration: number = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 export const getCurrentUser = async (): Promise<User | null> => {
+  const now = Date.now();
+
+  if (cachedUser && now < cacheExpiration) {
+    return cachedUser;
+  }
+
   const response = await fetch("/api/me", {
     credentials: "include",
   });
+
   if (!response.ok) {
-    return null;
+    cachedUser = null;
+  } else {
+    cachedUser = await response.json();
+    cacheExpiration = now + CACHE_DURATION;
   }
-  const user = await response.json();
-  return user;
+
+  return cachedUser;
 };
 
 export const logout = async (): Promise<Response> => {
