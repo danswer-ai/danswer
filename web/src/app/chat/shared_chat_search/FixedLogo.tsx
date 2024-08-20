@@ -19,7 +19,7 @@ export default function FixedLogo({
   return (
     <>
       <div
-        onClick={toggleSidebar}
+        // onClick={toggleSidebar}
         className="fixed  cursor-pointer flex z-40 left-2.5 top-2"
       >
         <div className="max-w-[200px] mobile:hidden flex items-center gap-x-1 my-auto">

@@ -73,7 +73,6 @@ export default function FunctionalHeader({
           toggleSidebar={toggleSidebar}
           handleNewChat={handleNewChat}
         />
-
         <div
           style={{ transition: "width 0.30s ease-out" }}
           className={`
