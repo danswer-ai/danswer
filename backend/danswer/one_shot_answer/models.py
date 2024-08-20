@@ -21,7 +21,7 @@ class QueryRephrase(BaseModel):
 
 class ThreadMessage(BaseModel):
     message: str
-    sender: str | None
+    sender: str | None = None
     role: MessageType = MessageType.USER
 
 

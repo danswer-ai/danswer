@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from pydantic import validator
 
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
@@ -23,9 +24,9 @@ MAX_METRICS_CONTENT = (
 
 class RerankingDetails(BaseModel):
     # If model is None (or num_rerank is 0), then reranking is turned off
-    rerank_model_name: str | None
-    provider_type: RerankerProvider | None
-    api_key: str | None
+    rerank_model_name: str | None = None
+    provider_type: RerankerProvider | None = None
+    api_key: str | None = None
 
     num_rerank: int
 
@@ -62,13 +63,13 @@ class BaseFilters(BaseModel):
 
 
 class IndexFilters(BaseFilters):
-    access_control_list: list[str] | None
+    access_control_list: list[str] | None = None
 
 
 class ChunkMetric(BaseModel):
     document_id: str
     chunk_content_start: str
-    first_link: str | None
+    first_link: str | None = None
     score: float
 
 
@@ -79,6 +80,8 @@ class ChunkContext(BaseModel):
     chunks_below: int = CONTEXT_CHUNKS_BELOW
     full_doc: bool = False
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("chunks_above", "chunks_below", pre=True, each_item=False)
     def check_non_negative(cls, value: int, field: Any) -> int:
         if value < 0:
@@ -104,9 +107,7 @@ class SearchRequest(ChunkContext):
     hybrid_alpha: float | None = None
     rerank_settings: RerankingDetails | None = None
     evaluation_type: LLMEvaluationType = LLMEvaluationType.UNSPECIFIED
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class SearchQuery(ChunkContext):
@@ -117,7 +118,7 @@ class SearchQuery(ChunkContext):
     evaluation_type: LLMEvaluationType
     filters: IndexFilters
 
-    rerank_settings: RerankingDetails | None
+    rerank_settings: RerankingDetails | None = None
     hybrid_alpha: float
     recency_bias_multiplier: float
 
@@ -126,9 +127,7 @@ class SearchQuery(ChunkContext):
 
     num_hits: int = NUM_RETURNED_HITS
     offset: int = 0
-
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class RetrievalDetails(ChunkContext):
@@ -251,7 +250,7 @@ class SearchDoc(BaseModel):
     document_id: str
     chunk_ind: int
     semantic_identifier: str
-    link: str | None
+    link: str | None = None
     blurb: str
     source_type: DocumentSource
     boost: int
@@ -260,7 +259,7 @@ class SearchDoc(BaseModel):
     # be `True` when doing an admin search
     hidden: bool
     metadata: dict[str, str | list[str]]
-    score: float | None
+    score: float | None = None
     is_relevant: bool | None = None
     relevance_explanation: str | None = None
     # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
@@ -268,9 +267,9 @@ class SearchDoc(BaseModel):
     # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]
     match_highlights: list[str]
     # when the doc was last updated
-    updated_at: datetime | None
-    primary_owners: list[str] | None
-    secondary_owners: list[str] | None
+    updated_at: datetime | None = None
+    primary_owners: list[str] | None = None
+    secondary_owners: list[str] | None = None
     is_internet: bool = False
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore

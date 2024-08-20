@@ -9,9 +9,9 @@ class ToolSnapshot(BaseModel):
     id: int
     name: str
     description: str
-    definition: dict[str, Any] | None
+    definition: dict[str, Any] | None = None
     display_name: str
-    in_code_tool_id: str | None
+    in_code_tool_id: str | None = None
 
     @classmethod
     def from_model(cls, tool: Tool) -> "ToolSnapshot":

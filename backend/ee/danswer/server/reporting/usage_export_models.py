@@ -15,7 +15,7 @@ class FlowType(str, Enum):
 class ChatMessageSkeleton(BaseModel):
     message_id: int
     chat_session_id: int
-    user_id: str | None
+    user_id: str | None = None
     flow_type: FlowType
     time_sent: datetime
 
@@ -27,7 +27,7 @@ class UserSkeleton(BaseModel):
 
 class UsageReportMetadata(BaseModel):
     report_name: str
-    requestor: str | None
+    requestor: str | None = None
     time_created: datetime
-    period_from: datetime | None  # None = All time
-    period_to: datetime | None
+    period_from: datetime | None = None  # None = All time
+    period_to: datetime | None = None

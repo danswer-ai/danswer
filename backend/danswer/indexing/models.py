@@ -26,7 +26,7 @@ class BaseChunk(BaseModel):
     content: str
     source_links: dict[
         int, str
-    ] | None  # Holds the link and the offsets into the raw Chunk text
+    ] | None = None  # Holds the link and the offsets into the raw Chunk text
     section_continuation: bool  # True if this Chunk's start is not at the start of a Section
 
 
@@ -45,7 +45,7 @@ class DocAwareChunk(BaseChunk):
     metadata_suffix_semantic: str
     metadata_suffix_keyword: str
 
-    mini_chunk_texts: list[str] | None
+    mini_chunk_texts: list[str] | None = None
 
     large_chunk_reference_ids: list[int] = []
 
@@ -58,7 +58,7 @@ class DocAwareChunk(BaseChunk):
 
 class IndexChunk(DocAwareChunk):
     embeddings: ChunkEmbedding
-    title_embedding: Embedding | None
+    title_embedding: Embedding | None = None
 
 
 class DocMetadataAwareIndexChunk(IndexChunk):
@@ -98,8 +98,8 @@ class EmbeddingModelDetail(BaseModel):
     model_name: str
     model_dim: int
     normalize: bool
-    query_prefix: str | None
-    passage_prefix: str | None
+    query_prefix: str | None = None
+    passage_prefix: str | None = None
     cloud_provider_id: int | None = None
     cloud_provider_name: str | None = None
 

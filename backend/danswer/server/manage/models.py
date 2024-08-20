@@ -3,8 +3,9 @@ from typing import Any
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
+from pydantic import ConfigDict
+from pydantic import field_validator
 from pydantic import root_validator
-from pydantic import validator
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import AuthType
@@ -38,8 +39,8 @@ class AuthTypeResponse(BaseModel):
 
 
 class UserPreferences(BaseModel):
-    chosen_assistants: list[int] | None
-    default_model: str | None
+    chosen_assistants: list[int] | None = None
+    default_model: str | None = None
 
 
 class UserInfo(BaseModel):
@@ -148,7 +149,8 @@ class StandardAnswerCreationRequest(BaseModel):
     answer: str
     categories: list[int]
 
-    @validator("categories", pre=True)
+    @field_validator("categories", mode="before")
+    @classmethod
     def validate_categories(cls, value: list[int]) -> list[int]:
         if len(value) < 1:
             raise ValueError(
@@ -160,9 +162,7 @@ class StandardAnswerCreationRequest(BaseModel):
 class SlackBotTokens(BaseModel):
     bot_token: str
     app_token: str
-
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class SlackBotConfigCreationRequest(BaseModel):
@@ -170,10 +170,10 @@ class SlackBotConfigCreationRequest(BaseModel):
     # in the future, `document_sets` will probably be replaced
     # by an optional `PersonaSnapshot` object. Keeping it like this
     # for now for simplicity / speed of development
-    document_sets: list[int] | None
+    document_sets: list[int] | None = None
     persona_id: (
         int | None
-    )  # NOTE: only one of `document_sets` / `persona_id` should be set
+    ) = None  # NOTE: only one of `document_sets` / `persona_id` should be set
     channel_names: list[str]
     respond_tag_only: bool = False
     respond_to_bots: bool = False
@@ -186,7 +186,8 @@ class SlackBotConfigCreationRequest(BaseModel):
     response_type: SlackBotResponseType
     standard_answer_categories: list[int] = []
 
-    @validator("answer_filters", pre=True)
+    @field_validator("answer_filters", mode="before")
+    @classmethod
     def validate_filters(cls, value: list[str]) -> list[str]:
         if any(test not in VALID_SLACK_FILTERS for test in value):
             raise ValueError(
@@ -206,7 +207,7 @@ class SlackBotConfigCreationRequest(BaseModel):
 
 class SlackBotConfig(BaseModel):
     id: int
-    persona: PersonaSnapshot | None
+    persona: PersonaSnapshot | None = None
     channel_config: ChannelConfig
     response_type: SlackBotResponseType
     standard_answer_categories: list[StandardAnswerCategory]
@@ -237,7 +238,7 @@ class SlackBotConfig(BaseModel):
 
 class FullModelVersionResponse(BaseModel):
     current_model: EmbeddingModelDetail
-    secondary_model: EmbeddingModelDetail | None
+    secondary_model: EmbeddingModelDetail | None = None
 
 
 class AllUsersResponse(BaseModel):

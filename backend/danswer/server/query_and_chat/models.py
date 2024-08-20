@@ -145,7 +145,7 @@ class ChatSessionDetails(BaseModel):
     persona_id: int
     time_created: str
     shared_status: ChatSessionSharedStatus
-    folder_id: int | None
+    folder_id: int | None = None
     current_alternate_model: str | None = None
 
 
@@ -158,7 +158,7 @@ class SearchFeedbackRequest(BaseModel):
     document_id: str
     document_rank: int
     click: bool
-    search_feedback: SearchFeedbackType | None
+    search_feedback: SearchFeedbackType | None = None
 
     @root_validator
     def check_click_or_search_feedback(cls: BaseModel, values: dict) -> dict:
@@ -171,17 +171,17 @@ class SearchFeedbackRequest(BaseModel):
 
 class ChatMessageDetail(BaseModel):
     message_id: int
-    parent_message: int | None
-    latest_child_message: int | None
+    parent_message: int | None = None
+    latest_child_message: int | None = None
     message: str
-    rephrased_query: str | None
-    context_docs: RetrievalDocs | None
+    rephrased_query: str | None = None
+    context_docs: RetrievalDocs | None = None
     message_type: MessageType
     time_sent: datetime
-    alternate_assistant_id: str | None
+    alternate_assistant_id: str | None = None
     # Dict mapping citation number to db_doc_id
     chat_session_id: int | None = None
-    citations: dict[int, int] | None
+    citations: dict[int, int] | None = None
     files: list[FileDescriptor]
     tool_calls: list[ToolCallFinalResult]
 
@@ -206,7 +206,7 @@ class ChatSessionDetailResponse(BaseModel):
     messages: list[ChatMessageDetail]
     time_created: datetime
     shared_status: ChatSessionSharedStatus
-    current_alternate_model: str | None
+    current_alternate_model: str | None = None
 
 
 class QueryValidationResponse(BaseModel):
@@ -224,4 +224,4 @@ class AdminSearchResponse(BaseModel):
 
 
 class DanswerAnswer(BaseModel):
-    answer: str | None
+    answer: str | None = None

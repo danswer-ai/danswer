@@ -6,7 +6,7 @@ from pydantic import root_validator
 
 class ToolResponse(BaseModel):
     id: str | None = None
-    response: Any
+    response: Any = None
 
 
 class ToolCallKickoff(BaseModel):
@@ -36,4 +36,6 @@ class ToolRunnerResponse(BaseModel):
 
 
 class ToolCallFinalResult(ToolCallKickoff):
-    tool_result: Any  # we would like to use JSON_ro, but can't due to its recursive nature
+    tool_result: Any = (
+        None  # we would like to use JSON_ro, but can't due to its recursive nature
+    )

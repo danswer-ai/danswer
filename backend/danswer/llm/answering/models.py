@@ -8,6 +8,7 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import root_validator
 
@@ -150,6 +151,4 @@ class PromptConfig(BaseModel):
             include_citations=model.include_citations,
         )
 
-    # needed so that this can be passed into lru_cache funcs
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)

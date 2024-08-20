@@ -40,9 +40,11 @@ class ConnectorBase(BaseModel):
     source: DocumentSource
     input_type: InputType
     connector_specific_config: dict[str, Any]
-    refresh_freq: int | None  # In seconds, None for one time index with no refresh
-    prune_freq: int | None
-    indexing_start: datetime | None
+    refresh_freq: int | None = (
+        None  # In seconds, None for one time index with no refresh
+    )
+    prune_freq: int | None = None
+    indexing_start: datetime | None = None
 
 
 class ConnectorCredentialBase(ConnectorBase):
@@ -95,7 +97,7 @@ class CredentialBase(BaseModel):
 
 class CredentialSnapshot(CredentialBase):
     id: int
-    user_id: UUID | None
+    user_id: UUID | None = None
     time_created: datetime
     time_updated: datetime
 
@@ -119,14 +121,14 @@ class CredentialSnapshot(CredentialBase):
 
 class IndexAttemptSnapshot(BaseModel):
     id: int
-    status: IndexingStatus | None
+    status: IndexingStatus | None = None
     new_docs_indexed: int  # only includes completely new docs
     total_docs_indexed: int  # includes docs that are updated
     docs_removed_from_index: int
-    error_msg: str | None
+    error_msg: str | None = None
     error_count: int
-    full_exception_trace: str | None
-    time_started: str | None
+    full_exception_trace: str | None = None
+    time_started: str | None = None
     time_updated: str
 
     @classmethod
@@ -153,11 +155,11 @@ class IndexAttemptSnapshot(BaseModel):
 
 class IndexAttemptError(BaseModel):
     id: int
-    index_attempt_id: int | None
-    batch_number: int | None
+    index_attempt_id: int | None = None
+    batch_number: int | None = None
     doc_summaries: list[DocumentErrorSummary]
-    error_msg: str | None
-    traceback: str | None
+    error_msg: str | None = None
+    traceback: str | None = None
     time_created: str
 
     @classmethod
@@ -184,7 +186,7 @@ class CCPairFullInfo(BaseModel):
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     index_attempts: list[IndexAttemptSnapshot]
-    latest_deletion_attempt: DeletionAttemptSnapshot | None
+    latest_deletion_attempt: DeletionAttemptSnapshot | None = None
 
     @classmethod
     def from_models(
@@ -217,19 +219,19 @@ class ConnectorIndexingStatus(BaseModel):
     """Represents the latest indexing status of a connector"""
 
     cc_pair_id: int
-    name: str | None
+    name: str | None = None
     cc_pair_status: ConnectorCredentialPairStatus
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     owner: str
     public_doc: bool
-    last_finished_status: IndexingStatus | None
-    last_status: IndexingStatus | None
-    last_success: datetime | None
+    last_finished_status: IndexingStatus | None = None
+    last_status: IndexingStatus | None = None
+    last_success: datetime | None = None
     docs_indexed: int
-    error_msg: str | None
-    latest_index_attempt: IndexAttemptSnapshot | None
-    deletion_attempt: DeletionAttemptSnapshot | None
+    error_msg: str | None = None
+    latest_index_attempt: IndexAttemptSnapshot | None = None
+    deletion_attempt: DeletionAttemptSnapshot | None = None
     is_deletable: bool
 
 
@@ -239,20 +241,20 @@ class ConnectorCredentialPairIdentifier(BaseModel):
 
 
 class ConnectorCredentialPairMetadata(BaseModel):
-    name: str | None
+    name: str | None = None
     is_public: bool
 
 
 class ConnectorCredentialPairDescriptor(BaseModel):
     id: int
-    name: str | None
+    name: str | None = None
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
 
 
 class RunConnectorRequest(BaseModel):
     connector_id: int
-    credential_ids: list[int] | None
+    credential_ids: list[int] | None = None
     from_beginning: bool = False
 
 
@@ -289,8 +291,8 @@ class GoogleServiceAccountKey(BaseModel):
 
 
 class GoogleServiceAccountCredentialRequest(BaseModel):
-    google_drive_delegated_user: str | None  # email of user to impersonate
-    gmail_delegated_user: str | None  # email of user to impersonate
+    google_drive_delegated_user: str | None = None  # email of user to impersonate
+    gmail_delegated_user: str | None = None  # email of user to impersonate
 
 
 class FileUploadResponse(BaseModel):

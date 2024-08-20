@@ -32,15 +32,15 @@ class AbridgedSearchDoc(BaseModel):
 
     document_id: str
     semantic_identifier: str
-    link: str | None
+    link: str | None = None
 
 
 class MessageSnapshot(BaseModel):
     message: str
     message_type: MessageType
     documents: list[AbridgedSearchDoc]
-    feedback_type: QAFeedbackType | None
-    feedback_text: str | None
+    feedback_type: QAFeedbackType | None = None
+    feedback_text: str | None = None
     time_created: datetime
 
     @classmethod
@@ -84,18 +84,18 @@ class MessageSnapshot(BaseModel):
 class ChatSessionMinimal(BaseModel):
     id: int
     user_email: str
-    name: str | None
+    name: str | None = None
     first_user_message: str
     first_ai_message: str
     persona_name: str
     time_created: datetime
-    feedback_type: QAFeedbackType | Literal["mixed"] | None
+    feedback_type: QAFeedbackType | Literal["mixed"] | None = None
 
 
 class ChatSessionSnapshot(BaseModel):
     id: int
     user_email: str
-    name: str | None
+    name: str | None = None
     messages: list[MessageSnapshot]
     persona_name: str
     time_created: datetime
@@ -105,8 +105,8 @@ class QuestionAnswerPairSnapshot(BaseModel):
     user_message: str
     ai_response: str
     retrieved_documents: list[AbridgedSearchDoc]
-    feedback_type: QAFeedbackType | None
-    feedback_text: str | None
+    feedback_type: QAFeedbackType | None = None
+    feedback_text: str | None = None
     persona_name: str
     user_email: str
     time_created: datetime

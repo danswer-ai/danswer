@@ -32,7 +32,7 @@ class InputPromptSnapshot(BaseModel):
     prompt: str
     content: str
     active: bool
-    user_id: UUID | None
+    user_id: UUID | None = None
     is_public: bool
 
     @classmethod
