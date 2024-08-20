@@ -105,10 +105,7 @@ class GuruConnector(LoadConnector, PollConnector):
 
                 collection = card.get("collection", {})
                 if collection:
-                    metadata_dict["collection"] = collection.get("name", "")
-                    metadata_dict["collection_type"] = collection.get(
-                        "collectionTypeDetail", ""
-                    )
+                    metadata_dict["collection_name"] = collection.get("name", "")
 
                 owner = card.get("owner", {})
                 author = None
