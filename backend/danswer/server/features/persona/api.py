@@ -86,6 +86,7 @@ def list_personas_admin(
             user=user,
             get_editable=get_editable,
             include_deleted=include_deleted,
+            joinedload_all=True,
         )
     ]
 

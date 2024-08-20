@@ -1,3 +1,4 @@
+import traceback
 from collections.abc import Callable
 from collections.abc import Iterator
 from functools import partial
@@ -711,10 +712,13 @@ def stream_chat_message_objects(
         error_msg = str(e)
         logger.exception(f"Failed to process chat message: {error_msg}")
 
+        stack_trace = traceback.format_exc()
         client_error_msg = litellm_exception_to_error_msg(e, llm)
         if llm.config.api_key and len(llm.config.api_key) > 2:
             error_msg = error_msg.replace(llm.config.api_key, "[REDACTED_API_KEY]")
-        yield StreamingError(error=client_error_msg, stack_trace=error_msg)
+            stack_trace = stack_trace.replace(llm.config.api_key, "[REDACTED_API_KEY]")
+
+        yield StreamingError(error=client_error_msg, stack_trace=stack_trace)
         db_session.rollback()
         return
 

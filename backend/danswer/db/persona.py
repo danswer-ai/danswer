@@ -12,6 +12,7 @@ from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy.orm import aliased
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserRole
@@ -247,6 +248,7 @@ def get_personas(
     include_default: bool = True,
     include_slack_bot_personas: bool = False,
     include_deleted: bool = False,
+    joinedload_all: bool = False,
 ) -> Sequence[Persona]:
     stmt = select(Persona).distinct()
     stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
@@ -279,7 +281,16 @@ def get_personas(
     if not include_deleted:
         stmt = stmt.where(Persona.deleted.is_(False))
 
-    return db_session.scalars(stmt).all()
+    if joinedload_all:
+        stmt = stmt.options(
+            joinedload(Persona.prompts),
+            joinedload(Persona.tools),
+            joinedload(Persona.document_sets),
+            joinedload(Persona.groups),
+            joinedload(Persona.users),
+        )
+
+    return db_session.execute(stmt).unique().scalars().all()
 
 
 def mark_persona_as_deleted(

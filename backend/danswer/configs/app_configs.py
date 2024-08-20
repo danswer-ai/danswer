@@ -93,6 +93,14 @@ SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
 
+# If set, Danswer will listen to the `expires_at` returned by the identity
+# provider (e.g. Okta, Google, etc.) and force the user to re-authenticate
+# after this time has elapsed. Disabled since by default many auth providers
+# have very short expiry times (e.g. 1 hour) which provide a poor user experience
+TRACK_EXTERNAL_IDP_EXPIRY = (
+    os.environ.get("TRACK_EXTERNAL_IDP_EXPIRY", "").lower() == "true"
+)
+
 
 #####
 # DB Configs
@@ -326,6 +334,9 @@ LOG_VESPA_TIMING_INFORMATION = (
 )
 LOG_ENDPOINT_LATENCY = os.environ.get("LOG_ENDPOINT_LATENCY", "").lower() == "true"
 LOG_POSTGRES_LATENCY = os.environ.get("LOG_POSTGRES_LATENCY", "").lower() == "true"
+LOG_POSTGRES_CONN_COUNTS = (
+    os.environ.get("LOG_POSTGRES_CONN_COUNTS", "").lower() == "true"
+)
 # Anonymous usage telemetry
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 

@@ -1,12 +1,19 @@
 import "./globals.css";
 
-import { getCombinedSettings } from "@/components/settings/lib";
-import { CUSTOM_ANALYTICS_ENABLED } from "@/lib/constants";
+import {
+  fetchEnterpriseSettingsSS,
+  getCombinedSettings,
+} from "@/components/settings/lib";
+import {
+  CUSTOM_ANALYTICS_ENABLED,
+  SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
+} from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
 import { buildClientUrl } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
 import Head from "next/head";
+import { EnterpriseSettings } from "./admin/settings/interfaces";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,15 +22,18 @@ const inter = Inter({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const dynamicSettings = await getCombinedSettings({ forceRetrieval: true });
-  const logoLocation =
-    dynamicSettings.enterpriseSettings &&
-    dynamicSettings.enterpriseSettings?.use_custom_logo
-      ? "/api/enterprise-settings/logo"
-      : buildClientUrl("/danswer.ico");
+  let logoLocation = buildClientUrl("/danswer.ico");
+  let enterpriseSettings: EnterpriseSettings | null = null;
+  if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
+    enterpriseSettings = await (await fetchEnterpriseSettingsSS()).json();
+    logoLocation =
+      enterpriseSettings && enterpriseSettings.use_custom_logo
+        ? "/api/enterprise-settings/logo"
+        : buildClientUrl("/danswer.ico");
+  }
 
   return {
-    title: dynamicSettings.enterpriseSettings?.application_name ?? "Danswer",
+    title: enterpriseSettings?.application_name ?? "Danswer",
     description: "Question answering for your documents",
     icons: {
       icon: logoLocation,

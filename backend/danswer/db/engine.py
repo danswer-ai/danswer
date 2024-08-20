@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
+from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
@@ -63,6 +64,37 @@ if LOG_POSTGRES_LATENCY:
             logger.debug(
                 f"Query Complete: {statement}\n\nTotal Time: {total_time:.4f} seconds"
             )
+
+
+if LOG_POSTGRES_CONN_COUNTS:
+    # Global counter for connection checkouts and checkins
+    checkout_count = 0
+    checkin_count = 0
+
+    @event.listens_for(Engine, "checkout")
+    def log_checkout(dbapi_connection, connection_record, connection_proxy):  # type: ignore
+        global checkout_count
+        checkout_count += 1
+
+        active_connections = connection_proxy._pool.checkedout()
+        idle_connections = connection_proxy._pool.checkedin()
+        pool_size = connection_proxy._pool.size()
+        logger.debug(
+            "Connection Checkout\n"
+            f"Active Connections: {active_connections};\n"
+            f"Idle: {idle_connections};\n"
+            f"Pool Size: {pool_size};\n"
+            f"Total connection checkouts: {checkout_count}"
+        )
+
+    @event.listens_for(Engine, "checkin")
+    def log_checkin(dbapi_connection, connection_record):  # type: ignore
+        global checkin_count
+        checkin_count += 1
+        logger.debug(f"Total connection checkins: {checkin_count}")
+
+
+"""END DEBUGGING LOGGING"""
 
 
 def get_db_current_time(db_session: Session) -> datetime:
@@ -152,7 +184,7 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def warm_up_connections(
-    sync_connections_to_warm_up: int = 10, async_connections_to_warm_up: int = 10
+    sync_connections_to_warm_up: int = 20, async_connections_to_warm_up: int = 20
 ) -> None:
     sync_postgres_engine = get_sqlalchemy_engine()
     connections = [

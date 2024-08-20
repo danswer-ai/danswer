@@ -1,11 +1,9 @@
 from collections.abc import Sequence
 
 from sqlalchemy import and_
-from sqlalchemy import ColumnElement
 from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import func
-from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy.orm import joinedload
@@ -184,13 +182,12 @@ def get_last_attempt(
 
 
 def get_latest_index_attempts(
-    connector_credential_pair_identifiers: list[ConnectorCredentialPairIdentifier],
     secondary_index: bool,
     db_session: Session,
 ) -> Sequence[IndexAttempt]:
     ids_stmt = select(
         IndexAttempt.connector_credential_pair_id,
-        func.max(IndexAttempt.time_created).label("max_time_created"),
+        func.max(IndexAttempt.id).label("max_id"),
     ).join(EmbeddingModel, IndexAttempt.embedding_model_id == EmbeddingModel.id)
 
     if secondary_index:
@@ -198,23 +195,6 @@ def get_latest_index_attempts(
     else:
         ids_stmt = ids_stmt.where(EmbeddingModel.status == IndexModelStatus.PRESENT)
 
-    where_stmts: list[ColumnElement] = []
-    for connector_credential_pair_identifier in connector_credential_pair_identifiers:
-        where_stmts.append(
-            IndexAttempt.connector_credential_pair_id
-            == (
-                select(ConnectorCredentialPair.id)
-                .where(
-                    ConnectorCredentialPair.connector_id
-                    == connector_credential_pair_identifier.connector_id,
-                    ConnectorCredentialPair.credential_id
-                    == connector_credential_pair_identifier.credential_id,
-                )
-                .scalar_subquery()
-            )
-        )
-    if where_stmts:
-        ids_stmt = ids_stmt.where(or_(*where_stmts))
     ids_stmt = ids_stmt.group_by(IndexAttempt.connector_credential_pair_id)
     ids_subquery = ids_stmt.subquery()
 
@@ -225,7 +205,7 @@ def get_latest_index_attempts(
             IndexAttempt.connector_credential_pair_id
             == ids_subquery.c.connector_credential_pair_id,
         )
-        .where(IndexAttempt.time_created == ids_subquery.c.max_time_created)
+        .where(IndexAttempt.id == ids_subquery.c.max_id)
     )
 
     return db_session.execute(stmt).scalars().all()

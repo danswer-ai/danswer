@@ -83,6 +83,7 @@ export async function* handleSSEStream<T extends PacketType>(
 ): AsyncGenerator<T, void, unknown> {
   const reader = streamingResponse.body?.getReader();
   const decoder = new TextDecoder();
+  let buffer = "";
 
   while (true) {
     const rawChunk = await reader?.read();
@@ -94,16 +95,43 @@ export async function* handleSSEStream<T extends PacketType>(
       break;
     }
 
-    const chunk = decoder.decode(value);
-    const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
 
     for (const line of lines) {
+      if (line.trim() === "") continue;
+
       try {
         const data = JSON.parse(line) as T;
         yield data;
       } catch (error) {
         console.error("Error parsing SSE data:", error);
+
+        // Detect JSON objects (ie. check if parseable json has been accumulated)
+        const jsonObjects = line.match(/\{[^{}]*\}/g);
+        if (jsonObjects) {
+          for (const jsonObj of jsonObjects) {
+            try {
+              const data = JSON.parse(jsonObj) as T;
+              yield data;
+            } catch (innerError) {
+              console.error("Error parsing extracted JSON:", innerError);
+            }
+          }
+        }
       }
+    }
+  }
+
+  // Process any remaining data in the buffer
+  if (buffer.trim() !== "") {
+    try {
+      const data = JSON.parse(buffer) as T;
+      yield data;
+    } catch (error) {
+      console.log("Problematic remaining buffer:", buffer);
+      console.error("Error parsing remaining buffer:", error);
     }
   }
 }

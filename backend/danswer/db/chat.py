@@ -117,6 +117,7 @@ def get_chat_sessions_by_user(
     deleted: bool | None,
     db_session: Session,
     only_one_shot: bool = False,
+    limit: int = 50,
 ) -> list[ChatSession]:
     stmt = select(ChatSession).where(ChatSession.user_id == user_id)
 
@@ -129,6 +130,9 @@ def get_chat_sessions_by_user(
 
     if deleted is not None:
         stmt = stmt.where(ChatSession.deleted == deleted)
+
+    if limit:
+        stmt = stmt.limit(limit)
 
     result = db_session.execute(stmt)
     chat_sessions = result.scalars().all()
