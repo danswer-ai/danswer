@@ -100,7 +100,7 @@ def update_cc_pair_status(
     if not cc_pair:
         raise HTTPException(
             status_code=400,
-            detail="CC Pair not found for current user's permissions",
+            detail="Connection not found for current user's permissions",
         )
 
     if status_update_request.status == ConnectorCredentialPairStatus.PAUSED:
@@ -161,26 +161,26 @@ def associate_credential_to_connector(
             detail="Public connections cannot be created by non-admin users",
         )
 
-    try:
-        response = add_credential_to_connector(
-            connector_id=connector_id,
-            credential_id=credential_id,
-            cc_pair_name=metadata.name,
-            is_public=metadata.is_public,
-            user=user,
+    # try:
+    response = add_credential_to_connector(
+        connector_id=connector_id,
+        credential_id=credential_id,
+        cc_pair_name=metadata.name,
+        is_public=metadata.is_public,
+        user=user,
+        db_session=db_session,
+    )
+
+    if metadata.groups and isinstance(response.data, int):
+        relate_groups_to_cc_pair(
             db_session=db_session,
+            cc_pair_id=response.data,
+            user_group_ids=metadata.groups,
         )
 
-        if metadata.groups and isinstance(response.data, int):
-            relate_groups_to_cc_pair(
-                db_session=db_session,
-                cc_pair_id=response.data,
-                user_group_ids=metadata.groups,
-            )
-
-        return response
-    except IntegrityError:
-        raise HTTPException(status_code=400, detail="Name must be unique")
+    return response
+    # except IntegrityError:
+    #     raise HTTPException(status_code=400, detail="Name must be unique")
 
 
 @router.delete("/connector/{connector_id}/credential/{credential_id}")

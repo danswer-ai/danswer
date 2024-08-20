@@ -36,24 +36,43 @@ def _attach_user_filters(
 ) -> Select:
     """Attaches filters to the statement to ensure that the user can only
     access the appropriate credentials"""
-    if user:
-        if user.role == UserRole.ADMIN:
+    if not user:
+        if assume_admin:
+            # apply admin filters minus the user_id check
             stmt = stmt.where(
                 or_(
-                    Credential.user_id == user.id,
                     Credential.user_id.is_(None),
                     Credential.admin_public == True,  # noqa: E712
                 )
             )
-        else:
-            stmt = stmt.where(Credential.user_id == user.id)
-    elif assume_admin:
+        return stmt
+
+    if user.role == UserRole.ADMIN:
+        # Admins can access all credentials that are public or owned by them
+        # or are not associated with any user
         stmt = stmt.where(
             or_(
+                Credential.user_id == user.id,
                 Credential.user_id.is_(None),
                 Credential.admin_public == True,  # noqa: E712
             )
         )
+    elif user.role == UserRole.BASIC:
+        # Basic users can only access credentials that are owned by them
+        stmt = stmt.where(Credential.user_id == user.id)
+    else:
+        stmt = stmt.outerjoin(Credential__UserGroup).outerjoin(
+            User__UserGroup,
+            User__UserGroup.user_group_id == Credential__UserGroup.user_group_id,
+        )
+        # Curators can access all credentials that are curator_public or owned by them
+        # or are owned by
+        where_clause = User__UserGroup.user_id == user.id
+        if user.role == UserRole.CURATOR:
+            where_clause &= User__UserGroup.is_curator == True  # noqa: E712
+        where_clause |= Credential.curator_public == True  # noqa: E712
+        where_clause |= Credential.user_id == user.id  # noqa: E712
+        stmt = stmt.where(where_clause)
 
     return stmt
 
@@ -66,24 +85,6 @@ def fetch_credentials(
     stmt = _attach_user_filters(stmt, user)
     results = db_session.scalars(stmt)
     return list(results.all())
-
-
-def fetch_credentials_for_curator(
-    db_session: Session,
-    user: User,
-) -> list[Credential]:
-    where_clause = and_(
-        Credential.id == Credential__UserGroup.credential_id,
-        Credential__UserGroup.user_group_id == User__UserGroup.user_group_id,
-        User__UserGroup.user_id == user.id,
-    )
-    if user.role == UserRole.CURATOR:
-        where_clause = and_(
-            where_clause, User__UserGroup.is_curator == True  # noqa: E712
-        )
-    where_clause = or_(where_clause, Credential.curator_public == True)  # noqa: E712
-    curator_stmt = select(Credential).where(where_clause).distinct()
-    return list(db_session.scalars(curator_stmt).all())
 
 
 def fetch_credential_by_id(
@@ -108,32 +109,6 @@ def fetch_credentials_by_source(
     base_query = _attach_user_filters(base_query, user)
     credentials = db_session.execute(base_query).scalars().all()
     return list(credentials)
-
-
-def fetch_curator_credentials_by_source(
-    db_session: Session,
-    user: User,
-    document_source: DocumentSource | None = None,
-) -> list[Credential]:
-    where_clause = and_(
-        Credential.id == Credential__UserGroup.credential_id,
-        Credential__UserGroup.user_group_id == User__UserGroup.user_group_id,
-        User__UserGroup.user_id == user.id,
-    )
-    if user.role == UserRole.CURATOR:
-        where_clause = and_(
-            where_clause, User__UserGroup.is_curator == True  # noqa: E712
-        )
-    where_clause = or_(where_clause, Credential.curator_public == True)  # noqa: E712
-
-    final_stmt = (
-        select(Credential)
-        .where(Credential.source == document_source)
-        .where(where_clause)
-        .distinct()
-    )
-
-    return list(db_session.scalars(final_stmt).all())
 
 
 def swap_credentials_connector(

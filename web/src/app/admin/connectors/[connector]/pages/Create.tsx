@@ -332,7 +332,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                     name={"public"}
                     currentValue={isPublic}
                   />
-                  {!isPublic && (
+                  {!isPublic && userGroups && userGroups.length > 0 && (
                     <div>
                       <Text className="text-sm font-medium text-text-700 mb-2">
                         Select User Groups
@@ -342,7 +342,6 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                         render={() => (
                           <div className="flex gap-2 flex-wrap">
                             {!userGroupsIsLoading &&
-                              userGroups &&
                               userGroups.map((userGroup: UserGroup) => {
                                 const isSelected =
                                   groups?.includes(userGroup.id) || false;

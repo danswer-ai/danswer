@@ -5,6 +5,7 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.server.query_and_chat.token_limit import any_rate_limit_exists
@@ -45,13 +46,13 @@ def get_all_group_token_limit_settings(
 @router.get("/user-group/{group_id}")
 def get_group_token_limit_settings(
     group_id: int,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[TokenRateLimitDisplay]:
     return [
         TokenRateLimitDisplay.from_db(token_rate_limit)
         for token_rate_limit in fetch_all_user_group_token_rate_limits(
-            db_session, group_id
+            db_session, group_id, user
         )
     ]
 

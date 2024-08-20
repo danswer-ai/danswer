@@ -3,7 +3,6 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
@@ -13,13 +12,12 @@ from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
 from danswer.db.credentials import fetch_credentials_by_source
-from danswer.db.credentials import fetch_credentials_for_curator
-from danswer.db.credentials import fetch_curator_credentials_by_source
 from danswer.db.credentials import swap_credentials_connector
 from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.models import DocumentSource
 from danswer.db.models import User
+from danswer.db.models import UserRole
 from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import CredentialDataUpdateRequest
 from danswer.server.documents.models import CredentialSnapshot
@@ -40,13 +38,7 @@ def list_credentials_admin(
     db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
     """Lists all public credentials"""
-    if user is None or user.role == UserRole.ADMIN:
-        credentials = fetch_credentials(db_session=db_session, user=user)
-        return [
-            CredentialSnapshot.from_credential_db_model(credential)
-            for credential in credentials
-        ]
-    credentials = fetch_credentials_for_curator(db_session=db_session, user=user)
+    credentials = fetch_credentials(db_session=db_session, user=user)
     return [
         CredentialSnapshot.from_credential_db_model(credential)
         for credential in credentials
@@ -59,19 +51,9 @@ def get_cc_source_full_info(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
-    if user is None or user.role == UserRole.ADMIN:
-        credentials = fetch_credentials_by_source(
-            db_session=db_session, user=user, document_source=source_type
-        )
-
-        return [
-            CredentialSnapshot.from_credential_db_model(credential)
-            for credential in credentials
-        ]
-    credentials = fetch_curator_credentials_by_source(
+    credentials = fetch_credentials_by_source(
         db_session=db_session, user=user, document_source=source_type
     )
-
     return [
         CredentialSnapshot.from_credential_db_model(credential)
         for credential in credentials
@@ -105,13 +87,13 @@ def delete_credential_by_id_admin(
 
 @router.put("/admin/credentials/swap")
 def swap_credentials_for_connector(
-    credentail_swap_req: CredentialSwapRequest,
+    credential_swap_req: CredentialSwapRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     connector_credential_pair = swap_credentials_connector(
-        new_credential_id=credentail_swap_req.new_credential_id,
-        connector_id=credentail_swap_req.connector_id,
+        new_credential_id=credential_swap_req.new_credential_id,
+        connector_id=credential_swap_req.connector_id,
         db_session=db_session,
         user=user,
     )
@@ -120,6 +102,31 @@ def swap_credentials_for_connector(
         success=True,
         message="Credential swapped successfully",
         data=connector_credential_pair.id,
+    )
+
+
+@router.post("/credential")
+def create_credential_from_model(
+    credential_info: CredentialBase,
+    user: User | None = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> ObjectCreationIdResponse:
+    if user and user.role != UserRole.ADMIN:
+        if credential_info.curator_public:
+            raise HTTPException(
+                status_code=401,
+                detail="User does not have permission to create public credentials",
+            )
+        if not credential_info.groups:
+            raise HTTPException(
+                status_code=401,
+                detail="Curators must specify 1+ groups",
+            )
+
+    credential = create_credential(credential_info, user, db_session)
+    return ObjectCreationIdResponse(
+        id=credential.id,
+        credential=CredentialSnapshot.from_credential_db_model(credential),
     )
 
 
@@ -136,19 +143,6 @@ def list_credentials(
         CredentialSnapshot.from_credential_db_model(credential)
         for credential in credentials
     ]
-
-
-@router.post("/credential")
-def create_credential_from_model(
-    credential_info: CredentialBase,
-    user: User | None = Depends(current_curator_or_admin_user),
-    db_session: Session = Depends(get_session),
-) -> ObjectCreationIdResponse:
-    credential = create_credential(credential_info, user, db_session)
-    return ObjectCreationIdResponse(
-        id=credential.id,
-        credential=CredentialSnapshot.from_credential_db_model(credential),
-    )
 
 
 @router.get("/credential/{credential_id}")

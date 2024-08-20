@@ -5,6 +5,9 @@ import { FiUsers } from "react-icons/fi";
 import { UserGroup } from "@/lib/types";
 import { useUserGroups } from "@/lib/hooks";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
+import { useState, useEffect } from "react";
+import { getCurrentUser } from "@/lib/user";
+import { User, UserRole } from "@/lib/types";
 
 export type IsPublicGroupSelectorFormType = {
   is_public: boolean;
@@ -19,18 +22,41 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   objectName: string;
 }) => {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const isAdmin = currentUser?.role === UserRole.ADMIN;
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+        } else {
+          console.error("Failed to fetch current user");
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   return (
     <div className="mt-4">
       <BooleanFormField
         name="is_public"
         label="Is Public?"
+        disabled={!isAdmin}
         subtext={
           <>
             If set, then {objectName}s indexed by this {objectName} will be
             visible to <b>all users</b>. If turned off, then only users who
             explicitly have been given access to the {objectName}s (e.g. through
             a User Group) will have access.
+            {!isAdmin && (
+              <span className="block mt-2 text-sm text-gray-500">
+                Curators can't create public {objectName}s.
+              </span>
+            )}
           </>
         }
       />

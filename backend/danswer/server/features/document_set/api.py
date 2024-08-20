@@ -3,13 +3,11 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.db.document_set import check_document_sets_are_public
 from danswer.db.document_set import fetch_all_document_sets
-from danswer.db.document_set import fetch_document_sets_for_curator
 from danswer.db.document_set import fetch_user_document_sets
 from danswer.db.document_set import insert_document_set
 from danswer.db.document_set import mark_document_set_as_to_be_deleted
@@ -80,14 +78,11 @@ def list_document_sets_admin(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[DocumentSet]:
-    if user is None or user.role == UserRole.ADMIN:
-        return [
-            DocumentSet.from_model(ds)
-            for ds in fetch_all_document_sets(db_session=db_session)
-        ]
     return [
         DocumentSet.from_model(ds)
-        for ds in fetch_document_sets_for_curator(user=user, db_session=db_session)
+        for ds in fetch_all_document_sets(
+            db_session=db_session, user=user, for_editing=False
+        )
     ]
 
 

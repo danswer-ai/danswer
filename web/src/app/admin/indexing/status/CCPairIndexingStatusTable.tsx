@@ -18,11 +18,11 @@ import {
 } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import {
-  FiCheck,
   FiChevronDown,
   FiChevronRight,
   FiSettings,
-  FiXCircle,
+  FiLock,
+  FiUnlock,
 } from "react-icons/fi";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { SourceIcon } from "@/components/SourceIcon";
@@ -243,9 +243,9 @@ function ConnectorRow({
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell className={`w-[${columnWidths.fourth}]`}>
           {ccPairsIndexingStatus.public_doc ? (
-            <FiCheck className="my-auto text-emerald-600" size="18" />
+            <FiUnlock className="my-auto text-emerald-600" size="16" />
           ) : (
-            <FiXCircle className="my-auto text-red-600" />
+            <FiLock className="my-auto text-blue-600" size="16" />
           )}
         </TableCell>
       )}

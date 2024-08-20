@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy import delete
 from sqlalchemy import desc
+from sqlalchemy import exists
 from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
@@ -27,18 +28,42 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def _add_curator_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
+def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
     UG__CCpair = aliased(UserGroup__ConnectorCredentialPair)
     User__UG = aliased(User__UserGroup)
 
+    """
+    Here we select cc_pairs by relation:
+    User -> User__UserGroup -> UserGroup__ConnectorCredentialPair ->
+    ConnectorCredentialPair
+    """
     stmt = stmt.outerjoin(UG__CCpair).outerjoin(
         User__UG,
         User__UG.user_group_id == UG__CCpair.user_group_id,
     )
+
+    """
+    Filter cc_pairs by:
+    - if the user is in the user_group that owns the cc_pair
+    - if the user is not a global_curator, they must also have a curator relationship
+    to the user_group
+    - if editing is being done, we also filter out cc_pairs that are owned by groups
+    that the user isn't a curator for
+    - if we are not editing, we show all cc_pairs in the groups the user is a curator
+    for (as well as public cc_pairs)
+    """
     where_clause = User__UG.user_id == user.id
     if user.role == UserRole.CURATOR and for_editing:
         where_clause &= User__UG.is_curator == True  # noqa: E712
-    if not for_editing:
+    if for_editing:
+        user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
+        where_clause &= (
+            ~exists()
+            .where(UG__CCpair.cc_pair_id == ConnectorCredentialPair.id)
+            .where(~UG__CCpair.user_group_id.in_(user_groups))
+            .correlate(ConnectorCredentialPair)
+        )
+    else:
         where_clause |= ConnectorCredentialPair.is_public == True  # noqa: E712
 
     return stmt.where(where_clause)
@@ -52,7 +77,7 @@ def get_connector_credential_pairs(
 ) -> list[ConnectorCredentialPair]:
     stmt = select(ConnectorCredentialPair)
     if user and user.role != UserRole.ADMIN:
-        stmt = _add_curator_filters(stmt, user, for_editing)
+        stmt = _add_user_filters(stmt, user, for_editing)
     if not include_disabled:
         stmt = stmt.where(
             ConnectorCredentialPair.status == ConnectorCredentialPairStatus.ACTIVE
@@ -70,7 +95,7 @@ def get_connector_credential_pair(
 ) -> ConnectorCredentialPair | None:
     stmt = select(ConnectorCredentialPair)
     if user and user.role != UserRole.ADMIN:
-        stmt = _add_curator_filters(stmt, user, for_editing)
+        stmt = _add_user_filters(stmt, user, for_editing)
     stmt = stmt.where(ConnectorCredentialPair.connector_id == connector_id)
     stmt = stmt.where(ConnectorCredentialPair.credential_id == credential_id)
     result = db_session.execute(stmt)
@@ -85,7 +110,7 @@ def get_connector_credential_source_from_id(
 ) -> DocumentSource | None:
     stmt = select(ConnectorCredentialPair)
     if user and user.role != UserRole.ADMIN:
-        stmt = _add_curator_filters(stmt, user, for_editing)
+        stmt = _add_user_filters(stmt, user, for_editing)
     stmt = stmt.where(ConnectorCredentialPair.id == cc_pair_id)
     result = db_session.execute(stmt)
     cc_pair = result.scalar_one_or_none()
@@ -98,9 +123,9 @@ def get_connector_credential_pair_from_id(
     user: User | None = None,
     for_editing: bool = True,
 ) -> ConnectorCredentialPair | None:
-    stmt = select(ConnectorCredentialPair)
+    stmt = select(ConnectorCredentialPair).distinct()
     if user and user.role != UserRole.ADMIN:
-        stmt = _add_curator_filters(stmt, user, for_editing)
+        stmt = _add_user_filters(stmt, user, for_editing)
     stmt = stmt.where(ConnectorCredentialPair.id == cc_pair_id)
     result = db_session.execute(stmt)
     return result.scalar_one_or_none()
@@ -159,6 +184,7 @@ def relate_groups_to_cc_pair(
     cc_pair_id: int,
     user_group_ids: list[int],
 ) -> None:
+    logger.info(f"Relating groups {user_group_ids} to CC Pair {cc_pair_id}")
     for group_id in user_group_ids:
         db_session.add(
             UserGroup__ConnectorCredentialPair(
@@ -318,7 +344,7 @@ def add_credential_to_connector(
     return StatusResponse(
         success=False,
         message=f"Connector already has Credential {credential_id}",
-        data=connector_id,
+        data=association.id,
     )
 
 
@@ -340,13 +366,12 @@ def remove_credential_from_connector(
             detail="Credential does not exist or does not belong to user",
         )
 
-    association = (
-        db_session.query(ConnectorCredentialPair)
-        .filter(
-            ConnectorCredentialPair.connector_id == connector_id,
-            ConnectorCredentialPair.credential_id == credential_id,
-        )
-        .one_or_none()
+    association = get_connector_credential_pair(
+        connector_id=connector_id,
+        credential_id=credential_id,
+        db_session=db_session,
+        user=user,
+        for_editing=True,
     )
 
     if association is not None:

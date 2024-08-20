@@ -209,13 +209,9 @@ def _cleanup_credential__user_group_relationships__no_commit(
     user_group_id: int,
 ) -> None:
     """NOTE: does not commit the transaction."""
-    credential__user_group_relationships = db_session.scalars(
-        select(Credential__UserGroup).where(
-            Credential__UserGroup.user_group_id == user_group_id
-        )
-    ).all()
-    for credential__user_group_relationship in credential__user_group_relationships:
-        db_session.delete(credential__user_group_relationship)
+    db_session.query(Credential__UserGroup).filter(
+        Credential__UserGroup.user_group_id == user_group_id
+    ).delete(synchronize_session=False)
 
 
 def _cleanup_llm_provider__user_group_relationships__no_commit(
@@ -253,9 +249,6 @@ def validate_curator_status(
                 User__UserGroup.is_curator == True,  # noqa: E712
             )
             .all()
-        )
-        logger.info(
-            f"User {user.email} has {len(curator_relationships)} curator relationships"
         )
 
         if curator_relationships:

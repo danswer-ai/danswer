@@ -7,7 +7,10 @@ from sqlalchemy.orm import Session
 from danswer.configs.constants import TokenRateLimitScope
 from danswer.db.models import TokenRateLimit
 from danswer.db.models import TokenRateLimit__UserGroup
+from danswer.db.models import User
+from danswer.db.models import User__UserGroup
 from danswer.db.models import UserGroup
+from danswer.db.models import UserRole
 from danswer.server.token_rate_limits.models import TokenRateLimitArgs
 
 
@@ -49,7 +52,11 @@ def fetch_all_global_token_rate_limits(
 
 
 def fetch_all_user_group_token_rate_limits(
-    db_session: Session, group_id: int, enabled_only: bool = False, ordered: bool = True
+    db_session: Session,
+    group_id: int,
+    user: User | None = None,
+    enabled_only: bool = False,
+    ordered: bool = True,
 ) -> Sequence[TokenRateLimit]:
     query = (
         select(TokenRateLimit)
@@ -62,6 +69,16 @@ def fetch_all_user_group_token_rate_limits(
             TokenRateLimit.scope == TokenRateLimitScope.USER_GROUP,
         )
     )
+
+    if user and user.role != UserRole.ADMIN:
+        query = query.outerjoin(
+            User__UserGroup,
+            User__UserGroup.user_group_id == TokenRateLimit__UserGroup.user_group_id,
+        )
+        where_clause = User__UserGroup.user_id == user.id
+        if user.role == UserRole.CURATOR:
+            where_clause &= User__UserGroup.is_curator == True  # noqa: E712
+        query = query.where(where_clause)
 
     if enabled_only:
         query = query.where(TokenRateLimit.enabled.is_(True))

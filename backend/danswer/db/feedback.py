@@ -5,6 +5,7 @@ from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import delete
 from sqlalchemy import desc
+from sqlalchemy import exists
 from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
@@ -40,12 +41,17 @@ def _fetch_db_doc_by_id(doc_id: str, db_session: Session) -> DbDocument:
     return doc
 
 
-def _add_curator_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
+def _add_user_filters(stmt: Select, user: User, for_editing: bool = True) -> Select:
     DocByCC = aliased(DocumentByConnectorCredentialPair)
     CCPair = aliased(ConnectorCredentialPair)
     UG__CCpair = aliased(UserGroup__ConnectorCredentialPair)
     User__UG = aliased(User__UserGroup)
 
+    """
+    Here we select documents by relation:
+    User -> User__UserGroup -> UserGroup__ConnectorCredentialPair ->
+    ConnectorCredentialPair -> DocumentByConnectorCredentialPair -> Document
+    """
     stmt = (
         stmt.outerjoin(DocByCC, DocByCC.id == DbDocument.id)
         .outerjoin(
@@ -59,10 +65,28 @@ def _add_curator_filters(stmt: Select, user: User, for_editing: bool = True) -> 
         .outerjoin(User__UG, User__UG.user_group_id == UG__CCpair.user_group_id)
     )
 
+    """
+    Filter Documents by:
+    - if the user is in the user_group that owns the object
+    - if the user is not a global_curator, they must also have a curator relationship
+    to the user_group
+    - if editing is being done, we also filter out objects that are owned by groups
+    that the user isn't a curator for
+    - if we are not editing, we show all objects in the groups the user is a curator
+    for (as well as public objects as well)
+    """
     where_clause = User__UG.user_id == user.id
     if user.role == UserRole.CURATOR and for_editing:
         where_clause &= User__UG.is_curator == True  # noqa: E712
-    if not for_editing:
+    if for_editing:
+        user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
+        where_clause &= (
+            ~exists()
+            .where(UG__CCpair.cc_pair_id == CCPair.id)
+            .where(~UG__CCpair.user_group_id.in_(user_groups))
+            .correlate(CCPair)
+        )
+    else:
         where_clause |= CCPair.is_public == True  # noqa: E712
 
     return stmt.where(where_clause)
@@ -78,7 +102,7 @@ def fetch_docs_ranked_by_boost(
     stmt = select(DbDocument)
 
     if user and user.role != UserRole.ADMIN:
-        stmt = _add_curator_filters(stmt=stmt, user=user, for_editing=False)
+        stmt = _add_user_filters(stmt=stmt, user=user, for_editing=False)
 
     stmt = stmt.order_by(
         order_func(DbDocument.boost), order_func(DbDocument.semantic_id)
@@ -99,7 +123,7 @@ def update_document_boost(
 ) -> None:
     stmt = select(DbDocument).where(DbDocument.id == document_id)
     if user and user.role != UserRole.ADMIN:
-        stmt = _add_curator_filters(stmt, user, for_editing=True)
+        stmt = _add_user_filters(stmt, user, for_editing=True)
     result = db_session.execute(stmt).scalar_one_or_none()
     if result is None:
         raise HTTPException(
@@ -127,7 +151,7 @@ def update_document_hidden(
 ) -> None:
     stmt = select(DbDocument).where(DbDocument.id == document_id)
     if user and user.role != UserRole.ADMIN:
-        stmt = _add_curator_filters(stmt, user, for_editing=True)
+        stmt = _add_user_filters(stmt, user, for_editing=True)
     result = db_session.execute(stmt).scalar_one_or_none()
     if result is None:
         raise HTTPException(

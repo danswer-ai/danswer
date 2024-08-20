@@ -193,22 +193,24 @@ export default function CreateCredential({
               />
             ))}
             {!swapConnector && (
-              <div className="flex justify-between w-full">
-                <Button
-                  className="bg-indigo-500 hover:bg-indigo-400"
-                  onClick={() =>
-                    handleSubmit(formikProps.values, formikProps, "create")
-                  }
-                  type="button"
-                  disabled={formikProps.isSubmitting}
-                >
-                  <div className="flex items-center gap-x-1">
-                    <PlusCircleIcon size={16} className="text-indigo-100" />
-                    Create
-                  </div>
-                </Button>
+              <>
+                <div className="flex justify-between w-full">
+                  <Button
+                    className="bg-indigo-500 hover:bg-indigo-400"
+                    onClick={() =>
+                      handleSubmit(formikProps.values, formikProps, "create")
+                    }
+                    type="button"
+                    disabled={formikProps.isSubmitting}
+                  >
+                    <div className="flex items-center gap-x-1">
+                      <PlusCircleIcon size={16} className="text-indigo-100" />
+                      Create
+                    </div>
+                  </Button>
+                </div>
                 {isPaidEnterpriseFeaturesEnabled && (
-                  <>
+                  <div className="mt-4">
                     <AdvancedOptionsToggle
                       showAdvancedOptions={showAdvancedOptions}
                       setShowAdvancedOptions={setShowAdvancedOptions}
@@ -219,9 +221,9 @@ export default function CreateCredential({
                         objectName="credential"
                       />
                     )}
-                  </>
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </Card>
           {swapConnector && (

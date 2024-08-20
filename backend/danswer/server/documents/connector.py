@@ -505,7 +505,6 @@ def _check_connector_permissions(
     This is not a proper permission check, but this should prevent curators creating bad situations
     until a long-term solution is implemented (Replacing CC pairs/Connectors with Connections)
     """
-    logger.info(f"connector_data: {connector_data.__dict__}")
     if user and user.role != UserRole.ADMIN:
         if connector_data.is_public:
             raise HTTPException(
