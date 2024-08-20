@@ -164,6 +164,25 @@ export default function EmbeddingForm() {
     }
   };
 
+  let newModel: EmbeddingModelDescriptor;
+
+  if ("cloud_provider_name" in selectedProvider) {
+    // This is a CloudEmbeddingModel
+    newModel = {
+      ...selectedProvider,
+      model_name: selectedProvider.model_name,
+      cloud_provider_name: selectedProvider.cloud_provider_name,
+    };
+  } else {
+    // This is an EmbeddingModelDescriptor
+    newModel = {
+      ...selectedProvider,
+      model_name: selectedProvider.model_name!,
+      description: "",
+      cloud_provider_name: null,
+    };
+  }
+  console.log(newModel);
   const onConfirm = async () => {
     let newModel: EmbeddingModelDescriptor;
 
