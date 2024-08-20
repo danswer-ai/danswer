@@ -37,7 +37,7 @@ export function FilterDropdown({
               bg-background
               flex 
               flex-col 
-              ${dropdownWidth}
+              ${dropdownWidth || width}
               max-h-96 
               overflow-y-auto 
               overscroll-contain`}
