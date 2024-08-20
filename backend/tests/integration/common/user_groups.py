@@ -12,7 +12,7 @@ class UserGroupClient:
     def create_user_group(user_group_creation_request: UserGroupCreate) -> int:
         response = requests.post(
             f"{API_SERVER_URL}/manage/admin/user-group",
-            json=user_group_creation_request.dict(),
+            json=user_group_creation_request.model_dump(),
         )
         response.raise_for_status()
         return cast(int, response.json()["id"])

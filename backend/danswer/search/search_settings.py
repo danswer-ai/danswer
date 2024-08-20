@@ -37,4 +37,4 @@ def get_search_settings() -> SavedSearchSettings | None:
 
 def update_search_settings(settings: SavedSearchSettings) -> None:
     kv_store = get_dynamic_config_store()
-    kv_store.store(KV_SEARCH_SETTINGS, settings.dict())
+    kv_store.store(KV_SEARCH_SETTINGS, settings.model_dump())

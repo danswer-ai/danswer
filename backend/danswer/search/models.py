@@ -229,7 +229,7 @@ class InferenceChunkUncleaned(InferenceChunk):
         # Assumes the cleaning has already been applied and just needs to translate to the right type
         inference_chunk_data = {
             k: v
-            for k, v in self.dict().items()
+            for k, v in self.model_dump().items()
             if k
             not in ["metadata_suffix"]  # May be other fields to throw out in the future
         }
@@ -271,8 +271,8 @@ class SearchDoc(BaseModel):
     secondary_owners: list[str] | None = None
     is_internet: bool = False
 
-    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
-        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+    def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().model_dump(*args, **kwargs)  # type: ignore
         initial_dict["updated_at"] = (
             self.updated_at.isoformat() if self.updated_at else None
         )
@@ -290,7 +290,7 @@ class SavedSearchDoc(SearchDoc):
         """IMPORTANT: careful using this and not providing a db_doc_id If db_doc_id is not
         provided, it won't be able to actually fetch the saved doc and info later on. So only skip
         providing this if the SavedSearchDoc will not be used in the future"""
-        search_doc_data = search_doc.dict()
+        search_doc_data = search_doc.model_dump()
         search_doc_data["score"] = search_doc_data.get("score") or 0.0
         return cls(**search_doc_data, db_doc_id=db_doc_id)
 

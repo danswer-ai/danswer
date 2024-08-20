@@ -45,10 +45,10 @@ def upsert_cloud_embedding_provider(
         .first()
     )
     if existing_provider:
-        for key, value in provider.dict().items():
+        for key, value in provider.model_dump().items():
             setattr(existing_provider, key, value)
     else:
-        new_provider = CloudEmbeddingProviderModel(**provider.dict())
+        new_provider = CloudEmbeddingProviderModel(**provider.model_dump())
         db_session.add(new_provider)
         existing_provider = new_provider
     db_session.commit()

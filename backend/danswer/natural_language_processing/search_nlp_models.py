@@ -109,7 +109,7 @@ class EmbeddingModel:
     def _make_model_server_request(self, embed_request: EmbedRequest) -> EmbedResponse:
         def _make_request() -> EmbedResponse:
             response = requests.post(
-                self.embed_server_endpoint, json=embed_request.dict()
+                self.embed_server_endpoint, json=embed_request.model_dump()
             )
             try:
                 response.raise_for_status()
@@ -234,7 +234,7 @@ class RerankingModel:
         )
 
         response = requests.post(
-            self.rerank_server_endpoint, json=rerank_request.dict()
+            self.rerank_server_endpoint, json=rerank_request.model_dump()
         )
         response.raise_for_status()
 
@@ -267,7 +267,7 @@ class QueryAnalysisModel:
         )
 
         response = requests.post(
-            self.intent_server_endpoint, json=intent_request.dict()
+            self.intent_server_endpoint, json=intent_request.model_dump()
         )
         response.raise_for_status()
 

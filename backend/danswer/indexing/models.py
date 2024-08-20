@@ -85,7 +85,7 @@ class DocMetadataAwareIndexChunk(IndexChunk):
         document_sets: set[str],
         boost: int,
     ) -> "DocMetadataAwareIndexChunk":
-        index_chunk_data = index_chunk.dict()
+        index_chunk_data = index_chunk.model_dump()
         return cls(
             **index_chunk_data,
             access=access,

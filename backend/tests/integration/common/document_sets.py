@@ -14,7 +14,7 @@ class DocumentSetClient:
     ) -> int:
         response = requests.post(
             f"{API_SERVER_URL}/manage/admin/document-set",
-            json=doc_set_creation_request.dict(),
+            json=doc_set_creation_request.model_dump(),
         )
         response.raise_for_status()
         return cast(int, response.json())
