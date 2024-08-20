@@ -250,8 +250,10 @@ def embed_text(
     if not all(texts):
         raise ValueError("Empty strings are not allowed for embedding.")
 
-    # strip additional metadata from model name right before constructing embedding requsts
-    stripped_model_name = model_name.removesuffix(ALT_INDEX_SUFFIX)
+    # strip additional metadata from model name right before constructing embedding requests
+    stripped_model_name = (
+        model_name.removesuffix(ALT_INDEX_SUFFIX) if model_name else None
+    )
 
     # Third party API based embedding model
     if not texts:
@@ -285,7 +287,7 @@ def embed_text(
             error_message += "\n".join(texts)
             raise ValueError(error_message)
 
-    elif model_name is not None:
+    elif stripped_model_name is not None:
         prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
 
         local_model = get_embedding_model(
