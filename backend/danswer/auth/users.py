@@ -40,6 +40,7 @@ from danswer.configs.app_configs import SMTP_PASS
 from danswer.configs.app_configs import SMTP_PORT
 from danswer.configs.app_configs import SMTP_SERVER
 from danswer.configs.app_configs import SMTP_USER
+from danswer.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.app_configs import WEB_DOMAIN
@@ -201,10 +202,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             is_verified_by_default=is_verified_by_default,
         )
 
-        # NOTE: google oauth expires after 1hr. We don't want to force the user to
-        # re-authenticate that frequently, so for now we'll just ignore this for
-        # google oauth users
-        if expires_at and AUTH_TYPE != AuthType.GOOGLE_OAUTH:
+        # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
+        # re-authenticate that frequently, so by default this is disabled
+        if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
             oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
             await self.user_db.update(user, update_dict={"oidc_expiry": oidc_expiry})
         return user
