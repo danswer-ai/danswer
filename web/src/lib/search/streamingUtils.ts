@@ -106,7 +106,6 @@ export async function* handleSSEStream<T extends PacketType>(
         const data = JSON.parse(line) as T;
         yield data;
       } catch (error) {
-        console.log("Problematic line:", line);
         console.error("Error parsing SSE data:", error);
 
         // Try to extract valid JSON objects from the line
@@ -117,7 +116,6 @@ export async function* handleSSEStream<T extends PacketType>(
               const data = JSON.parse(jsonObj) as T;
               yield data;
             } catch (innerError) {
-              console.log("Problematic JSON object:", jsonObj);
               console.error("Error parsing extracted JSON:", innerError);
             }
           }
