@@ -99,12 +99,20 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - logging:/var/log/
+      - logs_api_server:/var/log/
     logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "6"
+      driver: "none"
+
+  api_server_logger:
+    image: fluentd:latest
+    container_name: api_server_logger
+    hostname: api_server
+    volumes:
+      - logs_api_server:/var/log/
+      - ../data/fluentd/fluent.conf:/fluentd/etc/fluent.conf
+    environment:
+      - FLUENTD_CONF=fluent.conf
+    command: fluentd -c /fluentd/etc/${FLUENTD_CONF}
 
   background:
     image: danswer/danswer-backend:latest
@@ -201,11 +209,21 @@ services:
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      - logs_background:/var/log/
     logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "6"
+      driver: "none"
+
+  background_logger:
+    image: fluentd:latest
+    container_name: background_logger
+    hostname: background
+    volumes:
+      - logs_background:/var/log/
+      - ../data/fluentd/fluent.conf:/fluentd/etc/fluent.conf
+    environment:
+      - FLUENTD_CONF=fluent.conf
+    command: fluentd -c /fluentd/etc/${FLUENTD_CONF}
 
   web_server:
     image: danswer/danswer-web-server:latest
@@ -256,12 +274,20 @@ services:
     volumes:
       # Not necessary, this is just to reduce download time during startup
       - model_cache_huggingface:/root/.cache/huggingface/
-      - logging:/var/log/
+      - logs_inference_model_server:/var/log/
     logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "6"
+      driver: "none"
+
+  inference_model_server_logger:
+    image: fluentd:latest
+    container_name: inference_model_server_logger
+    hostname: inference_model_server
+    volumes:
+      - logs_inference_model_server:/var/log/
+      - ../data/fluentd/fluent.conf:/fluentd/etc/fluent.conf
+    environment:
+      - FLUENTD_CONF=fluent.conf
+    command: fluentd -c /fluentd/etc/${FLUENTD_CONF}
 
   indexing_model_server:
     image: danswer/danswer-model-server:latest
@@ -284,12 +310,21 @@ services:
     volumes:
       # Not necessary, this is just to reduce download time during startup
       - indexing_huggingface_model_cache:/root/.cache/huggingface/
-      - logging:/var/log/
+      - logs_inference_model_server:/var/log/
     logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "6"
+      driver: "none"
+
+  indexing_model_server_logger:
+    image: fluentd:latest
+    container_name: indexing_model_server_logger
+    hostname: indexing_model_server
+    volumes:
+      - logs_indexing_model_server:/var/log/
+      - ../data/fluentd/fluent.conf:/fluentd/etc/fluent.conf
+    environment:
+      - FLUENTD_CONF=fluent.conf
+    command: fluentd -c /fluentd/etc/${FLUENTD_CONF}
+
 
   relational_db:
     image: postgres:15.2-alpine
@@ -346,6 +381,18 @@ services:
     command: > 
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
+    
+  centralized-logger:
+    image: fluentd:latest
+    container_name: centralized-logger
+    ports:
+      - "24224:24224"  # Fluentd listens for forwarded logs on this port
+    volumes:
+      - ../data/fluentd/centralized-fluent.conf:/fluentd/etc/fluent.conf
+      - ./logs:/var/log/central_logs
+    environment:
+      - FLUENTD_CONF=fluent.conf
+    command: fluentd -c /fluentd/etc/${FLUENTD_CONF}
         
 volumes:
   db_volume:
@@ -353,4 +400,7 @@ volumes:
 
   model_cache_huggingface:
   indexing_huggingface_model_cache:
-  logging:
+  logs_api_server:
+  logs_background:
+  logs_inference_model_server:
+  logs_indexing_model_server:
