@@ -226,7 +226,7 @@ class SqlGenerationTool(Tool):
                 json_response = f"\n\n```json\n{json_result}\n```\n\n"
                 final_response = json_response
             elif isChartInQuery:
-                if not dataframe.empty and not sql_generation_tool_output:
+                if not dataframe.empty and sql_generation_tool_output:
                     final_response = self.execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart(df=dataframe,
                                                                                                              sql_query=sql_generation_tool_output,
                                                                                                              user_query=query)
