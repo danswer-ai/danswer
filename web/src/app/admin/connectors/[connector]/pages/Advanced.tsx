@@ -51,8 +51,12 @@ const AdvancedFormPage = forwardRef<FormikProps<any>, AdvancedFormPageProps>(
               <div key="prune_freq">
                 <EditingValue
                   showNever
-                  description="Checking all documents against the source to see if any no longer exist. Documents are deleted based on this. Note: To do this, we must check every document with the source so careful turning up the frequency of this (in minutes). This defaults to 1 day. If you input 0, we will never prune this connector."
-                  optional
+                  description={`
+                    Checks all documents against the source to delete those that no longer exist.
+                    Note: This process checks every document, so be cautious when increasing frequency.
+                    Default is 30 days.
+                    Enter 0 to disable pruning for this connector.
+                  `}
                   currentValue={values.pruneFreq}
                   onChangeNumber={(value: number) => {
                     setPruneFreq(value);
@@ -60,7 +64,7 @@ const AdvancedFormPage = forwardRef<FormikProps<any>, AdvancedFormPageProps>(
                   }}
                   setFieldValue={setFieldValue}
                   type="number"
-                  label="Prune Frequency"
+                  label="Prune Frequency (days)"
                   name="pruneFreq"
                 />
               </div>
@@ -68,7 +72,6 @@ const AdvancedFormPage = forwardRef<FormikProps<any>, AdvancedFormPageProps>(
                 <EditingValue
                   showNever
                   description="This is how frequently we pull new documents from the source (in minutes). If you input 0, we will never pull new documents for this connector."
-                  optional
                   currentValue={values.refreshFreq}
                   onChangeNumber={(value: number) => {
                     setRefreshFreq(value);
@@ -76,7 +79,7 @@ const AdvancedFormPage = forwardRef<FormikProps<any>, AdvancedFormPageProps>(
                   }}
                   setFieldValue={setFieldValue}
                   type="number"
-                  label="Refresh Frequency"
+                  label="Refresh Frequency (minutes)"
                   name="refreshFreq"
                 />
               </div>
