@@ -1,8 +1,11 @@
 import logging
+import io
 import os
+import zipfile
 from collections.abc import MutableMapping
 from logging.handlers import RotatingFileHandler
 from typing import Any
+from typing import List
 
 from shared_configs.configs import DEV_LOGGING_ENABLED
 from shared_configs.configs import LOG_FILE_NAME
@@ -130,6 +133,9 @@ def setup_logger(
 
     is_containerized = os.path.exists("/.dockerenv")
     if LOG_FILE_NAME and (is_containerized or DEV_LOGGING_ENABLED):
+        if DEV_LOGGING_ENABLED and not is_containerized:
+            if not os.path.exists("./log"):
+                os.makedirs("./log")
         log_levels = ["debug", "info", "notice"]
         for level in log_levels:
             file_name = (
@@ -152,3 +158,20 @@ def setup_logger(
     logger.notice = lambda msg, *args, **kwargs: logger.log(logging.getLevelName("NOTICE"), msg, *args, **kwargs)  # type: ignore
 
     return DanswerLoggingAdapter(logger, extra=extra)
+
+
+async def fetch_log_files() -> List[RotatingFileHandler]:
+    is_containerized = os.path.exists("/.dockerenv")
+    if not LOG_FILE_NAME or not (is_containerized or DEV_LOGGING_ENABLED):
+        return [] # maybe throw an error
+    if is_containerized:
+        logging_path = "/var/log"
+    else:
+        logging_path = "./log"
+    zip_bytes = io.BytesIO()
+    with zipfile.ZipFile(zip_bytes, mode="w", compression=zipfile.ZIP_DEFLATED) as zipped:
+        for dirname, subdirs, files in os.walk(logging_path):
+            zipped.write(dirname)
+            for filename in files:
+                zipped.write(os.path.join(dirname, filename))
+    return zip_bytes

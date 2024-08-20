@@ -1,0 +1,6 @@
+{
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.autoImportCompletions": true,
+    "python.defaultInterpreterPath": "/Users/holden/.venv/bin/python3.11",
+    "mypy.runUsingActiveInterpreter": true
+}

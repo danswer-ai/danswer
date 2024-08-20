@@ -98,6 +98,8 @@ services:
       - ENV_SEED_CONFIGURATION=${ENV_SEED_CONFIGURATION:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      - logging:/var/log/
     logging:
       driver: json-file
       options:
@@ -254,6 +256,7 @@ services:
     volumes:
       # Not necessary, this is just to reduce download time during startup
       - model_cache_huggingface:/root/.cache/huggingface/
+      - logging:/var/log/
     logging:
       driver: json-file
       options:
@@ -281,6 +284,7 @@ services:
     volumes:
       # Not necessary, this is just to reduce download time during startup
       - indexing_huggingface_model_cache:/root/.cache/huggingface/
+      - logging:/var/log/
     logging:
       driver: json-file
       options:
@@ -349,3 +353,4 @@ volumes:
 
   model_cache_huggingface:
   indexing_huggingface_model_cache:
+  logging:

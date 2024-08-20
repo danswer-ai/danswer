@@ -21,6 +21,7 @@ import {
   AssistantsIconSkeleton,
   ClosedBookIcon,
   SearchIcon,
+  GearIcon,
 } from "@/components/icons/icons";
 
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
@@ -233,6 +234,20 @@ export function ClientLayout({
                     link: "/admin/token-rate-limits",
                   },
                 ],
+              },
+              {
+                name: "Troubleshoot",
+                items: [
+                  {
+                    name: (
+                      <div className="flex">
+                        <GearIcon size={18} />
+                        <div className="ml-1">Troubleshoot</div>
+                      </div>
+                    ),
+                    link: "/admin/troubleshoot",
+                  },
+                ]
               },
               ...(enableEnterprise
                 ? [
