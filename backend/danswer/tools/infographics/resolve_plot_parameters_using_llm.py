@@ -60,21 +60,12 @@ class ResolvePlotParametersUsingLLM:
         prompt = f""" context: {resolve_x_and_y_context}, question: {question} """
         return prompt
 
-        # return self.prompt_config.template.format(
-        #     sql_query=sql_query,
-        #     chart_type=chart_type,
-        #     requirement=requirement,
-        #     database_schema=self.get_database_schema()
-        # )
-
-    def resolve_graph_parameters_from_chart_type_and_sql_and_requirements(self, sql_query, requirement,
+    def resolve_graph_parameters_from_chart_type_and_sql_and_requirements(self, sql_query, schema, requirement,
                                                                           chart_type) -> list:
         """ Resolve graph parameters by querying the LLM with constructed prompts. """
-        schema = self.get_database_schema()
         prompt = self.construct_prompt(sql_query, schema, requirement, chart_type)
         try:
             llm_response = self.llm.invoke(prompt=prompt)
-            #field_names = self.post_process(llm_response)
             field_names = llm_response.content
             field_names = json.loads(field_names)
             print(f"field_names : {field_names}, type(field_names) = {type(field_names)}")
@@ -97,13 +88,10 @@ class ResolvePlotParametersUsingLLM:
         """
 
 
-
-
 if __name__ == '__main__':
     llm_config = LLMConfig(model_name="model_v1", other_configurations={})
     prompt_config = PromptConfig(
         template="""Given the SQL query results, database schema, and user requirements, please suggest appropriate fields for creating a visualization using Plotly...""")
-
 
     # Mocking llm.invoke for demonstration
     class MockLLM:

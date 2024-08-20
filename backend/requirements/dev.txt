@@ -24,3 +24,4 @@ plotly~=5.5.0
 kaleido~=0.1.0.post1
 pillow~=10.4.0
 pandas~=2.2.2
+pandasql~=0.7.3

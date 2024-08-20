@@ -15,9 +15,6 @@ class PlotFactory:
 
     @staticmethod
     def create_chart(chart_type, df, column_names):
-        # if not set(column_names).issubset(df.columns):
-        #     logger.error(f"Column names {column_names} not all found in DataFrame columns {df.columns.tolist()}")
-        #     return None
         try:
             """ Factory method to create charts based on the type. """
             charts = {
