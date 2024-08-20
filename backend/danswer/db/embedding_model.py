@@ -39,7 +39,7 @@ def create_embedding_model(
         cloud_provider_id=model_details.cloud_provider_id,
         # Every single embedding model except the initial one from migrations has this name
         # The initial one from migration is called "danswer_chunk"
-        index_name=f"danswer_chunk_{clean_model_name(model_details.model_name)}",
+        index_name=model_details.index_name,
     )
 
     db_session.add(embedding_model)
