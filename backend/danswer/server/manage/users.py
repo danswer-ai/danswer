@@ -2,13 +2,13 @@ import re
 from datetime import datetime
 from datetime import timezone
 
+from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import status
 from pydantic import BaseModel
-from pydantic import validate_email
 from sqlalchemy import Column
 from sqlalchemy import desc
 from sqlalchemy import select
