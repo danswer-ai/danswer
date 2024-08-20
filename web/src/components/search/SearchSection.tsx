@@ -512,6 +512,18 @@ export const SearchSection = ({
   const [firstSearch, setFirstSearch] = useState(true);
   const [searchState, setSearchState] = useState<searchState>("input");
 
+  // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
+  const [untoggled, setUntoggled] = useState(false);
+
+  const explicitlyUntoggle = () => {
+    setShowDocSidebar(false);
+
+    setUntoggled(true);
+    setTimeout(() => {
+      setUntoggled(false);
+    }, 200);
+  };
+
   useSidebarVisibility({
     toggledSidebar,
     sidebarElementRef,
@@ -600,7 +612,7 @@ export const SearchSection = ({
             duration-300 
             ease-in-out
             ${
-              showDocSidebar || toggledSidebar
+              !untoggled && (showDocSidebar || toggledSidebar)
                 ? "opacity-100 w-[250px] translate-x-0"
                 : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }
@@ -608,6 +620,7 @@ export const SearchSection = ({
         >
           <div className="w-full relative">
             <HistorySidebar
+              explicitlyUntoggle={explicitlyUntoggle}
               reset={() => setQuery("")}
               page="search"
               ref={innerSidebarElementRef}
