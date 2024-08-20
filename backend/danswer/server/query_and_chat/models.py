@@ -169,7 +169,7 @@ class ChatMessageDetail(BaseModel):
     context_docs: RetrievalDocs | None = None
     message_type: MessageType
     time_sent: datetime
-    alternate_assistant_id: str | None = None
+    alternate_assistant_id: int | None = None
     # Dict mapping citation number to db_doc_id
     chat_session_id: int | None = None
     citations: dict[int, int] | None = None

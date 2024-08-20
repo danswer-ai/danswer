@@ -68,7 +68,7 @@ def _convert_litellm_message_to_langchain_message(
     # Handling function calls and tool calls if present
     tool_calls = (
         cast(
-            list[litellm.utils.ChatCompletionMessageToolCall],
+            list[litellm.ChatCompletionMessageToolCall],
             litellm_message.tool_calls,
         )
         if hasattr(litellm_message, "tool_calls")
