@@ -211,6 +211,8 @@ services:
         - NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED=${NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED:-false}
     depends_on:
       - api_server
+    ports:
+      - "3000:3000"
     restart: always
     environment:
       - INTERNAL_URL=http://api_server:8080
