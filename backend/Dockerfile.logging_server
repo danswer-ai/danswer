@@ -1,0 +1,30 @@
+FROM python:3.11.7-slim-bookworm
+
+LABEL com.danswer.maintainer="founders@danswer.ai"
+LABEL com.danswer.description="This image is for the Danswer model server which runs all of the \
+AI models for Danswer. This container and all the code is MIT Licensed and free for all to use. \
+You can find it at https://hub.docker.com/r/danswer/danswer-model-server. For more details, \
+visit https://github.com/danswer-ai/danswer."
+
+# Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
+ARG DANSWER_VERSION=0.3-dev
+ENV DANSWER_VERSION=${DANSWER_VERSION}
+RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
+
+COPY ./requirements/logging_server.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
+
+WORKDIR /app
+
+# Shared between Danswer Backend and Logging Server
+COPY ./shared_configs /app/shared_configs
+
+# Logging Server main code
+COPY ./logging_server /app/logging_server
+
+COPY ./danswer/utils/logger.py /app/danswer/utils/logger.py
+COPY ./danswer/__init__.py /app/danswer/__init__.py
+
+ENV PYTHONPATH /app
+
+CMD ["uvicorn", "logging_server.main:app", "--host", "0.0.0.0", "--port", "5000"]

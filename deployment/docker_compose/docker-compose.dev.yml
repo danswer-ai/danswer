@@ -110,9 +110,7 @@ services:
     volumes:
       - logs_api_server:/var/log/
       - ../data/fluentd/fluent.conf:/fluentd/etc/fluent.conf
-    environment:
-      - FLUENTD_CONF=fluent.conf
-    command: fluentd -c /fluentd/etc/${FLUENTD_CONF}
+    command: fluentd -c /fluentd/etc/fluent.conf
 
   background:
     image: danswer/danswer-backend:latest
@@ -221,9 +219,7 @@ services:
     volumes:
       - logs_background:/var/log/
       - ../data/fluentd/fluent.conf:/fluentd/etc/fluent.conf
-    environment:
-      - FLUENTD_CONF=fluent.conf
-    command: fluentd -c /fluentd/etc/${FLUENTD_CONF}
+    command: fluentd -c /fluentd/etc/fluent.conf
 
   web_server:
     image: danswer/danswer-web-server:latest
@@ -285,9 +281,7 @@ services:
     volumes:
       - logs_inference_model_server:/var/log/
       - ../data/fluentd/fluent.conf:/fluentd/etc/fluent.conf
-    environment:
-      - FLUENTD_CONF=fluent.conf
-    command: fluentd -c /fluentd/etc/${FLUENTD_CONF}
+    command: fluentd -c /fluentd/etc/fluent.conf
 
   indexing_model_server:
     image: danswer/danswer-model-server:latest
@@ -310,7 +304,7 @@ services:
     volumes:
       # Not necessary, this is just to reduce download time during startup
       - indexing_huggingface_model_cache:/root/.cache/huggingface/
-      - logs_inference_model_server:/var/log/
+      - logs_indexing_model_server:/var/log/
     logging:
       driver: "none"
 
@@ -321,9 +315,7 @@ services:
     volumes:
       - logs_indexing_model_server:/var/log/
       - ../data/fluentd/fluent.conf:/fluentd/etc/fluent.conf
-    environment:
-      - FLUENTD_CONF=fluent.conf
-    command: fluentd -c /fluentd/etc/${FLUENTD_CONF}
+    command: fluentd -c /fluentd/etc/fluent.conf
 
 
   relational_db:
@@ -382,17 +374,26 @@ services:
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
     
-  centralized-logger:
+  logs_store:
     image: fluentd:latest
-    container_name: centralized-logger
+    container_name: logs_store
     ports:
       - "24224:24224"  # Fluentd listens for forwarded logs on this port
     volumes:
-      - ../data/fluentd/centralized-fluent.conf:/fluentd/etc/fluent.conf
-      - ./logs:/var/log/central_logs
-    environment:
-      - FLUENTD_CONF=fluent.conf
-    command: fluentd -c /fluentd/etc/${FLUENTD_CONF}
+      - ../data/fluentd/logs_store.conf:/fluentd/etc/fluent.conf
+      - logs_store:/fluentd/log
+    command: fluentd -c /fluentd/etc/fluent.conf
+
+  logs_server:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile.logging_server
+    restart: always
+    volumes:
+      - logs_store:/app/logs
+    ports:
+      - "5000:5000"
+
         
 volumes:
   db_volume:
@@ -404,3 +405,4 @@ volumes:
   logs_background:
   logs_inference_model_server:
   logs_indexing_model_server:
+  logs_store:

@@ -54,3 +54,8 @@ LOG_FILE_NAME = os.environ.get("LOG_FILE_NAME") or "danswer"
 DEV_LOGGING_ENABLED = os.environ.get("DEV_LOGGING_ENABLED", "").lower() == "true"
 # notset, debug, info, notice, warning, error, or critical
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")
+
+# Environment variables for our logging server
+LOGGING_SERVER_HOST = os.environ.get("LOGGING_SERVER_HOST") or "localhost"
+LOGGING_SERVER_ALLOWED_HOST = os.environ.get("LOGGING_SERVER_HOST") or "0.0.0.0"
+LOGGING_SERVER_PORT = int(os.environ.get("LOGGING_SERVER_PORT") or "5000")
