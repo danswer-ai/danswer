@@ -226,7 +226,7 @@ def handle_send_message_simple_with_history(
     full_chat_msg_info = CreateChatMessageRequest(
         chat_session_id=chat_session.id,
         parent_message_id=chat_message.id,
-        message=rephrased_query,
+        message=query,
         file_descriptors=[],
         prompt_id=req.prompt_id,
         search_doc_ids=None,
