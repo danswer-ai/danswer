@@ -10,26 +10,35 @@ import {
 import { fetchSS } from "@/lib/utilsSS";
 import { getWebVersion } from "@/lib/version";
 
-export async function fetchStandardSettingsSS() {
-  return fetchSS("/settings");
-}
+// export async function fetchStandardSettingsSS() {
+//   return fetchSS("/settings");
+// }
 
-export async function fetchEnterpriseSettingsSS() {
-  return fetchSS("/enterprise-settings");
-}
+// export async function fetchEnterpriseSettingsSS() {
+//   return fetchSS("/enterprise-settings");
+// }
 
-export async function fetchCustomAnalyticsScriptSS() {
-  return fetchSS("/enterprise-settings/custom-analytics-script");
-}
+// export async function fetchCustomAnalyticsScriptSS() {
+//   return fetchSS("/enterprise-settings/custom-analytics-script");
+// }
 
 export async function fetchSettingsSS() {
-  const tasks = [fetchStandardSettingsSS()];
+  const tasks = [fetchSS("/settings")];
   if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
-    tasks.push(fetchEnterpriseSettingsSS());
+    tasks.push(fetchSS("/enterprise-settings"));
     if (CUSTOM_ANALYTICS_ENABLED) {
-      tasks.push(fetchCustomAnalyticsScriptSS());
+      tasks.push(fetchSS("/enterprise-settings/custom-analytics-script"));
     }
   }
+
+  // export async function fetchSettingsSS() {
+  //   const tasks = [fetchStandardSettingsSS()];
+  //   if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
+  //     tasks.push(fetchEnterpriseSettingsSS());
+  //     if (CUSTOM_ANALYTICS_ENABLED) {
+  //       tasks.push(fetchCustomAnalyticsScriptSS());
+  //     }
+  //   }
 
   const results = await Promise.all(tasks);
 
