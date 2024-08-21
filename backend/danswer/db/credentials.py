@@ -107,6 +107,22 @@ def _add_user_filters(
     return stmt.where(where_clause)
 
 
+def _relate_credential_to_user_groups__no_commit(
+    db_session: Session,
+    credential_id: int,
+    user_group_ids: list[int],
+) -> None:
+    credential_user_groups = []
+    for group_id in user_group_ids:
+        credential_user_groups.append(
+            Credential__UserGroup(
+                credential_id=credential_id,
+                user_group_id=group_id,
+            )
+        )
+    db_session.add_all(credential_user_groups)
+
+
 def fetch_credentials(
     db_session: Session,
     user: User | None = None,
@@ -210,15 +226,12 @@ def create_credential(
     db_session.add(credential)
     db_session.flush()  # This ensures the credential gets an ID
 
-    credential_user_groups = []
-    for group_id in credential_data.groups:
-        credential_user_groups.append(
-            Credential__UserGroup(
-                credential_id=credential.id,
-                user_group_id=group_id,
-            )
-        )
-    db_session.add_all(credential_user_groups)
+    _relate_credential_to_user_groups__no_commit(
+        db_session=db_session,
+        credential_id=credential.id,
+        user_group_ids=credential_data.groups,
+    )
+
     db_session.commit()
 
     return credential
@@ -239,6 +252,7 @@ def alter_credential(
     user: User,
     db_session: Session,
 ) -> Credential | None:
+    # TODO: add user group relationship update
     credential = fetch_credential_by_id(credential_id, user, db_session)
 
     if credential is None:

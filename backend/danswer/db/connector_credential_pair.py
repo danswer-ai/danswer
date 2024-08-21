@@ -63,6 +63,10 @@ def _add_user_filters(
         where_clause &= User__UG.is_curator == True  # noqa: E712
     if get_editable:
         user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
+        if user.role == UserRole.CURATOR:
+            user_groups = user_groups.where(
+                User__UserGroup.is_curator == True  # noqa: E712
+            )
         where_clause &= (
             ~exists()
             .where(UG__CCpair.cc_pair_id == ConnectorCredentialPair.id)
