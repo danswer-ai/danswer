@@ -10,17 +10,17 @@ import {
 import { fetchSS } from "@/lib/utilsSS";
 import { getWebVersion } from "@/lib/version";
 
-// export async function fetchStandardSettingsSS() {
-//   return fetchSS("/settings");
-// }
+export async function fetchStandardSettingsSS() {
+  return fetchSS("/settings");
+}
 
-// export async function fetchEnterpriseSettingsSS() {
-//   return fetchSS("/enterprise-settings");
-// }
+export async function fetchEnterpriseSettingsSS() {
+  return fetchSS("/enterprise-settings");
+}
 
-// export async function fetchCustomAnalyticsScriptSS() {
-//   return fetchSS("/enterprise-settings/custom-analytics-script");
-// }
+export async function fetchCustomAnalyticsScriptSS() {
+  return fetchSS("/enterprise-settings/custom-analytics-script");
+}
 
 export async function fetchSettingsSS() {
   const tasks = [fetchSS("/settings")];
