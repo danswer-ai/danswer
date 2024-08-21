@@ -73,10 +73,15 @@ export default function Page() {
   };
 
   const categorizedSources = useMemo(() => {
-    const filtered = filterSources(sources);
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    const filtered = sources.filter(
+      (source) =>
+        source.displayName.toLowerCase().includes(lowerSearchTerm) ||
+        source.category.toLowerCase().includes(lowerSearchTerm)
+    );
+
     return Object.values(SourceCategory).reduce((acc, category) => {
       if (category === SourceCategory.Disabled) {
-        // Skip the disabled category
         return acc;
       }
 
@@ -89,6 +94,7 @@ export default function Page() {
       return acc;
     }, {} as Record<SourceCategory, SourceMetadata[]>);
   }, [sources, searchTerm]);
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       const filteredCategories = Object.entries(categorizedSources).filter(

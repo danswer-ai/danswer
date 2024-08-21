@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { User as UserTypes } from "@/lib/types";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { LOGOUT_DISABLED } from "@/lib/constants";
-import { Bell, CircleUserRound, Cpu, User } from "lucide-react";
+import { Bell, CircleUserRound, User } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 
 export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
@@ -41,10 +41,14 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
           className="w-full relative cursor-pointer"
         >
           <div
-            className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 shadow-md text-default py-2"
+            className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 text-default py-2"
             onClick={() => setUserInfoVisible(!userInfoVisible)}
           >
-            {user && user.email ? user.email[0].toUpperCase() : "A"}
+            {user && user.email ? (
+              user.email[0].toUpperCase()
+            ) : (
+              <User size={25} className="mx-auto" />
+            )}
           </div>
         </PopoverTrigger>
         <PopoverContent className={`w-[250px] !z-[999] mb-2 ml-4 text-sm`}>
@@ -54,11 +58,16 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
                 href=""
                 className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white items-center gap-3 group"
               >
-                <CircleUserRound
-                  size={40}
-                  className="min-w-10 min-h-10"
-                  strokeWidth={1}
-                />
+                <div
+                  className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 text-default py-2"
+                  onClick={() => setUserInfoVisible(!userInfoVisible)}
+                >
+                  {user && user.email ? (
+                    user.email[0].toUpperCase()
+                  ) : (
+                    <User size={25} className="mx-auto" />
+                  )}
+                </div>
                 <div className="flex flex-col w-[160px]">
                   <span className="text-dark-700 truncate group-hover:text-white">
                     Johny Doe
