@@ -62,15 +62,6 @@ export default function Page() {
       searchInputRef.current.focus();
     }
   }, []);
-  const filterSources = (sources: SourceMetadata[]) => {
-    if (!searchTerm) return sources;
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    return sources.filter(
-      (source) =>
-        source.displayName.toLowerCase().includes(lowerSearchTerm) ||
-        source.category.toLowerCase().includes(lowerSearchTerm)
-    );
-  };
 
   const categorizedSources = useMemo(() => {
     const lowerSearchTerm = searchTerm.toLowerCase();
