@@ -22,6 +22,7 @@ services:
     restart: always
 #    volumes:
 #      - ../../backend/:/app
+       - /elk/imageserver/web/images:/images
     ports:
       - "8080:8080"
     environment:
@@ -104,11 +105,16 @@ services:
       - ENV_SEED_CONFIGURATION=${ENV_SEED_CONFIGURATION:-}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
-      - LANGFUSE_HOST=${LANGFUSE_HOST:-}      
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-}    
+      # Image server config
+      - IMAGE_SERVER=${IMAGE_SERVER:-host.docker.internal}
+      - IMAGE_SERVER_PROTOCAL=${IMAGE_SERVER_PROTOCAL:-http}
+      - IMAGE_SERVER_PORT=${IMAGE_SERVER_PORT:-9123}        
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ../../backend:/code    
+      - /elk/imageserver/web/images:/images      
     logging:
       driver: json-file
       options:
@@ -402,7 +408,18 @@ services:
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
         
+  imageserver:
+    image: nginx:latest
+    container_name: imageserver    
+    ports:
+      - "9123:80"
+    volumes:
+      - /elk/imageserver/web/images:/usr/share/nginx/html/images:ro
+      - ./imageserver_nginx.conf:/etc/nginx/nginx.conf:ro
+      - /elk/imageserver/logs:/var/log/nginx:rw
+    restart: unless-stopped
 
+    
   langfuse:
     #image: ghcr.io/langfuse/langfuse:latest
     image: docudive/langfuse:v1

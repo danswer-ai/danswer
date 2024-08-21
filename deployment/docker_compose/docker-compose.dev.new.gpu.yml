@@ -20,8 +20,7 @@ services:
       - index
       - inference_model_server
     restart: always
-#    volumes:
-#      - ../../backend/:/app
+
     ports:
       - "8080:8080"
     environment:
@@ -105,10 +104,15 @@ services:
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - LANGFUSE_HOST=${LANGFUSE_HOST:-}      
+      # Image server config
+      - IMAGE_SERVER=${IMAGE_SERVER:-host.docker.internal}
+      - IMAGE_SERVER_PROTOCAL=${IMAGE_SERVER_PROTOCAL:-http}
+      - IMAGE_SERVER_PORT=${IMAGE_SERVER_PORT:-9123}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ../../backend:/code    
+      - /data/spectra_data/imageserver/web/images:/images
     logging:
       driver: json-file
       options:
@@ -298,7 +302,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       # Not necessary, this is just to reduce download time during startup
-      - ../data/model_cache_huggingface:/root/.cache/huggingface/
+      - /data/spectra_data/model_cache_huggingface:/root/.cache/huggingface/
       - ../../backend:/code            
     ports:
       - "9090:8080"
@@ -345,7 +349,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       # Not necessary, this is just to reduce download time during startup
-      - ../data/model_cache_huggingface:/root/.cache/huggingface/
+      - /data/spectra_data/model_cache_huggingface:/root/.cache/huggingface/
       - ../../backend:/code            
     ports:
       - "7080:8080"
@@ -368,7 +372,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ../data/db_volume:/var/lib/postgresql/data
+      - /data/spectra_data/db_volume:/var/lib/postgresql/data
 
 
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
@@ -381,7 +385,7 @@ services:
       - "19071:19071"
       - "8081:8081"
     volumes:
-      - ../data/vespa_volume:/opt/vespa/var
+      - /data/spectra_data/vespa_volume:/opt/vespa/var
     logging:
       driver: json-file
       options:
@@ -420,6 +424,16 @@ services:
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
         
+  imageserver:
+    image: nginx:latest
+    container_name: imageserver    
+    ports:
+      - "9123:80"
+    volumes:
+      - /data/spectra_data/imageserver/web/images:/usr/share/nginx/html/images:ro
+      - ./imageserver_nginx.conf:/etc/nginx/nginx.conf:ro
+      - /data/spectra_data/imageserver/logs:/var/log/nginx:rw
+    restart: unless-stopped
 
   langfuse:
     #image: ghcr.io/langfuse/langfuse:latest
