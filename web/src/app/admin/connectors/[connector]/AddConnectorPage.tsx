@@ -89,8 +89,8 @@ export default function AddConnector({
 
   // Default to 10 minutes unless otherwise specified
   const defaultRefresh = configuration.overrideDefaultFreq || 10;
-  // default is 1 day (in minutes)
-  const defaultPrune = 24 * 60;
+  // Default is 30 days
+  const defaultPrune = 30;
 
   const [refreshFreq, setRefreshFreq] = useState<number>(defaultRefresh || 0);
   const [pruneFreq, setPruneFreq] = useState<number>(defaultPrune);
@@ -142,7 +142,7 @@ export default function AddConnector({
 
   const createConnector = async () => {
     const AdvancedConfig: AdvancedConfig = {
-      pruneFreq: pruneFreq * 60,
+      pruneFreq: pruneFreq * 60 * 60 * 24,
       indexingStart,
       refreshFreq: refreshFreq * 60,
     };
@@ -190,7 +190,7 @@ export default function AddConnector({
         name: name,
         source: connector,
         refresh_freq: refreshFreq * 60 || null,
-        prune_freq: pruneFreq * 60 || null,
+        prune_freq: pruneFreq * 60 * 60 * 24 || null,
         indexing_start: indexingStart,
         is_public: isPublic,
         groups: groups,

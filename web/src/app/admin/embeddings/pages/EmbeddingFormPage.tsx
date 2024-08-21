@@ -311,11 +311,11 @@ export default function EmbeddingForm() {
           >
             <>
               <div className="text-lg">
-                {selectedProvider.model_name} is a low-performance model.
+                {selectedProvider.model_name} is a lower accuracy model.
                 <br />
                 We recommend the following alternatives.
-                <li>OpenAI for cloud-based</li>
-                <li>Nomic for self-hosted</li>
+                <li>Cohere embed-english-v3.0 for cloud-based</li>
+                <li>Nomic nomic-embed-text-v1 for self-hosted</li>
               </div>
               <div className="flex mt-4 justify-between">
                 <Button color="green" onClick={() => setShowPoorModel(false)}>

@@ -40,10 +40,12 @@ def get_local_intent_model(
     if _INTENT_MODEL is None:
         try:
             # Calculate where the cache should be, then load from local if available
+            logger.notice(f"Loading model from local cache: {model_name_or_path}")
             local_path = snapshot_download(
                 repo_id=model_name_or_path, revision=tag, local_files_only=True
             )
             _INTENT_MODEL = HybridClassifier.from_pretrained(local_path)
+            logger.notice(f"Loaded model from local cache: {local_path}")
         except Exception as e:
             logger.warning(f"Failed to load model directly: {e}")
             try:

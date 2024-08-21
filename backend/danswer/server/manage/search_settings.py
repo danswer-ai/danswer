@@ -20,6 +20,7 @@ from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import EmbeddingModelDetail
+from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.search.models import SavedSearchSettings
 from danswer.search.search_settings import get_search_settings
 from danswer.search.search_settings import update_search_settings
@@ -56,10 +57,15 @@ def set_new_embedding_model(
 
         embed_model_details.cloud_provider_id = cloud_id
 
+    embed_model_details.index_name = (
+        f"danswer_chunk_{clean_model_name(embed_model_details.model_name)}"
+    )
     # account for same model name being indexed with two different configurations
-    if embed_model_details.model_name == current_model.model_name:
-        if not current_model.model_name.endswith(ALT_INDEX_SUFFIX):
-            embed_model_details.model_name += ALT_INDEX_SUFFIX
+    if (
+        embed_model_details.model_name == current_model.model_name
+        and not current_model.index_name.endswith(ALT_INDEX_SUFFIX)
+    ):
+        embed_model_details.index_name += ALT_INDEX_SUFFIX
 
     secondary_model = get_secondary_db_embedding_model(db_session)
 
