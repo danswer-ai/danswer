@@ -45,7 +45,7 @@ class ConnectorBase(BaseModel):
     indexing_start: datetime | None
 
 
-class ConnectorCredentialBase(ConnectorBase):
+class ConnectorUpdateRequest(ConnectorBase):
     is_public: bool | None = None
     groups: list[int] | None = None
 

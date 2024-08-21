@@ -75,10 +75,10 @@ from danswer.file_store.file_store import get_default_file_store
 from danswer.server.documents.models import AuthStatus
 from danswer.server.documents.models import AuthUrl
 from danswer.server.documents.models import ConnectorBase
-from danswer.server.documents.models import ConnectorCredentialBase
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
 from danswer.server.documents.models import ConnectorSnapshot
+from danswer.server.documents.models import ConnectorUpdateRequest
 from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import CredentialSnapshot
 from danswer.server.documents.models import FileUploadResponse
@@ -502,7 +502,7 @@ def _validate_connector_allowed(source: DocumentSource) -> None:
 
 
 def _check_connector_permissions(
-    connector_data: ConnectorCredentialBase, user: User | None
+    connector_data: ConnectorUpdateRequest, user: User | None
 ) -> ConnectorBase:
     """
     This is not a proper permission check, but this should prevent curators creating bad situations
@@ -532,7 +532,7 @@ def _check_connector_permissions(
 
 @router.post("/admin/connector")
 def create_connector_from_model(
-    connector_data: ConnectorCredentialBase,
+    connector_data: ConnectorUpdateRequest,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
@@ -549,7 +549,7 @@ def create_connector_from_model(
 
 @router.post("/admin/connector-with-mock-credential")
 def create_connector_with_mock_credential(
-    connector_data: ConnectorCredentialBase,
+    connector_data: ConnectorUpdateRequest,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
@@ -581,7 +581,7 @@ def create_connector_with_mock_credential(
 @router.patch("/admin/connector/{connector_id}")
 def update_connector_from_model(
     connector_id: int,
-    connector_data: ConnectorCredentialBase,
+    connector_data: ConnectorUpdateRequest,
     user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ConnectorSnapshot | StatusResponse[int]:
