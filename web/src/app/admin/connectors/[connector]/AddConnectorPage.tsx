@@ -17,6 +17,7 @@ import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { submitFiles } from "./pages/utils/files";
 import { submitGoogleSite } from "./pages/utils/google_site";
+import { submitGitlabPages } from "./pages/utils/gitlab_pages";
 import AdvancedFormPage from "./pages/Advanced";
 import DynamicConnectionForm from "./pages/Create";
 import CreateCredential from "@/components/credentials/actions/CreateCredential";
@@ -148,6 +149,23 @@ export default function AddConnector({
     // google sites-specific handling
     if (connector == "google_site") {
       const response = await submitGoogleSite(
+        selectedFiles,
+        values?.base_url,
+        setPopup,
+        AdvancedConfig,
+        name
+      );
+      if (response) {
+        setTimeout(() => {
+          window.open("/admin/indexing/status", "_self");
+        }, 1000);
+      }
+      return;
+    }
+
+    // gitlab pages-specific handling
+    if (connector == "gitlab_pages") {
+      const response = await submitGitlabPages(
         selectedFiles,
         values?.base_url,
         setPopup,

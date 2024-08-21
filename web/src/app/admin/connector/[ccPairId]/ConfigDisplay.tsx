@@ -30,7 +30,7 @@ function buildConfigEntries(
           file_names: obj.file_locations.map(getNameFromPath),
         }
       : {};
-  } else if (sourceType === "google_sites") {
+  } else if (sourceType === "google_sites" || sourceType === "gitlab_pages") {
     return {
       base_url: obj.base_url,
     };

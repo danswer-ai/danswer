@@ -183,6 +183,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     category: SourceCategory.Wiki,
     docs: "https://docs.danswer.dev/connectors/google_sites",
   },
+  gitlab_pages: {
+    icon: GitlabIcon,
+    displayName: "Gitlab Pages",
+    category: SourceCategory.Wiki,
+  },
   loopio: {
     icon: LoopioIcon,
     displayName: "Loopio",

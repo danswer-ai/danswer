@@ -85,6 +85,7 @@ class DocumentSource(str, Enum):
     DOCUMENT360 = "document360"
     GONG = "gong"
     GOOGLE_SITES = "google_sites"
+    GITLAB_PAGES = "gitlab_pages"
     ZENDESK = "zendesk"
     LOOPIO = "loopio"
     DROPBOX = "dropbox"

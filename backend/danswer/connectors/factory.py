@@ -20,6 +20,7 @@ from danswer.connectors.gmail.connector import GmailConnector
 from danswer.connectors.gong.connector import GongConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_site.connector import GoogleSitesConnector
+from danswer.connectors.gitlab_pages.connector import GitlabPagesConnector
 from danswer.connectors.guru.connector import GuruConnector
 from danswer.connectors.hubspot.connector import HubSpotConnector
 from danswer.connectors.interfaces import BaseConnector
@@ -80,6 +81,7 @@ def identify_connector_class(
         DocumentSource.DOCUMENT360: Document360Connector,
         DocumentSource.GONG: GongConnector,
         DocumentSource.GOOGLE_SITES: GoogleSitesConnector,
+        DocumentSource.GITLAB_PAGES: GitlabPagesConnector,
         DocumentSource.ZENDESK: ZendeskConnector,
         DocumentSource.LOOPIO: LoopioConnector,
         DocumentSource.DROPBOX: DropboxConnector,
