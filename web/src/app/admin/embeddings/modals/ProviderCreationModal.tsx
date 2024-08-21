@@ -19,14 +19,15 @@ export function ProviderCreationModal({
   onCancel: () => void;
   existingProvider?: CloudEmbeddingProvider;
 }) {
-  const useFileUpload = selectedProvider.name == "Google";
+  const useFileUpload = selectedProvider.provider_type == "Google";
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [fileName, setFileName] = useState<string>("");
 
   const initialValues = {
-    name: existingProvider?.name || selectedProvider.name,
+    provider_type:
+      existingProvider?.provider_type || selectedProvider.provider_type,
     api_key: existingProvider?.api_key || "",
     custom_config: existingProvider?.custom_config
       ? Object.entries(existingProvider.custom_config)
@@ -36,7 +37,7 @@ export function ProviderCreationModal({
   };
 
   const validationSchema = Yup.object({
-    name: Yup.string().required("Name is required"),
+    provider_type: Yup.string().required("Provider type is required"),
     api_key: useFileUpload
       ? Yup.string()
       : Yup.string().required("API Key is required"),
@@ -134,7 +135,7 @@ export function ProviderCreationModal({
   return (
     <Modal
       width="max-w-3xl"
-      title={`Configure ${selectedProvider.name}`}
+      title={`Configure ${selectedProvider.provider_type}`}
       onOutsideClick={onCancel}
       icon={selectedProvider.icon}
     >

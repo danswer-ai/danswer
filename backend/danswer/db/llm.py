@@ -12,6 +12,7 @@ from danswer.server.manage.embedding.models import CloudEmbeddingProvider
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
+from shared_configs.enums import EmbeddingProvider
 
 
 def update_group_llm_provider_relationships__no_commit(
@@ -41,7 +42,7 @@ def upsert_cloud_embedding_provider(
 ) -> CloudEmbeddingProvider:
     existing_provider = (
         db_session.query(CloudEmbeddingProviderModel)
-        .filter_by(name=provider.name)
+        .filter_by(provider_type=provider.provider_type)
         .first()
     )
     if existing_provider:
@@ -126,11 +127,11 @@ def fetch_existing_llm_providers(
 
 
 def fetch_embedding_provider(
-    db_session: Session, provider_id: int
+    db_session: Session, provider_type: EmbeddingProvider
 ) -> CloudEmbeddingProviderModel | None:
     return db_session.scalar(
         select(CloudEmbeddingProviderModel).where(
-            CloudEmbeddingProviderModel.id == provider_id
+            CloudEmbeddingProviderModel.provider_type == provider_type
         )
     )
 
@@ -156,11 +157,11 @@ def fetch_provider(db_session: Session, provider_name: str) -> FullLLMProvider |
 
 
 def remove_embedding_provider(
-    db_session: Session, embedding_provider_name: str
+    db_session: Session, provider_type: EmbeddingProvider
 ) -> None:
     db_session.execute(
         delete(CloudEmbeddingProviderModel).where(
-            CloudEmbeddingProviderModel.name == embedding_provider_name
+            CloudEmbeddingProviderModel.provider_type == provider_type
         )
     )
 

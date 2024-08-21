@@ -11,7 +11,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.embedding_model import create_embedding_model
 from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.embedding_model import get_model_id_from_name
+from danswer.db.embedding_model import get_embedding_provider_from_type
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.embedding_model import update_embedding_model_status
 from danswer.db.engine import get_session
@@ -42,30 +42,28 @@ def set_new_embedding_model(
     """Creates a new EmbeddingModel row and cancels the previous secondary indexing if any
     Gives an error if the same model name is used as the current or secondary index
     """
-    current_model = get_current_db_embedding_model(db_session)
 
-    if embed_model_details.cloud_provider_name is not None:
-        cloud_id = get_model_id_from_name(
-            db_session, embed_model_details.cloud_provider_name
+    # Validate cloud provider exists
+    if embed_model_details.provider_type is not None:
+        cloud_provider = get_embedding_provider_from_type(
+            db_session, provider_type=embed_model_details.provider_type
         )
 
-        if cloud_id is None:
+        if cloud_provider is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No ID exists for given provider name",
+                detail=f"No embedding provider exists for cloud embedding type {embed_model_details.provider_type}",
             )
 
-        embed_model_details.cloud_provider_id = cloud_id
+    current_model = get_current_db_embedding_model(db_session)
 
-    embed_model_details.index_name = (
-        f"danswer_chunk_{clean_model_name(embed_model_details.model_name)}"
-    )
-    # account for same model name being indexed with two different configurations
+    # We define index name here
+    index_name = f"danswer_chunk_{clean_model_name(embed_model_details.model_name)}"
     if (
         embed_model_details.model_name == current_model.model_name
         and not current_model.index_name.endswith(ALT_INDEX_SUFFIX)
     ):
-        embed_model_details.index_name += ALT_INDEX_SUFFIX
+        index_name += ALT_INDEX_SUFFIX
 
     secondary_model = get_secondary_db_embedding_model(db_session)
 
@@ -89,8 +87,7 @@ def set_new_embedding_model(
         )
 
     new_model = create_embedding_model(
-        model_details=embed_model_details,
-        db_session=db_session,
+        model_details=embed_model_details, db_session=db_session, index_name=index_name
     )
 
     # Ensure Vespa has the new index immediately

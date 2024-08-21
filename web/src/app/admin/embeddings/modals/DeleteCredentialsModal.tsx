@@ -15,13 +15,13 @@ export function DeleteCredentialsModal({
   return (
     <Modal
       width="max-w-3xl"
-      title={`Nuke ${modelProvider.name} Credentials?`}
+      title={`Delete ${modelProvider.provider_type} Credentials?`}
       onOutsideClick={onCancel}
     >
       <div className="mb-4">
         <Text className="text-lg mb-2">
-          You&apos;re about to delete your {modelProvider.name} credentials. Are
-          you sure?
+          You&apos;re about to delete your {modelProvider.provider_type}{" "}
+          credentials. Are you sure?
         </Text>
         <Callout
           title="Point of No Return"

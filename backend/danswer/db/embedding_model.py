@@ -20,12 +20,14 @@ from danswer.server.manage.embedding.models import (
     CloudEmbeddingProvider as ServerCloudEmbeddingProvider,
 )
 from danswer.utils.logger import setup_logger
+from shared_configs.enums import EmbeddingProvider
 
 logger = setup_logger()
 
 
 def create_embedding_model(
     model_details: EmbeddingModelDetail,
+    index_name: str,
     db_session: Session,
     status: IndexModelStatus = IndexModelStatus.FUTURE,
 ) -> EmbeddingModel:
@@ -36,10 +38,10 @@ def create_embedding_model(
         query_prefix=model_details.query_prefix,
         passage_prefix=model_details.passage_prefix,
         status=status,
-        cloud_provider_id=model_details.cloud_provider_id,
+        provider_type=model_details.provider_type,
         # Every single embedding model except the initial one from migrations has this name
         # The initial one from migration is called "danswer_chunk"
-        index_name=model_details.index_name,
+        index_name=index_name,
     )
 
     db_session.add(embedding_model)
@@ -48,14 +50,14 @@ def create_embedding_model(
     return embedding_model
 
 
-def get_model_id_from_name(
-    db_session: Session, embedding_provider_name: str
-) -> int | None:
+def get_embedding_provider_from_type(
+    db_session: Session, provider_type: EmbeddingProvider
+) -> CloudEmbeddingProvider | None:
     query = select(CloudEmbeddingProvider).where(
-        CloudEmbeddingProvider.name == embedding_provider_name
+        CloudEmbeddingProvider.provider_type == provider_type
     )
     provider = db_session.execute(query).scalars().first()
-    return provider.id if provider else None
+    return provider if provider else None
 
 
 def get_current_db_embedding_provider(
@@ -65,14 +67,11 @@ def get_current_db_embedding_provider(
         get_current_db_embedding_model(db_session=db_session)
     )
 
-    if (
-        current_embedding_model is None
-        or current_embedding_model.cloud_provider_id is None
-    ):
+    if current_embedding_model is None or current_embedding_model.provider_type is None:
         return None
 
     embedding_provider = fetch_embedding_provider(
-        db_session=db_session, provider_id=current_embedding_model.cloud_provider_id
+        db_session=db_session, provider_type=current_embedding_model.provider_type
     )
     if embedding_provider is None:
         raise RuntimeError("No embedding provider exists for this model.")

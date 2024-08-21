@@ -122,28 +122,28 @@ export function EmbeddingModelSelection({
   };
 
   const clientsideAddProvider = (provider: CloudEmbeddingProvider) => {
-    const providerName = provider.name;
+    const providerType = provider.provider_type;
     setNewEnabledProviders((newEnabledProviders) => [
       ...newEnabledProviders,
-      providerName,
+      providerType,
     ]);
     setNewUnenabledProviders((newUnenabledProviders) =>
       newUnenabledProviders.filter(
-        (givenProvidername) => givenProvidername != providerName
+        (givenProviderType) => givenProviderType != providerType
       )
     );
   };
 
   const clientsideRemoveProvider = (provider: CloudEmbeddingProvider) => {
-    const providerName = provider.name;
+    const providerType = provider.provider_type;
     setNewEnabledProviders((newEnabledProviders) =>
       newEnabledProviders.filter(
-        (givenProvidername) => givenProvidername != providerName
+        (givenProviderType) => givenProviderType != providerType
       )
     );
     setNewUnenabledProviders((newUnenabledProviders) => [
       ...newUnenabledProviders,
-      providerName,
+      providerType,
     ]);
   };
 
@@ -191,7 +191,7 @@ export function EmbeddingModelSelection({
       )}
       {changeCredentialsProvider && (
         <ChangeCredentialsModal
-          useFileUpload={changeCredentialsProvider.name == "Google"}
+          useFileUpload={changeCredentialsProvider.provider_type == "Google"}
           onDeleted={() => {
             clientsideRemoveProvider(changeCredentialsProvider);
             setChangeCredentialsProvider(null);
