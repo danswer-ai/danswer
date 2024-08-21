@@ -1,5 +1,3 @@
-from typing import Any
-
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import model_validator
@@ -46,7 +44,7 @@ class DirectQARequest(ChunkContext):
     skip_gen_ai_answer_generation: bool = False
 
     @model_validator(mode="after")
-    def check_chain_of_thought_and_prompt_id(self) -> dict[str, Any]:
+    def check_chain_of_thought_and_prompt_id(self) -> "DirectQARequest":
         if self.chain_of_thought and self.prompt_id is not None:
             raise ValueError(
                 "If chain_of_thought is True, prompt_id must be None"
