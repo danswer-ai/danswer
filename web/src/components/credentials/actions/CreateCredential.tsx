@@ -121,7 +121,9 @@ export default function CreateCredential({
   }
 
   const credentialTemplate: dictionaryType = credentialTemplates[sourceType];
+  // console.log(credentialTemplate)
   const validationSchema = createValidationSchema(credentialTemplate);
+  console.log(validationSchema);
 
   return (
     <Formik
