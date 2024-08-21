@@ -60,6 +60,11 @@ export default function AddConnector({
     errorHandlingFetcher,
     { refreshInterval: 5000 }
   );
+  const { data: editableCredentials } = useSWR<Credential<any>[]>(
+    buildSimilarCredentialInfoURL(connector, true),
+    errorHandlingFetcher,
+    { refreshInterval: 5000 }
+  );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const credentialTemplate = credentialTemplates[connector];
@@ -253,7 +258,7 @@ export default function AddConnector({
   };
 
   const displayName = getSourceDisplayName(connector) || connector;
-  if (!credentials) {
+  if (!credentials || !editableCredentials) {
     return <></>;
   }
 
@@ -356,6 +361,7 @@ export default function AddConnector({
                 source={connector}
                 defaultedCredential={currentCredential!}
                 credentials={credentials}
+                editableCredentials={editableCredentials}
                 onDeleteCredential={onDeleteCredential}
                 onSwitch={onSwap}
               />

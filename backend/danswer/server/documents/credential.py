@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -50,9 +51,15 @@ def get_cc_source_full_info(
     source_type: DocumentSource,
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    get_editable: bool = Query(
+        False, description="If true, return editable credentials"
+    ),
 ) -> list[CredentialSnapshot]:
     credentials = fetch_credentials_by_source(
-        db_session=db_session, user=user, document_source=source_type
+        db_session=db_session,
+        user=user,
+        document_source=source_type,
+        get_editable=get_editable,
     )
     return [
         CredentialSnapshot.from_credential_db_model(credential)

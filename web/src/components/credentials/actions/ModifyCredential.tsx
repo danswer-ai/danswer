@@ -1,16 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Badge } from "@tremor/react";
 import { ValidSources } from "@/lib/types";
-import { FaCreativeCommons } from "react-icons/fa";
 import {
   EditIcon,
   NewChatIcon,
-  NewIconTest,
   SwapIcon,
   TrashIcon,
 } from "@/components/icons/icons";
-import { getSourceDisplayName } from "@/lib/sources";
 import {
   ConfluenceCredentialJson,
   Credential,
@@ -19,12 +16,14 @@ import { Connector } from "@/lib/connectors/connectors";
 
 const CredentialSelectionTable = ({
   credentials,
+  editableCredentials,
   onEditCredential,
   onSelectCredential,
   currentCredentialId,
   onDeleteCredential,
 }: {
   credentials: Credential<any>[];
+  editableCredentials: Credential<any>[];
   onSelectCredential: (credential: Credential<any> | null) => void;
   currentCredentialId?: number;
   onDeleteCredential: (credential: Credential<any>) => void;
@@ -66,6 +65,10 @@ const CredentialSelectionTable = ({
               const selected = currentCredentialId
                 ? credential.id == (selectedCredentialId || currentCredentialId)
                 : false;
+              const editable = editableCredentials.some(
+                (editableCredential) => editableCredential.id === credential.id
+              );
+              console.log(editable);
               return (
                 <tr key={credential.id} className="border-b hover:bg-gray-50">
                   <td className="min-w-[60px] p-2">
@@ -92,7 +95,7 @@ const CredentialSelectionTable = ({
                   </td>
                   <td className="pt-3 flex gap-x-2 content-center mt-auto">
                     <button
-                      disabled={selected}
+                      disabled={selected || !editable}
                       onClick={async () => {
                         onDeleteCredential(credential);
                       }}
@@ -102,6 +105,7 @@ const CredentialSelectionTable = ({
                     </button>
                     {onEditCredential && (
                       <button
+                        disabled={!editable}
                         onClick={() => onEditCredential(credential)}
                         className="cursor-pointer my-auto"
                       >
@@ -128,6 +132,7 @@ export default function ModifyCredential({
   showIfEmpty,
   attachedConnector,
   credentials,
+  editableCredentials,
   source,
   defaultedCredential,
 
@@ -143,6 +148,7 @@ export default function ModifyCredential({
   attachedConnector?: Connector<any>;
   defaultedCredential?: Credential<any>;
   credentials: Credential<any>[];
+  editableCredentials: Credential<any>[];
   source: ValidSources;
 
   onSwitch?: (newCredential: Credential<any>) => void;
@@ -157,7 +163,7 @@ export default function ModifyCredential({
   const [confirmDeletionCredential, setConfirmDeletionCredential] =
     useState<null | Credential<any>>(null);
 
-  if (!credentials) {
+  if (!credentials || !editableCredentials) {
     return <></>;
   }
 
@@ -215,6 +221,7 @@ export default function ModifyCredential({
             defaultedCredential ? defaultedCredential.id : undefined
           }
           credentials={credentials}
+          editableCredentials={editableCredentials}
           onSelectCredential={(credential: Credential<any> | null) => {
             if (credential && onSwitch) {
               onSwitch(credential);

@@ -49,6 +49,11 @@ export default function CredentialSection({
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
+  const { data: editableCredentials } = useSWR<Credential<any>[]>(
+    buildSimilarCredentialInfoURL(sourceType, true),
+    errorHandlingFetcher,
+    { refreshInterval: 5000 }
+  );
 
   const onSwap = async (
     selectedCredential: Credential<any>,
@@ -114,7 +119,7 @@ export default function CredentialSection({
   };
   const { popup, setPopup } = usePopup();
 
-  if (!credentials) {
+  if (!credentials || !editableCredentials) {
     return <></>;
   }
 
@@ -154,6 +159,7 @@ export default function CredentialSection({
             attachedConnector={ccPair.connector}
             defaultedCredential={defaultedCredential}
             credentials={credentials}
+            editableCredentials={editableCredentials}
             onDeleteCredential={onDeleteCredential}
             onEditCredential={(credential: Credential<any>) =>
               onEditCredential(credential)
