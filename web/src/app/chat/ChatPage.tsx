@@ -577,11 +577,10 @@ export function ChatPage({
       }
     }
   }; */
-
   const adjustDocumentSidebarWidth = () => {
     if (masterFlexboxRef.current && document.documentElement.clientWidth) {
       if (document.documentElement.clientWidth > 1700) {
-        setMaxDocumentSidebarWidth(400);
+        setMaxDocumentSidebarWidth(450);
       } else if (document.documentElement.clientWidth > 1420) {
         setMaxDocumentSidebarWidth(350);
       } else {
@@ -1302,6 +1301,7 @@ export function ChatPage({
                             return (
                               <div key={messageReactComponentKey}>
                                 <HumanMessage
+                                  user={user}
                                   content={message.message}
                                   files={message.files}
                                   messageId={message.messageId}
@@ -1596,19 +1596,20 @@ export function ChatPage({
                           />
                         )}
                       </AnimatePresence>
+
                       <div
                         ref={sidebarElementRef}
                         className="fixed 2xl:relative top-0 right-0 z-overlay bg-background  flex-none overflow-y-hidden h-full"
                         style={{
                           width: !showDocSidebar
-                            ? Math.max(300, usedSidebarWidth)
+                            ? Math.max(350, usedSidebarWidth)
                             : 0,
                         }}
                       >
                         <ResizableSection
                           updateSidebarWidth={updateSidebarWidth}
                           intialWidth={usedSidebarWidth}
-                          minWidth={300}
+                          minWidth={350}
                           maxWidth={maxDocumentSidebarWidth || undefined}
                         >
                           <DocumentSidebar
@@ -1627,37 +1628,6 @@ export function ChatPage({
                           />
                         </ResizableSection>
                       </div>
-                      {/* <div
-                        ref={sidebarElementRef}
-                        className="fixed 2xl:relative top-0 right-0 z-overlay bg-background  flex-none overflow-y-hidden h-full"
-                        style={{
-                          width: !showDocSidebar
-                            ? Math.max(300, usedSidebarWidth)
-                            : 0,
-                        }}
-                      >
-                        <ResizableSection
-                          updateSidebarWidth={updateSidebarWidth}
-                          intialWidth={usedSidebarWidth}
-                          minWidth={300}
-                          maxWidth={maxDocumentSidebarWidth || undefined}
-                        >
-                          <DocumentSidebar
-                            initialWidth={showDocSidebar ? usedSidebarWidth : 0}
-                            ref={innerSidebarElementRef}
-                            closeSidebar={() => toggleSidebar()}
-                            selectedMessage={aiMessage}
-                            selectedDocuments={selectedDocuments}
-                            toggleDocumentSelection={toggleDocumentSelection}
-                            clearSelectedDocuments={clearSelectedDocuments}
-                            selectedDocumentTokens={selectedDocumentTokens}
-                            maxTokens={maxTokens}
-                            isLoading={isFetchingChatMessages}
-                            showDocSidebar={showDocSidebar}
-                            isWide={isWide}
-                          />
-                        </ResizableSection>
-                      </div> */}
                     </>
                   ) : // Another option is to use a div with the width set to the initial width, so that the
                   // chat section appears in the same place as before

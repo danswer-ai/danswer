@@ -6,12 +6,8 @@ import {
   MessageCircleMore,
   Headset,
   FolderPlus,
-  X,
   Plus,
   PanelLeftClose,
-  Menu,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { useContext, useEffect } from "react";
 import Link from "next/link";
@@ -31,12 +27,15 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import Logo from "../../../../public/logo-brand.png";
-import SmallLogo from "../../../../public/logo.png";
 import { HeaderTitle } from "@/components/header/Header";
-import { UserSettingsButton } from "@/components/UserSettingsButton";
 import { useChatContext } from "@/components/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export const ChatSidebar = ({
   existingChats,
@@ -136,6 +135,27 @@ export const ChatSidebar = ({
                 <PanelLeftClose size={24} />
               </Button>
             </div>
+          </div>
+
+          <div className="px-4 pb-6 pt-2 w-full">
+            <Popover>
+              <PopoverTrigger asChild className="w-full">
+                <div className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 shadow-sm text-sm">
+                  <div className="px-1.5 py-0.5 rounded bg-primary-foreground font-bold text-white">
+                    D
+                  </div>
+                  <span>Developement Team</span>
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-full">
+                <div className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 shadow-sm text-sm w-full">
+                  <div className="px-1.5 py-0.5 rounded bg-primary-foreground font-bold text-white">
+                    D
+                  </div>
+                  <span>Developement Team</span>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="h-full overflow-auto">

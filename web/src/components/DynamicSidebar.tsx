@@ -8,11 +8,11 @@ import { User } from "@/lib/types";
 interface SidebarProps {
   user?: User | null;
   isSearch?: boolean;
-  openSidebar: boolean;
-  toggleLeftSideBar: () => void;
-  isExpanded: boolean;
-  toggleWidth: () => void;
-  children: React.ReactNode;
+  openSidebar?: boolean;
+  toggleLeftSideBar?: () => void;
+  isExpanded?: boolean;
+  toggleWidth?: () => void;
+  children?: React.ReactNode;
 }
 
 export function DynamicSidebar({

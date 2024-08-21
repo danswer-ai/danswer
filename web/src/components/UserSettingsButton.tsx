@@ -64,14 +64,14 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
                     Johny Doe
                   </span>
                   <span className="text-dark-500 truncate group-hover:text-white">
-                    johnydoe@gmail.com
+                    {user!.email}
                   </span>
                 </div>
               </Link>
               <div className="my-1 border-b border-border" />
             </>
             <Link
-              href="/admin/indexing/status"
+              href="/profile"
               className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white"
             >
               <User className="my-auto mr-3" size={24} strokeWidth={1.5} />
@@ -93,14 +93,7 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
               </>
             )}
             <Link
-              href="/admin/indexing/status"
-              className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white"
-            >
-              <Cpu className="my-auto mr-3" size={24} strokeWidth={1.5} />
-              My Assistant
-            </Link>
-            <Link
-              href="/admin/indexing/status"
+              href="/notification"
               className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white"
             >
               <Bell className="my-auto mr-3" size={24} strokeWidth={1.5} />

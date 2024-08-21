@@ -10,7 +10,6 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
-import Profile from "./profile";
 
 export default async function ProfilePage() {
   const tasks = [
@@ -50,11 +49,8 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="h-full overflow-x-hidden flex">
+    <div className="h-full overflow-x-hidden">
       <DynamicSidebar user={user} />
-      <div className="w-full pt-20 lg:pt-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 h-screen overflow-hidden">
-        <Profile user={user} />
-      </div>
     </div>
   );
 }

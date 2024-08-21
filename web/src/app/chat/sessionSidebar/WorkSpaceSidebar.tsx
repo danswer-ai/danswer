@@ -55,7 +55,12 @@ export const WorkSpaceSidebar = ({
           </div>
         </div>
         <div>
-          <Button variant="ghost" size="icon" className="mb-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mb-4"
+            onClick={() => console.log(user)}
+          >
             <Settings />
           </Button>
           <UserSettingsButton user={user} />

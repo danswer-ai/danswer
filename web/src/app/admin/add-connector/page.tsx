@@ -14,11 +14,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
-function SourceTile({ sourceMetadata }: { sourceMetadata: SourceMetadata }) {
+function SourceTile({
+  sourceMetadata,
+  disabled,
+}: {
+  sourceMetadata: SourceMetadata;
+  disabled?: boolean;
+}) {
   return (
-    <Link href={sourceMetadata.adminUrl}>
-      <Card className="w-40 hover:bg-hover">
+    <Link
+      href={sourceMetadata.adminUrl}
+      className={disabled ? "pointer-events-none" : ""}
+    >
+      <Card
+        className={`w-40 hover:bg-hover ${
+          disabled ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+      >
         <CardContent className="p-4 flex items-center flex-col justify-center">
           <SourceIcon sourceType={sourceMetadata.internalName} iconSize={24} />
           <Text className="mt-2 text-sm font-medium">
@@ -57,7 +71,7 @@ export default function Page() {
       </Text>
 
       <div className="flex mt-8">
-        <Title>Import Knowledge</Title>
+        <span className="font-bold pb-2">Import Knowledge</span>
       </div>
       <Text>
         Connect to pieces of knowledge that live outside your apps. Upload
@@ -73,7 +87,7 @@ export default function Page() {
       </div>
 
       <div className="flex mt-8">
-        <Title>Setup Auto-Syncing from Apps</Title>
+        <span className="font-bold pb-2">Setup Auto-Syncing from Apps</span>
       </div>
       <Text>
         Setup auto-syncing from your organization&apos;s most used apps and
@@ -89,7 +103,7 @@ export default function Page() {
       </div>
 
       <div className="flex mt-8">
-        <Title>Coming soon...</Title>
+        <span className="font-bold pb-2">Coming soon...</span>
       </div>
       <Text>
         These are the connectors that we are currently working on. Stay tuned!
@@ -97,7 +111,11 @@ export default function Page() {
       <div className="flex flex-wrap gap-4 py-4 md:p-4">
         {comingSoonSources.map((source) => {
           return (
-            <SourceTile key={source.internalName} sourceMetadata={source} />
+            <SourceTile
+              key={source.internalName}
+              sourceMetadata={source}
+              disabled
+            />
           );
         })}
       </div>
