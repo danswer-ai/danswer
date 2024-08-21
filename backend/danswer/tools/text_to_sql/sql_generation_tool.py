@@ -227,9 +227,10 @@ class SqlGenerationTool(Tool):
                 final_response = json_response
             elif isChartInQuery:
                 if not dataframe.empty and sql_generation_tool_output:
-                    final_response = self.execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart(df=dataframe,
-                                                                                                             sql_query=sql_generation_tool_output,
-                                                                                                             user_query=query)
+                    image_path = self.execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart(df=dataframe,
+                                                                                                         sql_query=sql_generation_tool_output,
+                                                                                                         user_query=query)
+                    final_response = image_path
                 else:
                     final_response = "No records fetched from uploaded Excel. Please check your Excel or rephrase your query!"
             else:
@@ -249,7 +250,7 @@ class SqlGenerationTool(Tool):
         dataframe = pd.read_csv(excel_byte_stream)
         return dataframe
 
-    def execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart(self, df, sql_query, user_query):
+    def execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart(self, df, sql_query, user_query) -> str:
         # execute query on dataframe
         self.dataframe_inmemory_sql = DataframeInMemorySQL(df=df)
         filtered_df = self.dataframe_inmemory_sql.execute_sql(sql_query)
@@ -259,10 +260,10 @@ class SqlGenerationTool(Tool):
                                                                                                                       schema=filtered_df.info,
                                                                                                                       requirement=user_query,
                                                                                                                       chart_type=chart_type)
-        base64_markdown = self.plot_charts.generate_chart_as_markdown_base64(dataframe=filtered_df,
-                                                                             field_names=column_names,
-                                                                             chart_type=chart_type)
-        return base64_markdown
+        image_path = self.plot_charts.generate_chart_and_save(dataframe=filtered_df,
+                                                              field_names=column_names,
+                                                              chart_type=chart_type)
+        return image_path
 
     # Function to format the list of dictionaries as a markdown table
     def format_as_markdown_table(self, data):
