@@ -36,7 +36,7 @@ msal==1.26.0
 nltk==3.8.1
 Office365-REST-Python-Client==2.5.9
 oauthlib==3.2.2
-openai==1.14.3 
+openai==1.41.1 
 openpyxl==3.1.2
 playwright==1.41.2
 psutil==5.9.5
@@ -64,7 +64,7 @@ slack-sdk==3.20.2
 SQLAlchemy[mypy]==2.0.15
 starlette==0.36.3
 supervisor==4.2.5
-tiktoken==0.4.0
+tiktoken==0.7.0
 timeago==1.0.16
 transformers==4.39.2
 uvicorn==0.21.1
