@@ -67,8 +67,7 @@ class GenerateSqlForDataframe:
         try:
             llm_response = self.llm.invoke(prompt=prompt)
             sql_query = llm_response.content
-            logger.info(
-                f'SQL Query generated successfully. SQL Query : {sql_query}, type(field_names) = {type(sql_query)}')
+            logger.info(f'SQL Query generated successfully. SQL Query : {sql_query}, type(field_names) = {type(sql_query)}')
             return sql_query
         except Exception as e:
             logger.error("Failed to generate SQL Query: %s", str(e))

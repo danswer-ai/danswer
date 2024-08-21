@@ -6,6 +6,7 @@ import plotly.io as pio
 from danswer.utils.logger import setup_logger
 import uuid
 import kaleido
+import os
 
 # Setup logger
 logger = setup_logger()
@@ -42,12 +43,11 @@ class PlotCharts:
     def generate_chart_and_save(self, dataframe, field_names, chart_type) -> str:
         """ Generate specified chart and convert to markdown with base64 image. """
         figure = PlotFactory.create_chart(chart_type, dataframe, field_names)
-        file_name = str(uuid.uuid4()) + '.jpg'
-        image_path = '/image/' + file_name
+        image_path = os.path.join('/images', str(uuid.uuid4()) + '.jpg')
         figure.write_image(image_path)
+        return image_path
         # base64_image = self.base64_from_fig(figure)
         # self.format_as_markdown_image(base64_image=base64_image, alt_text='plot') if figure else None
-        return image_path
 
     @staticmethod
     def base64_from_fig(fig):
