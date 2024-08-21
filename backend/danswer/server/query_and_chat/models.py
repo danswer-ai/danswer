@@ -177,7 +177,7 @@ class ChatMessageDetail(BaseModel):
     tool_calls: list[ToolCallFinalResult]
 
     def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
-        initial_dict = super().model_dump(*args, **kwargs)  # type: ignore
+        initial_dict = super().model_dump(mode="json", *args, **kwargs)  # type: ignore
         initial_dict["time_sent"] = self.time_sent.isoformat()
         return initial_dict
 

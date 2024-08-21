@@ -4,7 +4,7 @@ from typing import Any
 from langchain_core.messages.ai import AIMessage
 from langchain_core.messages.tool import ToolCall
 from langchain_core.messages.tool import ToolMessage
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from danswer.natural_language_processing.utils import BaseTokenizer
 
