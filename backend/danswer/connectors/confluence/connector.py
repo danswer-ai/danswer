@@ -620,62 +620,60 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             last_modified = _datetime_from_string(page["version"]["when"])
             author = cast(str | None, page["version"].get("by", {}).get("email"))
 
-            if time_filter is None or time_filter(last_modified):
-                page_id = page["id"]
+            if time_filter and not time_filter(last_modified):
+                continue
 
-                if self.labels_to_skip or not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING:
-                    page_labels = self._fetch_labels(self.confluence_client, page_id)
+            page_id = page["id"]
 
-                # check disallowed labels
-                if self.labels_to_skip:
-                    label_intersection = self.labels_to_skip.intersection(page_labels)
-                    if label_intersection:
-                        logger.info(
-                            f"Page with ID '{page_id}' has a label which has been "
-                            f"designated as disallowed: {label_intersection}. Skipping."
-                        )
+            if self.labels_to_skip or not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING:
+                page_labels = self._fetch_labels(self.confluence_client, page_id)
 
-                        continue
-
-                page_html = (
-                    page["body"]
-                    .get("storage", page["body"].get("view", {}))
-                    .get("value")
-                )
-                page_url = self.wiki_base + page["_links"]["webui"]
-                if not page_html:
-                    logger.debug("Page is empty, skipping: %s", page_url)
-                    continue
-                page_text = parse_html_page(page_html, self.confluence_client)
-
-                files_in_used = get_used_attachments(page_html, self.confluence_client)
-                attachment_text, unused_page_attachments = self._fetch_attachments(
-                    self.confluence_client, page_id, files_in_used
-                )
-                unused_attachments.extend(unused_page_attachments)
-
-                page_text += attachment_text
-                comments_text = self._fetch_comments(self.confluence_client, page_id)
-                page_text += comments_text
-                doc_metadata: dict[str, str | list[str]] = {
-                    "Wiki Space Name": self.space
-                }
-                if not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING and page_labels:
-                    doc_metadata["labels"] = page_labels
-
-                doc_batch.append(
-                    Document(
-                        id=page_url,
-                        sections=[Section(link=page_url, text=page_text)],
-                        source=DocumentSource.CONFLUENCE,
-                        semantic_identifier=page["title"],
-                        doc_updated_at=last_modified,
-                        primary_owners=(
-                            [BasicExpertInfo(email=author)] if author else None
-                        ),
-                        metadata=doc_metadata,
+            # check disallowed labels
+            if self.labels_to_skip:
+                label_intersection = self.labels_to_skip.intersection(page_labels)
+                if label_intersection:
+                    logger.info(
+                        f"Page with ID '{page_id}' has a label which has been "
+                        f"designated as disallowed: {label_intersection}. Skipping."
                     )
+
+                    continue
+
+            page_html = (
+                page["body"].get("storage", page["body"].get("view", {})).get("value")
+            )
+            page_url = self.wiki_base + page["_links"]["webui"]
+            if not page_html:
+                logger.debug("Page is empty, skipping: %s", page_url)
+                continue
+            page_text = parse_html_page(page_html, self.confluence_client)
+
+            files_in_used = get_used_attachments(page_html, self.confluence_client)
+            attachment_text, unused_page_attachments = self._fetch_attachments(
+                self.confluence_client, page_id, files_in_used
+            )
+            unused_attachments.extend(unused_page_attachments)
+
+            page_text += attachment_text
+            comments_text = self._fetch_comments(self.confluence_client, page_id)
+            page_text += comments_text
+            doc_metadata: dict[str, str | list[str]] = {"Wiki Space Name": self.space}
+            if not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING and page_labels:
+                doc_metadata["labels"] = page_labels
+
+            doc_batch.append(
+                Document(
+                    id=page_url,
+                    sections=[Section(link=page_url, text=page_text)],
+                    source=DocumentSource.CONFLUENCE,
+                    semantic_identifier=page["title"],
+                    doc_updated_at=last_modified,
+                    primary_owners=(
+                        [BasicExpertInfo(email=author)] if author else None
+                    ),
+                    metadata=doc_metadata,
                 )
+            )
         return (
             doc_batch,
             unused_attachments,
@@ -683,29 +681,37 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         )
 
     def _get_attachment_batch(
-        self, start_ind: int, attachments: list[dict[str, Any]]
+        self,
+        start_ind: int,
+        attachments: list[dict[str, Any]],
+        time_filter: Callable[[datetime], bool] | None = None,
     ) -> tuple[list[Document], int]:
         doc_batch: list[Document] = []
 
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
 
-        batch = self._fetch_pages(self.confluence_client, start_ind)
+        end_ind = min(start_ind + self.batch_size, len(attachments))
 
-        for attachment in attachments:
-            download_url = self.confluence_client.url + attachment["_links"]["download"]
-
-            response = self.confluence_client._session.get(download_url)
-
-            if response.status_code == 200:
-                extracted_text = extract_file_text(
-                    attachment["title"], io.BytesIO(response.content), False
-                )
-
-            creator_email = attachment["history"]["createdBy"]["email"]
+        for attachment in attachments[start_ind:end_ind]:
             last_updated = _datetime_from_string(
                 attachment["history"]["lastUpdated"]["when"]
             )
+
+            if time_filter and not time_filter(last_updated):
+                continue
+
+            download_url = self.confluence_client.url + attachment["_links"]["download"]
+
+            response = self.confluence_client._session.get(download_url)
+            if response.status_code != 200:
+                continue
+
+            extracted_text = extract_file_text(
+                attachment["title"], io.BytesIO(response.content), False
+            )
+
+            creator_email = attachment["history"]["createdBy"]["email"]
 
             comment = attachment["metadata"].get("comment", "")
             doc_metadata: dict[str, str | list[str]] = {"comment": comment}
@@ -733,7 +739,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 )
             )
 
-        return doc_batch, len(batch)
+        return doc_batch, end_ind - start_ind
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         unused_attachments = []
@@ -794,7 +800,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         start_ind = 0
         while True:
             attachment_batch, num_attachments = self._get_attachment_batch(
-                start_ind, unused_attachments
+                start_ind,
+                unused_attachments,
+                time_filter=lambda t: start_time <= t <= end_time,
             )
             start_ind += num_attachments
             if attachment_batch:
