@@ -109,8 +109,6 @@ class EmbeddingModelDetail(BaseModel):
         embedding_model: "EmbeddingModel",
     ) -> "EmbeddingModelDetail":
         return cls(
-            # When constructing EmbeddingModel Detail for user-facing flows, strip the
-            # unneeded additional data after the `_`s
             model_name=embedding_model.model_name,
             model_dim=embedding_model.model_dim,
             normalize=embedding_model.normalize,
