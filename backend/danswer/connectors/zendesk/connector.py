@@ -1,10 +1,9 @@
 from typing import Any
-import time
 
 import requests
 from retry import retry
 from zenpy import Zenpy  # type: ignore
-from zenpy.lib.api_objects import Ticket, Comment  # type: ignore
+from zenpy.lib.api_objects import Ticket
 from zenpy.lib.api_objects.help_centre_objects import Article  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -24,6 +23,7 @@ from danswer.file_processing.html_utils import parse_html_page_basic
 
 # Define a constant for the time delay
 TIME_DELAY_SECONDS = 5
+
 
 def _article_to_document(article: Article, content_tags: dict[str, str]) -> Document:
     author = BasicExpertInfo(
@@ -56,6 +56,7 @@ def _article_to_document(article: Article, content_tags: dict[str, str]) -> Docu
         metadata=metadata,
     )
 
+
 class ZendeskClientNotSetUpError(PermissionError):
     def __init__(self) -> None:
         super().__init__("Zendesk Client is not set up, was load_credentials called?")
@@ -63,8 +64,8 @@ class ZendeskClientNotSetUpError(PermissionError):
 
 class ZendeskConnector(LoadConnector, PollConnector):
     def __init__(
-        self, 
-        batch_size: int = INDEX_BATCH_SIZE, 
+        self,
+        batch_size: int = INDEX_BATCH_SIZE,
         content_type: str = "articles",
     ) -> None:
         self.batch_size = batch_size
@@ -135,12 +136,11 @@ class ZendeskConnector(LoadConnector, PollConnector):
             raise ZendeskClientNotSetUpError()
 
         requester = BasicExpertInfo(
-            display_name=ticket.requester.name,
-            email=ticket.requester.email
+            display_name=ticket.requester.name, email=ticket.requester.email
         )
         update_time = time_str_to_utc(ticket.updated_at)
 
-        metadata: dict[str, Union[str, list[str]]] = {
+        metadata: dict[str, str | list[str]] = {
             "status": ticket.status,
             "priority": ticket.priority,
             "tags": ticket.tags,
@@ -154,19 +154,30 @@ class ZendeskConnector(LoadConnector, PollConnector):
         comments = self.zendesk_client.tickets.comments(ticket=ticket)
 
         # Combine all comments into a single text
-        comments_text = "\n\n".join([
-            f"Comment by {comment.author.name} at {comment.created_at}:\n{comment.body}"
-            for comment in comments
-        ])
+        comments_text = "\n\n".join(
+            [
+                f"Comment by {comment.author.name} at {comment.created_at}:\n{comment.body}"
+                for comment in comments
+            ]
+        )
 
         # Combine ticket description and comments
-        full_text = f"Ticket Description:\n{ticket.description}\n\nComments:\n{comments_text}"
+        description = (
+            ticket.description
+            if hasattr(ticket, "description") and ticket.description
+            else ""
+        )
+        full_text = f"Ticket Description:\n{description}\n\nComments:\n{comments_text}"
+
+        # Extract subdomain from ticket.url
+        subdomain = ticket.url.split("//")[1].split(".zendesk.com")[0]
+
+        # Build the html url for the ticket
+        ticket_url = f"https://{subdomain}.zendesk.com/agent/tickets/{ticket.id}"
 
         return Document(
             id=f"ticket:{ticket.id}",
-            sections=[
-                Section(link=ticket.url, text=full_text)
-            ],
+            sections=[Section(link=ticket_url, text=full_text)],
             source=DocumentSource.ZENDESK,
             semantic_identifier=f"Ticket #{ticket.id}: {ticket.subject}",
             doc_updated_at=update_time,
@@ -187,7 +198,9 @@ class ZendeskConnector(LoadConnector, PollConnector):
         else:
             raise ValueError(f"Unsupported content_type: {self.content_type}")
 
-    def _poll_articles(self, start: SecondsSinceUnixEpoch | None) -> GenerateDocumentsOutput:
+    def _poll_articles(
+        self, start: SecondsSinceUnixEpoch | None
+    ) -> GenerateDocumentsOutput:
         articles = (
             self.zendesk_client.help_center.articles(cursor_pagination=True)
             if start is None
@@ -215,7 +228,9 @@ class ZendeskConnector(LoadConnector, PollConnector):
         if doc_batch:
             yield doc_batch
 
-    def _poll_tickets(self, start: SecondsSinceUnixEpoch | None) -> GenerateDocumentsOutput:
+    def _poll_tickets(
+        self, start: SecondsSinceUnixEpoch | None
+    ) -> GenerateDocumentsOutput:
         if self.zendesk_client is None:
             raise ZendeskClientNotSetUpError()
 
@@ -224,14 +239,25 @@ class ZendeskConnector(LoadConnector, PollConnector):
             start = 0
 
         try:
-            ticket_generator = self.zendesk_client.tickets.incremental(start_time=int(start))
-            
+            ticket_generator = self.zendesk_client.tickets.incremental(
+                start_time=int(start)
+            )
+
             total_processed = 0
             while True:
                 doc_batch = []
                 for _ in range(self.batch_size):
                     try:
                         ticket = next(ticket_generator)
+
+                        # Log out the ticket details
+                        print(f"Processing ticket: {ticket.id}")
+
+                        # Check if the ticket status is deleted
+                        if ticket.status == "deleted":
+                            print(f"Skipping deleted ticket: {ticket.id}")
+                            continue
+
                         doc_batch.append(self._ticket_to_document(ticket))
                         total_processed += 1
                     except StopIteration:
@@ -239,18 +265,18 @@ class ZendeskConnector(LoadConnector, PollConnector):
                         if doc_batch:
                             yield doc_batch
                         return
-                
+
                 if doc_batch:
                     yield doc_batch
-                
-                time.sleep(TIME_DELAY_SECONDS)  # 5-second delay between batches to rate-limit calling the Zendesk API
 
-        except Exception as e:
+        except Exception:
             raise
+
 
 if __name__ == "__main__":
     import os
-    # import time
+
+    import time
 
     connector = ZendeskConnector()
     connector.load_credentials(

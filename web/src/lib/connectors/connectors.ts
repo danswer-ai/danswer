@@ -595,10 +595,10 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         optional: false,
         options: [
           { name: "articles", value: "articles" },
-          { name: "tickets", value: "tickets" }
+          { name: "tickets", value: "tickets" },
         ],
         default: 0,
-      }
+      },
     ],
   },
   linear: {
