@@ -1,7 +1,7 @@
 """change default prune_freq
 
 Revision ID: 4b08d97e175a
-Revises: da4c21c69164
+Revises: d9ec13955951
 Create Date: 2024-08-20 15:28:52.993827
 
 """
@@ -9,7 +9,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "4b08d97e175a"
-down_revision = "da4c21c69164"
+down_revision = "d9ec13955951"
 branch_labels = None
 depends_on = None
 
