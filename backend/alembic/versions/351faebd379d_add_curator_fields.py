@@ -1,7 +1,7 @@
 """Add curator fields
 
 Revision ID: 351faebd379d
-Revises: c5b692fa265c
+Revises: 4b08d97e175a
 Create Date: 2024-08-15 22:37:08.397052
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "351faebd379d"
-down_revision = "c5b692fa265c"
+down_revision = "4b08d97e175a"
 branch_labels = None
 depends_on = None
 
