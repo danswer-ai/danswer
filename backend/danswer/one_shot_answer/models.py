@@ -46,21 +46,15 @@ class DirectQARequest(ChunkContext):
     skip_gen_ai_answer_generation: bool = False
 
     @model_validator(mode="after")
-    @classmethod
-    def check_chain_of_thought_and_prompt_id(
-        cls, values: dict[str, Any]
-    ) -> dict[str, Any]:
-        chain_of_thought = values.get("chain_of_thought")
-        prompt_id = values.get("prompt_id")
-
-        if chain_of_thought and prompt_id is not None:
+    def check_chain_of_thought_and_prompt_id(self) -> dict[str, Any]:
+        if self.chain_of_thought and self.prompt_id is not None:
             raise ValueError(
                 "If chain_of_thought is True, prompt_id must be None"
                 "The chain of thought prompt is only for question "
                 "answering and does not accept customizing."
             )
 
-        return values
+        return self
 
 
 class OneShotQAResponse(BaseModel):
