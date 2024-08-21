@@ -1,4 +1,4 @@
-"""Remove _dim suffix from model_name
+"""Remove _alt suffix from model_name
 
 Revision ID: d9ec13955951
 Revises: da4c21c69164
@@ -12,8 +12,8 @@ from alembic import op
 # revision identifiers, used by Alembic.
 revision = "d9ec13955951"
 down_revision = "da4c21c69164"
-branch_labels = None
-depends_on = None
+branch_labels: None = None
+depends_on: None = None
 
 
 def upgrade() -> None:
