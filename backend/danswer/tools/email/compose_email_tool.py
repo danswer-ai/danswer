@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from danswer.dynamic_configs.interface import JSON_ro
 from danswer.llm.answering.prompts.build import AnswerPromptBuilder, default_build_system_message, \
     default_build_user_message
-from danswer.llm.utils import message_to_string, message_generator_to_string_generator, get_max_input_tokens
+from danswer.llm.utils import message_to_string, message_generator_to_string_generator
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
@@ -15,6 +15,7 @@ from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.llm.answering.models import PromptConfig, PreviousMessage
 from danswer.llm.interfaces import LLMConfig, LLM
+from danswer.tools.email.send_email import EmailService
 
 logger = setup_logger()
 
@@ -141,6 +142,8 @@ class ComposeEmailTool(Tool):
             self.llm.invoke(prompt=prompt)
         )
 
+        self.send_email_to_recipients(query, mail_response)
+
         yield ToolResponse(
             id=COMPOSE_EMAIL_RESPONSE_ID,
             response=mail_response
@@ -149,8 +152,14 @@ class ComposeEmailTool(Tool):
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         composed_email_response = cast(
             list[ToolResponse], args[0].response
+
         )
         # NOTE: need to do this json.loads(doc.json()) stuff because there are some
         # subfields that are not serializable by default (datetime)
         # this forces pydantic to make them JSON serializable for us
         return composed_email_response
+
+    @staticmethod
+    def send_email_to_recipients(query_text, email_content):
+        email_service = EmailService()
+        email_service.process_email(query_text, email_content)
