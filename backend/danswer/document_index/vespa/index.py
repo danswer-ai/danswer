@@ -435,6 +435,8 @@ class VespaIndex(DocumentIndex):
 
         final_query = " ".join(final_keywords) if final_keywords else query
 
+        logger.debug(f"Query YQL: {yql}")
+
         params: dict[str, str | int | float] = {
             "yql": yql,
             "query": final_query,
