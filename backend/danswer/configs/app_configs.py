@@ -5,6 +5,7 @@ import urllib.parse
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
 from danswer.file_processing.enums import HtmlBasedConnectorTransformLinksStrategy
+import socket
 
 #####
 # App Configs
@@ -16,7 +17,6 @@ APP_PORT = 8080
 # prefix from requests directed towards the API server. In these cases, set this to `/api`
 APP_API_PREFIX = os.environ.get("API_PREFIX", "")
 
-
 #####
 # User Facing Features Configs
 #####
@@ -26,7 +26,6 @@ GENERATIVE_MODEL_ACCESS_CHECK_FREQ = int(
 )  # 1 day
 DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "true"
 
-
 #####
 # Web Configs
 #####
@@ -35,7 +34,6 @@ DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "
 # on Windows, try  setting this to `http://127.0.0.1:3000` instead and see if that
 # fixes it)
 WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
-
 
 #####
 # Auth Configs
@@ -50,9 +48,8 @@ ENCRYPTION_KEY_SECRET = os.environ.get("ENCRYPTION_KEY_SECRET") or ""
 
 # Turn off mask if admin users should see full credentials for data connectors.
 MASK_CREDENTIAL_PREFIX = (
-    os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
+        os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
 )
-
 
 SESSION_EXPIRE_TIME_SECONDS = int(
     os.environ.get("SESSION_EXPIRE_TIME_SECONDS") or 86400 * 7
@@ -65,7 +62,7 @@ SESSION_EXPIRE_TIME_SECONDS = int(
 # NOTE: maintaining `VALID_EMAIL_DOMAIN` to keep backwards compatibility
 _VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
 _VALID_EMAIL_DOMAINS_STR = (
-    os.environ.get("VALID_EMAIL_DOMAINS", "") or _VALID_EMAIL_DOMAIN
+        os.environ.get("VALID_EMAIL_DOMAINS", "") or _VALID_EMAIL_DOMAIN
 )
 VALID_EMAIL_DOMAINS = (
     [domain.strip() for domain in _VALID_EMAIL_DOMAINS_STR.split(",")]
@@ -75,24 +72,29 @@ VALID_EMAIL_DOMAINS = (
 # OAuth Login Flow
 # Used for both Google OAuth2 and OIDC flows
 OAUTH_CLIENT_ID = (
-    os.environ.get("OAUTH_CLIENT_ID", os.environ.get("GOOGLE_OAUTH_CLIENT_ID")) or ""
+        os.environ.get("OAUTH_CLIENT_ID", os.environ.get("GOOGLE_OAUTH_CLIENT_ID")) or ""
 )
 OAUTH_CLIENT_SECRET = (
-    os.environ.get("OAUTH_CLIENT_SECRET", os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET"))
-    or ""
+        os.environ.get("OAUTH_CLIENT_SECRET", os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET"))
+        or ""
 )
 
 USER_AUTH_SECRET = os.environ.get("USER_AUTH_SECRET", "")
 # for basic auth
 REQUIRE_EMAIL_VERIFICATION = (
-    os.environ.get("REQUIRE_EMAIL_VERIFICATION", "").lower() == "true"
+        os.environ.get("REQUIRE_EMAIL_VERIFICATION", "").lower() == "true"
 )
 SMTP_SERVER = os.environ.get("SMTP_SERVER") or "smtp.gmail.com"
 SMTP_PORT = int(os.environ.get("SMTP_PORT") or "587")
 SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
+IMAGE_SERVER = os.getenv("IMAGE_SERVER")
 
+try:
+    IMAGE_SERVER = socket.gethostbyname('host.docker.internal') if IMAGE_SERVER in ('host.docker.internal', None, '') else IMAGE_SERVER
+except socket.error as e:
+    print(f"Could not resolve host.docker.internal: {e}")
 
 #####
 # DB Configs
@@ -110,7 +112,7 @@ VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
 VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
 # The default below is for dockerized deployment
 VESPA_DEPLOYMENT_ZIP = (
-    os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
+        os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
 )
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
 try:
@@ -128,7 +130,6 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
-
 
 #####
 # Connector Configs
@@ -168,8 +169,8 @@ HTML_BASED_CONNECTOR_TRANSFORM_LINKS_STRATEGY = os.environ.get(
 )
 
 NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP = (
-    os.environ.get("NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP", "").lower()
-    == "true"
+        os.environ.get("NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP", "").lower()
+        == "true"
 )
 
 CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
@@ -182,13 +183,13 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
 
 # Avoid to get archived pages
 CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
-    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
+        os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
 )
 
 # Save pages labels as Danswer metadata tags
 # The reason to skip this would be to reduce the number of calls to Confluence due to rate limit concerns
 CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
-    os.environ.get("CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING", "").lower() == "true"
+        os.environ.get("CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING", "").lower() == "true"
 )
 
 JIRA_CONNECTOR_LABELS_TO_SKIP = [
@@ -202,27 +203,26 @@ GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
 GITHUB_CONNECTOR_BASE_URL = os.environ.get("GITHUB_CONNECTOR_BASE_URL") or None
 
 GITLAB_CONNECTOR_INCLUDE_CODE_FILES = (
-    os.environ.get("GITLAB_CONNECTOR_INCLUDE_CODE_FILES", "").lower() == "true"
+        os.environ.get("GITLAB_CONNECTOR_INCLUDE_CODE_FILES", "").lower() == "true"
 )
 
 DASK_JOB_CLIENT_ENABLED = (
-    os.environ.get("DASK_JOB_CLIENT_ENABLED", "").lower() == "true"
+        os.environ.get("DASK_JOB_CLIENT_ENABLED", "").lower() == "true"
 )
 EXPERIMENTAL_CHECKPOINTING_ENABLED = (
-    os.environ.get("EXPERIMENTAL_CHECKPOINTING_ENABLED", "").lower() == "true"
+        os.environ.get("EXPERIMENTAL_CHECKPOINTING_ENABLED", "").lower() == "true"
 )
 
 DEFAULT_PRUNING_FREQ = 60 * 60 * 24  # Once a day
 
 PREVENT_SIMULTANEOUS_PRUNING = (
-    os.environ.get("PREVENT_SIMULTANEOUS_PRUNING", "").lower() == "true"
+        os.environ.get("PREVENT_SIMULTANEOUS_PRUNING", "").lower() == "true"
 )
 
 # This is the maxiumum rate at which documents are queried for a pruning job. 0 disables the limitation.
 MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE = int(
     os.environ.get("MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE", 0)
 )
-
 
 #####
 # Indexing Configs
@@ -236,7 +236,7 @@ CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
 # When swapping to a new embedding model, a secondary index is created in the background, to conserve
 # resources, we pause updates on the primary index by default while the secondary index is created
 DISABLE_INDEX_UPDATE_ON_SWAP = (
-    os.environ.get("DISABLE_INDEX_UPDATE_ON_SWAP", "").lower() == "true"
+        os.environ.get("DISABLE_INDEX_UPDATE_ON_SWAP", "").lower() == "true"
 )
 # Controls how many worker processes we spin up to index documents in the
 # background. This is useful for speeding up indexing, but does require a
@@ -253,7 +253,6 @@ MINI_CHUNK_SIZE = 150
 # Timeout to wait for job's last update before killing it, in hours
 CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT", 3))
 
-
 #####
 # Miscellaneous
 #####
@@ -264,23 +263,23 @@ JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 # used to allow the background indexing jobs to use a different embedding
 # model server than the API server
 CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
-    os.environ.get("CURRENT_PROCESS_IS_AN_INDEXING_JOB", "").lower() == "true"
+        os.environ.get("CURRENT_PROCESS_IS_AN_INDEXING_JOB", "").lower() == "true"
 )
 # Logs every model prompt and output, mostly used for development or exploration purposes
 LOG_ALL_MODEL_INTERACTIONS = (
-    os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
+        os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
 )
 # If set to `true` will enable additional logs about Vespa query performance
 # (time spent on finding the right docs + time spent fetching summaries from disk)
 LOG_VESPA_TIMING_INFORMATION = (
-    os.environ.get("LOG_VESPA_TIMING_INFORMATION", "").lower() == "true"
+        os.environ.get("LOG_VESPA_TIMING_INFORMATION", "").lower() == "true"
 )
 LOG_ENDPOINT_LATENCY = os.environ.get("LOG_ENDPOINT_LATENCY", "").lower() == "true"
 # Anonymous usage telemetry
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 
 TOKEN_BUDGET_GLOBALLY_ENABLED = (
-    os.environ.get("TOKEN_BUDGET_GLOBALLY_ENABLED", "").lower() == "true"
+        os.environ.get("TOKEN_BUDGET_GLOBALLY_ENABLED", "").lower() == "true"
 )
 
 # Defined custom query/answer conditions to validate the query and the LLM answer.
@@ -288,7 +287,6 @@ TOKEN_BUDGET_GLOBALLY_ENABLED = (
 CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
     os.environ.get("CUSTOM_ANSWER_VALIDITY_CONDITIONS", "[]")
 )
-
 
 #####
 # Enterprise Edition Configs
@@ -298,5 +296,5 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 # founders@danswer.ai OR message Chris Weaver or Yuhong Sun in the Danswer
 # Slack community (https://join.slack.com/t/danswer/shared_invite/zt-1w76msxmd-HJHLe3KNFIAIzk_0dSOKaQ)
 ENTERPRISE_EDITION_ENABLED = (
-    os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
+        os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )

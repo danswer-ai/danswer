@@ -3,6 +3,8 @@ import plotly.express as px
 import pandas as pd
 import base64
 import plotly.io as pio
+
+from danswer.configs.app_configs import IMAGE_SERVER
 from danswer.utils.logger import setup_logger
 import uuid
 import kaleido
@@ -34,6 +36,10 @@ class PlotFactory:
             return None
 
 
+def format_image_url(file_name, image_title="title image") -> str:
+    return "![" + image_title + "](http://" + IMAGE_SERVER + "/" + "images/" + file_name + ")"
+
+
 class PlotCharts:
     """ Main class to handle plotting operations. """
 
@@ -43,9 +49,10 @@ class PlotCharts:
     def generate_chart_and_save(self, dataframe, field_names, chart_type) -> str:
         """ Generate specified chart and convert to markdown with base64 image. """
         figure = PlotFactory.create_chart(chart_type, dataframe, field_names)
-        image_path = os.path.join('/images', str(uuid.uuid4()) + '.jpg')
+        file_name = str(uuid.uuid4()) + '.jpg'
+        image_path = os.path.join('/images', file_name)
         figure.write_image(image_path)
-        return image_path
+        return format_image_url(file_name=file_name)
         # base64_image = self.base64_from_fig(figure)
         # self.format_as_markdown_image(base64_image=base64_image, alt_text='plot') if figure else None
 
