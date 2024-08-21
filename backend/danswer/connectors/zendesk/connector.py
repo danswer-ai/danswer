@@ -250,12 +250,8 @@ class ZendeskConnector(LoadConnector, PollConnector):
                     try:
                         ticket = next(ticket_generator)
 
-                        # Log out the ticket details
-                        print(f"Processing ticket: {ticket.id}")
-
-                        # Check if the ticket status is deleted
+                        # Check if the ticket status is deleted and skip it if so
                         if ticket.status == "deleted":
-                            print(f"Skipping deleted ticket: {ticket.id}")
                             continue
 
                         doc_batch.append(self._ticket_to_document(ticket))
