@@ -406,8 +406,9 @@ import {
   Image as ImageIcon,
   ChevronLeft,
   ChevronRight,
+  User,
 } from "lucide-react";
-import { User } from "@/lib/types";
+import { User as UserTypes } from "@/lib/types";
 
 export const HumanMessage = ({
   content,
@@ -424,7 +425,7 @@ export const HumanMessage = ({
   otherMessagesCanSwitchTo?: number[];
   onEdit?: (editedContent: string) => void;
   onMessageSelection?: (messageId: number) => void;
-  user?: User | null;
+  user?: UserTypes | null;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -468,12 +469,12 @@ export const HumanMessage = ({
       <div className="w-full">
         <div className="">
           <div className="flex">
-            {/*  <div className="p-1 mx-1 bg-blue-400 rounded-regular h-fit"> */}
-            {/* <div className="text-inverted">
-                <User size={25} className="mx-auto my-auto" />
-              </div> */}
             <div className="flex items-center justify-center bg-white rounded-full min-h-[34px] min-w-[34px] max-h-[34px] max-w-[34px] aspect-square text-base font-normal border-2 border-gray-900 text-default py-2 mx-1">
-              {user && user.email ? user.email[0].toUpperCase() : "A"}
+              {user && user.email ? (
+                user.email[0].toUpperCase()
+              ) : (
+                <User size={25} className="mx-auto" />
+              )}
             </div>
 
             <div className="my-auto ml-2 font-bold text-black">You</div>

@@ -56,6 +56,7 @@ export const CreateRateLimitModal = ({
           name: userGroup.name,
           value: userGroup.id,
         }));
+
         setModalUserGroups(options);
         setShouldFetchUserGroups(false);
       } catch (error) {

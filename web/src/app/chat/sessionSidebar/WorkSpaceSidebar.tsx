@@ -10,6 +10,7 @@ import HubSpot from "../../../../public/HubSpot.png";
 import enMedD from "../../../../public/logo.png";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@/lib/types";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 interface WorkSpaceSidebarProps {
   openSidebar?: boolean;
@@ -37,30 +38,39 @@ export const WorkSpaceSidebar = ({
           />
           <Separator />
           <div className="flex flex-col items-center gap-6">
-            {/* <Button variant="ghost" size="icon">
-              <Image src={Notion} alt="Notion" width={30} height={30} />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Image src={Dropbox} alt="Dropbox" width={30} height={30} />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Image src={Gitlab} alt="Gitlab" width={30} height={30} />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Image src={HubSpot} alt="HubSpot" width={30} height={30} />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Ellipsis />
-            </Button> */}
+            <CustomTooltip
+              trigger={
+                <div className="flex items-center">
+                  <Image
+                    src={enMedD}
+                    alt="enMedD Logo"
+                    width={40}
+                    height={40}
+                    className="rounded-full min-w-10 min-h-10"
+                  />{" "}
+                </div>
+              }
+              side="right"
+              delayDuration={0}
+            >
+              enMeDd
+            </CustomTooltip>
+
+            <CustomTooltip
+              trigger={
+                <div>
+                  <Ellipsis />
+                </div>
+              }
+              side="right"
+              delayDuration={0}
+            >
+              More
+            </CustomTooltip>
           </div>
         </div>
         <div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="mb-4"
-            onClick={() => console.log(user)}
-          >
+          <Button variant="ghost" size="icon" className="mb-4">
             <Settings />
           </Button>
           <UserSettingsButton user={user} />

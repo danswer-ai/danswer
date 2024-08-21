@@ -1,124 +1,158 @@
+"use client";
+
+import { CustomTooltip } from "@/components/CustomTooltip";
 import { SourceIcon } from "@/components/SourceIcon";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { ConnectorIcon } from "@/components/icons/icons";
+import { Input } from "@/components/ui/input";
 import { SourceCategory, SourceMetadata } from "@/lib/search/interfaces";
 import { listSourceMetadata } from "@/lib/sources";
-import { Title, Text } from "@tremor/react";
+import { CloudUpload, Search } from "lucide-react";
 import Link from "next/link";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function SourceTile({
   sourceMetadata,
   disabled,
+  category,
 }: {
   sourceMetadata: SourceMetadata;
   disabled?: boolean;
+  category?: string;
 }) {
   return (
     <Link
       href={sourceMetadata.adminUrl}
-      className={disabled ? "pointer-events-none" : ""}
+      className={
+        category?.toLocaleLowerCase() === "coming soon"
+          ? "pointer-events-none"
+          : ""
+      }
     >
-      <Card
-        className={`w-40 hover:bg-hover ${
-          disabled ? "opacity-50 cursor-not-allowed" : ""
-        }`}
+      <CustomTooltip
+        trigger={
+          <div
+            className={`hover:border-primary border rounded-lg flex items-center justify-center p-[18px] ${
+              category?.toLocaleLowerCase() === "coming soon"
+                ? "cursor-not-allowed grayscale"
+                : ""
+            }`}
+          >
+            <SourceIcon
+              sourceType={sourceMetadata.internalName}
+              iconSize={24}
+            />
+          </div>
+        }
+        style="bg-primary border-none text-white"
       >
-        <CardContent className="p-4 flex items-center flex-col justify-center">
-          <SourceIcon sourceType={sourceMetadata.internalName} iconSize={24} />
-          <Text className="mt-2 text-sm font-medium">
-            {sourceMetadata.displayName}
-          </Text>
-        </CardContent>
-      </Card>
+        {sourceMetadata.displayName}
+      </CustomTooltip>
     </Link>
   );
 }
 
 export default function Page() {
-  const sources = listSourceMetadata();
+  const sources = useMemo(() => listSourceMetadata(), []);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const importedKnowledgeSources = sources.filter(
-    (source) => source.category === SourceCategory.ImportedKnowledge
-  );
-  const appConnectionSources = sources.filter(
-    (source) => source.category === SourceCategory.AppConnection
-  );
-  const comingSoonSources = sources.filter(
-    (source) => source.category === SourceCategory.ComingSoon
-  );
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
+  const filterSources = (sources: SourceMetadata[]) => {
+    if (!searchTerm) return sources;
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return sources.filter(
+      (source) =>
+        source.displayName.toLowerCase().includes(lowerSearchTerm) ||
+        source.category.toLowerCase().includes(lowerSearchTerm)
+    );
+  };
+
+  const categorizedSources = useMemo(() => {
+    const filtered = filterSources(sources);
+    return Object.values(SourceCategory).reduce((acc, category) => {
+      if (category === SourceCategory.Disabled) {
+        // Skip the disabled category
+        return acc;
+      }
+
+      acc[category] = sources.filter(
+        (source) =>
+          source.category === category &&
+          (filtered.includes(source) ||
+            category.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      return acc;
+    }, {} as Record<SourceCategory, SourceMetadata[]>);
+  }, [sources, searchTerm]);
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      const filteredCategories = Object.entries(categorizedSources).filter(
+        ([_, sources]) => sources.length > 0
+      );
+      if (
+        filteredCategories.length > 0 &&
+        filteredCategories[0][1].length > 0
+      ) {
+        const firstSource = filteredCategories[0][1][0];
+        if (firstSource) {
+          window.open(firstSource.adminUrl, "_self");
+        }
+      }
+    }
+  };
 
   return (
-    <div className="container mx-auto">
+    <div className="mx-auto container">
       <AdminPageTitle
-        icon={<ConnectorIcon size={32} />}
-        title="Add Connector"
+        icon={<CloudUpload size={24} />}
+        title="Add Data Source"
       />
 
-      <Text>
+      <p className="p-2.5 pt-0">
         Connect enMedD CHP to your organization&apos;s knowledge sources.
         We&apos;ll automatically sync your data into enMedD CHP, so you can find
         exactly what you&apos;re looking for in one place.
-      </Text>
+      </p>
 
-      <div className="flex mt-8">
-        <span className="font-bold pb-2">Import Knowledge</span>
-      </div>
-      <Text>
-        Connect to pieces of knowledge that live outside your apps. Upload
-        files, scrape websites, or connect to your organization&apos;s Google
-        Site.
-      </Text>
-      <div className="flex flex-wrap gap-4 py-4 md:p-4">
-        {importedKnowledgeSources.map((source) => {
-          return (
-            <SourceTile key={source.internalName} sourceMetadata={source} />
-          );
-        })}
-      </div>
-
-      <div className="flex mt-8">
-        <span className="font-bold pb-2">Setup Auto-Syncing from Apps</span>
-      </div>
-      <Text>
-        Setup auto-syncing from your organization&apos;s most used apps and
-        services. Unless otherwise specified during the connector setup, we will
-        pull in the latest updates from the source every 10 minutes.
-      </Text>
-      <div className="flex flex-wrap gap-4 py-4 md:p-4">
-        {appConnectionSources.map((source) => {
-          return (
-            <SourceTile key={source.internalName} sourceMetadata={source} />
-          );
-        })}
+      <div className="relative md:w-96 mt-6">
+        <Input
+          className="pl-9"
+          ref={searchInputRef}
+          placeholder="Search connectors..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={handleKeyPress}
+        />
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2"
+          size={15}
+        />
       </div>
 
-      <div className="flex mt-8">
-        <span className="font-bold pb-2">Coming soon...</span>
-      </div>
-      <Text>
-        These are the connectors that we are currently working on. Stay tuned!
-      </Text>
-      <div className="flex flex-wrap gap-4 py-4 md:p-4">
-        {comingSoonSources.map((source) => {
-          return (
-            <SourceTile
-              key={source.internalName}
-              sourceMetadata={source}
-              disabled
-            />
-          );
-        })}
-      </div>
+      {Object.entries(categorizedSources)
+        .filter(([_, sources]) => sources.length > 0)
+        .map(([category, sources], categoryInd) => (
+          <div key={category} className="border rounded-lg p-6 mt-6">
+            <span className="font-bold pb-2 block text-lg md:text-2xl text-strong">
+              {category}
+            </span>
+            <div className="flex flex-wrap gap-4 pt-6">
+              {sources.map((source, sourceInd) => (
+                <SourceTile
+                  key={source.internalName}
+                  sourceMetadata={source}
+                  category={category}
+                  disabled
+                />
+              ))}
+            </div>
+          </div>
+        ))}
     </div>
   );
 }

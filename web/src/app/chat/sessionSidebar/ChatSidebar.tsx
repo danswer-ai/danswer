@@ -144,15 +144,15 @@ export const ChatSidebar = ({
                   <div className="px-1.5 py-0.5 rounded bg-primary-foreground font-bold text-white">
                     D
                   </div>
-                  <span>Developement Team</span>
+                  <span>Default</span>
                 </div>
               </PopoverTrigger>
               <PopoverContent className="w-full">
-                <div className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 shadow-sm text-sm w-full">
+                <div className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 text-sm w-full">
                   <div className="px-1.5 py-0.5 rounded bg-primary-foreground font-bold text-white">
                     D
                   </div>
-                  <span>Developement Team</span>
+                  <span>Development Team</span>
                 </div>
               </PopoverContent>
             </Popover>
