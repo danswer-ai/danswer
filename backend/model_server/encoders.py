@@ -23,7 +23,6 @@ from model_server.constants import DEFAULT_VOYAGE_MODEL
 from model_server.constants import EmbeddingModelTextType
 from model_server.constants import EmbeddingProvider
 from model_server.utils import simple_log_function_time
-from shared_configs.configs import ALT_INDEX_SUFFIX
 from shared_configs.configs import INDEXING_ONLY
 from shared_configs.enums import EmbedTextType
 from shared_configs.enums import RerankerProvider
@@ -285,10 +284,8 @@ def embed_text(
     elif model_name is not None:
         prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
 
-        # strip additional metadata from model name right before constructing from Huggingface
-        stripped_model_name = model_name.removesuffix(ALT_INDEX_SUFFIX)
         local_model = get_embedding_model(
-            model_name=stripped_model_name, max_context_length=max_context_length
+            model_name=model_name, max_context_length=max_context_length
         )
         embeddings_vectors = local_model.encode(
             prefixed_texts, normalize_embeddings=normalize_embeddings
