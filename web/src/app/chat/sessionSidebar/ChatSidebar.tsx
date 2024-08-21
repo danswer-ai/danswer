@@ -74,28 +74,10 @@ export const ChatSidebar = ({
         <div className="pt-6 flex">
           <Link
             className="ml-4 w-full"
-            href={
-              settings && settings.default_page === "chat" ? "/chat" : "/search"
-            }
+            href="/dashboard"
           >
             <div className="flex w-full">
-              <Logo height={32} width={30} className="mr-1 my-auto" />
-
-              {enterpriseSettings && enterpriseSettings.application_name ? (
-                <div>
-                  <HeaderTitle>
-                    {enterpriseSettings.application_name}
-                  </HeaderTitle>
-
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle -mt-1.5">
-                      Powered by Spectra
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <HeaderTitle>Spectra</HeaderTitle>
-              )}
+              <Logo isFullSize={true} width={200} className="mr-1 my-auto" />
             </div>
           </Link>
         </div>

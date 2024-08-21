@@ -11,6 +11,6 @@ export default async function Page() {
   if (settings.settings.default_page === "search") {
     redirect("/search");
   } else {
-    redirect("/chat");
+    redirect("/dashboard");
   }
 }

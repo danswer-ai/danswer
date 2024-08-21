@@ -16,6 +16,11 @@ module.exports = {
     transparent: "transparent",
     current: "currentColor",
     extend: {
+      scale: {
+        '102': '1.02', 
+        '103': '1.03', 
+        '104': '1.04', 
+      },
       screens: {
         "2xl": "1420px",
         "3xl": "1700px",
