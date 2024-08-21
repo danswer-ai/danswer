@@ -158,8 +158,6 @@ def associate_credential_to_connector(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    logger.info(f"Associating credential {credential_id} to connector {connector_id}")
-    logger.info(f"Metadata: {metadata}")
     if user and user.role != UserRole.ADMIN and metadata.is_public:
         raise HTTPException(
             status_code=400,
