@@ -252,27 +252,6 @@ def get_personas(
 ) -> Sequence[Persona]:
     stmt = select(Persona).distinct()
     stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
-    # if user is not None and user.role != UserRole.ADMIN:
-    #     # Subquery to find all groups the user belongs to
-    #     user_groups_subquery = (
-    #         select(User__UserGroup.user_group_id)
-    #         .where(User__UserGroup.user_id == user.id)
-    #         .subquery()
-    #     )
-
-    #     # Include personas where the user is directly related or part of a user group that has access
-    #     access_conditions = or_(
-    #         Persona.is_public == True,  # noqa: E712
-    #         Persona.id.in_(  # User has access through list of users with access
-    #             select(Persona__User.persona_id).where(Persona__User.user_id == user.id)
-    #         ),
-    #         Persona.id.in_(  # User is part of a group that has access
-    #             select(Persona__UserGroup.persona_id).where(
-    #                 Persona__UserGroup.user_group_id.in_(user_groups_subquery)  # type: ignore
-    #             )
-    #         ),
-    #     )
-    #     stmt = stmt.where(access_conditions)
 
     if not include_default:
         stmt = stmt.where(Persona.default_persona.is_(False))

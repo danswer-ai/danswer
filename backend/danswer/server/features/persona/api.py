@@ -75,9 +75,7 @@ def list_personas_admin(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
-    get_editable: bool = Query(
-        False, description="If true, return get_editable personas"
-    ),
+    get_editable: bool = Query(False, description="If true, return editable personas"),
 ) -> list[PersonaSnapshot]:
     return [
         PersonaSnapshot.from_model(persona)
@@ -197,7 +195,11 @@ def list_personas(
     return [
         PersonaSnapshot.from_model(persona)
         for persona in get_personas(
-            user=user, include_deleted=include_deleted, db_session=db_session
+            user=user,
+            include_deleted=include_deleted,
+            db_session=db_session,
+            get_editable=False,
+            joinedload_all=True,
         )
     ]
 

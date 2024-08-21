@@ -79,7 +79,7 @@ def list_document_sets_admin(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
     get_editable: bool = Query(
-        False, description="If true, return get_editable document sets"
+        False, description="If true, return editable document sets"
     ),
 ) -> list[DocumentSet]:
     return [

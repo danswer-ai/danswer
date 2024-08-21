@@ -380,7 +380,7 @@ def get_connector_indexing_status(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
     get_editable: bool = Query(
-        False, description="If true, return get_editable document sets"
+        False, description="If true, return editable document sets"
     ),
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
