@@ -49,6 +49,22 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const combinedSettings = await getCombinedSettings({});
+  // Handling if combinedSettings is null
+  if (!combinedSettings) {
+    // Here you could redirect the user, show an error, or provide default settings
+    return (
+      <html lang="en">
+        <Head>
+          <title>Settings Unavailable</title>
+        </Head>
+        <body>
+          <div className="error">
+            Settings could not be loaded. Please try again later.
+          </div>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="en">

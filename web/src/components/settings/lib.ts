@@ -31,33 +31,60 @@ export async function fetchSettingsSS() {
     }
   }
 
-  const results = await Promise.all(tasks);
+  try {
+    const results = await Promise.all(tasks);
 
-  const settings = (await results[0].json()) as Settings;
-  const enterpriseSettings =
-    tasks.length > 1 ? ((await results[1].json()) as EnterpriseSettings) : null;
-  const customAnalyticsScript = (
-    tasks.length > 2 ? await results[2].json() : null
-  ) as string | null;
-  const webVersion = getWebVersion();
+    if (!results[0].ok) {
+      throw new Error(
+        `fetchStandardSettingsSS failed: status=${results[0].status} body=${await results[0].text()}`
+      );
+    }
 
-  const combinedSettings: CombinedSettings = {
-    settings,
-    enterpriseSettings,
-    customAnalyticsScript,
-    webVersion,
-  };
+    const settings = await results[0].json();
 
-  return combinedSettings;
+    let enterpriseSettings = null;
+    if (tasks.length > 1) {
+      if (!results[1].ok) {
+        throw new Error(
+          `fetchEnterpriseSettingsSS failed: status=${results[1].status} body=${await results[1].text()}`
+        );
+      }
+      enterpriseSettings = (await results[1].json()) as EnterpriseSettings;
+    }
+
+    let customAnalyticsScript = null;
+    if (tasks.length > 2) {
+      if (!results[2].ok) {
+        throw new Error(
+          `fetchCustomAnalyticsScriptSS failed: status=${results[2].status} body=${await results[2].text()}`
+        );
+      }
+      customAnalyticsScript = (await results[2].json()) as string;
+    }
+
+    const webVersion = getWebVersion();
+
+    const combinedSettings: CombinedSettings = {
+      settings,
+      enterpriseSettings,
+      customAnalyticsScript,
+      webVersion,
+    };
+
+    return combinedSettings;
+  } catch (error) {
+    console.error("fetchSettingsSS exception: ", error);
+    return null;
+  }
 }
 
-let cachedSettings: CombinedSettings;
+let cachedSettings: CombinedSettings | null;
 
 export async function getCombinedSettings({
   forceRetrieval,
 }: {
   forceRetrieval?: boolean;
-}): Promise<CombinedSettings> {
+}): Promise<CombinedSettings | null> {
   if (!cachedSettings || forceRetrieval) {
     cachedSettings = await fetchSettingsSS();
   }
