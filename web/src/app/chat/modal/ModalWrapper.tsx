@@ -1,4 +1,6 @@
+"use client";
 import { XIcon } from "@/components/icons/icons";
+import { useRef } from "react";
 
 export const ModalWrapper = ({
   children,
@@ -11,9 +13,21 @@ export const ModalWrapper = ({
   modalClassName?: string;
   onClose?: () => void;
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (
+      onClose &&
+      modalRef.current &&
+      !modalRef.current.contains(e.target as Node)
+    ) {
+      onClose();
+    }
+  };
+
   return (
     <div
-      onClick={() => onClose && onClose()}
+      onMouseDown={handleMouseDown}
       className={
         "fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm " +
         "flex items-center justify-center z-50 " +
@@ -21,6 +35,7 @@ export const ModalWrapper = ({
       }
     >
       <div
+        ref={modalRef}
         onClick={(e) => {
           if (onClose) {
             e.stopPropagation();

@@ -33,7 +33,7 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def get_deletion_status(
+def _get_deletion_status(
     connector_id: int, credential_id: int, db_session: Session
 ) -> TaskQueueState | None:
     cleanup_task_name = name_cc_cleanup_task(
@@ -45,7 +45,7 @@ def get_deletion_status(
 def get_deletion_attempt_snapshot(
     connector_id: int, credential_id: int, db_session: Session
 ) -> DeletionAttemptSnapshot | None:
-    deletion_task = get_deletion_status(connector_id, credential_id, db_session)
+    deletion_task = _get_deletion_status(connector_id, credential_id, db_session)
     if not deletion_task:
         return None
 
@@ -65,7 +65,7 @@ def should_kick_off_deletion_of_cc_pair(
     if check_deletion_attempt_is_allowed(cc_pair, db_session):
         return False
 
-    deletion_task = get_deletion_status(
+    deletion_task = _get_deletion_status(
         connector_id=cc_pair.connector_id,
         credential_id=cc_pair.credential_id,
         db_session=db_session,

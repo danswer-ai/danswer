@@ -447,6 +447,8 @@ export function HorizontalSourceSelector({
             icon={<FiMap size={16} />}
             defaultDisplay="Sources"
             width="w-fit max-w-24 ellipsis truncate"
+            dropdownWidth="max-w-36 w-fit"
+            optionClassName="truncate break-all ellipsis"
           />
         )}
 
@@ -465,7 +467,9 @@ export function HorizontalSourceSelector({
             handleSelect={(option) => handleDocumentSetSelect(option.key)}
             icon={<FiBook size={16} />}
             defaultDisplay="Sets"
-            width="w-fit max-w-24 ellipsis"
+            width="w-fit max-w-24 ellipsis truncate"
+            dropdownWidth="max-w-36 w-fit"
+            optionClassName="truncate break-all ellipsis"
           />
         )}
 
@@ -495,7 +499,9 @@ export function HorizontalSourceSelector({
             }}
             icon={<FiTag size={16} />}
             defaultDisplay="Tags"
-            width="w-fit max-w-24 ellipsis"
+            width="w-fit max-w-24 ellipsis truncate"
+            dropdownWidth="max-w-80 w-fit"
+            optionClassName="truncate break-all ellipsis"
           />
         )}
       </div>

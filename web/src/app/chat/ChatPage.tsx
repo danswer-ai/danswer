@@ -1202,6 +1202,17 @@ export function ChatPage({
 
   const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
 
+  // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
+  const [untoggled, setUntoggled] = useState(false);
+
+  const explicitlyUntoggle = () => {
+    setShowDocSidebar(false);
+
+    setUntoggled(true);
+    setTimeout(() => {
+      setUntoggled(false);
+    }, 200);
+  };
   const toggleSidebar = () => {
     Cookies.set(
       SIDEBAR_TOGGLED_COOKIE_NAME,
@@ -1393,13 +1404,14 @@ export function ChatPage({
                 duration-300
                 ease-in-out
                 ${
-                  showDocSidebar || toggledSidebar
+                  !untoggled && (showDocSidebar || toggledSidebar)
                     ? "opacity-100 w-[250px] translate-x-0"
                     : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
                 }`}
             >
               <div className="w-full relative">
                 <HistorySidebar
+                  explicitlyUntoggle={explicitlyUntoggle}
                   stopGenerating={stopGeneration}
                   reset={() => setMessage("")}
                   page="chat"

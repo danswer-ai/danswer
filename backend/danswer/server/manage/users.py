@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from datetime import timezone
 
+from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Body
 from fastapi import Depends
@@ -159,12 +160,18 @@ def bulk_invite_users(
     emails: list[str] = Body(..., embed=True),
     current_user: User | None = Depends(current_admin_user),
 ) -> int:
+    """emails are string validated. If any email fails validation, no emails are
+    invited and an exception is raised."""
     if current_user is None:
         raise HTTPException(
             status_code=400, detail="Auth is disabled, cannot invite users"
         )
 
-    all_emails = list(set(emails) | set(get_invited_users()))
+    normalized_emails = []
+    for email in emails:
+        email_info = validate_email(email)  # can raise EmailNotValidError
+        normalized_emails.append(email_info.normalized)  # type: ignore
+    all_emails = list(set(normalized_emails) | set(get_invited_users()))
     return write_invited_users(all_emails)
 
 
