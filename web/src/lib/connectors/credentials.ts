@@ -312,7 +312,7 @@ export const credentialDisplayNames: Record<string, string> = {
 
   // Jira
   jira_user_email: "Jira User Email (required for Jira Cloud)",
-  jira_api_token: "Jira API Token or Jira Personal Access Token",
+  jira_api_token: "API or Personal Access Token",
 
   // Productboard
   productboard_access_token: "Productboard Access Token",
