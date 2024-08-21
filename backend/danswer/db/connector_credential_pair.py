@@ -185,21 +185,6 @@ def get_last_successful_attempt_time(
 """Updates"""
 
 
-def relate_groups_to_cc_pair(
-    db_session: Session,
-    cc_pair_id: int,
-    user_group_ids: list[int],
-) -> None:
-    logger.info(f"Relating groups {user_group_ids} to CC Pair {cc_pair_id}")
-    for group_id in user_group_ids:
-        db_session.add(
-            UserGroup__ConnectorCredentialPair(
-                user_group_id=group_id, cc_pair_id=cc_pair_id
-            )
-        )
-    db_session.commit()
-
-
 def _update_connector_credential_pair(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
@@ -302,13 +287,27 @@ def associate_default_cc_pair(db_session: Session) -> None:
     db_session.commit()
 
 
+def _relate_groups_to_cc_pair__no_commit(
+    db_session: Session,
+    cc_pair_id: int,
+    user_group_ids: list[int],
+) -> None:
+    for group_id in user_group_ids:
+        db_session.add(
+            UserGroup__ConnectorCredentialPair(
+                user_group_id=group_id, cc_pair_id=cc_pair_id
+            )
+        )
+
+
 def add_credential_to_connector(
+    db_session: Session,
+    user: User | None,
     connector_id: int,
     credential_id: int,
     cc_pair_name: str | None,
     is_public: bool,
-    user: User | None,
-    db_session: Session,
+    groups: list[int] | None,
 ) -> StatusResponse:
     connector = fetch_connector_by_id(connector_id, db_session)
     credential = fetch_credential_by_id(credential_id, user, db_session)
@@ -345,6 +344,15 @@ def add_credential_to_connector(
         is_public=is_public,
     )
     db_session.add(association)
+    db_session.flush()  # make sure the association has an id
+
+    if groups:
+        _relate_groups_to_cc_pair__no_commit(
+            db_session=db_session,
+            cc_pair_id=association.id,
+            user_group_ids=groups,
+        )
+
     db_session.commit()
 
     return StatusResponse(

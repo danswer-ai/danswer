@@ -10,7 +10,6 @@ from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
-from danswer.db.connector_credential_pair import relate_groups_to_cc_pair
 from danswer.db.connector_credential_pair import remove_credential_from_connector
 from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
@@ -166,20 +165,14 @@ def associate_credential_to_connector(
 
     try:
         response = add_credential_to_connector(
+            db_session=db_session,
+            user=user,
             connector_id=connector_id,
             credential_id=credential_id,
             cc_pair_name=metadata.name,
             is_public=metadata.is_public,
-            user=user,
-            db_session=db_session,
+            groups=metadata.groups,
         )
-
-        if metadata.groups and isinstance(response.data, int):
-            relate_groups_to_cc_pair(
-                db_session=db_session,
-                cc_pair_id=response.data,
-                user_group_ids=metadata.groups,
-            )
 
         return response
     except IntegrityError:

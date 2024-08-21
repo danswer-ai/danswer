@@ -565,12 +565,13 @@ def create_connector_with_mock_credential(
             mock_credential, user=user, db_session=db_session
         )
         response = add_credential_to_connector(
+            db_session=db_session,
+            user=user,
             connector_id=cast(int, connector_response.id),  # will aways be an int
             credential_id=credential.id,
             is_public=connector_data.is_public or False,
-            user=user,
-            db_session=db_session,
             cc_pair_name=connector_data.name,
+            groups=connector_data.groups,
         )
         return response
 
