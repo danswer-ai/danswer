@@ -38,6 +38,13 @@ class UserGroup(BaseModel):
                     preferences=UserPreferences(
                         chosen_assistants=user.chosen_assistants
                     ),
+                    workspace_id=user.workspace_id,
+                    full_name=user.full_name,
+                    company_name=user.company_name,
+                    company_email=user.company_email,
+                    company_billing=user.company_billing,
+                    billing_email_address=user.billing_email_address,
+                    vat=user.vat,
                 )
                 for user in user_group_model.users
             ],

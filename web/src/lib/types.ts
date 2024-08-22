@@ -17,6 +17,13 @@ export interface User {
   is_superuser: string;
   is_verified: string;
   role: "basic" | "admin";
+  workspace_id?: number;
+  full_name?: string;
+  company_name?: string;
+  company_email?: string;
+  company_billing?: string;
+  billing_email_address?: string;
+  vat?: string;
   preferences: UserPreferences;
   status: UserStatus;
 }
