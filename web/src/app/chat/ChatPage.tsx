@@ -390,10 +390,12 @@ export function ChatPage({
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
+
   const [completeMessageDetail, setCompleteMessageDetail] = useState<{
     sessionId: number | null;
     messageMap: Map<number, Message>;
   }>({ sessionId: null, messageMap: new Map() });
+
   const upsertToCompleteMessageMap = ({
     messages,
     completeMessageMapOverride,
@@ -413,6 +415,7 @@ export function ChatPage({
     const frozenCompleteMessageMap =
       completeMessageMapOverride || completeMessageDetail.messageMap;
     const newCompleteMessageMap = structuredClone(frozenCompleteMessageMap);
+
     if (newCompleteMessageMap.size === 0) {
       const systemMessageId = messages[0].parentMessageId || SYSTEM_MESSAGE_ID;
       const firstMessageId = messages[0].messageId;
@@ -471,8 +474,17 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(
     completeMessageDetail.messageMap
   );
+
   const [submittedMessage, setSubmittedMessage] = useState("");
   const [chatState, setChatState] = useState<ChatState>("input");
+  interface RegenerationState {
+    regenerating: boolean;
+    finalMessageIndex: number;
+  }
+
+  const [regenerationState, setRegenerationState] =
+    useState<RegenerationState | null>(null);
+
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
 
@@ -719,6 +731,8 @@ export function ChatPage({
     forceSearch,
     isSeededChat,
     alternativeAssistantOverride = null,
+    modelOverRide,
+    regenerationRequest,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
@@ -726,6 +740,8 @@ export function ChatPage({
     forceSearch?: boolean;
     isSeededChat?: boolean;
     alternativeAssistantOverride?: Persona | null;
+    modelOverRide?: LlmOverride;
+    regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
     if (chatState != "input") {
       setPopup({
@@ -735,8 +751,14 @@ export function ChatPage({
 
       return;
     }
+    setRegenerationState(
+      regenerationRequest
+        ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
+        : null
+    );
 
     setChatState("loading");
+
     const controller = new AbortController();
     setAbortController(controller);
 
@@ -770,12 +792,14 @@ export function ChatPage({
     const messageToResendIndex = messageToResend
       ? messageHistory.indexOf(messageToResend)
       : null;
+
     if (!messageToResend && messageIdToResend !== undefined) {
       setPopup({
         message:
           "Failed to re-send message - please refresh the page and try again.",
         type: "error",
       });
+      setRegenerationState(null);
       setChatState("input");
       return;
     }
@@ -789,6 +813,7 @@ export function ChatPage({
       messageToResendIndex !== null
         ? messageHistory.slice(0, messageToResendIndex)
         : messageHistory;
+
     let parentMessage =
       messageToResendParent ||
       (currMessageHistory.length > 0
@@ -827,8 +852,11 @@ export function ChatPage({
     } = null;
 
     try {
+      const mapKeys = Array.from(completeMessageDetail.messageMap.keys());
+      const systemMessage = Math.min(...mapKeys);
+
       const lastSuccessfulMessageId =
-        getLastSuccessfulMessageId(currMessageHistory);
+        getLastSuccessfulMessageId(currMessageHistory) || systemMessage;
 
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
@@ -836,7 +864,9 @@ export function ChatPage({
         message: currMessage,
         alternateAssistantId: currentAssistantId,
         fileDescriptors: currentMessageFiles,
-        parentMessageId: lastSuccessfulMessageId,
+        parentMessageId:
+          regenerationRequest?.parentMessage.messageId ||
+          lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
         promptId: liveAssistant?.prompts[0]?.id || 0,
         filters: buildFilters(
@@ -853,12 +883,14 @@ export function ChatPage({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
-
+        regenerate: regenerationRequest !== undefined,
         modelProvider:
+          modelOverRide?.name ||
           llmOverrideManager.llmOverride.name ||
           llmOverrideManager.globalDefault.name ||
           undefined,
         modelVersion:
+          modelOverRide?.modelName ||
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
           llmOverrideManager.globalDefault.modelName ||
@@ -900,15 +932,18 @@ export function ChatPage({
             // we will use tempMessages until the regenerated message is complete
             messageUpdates = [
               {
-                messageId: user_message_id,
+                messageId: regenerationRequest
+                  ? regenerationRequest?.parentMessage?.messageId!
+                  : user_message_id,
                 message: currMessage,
                 type: "user",
                 files: currentMessageFiles,
                 toolCalls: [],
-                parentMessageId: parentMessage?.messageId || null,
+                parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
               },
             ];
-            if (parentMessage) {
+
+            if (parentMessage && !regenerationRequest) {
               messageUpdates.push({
                 ...parentMessage,
                 childrenMessageIds: (
@@ -934,6 +969,8 @@ export function ChatPage({
               assistant_message_id,
               user_message_id,
             };
+
+            setRegenerationState(null);
           } else {
             const { user_message_id, frozenMessageMap, frozenSessionId } =
               initialFetchDetails;
@@ -993,8 +1030,20 @@ export function ChatPage({
               parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
 
             const updateFn = (messages: Message[]) => {
-              const replacementsMap = null;
-              upsertToCompleteMessageMap({
+              const replacementsMap = regenerationRequest
+                ? new Map([
+                    [
+                      regenerationRequest?.parentMessage?.messageId,
+                      regenerationRequest?.parentMessage?.messageId,
+                    ],
+                    [
+                      regenerationRequest?.messageId,
+                      initialFetchDetails?.assistant_message_id,
+                    ],
+                  ] as [number, number][])
+                : null;
+
+              return upsertToCompleteMessageMap({
                 messages: messages,
                 replacementsMap: replacementsMap,
                 completeMessageMapOverride: frozenMessageMap,
@@ -1004,13 +1053,19 @@ export function ChatPage({
 
             updateFn([
               {
-                messageId: initialFetchDetails.user_message_id!,
+                messageId: regenerationRequest
+                  ? regenerationRequest?.parentMessage?.messageId!
+                  : initialFetchDetails.user_message_id!,
                 message: currMessage,
                 type: "user",
                 files: currentMessageFiles,
                 toolCalls: [],
                 parentMessageId: error ? null : lastSuccessfulMessageId,
-                childrenMessageIds: [initialFetchDetails.assistant_message_id!],
+                childrenMessageIds: [
+                  ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
+                    []),
+                  initialFetchDetails.assistant_message_id!,
+                ],
                 latestChildMessageId: initialFetchDetails.assistant_message_id,
               },
               {
@@ -1024,9 +1079,12 @@ export function ChatPage({
                 citations: finalMessage?.citations || {},
                 files: finalMessage?.files || aiMessageImages || [],
                 toolCalls: finalMessage?.tool_calls || toolCalls,
-                parentMessageId: initialFetchDetails.user_message_id,
+                parentMessageId: regenerationRequest
+                  ? regenerationRequest?.parentMessage?.messageId!
+                  : initialFetchDetails.user_message_id,
                 alternateAssistantID: alternativeAssistant?.id,
                 stackTrace: stackTrace,
+                overridden_model: finalMessage?.overridden_model,
               },
             ]);
           }
@@ -1060,6 +1118,7 @@ export function ChatPage({
         completeMessageMapOverride: completeMessageDetail.messageMap,
       });
     }
+    setRegenerationState(null);
     setChatState("input");
     if (isNewSession) {
       if (finalMessage) {
@@ -1309,6 +1368,22 @@ export function ChatPage({
   };
   const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
+  interface RegenerationRequest {
+    messageId: number;
+    parentMessage: Message;
+  }
+
+  function createRegenerator(regenerationRequest: RegenerationRequest) {
+    // Returns new function that only needs `modelOverRide` to be specified when called
+    return async function (modelOverRide: LlmOverride) {
+      return await onSubmit({
+        modelOverRide,
+        messageIdToResend: regenerationRequest.parentMessage.messageId,
+        regenerationRequest,
+      });
+    };
+  }
+
   return (
     <>
       <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
@@ -1494,7 +1569,7 @@ export function ChatPage({
                             )}
                           <div
                             className={
-                              "mt-4 -ml-4 w-full mx-auto " +
+                              "mt-4 -ml-4  w-full mx-auto " +
                               "absolute mobile:top-0 desktop:top-12 left-0" +
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }
@@ -1503,10 +1578,19 @@ export function ChatPage({
                               const messageMap =
                                 completeMessageDetail.messageMap;
                               const messageReactComponentKey = `${i}-${completeMessageDetail.sessionId}`;
+                              const parentMessage = message.parentMessageId
+                                ? messageMap.get(message.parentMessageId)
+                                : null;
+                              if (
+                                regenerationState &&
+                                regenerationState.regenerating &&
+                                message.messageId >
+                                  regenerationState.finalMessageIndex
+                              ) {
+                                return <></>;
+                              }
+
                               if (message.type === "user") {
-                                const parentMessage = message.parentMessageId
-                                  ? messageMap.get(message.parentMessageId)
-                                  : null;
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <HumanMessage
@@ -1514,9 +1598,6 @@ export function ChatPage({
                                       content={message.message}
                                       files={message.files}
                                       messageId={message.messageId}
-                                      otherMessagesCanSwitchTo={
-                                        parentMessage?.childrenMessageIds || []
-                                      }
                                       onEdit={(editedContent) => {
                                         const parentMessageId =
                                           message.parentMessageId!;
@@ -1536,6 +1617,9 @@ export function ChatPage({
                                           messageOverride: editedContent,
                                         });
                                       }}
+                                      otherMessagesCanSwitchTo={
+                                        parentMessage?.childrenMessageIds || []
+                                      }
                                       onMessageSelection={(messageId) => {
                                         const newCompleteMessageMap = new Map(
                                           messageMap
@@ -1576,6 +1660,15 @@ export function ChatPage({
                                       )
                                     : null;
 
+                                if (
+                                  regenerationState &&
+                                  regenerationState.regenerating &&
+                                  // chatState == "loading" &&
+                                  message.messageId >
+                                    regenerationState.finalMessageIndex - 1
+                                ) {
+                                  return <></>;
+                                }
                                 return (
                                   <div
                                     key={messageReactComponentKey}
@@ -1586,6 +1679,33 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      overriddenModel={message.overridden_model}
+                                      regenerate={createRegenerator({
+                                        messageId: message.messageId,
+                                        parentMessage: parentMessage!,
+                                      })}
+                                      otherMessagesCanSwitchTo={
+                                        parentMessage?.childrenMessageIds || []
+                                      }
+                                      onMessageSelection={(messageId) => {
+                                        const newCompleteMessageMap = new Map(
+                                          messageMap
+                                        );
+                                        newCompleteMessageMap.get(
+                                          message.parentMessageId!
+                                        )!.latestChildMessageId = messageId;
+                                        setCompleteMessageDetail({
+                                          sessionId:
+                                            completeMessageDetail.sessionId,
+                                          messageMap: newCompleteMessageMap,
+                                        });
+                                        setSelectedMessageForDocDisplay(
+                                          messageId
+                                        );
+                                        // set message as latest so we can edit this message
+                                        // and so it sticks around on page reload
+                                        setMessageAsLatest(messageId);
+                                      }}
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={
@@ -1598,6 +1718,7 @@ export function ChatPage({
                                       }
                                       messageId={message.messageId}
                                       content={message.message}
+                                      // content={message.message}
                                       files={message.files}
                                       query={
                                         messageHistory[i]?.query || undefined
@@ -1739,6 +1860,7 @@ export function ChatPage({
                               }
                             })}
                             {chatState == "loading" &&
+                              !regenerationState?.regenerating &&
                               messageHistory[messageHistory.length - 1]?.type !=
                                 "user" && (
                                 <HumanMessage
@@ -1746,6 +1868,7 @@ export function ChatPage({
                                   content={submittedMessage}
                                 />
                               )}
+
                             {chatState == "loading" && (
                               <div
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}

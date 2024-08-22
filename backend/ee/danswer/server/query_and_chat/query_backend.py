@@ -54,6 +54,7 @@ def handle_search_request(
     logger.notice(f"Received document search query: {query}")
 
     llm, fast_llm = get_default_llms()
+
     search_pipeline = SearchPipeline(
         search_request=SearchRequest(
             query=query,

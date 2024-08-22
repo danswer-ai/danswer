@@ -4,8 +4,6 @@ from typing import Any
 from pydantic import BaseModel
 from pydantic import validator
 
-from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
-from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Persona
@@ -73,15 +71,15 @@ class ChunkMetric(BaseModel):
 
 
 class ChunkContext(BaseModel):
-    # Additional surrounding context options, if full doc, then chunks are deduped
-    # If surrounding context overlap, it is combined into one
-    chunks_above: int = CONTEXT_CHUNKS_ABOVE
-    chunks_below: int = CONTEXT_CHUNKS_BELOW
+    # If not specified (None), picked up from Persona settings if there is space
+    # if specified (even if 0), it always uses the specified number of chunks above and below
+    chunks_above: int | None = None
+    chunks_below: int | None = None
     full_doc: bool = False
 
     @validator("chunks_above", "chunks_below", pre=True, each_item=False)
     def check_non_negative(cls, value: int, field: Any) -> int:
-        if value < 0:
+        if value is not None and value < 0:
             raise ValueError(f"{field.name} must be non-negative")
         return value
 
@@ -116,6 +114,10 @@ class SearchQuery(ChunkContext):
     search_type: SearchType
     evaluation_type: LLMEvaluationType
     filters: IndexFilters
+
+    # by this point, the chunks_above and chunks_below must be set
+    chunks_above: int
+    chunks_below: int
 
     rerank_settings: RerankingDetails | None
     hybrid_alpha: float

@@ -114,6 +114,7 @@ export type PacketType =
   | MessageResponseIDInfo;
 
 export async function* sendMessage({
+  regenerate,
   message,
   fileDescriptors,
   parentMessageId,
@@ -131,6 +132,7 @@ export async function* sendMessage({
   alternateAssistantId,
   signal,
 }: {
+  regenerate: boolean;
   message: string;
   fileDescriptors: FileDescriptor[];
   parentMessageId: number | null;
@@ -159,6 +161,7 @@ export async function* sendMessage({
     prompt_id: promptId,
     search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
     file_descriptors: fileDescriptors,
+    regenerate,
     retrieval_options: !documentsAreSelected
       ? {
           run_search:
@@ -386,13 +389,12 @@ export function getLastSuccessfulMessageId(messageHistory: Message[]) {
     .reverse()
     .find(
       (message) =>
-        message.type === "assistant" &&
+        (message.type === "assistant" || message.type === "system") &&
         message.messageId !== -1 &&
         message.messageId !== null
     );
   return lastSuccessfulMessage ? lastSuccessfulMessage?.messageId : null;
 }
-
 export function processRawChatHistory(
   rawMessages: BackendMessage[]
 ): Map<number, Message> {
@@ -435,6 +437,7 @@ export function processRawChatHistory(
       parentMessageId: messageInfo.parent_message,
       childrenMessageIds: [],
       latestChildMessageId: messageInfo.latest_child_message,
+      overridden_model: messageInfo.overridden_model,
     };
 
     messages.set(messageInfo.message_id, message);
