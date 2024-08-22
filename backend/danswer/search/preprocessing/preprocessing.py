@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import BASE_RECENCY_DECAY
+from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
+from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
 from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.chat_configs import HYBRID_ALPHA
@@ -199,6 +201,20 @@ def retrieval_preprocessing(
     if search_request.hybrid_alpha:
         hybrid_alpha = search_request.hybrid_alpha
 
+    # Search request overrides anything else as it's explicitly set by the request
+    # If not explicitly specified, use the persona settings if they exist
+    # Otherwise, use the global defaults
+    chunks_above = (
+        search_request.chunks_above
+        if search_request.chunks_above is not None
+        else (persona.chunks_above if persona else CONTEXT_CHUNKS_ABOVE)
+    )
+    chunks_below = (
+        search_request.chunks_below
+        if search_request.chunks_below is not None
+        else (persona.chunks_below if persona else CONTEXT_CHUNKS_BELOW)
+    )
+
     return SearchQuery(
         query=query,
         processed_keywords=processed_keywords,
@@ -216,7 +232,7 @@ def retrieval_preprocessing(
         max_llm_filter_sections=rerank_settings.num_rerank
         if rerank_settings
         else NUM_POSTPROCESSED_RESULTS,
-        chunks_above=search_request.chunks_above,
-        chunks_below=search_request.chunks_below,
+        chunks_above=chunks_above,
+        chunks_below=chunks_below,
         full_doc=search_request.full_doc,
     )
