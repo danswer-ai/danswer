@@ -48,7 +48,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const combinedSettings = await getCombinedSettings({});
+  const combinedSettings = await getCombinedSettings();
 
   return (
     <html lang="en">
