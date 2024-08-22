@@ -17,6 +17,8 @@ import { TokenRateLimitDisplay } from "./types";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
+import { useEffect } from "react";
 
 type TokenRateLimitTableArgs = {
   tokenRateLimits: TokenRateLimitDisplay[];
@@ -24,6 +26,7 @@ type TokenRateLimitTableArgs = {
   description?: string;
   fetchUrl: string;
   hideHeading?: boolean;
+  isAdmin: boolean;
 };
 
 export const TokenRateLimitTable = ({
@@ -32,6 +35,7 @@ export const TokenRateLimitTable = ({
   description,
   fetchUrl,
   hideHeading,
+  isAdmin,
 }: TokenRateLimitTableArgs) => {
   const shouldRenderGroupName = () =>
     tokenRateLimits.length > 0 && tokenRateLimits[0].group_name !== undefined;
@@ -79,7 +83,9 @@ export const TokenRateLimitTable = ({
       {!hideHeading && description && (
         <Text className="my-2">{description}</Text>
       )}
-      <Table className={`overflow-visible ${!hideHeading && "my-8"}`}>
+      <Table
+        className={`overflow-visible ${!hideHeading && "my-8"} [&_td]:text-center [&_th]:text-center`}
+      >
         <TableHead>
           <TableRow>
             <TableHeaderCell>Enabled</TableHeaderCell>
@@ -88,7 +94,7 @@ export const TokenRateLimitTable = ({
             )}
             <TableHeaderCell>Time Window (Hours)</TableHeaderCell>
             <TableHeaderCell>Token Budget (Thousands)</TableHeaderCell>
-            <TableHeaderCell>Delete</TableHeaderCell>
+            {isAdmin && <TableHeaderCell>Delete</TableHeaderCell>}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -96,15 +102,33 @@ export const TokenRateLimitTable = ({
             return (
               <TableRow key={tokenRateLimit.token_id}>
                 <TableCell>
-                  <div
-                    onClick={() => handleEnabledChange(tokenRateLimit.token_id)}
-                    className="px-1 py-0.5 hover:bg-hover-light rounded flex cursor-pointer select-none w-24 flex"
-                  >
-                    <div className="mx-auto flex">
-                      <CustomCheckbox checked={tokenRateLimit.enabled} />
-                      <p className="ml-2">
-                        {tokenRateLimit.enabled ? "Enabled" : "Disabled"}
-                      </p>
+                  <div className="flex justify-center">
+                    <div
+                      onClick={
+                        isAdmin
+                          ? () => handleEnabledChange(tokenRateLimit.token_id)
+                          : undefined
+                      }
+                      className={`px-1 py-0.5 rounded select-none w-24 ${
+                        isAdmin
+                          ? "hover:bg-hover-light cursor-pointer"
+                          : "opacity-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center">
+                        <CustomCheckbox
+                          checked={tokenRateLimit.enabled}
+                          onChange={
+                            isAdmin
+                              ? () =>
+                                  handleEnabledChange(tokenRateLimit.token_id)
+                              : undefined
+                          }
+                        />
+                        <p className="ml-2">
+                          {tokenRateLimit.enabled ? "Enabled" : "Disabled"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </TableCell>
@@ -113,13 +137,23 @@ export const TokenRateLimitTable = ({
                     {tokenRateLimit.group_name}
                   </TableCell>
                 )}
-                <TableCell>{tokenRateLimit.period_hours}</TableCell>
-                <TableCell>{tokenRateLimit.token_budget}</TableCell>
                 <TableCell>
-                  <DeleteButton
-                    onClick={() => handleDelete(tokenRateLimit.token_id)}
-                  />
+                  {tokenRateLimit.period_hours +
+                    " hour" +
+                    (tokenRateLimit.period_hours > 1 ? "s" : "")}
                 </TableCell>
+                <TableCell>
+                  {tokenRateLimit.token_budget + " thousand tokens"}
+                </TableCell>
+                {isAdmin && (
+                  <TableCell>
+                    <div className="flex justify-center">
+                      <DeleteButton
+                        onClick={() => handleDelete(tokenRateLimit.token_id)}
+                      />
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}
@@ -135,14 +169,27 @@ export const GenericTokenRateLimitTable = ({
   description,
   hideHeading,
   responseMapper,
+  setPopup,
+  isAdmin,
 }: {
   fetchUrl: string;
   title?: string;
   description?: string;
   hideHeading?: boolean;
   responseMapper?: (data: any) => TokenRateLimitDisplay[];
+  setPopup: (data: any) => void;
+  isAdmin: boolean;
 }) => {
   const { data, isLoading, error } = useSWR(fetchUrl, errorHandlingFetcher);
+
+  useEffect(() => {
+    if (error) {
+      setPopup({
+        message: `Failed to load token rate limits: ${error.message}`,
+        type: "error",
+      });
+    }
+  }, [error, setPopup]);
 
   if (isLoading) {
     return <ThreeDotsLoader />;
@@ -164,6 +211,7 @@ export const GenericTokenRateLimitTable = ({
       title={title}
       description={description}
       hideHeading={hideHeading}
+      isAdmin={isAdmin}
     />
   );
 };

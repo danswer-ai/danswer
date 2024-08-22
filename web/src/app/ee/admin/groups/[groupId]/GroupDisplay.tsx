@@ -1,7 +1,7 @@
 "use client";
 
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { AddMemberForm } from "./AddMemberForm";
 import { updateUserGroup, updateCuratorStatus } from "./lib";
@@ -137,9 +137,12 @@ export const GroupDisplay = ({
     };
     fetchCurrentUser();
   }, []);
-  const handlePopup = (message: string, type: "success" | "error") => {
-    setPopup({ message, type });
-  };
+  const handlePopup = useCallback(
+    (message: string, type: "success" | "error") => {
+      setPopup({ message, type });
+    },
+    [setPopup]
+  );
 
   const onRoleChangeSuccess = () =>
     handlePopup("User role updated successfully!", "success");
@@ -443,6 +446,8 @@ export const GroupDisplay = ({
       <GenericTokenRateLimitTable
         fetchUrl={`/api/admin/token-rate-limits/user-group/${userGroup.id}`}
         hideHeading
+        setPopup={(data) => handlePopup(data.message, data.type)}
+        isAdmin={isAdmin}
       />
 
       {isAdmin && (
