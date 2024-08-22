@@ -53,8 +53,8 @@ def create_embedding_model(
 def get_embedding_provider_from_provider(
     db_session: Session, cloud_provider_type: EmbeddingProvider
 ) -> CloudEmbeddingProvider | None:
-    query = select(CloudEmbeddingProvider).where(
-        CloudEmbeddingProvider.provider_type == cloud_provider_type
+    query = select(cloud_provider_type).where(
+        CloudEmbeddingProvider.cloud_provider_type == cloud_provider_type
     )
     provider = db_session.execute(query).scalars().first()
     return provider if provider else None

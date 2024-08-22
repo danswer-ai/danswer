@@ -90,18 +90,18 @@ class EmbeddingModel:
         query_prefix: str | None,
         passage_prefix: str | None,
         api_key: str | None,
-        provider_type: EmbeddingProvider | None,
+        cloud_provider_type: EmbeddingProvider | None,
         retrim_content: bool = False,
     ) -> None:
         self.api_key = api_key
-        self.provider_type = provider_type
+        self.cloud_provider_type = cloud_provider_type
         self.query_prefix = query_prefix
         self.passage_prefix = passage_prefix
         self.normalize = normalize
         self.model_name = model_name
         self.retrim_content = retrim_content
         self.tokenizer = get_tokenizer(
-            model_name=model_name, provider_type=provider_type
+            model_name=model_name, provider_type=cloud_provider_type
         )
 
         model_server_url = build_model_server_url(server_host, server_port)

@@ -42,7 +42,7 @@ def upsert_cloud_embedding_provider(
 ) -> CloudEmbeddingProvider:
     existing_provider = (
         db_session.query(CloudEmbeddingProviderModel)
-        .filter_by(provider_type=provider.provider_type)
+        .filter_by(cloud_provider_type=provider.cloud_provider_type)
         .first()
     )
     if existing_provider:
@@ -131,7 +131,7 @@ def fetch_embedding_provider(
 ) -> CloudEmbeddingProviderModel | None:
     return db_session.scalar(
         select(CloudEmbeddingProviderModel).where(
-            CloudEmbeddingProviderModel.provider_type == cloud_provider_type
+            CloudEmbeddingProviderModel.cloud_provider_type == cloud_provider_type
         )
     )
 
@@ -157,11 +157,11 @@ def fetch_provider(db_session: Session, provider_name: str) -> FullLLMProvider |
 
 
 def remove_embedding_provider(
-    db_session: Session, provider_type: EmbeddingProvider
+    db_session: Session, cloud_provider_type: EmbeddingProvider
 ) -> None:
     db_session.execute(
         delete(CloudEmbeddingProviderModel).where(
-            CloudEmbeddingProviderModel.provider_type == provider_type
+            CloudEmbeddingProviderModel.cloud_provider_type == cloud_provider_type
         )
     )
 
