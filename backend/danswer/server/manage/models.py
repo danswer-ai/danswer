@@ -1,3 +1,4 @@
+from typing import Optional
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -34,6 +35,13 @@ class UserInfo(BaseModel):
     is_superuser: bool
     is_verified: bool
     role: UserRole
+    workspace_id: Optional[int]
+    full_name: Optional[str]
+    company_name: Optional[str]
+    company_email: Optional[str]
+    company_billing: Optional[str]
+    billing_email_address: Optional[str]
+    vat: Optional[str]
     preferences: UserPreferences
 
     @classmethod
@@ -45,7 +53,14 @@ class UserInfo(BaseModel):
             is_superuser=user.is_superuser,
             is_verified=user.is_verified,
             role=user.role,
-            preferences=(UserPreferences(chosen_assistants=user.chosen_assistants)),
+            workspace_id=user.workspace_id,
+            full_name=user.full_name,
+            company_name=user.company_name,
+            company_email=user.company_email,
+            company_billing=user.company_billing,
+            billing_email_address=user.billing_email_address,
+            vat=user.vat,
+            preferences=UserPreferences(chosen_assistants=user.chosen_assistants),
         )
 
 
