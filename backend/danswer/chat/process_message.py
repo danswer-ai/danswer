@@ -502,14 +502,14 @@ def stream_chat_message_objects(
                     )
                     tool_dict[db_tool_model.id] = [summary_generation_tool]
                 elif tool_cls.__name__ == ComposeEmailTool.__name__:
-                    sql_generation_tool = ComposeEmailTool(
+                    email_compose_tool = ComposeEmailTool(
                         user=user,
                         persona=persona,
                         prompt_config=prompt_config,
                         llm_config=llm.config,
                         llm=llm
                     )
-                    tool_dict[db_tool_model.id] = [sql_generation_tool]
+                    tool_dict[db_tool_model.id] = [email_compose_tool]
                 elif tool_cls.__name__ == ImageGenerationTool.__name__:
                     img_generation_llm_config: LLMConfig | None = None
                     if (

@@ -27,8 +27,16 @@ HINT: if input question as about composing or drafting an email, then use this t
 """
 
 Compose_Email_TEMPLATE = f"""
-you are an Email composing expert, you are responsible to compose well structured Email content based on user input. 
-do not add any explanation, do not makeup any answer. Based on provided meta data compose Email.
+provide email subject always in this format, **Subject**
+
+example:
+
+**Subject**: Sick Leave
+Dear Hr,
+I am on sick leave for 2 days starting from today,
+
+Regards,
+Name
 """.strip()
 
 COMPOSE_EMAIL_PROMPT = """You are a professional email writing assistant that always uses a polite enthusiastic tone, 
@@ -55,6 +63,7 @@ class ComposeEmailTool(Tool):
             llm_config: LLMConfig,
             llm: LLM | None
     ) -> None:
+        self.history = None
         self.user = user
         self.persona = persona
         self.prompt_config = prompt_config
@@ -102,6 +111,7 @@ class ComposeEmailTool(Tool):
             force_run: bool = False,
     ) -> dict[str, Any] | None:
         args = {"query": query}
+        self.history = history
         return args
 
     def build_tool_message_content(
@@ -125,7 +135,7 @@ class ComposeEmailTool(Tool):
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         query = cast(str, kwargs["query"])
 
-        prompt_builder = AnswerPromptBuilder([], self.llm_config)
+        prompt_builder = AnswerPromptBuilder(self.history, self.llm_config)
 
         prompt_builder.update_system_prompt(
             default_build_system_message(self.prompt_config)
@@ -152,7 +162,6 @@ class ComposeEmailTool(Tool):
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         composed_email_response = cast(
             list[ToolResponse], args[0].response
-
         )
         # NOTE: need to do this json.loads(doc.json()) stuff because there are some
         # subfields that are not serializable by default (datetime)
