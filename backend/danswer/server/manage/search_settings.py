@@ -19,6 +19,7 @@ from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
+from danswer.indexing.models import EmbeddingModelCreateRequest
 from danswer.indexing.models import EmbeddingModelDetail
 from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.search.models import SavedSearchSettings
@@ -65,6 +66,10 @@ def set_new_embedding_model(
     ):
         index_name += ALT_INDEX_SUFFIX
 
+    create_embed_model_details = EmbeddingModelCreateRequest(
+        **embed_model_details.dict(), index_name=index_name
+    )
+
     secondary_model = get_secondary_db_embedding_model(db_session)
 
     if secondary_model:
@@ -87,7 +92,7 @@ def set_new_embedding_model(
         )
 
     new_model = create_embedding_model(
-        model_details=embed_model_details, db_session=db_session, index_name=index_name
+        create_embed_model_details=create_embed_model_details, db_session=db_session
     )
 
     # Ensure Vespa has the new index immediately

@@ -14,6 +14,7 @@ from danswer.db.llm import fetch_embedding_provider
 from danswer.db.models import CloudEmbeddingProvider
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexModelStatus
+from danswer.indexing.models import EmbeddingModelCreateRequest
 from danswer.indexing.models import EmbeddingModelDetail
 from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.server.manage.embedding.models import (
@@ -26,22 +27,21 @@ logger = setup_logger()
 
 
 def create_embedding_model(
-    model_details: EmbeddingModelDetail,
-    index_name: str,
+    create_embed_model_details: EmbeddingModelCreateRequest,
     db_session: Session,
     status: IndexModelStatus = IndexModelStatus.FUTURE,
 ) -> EmbeddingModel:
     embedding_model = EmbeddingModel(
-        model_name=model_details.model_name,
-        model_dim=model_details.model_dim,
-        normalize=model_details.normalize,
-        query_prefix=model_details.query_prefix,
-        passage_prefix=model_details.passage_prefix,
+        model_name=create_embed_model_details.model_name,
+        model_dim=create_embed_model_details.model_dim,
+        normalize=create_embed_model_details.normalize,
+        query_prefix=create_embed_model_details.query_prefix,
+        passage_prefix=create_embed_model_details.passage_prefix,
         status=status,
-        provider_type=model_details.provider_type,
+        provider_type=create_embed_model_details.provider_type,
         # Every single embedding model except the initial one from migrations has this name
         # The initial one from migration is called "danswer_chunk"
-        index_name=index_name,
+        index_name=create_embed_model_details.index_name,
     )
 
     db_session.add(embedding_model)

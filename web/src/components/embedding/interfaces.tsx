@@ -138,6 +138,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     costslink: "https://cohere.com/pricing",
     embedding_models: [
       {
+        provider_type: EmbeddingProvider.COHERE,
         model_name: "embed-english-v3.0",
         description:
           "Cohere's English embedding model. Good performance for English-language tasks.",
@@ -152,7 +153,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
       },
       {
         model_name: "embed-english-light-v3.0",
-
+        provider_type: EmbeddingProvider.COHERE,
         description:
           "Cohere's lightweight English embedding model. Faster and more efficient for simpler tasks.",
         pricePerMillion: 0.1,
@@ -177,6 +178,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     costslink: "https://openai.com/pricing",
     embedding_models: [
       {
+        provider_type: EmbeddingProvider.OPENAI,
         model_name: "text-embedding-3-large",
         description:
           "OpenAI's large embedding model. Best performance, but more expensive.",
@@ -190,6 +192,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         enabled: false,
       },
       {
+        provider_type: EmbeddingProvider.OPENAI,
         model_name: "text-embedding-3-small",
         model_dim: 1536,
         normalize: false,
@@ -217,6 +220,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     costslink: "https://cloud.google.com/vertex-ai/pricing",
     embedding_models: [
       {
+        provider_type: EmbeddingProvider.GOOGLE,
         model_name: "text-embedding-004",
         description: "Google's most recent text embedding model.",
         pricePerMillion: 0.025,
@@ -229,6 +233,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         passage_prefix: "",
       },
       {
+        provider_type: EmbeddingProvider.GOOGLE,
         model_name: "textembedding-gecko@003",
         description: "Google's Gecko embedding model. Powerful and efficient.",
         pricePerMillion: 0.025,
@@ -253,6 +258,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     costslink: "https://www.voyageai.com/pricing",
     embedding_models: [
       {
+        provider_type: EmbeddingProvider.VOYAGE,
         model_name: "voyage-large-2-instruct",
         description:
           "Voyage's large embedding model. High performance with instruction fine-tuning.",
@@ -266,6 +272,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         passage_prefix: "",
       },
       {
+        provider_type: EmbeddingProvider.VOYAGE,
         model_name: "voyage-light-2-instruct",
         description:
           "Voyage's lightweight embedding model. Good balance of performance and efficiency.",

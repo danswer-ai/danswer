@@ -115,3 +115,7 @@ class EmbeddingModelDetail(BaseModel):
             passage_prefix=embedding_model.passage_prefix,
             provider_type=embedding_model.provider_type,
         )
+
+
+class EmbeddingModelCreateRequest(EmbeddingModelDetail):
+    index_name: str

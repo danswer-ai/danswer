@@ -172,7 +172,9 @@ export default function EmbeddingForm() {
       newModel = {
         ...selectedProvider,
         model_name: selectedProvider.model_name,
-        provider_type: selectedProvider.provider_type,
+        provider_type: selectedProvider.provider_type
+          ?.toLowerCase()
+          .split(" ")[0],
       };
     } else {
       // This is an EmbeddingModelDescriptor
