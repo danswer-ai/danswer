@@ -228,6 +228,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
             oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
             await self.user_db.update(user, update_dict={"oidc_expiry": oidc_expiry})
+
+        # this is needed if an organization goes from `TRACK_EXTERNAL_IDP_EXPIRY=true` to `false`
+        # otherwise, the oidc expiry will always be old, and the user will never be able to login
+        if user.oidc_expiry and not TRACK_EXTERNAL_IDP_EXPIRY:
+            await self.user_db.update(user, update_dict={"oidc_expiry": None})
+
         return user
 
     async def on_after_register(

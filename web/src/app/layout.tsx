@@ -2,7 +2,8 @@ import "./globals.css";
 
 import {
   fetchEnterpriseSettingsSS,
-  getCombinedSettings,
+  fetchSettingsSS,
+  SettingsError,
 } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
@@ -14,6 +15,7 @@ import { buildClientUrl } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 import { EnterpriseSettings } from "./admin/settings/interfaces";
+import { redirect } from "next/navigation";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -48,7 +50,22 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const combinedSettings = await getCombinedSettings({});
+  const combinedSettings = await fetchSettingsSS();
+  if (!combinedSettings) {
+    // Just display a simple full page error if fetching fails.
+    return (
+      <html lang="en">
+        <Head>
+          <title>Settings Unavailable</title>
+        </Head>
+        <body>
+          <div className="error">
+            Settings could not be loaded. Please try again later.
+          </div>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="en">
