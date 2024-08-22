@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
 from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
-from danswer.configs.model_configs import GEN_AI_MODEL_DEFAULT_MAX_TOKENS
 from danswer.danswerbot.slack.handlers.handle_standard_answers import (
     oneoff_standard_answers,
 )
@@ -16,7 +15,6 @@ from danswer.db.persona import get_persona_by_id
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
-from danswer.llm.answering.prompts.citations_prompt import compute_max_llm_input_tokens
 from danswer.llm.factory import get_default_llms
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
@@ -57,14 +55,6 @@ def handle_search_request(
 
     llm, fast_llm = get_default_llms()
 
-    max_llm_tokens = compute_max_llm_input_tokens(llm.config)
-    if max_llm_tokens < 3 * GEN_AI_MODEL_DEFAULT_MAX_TOKENS:
-        chunks_above: int | None = 0
-        chunks_below: int | None = 0
-    else:
-        chunks_above = search_request.chunks_above
-        chunks_below = search_request.chunks_below
-
     search_pipeline = SearchPipeline(
         search_request=SearchRequest(
             query=query,
@@ -76,8 +66,8 @@ def handle_search_request(
             limit=search_request.retrieval_options.limit,
             rerank_settings=search_request.rerank_settings,
             evaluation_type=search_request.evaluation_type,
-            chunks_above=chunks_above,
-            chunks_below=chunks_below,
+            chunks_above=search_request.chunks_above,
+            chunks_below=search_request.chunks_below,
             full_doc=search_request.full_doc,
         ),
         user=user,
