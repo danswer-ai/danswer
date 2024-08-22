@@ -66,6 +66,9 @@ export const buildDocumentSummaryDisplay = (
       sections.push(["...", false, false]);
     }
   });
+  if (sections.length == 0) {
+    return;
+  }
 
   let previousIsContinuation = sections[0][2];
   let previousIsBold = sections[0][1];
