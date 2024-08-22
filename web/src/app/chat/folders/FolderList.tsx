@@ -138,8 +138,12 @@ const FolderItem = ({
         <div
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
+          className="w-full"
         >
-          <div onClick={toggleFolderExpansion} className="cursor-pointer">
+          <div
+            onClick={toggleFolderExpansion}
+            className="cursor-pointer w-full"
+          >
             <div className="text-sm text-medium flex items-center justify-start w-full">
               <div className="mr-2">
                 {isExpanded ? (

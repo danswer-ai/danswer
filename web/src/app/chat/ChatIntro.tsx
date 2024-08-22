@@ -7,6 +7,7 @@ import { LuChevronsLeftRight } from "react-icons/lu";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Bookmark, Info } from "lucide-react";
+import { StarterMessage } from "./StarterMessage";
 
 const MAX_PERSONAS_TO_DISPLAY = 4;
 
@@ -27,10 +28,12 @@ function HelperItemDisplay({
 
 export function ChatIntro({
   availableSources,
-  selectedPersona,
+  livePersona,
+  children,
 }: {
   availableSources: ValidSources[];
-  selectedPersona: Persona;
+  livePersona: Persona;
+  children?: React.ReactNode;
 }) {
   const availableSourceMetadata = getSourceMetadataForSources(availableSources);
 
@@ -39,68 +42,35 @@ export function ChatIntro({
   return (
     <>
       <div className="flex justify-center w-full py-20">
-        <div className="max-w-screen-lg 2xl:w-searchbar px-5 2xl:px-0 pt-10 md:pt-16 lg:pt-0 xl:pt-16">
+        <div className="max-w-full 2xl:w-searchbar px-5 2xl:px-0 pt-10 md:pt-16 lg:pt-0 2xl:pt-14">
           <div className="flex">
             <div>
               <h1 className="flex flex-col text-[2rem] md:text-[3rem] 2xl:text-[4rem] font-medium leading-[1.2] tracking-tighter">
-                <span className="h1-bg">Hi, I&rsquo;am enMedD AI,</span>
+                <span className="h1-bg">Hi, I am {livePersona?.name},</span>
                 <span className="h1-bg">How can I help you today?</span>
               </h1>
               {/* <div className="m-auto mt-4 text-3xl font-bold text-strong w-fit">
-                {selectedPersona?.name || "How can I help you today?"}
+                {livePersona?.name || "How can I help you today?"}
               </div>
-              {selectedPersona && (
+              {livePersona && (
                 <div className="px-6 mt-1 text-center">
-                  {selectedPersona.description}
+                  {livePersona.description}
                 </div>
               )} */}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10">
-            <Card className="h-[180px] p-4 justify-between md:flex flex-col cursor-pointer border-input-colored hidden">
-              <CardContent className="p-0 text-default">
-                How can I optimize this code for better performance?
-              </CardContent>
-              <CardFooter className="p-0">
-                <LuChevronsLeftRight size={24} className="ml-auto" />
-              </CardFooter>
-            </Card>
-            <Card className="h-[180px] p-4 justify-between md:flex flex-col cursor-pointer border-input-colored hidden">
-              <CardContent className="p-0 text-default">
-                How can I optimize this code for better performance?
-              </CardContent>
-              <CardFooter className="p-0">
-                <LuChevronsLeftRight size={24} className="ml-auto" />
-              </CardFooter>
-            </Card>
-            <Card className="h-[180px] p-4 justify-between flex flex-col cursor-pointer border-input-colored">
-              <CardContent className="p-0 text-default">
-                How can I optimize this code for better performance?
-              </CardContent>
-              <CardFooter className="p-0">
-                <LuChevronsLeftRight size={24} className="ml-auto" />
-              </CardFooter>
-            </Card>
-            <Card className="h-[180px] p-4 justify-between flex flex-col cursor-pointer border-input-colored">
-              <CardContent className="p-0 text-default">
-                How can I optimize this code for better performance?
-              </CardContent>
-              <CardFooter className="p-0">
-                <LuChevronsLeftRight size={24} className="ml-auto" />
-              </CardFooter>
-            </Card>
-          </div>
+          {children}
 
-          {selectedPersona && selectedPersona.num_chunks !== 0 && (
+          {livePersona && livePersona.num_chunks !== 0 && (
             <div className="pt-4">
-              {selectedPersona.document_sets.length > 0 && (
+              {livePersona.document_sets.length > 0 && (
                 <div className="mt-2">
                   <p className="mt-4 mb-1 font-bold text-emphasis">
                     Knowledge Sets:{" "}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {selectedPersona.document_sets.map((documentSet) => (
+                    {livePersona.document_sets.map((documentSet) => (
                       <div key={documentSet.id} className="w-fit">
                         <HoverPopup
                           mainContent={
