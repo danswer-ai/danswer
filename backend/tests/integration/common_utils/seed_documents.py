@@ -4,13 +4,18 @@ import requests
 from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
-from tests.integration.common.connectors import ConnectorClient
-from tests.integration.common.constants import API_SERVER_URL
+from tests.integration.common_utils.connectors import ConnectorClient
+from tests.integration.common_utils.constants import API_SERVER_URL
+
+
+class SimpleTestDocument(BaseModel):
+    id: str
+    content: str
 
 
 class SeedDocumentResponse(BaseModel):
     cc_pair_id: int
-    document_ids: list[str]
+    documents: list[SimpleTestDocument]
 
 
 class TestDocumentClient:
@@ -23,11 +28,9 @@ class TestDocumentClient:
             cc_pair_id = connector_details.cc_pair_id
 
         # Create and ingest some documents
-        document_ids: list[str] = []
+        documents: list[dict] = []
         for _ in range(num_docs):
             document_id = f"test-doc-{uuid.uuid4()}"
-            document_ids.append(document_id)
-
             document = {
                 "document": {
                     "id": document_id,
@@ -38,12 +41,14 @@ class TestDocumentClient:
                         }
                     ],
                     "source": DocumentSource.NOT_APPLICABLE,
-                    "metadata": {},
+                    # just for testing metadata
+                    "metadata": {"document_id": document_id},
                     "semantic_identifier": f"Test Document {document_id}",
                     "from_ingestion_api": True,
                 },
                 "cc_pair_id": cc_pair_id,
             }
+            documents.append(document)
             response = requests.post(
                 f"{API_SERVER_URL}/danswer-api/ingestion",
                 json=document,
@@ -53,7 +58,13 @@ class TestDocumentClient:
         print("Seeding completed successfully.")
         return SeedDocumentResponse(
             cc_pair_id=cc_pair_id,
-            document_ids=document_ids,
+            documents=[
+                SimpleTestDocument(
+                    id=document["document"]["id"],
+                    content=document["document"]["sections"][0]["text"],
+                )
+                for document in documents
+            ],
         )
 
 
