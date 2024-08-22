@@ -1,7 +1,10 @@
 import uuid
 from enum import Enum
+from typing import List
+from typing import Optional
 
 from fastapi_users import schemas
+from pydantic import EmailStr
 
 
 class UserRole(str, Enum):
@@ -17,11 +20,35 @@ class UserStatus(str, Enum):
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
     role: UserRole
+    chosen_assistants: Optional[List[int]]
+    workspace_id: Optional[int]
+    full_name: Optional[str]
+    company_name: Optional[str]
+    company_email: Optional[EmailStr]
+    company_billing: Optional[str]
+    billing_email_address: Optional[EmailStr]
+    vat: Optional[str]
 
 
 class UserCreate(schemas.BaseUserCreate):
     role: UserRole = UserRole.BASIC
+    chosen_assistants: Optional[List[int]]
+    workspace_id: Optional[int]
+    full_name: Optional[str]
+    company_name: Optional[str]
+    company_email: Optional[EmailStr]
+    company_billing: Optional[str]
+    billing_email_address: Optional[EmailStr]
+    vat: Optional[str]
 
 
 class UserUpdate(schemas.BaseUserUpdate):
     role: UserRole
+    chosen_assistants: Optional[List[int]]
+    workspace_id: Optional[int]
+    full_name: Optional[str]
+    company_name: Optional[str]
+    company_email: Optional[EmailStr]
+    company_billing: Optional[str]
+    billing_email_address: Optional[EmailStr]
+    vat: Optional[str]
