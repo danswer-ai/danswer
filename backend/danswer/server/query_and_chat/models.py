@@ -101,9 +101,6 @@ class CreateChatMessageRequest(ChunkContext):
     # enables additional handling to ensure that we regenerate with a given user message ID
     regenerate: bool | None = None
 
-    # explicitly overrides model type such that we can display it for users.
-    overridden_model: str | None = None
-
     # allows the caller to override the Persona / Prompt
     # these do not persist in the chat thread details
     llm_override: LLMOverride | None = None
