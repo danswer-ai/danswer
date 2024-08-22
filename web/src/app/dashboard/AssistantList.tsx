@@ -32,7 +32,7 @@ const AssistantList = ({assistants}: {assistants: Persona[]}) => {
     }
 
     return (
-        <div className="grid grid-cols-3 gap-4 w-full max-w-5xl">
+        <div className="grid grid-cols-3 gap-5 w-full max-w-5xl">
             {getAssitantList()}
         </div>
     );
