@@ -1,13 +1,14 @@
 import logging
-import io
 import os
-import zipfile
 from collections.abc import MutableMapping
+from logging.handlers import HTTPHandler, TimedRotatingFileHandler
 from logging.handlers import RotatingFileHandler
 from typing import Any
-from typing import List
 
 from shared_configs.configs import DEV_LOGGING_ENABLED
+from shared_configs.configs import EXTERNAL_LOGGING
+from shared_configs.configs import LOGGING_SERVER_HOST_NAME
+from shared_configs.configs import LOGGING_SERVER_PORT
 from shared_configs.configs import LOG_FILE_NAME
 from shared_configs.configs import LOG_LEVEL
 from shared_configs.configs import SLACK_CHANNEL_ID
@@ -70,6 +71,19 @@ class DanswerLoggingAdapter(logging.LoggerAdapter):
         )
 
 
+class DanswerHTTPHandler(HTTPHandler):
+    """
+    Custom HTTP Handler so we can override the mapLogRecord function. Can be extended further later
+    """
+    def __init__(self, host: str, url: str, service_name: str, **kwargs):
+        self.service_name = service_name
+        super().__init__(host, url, **kwargs)
+    def mapLogRecord(self, record):
+        record_dict = record.__dict__.copy()
+        record_dict['service_name'] = self.service_name
+        return record_dict
+
+
 class ColoredFormatter(logging.Formatter):
     """Custom formatter to add colors to log levels."""
 
@@ -100,6 +114,13 @@ def get_standard_formatter() -> ColoredFormatter:
     """Returns a standard colored logging formatter."""
     return ColoredFormatter(
         "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+
+def get_log_server_formatter() -> ColoredFormatter:
+    """Returns a standard colored logging formatter."""
+    return ColoredFormatter(
+        "%(message)s",
         datefmt="%m/%d/%Y %I:%M:%S %p",
     )
 
@@ -138,40 +159,66 @@ def setup_logger(
                 os.makedirs("./log")
         log_levels = ["debug", "info", "notice"]
         for level in log_levels:
-            file_name = (
-                f"/var/log/{LOG_FILE_NAME}_{level}.log"
-                if is_containerized
-                else f"./log/{LOG_FILE_NAME}_{level}.log"
-            )
-            file_handler = RotatingFileHandler(
-                file_name,
-                maxBytes=25 * 1024 * 1024,  # 25 MB
-                backupCount=5,  # Keep 5 backup files
-            )
-            file_handler.setLevel(get_log_level_from_str(level))
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
-
-            if uvicorn_logger:
-                uvicorn_logger.addHandler(file_handler)
+            file_name = f"{LOG_FILE_NAME}_{level}"
+            service_name = os.getenv("SERVICE_NAME") or ""
+            if EXTERNAL_LOGGING:
+                host = f"{LOGGING_SERVER_HOST_NAME}:{LOGGING_SERVER_PORT}"
+                url = f"/logs/add/"
+                http_handler = DanswerHTTPHandler(
+                    host,
+                    url,
+                    service_name,
+                    method="POST"
+                )
+                http_handler.setLevel(get_log_level_from_str(level))
+                logger.addHandler(http_handler)
+            else:
+                file_path = (
+                    f"/var/log/{file_name}.log"
+                    if is_containerized
+                    else f"./log/{file_name}.log"
+                )
+                file_handler = RotatingFileHandler(
+                    file_path,
+                    maxBytes=25 * 1024 * 1024,  # 25 MB
+                    backupCount=5,  # Keep 5 backup files
+                )
+                file_handler.setLevel(get_log_level_from_str(level))
+                file_handler.setFormatter(formatter)
+                logger.addHandler(file_handler)
+                if uvicorn_logger:
+                    uvicorn_logger.addHandler(file_handler)
 
     logger.notice = lambda msg, *args, **kwargs: logger.log(logging.getLevelName("NOTICE"), msg, *args, **kwargs)  # type: ignore
 
     return DanswerLoggingAdapter(logger, extra=extra)
 
+def setup_logging_server_logger(
+    name: str = __name__,
+    log_level: int = get_log_level_from_str(),
+):
+    logger = logging.getLogger(name)
+    if logger.handlers:
+        return DanswerLoggingAdapter(logger)
+    logger.setLevel(log_level)
+    formatter = get_log_server_formatter()
+    handler = logging.StreamHandler()
+    handler.setLevel(log_level)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    log_levels = ["debug", "info", "notice"]
+    for level in log_levels:
+        file_name = f"{LOG_FILE_NAME}_{name}_{level}"
+        file_path = f"/app/logs/{file_name}.log"
+        file_handler = TimedRotatingFileHandler(
+            file_path,
+            when="M",
+            interval=30,
+            backupCount=10,
+        )
+        file_handler.setLevel(get_log_level_from_str(level))
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
-async def fetch_log_files() -> List[RotatingFileHandler]:
-    is_containerized = os.path.exists("/.dockerenv")
-    if not LOG_FILE_NAME or not (is_containerized or DEV_LOGGING_ENABLED):
-        return [] # maybe throw an error
-    if is_containerized:
-        logging_path = "/var/log"
-    else:
-        logging_path = "./log"
-    zip_bytes = io.BytesIO()
-    with zipfile.ZipFile(zip_bytes, mode="w", compression=zipfile.ZIP_DEFLATED) as zipped:
-        for dirname, subdirs, files in os.walk(logging_path):
-            zipped.write(dirname)
-            for filename in files:
-                zipped.write(os.path.join(dirname, filename))
-    return zip_bytes
+    logger.notice = lambda msg, *args, **kwargs: logger.log(logging.getLevelName("NOTICE"), msg, *args, **kwargs)  # type: ignore
+    return DanswerLoggingAdapter(logger)

@@ -56,6 +56,9 @@ DEV_LOGGING_ENABLED = os.environ.get("DEV_LOGGING_ENABLED", "").lower() == "true
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")
 
 # Environment variables for our logging server
-LOGGING_SERVER_HOST = os.environ.get("LOGGING_SERVER_HOST") or "localhost"
-LOGGING_SERVER_ALLOWED_HOST = os.environ.get("LOGGING_SERVER_HOST") or "0.0.0.0"
+EXTERNAL_LOGGING = os.environ.get("EXTERNAL_LOGGING_HOST") or True
+# False for docker compose
+EXTERNAL_LOGGING_USE_HTTPS = os.environ.get("EXTERNAL_LOGGING_USE_HTTPS") or False
+LOGGING_SERVER_HOST = os.environ.get("LOGGING_SERVER_HOST") or "0.0.0.0"
+LOGGING_SERVER_HOST_NAME = os.environ.get("LOGGING_SERVER_HOST_NAME") or "logs_server"
 LOGGING_SERVER_PORT = int(os.environ.get("LOGGING_SERVER_PORT") or "5000")
