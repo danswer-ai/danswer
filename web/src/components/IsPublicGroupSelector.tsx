@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FormikProps, FieldArray, ArrayHelpers, ErrorMessage } from "formik";
-import { Text } from "@tremor/react";
+import { Text, Divider } from "@tremor/react";
 import { FiUsers } from "react-icons/fi";
 import { UserGroup, User, UserRole } from "@/lib/types";
 import { useUserGroups } from "@/lib/hooks";
@@ -15,13 +15,15 @@ export type IsPublicGroupSelectorFormType = {
 export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   formikProps,
   objectName,
+  enforceGroupSelection = true,
 }: {
   formikProps: FormikProps<T>;
   objectName: string;
+  enforceGroupSelection?: boolean;
 }) => {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const isAdmin = currentUser?.role === UserRole.ADMIN;
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
 
   return (
     <div>
+      <Divider />
       {isAdmin && (
         <>
           <BooleanFormField
@@ -68,16 +71,21 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
 
       {(!formikProps.values.is_public || !isAdmin) && (
         <>
+          <div className="flex gap-x-2 items-center">
+            <div className="block font-medium text-base">
+              Assign group access for this {objectName}
+            </div>
+          </div>
           <Text className="mb-3">
-            {isAdmin ? (
+            {isAdmin || !enforceGroupSelection ? (
               <>
-                This {objectName} will be visible to the groups selected below:
+                This {objectName} will be visible/accessible by the groups
+                selected below
               </>
             ) : (
               <>
-                This {objectName} will be visible to the groups selected below
-                <br />
-                <b>curators must select one or more groups</b>:
+                Curators must select one or more groups to give access to this{" "}
+                {objectName}
               </>
             )}
           </Text>

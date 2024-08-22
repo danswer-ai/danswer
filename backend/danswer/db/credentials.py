@@ -126,9 +126,10 @@ def _relate_credential_to_user_groups__no_commit(
 def fetch_credentials(
     db_session: Session,
     user: User | None = None,
+    get_editable: bool = True,
 ) -> list[Credential]:
     stmt = select(Credential)
-    stmt = _add_user_filters(stmt, user)
+    stmt = _add_user_filters(stmt, user, get_editable=get_editable)
     results = db_session.scalars(stmt)
     return list(results.all())
 

@@ -106,7 +106,7 @@ router = APIRouter(prefix="/manage")
 
 @router.get("/admin/connector/gmail/app-credential")
 def check_google_app_gmail_credentials_exist(
-    _: User = Depends(current_admin_user),
+    _: User = Depends(current_curator_or_admin_user),
 ) -> dict[str, str]:
     try:
         return {"client_id": get_google_app_gmail_cred().web.client_id}
@@ -144,7 +144,7 @@ def delete_google_app_gmail_credentials(
 
 @router.get("/admin/connector/google-drive/app-credential")
 def check_google_app_credentials_exist(
-    _: User = Depends(current_admin_user),
+    _: User = Depends(current_curator_or_admin_user),
 ) -> dict[str, str]:
     try:
         return {"client_id": get_google_app_cred().web.client_id}
@@ -182,7 +182,7 @@ def delete_google_app_credentials(
 
 @router.get("/admin/connector/gmail/service-account-key")
 def check_google_service_gmail_account_key_exist(
-    _: User = Depends(current_admin_user),
+    _: User = Depends(current_curator_or_admin_user),
 ) -> dict[str, str]:
     try:
         return {"service_account_email": get_gmail_service_account_key().client_email}
@@ -222,7 +222,7 @@ def delete_google_service_gmail_account_key(
 
 @router.get("/admin/connector/google-drive/service-account-key")
 def check_google_service_account_key_exist(
-    _: User = Depends(current_admin_user),
+    _: User = Depends(current_curator_or_admin_user),
 ) -> dict[str, str]:
     try:
         return {"service_account_email": get_service_account_key().client_email}
@@ -263,7 +263,7 @@ def delete_google_service_account_key(
 @router.put("/admin/connector/google-drive/service-account-credential")
 def upsert_service_account_credential(
     service_account_credential_request: GoogleServiceAccountCredentialRequest,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     """Special API which allows the creation of a credential for a service account.
@@ -289,7 +289,7 @@ def upsert_service_account_credential(
 @router.put("/admin/connector/gmail/service-account-credential")
 def upsert_gmail_service_account_credential(
     service_account_credential_request: GoogleServiceAccountCredentialRequest,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     """Special API which allows the creation of a credential for a service account.

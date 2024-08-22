@@ -341,7 +341,10 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                     (!isAdmin || (!isPublic && userGroups.length > 0)) && (
                       <div>
                         <Text className="text-sm font-medium text-text-700 mb-2">
-                          Select User Groups
+                          Select User Group(s){" "}
+                          {isAdmin
+                            ? ""
+                            : "(Curators must select one or more groups)"}
                         </Text>
                         <FieldArray
                           name="groups"

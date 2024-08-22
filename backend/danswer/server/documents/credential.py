@@ -39,7 +39,11 @@ def list_credentials_admin(
     db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
     """Lists all public credentials"""
-    credentials = fetch_credentials(db_session=db_session, user=user)
+    credentials = fetch_credentials(
+        db_session=db_session,
+        user=user,
+        get_editable=False,
+    )
     return [
         CredentialSnapshot.from_credential_db_model(credential)
         for credential in credentials

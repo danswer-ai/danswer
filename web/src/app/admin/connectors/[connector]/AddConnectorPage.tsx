@@ -12,7 +12,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useFormContext } from "@/components/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { submitFiles } from "./pages/utils/files";
@@ -23,7 +23,6 @@ import CreateCredential from "@/components/credentials/actions/CreateCredential"
 import ModifyCredential from "@/components/credentials/actions/ModifyCredential";
 import { ValidSources } from "@/lib/types";
 import { Credential, credentialTemplates } from "@/lib/connectors/credentials";
-import { ConnectorBase } from "@/lib/connectors/connectors";
 import {
   ConnectionConfiguration,
   connectorConfigs,
@@ -117,7 +116,9 @@ export default function AddConnector({
   const { liveGmailCredential } = useGmailCredentials();
 
   const credentialActivated =
-    liveGDriveCredential || liveGmailCredential || currentCredential;
+    (connector === "google_drive" && liveGDriveCredential) ||
+    (connector === "gmail" && liveGmailCredential) ||
+    currentCredential;
 
   const noCredentials = credentialTemplate == null;
   if (noCredentials && 1 != formStep) {
@@ -444,7 +445,10 @@ export default function AddConnector({
             )}
             <button
               className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-              disabled={!isFormValid}
+              disabled={
+                !isFormValid ||
+                (connector == "file" && selectedFiles.length == 0)
+              }
               onClick={async () => {
                 await createConnector();
               }}
