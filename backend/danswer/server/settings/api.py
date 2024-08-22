@@ -52,6 +52,7 @@ def fetch_settings(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> UserSettings:
+    logger.info("I have successfully entered the fetch settings function")
     """Settings and notifications are stuffed into this single endpoint to reduce number of
     Postgres calls"""
     general_settings = load_settings()
