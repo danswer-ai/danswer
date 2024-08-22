@@ -77,16 +77,3 @@ export async function fetchSettingsSS() {
     return null;
   }
 }
-
-let cachedSettings: CombinedSettings | null;
-
-export async function getCombinedSettings({
-  forceRetrieval,
-}: {
-  forceRetrieval?: boolean;
-}): Promise<CombinedSettings | null> {
-  if (!cachedSettings || forceRetrieval) {
-    cachedSettings = await fetchSettingsSS();
-  }
-  return cachedSettings;
-}

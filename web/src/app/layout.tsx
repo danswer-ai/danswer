@@ -2,7 +2,7 @@ import "./globals.css";
 
 import {
   fetchEnterpriseSettingsSS,
-  getCombinedSettings,
+  fetchSettingsSS,
 } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
@@ -48,10 +48,9 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const combinedSettings = await getCombinedSettings({});
-  // Handling if combinedSettings is null
+  const combinedSettings = await fetchSettingsSS();
   if (!combinedSettings) {
-    // Here you could redirect the user, show an error, or provide default settings
+    // Just display a simple full page error if fetching fails.
     return (
       <html lang="en">
         <Head>
