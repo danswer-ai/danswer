@@ -94,6 +94,7 @@ from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
 _GMAIL_CREDENTIAL_ID_COOKIE_NAME = "gmail_credential_id"
 _GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"
 

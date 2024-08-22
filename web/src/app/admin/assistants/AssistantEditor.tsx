@@ -1044,6 +1044,7 @@ export function AssistantEditor({
                           ...formikProps,
                         }}
                         objectName="assistant"
+                        enforceGroupSelection={false}
                       />
                     )}
 

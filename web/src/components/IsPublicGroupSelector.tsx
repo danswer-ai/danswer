@@ -32,6 +32,17 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         const user = await getCurrentUser();
         if (user) {
           setCurrentUser(user);
+          formikProps.setFieldValue("is_public", user.role === UserRole.ADMIN);
+
+          // Select the only group by default if there's only one
+          if (
+            userGroups &&
+            userGroups.length === 1 &&
+            formikProps.values.groups.length === 0 &&
+            user.role !== UserRole.ADMIN
+          ) {
+            formikProps.setFieldValue("groups", [userGroups[0].id]);
+          }
         } else {
           console.error("Failed to fetch current user");
         }
@@ -42,7 +53,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
       }
     };
     fetchCurrentUser();
-  }, []);
+  }, [userGroups]); // Add userGroups as a dependency
 
   if (isLoading || userGroupsIsLoading) {
     return null; // or return a loading spinner if preferred

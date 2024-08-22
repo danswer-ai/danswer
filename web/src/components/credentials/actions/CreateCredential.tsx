@@ -238,9 +238,9 @@ export default function CreateCredential({
             ))}
             {!swapConnector && !isLoading && (
               <div className="mt-4 flex flex-col sm:flex-row justify-between items-end">
-                <div className="w-full sm:w-auto mb-4 sm:mb-0">
+                <div className="w-full sm:w-3/4 mb-4 sm:mb-0">
                   {isPaidEnterpriseFeaturesEnabled && (
-                    <>
+                    <div className="flex flex-col items-start">
                       {isAdmin && (
                         <AdvancedOptionsToggle
                           showAdvancedOptions={showAdvancedOptions}
@@ -253,17 +253,19 @@ export default function CreateCredential({
                           objectName="credential"
                         />
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
-                <CreateButton
-                  onClick={() =>
-                    handleSubmit(formikProps.values, formikProps, "create")
-                  }
-                  isSubmitting={formikProps.isSubmitting}
-                  isAdmin={isAdmin}
-                  groups={formikProps.values.groups}
-                />
+                <div className="w-full sm:w-1/4">
+                  <CreateButton
+                    onClick={() =>
+                      handleSubmit(formikProps.values, formikProps, "create")
+                    }
+                    isSubmitting={formikProps.isSubmitting}
+                    isAdmin={isAdmin}
+                    groups={formikProps.values.groups}
+                  />
+                </div>
               </div>
             )}
           </Card>

@@ -17,8 +17,6 @@ import { TokenRateLimitDisplay } from "./types";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { useEffect } from "react";
 
 type TokenRateLimitTableArgs = {
   tokenRateLimits: TokenRateLimitDisplay[];
@@ -169,27 +167,16 @@ export const GenericTokenRateLimitTable = ({
   description,
   hideHeading,
   responseMapper,
-  setPopup,
-  isAdmin,
+  isAdmin = true,
 }: {
   fetchUrl: string;
   title?: string;
   description?: string;
   hideHeading?: boolean;
   responseMapper?: (data: any) => TokenRateLimitDisplay[];
-  setPopup: (data: any) => void;
-  isAdmin: boolean;
+  isAdmin?: boolean;
 }) => {
   const { data, isLoading, error } = useSWR(fetchUrl, errorHandlingFetcher);
-
-  useEffect(() => {
-    if (error) {
-      setPopup({
-        message: `Failed to load token rate limits: ${error.message}`,
-        type: "error",
-      });
-    }
-  }, [error, setPopup]);
 
   if (isLoading) {
     return <ThreeDotsLoader />;
