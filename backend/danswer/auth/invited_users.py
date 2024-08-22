@@ -35,7 +35,8 @@ def send_user_email_invite(
     msg["From"] = current_user.email
     link = f"{WEB_DOMAIN}/auth/signup"
     # TODO: send the name of the workspace based on the whitelabelling in the frontend\
-    body = MIMEText(f"Hi!, You have been invited to join my workspace at Danswer. You can register your account here and join the Danswer workspace: {link}")
+    body = MIMEText(f"Hi!, You have been invited to join my workspace at Danswer. \
+        You can register your account here and join the Danswer workspace: {link}")
     msg.attach(body)
 
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as s:
