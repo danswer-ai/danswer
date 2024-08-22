@@ -897,6 +897,7 @@ class ChatMessage(Base):
         Integer, ForeignKey("persona.id"), nullable=True
     )
 
+    overridden_model: Mapped[str | None] = mapped_column(String, nullable=True)
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)

@@ -88,6 +88,7 @@ export interface Message {
   latestChildMessageId?: number | null;
   alternateAssistantID?: number | null;
   stackTrace?: string | null;
+  overridden_model?: string;
 }
 
 export interface BackendChatSession {
@@ -116,6 +117,7 @@ export interface BackendMessage {
   files: FileDescriptor[];
   tool_calls: ToolCallFinalResult[];
   alternate_assistant_id?: number | null;
+  overridden_model?: string;
 }
 
 export interface MessageResponseIDInfo {
