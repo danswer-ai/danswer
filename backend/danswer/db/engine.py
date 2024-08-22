@@ -99,9 +99,6 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
         # https://github.com/MagicStack/asyncpg/issues/798
         connection_string = build_connection_string()
         _ASYNC_ENGINE = create_async_engine(
-<<<<<<< HEAD
-            connection_string, pool_size=40, max_overflow=10, connect_args=connect_args
-=======
             connection_string,
             connect_args={
                 "server_settings": {"application_name": POSTGRES_APP_NAME + "_async"}
@@ -110,7 +107,6 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
             max_overflow=10,
             pool_pre_ping=POSTGRES_POOL_PRE_PING,
             pool_recycle=POSTGRES_POOL_RECYCLE,
->>>>>>> upstream/main
         )
     return _ASYNC_ENGINE
 

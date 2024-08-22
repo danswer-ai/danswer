@@ -72,7 +72,7 @@ const MODELS_SUPPORTING_IMAGES = [
   ["azure", "gpt-4o-mini"],
   ["azure", "gpt-4-vision-preview"],
   ["azure", "gpt-4-turbo"],
-  ["azure", "gpt-4-1106-vision-preview"],
+  ["azure", "gpt-4-1106-vision-preview"]
 ];
 
 export function checkLLMSupportsImageInput(provider: string, model: string) {

@@ -59,30 +59,18 @@ export default async function RootLayout({
           />
         </head>
       )}
-<<<<<<< HEAD
-      <body
-        className={`${inter.variable} font-sans text-default bg-background ${
-          // TODO: remove this once proper dark mode exists
-          process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
-          }`}
-      >
-        <SettingsProvider settings={combinedSettings}>
-          {children}
-        </SettingsProvider>
-=======
 
       <body className={`relative ${inter.variable} font-sans`}>
         <div
           className={`text-default bg-background ${
             // TODO: remove this once proper dark mode exists
             process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
-          }`}
+            }`}
         >
           <SettingsProvider settings={combinedSettings}>
             {children}
           </SettingsProvider>
         </div>
->>>>>>> upstream/main
       </body>
     </html>
   );

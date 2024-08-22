@@ -230,15 +230,6 @@ def index_doc_batch(
             for chunk in chunks_with_embeddings
         ]
 
-<<<<<<< HEAD
-    logger.debug(
-        f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
-    )
-    # A document will not be spread across different batches, so all the
-    # documents with chunks in this set, are fully represented by the chunks
-    # in this set
-    insertion_records = document_index.index(chunks=access_aware_chunks)
-=======
         logger.debug(
             f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in access_aware_chunks]}"
         )
@@ -246,7 +237,6 @@ def index_doc_batch(
         # documents with chunks in this set, are fully represented by the chunks
         # in this set
         insertion_records = document_index.index(chunks=access_aware_chunks)
->>>>>>> upstream/main
 
     successful_doc_ids = [record.document_id for record in insertion_records]
     successful_docs = [doc for doc in updatable_docs if doc.id in successful_doc_ids]
