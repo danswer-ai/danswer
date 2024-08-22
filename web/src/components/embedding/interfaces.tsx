@@ -9,10 +9,15 @@ import {
   VoyageIcon,
 } from "@/components/icons/icons";
 
-// Cloud Provider (not needed for hosted ones)
+export enum EmbeddingProvider {
+  OPENAI = "OpenAI",
+  COHERE = "Cohere",
+  VOYAGE = "Voyage",
+  GOOGLE = "Google",
+}
 
 export interface CloudEmbeddingProvider {
-  provider_type: string;
+  provider_type: EmbeddingProvider;
   api_key?: string;
   custom_config?: Record<string, string>;
   docsLink?: string;
@@ -122,7 +127,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
 
 export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
   {
-    provider_type: "Cohere",
+    provider_type: EmbeddingProvider.COHERE,
     website: "https://cohere.ai",
     icon: CohereIcon,
     docsLink:
@@ -162,7 +167,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     ],
   },
   {
-    provider_type: "OpenAI",
+    provider_type: EmbeddingProvider.OPENAI,
     website: "https://openai.com",
     icon: OpenAIIcon,
     description: "AI industry leader known for ChatGPT and DALL-E",
@@ -201,7 +206,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
   },
 
   {
-    provider_type: "Google",
+    provider_type: EmbeddingProvider.GOOGLE,
     website: "https://ai.google",
     icon: GoogleIcon,
     docsLink:
@@ -238,7 +243,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
     ],
   },
   {
-    provider_type: "Voyage",
+    provider_type: EmbeddingProvider.VOYAGE,
     website: "https://www.voyageai.com",
     icon: VoyageIcon,
     description: "Advanced NLP research startup born from Stanford AI Labs",

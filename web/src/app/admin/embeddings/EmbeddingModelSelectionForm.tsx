@@ -11,6 +11,7 @@ import {
   INVALID_OLD_MODEL,
   HostedEmbeddingModel,
   EmbeddingModelDescriptor,
+  EmbeddingProvider,
 } from "../../../components/embedding/interfaces";
 import { Connector } from "@/lib/connectors/connectors";
 import OpenEmbeddingPage from "./pages/OpenEmbeddingPage";
@@ -28,8 +29,7 @@ import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../configuration/llm/constants";
 export interface EmbeddingDetails {
   api_key: string;
   custom_config: any;
-  default_model_id?: number;
-  name: string;
+  provider_type: EmbeddingProvider;
 }
 
 export function EmbeddingModelSelection({

@@ -113,12 +113,20 @@ export function ChangeCredentialsModal({
         const errorMsg = (await testResponse.json()).detail;
         throw new Error(errorMsg);
       }
+      console.log(
+        JSON.stringify({
+          provider_type: provider.provider_type.toLowerCase().split(" ")[0],
+          api_key: apiKey,
+          is_default_provider: false,
+          is_configured: true,
+        })
+      );
 
       const updateResponse = await fetch(EMBEDDING_PROVIDERS_ADMIN_URL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          provider_type: provider.provider_type,
+          provider_type: provider.provider_type.toLowerCase().split(" ")[0],
           api_key: apiKey,
           is_default_provider: false,
           is_configured: true,

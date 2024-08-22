@@ -39,12 +39,12 @@ export default function CloudEmbeddingPage({
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
 }) {
-  function hasNameInArray(
-    arr: Array<{ name: string }>,
+  function hasProviderTypeinArray(
+    arr: Array<{ provider_type: string }>,
     searchName: string
   ): boolean {
     return arr.some(
-      (item) => item.name.toLowerCase() === searchName.toLowerCase()
+      (item) => item.provider_type.toLowerCase() === searchName.toLowerCase()
     );
   }
 
@@ -55,7 +55,10 @@ export default function CloudEmbeddingPage({
         !newUnenabledProviders.includes(model.provider_type) &&
         (newEnabledProviders.includes(model.provider_type) ||
           (embeddingProviderDetails &&
-            hasNameInArray(embeddingProviderDetails, model.provider_type))!),
+            hasProviderTypeinArray(
+              embeddingProviderDetails,
+              model.provider_type
+            ))!),
     })
   );
 

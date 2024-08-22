@@ -30,4 +30,3 @@ class CloudEmbeddingProvider(BaseModel):
 class CloudEmbeddingProviderCreationRequest(BaseModel):
     provider_type: EmbeddingProvider
     api_key: str | None = None
-    default_model_id: int | None = None

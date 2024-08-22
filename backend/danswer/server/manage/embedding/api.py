@@ -32,6 +32,7 @@ def test_embedding_configuration(
     test_llm_request: TestEmbeddingRequest,
     _: User | None = Depends(current_admin_user),
 ) -> None:
+    print(test_llm_request)
     try:
         test_model = EmbeddingModel(
             server_host=MODEL_SERVER_HOST,
@@ -91,4 +92,5 @@ def put_cloud_embedding_provider(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> CloudEmbeddingProvider:
+    print("made it within")
     return upsert_cloud_embedding_provider(db_session, provider)

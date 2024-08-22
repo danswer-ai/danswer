@@ -32,7 +32,6 @@ export function ProviderCreationModal({
     custom_config: existingProvider?.custom_config
       ? Object.entries(existingProvider.custom_config)
       : [],
-    default_model_name: "",
     model_id: 0,
   };
 
@@ -75,11 +74,16 @@ export function ProviderCreationModal({
     values: any,
     { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }
   ) => {
+    console.log("SUBMITTING");
     setIsProcessing(true);
     setErrorMsg("");
 
     try {
+      console.log("GATHERING CONFIG");
+
       const customConfig = Object.fromEntries(values.custom_config);
+      // console.log("1")
+      // console.log(values.provider_type.toLowerCase().split(" ")[0])
 
       const initialResponse = await fetch(
         "/api/admin/embedding/test-embedding",
@@ -87,11 +91,12 @@ export function ProviderCreationModal({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            provider: values.name.toLowerCase().split(" ")[0],
+            provider_type: values.provider_type.toLowerCase().split(" ")[0],
             api_key: values.api_key,
           }),
         }
       );
+      console.log("2");
 
       if (!initialResponse.ok) {
         const errorMsg = (await initialResponse.json()).detail;
@@ -106,6 +111,7 @@ export function ProviderCreationModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
+          provider_type: values.provider_type.toLowerCase().split(" ")[0],
           custom_config: customConfig,
           is_default_provider: false,
           is_configured: true,
@@ -121,6 +127,7 @@ export function ProviderCreationModal({
 
       onConfirm();
     } catch (error: unknown) {
+      console.log("HIII");
       if (error instanceof Error) {
         setErrorMsg(error.message);
       } else {
