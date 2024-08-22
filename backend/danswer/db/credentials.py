@@ -29,6 +29,17 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+# The credentials for these sources are not real so
+# permissions are not enforced for them
+CREDENTIAL_PERMISSIONS_TO_IGNORE = {
+    DocumentSource.FILE,
+    DocumentSource.WEB,
+    DocumentSource.NOT_APPLICABLE,
+    DocumentSource.GOOGLE_SITES,
+    DocumentSource.WIKIPEDIA,
+    DocumentSource.MEDIAWIKI,
+}
+
 
 def _add_user_filters(
     stmt: Select,
@@ -45,6 +56,7 @@ def _add_user_filters(
                 or_(
                     Credential.user_id.is_(None),
                     Credential.admin_public == True,  # noqa: E712
+                    Credential.source.in_(CREDENTIAL_PERMISSIONS_TO_IGNORE),
                 )
             )
         return stmt
@@ -57,6 +69,7 @@ def _add_user_filters(
                 Credential.user_id == user.id,
                 Credential.user_id.is_(None),
                 Credential.admin_public == True,  # noqa: E712
+                Credential.source.in_(CREDENTIAL_PERMISSIONS_TO_IGNORE),
             )
         )
     if user.role == UserRole.BASIC:
@@ -103,6 +116,8 @@ def _add_user_filters(
     else:
         where_clause |= Credential.curator_public == True  # noqa: E712
         where_clause |= Credential.user_id == user.id  # noqa: E712
+
+    where_clause |= Credential.source.in_(CREDENTIAL_PERMISSIONS_TO_IGNORE)
 
     return stmt.where(where_clause)
 

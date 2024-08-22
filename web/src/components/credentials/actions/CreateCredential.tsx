@@ -193,7 +193,7 @@ export default function CreateCredential({
       initialValues={
         {
           name: "",
-          is_public: true,
+          is_public: isAdmin,
           groups: [],
         } as formType
       }

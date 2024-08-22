@@ -553,6 +553,17 @@ def create_connector_with_mock_credential(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
+    if user and user.role != UserRole.ADMIN:
+        if connector_data.is_public:
+            raise HTTPException(
+                status_code=401,
+                detail="User does not have permission to create public credentials",
+            )
+        if not connector_data.groups:
+            raise HTTPException(
+                status_code=401,
+                detail="Curators must specify 1+ groups",
+            )
     try:
         _validate_connector_allowed(connector_data.source)
         connector_response = create_connector(

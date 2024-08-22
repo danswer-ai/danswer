@@ -64,7 +64,7 @@ export function CredentialForm<T extends Yup.AnyObject>({
           submitCredential<T>({
             credential_json: values,
             admin_public: true,
-            curator_public: true,
+            curator_public: false,
             groups: [],
             source: source,
           }).then(({ message, isSuccess }) => {

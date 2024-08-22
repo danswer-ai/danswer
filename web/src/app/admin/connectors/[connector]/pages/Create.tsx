@@ -49,7 +49,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   const { setAllowAdvanced } = useFormContext();
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -57,6 +57,11 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
         const user = await getCurrentUser();
         if (user) {
           setCurrentUser(user);
+          const userIsAdmin = user.role === UserRole.ADMIN;
+          setIsAdmin(userIsAdmin);
+          if (!userIsAdmin) {
+            setIsPublic(false);
+          }
         } else {
           console.error("Failed to fetch current user");
         }
@@ -65,7 +70,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
       }
     };
     fetchCurrentUser();
-  }, []);
+  }, [setIsPublic]);
 
   const initialValues = {
     name: initialName || "",

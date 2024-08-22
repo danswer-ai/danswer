@@ -9,6 +9,7 @@ from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.db.credentials import alter_credential
 from danswer.db.credentials import create_credential
+from danswer.db.credentials import CREDENTIAL_PERMISSIONS_TO_IGNORE
 from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
@@ -28,6 +29,10 @@ from danswer.server.models import StatusResponse
 
 
 router = APIRouter(prefix="/manage")
+
+
+def _ignore_credential_permissions(source: DocumentSource) -> bool:
+    return source in CREDENTIAL_PERMISSIONS_TO_IGNORE
 
 
 """Admin-only endpoints"""
@@ -122,7 +127,11 @@ def create_credential_from_model(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
-    if user and user.role != UserRole.ADMIN:
+    if (
+        user
+        and user.role != UserRole.ADMIN
+        and not _ignore_credential_permissions(credential_info.source)
+    ):
         if credential_info.curator_public:
             raise HTTPException(
                 status_code=401,

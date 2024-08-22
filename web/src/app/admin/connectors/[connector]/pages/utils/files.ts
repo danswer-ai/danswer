@@ -63,7 +63,8 @@ export const submitFiles = async (
     credential_json: {},
     admin_public: true,
     source: "file",
-    curator_public: true,
+    curator_public: isPublic,
+    groups: groups,
     name,
   });
   if (!createCredentialResponse.ok) {
