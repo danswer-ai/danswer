@@ -1206,6 +1206,8 @@ class Persona(Base):
     description: Mapped[str] = mapped_column(String)
     # Number of chunks to pass to the LLM for generation.
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
+    chunks_above: Mapped[int] = mapped_column(Integer)
+    chunks_below: Mapped[int] = mapped_column(Integer)
     # Pass every chunk through LLM for evaluation, fairly expensive
     # Can be turned off globally by admin, in which case, this setting is ignored
     llm_relevance_filter: Mapped[bool] = mapped_column(Boolean)
