@@ -1,4 +1,5 @@
 import os
+from typing import cast
 
 import requests
 from pydantic import BaseModel
@@ -7,13 +8,16 @@ from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
 
 
-class LLM(BaseModel):
+class LLMProvider(BaseModel):
     provider: str
     api_key: str
     default_model_name: str
     api_base: str | None = None
     api_version: str | None = None
     is_default: bool = True
+
+    # only populated after creation
+    _provider_id: int | None = None
 
     def create(self) -> int:
         llm_provider = LLMProviderUpsertRequest(
@@ -37,16 +41,18 @@ class LLM(BaseModel):
         )
         response.raise_for_status()
 
-        return response.json()["id"]
+        self._provider_id = cast(int, response.json()["id"])
+        return self._provider_id
 
-    @staticmethod
-    def delete(provider_id: int) -> None:
-        response = requests.delete(f"{API_SERVER_URL}/admin/llm/provider/{provider_id}")
+    def delete(self) -> None:
+        response = requests.delete(
+            f"{API_SERVER_URL}/admin/llm/provider/{self._provider_id}"
+        )
         response.raise_for_status()
 
 
-def seed_default_openai_provider() -> LLM:
-    llm = LLM(
+def seed_default_openai_provider() -> LLMProvider:
+    llm = LLMProvider(
         provider="openai",
         default_model_name="gpt-4o-mini",
         api_key=os.environ["OPENAI_API_KEY"],

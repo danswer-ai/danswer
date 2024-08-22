@@ -32,4 +32,5 @@ def test_send_message_simple_with_history(reset: None) -> None:
         found_doc = next(
             (x for x in response_json["simple_search_docs"] if x["id"] == doc.id), None
         )
+        assert found_doc
         assert found_doc["metadata"]["document_id"] == doc.id
