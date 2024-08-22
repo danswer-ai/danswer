@@ -25,7 +25,7 @@ def upgrade() -> None:
     )
 
     # Update provider_type with existing name values
-    op.execute("UPDATE embedding_provider SET provider_type = name")
+    op.execute("UPDATE embedding_provider SET provider_type = UPPER(name)")
 
     # Make provider_type not nullable
     op.alter_column("embedding_provider", "provider_type", nullable=False)
@@ -53,10 +53,10 @@ def upgrade() -> None:
     op.execute(
         """
         UPDATE embedding_model
-        SET provider_type = LOWER(
-            (SELECT provider_type
+        SET provider_type = (
+            SELECT provider_type
             FROM embedding_provider
-            WHERE embedding_provider.id = embedding_model.cloud_provider_id)
+            WHERE embedding_provider.id = embedding_model.cloud_provider_id
         )
     """
     )
