@@ -10,6 +10,8 @@ from danswer.configs.app_configs import SMTP_PORT
 from danswer.configs.app_configs import SMTP_SERVER
 from danswer.configs.app_configs import SMTP_USER
 
+SUBJECT_MATCH_PATTERN = r"\*\*Subject\*\*: (.*)"
+
 
 class EmailService:
     """ Main class to handle plotting operations. """
@@ -29,11 +31,14 @@ class EmailService:
         try:
             subject = self.extract_subject(email_content) or "Sent From ComposeEmailTool"
 
+            # Remove the subject line from the email content
+            email_content_without_subject = re.sub(SUBJECT_MATCH_PATTERN, "", email_content)
+
             msg = MIMEMultipart("alternative")
             msg['Subject'] = subject
 
             # Create the HTML body and set the content-type as 'text/html'
-            html = markdown.markdown(email_content)
+            html = markdown.markdown(email_content_without_subject)
             html_part = MIMEText(html, 'html')
             msg.attach(html_part)
 
@@ -57,8 +62,7 @@ class EmailService:
 
     @staticmethod
     def extract_subject(input_text):
-        subject_match = re.search(r"\*\*Subject\*\*: (.*)", input_text)
-        # match = re.search(r"(?i)(?:Subject:|\*\*Subject\*\*):\s+(.*)", text)
+        subject_match = re.search(SUBJECT_MATCH_PATTERN, input_text)
 
         subject = ""
         if subject_match:
