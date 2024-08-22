@@ -208,7 +208,7 @@ def _run_indexing(
                 # contents still need to be initially pulled.
                 db_session.refresh(db_connector)
                 if (
-                    db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
+                    not db_cc_pair.status.is_active()
                     and db_embedding_model.status != IndexModelStatus.FUTURE
                 ):
                     # let the `except` block handle this
@@ -297,7 +297,7 @@ def _run_indexing(
             # to give better clarity in the UI, as the next run will never happen.
             if (
                 ind == 0
-                or db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
+                or not db_cc_pair.status.is_active()
                 or index_attempt.status != IndexingStatus.IN_PROGRESS
             ):
                 mark_attempt_failed(

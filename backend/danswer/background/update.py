@@ -96,7 +96,7 @@ def _should_create_new_indexing(
     # If the connector is paused or is the ingestion API, don't index
     # NOTE: during an embedding model switch over, the following logic
     # is bypassed by the above check for a future model
-    if cc_pair.status == ConnectorCredentialPairStatus.PAUSED or connector.id == 0:
+    if cc_pair.status != ConnectorCredentialPairStatus.ACTIVE or connector.id == 0:
         return False
 
     if not last_index:
