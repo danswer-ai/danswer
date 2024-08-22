@@ -103,7 +103,7 @@ def list_all_users(
 
     users = [
         user
-        for user in list_users(db_session, q=q, user=user)
+        for user in list_users(db_session, email_filter_string=q, user=user)
         if not is_api_key_email_address(user.email)
     ]
     accepted_emails = {user.email for user in users}

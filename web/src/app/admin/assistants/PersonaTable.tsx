@@ -30,6 +30,22 @@ function PersonaTypeDisplay({ persona }: { persona: Persona }) {
   return <Text>Personal {persona.owner && <>({persona.owner.email})</>}</Text>;
 }
 
+const togglePersonaVisibility = async (
+  personaId: number,
+  isVisible: boolean
+) => {
+  const response = await fetch(`/api/admin/persona/${personaId}/visible`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      is_visible: !isVisible,
+    }),
+  });
+  return response;
+};
+
 export function PersonasTable({
   allPersonas,
   editablePersonas,
@@ -151,17 +167,9 @@ export function PersonasTable({
                 key="is_visible"
                 onClick={async () => {
                   if (isEditable) {
-                    const response = await fetch(
-                      `/api/admin/persona/${persona.id}/visible`,
-                      {
-                        method: "PATCH",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                          is_visible: !persona.is_visible,
-                        }),
-                      }
+                    const response = await togglePersonaVisibility(
+                      persona.id,
+                      persona.is_visible
                     );
                     if (response.ok) {
                       router.refresh();

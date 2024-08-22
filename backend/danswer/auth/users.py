@@ -67,7 +67,7 @@ from danswer.utils.variable_functionality import fetch_versioned_implementation
 logger = setup_logger()
 
 
-def validate_curator_request(groups: list[str], is_public: bool) -> None:
+def validate_curator_request(groups: list | None, is_public: bool) -> None:
     if is_public:
         detail = "User does not have permission to create public credentials"
         logger.error(detail)
@@ -418,14 +418,14 @@ async def current_curator_or_admin_user(
     if DISABLE_AUTH:
         return None
 
-    is_global_curator = (
-        user
-        and hasattr(user, "role")
-        and (user.role == UserRole.GLOBAL_CURATOR or user.role == UserRole.CURATOR)
-    )
-    is_admin = user and hasattr(user, "role") and user.role == UserRole.ADMIN
+    if not user or not hasattr(user, "role"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User is not authenticated or lacks role information.",
+        )
 
-    if not is_global_curator and not is_admin:
+    allowed_roles = {UserRole.GLOBAL_CURATOR, UserRole.CURATOR, UserRole.ADMIN}
+    if user.role not in allowed_roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. User is not a curator or admin.",

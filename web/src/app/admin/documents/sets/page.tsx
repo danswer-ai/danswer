@@ -100,6 +100,7 @@ interface DocumentFeedbackTableProps {
   refresh: () => void;
   refreshEditable: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
+  editableDocumentSets: DocumentSet[];
 }
 
 const DocumentSetTable = ({
@@ -108,7 +109,7 @@ const DocumentSetTable = ({
   refresh,
   refreshEditable,
   setPopup,
-}: DocumentFeedbackTableProps & { editableDocumentSets: DocumentSet[] }) => {
+}: DocumentFeedbackTableProps) => {
   const [page, setPage] = useState(1);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const isAdmin = currentUser?.role === UserRole.ADMIN;

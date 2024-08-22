@@ -5,6 +5,16 @@ from fastapi_users import schemas
 
 
 class UserRole(str, Enum):
+    """
+    User roles
+    - Basic can't perform any admin actions
+    - Admin can perform all admin actions
+    - Curator can perform admin actions for
+        groups they are curators of
+    - Global Curator can perform admin actions
+        for all groups they are a member of
+    """
+
     BASIC = "basic"
     ADMIN = "admin"
     CURATOR = "curator"

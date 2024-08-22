@@ -136,7 +136,10 @@ def create_credential_from_model(
         and user.role != UserRole.ADMIN
         and not _ignore_credential_permissions(credential_info.source)
     ):
-        validate_curator_request(credential_info.groups, credential_info.curator_public)
+        validate_curator_request(
+            groups=credential_info.groups,
+            is_public=credential_info.curator_public,
+        )
 
     credential = create_credential(credential_info, user, db_session)
     return ObjectCreationIdResponse(

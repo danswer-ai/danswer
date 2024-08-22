@@ -10,14 +10,14 @@ from danswer.db.models import UserRole
 
 
 def list_users(
-    db_session: Session, q: str = "", user: User | None = None
+    db_session: Session, email_filter_string: str = "", user: User | None = None
 ) -> Sequence[User]:
     """List all users. No pagination as of now, as the # of users
     is assumed to be relatively small (<< 1 million)"""
     stmt = select(User)
 
-    if q:
-        stmt = stmt.where(User.email.ilike(f"%{q}%"))  # type: ignore
+    if email_filter_string:
+        stmt = stmt.where(User.email.ilike(f"%{email_filter_string}%"))  # type: ignore
 
     if user and user.role != UserRole.ADMIN:
         stmt = stmt.join(User__UserGroup)
