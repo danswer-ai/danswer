@@ -118,7 +118,7 @@ def update_chat_session_model(
         user_id=user.id if user is not None else None,
         db_session=db_session,
     )
-    chat_session.current_alternate_model = update_thread_req.new_alternate_model
+    chat_session.current_alternate_model = update_thread_req.new_overridden_model
 
     db_session.add(chat_session)
     db_session.commit()

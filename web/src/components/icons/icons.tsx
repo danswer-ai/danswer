@@ -772,7 +772,7 @@ export const StarFeedback = ({
         fill="none"
         stroke="currentColor"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         stroke-width="1.5"
         d="m12.495 18.587l4.092 2.15a1.044 1.044 0 0 0 1.514-1.106l-.783-4.552a1.045 1.045 0 0 1 .303-.929l3.31-3.226a1.043 1.043 0 0 0-.575-1.785l-4.572-.657A1.044 1.044 0 0 1 15 7.907l-2.088-4.175a1.044 1.044 0 0 0-1.88 0L8.947 7.907a1.044 1.044 0 0 1-.783.575l-4.51.657a1.044 1.044 0 0 0-.584 1.785l3.309 3.226a1.044 1.044 0 0 1 .303.93l-.783 4.55a1.044 1.044 0 0 0 1.513 1.107l4.093-2.15a1.043 1.043 0 0 1 .991 0"
       />
@@ -797,7 +797,7 @@ export const DislikeFeedback = ({
         fill="none"
         stroke="currentColor"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         stroke-width="1.5"
       >
         <path d="M5.75 2.75H4.568c-.98 0-1.775.795-1.775 1.776v8.284c0 .98.795 1.775 1.775 1.775h1.184c.98 0 1.775-.794 1.775-1.775V4.526c0-.98-.795-1.776-1.775-1.776" />
@@ -824,7 +824,7 @@ export const LikeFeedback = ({
         fill="none"
         stroke="currentColor"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         stroke-width="1.5"
       >
         <path d="M5.75 9.415H4.568c-.98 0-1.775.794-1.775 1.775v8.284c0 .98.795 1.776 1.775 1.776h1.184c.98 0 1.775-.795 1.775-1.776V11.19c0-.98-.795-1.775-1.775-1.775" />
@@ -2603,7 +2603,7 @@ export const SwapIcon = ({
         fill="none"
         stroke="currentColor"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         stroke-width="1.5"
       >
         <path d="M3.53 11.47v2.118a4.235 4.235 0 0 0 4.235 4.236H20.47M3.53 6.176h12.705a4.235 4.235 0 0 1 4.236 4.236v2.117" />
@@ -2630,7 +2630,7 @@ export const ClosedBookIcon = ({
         fill="none"
         stroke="currentColor"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         d="M12.5 13.54H3a1.5 1.5 0 0 1 0-3h8.5a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H3A1.5 1.5 0 0 0 1.5 2v10m10-1.46v3"
       />
     </svg>
@@ -2654,7 +2654,7 @@ export const PinIcon = ({
         fill="none"
         stroke="currentColor"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         stroke-width="1.5"
         d="m17.942 6.076l2.442 2.442a1.22 1.22 0 0 1-.147 1.855l-1.757.232a1.697 1.697 0 0 0-.94.452c-.72.696-1.453 1.428-2.674 2.637c-.21.212-.358.478-.427.769l-.94 3.772a1.22 1.22 0 0 1-1.978.379l-3.04-3.052l-3.052-3.04a1.221 1.221 0 0 1 .379-1.978l3.747-.964a1.8 1.8 0 0 0 .77-.44c1.379-1.355 1.88-1.855 2.66-2.698c.233-.25.383-.565.428-.903l.232-1.783a1.221 1.221 0 0 1 1.856-.146zm-9.51 9.498L3.256 20.75"
       />
@@ -2679,7 +2679,7 @@ export const TwoRightArrowIcons = ({
         fill="none"
         stroke="currentColor"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
         stroke-width="1.5"
         d="m5.36 19l5.763-5.763a1.738 1.738 0 0 0 0-2.474L5.36 5m7 14l5.763-5.763a1.738 1.738 0 0 0 0-2.474L12.36 5"
       />

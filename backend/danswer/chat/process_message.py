@@ -349,7 +349,7 @@ def stream_chat_message_objects(
 
         if new_msg_req.regenerate:
             final_msg, history_msgs = create_chat_chain(
-                parent_id=parent_id,
+                stop_at_message_id=parent_id,
                 chat_session_id=chat_session_id,
                 db_session=db_session,
             )
@@ -474,16 +474,17 @@ def stream_chat_message_objects(
             reserved_assistant_message_id=reserved_message_id,
         )
 
-        alternate_model = (
+        overridden_model = (
             new_msg_req.llm_override.model_version if new_msg_req.llm_override else None
         )
+
         # Cannot determine these without the LLM step or breaking out early
         partial_response = partial(
             create_new_chat_message,
             chat_session_id=chat_session_id,
             parent_message=final_msg,
             prompt_id=prompt_id,
-            alternate_model=alternate_model,
+            overridden_model=overridden_model,
             # message=,
             # rephrased_query=,
             # token_count=,

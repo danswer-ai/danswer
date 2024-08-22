@@ -24,7 +24,6 @@ export function RegenerateDropdown({
   onSelect,
   side,
   maxHeight,
-  gptBox,
   alternate,
 }: {
   alternate?: string;
@@ -34,7 +33,6 @@ export function RegenerateDropdown({
   includeDefault?: boolean;
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
-  gptBox?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -110,12 +108,12 @@ export function RegenerateDropdown({
 export default function RegenerateOption({
   selectedAssistant,
   regenerate,
-  alternateModel,
+  overriddenModel,
   onHoverChange,
 }: {
   selectedAssistant: Persona;
   regenerate: (modelOverRide: LlmOverride) => Promise<void>;
-  alternateModel?: string;
+  overriddenModel?: string;
   onHoverChange: (isHovered: boolean) => void;
 }) {
   const llmOverrideManager = useLlmOverride();
@@ -167,7 +165,7 @@ export default function RegenerateOption({
       onMouseLeave={() => onHoverChange(false)}
     >
       <RegenerateDropdown
-        alternate={alternateModel}
+        alternate={overriddenModel}
         options={llmOptions}
         selected={currentModelName}
         onSelect={(value) => {
