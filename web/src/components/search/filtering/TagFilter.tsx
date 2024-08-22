@@ -96,48 +96,6 @@ export function TagFilter({
           </div>
         </div>
       )}
-      {/* {tagOptionsAreVisible && (
-        <div className="absolute top-0 right-0 transform translate-x-[105%] z-40">
-          <div
-            ref={popupRef}
-            className="p-2 border border-border rounded shadow-lg w-72 bg-background"
-          >
-            <div className="flex border-b border-border font-medium pb-1 text-xs mb-2">
-              <FiTag className="mr-1 my-auto" />
-              Tags
-            </div>
-            <div className="flex flex-wrap gap-x-1 gap-y-1">
-              {filteredTags.length > 0 ? (
-                filteredTags.map((tag) => (
-                  <div
-                    key={tag.tag_key + tag.tag_value}
-                    onClick={() => onSelectTag(tag)}
-                    className={`
-                    text-sm 
-                    max-w-full
-                    border 
-                    border-border 
-                    py-0.5 
-                    px-2 
-                    rounded 
-                    cursor-pointer 
-                    bg-background 
-                    hover:bg-hover
-                    ${selectedTags.includes(tag) ? "bg-hover" : ""}
-                  `}
-                  >
-                    {tag.tag_key}
-                    <b>=</b>
-                    {tag.tag_value}
-                  </div>
-                ))
-              ) : (
-                <div className="text-sm px-2 py-2">No matching tags found</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )} */}
     </div>
   );
 }

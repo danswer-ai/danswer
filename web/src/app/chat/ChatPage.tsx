@@ -566,17 +566,6 @@ export function ChatPage({
     number | null
   >(null);
 
-  /* const adjustDocumentSidebarWidth = () => {
-    if (masterFlexboxRef.current && document.documentElement.clientWidth) {
-      if (document.documentElement.clientWidth > 1700) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1460);
-      } else if (document.documentElement.clientWidth > 1420) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1060);
-      } else {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 960);
-      }
-    }
-  }; */
   const adjustDocumentSidebarWidth = () => {
     if (masterFlexboxRef.current && document.documentElement.clientWidth) {
       if (document.documentElement.clientWidth > 1700) {

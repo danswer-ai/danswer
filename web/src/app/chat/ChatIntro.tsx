@@ -26,14 +26,6 @@ export function ChatIntro({
                 <span className="h1-bg">Hi, I am {livePersona?.name},</span>
                 <span className="h1-bg">How can I help you today?</span>
               </h1>
-              {/* <div className="m-auto mt-4 text-3xl font-bold text-strong w-fit">
-                {livePersona?.name || "How can I help you today?"}
-              </div>
-              {livePersona && (
-                <div className="px-6 mt-1 text-center">
-                  {livePersona.description}
-                </div>
-              )} */}
             </div>
           </div>
 

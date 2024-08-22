@@ -231,18 +231,6 @@ export const SearchSection = ({
   return (
     <div className="relative flex gap-16 lg:gap-14 xl:gap-10 2xl:gap-20 h-full lg:pl-8 xl:pl-0 ml-auto">
       <div className="w-full flex flex-col gap-5">
-        {/* {personas.length > 0 ? (
-          <div className="flex mb-2 w-48">
-            <PersonaSelector
-              personas={personas}
-              selectedPersonaId={selectedPersona}
-              onPersonaChange={(persona) => setSelectedPersona(persona.id)}
-            />
-          </div>
-        ) : (
-          <div className="pt-3" />
-        )} */}
-
         <div className="flex items-center gap-2 relative">
           <SearchBar
             query={query}
@@ -251,7 +239,7 @@ export const SearchSection = ({
               setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
               await onSearch({ offset: 0 });
             }}
-          ></SearchBar>
+          />
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="lg:hidden">
