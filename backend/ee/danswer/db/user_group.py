@@ -274,6 +274,9 @@ def update_user_curator_relationship(
     user_group_id: int,
     set_curator_request: SetCuratorRequest,
 ) -> None:
+    user = fetch_user_by_id(db_session, set_curator_request.user_id)
+    if not user:
+        raise ValueError(f"User with id '{set_curator_request.user_id}' not found")
     requested_user_groups = fetch_user_groups_for_user(
         db_session=db_session,
         user_id=set_curator_request.user_id,
@@ -282,10 +285,7 @@ def update_user_curator_relationship(
 
     group_ids = [group.id for group in requested_user_groups]
     if user_group_id not in group_ids:
-        raise ValueError(
-            f"User with id '{set_curator_request.user_id}' not found or "
-            f"group id '{user_group_id}' not in user's groups"
-        )
+        raise ValueError(f"user is not in group '{user_group_id}'")
 
     relationship_to_update = (
         db_session.query(User__UserGroup)
@@ -306,14 +306,13 @@ def update_user_curator_relationship(
         )
         db_session.add(relationship_to_update)
 
-    user = fetch_user_by_id(db_session, set_curator_request.user_id)
     _validate_curator_status__no_commit(db_session, [user])
     db_session.commit()
 
 
 def update_user_group(
     db_session: Session,
-    user: User,
+    user: User | None,
     user_group_id: int,
     user_group_update: UserGroupUpdate,
 ) -> UserGroup:
@@ -329,7 +328,9 @@ def update_user_group(
     added_user_ids = list(updated_user_ids - current_user_ids)
     removed_user_ids = list(current_user_ids - updated_user_ids)
 
-    if (removed_user_ids or added_user_ids) and user.role != UserRole.ADMIN:
+    if (removed_user_ids or added_user_ids) and (
+        not user or user.role != UserRole.ADMIN
+    ):
         raise ValueError("Only admins can add or remove users from user groups")
 
     if removed_user_ids:

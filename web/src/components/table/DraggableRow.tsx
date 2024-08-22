@@ -7,11 +7,11 @@ import { Row } from "./interfaces";
 export function DraggableRow({
   row,
   forceDragging,
-  isAdmin,
+  isAdmin = true,
 }: {
   row: Row;
   forceDragging?: boolean;
-  isAdmin: boolean;
+  isAdmin?: boolean;
 }) {
   const {
     attributes,

@@ -92,6 +92,27 @@ export default function CreateCredential({
   refresh?: () => void;
 }) {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+        } else {
+          console.error("Failed to fetch current user");
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   const handleSubmit = async (
     values: formType,
@@ -163,32 +184,9 @@ export default function CreateCredential({
     return <GDriveMain />;
   }
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const isAdmin = currentUser?.role === UserRole.ADMIN;
-
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
-
   const credentialTemplate: dictionaryType = credentialTemplates[sourceType];
   const validationSchema = createValidationSchema(credentialTemplate);
-
-  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   return (
     <Formik
