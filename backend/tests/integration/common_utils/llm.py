@@ -3,6 +3,7 @@ from typing import cast
 
 import requests
 from pydantic import BaseModel
+from pydantic import PrivateAttr
 
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
@@ -17,7 +18,7 @@ class LLMProvider(BaseModel):
     is_default: bool = True
 
     # only populated after creation
-    _provider_id: int | None = None
+    _provider_id: int | None = PrivateAttr()
 
     def create(self) -> int:
         llm_provider = LLMProviderUpsertRequest(
