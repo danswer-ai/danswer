@@ -2,7 +2,7 @@ import "./globals.css";
 
 import {
   fetchEnterpriseSettingsSS,
-  getCombinedSettings,
+  fetchSettingsSS,
 } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
@@ -48,7 +48,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const combinedSettings = await getCombinedSettings();
+  const combinedSettings = await fetchSettingsSS();
 
   return (
     <html lang="en">

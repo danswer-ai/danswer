@@ -50,9 +50,3 @@ export async function fetchSettingsSS() {
 
   return combinedSettings;
 }
-
-let cachedSettings: CombinedSettings;
-
-export async function getCombinedSettings(): Promise<CombinedSettings> {
-  return await fetchSettingsSS();
-}
