@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session_context_manager
-from tests.integration.common.reset import reset_all
-from tests.integration.common.vespa import TestVespaClient
+from tests.integration.common_utils.reset import reset_all
+from tests.integration.common_utils.vespa import TestVespaClient
 
 
 @pytest.fixture

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
 from danswer.db.enums import ConnectorCredentialPairStatus
-from tests.integration.common.constants import API_SERVER_URL
+from tests.integration.common_utils.constants import API_SERVER_URL
 
 
 class ConnectorCreationDetails(BaseModel):

@@ -4,7 +4,7 @@ import requests
 
 from ee.danswer.server.user_group.models import UserGroup
 from ee.danswer.server.user_group.models import UserGroupCreate
-from tests.integration.common.constants import API_SERVER_URL
+from tests.integration.common_utils.constants import API_SERVER_URL
 
 
 class UserGroupClient:
