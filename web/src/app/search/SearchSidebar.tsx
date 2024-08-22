@@ -58,7 +58,7 @@ export const SearchSidebar = ({
   let opacityClass = "opacity-100";
 
   if (isLgScreen) {
-    opacityClass = isExpanded ? "lg:opacity-0" : "lg:opacity-100 delay-200";
+    opacityClass = isExpanded ? "lg:opacity-100 delay-200" : "lg:opacity-0";
   } else {
     opacityClass = openSidebar
       ? "opacity-100 delay-200"
@@ -80,8 +80,8 @@ export const SearchSidebar = ({
             w-full overflow-hidden lg:overflow-visible
             ${
               isExpanded
-                ? "lg:w-0 border-none"
-                : "lg:w-sidebar border-r border-border"
+                ? "lg:w-sidebar border-r border-border"
+                : "lg:w-0 border-none"
             }
             `}
         id="chat-sidebar"

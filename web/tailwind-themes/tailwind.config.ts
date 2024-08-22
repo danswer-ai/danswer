@@ -18,6 +18,9 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)"],
+      },
       colors: {
         input: "hsl(var(--input))",
         "input-colored": "#8DBAFF",
@@ -138,6 +141,7 @@ const config = {
         md: "10px",
         lg: "12px",
         xl: "16px",
+        "2xl": "20px",
         pill: "999px",
         circle: "50%",
       },
@@ -154,9 +158,6 @@ const config = {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-      },
-      fontFamily: {
-        sans: ["var(--font-sans)"],
       },
       width: {
         sidebar: "300px",

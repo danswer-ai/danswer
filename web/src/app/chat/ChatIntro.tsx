@@ -2,29 +2,8 @@ import { getSourceMetadataForSources } from "@/lib/sources";
 import { ValidSources } from "@/lib/types";
 import { Persona } from "../admin/assistants/interfaces";
 import { HoverPopup } from "@/components/HoverPopup";
-import { useState } from "react";
-import { LuChevronsLeftRight } from "react-icons/lu";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Bookmark, Info } from "lucide-react";
-import { StarterMessage } from "./StarterMessage";
-
-const MAX_PERSONAS_TO_DISPLAY = 4;
-
-function HelperItemDisplay({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="px-4 py-2 border rounded cursor-pointer hover:bg-hover-light border-border">
-      <div className="flex text-lg font-bold text-emphasis">{title}</div>
-      <div className="text-sm">{description}</div>
-    </div>
-  );
-}
 
 export function ChatIntro({
   availableSources,
@@ -37,8 +16,6 @@ export function ChatIntro({
 }) {
   const availableSourceMetadata = getSourceMetadataForSources(availableSources);
 
-  const [displaySources, setDisplaySources] = useState(false);
-
   return (
     <>
       <div className="flex justify-center w-full py-20">
@@ -49,14 +26,6 @@ export function ChatIntro({
                 <span className="h1-bg">Hi, I am {livePersona?.name},</span>
                 <span className="h1-bg">How can I help you today?</span>
               </h1>
-              {/* <div className="m-auto mt-4 text-3xl font-bold text-strong w-fit">
-                {livePersona?.name || "How can I help you today?"}
-              </div>
-              {livePersona && (
-                <div className="px-6 mt-1 text-center">
-                  {livePersona.description}
-                </div>
-              )} */}
             </div>
           </div>
 

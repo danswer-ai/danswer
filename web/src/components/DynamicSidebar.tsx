@@ -8,11 +8,11 @@ import { User } from "@/lib/types";
 interface SidebarProps {
   user?: User | null;
   isSearch?: boolean;
-  openSidebar: boolean;
-  toggleLeftSideBar: () => void;
-  isExpanded: boolean;
-  toggleWidth: () => void;
-  children: React.ReactNode;
+  openSidebar?: boolean;
+  toggleLeftSideBar?: () => void;
+  isExpanded?: boolean;
+  toggleWidth?: () => void;
+  children?: React.ReactNode;
 }
 
 export function DynamicSidebar({
@@ -56,9 +56,9 @@ export function DynamicSidebar({
             className="absolute bottom-1/2 -translate-y-1/2 border rounded-r py-2 transition-all ease-in-out duration-500 border-l-0 z-modal left-full"
           >
             {isExpanded ? (
-              <ChevronRight size={16} />
-            ) : (
               <ChevronLeft size={16} />
+            ) : (
+              <ChevronRight size={16} />
             )}
           </button>
         </div>

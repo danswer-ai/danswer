@@ -569,11 +569,11 @@ export function ChatPage({
   const adjustDocumentSidebarWidth = () => {
     if (masterFlexboxRef.current && document.documentElement.clientWidth) {
       if (document.documentElement.clientWidth > 1700) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1460);
+        setMaxDocumentSidebarWidth(450);
       } else if (document.documentElement.clientWidth > 1420) {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 1060);
+        setMaxDocumentSidebarWidth(350);
       } else {
-        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 960);
+        setMaxDocumentSidebarWidth(300);
       }
     }
   };
@@ -1241,19 +1241,6 @@ export function ChatPage({
                       the top of the chat page. Only used in the EE version of the app. */}
                       <ChatBanner />
 
-                      {/* {messageHistory.length === 0 &&
-                        !isFetchingChatMessages &&
-                        !isStreaming && (
-                          <ChatIntro
-                            availableSources={finalAvailableSources}
-                            livePersona={livePersona}
-                            currentPersona={currentPersona}
-                            selectedPersona={selectedPersona}
-                            onSubmit={onSubmit({
-                              messageOverride: starterMessage.message,
-                            })}
-                          />
-                        )} */}
                       {messageHistory.length === 0 &&
                         !isFetchingChatMessages &&
                         !isStreaming && (
@@ -1303,6 +1290,7 @@ export function ChatPage({
                             return (
                               <div key={messageReactComponentKey}>
                                 <HumanMessage
+                                  user={user}
                                   content={message.message}
                                   files={message.files}
                                   messageId={message.messageId}
@@ -1535,44 +1523,6 @@ export function ChatPage({
 
                         <div ref={endDivRef}></div>
 
-                        {/* {currentPersona &&
-                          currentPersona.starter_messages &&
-                          currentPersona.starter_messages.length > 0 &&
-                          selectedPersona &&
-                          messageHistory.length === 0 &&
-                          !isFetchingChatMessages && (
-                            <div
-                              className={`
-                            mx-auto 
-                            px-4 
-                            w-searchbar-xs 
-                            2xl:w-searchbar-sm 
-                            3xl:w-searchbar 
-                            grid 
-                            gap-4 
-                            grid-cols-1 
-                            grid-rows-1 
-                            mt-4 
-                            md:grid-cols-2 
-                            mb-6`}
-                            >
-                              {currentPersona.starter_messages.map(
-                                (starterMessage, i) => (
-                                  <div key={i} className="w-full">
-                                    <StarterMessage
-                                      starterMessage={starterMessage}
-                                      onClick={() =>
-                                        onSubmit({
-                                          messageOverride:
-                                            starterMessage.message,
-                                        })
-                                      }
-                                    />
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          )} */}
                         <div ref={endDivRef} />
                       </div>
                     </div>
@@ -1635,19 +1585,20 @@ export function ChatPage({
                           />
                         )}
                       </AnimatePresence>
+
                       <div
                         ref={sidebarElementRef}
                         className="fixed 2xl:relative top-0 right-0 z-overlay bg-background  flex-none overflow-y-hidden h-full"
                         style={{
                           width: !showDocSidebar
-                            ? Math.max(300, usedSidebarWidth)
+                            ? Math.max(350, usedSidebarWidth)
                             : 0,
                         }}
                       >
                         <ResizableSection
                           updateSidebarWidth={updateSidebarWidth}
                           intialWidth={usedSidebarWidth}
-                          minWidth={300}
+                          minWidth={350}
                           maxWidth={maxDocumentSidebarWidth || undefined}
                         >
                           <DocumentSidebar
