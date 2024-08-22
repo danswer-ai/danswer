@@ -1595,7 +1595,7 @@ export function ChatPage({
                                   <div key={messageReactComponentKey}>
                                     <HumanMessage
                                       stopGenerating={stopGeneration}
-                                      content={`${message.message} ${regenerationState?.finalMessageIndex ? regenerationState?.finalMessageIndex : "hi"}`}
+                                      content={message.message}
                                       files={message.files}
                                       messageId={message.messageId}
                                       onEdit={(editedContent) => {
@@ -1717,7 +1717,7 @@ export function ChatPage({
                                         currentAlternativeAssistant
                                       }
                                       messageId={message.messageId}
-                                      content={`${message.message} ${i} ${messageHistory.length - 1}`}
+                                      content={message.message}
                                       // content={message.message}
                                       files={message.files}
                                       query={
