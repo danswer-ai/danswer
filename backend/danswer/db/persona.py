@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.chat_configs import BING_API_KEY
+from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
+from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import DocumentSet
@@ -67,28 +69,14 @@ def create_update_persona(
     # Permission to actually use these is checked later
 
     try:
-        persona = upsert_persona(
-            persona_id=persona_id,
-            user=user,
-            name=create_persona_request.name,
-            description=create_persona_request.description,
-            num_chunks=create_persona_request.num_chunks,
-            llm_relevance_filter=create_persona_request.llm_relevance_filter,
-            llm_filter_extraction=create_persona_request.llm_filter_extraction,
-            recency_bias=create_persona_request.recency_bias,
-            prompt_ids=create_persona_request.prompt_ids,
-            tool_ids=create_persona_request.tool_ids,
-            document_set_ids=create_persona_request.document_set_ids,
-            llm_model_provider_override=create_persona_request.llm_model_provider_override,
-            llm_model_version_override=create_persona_request.llm_model_version_override,
-            starter_messages=create_persona_request.starter_messages,
-            is_public=create_persona_request.is_public,
-            db_session=db_session,
-            icon_color=create_persona_request.icon_color,
-            icon_shape=create_persona_request.icon_shape,
-            uploaded_image_id=create_persona_request.uploaded_image_id,
-            remove_image=create_persona_request.remove_image,
-        )
+        persona_data = {
+            "persona_id": persona_id,
+            "user": user,
+            "db_session": db_session,
+            **create_persona_request.dict(exclude={"users", "groups"}),
+        }
+
+        persona = upsert_persona(**persona_data)
 
         versioned_make_persona_private = fetch_versioned_implementation(
             "danswer.db.persona", "make_persona_private"
@@ -352,6 +340,8 @@ def upsert_persona(
     display_priority: int | None = None,
     is_visible: bool = True,
     remove_image: bool | None = None,
+    chunks_above: int = CONTEXT_CHUNKS_ABOVE,
+    chunks_below: int = CONTEXT_CHUNKS_BELOW,
 ) -> Persona:
     if persona_id is not None:
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
@@ -398,6 +388,8 @@ def upsert_persona(
         persona.name = name
         persona.description = description
         persona.num_chunks = num_chunks
+        persona.chunks_above = chunks_above
+        persona.chunks_below = chunks_below
         persona.llm_relevance_filter = llm_relevance_filter
         persona.llm_filter_extraction = llm_filter_extraction
         persona.recency_bias = recency_bias
@@ -435,6 +427,8 @@ def upsert_persona(
             name=name,
             description=description,
             num_chunks=num_chunks,
+            chunks_above=chunks_above,
+            chunks_below=chunks_below,
             llm_relevance_filter=llm_relevance_filter,
             llm_filter_extraction=llm_filter_extraction,
             recency_bias=recency_bias,

@@ -270,6 +270,11 @@ def stream_chat_message_objects(
     3. [always] A set of streamed LLM tokens or an error anywhere along the line if something fails
     4. [always] Details on the final AI response message that is created
     """
+    # Currently surrounding context is not supported for chat
+    # Chat is already token heavy and harder for the model to process plus it would roll history over much faster
+    new_msg_req.chunks_above = 0
+    new_msg_req.chunks_below = 0
+
     try:
         user_id = user.id if user is not None else None
 
