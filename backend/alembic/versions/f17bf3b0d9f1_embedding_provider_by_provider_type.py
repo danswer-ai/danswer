@@ -137,7 +137,18 @@ def downgrade() -> None:
     op.create_primary_key("embedding_provider_pkey", "embedding_provider", ["id"])
 
     # Update name with existing provider_type values
-    op.execute("UPDATE embedding_provider SET name = provider_type")
+    op.execute(
+        """
+        UPDATE embedding_provider
+        SET name = CASE
+            WHEN provider_type = 'OPENAI' THEN 'OpenAI'
+            WHEN provider_type = 'COHERE' THEN 'Cohere'
+            WHEN provider_type = 'GOOGLE' THEN 'Google'
+            WHEN provider_type = 'VOYAGE' THEN 'Voyage'
+            ELSE provider_type
+        END
+    """
+    )
 
     # Drop the provider_type column from embedding_provider
     op.drop_column("embedding_provider", "provider_type")
