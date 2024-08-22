@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -196,14 +195,11 @@ class SlackBotConfigCreationRequest(BaseModel):
         return value
 
     @model_validator(mode="after")
-    @classmethod
-    def validate_document_sets_and_persona_id(
-        cls, values: dict[str, Any]
-    ) -> dict[str, Any]:
-        if values.get("document_sets") and values.get("persona_id"):
+    def validate_document_sets_and_persona_id(self) -> "SlackBotConfigCreationRequest":
+        if self.document_sets and self.persona_id:
             raise ValueError("Only one of `document_sets` / `persona_id` should be set")
 
-        return values
+        return self
 
 
 class SlackBotConfig(BaseModel):

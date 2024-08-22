@@ -316,12 +316,15 @@ class DefaultMultiLLM(LLM):
             return
 
         output = None
-        response = self._completion(prompt, tools, tool_choice, True)
+        response = cast(
+            litellm.CustomStreamWrapper,
+            self._completion(prompt, tools, tool_choice, True),
+        )
         try:
             for part in response:
-                if len(part.choices) == 0:
+                if len(part["choices"]) == 0:
                     continue
-                delta = part.choices[0].delta
+                delta = part["choices"][0]["delta"]
                 message_chunk = _convert_delta_to_message_chunk(delta, output)
                 if output is None:
                     output = message_chunk
