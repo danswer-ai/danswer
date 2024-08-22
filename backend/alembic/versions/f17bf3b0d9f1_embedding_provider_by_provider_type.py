@@ -18,89 +18,82 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Add the new provider_type column to embedding_provider
     op.add_column(
         "embedding_provider",
         sa.Column("provider_type", sa.String(50), nullable=True),
     )
 
-    # Copy data from 'name' to 'provider_type'
+    # Update provider_type with existing name values
     op.execute("UPDATE embedding_provider SET provider_type = name")
 
-    # Drop the foreign key constraint in embedding_model
+    # Make provider_type not nullable
+    op.alter_column("embedding_provider", "provider_type", nullable=False)
+
+    # Drop the foreign key constraint in embedding_model table
     op.drop_constraint(
         "fk_embedding_model_cloud_provider", "embedding_model", type_="foreignkey"
     )
 
-    # Rename cloud_provider_id to cloud_provider_type in embedding_model
-    op.alter_column(
-        "embedding_model",
-        "cloud_provider_id",
-        new_column_name="cloud_provider_type",
-        type_=sa.String(50),
-    )
-
-    # Drop the old primary key and id column from embedding_provider
+    # Drop the existing primary key constraint
     op.drop_constraint("embedding_provider_pkey", "embedding_provider", type_="primary")
-    op.drop_column("embedding_provider", "id")
 
-    # Make 'provider_type' not nullable and set it as the new primary key
-    op.alter_column("embedding_provider", "provider_type", nullable=False)
+    # Create a new primary key constraint on provider_type
     op.create_primary_key(
         "embedding_provider_pkey", "embedding_provider", ["provider_type"]
     )
 
-    # Drop the 'name' column from embedding_provider
+    # Drop the old id column
+    op.drop_column("embedding_provider", "id")
+
+    # Drop the name column
     op.drop_column("embedding_provider", "name")
 
-    # Update the foreign key in embedding_model
+    # Changes to embedding_model table
+    op.add_column(
+        "embedding_model",
+        sa.Column("provider_type", sa.String(50), nullable=True),
+    )
+
+    # Update provider_type in embedding_model based on the existing relationship
+    op.execute(
+        """
+        UPDATE embedding_model
+        SET provider_type = embedding_provider.provider_type
+        FROM embedding_provider
+        WHERE embedding_model.cloud_provider_id = embedding_provider.id
+    """
+    )
+
+    # Drop the old cloud_provider_id column
+    op.drop_column("embedding_model", "cloud_provider_id")
+
+    # Create the new foreign key constraint
     op.create_foreign_key(
         "fk_embedding_model_cloud_provider",
         "embedding_model",
         "embedding_provider",
-        ["cloud_provider_type"],
+        ["provider_type"],
         ["provider_type"],
     )
 
 
 def downgrade() -> None:
-    # Add back the 'id' and 'name' columns to embedding_provider
-    op.add_column(
-        "embedding_provider",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-    )
-    op.add_column("embedding_provider", sa.Column("name", sa.String(50), nullable=True))
-
-    # Copy data from 'provider_type' to 'name'
-    op.execute("UPDATE embedding_provider SET name = provider_type")
-
-    # Drop the new primary key
-    op.drop_constraint("embedding_provider_pkey", "embedding_provider", type_="primary")
-
-    # Set 'id' as the primary key
-    op.create_primary_key("embedding_provider_pkey", "embedding_provider", ["id"])
-
-    # Make 'name' unique and not nullable
-    op.create_unique_constraint(
-        "embedding_provider_name_key", "embedding_provider", ["name"]
-    )
-    op.alter_column("embedding_provider", "name", nullable=False)
-
-    # Rename cloud_provider_type back to cloud_provider_id in embedding_model
-    op.alter_column(
-        "embedding_model",
-        "cloud_provider_type",
-        new_column_name="cloud_provider_id",
-        type_=sa.Integer(),
-    )
-
-    # Drop the 'provider_type' column from embedding_provider
-    op.drop_column("embedding_provider", "provider_type")
-
-    # Update the foreign key in embedding_model
+    # Revert changes to embedding_model table
     op.drop_constraint(
         "fk_embedding_model_cloud_provider", "embedding_model", type_="foreignkey"
     )
+    op.add_column(
+        "embedding_model", sa.Column("cloud_provider_id", sa.Integer(), nullable=True)
+    )
+    op.execute(
+        """
+        UPDATE embedding_model
+        SET cloud_provider_id = embedding_provider.id
+        FROM embedding_provider
+        WHERE embedding_model.provider_type = embedding_provider.provider_type
+    """
+    )
+    op.drop_column("embedding_model", "provider_type")
     op.create_foreign_key(
         "fk_embedding_model_cloud_provider",
         "embedding_model",
@@ -108,3 +101,18 @@ def downgrade() -> None:
         ["cloud_provider_id"],
         ["id"],
     )
+
+    # Revert changes to embedding_provider table
+    op.add_column(
+        "embedding_provider",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+    )
+    op.add_column("embedding_provider", sa.Column("name", sa.String(50), nullable=True))
+    op.execute("UPDATE embedding_provider SET name = provider_type")
+    op.drop_constraint("embedding_provider_pkey", "embedding_provider", type_="primary")
+    op.create_primary_key("embedding_provider_pkey", "embedding_provider", ["id"])
+    op.create_unique_constraint(
+        "embedding_provider_name_key", "embedding_provider", ["name"]
+    )
+    op.alter_column("embedding_provider", "name", nullable=False)
+    op.drop_column("embedding_provider", "provider_type")

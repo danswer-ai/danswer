@@ -41,7 +41,7 @@ export interface EmbeddingModelDescriptor {
   normalize: boolean;
   query_prefix: string;
   passage_prefix: string;
-  cloud_provider_type?: string | null;
+  provider_type?: string | null;
   description: string;
 }
 

@@ -167,12 +167,12 @@ export default function EmbeddingForm() {
   const onConfirm = async () => {
     let newModel: EmbeddingModelDescriptor;
 
-    if ("cloud_provider_type" in selectedProvider) {
+    if ("provider_type" in selectedProvider) {
       // This is a CloudEmbeddingModel
       newModel = {
         ...selectedProvider,
         model_name: selectedProvider.model_name,
-        cloud_provider_type: selectedProvider.cloud_provider_type,
+        provider_type: selectedProvider.provider_type,
       };
     } else {
       // This is an EmbeddingModelDescriptor
@@ -180,7 +180,7 @@ export default function EmbeddingForm() {
         ...selectedProvider,
         model_name: selectedProvider.model_name!,
         description: "",
-        cloud_provider_type: null,
+        provider_type: null,
       };
     }
 
