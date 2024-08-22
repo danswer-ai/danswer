@@ -151,13 +151,12 @@ class SearchFeedbackRequest(BaseModel):
     search_feedback: SearchFeedbackType | None = None
 
     @model_validator(mode="after")
-    @classmethod
-    def check_click_or_search_feedback(cls: BaseModel, values: dict) -> dict:
-        click, feedback = values.get("click"), values.get("search_feedback")
+    def check_click_or_search_feedback(self) -> "SearchFeedbackRequest":
+        click, feedback = self.click, self.search_feedback
 
         if click is False and feedback is None:
             raise ValueError("Empty feedback received.")
-        return values
+        return self
 
 
 class ChatMessageDetail(BaseModel):

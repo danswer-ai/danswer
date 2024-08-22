@@ -62,7 +62,7 @@ def _convert_litellm_message_to_langchain_message(
     litellm_message: litellm.Message,
 ) -> BaseMessage:
     # Extracting the basic attributes from the litellm message
-    content = litellm_message.content
+    content = litellm_message.content or ""
     role = litellm_message.role
 
     # Handling function calls and tool calls if present
@@ -296,9 +296,11 @@ class DefaultMultiLLM(LLM):
         response = cast(
             litellm.ModelResponse, self._completion(prompt, tools, tool_choice, False)
         )
-        return _convert_litellm_message_to_langchain_message(
-            response.choices[0].message
-        )
+        choice = response.choices[0]
+        if hasattr(choice, "message"):
+            return _convert_litellm_message_to_langchain_message(choice.message)
+        else:
+            raise ValueError("Unexpected response choice type")
 
     def _stream_implementation(
         self,
@@ -317,9 +319,9 @@ class DefaultMultiLLM(LLM):
         response = self._completion(prompt, tools, tool_choice, True)
         try:
             for part in response:
-                if len(part["choices"]) == 0:
+                if len(part.choices) == 0:
                     continue
-                delta = part["choices"][0]["delta"]
+                delta = part.choices[0].delta
                 message_chunk = _convert_delta_to_message_chunk(delta, output)
                 if output is None:
                     output = message_chunk
