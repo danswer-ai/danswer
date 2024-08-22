@@ -74,16 +74,10 @@ export function ProviderCreationModal({
     values: any,
     { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }
   ) => {
-    console.log("SUBMITTING");
     setIsProcessing(true);
     setErrorMsg("");
-
     try {
-      console.log("GATHERING CONFIG");
-
       const customConfig = Object.fromEntries(values.custom_config);
-      // console.log("1")
-      // console.log(values.provider_type.toLowerCase().split(" ")[0])
 
       const initialResponse = await fetch(
         "/api/admin/embedding/test-embedding",
@@ -96,7 +90,6 @@ export function ProviderCreationModal({
           }),
         }
       );
-      console.log("2");
 
       if (!initialResponse.ok) {
         const errorMsg = (await initialResponse.json()).detail;
@@ -127,7 +120,6 @@ export function ProviderCreationModal({
 
       onConfirm();
     } catch (error: unknown) {
-      console.log("HIII");
       if (error instanceof Error) {
         setErrorMsg(error.message);
       } else {
