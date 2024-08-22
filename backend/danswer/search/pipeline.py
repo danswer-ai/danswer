@@ -136,10 +136,6 @@ class SearchPipeline:
     """Retrieval and Postprocessing"""
 
     def _get_chunks(self) -> list[InferenceChunk]:
-        """TODO as a future extension:
-        If large chunks (above 512 tokens) are used which cannot be directly fed to the LLM,
-        This step should run the two retrievals to get all of the base size chunks
-        """
         if self._retrieved_chunks is not None:
             return self._retrieved_chunks
 

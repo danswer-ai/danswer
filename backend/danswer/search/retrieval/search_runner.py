@@ -266,7 +266,7 @@ def retrieve_chunks(
 
     if not top_chunks:
         logger.warning(
-            f"{query.search_type.value.capitalize()} search returned no results "
+            f"Hybrid ({query.search_type.value.capitalize()}) search returned no results "
             f"with filters: {query.filters}"
         )
         return []
