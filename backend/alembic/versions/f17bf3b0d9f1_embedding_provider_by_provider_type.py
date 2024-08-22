@@ -53,10 +53,10 @@ def upgrade() -> None:
     op.execute(
         """
         UPDATE embedding_model
-        SET provider_type = (
-            SELECT provider_type
+        SET provider_type = LOWER(
+            (SELECT provider_type
             FROM embedding_provider
-            WHERE embedding_provider.id = embedding_model.cloud_provider_id
+            WHERE embedding_provider.id = embedding_model.cloud_provider_id)
         )
     """
     )
@@ -93,6 +93,18 @@ def downgrade() -> None:
     op.add_column(
         "embedding_model", sa.Column("cloud_provider_id", sa.Integer(), nullable=True)
     )
+    op.add_column("embedding_provider", sa.Column("id", sa.Integer(), nullable=True))
+
+    # Assign incrementing IDs to embedding providers
+    op.execute(
+        """
+        CREATE SEQUENCE IF NOT EXISTS embedding_provider_id_seq;"""
+    )
+    op.execute(
+        """
+        UPDATE embedding_provider SET id = nextval('embedding_provider_id_seq');
+    """
+    )
 
     # Update cloud_provider_id based on provider_type
     op.execute(
@@ -113,10 +125,7 @@ def downgrade() -> None:
     op.drop_column("embedding_model", "provider_type")
 
     # Add back the columns to embedding_provider
-    op.add_column("embedding_provider", sa.Column("id", sa.Integer(), nullable=False))
-    op.add_column(
-        "embedding_provider", sa.Column("name", sa.String(50), nullable=False)
-    )
+    op.add_column("embedding_provider", sa.Column("name", sa.String(50), nullable=True))
     op.add_column(
         "embedding_provider", sa.Column("default_model_id", sa.Integer(), nullable=True)
     )
