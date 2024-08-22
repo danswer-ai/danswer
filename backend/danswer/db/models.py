@@ -1079,7 +1079,7 @@ class CloudEmbeddingProvider(Base):
     embedding_models: Mapped[list["EmbeddingModel"]] = relationship(
         "EmbeddingModel",
         back_populates="cloud_provider",
-        foreign_keys="EmbeddingModel.provider_type",
+        foreign_keys="EmbeddingModel.cloud_provider_type",
     )
 
     def __repr__(self) -> str:

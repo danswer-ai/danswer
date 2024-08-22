@@ -38,7 +38,7 @@ def create_embedding_model(
         query_prefix=model_details.query_prefix,
         passage_prefix=model_details.passage_prefix,
         status=status,
-        provider_type=model_details.provider_type,
+        cloud_provider_type=model_details.cloud_provider_type,
         # Every single embedding model except the initial one from migrations has this name
         # The initial one from migration is called "danswer_chunk"
         index_name=index_name,
@@ -50,11 +50,11 @@ def create_embedding_model(
     return embedding_model
 
 
-def get_embedding_provider_from_type(
-    db_session: Session, provider_type: EmbeddingProvider
+def get_embedding_provider_from_provider(
+    db_session: Session, cloud_provider_type: EmbeddingProvider
 ) -> CloudEmbeddingProvider | None:
     query = select(CloudEmbeddingProvider).where(
-        CloudEmbeddingProvider.provider_type == provider_type
+        CloudEmbeddingProvider.provider_type == cloud_provider_type
     )
     provider = db_session.execute(query).scalars().first()
     return provider if provider else None
@@ -67,11 +67,15 @@ def get_current_db_embedding_provider(
         get_current_db_embedding_model(db_session=db_session)
     )
 
-    if current_embedding_model is None or current_embedding_model.provider_type is None:
+    if (
+        current_embedding_model is None
+        or current_embedding_model.cloud_provider_type is None
+    ):
         return None
 
     embedding_provider = fetch_embedding_provider(
-        db_session=db_session, provider_type=current_embedding_model.provider_type
+        db_session=db_session,
+        cloud_provider_type=current_embedding_model.cloud_provider_type,
     )
     if embedding_provider is None:
         raise RuntimeError("No embedding provider exists for this model.")

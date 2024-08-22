@@ -127,11 +127,11 @@ def fetch_existing_llm_providers(
 
 
 def fetch_embedding_provider(
-    db_session: Session, provider_type: EmbeddingProvider
+    db_session: Session, cloud_provider_type: EmbeddingProvider
 ) -> CloudEmbeddingProviderModel | None:
     return db_session.scalar(
         select(CloudEmbeddingProviderModel).where(
-            CloudEmbeddingProviderModel.provider_type == provider_type
+            CloudEmbeddingProviderModel.provider_type == cloud_provider_type
         )
     )
 

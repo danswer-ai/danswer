@@ -8,7 +8,6 @@ Create Date: 2024-08-21 13:13:31.120460
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
@@ -19,31 +18,14 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create the EmbeddingProvider enum type
-    op.execute(
-        "CREATE TYPE embeddingprovider AS ENUM ('OPENAI', 'AZURE', 'COHERE', 'HUGGINGFACE', 'GOOGLE', 'BEDROCK')"
-    )
-
     # Add the new provider_type column to embedding_provider
     op.add_column(
         "embedding_provider",
-        sa.Column(
-            "provider_type",
-            postgresql.ENUM(
-                "OPENAI",
-                "AZURE",
-                "COHERE",
-                "HUGGINGFACE",
-                "GOOGLE",
-                "BEDROCK",
-                name="embeddingprovider",
-            ),
-            nullable=True,
-        ),
+        sa.Column("provider_type", sa.String(50), nullable=True),
     )
 
     # Copy data from 'name' to 'provider_type'
-    op.execute("UPDATE embedding_provider SET provider_type = name::embeddingprovider")
+    op.execute("UPDATE embedding_provider SET provider_type = name")
 
     # Drop the foreign key constraint in embedding_model
     op.drop_constraint(
@@ -55,15 +37,7 @@ def upgrade() -> None:
         "embedding_model",
         "cloud_provider_id",
         new_column_name="cloud_provider_type",
-        type_=postgresql.ENUM(
-            "OPENAI",
-            "AZURE",
-            "COHERE",
-            "HUGGINGFACE",
-            "GOOGLE",
-            "BEDROCK",
-            name="embeddingprovider",
-        ),
+        type_=sa.String(50),
     )
 
     # Drop the old primary key and id column from embedding_provider
@@ -71,9 +45,9 @@ def upgrade() -> None:
     op.drop_column("embedding_provider", "id")
 
     # Make 'provider_type' not nullable and set it as the new primary key
-    op.alter_column("embedding_provider", "cloud_provider_type", nullable=False)
+    op.alter_column("embedding_provider", "provider_type", nullable=False)
     op.create_primary_key(
-        "embedding_provider_pkey", "embedding_provider", ["cloud_provider_type"]
+        "embedding_provider_pkey", "embedding_provider", ["provider_type"]
     )
 
     # Drop the 'name' column from embedding_provider
@@ -95,10 +69,10 @@ def downgrade() -> None:
         "embedding_provider",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
     )
-    op.add_column("embedding_provider", sa.Column("name", sa.String(), nullable=True))
+    op.add_column("embedding_provider", sa.Column("name", sa.String(50), nullable=True))
 
     # Copy data from 'provider_type' to 'name'
-    op.execute("UPDATE embedding_provider SET name = provider_type::text")
+    op.execute("UPDATE embedding_provider SET name = provider_type")
 
     # Drop the new primary key
     op.drop_constraint("embedding_provider_pkey", "embedding_provider", type_="primary")
@@ -122,9 +96,6 @@ def downgrade() -> None:
 
     # Drop the 'provider_type' column from embedding_provider
     op.drop_column("embedding_provider", "provider_type")
-
-    # Drop the EmbeddingProvider enum type
-    op.execute("DROP TYPE embeddingprovider")
 
     # Update the foreign key in embedding_model
     op.drop_constraint(
