@@ -506,9 +506,9 @@ export const AIMessage = ({
                     (isActive ? (
                       <div
                         className={`
-                      flex md:flex-row gap-x-0.5 mt-1
-                      transition-transform duration-300 ease-in-out
-                      transform opacity-100 translate-y-0"
+                        flex md:flex-row gap-x-0.5 mt-1
+                        transition-transform duration-300 ease-in-out
+                        transform opacity-100 translate-y-0"
                   `}
                       >
                         <TooltipGroup>
@@ -565,12 +565,13 @@ export const AIMessage = ({
                       <div
                         ref={hoverElementRef}
                         className={`
-                        absolute -bottom-4
+
+                        absolute -bottom-5
                         invisible ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!visible"}
                         opacity-0 ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!opacity-100"}
                         translate-y-2 ${(isHovering || settings?.isMobile) && "!translate-y-0"}
                         transition-transform duration-300 ease-in-out 
-                        flex md:flex-row gap-x-0.5 bg-background-125/40 p-1.5 rounded-lg
+                        flex md:flex-row gap-x-0.5 bg-background-125/40 -mx-1.5 p-1.5 rounded-lg
                         `}
                       >
                         <TooltipGroup>

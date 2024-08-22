@@ -64,7 +64,7 @@ def create_chat_chain(
     while current_message is not None:
         child_msg = current_message.latest_child_message
 
-        # Break if at the end of the change
+        # Break if at the end of the chain
         # or have reached the `final_id` of the submitted message
         if not child_msg or (
             stop_at_message_id and current_message.id == stop_at_message_id
