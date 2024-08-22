@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 
 from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import get_last_attempt
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexingStatus
@@ -24,10 +23,7 @@ def check_deletion_attempt_is_allowed(
         f"'{connector_credential_pair.credential_id}' is not deletable."
     )
 
-    if (
-        connector_credential_pair.status != ConnectorCredentialPairStatus.PAUSED
-        and connector_credential_pair.status != ConnectorCredentialPairStatus.DELETING
-    ):
+    if connector_credential_pair.status.is_active():
         return base_error_msg + " Connector must be paused."
 
     connector_id = connector_credential_pair.connector_id
