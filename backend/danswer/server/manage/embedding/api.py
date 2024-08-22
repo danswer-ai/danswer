@@ -38,7 +38,7 @@ def test_embedding_configuration(
             server_host=MODEL_SERVER_HOST,
             server_port=MODEL_SERVER_PORT,
             api_key=test_llm_request.api_key,
-            cloud_provider_type=test_llm_request.cloud_provider_type,
+            provider_type=test_llm_request.provider_type,
             normalize=False,
             query_prefix=None,
             passage_prefix=None,
@@ -70,20 +70,20 @@ def list_embedding_providers(
 
 @admin_router.delete("/embedding-provider/{provider_type}")
 def delete_embedding_provider(
-    cloud_provider_type: EmbeddingProvider,
+    provider_type: EmbeddingProvider,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     embedding_provider = get_current_db_embedding_provider(db_session=db_session)
     if (
         embedding_provider is not None
-        and cloud_provider_type == embedding_provider.cloud_provider_type
+        and provider_type == embedding_provider.provider_type
     ):
         raise HTTPException(
             status_code=400, detail="You can't delete a currently active model"
         )
 
-    remove_embedding_provider(db_session, cloud_provider_type=cloud_provider_type)
+    remove_embedding_provider(db_session, provider_type=provider_type)
 
 
 @admin_router.put("/embedding-provider")

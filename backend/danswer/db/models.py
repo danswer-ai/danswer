@@ -556,14 +556,14 @@ class EmbeddingModel(Base):
     index_name: Mapped[str] = mapped_column(String)
 
     # New field for cloud provider relationship
-    cloud_provider_type: Mapped[EmbeddingProvider | None] = mapped_column(
-        ForeignKey("embedding_provider.cloud_provider_type")
+    provider_type: Mapped[EmbeddingProvider | None] = mapped_column(
+        ForeignKey("embedding_provider.provider_type")
     )
 
     cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(
         "CloudEmbeddingProvider",
         back_populates="embedding_models",
-        foreign_keys=[cloud_provider_type],
+        foreign_keys=[provider_type],
     )
 
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
@@ -587,15 +587,7 @@ class EmbeddingModel(Base):
 
     def __repr__(self) -> str:
         return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}',\
-          cloud_provider='{self.cloud_provider.cloud_provider_type if self.cloud_provider else 'None'}')>"
-
-    @property
-    def provider_type(self) -> EmbeddingProvider | None:
-        return (
-            self.cloud_provider.cloud_provider_type
-            if self.cloud_provider is not None
-            else None
-        )
+          cloud_provider='{self.cloud_provider.provider_type if self.cloud_provider else 'None'}')>"
 
     @property
     def api_key(self) -> str | None:
@@ -1072,18 +1064,18 @@ class LLMProvider(Base):
 class CloudEmbeddingProvider(Base):
     __tablename__ = "embedding_provider"
 
-    cloud_provider_type: Mapped[EmbeddingProvider] = mapped_column(
+    provider_type: Mapped[EmbeddingProvider] = mapped_column(
         Enum(EmbeddingProvider), primary_key=True
     )
     api_key: Mapped[str | None] = mapped_column(EncryptedString())
     embedding_models: Mapped[list["EmbeddingModel"]] = relationship(
         "EmbeddingModel",
         back_populates="cloud_provider",
-        foreign_keys="EmbeddingModel.cloud_provider_type",
+        foreign_keys="EmbeddingModel.provider_type",
     )
 
     def __repr__(self) -> str:
-        return f"<EmbeddingProvider(type='{self.cloud_provider_type}')>"
+        return f"<EmbeddingProvider(type='{self.provider_type}')>"
 
 
 class DocumentSet(Base):

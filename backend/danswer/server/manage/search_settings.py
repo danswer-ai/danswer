@@ -44,15 +44,15 @@ def set_new_embedding_model(
     """
 
     # Validate cloud provider exists
-    if embed_model_details.cloud_provider_type is not None:
+    if embed_model_details.provider_type is not None:
         cloud_provider = get_embedding_provider_from_provider(
-            db_session, cloud_provider_type=embed_model_details.cloud_provider_type
+            db_session, provider_type=embed_model_details.provider_type
         )
 
         if cloud_provider is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"No embedding provider exists for cloud embedding type {embed_model_details.cloud_provider_type}",
+                detail=f"No embedding provider exists for cloud embedding type {embed_model_details.provider_type}",
             )
 
     current_model = get_current_db_embedding_model(db_session)

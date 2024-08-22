@@ -9,12 +9,12 @@ if TYPE_CHECKING:
 
 
 class TestEmbeddingRequest(BaseModel):
-    cloud_provider_type: EmbeddingProvider
+    provider_type: EmbeddingProvider
     api_key: str | None = None
 
 
 class CloudEmbeddingProvider(BaseModel):
-    cloud_provider_type: EmbeddingProvider
+    provider_type: EmbeddingProvider
     api_key: str | None = None
 
     @classmethod
@@ -22,11 +22,11 @@ class CloudEmbeddingProvider(BaseModel):
         cls, cloud_provider_model: "CloudEmbeddingProviderModel"
     ) -> "CloudEmbeddingProvider":
         return cls(
-            cloud_provider_type=cloud_provider_model.cloud_provider_type,
+            provider_type=cloud_provider_model.provider_type,
             api_key=cloud_provider_model.api_key,
         )
 
 
 class CloudEmbeddingProviderCreationRequest(BaseModel):
-    cloud_provider_type: EmbeddingProvider
+    provider_type: EmbeddingProvider
     api_key: str | None = None
