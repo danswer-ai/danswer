@@ -11,9 +11,9 @@ from danswer.db.models import User
 from danswer.server.query_and_chat.token_limit import any_rate_limit_exists
 from danswer.server.token_rate_limits.models import TokenRateLimitArgs
 from danswer.server.token_rate_limits.models import TokenRateLimitDisplay
-from ee.danswer.db.token_limit import fetch_all_user_group_token_rate_limits
 from ee.danswer.db.token_limit import fetch_all_user_group_token_rate_limits_by_group
 from ee.danswer.db.token_limit import fetch_all_user_token_rate_limits
+from ee.danswer.db.token_limit import fetch_user_group_token_rate_limits
 from ee.danswer.db.token_limit import insert_user_group_token_rate_limit
 from ee.danswer.db.token_limit import insert_user_token_rate_limit
 
@@ -51,7 +51,7 @@ def get_group_token_limit_settings(
 ) -> list[TokenRateLimitDisplay]:
     return [
         TokenRateLimitDisplay.from_db(token_rate_limit)
-        for token_rate_limit in fetch_all_user_group_token_rate_limits(
+        for token_rate_limit in fetch_user_group_token_rate_limits(
             db_session, group_id, user
         )
     ]

@@ -8,7 +8,7 @@ from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.db.document_set import check_document_sets_are_public
-from danswer.db.document_set import fetch_all_document_sets
+from danswer.db.document_set import fetch_all_document_sets_for_user
 from danswer.db.document_set import fetch_user_document_sets
 from danswer.db.document_set import insert_document_set
 from danswer.db.document_set import mark_document_set_as_to_be_deleted
@@ -84,7 +84,7 @@ def list_document_sets_admin(
 ) -> list[DocumentSet]:
     return [
         DocumentSet.from_model(ds)
-        for ds in fetch_all_document_sets(
+        for ds in fetch_all_document_sets_for_user(
             db_session=db_session, user=user, get_editable=get_editable
         )
     ]

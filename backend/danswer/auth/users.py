@@ -411,7 +411,7 @@ async def current_curator_or_admin_user(
     if not is_global_curator and not is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. User is not a curator.",
+            detail="Access denied. User is not a curator or admin.",
         )
 
     return user
@@ -424,7 +424,7 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
     if not user or not hasattr(user, "role") or user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. User is not an admin.",
+            detail="Access denied. User must be an admin to perform this action.",
         )
 
     return user

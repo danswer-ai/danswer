@@ -170,8 +170,6 @@ export const DocumentSetCreationForm = ({
               )}
             />
 
-            <Divider className="my-4" />
-
             {isPaidEnterpriseFeaturesEnabled &&
               userGroups &&
               userGroups.length > 0 && (

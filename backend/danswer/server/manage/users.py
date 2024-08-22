@@ -70,7 +70,7 @@ def set_user_role(
     if user_role_update_request.new_role == UserRole.CURATOR:
         raise HTTPException(
             status_code=400,
-            detail="Cannot use this endpoint to set a user role to curator",
+            detail="Curator role must be set via the User Group Menu",
         )
 
     if user_to_update.role == user_role_update_request.new_role:
