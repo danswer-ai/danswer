@@ -4,6 +4,7 @@ from typing import Any
 from typing import cast
 from typing import IO
 
+from dotenv import load_dotenv
 from fastapi import HTTPException
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -15,7 +16,6 @@ from danswer.file_store.file_store import get_default_file_store
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
 from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
-from dotenv import load_dotenv
 
 load_dotenv()
 

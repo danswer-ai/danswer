@@ -1,5 +1,7 @@
 from typing import Any
-from typing import Dict, Type, Union
+from typing import Dict
+from typing import Type
+from typing import Union
 
 from sqlalchemy.orm import Session
 
@@ -39,7 +41,9 @@ def identify_connector_class(
     source: DocumentSource,
     input_type: InputType | None = None,
 ) -> Type[BaseConnector]:
-    connector_map: Dict[DocumentSource, Union[Type[BaseConnector], Dict[InputType, Type[BaseConnector]]]] = {
+    connector_map: Dict[
+        DocumentSource, Union[Type[BaseConnector], Dict[InputType, Type[BaseConnector]]]
+    ] = {
         DocumentSource.WEB: WebConnector,
         DocumentSource.FILE: LocalFileConnector,
         DocumentSource.GITHUB: GithubConnector,
@@ -62,7 +66,9 @@ def identify_connector_class(
         DocumentSource.GOOGLE_CLOUD_STORAGE: BlobStorageConnector,
         DocumentSource.OCI_STORAGE: BlobStorageConnector,
     }
-    connector_by_source: Union[Type[BaseConnector], Dict[InputType, Type[BaseConnector]]] = connector_map.get(source, {})
+    connector_by_source: Union[
+        Type[BaseConnector], Dict[InputType, Type[BaseConnector]]
+    ] = connector_map.get(source, {})
 
     if isinstance(connector_by_source, dict):
         if input_type is None:

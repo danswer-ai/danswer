@@ -7,6 +7,7 @@ from typing import Optional
 
 import boto3
 from botocore.client import Config
+from dotenv import load_dotenv
 from mypy_boto3_s3 import S3Client
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -21,7 +22,6 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.utils.logger import setup_logger
-from dotenv import load_dotenv
 
 load_dotenv()
 
