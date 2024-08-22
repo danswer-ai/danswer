@@ -4,7 +4,10 @@ import pandas as pd
 import base64
 import plotly.io as pio
 
-from danswer.configs.app_configs import IMAGE_SERVER
+from danswer.configs.app_configs import IMAGE_SERVER_PROTOCOL
+from danswer.configs.app_configs import IMAGE_SERVER_HOST
+from danswer.configs.app_configs import IMAGE_SERVER_PORT
+
 from danswer.utils.logger import setup_logger
 import uuid
 import kaleido
@@ -30,14 +33,18 @@ class PlotFactory:
                 "SCATTER_MATRIX": lambda: px.scatter(df, x=column_names['x'], y=column_names['y'], color=column_names['color'],
                                                      size=column_names['size'], title='Scatter Chart')
             }
-            return charts.get(chart_type, lambda: logger.error("Unsupported chart type"))()
+            figure = charts.get(chart_type, lambda: logger.error("Unsupported chart type"))()
+            logger.info(f'figure: {figure} generated for {chart_type} and dataframe: {df.dtypes}')
+            return figure
         except Exception as e:
             logger.error(f"Error creating chart: {e}")
             return None
 
 
 def format_image_url(file_name, image_title="title image") -> str:
-    return "![" + image_title + "](http://" + IMAGE_SERVER + "/" + "images/" + file_name + ")"
+    image_url = "![" + image_title + "](" + IMAGE_SERVER_PROTOCOL + "://" + IMAGE_SERVER_HOST + ":" + IMAGE_SERVER_PORT + "/" + "images/" + file_name + ")"
+    logger.info(f'Formatted image url: {image_url}')
+    return image_url
 
 
 class PlotCharts:
@@ -52,6 +59,7 @@ class PlotCharts:
         file_name = str(uuid.uuid4()) + '.jpg'
         image_path = os.path.join('/images', file_name)
         figure.write_image(image_path)
+        logger.info(f'Plotly figure saved to {image_path}')
         return format_image_url(file_name=file_name)
         # base64_image = self.base64_from_fig(figure)
         # self.format_as_markdown_image(base64_image=base64_image, alt_text='plot') if figure else None

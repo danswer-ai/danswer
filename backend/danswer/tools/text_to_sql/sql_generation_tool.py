@@ -247,7 +247,7 @@ class SqlGenerationTool(Tool):
         content = file.content
         excel_byte_stream = BytesIO(content)
         dataframe = pd.read_csv(excel_byte_stream)
-        logger.info(f'excel loaded to dataframe : {dataframe.info()}')
+        logger.info(f'excel loaded to dataframe : {dataframe.dtypes}')
         return dataframe
 
     def execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart(self, df, sql_query, user_query) -> str:
