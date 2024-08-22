@@ -428,7 +428,7 @@ services:
       - "3456:3456"
     environment:
       - DATABASE_URL=postgresql://postgres:password@relational_db:5432/langfuse
-      - NEXTAUTH_URL=http://192.168.1.27:3456
+      - NEXTAUTH_URL=http://host.docker.internal:3456
       - NEXTAUTH_SECRET=mysecret
       - SALT=mysalt
       - PORT=3456

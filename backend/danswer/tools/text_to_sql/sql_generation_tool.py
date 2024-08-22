@@ -1,6 +1,7 @@
 import json
 from collections.abc import Generator
 from datetime import date, datetime
+from io import BytesIO
 from typing import Any
 from typing import cast
 
@@ -9,10 +10,15 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from danswer.dynamic_configs.interface import JSON_ro
+from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.answering.prompts.build import AnswerPromptBuilder, default_build_system_message, \
     default_build_user_message
 from danswer.llm.utils import message_to_string
 from danswer.prompts.constants import GENERAL_SEP_PAT
+from danswer.tools.infographics.dataframe_inmemory_sql import DataframeInMemorySQL
+from danswer.tools.infographics.generate_sql_for_dataframe import GenerateSqlForDataframe
+from danswer.tools.infographics.plot_charts import PlotCharts
+from danswer.tools.infographics.resolve_plot_parameters_using_llm import ResolvePlotParametersUsingLLM
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
@@ -20,6 +26,7 @@ from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.llm.answering.models import PromptConfig, PreviousMessage
 from danswer.llm.interfaces import LLMConfig, LLM
+import pandas as pd
 
 logger = setup_logger()
 
@@ -85,7 +92,8 @@ class SqlGenerationTool(Tool):
             persona: Persona,
             prompt_config: PromptConfig,
             llm_config: LLMConfig,
-            llm: LLM | None
+            llm: LLM | None,
+            files: list[InMemoryChatFile] | None
 
     ) -> None:
         self.db_session = db_session
@@ -94,6 +102,14 @@ class SqlGenerationTool(Tool):
         self.prompt_config = prompt_config
         self.llm_config = llm_config
         self.llm = llm
+        self.files = files
+        self.plot_charts = PlotCharts()
+        self.resolve_plot_parameters = ResolvePlotParametersUsingLLM(llm=llm,
+                                                                     llm_config=llm_config,
+                                                                     prompt_config=prompt_config)
+        self.generate_sql_for_dataframe = GenerateSqlForDataframe(llm=llm,
+                                                                  llm_config=llm_config,
+                                                                  prompt_config=prompt_config)
 
     @property
     def name(self) -> str:
@@ -108,6 +124,7 @@ class SqlGenerationTool(Tool):
         return self._DISPLAY_NAME
 
     """For explicit tool calling"""
+
     def tool_definition(self) -> dict:
         return {
             "type": "function",
@@ -156,36 +173,48 @@ class SqlGenerationTool(Tool):
         )
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
+        # query= " list all employes by there age  output = is sql
+        # infographi_query = show emplyes age chart by salary
         query = cast(str, kwargs["query"])
 
         llm_config = self.llm_config
         history = []
-        prompt_builder = AnswerPromptBuilder(history, llm_config)
-        prompt_builder.update_system_prompt(
-            default_build_system_message(self.prompt_config)
-        )
-        prompt_builder.update_user_prompt(
-            default_build_user_message(
-                user_query=query, prompt_config=self.prompt_config, files=[]
+        dataframe = None
+        result_list = []
+        if self.files:
+            dataframe = self.generate_dataframe_from_excel(self.files)
+            if not dataframe.empty:
+                sql_generation_tool_output = self.generate_sql_for_dataframe.generate_sql_query(schema=dataframe.dtypes, requirement=query)
+            else:
+                sql_generation_tool_output = None
+        else:
+            prompt_builder = AnswerPromptBuilder(history, llm_config)
+            prompt_builder.update_system_prompt(
+                default_build_system_message(self.prompt_config)
             )
-        )
-        prompt = prompt_builder.build()
+            prompt_builder.update_user_prompt(
+                default_build_user_message(
+                    user_query=query, prompt_config=self.prompt_config, files=[]
+                )
+            )
+            prompt = prompt_builder.build()
 
-        sql_generation_tool_output = message_to_string(
-            self.llm.invoke(prompt=prompt)
-        )
-        # run the SQL in DB
-        db_results = self.db_session.execute(text(sql_generation_tool_output))
-        # dbrows = db_results.fetchall()
-        dbrows = db_results.fetchmany(size=10)
+            sql_generation_tool_output = message_to_string(
+                self.llm.invoke(prompt=prompt)
+            )
+            # run the SQL in DB
+            db_results = self.db_session.execute(text(sql_generation_tool_output))
+            # dbrows = db_results.fetchall()
+            dbrows = db_results.fetchmany(size=10)
 
-        # Convert rows to a list of dictionaries
-        # Each row will be converted to a dictionary using column names
-        result_list = [dict(row._mapping) for row in dbrows]
+            # Convert rows to a list of dictionaries
+            # Each row will be converted to a dictionary using column names
+            result_list = [dict(row._mapping) for row in dbrows]
 
-        final_response = ""
         isTableResponse = "json" in query
-        if not result_list:
+        isChartInQuery = "chart" in query.lower()
+        # isChartInQuery = True
+        if not result_list and dataframe.empty:
             final_response = "No result found. Please rephrase your query!"
         else:
             if isTableResponse:
@@ -196,6 +225,14 @@ class SqlGenerationTool(Tool):
                 json_result = json.dumps(result_list, default=json_encoder, ensure_ascii=False, indent=4)
                 json_response = f"\n\n```json\n{json_result}\n```\n\n"
                 final_response = json_response
+            elif isChartInQuery:
+                if not dataframe.empty and sql_generation_tool_output:
+                    image_path = self.execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart(df=dataframe,
+                                                                                                         sql_query=sql_generation_tool_output,
+                                                                                                         user_query=query)
+                    final_response = image_path
+                else:
+                    final_response = "No records fetched from uploaded Excel. Please check your Excel or rephrase your query!"
             else:
                 table_response = self.format_as_markdown_table(result_list)
                 final_response = table_response
@@ -205,6 +242,28 @@ class SqlGenerationTool(Tool):
             response=final_response
         )
 
+    def generate_dataframe_from_excel(self, files):
+        file = files[0]  # first file only
+        content = file.content
+        excel_byte_stream = BytesIO(content)
+        dataframe = pd.read_csv(excel_byte_stream)
+        logger.info(f'excel loaded to dataframe : {dataframe.dtypes}')
+        return dataframe
+
+    def execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart(self, df, sql_query, user_query) -> str:
+        # execute query on dataframe
+        self.dataframe_inmemory_sql = DataframeInMemorySQL(df=df)
+        filtered_df = self.dataframe_inmemory_sql.execute_sql(sql_query)
+        logger.debug(f'dataframe_in_memory_sql df: {filtered_df}')
+        chart_type = self.plot_charts.find_chart_type(filtered_df)
+        column_names = self.resolve_plot_parameters.resolve_graph_parameters_from_chart_type_and_sql_and_requirements(sql_query=sql_query,
+                                                                                                                      schema=filtered_df.info,
+                                                                                                                      requirement=user_query,
+                                                                                                                      chart_type=chart_type)
+        image_path = self.plot_charts.generate_chart_and_save(dataframe=filtered_df,
+                                                              field_names=column_names,
+                                                              chart_type=chart_type)
+        return image_path
 
     # Function to format the list of dictionaries as a markdown table
     def format_as_markdown_table(self, data):
@@ -230,7 +289,6 @@ class SqlGenerationTool(Tool):
         table = "\n".join([header_row, separator_row] + data_rows)
 
         return table
-
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         sql_generation_response = cast(
