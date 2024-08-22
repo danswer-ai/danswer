@@ -18,6 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # Add provider_type column to embedding_provider
     op.add_column(
         "embedding_provider",
         sa.Column("provider_type", sa.String(50), nullable=True),
@@ -41,6 +42,8 @@ def upgrade() -> None:
     op.create_primary_key(
         "embedding_provider_pkey", "embedding_provider", ["provider_type"]
     )
+
+    # Add provider_type column to embedding_model
     op.add_column(
         "embedding_model",
         sa.Column("provider_type", sa.String(50), nullable=True),
@@ -58,18 +61,16 @@ def upgrade() -> None:
     """
     )
 
-    # Drop the old id column
+    # Drop the old id column from embedding_provider
     op.drop_column("embedding_provider", "id")
 
-    # Drop the name column
+    # Drop the name column from embedding_provider
     op.drop_column("embedding_provider", "name")
 
-    # Drop the default_model_id column
+    # Drop the default_model_id column from embedding_provider
     op.drop_column("embedding_provider", "default_model_id")
 
-    # Changes to embedding_model table
-
-    # Drop the old cloud_provider_id column
+    # Drop the old cloud_provider_id column from embedding_model
     op.drop_column("embedding_model", "cloud_provider_id")
 
     # Create the new foreign key constraint
@@ -97,11 +98,14 @@ def downgrade() -> None:
     op.execute(
         """
         UPDATE embedding_model
-        SET cloud_provider_id = (
-            SELECT id
-            FROM embedding_provider
-            WHERE embedding_provider.provider_type = embedding_model.provider_type
-        )
+        SET cloud_provider_id = CASE
+            WHEN provider_type IS NULL THEN NULL
+            ELSE (
+                SELECT id
+                FROM embedding_provider
+                WHERE embedding_provider.provider_type = embedding_model.provider_type
+            )
+        END
     """
     )
 
