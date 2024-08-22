@@ -65,6 +65,7 @@ from danswer.utils.logger import setup_logger
 
 from danswer.tools.summary.summary_tool import SummaryGenerationTool, SUMMARY_GENERATION_RESPONSE_ID
 from danswer.tools.text_to_sql.sql_generation_tool import SqlGenerationTool, SQL_GENERATION_RESPONSE_ID
+from danswer.tools.email.compose_email_tool import ComposeEmailTool, COMPOSE_EMAIL_RESPONSE_ID
 
 logger = setup_logger()
 
@@ -267,6 +268,11 @@ class Answer:
                     if response.id == SUMMARY_GENERATION_RESPONSE_ID:
                         res1 = yield response.response
                         return [DanswerAnswerPiece(answer_piece=res1)]
+            elif tool.name == ComposeEmailTool._NAME:
+                for response in tool_runner.tool_responses():
+                    if response.id == COMPOSE_EMAIL_RESPONSE_ID:
+                        res1 = yield response.response
+                        return [DanswerAnswerPiece(answer_piece=res1)]
             elif tool.name == ImageGenerationTool._NAME:
                 prompt_builder.update_user_prompt(
                     build_image_generation_user_prompt(
@@ -411,6 +417,11 @@ class Answer:
         elif tool.name == SummaryGenerationTool._NAME:
             for response in tool_runner.tool_responses():
                 if response.id == SUMMARY_GENERATION_RESPONSE_ID:
+                    res1 = yield response.response
+                    return [DanswerAnswerPiece(answer_piece=res1)]
+        elif tool.name == ComposeEmailTool._NAME:
+            for response in tool_runner.tool_responses():
+                if response.id == COMPOSE_EMAIL_RESPONSE_ID:
                     res1 = yield response.response
                     return [DanswerAnswerPiece(answer_piece=res1)]
         else:
