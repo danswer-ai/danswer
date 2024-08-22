@@ -1,7 +1,7 @@
 """embedding provider by provider type
 
 Revision ID: f17bf3b0d9f1
-Revises: 4b08d97e175a
+Revises: ee3f4b47fad5
 Create Date: 2024-08-21 13:13:31.120460
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "f17bf3b0d9f1"
-down_revision = "4b08d97e175a"
+down_revision = "ee3f4b47fad5"
 branch_labels = None
 depends_on = None
 
@@ -47,6 +47,9 @@ def upgrade() -> None:
 
     # Drop the name column
     op.drop_column("embedding_provider", "name")
+
+    # Drop the default_model_id column
+    op.drop_column("embedding_provider", "default_model_id")
 
     # Changes to embedding_model table
     op.add_column(
@@ -91,6 +94,11 @@ def downgrade() -> None:
     # Add name column to embedding_provider table
     op.add_column("embedding_provider", sa.Column("name", sa.String(50), nullable=True))
     op.execute("UPDATE embedding_provider SET name = provider_type")
+
+    # Add default_model_id column back to embedding_provider table
+    op.add_column(
+        "embedding_provider", sa.Column("default_model_id", sa.Integer(), nullable=True)
+    )
 
     # Create a unique constraint on the id column
     op.create_unique_constraint(
