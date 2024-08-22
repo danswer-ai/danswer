@@ -208,8 +208,12 @@ def _run_indexing(
                 # contents still need to be initially pulled.
                 db_session.refresh(db_connector)
                 if (
-                    not db_cc_pair.status.is_active()
-                    and db_embedding_model.status != IndexModelStatus.FUTURE
+                    (
+                        db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
+                        and db_embedding_model.status != IndexModelStatus.FUTURE
+                    )
+                    # if it's deleting, we don't care if this is a secondary index
+                    or db_cc_pair.status == ConnectorCredentialPairStatus.DELETING
                 ):
                     # let the `except` block handle this
                     raise RuntimeError("Connector was disabled mid run")

@@ -25,7 +25,6 @@ from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
-from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
@@ -96,7 +95,7 @@ def _should_create_new_indexing(
     # If the connector is paused or is the ingestion API, don't index
     # NOTE: during an embedding model switch over, the following logic
     # is bypassed by the above check for a future model
-    if cc_pair.status != ConnectorCredentialPairStatus.ACTIVE or connector.id == 0:
+    if not cc_pair.status.is_active() or connector.id == 0:
         return False
 
     if not last_index:
