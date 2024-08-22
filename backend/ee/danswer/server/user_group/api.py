@@ -9,14 +9,12 @@ from danswer.auth.users import current_curator_or_admin_user
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.models import UserRole
-from danswer.db.users import fetch_user_by_id
 from ee.danswer.db.user_group import fetch_user_groups
 from ee.danswer.db.user_group import fetch_user_groups_for_user
 from ee.danswer.db.user_group import insert_user_group
 from ee.danswer.db.user_group import prepare_user_group_for_deletion
+from ee.danswer.db.user_group import update_user_curator_relationship
 from ee.danswer.db.user_group import update_user_group
-from ee.danswer.db.user_group import update_user_group_role
-from ee.danswer.db.user_group import validate_curator_status
 from ee.danswer.server.user_group.models import SetCuratorRequest
 from ee.danswer.server.user_group.models import UserGroup
 from ee.danswer.server.user_group.models import UserGroupCreate
@@ -62,31 +60,35 @@ def create_user_group(
 def patch_user_group(
     user_group_id: int,
     user_group_update: UserGroupUpdate,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> UserGroup:
     try:
         return UserGroup.from_model(
-            update_user_group(db_session, user_group_id, user_group_update)
+            update_user_group(
+                db_session=db_session,
+                user=user,
+                user_group_id=user_group_id,
+                user_group_update=user_group_update,
+            )
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.post("/admin/user-group/{user_group_id}/set-curator")
-def patch_user_group_role(
+def set_user_curator(
     user_group_id: int,
     set_curator_request: SetCuratorRequest,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
-        update_user_group_role(db_session, user_group_id, set_curator_request)
-        user = fetch_user_by_id(db_session, set_curator_request.user_id)
-        if user is not None:
-            validate_curator_status(db_session, [user])
-        else:
-            raise ValueError(f"User with id {set_curator_request.user_id} not found")
+        update_user_curator_relationship(
+            db_session=db_session,
+            user_group_id=user_group_id,
+            set_curator_request=set_curator_request,
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

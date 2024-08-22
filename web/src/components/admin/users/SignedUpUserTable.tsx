@@ -19,6 +19,13 @@ import {
 import { GenericConfirmModal } from "@/components/modals/GenericConfirmModal";
 import { useState } from "react";
 
+const USER_ROLE_LABELS: Record<UserRole, string> = {
+  [UserRole.BASIC]: "Basic",
+  [UserRole.ADMIN]: "Admin",
+  [UserRole.GLOBAL_CURATOR]: "Global Curator",
+  [UserRole.CURATOR]: "Curator",
+};
+
 interface Props {
   users: Array<User>;
   setPopup: (spec: PopupSpec) => void;
@@ -75,15 +82,28 @@ const UserRoleDropdown = ({
         disabled={isSettingRole}
         className="w-40 mx-auto"
       >
-        <SelectItem value={UserRole.BASIC}>Basic</SelectItem>
-        <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-        <SelectItem value={UserRole.GLOBAL_CURATOR}>Global Curator</SelectItem>
+        {Object.entries(USER_ROLE_LABELS).map(([role, label]) => (
+          <SelectItem
+            key={role}
+            value={role}
+            className={
+              role === UserRole.CURATOR ? "opacity-30 cursor-not-allowed" : ""
+            }
+            title={
+              role === UserRole.CURATOR
+                ? "Curator role must be assigned in the Groups tab"
+                : ""
+            }
+          >
+            {label}
+          </SelectItem>
+        ))}
       </Select>
       {showConfirmModal && (
         <GenericConfirmModal
           title="Change Curator Role"
-          message="Warning: Switching roles from curator will remove their status as curator from all groups they curate"
-          confirmText={`Switch Role to ${pendingRole ?? "new role"}`}
+          message={`Warning: Switching roles from Curator to ${USER_ROLE_LABELS[pendingRole as UserRole] ?? USER_ROLE_LABELS[user.role]} will remove their status as individual curators from all groups.`}
+          confirmText={`Switch Role to ${USER_ROLE_LABELS[pendingRole as UserRole] ?? USER_ROLE_LABELS[user.role]}`}
           onClose={() => setShowConfirmModal(false)}
           onConfirm={handleConfirm}
         />

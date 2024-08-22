@@ -45,8 +45,7 @@ from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
-from ee.danswer.db.user_group import disable_curator_status
-from ee.danswer.db.user_group import validate_curator_status
+from ee.danswer.db.user_group import remove_curator_status__no_commit
 
 logger = setup_logger()
 
@@ -84,13 +83,10 @@ def set_user_role(
         )
 
     if user_to_update.role == UserRole.CURATOR:
-        # if switching from curator, remove all curator relationships
-        disable_curator_status(db_session, user_to_update.id)
-        validate_curator_status(db_session, [user_to_update])
-    else:
-        user_to_update.role = user_role_update_request.new_role.value
+        remove_curator_status__no_commit(db_session, user_to_update)
 
-    db_session.add(user_to_update)
+    user_to_update.role = user_role_update_request.new_role.value
+
     db_session.commit()
 
 
