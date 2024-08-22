@@ -3,6 +3,7 @@ import "./globals.css";
 import {
   fetchEnterpriseSettingsSS,
   fetchSettingsSS,
+  SettingsError,
 } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
@@ -14,6 +15,7 @@ import { buildClientUrl } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 import { EnterpriseSettings } from "./admin/settings/interfaces";
+import { redirect } from "next/navigation";
 
 const inter = Inter({
   subsets: ["latin"],
