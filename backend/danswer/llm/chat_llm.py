@@ -5,6 +5,7 @@ from typing import Any
 from typing import cast
 
 import litellm  # type: ignore
+from dotenv import load_dotenv
 from httpx import RemoteProtocolError
 from langchain.schema.language_model import LanguageModelInput
 from langchain_core.messages import AIMessage
@@ -33,7 +34,6 @@ from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import LLMConfig
 from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.utils.logger import setup_logger
-from dotenv import load_dotenv
 
 load_dotenv()
 

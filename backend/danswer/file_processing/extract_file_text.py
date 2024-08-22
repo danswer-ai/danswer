@@ -14,13 +14,13 @@ import chardet
 import docx  # type: ignore
 import openpyxl  # type: ignore
 import pptx  # type: ignore
+from dotenv import load_dotenv
 from pypdf import PdfReader
 from pypdf.errors import PdfStreamError
 
 from danswer.configs.constants import DANSWER_METADATA_FILENAME
 from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.utils.logger import setup_logger
-from dotenv import load_dotenv
 
 load_dotenv()
 

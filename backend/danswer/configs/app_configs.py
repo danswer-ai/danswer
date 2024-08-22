@@ -2,10 +2,11 @@ import json
 import os
 import urllib.parse
 
+from dotenv import load_dotenv
+
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
 from danswer.file_processing.enums import HtmlBasedConnectorTransformLinksStrategy
-from dotenv import load_dotenv
 
 load_dotenv()
 

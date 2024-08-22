@@ -1,9 +1,13 @@
+import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import smtplib
 from typing import cast
 
-from danswer.configs.app_configs import SMTP_PASS, SMTP_PORT, SMTP_SERVER, SMTP_USER, WEB_DOMAIN
+from danswer.configs.app_configs import SMTP_PASS
+from danswer.configs.app_configs import SMTP_PORT
+from danswer.configs.app_configs import SMTP_SERVER
+from danswer.configs.app_configs import SMTP_USER
+from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.models import User
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -25,18 +29,18 @@ def write_invited_users(emails: list[str]) -> int:
     store.store(USER_STORE_KEY, cast(JSON_ro, emails))
     return len(emails)
 
-def send_user_email_invite(
-    user_email: str,
-    current_user : User
-) -> None:
+
+def send_user_email_invite(user_email: str, current_user: User) -> None:
     msg = MIMEMultipart()
     msg["Subject"] = "You're invited to join a workspace @ Danswer!"
     msg["To"] = user_email
     msg["From"] = current_user.email
     link = f"{WEB_DOMAIN}/auth/signup"
     # TODO: send the name of the workspace based on the whitelabelling in the frontend\
-    body = MIMEText(f"Hi!, You have been invited to join my workspace at Danswer. \
-        You can register your account here and join the Danswer workspace: {link}")
+    body = MIMEText(
+        f"Hi!, You have been invited to join my workspace at Danswer. \
+        You can register your account here and join the Danswer workspace: {link}"
+    )
     msg.attach(body)
 
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as s:

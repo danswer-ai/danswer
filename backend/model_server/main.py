@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 import torch
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from transformers import logging as transformer_logging  # type:ignore
 
@@ -20,7 +21,6 @@ from shared_configs.configs import INDEXING_ONLY
 from shared_configs.configs import MIN_THREADS_ML_MODELS
 from shared_configs.configs import MODEL_SERVER_ALLOWED_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-from dotenv import load_dotenv
 
 load_dotenv()
 

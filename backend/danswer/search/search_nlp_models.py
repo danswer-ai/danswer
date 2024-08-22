@@ -5,6 +5,7 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 import requests
+from dotenv import load_dotenv
 from transformers import logging as transformer_logging  # type:ignore
 
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
@@ -19,7 +20,6 @@ from shared_configs.model_server_models import IntentRequest
 from shared_configs.model_server_models import IntentResponse
 from shared_configs.model_server_models import RerankRequest
 from shared_configs.model_server_models import RerankResponse
-from dotenv import load_dotenv
 
 load_dotenv()
 

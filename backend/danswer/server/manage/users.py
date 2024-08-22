@@ -10,7 +10,8 @@ from pydantic import BaseModel
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
-from danswer.auth.invited_users import get_invited_users, send_user_email_invite
+from danswer.auth.invited_users import get_invited_users
+from danswer.auth.invited_users import send_user_email_invite
 from danswer.auth.invited_users import write_invited_users
 from danswer.auth.noauth_user import fetch_no_auth_user
 from danswer.auth.noauth_user import set_no_auth_user_preferences
