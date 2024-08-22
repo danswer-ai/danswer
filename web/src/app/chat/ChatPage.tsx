@@ -481,6 +481,7 @@ export function ChatPage({
     regenerating: boolean;
     finalMessageIndex: number;
   }
+
   const [regenerationState, setRegenerationState] =
     useState<RegenerationState | null>(null);
 
@@ -755,6 +756,7 @@ export function ChatPage({
         ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
         : null
     );
+
     setChatState("loading");
 
     const controller = new AbortController();
@@ -967,6 +969,8 @@ export function ChatPage({
               assistant_message_id,
               user_message_id,
             };
+
+            setRegenerationState(null);
           } else {
             const { user_message_id, frozenMessageMap, frozenSessionId } =
               initialFetchDetails;
@@ -1080,7 +1084,7 @@ export function ChatPage({
                   : initialFetchDetails.user_message_id,
                 alternateAssistantID: alternativeAssistant?.id,
                 stackTrace: stackTrace,
-                alternate_model: finalMessage?.alternate_model,
+                overridden_model: finalMessage?.overridden_model,
               },
             ]);
           }
@@ -1578,8 +1582,10 @@ export function ChatPage({
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
                               if (
-                                regenerationState?.regenerating &&
-                                i >= regenerationState.finalMessageIndex
+                                regenerationState &&
+                                regenerationState.regenerating &&
+                                message.messageId >
+                                  regenerationState.finalMessageIndex
                               ) {
                                 return <></>;
                               }
@@ -1589,7 +1595,7 @@ export function ChatPage({
                                   <div key={messageReactComponentKey}>
                                     <HumanMessage
                                       stopGenerating={stopGeneration}
-                                      content={message.message}
+                                      content={`${message.message} ${regenerationState?.finalMessageIndex ? regenerationState?.finalMessageIndex : "hi"}`}
                                       files={message.files}
                                       messageId={message.messageId}
                                       onEdit={(editedContent) => {
@@ -1655,9 +1661,11 @@ export function ChatPage({
                                     : null;
 
                                 if (
-                                  regenerationState?.regenerating &&
-                                  chatState == "loading" &&
-                                  i == messageHistory.length - 1
+                                  regenerationState &&
+                                  regenerationState.regenerating &&
+                                  // chatState == "loading" &&
+                                  message.messageId >
+                                    regenerationState.finalMessageIndex - 1
                                 ) {
                                   return <></>;
                                 }
@@ -1671,7 +1679,7 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
-                                      alternateModel={message.alternate_model}
+                                      overriddenModel={message.overridden_model}
                                       regenerate={createRegenerator({
                                         messageId: message.messageId,
                                         parentMessage: parentMessage!,
@@ -1709,7 +1717,8 @@ export function ChatPage({
                                         currentAlternativeAssistant
                                       }
                                       messageId={message.messageId}
-                                      content={message.message}
+                                      content={`${message.message} ${i} ${messageHistory.length - 1}`}
+                                      // content={message.message}
                                       files={message.files}
                                       query={
                                         messageHistory[i]?.query || undefined

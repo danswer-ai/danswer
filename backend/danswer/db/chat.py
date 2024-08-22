@@ -443,7 +443,7 @@ def create_new_chat_message(
     tool_calls: list[ToolCall] | None = None,
     commit: bool = True,
     reserved_message_id: int | None = None,
-    alternate_model: str | None = None,
+    overridden_model: str | None = None,
 ) -> ChatMessage:
     if reserved_message_id is not None:
         # Edit existing message
@@ -463,7 +463,7 @@ def create_new_chat_message(
         existing_message.tool_calls = tool_calls if tool_calls else []
         existing_message.error = error
         existing_message.alternate_assistant_id = alternate_assistant_id
-        existing_message.alternate_model = alternate_model
+        existing_message.overridden_model = overridden_model
 
         new_chat_message = existing_message
     else:
@@ -482,7 +482,7 @@ def create_new_chat_message(
             tool_calls=tool_calls if tool_calls else [],
             error=error,
             alternate_assistant_id=alternate_assistant_id,
-            alternate_model=alternate_model,
+            overridden_model=overridden_model,
         )
         db_session.add(new_chat_message)
 
@@ -722,7 +722,7 @@ def translate_db_message_to_chat_message_detail(
             for tool_call in chat_message.tool_calls
         ],
         alternate_assistant_id=chat_message.alternate_assistant_id,
-        alternate_model=chat_message.alternate_model,
+        overridden_model=chat_message.overridden_model,
     )
 
     return chat_msg_detail

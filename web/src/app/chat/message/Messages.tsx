@@ -116,7 +116,7 @@ function FileDisplay({
 
 export const AIMessage = ({
   regenerate,
-  alternateModel,
+  overriddenModel,
   shared,
   isActive,
   toggleDocumentSelection,
@@ -166,7 +166,7 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
-  alternateModel?: string;
+  overriddenModel?: string;
   regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
@@ -556,7 +556,7 @@ export const AIMessage = ({
                               onHoverChange={setIsRegenerateHovered}
                               selectedAssistant={currentPersona!}
                               regenerate={regenerate}
-                              alternateModel={alternateModel}
+                              overriddenModel={overriddenModel}
                             />
                           )}
                         </TooltipGroup>
@@ -619,7 +619,7 @@ export const AIMessage = ({
                             <RegenerateOption
                               selectedAssistant={currentPersona!}
                               regenerate={regenerate}
-                              alternateModel={alternateModel}
+                              overriddenModel={overriddenModel}
                               onHoverChange={setIsRegenerateHovered}
                             />
                           )}
