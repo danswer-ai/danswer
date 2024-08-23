@@ -54,6 +54,7 @@ def translate_doc_response_to_simple_doc(
                 highlight for highlight in doc.match_highlights if highlight
             ],
             source_type=doc.source_type,
+            metadata=doc.metadata,
         )
         for doc in doc_response.top_documents
     ]

@@ -22,6 +22,7 @@ from danswer.auth.noauth_user import set_no_auth_user_preferences
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserStatus
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
@@ -38,11 +39,13 @@ from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
 from danswer.server.manage.models import UserRoleResponse
+from danswer.server.manage.models import UserRoleUpdateRequest
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
+from ee.danswer.db.user_group import remove_curator_status__no_commit
 
 logger = setup_logger()
 
@@ -52,42 +55,38 @@ router = APIRouter()
 USERS_PAGE_SIZE = 10
 
 
-@router.patch("/manage/promote-user-to-admin")
-def promote_admin(
-    user_email: UserByEmail,
-    _: User = Depends(current_admin_user),
+@router.patch("/manage/set-user-role")
+def set_user_role(
+    user_role_update_request: UserRoleUpdateRequest,
+    current_user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    user_to_promote = get_user_by_email(
-        email=user_email.user_email, db_session=db_session
+    user_to_update = get_user_by_email(
+        email=user_role_update_request.user_email, db_session=db_session
     )
-    if not user_to_promote:
+    if not user_to_update:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user_to_promote.role = UserRole.ADMIN
-    db_session.add(user_to_promote)
-    db_session.commit()
-
-
-@router.patch("/manage/demote-admin-to-basic")
-async def demote_admin(
-    user_email: UserByEmail,
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> None:
-    user_to_demote = get_user_by_email(
-        email=user_email.user_email, db_session=db_session
-    )
-    if not user_to_demote:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if user_to_demote.id == user.id:
+    if user_role_update_request.new_role == UserRole.CURATOR:
         raise HTTPException(
-            status_code=400, detail="Cannot demote yourself from admin role!"
+            status_code=400,
+            detail="Curator role must be set via the User Group Menu",
         )
 
-    user_to_demote.role = UserRole.BASIC
-    db_session.add(user_to_demote)
+    if user_to_update.role == user_role_update_request.new_role:
+        return
+
+    if current_user.id == user_to_update.id:
+        raise HTTPException(
+            status_code=400,
+            detail="An admin cannot demote themselves from admin role!",
+        )
+
+    if user_to_update.role == UserRole.CURATOR:
+        remove_curator_status__no_commit(db_session, user_to_update)
+
+    user_to_update.role = user_role_update_request.new_role.value
+
     db_session.commit()
 
 
@@ -96,7 +95,7 @@ def list_all_users(
     q: str | None = None,
     accepted_page: int | None = None,
     invited_page: int | None = None,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AllUsersResponse:
     if not q:
@@ -104,7 +103,7 @@ def list_all_users(
 
     users = [
         user
-        for user in list_users(db_session, q=q)
+        for user in list_users(db_session, email_filter_string=q, user=user)
         if not is_api_key_email_address(user.email)
     ]
     accepted_emails = {user.email for user in users}

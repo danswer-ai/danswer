@@ -107,16 +107,14 @@ def fetch_existing_llm_providers(
     if not user:
         return list(db_session.scalars(select(LLMProviderModel)).all())
     stmt = select(LLMProviderModel).distinct()
-    user_groups_subquery = (
-        select(User__UserGroup.user_group_id)
-        .where(User__UserGroup.user_id == user.id)
-        .subquery()
+    user_groups_select = select(User__UserGroup.user_group_id).where(
+        User__UserGroup.user_id == user.id
     )
     access_conditions = or_(
         LLMProviderModel.is_public,
         LLMProviderModel.id.in_(  # User is part of a group that has access
             select(LLMProvider__UserGroup.llm_provider_id).where(
-                LLMProvider__UserGroup.user_group_id.in_(user_groups_subquery)  # type: ignore
+                LLMProvider__UserGroup.user_group_id.in_(user_groups_select)  # type: ignore
             )
         ),
     )

@@ -64,6 +64,7 @@ class SimpleDoc(BaseModel):
     blurb: str
     match_highlights: list[str]
     source_type: DocumentSource
+    metadata: dict | None
 
 
 class ChatBasicResponse(BaseModel):

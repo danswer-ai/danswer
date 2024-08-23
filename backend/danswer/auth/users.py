@@ -67,6 +67,23 @@ from danswer.utils.variable_functionality import fetch_versioned_implementation
 logger = setup_logger()
 
 
+def validate_curator_request(groups: list | None, is_public: bool) -> None:
+    if is_public:
+        detail = "User does not have permission to create public credentials"
+        logger.error(detail)
+        raise HTTPException(
+            status_code=401,
+            detail=detail,
+        )
+    if not groups:
+        detail = "Curators must specify 1+ groups"
+        logger.error(detail)
+        raise HTTPException(
+            status_code=401,
+            detail="Curators must specify 1+ groups",
+        )
+
+
 def is_user_admin(user: User | None) -> bool:
     if AUTH_TYPE == AuthType.DISABLED:
         return True
@@ -395,6 +412,28 @@ async def current_user(
     return await double_check_user(user)
 
 
+async def current_curator_or_admin_user(
+    user: User | None = Depends(current_user),
+) -> User | None:
+    if DISABLE_AUTH:
+        return None
+
+    if not user or not hasattr(user, "role"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User is not authenticated or lacks role information.",
+        )
+
+    allowed_roles = {UserRole.GLOBAL_CURATOR, UserRole.CURATOR, UserRole.ADMIN}
+    if user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User is not a curator or admin.",
+        )
+
+    return user
+
+
 async def current_admin_user(user: User | None = Depends(current_user)) -> User | None:
     if DISABLE_AUTH:
         return None
@@ -402,7 +441,7 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
     if not user or not hasattr(user, "role") or user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. User is not an admin.",
+            detail="Access denied. User must be an admin to perform this action.",
         )
 
     return user

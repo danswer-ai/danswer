@@ -4,7 +4,7 @@ import requests
 
 from danswer.server.features.document_set.models import DocumentSet
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
-from tests.integration.common.constants import API_SERVER_URL
+from tests.integration.common_utils.constants import API_SERVER_URL
 
 
 def create_document_set(doc_set_creation_request: DocumentSetCreationRequest) -> int:

@@ -93,7 +93,11 @@ class CreateChatMessageRequest(ChunkContext):
     # will disable Query Rewording if specified
     query_override: str | None = None
 
+    # enables additional handling to ensure that we regenerate with a given user message ID
+    regenerate: bool | None = None
+
     # allows the caller to override the Persona / Prompt
+    # these do not persist in the chat thread details
     llm_override: LLMOverride | None = None
     prompt_override: PromptOverride | None = None
 
@@ -168,6 +172,7 @@ class ChatMessageDetail(BaseModel):
     context_docs: RetrievalDocs | None = None
     message_type: MessageType
     time_sent: datetime
+    overridden_model: str | None
     alternate_assistant_id: int | None = None
     # Dict mapping citation number to db_doc_id
     chat_session_id: int | None = None

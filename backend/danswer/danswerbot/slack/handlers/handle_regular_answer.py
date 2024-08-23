@@ -146,7 +146,12 @@ def handle_regular_answer(
             if len(new_message_request.messages) > 1:
                 persona = cast(
                     Persona,
-                    fetch_persona_by_id(db_session, new_message_request.persona_id),
+                    fetch_persona_by_id(
+                        db_session,
+                        new_message_request.persona_id,
+                        user=None,
+                        get_editable=False,
+                    ),
                 )
                 llm, _ = get_llms_for_persona(persona)
 

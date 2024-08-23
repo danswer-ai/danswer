@@ -4,6 +4,7 @@ import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
 import { Button, Divider, Italic, Text } from "@tremor/react";
+import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import {
   ArrayHelpers,
   ErrorMessage,
@@ -11,6 +12,7 @@ import {
   FieldArray,
   Form,
   Formik,
+  FormikProps,
 } from "formik";
 
 import {
@@ -21,10 +23,8 @@ import {
 } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { getDisplayNameForModel } from "@/lib/hooks";
-import { Bubble } from "@/components/Bubble";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
-import { GroupsIcon } from "@/components/icons/icons";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useUserGroups } from "@/lib/hooks";
@@ -232,6 +232,9 @@ export function AssistantEditor({
   const [existingPersonaImageId, setExistingPersonaImageId] = useState<
     string | null
   >(existingPersona?.uploaded_image_id || null);
+
+  const [isRequestSuccessful, setIsRequestSuccessful] = useState(false);
+
   return (
     <div>
       {popup}
@@ -414,10 +417,16 @@ export function AssistantEditor({
                 ? `/admin/assistants?u=${Date.now()}`
                 : `/chat?assistantId=${assistantId}`
             );
+            setIsRequestSuccessful(true);
           }
         }}
       >
-        {({ isSubmitting, values, setFieldValue }) => {
+        {({
+          isSubmitting,
+          values,
+          setFieldValue,
+          ...formikProps
+        }: FormikProps<any>) => {
           function toggleToolInValues(toolId: number) {
             const updatedEnabledToolsMap = {
               ...values.enabled_tools_map,
@@ -891,24 +900,28 @@ export function AssistantEditor({
                         <div>
                           {values.starter_messages &&
                             values.starter_messages.length > 0 &&
-                            values.starter_messages.map((_, index) => {
-                              return (
-                                <div
-                                  key={index}
-                                  className={index === 0 ? "mt-2" : "mt-6"}
-                                >
-                                  <div className="flex">
-                                    <div className="w-full mr-6 border border-border p-3 rounded">
-                                      <div>
-                                        <Label small>Name</Label>
-                                        <SubLabel>
-                                          Shows up as the &quot;title&quot; for
-                                          this Starter Message. For example,
-                                          &quot;Write an email&quot;.
-                                        </SubLabel>
-                                        <Field
-                                          name={`starter_messages[${index}].name`}
-                                          className={`
+                            values.starter_messages.map(
+                              (
+                                starterMessage: StarterMessage,
+                                index: number
+                              ) => {
+                                return (
+                                  <div
+                                    key={index}
+                                    className={index === 0 ? "mt-2" : "mt-6"}
+                                  >
+                                    <div className="flex">
+                                      <div className="w-full mr-6 border border-border p-3 rounded">
+                                        <div>
+                                          <Label small>Name</Label>
+                                          <SubLabel>
+                                            Shows up as the &quot;title&quot;
+                                            for this Starter Message. For
+                                            example, &quot;Write an email&quot;.
+                                          </SubLabel>
+                                          <Field
+                                            name={`starter_messages[${index}].name`}
+                                            className={`
                                         border 
                                         border-border 
                                         bg-background 
@@ -918,27 +931,27 @@ export function AssistantEditor({
                                         px-3 
                                         mr-4
                                       `}
-                                          autoComplete="off"
-                                        />
-                                        <ErrorMessage
-                                          name={`starter_messages[${index}].name`}
-                                          component="div"
-                                          className="text-error text-sm mt-1"
-                                        />
-                                      </div>
+                                            autoComplete="off"
+                                          />
+                                          <ErrorMessage
+                                            name={`starter_messages[${index}].name`}
+                                            component="div"
+                                            className="text-error text-sm mt-1"
+                                          />
+                                        </div>
 
-                                      <div className="mt-3">
-                                        <Label small>Description</Label>
-                                        <SubLabel>
-                                          A description which tells the user
-                                          what they might want to use this
-                                          Starter Message for. For example
-                                          &quot;to a client about a new
-                                          feature&quot;
-                                        </SubLabel>
-                                        <Field
-                                          name={`starter_messages.${index}.description`}
-                                          className={`
+                                        <div className="mt-3">
+                                          <Label small>Description</Label>
+                                          <SubLabel>
+                                            A description which tells the user
+                                            what they might want to use this
+                                            Starter Message for. For example
+                                            &quot;to a client about a new
+                                            feature&quot;
+                                          </SubLabel>
+                                          <Field
+                                            name={`starter_messages.${index}.description`}
+                                            className={`
                                         border 
                                         border-border 
                                         bg-background 
@@ -948,28 +961,28 @@ export function AssistantEditor({
                                         px-3 
                                         mr-4
                                       `}
-                                          autoComplete="off"
-                                        />
-                                        <ErrorMessage
-                                          name={`starter_messages[${index}].description`}
-                                          component="div"
-                                          className="text-error text-sm mt-1"
-                                        />
-                                      </div>
+                                            autoComplete="off"
+                                          />
+                                          <ErrorMessage
+                                            name={`starter_messages[${index}].description`}
+                                            component="div"
+                                            className="text-error text-sm mt-1"
+                                          />
+                                        </div>
 
-                                      <div className="mt-3">
-                                        <Label small>Message</Label>
-                                        <SubLabel>
-                                          The actual message to be sent as the
-                                          initial user message if a user selects
-                                          this starter prompt. For example,
-                                          &quot;Write me an email to a client
-                                          about a new billing feature we just
-                                          released.&quot;
-                                        </SubLabel>
-                                        <Field
-                                          name={`starter_messages[${index}].message`}
-                                          className={`
+                                        <div className="mt-3">
+                                          <Label small>Message</Label>
+                                          <SubLabel>
+                                            The actual message to be sent as the
+                                            initial user message if a user
+                                            selects this starter prompt. For
+                                            example, &quot;Write me an email to
+                                            a client about a new billing feature
+                                            we just released.&quot;
+                                          </SubLabel>
+                                          <Field
+                                            name={`starter_messages[${index}].message`}
+                                            className={`
                                           border 
                                           border-border 
                                           bg-background 
@@ -979,28 +992,29 @@ export function AssistantEditor({
                                           px-3 
                                           mr-4
                                       `}
-                                          as="textarea"
-                                          autoComplete="off"
-                                        />
-                                        <ErrorMessage
-                                          name={`starter_messages[${index}].message`}
-                                          component="div"
-                                          className="text-error text-sm mt-1"
+                                            as="textarea"
+                                            autoComplete="off"
+                                          />
+                                          <ErrorMessage
+                                            name={`starter_messages[${index}].message`}
+                                            component="div"
+                                            className="text-error text-sm mt-1"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="my-auto">
+                                        <FiX
+                                          className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                                          onClick={() =>
+                                            arrayHelpers.remove(index)
+                                          }
                                         />
                                       </div>
                                     </div>
-                                    <div className="my-auto">
-                                      <FiX
-                                        className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                                        onClick={() =>
-                                          arrayHelpers.remove(index)
-                                        }
-                                      />
-                                    </div>
                                   </div>
-                                </div>
-                              );
-                            })}
+                                );
+                              }
+                            )}
 
                           <Button
                             onClick={() => {
@@ -1025,65 +1039,17 @@ export function AssistantEditor({
 
                   {isPaidEnterpriseFeaturesEnabled &&
                     userGroups &&
-                    (!user || user.role === "admin") && (
-                      <>
-                        <Divider />
-
-                        <BooleanFormField
-                          small
-                          noPadding
-                          alignTop
-                          name="is_public"
-                          label="Is Public?"
-                          subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
-                        />
-
-                        {userGroups &&
-                          userGroups.length > 0 &&
-                          !values.is_public && (
-                            <div>
-                              <Text>
-                                Select which User Groups should have access to
-                                this Assistant.
-                              </Text>
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {userGroups.map((userGroup) => {
-                                  const isSelected = values.groups.includes(
-                                    userGroup.id
-                                  );
-                                  return (
-                                    <Bubble
-                                      key={userGroup.id}
-                                      isSelected={isSelected}
-                                      onClick={() => {
-                                        if (isSelected) {
-                                          setFieldValue(
-                                            "groups",
-                                            values.groups.filter(
-                                              (id) => id !== userGroup.id
-                                            )
-                                          );
-                                        } else {
-                                          setFieldValue("groups", [
-                                            ...values.groups,
-                                            userGroup.id,
-                                          ]);
-                                        }
-                                      }}
-                                    >
-                                      <div className="flex">
-                                        <GroupsIcon />
-                                        <div className="ml-1">
-                                          {userGroup.name}
-                                        </div>
-                                      </div>
-                                    </Bubble>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                      </>
+                    userGroups.length > 0 && (
+                      <IsPublicGroupSelector
+                        formikProps={{
+                          values,
+                          isSubmitting,
+                          setFieldValue,
+                          ...formikProps,
+                        }}
+                        objectName="assistant"
+                        enforceGroupSelection={false}
+                      />
                     )}
 
                   <div className="flex">
@@ -1092,7 +1058,7 @@ export function AssistantEditor({
                       color="green"
                       size="md"
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isRequestSuccessful}
                     >
                       {isUpdate ? "Update!" : "Create!"}
                     </Button>

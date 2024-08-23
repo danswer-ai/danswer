@@ -1,10 +1,10 @@
 import time
 
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
-from tests.integration.common.seed_documents import TestDocumentClient
-from tests.integration.common.vespa import TestVespaClient
-from tests.integration.document_set.utils import create_document_set
-from tests.integration.document_set.utils import fetch_document_sets
+from tests.integration.common_utils.seed_documents import TestDocumentClient
+from tests.integration.common_utils.vespa import TestVespaClient
+from tests.integration.tests.document_set.utils import create_document_set
+from tests.integration.tests.document_set.utils import fetch_document_sets
 
 
 def test_multiple_document_sets_syncing_same_connnector(
@@ -68,12 +68,12 @@ def test_multiple_document_sets_syncing_same_connnector(
     doc_set_names = {doc_set.name for doc_set in doc_sets}
 
     # make sure documents are as expected
-    result = vespa_client.get_documents_by_id(seed_result.document_ids)
+    seeded_document_ids = [doc.id for doc in seed_result.documents]
+
+    result = vespa_client.get_documents_by_id([doc.id for doc in seed_result.documents])
     documents = result["documents"]
-    assert len(documents) == len(seed_result.document_ids)
-    assert all(
-        doc["fields"]["document_id"] in seed_result.document_ids for doc in documents
-    )
+    assert len(documents) == len(seed_result.documents)
+    assert all(doc["fields"]["document_id"] in seeded_document_ids for doc in documents)
     assert all(
         set(doc["fields"]["document_sets"].keys()) == doc_set_names for doc in documents
     )

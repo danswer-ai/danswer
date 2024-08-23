@@ -1,12 +1,15 @@
 "use client";
 
 import React from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { LoadingAnimation } from "@/components/Loading";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { ConnectorIndexingStatus } from "@/lib/types";
+import { getCurrentUser } from "@/lib/user";
+import { User, UserRole } from "@/lib/types";
 import { usePublicCredentials } from "@/lib/hooks";
 import { Title } from "@tremor/react";
 import { DriveJsonUploadSection, DriveOAuthSection } from "./Credential";
@@ -18,6 +21,24 @@ import {
 import { GoogleDriveConfig } from "@/lib/connectors/connectors";
 
 const GDriveMain = ({}: {}) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const isAdmin = currentUser?.role === UserRole.ADMIN;
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+        } else {
+          console.error("Failed to fetch current user");
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
   const {
     data: appCredentialData,
     isLoading: isAppCredentialLoading,
@@ -119,22 +140,27 @@ const GDriveMain = ({}: {}) => {
         setPopup={setPopup}
         appCredentialData={appCredentialData}
         serviceAccountCredentialData={serviceAccountKeyData}
+        isAdmin={isAdmin}
       />
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 2: Authenticate with Danswer
-      </Title>
-      <DriveOAuthSection
-        setPopup={setPopup}
-        refreshCredentials={refreshCredentials}
-        googleDrivePublicCredential={googleDrivePublicCredential}
-        googleDriveServiceAccountCredential={
-          googleDriveServiceAccountCredential
-        }
-        appCredentialData={appCredentialData}
-        serviceAccountKeyData={serviceAccountKeyData}
-        connectorExists={googleDriveConnectorIndexingStatuses.length > 0}
-      />
+      {isAdmin && (
+        <>
+          <Title className="mb-2 mt-6 ml-auto mr-auto">
+            Step 2: Authenticate with Danswer
+          </Title>
+          <DriveOAuthSection
+            setPopup={setPopup}
+            refreshCredentials={refreshCredentials}
+            googleDrivePublicCredential={googleDrivePublicCredential}
+            googleDriveServiceAccountCredential={
+              googleDriveServiceAccountCredential
+            }
+            appCredentialData={appCredentialData}
+            serviceAccountKeyData={serviceAccountKeyData}
+            connectorExists={googleDriveConnectorIndexingStatuses.length > 0}
+          />
+        </>
+      )}
     </>
   );
 };

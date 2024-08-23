@@ -22,7 +22,7 @@ import {
   ClosedBookIcon,
   SearchIcon,
 } from "@/components/icons/icons";
-
+import { UserRole } from "@/lib/types";
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
 import { UserDropdown } from "../UserDropdown";
 import { User } from "@/lib/types";
@@ -40,6 +40,8 @@ export function ClientLayout({
   children: React.ReactNode;
   enableEnterprise: boolean;
 }) {
+  const isCurator =
+    user?.role === UserRole.CURATOR || user?.role === UserRole.GLOBAL_CURATOR;
   const pathname = usePathname();
   const settings = useContext(SettingsContext);
 
@@ -123,86 +125,53 @@ export function ClientLayout({
                     ),
                     link: "/admin/assistants",
                   },
-                  {
-                    name: (
-                      <div className="flex">
-                        {/* <FiSlack size={18} /> */}
-                        <SlackIconSkeleton />
-                        <div className="ml-1">Slack Bots</div>
-                      </div>
-                    ),
-                    link: "/admin/bot",
-                  },
-                  {
-                    name: (
-                      <div className="flex">
-                        {/* <FiTool size={18} className="my-auto" /> */}
-                        <ToolIconSkeleton size={18} />
-                        <div className="ml-1">Tools</div>
-                      </div>
-                    ),
-                    link: "/admin/tools",
-                  },
-                  {
-                    name: (
-                      <div className="flex">
-                        <ClipboardIcon size={18} />
-                        <div className="ml-1">Standard Answers</div>
-                      </div>
-                    ),
-                    link: "/admin/standard-answer",
-                  },
-                  {
-                    name: (
-                      <div className="flex">
-                        <ClosedBookIcon size={18} />
-                        <div className="ml-1">Prompt Library</div>
-                      </div>
-                    ),
-                    link: "/admin/prompt-library",
-                  },
-                ],
-              },
-              {
-                name: "Configuration",
-                items: [
-                  {
-                    name: (
-                      <div className="flex">
-                        <CpuIconSkeleton size={18} />
-                        <div className="ml-1">LLM</div>
-                      </div>
-                    ),
-                    link: "/admin/configuration/llm",
-                  },
-                  {
-                    error: settings?.settings.needs_reindexing,
-                    name: (
-                      <div className="flex">
-                        <SearchIcon />
-                        <CustomTooltip content="Navigate here to update your search settings">
-                          <div className="ml-1">Search Settings</div>
-                        </CustomTooltip>
-                      </div>
-                    ),
-                    link: "/admin/configuration/search",
-                  },
-                ],
-              },
-              {
-                name: "User Management",
-                items: [
-                  {
-                    name: (
-                      <div className="flex">
-                        <UsersIconSkeleton size={18} />
-                        <div className="ml-1">Users</div>
-                      </div>
-                    ),
-                    link: "/admin/users",
-                  },
-                  ...(enableEnterprise
+                  ...(!isCurator
                     ? [
+                        {
+                          name: (
+                            <div className="flex">
+                              <SlackIconSkeleton />
+                              <div className="ml-1">Slack Bots</div>
+                            </div>
+                          ),
+                          link: "/admin/bot",
+                        },
+                        {
+                          name: (
+                            <div className="flex">
+                              <ToolIconSkeleton size={18} />
+                              <div className="ml-1">Tools</div>
+                            </div>
+                          ),
+                          link: "/admin/tools",
+                        },
+                        {
+                          name: (
+                            <div className="flex">
+                              <ClipboardIcon size={18} />
+                              <div className="ml-1">Standard Answers</div>
+                            </div>
+                          ),
+                          link: "/admin/standard-answer",
+                        },
+                        {
+                          name: (
+                            <div className="flex">
+                              <ClosedBookIcon size={18} />
+                              <div className="ml-1">Prompt Library</div>
+                            </div>
+                          ),
+                          link: "/admin/prompt-library",
+                        },
+                      ]
+                    : []),
+                ],
+              },
+              ...(isCurator
+                ? [
+                    {
+                      name: "User Management",
+                      items: [
                         {
                           name: (
                             <div className="flex">
@@ -212,91 +181,148 @@ export function ClientLayout({
                           ),
                           link: "/admin/groups",
                         },
-                        {
-                          name: (
-                            <div className="flex">
-                              <KeyIconSkeleton size={18} />
-                              <div className="ml-1">API Keys</div>
-                            </div>
-                          ),
-                          link: "/admin/api-key",
-                        },
-                      ]
-                    : []),
-                  {
-                    name: (
-                      <div className="flex">
-                        <ShieldIconSkeleton size={18} />
-                        <div className="ml-1">Token Rate Limits</div>
-                      </div>
-                    ),
-                    link: "/admin/token-rate-limits",
-                  },
-                ],
-              },
-              ...(enableEnterprise
-                ? [
-                    {
-                      name: "Performance",
-                      items: [
-                        {
-                          name: (
-                            <div className="flex">
-                              <FiActivity size={18} />
-                              <div className="ml-1">Usage Statistics</div>
-                            </div>
-                          ),
-                          link: "/admin/performance/usage",
-                        },
-                        {
-                          name: (
-                            <div className="flex">
-                              <DatabaseIconSkeleton size={18} />
-                              <div className="ml-1">Query History</div>
-                            </div>
-                          ),
-                          link: "/admin/performance/query-history",
-                        },
-                        {
-                          name: (
-                            <div className="flex">
-                              <FiBarChart2 size={18} />
-                              <div className="ml-1">Custom Analytics</div>
-                            </div>
-                          ),
-                          link: "/admin/performance/custom-analytics",
-                        },
                       ],
                     },
                   ]
                 : []),
-              {
-                name: "Settings",
-                items: [
-                  {
-                    name: (
-                      <div className="flex">
-                        <SettingsIconSkeleton size={18} />
-                        <div className="ml-1">Workspace Settings</div>
-                      </div>
-                    ),
-                    link: "/admin/settings",
-                  },
-                  ...(enableEnterprise
-                    ? [
+              ...(!isCurator
+                ? [
+                    {
+                      name: "Configuration",
+                      items: [
                         {
                           name: (
                             <div className="flex">
-                              <PaintingIconSkeleton size={18} />
-                              <div className="ml-1">Whitelabeling</div>
+                              <CpuIconSkeleton size={18} />
+                              <div className="ml-1">LLM</div>
                             </div>
                           ),
-                          link: "/admin/whitelabeling",
+                          link: "/admin/configuration/llm",
                         },
-                      ]
-                    : []),
-                ],
-              },
+                        {
+                          error: settings?.settings.needs_reindexing,
+                          name: (
+                            <div className="flex">
+                              <SearchIcon />
+                              <CustomTooltip content="Navigate here to update your search settings">
+                                <div className="ml-1">Search Settings</div>
+                              </CustomTooltip>
+                            </div>
+                          ),
+                          link: "/admin/configuration/search",
+                        },
+                      ],
+                    },
+                    {
+                      name: "User Management",
+                      items: [
+                        {
+                          name: (
+                            <div className="flex">
+                              <UsersIconSkeleton size={18} />
+                              <div className="ml-1">Users</div>
+                            </div>
+                          ),
+                          link: "/admin/users",
+                        },
+                        ...(enableEnterprise
+                          ? [
+                              {
+                                name: (
+                                  <div className="flex">
+                                    <GroupsIconSkeleton size={18} />
+                                    <div className="ml-1">Groups</div>
+                                  </div>
+                                ),
+                                link: "/admin/groups",
+                              },
+                              {
+                                name: (
+                                  <div className="flex">
+                                    <KeyIconSkeleton size={18} />
+                                    <div className="ml-1">API Keys</div>
+                                  </div>
+                                ),
+                                link: "/admin/api-key",
+                              },
+                            ]
+                          : []),
+                        {
+                          name: (
+                            <div className="flex">
+                              <ShieldIconSkeleton size={18} />
+                              <div className="ml-1">Token Rate Limits</div>
+                            </div>
+                          ),
+                          link: "/admin/token-rate-limits",
+                        },
+                      ],
+                    },
+                    ...(enableEnterprise
+                      ? [
+                          {
+                            name: "Performance",
+                            items: [
+                              {
+                                name: (
+                                  <div className="flex">
+                                    <FiActivity size={18} />
+                                    <div className="ml-1">Usage Statistics</div>
+                                  </div>
+                                ),
+                                link: "/admin/performance/usage",
+                              },
+                              {
+                                name: (
+                                  <div className="flex">
+                                    <DatabaseIconSkeleton size={18} />
+                                    <div className="ml-1">Query History</div>
+                                  </div>
+                                ),
+                                link: "/admin/performance/query-history",
+                              },
+                              {
+                                name: (
+                                  <div className="flex">
+                                    <FiBarChart2 size={18} />
+                                    <div className="ml-1">Custom Analytics</div>
+                                  </div>
+                                ),
+                                link: "/admin/performance/custom-analytics",
+                              },
+                            ],
+                          },
+                        ]
+                      : []),
+                    {
+                      name: "Settings",
+                      items: [
+                        {
+                          name: (
+                            <div className="flex">
+                              <SettingsIconSkeleton size={18} />
+                              <div className="ml-1">Workspace Settings</div>
+                            </div>
+                          ),
+                          link: "/admin/settings",
+                        },
+                        ...(enableEnterprise
+                          ? [
+                              {
+                                name: (
+                                  <div className="flex">
+                                    <PaintingIconSkeleton size={18} />
+                                    <div className="ml-1">Whitelabeling</div>
+                                  </div>
+                                ),
+                                link: "/admin/whitelabeling",
+                              },
+                            ]
+                          : []),
+                      ],
+                    },
+                  ]
+                : []),
             ]}
           />
         </div>
