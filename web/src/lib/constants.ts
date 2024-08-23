@@ -35,9 +35,6 @@ export const NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN =
 
 export const TOGGLED_CONNECTORS_COOKIE_NAME = "toggled_connectors";
 
-export const NEXT_PUBLIC_STOP_GENERATING_ON_SWITCH =
-  process.env.NEXT_PUBLIC_STOP_GENERATING_ON_SWITCH?.toLowerCase() === "true";
-
 /* Enterprise-only settings */
 
 // NOTE: this should ONLY be used on the server-side. If used client side,
