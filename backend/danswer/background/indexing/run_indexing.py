@@ -11,12 +11,9 @@ from danswer.background.indexing.tracer import DanswerTracer
 from danswer.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
 from danswer.configs.app_configs import INDEXING_TRACER_INTERVAL
 from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
+from danswer.connectors.connector_runner import ConnectorRunner
 from danswer.connectors.factory import instantiate_connector
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import IndexAttemptMetadata
-from danswer.connectors.models import InputType
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.engine import get_sqlalchemy_engine
@@ -42,12 +39,12 @@ logger = setup_logger()
 INDEXING_TRACER_NUM_PRINT_ENTRIES = 5
 
 
-def _get_document_generator(
+def _get_connector_runner(
     db_session: Session,
     attempt: IndexAttempt,
     start_time: datetime,
     end_time: datetime,
-) -> GenerateDocumentsOutput:
+) -> ConnectorRunner:
     """
     NOTE: `start_time` and `end_time` are only used for poll connectors
 
@@ -77,31 +74,9 @@ def _get_document_generator(
         )
         raise e
 
-    if task == InputType.LOAD_STATE:
-        assert isinstance(runnable_connector, LoadConnector)
-        doc_batch_generator = runnable_connector.load_from_state()
-
-    elif task == InputType.POLL:
-        assert isinstance(runnable_connector, PollConnector)
-        if (
-            attempt.connector_credential_pair.connector_id is None
-            or attempt.connector_credential_pair.connector_id is None
-        ):
-            raise ValueError(
-                f"Polling attempt {attempt.id} is missing connector_id or credential_id, "
-                f"can't fetch time range."
-            )
-
-        logger.info(f"Polling for updates between {start_time} and {end_time}")
-        doc_batch_generator = runnable_connector.poll_source(
-            start=start_time.timestamp(), end=end_time.timestamp()
-        )
-
-    else:
-        # Event types cannot be handled by a background type
-        raise RuntimeError(f"Invalid task type: {task}")
-
-    return doc_batch_generator
+    return ConnectorRunner(
+        connector=runnable_connector, time_range=(start_time, end_time)
+    )
 
 
 def _run_indexing(
@@ -189,7 +164,7 @@ def _run_indexing(
                 datetime(1970, 1, 1, tzinfo=timezone.utc),
             )
 
-            doc_batch_generator = _get_document_generator(
+            connector_runner = _get_connector_runner(
                 db_session=db_session,
                 attempt=index_attempt,
                 start_time=window_start,
@@ -201,7 +176,7 @@ def _run_indexing(
             tracer_counter = 0
             if INDEXING_TRACER_INTERVAL > 0:
                 tracer.snap()
-            for doc_batch in doc_batch_generator:
+            for doc_batch in connector_runner.run():
                 # Check if connector is disabled mid run and stop if so unless it's the secondary
                 # index being built. We want to populate it even for paused connectors
                 # Often paused connectors are sources that aren't updated frequently but the
