@@ -32,6 +32,7 @@ import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
 import { AddTokenRateLimitForm } from "./AddTokenRateLimitForm";
 import { GenericTokenRateLimitTable } from "@/app/admin/token-rate-limits/TokenRateLimitTables";
 import { getCurrentUser } from "@/lib/user";
+import { useUser } from "@/components/user/UserProvider";
 
 interface GroupDisplayProps {
   users: User[];
@@ -120,23 +121,12 @@ export const GroupDisplay = ({
   const [addMemberFormVisible, setAddMemberFormVisible] = useState(false);
   const [addConnectorFormVisible, setAddConnectorFormVisible] = useState(false);
   const [addRateLimitFormVisible, setAddRateLimitFormVisible] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
+
+  const { isLoadingUser, isAdmin } = useUser();
+  if (isLoadingUser) {
+    return <></>;
+  }
+
   const handlePopup = (message: string, type: "success" | "error") => {
     setPopup({ message, type });
   };

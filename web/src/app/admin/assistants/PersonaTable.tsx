@@ -13,6 +13,7 @@ import { FiEdit2 } from "react-icons/fi";
 import { TrashIcon } from "@/components/icons/icons";
 import { getCurrentUser } from "@/lib/user";
 import { UserRole, User } from "@/lib/types";
+import { useUser } from "@/components/user/UserProvider";
 
 function PersonaTypeDisplay({ persona }: { persona: Persona }) {
   if (persona.default_persona) {
@@ -56,23 +57,10 @@ export function PersonasTable({
   const router = useRouter();
   const { popup, setPopup } = usePopup();
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
+  const { isLoadingUser, isAdmin } = useUser();
+  if (isLoadingUser) {
+    return <></>;
+  }
 
   const editablePersonaIds = new Set(
     editablePersonas.map((p) => p.id.toString())

@@ -17,26 +17,14 @@ import { usePublicCredentials } from "@/lib/hooks";
 import { Title } from "@tremor/react";
 import { GmailConfig } from "@/lib/connectors/connectors";
 import { useState, useEffect } from "react";
+import { useUser } from "@/components/user/UserProvider";
 
 export const GmailMain = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
+  const { isLoadingUser, isAdmin } = useUser();
+  if (isLoadingUser) {
+    return <></>;
+  }
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
   const {
     data: appCredentialData,
     isLoading: isAppCredentialLoading,

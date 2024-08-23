@@ -26,6 +26,7 @@ import {
   IsPublicGroupSelectorFormType,
   IsPublicGroupSelector,
 } from "@/components/IsPublicGroupSelector";
+import { useUser } from "@/components/user/UserProvider";
 
 const CreateButton = ({
   onClick,
@@ -96,23 +97,10 @@ export default function CreateCredential({
   const [isLoading, setIsLoading] = useState(true);
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
+  const { isLoadingUser, isAdmin } = useUser();
+  if (isLoadingUser) {
+    return <></>;
+  }
 
   const handleSubmit = async (
     values: formType,
@@ -184,7 +172,6 @@ export default function CreateCredential({
     return <GDriveMain />;
   }
 
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
   const credentialTemplate: dictionaryType = credentialTemplates[sourceType];
   const validationSchema = createValidationSchema(credentialTemplate);
 
