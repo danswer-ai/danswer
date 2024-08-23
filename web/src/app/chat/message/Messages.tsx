@@ -286,7 +286,6 @@ export const AIMessage = ({
                       <>
                         {query !== undefined &&
                           handleShowRetrieved !== undefined &&
-                          isCurrentlyShowingRetrieved !== undefined &&
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary
@@ -294,9 +293,6 @@ export const AIMessage = ({
                                 finished={toolCall?.tool_result != undefined}
                                 hasDocs={hasDocs || false}
                                 messageId={messageId}
-                                isCurrentlyShowingRetrieved={
-                                  isCurrentlyShowingRetrieved
-                                }
                                 handleShowRetrieved={handleShowRetrieved}
                                 handleSearchQueryEdit={handleSearchQueryEdit}
                               />
