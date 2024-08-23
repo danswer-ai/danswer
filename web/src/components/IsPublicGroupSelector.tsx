@@ -43,7 +43,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
     }
   }, [userGroups, isAdmin, user]);
 
-  if (isLoadingUser) {
+  if (isLoadingUser || userGroupsIsLoading) {
     return null;
   }
 
