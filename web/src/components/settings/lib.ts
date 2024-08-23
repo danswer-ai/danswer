@@ -74,7 +74,7 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
     let customAnalyticsScript: string | null = null;
     if (tasks.length > 2) {
       if (!results[2].ok) {
-        if (results[2].status !== 403) {
+        if (results[2].status !== 403 && results[1].status !== 404) {
           throw new Error(
             `fetchCustomAnalyticsScriptSS failed: status=${results[2].status} body=${await results[2].text()}`
           );
