@@ -77,15 +77,15 @@ export default function FunctionalHeader({
           style={{ transition: "width 0.30s ease-out" }}
           className={`
             mobile:hidden
-                  flex-none 
-                  mx-auto
-                  overflow-y-hidden 
-                  transition-all 
-                  duration-300 
-                  ease-in-out
-                  h-full
-                  ${sidebarToggled ? "w-[250px]" : "w-[0px]"}
-                  `}
+            flex-none 
+            mx-auto
+            overflow-y-hidden 
+            transition-all 
+            duration-300 
+            ease-in-out
+            h-full
+            ${sidebarToggled ? "w-[250px]" : "w-[0px]"}
+            `}
         />
         <div className="w-full mobile:-mx-20 desktop:px-4">
           <ChatBanner />

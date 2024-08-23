@@ -16,6 +16,10 @@ import { Inter } from "next/font/google";
 import Head from "next/head";
 import { EnterpriseSettings } from "./admin/settings/interfaces";
 import { redirect } from "next/navigation";
+import { Button, Card } from "@tremor/react";
+import LogoType from "@/components/header/LogoType";
+import { HeaderTitle } from "@/components/header/HeaderTitle";
+import { Logo } from "@/components/Logo";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -53,14 +57,27 @@ export default async function RootLayout({
   const combinedSettings = await fetchSettingsSS();
   if (!combinedSettings) {
     // Just display a simple full page error if fetching fails.
+
     return (
-      <html lang="en">
+      <html lang="en" className={`${inter.variable} font-sans`}>
         <Head>
-          <title>Settings Unavailable</title>
+          <title>Settings Unavailable | Danswer</title>
         </Head>
-        <body>
-          <div className="error">
-            Settings could not be loaded. Please try again later.
+        <body className="bg-background text-default">
+          <div className="flex flex-col items-center justify-center min-h-screen">
+            <div className="mb-2 flex items-center max-w-[175px]">
+              <HeaderTitle>Danswer</HeaderTitle>
+              <Logo height={40} width={40} />
+            </div>
+
+            <Card className="p-8 max-w-md">
+              <h1 className="text-2xl font-bold mb-4 text-error">Error</h1>
+              <p className="text-text-500">
+                Your Danswer instance was not configured properly and your
+                settings could not be loaded. Please contact your admin to fix
+                this error.
+              </p>
+            </Card>
           </div>
         </body>
       </html>
