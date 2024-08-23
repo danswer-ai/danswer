@@ -1,7 +1,4 @@
-import { ChatProvider } from "@/components/context/ChatContext";
-import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { User } from "@/lib/types";
-import { unstable_noStore as noStore } from "next/cache";
 import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import {
   AuthTypeMetadata,
@@ -11,7 +8,7 @@ import {
 import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
 import Profile from "./profile";
-import { Bar } from "../search/bar";
+import { WorkSpaceSidebar } from "../chat/sessionSidebar/WorkSpaceSidebar";
 
 export default async function ProfilePage() {
   const tasks = [
@@ -51,9 +48,9 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="h-full overflow-x-hidden flex">
-      <Bar user={user} />
-      <div className="w-full pt-20 lg:pt-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 h-screen overflow-hidden">
+    <div className="h-full overflow-x-hidden flex relative flex-row">
+      <WorkSpaceSidebar user={user} />
+      <div className="pt-20 lg:pt-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 h-screen overflow-hidden w-4/5 mx-auto">
         <Profile user={user} />
       </div>
     </div>

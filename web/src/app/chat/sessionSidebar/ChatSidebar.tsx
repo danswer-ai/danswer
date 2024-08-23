@@ -107,7 +107,7 @@ export const ChatSidebar = ({
     <>
       {popup}
       <div
-        className={`py-6
+        className={`py-4
             bg-background
             flex-col 
             h-full

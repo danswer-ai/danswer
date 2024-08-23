@@ -1276,7 +1276,7 @@ export function ChatPage({
                         )}
 
                       <div
-                        className={`mt-4 py-20 lg:py-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
+                        className={`mt-4 pt-20 pb-10 md:pb-14 lg:py-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
                           hasPerformedInitialScroll ? "" : " invisible"
                         } ${messageHistory.length === 0 ? "hidden" : "block"}`}
                       >

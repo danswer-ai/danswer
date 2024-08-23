@@ -22,7 +22,7 @@ export const WorkSpaceSidebar = ({
   user,
 }: WorkSpaceSidebarProps) => {
   return (
-    <div className={`bg-background h-full px-4 py-6 border-r border-border`}>
+    <div className={`bg-background h-full p-4 border-r border-border`}>
       <div
         className={`h-full flex flex-col justify-between transition-opacity duration-300 ease-in-out lg:!opacity-100  ${
           openSidebar ? "opacity-100 delay-200" : "opacity-0"
