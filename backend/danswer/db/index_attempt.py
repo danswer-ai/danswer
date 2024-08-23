@@ -242,7 +242,8 @@ def get_latest_finished_index_attempt_for_cc_pair(
     secondary_index: bool,
     db_session: Session,
 ) -> IndexAttempt | None:
-    stmt = select(IndexAttempt).where(
+    stmt = select(IndexAttempt).distinct()
+    stmt = stmt.where(
         IndexAttempt.connector_credential_pair_id == connector_credential_pair_id,
         IndexAttempt.status.not_in(
             [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]

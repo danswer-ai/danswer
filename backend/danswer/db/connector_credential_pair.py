@@ -85,7 +85,7 @@ def get_connector_credential_pairs(
     user: User | None = None,
     get_editable: bool = True,
 ) -> list[ConnectorCredentialPair]:
-    stmt = select(ConnectorCredentialPair)
+    stmt = select(ConnectorCredentialPair).distinct()
     stmt = _add_user_filters(stmt, user, get_editable)
     if not include_disabled:
         stmt = stmt.where(
