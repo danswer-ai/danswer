@@ -231,13 +231,8 @@ export const AIMessage = ({
       }
       return content;
     };
-
     content = trimIncompleteCodeSection(content);
   }
-
-  const danswerSearchToolEnabledForPersona = currentPersona.tools.some(
-    (tool) => tool.in_code_tool_id === SEARCH_TOOL_NAME
-  );
 
   let filteredDocs: FilteredDanswerDocument[] = [];
 
@@ -760,24 +755,24 @@ export const HumanMessage = ({
                       <textarea
                         ref={textareaRef}
                         className={`
-                      m-0 
-                      w-full 
-                      h-auto
-                      shrink
-                      border-0
-                      rounded-lg 
-                      overflow-y-hidden
-                      bg-background-emphasis 
-                      whitespace-normal 
-                      break-word
-                      overscroll-contain
-                      outline-none 
-                      placeholder-gray-400 
-                      resize-none
-                      pl-4
-                      overflow-y-auto
-                      pr-12 
-                      py-4`}
+                        m-0 
+                        w-full 
+                        h-auto
+                        shrink
+                        border-0
+                        rounded-lg 
+                        overflow-y-hidden
+                        bg-background-emphasis 
+                        whitespace-normal 
+                        break-word
+                        overscroll-contain
+                        outline-none 
+                        placeholder-gray-400 
+                        resize-none
+                        pl-4
+                        overflow-y-auto
+                        pr-12 
+                        py-4`}
                         aria-multiline
                         role="textarea"
                         value={editedContent}
@@ -901,7 +896,7 @@ export const HumanMessage = ({
                     ) : (
                       <div className="h-[27px]" />
                     )}
-                    <p className="ml-auto rounded-lg p-1">{content}</p>
+                    <div className="ml-auto rounded-lg p-1">{content}</div>
                   </>
                 )}
               </div>

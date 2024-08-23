@@ -278,7 +278,7 @@ async def is_disconnected(request: Request) -> Callable[[], bool]:
     def is_disconnected_sync() -> bool:
         future = asyncio.run_coroutine_threadsafe(request.is_disconnected(), main_loop)
         try:
-            return not future.result(timeout=0.01)
+            return not future.result(timeout=0.05)
         except asyncio.TimeoutError:
             logger.error("Asyncio timed out")
             return True

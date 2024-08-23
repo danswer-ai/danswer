@@ -91,12 +91,9 @@ import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { DeleteChatModal } from "./modal/DeleteChatModal";
 import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
-<<<<<<< HEAD
+
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
-=======
-import { NEXT_PUBLIC_STOP_GENERATING_ON_SWITCH } from "@/lib/constants";
->>>>>>> 0146234a (refactored for stop / regenerate)
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -223,8 +220,8 @@ export function ChatPage({
     }
   }, [liveAssistant]);
 
-  const stopGenerating = (sessionId?: number) => {
-    const currentSession = sessionId || currentSessionId();
+  const stopGenerating = () => {
+    const currentSession = currentSessionId();
     const controller = abortControllers.get(currentSession);
     if (controller) {
       controller.abort();
@@ -357,8 +354,13 @@ export function ChatPage({
       // This corresponds to a "renaming" of chat, which occurs after first message
       // stream
       if (
-        messageHistory[messageHistory.length - 1]?.type !== "error" ||
-        loadedSessionId != null
+        (messageHistory[messageHistory.length - 1]?.type !== "error" ||
+          loadedSessionId != null) &&
+        !(
+          currentChatState() == "toolBuilding" ||
+          currentChatState() == "streaming" ||
+          currentChatState() == "loading"
+        )
       ) {
         updateCompleteMessageDetail(chatSession.chat_session_id, newMessageMap);
 
@@ -516,10 +518,11 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(
     currentMessageMap(completeMessageDetail)
   );
+
   const [submittedMessage, setSubmittedMessage] = useState("");
 
   const [chatState, setChatState] = useState<Map<number | null, ChatState>>(
-    new Map([[null, "input"]])
+    new Map([[chatSessionIdRef.current, "input"]])
   );
 
   const [regenerationState, setRegenerationState] = useState<
@@ -1991,11 +1994,13 @@ export function ChatPage({
                                 );
                               }
                             })}
+
                             {currentSessionChatState == "loading" &&
                               !currentSessionRegenerationState?.regenerating &&
                               messageHistory[messageHistory.length - 1]?.type !=
                                 "user" && (
                                 <HumanMessage
+                                  key={-2}
                                   messageId={-1}
                                   content={submittedMessage}
                                 />
@@ -2006,6 +2011,7 @@ export function ChatPage({
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                               >
                                 <AIMessage
+                                  key={-3}
                                   currentPersona={liveAssistant}
                                   alternativeAssistant={
                                     alternativeGeneratingAssistant ??
@@ -2034,6 +2040,7 @@ export function ChatPage({
                               messageHistory.length === 0 &&
                               !isFetchingChatMessages && (
                                 <div
+                                  key={-4}
                                   className={`
                                       mx-auto 
                                       px-4 
