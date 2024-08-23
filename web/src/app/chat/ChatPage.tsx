@@ -1894,7 +1894,6 @@ export function ChatPage({
                                                 });
                                                 return;
                                               }
-
                                               if (
                                                 previousMessage.messageId ===
                                                 null

@@ -125,7 +125,87 @@ export function ClientLayout({
                     ),
                     link: "/admin/assistants",
                   },
+<<<<<<< HEAD
                   ...(!isCurator
+=======
+                  {
+                    name: (
+                      <div className="flex">
+                        {/* <FiSlack size={18} /> */}
+                        <SlackIconSkeleton />
+                        <div className="ml-1">Slack Bots</div>
+                      </div>
+                    ),
+                    link: "/admin/bot",
+                  },
+                  {
+                    name: (
+                      <div className="flex">
+                        {/* <FiTool size={18} className="my-auto" /> */}
+                        <ToolIconSkeleton size={18} />
+                        <div className="ml-1">Tools</div>
+                      </div>
+                    ),
+                    link: "/admin/tools",
+                  },
+                  {
+                    name: (
+                      <div className="flex">
+                        <ClipboardIcon size={18} />
+                        <div className="ml-1">Standard Answers</div>
+                      </div>
+                    ),
+                    link: "/admin/standard-answer",
+                  },
+                  {
+                    name: (
+                      <div className="flex">
+                        <ClosedBookIcon size={18} />
+                        <div className="ml-1">Prompt Library</div>
+                      </div>
+                    ),
+                    link: "/admin/prompt-library",
+                  },
+                ],
+              },
+              {
+                name: "Configuration",
+                items: [
+                  {
+                    name: (
+                      <div className="flex">
+                        <CpuIconSkeleton size={18} />
+                        <div className="ml-1">LLM</div>
+                      </div>
+                    ),
+                    link: "/admin/configuration/llm",
+                  },
+                  {
+                    error: settings?.settings.needs_reindexing,
+                    name: (
+                      <div className="flex">
+                        <SearchIcon />
+                        <div className="ml-1">Search Settings</div>
+                      </div>
+                    ),
+                    link: "/admin/configuration/search",
+                  },
+                ],
+              },
+              {
+                name: "User Management",
+                items: [
+                  {
+                    name: (
+                      <div className="flex">
+                        <UsersIconSkeleton size={18} />
+                        <div className="ml-1">Users</div>
+                      </div>
+                    ),
+                    link: "/admin/users",
+                  },
+                  ...(enableEnterprise
+>>>>>>> 292eeb2f (squash)
                     ? [
                         {
                           name: (
