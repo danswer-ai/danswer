@@ -11,7 +11,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.embedding_model import create_embedding_model
 from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.embedding_model import get_embedding_provider_from_provider
+from danswer.db.embedding_model import get_embedding_provider_from_provider_type
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.embedding_model import update_embedding_model_status
 from danswer.db.engine import get_session
@@ -46,7 +46,7 @@ def set_new_embedding_model(
 
     # Validate cloud provider exists
     if embed_model_details.provider_type is not None:
-        cloud_provider = get_embedding_provider_from_provider(
+        cloud_provider = get_embedding_provider_from_provider_type(
             db_session, provider_type=embed_model_details.provider_type
         )
 
