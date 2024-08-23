@@ -33,13 +33,20 @@ const CredentialSelectionTable = ({
     number | null
   >(null);
 
+  // Deduplicate credentials
+  const dedupedCredentials = credentials.filter(
+    (cred) =>
+      !editableCredentials.some((editableCred) => editableCred.id === cred.id)
+  );
+  const allCredentials = [...editableCredentials, ...dedupedCredentials];
+
   const handleSelectCredential = (credentialId: number) => {
     const newSelectedId =
       selectedCredentialId === credentialId ? null : credentialId;
     setSelectedCredentialId(newSelectedId);
 
     const selectedCredential =
-      credentials.find((cred) => cred.id === newSelectedId) || null;
+      allCredentials.find((cred) => cred.id === newSelectedId) || null;
     onSelectCredential(selectedCredential);
   };
 
@@ -59,9 +66,9 @@ const CredentialSelectionTable = ({
           </tr>
         </thead>
 
-        {credentials.length > 0 && (
+        {allCredentials.length > 0 && (
           <tbody>
-            {credentials.map((credential, ind) => {
+            {allCredentials.map((credential, ind) => {
               const selected = currentCredentialId
                 ? credential.id == (selectedCredentialId || currentCredentialId)
                 : false;
@@ -120,7 +127,7 @@ const CredentialSelectionTable = ({
         )}
       </table>
 
-      {credentials.length == 0 && (
+      {allCredentials.length == 0 && (
         <p className="mt-4"> No credentials exist for this connector!</p>
       )}
     </div>

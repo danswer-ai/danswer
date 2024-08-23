@@ -358,7 +358,18 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                               {!userGroupsIsLoading &&
                                 userGroups.map((userGroup: UserGroup) => {
                                   const isSelected =
-                                    groups?.includes(userGroup.id) || false;
+                                    groups?.includes(userGroup.id) ||
+                                    (!isAdmin && userGroups.length === 1);
+
+                                  // Auto-select the only group for non-admin users
+                                  if (
+                                    !isAdmin &&
+                                    userGroups.length === 1 &&
+                                    groups.length === 0
+                                  ) {
+                                    setGroups([userGroup.id]);
+                                  }
+
                                   return (
                                     <div
                                       key={userGroup.id}
@@ -375,13 +386,16 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                                       `}
                                       onClick={() => {
                                         if (setGroups) {
-                                          if (isSelected) {
+                                          if (
+                                            isSelected &&
+                                            (isAdmin || userGroups.length > 1)
+                                          ) {
                                             setGroups(
                                               groups?.filter(
                                                 (id) => id !== userGroup.id
                                               ) || []
                                             );
-                                          } else {
+                                          } else if (!isSelected) {
                                             setGroups([
                                               ...(groups || []),
                                               userGroup.id,

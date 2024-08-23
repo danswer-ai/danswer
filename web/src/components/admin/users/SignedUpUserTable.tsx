@@ -18,6 +18,7 @@ import {
 } from "@tremor/react";
 import { GenericConfirmModal } from "@/components/modals/GenericConfirmModal";
 import { useState } from "react";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 const USER_ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.BASIC]: "Basic",
@@ -49,6 +50,7 @@ const UserRoleDropdown = ({
     userMutationFetcher,
     { onSuccess, onError }
   );
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   const handleChange = (value: string) => {
     if (value === user.role) return;
@@ -82,22 +84,26 @@ const UserRoleDropdown = ({
         disabled={isSettingRole}
         className="w-40 mx-auto"
       >
-        {Object.entries(USER_ROLE_LABELS).map(([role, label]) => (
-          <SelectItem
-            key={role}
-            value={role}
-            className={
-              role === UserRole.CURATOR ? "opacity-30 cursor-not-allowed" : ""
-            }
-            title={
-              role === UserRole.CURATOR
-                ? "Curator role must be assigned in the Groups tab"
-                : ""
-            }
-          >
-            {label}
-          </SelectItem>
-        ))}
+        {Object.entries(USER_ROLE_LABELS).map(([role, label]) =>
+          !isPaidEnterpriseFeaturesEnabled &&
+          (role === UserRole.CURATOR ||
+            role === UserRole.GLOBAL_CURATOR) ? null : (
+            <SelectItem
+              key={role}
+              value={role}
+              className={
+                role === UserRole.CURATOR ? "opacity-30 cursor-not-allowed" : ""
+              }
+              title={
+                role === UserRole.CURATOR
+                  ? "Curator role must be assigned in the Groups tab"
+                  : ""
+              }
+            >
+              {label}
+            </SelectItem>
+          )
+        )}
       </Select>
       {showConfirmModal && (
         <GenericConfirmModal
