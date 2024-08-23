@@ -50,7 +50,7 @@ def create_embedding_model(
     return embedding_model
 
 
-def get_embedding_provider_from_provider(
+def get_embedding_provider_from_provider_type(
     db_session: Session, provider_type: EmbeddingProvider
 ) -> CloudEmbeddingProvider | None:
     query = select(CloudEmbeddingProvider).where(

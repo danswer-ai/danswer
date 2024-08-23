@@ -557,7 +557,7 @@ class EmbeddingModel(Base):
 
     # New field for cloud provider relationship
     provider_type: Mapped[EmbeddingProvider | None] = mapped_column(
-        ForeignKey("embedding_provider.provider_type")
+        ForeignKey("embedding_provider.provider_type"), nullable=True
     )
 
     cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(
