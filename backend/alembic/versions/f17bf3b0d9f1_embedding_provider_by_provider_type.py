@@ -1,7 +1,7 @@
 """embedding provider by provider type
 
 Revision ID: f17bf3b0d9f1
-Revises: 351faebd379d
+Revises: ee3f4b47fad5
 Create Date: 2024-08-21 13:13:31.120460
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "f17bf3b0d9f1"
-down_revision = "351faebd379d"
+down_revision = "ee3f4b47fad5"
 branch_labels = None
 depends_on = None
 
