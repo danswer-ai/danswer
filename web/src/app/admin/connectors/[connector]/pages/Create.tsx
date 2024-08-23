@@ -51,7 +51,6 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
 
   const { isLoadingUser, isAdmin, user } = useUser();
-  console.log(user);
 
   if (isLoadingUser) {
     return <></>;
