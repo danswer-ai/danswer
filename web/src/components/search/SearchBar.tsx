@@ -177,25 +177,25 @@ export const FullSearchBar = ({
         rows={3}
         onKeyDownCapture={handleKeyDown}
         className={`
-                m-0
-                w-full
-                shrink
-                resize-none
-                border-0
-                bg-background-100
-                whitespace-normal
-                rounded-lg
-                break-word
-                overscroll-contain
-                outline-none
-                placeholder-subtle
-                resize-none
-                pl-4
-                pr-12
-                max-h-[6em]
-                py-4
-                h-14
-              `}
+          m-0
+          w-full
+          shrink
+          resize-none
+          border-0
+          bg-background-100
+          whitespace-normal
+          rounded-lg
+          break-word
+          overscroll-contain
+          outline-none
+          placeholder-subtle
+          resize-none
+          pl-4
+          pr-12
+          max-h-[6em]
+          py-4
+          h-14
+        `}
         autoFocus
         style={{ scrollbarWidth: "thin" }}
         role="textarea"
@@ -208,7 +208,7 @@ export const FullSearchBar = ({
       />
 
       <div
-        className={`flex ${showingSidebar ? " 2xl:justify-between" : "2xl:justify-end"} justify-between 4xl:justify-end  w-full items-center space-x-3 py-3 px-4 `}
+        className={`flex ${showingSidebar ? " 2xl:justify-between" : "2xl:justify-end"} justify-between 4xl:justify-end w-full items-center space-x-3 py-3 px-4`}
       >
         <div className={`-my-1 4xl:hidden ${!showingSidebar && "2xl:hidden"}`}>
           {(ccPairs.length > 0 || documentSets.length > 0) && (
