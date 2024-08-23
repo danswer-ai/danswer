@@ -13,7 +13,7 @@ import { ConnectionConfiguration } from "@/lib/connectors/connectors";
 import { useFormContext } from "@/components/context/FormContext";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Text } from "@tremor/react";
-import { getCurrentUser } from "@/lib/user";
+
 import { FiUsers } from "react-icons/fi";
 import { useUser } from "@/components/user/UserProvider";
 
@@ -51,6 +51,7 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
 
   const { isLoadingUser, isAdmin } = useUser();
+
   if (isLoadingUser) {
     return <></>;
   }

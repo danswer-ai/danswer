@@ -21,9 +21,6 @@ import { useUser } from "@/components/user/UserProvider";
 
 export const GmailMain = () => {
   const { isLoadingUser, isAdmin } = useUser();
-  if (isLoadingUser) {
-    return <></>;
-  }
 
   const {
     data: appCredentialData,
@@ -64,6 +61,10 @@ export const GmailMain = () => {
   const serviceAccountKeySuccessfullyFetched =
     serviceAccountKeyData ||
     (isServiceAccountKeyError && isServiceAccountKeyError.status === 404);
+
+  if (isLoadingUser) {
+    return <></>;
+  }
 
   if (
     (!appCredentialSuccessfullyFetched && isAppCredentialLoading) ||

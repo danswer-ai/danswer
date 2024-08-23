@@ -58,9 +58,6 @@ export function PersonasTable({
   const { popup, setPopup } = usePopup();
 
   const { isLoadingUser, isAdmin } = useUser();
-  if (isLoadingUser) {
-    return <></>;
-  }
 
   const editablePersonaIds = new Set(
     editablePersonas.map((p) => p.id.toString())
@@ -110,6 +107,10 @@ export function PersonasTable({
       router.refresh();
     }
   };
+
+  if (isLoadingUser) {
+    return <></>;
+  }
 
   return (
     <div>

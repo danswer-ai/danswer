@@ -38,6 +38,7 @@ import {
   useGoogleDriveCredentials,
 } from "./pages/utils/hooks";
 import { FormikProps } from "formik";
+import { useUser } from "@/components/user/UserProvider";
 
 export type AdvancedConfig = {
   pruneFreq: number | null;
@@ -99,7 +100,15 @@ export default function AddConnector({
   const [refreshFreq, setRefreshFreq] = useState<number>(defaultRefresh || 0);
   const [pruneFreq, setPruneFreq] = useState<number>(defaultPrune);
   const [indexingStart, setIndexingStart] = useState<Date | null>(null);
-  const [isPublic, setIsPublic] = useState(true);
+  const { isAdmin, isLoadingUser } = useUser();
+
+  const [isPublic, setIsPublic] = useState(isAdmin);
+  useEffect(() => {
+    if (!isLoadingUser) {
+      setIsPublic(isAdmin);
+    }
+  }, [isLoadingUser, isAdmin]);
+
   const [groups, setGroups] = useState<number[]>([]);
   const [createConnectorToggle, setCreateConnectorToggle] = useState(false);
   const formRef = useRef<FormikProps<any>>(null);
@@ -127,6 +136,10 @@ export default function AddConnector({
 
   if (!noCredentials && !credentialActivated && formStep != 0) {
     setFormStep(Math.min(formStep, 0));
+  }
+
+  if (isLoadingUser) {
+    return <></>;
   }
 
   const resetAdvancedConfigs = () => {
