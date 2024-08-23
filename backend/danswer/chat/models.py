@@ -9,6 +9,7 @@ from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SearchResponse
+from danswer.tools.custom.base_tool_types import ToolResultType
 
 
 class LlmDoc(BaseModel):
@@ -130,7 +131,7 @@ class ImageGenerationDisplay(BaseModel):
 
 
 class CustomToolResponse(BaseModel):
-    response: dict
+    response: ToolResultType
     tool_name: str
 
 
