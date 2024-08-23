@@ -61,7 +61,7 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
     let enterpriseSettings: EnterpriseSettings | null = null;
     if (tasks.length > 1) {
       if (!results[1].ok) {
-        if (results[1].status !== 403 && results[1].status !== 404) {
+        if (results[1].status !== 403) {
           throw new Error(
             `fetchEnterpriseSettingsSS failed: status=${results[1].status} body=${await results[1].text()}`
           );
@@ -74,7 +74,7 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
     let customAnalyticsScript: string | null = null;
     if (tasks.length > 2) {
       if (!results[2].ok) {
-        if (results[2].status !== 403 && results[1].status !== 404) {
+        if (results[2].status !== 403) {
           throw new Error(
             `fetchCustomAnalyticsScriptSS failed: status=${results[2].status} body=${await results[2].text()}`
           );
