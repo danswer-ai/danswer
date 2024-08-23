@@ -4,7 +4,6 @@ from fastapi import HTTPException
 from fastapi import Query
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import validate_curator_request
@@ -55,13 +54,14 @@ def create_document_set(
 @router.patch("/admin/document-set")
 def patch_document_set(
     document_set_update_request: DocumentSetUpdateRequest,
-    _: User = Depends(current_admin_user),
+    user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
         update_document_set(
             document_set_update_request=document_set_update_request,
             db_session=db_session,
+            user=user,
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -70,12 +70,14 @@ def patch_document_set(
 @router.delete("/admin/document-set/{document_set_id}")
 def delete_document_set(
     document_set_id: int,
-    _: User = Depends(current_admin_user),
+    user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
         mark_document_set_as_to_be_deleted(
-            document_set_id=document_set_id, db_session=db_session
+            db_session=db_session,
+            document_set_id=document_set_id,
+            user=user,
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

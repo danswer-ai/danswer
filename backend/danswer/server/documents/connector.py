@@ -54,6 +54,7 @@ from danswer.db.connector import fetch_connectors
 from danswer.db.connector import get_connector_credential_ids
 from danswer.db.connector import update_connector
 from danswer.db.connector_credential_pair import add_credential_to_connector
+from danswer.db.connector_credential_pair import get_cc_pair_groups_for_ids
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.credentials import create_credential
@@ -422,6 +423,17 @@ def get_connector_indexing_status(
         for connector_id, credential_id, cnt in document_count_info
     }
 
+    group_cc_pair_relationships = get_cc_pair_groups_for_ids(
+        db_session=db_session,
+        cc_pair_ids=[cc_pair.id for cc_pair in cc_pairs],
+        user=user,
+    )
+    group_cc_pair_relationships_dict: dict[int, list[int]] = {}
+    for relationship in group_cc_pair_relationships:
+        group_cc_pair_relationships_dict.setdefault(relationship.cc_pair_id, []).append(
+            relationship.user_group_id
+        )
+
     for cc_pair in cc_pairs:
         # TODO remove this to enable ingestion API
         if cc_pair.name == "DefaultCCPair":
@@ -448,6 +460,7 @@ def get_connector_indexing_status(
                 credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=cc_pair.is_public,
                 owner=credential.user.email if credential.user else "",
+                groups=group_cc_pair_relationships_dict.get(cc_pair.id, []),
                 last_finished_status=(
                     latest_finished_attempt.status if latest_finished_attempt else None
                 ),

@@ -20,6 +20,7 @@ import {
 } from "@/lib/connectors/credentials";
 import { GoogleDriveConfig } from "@/lib/connectors/connectors";
 import { useUser } from "@/components/user/UserProvider";
+import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 
 const GDriveMain = ({}: {}) => {
   const { isLoadingUser, isAdmin } = useUser();
@@ -46,10 +47,7 @@ const GDriveMain = ({}: {}) => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: connectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any, any>[], FetchError>(
-    "/api/manage/admin/connector/indexing-status",
-    errorHandlingFetcher
-  );
+  } = useConnectorCredentialIndexingStatus();
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
