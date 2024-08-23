@@ -26,6 +26,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const isAdmin = currentUser?.role === UserRole.ADMIN;
 
+  // TODO convert this to logic
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
