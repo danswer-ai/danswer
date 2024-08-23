@@ -200,7 +200,18 @@ services:
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
 
 
+  cache:
+    image: redis:7.4-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server
+    volumes: 
+      - cache:/data
+
+
 volumes:
+  cache:
   db_volume:
     driver: local
     driver_opts:

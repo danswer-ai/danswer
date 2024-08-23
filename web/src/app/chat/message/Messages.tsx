@@ -45,9 +45,12 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
 import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
+
 import {
-  DislikeFeedbackIcon,
-  LikeFeedbackIcon,
+  ThumbsUpIcon,
+  ThumbsDownIcon,
+  LikeFeedback,
+  DislikeFeedback,
 } from "@/components/icons/icons";
 import {
   CustomTooltip,
@@ -59,6 +62,8 @@ import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
+import RegenerateOption from "../RegenerateOption";
+import { LlmOverride } from "@/lib/hooks";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
@@ -110,6 +115,8 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
+  regenerate,
+  overriddenModel,
   shared,
   isActive,
   toggleDocumentSelection,
@@ -132,9 +139,13 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
   currentPersona,
+  otherMessagesCanSwitchTo,
+  onMessageSelection,
 }: {
   shared?: boolean;
   isActive?: boolean;
+  otherMessagesCanSwitchTo?: number[];
+  onMessageSelection?: (messageId: number) => void;
   selectedDocuments?: DanswerDocument[] | null;
   toggleDocumentSelection?: () => void;
   docs?: DanswerDocument[] | null;
@@ -155,6 +166,8 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
+  overriddenModel?: string;
+  regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
@@ -183,6 +196,7 @@ export const AIMessage = ({
   };
   const finalContent = processContent(content as string);
 
+  const [isRegenerateHovered, setIsRegenerateHovered] = useState(false);
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
 
   const settings = useContext(SettingsContext);
@@ -240,9 +254,18 @@ export const AIMessage = ({
       });
   }
 
+  const currentMessageInd = messageId
+    ? otherMessagesCanSwitchTo?.indexOf(messageId)
+    : undefined;
   const uniqueSources: ValidSources[] = Array.from(
     new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
+
+  const includeMessageSwitcher =
+    currentMessageInd !== undefined &&
+    onMessageSelection &&
+    otherMessagesCanSwitchTo &&
+    otherMessagesCanSwitchTo.length > 1;
 
   return (
     <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
@@ -263,7 +286,6 @@ export const AIMessage = ({
                       <>
                         {query !== undefined &&
                           handleShowRetrieved !== undefined &&
-                          isCurrentlyShowingRetrieved !== undefined &&
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary
@@ -271,9 +293,6 @@ export const AIMessage = ({
                                 finished={toolCall?.tool_result != undefined}
                                 hasDocs={hasDocs || false}
                                 messageId={messageId}
-                                isCurrentlyShowingRetrieved={
-                                  isCurrentlyShowingRetrieved
-                                }
                                 handleShowRetrieved={handleShowRetrieved}
                                 handleSearchQueryEdit={handleSearchQueryEdit}
                               />
@@ -483,59 +502,124 @@ export const AIMessage = ({
                     (isActive ? (
                       <div
                         className={`
-                      flex md:flex-row gap-x-0.5 mt-1
-                      transition-transform duration-300 ease-in-out
-                      transform opacity-100 translate-y-0"
+                        flex md:flex-row gap-x-0.5 mt-1
+                        transition-transform duration-300 ease-in-out
+                        transform opacity-100 translate-y-0"
                   `}
                       >
                         <TooltipGroup>
+                          <div className="flex justify-start w-full gap-x-0.5">
+                            {includeMessageSwitcher && (
+                              <div className="-mx-1 mr-auto">
+                                <MessageSwitcher
+                                  currentPage={currentMessageInd + 1}
+                                  totalPages={otherMessagesCanSwitchTo.length}
+                                  handlePrevious={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd - 1
+                                      ]
+                                    );
+                                  }}
+                                  handleNext={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd + 1
+                                      ]
+                                    );
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
                           <CustomTooltip showTick line content="Copy!">
                             <CopyButton content={content.toString()} />
                           </CustomTooltip>
                           <CustomTooltip showTick line content="Good response!">
                             <HoverableIcon
-                              icon={<LikeFeedbackIcon />}
+                              icon={<LikeFeedback />}
                               onClick={() => handleFeedback("like")}
                             />
                           </CustomTooltip>
                           <CustomTooltip showTick line content="Bad response!">
                             <HoverableIcon
-                              icon={<DislikeFeedbackIcon />}
+                              icon={<DislikeFeedback size={16} />}
                               onClick={() => handleFeedback("dislike")}
                             />
                           </CustomTooltip>
+                          {regenerate && (
+                            <RegenerateOption
+                              onHoverChange={setIsRegenerateHovered}
+                              selectedAssistant={currentPersona!}
+                              regenerate={regenerate}
+                              overriddenModel={overriddenModel}
+                            />
+                          )}
                         </TooltipGroup>
                       </div>
                     ) : (
                       <div
                         ref={hoverElementRef}
                         className={`
-                        absolute -bottom-4
-                        invisible ${(isHovering || settings?.isMobile) && "!visible"}
-                        opacity-0 ${(isHovering || settings?.isMobile) && "!opacity-100"}
+
+                        absolute -bottom-5
+                        invisible ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!visible"}
+                        opacity-0 ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!opacity-100"}
                         translate-y-2 ${(isHovering || settings?.isMobile) && "!translate-y-0"}
                         transition-transform duration-300 ease-in-out 
-                        flex md:flex-row gap-x-0.5 bg-background-125/40 p-1.5 rounded-lg
+                        flex md:flex-row gap-x-0.5 bg-background-125/40 -mx-1.5 p-1.5 rounded-lg
                         `}
                       >
                         <TooltipGroup>
+                          <div className="flex justify-start w-full gap-x-0.5">
+                            {includeMessageSwitcher && (
+                              <div className="-mx-1 mr-auto">
+                                <MessageSwitcher
+                                  currentPage={currentMessageInd + 1}
+                                  totalPages={otherMessagesCanSwitchTo.length}
+                                  handlePrevious={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd - 1
+                                      ]
+                                    );
+                                  }}
+                                  handleNext={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd + 1
+                                      ]
+                                    );
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
                           <CustomTooltip showTick line content="Copy!">
                             <CopyButton content={content.toString()} />
                           </CustomTooltip>
 
                           <CustomTooltip showTick line content="Good response!">
                             <HoverableIcon
-                              icon={<LikeFeedbackIcon />}
+                              icon={<LikeFeedback />}
                               onClick={() => handleFeedback("like")}
                             />
                           </CustomTooltip>
 
                           <CustomTooltip showTick line content="Bad response!">
                             <HoverableIcon
-                              icon={<DislikeFeedbackIcon />}
+                              icon={<DislikeFeedback size={16} />}
                               onClick={() => handleFeedback("dislike")}
                             />
                           </CustomTooltip>
+                          {regenerate && (
+                            <RegenerateOption
+                              selectedAssistant={currentPersona!}
+                              regenerate={regenerate}
+                              overriddenModel={overriddenModel}
+                              onHoverChange={setIsRegenerateHovered}
+                            />
+                          )}
                         </TooltipGroup>
                       </div>
                     ))}

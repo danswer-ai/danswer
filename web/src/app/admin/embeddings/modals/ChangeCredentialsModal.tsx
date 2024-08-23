@@ -74,7 +74,7 @@ export function ChangeCredentialsModal({
 
     try {
       const response = await fetch(
-        `${EMBEDDING_PROVIDERS_ADMIN_URL}/${provider.name}`,
+        `${EMBEDDING_PROVIDERS_ADMIN_URL}/${provider.provider_type}`,
         {
           method: "DELETE",
         }
@@ -99,19 +99,12 @@ export function ChangeCredentialsModal({
 
   const handleSubmit = async () => {
     setTestError("");
-
     try {
-      const body = JSON.stringify({
-        api_key: apiKey,
-        provider: provider.name.toLowerCase().split(" ")[0],
-        default_model_id: provider.name,
-      });
-
       const testResponse = await fetch("/api/admin/embedding/test-embedding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          provider: provider.name.toLowerCase().split(" ")[0],
+          provider_type: provider.provider_type.toLowerCase().split(" ")[0],
           api_key: apiKey,
         }),
       });
@@ -125,7 +118,7 @@ export function ChangeCredentialsModal({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: provider.name,
+          provider_type: provider.provider_type.toLowerCase().split(" ")[0],
           api_key: apiKey,
           is_default_provider: false,
           is_configured: true,
@@ -151,7 +144,7 @@ export function ChangeCredentialsModal({
     <Modal
       width="max-w-3xl"
       icon={provider.icon}
-      title={`Modify your ${provider.name} key`}
+      title={`Modify your ${provider.provider_type} key`}
       onOutsideClick={onCancel}
     >
       <div className="mb-4">

@@ -374,9 +374,22 @@ export function CustomLLMProviderUpdateForm({
               name="model_names"
               label="Model Names"
               values={values}
-              subtext={`List the individual models that you want to make 
-            available as a part of this provider. At least one must be specified. 
-            As an example, for OpenAI one model might be "gpt-4".`}
+              subtext={
+                <>
+                  List the individual models that you want to make available as
+                  a part of this provider. At least one must be specified. For
+                  the best experience your [Provider Name]/[Model Name] should
+                  match one of the pairs listed{" "}
+                  <a
+                    target="_blank"
+                    href="https://models.litellm.ai/"
+                    className="text-link"
+                  >
+                    here
+                  </a>
+                  .
+                </>
+              }
             />
 
             <Divider />

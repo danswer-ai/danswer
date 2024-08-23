@@ -469,7 +469,7 @@ if __name__ == "__main__":
                     # or the tokens have updated (set up for the first time)
                     with Session(get_sqlalchemy_engine()) as db_session:
                         embedding_model = get_current_db_embedding_model(db_session)
-                        if embedding_model.cloud_provider_id is None:
+                        if embedding_model.provider_type is None:
                             warm_up_bi_encoder(
                                 embedding_model=embedding_model,
                                 model_server_host=MODEL_SERVER_HOST,

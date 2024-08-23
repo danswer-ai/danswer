@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
@@ -50,7 +50,7 @@ basic_router = APIRouter(prefix="/query")
 @admin_router.post("/search")
 def admin_search(
     question: AdminSearchRequest,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AdminSearchResponse:
     query = question.query

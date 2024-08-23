@@ -39,12 +39,12 @@ export default function CloudEmbeddingPage({
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
 }) {
-  function hasNameInArray(
-    arr: Array<{ name: string }>,
+  function hasProviderTypeinArray(
+    arr: Array<{ provider_type: string }>,
     searchName: string
   ): boolean {
     return arr.some(
-      (item) => item.name.toLowerCase() === searchName.toLowerCase()
+      (item) => item.provider_type.toLowerCase() === searchName.toLowerCase()
     );
   }
 
@@ -52,10 +52,13 @@ export default function CloudEmbeddingPage({
     (model) => ({
       ...model,
       configured:
-        !newUnenabledProviders.includes(model.name) &&
-        (newEnabledProviders.includes(model.name) ||
+        !newUnenabledProviders.includes(model.provider_type) &&
+        (newEnabledProviders.includes(model.provider_type) ||
           (embeddingProviderDetails &&
-            hasNameInArray(embeddingProviderDetails, model.name))!),
+            hasProviderTypeinArray(
+              embeddingProviderDetails,
+              model.provider_type
+            ))!),
     })
   );
 
@@ -71,11 +74,12 @@ export default function CloudEmbeddingPage({
 
       <div className="gap-4 mt-2 pb-10 flex content-start flex-wrap">
         {providers.map((provider) => (
-          <div key={provider.name} className="mt-4 w-full">
+          <div key={provider.provider_type} className="mt-4 w-full">
             <div className="flex items-center mb-2">
               {provider.icon({ size: 40 })}
               <h2 className="ml-2  mt-2 text-xl font-bold">
-                {provider.name} {provider.name == "Cohere" && "(recommended)"}
+                {provider.provider_type}{" "}
+                {provider.provider_type == "Cohere" && "(recommended)"}
               </h2>
               <HoverPopup
                 mainContent={
