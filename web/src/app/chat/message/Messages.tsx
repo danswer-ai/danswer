@@ -85,7 +85,10 @@ function FileDisplay({
   return (
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
-        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
+        <div
+          id="danswer-file"
+          className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}
+        >
           <div className="flex flex-col gap-2">
             {nonImgFiles.map((file) => {
               return (
@@ -102,7 +105,10 @@ function FileDisplay({
         </div>
       )}
       {imageFiles && imageFiles.length > 0 && (
-        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
+        <div
+          id="danswer-image"
+          className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}
+        >
           <div className="flex flex-col gap-2">
             {imageFiles.map((file) => {
               return <InMessageImage key={file.id} fileId={file.id} />;
@@ -268,7 +274,11 @@ export const AIMessage = ({
     otherMessagesCanSwitchTo.length > 1;
 
   return (
-    <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
+    <div
+      id="danswer-ai-message"
+      ref={trackedElementRef}
+      className={"py-5 px-2 lg:px-5 relative flex "}
+    >
       <div
         className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-message-max`}
       >
@@ -717,6 +727,7 @@ export const HumanMessage = ({
 
   return (
     <div
+      id="danswer-human-message"
       className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
