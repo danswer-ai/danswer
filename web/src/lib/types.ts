@@ -14,7 +14,12 @@ export enum UserStatus {
   deactivated = "deactivated",
 }
 
-export type UserRole = "basic" | "admin";
+export enum UserRole {
+  BASIC = "basic",
+  ADMIN = "admin",
+  CURATOR = "curator",
+  GLOBAL_CURATOR = "global_curator",
+}
 
 export interface User {
   id: string;
@@ -185,6 +190,7 @@ export interface UserGroup {
   id: number;
   name: string;
   users: User[];
+  curator_ids: string[];
   cc_pairs: CCPairDescriptor<any, any>[];
   document_sets: DocumentSet[];
   personas: Persona[];

@@ -1,12 +1,17 @@
 "use client";
 
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { AddMemberForm } from "./AddMemberForm";
-import { updateUserGroup } from "./lib";
+import { updateUserGroup, updateCuratorStatus } from "./lib";
 import { LoadingAnimation } from "@/components/Loading";
-import { ConnectorIndexingStatus, User, UserGroup } from "@/lib/types";
+import {
+  ConnectorIndexingStatus,
+  User,
+  UserGroup,
+  UserRole,
+} from "@/lib/types";
 import { AddConnectorForm } from "./AddConnectorForm";
 import {
   Table,
@@ -18,12 +23,15 @@ import {
   Divider,
   Button,
   Text,
+  Select,
+  SelectItem,
 } from "@tremor/react";
 import { DeleteButton } from "@/components/DeleteButton";
 import { Bubble } from "@/components/Bubble";
 import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
 import { AddTokenRateLimitForm } from "./AddTokenRateLimitForm";
 import { GenericTokenRateLimitTable } from "@/app/admin/token-rate-limits/TokenRateLimitTables";
+import { getCurrentUser } from "@/lib/user";
 
 interface GroupDisplayProps {
   users: User[];
@@ -31,6 +39,76 @@ interface GroupDisplayProps {
   userGroup: UserGroup;
   refreshUserGroup: () => void;
 }
+
+const UserRoleDropdown = ({
+  user,
+  group,
+  onSuccess,
+  onError,
+  isAdmin,
+}: {
+  user: User;
+  group: UserGroup;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+  isAdmin: boolean;
+}) => {
+  const [localRole, setLocalRole] = useState(() => {
+    if (user.role === UserRole.CURATOR) {
+      return group.curator_ids.includes(user.id)
+        ? UserRole.CURATOR
+        : UserRole.BASIC;
+    }
+    return user.role;
+  });
+  const [isSettingRole, setIsSettingRole] = useState(false);
+
+  const handleChange = async (value: string) => {
+    if (value === localRole) return;
+    if (value === UserRole.BASIC || value === UserRole.CURATOR) {
+      setIsSettingRole(true);
+      setLocalRole(value);
+      try {
+        const response = await updateCuratorStatus(group.id, {
+          user_id: user.id,
+          is_curator: value === UserRole.CURATOR,
+        });
+        if (response.ok) {
+          onSuccess();
+          user.role = value;
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || "Failed to update user role");
+        }
+      } catch (error: any) {
+        onError(error.message);
+        setLocalRole(user.role);
+      } finally {
+        setIsSettingRole(false);
+      }
+    }
+  };
+
+  const isEditable =
+    (user.role === UserRole.BASIC || user.role === UserRole.CURATOR) && isAdmin;
+
+  if (isEditable) {
+    return (
+      <div className="w-40 ">
+        <Select
+          value={localRole}
+          onValueChange={handleChange}
+          disabled={isSettingRole}
+        >
+          <SelectItem value={UserRole.BASIC}>Basic</SelectItem>
+          <SelectItem value={UserRole.CURATOR}>Curator</SelectItem>
+        </Select>
+      </div>
+    );
+  } else {
+    return <div>{user.role}</div>;
+  }
+};
 
 export const GroupDisplay = ({
   users,
@@ -42,6 +120,31 @@ export const GroupDisplay = ({
   const [addMemberFormVisible, setAddMemberFormVisible] = useState(false);
   const [addConnectorFormVisible, setAddConnectorFormVisible] = useState(false);
   const [addRateLimitFormVisible, setAddRateLimitFormVisible] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const isAdmin = currentUser?.role === UserRole.ADMIN;
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+        } else {
+          console.error("Failed to fetch current user");
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+  const handlePopup = (message: string, type: "success" | "error") => {
+    setPopup({ message, type });
+  };
+
+  const onRoleChangeSuccess = () =>
+    handlePopup("User role updated successfully!", "success");
+  const onRoleChangeError = (errorMsg: string) =>
+    handlePopup(`Unable to update user role - ${errorMsg}`, "error");
 
   return (
     <div>
@@ -71,9 +174,12 @@ export const GroupDisplay = ({
               <TableHead>
                 <TableRow>
                   <TableHeaderCell>Email</TableHeaderCell>
-                  <TableHeaderCell className="flex w-full">
-                    <div className="ml-auto">Remove User</div>
-                  </TableHeaderCell>
+                  <TableHeaderCell>Role</TableHeaderCell>
+                  {isAdmin && (
+                    <TableHeaderCell className="flex w-full">
+                      <div className="ml-auto">Remove User</div>
+                    </TableHeaderCell>
+                  )}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -84,42 +190,56 @@ export const GroupDisplay = ({
                         {user.email}
                       </TableCell>
                       <TableCell>
+                        <UserRoleDropdown
+                          user={user}
+                          group={userGroup}
+                          onSuccess={onRoleChangeSuccess}
+                          onError={onRoleChangeError}
+                          isAdmin={isAdmin}
+                        />
+                      </TableCell>
+                      <TableCell>
                         <div className="flex w-full">
                           <div className="ml-auto m-2">
-                            <DeleteButton
-                              onClick={async () => {
-                                const response = await updateUserGroup(
-                                  userGroup.id,
-                                  {
-                                    user_ids: userGroup.users
-                                      .filter(
-                                        (userGroupUser) =>
-                                          userGroupUser.id !== user.id
-                                      )
-                                      .map((userGroupUser) => userGroupUser.id),
-                                    cc_pair_ids: userGroup.cc_pairs.map(
-                                      (ccPair) => ccPair.id
-                                    ),
+                            {isAdmin && (
+                              <DeleteButton
+                                onClick={async () => {
+                                  const response = await updateUserGroup(
+                                    userGroup.id,
+                                    {
+                                      user_ids: userGroup.users
+                                        .filter(
+                                          (userGroupUser) =>
+                                            userGroupUser.id !== user.id
+                                        )
+                                        .map(
+                                          (userGroupUser) => userGroupUser.id
+                                        ),
+                                      cc_pair_ids: userGroup.cc_pairs.map(
+                                        (ccPair) => ccPair.id
+                                      ),
+                                    }
+                                  );
+                                  if (response.ok) {
+                                    setPopup({
+                                      message:
+                                        "Successfully removed user from group",
+                                      type: "success",
+                                    });
+                                  } else {
+                                    const responseJson = await response.json();
+                                    const errorMsg =
+                                      responseJson.detail ||
+                                      responseJson.message;
+                                    setPopup({
+                                      message: `Error removing user from group - ${errorMsg}`,
+                                      type: "error",
+                                    });
                                   }
-                                );
-                                if (response.ok) {
-                                  setPopup({
-                                    message:
-                                      "Successfully removed user from group",
-                                    type: "success",
-                                  });
-                                } else {
-                                  const responseJson = await response.json();
-                                  const errorMsg =
-                                    responseJson.detail || responseJson.message;
-                                  setPopup({
-                                    message: `Error removing user from group - ${errorMsg}`,
-                                    type: "error",
-                                  });
-                                }
-                                refreshUserGroup();
-                              }}
-                            />
+                                  refreshUserGroup();
+                                }}
+                              />
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -134,15 +254,17 @@ export const GroupDisplay = ({
         )}
       </div>
 
-      <Button
-        className="mt-3"
-        size="xs"
-        color="green"
-        onClick={() => setAddMemberFormVisible(true)}
-        disabled={!userGroup.is_up_to_date}
-      >
-        Add Users
-      </Button>
+      {isAdmin && (
+        <Button
+          className="mt-3"
+          size="xs"
+          color="green"
+          onClick={() => setAddMemberFormVisible(true)}
+          disabled={!userGroup.is_up_to_date}
+        >
+          Add Users
+        </Button>
+      )}
 
       {addMemberFormVisible && (
         <AddMemberForm
@@ -233,15 +355,17 @@ export const GroupDisplay = ({
         )}
       </div>
 
-      <Button
-        className="mt-3"
-        onClick={() => setAddConnectorFormVisible(true)}
-        size="xs"
-        color="green"
-        disabled={!userGroup.is_up_to_date}
-      >
-        Add Connectors
-      </Button>
+      {isAdmin && (
+        <Button
+          className="mt-3"
+          onClick={() => setAddConnectorFormVisible(true)}
+          size="xs"
+          color="green"
+          disabled={!userGroup.is_up_to_date}
+        >
+          Add Connectors
+        </Button>
+      )}
 
       {addConnectorFormVisible && (
         <AddConnectorForm
@@ -319,16 +443,19 @@ export const GroupDisplay = ({
       <GenericTokenRateLimitTable
         fetchUrl={`/api/admin/token-rate-limits/user-group/${userGroup.id}`}
         hideHeading
+        isAdmin={isAdmin}
       />
 
-      <Button
-        color="green"
-        size="xs"
-        className="mt-3"
-        onClick={() => setAddRateLimitFormVisible(true)}
-      >
-        Create a Token Rate Limit
-      </Button>
+      {isAdmin && (
+        <Button
+          color="green"
+          size="xs"
+          className="mt-3"
+          onClick={() => setAddRateLimitFormVisible(true)}
+        >
+          Create a Token Rate Limit
+        </Button>
+      )}
     </div>
   );
 };

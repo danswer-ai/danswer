@@ -15,12 +15,12 @@ interface AdvancedFormPageProps {
 const AdvancedFormPage = forwardRef<FormikProps<any>, AdvancedFormPageProps>(
   (
     {
+      setIndexingStart,
+      indexingStart,
       setRefreshFreq,
+      currentRefreshFreq,
       setPruneFreq,
       currentPruneFreq,
-      currentRefreshFreq,
-      indexingStart,
-      setIndexingStart,
     },
     ref
   ) => {

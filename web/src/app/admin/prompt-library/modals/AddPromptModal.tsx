@@ -1,7 +1,7 @@
 import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { ModalWrapper } from "@/app/chat/modal/ModalWrapper";
+import { ModalWrapper } from "@/components/modals/ModalWrapper";
 import { Button, Textarea, TextInput } from "@tremor/react";
 
 import { BookstackIcon } from "@/components/icons/icons";

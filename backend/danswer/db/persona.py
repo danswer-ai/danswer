@@ -4,13 +4,15 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import delete
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import or_
+from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy import update
+from sqlalchemy.orm import aliased
 from sqlalchemy.orm import joinedload
-from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserRole
@@ -36,6 +38,89 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
+
+
+def _add_user_filters(
+    stmt: Select, user: User | None, get_editable: bool = True
+) -> Select:
+    # If user is None, assume the user is an admin or auth is disabled
+    if user is None or user.role == UserRole.ADMIN:
+        return stmt
+
+    Persona__UG = aliased(Persona__UserGroup)
+    User__UG = aliased(User__UserGroup)
+    """
+    Here we select cc_pairs by relation:
+    User -> User__UserGroup -> Persona__UserGroup -> Persona
+    """
+    stmt = (
+        stmt.outerjoin(Persona__UG)
+        .outerjoin(
+            User__UserGroup,
+            User__UserGroup.user_group_id == Persona__UG.user_group_id,
+        )
+        .outerjoin(
+            Persona__User,
+            Persona__User.persona_id == Persona.id,
+        )
+    )
+    """
+    Filter Personas by:
+    - if the user is in the user_group that owns the Persona
+    - if the user is not a global_curator, they must also have a curator relationship
+    to the user_group
+    - if editing is being done, we also filter out Personas that are owned by groups
+    that the user isn't a curator for
+    - if we are not editing, we show all Personas in the groups the user is a curator
+    for (as well as public Personas)
+    - if we are not editing, we return all Personas directly connected to the user
+    """
+    where_clause = User__UserGroup.user_id == user.id
+    if user.role == UserRole.CURATOR and get_editable:
+        where_clause &= User__UserGroup.is_curator == True  # noqa: E712
+    if get_editable:
+        user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
+        if user.role == UserRole.CURATOR:
+            user_groups = user_groups.where(User__UG.is_curator == True)  # noqa: E712
+        where_clause &= (
+            ~exists()
+            .where(Persona__UG.persona_id == Persona.id)
+            .where(~Persona__UG.user_group_id.in_(user_groups))
+            .correlate(Persona)
+        )
+    else:
+        where_clause |= Persona.is_public == True  # noqa: E712
+        where_clause &= Persona.is_visible == True  # noqa: E712
+        where_clause |= Persona__User.user_id == user.id
+    where_clause |= Persona.user_id == user.id
+
+    return stmt.where(where_clause)
+
+
+def fetch_persona_by_id(
+    db_session: Session, persona_id: int, user: User | None, get_editable: bool = True
+) -> Persona:
+    stmt = select(Persona).where(Persona.id == persona_id).distinct()
+    stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
+    persona = db_session.scalars(stmt).one_or_none()
+    if not persona:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Persona with ID {persona_id} does not exist or user is not authorized to access it",
+        )
+    return persona
+
+
+def _get_persona_by_name(
+    persona_name: str, user: User | None, db_session: Session
+) -> Persona | None:
+    """Admins can see all, regular users can only fetch their own.
+    If user is None, assume the user is an admin or auth is disabled."""
+    stmt = select(Persona).where(Persona.name == persona_name)
+    if user and user.role != UserRole.ADMIN:
+        stmt = stmt.where(Persona.user_id == user.id)
+    result = db_session.execute(stmt).scalar_one_or_none()
+    return result
 
 
 def make_persona_private(
@@ -105,13 +190,9 @@ def update_persona_shared_users(
     """Simplified version of `create_update_persona` which only touches the
     accessibility rather than any of the logic (e.g. prompt, connected data sources,
     etc.)."""
-    persona = fetch_persona_by_id(db_session=db_session, persona_id=persona_id)
-    if not persona:
-        raise HTTPException(
-            status_code=404, detail=f"Persona with ID {persona_id} not found"
-        )
-
-    check_user_can_edit_persona(user=user, persona=persona)
+    persona = fetch_persona_by_id(
+        db_session=db_session, persona_id=persona_id, user=user, get_editable=True
+    )
 
     if persona.is_public:
         raise HTTPException(status_code=400, detail="Cannot share public persona")
@@ -127,10 +208,6 @@ def update_persona_shared_users(
         group_ids=None,
         db_session=db_session,
     )
-
-
-def fetch_persona_by_id(db_session: Session, persona_id: int) -> Persona | None:
-    return db_session.scalar(select(Persona).where(Persona.id == persona_id))
 
 
 def get_prompts(
@@ -152,36 +229,17 @@ def get_prompts(
 
 
 def get_personas(
-    # if user_id is `None` assume the user is an admin or auth is disabled
-    user_id: UUID | None,
+    # if user is `None` assume the user is an admin or auth is disabled
+    user: User | None,
     db_session: Session,
+    get_editable: bool = True,
     include_default: bool = True,
     include_slack_bot_personas: bool = False,
     include_deleted: bool = False,
     joinedload_all: bool = False,
 ) -> Sequence[Persona]:
     stmt = select(Persona).distinct()
-    if user_id is not None:
-        # Subquery to find all groups the user belongs to
-        user_groups_subquery = (
-            select(User__UserGroup.user_group_id)
-            .where(User__UserGroup.user_id == user_id)
-            .subquery()
-        )
-
-        # Include personas where the user is directly related or part of a user group that has access
-        access_conditions = or_(
-            Persona.is_public == True,  # noqa: E712
-            Persona.id.in_(  # User has access through list of users with access
-                select(Persona__User.persona_id).where(Persona__User.user_id == user_id)
-            ),
-            Persona.id.in_(  # User is part of a group that has access
-                select(Persona__UserGroup.persona_id).where(
-                    Persona__UserGroup.user_group_id.in_(user_groups_subquery)  # type: ignore
-                )
-            ),
-        )
-        stmt = stmt.where(access_conditions)
+    stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
 
     if not include_default:
         stmt = stmt.where(Persona.default_persona.is_(False))
@@ -245,7 +303,7 @@ def update_all_personas_display_priority(
     db_session: Session,
 ) -> None:
     """Updates the display priority of all lives Personas"""
-    personas = get_personas(user_id=None, db_session=db_session)
+    personas = get_personas(user=None, db_session=db_session)
     available_persona_ids = {persona.id for persona in personas}
     if available_persona_ids != set(display_priority_map.keys()):
         raise ValueError("Invalid persona IDs provided")
@@ -346,7 +404,7 @@ def upsert_persona(
     if persona_id is not None:
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
     else:
-        persona = get_persona_by_name(
+        persona = _get_persona_by_name(
             persona_name=name, user=user, db_session=db_session
         )
 
@@ -383,7 +441,10 @@ def upsert_persona(
         if not default_persona and persona.default_persona:
             raise ValueError("Cannot update default persona with non-default.")
 
-        check_user_can_edit_persona(user=user, persona=persona)
+        # this checks if the user has permission to edit the persona
+        persona = fetch_persona_by_id(
+            db_session=db_session, persona_id=persona.id, user=user, get_editable=True
+        )
 
         persona.name = name
         persona.description = description
@@ -485,8 +546,11 @@ def update_persona_visibility(
     persona_id: int,
     is_visible: bool,
     db_session: Session,
+    user: User | None = None,
 ) -> None:
-    persona = get_persona_by_id(persona_id=persona_id, user=None, db_session=db_session)
+    persona = fetch_persona_by_id(
+        db_session=db_session, persona_id=persona_id, user=user, get_editable=True
+    )
     persona.is_visible = is_visible
     db_session.commit()
 
@@ -497,23 +561,6 @@ def validate_persona_tools(tools: list[Tool]) -> None:
             raise ValueError(
                 "Bing API key not found, please contact your Danswer admin to get it added!"
             )
-
-
-def check_user_can_edit_persona(user: User | None, persona: Persona) -> None:
-    # if user is None, assume that no-auth is turned on
-    if user is None:
-        return
-
-    # admins can edit everything
-    if user.role == UserRole.ADMIN:
-        return
-
-    # otherwise, make sure user owns persona
-    if persona.user_id != user.id:
-        raise HTTPException(
-            status_code=403,
-            detail=f"User not authorized to edit persona with ID {persona.id}",
-        )
 
 
 def get_prompts_by_ids(prompt_ids: list[int], db_session: Session) -> Sequence[Prompt]:
@@ -587,54 +634,53 @@ def get_persona_by_id(
     include_deleted: bool = False,
     is_for_edit: bool = True,  # NOTE: assume true for safety
 ) -> Persona:
-    stmt = (
+    persona_stmt = (
         select(Persona)
-        .options(selectinload(Persona.users), selectinload(Persona.groups))
+        .distinct()
+        .outerjoin(Persona.groups)
+        .outerjoin(Persona.users)
+        .outerjoin(UserGroup.user_group_relationships)
         .where(Persona.id == persona_id)
     )
 
-    or_conditions = []
-
-    # if user is an admin, they should have access to all Personas
-    # and will skip the following clause
-    if user is not None and user.role != UserRole.ADMIN:
-        # the user is not an admin
-        isPersonaUnowned = Persona.user_id.is_(
-            None
-        )  # allow access if persona user id is None
-        isUserCreator = (
-            Persona.user_id == user.id
-        )  # allow access if user created the persona
-        or_conditions.extend([isPersonaUnowned, isUserCreator])
-
-        # if we aren't editing, also give access if:
-        # 1. the user is authorized for this persona
-        # 2. the user is in an authorized group for this persona
-        # 3. if the persona is public
-        if not is_for_edit:
-            isSharedWithUser = Persona.users.any(
-                id=user.id
-            )  # allow access if user is in allowed users
-            isSharedWithGroup = Persona.groups.any(
-                UserGroup.users.any(id=user.id)
-            )  # allow access if user is in any allowed group
-            or_conditions.extend([isSharedWithUser, isSharedWithGroup])
-            or_conditions.append(Persona.is_public.is_(True))
-
-    if or_conditions:
-        stmt = stmt.where(or_(*or_conditions))
-
     if not include_deleted:
-        stmt = stmt.where(Persona.deleted.is_(False))
+        persona_stmt = persona_stmt.where(Persona.deleted.is_(False))
 
-    result = db_session.execute(stmt)
+    if not user or user.role == UserRole.ADMIN:
+        result = db_session.execute(persona_stmt)
+        persona = result.scalar_one_or_none()
+        if persona is None:
+            raise ValueError(
+                f"Persona with ID {persona_id} does not exist or does not belong to user"
+            )
+        return persona
+
+    # or check if user owns persona
+    or_conditions = Persona.user_id == user.id
+    # allow access if persona user id is None
+    or_conditions |= Persona.user_id == None  # noqa: E711
+    if not is_for_edit:
+        # if the user is in a group related to the persona
+        or_conditions |= User__UserGroup.user_id == user.id
+        # if the user is in the .users of the persona
+        or_conditions |= User.id == user.id
+        or_conditions |= Persona.is_public == True  # noqa: E712
+    elif user.role == UserRole.GLOBAL_CURATOR:
+        # global curators can edit personas for the groups they are in
+        or_conditions |= User__UserGroup.user_id == user.id
+    elif user.role == UserRole.CURATOR:
+        # curators can edit personas for the groups they are curators of
+        or_conditions |= (User__UserGroup.user_id == user.id) & (
+            User__UserGroup.is_curator == True  # noqa: E712
+        )
+
+    persona_stmt = persona_stmt.where(or_conditions)
+    result = db_session.execute(persona_stmt)
     persona = result.scalar_one_or_none()
-
     if persona is None:
         raise ValueError(
             f"Persona with ID {persona_id} does not exist or does not belong to user"
         )
-
     return persona
 
 
@@ -661,18 +707,6 @@ def get_prompt_by_name(
     if user and user.role != UserRole.ADMIN:
         stmt = stmt.where(Prompt.user_id == user.id)
 
-    result = db_session.execute(stmt).scalar_one_or_none()
-    return result
-
-
-def get_persona_by_name(
-    persona_name: str, user: User | None, db_session: Session
-) -> Persona | None:
-    """Admins can see all, regular users can only fetch their own.
-    If user is None, assume the user is an admin or auth is disabled."""
-    stmt = select(Persona).where(Persona.name == persona_name)
-    if user and user.role != UserRole.ADMIN:
-        stmt = stmt.where(Persona.user_id == user.id)
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
 

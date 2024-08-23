@@ -45,8 +45,9 @@ class ConnectorBase(BaseModel):
     indexing_start: datetime | None
 
 
-class ConnectorCredentialBase(ConnectorBase):
-    is_public: bool
+class ConnectorUpdateRequest(ConnectorBase):
+    is_public: bool | None = None
+    groups: list[int] | None = None
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -91,6 +92,8 @@ class CredentialBase(BaseModel):
     admin_public: bool
     source: DocumentSource
     name: str | None = None
+    curator_public: bool = False
+    groups: list[int] = []
 
 
 class CredentialSnapshot(CredentialBase):
@@ -98,6 +101,11 @@ class CredentialSnapshot(CredentialBase):
     user_id: UUID | None
     time_created: datetime
     time_updated: datetime
+    name: str | None
+    source: DocumentSource
+    credential_json: dict[str, Any]
+    admin_public: bool
+    curator_public: bool
 
     @classmethod
     def from_credential_db_model(cls, credential: Credential) -> "CredentialSnapshot":
@@ -105,7 +113,7 @@ class CredentialSnapshot(CredentialBase):
             id=credential.id,
             credential_json=(
                 mask_credential_dict(credential.credential_json)
-                if MASK_CREDENTIAL_PREFIX
+                if MASK_CREDENTIAL_PREFIX and credential.credential_json
                 else credential.credential_json
             ),
             user_id=credential.user_id,
@@ -114,6 +122,7 @@ class CredentialSnapshot(CredentialBase):
             time_updated=credential.time_updated,
             source=credential.source or DocumentSource.NOT_APPLICABLE,
             name=credential.name,
+            curator_public=credential.curator_public,
         )
 
 
@@ -185,6 +194,8 @@ class CCPairFullInfo(BaseModel):
     credential: CredentialSnapshot
     index_attempts: list[IndexAttemptSnapshot]
     latest_deletion_attempt: DeletionAttemptSnapshot | None
+    is_public: bool
+    is_editable_for_current_user: bool
 
     @classmethod
     def from_models(
@@ -193,6 +204,7 @@ class CCPairFullInfo(BaseModel):
         index_attempt_models: list[IndexAttempt],
         latest_deletion_attempt: DeletionAttemptSnapshot | None,
         num_docs_indexed: int,  # not ideal, but this must be computed separately
+        is_editable_for_current_user: bool,
     ) -> "CCPairFullInfo":
         return cls(
             id=cc_pair_model.id,
@@ -210,6 +222,8 @@ class CCPairFullInfo(BaseModel):
                 for index_attempt_model in index_attempt_models
             ],
             latest_deletion_attempt=latest_deletion_attempt,
+            is_public=cc_pair_model.is_public,
+            is_editable_for_current_user=is_editable_for_current_user,
         )
 
 
@@ -241,6 +255,7 @@ class ConnectorCredentialPairIdentifier(BaseModel):
 class ConnectorCredentialPairMetadata(BaseModel):
     name: str | None
     is_public: bool
+    groups: list[int] | None
 
 
 class ConnectorCredentialPairDescriptor(BaseModel):

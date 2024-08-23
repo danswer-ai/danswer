@@ -47,13 +47,15 @@ export const DanswerApiKeyForm = ({
         <Formik
           initialValues={{
             name: apiKey?.api_key_name || "",
-            is_admin: apiKey?.api_key_role == "admin" ?? false,
+            is_admin: apiKey?.api_key_role === "admin",
           }}
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
 
             // Map the boolean to a UserRole string
-            const role: UserRole = values.is_admin ? "admin" : "basic";
+            const role: UserRole = values.is_admin
+              ? UserRole.ADMIN
+              : UserRole.BASIC;
 
             // Prepare the payload with the UserRole
             const payload = {

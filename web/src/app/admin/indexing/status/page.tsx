@@ -21,15 +21,31 @@ function Main() {
     errorHandlingFetcher,
     { refreshInterval: 10000 } // 10 seconds
   );
+  const {
+    data: editableIndexAttemptData,
+    isLoading: editableIndexAttemptIsLoading,
+    error: editableIndexAttemptError,
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
+    "/api/manage/admin/connector/indexing-status?get_editable=true",
+    errorHandlingFetcher,
+    { refreshInterval: 10000 } // 10 seconds
+  );
 
-  if (indexAttemptIsLoading) {
+  if (indexAttemptIsLoading || editableIndexAttemptIsLoading) {
     return <LoadingAnimation text="" />;
   }
 
-  if (indexAttemptError || !indexAttemptData) {
+  if (
+    indexAttemptError ||
+    !indexAttemptData ||
+    editableIndexAttemptError ||
+    !editableIndexAttemptData
+  ) {
     return (
       <div className="text-error">
-        {indexAttemptError?.info?.detail || "Error loading indexing history."}
+        {indexAttemptError?.info?.detail ||
+          editableIndexAttemptError?.info?.detail ||
+          "Error loading indexing history."}
       </div>
     );
   }
@@ -58,7 +74,10 @@ function Main() {
   });
 
   return (
-    <CCPairIndexingStatusTable ccPairsIndexingStatuses={indexAttemptData} />
+    <CCPairIndexingStatusTable
+      ccPairsIndexingStatuses={indexAttemptData}
+      editableCcPairsIndexingStatuses={editableIndexAttemptData}
+    />
   );
 }
 

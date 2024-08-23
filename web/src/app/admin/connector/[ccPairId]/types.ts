@@ -17,4 +17,6 @@ export interface CCPairFullInfo {
   credential: Credential<any>;
   index_attempts: IndexAttemptSnapshot[];
   latest_deletion_attempt: DeletionAttemptSnapshot | null;
+  is_public: boolean;
+  is_editable_for_current_user: boolean;
 }

@@ -18,11 +18,11 @@ import {
 } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import {
-  FiCheck,
   FiChevronDown,
   FiChevronRight,
   FiSettings,
-  FiXCircle,
+  FiLock,
+  FiUnlock,
 } from "react-icons/fi";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { SourceIcon } from "@/components/SourceIcon";
@@ -134,9 +134,11 @@ function SummaryRow({
 function ConnectorRow({
   ccPairsIndexingStatus,
   invisible,
+  isEditable,
 }: {
   ccPairsIndexingStatus: ConnectorIndexingStatus<any, any>;
   invisible?: boolean;
+  isEditable: boolean;
 }) {
   const router = useRouter();
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
@@ -225,9 +227,9 @@ function ConnectorRow({
       className={`hover:bg-hover-light ${
         invisible ? "invisible h-0 !-mb-10" : "border border-border !border-b"
       }  w-full cursor-pointer relative`}
-      onClick={() =>
-        router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`)
-      }
+      onClick={() => {
+        router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
+      }}
     >
       <TableCell className={`!pr-0 w-[${columnWidths.first}]`}>
         <p className="w-[200px] inline-block ellipsis truncate">
@@ -243,9 +245,17 @@ function ConnectorRow({
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell className={`w-[${columnWidths.fourth}]`}>
           {ccPairsIndexingStatus.public_doc ? (
-            <FiCheck className="my-auto text-emerald-600" size="18" />
+            <Badge
+              size="md"
+              color={isEditable ? "green" : "gray"}
+              icon={FiUnlock}
+            >
+              Public
+            </Badge>
           ) : (
-            <FiXCircle className="my-auto text-red-600" />
+            <Badge size="md" color={isEditable ? "blue" : "gray"} icon={FiLock}>
+              Private
+            </Badge>
           )}
         </TableCell>
       )}
@@ -260,9 +270,14 @@ function ConnectorRow({
         />
       </TableCell>
       <TableCell className={`w-[${columnWidths.seventh}]`}>
-        <CustomTooltip content="Manage Connector">
-          <FiSettings className="cursor-pointer" onClick={handleManageClick} />
-        </CustomTooltip>
+        {isEditable && (
+          <CustomTooltip content="Manage Connector">
+            <FiSettings
+              className="cursor-pointer"
+              onClick={handleManageClick}
+            />
+          </CustomTooltip>
+        )}
       </TableCell>
     </TableRow>
   );
@@ -270,8 +285,10 @@ function ConnectorRow({
 
 export function CCPairIndexingStatusTable({
   ccPairsIndexingStatuses,
+  editableCcPairsIndexingStatuses,
 }: {
   ccPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[];
+  editableCcPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[];
 }) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -294,12 +311,29 @@ export function CCPairIndexingStatusTable({
   const { groupedStatuses, sortedSources, groupSummaries } = useMemo(() => {
     const grouped: Record<ValidSources, ConnectorIndexingStatus<any, any>[]> =
       {} as Record<ValidSources, ConnectorIndexingStatus<any, any>[]>;
+
+    // First, add editable connectors
+    editableCcPairsIndexingStatuses.forEach((status) => {
+      const source = status.connector.source;
+      if (!grouped[source]) {
+        grouped[source] = [];
+      }
+      grouped[source].unshift(status);
+    });
+
+    // Then, add non-editable connectors
     ccPairsIndexingStatuses.forEach((status) => {
       const source = status.connector.source;
       if (!grouped[source]) {
         grouped[source] = [];
       }
-      grouped[source].push(status);
+      if (
+        !editableCcPairsIndexingStatuses.some(
+          (e) => e.cc_pair_id === status.cc_pair_id
+        )
+      ) {
+        grouped[source].push(status);
+      }
     });
 
     const sorted = Object.keys(grouped).sort() as ValidSources[];
@@ -329,7 +363,7 @@ export function CCPairIndexingStatusTable({
       sortedSources: sorted,
       groupSummaries: summaries,
     };
-  }, [ccPairsIndexingStatuses]);
+  }, [ccPairsIndexingStatuses, editableCcPairsIndexingStatuses]);
 
   const toggleSource = (
     source: ValidSources,
@@ -410,6 +444,7 @@ export function CCPairIndexingStatusTable({
             deletion_attempt: null,
             is_deletable: true,
           }}
+          isEditable={false}
         />
         <div className="-mb-10" />
 
@@ -474,7 +509,7 @@ export function CCPairIndexingStatusTable({
                             <TableHeaderCell
                               className={`w-[${columnWidths.fourth}]`}
                             >
-                              Public
+                              Permissions
                             </TableHeaderCell>
                           )}
                           <TableHeaderCell
@@ -498,6 +533,11 @@ export function CCPairIndexingStatusTable({
                           <ConnectorRow
                             key={ccPairsIndexingStatus.cc_pair_id}
                             ccPairsIndexingStatus={ccPairsIndexingStatus}
+                            isEditable={editableCcPairsIndexingStatuses.some(
+                              (e) =>
+                                e.cc_pair_id ===
+                                ccPairsIndexingStatus.cc_pair_id
+                            )}
                           />
                         ))}
                       </>
