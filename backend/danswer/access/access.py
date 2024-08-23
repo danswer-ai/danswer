@@ -1,18 +1,46 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 
 from danswer.access.models import DocumentAccess
 from danswer.access.utils import prefix_user
 from danswer.configs.constants import PUBLIC_DOC_PAT
-from danswer.db.document import get_acccess_info_for_documents
+from danswer.db.document import get_access_info_for_document
+from danswer.db.document import get_access_info_for_documents
 from danswer.db.models import User
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+
+
+def _get_access_for_document(
+    document_id: str,
+    db_session: Session,
+) -> Optional[DocumentAccess]:
+    info = get_access_info_for_document(
+        db_session=db_session,
+        document_id=document_id,
+    )
+
+    if not info:
+        return None
+
+    return DocumentAccess.build(info.user_ids, [], info.is_public)
+
+
+def get_access_for_document(
+    document_id: str,
+    db_session: Session,
+) -> Optional[DocumentAccess]:
+    versioned_get_access_for_document_fn = fetch_versioned_implementation(
+        "danswer.access.access", "_get_access_for_document"
+    )
+    return versioned_get_access_for_document_fn(document_id, db_session)  # type: ignore
 
 
 def _get_access_for_documents(
     document_ids: list[str],
     db_session: Session,
 ) -> dict[str, DocumentAccess]:
-    document_access_info = get_acccess_info_for_documents(
+    document_access_info = get_access_info_for_documents(
         db_session=db_session,
         document_ids=document_ids,
     )

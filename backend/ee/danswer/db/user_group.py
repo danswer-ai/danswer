@@ -48,6 +48,42 @@ def fetch_user_groups_for_user(
     return db_session.scalars(stmt).all()
 
 
+def select_documents_by_usergroup(
+    user_group_id: int,
+) -> select:
+    """This returns a statement that should be executed using
+    .yield_per() to minimize overhead. The primary consumers of this function
+    are the cleanup tasks."""
+    stmt = (
+        select(Document)
+        .join(
+            DocumentByConnectorCredentialPair,
+            Document.id == DocumentByConnectorCredentialPair.id,
+        )
+        .join(
+            ConnectorCredentialPair,
+            and_(
+                DocumentByConnectorCredentialPair.connector_id
+                == ConnectorCredentialPair.connector_id,
+                DocumentByConnectorCredentialPair.credential_id
+                == ConnectorCredentialPair.credential_id,
+            ),
+        )
+        .join(
+            UserGroup__ConnectorCredentialPair,
+            UserGroup__ConnectorCredentialPair.cc_pair_id == ConnectorCredentialPair.id,
+        )
+        .join(
+            UserGroup,
+            UserGroup__ConnectorCredentialPair.user_group_id == UserGroup.id,
+        )
+        .where(UserGroup.id == user_group_id)
+        .order_by(Document.id)
+    )
+    stmt = stmt.distinct()
+    return stmt
+
+
 def fetch_documents_for_user_group_paginated(
     db_session: Session,
     user_group_id: int,

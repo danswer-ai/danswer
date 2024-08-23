@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 
 from danswer.access.access import (
@@ -9,6 +11,17 @@ from danswer.access.utils import prefix_user_group
 from danswer.db.models import User
 from ee.danswer.db.user_group import fetch_user_groups_for_documents
 from ee.danswer.db.user_group import fetch_user_groups_for_user
+
+
+def _get_access_for_document(
+    document_id: list[str],
+    db_session: Session,
+) -> Optional[DocumentAccess]:
+    id_to_access = _get_access_for_documents([document_id], db_session)
+    if len(id_to_access) == 0:
+        return None
+
+    return next(iter(id_to_access.items()))
 
 
 def _get_access_for_documents(

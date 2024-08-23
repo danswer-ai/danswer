@@ -414,6 +414,70 @@ def fetch_documents_for_document_set_paginated(
     return documents, documents[-1].id if documents else None
 
 
+def select_documents_by_docset(
+    document_set_id: int,
+    current_only: bool = True,
+) -> select:
+    """This returns a statement that should be executed using
+    .yield_per() to minimize overhead. The primary consumers of this function
+    are the cleanup tasks."""
+
+    stmt = (
+        select(Document)
+        .join(
+            DocumentByConnectorCredentialPair,
+            DocumentByConnectorCredentialPair.id == Document.id,
+        )
+        .join(
+            ConnectorCredentialPair,
+            and_(
+                ConnectorCredentialPair.connector_id
+                == DocumentByConnectorCredentialPair.connector_id,
+                ConnectorCredentialPair.credential_id
+                == DocumentByConnectorCredentialPair.credential_id,
+            ),
+        )
+        .join(
+            DocumentSet__ConnectorCredentialPair,
+            DocumentSet__ConnectorCredentialPair.connector_credential_pair_id
+            == ConnectorCredentialPair.id,
+        )
+        .join(
+            DocumentSetDBModel,
+            DocumentSetDBModel.id
+            == DocumentSet__ConnectorCredentialPair.document_set_id,
+        )
+        .where(DocumentSetDBModel.id == document_set_id)
+        .order_by(Document.id)
+    )
+
+    if current_only:
+        stmt = stmt.where(
+            DocumentSet__ConnectorCredentialPair.is_current == True  # noqa: E712
+        )
+
+    stmt = stmt.distinct()
+    return stmt
+
+
+def fetch_document_sets_for_document(
+    document_id: str,
+    db_session: Session,
+) -> list[str] | None:
+    """
+    Fetches the document set names for a single document ID.
+
+    :param document_id: The ID of the document to fetch sets for.
+    :param db_session: The SQLAlchemy session to use for the query.
+    :return: A list of document set names, or None if no result is found.
+    """
+    result = fetch_document_sets_for_documents([document_id], db_session)
+    if not result:
+        return None
+
+    return result[0]
+
+
 def fetch_document_sets_for_documents(
     document_ids: list[str],
     db_session: Session,
