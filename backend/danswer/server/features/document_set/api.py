@@ -1,18 +1,22 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
+from danswer.auth.users import validate_curator_request
 from danswer.db.document_set import check_document_sets_are_public
-from danswer.db.document_set import fetch_all_document_sets
+from danswer.db.document_set import fetch_all_document_sets_for_user
 from danswer.db.document_set import fetch_user_document_sets
 from danswer.db.document_set import insert_document_set
 from danswer.db.document_set import mark_document_set_as_to_be_deleted
 from danswer.db.document_set import update_document_set
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.db.models import UserRole
 from danswer.server.documents.models import ConnectorCredentialPairDescriptor
 from danswer.server.documents.models import ConnectorSnapshot
 from danswer.server.documents.models import CredentialSnapshot
@@ -29,9 +33,14 @@ router = APIRouter(prefix="/manage")
 @router.post("/admin/document-set")
 def create_document_set(
     document_set_creation_request: DocumentSetCreationRequest,
-    user: User = Depends(current_admin_user),
+    user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> int:
+    if user and user.role != UserRole.ADMIN:
+        validate_curator_request(
+            groups=document_set_creation_request.groups,
+            is_public=document_set_creation_request.is_public,
+        )
     try:
         document_set_db_model, _ = insert_document_set(
             document_set_creation_request=document_set_creation_request,
@@ -74,12 +83,17 @@ def delete_document_set(
 
 @router.get("/admin/document-set")
 def list_document_sets_admin(
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    get_editable: bool = Query(
+        False, description="If true, return editable document sets"
+    ),
 ) -> list[DocumentSet]:
     return [
         DocumentSet.from_model(ds)
-        for ds in fetch_all_document_sets(db_session=db_session)
+        for ds in fetch_all_document_sets_for_user(
+            db_session=db_session, user=user, get_editable=get_editable
+        )
     ]
 
 

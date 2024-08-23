@@ -1,5 +1,5 @@
 import { FiTrash, FiX } from "react-icons/fi";
-import { ModalWrapper } from "./ModalWrapper";
+import { ModalWrapper } from "@/components/modals/ModalWrapper";
 import { BasicClickable } from "@/components/BasicClickable";
 
 export const DeleteChatModal = ({

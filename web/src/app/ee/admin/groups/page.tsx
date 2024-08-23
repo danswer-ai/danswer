@@ -4,7 +4,9 @@ import { GroupsIcon } from "@/components/icons/icons";
 import { UserGroupsTable } from "./UserGroupsTable";
 import { UserGroupCreationForm } from "./UserGroupCreationForm";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getCurrentUser } from "@/lib/user";
+import { User, UserRole } from "@/lib/types";
 import { ThreeDotsLoader } from "@/components/Loading";
 import {
   useConnectorCredentialIndexingStatus,
@@ -32,6 +34,24 @@ const Main = () => {
     error: usersError,
   } = useUsers();
 
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const isAdmin = currentUser?.role === UserRole.ADMIN;
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+        } else {
+          console.error("Failed to fetch current user");
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
   if (isLoading || isCCPairsLoading || userIsLoading) {
     return <ThreeDotsLoader />;
   }
@@ -51,14 +71,16 @@ const Main = () => {
   return (
     <>
       {popup}
-      <div className="my-3">
-        <Button size="xs" color="green" onClick={() => setShowForm(true)}>
-          Create New User Group
-        </Button>
-      </div>
+      {isAdmin && (
+        <div className="my-3">
+          <Button size="xs" color="green" onClick={() => setShowForm(true)}>
+            Create New User Group
+          </Button>
+        </div>
+      )}
       {data.length > 0 && (
         <div>
-          <Divider />
+          {isAdmin && <Divider />}
           <UserGroupsTable
             userGroups={data}
             setPopup={setPopup}

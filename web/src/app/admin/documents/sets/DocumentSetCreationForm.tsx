@@ -3,16 +3,17 @@
 import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { createDocumentSet, updateDocumentSet } from "./lib";
-import { ConnectorIndexingStatus, DocumentSet, UserGroup } from "@/lib/types";
 import {
-  BooleanFormField,
-  TextFormField,
-} from "@/components/admin/connectors/Field";
+  createDocumentSet,
+  updateDocumentSet,
+  DocumentSetCreationRequest,
+} from "./lib";
+import { ConnectorIndexingStatus, DocumentSet, UserGroup } from "@/lib/types";
+import { TextFormField } from "@/components/admin/connectors/Field";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { Button, Divider, Text } from "@tremor/react";
-import { FiUsers } from "react-icons/fi";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -35,22 +36,17 @@ export const DocumentSetCreationForm = ({
 
   return (
     <div>
-      <Formik
+      <Formik<DocumentSetCreationRequest>
         initialValues={{
-          name: existingDocumentSet ? existingDocumentSet.name : "",
-          description: existingDocumentSet
-            ? existingDocumentSet.description
-            : "",
-          cc_pair_ids: existingDocumentSet
-            ? existingDocumentSet.cc_pair_descriptors.map(
-                (ccPairDescriptor) => {
-                  return ccPairDescriptor.id;
-                }
-              )
-            : ([] as number[]),
-          is_public: existingDocumentSet ? existingDocumentSet.is_public : true,
-          users: existingDocumentSet ? existingDocumentSet.users : [],
-          groups: existingDocumentSet ? existingDocumentSet.groups : [],
+          name: existingDocumentSet?.name ?? "",
+          description: existingDocumentSet?.description ?? "",
+          cc_pair_ids:
+            existingDocumentSet?.cc_pair_descriptors.map(
+              (ccPairDescriptor) => ccPairDescriptor.id
+            ) ?? [],
+          is_public: existingDocumentSet?.is_public ?? true,
+          users: existingDocumentSet?.users ?? [],
+          groups: existingDocumentSet?.groups ?? [],
         }}
         validationSchema={Yup.object().shape({
           name: Yup.string().required("Please enter a name for the set"),
@@ -74,6 +70,7 @@ export const DocumentSetCreationForm = ({
             response = await updateDocumentSet({
               id: existingDocumentSet.id,
               ...processedValues,
+              users: processedValues.users,
             });
           } else {
             response = await createDocumentSet(processedValues);
@@ -98,7 +95,7 @@ export const DocumentSetCreationForm = ({
           }
         }}
       >
-        {({ isSubmitting, values }) => (
+        {(props) => (
           <Form>
             <TextFormField
               name="name"
@@ -128,7 +125,9 @@ export const DocumentSetCreationForm = ({
               render={(arrayHelpers: ArrayHelpers) => (
                 <div className="mb-3 flex gap-2 flex-wrap">
                   {ccPairs.map((ccPair) => {
-                    const ind = values.cc_pair_ids.indexOf(ccPair.cc_pair_id);
+                    const ind = props.values.cc_pair_ids.indexOf(
+                      ccPair.cc_pair_id
+                    );
                     let isSelected = ind !== -1;
                     return (
                       <div
@@ -174,89 +173,15 @@ export const DocumentSetCreationForm = ({
             {isPaidEnterpriseFeaturesEnabled &&
               userGroups &&
               userGroups.length > 0 && (
-                <div>
-                  <Divider />
-
-                  <BooleanFormField
-                    name="is_public"
-                    label="Is Public?"
-                    subtext={
-                      <>
-                        If the document set is public, then it will be visible
-                        to <b>all users</b>. If it is not public, then only
-                        users in the specified groups will be able to see it.
-                      </>
-                    }
-                  />
-
-                  <Divider />
-                  <h2 className="mb-1 font-medium text-base">
-                    Groups with Access
-                  </h2>
-                  {!values.is_public ? (
-                    <>
-                      <Text className="mb-3">
-                        If any groups are specified, then this Document Set will
-                        only be visible to the specified groups. If no groups
-                        are specified, then the Document Set will be visible to
-                        all users.
-                      </Text>
-                      <FieldArray
-                        name="groups"
-                        render={(arrayHelpers: ArrayHelpers) => (
-                          <div className="flex gap-2 flex-wrap">
-                            {userGroups.map((userGroup) => {
-                              const ind = values.groups.indexOf(userGroup.id);
-                              let isSelected = ind !== -1;
-                              return (
-                                <div
-                                  key={userGroup.id}
-                                  className={
-                                    `
-                              px-3 
-                              py-1
-                              rounded-lg 
-                              border
-                              border-border 
-                              w-fit 
-                              flex 
-                              cursor-pointer ` +
-                                    (isSelected
-                                      ? " bg-background-strong"
-                                      : " hover:bg-hover")
-                                  }
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      arrayHelpers.remove(ind);
-                                    } else {
-                                      arrayHelpers.push(userGroup.id);
-                                    }
-                                  }}
-                                >
-                                  <div className="my-auto flex">
-                                    <FiUsers className="my-auto mr-2" />{" "}
-                                    {userGroup.name}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      />
-                    </>
-                  ) : (
-                    <Text>
-                      This Document Set is public, so this does not apply. If
-                      you want to control which user groups see this Document
-                      Set, mark it as non-public!
-                    </Text>
-                  )}
-                </div>
+                <IsPublicGroupSelector
+                  formikProps={props}
+                  objectName="document set"
+                />
               )}
             <div className="flex mt-6">
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={props.isSubmitting}
                 className="w-64 mx-auto"
               >
                 {isUpdate ? "Update!" : "Create!"}

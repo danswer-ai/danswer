@@ -12,7 +12,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useFormContext } from "@/components/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { submitFiles } from "./pages/utils/files";
@@ -59,6 +59,11 @@ export default function AddConnector({
     errorHandlingFetcher,
     { refreshInterval: 5000 }
   );
+  const { data: editableCredentials } = useSWR<Credential<any>[]>(
+    buildSimilarCredentialInfoURL(connector, true),
+    errorHandlingFetcher,
+    { refreshInterval: 5000 }
+  );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const credentialTemplate = credentialTemplates[connector];
@@ -95,6 +100,7 @@ export default function AddConnector({
   const [pruneFreq, setPruneFreq] = useState<number>(defaultPrune);
   const [indexingStart, setIndexingStart] = useState<Date | null>(null);
   const [isPublic, setIsPublic] = useState(true);
+  const [groups, setGroups] = useState<number[]>([]);
   const [createConnectorToggle, setCreateConnectorToggle] = useState(false);
   const formRef = useRef<FormikProps<any>>(null);
   const [advancedFormPageState, setAdvancedFormPageState] = useState(true);
@@ -110,7 +116,9 @@ export default function AddConnector({
   const { liveGmailCredential } = useGmailCredentials();
 
   const credentialActivated =
-    liveGDriveCredential || liveGmailCredential || currentCredential;
+    (connector === "google_drive" && liveGDriveCredential) ||
+    (connector === "gmail" && liveGmailCredential) ||
+    currentCredential;
 
   const noCredentials = credentialTemplate == null;
   if (noCredentials && 1 != formStep) {
@@ -170,7 +178,8 @@ export default function AddConnector({
         setSelectedFiles,
         name,
         AdvancedConfig,
-        isPublic
+        isPublic,
+        groups
       );
       if (response) {
         setTimeout(() => {
@@ -189,6 +198,8 @@ export default function AddConnector({
         refresh_freq: refreshFreq * 60 || null,
         prune_freq: pruneFreq * 60 * 60 * 24 || null,
         indexing_start: indexingStart,
+        is_public: isPublic,
+        groups: groups,
       },
       undefined,
       credentialActivated ? false : true,
@@ -218,7 +229,8 @@ export default function AddConnector({
         response.id,
         credential?.id!,
         name,
-        isPublic
+        isPublic,
+        groups
       );
       if (linkCredentialResponse.ok) {
         setPopup({
@@ -247,7 +259,7 @@ export default function AddConnector({
   };
 
   const displayName = getSourceDisplayName(connector) || connector;
-  if (!credentials) {
+  if (!credentials || !editableCredentials) {
     return <></>;
   }
 
@@ -350,6 +362,7 @@ export default function AddConnector({
                 source={connector}
                 defaultedCredential={currentCredential!}
                 credentials={credentials}
+                editableCredentials={editableCredentials}
                 onDeleteCredential={onDeleteCredential}
                 onSwitch={onSwap}
               />
@@ -411,6 +424,8 @@ export default function AddConnector({
               setName={setName}
               config={configuration}
               isPublic={isPublic}
+              groups={groups}
+              setGroups={setGroups}
               defaultValues={values}
               initialName={name}
               onFormStatusChange={handleFormStatusChange}
@@ -430,7 +445,10 @@ export default function AddConnector({
             )}
             <button
               className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-              disabled={!isFormValid}
+              disabled={
+                !isFormValid ||
+                (connector == "file" && selectedFiles.length == 0)
+              }
               onClick={async () => {
                 await createConnector();
               }}
@@ -464,10 +482,10 @@ export default function AddConnector({
               key={advancedFormPageState ? 0 : 1}
               setIndexingStart={setIndexingStart}
               indexingStart={indexingStart}
-              currentPruneFreq={pruneFreq}
-              currentRefreshFreq={refreshFreq}
               setPruneFreq={setPruneFreq}
+              currentPruneFreq={pruneFreq}
               setRefreshFreq={setRefreshFreq}
+              currentRefreshFreq={refreshFreq}
               ref={formRef}
             />
 

@@ -3,7 +3,6 @@ import { Modal } from "@/components/Modal";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { Button, Text, Title } from "@tremor/react";
-import Link from "next/link";
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import { ReindexingProgressTable } from "../../../../components/embedding/ReindexingProgressTable";

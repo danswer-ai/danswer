@@ -84,6 +84,7 @@ import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { DeleteChatModal } from "./modal/DeleteChatModal";
 import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
+import { SEARCH_TOOL_NAME } from "./tools/constants";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -985,7 +986,6 @@ export function ChatPage({
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
               documents = (packet as DocumentsResponse).top_documents;
-              query = (packet as DocumentsResponse).rephrased_query;
               retrievalType = RetrievalType.Search;
               if (documents && documents.length > 0) {
                 // point to the latest message (we don't know the messageId yet, which is why
@@ -1007,6 +1007,12 @@ export function ChatPage({
                 setChatState("toolBuilding");
               } else {
                 setChatState("streaming");
+              }
+
+              // This will be consolidated in upcoming tool calls udpate,
+              // but for now, we need to set query as early as possible
+              if (toolCalls[0].tool_name == SEARCH_TOOL_NAME) {
+                query = toolCalls[0].tool_args["query"];
               }
             } else if (Object.hasOwn(packet, "file_ids")) {
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
@@ -1733,8 +1739,7 @@ export function ChatPage({
                                       }
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
-                                        (chatState != "streaming" &&
-                                          chatState != "toolBuilding")
+                                        chatState == "input"
                                       }
                                       hasDocs={
                                         (message.documents &&
@@ -2018,7 +2023,7 @@ export function ChatPage({
                 <div className="mx-auto h-full flex">
                   <div
                     style={{ transition: "width 0.30s ease-out" }}
-                    className={`flex-none bg-transparent transition-all bg-opacity-80 duration-300 ease-in-out h-full
+                    className={`flex-none bg-transparent transition-all bg-opacity-80 duration-300 epase-in-out h-full
                         ${toggledSidebar ? "w-[250px] " : "w-[0px]"}`}
                   />
                   <div className="my-auto">
@@ -2028,7 +2033,7 @@ export function ChatPage({
               )}
             </div>
           </div>
-          <FixedLogo toggleSidebar={toggleSidebar} />
+          <FixedLogo />
         </div>
       </div>
       <DocumentSidebar

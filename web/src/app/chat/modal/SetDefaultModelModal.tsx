@@ -1,5 +1,5 @@
-import { Dispatch, SetStateAction, useEffect, useRef } from "react";
-import { ModalWrapper } from "./ModalWrapper";
+import { Dispatch, SetStateAction, useState, useEffect, useRef } from "react";
+import { ModalWrapper } from "@/components/modals/ModalWrapper";
 import { Badge, Text } from "@tremor/react";
 import { getDisplayNameForModel, LlmOverride } from "@/lib/hooks";
 import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";

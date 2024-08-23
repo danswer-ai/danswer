@@ -132,7 +132,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
           <SourceIcon iconSize={24} sourceType={ccPair.connector.source} />
         </div>
 
-        {isEditing ? (
+        {ccPair.is_editable_for_current_user && isEditing ? (
           <div className="flex items-center">
             <input
               ref={inputRef}
@@ -150,30 +150,36 @@ function Main({ ccPairId }: { ccPairId: number }) {
           </div>
         ) : (
           <h1
-            onClick={() => startEditing()}
-            className="group flex cursor-pointer text-3xl text-emphasis gap-x-2 items-center font-bold"
+            onClick={() =>
+              ccPair.is_editable_for_current_user && startEditing()
+            }
+            className={`group flex ${ccPair.is_editable_for_current_user ? "cursor-pointer" : ""} text-3xl text-emphasis gap-x-2 items-center font-bold`}
           >
             {ccPair.name}
-            <EditIcon className="group-hover:visible invisible" />
+            {ccPair.is_editable_for_current_user && (
+              <EditIcon className="group-hover:visible invisible" />
+            )}
           </h1>
         )}
 
-        <div className="ml-auto flex gap-x-2">
-          {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
-            ccPair.connector.source
-          ) && (
-            <ReIndexButton
-              ccPairId={ccPair.id}
-              connectorId={ccPair.connector.id}
-              credentialId={ccPair.credential.id}
-              isDisabled={
-                ccPair.status === ConnectorCredentialPairStatus.PAUSED
-              }
-              isDeleting={isDeleting}
-            />
-          )}
-          {!isDeleting && <ModifyStatusButtonCluster ccPair={ccPair} />}
-        </div>
+        {ccPair.is_editable_for_current_user && (
+          <div className="ml-auto flex gap-x-2">
+            {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
+              ccPair.connector.source
+            ) && (
+              <ReIndexButton
+                ccPairId={ccPair.id}
+                connectorId={ccPair.connector.id}
+                credentialId={ccPair.credential.id}
+                isDisabled={
+                  ccPair.status === ConnectorCredentialPairStatus.PAUSED
+                }
+                isDeleting={isDeleting}
+              />
+            )}
+            {!isDeleting && <ModifyStatusButtonCluster ccPair={ccPair} />}
+          </div>
+        )}
       </div>
       <CCPairStatus
         status={lastIndexAttempt?.status || "not_started"}
@@ -184,19 +190,27 @@ function Main({ ccPairId }: { ccPairId: number }) {
         Total Documents Indexed:{" "}
         <b className="text-emphasis">{totalDocsIndexed}</b>
       </div>
-      {credentialTemplates[ccPair.connector.source] && (
-        <>
-          <Divider />
-
-          <Title className="mb-2">Credentials</Title>
-
-          <CredentialSection
-            ccPair={ccPair}
-            sourceType={ccPair.connector.source}
-            refresh={() => refresh()}
-          />
-        </>
+      {!ccPair.is_editable_for_current_user && (
+        <div className="text-sm mt-2 text-neutral-500 italic">
+          {ccPair.is_public
+            ? "Public connectors are not editable by curators."
+            : "This connector belongs to groups where you don't have curator permissions, so it's not editable."}
+        </div>
       )}
+      {credentialTemplates[ccPair.connector.source] &&
+        ccPair.is_editable_for_current_user && (
+          <>
+            <Divider />
+
+            <Title className="mb-2">Credentials</Title>
+
+            <CredentialSection
+              ccPair={ccPair}
+              sourceType={ccPair.connector.source}
+              refresh={() => refresh()}
+            />
+          </>
+        )}
       <Divider />
       <ConfigDisplay
         connectorSpecificConfig={ccPair.connector.connector_specific_config}
@@ -222,7 +236,9 @@ function Main({ ccPairId }: { ccPairId: number }) {
       <Divider />
       <div className="flex mt-4">
         <div className="mx-auto">
-          <DeletionButton ccPair={ccPair} />
+          {ccPair.is_editable_for_current_user && (
+            <DeletionButton ccPair={ccPair} />
+          )}
         </div>
       </div>
     </>

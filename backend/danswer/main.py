@@ -343,7 +343,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         setup_vespa(document_index, db_embedding_model, secondary_db_embedding_model)
 
         logger.notice(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
-        if db_embedding_model.cloud_provider_id is None:
+        if db_embedding_model.provider_type is None:
             warm_up_bi_encoder(
                 embedding_model=db_embedding_model,
                 model_server_host=MODEL_SERVER_HOST,

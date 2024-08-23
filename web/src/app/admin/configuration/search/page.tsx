@@ -79,7 +79,7 @@ function Main() {
     (provider) =>
       provider.embedding_models.map((model) => ({
         ...model,
-        cloud_provider_id: provider.id,
+        provider_type: provider.provider_type,
         model_name: model.model_name, // Ensure model_name is set for consistency
       }))
   );
