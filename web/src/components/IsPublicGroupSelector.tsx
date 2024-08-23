@@ -6,6 +6,7 @@ import { UserGroup, User, UserRole } from "@/lib/types";
 import { useUserGroups } from "@/lib/hooks";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
 import { getCurrentUser } from "@/lib/user";
+import { useUser } from "./user/UserProvider";
 
 export type IsPublicGroupSelectorFormType = {
   is_public: boolean;
@@ -22,42 +23,28 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   enforceGroupSelection?: boolean;
 }) => {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
 
-  // TODO convert this to logic
+  const { isAdmin, user, isLoadingUser } = useUser();
+
   useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-          formikProps.setFieldValue("is_public", user.role === UserRole.ADMIN);
-
-          // Select the only group by default if there's only one
-          if (
-            userGroups &&
-            userGroups.length === 1 &&
-            formikProps.values.groups.length === 0 &&
-            user.role !== UserRole.ADMIN
-          ) {
-            formikProps.setFieldValue("groups", [userGroups[0].id]);
-          }
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      } finally {
-        setIsLoading(false);
+    if (user) {
+      formikProps.setFieldValue("is_public", user.role === UserRole.ADMIN);
+      // Select the only group by default if there's only one
+      if (
+        userGroups &&
+        userGroups.length === 1 &&
+        formikProps.values.groups.length === 0 &&
+        user.role !== UserRole.ADMIN
+      ) {
+        formikProps.setFieldValue("groups", [userGroups[0].id]);
       }
-    };
-    fetchCurrentUser();
-  }, [userGroups]); // Add userGroups as a dependency
+    } else {
+      console.error("Failed to fetch current user");
+    }
+  }, [userGroups, isAdmin, user]);
 
-  if (isLoading || userGroupsIsLoading) {
-    return null; // or return a loading spinner if preferred
+  if (isLoadingUser) {
+    return null;
   }
 
   return (
