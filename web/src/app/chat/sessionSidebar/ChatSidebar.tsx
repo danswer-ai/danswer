@@ -77,7 +77,7 @@ export const ChatSidebar = ({
             href="/dashboard"
           >
             <div className="flex w-full">
-              <Logo isFullSize={true} width={200} className="mr-1 my-auto" />
+              <Logo isFullSize={true} width={150} className="mr-1 my-auto" />
             </div>
           </Link>
         </div>

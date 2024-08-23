@@ -18,11 +18,9 @@ export default function SideBarHeader() {
     return (
         <Link
             className="py-3"
-            href={
-                settings && settings.default_page === "chat" ? "/chat" : "/search"
-            }
+            href='/dashboard'
             >
-            <Logo isFullSize={true} width={200}/>
+            <Logo isFullSize={true} width={150}/>
         </Link>
     );
 }

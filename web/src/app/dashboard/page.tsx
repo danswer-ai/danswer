@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { UserDropdown } from "@/components/UserDropdown";
 import {
     FetchAssistantsResponse,
@@ -5,6 +6,8 @@ import {
 } from "@/lib/assistants/fetchAssistantsSS";
 import { User } from "@/lib/types";
 import {
+    AuthTypeMetadata,
+    getAuthTypeMetadataSS,
     getCurrentUserSS,
 } from "@/lib/userSS";
 import DashboardSideBar from "./DashboardSideBar";
@@ -12,6 +15,7 @@ import AssistantList from "./AssistantList";
 
 export default async function Dashboard() {
     const tasks = [
+        getAuthTypeMetadataSS(),
         getCurrentUserSS(),
         fetchAssistantsSS()
     ];
@@ -19,6 +23,7 @@ export default async function Dashboard() {
     let results: (
         | User
         | FetchAssistantsResponse
+        | AuthTypeMetadata
         | null
     )[] = [null, null, null];
     try {
@@ -27,9 +32,15 @@ export default async function Dashboard() {
         console.log(`Some fetch failed for the main search page - ${e}`);
     }
 
-    const user = results[0] as User | null;
-    const [initialAssistantsList, assistantsFetchError] = results[1] as FetchAssistantsResponse;
+    const authTypeMetadata = results[0] as AuthTypeMetadata | null;
+    const user = results[1] as User | null;
+    const [initialAssistantsList, assistantsFetchError] = results[2] as FetchAssistantsResponse;
     
+    const authDisabled = authTypeMetadata?.authType === "disabled";
+    if (!authDisabled && !user) {
+        return redirect("/auth/login");
+    }
+
     return (
         <>
             <div className="flex">

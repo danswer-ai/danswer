@@ -45,13 +45,15 @@ export const EE_ENABLED =
 export const CUSTOM_ANALYTICS_ENABLED = process.env.CUSTOM_ANALYTICS_SECRET_KEY
   ? true
   : false;
+console.log(process.env.NEXT_PUBLIC_ASSISTANTS_ICON_MAPPING);
 
-// Parse the JSON string (icon set) from the environment variable
+// Parse the JSON string from the environment variable
 const iconMapping = process.env.NEXT_PUBLIC_ASSISTANTS_ICON_MAPPING
   ? JSON.parse(process.env.NEXT_PUBLIC_ASSISTANTS_ICON_MAPPING)
   : {};
 
-// Export the icon mapping constant
+// Export a function to get the icon for an item
 export const getAssistantIcon = (itemId: string | number) => {
+  console.log(iconMapping, itemId); // For debugging purposes
   return iconMapping[itemId] || '/svgs/icon-chat.svg';
 };
