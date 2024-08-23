@@ -93,8 +93,6 @@ export default function CreateCredential({
   refresh?: () => void;
 }) {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   const { isLoadingUser, isAdmin } = useUser();
@@ -223,7 +221,7 @@ export default function CreateCredential({
                 }
               />
             ))}
-            {!swapConnector && !isLoading && (
+            {!swapConnector && (
               <div className="mt-4 flex flex-col sm:flex-row justify-between items-end">
                 <div className="w-full sm:w-3/4 mb-4 sm:mb-0">
                   {isPaidEnterpriseFeaturesEnabled && (
