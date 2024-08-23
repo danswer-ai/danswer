@@ -224,7 +224,7 @@ export function ChatPage({
   }, [liveAssistant]);
 
   const stopGenerating = (sessionId?: number) => {
-    const currentSession = currentSessionId();
+    const currentSession = sessionId || currentSessionId();
     const controller = abortControllers.get(currentSession);
     if (controller) {
       controller.abort();
@@ -900,6 +900,7 @@ export function ChatPage({
     updateStatesWithNewSessionId(currChatSessionId);
 
     const controller = new AbortController();
+
     setAbortControllers((prev) =>
       new Map(prev).set(currChatSessionId, controller)
     );
@@ -2084,7 +2085,6 @@ export function ChatPage({
                                 </button>
                               </div>
                             )}
-
                             <ChatInputBar
                               chatState={currentSessionChatState}
                               stopGenerating={stopGenerating}
