@@ -204,7 +204,18 @@ services:
       - .env.nginx
 
 
+  cache:
+    image: redis:7.4-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server
+    volumes: 
+      - cache:/data
+
+
 volumes:
+  cache:
   db_volume:
   vespa_volume:
   # Created by the container itself
