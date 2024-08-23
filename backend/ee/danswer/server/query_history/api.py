@@ -148,7 +148,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
     def to_json(self) -> dict[str, str]:
         return {
             "chat_session_id": str(self.chat_session_id),
-            "message_pair_num": self.message_pair_num,
+            "message_pair_num": str(self.message_pair_num),
             "user_message": self.user_message,
             "ai_response": self.ai_response,
             "retrieved_documents": "|".join(
