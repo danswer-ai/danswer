@@ -356,11 +356,7 @@ export function ChatPage({
       if (
         (messageHistory[messageHistory.length - 1]?.type !== "error" ||
           loadedSessionId != null) &&
-        !(
-          currentChatState() == "toolBuilding" ||
-          currentChatState() == "streaming" ||
-          currentChatState() == "loading"
-        )
+        !currentChatAnswering()
       ) {
         updateCompleteMessageDetail(chatSession.chat_session_id, newMessageMap);
 
@@ -585,6 +581,14 @@ export function ChatPage({
 
   const currentChatState = (): ChatState => {
     return chatState.get(currentSessionId()) || "input";
+  };
+
+  const currentChatAnswering = () => {
+    return (
+      currentChatState() == "toolBuilding" ||
+      currentChatState() == "streaming" ||
+      currentChatState() == "loading"
+    );
   };
 
   const updateRegenerationState = (
