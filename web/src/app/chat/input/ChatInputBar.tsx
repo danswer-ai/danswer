@@ -273,7 +273,7 @@ export function ChatInputBar({
   };
 
   return (
-    <div>
+    <div id="danswer-chat-input">
       <div className="flex justify-center max-w-screen-lg mx-auto">
         <div
           className="
