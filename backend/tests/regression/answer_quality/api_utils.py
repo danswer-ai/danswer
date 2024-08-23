@@ -122,7 +122,7 @@ def create_cc_pair(env_name: str, connector_id: int, credential_id: int) -> None
         env_name, f"/manage/connector/{connector_id}/credential/{credential_id}"
     )
 
-    body = {"name": "zip_folder_contents", "is_public": True}
+    body = {"name": "zip_folder_contents", "is_public": True, "groups": []}
     print("body:", body)
     response = requests.put(url, headers=GENERAL_HEADERS, json=body)
     if response.status_code == 200:
