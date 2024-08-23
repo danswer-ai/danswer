@@ -14,6 +14,7 @@ import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { Button, Divider, Text } from "@tremor/react";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
+import React, { useEffect } from "react";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -95,100 +96,117 @@ export const DocumentSetCreationForm = ({
           }
         }}
       >
-        {(props) => (
-          <Form>
-            <TextFormField
-              name="name"
-              label="Name:"
-              placeholder="A name for the document set"
-              disabled={isUpdate}
-              autoCompleteDisabled={true}
-            />
-            <TextFormField
-              name="description"
-              label="Description:"
-              placeholder="Describe what the document set represents"
-              autoCompleteDisabled={true}
-            />
+        {(props) => {
+          useEffect(() => {
+            if (props.values.is_public) {
+              props.setFieldValue("cc_pair_ids", []);
+            }
+          }, [props.values.is_public]);
 
-            <Divider />
+          return (
+            <Form>
+              <TextFormField
+                name="name"
+                label="Name:"
+                placeholder="A name for the document set"
+                disabled={isUpdate}
+                autoCompleteDisabled={true}
+              />
+              <TextFormField
+                name="description"
+                label="Description:"
+                placeholder="Describe what the document set represents"
+                autoCompleteDisabled={true}
+              />
+              {isPaidEnterpriseFeaturesEnabled &&
+                userGroups &&
+                userGroups.length > 0 && (
+                  <IsPublicGroupSelector
+                    formikProps={props}
+                    objectName="document set"
+                  />
+                )}
 
-            <h2 className="mb-1 font-medium text-base">
-              Pick your connectors:
-            </h2>
-            <p className="mb-3 text-xs">
-              All documents indexed by the selected connectors will be a part of
-              this document set.
-            </p>
-            <FieldArray
-              name="cc_pair_ids"
-              render={(arrayHelpers: ArrayHelpers) => (
-                <div className="mb-3 flex gap-2 flex-wrap">
-                  {ccPairs.map((ccPair) => {
-                    const ind = props.values.cc_pair_ids.indexOf(
-                      ccPair.cc_pair_id
-                    );
-                    let isSelected = ind !== -1;
-                    return (
-                      <div
-                        key={`${ccPair.connector.id}-${ccPair.credential.id}`}
-                        className={
-                          `
-                              px-3 
-                              py-1
-                              rounded-lg 
-                              border
-                              border-border 
-                              w-fit 
-                              flex 
-                              cursor-pointer ` +
-                          (isSelected
-                            ? " bg-background-strong"
-                            : " hover:bg-hover")
-                        }
-                        onClick={() => {
-                          if (isSelected) {
-                            arrayHelpers.remove(ind);
-                          } else {
-                            arrayHelpers.push(ccPair.cc_pair_id);
-                          }
-                        }}
-                      >
-                        <div className="my-auto">
-                          <ConnectorTitle
-                            connector={ccPair.connector}
-                            ccPairId={ccPair.cc_pair_id}
-                            ccPairName={ccPair.name}
-                            isLink={false}
-                            showMetadata={false}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            />
+              <Divider />
 
-            {isPaidEnterpriseFeaturesEnabled &&
-              userGroups &&
-              userGroups.length > 0 && (
-                <IsPublicGroupSelector
-                  formikProps={props}
-                  objectName="document set"
-                />
-              )}
-            <div className="flex mt-6">
-              <Button
-                type="submit"
-                disabled={props.isSubmitting}
-                className="w-64 mx-auto"
-              >
-                {isUpdate ? "Update!" : "Create!"}
-              </Button>
-            </div>
-          </Form>
-        )}
+              <h2 className="mb-1 font-medium text-base">
+                Pick your connectors:
+              </h2>
+              <p className="mb-3 text-xs">
+                All documents indexed by the selected connectors will be a part
+                of this document set.
+              </p>
+              <FieldArray
+                name="cc_pair_ids"
+                render={(arrayHelpers: ArrayHelpers) => (
+                  <div className="mb-3 flex gap-2 flex-wrap">
+                    {ccPairs
+                      .filter(
+                        (ccPair) =>
+                          ccPair.public_doc ||
+                          (ccPair.groups.length > 0 &&
+                            props.values.groups.every((group) =>
+                              ccPair.groups.includes(group)
+                            ))
+                      )
+                      .map((ccPair) => {
+                        const ind = props.values.cc_pair_ids.indexOf(
+                          ccPair.cc_pair_id
+                        );
+                        let isSelected = ind !== -1;
+                        return (
+                          <div
+                            key={`${ccPair.connector.id}-${ccPair.credential.id}`}
+                            className={
+                              `
+                                    px-3 
+                                    py-1
+                                    rounded-lg 
+                                    border
+                                    border-border 
+                                    w-fit 
+                                    flex 
+                                    cursor-pointer ` +
+                              (isSelected
+                                ? " bg-background-strong"
+                                : " hover:bg-hover")
+                            }
+                            onClick={() => {
+                              if (isSelected) {
+                                arrayHelpers.remove(ind);
+                              } else {
+                                arrayHelpers.push(ccPair.cc_pair_id);
+                              }
+                            }}
+                          >
+                            <div className="my-auto">
+                              <ConnectorTitle
+                                connector={ccPair.connector}
+                                ccPairId={ccPair.cc_pair_id}
+                                ccPairName={ccPair.name}
+                                isLink={false}
+                                showMetadata={false}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              />
+
+              <div className="flex mt-6">
+                <Button
+                  type="submit"
+                  disabled={props.isSubmitting}
+                  className="w-64 mx-auto"
+                >
+                  {isUpdate ? "Update!" : "Create!"}
+                </Button>
+              </div>
+            </Form>
+          );
+        }}
       </Formik>
     </div>
   );

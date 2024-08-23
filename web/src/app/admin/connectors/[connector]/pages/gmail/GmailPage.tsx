@@ -17,6 +17,7 @@ import { usePublicCredentials } from "@/lib/hooks";
 import { Title } from "@tremor/react";
 import { GmailConfig } from "@/lib/connectors/connectors";
 import { useState, useEffect } from "react";
+import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 
 export const GmailMain = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -57,10 +58,8 @@ export const GmailMain = () => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: connectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
-    "/api/manage/admin/connector/indexing-status",
-    errorHandlingFetcher
-  );
+  } = useConnectorCredentialIndexingStatus();
+
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,

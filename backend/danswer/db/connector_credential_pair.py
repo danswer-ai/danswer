@@ -59,21 +59,19 @@ def _add_user_filters(
     for (as well as public cc_pairs)
     """
     where_clause = User__UG.user_id == user.id
-    if user.role == UserRole.CURATOR and get_editable:
-        where_clause &= User__UG.is_curator == True  # noqa: E712
-    if get_editable:
-        user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
-        if user.role == UserRole.CURATOR:
-            user_groups = user_groups.where(
-                User__UserGroup.is_curator == True  # noqa: E712
-            )
-        where_clause &= (
-            ~exists()
-            .where(UG__CCpair.cc_pair_id == ConnectorCredentialPair.id)
-            .where(~UG__CCpair.user_group_id.in_(user_groups))
-            .correlate(ConnectorCredentialPair)
+    where_clause &= User__UG.is_curator == True  # noqa: E712
+    user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
+    if user.role == UserRole.CURATOR:
+        user_groups = user_groups.where(
+            User__UserGroup.is_curator == True  # noqa: E712
         )
-    else:
+    where_clause &= (
+        ~exists()
+        .where(UG__CCpair.cc_pair_id == ConnectorCredentialPair.id)
+        .where(~UG__CCpair.user_group_id.in_(user_groups))
+        .correlate(ConnectorCredentialPair)
+    )
+    if not get_editable:
         where_clause |= ConnectorCredentialPair.is_public == True  # noqa: E712
 
     return stmt.where(where_clause)
@@ -84,6 +82,7 @@ def get_connector_credential_pairs(
     include_disabled: bool = True,
     user: User | None = None,
     get_editable: bool = True,
+    ids: list[int] | None = None,
 ) -> list[ConnectorCredentialPair]:
     stmt = select(ConnectorCredentialPair).distinct()
     stmt = _add_user_filters(stmt, user, get_editable)
@@ -91,8 +90,26 @@ def get_connector_credential_pairs(
         stmt = stmt.where(
             ConnectorCredentialPair.status == ConnectorCredentialPairStatus.ACTIVE
         )  # noqa
+    if ids:
+        stmt = stmt.where(ConnectorCredentialPair.id.in_(ids))
     results = db_session.scalars(stmt)
     return list(results.all())
+
+
+def get_cc_pair_groups_for_ids(
+    db_session: Session,
+    cc_pair_ids: list[int],
+    user: User | None = None,
+    get_editable: bool = True,
+) -> list[UserGroup__ConnectorCredentialPair]:
+    stmt = select(UserGroup__ConnectorCredentialPair).distinct()
+    stmt = stmt.outerjoin(
+        ConnectorCredentialPair,
+        UserGroup__ConnectorCredentialPair.cc_pair_id == ConnectorCredentialPair.id,
+    )
+    stmt = _add_user_filters(stmt, user, get_editable)
+    stmt = stmt.where(UserGroup__ConnectorCredentialPair.cc_pair_id.in_(cc_pair_ids))
+    return list(db_session.scalars(stmt).all())
 
 
 def get_connector_credential_pair(

@@ -236,6 +236,7 @@ class ConnectorIndexingStatus(BaseModel):
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     owner: str
+    groups: list[int]
     public_doc: bool
     last_finished_status: IndexingStatus | None
     last_status: IndexingStatus | None

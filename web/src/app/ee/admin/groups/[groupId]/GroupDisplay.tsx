@@ -106,7 +106,7 @@ const UserRoleDropdown = ({
       </div>
     );
   } else {
-    return <div>{user.role}</div>;
+    return <div>{localRole}</div>;
   }
 };
 
@@ -175,23 +175,21 @@ export const GroupDisplay = ({
                 <TableRow>
                   <TableHeaderCell>Email</TableHeaderCell>
                   <TableHeaderCell>Role</TableHeaderCell>
-                  {isAdmin && (
-                    <TableHeaderCell className="flex w-full">
-                      <div className="ml-auto">Remove User</div>
-                    </TableHeaderCell>
-                  )}
+                  <TableHeaderCell className="flex w-full">
+                    <div className="ml-auto">Remove User</div>
+                  </TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {userGroup.users.map((user) => {
+                {userGroup.users.map((groupMember) => {
                   return (
-                    <TableRow key={user.id}>
+                    <TableRow key={groupMember.id}>
                       <TableCell className="whitespace-normal break-all">
-                        {user.email}
+                        {groupMember.email}
                       </TableCell>
                       <TableCell>
                         <UserRoleDropdown
-                          user={user}
+                          user={groupMember}
                           group={userGroup}
                           onSuccess={onRoleChangeSuccess}
                           onError={onRoleChangeError}
@@ -201,7 +199,10 @@ export const GroupDisplay = ({
                       <TableCell>
                         <div className="flex w-full">
                           <div className="ml-auto m-2">
-                            {isAdmin && (
+                            {(isAdmin ||
+                              !userGroup.curator_ids.includes(
+                                groupMember.id
+                              )) && (
                               <DeleteButton
                                 onClick={async () => {
                                   const response = await updateUserGroup(
@@ -210,7 +211,7 @@ export const GroupDisplay = ({
                                       user_ids: userGroup.users
                                         .filter(
                                           (userGroupUser) =>
-                                            userGroupUser.id !== user.id
+                                            userGroupUser.id !== groupMember.id
                                         )
                                         .map(
                                           (userGroupUser) => userGroupUser.id
@@ -254,17 +255,15 @@ export const GroupDisplay = ({
         )}
       </div>
 
-      {isAdmin && (
-        <Button
-          className="mt-3"
-          size="xs"
-          color="green"
-          onClick={() => setAddMemberFormVisible(true)}
-          disabled={!userGroup.is_up_to_date}
-        >
-          Add Users
-        </Button>
-      )}
+      <Button
+        className="mt-3"
+        size="xs"
+        color="green"
+        onClick={() => setAddMemberFormVisible(true)}
+        disabled={!userGroup.is_up_to_date}
+      >
+        Add Users
+      </Button>
 
       {addMemberFormVisible && (
         <AddMemberForm

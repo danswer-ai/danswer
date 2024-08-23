@@ -5,8 +5,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.db.models import User
-from danswer.db.models import User__UserGroup
-from danswer.db.models import UserRole
 
 
 def list_users(
@@ -18,13 +16,6 @@ def list_users(
 
     if email_filter_string:
         stmt = stmt.where(User.email.ilike(f"%{email_filter_string}%"))  # type: ignore
-
-    if user and user.role != UserRole.ADMIN:
-        stmt = stmt.join(User__UserGroup)
-        where_clause = User__UserGroup.user_id == user.id
-        if user.role == UserRole.CURATOR:
-            where_clause &= User__UserGroup.is_curator == True  # noqa: E712
-        stmt = stmt.where(where_clause)
 
     return db_session.scalars(stmt).unique().all()
 
