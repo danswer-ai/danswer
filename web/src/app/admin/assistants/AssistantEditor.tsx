@@ -232,6 +232,9 @@ export function AssistantEditor({
   const [existingPersonaImageId, setExistingPersonaImageId] = useState<
     string | null
   >(existingPersona?.uploaded_image_id || null);
+
+  const [isRequestSuccessful, setIsRequestSuccessful] = useState(false);
+
   return (
     <div>
       {popup}
@@ -414,6 +417,7 @@ export function AssistantEditor({
                 ? `/admin/assistants?u=${Date.now()}`
                 : `/chat?assistantId=${assistantId}`
             );
+            setIsRequestSuccessful(true);
           }
         }}
       >
@@ -1054,7 +1058,7 @@ export function AssistantEditor({
                       color="green"
                       size="md"
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isRequestSuccessful}
                     >
                       {isUpdate ? "Update!" : "Create!"}
                     </Button>

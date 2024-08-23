@@ -345,11 +345,23 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                   {userGroups &&
                     (!isAdmin || (!isPublic && userGroups.length > 0)) && (
                       <div>
-                        <Text className="text-sm font-medium text-text-700 mb-2">
-                          Select User Group(s){" "}
-                          {isAdmin
-                            ? ""
-                            : "(Curators must select one or more groups)"}
+                        <div className="flex gap-x-2 items-center">
+                          <div className="block font-medium text-base">
+                            Assign group access for this Connector
+                          </div>
+                        </div>
+                        <Text className="mb-3">
+                          {isAdmin ? (
+                            <>
+                              This Connector will be visible/accessible by the
+                              groups selected below
+                            </>
+                          ) : (
+                            <>
+                              Curators must select one or more groups to give
+                              access to this Connector
+                            </>
+                          )}
                         </Text>
                         <FieldArray
                           name="groups"

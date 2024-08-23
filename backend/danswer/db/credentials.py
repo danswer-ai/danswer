@@ -333,7 +333,6 @@ def delete_credential(
     db_session: Session,
     force: bool = False,
 ) -> None:
-    _cleanup_credential__user_group_relationships__no_commit(db_session, credential_id)
     credential = fetch_credential_by_id(credential_id, user, db_session)
     if credential is None:
         raise ValueError(
@@ -379,6 +378,7 @@ def delete_credential(
     else:
         logger.notice(f"Deleting credential {credential_id}")
 
+    _cleanup_credential__user_group_relationships__no_commit(db_session, credential_id)
     db_session.delete(credential)
     db_session.commit()
 

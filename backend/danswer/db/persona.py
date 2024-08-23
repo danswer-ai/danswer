@@ -636,6 +636,7 @@ def get_persona_by_id(
 ) -> Persona:
     persona_stmt = (
         select(Persona)
+        .distinct()
         .outerjoin(Persona.groups)
         .outerjoin(Persona.users)
         .outerjoin(UserGroup.user_group_relationships)

@@ -33,12 +33,15 @@ const CredentialSelectionTable = ({
     number | null
   >(null);
 
-  // Deduplicate credentials
-  const dedupedCredentials = credentials.filter(
-    (cred) =>
-      !editableCredentials.some((editableCred) => editableCred.id === cred.id)
-  );
-  const allCredentials = [...editableCredentials, ...dedupedCredentials];
+  const allCredentials = React.useMemo(() => {
+    const credMap = new Map(editableCredentials.map((cred) => [cred.id, cred]));
+    credentials.forEach((cred) => {
+      if (!credMap.has(cred.id)) {
+        credMap.set(cred.id, cred);
+      }
+    });
+    return Array.from(credMap.values());
+  }, [credentials, editableCredentials]);
 
   const handleSelectCredential = (credentialId: number) => {
     const newSelectedId =
@@ -75,7 +78,6 @@ const CredentialSelectionTable = ({
               const editable = editableCredentials.some(
                 (editableCredential) => editableCredential.id === credential.id
               );
-              console.log(editable);
               return (
                 <tr key={credential.id} className="border-b hover:bg-gray-50">
                   <td className="min-w-[60px] p-2">
