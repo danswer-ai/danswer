@@ -378,7 +378,7 @@ def update_loop(
         # So that the first time users aren't surprised by really slow speed of first
         # batch of documents indexed
 
-        if db_embedding_model.cloud_provider_id is None:
+        if db_embedding_model.provider_type is None:
             logger.notice("Running a first inference to warm up embedding model")
             warm_up_bi_encoder(
                 embedding_model=db_embedding_model,
