@@ -101,7 +101,7 @@ export function WhitelabelingForm() {
 
             const formData = new FormData();
             formData.append("file", selectedLogotype);
-            setSelectedLogo(null);
+            setSelectedLogotype(null);
             const response = await fetch(
               "/api/admin/enterprise-settings/logo?is_logotype=true",
               {
@@ -188,8 +188,11 @@ export function WhitelabelingForm() {
             {showAdvancedOptions && (
               <>
                 <Text>
-                  Look at{" "}
-                  <Link href={""} className="text-link cursor-pointer">
+                  Read{" "}
+                  <Link
+                    href={"https://docs.danswer.dev/enterprise_edition/theming"}
+                    className="text-link cursor-pointer"
+                  >
                     the docs
                   </Link>{" "}
                   to see whitelabelling examples in action.
