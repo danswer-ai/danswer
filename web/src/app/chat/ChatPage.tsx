@@ -85,6 +85,7 @@ import { DeleteChatModal } from "./modal/DeleteChatModal";
 import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { SEARCH_TOOL_NAME } from "./tools/constants";
+import { useUser } from "@/components/user/UserProvider";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -105,7 +106,6 @@ export function ChatPage({
   const searchParams = useSearchParams();
 
   let {
-    user,
     chatSessions,
     availableSources,
     availableDocumentSets,
@@ -115,6 +115,8 @@ export function ChatPage({
     openedFolders,
     userInputPrompts,
   } = useChatContext();
+
+  const { user, refreshUser } = useUser();
 
   // chat session
   const existingChatIdRaw = searchParams.get("chatId");
@@ -1418,6 +1420,7 @@ export function ChatPage({
         <SetDefaultModelModal
           setLlmOverride={llmOverrideManager.setGlobalDefault}
           defaultModel={user?.preferences.default_model!}
+          refreshUser={refreshUser}
           llmProviders={llmProviders}
           onClose={() => setSettingsToggled(false)}
         />

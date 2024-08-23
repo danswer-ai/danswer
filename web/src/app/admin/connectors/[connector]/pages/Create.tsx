@@ -13,8 +13,9 @@ import { ConnectionConfiguration } from "@/lib/connectors/connectors";
 import { useFormContext } from "@/components/context/FormContext";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Text } from "@tremor/react";
-import { getCurrentUser } from "@/lib/user";
+
 import { FiUsers } from "react-icons/fi";
+import { useUser } from "@/components/user/UserProvider";
 
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;
@@ -48,29 +49,12 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
   const { setAllowAdvanced } = useFormContext();
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-          const userIsAdmin = user.role === UserRole.ADMIN;
-          setIsAdmin(userIsAdmin);
-          if (!userIsAdmin) {
-            setIsPublic(false);
-          }
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-    fetchCurrentUser();
-  }, [setIsPublic]);
+  const { isLoadingUser, isAdmin, user } = useUser();
+
+  if (isLoadingUser) {
+    return <></>;
+  }
 
   const initialValues = {
     name: initialName || "",
