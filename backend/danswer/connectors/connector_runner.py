@@ -47,7 +47,7 @@ class ConnectorRunner:
         try:
             yield from self.doc_batch_generator
         except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
+            exc_type, _, exc_traceback = sys.exc_info()
 
             # Traverse the traceback to find the last frame where the exception was raised
             tb = exc_traceback
