@@ -521,6 +521,17 @@ export function ChatPage({
     new Map([[chatSessionIdRef.current, "input"]])
   );
 
+  const [scrollHeight, setScrollHeight] = useState<Map<number | null, number>>(
+    new Map([[chatSessionIdRef.current, 0]])
+  );
+  const currentScrollHeight = () => {
+    return scrollHeight.get(currentSessionId());
+  };
+
+  const retrieveCurrentScrollHeight = (): number | null => {
+    return scrollHeight.get(currentSessionId()) || null;
+  };
+
   const [regenerationState, setRegenerationState] = useState<
     Map<number | null, RegenerationState | null>
   >(new Map([[null, null]]));

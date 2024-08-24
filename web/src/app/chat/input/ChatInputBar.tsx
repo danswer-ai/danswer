@@ -32,9 +32,8 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { StopCircle } from "@phosphor-icons/react/dist/ssr";
-import { Square } from "@phosphor-icons/react";
 import { ChatState } from "../types";
+
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
