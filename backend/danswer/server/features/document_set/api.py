@@ -57,6 +57,11 @@ def patch_document_set(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    if user and user.role != UserRole.ADMIN:
+        validate_curator_request(
+            groups=document_set_update_request.groups,
+            is_public=document_set_update_request.is_public,
+        )
     try:
         update_document_set(
             document_set_update_request=document_set_update_request,

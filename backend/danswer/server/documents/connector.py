@@ -426,7 +426,6 @@ def get_connector_indexing_status(
     group_cc_pair_relationships = get_cc_pair_groups_for_ids(
         db_session=db_session,
         cc_pair_ids=[cc_pair.id for cc_pair in cc_pairs],
-        user=user,
     )
     group_cc_pair_relationships_dict: dict[int, list[int]] = {}
     for relationship in group_cc_pair_relationships:

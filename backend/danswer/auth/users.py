@@ -80,7 +80,7 @@ def validate_curator_request(groups: list | None, is_public: bool) -> None:
         logger.error(detail)
         raise HTTPException(
             status_code=401,
-            detail="Curators must specify 1+ groups",
+            detail=detail,
         )
 
 

@@ -28,22 +28,22 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   useEffect(() => {
     if (user && userGroups) {
       const isUserAdmin = user.role === UserRole.ADMIN;
-
-      if (
-        !formikProps.values.is_public &&
-        isUserAdmin &&
-        formikProps.values.groups.length === 0
-      ) {
-        formikProps.setFieldValue("is_public", true);
-      }
       if (userGroups.length === 1 && !isUserAdmin) {
         formikProps.setFieldValue("groups", [userGroups[0].id]);
         setShouldHideContent(true);
+      } else if (formikProps.values.is_public) {
+        formikProps.setFieldValue("groups", []);
+        setShouldHideContent(false);
       } else {
         setShouldHideContent(false);
       }
     }
-  }, [user, userGroups, formikProps.setFieldValue]);
+  }, [
+    user,
+    userGroups,
+    formikProps.setFieldValue,
+    formikProps.values.is_public,
+  ]);
 
   if (isLoadingUser || userGroupsIsLoading) {
     return <div>Loading...</div>;

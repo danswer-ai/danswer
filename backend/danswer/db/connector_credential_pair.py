@@ -59,19 +59,21 @@ def _add_user_filters(
     for (as well as public cc_pairs)
     """
     where_clause = User__UG.user_id == user.id
-    where_clause &= User__UG.is_curator == True  # noqa: E712
-    user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
-    if user.role == UserRole.CURATOR:
-        user_groups = user_groups.where(
-            User__UserGroup.is_curator == True  # noqa: E712
+    if user.role == UserRole.CURATOR and get_editable:
+        where_clause &= User__UG.is_curator == True  # noqa: E712
+    if get_editable:
+        user_groups = select(User__UG.user_group_id).where(User__UG.user_id == user.id)
+        if user.role == UserRole.CURATOR:
+            user_groups = user_groups.where(
+                User__UserGroup.is_curator == True  # noqa: E712
+            )
+        where_clause &= (
+            ~exists()
+            .where(UG__CCpair.cc_pair_id == ConnectorCredentialPair.id)
+            .where(~UG__CCpair.user_group_id.in_(user_groups))
+            .correlate(ConnectorCredentialPair)
         )
-    where_clause &= (
-        ~exists()
-        .where(UG__CCpair.cc_pair_id == ConnectorCredentialPair.id)
-        .where(~UG__CCpair.user_group_id.in_(user_groups))
-        .correlate(ConnectorCredentialPair)
-    )
-    if not get_editable:
+    else:
         where_clause |= ConnectorCredentialPair.is_public == True  # noqa: E712
 
     return stmt.where(where_clause)
