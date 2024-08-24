@@ -78,6 +78,8 @@ def retrieval_preprocessing(
         logger.debug("Persona disables auto detect filters")
         auto_detect_time_filter = False
         auto_detect_source_filter = False
+    else:
+        logger.debug("Auto detect filters enabled")
 
     if (
         time_filter is not None
