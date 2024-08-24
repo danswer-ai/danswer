@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { WorkSpaceSidebar } from "@/app/chat/sessionSidebar/WorkSpaceSidebar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { User } from "@/lib/types";
+import { useState } from "react";
 
 interface SidebarProps {
   user?: User | null;
@@ -24,6 +25,8 @@ export function DynamicSidebar({
   isExpanded,
   children,
 }: SidebarProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
     <>
       <AnimatePresence>
@@ -48,19 +51,29 @@ export function DynamicSidebar({
           openSidebar ? "w-[85vw]" : "w-0"
         } ${isSearch ? "xl:relative" : "lg:relative"}`}
       >
-        <div className="h-full relative flex w-full">
+        <div
+          className="h-full relative flex w-full"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           <WorkSpaceSidebar openSidebar={openSidebar} user={user} />
           {children}
-          <button
-            onClick={toggleWidth}
-            className="absolute bottom-1/2 -translate-y-1/2 border rounded-r py-2 transition-all ease-in-out duration-500 border-l-0 z-modal left-full"
+          <div
+            className={`h-full flex items-center justify-center transition-opacity ease-in-out duration-200 ${
+              isHovered ? "opacity-100" : "opacity-0"
+            }`}
           >
-            {isExpanded ? (
-              <ChevronLeft size={16} />
-            ) : (
-              <ChevronRight size={16} />
-            )}
-          </button>
+            <button
+              onClick={toggleWidth}
+              className="border rounded-r py-2 border-l-0"
+            >
+              {isExpanded ? (
+                <ChevronLeft size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </>

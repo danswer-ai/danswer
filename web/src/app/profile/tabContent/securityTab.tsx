@@ -61,7 +61,7 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
 
       <div className="flex py-8 border-b">
         <div className="w-[500px] text-sm">
-          <span className="font-semibold text-black">Linked team account</span>
+          <span className="font-semibold text-black">Linked team</span>
           <p className="w-3/4 pt-1">
             Easily switch between them and access both accounts from any device.
           </p>
