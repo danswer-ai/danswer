@@ -23,18 +23,6 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build integration test Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          file: ./backend/tests/integration/Dockerfile
-          platforms: linux/arm64
-          pull: true
-          push: true
-          tags: danswer/integration-test-runner:latest
-          cache-from: type=registry,ref=danswer/integration-test-runner:latest
-          cache-to: type=registry,ref=danswer/integration-test-runner:latest,mode=max
-
       - name: Build Web Docker image
         uses: docker/build-push-action@v5
         with:
@@ -116,17 +104,17 @@ jobs:
           done
           echo "Finished waiting for service."
 
-      # - name: Build integration test Docker image
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: ./backend
-      #     file: tests/integration/Dockerfile
-      #     platforms: linux/arm64
-      #     pull: true
-      #     push: true
-      #     tags: danswer/integration-test-runner:latest
-      #     cache-from: type=registry,ref=danswer/integration-test-runner:latest
-      #     cache-to: type=registry,ref=danswer/integration-test-runner:latest,mode=max
+      - name: Build integration test Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/tests/integration/Dockerfile
+          platforms: linux/arm64
+          pull: true
+          push: true
+          tags: danswer/integration-test-runner:latest
+          cache-from: type=registry,ref=danswer/integration-test-runner:latest
+          cache-to: type=registry,ref=danswer/integration-test-runner:latest,mode=max
 
       - name: Run integration tests
         run: |
