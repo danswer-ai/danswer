@@ -31,7 +31,6 @@ import { Bubble } from "@/components/Bubble";
 import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
 import { AddTokenRateLimitForm } from "./AddTokenRateLimitForm";
 import { GenericTokenRateLimitTable } from "@/app/admin/token-rate-limits/TokenRateLimitTables";
-import { getCurrentUser } from "@/lib/user";
 import { useUser } from "@/components/user/UserProvider";
 
 interface GroupDisplayProps {
@@ -344,17 +343,15 @@ export const GroupDisplay = ({
         )}
       </div>
 
-      {isAdmin && (
-        <Button
-          className="mt-3"
-          onClick={() => setAddConnectorFormVisible(true)}
-          size="xs"
-          color="green"
-          disabled={!userGroup.is_up_to_date}
-        >
-          Add Connectors
-        </Button>
-      )}
+      <Button
+        className="mt-3"
+        onClick={() => setAddConnectorFormVisible(true)}
+        size="xs"
+        color="green"
+        disabled={!userGroup.is_up_to_date}
+      >
+        Add Connectors
+      </Button>
 
       {addConnectorFormVisible && (
         <AddConnectorForm
