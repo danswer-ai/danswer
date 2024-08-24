@@ -326,92 +326,107 @@ const DynamicConnectionForm: React.FC<DynamicConnectionFormProps> = ({
                       currentValue={isPublic}
                     />
                   )}
-                  {userGroups &&
-                    (!isAdmin || (!isPublic && userGroups.length > 0)) && (
-                      <div>
-                        <div className="flex gap-x-2 items-center">
-                          <div className="block font-medium text-base">
-                            Assign group access for this Connector
-                          </div>
-                        </div>
-                        <Text className="mb-3">
-                          {isAdmin ? (
-                            <>
-                              This Connector will be visible/accessible by the
-                              groups selected below
-                            </>
-                          ) : (
-                            <>
-                              Curators must select one or more groups to give
-                              access to this Connector
-                            </>
-                          )}
-                        </Text>
-                        <FieldArray
-                          name="groups"
-                          render={() => (
-                            <div className="flex gap-2 flex-wrap">
-                              {!userGroupsIsLoading &&
-                                userGroups.map((userGroup: UserGroup) => {
-                                  const isSelected =
-                                    groups?.includes(userGroup.id) ||
-                                    (!isAdmin && userGroups.length === 1);
 
-                                  // Auto-select the only group for non-admin users
-                                  if (
-                                    !isAdmin &&
-                                    userGroups.length === 1 &&
-                                    groups.length === 0
-                                  ) {
-                                    setGroups([userGroup.id]);
-                                  }
-
-                                  return (
-                                    <div
-                                      key={userGroup.id}
-                                      className={`
-                                        px-3 
-                                        py-1
-                                        rounded-lg 
-                                        border
-                                        border-border 
-                                        w-fit 
-                                        flex 
-                                        cursor-pointer 
-                                        ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
-                                      `}
-                                      onClick={() => {
-                                        if (setGroups) {
-                                          if (
-                                            isSelected &&
-                                            (isAdmin || userGroups.length > 1)
-                                          ) {
-                                            setGroups(
-                                              groups?.filter(
-                                                (id) => id !== userGroup.id
-                                              ) || []
-                                            );
-                                          } else if (!isSelected) {
-                                            setGroups([
-                                              ...(groups || []),
-                                              userGroup.id,
-                                            ]);
-                                          }
-                                        }
-                                      }}
-                                    >
-                                      <div className="my-auto flex">
-                                        <FiUsers className="my-auto mr-2" />{" "}
-                                        {userGroup.name}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
+                  {userGroups ? (
+                    <>
+                      {!isPublic &&
+                      ((isAdmin && userGroups.length > 0) ||
+                        (!isAdmin && userGroups.length > 1)) ? (
+                        <div>
+                          <div className="flex gap-x-2 items-center">
+                            <div className="block font-medium text-base">
+                              Assign group access for this Connector
                             </div>
-                          )}
-                        />
-                      </div>
-                    )}
+                          </div>
+                          <Text className="mb-3">
+                            {isAdmin ? (
+                              <>
+                                This Connector will be visible/accessible by the
+                                groups selected below
+                              </>
+                            ) : (
+                              <>
+                                Curators must select one or more groups to give
+                                access to this Connector
+                              </>
+                            )}
+                          </Text>
+                          <FieldArray
+                            name="groups"
+                            render={() => (
+                              <div className="flex gap-2 flex-wrap">
+                                {!userGroupsIsLoading &&
+                                  userGroups.map((userGroup: UserGroup) => {
+                                    const isSelected =
+                                      groups?.includes(userGroup.id) ||
+                                      (!isAdmin && userGroups.length === 1);
+
+                                    // Auto-select the only group for non-admin users
+                                    if (
+                                      !isAdmin &&
+                                      userGroups.length === 1 &&
+                                      groups.length === 0
+                                    ) {
+                                      setGroups([userGroup.id]);
+                                    }
+
+                                    return (
+                                      <div
+                                        key={userGroup.id}
+                                        className={`
+                                            px-3 
+                                            py-1
+                                            rounded-lg 
+                                            border
+                                            border-border 
+                                            w-fit 
+                                            flex 
+                                            cursor-pointer 
+                                            ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
+                                          `}
+                                        onClick={() => {
+                                          if (setGroups) {
+                                            if (
+                                              isSelected &&
+                                              (isAdmin || userGroups.length > 1)
+                                            ) {
+                                              setGroups(
+                                                groups?.filter(
+                                                  (id) => id !== userGroup.id
+                                                ) || []
+                                              );
+                                            } else if (!isSelected) {
+                                              setGroups([
+                                                ...(groups || []),
+                                                userGroup.id,
+                                              ]);
+                                            }
+                                          }
+                                        }}
+                                      >
+                                        <div className="my-auto flex">
+                                          <FiUsers className="my-auto mr-2" />{" "}
+                                          {userGroup.name}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            )}
+                          />
+                        </div>
+                      ) : userGroups && userGroups.length > 0 ? (
+                        <Text className="mb-3">
+                          These documents will be assigned to group:{" "}
+                          <b>{userGroups[0].name}</b>.
+                        </Text>
+                      ) : (
+                        <></>
+                      )}
+                    </>
+                  ) : (
+                    <></>
+                  )}
                 </>
               )}
             </Form>

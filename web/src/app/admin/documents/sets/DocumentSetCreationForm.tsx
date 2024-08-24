@@ -11,7 +11,7 @@ import {
 import { ConnectorIndexingStatus, DocumentSet, UserGroup } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
-import { Button, Divider, Text } from "@tremor/react";
+import { Button, Divider } from "@tremor/react";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import React, { useEffect } from "react";
@@ -32,8 +32,13 @@ export const DocumentSetCreationForm = ({
   existingDocumentSet,
 }: SetCreationPopupProps) => {
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
-
   const isUpdate = existingDocumentSet !== undefined;
+
+  useEffect(() => {
+    if (existingDocumentSet?.is_public) {
+      return;
+    }
+  }, [existingDocumentSet?.is_public]);
 
   return (
     <div>
@@ -97,12 +102,6 @@ export const DocumentSetCreationForm = ({
         }}
       >
         {(props) => {
-          useEffect(() => {
-            if (props.values.is_public) {
-              props.setFieldValue("cc_pair_ids", []);
-            }
-          }, [props.values.is_public]);
-
           return (
             <Form>
               <TextFormField
@@ -138,18 +137,28 @@ export const DocumentSetCreationForm = ({
               </p>
               <FieldArray
                 name="cc_pair_ids"
-                render={(arrayHelpers: ArrayHelpers) => (
-                  <div className="mb-3 flex gap-2 flex-wrap">
-                    {ccPairs
-                      .filter(
-                        (ccPair) =>
-                          ccPair.public_doc ||
-                          (ccPair.groups.length > 0 &&
-                            props.values.groups.every((group) =>
-                              ccPair.groups.includes(group)
-                            ))
-                      )
-                      .map((ccPair) => {
+                render={(arrayHelpers: ArrayHelpers) => {
+                  // Filter visible cc pairs
+                  const visibleCcPairs = ccPairs.filter(
+                    (ccPair) =>
+                      ccPair.public_doc ||
+                      (ccPair.groups.length > 0 &&
+                        props.values.groups.every((group) =>
+                          ccPair.groups.includes(group)
+                        ))
+                  );
+
+                  // Deselect filtered out cc pairs
+                  const visibleCcPairIds = visibleCcPairs.map(
+                    (ccPair) => ccPair.cc_pair_id
+                  );
+                  props.values.cc_pair_ids = props.values.cc_pair_ids.filter(
+                    (id) => visibleCcPairIds.includes(id)
+                  );
+
+                  return (
+                    <div className="mb-3 flex gap-2 flex-wrap">
+                      {visibleCcPairs.map((ccPair) => {
                         const ind = props.values.cc_pair_ids.indexOf(
                           ccPair.cc_pair_id
                         );
@@ -191,8 +200,9 @@ export const DocumentSetCreationForm = ({
                           </div>
                         );
                       })}
-                  </div>
-                )}
+                    </div>
+                  );
+                }}
               />
 
               <div className="flex mt-6">

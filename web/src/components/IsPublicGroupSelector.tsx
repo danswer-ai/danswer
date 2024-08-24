@@ -5,7 +5,6 @@ import { FiUsers } from "react-icons/fi";
 import { UserGroup, User, UserRole } from "@/lib/types";
 import { useUserGroups } from "@/lib/hooks";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
-import { getCurrentUser } from "@/lib/user";
 import { useUser } from "./user/UserProvider";
 
 export type IsPublicGroupSelectorFormType = {
@@ -23,28 +22,44 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   enforceGroupSelection?: boolean;
 }) => {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
-
   const { isAdmin, user, isLoadingUser } = useUser();
+  const [shouldHideContent, setShouldHideContent] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      formikProps.setFieldValue("is_public", user.role === UserRole.ADMIN);
-      // Select the only group by default if there's only one
+    if (user && userGroups) {
+      const isUserAdmin = user.role === UserRole.ADMIN;
+
       if (
-        userGroups &&
-        userGroups.length === 1 &&
-        formikProps.values.groups.length === 0 &&
-        user.role !== UserRole.ADMIN
+        !formikProps.values.is_public &&
+        isUserAdmin &&
+        formikProps.values.groups.length === 0
       ) {
-        formikProps.setFieldValue("groups", [userGroups[0].id]);
+        formikProps.setFieldValue("is_public", true);
       }
-    } else {
-      console.error("Failed to fetch current user");
+      if (userGroups.length === 1 && !isUserAdmin) {
+        formikProps.setFieldValue("groups", [userGroups[0].id]);
+        setShouldHideContent(true);
+      } else {
+        setShouldHideContent(false);
+      }
     }
-  }, [userGroups, isAdmin, user]);
+  }, [user, userGroups, formikProps.setFieldValue]);
 
   if (isLoadingUser || userGroupsIsLoading) {
-    return null;
+    return <div>Loading...</div>;
+  }
+
+  if (shouldHideContent && enforceGroupSelection) {
+    return (
+      <>
+        {userGroups && (
+          <div className="mb-1 font-medium text-base">
+            These {objectName}s will be assigned to group:{" "}
+            <b>{userGroups[0].name}</b>.
+          </div>
+        )}
+      </>
+    );
   }
 
   return (
@@ -68,7 +83,9 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         </>
       )}
 
-      {(!formikProps.values.is_public || !isAdmin) && (
+      {(!formikProps.values.is_public ||
+        !isAdmin ||
+        formikProps.values.groups.length > 0) && (
         <>
           <div className="flex gap-x-2 items-center">
             <div className="block font-medium text-base">
