@@ -871,7 +871,7 @@ export function ChatPage({
     modelOverRide?: LlmOverride;
     regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
-    const frozenSessionId = currentSessionId();
+    let frozenSessionId = currentSessionId();
 
     if (currentChatState() != "input") {
       setPopup({
@@ -904,6 +904,8 @@ export function ChatPage({
     } else {
       currChatSessionId = chatSessionIdRef.current as number;
     }
+    frozenSessionId = currChatSessionId;
+
     updateStatesWithNewSessionId(currChatSessionId);
 
     const controller = new AbortController();
