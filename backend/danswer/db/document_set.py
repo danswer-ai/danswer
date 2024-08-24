@@ -197,7 +197,7 @@ def insert_document_set(
         _check_if_cc_pairs_are_owned_by_groups(
             db_session=db_session,
             cc_pair_ids=document_set_creation_request.cc_pair_ids,
-            group_ids=document_set_creation_request.groups,
+            group_ids=document_set_creation_request.groups or [],
         )
 
     try:
