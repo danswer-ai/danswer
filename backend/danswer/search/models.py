@@ -7,9 +7,9 @@ from pydantic import validator
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Persona
+from danswer.db.models import SearchSettings
 from danswer.indexing.models import BaseChunk
 from danswer.indexing.models import IndexingSetting
-from danswer.indexing.models import SearchSettings
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
