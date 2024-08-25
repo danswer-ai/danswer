@@ -18,6 +18,7 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import AdvancedEmbeddingFormPage from "./AdvancedEmbeddingFormPage";
 import {
   AdvancedDetails,
+  RerankerProvider,
   RerankingDetails,
   SavedSearchSettings,
 } from "../interfaces";
@@ -31,9 +32,15 @@ export default function EmbeddingForm() {
 
   const [advancedEmbeddingDetails, setAdvancedEmbeddingDetails] =
     useState<AdvancedDetails>({
-      disable_rerank_for_streaming: false,
-      multilingual_expansion: [],
+      model_name: "",
+      model_dim: 0,
+      normalize: false,
+      query_prefix: "",
+      passage_prefix: "",
+      index_name: "",
       multipass_indexing: true,
+      multilingual_expansion: [],
+      disable_rerank_for_streaming: false,
     });
 
   const [rerankingDetails, setRerankingDetails] = useState<RerankingDetails>({
@@ -52,7 +59,7 @@ export default function EmbeddingForm() {
 
   async function updateSearchSettings(searchSettings: SavedSearchSettings) {
     const response = await fetch(
-      "/api/search-settings/update-search-settings",
+      "/api/search-settings/update-inference-settings",
       {
         method: "POST",
         headers: {
@@ -80,7 +87,7 @@ export default function EmbeddingForm() {
     isLoading: isLoadingCurrentModel,
     error: currentEmbeddingModelError,
   } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
-    "/api/search-settings/get-current-embedding-model",
+    "/api/search-settings/get-current-search-settings",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
@@ -91,7 +98,7 @@ export default function EmbeddingForm() {
 
   const { data: searchSettings, isLoading: isLoadingSearchSettings } =
     useSWR<SavedSearchSettings | null>(
-      "/api/search-settings/get-search-settings",
+      "/api/search-settings/get-current-search-settings",
       errorHandlingFetcher,
       { refreshInterval: 5000 } // 5 seconds
     );
@@ -99,10 +106,16 @@ export default function EmbeddingForm() {
   useEffect(() => {
     if (searchSettings) {
       setAdvancedEmbeddingDetails({
+        model_name: searchSettings.model_name,
+        model_dim: searchSettings.model_dim,
+        normalize: searchSettings.normalize,
+        query_prefix: searchSettings.query_prefix,
+        passage_prefix: searchSettings.passage_prefix,
+        index_name: searchSettings.index_name,
+        multipass_indexing: searchSettings.multipass_indexing,
+        multilingual_expansion: searchSettings.multilingual_expansion,
         disable_rerank_for_streaming:
           searchSettings.disable_rerank_for_streaming,
-        multilingual_expansion: searchSettings.multilingual_expansion,
-        multipass_indexing: searchSettings.multipass_indexing,
       });
       setRerankingDetails({
         api_key: searchSettings.api_key,
@@ -133,6 +146,7 @@ export default function EmbeddingForm() {
     }
   }, [currentEmbeddingModel]);
 
+  console.log(currentEmbeddingModel);
   useEffect(() => {
     if (currentEmbeddingModel) {
       setSelectedProvider(currentEmbeddingModel);
@@ -149,6 +163,7 @@ export default function EmbeddingForm() {
     let values: SavedSearchSettings = {
       ...rerankingDetails,
       ...advancedEmbeddingDetails,
+      // index_name: ""
     };
     const response = await updateSearchSettings(values);
     if (response.ok) {
@@ -156,7 +171,7 @@ export default function EmbeddingForm() {
         message: "Updated search settings succesffuly",
         type: "success",
       });
-      mutate("/api/search-settings/get-search-settings");
+      mutate("/api/search-settings/get-current-search-settings");
       return true;
     } else {
       setPopup({ message: "Failed to update search settings", type: "error" });
@@ -165,29 +180,32 @@ export default function EmbeddingForm() {
   };
 
   const onConfirm = async () => {
-    let newModel: EmbeddingModelDescriptor;
+    if (!selectedProvider) {
+      return;
+    }
+    let newModel: SavedSearchSettings;
 
-    if ("provider_type" in selectedProvider) {
+    if (selectedProvider.provider_type != null) {
       // This is a CloudEmbeddingModel
       newModel = {
         ...selectedProvider,
         model_name: selectedProvider.model_name,
-        provider_type: selectedProvider.provider_type
-          ?.toLowerCase()
-          .split(" ")[0],
+        provider_type:
+          (selectedProvider.provider_type
+            ?.toLowerCase()
+            .split(" ")[0] as RerankerProvider) || null,
       };
     } else {
       // This is an EmbeddingModelDescriptor
       newModel = {
         ...selectedProvider,
         model_name: selectedProvider.model_name!,
-        description: "",
         provider_type: null,
       };
     }
 
     const response = await fetch(
-      "/api/search-settings/set-new-embedding-model",
+      "/api/search-settings/set-new-search-settings",
       {
         method: "POST",
         body: JSON.stringify(newModel),
@@ -201,7 +219,7 @@ export default function EmbeddingForm() {
         message: "Changed provider suceessfully. Redirecing to embedding page",
         type: "success",
       });
-      mutate("/api/search-settings/get-secondary-embedding-model");
+      mutate("/api/search-settings/get-secondary-search-settings");
       setTimeout(() => {
         window.open("/admin/configuration/search", "_self");
       }, 2000);

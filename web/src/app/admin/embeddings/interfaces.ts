@@ -9,14 +9,26 @@ export enum RerankerProvider {
   COHERE = "cohere",
 }
 export interface AdvancedDetails {
-  multilingual_expansion: string[];
+  model_name: string;
+  model_dim: number;
+  normalize: boolean;
+  query_prefix: string;
+  passage_prefix: string;
+  index_name: string;
   multipass_indexing: boolean;
+  multilingual_expansion: string[];
   disable_rerank_for_streaming: boolean;
 }
 
 export interface SavedSearchSettings extends RerankingDetails {
-  multilingual_expansion: string[];
+  model_name: string;
+  model_dim: number;
+  normalize: boolean;
+  query_prefix: string;
+  passage_prefix: string;
+  index_name: string;
   multipass_indexing: boolean;
+  multilingual_expansion: string[];
   disable_rerank_for_streaming: boolean;
 }
 

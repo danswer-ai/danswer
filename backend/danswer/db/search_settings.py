@@ -126,6 +126,37 @@ def get_multilingual_expansion(db_session: Session | None = None) -> list[str]:
     return search_settings.multilingual_expansion
 
 
+def update_search_settings(
+    db_session: Session,
+    search_settings: SavedSearchSettings,
+) -> None:
+    current_settings = get_current_search_settings(db_session)
+    if not current_settings:
+        logger.warning("No current search settings found to update")
+        return
+
+    # Update the fields
+    current_settings.model_name = search_settings.model_name
+    current_settings.model_dim = search_settings.model_dim
+    current_settings.normalize = search_settings.normalize
+    current_settings.query_prefix = search_settings.query_prefix
+    current_settings.passage_prefix = search_settings.passage_prefix
+    current_settings.provider_type = search_settings.provider_type
+    current_settings.index_name = search_settings.index_name
+    current_settings.multipass_indexing = search_settings.multipass_indexing
+    current_settings.multilingual_expansion = search_settings.multilingual_expansion
+    current_settings.disable_rerank_for_streaming = (
+        search_settings.disable_rerank_for_streaming
+    )
+    current_settings.rerank_model_name = search_settings.rerank_model_name
+    current_settings.rerank_provider_type = search_settings.rerank_provider_type
+    current_settings.rerank_api_key = search_settings.rerank_api_key
+    current_settings.num_rerank = search_settings.num_rerank
+
+    db_session.commit()
+    logger.info("Search settings updated successfully")
+
+
 def update_search_settings_status(
     search_settings: SearchSettings, new_status: IndexModelStatus, db_session: Session
 ) -> None:

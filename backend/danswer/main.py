@@ -34,6 +34,7 @@ from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import KV_REINDEX_KEY
+from danswer.configs.constants import KV_SEARCH_SETTINGS
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
 from danswer.db.connector import check_connectors_exist
 from danswer.db.connector import create_initial_default_connector
@@ -188,6 +189,18 @@ def setup_postgres(db_session: Session) -> None:
     auto_add_search_tool_to_personas(db_session)
 
 
+def saved_search_settings(db_session: Session) -> None:
+    kv_store = get_dynamic_config_store()
+    print("I AM IN THE SERACH STETING")
+    try:
+        search_settings = kv_store.load(KV_SEARCH_SETTINGS)
+        print(search_settings)
+        return
+    except ConfigNotFoundError:
+        print("CONFIGURATION NOT FOUND")
+        # Only need to update the flag if it hasn't been set
+
+
 def mark_reindex_flag(db_session: Session) -> None:
     kv_store = get_dynamic_config_store()
     try:
@@ -292,6 +305,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # setup Postgres with default credential, llm providers, etc.
         setup_postgres(db_session)
 
+        saved_search_settings(db_session)
         # Does the user need to trigger a reindexing to bring the document index
         # into a good state, marked in the kv store
         mark_reindex_flag(db_session)

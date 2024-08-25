@@ -93,7 +93,7 @@ export function EmbeddingModelSelection({
 
   const onConfirmSelection = async (model: EmbeddingModelDescriptor) => {
     const response = await fetch(
-      "/api/search-settings/set-new-embedding-model",
+      "/api/search-settings/set-new-search-settings",
       {
         method: "POST",
         body: JSON.stringify(model),
@@ -104,7 +104,7 @@ export function EmbeddingModelSelection({
     );
     if (response.ok) {
       setShowTentativeModel(null);
-      mutate("/api/search-settings/get-secondary-embedding-model");
+      mutate("/api/search-settings/get-secondary-search-settings");
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
       }
