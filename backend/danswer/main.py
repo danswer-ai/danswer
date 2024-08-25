@@ -191,13 +191,13 @@ def setup_postgres(db_session: Session) -> None:
 
 def saved_search_settings(db_session: Session) -> None:
     kv_store = get_dynamic_config_store()
-    print("I AM IN THE SERACH STETING")
+
     try:
         search_settings = kv_store.load(KV_SEARCH_SETTINGS)
         print(search_settings)
         return
     except ConfigNotFoundError:
-        print("CONFIGURATION NOT FOUND")
+        print("no search config ")
         # Only need to update the flag if it hasn't been set
 
 

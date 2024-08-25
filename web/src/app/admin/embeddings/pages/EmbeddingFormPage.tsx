@@ -146,7 +146,6 @@ export default function EmbeddingForm() {
     }
   }, [currentEmbeddingModel]);
 
-  console.log(currentEmbeddingModel);
   useEffect(() => {
     if (currentEmbeddingModel) {
       setSelectedProvider(currentEmbeddingModel);
