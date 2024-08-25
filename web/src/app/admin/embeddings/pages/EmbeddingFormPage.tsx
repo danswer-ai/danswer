@@ -246,7 +246,10 @@ export default function EmbeddingForm() {
         <button
           className="enabled:cursor-pointer disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
           onClick={async () => {
-            await onConfirm();
+            const update = await updateSearch();
+            if (update) {
+              await onConfirm();
+            }
           }}
         >
           Re-index
