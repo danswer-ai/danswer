@@ -208,7 +208,7 @@ def translate_saved_search_settings(db_session: Session) -> None:
                 ).dict()
 
                 new_current_settings = SavedSearchSettings(
-                    **{**current_settings_dict, **search_settings_dict.items()}
+                    **{**current_settings_dict, **search_settings_dict}
                 )
                 update_current_search_settings(db_session, new_current_settings)
 
@@ -220,7 +220,7 @@ def translate_saved_search_settings(db_session: Session) -> None:
                 ).dict()
 
                 new_secondary_settings = SavedSearchSettings(
-                    **{**secondary_settings_dict, **search_settings_dict.items()}
+                    **{**secondary_settings_dict, **search_settings_dict}
                 )
                 update_secondary_search_settings(
                     db_session,

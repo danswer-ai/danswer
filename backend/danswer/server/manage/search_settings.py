@@ -69,9 +69,9 @@ def set_new_search_settings(
             index_name += ALT_INDEX_SUFFIX
         search_values = search_settings_new.dict()
         search_values["index_name"] = index_name
-        new_search_settings = SavedSearchSettings(**search_values)
+        new_search_settings_request = SavedSearchSettings(**search_values)
     else:
-        new_search_settings = SavedSearchSettings(**search_settings_new.dict())
+        new_search_settings_request = SavedSearchSettings(**search_settings_new.dict())
 
     secondary_search_settings = get_secondary_search_settings(db_session)
 
@@ -89,7 +89,7 @@ def set_new_search_settings(
         )
 
     new_search_settings = create_search_settings(
-        search_settings=new_search_settings, db_session=db_session
+        search_settings=new_search_settings_request, db_session=db_session
     )
 
     # Ensure Vespa has the new index immediately

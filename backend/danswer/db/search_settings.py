@@ -126,7 +126,11 @@ def get_multilingual_expansion(db_session: Session | None = None) -> list[str]:
     return search_settings.multilingual_expansion
 
 
-def update_search_settings(current_settings, updated_settings, preserved_fields):
+def update_search_settings(
+    current_settings: SearchSettings,
+    updated_settings: SavedSearchSettings,
+    preserved_fields: list[str],
+) -> None:
     for field, value in updated_settings.dict().items():
         if field not in preserved_fields:
             setattr(current_settings, field, value)
