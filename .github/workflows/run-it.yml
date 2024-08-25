@@ -141,6 +141,8 @@ jobs:
             -e VESPA_HOST=index \
             -e API_SERVER_HOST=api_server \
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
+            --pull always \
+            --cache-from type=inline \
             danswer/integration-test-runner:it
         continue-on-error: true
         id: run_tests
