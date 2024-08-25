@@ -32,8 +32,8 @@ jobs:
           context: ./web
           file: ./web/Dockerfile
           platforms: linux/arm64
-          pull: false
-          push: false
+          pull: true
+          push: true
           load: true
           tags: danswer/danswer-web-server:latest
           cache-from: type=registry,ref=danswer/danswer-web-server:it
