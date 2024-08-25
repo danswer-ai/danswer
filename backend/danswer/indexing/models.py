@@ -120,7 +120,7 @@ class EmbeddingModelDetail(BaseModel):
 # Additional info needed for indexing time
 class IndexingSetting(EmbeddingModelDetail):
     model_dim: int
-    index_name: str
+    index_name: str | None
     multipass_indexing: bool
 
     @classmethod

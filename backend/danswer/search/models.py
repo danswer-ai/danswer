@@ -49,7 +49,14 @@ class InferenceSettings(RerankingDetails):
 
 
 class SearchSettingsCreationRequest(InferenceSettings, IndexingSetting):
-    index_name: str | None = None
+    @classmethod
+    def from_db_model(
+        cls, search_settings: SearchSettings
+    ) -> "SearchSettingsCreationRequest":
+        inference_settings = InferenceSettings.from_db_model(search_settings)
+        indexing_setting = IndexingSetting.from_db_model(search_settings)
+
+        return cls(**inference_settings.dict(), **indexing_setting.dict())
 
 
 class SavedSearchSettings(InferenceSettings, IndexingSetting):
