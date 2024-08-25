@@ -26,9 +26,6 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Pull Web Docker image
-        run: docker pull danswer/danswer-web-server:latest || true
-
       - name: Build Web Docker image
         uses: docker/build-push-action@v5
         with:
@@ -39,10 +36,10 @@ jobs:
           push: false
           load: true
           tags: danswer/danswer-web-server:latest
-          cache-from: |
-            type=local,src=/var/lib/docker
-            danswer/danswer-web-server:latest
-          cache-to: type=inline
+          cache-from: type=registry,ref=danswer/danswer-web-server:it
+          cache-to: |
+            type=registry,ref=danswer/danswer-web-server:it,mode=max
+            type=inline
 
       - name: Build Backend Docker image
         uses: docker/build-push-action@v5
@@ -51,11 +48,13 @@ jobs:
           file: ./backend/Dockerfile
           platforms: linux/arm64
           pull: true
-          push: false
+          push: true
           load: true
           tags: danswer/danswer-backend:latest
-          cache-from: type=registry,ref=danswer/danswer-backend:latest
-          cache-to: type=inline
+          cache-from: type=registry,ref=danswer/danswer-backend:it
+          cache-to: |
+            type=registry,ref=danswer/danswer-backend:it,mode=max
+            type=inline
 
       - name: Build Model Server Docker image
         uses: docker/build-push-action@v5
@@ -64,11 +63,13 @@ jobs:
           file: ./backend/Dockerfile.model_server
           platforms: linux/arm64
           pull: true
-          push: false
+          push: true
           load: true
           tags: danswer/danswer-model-server:latest
-          cache-from: type=registry,ref=danswer/danswer-model-server:latest
-          cache-to: type=inline
+          cache-from: type=registry,ref=danswer/danswer-model-server:it
+          cache-to: |
+            type=registry,ref=danswer/danswer-model-server:it,mode=max
+            type=inline
 
       - name: Build integration test Docker image
         uses: docker/build-push-action@v5
@@ -79,11 +80,10 @@ jobs:
           pull: true
           push: true
           tags: danswer/integration-test-runner:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Create Docker network
-        run: docker network create danswer-network
+          cache-from: type=registry,ref=danswer/integration-test-runner:it
+          cache-to: |
+            type=registry,ref=danswer/integration-test-runner:it,mode=max
+            type=inline
 
       - name: Start Docker containers
         run: |
@@ -132,8 +132,8 @@ jobs:
             -e POSTGRES_USER=postgres \
             -e POSTGRES_PASSWORD=password \
             -e POSTGRES_DB=postgres \
-            -e VESPA_HOST=index
-            -e API_SERVER_HOST=api_server
+            -e VESPA_HOST=index \
+            -e API_SERVER_HOST=api_server \
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
             danswer/integration-test-runner:latest
         continue-on-error: true
