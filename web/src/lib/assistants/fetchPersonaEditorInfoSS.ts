@@ -100,9 +100,9 @@ export async function fetchAssistantEditorInfoSS(
     } else if (provider.provider == "anthropic") {
       provider.icon = AnthropicIcon;
     } else if (provider.provider == "bedrock") {
-      provider.icon = AzureIcon;
-    } else if (provider.provider == "azure") {
       provider.icon = AWSIcon;
+    } else if (provider.provider == "azure") {
+      provider.icon = AzureIcon;
     } else {
       provider.icon = OpenSourceIcon;
     }
