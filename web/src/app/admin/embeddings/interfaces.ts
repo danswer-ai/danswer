@@ -1,4 +1,5 @@
 import { EmbeddingProvider } from "@/components/embedding/interfaces";
+import { NonNullChain } from "typescript";
 
 export interface RerankingDetails {
   rerank_model_name: string | null;
@@ -16,7 +17,7 @@ export interface AdvancedDetails {
   normalize: boolean;
   query_prefix: string;
   passage_prefix: string;
-  index_name: string;
+  index_name: string | null;
   multipass_indexing: boolean;
   multilingual_expansion: string[];
   disable_rerank_for_streaming: boolean;
@@ -28,7 +29,7 @@ export interface SavedSearchSettings extends RerankingDetails {
   normalize: boolean;
   query_prefix: string;
   passage_prefix: string;
-  index_name: string;
+  index_name: string | null;
   multipass_indexing: boolean;
   multilingual_expansion: string[];
   disable_rerank_for_streaming: boolean;

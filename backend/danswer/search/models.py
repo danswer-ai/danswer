@@ -48,6 +48,10 @@ class InferenceSettings(RerankingDetails):
     multilingual_expansion: list[str]
 
 
+class SearchSettingsCreationRequest(InferenceSettings, IndexingSetting):
+    index_name: str | None = None
+
+
 class SavedSearchSettings(InferenceSettings, IndexingSetting):
     @classmethod
     def from_db_model(cls, search_settings: SearchSettings) -> "SavedSearchSettings":

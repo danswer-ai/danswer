@@ -22,6 +22,7 @@ from danswer.server.manage.embedding.models import (
     CloudEmbeddingProvider as ServerCloudEmbeddingProvider,
 )
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import PRESERVED_SEARCH_FIELDS
 from shared_configs.enums import EmbeddingProvider
 
 logger = setup_logger()
@@ -125,59 +126,42 @@ def get_multilingual_expansion(db_session: Session | None = None) -> list[str]:
     return search_settings.multilingual_expansion
 
 
-def update_search_settings(
-    db_session: Session,
-    search_settings: SavedSearchSettings,
-    current_settings: SearchSettings,
-) -> None:
-    if search_settings.index_name != current_settings.index_name:
-        raise ValueError(
-            f"Index name mismatch: expected {current_settings.index_name}, got {search_settings.index_name}"
-        )
-
-    current_settings.model_name = search_settings.model_name
-    current_settings.model_dim = search_settings.model_dim
-    current_settings.normalize = search_settings.normalize
-    current_settings.query_prefix = search_settings.query_prefix
-    current_settings.passage_prefix = search_settings.passage_prefix
-    current_settings.provider_type = search_settings.provider_type
-    current_settings.multilingual_expansion = search_settings.multilingual_expansion
-    current_settings.disable_rerank_for_streaming = (
-        search_settings.disable_rerank_for_streaming
-    )
-    current_settings.rerank_model_name = search_settings.rerank_model_name
-    current_settings.rerank_provider_type = search_settings.rerank_provider_type
-    current_settings.rerank_api_key = search_settings.rerank_api_key
-    current_settings.num_rerank = search_settings.num_rerank
-
-    db_session.commit()
-    logger.info("Search settings updated successfully")
+def update_search_settings(current_settings, updated_settings, preserved_fields):
+    for field, value in updated_settings.dict().items():
+        if field not in preserved_fields:
+            setattr(current_settings, field, value)
 
 
 def update_current_search_settings(
     db_session: Session,
     search_settings: SavedSearchSettings,
+    preserved_fields: list[str] = PRESERVED_SEARCH_FIELDS,
 ) -> None:
     current_settings = get_current_search_settings(db_session)
     if not current_settings:
         logger.warning("No current search settings found to update")
         return
 
-    # we never multipass_indexing for current settings
-    search_settings.multipass_indexing = current_settings.multipass_indexing
-    update_search_settings(db_session, search_settings, current_settings)
+    update_search_settings(current_settings, search_settings, preserved_fields)
+    db_session.commit()
+    logger.info("Current search settings updated successfully")
 
 
 def update_secondary_search_settings(
     db_session: Session,
     search_settings: SavedSearchSettings,
+    preserved_fields: list[str] = PRESERVED_SEARCH_FIELDS,
 ) -> None:
     secondary_settings = get_secondary_search_settings(db_session)
     if not secondary_settings:
         logger.warning("No secondary search settings found to update")
         return
 
-    update_search_settings(db_session, search_settings, secondary_settings)
+    preserved_fields = PRESERVED_SEARCH_FIELDS
+    update_search_settings(secondary_settings, search_settings, preserved_fields)
+
+    db_session.commit()
+    logger.info("Secondary search settings updated successfully")
 
 
 def update_search_settings_status(

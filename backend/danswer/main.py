@@ -200,30 +200,16 @@ def translate_saved_search_settings(db_session: Session) -> None:
         if isinstance(search_settings_dict, dict):
             # Update current search settings
             current_settings = get_current_search_settings(db_session)
-            preserved_fields = [
-                "provider_type",
-                "api_key",
-                "model_name",
-                "index_name",
-                "multipass_indexing",
-            ]
 
+            # Update non-preserved fields
             if current_settings:
                 current_settings_dict = SavedSearchSettings.from_db_model(
                     current_settings
                 ).dict()
 
                 new_current_settings = SavedSearchSettings(
-                    **{
-                        **current_settings_dict,
-                        **{
-                            k: v
-                            for k, v in search_settings_dict.items()
-                            if k not in preserved_fields
-                        },
-                    }
+                    **{**current_settings_dict, **search_settings_dict.items()}
                 )
-
                 update_current_search_settings(db_session, new_current_settings)
 
             # Update secondary search settings
@@ -234,16 +220,12 @@ def translate_saved_search_settings(db_session: Session) -> None:
                 ).dict()
 
                 new_secondary_settings = SavedSearchSettings(
-                    **{
-                        **secondary_settings_dict,
-                        **{
-                            k: v
-                            for k, v in search_settings_dict.items()
-                            if k not in preserved_fields
-                        },
-                    }
+                    **{**secondary_settings_dict, **search_settings_dict.items()}
                 )
-                update_secondary_search_settings(db_session, new_secondary_settings)
+                update_secondary_search_settings(
+                    db_session,
+                    new_secondary_settings,
+                )
             # Delete the KV store entry after successful update
             kv_store.delete(KV_SEARCH_SETTINGS)
             logger.notice("Search settings updated and KV store entry deleted.")

@@ -22,10 +22,12 @@ from danswer.db.search_settings import update_search_settings_status
 from danswer.document_index.factory import get_default_document_index
 from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.search.models import SavedSearchSettings
+from danswer.search.models import SearchSettingsCreationRequest
 from danswer.server.manage.models import FullModelVersionResponse
 from danswer.server.models import IdReturn
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import ALT_INDEX_SUFFIX
+
 
 router = APIRouter(prefix="/search-settings")
 logger = setup_logger()
@@ -33,13 +35,15 @@ logger = setup_logger()
 
 @router.post("/set-new-search-settings")
 def set_new_search_settings(
-    search_settings_new: SavedSearchSettings,
+    search_settings_new: SearchSettingsCreationRequest,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> IdReturn:
     """Creates a new EmbeddingModel row and cancels the previous secondary indexing if any
     Gives an error if the same model name is used as the current or secondary index
     """
+    print("intial settings")
+    print(search_settings_new)
 
     if search_settings_new.index_name:
         logger.warning("Index name was specified by request, this is not suggested")
@@ -58,13 +62,19 @@ def set_new_search_settings(
 
     search_settings = get_current_search_settings(db_session)
 
-    # We define index name here
-    index_name = f"danswer_chunk_{clean_model_name(search_settings.model_name)}"
-    if (
-        search_settings_new.model_name == search_settings.model_name
-        and not search_settings.index_name.endswith(ALT_INDEX_SUFFIX)
-    ):
-        index_name += ALT_INDEX_SUFFIX
+    if search_settings_new.index_name is None:
+        # We define index name here
+        index_name = f"danswer_chunk_{clean_model_name(search_settings_new.model_name)}"
+        if (
+            search_settings_new.model_name == search_settings.model_name
+            and not search_settings.index_name.endswith(ALT_INDEX_SUFFIX)
+        ):
+            index_name += ALT_INDEX_SUFFIX
+        search_values = search_settings_new.dict()
+        search_values["index_name"] = index_name
+        new_search_settings = SavedSearchSettings(**search_values)
+    else:
+        new_search_settings = SavedSearchSettings(**search_settings_new.dict())
 
     secondary_search_settings = get_secondary_search_settings(db_session)
 
@@ -81,8 +91,15 @@ def set_new_search_settings(
             db_session=db_session,
         )
 
+    # print("new settings")
+    # print(search_settings_new)
+
+    # new_search_settings = SavedSearchSettings(
+    #     **{**search_settings_new.dict(), "index_name": index_name}
+    # )
+
     new_search_settings = create_search_settings(
-        search_settings=search_settings_new, db_session=db_session
+        search_settings=new_search_settings, db_session=db_session
     )
 
     # Ensure Vespa has the new index immediately
@@ -161,6 +178,7 @@ def get_all_search_settings(
     )
 
 
+# Updates current non-reindex search settings
 @router.post("/update-inference-settings")
 def update_saved_search_settings(
     search_settings: SavedSearchSettings,

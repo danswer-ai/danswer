@@ -92,11 +92,13 @@ export function EmbeddingModelSelection({
   );
 
   const onConfirmSelection = async (model: EmbeddingModelDescriptor) => {
+    console.log(model);
+    return;
     const response = await fetch(
       "/api/search-settings/set-new-search-settings",
       {
         method: "POST",
-        body: JSON.stringify(model),
+        body: JSON.stringify({ ...model, index_name: null }),
         headers: {
           "Content-Type": "application/json",
         },
