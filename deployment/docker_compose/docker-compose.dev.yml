@@ -1,7 +1,7 @@
 version: '3'
 services:
   api_server:
-    image: danswer/danswer-backend:latest
+    image: ${DANSWER_BACKEND_IMAGE:-danswer/danswer-backend:latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -106,7 +106,7 @@ services:
         max-file: "6"
 
   background:
-    image: danswer/danswer-backend:latest
+    image: ${DANSWER_BACKEND_IMAGE:-danswer/danswer-backend:latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -207,7 +207,7 @@ services:
         max-file: "6"
 
   web_server:
-    image: danswer/danswer-web-server:latest
+    image: ${DANSWER_WEB_SERVER_IMAGE:-danswer/danswer-web-server:latest}
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -236,7 +236,7 @@ services:
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
 
   inference_model_server:
-    image: danswer/danswer-model-server:latest
+    image: ${DANSWER_MODEL_SERVER_IMAGE:-danswer/danswer-model-server:latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -262,7 +262,7 @@ services:
         max-file: "6"
 
   indexing_model_server:
-    image: danswer/danswer-model-server:latest
+    image: ${DANSWER_MODEL_SERVER_IMAGE:-danswer/danswer-model-server:latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
