@@ -161,3 +161,12 @@ def downgrade() -> None:
         ["cloud_provider_id"],
         ["id"],
     )
+
+    # Recreate the foreign key constraint in embedding_model table
+    op.create_foreign_key(
+        "fk_embedding_provider_default_model",
+        "embedding_provider",
+        "embedding_model",
+        ["default_model_id"],
+        ["id"],
+    )
