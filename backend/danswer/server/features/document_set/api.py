@@ -88,8 +88,8 @@ def delete_document_set(
 
 
 @router.get("/document-set")
-def list_document_sets_admin(
-    user: User | None = Depends(current_curator_or_admin_user),
+def list_document_sets_for_user(
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
     get_editable: bool = Query(
         False, description="If true, return editable document sets"
