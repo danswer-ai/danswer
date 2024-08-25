@@ -443,6 +443,7 @@ export function CCPairIndexingStatusTable({
             error_msg: "",
             deletion_attempt: null,
             is_deletable: true,
+            groups: [], // Add this line
           }}
           isEditable={false}
         />

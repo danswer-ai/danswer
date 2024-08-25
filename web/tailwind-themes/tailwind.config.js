@@ -79,6 +79,8 @@ module.exports = {
         "token-regex": "#9cdcfe", // light blue
         "token-attr-name": "#9cdcfe", // light blue
 
+        "non-selectable": "#f8d7da", // red-100
+
         // background
         "background-search": "#ffffff", // white
         input: "#f5f5f5",
@@ -133,6 +135,7 @@ module.exports = {
         "border-medium": "#d1d5db", // gray-300
         "border-strong": "#9ca3af", // gray-400
         "border-dark": "#525252", // neutral-600
+        "non-selectable-border": "#f5c2c7", // red-200
 
         // hover
         "hover-light": "#f3f4f6", // gray-100

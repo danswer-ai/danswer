@@ -10,26 +10,19 @@ import { CCPairIndexingStatusTable } from "./CCPairIndexingStatusTable";
 import { AdminPageTitle } from "@/components/admin/Title";
 import Link from "next/link";
 import { Button, Text } from "@tremor/react";
+import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 
 function Main() {
   const {
     data: indexAttemptData,
     isLoading: indexAttemptIsLoading,
     error: indexAttemptError,
-  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
-    "/api/manage/admin/connector/indexing-status",
-    errorHandlingFetcher,
-    { refreshInterval: 10000 } // 10 seconds
-  );
+  } = useConnectorCredentialIndexingStatus();
   const {
     data: editableIndexAttemptData,
     isLoading: editableIndexAttemptIsLoading,
     error: editableIndexAttemptError,
-  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
-    "/api/manage/admin/connector/indexing-status?get_editable=true",
-    errorHandlingFetcher,
-    { refreshInterval: 10000 } // 10 seconds
-  );
+  } = useConnectorCredentialIndexingStatus(undefined, true);
 
   if (indexAttemptIsLoading || editableIndexAttemptIsLoading) {
     return <LoadingAnimation text="" />;

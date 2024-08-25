@@ -111,23 +111,6 @@ const DocumentSetTable = ({
   setPopup,
 }: DocumentFeedbackTableProps) => {
   const [page, setPage] = useState(1);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
 
   // sort by name for consistent ordering
   documentSets.sort((a, b) => {

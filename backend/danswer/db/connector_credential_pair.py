@@ -84,15 +84,34 @@ def get_connector_credential_pairs(
     include_disabled: bool = True,
     user: User | None = None,
     get_editable: bool = True,
+    ids: list[int] | None = None,
 ) -> list[ConnectorCredentialPair]:
-    stmt = select(ConnectorCredentialPair)
+    stmt = select(ConnectorCredentialPair).distinct()
     stmt = _add_user_filters(stmt, user, get_editable)
     if not include_disabled:
         stmt = stmt.where(
             ConnectorCredentialPair.status == ConnectorCredentialPairStatus.ACTIVE
         )  # noqa
+    if ids:
+        stmt = stmt.where(ConnectorCredentialPair.id.in_(ids))
     results = db_session.scalars(stmt)
     return list(results.all())
+
+
+def get_cc_pair_groups_for_ids(
+    db_session: Session,
+    cc_pair_ids: list[int],
+    user: User | None = None,
+    get_editable: bool = True,
+) -> list[UserGroup__ConnectorCredentialPair]:
+    stmt = select(UserGroup__ConnectorCredentialPair).distinct()
+    stmt = stmt.outerjoin(
+        ConnectorCredentialPair,
+        UserGroup__ConnectorCredentialPair.cc_pair_id == ConnectorCredentialPair.id,
+    )
+    stmt = _add_user_filters(stmt, user, get_editable)
+    stmt = stmt.where(UserGroup__ConnectorCredentialPair.cc_pair_id.in_(cc_pair_ids))
+    return list(db_session.scalars(stmt).all())
 
 
 def get_connector_credential_pair(

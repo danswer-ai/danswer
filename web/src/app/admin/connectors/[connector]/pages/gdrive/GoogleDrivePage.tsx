@@ -19,26 +19,12 @@ import {
   GoogleDriveServiceAccountCredentialJson,
 } from "@/lib/connectors/credentials";
 import { GoogleDriveConfig } from "@/lib/connectors/connectors";
+import { useUser } from "@/components/user/UserProvider";
+import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 
 const GDriveMain = ({}: {}) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
+  const { isLoadingUser, isAdmin } = useUser();
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
   const {
     data: appCredentialData,
     isLoading: isAppCredentialLoading,
@@ -61,10 +47,7 @@ const GDriveMain = ({}: {}) => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: connectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any, any>[], FetchError>(
-    "/api/manage/admin/connector/indexing-status",
-    errorHandlingFetcher
-  );
+  } = useConnectorCredentialIndexingStatus();
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
@@ -80,6 +63,10 @@ const GDriveMain = ({}: {}) => {
   const serviceAccountKeySuccessfullyFetched =
     serviceAccountKeyData ||
     (isServiceAccountKeyError && isServiceAccountKeyError.status === 404);
+
+  if (isLoadingUser) {
+    return <></>;
+  }
 
   if (
     (!appCredentialSuccessfullyFetched && isAppCredentialLoading) ||

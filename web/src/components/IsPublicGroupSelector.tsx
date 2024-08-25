@@ -5,7 +5,7 @@ import { FiUsers } from "react-icons/fi";
 import { UserGroup, User, UserRole } from "@/lib/types";
 import { useUserGroups } from "@/lib/hooks";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
-import { getCurrentUser } from "@/lib/user";
+import { useUser } from "./user/UserProvider";
 
 export type IsPublicGroupSelectorFormType = {
   is_public: boolean;
@@ -22,41 +22,44 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   enforceGroupSelection?: boolean;
 }) => {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
+  const { isAdmin, user, isLoadingUser } = useUser();
+  const [shouldHideContent, setShouldHideContent] = useState(false);
 
   useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-          formikProps.setFieldValue("is_public", user.role === UserRole.ADMIN);
-
-          // Select the only group by default if there's only one
-          if (
-            userGroups &&
-            userGroups.length === 1 &&
-            formikProps.values.groups.length === 0 &&
-            user.role !== UserRole.ADMIN
-          ) {
-            formikProps.setFieldValue("groups", [userGroups[0].id]);
-          }
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      } finally {
-        setIsLoading(false);
+    if (user && userGroups) {
+      const isUserAdmin = user.role === UserRole.ADMIN;
+      if (userGroups.length === 1 && !isUserAdmin) {
+        formikProps.setFieldValue("groups", [userGroups[0].id]);
+        setShouldHideContent(true);
+      } else if (formikProps.values.is_public) {
+        formikProps.setFieldValue("groups", []);
+        setShouldHideContent(false);
+      } else {
+        setShouldHideContent(false);
       }
-    };
-    fetchCurrentUser();
-  }, [userGroups]); // Add userGroups as a dependency
+    }
+  }, [
+    user,
+    userGroups,
+    formikProps.setFieldValue,
+    formikProps.values.is_public,
+  ]);
 
-  if (isLoading || userGroupsIsLoading) {
-    return null; // or return a loading spinner if preferred
+  if (isLoadingUser || userGroupsIsLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (shouldHideContent && enforceGroupSelection) {
+    return (
+      <>
+        {userGroups && (
+          <div className="mb-1 font-medium text-base">
+            This {objectName} will be assigned to group{" "}
+            <b>{userGroups[0].name}</b>.
+          </div>
+        )}
+      </>
+    );
   }
 
   return (
@@ -70,17 +73,19 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
             disabled={!isAdmin}
             subtext={
               <span className="block mt-2 text-sm text-gray-500">
-                If set, then {objectName}s indexed by this {objectName} will be
-                visible to <b>all users</b>. If turned off, then only users who
-                explicitly have been given access to the {objectName}s (e.g.
-                through a User Group) will have access.
+                If set, then this {objectName} will be visible to{" "}
+                <b>all users</b>. If turned off, then only users who explicitly
+                have been given access to this {objectName} (e.g. through a User
+                Group) will have access.
               </span>
             }
           />
         </>
       )}
 
-      {(!formikProps.values.is_public || !isAdmin) && (
+      {(!formikProps.values.is_public ||
+        !isAdmin ||
+        formikProps.values.groups.length > 0) && (
         <>
           <div className="flex gap-x-2 items-center">
             <div className="block font-medium text-base">
