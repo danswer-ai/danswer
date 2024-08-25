@@ -42,9 +42,6 @@ def set_new_search_settings(
     """Creates a new EmbeddingModel row and cancels the previous secondary indexing if any
     Gives an error if the same model name is used as the current or secondary index
     """
-    print("intial settings")
-    print(search_settings_new)
-
     if search_settings_new.index_name:
         logger.warning("Index name was specified by request, this is not suggested")
 
@@ -90,13 +87,6 @@ def set_new_search_settings(
             new_status=IndexModelStatus.PAST,
             db_session=db_session,
         )
-
-    # print("new settings")
-    # print(search_settings_new)
-
-    # new_search_settings = SavedSearchSettings(
-    #     **{**search_settings_new.dict(), "index_name": index_name}
-    # )
 
     new_search_settings = create_search_settings(
         search_settings=new_search_settings, db_session=db_session
