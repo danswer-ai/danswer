@@ -197,7 +197,7 @@ def translate_saved_search_settings(db_session: Session) -> None:
 
     try:
         search_settings_dict = kv_store.load(KV_SEARCH_SETTINGS)
-        if search_settings_dict:
+        if isinstance(search_settings_dict, dict):
             # Update current search settings
             current_settings = get_current_search_settings(db_session)
             preserved_fields = [
