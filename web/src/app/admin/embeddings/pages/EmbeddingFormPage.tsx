@@ -58,7 +58,6 @@ export default function EmbeddingForm() {
   };
 
   async function updateSearchSettings(searchSettings: SavedSearchSettings) {
-    console.log(searchSettings);
     const response = await fetch(
       "/api/search-settings/update-inference-settings",
       {
@@ -241,16 +240,13 @@ export default function EmbeddingForm() {
     searchSettings?.multipass_indexing !=
       advancedEmbeddingDetails.multipass_indexing;
 
-  const ReIndxingButton = () => {
-    return (
+  const ReIndexingButton = ({ needsReIndex }: { needsReIndex: boolean }) => {
+    return needsReIndex ? (
       <div className="flex mx-auto gap-x-1 ml-auto items-center">
         <button
           className="enabled:cursor-pointer disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
           onClick={async () => {
-            const updated = await updateSearch();
-            if (updated) {
-              await onConfirm();
-            }
+            await onConfirm();
           }}
         >
           Re-index
@@ -275,6 +271,15 @@ export default function EmbeddingForm() {
           </div>
         </div>
       </div>
+    ) : (
+      <button
+        className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+        onClick={async () => {
+          updateSearch();
+        }}
+      >
+        Update Search
+      </button>
     );
   };
 
@@ -385,18 +390,7 @@ export default function EmbeddingForm() {
                 Previous
               </button>
 
-              {needsReIndex ? (
-                <ReIndxingButton />
-              ) : (
-                <button
-                  className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-                  onClick={async () => {
-                    updateSearch();
-                  }}
-                >
-                  Update Search
-                </button>
-              )}
+              <ReIndexingButton needsReIndex={needsReIndex} />
 
               <div className="flex w-full justify-end">
                 <button
@@ -434,20 +428,7 @@ export default function EmbeddingForm() {
                 Previous
               </button>
 
-              {needsReIndex ? (
-                <ReIndxingButton />
-              ) : (
-                <button
-                  className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 
-                    disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center 
-                    text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-                  onClick={async () => {
-                    updateSearch();
-                  }}
-                >
-                  Update Search
-                </button>
-              )}
+              <ReIndexingButton needsReIndex={needsReIndex} />
             </div>
           </>
         )}
