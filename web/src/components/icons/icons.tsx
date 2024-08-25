@@ -1,46 +1,5 @@
 "use client";
 
-import {
-  Notebook,
-  Key,
-  Trash,
-  XSquare,
-  LinkBreak,
-  Link,
-  Plug,
-  Brain,
-  X,
-  Question,
-  Gear,
-  ArrowSquareOut,
-} from "@phosphor-icons/react";
-import {
-  FiCheck,
-  FiChevronsDown,
-  FiChevronsUp,
-  FiEdit2,
-  FiFile,
-  FiGlobe,
-  FiThumbsDown,
-  FiThumbsUp,
-  FiChevronDown,
-  FiChevronUp,
-  FiAlertCircle,
-  FiChevronRight,
-  FiChevronLeft,
-  FiAlertTriangle,
-  FiZoomIn,
-  FiCopy,
-  FiBookmark,
-  FiCpu,
-  FiInfo,
-  FiUploadCloud,
-  FiUser,
-  FiUsers,
-  FiBarChart2,
-  FiDatabase,
-} from "react-icons/fi";
-import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
@@ -56,7 +15,46 @@ import salesforceIcon from "../../../public/Salesforce.png";
 import sharepointIcon from "../../../public/Sharepoint.png";
 import googleSheets from "../../../public/GoogleSheets.svg";
 import teamsIcon from "../../../public/Teams.png";
-import { FaRobot } from "react-icons/fa";
+import {
+  Database,
+  KeyRound,
+  User,
+  Notebook,
+  Users,
+  Plug,
+  Trash2,
+  SquareX,
+  Unlink,
+  Link,
+  Settings,
+  SquareArrowOutUpRight,
+  CircleHelp,
+  Brain,
+  X,
+  Bot,
+  Layers,
+  Check,
+  ChevronsDown,
+  ChevronsUp,
+  Pencil,
+  File,
+  Globe,
+  ThumbsDown,
+  ThumbsUp,
+  ChevronUp,
+  ChevronDown,
+  CircleAlert,
+  ChevronRight,
+  ChevronLeft,
+  TriangleAlert,
+  ZoomIn,
+  Copy,
+  Bookmark,
+  Cpu,
+  Info,
+  CloudUpload,
+  ChartNoAxesColumn,
+} from "lucide-react";
 
 interface IconProps {
   size?: number;
@@ -84,49 +82,49 @@ export const KeyIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <Key size={size} className={className} />;
+  return <KeyRound size={size} className={className} />;
 };
 
 export const UsersIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiUser size={size} className={className} />;
+  return <User size={size} className={className} />;
 };
 
 export const GroupsIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiUsers size={size} className={className} />;
+  return <Users size={size} className={className} />;
 };
 
 export const GearIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <Gear size={size} className={className} />;
+  return <Settings size={size} className={className} />;
 };
 
 export const ArrowSquareOutIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <ArrowSquareOut size={size} className={className} />;
+  return <SquareArrowOutUpRight size={size} className={className} />;
 };
 
 export const TrashIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <Trash size={size} className={className} />;
+  return <Trash2 size={size} className={className} />;
 };
 
 export const LinkBreakIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <LinkBreak size={size} className={className} />;
+  return <Unlink size={size} className={className} />;
 };
 
 export const LinkIcon = ({
@@ -140,35 +138,35 @@ export const XSquareIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <XSquare size={size} className={className} />;
+  return <SquareX size={size} className={className} />;
 };
 
 export const GlobeIcon = ({
   size = 16,
   className = defaultTailwindCSSBlue,
 }: IconProps) => {
-  return <FiGlobe size={size} className={className} />;
+  return <Globe size={size} className={className} />;
 };
 
 export const FileIcon = ({
   size = 16,
   className = defaultTailwindCSSBlue,
 }: IconProps) => {
-  return <FiFile size={size} className={className} />;
+  return <File size={size} className={className} />;
 };
 
 export const InfoIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiInfo size={size} className={className} />;
+  return <Info size={size} className={className} />;
 };
 
 export const QuestionIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <Question size={size} className={className} />;
+  return <CircleHelp size={size} className={className} />;
 };
 
 export const BrainIcon = ({
@@ -182,7 +180,7 @@ export const EditIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiEdit2 size={size} className={className} />;
+  return <Pencil size={size} className={className} />;
 };
 
 export const XIcon = ({
@@ -196,119 +194,119 @@ export const ThumbsUpIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiThumbsUp size={size} className={className} />;
+  return <ThumbsUp size={size} className={className} />;
 };
 
 export const ThumbsDownIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiThumbsDown size={size} className={className} />;
+  return <ThumbsDown size={size} className={className} />;
 };
 
 export const ChevronsUpIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiChevronsUp size={size} className={className} />;
+  return <ChevronsUp size={size} className={className} />;
 };
 
 export const ChevronsDownIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiChevronsDown size={size} className={className} />;
+  return <ChevronsDown size={size} className={className} />;
 };
 
 export const ChevronUpIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiChevronUp size={size} className={className} />;
+  return <ChevronUp size={size} className={className} />;
 };
 
 export const ChevronDownIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiChevronDown size={size} className={className} />;
+  return <ChevronDown size={size} className={className} />;
 };
 
 export const ChevronRightIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiChevronRight size={size} className={className} />;
+  return <ChevronRight size={size} className={className} />;
 };
 
 export const ChevronLeftIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiChevronLeft size={size} className={className} />;
+  return <ChevronLeft size={size} className={className} />;
 };
 
 export const CheckmarkIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiCheck size={size} className={className} />;
+  return <Check size={size} className={className} />;
 };
 
 export const AlertIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiAlertCircle size={size} className={className} />;
+  return <CircleAlert size={size} className={className} />;
 };
 
 export const TriangleAlertIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiAlertTriangle size={size} className={className} />;
+  return <TriangleAlert size={size} className={className} />;
 };
 
 export const ZoomInIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiZoomIn size={size} className={className} />;
+  return <ZoomIn size={size} className={className} />;
 };
 
 export const CopyIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiCopy size={size} className={className} />;
+  return <Copy size={size} className={className} />;
 };
 
 export const BookmarkIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiBookmark size={size} className={className} />;
+  return <Bookmark size={size} className={className} />;
 };
 
 export const CPUIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiCpu size={size} className={className} />;
+  return <Cpu size={size} className={className} />;
 };
 
 export const RobotIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FaRobot size={size} className={className} />;
+  return <Bot size={size} className={className} />;
 };
 
 export const ConnectorIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiUploadCloud size={size} className={className} />;
+  return <CloudUpload size={size} className={className} />;
 };
 
 //
@@ -375,7 +373,7 @@ export const BookstackIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <SiBookstack size={size} className={className + " text-[#0288D1]"} />;
+  return <Layers size={size} className={className + " text-[#0288D1]"} />;
 };
 
 export const ConfluenceIcon = ({
@@ -598,12 +596,12 @@ export const BarChartIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiBarChart2 size={size} className={className} />;
+  return <ChartNoAxesColumn size={size} className={className} />;
 };
 
 export const DatabaseIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FiDatabase size={size} className={className} />;
+  return <Database size={size} className={className} />;
 };

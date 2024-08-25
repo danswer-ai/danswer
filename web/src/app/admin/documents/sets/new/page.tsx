@@ -15,6 +15,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { useRouter } from "next/navigation";
 import { UserGroup } from "@/lib/types";
 import { refreshDocumentSets } from "../hooks";
+import { Bookmark } from "lucide-react";
 
 function Main() {
   const { popup, setPopup } = usePopup();
@@ -66,10 +67,7 @@ const Page = () => {
     <div className="container mx-auto">
       <BackButton />
 
-      <AdminPageTitle
-        icon={<BookmarkIcon size={32} />}
-        title="New Document Set"
-      />
+      <AdminPageTitle icon={<Bookmark size={32} />} title="New Document Set" />
 
       <Main />
     </div>

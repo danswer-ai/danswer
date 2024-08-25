@@ -1,17 +1,4 @@
-import {
-  FiActivity,
-  FiBarChart2,
-  FiCpu,
-  FiImage,
-  FiMessageSquare,
-  FiPackage,
-  FiSearch,
-  FiSettings,
-  FiShield,
-  FiSlack,
-  FiTool,
-  FiX,
-} from "react-icons/fi";
+import { FiMessageSquare, FiSearch, FiX } from "react-icons/fi";
 import {
   BookmarkIcon,
   ConnectorIcon,
@@ -29,6 +16,15 @@ import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "@/lib/consta
 import { AdminSidebar } from "./admin/connectors/AdminSidebar";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  Cpu,
+  Package,
+  Settings,
+  Shield,
+  Wrench,
+  Image as ImageIcon,
+  Activity,
+} from "lucide-react";
 
 interface SideBarProps {
   isHeader?: boolean;
@@ -142,7 +138,7 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
               {
                 name: (
                   <div className="flex">
-                    <FiTool size={18} className="my-auto" />
+                    <Wrench size={18} className="my-auto" />
                     <div className="ml-1">Tools</div>
                   </div>
                 ),
@@ -156,7 +152,7 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
               {
                 name: (
                   <div className="flex">
-                    <FiCpu size={18} />
+                    <Cpu size={18} />
                     <div className="ml-1">LLM</div>
                   </div>
                 ),
@@ -165,7 +161,7 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
               {
                 name: (
                   <div className="flex">
-                    <FiPackage size={18} />
+                    <Package size={18} />
                     <div className="ml-1">Embedding</div>
                   </div>
                 ),
@@ -210,7 +206,7 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
               {
                 name: (
                   <div className="flex">
-                    <FiShield size={18} />
+                    <Shield size={18} />
                     <div className="ml-1">Token Rate Limits</div>
                   </div>
                 ),
@@ -226,7 +222,7 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
                     {
                       name: (
                         <div className="flex">
-                          <FiActivity size={18} />
+                          <Activity size={18} />
                           <div className="ml-1">Usage Statistics</div>
                         </div>
                       ),
@@ -260,7 +256,7 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
               {
                 name: (
                   <div className="flex">
-                    <FiSettings size={18} />
+                    <Settings size={18} />
                     <div className="ml-1">Workspace Settings</div>
                   </div>
                 ),
@@ -271,7 +267,7 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
                     {
                       name: (
                         <div className="flex">
-                          <FiImage size={18} />
+                          <ImageIcon size={18} />
                           <div className="ml-1">Whitelabeling</div>
                         </div>
                       ),

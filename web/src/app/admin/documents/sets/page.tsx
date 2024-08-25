@@ -33,6 +33,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Bookmark } from "lucide-react";
 
 const numToDisplay = 50;
 
@@ -270,7 +271,7 @@ const Main = () => {
 const Page = () => {
   return (
     <div className="container mx-auto">
-      <AdminPageTitle icon={<BookmarkIcon size={32} />} title="Document Sets" />
+      <AdminPageTitle icon={<Bookmark size={32} />} title="Document Sets" />
 
       <Main />
     </div>

@@ -14,6 +14,7 @@ import { Card } from "@tremor/react";
 import { DocumentSetCreationForm } from "../DocumentSetCreationForm";
 import { useRouter } from "next/navigation";
 import { usePopup } from "@/components/admin/connectors/Popup";
+import { Bookmark } from "lucide-react";
 
 function Main({ documentSetId }: { documentSetId: number }) {
   const router = useRouter();
@@ -72,10 +73,7 @@ function Main({ documentSetId }: { documentSetId: number }) {
     <div>
       {popup}
 
-      <AdminPageTitle
-        icon={<BookmarkIcon size={32} />}
-        title={documentSet.name}
-      />
+      <AdminPageTitle icon={<Bookmark size={32} />} title={documentSet.name} />
 
       <Card>
         <DocumentSetCreationForm

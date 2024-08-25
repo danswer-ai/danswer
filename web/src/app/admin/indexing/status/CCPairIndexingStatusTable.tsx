@@ -18,6 +18,7 @@ import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 import { useRouter } from "next/navigation";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
 import { FiCheck, FiEdit2, FiXCircle } from "react-icons/fi";
+import { Pencil } from "lucide-react";
 
 const NUM_IN_PAGE = 20;
 
@@ -129,7 +130,7 @@ export function CCPairIndexingStatusTable({
               >
                 <TableCell>
                   <div className="flex my-auto">
-                    <FiEdit2 className="mr-4 my-auto" />
+                    <Pencil size={16} className="mr-4 my-auto" />
                     <div className="whitespace-normal break-all max-w-3xl">
                       <ConnectorTitle
                         connector={ccPairsIndexingStatus.connector}

@@ -8,10 +8,16 @@ import { DeleteChatModal } from "../modal/DeleteChatModal";
 import { BasicSelectable } from "@/components/BasicClickable";
 import Link from "next/link";
 
-import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { ShareChatSessionModal } from "../modal/ShareChatSessionModal";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
-import { Ellipsis, Share2, X, Check, Pencil } from "lucide-react";
+import {
+  Ellipsis,
+  Share2,
+  X,
+  Check,
+  Pencil,
+  MessageCircleMore,
+} from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -82,7 +88,7 @@ export function ChatSessionDisplay({
         <BasicSelectable fullWidth selected={isSelected}>
           <>
             <div className="flex relative items-center gap-2 w-full">
-              <IoChatbubbleEllipsesOutline className="min-w-4 min-h-4" />
+              <MessageCircleMore size={16} />
               {isRenamingChat ? (
                 <input
                   value={chatName}
