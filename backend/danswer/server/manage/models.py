@@ -17,7 +17,7 @@ from danswer.db.models import SlackBotResponseType
 from danswer.db.models import StandardAnswer as StandardAnswerModel
 from danswer.db.models import StandardAnswerCategory as StandardAnswerCategoryModel
 from danswer.db.models import User
-from danswer.indexing.models import EmbeddingModelDetail
+from danswer.search.models import SavedSearchSettings
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
@@ -246,8 +246,8 @@ class SlackBotConfig(BaseModel):
 
 
 class FullModelVersionResponse(BaseModel):
-    current_model: EmbeddingModelDetail
-    secondary_model: EmbeddingModelDetail | None
+    current_settings: SavedSearchSettings
+    secondary_settings: SavedSearchSettings | None
 
 
 class AllUsersResponse(BaseModel):

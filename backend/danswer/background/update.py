@@ -20,8 +20,6 @@ from danswer.configs.app_configs import NUM_SECONDARY_INDEXING_WORKERS
 from danswer.configs.constants import POSTGRES_INDEXER_APP_NAME
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
-from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
@@ -32,11 +30,14 @@ from danswer.db.index_attempt import get_last_attempt_for_cc_pair
 from danswer.db.index_attempt import get_not_started_index_attempts
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
+from danswer.db.models import SearchSettings
+from danswer.db.search_settings import get_current_search_settings
+from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
+from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
@@ -60,7 +61,7 @@ _UNEXPECTED_STATE_FAILURE_REASON = (
 def _should_create_new_indexing(
     cc_pair: ConnectorCredentialPair,
     last_index: IndexAttempt | None,
-    model: EmbeddingModel,
+    model: SearchSettings,
     secondary_index_building: bool,
     db_session: Session,
 ) -> bool:
@@ -160,18 +161,18 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
             ongoing.add(
                 (
                     attempt.connector_credential_pair_id,
-                    attempt.embedding_model_id,
+                    attempt.search_settings_id,
                 )
             )
 
-        embedding_models = [get_current_db_embedding_model(db_session)]
-        secondary_embedding_model = get_secondary_db_embedding_model(db_session)
-        if secondary_embedding_model is not None:
-            embedding_models.append(secondary_embedding_model)
+        search_settings = [get_current_search_settings(db_session)]
+        secondary_search_settings = get_secondary_search_settings(db_session)
+        if secondary_search_settings is not None:
+            search_settings.append(secondary_search_settings)
 
         all_connector_credential_pairs = fetch_connector_credential_pairs(db_session)
         for cc_pair in all_connector_credential_pairs:
-            for model in embedding_models:
+            for model in search_settings:
                 # Check if there is an ongoing indexing attempt for this connector credential pair
                 if (cc_pair.id, model.id) in ongoing:
                     continue
@@ -183,7 +184,7 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                     cc_pair=cc_pair,
                     last_index=last_attempt,
                     model=model,
-                    secondary_index_building=len(embedding_models) > 1,
+                    secondary_index_building=len(search_settings) > 1,
                     db_session=db_session,
                 ):
                     continue
@@ -285,7 +286,7 @@ def kickoff_indexing_jobs(
         # get_not_started_index_attempts orders its returned results from oldest to newest
         # we must process attempts in a FIFO manner to prevent connector starvation
         new_indexing_attempts = [
-            (attempt, attempt.embedding_model)
+            (attempt, attempt.search_settings)
             for attempt in get_not_started_index_attempts(db_session)
             if attempt.id not in existing_jobs
         ]
@@ -297,10 +298,10 @@ def kickoff_indexing_jobs(
 
     indexing_attempt_count = 0
 
-    for attempt, embedding_model in new_indexing_attempts:
+    for attempt, search_settings in new_indexing_attempts:
         use_secondary_index = (
-            embedding_model.status == IndexModelStatus.FUTURE
-            if embedding_model is not None
+            search_settings.status == IndexModelStatus.FUTURE
+            if search_settings is not None
             else False
         )
         if attempt.connector_credential_pair.connector is None:
@@ -373,17 +374,21 @@ def update_loop(
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
         check_index_swap(db_session=db_session)
-        db_embedding_model = get_current_db_embedding_model(db_session)
+        search_settings = get_current_search_settings(db_session)
 
         # So that the first time users aren't surprised by really slow speed of first
         # batch of documents indexed
 
-        if db_embedding_model.provider_type is None:
+        if search_settings.provider_type is None:
             logger.notice("Running a first inference to warm up embedding model")
+            embedding_model = EmbeddingModel.from_db_model(
+                search_settings=search_settings,
+                server_host=INDEXING_MODEL_SERVER_HOST,
+                server_port=MODEL_SERVER_PORT,
+            )
+
             warm_up_bi_encoder(
-                embedding_model=db_embedding_model,
-                model_server_host=INDEXING_MODEL_SERVER_HOST,
-                model_server_port=MODEL_SERVER_PORT,
+                embedding_model=embedding_model,
             )
 
     client_primary: Client | SimpleJobClient

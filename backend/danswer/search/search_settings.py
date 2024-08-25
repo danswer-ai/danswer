@@ -9,12 +9,7 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def get_multilingual_expansion() -> list[str]:
-    search_settings = get_search_settings()
-    return search_settings.multilingual_expansion if search_settings else []
-
-
-def get_search_settings() -> SavedSearchSettings | None:
+def get_kv_search_settings() -> SavedSearchSettings | None:
     """Get all user configured search settings which affect the search pipeline
     Note: KV store is used in this case since there is no need to rollback the value or any need to audit past values
 
