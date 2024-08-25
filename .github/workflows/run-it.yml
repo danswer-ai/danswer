@@ -87,7 +87,7 @@ jobs:
         run: |
           cd deployment/docker_compose
           docker compose -f docker-compose.dev.yml -p danswer-stack up -d
-          docker ps -q --filter name=danswer-stack | xargs -I {} docker network connect danswer-network {}
+        # docker ps -q --filter name=danswer-stack | xargs -I {} docker network connect danswer-network {}
         id: start_docker
 
       - name: Wait for service to be ready
@@ -125,7 +125,7 @@ jobs:
       - name: Run integration tests
         run: |
           echo "Running integration tests..."
-          docker run --rm --network danswer-network \
+          docker run --rm --network danswer-stack_default \
             -e POSTGRES_HOST=relational_db \
             -e POSTGRES_USER=postgres \
             -e POSTGRES_PASSWORD=password \
