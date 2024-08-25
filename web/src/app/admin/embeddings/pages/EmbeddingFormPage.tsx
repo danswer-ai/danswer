@@ -8,7 +8,7 @@ import { Button, Card, Text } from "@tremor/react";
 import { ArrowLeft, ArrowRight, WarningCircle } from "@phosphor-icons/react";
 import {
   CloudEmbeddingModel,
-  EmbeddingModelDescriptor,
+  EmbeddingProvider,
   HostedEmbeddingModel,
 } from "../../../../components/embedding/interfaces";
 import { errorHandlingFetcher } from "@/lib/fetcher";
@@ -46,7 +46,7 @@ export default function EmbeddingForm() {
   const [rerankingDetails, setRerankingDetails] = useState<RerankingDetails>({
     api_key: "",
     num_rerank: 0,
-    provider_type: null,
+    rerank_provider_type: null,
     rerank_model_name: "",
   });
 
@@ -58,6 +58,7 @@ export default function EmbeddingForm() {
   };
 
   async function updateSearchSettings(searchSettings: SavedSearchSettings) {
+    console.log(searchSettings);
     const response = await fetch(
       "/api/search-settings/update-inference-settings",
       {
@@ -120,23 +121,23 @@ export default function EmbeddingForm() {
       setRerankingDetails({
         api_key: searchSettings.api_key,
         num_rerank: searchSettings.num_rerank,
-        provider_type: searchSettings.provider_type,
+        rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
       });
     }
   }, [searchSettings]);
 
-  const originalRerankingDetails = searchSettings
+  const originalRerankingDetails: RerankingDetails = searchSettings
     ? {
         api_key: searchSettings.api_key,
         num_rerank: searchSettings.num_rerank,
-        provider_type: searchSettings.provider_type,
+        rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
       }
     : {
         api_key: "",
         num_rerank: 0,
-        provider_type: null,
+        rerank_provider_type: null,
         rerank_model_name: "",
       };
 
@@ -162,7 +163,10 @@ export default function EmbeddingForm() {
     let values: SavedSearchSettings = {
       ...rerankingDetails,
       ...advancedEmbeddingDetails,
+      provider_type:
+        selectedProvider.provider_type?.toLowerCase() as EmbeddingProvider | null,
     };
+
     const response = await updateSearchSettings(values);
     if (response.ok) {
       setPopup({
@@ -184,19 +188,23 @@ export default function EmbeddingForm() {
     let newModel: SavedSearchSettings;
 
     if (selectedProvider.provider_type != null) {
-      // This is a CloudEmbeddingModel
+      // This is a cloud model
       newModel = {
         ...selectedProvider,
+        ...rerankingDetails,
+        ...advancedEmbeddingDetails,
         model_name: selectedProvider.model_name,
         provider_type:
           (selectedProvider.provider_type
             ?.toLowerCase()
-            .split(" ")[0] as RerankerProvider) || null,
+            .split(" ")[0] as EmbeddingProvider) || null,
       };
     } else {
-      // This is an EmbeddingModelDescriptor
+      // This is a locally hosted model
       newModel = {
         ...selectedProvider,
+        ...advancedEmbeddingDetails,
+        ...rerankingDetails,
         model_name: selectedProvider.model_name!,
         provider_type: null,
       };
