@@ -130,10 +130,13 @@ export const DocumentSetCreationForm = ({
               <Divider />
 
               <h2 className="mb-1 font-medium text-base">
-                Here are the connectors available to the selected group
-                {userGroups && userGroups.length > 1 ? "s" : ""}:
+                These are the connectors available to{" "}
+                {userGroups && userGroups.length > 1
+                  ? "the selected group"
+                  : "the group you curate"}
+                :
               </h2>
-              <p className="mb-3 text-xs">
+              <p className="mb-3 text-sm">
                 All documents indexed by these selected connectors will be a
                 part of this document set.
               </p>
@@ -230,7 +233,7 @@ export const DocumentSetCreationForm = ({
                           : "group you curate"}
                         :
                       </h2>
-                      <p className="mb-3 text-xs">
+                      <p className="mb-3 text-sm">
                         Only connectors that are directly assigned to the group
                         you are trying to add the document set to will be
                         available.

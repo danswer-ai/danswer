@@ -54,7 +54,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
       <>
         {userGroups && (
           <div className="mb-1 font-medium text-base">
-            These {objectName}s will be assigned to group:{" "}
+            This {objectName} will be assigned to group{" "}
             <b>{userGroups[0].name}</b>.
           </div>
         )}
@@ -73,10 +73,10 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
             disabled={!isAdmin}
             subtext={
               <span className="block mt-2 text-sm text-gray-500">
-                If set, then {objectName}s indexed by this {objectName} will be
-                visible to <b>all users</b>. If turned off, then only users who
-                explicitly have been given access to the {objectName}s (e.g.
-                through a User Group) will have access.
+                If set, then this {objectName} will be visible to{" "}
+                <b>all users</b>. If turned off, then only users who explicitly
+                have been given access to this {objectName} (e.g. through a User
+                Group) will have access.
               </span>
             }
           />
