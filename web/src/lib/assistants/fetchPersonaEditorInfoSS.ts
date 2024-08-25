@@ -5,7 +5,6 @@ import { fetchSS } from "../utilsSS";
 import { FullLLMProvider } from "@/app/admin/configuration/llm/interfaces";
 import { ToolSnapshot } from "../tools/interfaces";
 import { fetchToolsSS } from "../tools/fetchTools";
-import { IconManifestType } from "react-icons/lib";
 import {
   OpenAIIcon,
   AnthropicIcon,

@@ -21,7 +21,7 @@ class DocumentSetClient:
 
     @staticmethod
     def fetch_document_sets() -> list[DocumentSet]:
-        response = requests.get(f"{API_SERVER_URL}/manage/admin/document-set")
+        response = requests.get(f"{API_SERVER_URL}/manage/document-set")
         response.raise_for_status()
 
         document_sets = [
