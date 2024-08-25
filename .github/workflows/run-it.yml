@@ -71,10 +71,8 @@ jobs:
           pull: true
           push: true
           tags: danswer/integration-test-runner:latest
-          cache-from: type=registry,ref=danswer/integration-test-runner:latest
-          cache-to: |
-            type=registry,ref=danswer/integration-test-runner:latest,mode=max
-            type=local,dest=/tmp/.buildx-cache-new
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # This step is necessary to prevent the cache from growing indefinitely
       - name: Move cache
