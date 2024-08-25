@@ -129,21 +129,19 @@ def get_multilingual_expansion(db_session: Session | None = None) -> list[str]:
 def update_search_settings(
     db_session: Session,
     search_settings: SavedSearchSettings,
+    current_settings: SearchSettings,
 ) -> None:
-    current_settings = get_current_search_settings(db_session)
-    if not current_settings:
-        logger.warning("No current search settings found to update")
-        return
+    if search_settings.index_name != current_settings.index_name:
+        raise ValueError(
+            f"Index name mismatch: expected {current_settings.index_name}, got {search_settings.index_name}"
+        )
 
-    # Update the fields
     current_settings.model_name = search_settings.model_name
     current_settings.model_dim = search_settings.model_dim
     current_settings.normalize = search_settings.normalize
     current_settings.query_prefix = search_settings.query_prefix
     current_settings.passage_prefix = search_settings.passage_prefix
     current_settings.provider_type = search_settings.provider_type
-    current_settings.index_name = search_settings.index_name
-    current_settings.multipass_indexing = search_settings.multipass_indexing
     current_settings.multilingual_expansion = search_settings.multilingual_expansion
     current_settings.disable_rerank_for_streaming = (
         search_settings.disable_rerank_for_streaming
@@ -155,6 +153,32 @@ def update_search_settings(
 
     db_session.commit()
     logger.info("Search settings updated successfully")
+
+
+def update_current_search_settings(
+    db_session: Session,
+    search_settings: SavedSearchSettings,
+) -> None:
+    current_settings = get_current_search_settings(db_session)
+    if not current_settings:
+        logger.warning("No current search settings found to update")
+        return
+
+    # we never multipass_indexing for current settings
+    search_settings.multipass_indexing = current_settings.multipass_indexing
+    update_search_settings(db_session, search_settings, current_settings)
+
+
+def update_secondary_search_settings(
+    db_session: Session,
+    search_settings: SavedSearchSettings,
+) -> None:
+    secondary_settings = get_secondary_search_settings(db_session)
+    if not secondary_settings:
+        logger.warning("No secondary search settings found to update")
+        return
+
+    update_search_settings(db_session, search_settings, secondary_settings)
 
 
 def update_search_settings_status(

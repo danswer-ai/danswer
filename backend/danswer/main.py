@@ -51,6 +51,8 @@ from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.persona import delete_old_default_personas
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
+from danswer.db.search_settings import update_current_search_settings
+from danswer.db.search_settings import update_secondary_search_settings
 from danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
@@ -62,6 +64,7 @@ from danswer.llm.llm_initialization import load_llm_providers
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
+from danswer.search.models import SavedSearchSettings
 from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.auth_check import check_router_auth
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
@@ -189,16 +192,45 @@ def setup_postgres(db_session: Session) -> None:
     auto_add_search_tool_to_personas(db_session)
 
 
-def saved_search_settings(db_session: Session) -> None:
+def translate_saved_search_settings(db_session: Session) -> None:
     kv_store = get_dynamic_config_store()
 
     try:
-        search_settings = kv_store.load(KV_SEARCH_SETTINGS)
-        print(search_settings)
-        return
+        search_settings_dict = kv_store.load(KV_SEARCH_SETTINGS)
+        if search_settings_dict:
+            # Update current search settings
+            current_settings = get_current_search_settings(db_session)
+            if current_settings:
+                new_current_settings = SavedSearchSettings(
+                    **{
+                        **SavedSearchSettings.from_db_model(current_settings).dict(),
+                        **search_settings_dict,
+                    }
+                )
+                # Don't update multipass_indexing for current settings
+                new_current_settings.multipass_indexing = (
+                    current_settings.multipass_indexing
+                )
+                update_current_search_settings(db_session, new_current_settings)
+
+            # Update secondary search settings
+            secondary_settings = get_secondary_search_settings(db_session)
+            if secondary_settings:
+                new_secondary_settings = SavedSearchSettings(
+                    **{
+                        **SavedSearchSettings.from_db_model(current_settings).dict(),
+                        **search_settings_dict,
+                    }
+                )
+                update_secondary_search_settings(db_session, new_secondary_settings)
+
+            # Delete the KV store entry after successful update
+            kv_store.delete(KV_SEARCH_SETTINGS)
+            print("Search settings updated and KV store entry deleted.")
+        else:
+            print("KV store search settings is empty.")
     except ConfigNotFoundError:
-        print("no search config ")
-        # Only need to update the flag if it hasn't been set
+        print("No search config found in KV store.")
 
 
 def mark_reindex_flag(db_session: Session) -> None:
@@ -305,7 +337,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # setup Postgres with default credential, llm providers, etc.
         setup_postgres(db_session)
 
-        saved_search_settings(db_session)
+        translate_saved_search_settings(db_session)
+
         # Does the user need to trigger a reindexing to bring the document index
         # into a good state, marked in the kv store
         mark_reindex_flag(db_session)
