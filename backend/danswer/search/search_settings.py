@@ -28,8 +28,3 @@ def get_kv_search_settings() -> SavedSearchSettings | None:
         # or the user can set it via the API/UI
         kv_store.delete(KV_SEARCH_SETTINGS)
         return None
-
-
-def update_kv_search_settings(settings: SavedSearchSettings) -> None:
-    kv_store = get_dynamic_config_store()
-    kv_store.store(KV_SEARCH_SETTINGS, settings.dict())
