@@ -42,7 +42,7 @@ jobs:
           cache-from: |
             type=local,src=/var/lib/docker
             danswer/danswer-web-server:latest
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          cache-to: type=inline
 
       - name: Build Backend Docker image
         uses: docker/build-push-action@v5
@@ -55,7 +55,7 @@ jobs:
           load: true
           tags: danswer/danswer-backend:latest
           cache-from: type=registry,ref=danswer/danswer-backend:latest
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          cache-to: type=inline
 
       - name: Build Model Server Docker image
         uses: docker/build-push-action@v5
@@ -68,7 +68,7 @@ jobs:
           load: true
           tags: danswer/danswer-model-server:latest
           cache-from: type=registry,ref=danswer/danswer-model-server:latest
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          cache-to: type=inline
 
       - name: Build integration test Docker image
         uses: docker/build-push-action@v5
@@ -82,19 +82,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # This step is necessary to prevent the cache from growing indefinitely
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
       - name: Create Docker network
         run: docker network create danswer-network
 
       - name: Start Docker containers
         run: |
           cd deployment/docker_compose
-          docker compose -f docker-compose.dev.yml -p danswer-stack up -d
+          docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build
         # docker ps -q --filter name=danswer-stack | xargs -I {} docker network connect danswer-network {}
         id: start_docker
 
@@ -139,6 +133,7 @@ jobs:
             -e POSTGRES_PASSWORD=password \
             -e POSTGRES_DB=postgres \
             -e VESPA_HOST=index
+            -e API_SERVER_HOST=api_server
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
             danswer/integration-test-runner:latest
         continue-on-error: true
