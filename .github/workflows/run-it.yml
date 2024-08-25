@@ -35,7 +35,7 @@ jobs:
           pull: true
           push: true
           load: true
-          tags: danswer/danswer-web-server:latest
+          tags: danswer/danswer-web-server:it
           cache-from: type=registry,ref=danswer/danswer-web-server:it
           cache-to: |
             type=registry,ref=danswer/danswer-web-server:it,mode=max
@@ -50,7 +50,7 @@ jobs:
           pull: true
           push: true
           load: true
-          tags: danswer/danswer-backend:latest
+          tags: danswer/danswer-backend:it
           cache-from: type=registry,ref=danswer/danswer-backend:it
           cache-to: |
             type=registry,ref=danswer/danswer-backend:it,mode=max
@@ -65,11 +65,17 @@ jobs:
           pull: true
           push: true
           load: true
-          tags: danswer/danswer-model-server:latest
+          tags: danswer/danswer-model-server:it
           cache-from: type=registry,ref=danswer/danswer-model-server:it
           cache-to: |
             type=registry,ref=danswer/danswer-model-server:it,mode=max
             type=inline
+
+      - name: Retag the images
+        run: |
+          docker tag danswer/danswer-web-server:it danswer/danswer-web-server:latest
+          docker tag danswer/danswer-backend:it danswer/danswer-backend:latest
+          docker tag danswer/danswer-model-server:it danswer/danswer-model-server:latest
 
       - name: Build integration test Docker image
         uses: docker/build-push-action@v5
@@ -79,7 +85,7 @@ jobs:
           platforms: linux/arm64
           pull: true
           push: true
-          tags: danswer/integration-test-runner:latest
+          tags: danswer/integration-test-runner:it
           cache-from: type=registry,ref=danswer/integration-test-runner:it
           cache-to: |
             type=registry,ref=danswer/integration-test-runner:it,mode=max
@@ -135,7 +141,7 @@ jobs:
             -e VESPA_HOST=index \
             -e API_SERVER_HOST=api_server \
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
-            danswer/integration-test-runner:latest
+            danswer/integration-test-runner:it
         continue-on-error: true
         id: run_tests
 
