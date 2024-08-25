@@ -62,6 +62,20 @@ jobs:
           cache-from: type=registry,ref=danswer/danswer-model-server:latest
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
+      - name: Build integration test Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/tests/integration/Dockerfile
+          platforms: linux/arm64
+          pull: true
+          push: true
+          tags: danswer/integration-test-runner:latest
+          cache-from: type=registry,ref=danswer/integration-test-runner:latest
+          cache-to: |
+            type=registry,ref=danswer/integration-test-runner:latest,mode=max
+            type=local,dest=/tmp/.buildx-cache-new
+
       # This step is necessary to prevent the cache from growing indefinitely
       - name: Move cache
         run: |
@@ -103,18 +117,6 @@ jobs:
             sleep 5
           done
           echo "Finished waiting for service."
-
-      - name: Build integration test Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          file: ./backend/tests/integration/Dockerfile
-          platforms: linux/arm64
-          pull: true
-          push: true
-          tags: danswer/integration-test-runner:latest
-          cache-from: type=registry,ref=danswer/integration-test-runner:latest
-          cache-to: type=registry,ref=danswer/integration-test-runner:latest,mode=max
 
       - name: Run integration tests
         run: |
