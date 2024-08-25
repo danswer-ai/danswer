@@ -87,9 +87,9 @@ jobs:
         run: |
           cd deployment/docker_compose
           docker compose -f docker-compose.dev.yml -p danswer-stack up -d
-          docker network connect danswer-network danswer-stack-api-server-1
+          docker network connect danswer-network danswer-stack-api_server-1
           docker network connect danswer-network danswer-stack-background-1
-          docker network connect danswer-network danswer-stack-web-server-1
+          docker network connect danswer-network danswer-stack-web_server-1
           docker network connect danswer-network danswer-stack-relational_db-1
           docker network connect danswer-network danswer-stack-index-1
           docker network connect danswer-network danswer-stack-inference_model_server-1
