@@ -26,17 +26,22 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
+      - name: Pull Web Docker image
+        run: docker pull danswer/danswer-web-server:latest || true
+
       - name: Build Web Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./web
           file: ./web/Dockerfile
           platforms: linux/arm64
-          pull: true
+          pull: false
           push: false
           load: true
           tags: danswer/danswer-web-server:latest
-          cache-from: type=registry,ref=danswer/danswer-web-server:latest
+          cache-from: |
+            type=local,src=/var/lib/docker
+            danswer/danswer-web-server:latest
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Build Backend Docker image
