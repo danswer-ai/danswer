@@ -80,8 +80,20 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
+      - name: Create Docker network
+        run: docker network create danswer-network
+
       - name: Start Docker containers
-        run: cd deployment/docker_compose && docker compose -f docker-compose.dev.yml -p danswer-stack up -d
+        run: |
+          cd deployment/docker_compose
+          docker compose -f docker-compose.dev.yml -p danswer-stack up -d
+          docker network connect danswer-network danswer-stack-api-server-1
+          docker network connect danswer-network danswer-stack-background-1
+          docker network connect danswer-network danswer-stack-web-server-1
+          docker network connect danswer-network danswer-stack-relational_db-1
+          docker network connect danswer-network danswer-stack-index-1
+          docker network connect danswer-network danswer-stack-inference_model_server-1
+          docker network connect danswer-network danswer-stack-indexing_model_server-1
         id: start_docker
 
       - name: Wait for service to be ready
@@ -119,7 +131,7 @@ jobs:
       - name: Run integration tests
         run: |
           echo "Running integration tests..."
-          docker run --rm danswer/integration-test-runner:latest
+          docker run --rm --network danswer-network danswer/integration-test-runner:latest
         continue-on-error: true
         id: run_tests
 
