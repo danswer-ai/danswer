@@ -200,37 +200,57 @@ def translate_saved_search_settings(db_session: Session) -> None:
         if search_settings_dict:
             # Update current search settings
             current_settings = get_current_search_settings(db_session)
+            preserved_fields = [
+                "provider_type",
+                "api_key",
+                "model_name",
+                "index_name",
+                "multipass_indexing",
+            ]
+
             if current_settings:
+                current_settings_dict = SavedSearchSettings.from_db_model(
+                    current_settings
+                ).dict()
+
                 new_current_settings = SavedSearchSettings(
                     **{
-                        **SavedSearchSettings.from_db_model(current_settings).dict(),
-                        **search_settings_dict,
+                        **current_settings_dict,
+                        **{
+                            k: v
+                            for k, v in search_settings_dict.items()
+                            if k not in preserved_fields
+                        },
                     }
                 )
-                # Don't update multipass_indexing for current settings
-                new_current_settings.multipass_indexing = (
-                    current_settings.multipass_indexing
-                )
+
                 update_current_search_settings(db_session, new_current_settings)
 
             # Update secondary search settings
             secondary_settings = get_secondary_search_settings(db_session)
             if secondary_settings:
+                secondary_settings_dict = SavedSearchSettings.from_db_model(
+                    secondary_settings
+                ).dict()
+
                 new_secondary_settings = SavedSearchSettings(
                     **{
-                        **SavedSearchSettings.from_db_model(current_settings).dict(),
-                        **search_settings_dict,
+                        **secondary_settings_dict,
+                        **{
+                            k: v
+                            for k, v in search_settings_dict.items()
+                            if k not in preserved_fields
+                        },
                     }
                 )
                 update_secondary_search_settings(db_session, new_secondary_settings)
-
             # Delete the KV store entry after successful update
             kv_store.delete(KV_SEARCH_SETTINGS)
-            print("Search settings updated and KV store entry deleted.")
+            logger.notice("Search settings updated and KV store entry deleted.")
         else:
-            print("KV store search settings is empty.")
+            logger.notice("KV store search settings is empty.")
     except ConfigNotFoundError:
-        print("No search config found in KV store.")
+        logger.notice("No search config found in KV store.")
 
 
 def mark_reindex_flag(db_session: Session) -> None:

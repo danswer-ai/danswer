@@ -162,7 +162,6 @@ export default function EmbeddingForm() {
     let values: SavedSearchSettings = {
       ...rerankingDetails,
       ...advancedEmbeddingDetails,
-      // index_name: ""
     };
     const response = await updateSearchSettings(values);
     if (response.ok) {
