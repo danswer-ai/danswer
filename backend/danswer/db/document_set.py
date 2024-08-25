@@ -468,26 +468,6 @@ def fetch_all_document_sets_for_user(
     return db_session.scalars(stmt).all()
 
 
-def fetch_user_document_sets(
-    user_id: UUID | None, db_session: Session
-) -> list[tuple[DocumentSetDBModel, list[ConnectorCredentialPair]]]:
-    # If Auth is turned off, all document sets become visible
-    # document sets are not permission enforced, only for organizational purposes
-    # the documents themselves are permission enforced
-    if user_id is None:
-        return fetch_document_sets(
-            user_id=user_id, db_session=db_session, include_outdated=True
-        )
-
-    versioned_fetch_doc_sets_fn = fetch_versioned_implementation(
-        "danswer.db.document_set", "fetch_document_sets"
-    )
-
-    return versioned_fetch_doc_sets_fn(
-        user_id=user_id, db_session=db_session, include_outdated=True
-    )
-
-
 def fetch_documents_for_document_set_paginated(
     document_set_id: int,
     db_session: Session,
