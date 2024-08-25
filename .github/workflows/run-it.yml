@@ -125,7 +125,12 @@ jobs:
       - name: Run integration tests
         run: |
           echo "Running integration tests..."
-          docker run --rm --network danswer-network danswer/integration-test-runner:latest
+          docker run --rm --network danswer-network \
+            -e POSTGRES_HOST=relational_db \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_PASSWORD=password \
+            -e POSTGRES_DB=postgres \
+            danswer/integration-test-runner:latest
         continue-on-error: true
         id: run_tests
 
