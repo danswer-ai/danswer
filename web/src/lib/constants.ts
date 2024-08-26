@@ -39,6 +39,9 @@ export const TOGGLED_CONNECTORS_COOKIE_NAME = "toggled_connectors";
 
 // NOTE: this should ONLY be used on the server-side. If used client side,
 // it will not be accurate (will always be false).
+export const SERVER_SIDE_ONLY__REFRESH_OIDC_EXPIRY =
+  process.env.REFRESH_OIDC_EXPIRY?.toLowerCase() === "true";
+
 export const SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED =
   process.env.ENABLE_PAID_ENTERPRISE_EDITION_FEATURES?.toLowerCase() === "true";
 // NOTE: since this is a `NEXT_PUBLIC_` variable, it will be set at

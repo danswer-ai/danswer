@@ -8,6 +8,7 @@ import {
 import {
   CUSTOM_ANALYTICS_ENABLED,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
+  SERVER_SIDE_ONLY__REFRESH_OIDC_EXPIRY,
 } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
@@ -55,9 +56,9 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  console.log("Fetching");
-  const refreshingResponse = await fetchSS("/settings/refresh-user");
-  console.log(refreshingResponse);
+  if (SERVER_SIDE_ONLY__REFRESH_OIDC_EXPIRY) {
+    await fetchSS("/settings/refresh-user");
+  }
 
   const combinedSettings = await fetchSettingsSS();
   if (!combinedSettings) {

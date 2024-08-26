@@ -240,9 +240,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             oidc_expiry = datetime.fromtimestamp(
                 new_token_info["expires_at"], tz=timezone.utc
             )
-            print(new_token_info)
             refresh_token = new_token_info.get("refresh_token", user.refresh_token)
-            print(refresh_token)
 
             logger.debug(
                 f"Updated OIDC token info for user {user.id}: expiry set to {user.oidc_expiry}"

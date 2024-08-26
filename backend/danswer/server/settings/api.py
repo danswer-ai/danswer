@@ -1,4 +1,3 @@
-import traceback
 from typing import cast
 
 from fastapi import APIRouter
@@ -62,7 +61,6 @@ async def refresh_user(
                 db_session.commit()
 
         except Exception as e:
-            traceback.print_exc()
             logger.error(f"Failed to refresh OIDC token: {e}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
