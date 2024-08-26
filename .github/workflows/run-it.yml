@@ -96,6 +96,7 @@ jobs:
       - name: Start Docker containers
         run: |
           cd deployment/docker_compose
+          ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=true \
           DANSWER_BACKEND_IMAGE=danswer/danswer-backend:it \
           DANSWER_WEB_SERVER_IMAGE=danswer/danswer-web-server:it \
           DANSWER_MODEL_SERVER_IMAGE=danswer/danswer-model-server:it \
