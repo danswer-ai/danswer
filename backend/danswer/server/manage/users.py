@@ -285,7 +285,7 @@ def get_current_token_creation(
 
 
 @router.get("/me")
-async def verify_user_logged_in(
+def verify_user_logged_in(
     user: User | None = Depends(optional_user),
     db_session: Session = Depends(get_session),
 ) -> UserInfo:

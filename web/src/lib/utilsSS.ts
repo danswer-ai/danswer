@@ -15,6 +15,7 @@ export function buildUrl(path: string) {
   return `${INTERNAL_URL}/${path}`;
 }
 
+// Server-side fetch with default options and cookie handling
 export function fetchSS(url: string, options?: RequestInit) {
   const defaultOptions: RequestInit = {
     credentials: "include",

@@ -82,7 +82,7 @@ def put_settings(
 
 
 @basic_router.get("")
-async def fetch_settings(
+def fetch_settings(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> UserSettings:
