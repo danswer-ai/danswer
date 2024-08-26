@@ -28,7 +28,7 @@ export function Logo({
     return (
       isFullSize ? 
       <div style={{width}} className={className}>
-        <img src="/spectra-logo.svg" alt="Logo" width={width} />
+        <img src="/logo.svg" alt="Logo" width={width} />
       </div> :
       <div style={{ height, width }} className={className}>
         <Image src="/logo.png" alt="Logo" width={width} height={height} />
