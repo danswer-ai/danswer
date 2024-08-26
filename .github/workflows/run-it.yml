@@ -71,7 +71,7 @@ jobs:
           cache-to: |
             type=registry,ref=danswer/danswer-model-server:it,mode=max
             type=inline
-            
+
       - name: Build integration test Docker image
         uses: docker/build-push-action@v5
         with:
@@ -168,4 +168,7 @@ jobs:
           path: ${{ github.workspace }}/docker-compose.log
 
       - name: Stop Docker containers
-        run: docker compose down
+        run: |
+          cd deployment/docker_compose
+          docker compose -f docker-compose.dev.yml -p danswer-stack down -v
+          
