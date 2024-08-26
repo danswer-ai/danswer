@@ -88,7 +88,7 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
-import { DeleteChatModal } from "./modal/DeleteChatModal";
+import { DeleteEntityModal } from "../../components/modals/DeleteEntityModal";
 import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
@@ -1571,7 +1571,9 @@ export function ChatPage({
       )}
 
       {deletingChatSession && (
-        <DeleteChatModal
+        <DeleteEntityModal
+          entityType="chat"
+          entityName={deletingChatSession.name.slice(0, 30)}
           onClose={() => setDeletingChatSession(null)}
           onSubmit={async () => {
             const response = await deleteChatSession(deletingChatSession.id);
@@ -1583,7 +1585,6 @@ export function ChatPage({
               alert("Failed to delete chat session");
             }
           }}
-          chatSessionName={deletingChatSession.name}
         />
       )}
 
@@ -1706,7 +1707,7 @@ export function ChatPage({
                       >
                         {/* <input {...getInputProps()} /> */}
                         <div
-                          className={`w-full h-full flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
+                          className={`w-full h-full  flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -1722,7 +1723,7 @@ export function ChatPage({
                             )}
                           <div
                             className={
-                              "mt-4 -ml-4  w-full mx-auto " +
+                              "mt-4 -ml-4 w-full mx-auto " +
                               "absolute mobile:top-0 desktop:top-12 left-0" +
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }

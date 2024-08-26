@@ -218,7 +218,7 @@ export function LLMProviderUpdateForm({
       }}
     >
       {({ values, setFieldValue }) => (
-        <Form>
+        <Form className="w-full items-stretch	">
           <TextFormField
             name="name"
             label="Display Name"
@@ -226,8 +226,6 @@ export function LLMProviderUpdateForm({
             placeholder="Display Name"
             disabled={existingLlmProvider ? true : false}
           />
-
-          <Divider />
 
           {llmProviderDescriptor.api_key_required && (
             <TextFormField
@@ -348,7 +346,7 @@ export function LLMProviderUpdateForm({
                 <>
                   <BooleanFormField
                     small
-                    noPadding
+                    removeIndent
                     alignTop
                     name="is_public"
                     label="Is Public?"

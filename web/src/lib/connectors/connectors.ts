@@ -222,9 +222,7 @@ export const connectorConfigs: Record<ValidSources, ConnectionConfiguration> = {
     
 For example, entering https://danswer.atlassian.net/wiki/spaces/Engineering/overview and clicking the Index button will index the whole Engineering Confluence space, but entering https://danswer.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page will index that page (and optionally the page's children). 
 
-Selecting the "Index Recursively" checkbox will index the single page's children in addition to itself.
-
-We pull the latest pages and comments from each space every 10 minutes`,
+Selecting the "Index Recursively" checkbox will index the single page's children in addition to itself.`,
     values: [
       {
         type: "text",

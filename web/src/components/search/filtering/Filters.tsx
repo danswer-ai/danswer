@@ -114,7 +114,7 @@ export function SourceSelector({
       {existingSources.length > 0 && (
         <div className="mt-4">
           <div className="flex w-full gap-x-2 items-center">
-            <div className="font-bold text-xs  mt-2 flex items-center gap-x-2">
+            <div className="font-bold text-xs mt-2 flex items-center gap-x-2">
               <p>Sources</p>
               <input
                 type="checkbox"

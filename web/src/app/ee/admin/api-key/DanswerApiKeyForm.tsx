@@ -108,7 +108,7 @@ export const DanswerApiKeyForm = ({
 
               <BooleanFormField
                 small
-                noPadding
+                removeIndent
                 alignTop
                 name="is_admin"
                 label="Is Admin?"
