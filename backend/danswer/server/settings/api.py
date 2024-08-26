@@ -38,7 +38,7 @@ admin_router = APIRouter(prefix="/admin/settings")
 basic_router = APIRouter(prefix="/settings")
 
 
-@basic_router.get("/refresh-user")
+@basic_router.post("/refresh-user")
 async def refresh_user(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
