@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
-from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -23,6 +22,7 @@ from danswer.db.index_attempt import get_index_attempts_for_connector
 from danswer.db.models import User
 from danswer.db.models import UserRole
 from danswer.server.documents.models import CCPairFullInfo
+from danswer.server.documents.models import CCStatusUpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
 from danswer.server.models import StatusResponse
@@ -82,10 +82,6 @@ def get_cc_pair_full_info(
         num_docs_indexed=documents_indexed,
         is_editable_for_current_user=is_editable_for_current_user,
     )
-
-
-class CCStatusUpdateRequest(BaseModel):
-    status: ConnectorCredentialPairStatus
 
 
 @router.put("/admin/cc-pair/{cc_pair_id}/status")

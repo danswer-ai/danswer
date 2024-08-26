@@ -642,7 +642,7 @@ def update_connector_from_model(
 @router.delete("/admin/connector/{connector_id}", response_model=StatusResponse[int])
 def delete_connector_by_id(
     connector_id: int,
-    _: User = Depends(current_admin_user),
+    _: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
     try:

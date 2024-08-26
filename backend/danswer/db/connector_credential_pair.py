@@ -351,7 +351,7 @@ def add_credential_to_connector(
     if existing_association is not None:
         return StatusResponse(
             success=False,
-            message=f"Connector already has Credential {credential_id}",
+            message=f"Connector {connector_id} already has Credential {credential_id}",
             data=connector_id,
         )
 
@@ -375,8 +375,8 @@ def add_credential_to_connector(
     db_session.commit()
 
     return StatusResponse(
-        success=False,
-        message=f"Connector already has Credential {credential_id}",
+        success=True,
+        message=f"Creating new association between Connector {connector_id} and Credential {credential_id}",
         data=association.id,
     )
 

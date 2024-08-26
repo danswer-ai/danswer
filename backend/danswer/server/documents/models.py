@@ -259,6 +259,10 @@ class ConnectorCredentialPairMetadata(BaseModel):
     groups: list[int] | None
 
 
+class CCStatusUpdateRequest(BaseModel):
+    status: ConnectorCredentialPairStatus
+
+
 class ConnectorCredentialPairDescriptor(BaseModel):
     id: int
     name: str | None
