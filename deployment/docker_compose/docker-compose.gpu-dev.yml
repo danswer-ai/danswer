@@ -1,7 +1,7 @@
 version: '3'
 services:
   api_server:
-    image: ${DANSWER_BACKEND_IMAGE:-danswer/danswer-backend:latest}
+    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -98,7 +98,7 @@ services:
 
 
   background:
-    image: ${DANSWER_BACKEND_IMAGE:-danswer/danswer-backend:latest}
+    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -201,7 +201,7 @@ services:
 
 
   web_server:
-    image: ${DANSWER_WEB_SERVER_IMAGE:-danswer/danswer-web-server:latest}
+    image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -226,7 +226,7 @@ services:
 
 
   inference_model_server:
-    image: ${DANSWER_WEB_SERVER_IMAGE:-danswer/danswer-web-server:latest}
+    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
     # for GPU support, please read installation guidelines in the README.md
     # bare minimum to get this working is to install nvidia-container-toolkit
     deploy:
@@ -262,7 +262,7 @@ services:
 
 
   indexing_model_server:
-    image: ${DANSWER_WEB_SERVER_IMAGE:-danswer/danswer-web-server:latest}
+    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
