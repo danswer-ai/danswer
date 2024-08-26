@@ -11,7 +11,7 @@ export interface RerankingDetails {
 export enum RerankerProvider {
   COHERE = "cohere",
 }
-export interface AdvancedDetails {
+export interface AdvancedSearchConfiguration {
   model_name: string;
   model_dim: number;
   normalize: boolean;

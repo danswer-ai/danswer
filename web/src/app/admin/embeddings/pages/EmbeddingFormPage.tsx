@@ -17,7 +17,7 @@ import useSWR, { mutate } from "swr";
 import { ThreeDotsLoader } from "@/components/Loading";
 import AdvancedEmbeddingFormPage from "./AdvancedEmbeddingFormPage";
 import {
-  AdvancedDetails,
+  AdvancedSearchConfiguration,
   RerankerProvider,
   RerankingDetails,
   SavedSearchSettings,
@@ -31,7 +31,7 @@ export default function EmbeddingForm() {
   const { popup, setPopup } = usePopup();
 
   const [advancedEmbeddingDetails, setAdvancedEmbeddingDetails] =
-    useState<AdvancedDetails>({
+    useState<AdvancedSearchConfiguration>({
       model_name: "",
       model_dim: 0,
       normalize: false,
@@ -51,7 +51,7 @@ export default function EmbeddingForm() {
   });
 
   const updateAdvancedEmbeddingDetails = (
-    key: keyof AdvancedDetails,
+    key: keyof AdvancedSearchConfiguration,
     value: any
   ) => {
     setAdvancedEmbeddingDetails((values) => ({ ...values, [key]: value }));

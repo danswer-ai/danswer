@@ -5,14 +5,14 @@ import { EditingValue } from "@/components/credentials/EditingValue";
 import CredentialSubText from "@/components/credentials/CredentialFields";
 import { TrashIcon } from "@/components/icons/icons";
 import { FaPlus } from "react-icons/fa";
-import { AdvancedDetails, RerankingDetails } from "../interfaces";
+import { AdvancedSearchConfiguration, RerankingDetails } from "../interfaces";
 
 interface AdvancedEmbeddingFormPageProps {
   updateAdvancedEmbeddingDetails: (
-    key: keyof AdvancedDetails,
+    key: keyof AdvancedSearchConfiguration,
     value: any
   ) => void;
-  advancedEmbeddingDetails: AdvancedDetails;
+  advancedEmbeddingDetails: AdvancedSearchConfiguration;
   setRerankingDetails: Dispatch<SetStateAction<RerankingDetails>>;
   numRerank: number;
 }
