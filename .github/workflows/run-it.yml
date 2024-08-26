@@ -42,20 +42,20 @@ jobs:
             type=registry,ref=danswer/danswer-web-server:it,mode=max
             type=inline
 
-      # - name: Build Backend Docker image
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: ./backend
-      #     file: ./backend/Dockerfile
-      #     platforms: linux/arm64
-      #     pull: true
-      #     push: true
-      #     load: true
-      #     tags: danswer/danswer-backend:it
-      #     cache-from: type=registry,ref=danswer/danswer-backend:it
-      #     cache-to: |
-      #       type=registry,ref=danswer/danswer-backend:it,mode=max
-      #       type=inline
+      - name: Build Backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          platforms: linux/arm64
+          pull: true
+          push: true
+          load: true
+          tags: danswer/danswer-backend:it
+          cache-from: type=registry,ref=danswer/danswer-backend:it
+          cache-to: |
+            type=registry,ref=danswer/danswer-backend:it,mode=max
+            type=inline
 
       - name: Build Model Server Docker image
         uses: docker/build-push-action@v5
