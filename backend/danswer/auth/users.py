@@ -1,4 +1,5 @@
 import smtplib
+import time
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime
@@ -8,6 +9,7 @@ from email.mime.text import MIMEText
 from typing import Optional
 from typing import Tuple
 
+import aiohttp
 from email_validator import EmailNotValidError
 from email_validator import validate_email
 from fastapi import APIRouter
@@ -28,6 +30,7 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
@@ -36,6 +39,8 @@ from danswer.auth.schemas import UserRole
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
+from danswer.configs.app_configs import OAUTH_CLIENT_ID
+from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import REFRESH_OIDC_EXPIRY
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
@@ -64,6 +69,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
 
 logger = setup_logger()
 
@@ -169,6 +175,11 @@ def verify_email_domain(email: str) -> None:
             )
 
 
+class OIDCTokenRefreshResult(BaseModel):
+    oidc_expiry: datetime
+    refresh_token: str
+
+
 def send_user_verification_email(
     user_email: str,
     token: str,
@@ -217,37 +228,35 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         self,
         user: User,
         refresh_token: str,
-    ) -> User:
+    ) -> None | OIDCTokenRefreshResult:
         logger.info(f"Attempting to refresh OIDC token for user {user.id}")
         if not REFRESH_OIDC_EXPIRY:
             logger.warning("OIDC token refresh is not enabled")
-            return user
+            return None
+
         try:
             new_token_info = await self.refresh_oidc_token_with_provider(refresh_token)
             logger.info(f"Successfully refreshed OIDC token for user {user.id}")
-            user.oidc_expiry = datetime.fromtimestamp(
+            oidc_expiry = datetime.fromtimestamp(
                 new_token_info["expires_at"], tz=timezone.utc
             )
-            user.refresh_token = (
-                new_token_info.get("refresh_token", user.refresh_token),
-            )
+            print(new_token_info)
+            refresh_token = new_token_info.get("refresh_token", user.refresh_token)
+            print(refresh_token)
 
             logger.debug(
                 f"Updated OIDC token info for user {user.id}: expiry set to {user.oidc_expiry}"
             )
-            return user
+
+            return OIDCTokenRefreshResult(
+                oidc_expiry=oidc_expiry, refresh_token=refresh_token
+            )
+
         except Exception as e:
             logger.error(f"Failed to refresh OIDC token for user {user.id}: {str(e)}")
             raise
 
     async def refresh_oidc_token_with_provider(self, refresh_token: str) -> dict:
-        import aiohttp
-        from fastapi import HTTPException
-        from danswer.configs.app_configs import OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET
-        import time
-
-        from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
-
         try:
             async with aiohttp.ClientSession() as session:
                 # First, fetch the OpenID configuration
@@ -334,7 +343,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         )
 
         if refresh_token:
-            # if refresh_token and REFRESH_OIDC_EXPIRY:
             logger.info(f"Storing refresh token: {refresh_token}")
             await self.user_db.update(
                 user, update_dict={"refresh_token": refresh_token}

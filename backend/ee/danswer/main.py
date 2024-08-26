@@ -42,7 +42,7 @@ from ee.danswer.utils.encryption import test_encryption
 logger = setup_logger()
 
 
-def get_application(scope=None) -> FastAPI:
+def get_application() -> FastAPI:
     # Anything that happens at import time is not guaranteed to be running ee-version
     # Anything after the server startup will be running ee version
     global_version.set_ee()

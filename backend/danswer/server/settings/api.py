@@ -1,13 +1,17 @@
+import traceback
 from typing import cast
 
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import status
+from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.auth.users import get_user_manager
 from danswer.auth.users import is_user_admin
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import NotificationType
@@ -28,12 +32,42 @@ from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
 from danswer.utils.logger import setup_logger
 
-
 logger = setup_logger()
 
 
 admin_router = APIRouter(prefix="/admin/settings")
 basic_router = APIRouter(prefix="/settings")
+
+
+@basic_router.get("/refresh-user")
+async def refresh_user(
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    if user and user.refresh_token is not None:
+        try:
+            user_manager = await get_user_manager().__anext__()
+            updated_refresh_details = await user_manager.refresh_oidc_token(
+                user, user.refresh_token
+            )
+            if updated_refresh_details is not None:
+                db_session.execute(
+                    update(User)
+                    .where(User.id == user.id)
+                    .values(
+                        refresh_token=updated_refresh_details.refresh_token,
+                        oidc_expiry=updated_refresh_details.oidc_expiry,
+                    )
+                )
+                db_session.commit()
+
+        except Exception as e:
+            traceback.print_exc()
+            logger.error(f"Failed to refresh OIDC token: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Failed to refresh OIDC token.",
+            )
 
 
 @admin_router.put("")
@@ -48,7 +82,7 @@ def put_settings(
 
 
 @basic_router.get("")
-def fetch_settings(
+async def fetch_settings(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> UserSettings:
@@ -66,7 +100,7 @@ def fetch_settings(
     return UserSettings(
         **general_settings.dict(),
         notifications=user_notifications,
-        needs_reindexing=needs_reindexing
+        needs_reindexing=needs_reindexing,
     )
 
 

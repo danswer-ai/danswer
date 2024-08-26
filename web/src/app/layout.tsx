@@ -11,7 +11,7 @@ import {
 } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
-import { buildClientUrl } from "@/lib/utilsSS";
+import { buildClientUrl, fetchSS } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 import { EnterpriseSettings } from "./admin/settings/interfaces";
@@ -55,6 +55,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  console.log("Fetching");
+  const refreshingResponse = await fetchSS("/settings/refresh-user");
+  console.log(refreshingResponse);
+
   const combinedSettings = await fetchSettingsSS();
   if (!combinedSettings) {
     // Just display a simple full page error if fetching fails.
