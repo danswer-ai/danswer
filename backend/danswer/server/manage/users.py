@@ -16,6 +16,7 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
+from danswer.auth.invited_users import send_user_email_invite
 from danswer.auth.invited_users import write_invited_users
 from danswer.auth.noauth_user import fetch_no_auth_user
 from danswer.auth.noauth_user import set_no_auth_user_preferences
@@ -168,8 +169,11 @@ def bulk_invite_users(
 
     normalized_emails = []
     for email in emails:
-        email_info = validate_email(email)  # can raise EmailNotValidError
-        normalized_emails.append(email_info.normalized)  # type: ignore
+        email_info = validate_email(email)
+        logger.info(f"sent email to {email_info} + {email}")
+        send_user_email_invite(email, current_user)
+        logger.info(f"sent email to {email_info} + {email} + {email_info.email}")
+        normalized_emails.append(email_info.normalized)
     all_emails = list(set(normalized_emails) | set(get_invited_users()))
     return write_invited_users(all_emails)
 
