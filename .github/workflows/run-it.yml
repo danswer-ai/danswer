@@ -71,13 +71,7 @@ jobs:
           cache-to: |
             type=registry,ref=danswer/danswer-model-server:it,mode=max
             type=inline
-
-      # - name: Retag the images
-      #   run: |
-      #     docker tag danswer/danswer-web-server:it danswer/danswer-web-server:latest
-      #     docker tag danswer/danswer-backend:it danswer/danswer-backend:latest
-      #     docker tag danswer/danswer-model-server:it danswer/danswer-model-server:latest
-
+            
       - name: Build integration test Docker image
         uses: docker/build-push-action@v5
         with:
