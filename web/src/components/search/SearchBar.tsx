@@ -25,7 +25,7 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
     <div className="relative w-full">
       <MagnifyingGlass
         size={16}
-        className="text-emphasis absolute left-2 top-1/2 -translate-y-1/2"
+        className=" absolute left-2 top-1/2 -translate-y-1/2"
       />
       <Input
         autoFocus
@@ -35,7 +35,7 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         suppressContentEditableWarning={true}
-        className="pl-7"
+        className="pl-7 placeholder:text-subtle"
       />
     </div>
   );

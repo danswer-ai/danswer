@@ -2,47 +2,47 @@ name: Python Checks
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   mypy-check:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        cache: 'pip'
-        cache-dependency-path: |
-          backend/requirements/default.txt
-          backend/requirements/dev.txt
-          backend/requirements/model_server.txt
-    - run: |
-        python -m pip install --upgrade pip
-        pip install -r backend/requirements/default.txt
-        pip install -r backend/requirements/dev.txt
-        pip install -r backend/requirements/model_server.txt
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            backend/requirements/default.txt
+            backend/requirements/dev.txt
+            backend/requirements/model_server.txt
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements/default.txt
+          pip install -r backend/requirements/dev.txt
+          pip install -r backend/requirements/model_server.txt
 
-    - name: Run MyPy
-      run: |
-        cd backend
-        mypy .
+      - name: Run MyPy
+        run: |
+          cd backend
+          mypy .
 
-    - name: Run ruff
-      run: |
-        cd backend
-        ruff .
+      - name: Run ruff
+        run: |
+          cd backend
+          ruff .
 
-    - name: Check import order with reorder-python-imports
-      run: |
-        cd backend
-        find ./danswer -name "*.py" | xargs reorder-python-imports --py311-plus
+      - name: Check import order with reorder-python-imports
+        run: |
+          cd backend
+          find ./danswer -name "*.py" | xargs reorder-python-imports --py311-plus
 
-    - name: Check code formatting with Black
-      run: |
-        cd backend
-        black --check .
+      - name: Check code formatting with Black
+        run: |
+          cd backend
+          black --check .

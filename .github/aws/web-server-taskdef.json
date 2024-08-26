@@ -1,34 +1,36 @@
 {
-    "family": "web_server",
-    "networkMode": "awsvpc",
-    "containerDefinitions": [
-      {
-        "name": "web_server",
-        "image": "471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest",
-        "essential": true,
-        "memory": 512,
-        "cpu": 256,
-        "command": [],
-        "environment": [
-          { "name": "INTERNAL_URL", "value": "http://api_server:8080" },
-          { "name": "WEB_DOMAIN", "value": "${WEB_DOMAIN}" },
-          { "name": "THEME_IS_DARK", "value": "${THEME_IS_DARK}" },
-          { "name": "ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "value": "${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}" }
-        ],
-        "dependsOn": [
-          {
-            "containerName": "api_server",
-            "condition": "START"
-          }
-        ],
-        "logConfiguration": {
-          "logDriver": "json-file",
-          "options": {
-            "max-size": "50m",
-            "max-file": "6"
-          }
+  "family": "web_server",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "web_server",
+      "image": "471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest",
+      "essential": true,
+      "memory": 512,
+      "cpu": 256,
+      "command": [],
+      "environment": [
+        { "name": "INTERNAL_URL", "value": "http://api_server:8080" },
+        { "name": "WEB_DOMAIN", "value": "${WEB_DOMAIN}" },
+        { "name": "THEME_IS_DARK", "value": "${THEME_IS_DARK}" },
+        {
+          "name": "ENABLE_PAID_ENTERPRISE_EDITION_FEATURES",
+          "value": "${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}"
+        }
+      ],
+      "dependsOn": [
+        {
+          "containerName": "api_server",
+          "condition": "START"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "json-file",
+        "options": {
+          "max-size": "50m",
+          "max-file": "6"
         }
       }
-    ]
-  }
-  
+    }
+  ]
+}

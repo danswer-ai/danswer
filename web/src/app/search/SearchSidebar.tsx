@@ -117,11 +117,11 @@ export const SearchSidebar = ({
                 <></>
               )}
             </div>
-            <div className="px-4 text-sm text-emphasis font-medium flex flex-col gap-1">
+            <div className="px-4 text-sm  font-medium flex flex-col gap-1">
               {settings.search_page_enabled && (
                 <Link
                   href="/search"
-                  className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 shadow-sm`}
+                  className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer bg-primary text-white items-center gap-2 shadow-sm`}
                 >
                   <Search size={16} className="min-w-4 min-h-4" />
                   Search
@@ -131,14 +131,14 @@ export const SearchSidebar = ({
                 <>
                   <Link
                     href="/chat"
-                    className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2`}
+                    className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2`}
                   >
                     <MessageCircleMore size={16} className="min-w-4 min-h-4" />
                     Chat
                   </Link>
                   <Link
                     href="/assistants/mine"
-                    className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
+                    className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
                   >
                     <Headset size={16} />
                     <span className="truncate">Explore Assistants</span>

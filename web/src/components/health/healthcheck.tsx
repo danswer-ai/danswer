@@ -27,7 +27,7 @@ export const HealthCheckBanner = () => {
           </p>
           <a
             href="/auth/login"
-            className="w-full mt-4 mx-auto rounded-xs text-light py-2 bg-background-dark text-center hover:bg-emphasis animtate duration-300 transition-bg  "
+            className="w-full mt-4 mx-auto rounded-xs text-light py-2 bg-background-dark text-center hover:bg-default animtate duration-300 transition-bg  "
           >
             Log in
           </a>

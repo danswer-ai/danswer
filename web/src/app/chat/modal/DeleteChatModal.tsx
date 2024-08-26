@@ -18,7 +18,7 @@ export const DeleteChatModal = ({
   return (
     <Dialog>
       <DialogTrigger>
-        <div className="hover:bg-black/10 p-1 rounded">
+        <div className="hover:bg-background-inverted/10 p-1 rounded">
           <Trash size={16} />
         </div>
       </DialogTrigger>

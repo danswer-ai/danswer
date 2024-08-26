@@ -1168,7 +1168,7 @@ export function ChatPage({
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <div className="relative flex overflow-x-hidden bg-background text-default h-full">
+      <div className="relative flex overflow-x-hidden bg-background ault h-full">
         <DynamicSidebar
           user={user}
           openSidebar={openSidebar}
@@ -1560,6 +1560,7 @@ export function ChatPage({
                           handleFileUpload={handleImageUpload}
                           setConfigModalActiveTab={setConfigModalActiveTab}
                           textAreaRef={textAreaRef}
+                          activeTab={configModalActiveTab}
                         />
                       </div>
                     </div>
@@ -1570,7 +1571,7 @@ export function ChatPage({
                       <AnimatePresence>
                         {!showDocSidebar && (
                           <motion.div
-                            className={`fixed w-full h-full bg-black bg-opacity-20 inset-0 z-overlay 2xl:hidden`}
+                            className={`fixed w-full h-full bg-background-inverted bg-opacity-20 inset-0 z-overlay 2xl:hidden`}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: !showDocSidebar ? 1 : 0 }}
                             exit={{ opacity: 0 }}

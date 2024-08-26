@@ -27,22 +27,30 @@ spec:
         app: inference-model-server
     spec:
       containers:
-      - name: inference-model-server
-        image: danswer/danswer-model-server:latest
-        imagePullPolicy: IfNotPresent
-        command: [ "uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000" ]
-        ports:
-        - containerPort: 9000
-        envFrom:
-        - configMapRef:
-            name: env-configmap
-        volumeMounts:
-        - name: inference-model-storage
-          mountPath: /root/.cache
+        - name: inference-model-server
+          image: danswer/danswer-model-server:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "uvicorn",
+              "model_server.main:app",
+              "--host",
+              "0.0.0.0",
+              "--port",
+              "9000",
+            ]
+          ports:
+            - containerPort: 9000
+          envFrom:
+            - configMapRef:
+                name: env-configmap
+          volumeMounts:
+            - name: inference-model-storage
+              mountPath: /root/.cache
       volumes:
-      - name: inference-model-storage
-        persistentVolumeClaim:
-          claimName: inference-model-pvc
+        - name: inference-model-storage
+          persistentVolumeClaim:
+            claimName: inference-model-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

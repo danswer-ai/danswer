@@ -32,7 +32,7 @@ export function DynamicSidebar({
       <AnimatePresence>
         {openSidebar && (
           <motion.div
-            className={`fixed w-full h-full bg-black bg-opacity-20 inset-0 z-overlay lg:hidden`}
+            className={`fixed w-full h-full bg-background-inverted bg-opacity-20 inset-0 z-overlay lg:hidden`}
             initial={{ opacity: 0 }}
             animate={{ opacity: openSidebar ? 1 : 0 }}
             exit={{ opacity: 0 }}

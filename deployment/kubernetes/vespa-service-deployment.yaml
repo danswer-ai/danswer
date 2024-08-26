@@ -34,30 +34,30 @@ spec:
         app: vespa
     spec:
       containers:
-      - name: vespa
-        image: vespaengine/vespa:8.277.17
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          privileged: true
-          runAsUser: 0
-        ports:
-        - containerPort: 19071
-        - containerPort: 8081
-        readinessProbe:
-          httpGet:
-            path: /state/v1/health
-            port: 19071
-            scheme: HTTP
-        volumeMounts:
-        - name: vespa-storage
-          mountPath: /opt/vespa/var/
+        - name: vespa
+          image: vespaengine/vespa:8.277.17
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          ports:
+            - containerPort: 19071
+            - containerPort: 8081
+          readinessProbe:
+            httpGet:
+              path: /state/v1/health
+              port: 19071
+              scheme: HTTP
+          volumeMounts:
+            - name: vespa-storage
+              mountPath: /opt/vespa/var/
   volumeClaimTemplates:
-  - metadata:
-      name: vespa-storage
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      resources:
-        requests:
-          # Adjust the storage request size as needed.
-          storage: 5Gi
+    - metadata:
+        name: vespa-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            # Adjust the storage request size as needed.
+            storage: 5Gi

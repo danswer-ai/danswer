@@ -243,7 +243,7 @@ export const SearchSection = ({
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="lg:hidden">
-                <Filter size={16} className="text-emphasis" />
+                <Filter size={16} className="" />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-[85vw] sm:w-full">

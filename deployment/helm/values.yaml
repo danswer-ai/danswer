@@ -26,7 +26,15 @@ inferenceCapability:
       repository: danswer/danswer-model-server
       tag: latest
       pullPolicy: IfNotPresent
-    command: ["uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000"]
+    command:
+      [
+        "uvicorn",
+        "model_server.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "9000",
+      ]
     port: 9000
     volumeMounts:
       - name: inference-model-storage
@@ -114,10 +122,12 @@ webserver:
   podAnnotations: {}
   podLabels:
     app: web-server
-  podSecurityContext: {}
+  podSecurityContext:
+    {}
     # fsGroup: 2000
 
-  securityContext: {}
+  securityContext:
+    {}
     # capabilities:
     #   drop:
     #   - ALL
@@ -179,10 +189,12 @@ api:
     scope: danswer-backend
     app: api-server
 
-  podSecurityContext: {}
+  podSecurityContext:
+    {}
     # fsGroup: 2000
 
-  securityContext: {}
+  securityContext:
+    {}
     # capabilities:
     #   drop:
     #   - ALL
@@ -229,7 +241,6 @@ api:
   nodeSelector: {}
   tolerations: []
 
-
 background:
   replicaCount: 1
   image:
@@ -243,10 +254,12 @@ background:
     app: background
   deploymentLabels:
     app: background
-  podSecurityContext: {}
+  podSecurityContext:
+    {}
     # fsGroup: 2000
 
-  securityContext: {}
+  securityContext:
+    {}
     # capabilities:
     #   drop:
     #   - ALL
@@ -302,7 +315,8 @@ vespa:
     app.kubernetes.io/name: vespa
   enabled: true
 
-  podSecurityContext: {}
+  podSecurityContext:
+    {}
     # fsGroup: 2000
 
   securityContext:
@@ -316,8 +330,8 @@ vespa:
     # runAsUser: 1000
 
   resources:
-  # The Vespa Helm chart specifies default resources, which are quite modest. We override
-  # them here to increase chances of the chart running successfully.
+    # The Vespa Helm chart specifies default resources, which are quite modest. We override
+    # them here to increase chances of the chart running successfully.
     requests:
       cpu: 1500m
       memory: 4000Mi
@@ -328,7 +342,6 @@ vespa:
   nodeSelector: {}
   tolerations: []
   affinity: {}
-
 
 #ingress:
 #  enabled: false
@@ -379,14 +392,14 @@ auth:
     gen_ai_api_key: ""
 
 configMap:
-  AUTH_TYPE: "disabled"  # Change this for production uses unless Danswer is only accessible behind VPN
-  SESSION_EXPIRE_TIME_SECONDS: "86400"  # 1 Day Default
-  VALID_EMAIL_DOMAINS: ""  # Can be something like danswer.ai, as an extra double-check
+  AUTH_TYPE: "disabled" # Change this for production uses unless Danswer is only accessible behind VPN
+  SESSION_EXPIRE_TIME_SECONDS: "86400" # 1 Day Default
+  VALID_EMAIL_DOMAINS: "" # Can be something like danswer.ai, as an extra double-check
   SMTP_SERVER: "" # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
   SMTP_PORT: "" # For sending verification emails, if unspecified then defaults to '587'
-  SMTP_USER: ""  # 'your-email@company.com'
+  SMTP_USER: "" # 'your-email@company.com'
   # SMTP_PASS: ""  # 'your-gmail-password'
-  EMAIL_FROM: ""  # 'your-email@company.com' SMTP_USER missing used instead
+  EMAIL_FROM: "" # 'your-email@company.com' SMTP_USER missing used instead
   # Gen AI Settings
   GEN_AI_MODEL_PROVIDER: ""
   GEN_AI_MODEL_VERSION: ""
@@ -438,5 +451,5 @@ configMap:
   LOG_ALL_MODEL_INTERACTIONS: ""
   LOG_VESPA_TIMING_INFORMATION: ""
   # Shared or Non-backend Related
-  WEB_DOMAIN: "http://localhost:3000"  # for web server and api server
-  DOMAIN: "localhost"  # for nginx
+  WEB_DOMAIN: "http://localhost:3000" # for web server and api server
+  DOMAIN: "localhost" # for nginx

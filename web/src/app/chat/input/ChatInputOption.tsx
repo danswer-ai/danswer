@@ -65,7 +65,7 @@ const ChatInputOption = ({
           space-x-2 
           text-subtle
           hover:bg-hover
-          hover:text-emphasis
+          hover:
           p-1.5
           rounded-xs
         "

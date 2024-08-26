@@ -26,13 +26,13 @@ spec:
         app: web-server
     spec:
       containers:
-      - name: web-server
-        image: danswer/danswer-web-server:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 3000
-        # There are some extra values since this is shared between services
-        # There are no conflicts though, extra env variables are simply ignored
-        envFrom:
-        - configMapRef:
-            name: env-configmap
+        - name: web-server
+          image: danswer/danswer-web-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          # There are some extra values since this is shared between services
+          # There are no conflicts though, extra env variables are simply ignored
+          envFrom:
+            - configMapRef:
+                name: env-configmap

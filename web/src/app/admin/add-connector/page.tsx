@@ -43,7 +43,7 @@ function SourceTile({
             />
           </div>
         }
-        style="bg-primary border-none text-white"
+        style="bg-primary border-none text-inverted"
       >
         {sourceMetadata.displayName}
       </CustomTooltip>
@@ -71,19 +71,22 @@ export default function Page() {
         source.category.toLowerCase().includes(lowerSearchTerm)
     );
 
-    return Object.values(SourceCategory).reduce((acc, category) => {
-      if (category === SourceCategory.Disabled) {
-        return acc;
-      }
+    return Object.values(SourceCategory).reduce(
+      (acc, category) => {
+        if (category === SourceCategory.Disabled) {
+          return acc;
+        }
 
-      acc[category] = sources.filter(
-        (source) =>
-          source.category === category &&
-          (filtered.includes(source) ||
-            category.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      return acc;
-    }, {} as Record<SourceCategory, SourceMetadata[]>);
+        acc[category] = sources.filter(
+          (source) =>
+            source.category === category &&
+            (filtered.includes(source) ||
+              category.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+        return acc;
+      },
+      {} as Record<SourceCategory, SourceMetadata[]>
+    );
   }, [sources, searchTerm]);
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {

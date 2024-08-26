@@ -7,7 +7,9 @@ import { CreditCard, Link2, Lock, User } from "lucide-react";
 export default function Profile({ user }: { user: UserTypes | null }) {
   return (
     <div className="h-full overflow-x-hidden">
-      <h1 className="text-black text-3xl font-semibold">User Settings</h1>
+      <h1 className="text-inverted-inverted text-3xl font-semibold">
+        User Settings
+      </h1>
 
       <Tabs defaultValue="profile" className="w-full pt-10">
         <TabsList>

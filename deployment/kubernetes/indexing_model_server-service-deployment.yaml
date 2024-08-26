@@ -27,25 +27,33 @@ spec:
         app: indexing-model-server
     spec:
       containers:
-      - name: indexing-model-server
-        image: danswer/danswer-model-server:latest
-        imagePullPolicy: IfNotPresent
-        command: [ "uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000" ]
-        ports:
-        - containerPort: 9000
-        envFrom:
-        - configMapRef:
-            name: env-configmap
-        env:
-          - name: INDEXING_ONLY
-            value: "True"
-        volumeMounts:
-        - name: indexing-model-storage
-          mountPath: /root/.cache
+        - name: indexing-model-server
+          image: danswer/danswer-model-server:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "uvicorn",
+              "model_server.main:app",
+              "--host",
+              "0.0.0.0",
+              "--port",
+              "9000",
+            ]
+          ports:
+            - containerPort: 9000
+          envFrom:
+            - configMapRef:
+                name: env-configmap
+          env:
+            - name: INDEXING_ONLY
+              value: "True"
+          volumeMounts:
+            - name: indexing-model-storage
+              mountPath: /root/.cache
       volumes:
-      - name: indexing-model-storage
-        persistentVolumeClaim:
-          claimName: indexing-model-pvc
+        - name: indexing-model-storage
+          persistentVolumeClaim:
+            claimName: indexing-model-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

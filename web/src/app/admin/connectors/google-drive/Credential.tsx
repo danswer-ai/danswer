@@ -385,7 +385,7 @@ export const DriveOAuthSection = ({
                     type="submit"
                     disabled={isSubmitting}
                     className={
-                      "bg-slate-500 hover:bg-slate-700 text-white " +
+                      "bg-slate-500 hover:bg-slate-700 text-inverted " +
                       "font-bold py-2 px-4 rounded focus:outline-none " +
                       "focus:shadow-outline w-full max-w-sm mx-auto"
                     }

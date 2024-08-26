@@ -51,7 +51,7 @@ const EditRow = ({ documentSet }: { documentSet: DocumentSet }) => {
       )}
       <div
         className={
-          "text-emphasis font-medium my-auto p-1 hover:bg-hover-light flex cursor-pointer select-none" +
+          " font-medium my-auto p-1 hover:bg-hover-light flex cursor-pointer select-none" +
           (documentSet.is_up_to_date ? " cursor-pointer" : " cursor-default")
         }
         onClick={() => {
@@ -70,7 +70,7 @@ const EditRow = ({ documentSet }: { documentSet: DocumentSet }) => {
           }
         }}
       >
-        <FiEdit2 className="my-auto mr-1 text-emphasis" />
+        <FiEdit2 className="my-auto mr-1 " />
         {documentSet.name}
       </div>
     </div>
@@ -121,7 +121,7 @@ const DocumentSetTable = ({
               return (
                 <TableRow key={documentSet.id}>
                   <TableCell className="break-all whitespace-normal">
-                    <div className="flex gap-x-1 text-emphasis">
+                    <div className="flex gap-x-1 ">
                       <EditRow documentSet={documentSet} />
                     </div>
                   </TableCell>

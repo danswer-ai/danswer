@@ -419,7 +419,7 @@ export function ControlledPopup({
             border-border 
             z-30 
             rounded 
-            text-emphasis 
+             
             shadow-lg`}
           style={{ transform: "translateY(calc(-100% - 5px))" }}
         >

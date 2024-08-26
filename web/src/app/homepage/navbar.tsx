@@ -37,7 +37,7 @@ export default function Navbar() {
             <Link href="auth/login">Log in</Link>
             <Link
               href="auth/signup"
-              className="px-4 py-2 bg-[#2039F3] rounded-[5px] text-white"
+              className="px-4 py-2 bg-[#2039F3] rounded-[5px] text-inverted"
             >
               Sign up
             </Link>
@@ -48,14 +48,14 @@ export default function Navbar() {
             onClick={toggleMenu}
           >
             <div
-              className={`w-6 md:w-8 h-0.5 bg-black dark:bg-white transition-all duration-300 ease-in-out relative ${
+              className={`w-6 md:w-8 h-0.5 bg-background-inverted dark:bg-background transition-all duration-300 ease-in-out relative ${
                 openMenu
                   ? "rotate-[45deg] md:rotate-[42deg] top-1 md:top-1.5"
                   : "rotate-0 top-0"
               }`}
             />
             <div
-              className={`w-6 md:w-8 h-0.5 bg-black dark:bg-white transition-all duration-300 ease-in-out relative ${
+              className={`w-6 md:w-8 h-0.5 bg-background-inverted dark:bg-background transition-all duration-300 ease-in-out relative ${
                 openMenu
                   ? "rotate-[-45deg] md:rotate-[-42deg] -top-1"
                   : "rotate-0 top-0"

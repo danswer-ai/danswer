@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { UserSettingsButton } from "@/components/UserSettingsButton";
-import { Ellipsis, Settings } from "lucide-react";
+import { Ellipsis, Bell } from "lucide-react";
 import Image from "next/image";
 
 import Notion from "../../../../public/Notion.png";
 import Dropbox from "../../../../public/Dropbox.png";
 import Gitlab from "../../../../public/Gitlab.png";
-import HubSpot from "../../../../public/HubSpot.png";
+import ArnoldAi from "../../../../public/arnold_ai.png";
 import enMedD from "../../../../public/logo.png";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@/lib/types";
@@ -30,8 +30,8 @@ export const WorkSpaceSidebar = ({
       >
         <div className="flex flex-col items-center gap-6">
           <Image
-            src={enMedD}
-            alt="enMedD Logo"
+            src={ArnoldAi}
+            alt="ArnoldAi Logo"
             width={40}
             height={40}
             className="rounded-full min-w-10 min-h-10"
@@ -47,7 +47,7 @@ export const WorkSpaceSidebar = ({
                     width={40}
                     height={40}
                     className="rounded-full min-w-10 min-h-10"
-                  />{" "}
+                  />
                 </div>
               }
               side="right"
@@ -58,8 +58,8 @@ export const WorkSpaceSidebar = ({
 
             <CustomTooltip
               trigger={
-                <div>
-                  <Ellipsis />
+                <div className="h-10 w-10 hover:bg-light hover:text-accent-foreground flex items-center justify-center rounded-regular">
+                  <Ellipsis size={16} strokeWidth={2.5} />
                 </div>
               }
               side="right"
@@ -69,10 +69,7 @@ export const WorkSpaceSidebar = ({
             </CustomTooltip>
           </div>
         </div>
-        <div>
-          <Button variant="ghost" size="icon" className="mb-4">
-            <Settings />
-          </Button>
+        <div className="flex flex-col items-center gap-4">
           <UserSettingsButton user={user} />
         </div>
       </div>

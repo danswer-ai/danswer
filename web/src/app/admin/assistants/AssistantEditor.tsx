@@ -24,7 +24,6 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { HidableSection } from "./HidableSection";
-import { FiPlus, FiX } from "react-icons/fi";
 import { useUserGroups } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
@@ -36,18 +35,9 @@ import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
-import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { X, Plus } from "lucide-react";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -58,9 +48,7 @@ function findImageGenerationTool(tools: ToolSnapshot[]) {
 }
 
 function Label({ children }: { children: string | JSX.Element }) {
-  return (
-    <div className="block font-medium text-base text-emphasis">{children}</div>
-  );
+  return <div className="block font-medium text-base ">{children}</div>;
 }
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
@@ -805,7 +793,7 @@ export function AssistantEditor({
                                       </div>
                                     </div>
                                     <div className="my-auto">
-                                      <FiX
+                                      <X
                                         className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
                                         onClick={() =>
                                           arrayHelpers.remove(index)
@@ -828,7 +816,7 @@ export function AssistantEditor({
                             className="mt-3"
                             type="button"
                           >
-                            <FiPlus className="mr-1.5" /> Add New
+                            <Plus className="mr-1.5" /> Add New
                           </Button>
                         </div>
                       )}

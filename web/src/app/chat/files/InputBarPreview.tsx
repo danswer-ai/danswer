@@ -58,13 +58,13 @@ export function InputBarPreview({
             flex
             items-center
             justify-center
-            bg-black
+            bg-background-inverted
             bg-opacity-50
             rounded-regular
             z-0
           "
         >
-          <FiLoader className="animate-spin text-white" />
+          <FiLoader className="animate-spin text-inverted" />
         </div>
       )}
       {renderContent()}

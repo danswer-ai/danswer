@@ -68,7 +68,7 @@ export function ChatSessionDisplay({
   return (
     <>
       <Link
-        className="flex my-1 relative"
+        className="flex relative"
         key={chatSession.id}
         href={`/chat?chatId=${chatSession.id}`}
         scroll={false}
@@ -88,7 +88,7 @@ export function ChatSessionDisplay({
         <BasicSelectable fullWidth selected={isSelected}>
           <>
             <div className="flex relative items-center gap-2 w-full">
-              <MessageCircleMore size={16} />
+              <MessageCircleMore size={16} className="min-w-4 min-h-4" />
               {isRenamingChat ? (
                 <input
                   value={chatName}
@@ -102,7 +102,7 @@ export function ChatSessionDisplay({
                   className="-my-px px-1 py-[1px] mr-2 w-full rounded"
                 />
               ) : (
-                <p className="break-all overflow-hidden whitespace-nowrap mr-3 text-emphasis text-ellipsis">
+                <p className="break-all overflow-hidden whitespace-nowrap mr-3  text-ellipsis">
                   {chatName || `Chat ${chatSession.id}`}
                 </p>
               )}
@@ -111,7 +111,7 @@ export function ChatSessionDisplay({
                   <div className="ml-auto my-auto flex">
                     <div
                       onClick={onRename}
-                      className={`hover:bg-black/10 p-1 -m-1 rounded`}
+                      className={`hover:bg-background-inverted/10 p-1 -m-1 rounded`}
                     >
                       <Check size={16} />
                     </div>
@@ -120,7 +120,7 @@ export function ChatSessionDisplay({
                         setChatName(chatSession.name);
                         setIsRenamingChat(false);
                       }}
-                      className={`hover:bg-black/10 p-1 -m-1 rounded ml-2`}
+                      className={`hover:bg-background-inverted/10 p-1 -m-1 rounded ml-2`}
                     >
                       <X size={16} />
                     </div>
@@ -131,7 +131,7 @@ export function ChatSessionDisplay({
                       <div className={"-m-1"}>
                         <Popover>
                           <PopoverTrigger asChild>
-                            <div className="hover:bg-black/10 p-1 rounded">
+                            <div className="hover:bg-background-inverted/10 p-1 rounded">
                               <Ellipsis size={16} />
                             </div>
                           </PopoverTrigger>
@@ -143,7 +143,7 @@ export function ChatSessionDisplay({
                               >
                                 <Button
                                   variant="ghost"
-                                  className="w-full flex justify-start hover:bg-primary hover:text-white"
+                                  className="w-full flex justify-start hover:bg-primary hover:text-inverted"
                                 >
                                   <Share2 className="mr-2" size={16} />
                                   Share
@@ -152,7 +152,7 @@ export function ChatSessionDisplay({
                               <Button
                                 variant="ghost"
                                 onClick={() => setIsRenamingChat(true)}
-                                className="w-full hover:bg-primary hover:text-white"
+                                className="w-full hover:bg-primary hover:text-inverted"
                               >
                                 <Pencil className="mr-2" size={16} />
                                 Rename

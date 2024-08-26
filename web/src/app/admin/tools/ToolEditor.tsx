@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { MethodSpec, ToolSnapshot } from "@/lib/tools/interfaces";
 import { TextFormField } from "@/components/admin/connectors/Field";
@@ -46,11 +46,11 @@ function ToolForm({
   isSubmitting: boolean;
   definitionErrorState: [
     string | null,
-    React.Dispatch<React.SetStateAction<string | null>>
+    React.Dispatch<React.SetStateAction<string | null>>,
   ];
   methodSpecsState: [
     MethodSpec[] | null,
-    React.Dispatch<React.SetStateAction<MethodSpec[] | null>>
+    React.Dispatch<React.SetStateAction<MethodSpec[] | null>>,
   ];
 }) {
   const [definitionError, setDefinitionError] = definitionErrorState;
@@ -134,7 +134,7 @@ function ToolForm({
         <div className="mt-4">
           <h3 className="mb-2 text-base font-semibold">Available methods</h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
+            <table className="min-w-full bg-background border border-gray-200">
               <thead>
                 <tr>
                   <th className="px-4 py-2 border-b">Name</th>

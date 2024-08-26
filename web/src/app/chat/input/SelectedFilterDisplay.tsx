@@ -1,8 +1,8 @@
 import { SourceIcon } from "@/components/SourceIcon";
 import React from "react";
-import { FiBookmark, FiTag, FiX } from "react-icons/fi";
 import { FilterManager } from "@/lib/hooks";
 import { DateRangePickerValue } from "@tremor/react";
+import { X, Tag, Bookmark } from "lucide-react";
 
 const displayTimeRange = (timeRange: DateRangePickerValue) => {
   if (timeRange.selectValue) {
@@ -47,7 +47,7 @@ const SelectedFilter = ({
     onClick={onClick}
   >
     {children}
-    <FiX className="ml-2" size={14} />
+    <X className="ml-2" size={14} />
   </div>
 );
 
@@ -115,7 +115,7 @@ export function SelectedFilterDisplay({
             >
               <>
                 <div>
-                  <FiBookmark />
+                  <Bookmark size={14} />
                 </div>
                 <span className="ml-2">{documentSetName}</span>
               </>
@@ -136,7 +136,7 @@ export function SelectedFilterDisplay({
             >
               <>
                 <div>
-                  <FiTag />
+                  <Tag size={14} />
                 </div>
                 <span className="ml-1 max-w-[100px] text-ellipsis line-clamp-1 break-all">
                   {tag.tag_key}

@@ -26,7 +26,7 @@ export function Modal({
     <div>
       <div
         className={`
-        fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm
+        fixed inset-0 bg-background-inverted bg-opacity-30 backdrop-blur-sm
         flex items-center justify-center z-modal
       `}
         onClick={onOutsideClick}

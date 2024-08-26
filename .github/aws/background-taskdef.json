@@ -1,72 +1,71 @@
 {
-    "family": "background",
-    "networkMode": "awsvpc",
-    "containerDefinitions": [
-      {
-        "name": "background",
-        "image": "471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest",
-        "essential": true,
-        "memory": 5120,
-        "cpu": 2560,
-        "command": [
-          "/usr/bin/supervisord",
-          "-c",
-          "/etc/supervisor/conf.d/supervisord.conf"
-        ],
-        "environment": [
-          { "name": "ENCRYPTION_KEY_SECRET", "value": "" },
-          { "name": "GEN_AI_MODEL_PROVIDER", "value": "" },
-          { "name": "GEN_AI_MODEL_VERSION", "value": "" },
-          { "name": "FAST_GEN_AI_MODEL_VERSION", "value": "" },
-          { "name": "GEN_AI_API_KEY", "value": "" },
-          { "name": "GEN_AI_API_ENDPOINT", "value": "" },
-          { "name": "GEN_AI_API_VERSION", "value": "" },
-          { "name": "GEN_AI_LLM_PROVIDER_TYPE", "value": "" },
-          { "name": "GEN_AI_MAX_TOKENS", "value": "" },
-          { "name": "QA_TIMEOUT", "value": "" },
-          { "name": "MAX_CHUNKS_FED_TO_CHAT", "value": "" },
-          { "name": "DISABLE_LLM_FILTER_EXTRACTION", "value": "" },
-          { "name": "DISABLE_LLM_CHUNK_FILTER", "value": "" },
-          { "name": "DISABLE_LLM_CHOOSE_SEARCH", "value": "" },
-          { "name": "DISABLE_LLM_QUERY_REPHRASE", "value": "" },
-          { "name": "DISABLE_GENERATIVE_AI", "value": "" },
-          { "name": "GENERATIVE_MODEL_ACCESS_CHECK_FREQ", "value": "" },
-          { "name": "DISABLE_LITELLM_STREAMING", "value": "" },
-          { "name": "LITELLM_EXTRA_HEADERS", "value": "" },
-          { "name": "BING_API_KEY", "value": "" },
-          { "name": "DOC_TIME_DECAY", "value": "" },
-          { "name": "HYBRID_ALPHA", "value": "" },
-          { "name": "EDIT_KEYWORD_QUERY", "value": "" },
-          { "name": "MULTILINGUAL_QUERY_EXPANSION", "value": "" },
-          { "name": "LANGUAGE_HINT", "value": "" },
-          { "name": "LANGUAGE_CHAT_NAMING_HINT", "value": "" },
-          { "name": "QA_PROMPT_OVERRIDE", "value": "" },
-          { "name": "POSTGRES_HOST", "value": "relational_db" },
-          { "name": "POSTGRES_USER", "value": "" },
-          { "name": "POSTGRES_PASSWORD", "value": "" },
-          { "name": "POSTGRES_DB", "value": "" },
-          { "name": "VESPA_HOST", "value": "index" },
-          { "name": "MODEL_SERVER_HOST", "value": "inference_model_server" },
-          { "name": "MODEL_SERVER_PORT", "value": "" },
-          { "name": "DISABLE_TELEMETRY", "value": "" },
-          { "name": "LOG_LEVEL", "value": "info" },
-          { "name": "LOG_ALL_MODEL_INTERACTIONS", "value": "" },
-          { "name": "LOG_VESPA_TIMING_INFORMATION", "value": "" },
-          { "name": "LOG_ENDPOINT_LATENCY", "value": "" },
-          { "name": "ENV_SEED_CONFIGURATION", "value": "" },
-          { "name": "ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "value": "false" },
-          { "name": "API_KEY_HASH_ROUNDS", "value": "" },
-          { "name": "WEBSERVER_AUTO_START", "value": "false" }
-        ],
-        "logConfiguration": {
-          "logDriver": "awslogs",
-          "options": {
-            "awslogs-group": "/ecs/background",
-            "awslogs-region": "us-east-1",
-            "awslogs-stream-prefix": "ecs"
-          }
+  "family": "background",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "background",
+      "image": "471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest",
+      "essential": true,
+      "memory": 5120,
+      "cpu": 2560,
+      "command": [
+        "/usr/bin/supervisord",
+        "-c",
+        "/etc/supervisor/conf.d/supervisord.conf"
+      ],
+      "environment": [
+        { "name": "ENCRYPTION_KEY_SECRET", "value": "" },
+        { "name": "GEN_AI_MODEL_PROVIDER", "value": "" },
+        { "name": "GEN_AI_MODEL_VERSION", "value": "" },
+        { "name": "FAST_GEN_AI_MODEL_VERSION", "value": "" },
+        { "name": "GEN_AI_API_KEY", "value": "" },
+        { "name": "GEN_AI_API_ENDPOINT", "value": "" },
+        { "name": "GEN_AI_API_VERSION", "value": "" },
+        { "name": "GEN_AI_LLM_PROVIDER_TYPE", "value": "" },
+        { "name": "GEN_AI_MAX_TOKENS", "value": "" },
+        { "name": "QA_TIMEOUT", "value": "" },
+        { "name": "MAX_CHUNKS_FED_TO_CHAT", "value": "" },
+        { "name": "DISABLE_LLM_FILTER_EXTRACTION", "value": "" },
+        { "name": "DISABLE_LLM_CHUNK_FILTER", "value": "" },
+        { "name": "DISABLE_LLM_CHOOSE_SEARCH", "value": "" },
+        { "name": "DISABLE_LLM_QUERY_REPHRASE", "value": "" },
+        { "name": "DISABLE_GENERATIVE_AI", "value": "" },
+        { "name": "GENERATIVE_MODEL_ACCESS_CHECK_FREQ", "value": "" },
+        { "name": "DISABLE_LITELLM_STREAMING", "value": "" },
+        { "name": "LITELLM_EXTRA_HEADERS", "value": "" },
+        { "name": "BING_API_KEY", "value": "" },
+        { "name": "DOC_TIME_DECAY", "value": "" },
+        { "name": "HYBRID_ALPHA", "value": "" },
+        { "name": "EDIT_KEYWORD_QUERY", "value": "" },
+        { "name": "MULTILINGUAL_QUERY_EXPANSION", "value": "" },
+        { "name": "LANGUAGE_HINT", "value": "" },
+        { "name": "LANGUAGE_CHAT_NAMING_HINT", "value": "" },
+        { "name": "QA_PROMPT_OVERRIDE", "value": "" },
+        { "name": "POSTGRES_HOST", "value": "relational_db" },
+        { "name": "POSTGRES_USER", "value": "" },
+        { "name": "POSTGRES_PASSWORD", "value": "" },
+        { "name": "POSTGRES_DB", "value": "" },
+        { "name": "VESPA_HOST", "value": "index" },
+        { "name": "MODEL_SERVER_HOST", "value": "inference_model_server" },
+        { "name": "MODEL_SERVER_PORT", "value": "" },
+        { "name": "DISABLE_TELEMETRY", "value": "" },
+        { "name": "LOG_LEVEL", "value": "info" },
+        { "name": "LOG_ALL_MODEL_INTERACTIONS", "value": "" },
+        { "name": "LOG_VESPA_TIMING_INFORMATION", "value": "" },
+        { "name": "LOG_ENDPOINT_LATENCY", "value": "" },
+        { "name": "ENV_SEED_CONFIGURATION", "value": "" },
+        { "name": "ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "value": "false" },
+        { "name": "API_KEY_HASH_ROUNDS", "value": "" },
+        { "name": "WEBSERVER_AUTO_START", "value": "false" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/background",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
         }
       }
-    ]
-  }
-  
+    }
+  ]
+}

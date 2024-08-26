@@ -55,7 +55,7 @@ export default async function Page({ params }: { params: { chatId: string } }) {
         <Header user={user} />
       </div>
 
-      <div className="flex relative bg-background text-default overflow-hidden pt-16 h-screen">
+      <div className="flex relative bg-background ault overflow-hidden pt-16 h-screen">
         <SharedChatDisplay chatSession={chatSession} />
       </div>
     </div>

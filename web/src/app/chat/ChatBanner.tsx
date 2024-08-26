@@ -24,7 +24,7 @@ export function ChatBanner() {
       border
       flex`}
     >
-      <div className="flex flex-col mx-auto text-sm text-emphasis">
+      <div className="flex flex-col mx-auto text-sm ">
         <div className="my-auto">
           <ReactMarkdown
             className="max-w-full prose"

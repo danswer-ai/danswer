@@ -62,7 +62,7 @@ export function SharedChatDisplay({
                 {chatSession.description ||
                   `Chat ${chatSession.chat_session_id}`}
               </h1>
-              <p className="text-emphasis">
+              <p className="">
                 {humanReadableFormat(chatSession.time_created)}
               </p>
 

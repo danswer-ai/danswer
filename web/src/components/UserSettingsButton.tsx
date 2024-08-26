@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { User as UserTypes } from "@/lib/types";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { LOGOUT_DISABLED } from "@/lib/constants";
-import { Bell, CircleUserRound, User } from "lucide-react";
+import { Bell, CircleUserRound, LogOut, User } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 
 export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
@@ -41,25 +41,26 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
           className="w-full relative cursor-pointer"
         >
           <div
-            className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 text-default py-2"
+            className="flex items-center justify-center bg-background rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 ault py-2"
             onClick={() => setUserInfoVisible(!userInfoVisible)}
           >
-            {user && user.email ? (
+            {/* {user && user.email ? (
               user.email[0].toUpperCase()
             ) : (
               <User size={25} className="mx-auto" />
-            )}
+            )} */}
+            <User size={25} className="mx-auto" />
           </div>
         </PopoverTrigger>
         <PopoverContent className={`w-[250px] !z-[999] mb-2 ml-4 text-sm`}>
-          <div className="w-full text-black-800">
+          <div className="w-full">
             <>
               <Link
                 href=""
-                className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white items-center gap-3 group"
+                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted items-center gap-3 group"
               >
                 <div
-                  className="flex items-center justify-center bg-white rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 text-default py-2"
+                  className="flex items-center justify-center bg-background rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 ault py-2 text-default"
                   onClick={() => setUserInfoVisible(!userInfoVisible)}
                 >
                   {user && user.email ? (
@@ -69,10 +70,10 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
                   )}
                 </div>
                 <div className="flex flex-col w-[160px]">
-                  <span className="text-dark-700 truncate group-hover:text-white">
+                  <span className="truncate group-hover:text-inverted">
                     Johny Doe
                   </span>
-                  <span className="text-dark-500 truncate group-hover:text-white">
+                  <span className="text-dark-500 truncate group-hover:text-inverted">
                     {user!.email}
                   </span>
                 </div>
@@ -81,7 +82,7 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
             </>
             <Link
               href="/profile"
-              className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white"
+              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
             >
               <User className="my-auto mr-3" size={24} strokeWidth={1.5} />
               Profile Settings
@@ -90,7 +91,7 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
               <>
                 <Link
                   href="/admin/indexing/status"
-                  className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white"
+                  className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
                 >
                   <FiTool
                     className="my-auto mr-3"
@@ -101,13 +102,13 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
                 </Link>
               </>
             )}
-            <Link
+            {/*  <Link
               href="/notification"
-              className="flex py-3 px-4 cursor-pointer rounded hover:bg-primary hover:text-white"
+              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
             >
               <Bell className="my-auto mr-3" size={24} strokeWidth={1.5} />
               Notification
-            </Link>
+            </Link> */}
             {showLogout && (
               <>
                 {showAdminPanel && (
@@ -115,9 +116,9 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
                 )}
                 <div
                   onClick={handleLogout}
-                  className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-primary hover:text-white rounded"
+                  className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-primary hover:text-inverted rounded-regular"
                 >
-                  <FiLogOut
+                  <LogOut
                     className="my-auto mr-3"
                     size={24}
                     strokeWidth={1.5}

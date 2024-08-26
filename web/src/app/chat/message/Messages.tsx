@@ -159,7 +159,7 @@ export const AIMessage = ({
               assistant={alternativeAssistant || currentPersona}
             />
 
-            <div className="my-auto ml-2 font-bold text-black">
+            <div className="my-auto ml-2 font-bold text-inverted-inverted">
               {personaName || "enMedD AI"}
             </div>
 
@@ -275,7 +275,7 @@ export const AIMessage = ({
                         <CodeBlock {...props} content={content as string} />
                       ),
                       p: ({ node, ...props }) => (
-                        <p {...props} className="text-default mt-2.5" />
+                        <p {...props} className="ault mt-2.5" />
                       ),
                     }}
                     remarkPlugins={[remarkGfm]}
@@ -292,7 +292,7 @@ export const AIMessage = ({
             )}
             {citedDocuments && citedDocuments.length > 0 && (
               <div className="mt-2 flex flex-col gap-1">
-                <b className="text-sm text-black">Sources:</b>
+                <b className="text-sm text-inverted-inverted">Sources:</b>
                 <div className="flex flex-wrap gap-2">
                   {citedDocuments
                     .filter(([_, document]) => document.semantic_identifier)
@@ -382,7 +382,7 @@ function MessageSwitcher({
       >
         <ChevronLeft />
       </Button>
-      <span className="select-none text-emphasis text-medium">
+      <span className="select-none  text-medium">
         {currentPage} / {totalPages}
       </span>
       <Button
@@ -469,7 +469,7 @@ export const HumanMessage = ({
       <div className="w-full">
         <div className="">
           <div className="flex">
-            <div className="flex items-center justify-center bg-white rounded-full min-h-[34px] min-w-[34px] max-h-[34px] max-w-[34px] aspect-square text-base font-normal border-2 border-gray-900 text-default py-2 mx-1">
+            <div className="flex items-center justify-center bg-background rounded-full min-h-[34px] min-w-[34px] max-h-[34px] max-w-[34px] aspect-square text-base font-normal border-2 border-gray-900 ault py-2 mx-1">
               {user && user.email ? (
                 user.email[0].toUpperCase()
               ) : (
@@ -477,7 +477,9 @@ export const HumanMessage = ({
               )}
             </div>
 
-            <div className="my-auto ml-2 font-bold text-black">You</div>
+            <div className="my-auto ml-2 font-bold text-inverted-inverted">
+              You
+            </div>
           </div>
           <div className="flex flex-wrap pt-4 pl-1.5 md:pl-12 w-full">
             <div className="break-words w-full">
@@ -539,7 +541,6 @@ export const HumanMessage = ({
                       }}
                     />
                     <div className="flex justify-end gap-2 pr-4 mt-2">
-                      <Button onClick={handleEditSubmit}>Submit</Button>
                       <Button
                         onClick={() => {
                           setEditedContent(content);
@@ -549,6 +550,7 @@ export const HumanMessage = ({
                       >
                         Cancel
                       </Button>
+                      <Button onClick={handleEditSubmit}>Submit</Button>
                     </div>
                   </div>
                 </div>

@@ -13,12 +13,17 @@ spec:
         app: background
     spec:
       containers:
-      - name: background
-        image: danswer/danswer-backend:latest
-        imagePullPolicy: IfNotPresent
-        command: ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-        # There are some extra values since this is shared between services
-        # There are no conflicts though, extra env variables are simply ignored
-        envFrom:
-        - configMapRef:
-            name: env-configmap
+        - name: background
+          image: danswer/danswer-backend:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "/usr/bin/supervisord",
+              "-c",
+              "/etc/supervisor/conf.d/supervisord.conf",
+            ]
+          # There are some extra values since this is shared between services
+          # There are no conflicts though, extra env variables are simply ignored
+          envFrom:
+            - configMapRef:
+                name: env-configmap

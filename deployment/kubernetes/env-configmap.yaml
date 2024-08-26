@@ -4,15 +4,15 @@ metadata:
   name: env-configmap
 data:
   # Auth Setting, also check the secrets file
-  AUTH_TYPE: "disabled"  # Change this for production uses unless Danswer is only accessible behind VPN
-  ENCRYPTION_KEY_SECRET: ""  # This should not be specified directly in the yaml, this is just for reference
-  SESSION_EXPIRE_TIME_SECONDS: "86400"  # 1 Day Default
-  VALID_EMAIL_DOMAINS: ""  # Can be something like danswer.ai, as an extra double-check
+  AUTH_TYPE: "disabled" # Change this for production uses unless Danswer is only accessible behind VPN
+  ENCRYPTION_KEY_SECRET: "" # This should not be specified directly in the yaml, this is just for reference
+  SESSION_EXPIRE_TIME_SECONDS: "86400" # 1 Day Default
+  VALID_EMAIL_DOMAINS: "" # Can be something like danswer.ai, as an extra double-check
   SMTP_SERVER: "" # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
   SMTP_PORT: "" # For sending verification emails, if unspecified then defaults to '587'
-  SMTP_USER: ""  # 'your-email@company.com'
-  SMTP_PASS: ""  # 'your-gmail-password'
-  EMAIL_FROM: ""  # 'your-email@company.com' SMTP_USER missing used instead
+  SMTP_USER: "" # 'your-email@company.com'
+  SMTP_PASS: "" # 'your-gmail-password'
+  EMAIL_FROM: "" # 'your-email@company.com' SMTP_USER missing used instead
   # Gen AI Settings
   GEN_AI_MODEL_PROVIDER: ""
   GEN_AI_MODEL_VERSION: ""
@@ -71,6 +71,6 @@ data:
   LOG_ALL_MODEL_INTERACTIONS: ""
   LOG_VESPA_TIMING_INFORMATION: ""
   # Shared or Non-backend Related
-  INTERNAL_URL: "http://api-server-service:80"  # for web server
-  WEB_DOMAIN: "http://localhost:3000"  # for web server and api server
-  DOMAIN: "localhost"  # for nginx
+  INTERNAL_URL: "http://api-server-service:80" # for web server
+  WEB_DOMAIN: "http://localhost:3000" # for web server and api server
+  DOMAIN: "localhost" # for nginx

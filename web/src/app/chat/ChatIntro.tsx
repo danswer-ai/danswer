@@ -35,9 +35,7 @@ export function ChatIntro({
             <div className="pt-4">
               {livePersona.document_sets.length > 0 && (
                 <div className="mt-2">
-                  <p className="mt-4 mb-1 font-bold text-emphasis">
-                    Knowledge Sets:{" "}
-                  </p>
+                  <p className="mt-4 mb-1 font-bold ">Knowledge Sets: </p>
                   <div className="flex flex-wrap gap-2">
                     {livePersona.document_sets.map((documentSet) => (
                       <div key={documentSet.id} className="w-fit">

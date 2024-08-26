@@ -61,7 +61,7 @@ interface IconProps {
   className?: string;
 }
 
-export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-default";
+export const defaultTailwindCSS = "my-auto flex flex-shrink-0 ault";
 export const defaultTailwindCSSBlue = "my-auto flex flex-shrink-0 text-link";
 
 export const PlugIcon = ({

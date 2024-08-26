@@ -62,7 +62,7 @@ export const FeedbackModal = ({
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl">
         <DialogHeader>
-          <DialogTitle className="flex text-2xl font-bold text-emphasis">
+          <DialogTitle className="flex text-2xl font-bold ">
             <div className="my-auto mr-1">
               {feedbackType === "like" ? (
                 <FiThumbsUp className="my-auto mr-2 text-green-500" />

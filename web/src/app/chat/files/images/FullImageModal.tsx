@@ -22,7 +22,7 @@ export function FullImageModal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-80 z-50" />
+        <Dialog.Overlay className="fixed inset-0 bg-background-inverted bg-opacity-80 z-50" />
         <Dialog.Content
           className={`fixed 
             inset-0 

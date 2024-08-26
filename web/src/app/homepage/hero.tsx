@@ -31,7 +31,7 @@ export default function Hero() {
             </div>
 
             <div className="flex items-center gap-6 font-semibold">
-              <button className="py-3 px-6 bg-[#2039F3] text-white rounded-[5px]">
+              <button className="py-3 px-6 bg-[#2039F3] text-inverted rounded-[5px]">
                 Get a Demo
               </button>
               <Link

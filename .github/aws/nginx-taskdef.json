@@ -1,65 +1,62 @@
 {
-    "family": "nginx",
-    "networkMode": "awsvpc",
-    "containerDefinitions": [
-      {
-        "name": "nginx",
-        "image": "nginx:1.23.4-alpine",
-        "essential": true,
-        "memory": 512,
-        "cpu": 256,
-        "command": [
-          "/bin/sh",
-          "-c",
-          "dos2unix /etc/nginx/conf.d/run-nginx.sh && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
-        ],
-        "environment": [
-          { "name": "DOMAIN", "value": "localhost" }
-        ],
-        "dependsOn": [
-          {
-            "containerName": "api_server",
-            "condition": "START"
-          },
-          {
-            "containerName": "web_server",
-            "condition": "START"
-          }
-        ],
-        "portMappings": [
-          {
-            "containerPort": 80,
-            "hostPort": 80,
-            "protocol": "tcp"
-          },
-          {
-            "containerPort": 80,
-            "hostPort": 3000,
-            "protocol": "tcp"
-          }
-        ],
-        "mountPoints": [
-          {
-            "sourceVolume": "nginx_conf",
-            "containerPath": "/etc/nginx/conf.d"
-          }
-        ],
-        "logConfiguration": {
-          "logDriver": "json-file",
-          "options": {
-            "max-size": "50m",
-            "max-file": "6"
-          }
+  "family": "nginx",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "nginx",
+      "image": "nginx:1.23.4-alpine",
+      "essential": true,
+      "memory": 512,
+      "cpu": 256,
+      "command": [
+        "/bin/sh",
+        "-c",
+        "dos2unix /etc/nginx/conf.d/run-nginx.sh && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
+      ],
+      "environment": [{ "name": "DOMAIN", "value": "localhost" }],
+      "dependsOn": [
+        {
+          "containerName": "api_server",
+          "condition": "START"
+        },
+        {
+          "containerName": "web_server",
+          "condition": "START"
+        }
+      ],
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        },
+        {
+          "containerPort": 80,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "nginx_conf",
+          "containerPath": "/etc/nginx/conf.d"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "json-file",
+        "options": {
+          "max-size": "50m",
+          "max-file": "6"
         }
       }
-    ],
-    "volumes": [
-      {
-        "name": "nginx_conf",
-        "host": {
-          "sourcePath": "/path/to/local/nginx/conf"
-        }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "nginx_conf",
+      "host": {
+        "sourcePath": "/path/to/local/nginx/conf"
       }
-    ]
-  }
-  
+    }
+  ]
+}

@@ -35,13 +35,11 @@ export function EmphasizedClickable({
           border-gray-400
           shadow-md
           rounded-regular
-          font-medium 
-          text-emphasis
-          text-sm
           p-1
           select-none
           bg-hover-light
           hover:bg-hover
+          text-sm
           ${fullWidth ? "w-full" : ""}`}
     >
       {children}
@@ -66,13 +64,11 @@ export function BasicSelectable({
     <div
       className={`
           rounded-regular
-          font-medium 
-          text-emphasis 
           text-sm
-          ${padding && "p-2"}
+          ${padding && "px-4 py-2"}
           select-none
-          h-9
           flex items-center
+          h-10
           ${hasBorder ? "border border-border" : ""}
           ${selected ? "bg-hover" : "hover:bg-hover-light"} 
           ${fullWidth ? "w-full" : ""}`}

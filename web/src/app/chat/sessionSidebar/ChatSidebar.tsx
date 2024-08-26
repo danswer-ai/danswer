@@ -44,7 +44,6 @@ export const ChatSidebar = ({
   openedFolders,
   toggleSideBar,
   isExpanded,
-  isSearch,
   openSidebar,
 }: {
   existingChats: ChatSession[];
@@ -53,7 +52,6 @@ export const ChatSidebar = ({
   openedFolders: { [key: number]: boolean };
   toggleSideBar?: () => void;
   isExpanded?: boolean;
-  isSearch?: boolean;
   openSidebar?: boolean;
 }) => {
   let { user } = useChatContext();
@@ -137,11 +135,11 @@ export const ChatSidebar = ({
             </div>
           </div>
 
-          <div className="px-4 pb-6 pt-2 w-full">
+          {/* <div className="px-4 pb-6 pt-2 w-full">
             <Popover>
               <PopoverTrigger asChild className="w-full">
                 <div className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 shadow-sm text-sm">
-                  <div className="px-1.5 py-0.5 rounded bg-primary-foreground font-bold text-white">
+                  <div className="px-1.5 py-0.5 rounded bg-primary-foreground font-bold text-inverted">
                     D
                   </div>
                   <span>Default</span>
@@ -149,14 +147,14 @@ export const ChatSidebar = ({
               </PopoverTrigger>
               <PopoverContent className="w-full">
                 <div className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 text-sm w-full">
-                  <div className="px-1.5 py-0.5 rounded bg-primary-foreground font-bold text-white">
+                  <div className="px-1.5 py-0.5 rounded bg-primary-foreground font-bold text-inverted">
                     D
                   </div>
                   <span>Development Team</span>
                 </div>
               </PopoverContent>
             </Popover>
-          </div>
+          </div> */}
 
           <div className="h-full overflow-auto">
             <div className="flex px-4">
@@ -176,13 +174,11 @@ export const ChatSidebar = ({
                 <></>
               )}
             </div>
-            <div className="px-4 text-sm text-emphasis font-medium flex flex-col gap-1">
+            <div className="px-4 text-sm flex flex-col">
               {settings.search_page_enabled && (
                 <Link
                   href="/search"
-                  className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 ${
-                    isSearch ? "shadow-sm" : ""
-                  }`}
+                  className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
                 >
                   <Search size={16} className="min-w-4 min-h-4" />
                   Search
@@ -192,16 +188,14 @@ export const ChatSidebar = ({
                 <>
                   <Link
                     href="/chat"
-                    className={`flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 ${
-                      !isSearch ? "shadow-sm" : ""
-                    }`}
+                    className="flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 bg-primary text-white"
                   >
                     <MessageCircleMore size={16} className="min-w-4 min-h-4" />
                     Chat
                   </Link>
                   <Link
                     href="/assistants/mine"
-                    className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
+                    className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
                   >
                     <Headset size={16} />
                     <span className="truncate">Explore Assistants</span>
@@ -211,60 +205,56 @@ export const ChatSidebar = ({
               <Separator className="mt-4" />
             </div>
 
-            {!isSearch && (
-              <ChatTab
-                existingChats={existingChats}
-                currentChatId={currentChatId}
-                folders={folders}
-                openedFolders={openedFolders}
-                toggleSideBar={toggleSideBar}
-              />
-            )}
+            <ChatTab
+              existingChats={existingChats}
+              currentChatId={currentChatId}
+              folders={folders}
+              openedFolders={openedFolders}
+              toggleSideBar={toggleSideBar}
+            />
           </div>
 
-          {!isSearch && (
-            <div className="flex items-center gap-3 px-4 pt-4 mt-auto">
-              <Link
-                href={
-                  "/chat" +
-                  (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                  currentChatSession
-                    ? `?assistantId=${currentChatSession.persona_id}`
-                    : "")
-                }
-                className=" w-full"
+          <div className="flex items-center gap-3 px-4 pt-5 mt-auto">
+            <Link
+              href={
+                "/chat" +
+                (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+                currentChatSession
+                  ? `?assistantId=${currentChatSession.persona_id}`
+                  : "")
+              }
+              className=" w-full"
+            >
+              <Button
+                className="transition-all ease-in-out duration-300 w-full"
+                onClick={toggleSideBar}
               >
-                <Button
-                  className="transition-all ease-in-out duration-300 w-full"
-                  onClick={toggleSideBar}
-                >
-                  <Plus size={16} />
-                  Start new chat
-                </Button>
-              </Link>
-              <div>
-                <Button
-                  onClick={() =>
-                    createFolder("New Folder")
-                      .then((folderId) => {
-                        console.log(`Folder created with ID: ${folderId}`);
-                        router.refresh();
-                      })
-                      .catch((error) => {
-                        console.error("Failed to create folder:", error);
-                        setPopup({
-                          message: `Failed to create folder: ${error.message}`,
-                          type: "error",
-                        });
-                      })
-                  }
-                  size="icon"
-                >
-                  <FolderPlus size={16} />
-                </Button>
-              </div>
+                <Plus size={16} />
+                Start new chat
+              </Button>
+            </Link>
+            <div>
+              <Button
+                onClick={() =>
+                  createFolder("New Folder")
+                    .then((folderId) => {
+                      console.log(`Folder created with ID: ${folderId}`);
+                      router.refresh();
+                    })
+                    .catch((error) => {
+                      console.error("Failed to create folder:", error);
+                      setPopup({
+                        message: `Failed to create folder: ${error.message}`,
+                        type: "error",
+                      });
+                    })
+                }
+                size="icon"
+              >
+                <FolderPlus size={16} />
+              </Button>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </>
