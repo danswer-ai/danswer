@@ -3,8 +3,9 @@ concurrency:
   group: Run-Integration-Tests-${{ github.head_ref }}
   cancel-in-progress: true
 
-on:
-  pull_request: null
+on: 
+  push:
+    branches: [ main ]
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -51,7 +52,7 @@ jobs:
           push: true
           load: true
           tags: danswer/danswer-backend:it
-          cache-from: type=registry,ref=danswer/danswer-backend:it
+          # cache-from: type=registry,ref=danswer/danswer-backend:it
           cache-to: |
             type=registry,ref=danswer/danswer-backend:it,mode=max
             type=inline
