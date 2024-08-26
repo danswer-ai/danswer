@@ -65,18 +65,20 @@ export const useObjectState = <T>(
 const INDEXING_STATUS_URL = "/api/manage/admin/connector/indexing-status";
 
 export const useConnectorCredentialIndexingStatus = (
-  refreshInterval = 30000 // 30 seconds
+  refreshInterval = 30000, // 30 seconds
+  getEditable = false
 ) => {
   const { mutate } = useSWRConfig();
+  const url = `${INDEXING_STATUS_URL}${getEditable ? "?get_editable=true" : ""}`;
   const swrResponse = useSWR<ConnectorIndexingStatus<any, any>[]>(
-    INDEXING_STATUS_URL,
+    url,
     errorHandlingFetcher,
     { refreshInterval: refreshInterval }
   );
 
   return {
     ...swrResponse,
-    refreshIndexingStatus: () => mutate(INDEXING_STATUS_URL),
+    refreshIndexingStatus: () => mutate(url),
   };
 };
 

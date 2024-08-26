@@ -31,7 +31,7 @@ import { Bubble } from "@/components/Bubble";
 import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
 import { AddTokenRateLimitForm } from "./AddTokenRateLimitForm";
 import { GenericTokenRateLimitTable } from "@/app/admin/token-rate-limits/TokenRateLimitTables";
-import { getCurrentUser } from "@/lib/user";
+import { useUser } from "@/components/user/UserProvider";
 
 interface GroupDisplayProps {
   users: User[];
@@ -106,7 +106,7 @@ const UserRoleDropdown = ({
       </div>
     );
   } else {
-    return <div>{user.role}</div>;
+    return <div>{localRole}</div>;
   }
 };
 
@@ -120,23 +120,12 @@ export const GroupDisplay = ({
   const [addMemberFormVisible, setAddMemberFormVisible] = useState(false);
   const [addConnectorFormVisible, setAddConnectorFormVisible] = useState(false);
   const [addRateLimitFormVisible, setAddRateLimitFormVisible] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
+
+  const { isLoadingUser, isAdmin } = useUser();
+  if (isLoadingUser) {
+    return <></>;
+  }
+
   const handlePopup = (message: string, type: "success" | "error") => {
     setPopup({ message, type });
   };
@@ -175,23 +164,21 @@ export const GroupDisplay = ({
                 <TableRow>
                   <TableHeaderCell>Email</TableHeaderCell>
                   <TableHeaderCell>Role</TableHeaderCell>
-                  {isAdmin && (
-                    <TableHeaderCell className="flex w-full">
-                      <div className="ml-auto">Remove User</div>
-                    </TableHeaderCell>
-                  )}
+                  <TableHeaderCell className="flex w-full">
+                    <div className="ml-auto">Remove User</div>
+                  </TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {userGroup.users.map((user) => {
+                {userGroup.users.map((groupMember) => {
                   return (
-                    <TableRow key={user.id}>
+                    <TableRow key={groupMember.id}>
                       <TableCell className="whitespace-normal break-all">
-                        {user.email}
+                        {groupMember.email}
                       </TableCell>
                       <TableCell>
                         <UserRoleDropdown
-                          user={user}
+                          user={groupMember}
                           group={userGroup}
                           onSuccess={onRoleChangeSuccess}
                           onError={onRoleChangeError}
@@ -201,7 +188,10 @@ export const GroupDisplay = ({
                       <TableCell>
                         <div className="flex w-full">
                           <div className="ml-auto m-2">
-                            {isAdmin && (
+                            {(isAdmin ||
+                              !userGroup.curator_ids.includes(
+                                groupMember.id
+                              )) && (
                               <DeleteButton
                                 onClick={async () => {
                                   const response = await updateUserGroup(
@@ -210,7 +200,7 @@ export const GroupDisplay = ({
                                       user_ids: userGroup.users
                                         .filter(
                                           (userGroupUser) =>
-                                            userGroupUser.id !== user.id
+                                            userGroupUser.id !== groupMember.id
                                         )
                                         .map(
                                           (userGroupUser) => userGroupUser.id
@@ -254,17 +244,15 @@ export const GroupDisplay = ({
         )}
       </div>
 
-      {isAdmin && (
-        <Button
-          className="mt-3"
-          size="xs"
-          color="green"
-          onClick={() => setAddMemberFormVisible(true)}
-          disabled={!userGroup.is_up_to_date}
-        >
-          Add Users
-        </Button>
-      )}
+      <Button
+        className="mt-3"
+        size="xs"
+        color="green"
+        onClick={() => setAddMemberFormVisible(true)}
+        disabled={!userGroup.is_up_to_date}
+      >
+        Add Users
+      </Button>
 
       {addMemberFormVisible && (
         <AddMemberForm
@@ -355,17 +343,15 @@ export const GroupDisplay = ({
         )}
       </div>
 
-      {isAdmin && (
-        <Button
-          className="mt-3"
-          onClick={() => setAddConnectorFormVisible(true)}
-          size="xs"
-          color="green"
-          disabled={!userGroup.is_up_to_date}
-        >
-          Add Connectors
-        </Button>
-      )}
+      <Button
+        className="mt-3"
+        onClick={() => setAddConnectorFormVisible(true)}
+        size="xs"
+        color="green"
+        disabled={!userGroup.is_up_to_date}
+      >
+        Add Connectors
+      </Button>
 
       {addConnectorFormVisible && (
         <AddConnectorForm

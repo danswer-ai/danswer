@@ -558,13 +558,14 @@ class EmbeddingModel(Base):
     index_name: Mapped[str] = mapped_column(String)
 
     # New field for cloud provider relationship
-    cloud_provider_id: Mapped[int | None] = mapped_column(
-        ForeignKey("embedding_provider.id")
+    provider_type: Mapped[EmbeddingProvider | None] = mapped_column(
+        ForeignKey("embedding_provider.provider_type"), nullable=True
     )
+
     cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(
         "CloudEmbeddingProvider",
         back_populates="embedding_models",
-        foreign_keys=[cloud_provider_id],
+        foreign_keys=[provider_type],
     )
 
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
@@ -588,15 +589,7 @@ class EmbeddingModel(Base):
 
     def __repr__(self) -> str:
         return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}',\
-          cloud_provider='{self.cloud_provider.name if self.cloud_provider else 'None'}')>"
-
-    @property
-    def provider_type(self) -> EmbeddingProvider | None:
-        return (
-            EmbeddingProvider(self.cloud_provider.name.lower())
-            if self.cloud_provider is not None
-            else None
-        )
+          cloud_provider='{self.cloud_provider.provider_type if self.cloud_provider else 'None'}')>"
 
     @property
     def api_key(self) -> str | None:
@@ -1073,24 +1066,18 @@ class LLMProvider(Base):
 class CloudEmbeddingProvider(Base):
     __tablename__ = "embedding_provider"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True)
-    api_key: Mapped[str | None] = mapped_column(EncryptedString())
-    default_model_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("embedding_model.id"), nullable=True
+    provider_type: Mapped[EmbeddingProvider] = mapped_column(
+        Enum(EmbeddingProvider), primary_key=True
     )
-
+    api_key: Mapped[str | None] = mapped_column(EncryptedString())
     embedding_models: Mapped[list["EmbeddingModel"]] = relationship(
         "EmbeddingModel",
         back_populates="cloud_provider",
-        foreign_keys="EmbeddingModel.cloud_provider_id",
-    )
-    default_model: Mapped["EmbeddingModel"] = relationship(
-        "EmbeddingModel", foreign_keys=[default_model_id]
+        foreign_keys="EmbeddingModel.provider_type",
     )
 
     def __repr__(self) -> str:
-        return f"<EmbeddingProvider(name='{self.name}')>"
+        return f"<EmbeddingProvider(type='{self.provider_type}')>"
 
 
 class DocumentSet(Base):

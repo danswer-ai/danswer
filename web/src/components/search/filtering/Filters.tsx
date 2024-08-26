@@ -411,12 +411,23 @@ export function HorizontalSourceSelector({
     });
   };
 
+  const resetSources = () => {
+    setSelectedSources([]);
+  };
+  const resetDocuments = () => {
+    setSelectedDocumentSets([]);
+  };
+
+  const resetTags = () => {
+    setSelectedTags([]);
+  };
+
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex space-x-2">
         <div className="w-24">
           <DateRangeSelector
-            isHoritontal
+            isHorizontal
             value={timeRange}
             onValueChange={setTimeRange}
           />
@@ -446,9 +457,10 @@ export function HorizontalSourceSelector({
             }
             icon={<FiMap size={16} />}
             defaultDisplay="Sources"
-            width="w-fit max-w-24 ellipsis truncate"
-            dropdownWidth="max-w-36 w-fit"
-            optionClassName="truncate break-all ellipsis"
+            width="w-fit ellipsis truncate"
+            resetValues={resetSources}
+            dropdownWidth="w-40"
+            optionClassName="truncate w-full break-all ellipsis"
           />
         )}
 
@@ -456,17 +468,13 @@ export function HorizontalSourceSelector({
           <FilterDropdown
             options={availableDocumentSets.map((documentSet) => ({
               key: documentSet.name,
-              display: (
-                <>
-                  <FiBookmark />
-                  <span className="ml-2 text-sm">{documentSet.name}</span>
-                </>
-              ),
+              display: <>{documentSet.name}</>,
             }))}
             selected={selectedDocumentSets}
             handleSelect={(option) => handleDocumentSetSelect(option.key)}
             icon={<FiBook size={16} />}
             defaultDisplay="Sets"
+            resetValues={resetDocuments}
             width="w-fit max-w-24 ellipsis truncate"
             dropdownWidth="max-w-36 w-fit"
             optionClassName="truncate break-all ellipsis"
@@ -499,6 +507,7 @@ export function HorizontalSourceSelector({
             }}
             icon={<FiTag size={16} />}
             defaultDisplay="Tags"
+            resetValues={resetTags}
             width="w-fit max-w-24 ellipsis truncate"
             dropdownWidth="max-w-80 w-fit"
             optionClassName="truncate break-all ellipsis"

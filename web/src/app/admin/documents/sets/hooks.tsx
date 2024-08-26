@@ -2,9 +2,9 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { DocumentSet } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 
-const DOCUMENT_SETS_URL = "/api/manage/admin/document-set";
+const DOCUMENT_SETS_URL = "/api/manage/document-set";
 const GET_EDITABLE_DOCUMENT_SETS_URL =
-  "/api/manage/admin/document-set?get_editable=true";
+  "/api/manage/document-set?get_editable=true";
 
 export function refreshDocumentSets() {
   mutate(DOCUMENT_SETS_URL);

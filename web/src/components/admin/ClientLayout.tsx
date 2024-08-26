@@ -204,9 +204,7 @@ export function ClientLayout({
                           name: (
                             <div className="flex">
                               <SearchIcon />
-                              <CustomTooltip content="Navigate here to update your search settings">
-                                <div className="ml-1">Search Settings</div>
-                              </CustomTooltip>
+                              <div className="ml-1">Search Settings</div>
                             </div>
                           ),
                           link: "/admin/configuration/search",

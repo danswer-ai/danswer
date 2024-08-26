@@ -15,6 +15,7 @@ import {
 } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Button, Divider } from "@tremor/react";
+import { useUser } from "@/components/user/UserProvider";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -34,23 +35,10 @@ const Main = () => {
     error: usersError,
   } = useUsers();
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
+  const { isLoadingUser, isAdmin } = useUser();
+  if (isLoadingUser) {
+    return <></>;
+  }
 
   if (isLoading || isCCPairsLoading || userIsLoading) {
     return <ThreeDotsLoader />;

@@ -1,7 +1,6 @@
 "use client";
 
 import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
-
 import { ChatSession } from "@/app/chat/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { User } from "@/lib/types";
