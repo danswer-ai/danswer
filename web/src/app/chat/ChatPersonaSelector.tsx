@@ -4,6 +4,7 @@ import { CustomDropdown, DefaultDropdownElement } from "@/components/Dropdown";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { checkUserIdOwnsAssistant } from "@/lib/assistants/checkOwnership";
+import { getAssistantIcon } from "@/lib/constants";
 
 function PersonaItem({
   id,
@@ -42,12 +43,15 @@ function PersonaItem({
           onSelect(id);
         }}
       >
-        {name}
-        {isSelected && (
-          <div className="ml-auto mr-1 my-auto">
-            <FiCheck />
-          </div>
-        )}
+        <div className="flex">
+          <img className="mr-2" width={20} src={getAssistantIcon(id)} alt="" />
+          <div className="text">{name}</div>
+          {isSelected && (
+            <div className="ml-auto mr-1 my-auto">
+              <FiCheck />
+            </div>
+          )}
+        </div>
       </div>
       {isOwner && (
         <Link href={`/assistants/edit/${id}`} className="mx-2 my-auto">
@@ -132,7 +136,12 @@ export function ChatPersonaSelector({
     >
       <div className="select-none text-xl text-strong font-bold flex px-2 rounded cursor-pointer hover:bg-hover-light">
         <div className="mt-auto">
-          {currentlySelectedPersona?.name || "Default"}
+          <div className="flex">
+            <img className="mr-2" src={getAssistantIcon(currentlySelectedPersona?.id||0)} width={25} alt="" />
+            <div className="text">
+              {currentlySelectedPersona?.name || "Default"}
+            </div>
+          </div>
         </div>
         <FiChevronDown className="my-auto ml-1" />
       </div>

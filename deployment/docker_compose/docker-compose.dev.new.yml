@@ -263,6 +263,7 @@ services:
     restart: always
     environment:
       - INTERNAL_URL=http://api_server:8080
+      - NEXT_PUBLIC_ASSISTANTS_ICON_MAPPING={"-1":"/svgs/icon-chat.svg","0":"/svgs/icon-chat.svg","13":"/svgs/icon-redhat-agent.svg","2":"/svgs/icon-summary-generation.svg","3":"/svgs/icon-email.svg","8":"/svgs/icon-infographic.svg","5":"/svgs/icon-ner.svg","6":"/svgs/icon-redhat-agent.svg","1":"/svgs/icon-smart-table-analyzer.svg","12":"/svgs/icon-smart-table-analyzer.svg","15":"/svgs/icon-smart-table-analyzer.svg","11":"/svgs/icon-email.svg","22":"/svgs/icon-email.svg"}
       - WEB_DOMAIN=${WEB_DOMAIN:-}
       - THEME_IS_DARK=${THEME_IS_DARK:-}
 
