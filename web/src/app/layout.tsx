@@ -19,6 +19,7 @@ import { EnterpriseSettings } from "./admin/settings/interfaces";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Logo } from "@/components/Logo";
 import { UserProvider } from "@/components/user/UserProvider";
+import { Card } from "@tremor/react";
 
 const inter = Inter({
   subsets: ["latin"],
