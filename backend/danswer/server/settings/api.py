@@ -43,29 +43,31 @@ async def refresh_user(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    if user and user.refresh_token is not None:
-        try:
-            user_manager = await get_user_manager().__anext__()
-            updated_refresh_details = await user_manager.refresh_oidc_token(
-                user, user.refresh_token
-            )
-            if updated_refresh_details is not None:
-                db_session.execute(
-                    update(User)
-                    .where(User.id == user.id)  # type: ignore
-                    .values(
-                        refresh_token=updated_refresh_details.refresh_token,
-                        oidc_expiry=updated_refresh_details.oidc_expiry,
-                    )
-                )
-                db_session.commit()
+    if not user or not user.refresh_token:
+        return
 
-        except Exception as e:
-            logger.error(f"Failed to refresh OIDC token: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied. Failed to refresh OIDC token.",
+    try:
+        user_manager = await anext(get_user_manager())
+        updated_refresh_details = await user_manager.refresh_oidc_token(
+            user, user.refresh_token
+        )
+
+        if updated_refresh_details:
+            db_session.execute(
+                update(User)
+                .where(User.id == user.id)  # type: ignore
+                .values(
+                    refresh_token=updated_refresh_details.refresh_token,
+                    oidc_expiry=updated_refresh_details.oidc_expiry,
+                )
             )
+            db_session.commit()
+    except Exception as e:
+        logger.error(f"Failed to refresh OIDC token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Failed to refresh OIDC token.",
+        )
 
 
 @admin_router.put("")

@@ -57,7 +57,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   if (SERVER_SIDE_ONLY__REFRESH_OIDC_EXPIRY) {
-    await fetchSS("/settings/refresh-user");
+    await fetchSS("/settings/refresh-user", {
+      method: "POST",
+    });
   }
 
   const combinedSettings = await fetchSettingsSS();

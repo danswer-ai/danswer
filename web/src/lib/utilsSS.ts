@@ -16,15 +16,26 @@ export function buildUrl(path: string) {
 }
 
 export function fetchSS(url: string, options?: RequestInit) {
-  const init = options || {
+  const defaultOptions: RequestInit = {
     credentials: "include",
     cache: "no-store",
     headers: {
+      "Content-Type": "application/json",
       cookie: cookies()
         .getAll()
         .map((cookie) => `${cookie.name}=${cookie.value}`)
         .join("; "),
     },
   };
-  return fetch(buildUrl(url), init);
+
+  const mergedOptions = {
+    ...defaultOptions,
+    ...options,
+    headers: {
+      ...defaultOptions.headers,
+      ...options?.headers,
+    },
+  };
+
+  return fetch(buildUrl(url), mergedOptions);
 }
