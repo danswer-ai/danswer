@@ -30,10 +30,10 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
+from danswer.auth.schemas import OIDCTokenRefreshResult
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
 from danswer.configs.app_configs import AUTH_TYPE
@@ -173,11 +173,6 @@ def verify_email_domain(email: str) -> None:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email domain is not valid",
             )
-
-
-class OIDCTokenRefreshResult(BaseModel):
-    oidc_expiry: datetime
-    refresh_token: str
 
 
 def send_user_verification_email(

@@ -1,7 +1,9 @@
 import uuid
+from datetime import datetime
 from enum import Enum
 
 from fastapi_users import schemas
+from pydantic import BaseModel
 
 
 class UserRole(str, Enum):
@@ -37,3 +39,8 @@ class UserCreate(schemas.BaseUserCreate):
 
 class UserUpdate(schemas.BaseUserUpdate):
     role: UserRole
+
+
+class OIDCTokenRefreshResult(BaseModel):
+    oidc_expiry: datetime
+    refresh_token: str
