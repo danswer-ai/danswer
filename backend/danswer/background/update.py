@@ -61,7 +61,7 @@ _UNEXPECTED_STATE_FAILURE_REASON = (
 def _should_create_new_indexing(
     cc_pair: ConnectorCredentialPair,
     last_index: IndexAttempt | None,
-    model: SearchSettings,
+    search_settings_instance: SearchSettings,
     secondary_index_building: bool,
     db_session: Session,
 ) -> bool:
@@ -70,11 +70,14 @@ def _should_create_new_indexing(
     # User can still manually create single indexing attempts via the UI for the
     # currently in use index
     if DISABLE_INDEX_UPDATE_ON_SWAP:
-        if model.status == IndexModelStatus.PRESENT and secondary_index_building:
+        if (
+            search_settings_instance.status == IndexModelStatus.PRESENT
+            and secondary_index_building
+        ):
             return False
 
     # When switching over models, always index at least once
-    if model.status == IndexModelStatus.FUTURE:
+    if search_settings_instance.status == IndexModelStatus.FUTURE:
         if last_index:
             # No new index if the last index attempt succeeded
             # Once is enough. The model will never be able to swap otherwise.
@@ -165,31 +168,38 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                 )
             )
 
-        search_settings = [get_current_search_settings(db_session)]
+        # Get the primary search settings
+        primary_search_settings = get_current_search_settings(db_session)
+        search_settings = [primary_search_settings]
+
+        # Check for secondary search settings
         secondary_search_settings = get_secondary_search_settings(db_session)
         if secondary_search_settings is not None:
+            # If secondary settings exist, add them to the list
             search_settings.append(secondary_search_settings)
 
         all_connector_credential_pairs = fetch_connector_credential_pairs(db_session)
         for cc_pair in all_connector_credential_pairs:
-            for model in search_settings:
+            for search_settings_instance in search_settings:
                 # Check if there is an ongoing indexing attempt for this connector credential pair
-                if (cc_pair.id, model.id) in ongoing:
+                if (cc_pair.id, search_settings_instance.id) in ongoing:
                     continue
 
                 last_attempt = get_last_attempt_for_cc_pair(
-                    cc_pair.id, model.id, db_session
+                    cc_pair.id, search_settings_instance.id, db_session
                 )
                 if not _should_create_new_indexing(
                     cc_pair=cc_pair,
                     last_index=last_attempt,
-                    model=model,
+                    search_settings_instance=search_settings_instance,
                     secondary_index_building=len(search_settings) > 1,
                     db_session=db_session,
                 ):
                     continue
 
-                create_index_attempt(cc_pair.id, model.id, db_session)
+                create_index_attempt(
+                    cc_pair.id, search_settings_instance.id, db_session
+                )
 
 
 def cleanup_indexing_jobs(
