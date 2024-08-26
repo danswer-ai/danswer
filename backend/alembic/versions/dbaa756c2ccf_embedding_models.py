@@ -137,3 +137,6 @@ def downgrade() -> None:
     op.drop_column("index_attempt", "embedding_model_id")
     op.drop_table("embedding_model")
     op.execute("DROP TYPE IF EXISTS indexmodelstatus;")
+
+
+# alembic downgrade base
