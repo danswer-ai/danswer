@@ -4,6 +4,7 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  merge_group:
   pull_request:
     branches: [ main ]
 
@@ -171,4 +172,3 @@ jobs:
         run: |
           cd deployment/docker_compose
           docker compose -f docker-compose.dev.yml -p danswer-stack down -v
-          
