@@ -1,4 +1,5 @@
 import re
+import traceback
 from datetime import datetime
 from datetime import timezone
 
@@ -24,6 +25,7 @@ from danswer.auth.schemas import UserStatus
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
+from danswer.auth.users import get_user_manager
 from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
@@ -285,7 +287,7 @@ def get_current_token_creation(
 
 
 @router.get("/me")
-def verify_user_logged_in(
+async def verify_user_logged_in(
     user: User | None = Depends(optional_user),
     db_session: Session = Depends(get_session),
 ) -> UserInfo:
@@ -302,6 +304,23 @@ def verify_user_logged_in(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="User Not Authenticated"
         )
+
+    if user.refresh_token is not None:
+        try:
+            user_manager = await get_user_manager().__anext__()
+            user = await user_manager.refresh_oidc_token(user, user.refresh_token)
+            db_session.commit()
+            print("REFRESH")
+            print(user.oidc_expiry)
+            logger.info("User token refreshed successfully")
+
+        except Exception as e:
+            traceback.print_exc()
+            logger.error(f"Failed to refresh OIDC token: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Failed to refresh OIDC token.",
+            )
 
     if user.oidc_expiry and user.oidc_expiry < datetime.now(timezone.utc):
         raise HTTPException(

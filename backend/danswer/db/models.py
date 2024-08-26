@@ -126,7 +126,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     oidc_expiry: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMPAware(timezone=True), nullable=True
     )
-
+    refresh_token: Mapped[str] = mapped_column(Text, nullable=True)
     default_model: Mapped[str] = mapped_column(Text, nullable=True)
     # organized in typical structured fashion
     # formatted as `displayName__provider__modelName`

@@ -36,6 +36,7 @@ from danswer.auth.schemas import UserRole
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
+from danswer.configs.app_configs import REFRESH_OIDC_EXPIRY
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SMTP_PASS
@@ -212,6 +213,98 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 user_create.role = UserRole.BASIC
         return await super().create(user_create, safe=safe, request=request)  # type: ignore
 
+    async def refresh_oidc_token(
+        self,
+        user: User,
+        refresh_token: str,
+    ) -> User:
+        logger.info(f"Attempting to refresh OIDC token for user {user.id}")
+        if not REFRESH_OIDC_EXPIRY:
+            logger.warning("OIDC token refresh is not enabled")
+            return user
+        try:
+            new_token_info = await self.refresh_oidc_token_with_provider(refresh_token)
+            logger.info(f"Successfully refreshed OIDC token for user {user.id}")
+            user.oidc_expiry = datetime.fromtimestamp(
+                new_token_info["expires_at"], tz=timezone.utc
+            )
+            user.refresh_token = (
+                new_token_info.get("refresh_token", user.refresh_token),
+            )
+
+            logger.debug(
+                f"Updated OIDC token info for user {user.id}: expiry set to {user.oidc_expiry}"
+            )
+            return user
+        except Exception as e:
+            logger.error(f"Failed to refresh OIDC token for user {user.id}: {str(e)}")
+            raise
+
+    async def refresh_oidc_token_with_provider(self, refresh_token: str) -> dict:
+        import aiohttp
+        from fastapi import HTTPException
+        from danswer.configs.app_configs import OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET
+        import time
+
+        from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                # First, fetch the OpenID configuration
+                logger.info("Fetching OpenID configuration")
+                async with session.get(OPENID_CONFIG_URL) as config_response:
+                    if config_response.status != 200:
+                        logger.error(
+                            f"Failed to fetch OpenID configuration. Status: {config_response.status}"
+                        )
+                        raise HTTPException(
+                            status_code=config_response.status,
+                            detail=f"Failed to fetch OpenID configuration: {await config_response.text()}",
+                        )
+                    openid_config = await config_response.json()
+                    token_endpoint = openid_config.get("token_endpoint")
+
+                    if not token_endpoint:
+                        logger.error("Token endpoint not found in OpenID configuration")
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Token endpoint not found in OpenID configuration",
+                        )
+
+                # Now, use the token endpoint to refresh the token
+                logger.info(f"Refreshing OIDC token using endpoint: {token_endpoint}")
+                data = {
+                    "grant_type": "refresh_token",
+                    "refresh_token": refresh_token,
+                    "client_id": OAUTH_CLIENT_ID,
+                    "client_secret": OAUTH_CLIENT_SECRET,
+                }
+                async with session.post(token_endpoint, data=data) as response:
+                    if response.status != 200:
+                        logger.error(
+                            f"Failed to refresh OIDC token. Status: {response.status}"
+                        )
+                        raise HTTPException(
+                            status_code=response.status,
+                            detail=f"Failed to refresh OIDC token: {await response.text()}",
+                        )
+                    new_token_info = await response.json()
+
+                    logger.info("Successfully refreshed OIDC token")
+                    return {
+                        "access_token": new_token_info["access_token"],
+                        "refresh_token": new_token_info.get(
+                            "refresh_token", refresh_token
+                        ),
+                        "expires_at": int(new_token_info["expires_in"])
+                        + int(time.time()),
+                    }
+        except Exception as e:
+            logger.exception(f"Unexpected error refreshing OIDC token: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Error refreshing OIDC token: {str(e)}"
+            )
+
     async def oauth_callback(
         self: "BaseUserManager[models.UOAP, models.ID]",
         oauth_name: str,
@@ -240,6 +333,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             is_verified_by_default=is_verified_by_default,
         )
 
+        if refresh_token:
+            # if refresh_token and REFRESH_OIDC_EXPIRY:
+            logger.info(f"Storing refresh token: {refresh_token}")
+            await self.user_db.update(
+                user, update_dict={"refresh_token": refresh_token}
+            )
         # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
         # re-authenticate that frequently, so by default this is disabled
         if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:

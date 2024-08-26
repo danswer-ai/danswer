@@ -42,7 +42,7 @@ from ee.danswer.utils.encryption import test_encryption
 logger = setup_logger()
 
 
-def get_application() -> FastAPI:
+def get_application(scope=None) -> FastAPI:
     # Anything that happens at import time is not guaranteed to be running ee-version
     # Anything after the server startup will be running ee version
     global_version.set_ee()
@@ -55,7 +55,12 @@ def get_application() -> FastAPI:
         include_router_with_global_prefix_prepended(
             application,
             fastapi_users.get_oauth_router(
-                OpenID(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OPENID_CONFIG_URL),
+                OpenID(
+                    client_id=OAUTH_CLIENT_ID,
+                    client_secret=OAUTH_CLIENT_SECRET,
+                    openid_configuration_endpoint=OPENID_CONFIG_URL,
+                    base_scopes=["openid", "profile", "email", "offline_access"],
+                ),
                 auth_backend,
                 USER_AUTH_SECRET,
                 associate_by_email=True,
