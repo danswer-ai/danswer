@@ -41,7 +41,7 @@ from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
-from danswer.configs.app_configs import REFRESH_OIDC_EXPIRY
+from danswer.configs.app_configs import REFRESH_OIDC_EXPIRY_ON_LOAD
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SMTP_PASS
@@ -230,7 +230,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         refresh_token: str,
     ) -> None | OIDCTokenRefreshResult:
         logger.info(f"Attempting to refresh OIDC token for user {user.id}")
-        if not REFRESH_OIDC_EXPIRY:
+        if not REFRESH_OIDC_EXPIRY_ON_LOAD:
             logger.warning("OIDC token refresh is not enabled")
             return None
 

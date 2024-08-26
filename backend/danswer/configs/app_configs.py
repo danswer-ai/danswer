@@ -338,7 +338,9 @@ LOG_POSTGRES_CONN_COUNTS = (
     os.environ.get("LOG_POSTGRES_CONN_COUNTS", "").lower() == "true"
 )
 
-REFRESH_OIDC_EXPIRY = os.environ.get("REFRESH_OIDC_EXPIRY", "").lower() == "true"
+REFRESH_OIDC_EXPIRY_ON_LOAD = (
+    os.environ.get("REFRESH_OIDC_EXPIRY_ON_LOAD", "").lower() == "true"
+)
 
 # Anonymous usage telemetry
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"

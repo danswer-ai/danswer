@@ -81,7 +81,6 @@ services:
       # Leave this on pretty please? Nothing sensitive is collected!
       # https://docs.danswer.dev/more/telemetry
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
-      - REFRESH_OIDC_EXPIRY=${REFRESH_OIDC_EXPIRY:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
       - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # LiteLLM Verbose Logging
       # Log all of Danswer prompts and interactions with the LLM
@@ -98,6 +97,8 @@ services:
       - API_KEY_HASH_ROUNDS=${API_KEY_HASH_ROUNDS:-}
       # Seeding configuration
       - ENV_SEED_CONFIGURATION=${ENV_SEED_CONFIGURATION:-}
+      # Will refresh OIDC Expiry on each page load
+      - REFRESH_OIDC_EXPIRY_ON_LOAD=${REFRESH_OIDC_EXPIRY_ON_LOAD:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -199,6 +200,8 @@ services:
 
       # Enterprise Edition stuff
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
+      # Will refresh OIDC Expiry on each page load
+      - REFRESH_OIDC_EXPIRY_ON_LOAD=${REFRESH_OIDC_EXPIRY_ON_LOAD:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
