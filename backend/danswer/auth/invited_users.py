@@ -31,18 +31,18 @@ def write_invited_users(emails: list[str]) -> int:
 
 def send_user_email_invite(user_email: str, current_user: User) -> None:
     msg = MIMEMultipart()
-    msg["Subject"] = "You're invited to join a workspace @ Arnold AI!"
+    msg["Subject"] = "You're invited to join a workspace @ Danswer!"
     msg["To"] = user_email
     msg["From"] = current_user.email
     link = f"{WEB_DOMAIN}/auth/signup"
     text = "\n".join(
         [
             "Hi!,",
-            "You have been invited to join my workspace at Arnold AI.",
+            "You have been invited to join my workspace at Danswer.",
             f"You can register your account here and join the Arnold AI workspace: {link}",
         ]
     )
-    # TODO: send the name of the workspace based on the whitelabelling in the frontend\
+    # TODO: send the name of the workspace based on the whitelabelling in the frontend
     body = MIMEText(text, "plain")
     msg.attach(body)
 
