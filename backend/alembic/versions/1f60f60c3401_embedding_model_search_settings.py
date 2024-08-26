@@ -20,6 +20,9 @@ depends_on = None
 
 
 def upgrade() -> None:
+    op.drop_constraint(
+        "index_attempt__embedding_model_fk", "index_attempt", type_="foreignkey"
+    )
     # Rename the table
     op.rename_table("embedding_model", "search_settings")
 
@@ -122,3 +125,11 @@ def downgrade() -> None:
     op.drop_column("embedding_model", "disable_rerank_for_streaming")
     op.drop_column("embedding_model", "multilingual_expansion")
     op.drop_column("embedding_model", "multipass_indexing")
+
+    op.create_foreign_key(
+        "index_attempt__embedding_model_fk",
+        "index_attempt",
+        "embedding_model",
+        ["embedding_model_id"],
+        ["id"],
+    )
