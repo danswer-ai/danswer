@@ -52,7 +52,7 @@ async def refresh_user(
             if updated_refresh_details is not None:
                 db_session.execute(
                     update(User)
-                    .where(User.id == user.id)
+                    .where(User.id == user.id)  # type: ignore
                     .values(
                         refresh_token=updated_refresh_details.refresh_token,
                         oidc_expiry=updated_refresh_details.oidc_expiry,
