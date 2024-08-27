@@ -1,0 +1,23 @@
+version: '3'
+services:
+  ollama:
+    image: ollama/ollama_v1
+    container_name: ollama
+    environment:
+      - OLLAMA_NUM_PARALLEL=4
+      - OLLAMA_MAX_LOADED_MODELS=4
+      - OLLAMA_FLASH_ATTENTION=True
+      - OLLAMA_MAX_QUEUE=50
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [ gpu ]
+  ports:
+    - "11434:11434"
+  volumes:
+    - /mnt/USB/models/ollama/:root/.ollama
+
+  restart: always

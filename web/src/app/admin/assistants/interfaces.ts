@@ -30,6 +30,7 @@ export interface Persona {
   prompts: Prompt[];
   tools: ToolSnapshot[];
   num_chunks?: number;
+  icon?: string;
   llm_relevance_filter?: boolean;
   llm_filter_extraction?: boolean;
   llm_model_provider_override?: string;

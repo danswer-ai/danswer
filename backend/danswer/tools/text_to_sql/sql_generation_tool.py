@@ -227,6 +227,7 @@ class SqlGenerationTool(Tool):
             # Each row will be converted to a dictionary using column names
             result_list = [dict(row._mapping) for row in dbrows]
 
+
         isTableResponse = "json" in query
         isChartInQuery = "chart" in query.lower()
         # isChartInQuery = True
@@ -300,7 +301,6 @@ class SqlGenerationTool(Tool):
         return dataframe
 
     def resolve_parameters_and_generate_chart(self, filtered_df, sql_query, user_query) -> str:
-
         if not filtered_df.empty:
             chart_type = self.plot_charts.find_chart_type(filtered_df)
             column_names = self.resolve_plot_parameters.resolve_graph_parameters_from_chart_type_and_sql_and_requirements(sql_query=sql_query,

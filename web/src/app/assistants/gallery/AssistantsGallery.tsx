@@ -44,22 +44,22 @@ export function AssistantsGallery({
     <>
       {popup}
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <AssistantsPageTitle>Assistant Gallery</AssistantsPageTitle>
+        <AssistantsPageTitle>Plugin Gallery</AssistantsPageTitle>
         <div className="flex justify-center mb-6">
           <Link href="/assistants/mine">
-            <NavigationButton>View Your Assistants</NavigationButton>
+            <NavigationButton>View Your Plugins</NavigationButton>
           </Link>
         </div>
 
         <p className="text-center mb-6">
-          Discover and create custom assistants that combine instructions, extra
+          Discover and create custom plugins that combine instructions, extra
           knowledge, and any combination of tools.
         </p>
 
         <div className="mb-6">
           <input
             type="text"
-            placeholder="Search assistants..."
+            placeholder="Search plugins..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="
