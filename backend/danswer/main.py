@@ -48,7 +48,6 @@ from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
-from danswer.db.models import Connector
 from danswer.db.persona import delete_old_default_personas
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
@@ -195,7 +194,30 @@ def setup_postgres(db_session: Session) -> None:
 
 def translate_saved_search_settings(db_session: Session) -> None:
     kv_store = get_dynamic_config_store()
-    db_session.query(Connector).count()
+    # connector_count = db_session.query(Connector).count()
+
+    docs_exist = check_docs_exist(db_session)
+    connectors_exist = check_connectors_exist(db_session)
+    if not docs_exist and not connectors_exist:
+        import requests
+        from shared_configs.configs import MODEL_SERVER_HOST
+        from shared_configs.configs import MODEL_SERVER_PORT
+
+        response = requests.get(
+            f"http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}/api/gpu-status"
+        )
+
+        if response.status_code == 200:
+            gpu_status = response.json()
+            print(f"GPU Status: {gpu_status}")
+            if gpu_status["gpu_available"]:
+                print(f"GPU is available. Type: {gpu_status['type']}")
+            else:
+                print("GPU is not available")
+        else:
+            print(
+                f"Error: Unable to fetch GPU status. Status code: {response.status_code}"
+            )
 
     try:
         search_settings_dict = kv_store.load(KV_SEARCH_SETTINGS)
