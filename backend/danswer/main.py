@@ -48,6 +48,7 @@ from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
+from danswer.db.models import Connector
 from danswer.db.persona import delete_old_default_personas
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
@@ -194,6 +195,7 @@ def setup_postgres(db_session: Session) -> None:
 
 def translate_saved_search_settings(db_session: Session) -> None:
     kv_store = get_dynamic_config_store()
+    db_session.query(Connector).count()
 
     try:
         search_settings_dict = kv_store.load(KV_SEARCH_SETTINGS)
