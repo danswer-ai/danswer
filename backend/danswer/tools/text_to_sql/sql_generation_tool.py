@@ -15,7 +15,7 @@ from danswer.llm.answering.prompts.build import AnswerPromptBuilder, default_bui
     default_build_user_message
 from danswer.llm.utils import message_to_string
 from danswer.prompts.constants import GENERAL_SEP_PAT
-from danswer.tools.infographics.dataframe_inmemory_sql import DataframeInMemorySQL
+from danswer.tools.infographics.dataframe_inmemory_sql import DataframeInMemorySQL, DataframeInMemorySQLExecutionException
 from danswer.tools.infographics.generate_sql_for_dataframe import GenerateSqlForDataframe
 from danswer.tools.infographics.plot_charts import PlotCharts
 from danswer.tools.infographics.resolve_plot_parameters_using_llm import ResolvePlotParametersUsingLLM
@@ -186,15 +186,20 @@ class SqlGenerationTool(Tool):
         query = cast(str, kwargs["query"])
 
         llm_config = self.llm_config
+        # history = self.history
         history = []
+        filtered_df = None
+        dataframe_summary = None
         dataframe = None
         result_list = []
         if self.files:
-            dataframe = self.generate_dataframe_from_excel(self.files)
+            dataframe = self.generate_dataframe_from_excel(self.files[0]) # first file only
             if not dataframe.empty:
                 sql_generation_tool_output = self.generate_sql_for_dataframe.generate_sql_query(schema=dataframe.dtypes,
                                                                                                 requirement=query)
+                filtered_df = self.execute_sql_on_dataframe(df=dataframe, sql_query=sql_generation_tool_output)
             else:
+                filtered_df = None
                 sql_generation_tool_output = None
         else:
             '''
@@ -227,7 +232,7 @@ class SqlGenerationTool(Tool):
         isTableResponse = "json" in query
         isChartInQuery = "chart" in query.lower()
         # isChartInQuery = True
-        if not result_list and dataframe.empty:
+        if not result_list and filtered_df.empty:
             final_response = "No result found. Please rephrase your query!"
         else:
             if isTableResponse:
@@ -239,11 +244,32 @@ class SqlGenerationTool(Tool):
                 json_response = f"\n\n```json\n{json_result}\n```\n\n"
                 final_response = json_response
             elif isChartInQuery:
-                if not dataframe.empty and sql_generation_tool_output:
-                    image_path = self.execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart(df=dataframe,
-                                                                                                         sql_query=sql_generation_tool_output,
-                                                                                                         user_query=query)
-                    final_response = image_path
+                if not filtered_df.empty and sql_generation_tool_output:
+                    previous_generated_sqls = []
+                    previous_response_errors = []
+                    allowed_attempt = 3
+                    current_attempt = 1
+                    while current_attempt <= allowed_attempt:
+                        try:
+                            logger.info(f"Attempt #{current_attempt}. execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart")
+                            image_path = self.resolve_parameters_and_generate_chart(filtered_df=filtered_df,
+                                                                                    sql_query=sql_generation_tool_output,
+                                                                                    user_query=query)
+                            list_records = filtered_df.to_dict('records')
+                            tabular_data_summarization = self.tabular_data_summarizer(query, list_records)
+                            final_response = tabular_data_summarization + "\n" + image_path
+                            break
+                        except DataframeInMemorySQLExecutionException as e:
+                            previous_response = str(e.base_exception.args[0])
+                            previous_generated_sqls.append(sql_generation_tool_output)
+                            previous_response_errors.append(previous_response)
+                            current_attempt += 1
+                            final_response = 'Exception while executing SQL on data or generating graph.'
+                            if current_attempt <= allowed_attempt:
+                                sql_generation_tool_output = self.generate_sql_for_dataframe.generate_sql_query(schema=dataframe.dtypes,
+                                                                                                                requirement=query,
+                                                                                                                previous_sql_queries=previous_generated_sqls,
+                                                                                                                previous_response_errors=previous_response_errors)
                 else:
                     final_response = "No records fetched from uploaded Excel. Please check your Excel or rephrase your query!"
             else:
@@ -267,29 +293,39 @@ class SqlGenerationTool(Tool):
 
         return sql_query
 
-    def generate_dataframe_from_excel(self, files):
-        file = files[0]  # first file only
+    def generate_dataframe_from_excel(self, file):
+        # file = files[0]  # first file only
         content = file.content
         excel_byte_stream = BytesIO(content)
         dataframe = pd.read_csv(excel_byte_stream)
         logger.info(f'excel loaded to dataframe : {dataframe.dtypes}')
         return dataframe
 
-    def execute_sql_on_dataframe_and_resolve_parameters_and_generate_chart(self, df, sql_query, user_query) -> str:
+    def resolve_parameters_and_generate_chart(self, filtered_df, sql_query, user_query) -> str:
+        if not filtered_df.empty:
+            chart_type = self.plot_charts.find_chart_type(filtered_df)
+            column_names = self.resolve_plot_parameters.resolve_graph_parameters_from_chart_type_and_sql_and_requirements(sql_query=sql_query,
+                                                                                                                          schema=filtered_df.info,
+                                                                                                                          requirement=user_query,
+                                                                                                                          chart_type=chart_type)
+            image_path = self.plot_charts.generate_chart_and_save(dataframe=filtered_df,
+                                                                  field_names=column_names,
+                                                                  chart_type=chart_type)
+            return image_path
+
+    def execute_sql_on_dataframe(self, df, sql_query):
         # execute query on dataframe
         self.dataframe_inmemory_sql = DataframeInMemorySQL(df=df)
-        filtered_df = self.dataframe_inmemory_sql.execute_sql(sql_query)
-        logger.debug(f'dataframe_in_memory_sql df: {filtered_df}')
-        chart_type = self.plot_charts.find_chart_type(filtered_df)
-        column_names = self.resolve_plot_parameters.resolve_graph_parameters_from_chart_type_and_sql_and_requirements(
-            sql_query=sql_query,
-            schema=filtered_df.info,
-            requirement=user_query,
-            chart_type=chart_type)
-        image_path = self.plot_charts.generate_chart_and_save(dataframe=filtered_df,
-                                                              field_names=column_names,
-                                                              chart_type=chart_type)
-        return image_path
+        # repeat 3 times only
+        try:
+            filtered_df = self.dataframe_inmemory_sql.execute_sql(sql_query)
+            logger.debug(f'dataframe_in_memory_sql df: {filtered_df}')
+        except DataframeInMemorySQLExecutionException as e:
+            # if sql execution error then ask lama again to generate sql query and consider the previous response as error and correct the response.
+            # asking llama to correct the error
+            logger.debug(f'dataframe_in_memory_sql exception: {e}')
+            raise e
+        return filtered_df
 
     # Function to format the list of dictionaries as a markdown table
     def format_as_markdown_table(self, data):
@@ -324,3 +360,6 @@ class SqlGenerationTool(Tool):
         # subfields that are not serializable by default (datetime)
         # this forces pydantic to make them JSON serializable for us
         return sql_generation_response
+
+    def generate_dataframe_summary(self, filtered_df):
+        pass
