@@ -370,6 +370,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         translate_saved_search_settings(db_session)
 
+        # update multipass indexing setting based on GPU availability
         update_default_multipass_indexing(db_session)
 
         # Does the user need to trigger a reindexing to bring the document index
