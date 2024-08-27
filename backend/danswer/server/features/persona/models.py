@@ -41,26 +41,26 @@ class CreatePersonaRequest(BaseModel):
 
 class PersonaSnapshot(BaseModel):
     id: int
-    owner: MinimalUserSnapshot | None = None
+    owner: MinimalUserSnapshot | None
     name: str
     is_visible: bool
     is_public: bool
-    display_priority: int | None = None
+    display_priority: int | None
     description: str
-    num_chunks: float | None = None
+    num_chunks: float | None
     llm_relevance_filter: bool
     llm_filter_extraction: bool
-    llm_model_provider_override: str | None = None
-    llm_model_version_override: str | None = None
-    starter_messages: list[StarterMessage] | None = None
+    llm_model_provider_override: str | None
+    llm_model_version_override: str | None
+    starter_messages: list[StarterMessage] | None
     default_persona: bool
     prompts: list[PromptSnapshot]
     tools: list[ToolSnapshot]
     document_sets: list[DocumentSet]
     users: list[MinimalUserSnapshot]
     groups: list[int]
-    icon_color: str | None = None
-    icon_shape: int | None = None
+    icon_color: str | None
+    icon_shape: int | None
     uploaded_image_id: str | None = None
 
     @classmethod

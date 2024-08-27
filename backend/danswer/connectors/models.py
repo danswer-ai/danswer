@@ -27,7 +27,7 @@ class ConnectorMissingCredentialError(PermissionError):
 
 class Section(BaseModel):
     text: str
-    link: str | None = None
+    link: str | None
 
 
 class BasicExpertInfo(BaseModel):
@@ -169,7 +169,7 @@ class Document(DocumentBase):
 class DocumentErrorSummary(BaseModel):
     id: str
     semantic_id: str
-    section_link: str | None = None
+    section_link: str | None
 
     @classmethod
     def from_document(cls, doc: Document) -> "DocumentErrorSummary":

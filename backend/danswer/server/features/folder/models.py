@@ -5,7 +5,7 @@ from danswer.server.query_and_chat.models import ChatSessionDetails
 
 class FolderResponse(BaseModel):
     folder_id: int
-    folder_name: str | None = None
+    folder_name: str | None
     display_priority: int
     chat_sessions: list[ChatSessionDetails]
 

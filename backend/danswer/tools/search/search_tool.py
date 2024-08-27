@@ -52,8 +52,8 @@ SEARCH_EVALUATION_ID = "llm_doc_eval"
 class SearchResponseSummary(BaseModel):
     top_sections: list[InferenceSection]
     rephrased_query: str | None = None
-    predicted_flow: QueryFlow | None = None
-    predicted_search: SearchType | None = None
+    predicted_flow: QueryFlow | None
+    predicted_search: SearchType | None
     final_filters: IndexFilters
     recency_bias_multiplier: float
 

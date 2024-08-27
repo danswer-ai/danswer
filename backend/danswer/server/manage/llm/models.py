@@ -30,9 +30,9 @@ class LLMProviderDescriptor(BaseModel):
     provider: str
     model_names: list[str]
     default_model_name: str
-    fast_default_model_name: str | None = None
-    is_default_provider: bool | None = None
-    display_model_names: list[str] | None = None
+    fast_default_model_name: str | None
+    is_default_provider: bool | None
+    display_model_names: list[str] | None
 
     @classmethod
     def from_model(

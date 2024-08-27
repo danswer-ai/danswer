@@ -40,16 +40,15 @@ class ConnectorBase(BaseModel):
     source: DocumentSource
     input_type: InputType
     connector_specific_config: dict[str, Any]
-    refresh_freq: int | None = (
-        None  # In seconds, None for one time index with no refresh
-    )
+    # In seconds, None for one time index with no refresh
+    refresh_freq: int | None = None
     prune_freq: int | None = None
     indexing_start: datetime | None = None
 
 
 class ConnectorUpdateRequest(ConnectorBase):
-    is_public: bool | None = None
-    groups: list[int] | None = None
+    is_public: bool | None
+    groups: list[int] | None
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -100,7 +99,7 @@ class CredentialBase(BaseModel):
 
 class CredentialSnapshot(CredentialBase):
     id: int
-    user_id: UUID | None = None
+    user_id: UUID | None
     time_created: datetime
     time_updated: datetime
     name: str | None
@@ -130,14 +129,14 @@ class CredentialSnapshot(CredentialBase):
 
 class IndexAttemptSnapshot(BaseModel):
     id: int
-    status: IndexingStatus | None = None
+    status: IndexingStatus | None
     new_docs_indexed: int  # only includes completely new docs
     total_docs_indexed: int  # includes docs that are updated
     docs_removed_from_index: int
-    error_msg: str | None = None
+    error_msg: str | None
     error_count: int
-    full_exception_trace: str | None = None
-    time_started: str | None = None
+    full_exception_trace: str | None
+    time_started: str | None
     time_updated: str
 
     @classmethod
@@ -164,11 +163,11 @@ class IndexAttemptSnapshot(BaseModel):
 
 class IndexAttemptError(BaseModel):
     id: int
-    index_attempt_id: int | None = None
-    batch_number: int | None = None
+    index_attempt_id: int | None
+    batch_number: int | None
     doc_summaries: list[DocumentErrorSummary]
-    error_msg: str | None = None
-    traceback: str | None = None
+    error_msg: str | None
+    traceback: str | None
     time_created: str
 
     @classmethod
@@ -195,7 +194,7 @@ class CCPairFullInfo(BaseModel):
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     index_attempts: list[IndexAttemptSnapshot]
-    latest_deletion_attempt: DeletionAttemptSnapshot | None = None
+    latest_deletion_attempt: DeletionAttemptSnapshot | None
     is_public: bool
     is_editable_for_current_user: bool
 
@@ -233,20 +232,20 @@ class ConnectorIndexingStatus(BaseModel):
     """Represents the latest indexing status of a connector"""
 
     cc_pair_id: int
-    name: str | None = None
+    name: str | None
     cc_pair_status: ConnectorCredentialPairStatus
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     owner: str
     groups: list[int]
     public_doc: bool
-    last_finished_status: IndexingStatus | None = None
-    last_status: IndexingStatus | None = None
-    last_success: datetime | None = None
+    last_finished_status: IndexingStatus | None
+    last_status: IndexingStatus | None
+    last_success: datetime | None
     docs_indexed: int
-    error_msg: str | None = None
-    latest_index_attempt: IndexAttemptSnapshot | None = None
-    deletion_attempt: DeletionAttemptSnapshot | None = None
+    error_msg: str | None
+    latest_index_attempt: IndexAttemptSnapshot | None
+    deletion_attempt: DeletionAttemptSnapshot | None
     is_deletable: bool
 
 
@@ -307,8 +306,8 @@ class GoogleServiceAccountKey(BaseModel):
 
 
 class GoogleServiceAccountCredentialRequest(BaseModel):
-    google_drive_delegated_user: str | None = None  # email of user to impersonate
-    gmail_delegated_user: str | None = None  # email of user to impersonate
+    google_drive_delegated_user: str | None  # email of user to impersonate
+    gmail_delegated_user: str | None  # email of user to impersonate
 
 
 class FileUploadResponse(BaseModel):

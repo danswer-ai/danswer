@@ -214,7 +214,7 @@ class SlackBotConfigCreationRequest(BaseModel):
 
 class SlackBotConfig(BaseModel):
     id: int
-    persona: PersonaSnapshot | None = None
+    persona: PersonaSnapshot | None
     channel_config: ChannelConfig
     response_type: SlackBotResponseType
     standard_answer_categories: list[StandardAnswerCategory]
@@ -245,7 +245,7 @@ class SlackBotConfig(BaseModel):
 
 class FullModelVersionResponse(BaseModel):
     current_settings: SavedSearchSettings
-    secondary_settings: SavedSearchSettings | None = None
+    secondary_settings: SavedSearchSettings | None
 
 
 class AllUsersResponse(BaseModel):

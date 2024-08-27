@@ -24,9 +24,9 @@ MAX_METRICS_CONTENT = (
 
 class RerankingDetails(BaseModel):
     # If model is None (or num_rerank is 0), then reranking is turned off
-    rerank_model_name: str | None = None
-    rerank_provider_type: RerankerProvider | None = None
-    rerank_api_key: str | None = None
+    rerank_model_name: str | None
+    rerank_provider_type: RerankerProvider | None
+    rerank_api_key: str | None
 
     num_rerank: int
 
@@ -96,13 +96,13 @@ class BaseFilters(BaseModel):
 
 
 class IndexFilters(BaseFilters):
-    access_control_list: list[str] | None = None
+    access_control_list: list[str] | None
 
 
 class ChunkMetric(BaseModel):
     document_id: str
     chunk_content_start: str
-    first_link: str | None = None
+    first_link: str | None
     score: float
 
 
@@ -154,7 +154,7 @@ class SearchQuery(ChunkContext):
     chunks_above: int
     chunks_below: int
 
-    rerank_settings: RerankingDetails | None = None
+    rerank_settings: RerankingDetails | None
     hybrid_alpha: float
     recency_bias_multiplier: float
 

@@ -60,7 +60,7 @@ class BasicCreateChatMessageWithHistoryRequest(ChunkContext):
 class SimpleDoc(BaseModel):
     id: str
     semantic_identifier: str
-    link: str | None = None
+    link: str | None
     blurb: str
     match_highlights: list[str]
     source_type: DocumentSource

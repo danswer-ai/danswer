@@ -21,9 +21,9 @@ class LlmDoc(BaseModel):
     semantic_identifier: str
     source_type: DocumentSource
     metadata: dict[str, str | list[str]]
-    updated_at: datetime | None = None
-    link: str | None = None
-    source_links: dict[int, str] | None = None
+    updated_at: datetime | None
+    link: str | None
+    source_links: dict[int, str] | None
 
 
 # First chunk of info for streaming QA
@@ -68,7 +68,7 @@ class DocumentRelevance(BaseModel):
 
 class DanswerAnswerPiece(BaseModel):
     # A small piece of a complete answer. Used for streaming back answers.
-    answer_piece: str | None = None  # if None, specifies the end of an Answer
+    answer_piece: str | None  # if None, specifies the end of an Answer
 
 
 # An intermediate representation of citations, later translated into
@@ -79,7 +79,7 @@ class CitationInfo(BaseModel):
 
 
 class MessageResponseIDInfo(BaseModel):
-    user_message_id: int | None = None
+    user_message_id: int | None
     reserved_assistant_message_id: int
 
 
@@ -92,7 +92,7 @@ class DanswerQuote(BaseModel):
     # This is during inference so everything is a string by this point
     quote: str
     document_id: str
-    link: str | None = None
+    link: str | None
     source_type: str
     semantic_identifier: str
     blurb: str
@@ -114,12 +114,12 @@ class DanswerContexts(BaseModel):
 
 
 class DanswerAnswer(BaseModel):
-    answer: str | None = None
+    answer: str | None
 
 
 class QAResponse(SearchResponse, DanswerAnswer):
-    quotes: list[DanswerQuote] | None = None
-    contexts: list[DanswerContexts] | None = None
+    quotes: list[DanswerQuote] | None
+    contexts: list[DanswerContexts] | None
     predicted_flow: QueryFlow
     predicted_search: SearchType
     eval_res_valid: bool | None = None

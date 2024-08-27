@@ -201,7 +201,7 @@ class ChatSessionDetailResponse(BaseModel):
     messages: list[ChatMessageDetail]
     time_created: datetime
     shared_status: ChatSessionSharedStatus
-    current_alternate_model: str | None = None
+    current_alternate_model: str | None
 
 
 class QueryValidationResponse(BaseModel):
@@ -216,7 +216,3 @@ class AdminSearchRequest(BaseModel):
 
 class AdminSearchResponse(BaseModel):
     documents: list[SearchDoc]
-
-
-class DanswerAnswer(BaseModel):
-    answer: str | None = None
