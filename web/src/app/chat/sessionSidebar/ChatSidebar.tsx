@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useState } from "react";
 import {
   Search,
   MessageCircleMore,
@@ -31,11 +30,6 @@ import { HeaderTitle } from "@/components/header/Header";
 import { useChatContext } from "@/components/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
 export const ChatSidebar = ({
   existingChats,
@@ -43,38 +37,18 @@ export const ChatSidebar = ({
   folders,
   openedFolders,
   toggleSideBar,
-  isExpanded,
-  openSidebar,
+  isAssistant,
 }: {
   existingChats: ChatSession[];
   currentChatSession: ChatSession | null | undefined;
   folders: Folder[];
   openedFolders: { [key: number]: boolean };
   toggleSideBar?: () => void;
-  isExpanded?: boolean;
-  openSidebar?: boolean;
+  isAssistant?: boolean;
 }) => {
   let { user } = useChatContext();
   const router = useRouter();
   const { popup, setPopup } = usePopup();
-
-  const [isLgScreen, setIsLgScreen] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 1024px)");
-
-    const handleMediaQueryChange = (e: MediaQueryListEvent) => {
-      setIsLgScreen(e.matches);
-    };
-
-    setIsLgScreen(mediaQuery.matches);
-
-    mediaQuery.addEventListener("change", handleMediaQueryChange);
-
-    return () => {
-      mediaQuery.removeEventListener("change", handleMediaQueryChange);
-    };
-  }, []);
 
   const currentChatId = currentChatSession?.id;
 
@@ -91,169 +65,132 @@ export const ChatSidebar = ({
   const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
 
-  let opacityClass = "opacity-100";
-
-  if (isLgScreen) {
-    opacityClass = isExpanded ? "lg:opacity-100 delay-200" : "lg:opacity-0";
-  } else {
-    opacityClass = openSidebar
-      ? "opacity-100 delay-200"
-      : "opacity-0 lg:opacity-100";
-  }
-
   return (
     <>
       {popup}
       <div
-        className={`py-4
-            bg-background
+        className={`
             flex-col 
             h-full
-            ease-in-out
             flex
-            transition-[width] duration-500
             z-overlay
-            w-full overflow-hidden lg:overflow-visible
-            ${
-              isExpanded
-                ? "lg:w-sidebar border-r border-border"
-                : "lg:w-0 border-none"
-            }
+            w-full 
             `}
         id="chat-sidebar"
       >
-        <div
-          className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${opacityClass}`}
-        >
-          <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
-            <Image src={Logo} alt="enmedd-logo" height={40} />
+        <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
+          <Image src={Logo} alt="enmedd-logo" height={40} />
 
-            <div className="lg:hidden">
-              <Button variant="ghost" size="icon" onClick={toggleSideBar}>
-                <PanelLeftClose size={24} />
-              </Button>
-            </div>
+          <div className="lg:hidden">
+            <Button variant="ghost" size="icon" onClick={toggleSideBar}>
+              <PanelLeftClose size={24} />
+            </Button>
           </div>
+        </div>
 
-          {/* <div className="px-4 pb-6 pt-2 w-full">
-            <Popover>
-              <PopoverTrigger asChild className="w-full">
-                <div className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 shadow-sm text-sm">
-                  <div className="px-1.5 py-0.5 rounded bg-primary-foreground font-bold text-inverted">
-                    D
-                  </div>
-                  <span>Default</span>
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-full">
-                <div className="flex p-2 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 text-sm w-full">
-                  <div className="px-1.5 py-0.5 rounded bg-primary-foreground font-bold text-inverted">
-                    D
-                  </div>
-                  <span>Development Team</span>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div> */}
+        <div className="h-full overflow-auto">
+          <div className="flex px-4">
+            {enterpriseSettings && enterpriseSettings.application_name ? (
+              <div>
+                <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
 
-          <div className="h-full overflow-auto">
-            <div className="flex px-4">
-              {enterpriseSettings && enterpriseSettings.application_name ? (
-                <div>
-                  <HeaderTitle>
-                    {enterpriseSettings.application_name}
-                  </HeaderTitle>
-
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle -mt-1.5">
-                      Powered by enMedD CHP
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <></>
-              )}
-            </div>
-            <div className="px-4 text-sm flex flex-col">
-              {settings.search_page_enabled && (
+                {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
+                  <p className="text-xs text-subtle -mt-1.5">
+                    Powered by enMedD CHP
+                  </p>
+                )}
+              </div>
+            ) : (
+              <></>
+            )}
+          </div>
+          <div className="px-4 text-sm flex flex-col">
+            {settings.search_page_enabled && (
+              <Link
+                href="/search"
+                className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
+              >
+                <Search size={16} className="min-w-4 min-h-4" />
+                Search
+              </Link>
+            )}
+            {settings.chat_page_enabled && (
+              <>
                 <Link
-                  href="/search"
-                  className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
+                  href="/chat"
+                  className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
+                    !isAssistant
+                      ? "bg-primary text-white"
+                      : "hover:bg-hover-light"
+                  }`}
                 >
-                  <Search size={16} className="min-w-4 min-h-4" />
-                  Search
+                  <MessageCircleMore size={16} className="min-w-4 min-h-4" />
+                  Chat
                 </Link>
-              )}
-              {settings.chat_page_enabled && (
-                <>
-                  <Link
-                    href="/chat"
-                    className="flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 bg-primary text-white"
-                  >
-                    <MessageCircleMore size={16} className="min-w-4 min-h-4" />
-                    Chat
-                  </Link>
-                  <Link
-                    href="/assistants/mine"
-                    className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
-                  >
-                    <Headset size={16} />
-                    <span className="truncate">Explore Assistants</span>
-                  </Link>
-                </>
-              )}
-              <Separator className="mt-4" />
-            </div>
-
-            <ChatTab
-              existingChats={existingChats}
-              currentChatId={currentChatId}
-              folders={folders}
-              openedFolders={openedFolders}
-              toggleSideBar={toggleSideBar}
-            />
+                <Link
+                  href="/assistants/mine"
+                  className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
+                    isAssistant
+                      ? "bg-primary text-white"
+                      : "hover:bg-hover-light"
+                  }`}
+                >
+                  <Headset size={16} />
+                  <span className="truncate">Explore Assistants</span>
+                </Link>
+              </>
+            )}
+            <Separator className="mt-3" />
           </div>
 
-          <div className="flex items-center gap-3 px-4 pt-5 mt-auto">
-            <Link
-              href={
-                "/chat" +
-                (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
-                currentChatSession
-                  ? `?assistantId=${currentChatSession.persona_id}`
-                  : "")
-              }
-              className=" w-full"
+          <ChatTab
+            existingChats={existingChats}
+            currentChatId={currentChatId}
+            folders={folders}
+            openedFolders={openedFolders}
+            toggleSideBar={toggleSideBar}
+          />
+        </div>
+
+        <div className="flex items-center gap-3 px-4 pt-5 mt-auto">
+          <Link
+            href={
+              "/chat" +
+              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+              currentChatSession
+                ? `?assistantId=${currentChatSession.persona_id}`
+                : "")
+            }
+            className=" w-full"
+          >
+            <Button
+              className="transition-all ease-in-out duration-300 w-full"
+              onClick={toggleSideBar}
             >
-              <Button
-                className="transition-all ease-in-out duration-300 w-full"
-                onClick={toggleSideBar}
-              >
-                <Plus size={16} />
-                Start new chat
-              </Button>
-            </Link>
-            <div>
-              <Button
-                onClick={() =>
-                  createFolder("New Folder")
-                    .then((folderId) => {
-                      console.log(`Folder created with ID: ${folderId}`);
-                      router.refresh();
-                    })
-                    .catch((error) => {
-                      console.error("Failed to create folder:", error);
-                      setPopup({
-                        message: `Failed to create folder: ${error.message}`,
-                        type: "error",
-                      });
-                    })
-                }
-                size="icon"
-              >
-                <FolderPlus size={16} />
-              </Button>
-            </div>
+              <Plus size={16} />
+              Start new chat
+            </Button>
+          </Link>
+          <div>
+            <Button
+              onClick={() =>
+                createFolder("New Folder")
+                  .then((folderId) => {
+                    console.log(`Folder created with ID: ${folderId}`);
+                    router.refresh();
+                  })
+                  .catch((error) => {
+                    console.error("Failed to create folder:", error);
+                    setPopup({
+                      message: `Failed to create folder: ${error.message}`,
+                      type: "error",
+                    });
+                  })
+              }
+              size="icon"
+            >
+              <FolderPlus size={16} />
+            </Button>
           </div>
         </div>
       </div>

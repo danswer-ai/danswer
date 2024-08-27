@@ -198,14 +198,14 @@ export function ConfigurationModal({
         className="w-full flex flex-col gap-4"
         orientation="vertical"
       >
-        <TabsList className="!flex flex-col !h-auto w-[150px] sm:flex-row sm:w-[500px]">
+        <TabsList className="w-fit">
           <TabsTrigger value="assistant" className="w-full">
             <Cpu size={16} className="mr-2" /> My Assistant
           </TabsTrigger>
-          <TabsTrigger value="models" className="w-full">
+          {/*  <TabsTrigger value="models" className="w-full">
             <Sparkles size={16} className="mr-2" />
             Model
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="filters" className="w-full">
             <Filter size={16} className="mr-2" /> Filters
           </TabsTrigger>
@@ -223,13 +223,13 @@ export function ConfigurationModal({
             />
           </div>
         </TabsContent>
-        <TabsContent value="models">
+        {/* <TabsContent value="models">
           <LlmTab
             chatSessionId={chatSessionId}
             llmOverrideManager={llmOverrideManager}
             currentAssistant={selectedAssistant}
           />
-        </TabsContent>
+        </TabsContent> */}
         <TabsContent value="filters">
           <FiltersTab filterManager={filterManager} />
         </TabsContent>

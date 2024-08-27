@@ -1,4 +1,3 @@
-import { Header } from "@/components/header/Header";
 import { User } from "@/lib/types";
 import {
   AuthTypeMetadata,
@@ -7,6 +6,8 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { SideBar } from "../SideBar";
+import { WorkSpaceSidebar } from "@/app/chat/sessionSidebar/WorkSpaceSidebar";
+import { DynamicSidebar } from "../DynamicSidebar";
 
 export async function Layout({ children }: { children: React.ReactNode }) {
   const tasks = [getAuthTypeMetadataSS(), getCurrentUserSS()];
@@ -40,12 +41,12 @@ export async function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="h-screen overflow-y-hidden">
-      <div className="absolute top-0 z-50 w-full">
-        <Header user={user} />
-      </div>
-      <div className="flex h-full pt-12 md:pt-16">
-        <SideBar />
-        <div className="w-full h-full px-6 pt-8 pb-8 overflow-y-auto md:px-12">
+      <div className="flex h-full">
+        <DynamicSidebar user={user}>
+          <SideBar />
+        </DynamicSidebar>
+        {/* <div className="flex-1 h-full px-6 pt-8 pb-8 md:px-12 overflow-y-auto"> */}
+        <div className="flex-1 h-full overflow-y-auto py-20 lg:py-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24">
           {children}
         </div>
       </div>

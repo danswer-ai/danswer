@@ -1,16 +1,5 @@
 "use client";
 
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-  Text,
-  Button,
-  Divider,
-} from "@tremor/react";
 import { IndexAttemptStatus } from "@/components/Status";
 import { CCPairFullInfo } from "./types";
 import { useState } from "react";
@@ -19,6 +8,14 @@ import { localizeAndPrettify } from "@/lib/time";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 import { Modal } from "@/components/Modal";
 import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const NUM_IN_PAGE = 8;
 
@@ -75,15 +72,15 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
           </Modal>
         )}
       <Table>
-        <TableHead>
+        <TableHeader>
           <TableRow>
-            <TableHeaderCell>Time Started</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>New Doc Cnt</TableHeaderCell>
-            <TableHeaderCell>Total Doc Cnt</TableHeaderCell>
-            <TableHeaderCell>Error Msg</TableHeaderCell>
+            <TableHead>Time Started</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>New Doc Cnt</TableHead>
+            <TableHead>Total Doc Cnt</TableHead>
+            <TableHead>Error Msg</TableHead>
           </TableRow>
-        </TableHead>
+        </TableHeader>
         <TableBody>
           {ccPair.index_attempts
             .slice(NUM_IN_PAGE * (page - 1), NUM_IN_PAGE * page)
@@ -124,9 +121,9 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                   <TableCell>{indexAttempt.total_docs_indexed}</TableCell>
                   <TableCell>
                     <div>
-                      <Text className="flex flex-wrap whitespace-normal">
+                      <p className="flex flex-wrap whitespace-normal">
                         {indexAttempt.error_msg || "-"}
-                      </Text>
+                      </p>
                       {indexAttempt.full_exception_trace && (
                         <div
                           onClick={() => {

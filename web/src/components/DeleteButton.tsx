@@ -1,4 +1,5 @@
 import { FiTrash } from "react-icons/fi";
+import { Button } from "./ui/button";
 
 export function DeleteButton({
   onClick,
@@ -8,21 +9,9 @@ export function DeleteButton({
   disabled?: boolean;
 }) {
   return (
-    <div
-      className={`
-        my-auto 
-        flex 
-        mb-1 
-        ${disabled ? "cursor-default" : "hover:bg-hover cursor-pointer"} 
-        w-fit 
-        p-2 
-        rounded-regular
-        border-border
-        text-sm`}
-      onClick={onClick}
-    >
+    <Button onClick={onClick} variant="destructive" disabled={disabled}>
       <FiTrash className="mr-1 my-auto" />
       Delete
-    </div>
+    </Button>
   );
 }

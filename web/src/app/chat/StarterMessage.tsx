@@ -14,7 +14,7 @@ export function StarterMessage({
       onClick={onClick}
     >
       <CardContent className="p-0">
-        <p className="text-sm">{starterMessage.description}</p>
+        <p>{starterMessage.description}</p>
       </CardContent>{" "}
       <CardFooter className="p-0">
         {/* TODO: Create icon as a data for the starter messages */}

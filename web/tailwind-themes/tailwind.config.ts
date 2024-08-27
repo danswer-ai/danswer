@@ -73,13 +73,13 @@ const config = {
 
         // text or icons
         default: "rgba(14, 14, 15, 0.8)",
+        strong: "#111827", // gray-900
         inverted: "#ffffff", // white
         light: "#e5e7eb", // gray-200
         link: "#3b82f6", // blue-500
         "link-hover": "#1d4ed8", // blue-700
         subtle: "#6b7280", // gray-500
         emphasis: "#374151", // gray-700
-        strong: "#111827", // gray-900
         error: "#ef4444", // red-500
         alert: "#f59e0b", // amber-600
         accent: "#6671d0",

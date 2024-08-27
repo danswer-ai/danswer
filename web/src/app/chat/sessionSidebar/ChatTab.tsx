@@ -8,6 +8,7 @@ import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Separator } from "@/components/ui/separator";
 
 export function ChatTab({
   existingChats,
@@ -54,8 +55,8 @@ export function ChatTab({
   return (
     <div className="mb-1 px-4 transition-all ease-in-out">
       {folders.length > 0 && (
-        <div className="pb-3 border-b border-border">
-          <div className="px-4 text-sm text-dark-900 flex pb-2 pt-5 font-semibold">
+        <div>
+          <div className="px-4 text-sm text-dark-900 flex pb-2 pt-4 font-semibold">
             Folders
           </div>
           <FolderList
@@ -63,6 +64,7 @@ export function ChatTab({
             currentChatId={currentChatId}
             openedFolders={openedFolders}
           />
+          <Separator className="mt-3" />
         </div>
       )}
 
@@ -83,11 +85,12 @@ export function ChatTab({
               return (
                 <div
                   key={dateRange}
-                  className={`pb-4 ${
+                  /*  className={`pb-4 ${
                     dateRange !== "Previous 30 Days" ? "border-b" : ""
-                  }`}
+                  }`} */
+                  className={`pt-4`}
                 >
-                  <div className="px-4 text-sm text-dark-900 flex pb-2 pt-5 font-semibold">
+                  <div className="px-4 text-sm text-dark-900 flex pb-2 font-semibold">
                     {dateRange}
                   </div>
                   {chatSessions
@@ -105,6 +108,7 @@ export function ChatTab({
                         </div>
                       );
                     })}
+                  <Separator className="mt-3" />
                 </div>
               );
             }

@@ -256,7 +256,7 @@ export default function Page() {
 
   return (
     <div className="container mx-auto">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
       <AdminPageTitle icon={<R2Icon size={32} />} title="R2 Storage" />

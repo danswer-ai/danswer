@@ -30,24 +30,6 @@ export const SearchSidebar = ({
 }) => {
   const { popup, setPopup } = usePopup();
 
-  const [isLgScreen, setIsLgScreen] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 1024px)");
-
-    const handleMediaQueryChange = (e: MediaQueryListEvent) => {
-      setIsLgScreen(e.matches);
-    };
-
-    setIsLgScreen(mediaQuery.matches);
-
-    mediaQuery.addEventListener("change", handleMediaQueryChange);
-
-    return () => {
-      mediaQuery.removeEventListener("change", handleMediaQueryChange);
-    };
-  }, []);
-
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -55,98 +37,74 @@ export const SearchSidebar = ({
   const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
 
-  let opacityClass = "opacity-100";
-
-  if (isLgScreen) {
-    opacityClass = isExpanded ? "lg:opacity-100 delay-200" : "lg:opacity-0";
-  } else {
-    opacityClass = openSidebar
-      ? "opacity-100 delay-200"
-      : "opacity-0 lg:opacity-100";
-  }
-
   return (
     <>
       {popup}
       <div
-        className={`py-6
-            bg-background
+        className={`
             flex-col 
             h-full
-            ease-in-out
             flex
-            transition-[width] duration-500
             z-overlay
-            w-full overflow-hidden lg:overflow-visible
-            ${
-              isExpanded
-                ? "lg:w-sidebar border-r border-border"
-                : "lg:w-0 border-none"
-            }
+            w-full 
             `}
         id="chat-sidebar"
       >
-        <div
-          className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${opacityClass}`}
-        >
-          <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
-            <Image src={Logo} alt="enmedd-logo" height={40} />
+        <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
+          <Image src={Logo} alt="enmedd-logo" height={40} />
 
-            <div className="lg:hidden">
-              <Button variant="ghost" size="icon" onClick={toggleSideBar}>
-                <PanelLeftClose size={24} />
-              </Button>
-            </div>
+          <div className="lg:hidden">
+            <Button variant="ghost" size="icon" onClick={toggleSideBar}>
+              <PanelLeftClose size={24} />
+            </Button>
           </div>
+        </div>
 
-          <div className="h-full overflow-auto">
-            <div className="flex px-4">
-              {enterpriseSettings && enterpriseSettings.application_name ? (
-                <div>
-                  <HeaderTitle>
-                    {enterpriseSettings.application_name}
-                  </HeaderTitle>
+        <div className="h-full overflow-auto">
+          <div className="flex px-4">
+            {enterpriseSettings && enterpriseSettings.application_name ? (
+              <div>
+                <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
 
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle -mt-1.5">
-                      Powered by enMedD CHP
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <></>
-              )}
-            </div>
-            <div className="px-4 text-sm  font-medium flex flex-col gap-1">
-              {settings.search_page_enabled && (
+                {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
+                  <p className="text-xs text-subtle -mt-1.5">
+                    Powered by enMedD CHP
+                  </p>
+                )}
+              </div>
+            ) : (
+              <></>
+            )}
+          </div>
+          <div className="px-4 text-sm  font-medium flex flex-col gap-1">
+            {settings.search_page_enabled && (
+              <Link
+                href="/search"
+                className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer bg-primary text-white items-center gap-2 shadow-sm`}
+              >
+                <Search size={16} className="min-w-4 min-h-4" />
+                Search
+              </Link>
+            )}
+            {settings.chat_page_enabled && (
+              <>
                 <Link
-                  href="/search"
-                  className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer bg-primary text-white items-center gap-2 shadow-sm`}
+                  href="/chat"
+                  className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2`}
                 >
-                  <Search size={16} className="min-w-4 min-h-4" />
-                  Search
+                  <MessageCircleMore size={16} className="min-w-4 min-h-4" />
+                  Chat
                 </Link>
-              )}
-              {settings.chat_page_enabled && (
-                <>
-                  <Link
-                    href="/chat"
-                    className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2`}
-                  >
-                    <MessageCircleMore size={16} className="min-w-4 min-h-4" />
-                    Chat
-                  </Link>
-                  <Link
-                    href="/assistants/mine"
-                    className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
-                  >
-                    <Headset size={16} />
-                    <span className="truncate">Explore Assistants</span>
-                  </Link>
-                </>
-              )}
-              <Separator className="mt-4" />
-            </div>
+                <Link
+                  href="/assistants/mine"
+                  className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
+                >
+                  <Headset size={16} />
+                  <span className="truncate">Explore Assistants</span>
+                </Link>
+              </>
+            )}
+            <Separator className="mt-4" />
           </div>
         </div>
       </div>

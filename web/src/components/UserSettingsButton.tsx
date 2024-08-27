@@ -7,7 +7,14 @@ import { useRouter } from "next/navigation";
 import { User as UserTypes } from "@/lib/types";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { LOGOUT_DISABLED } from "@/lib/constants";
-import { Bell, CircleUserRound, LogOut, User } from "lucide-react";
+import {
+  Bell,
+  CircleUserRound,
+  LogOut,
+  MessageCircleMore,
+  Search,
+  User,
+} from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 
 export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
@@ -87,6 +94,24 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
               <User className="my-auto mr-3" size={24} strokeWidth={1.5} />
               Profile Settings
             </Link>
+            <Link
+              href="/chat"
+              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
+            >
+              <MessageCircleMore
+                className="my-auto mr-3"
+                size={24}
+                strokeWidth={1.5}
+              />
+              Chat
+            </Link>
+            <Link
+              href="/search"
+              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
+            >
+              <Search className="my-auto mr-3" size={24} strokeWidth={1.5} />
+              Search
+            </Link>
             {showAdminPanel && (
               <>
                 <Link
@@ -102,13 +127,6 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
                 </Link>
               </>
             )}
-            {/*  <Link
-              href="/notification"
-              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
-            >
-              <Bell className="my-auto mr-3" size={24} strokeWidth={1.5} />
-              Notification
-            </Link> */}
             {showLogout && (
               <>
                 {showAdminPanel && (

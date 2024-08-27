@@ -248,7 +248,7 @@ export default function Page() {
 
   return (
     <div className="container mx-auto">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
       <AdminPageTitle icon={<S3Icon size={32} />} title="S3 Storage" />

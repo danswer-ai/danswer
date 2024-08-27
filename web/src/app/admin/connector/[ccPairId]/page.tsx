@@ -64,7 +64,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
   return (
     <>
       <BackButton />
-      <div className="pb-1 flex mt-1">
+      <div className="pb-5 flex">
         <h1 className="text-3xl  font-bold">{ccPair.name}</h1>
 
         <div className="ml-auto">
@@ -78,7 +78,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
         isDeleting={isDeleting}
       />
 
-      <div className="text-sm mt-1">
+      <div className="text-sm pt-5">
         Total Documents Indexed: <b className="">{totalDocsIndexed}</b>
       </div>
 
@@ -93,7 +93,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
 
       <div className="mt-6">
         <div className="flex">
-          <Title>Indexing Attempts</Title>
+          <h3 className="font-semibold pb-5">Indexing Attempts</h3>
 
           {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
             ccPair.connector.source
@@ -135,7 +135,7 @@ export default function Page({ params }: { params: { ccPairId: string } }) {
 
   return (
     <div className="mx-auto container">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
 

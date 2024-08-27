@@ -1121,7 +1121,7 @@ export function ChatPage({
     <>
       {livePersona && (
         <div className="fixed top-0 left-0 flex w-full z-top-bar bg-background">
-          <div className="flex w-full items-start p-4 justify-between">
+          <div className="flex w-full items-start px-4 py-6 justify-between">
             <div className="flex lg:hidden items-center gap-2">
               <Button variant="ghost" size="icon" onClick={toggleLeftSideBar}>
                 <PanelRightClose size={24} />
@@ -1173,8 +1173,6 @@ export function ChatPage({
           user={user}
           openSidebar={openSidebar}
           toggleLeftSideBar={toggleLeftSideBar}
-          toggleWidth={toggleWidth}
-          isExpanded={isExpanded}
         >
           <ChatSidebar
             existingChats={chatSessions}
@@ -1182,8 +1180,6 @@ export function ChatPage({
             folders={folders}
             openedFolders={openedFolders}
             toggleSideBar={toggleLeftSideBar}
-            openSidebar={openSidebar}
-            isExpanded={isExpanded}
           />
         </DynamicSidebar>
 
@@ -1254,10 +1250,15 @@ export function ChatPage({
                               selectedPersona &&
                               messageHistory.length === 0 &&
                               !isFetchingChatMessages && (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 md:pt-8">
                                   {currentPersona.starter_messages.map(
                                     (starterMessage, i) => (
-                                      <div key={i} className="w-full">
+                                      <div
+                                        key={i}
+                                        className={`w-full ${
+                                          i > 1 ? "hidden md:flex" : ""
+                                        }`}
+                                      >
                                         <StarterMessage
                                           starterMessage={starterMessage}
                                           onClick={() =>

@@ -1,14 +1,14 @@
 "use client";
 
 import { ValidStatuses } from "@/lib/types";
-import { Badge } from "@tremor/react";
 import {
-  FiAlertTriangle,
-  FiCheckCircle,
-  FiClock,
-  FiPauseCircle,
-} from "react-icons/fi";
-import { HoverPopup } from "./HoverPopup";
+  TriangleAlert,
+  CircleCheckBig,
+  Clock,
+  CirclePause,
+} from "lucide-react";
+import { Badge } from "./ui/badge";
+import { CustomTooltip } from "./CustomTooltip";
 
 export function IndexAttemptStatus({
   status,
@@ -23,40 +23,31 @@ export function IndexAttemptStatus({
 
   if (status === "failed") {
     const icon = (
-      <Badge size={size} color="red" icon={FiAlertTriangle}>
-        Failed
+      <Badge variant="destructive">
+        <TriangleAlert size={14} /> Failed
       </Badge>
     );
     if (errorMsg) {
-      badge = (
-        <HoverPopup
-          mainContent={<div className="cursor-pointer">{icon}</div>}
-          popupContent={
-            <div className="flex flex-wrap whitespace-normal w-64">
-              {errorMsg}
-            </div>
-          }
-        />
-      );
+      badge = <CustomTooltip trigger={icon}>{errorMsg}</CustomTooltip>;
     } else {
       badge = icon;
     }
   } else if (status === "success") {
     badge = (
-      <Badge size={size} color="green" icon={FiCheckCircle}>
-        Succeeded
+      <Badge variant="success">
+        <CircleCheckBig size={14} /> Succeeded
       </Badge>
     );
   } else if (status === "in_progress") {
     badge = (
-      <Badge size={size} color="amber" icon={FiClock}>
-        In Progress
+      <Badge variant="warning">
+        <Clock size={14} /> In Progress
       </Badge>
     );
   } else if (status === "not_started") {
     badge = (
-      <Badge size={size} color="fuchsia" icon={FiClock}>
-        Scheduled
+      <Badge variant="outline">
+        <Clock size={14} /> Scheduled
       </Badge>
     );
   }
@@ -79,26 +70,26 @@ export function CCPairStatus({
 
   if (isDeleting) {
     badge = (
-      <Badge size={size} color="red" icon={FiAlertTriangle}>
-        Deleting
+      <Badge variant="destructive">
+        <TriangleAlert size={14} /> Deleting
       </Badge>
     );
   } else if (disabled) {
     badge = (
-      <Badge size={size} color="yellow" icon={FiPauseCircle}>
-        Paused
+      <Badge variant="warning">
+        <CirclePause size={14} /> Paused
       </Badge>
     );
   } else if (status === "failed") {
     badge = (
-      <Badge size={size} color="red" icon={FiAlertTriangle}>
-        Error
+      <Badge variant="destructive">
+        <TriangleAlert size={14} /> Error
       </Badge>
     );
   } else {
     badge = (
-      <Badge size={size} color="green" icon={FiCheckCircle}>
-        Active
+      <Badge variant="success">
+        <CircleCheckBig /> Active
       </Badge>
     );
   }

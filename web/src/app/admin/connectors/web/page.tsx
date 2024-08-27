@@ -48,7 +48,7 @@ export default function Web() {
 
   return (
     <div className="mx-auto container">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
 

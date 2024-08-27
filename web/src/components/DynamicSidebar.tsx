@@ -4,15 +4,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { WorkSpaceSidebar } from "@/app/chat/sessionSidebar/WorkSpaceSidebar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { User } from "@/lib/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface SidebarProps {
   user?: User | null;
   isSearch?: boolean;
   openSidebar?: boolean;
   toggleLeftSideBar?: () => void;
-  isExpanded?: boolean;
-  toggleWidth?: () => void;
   children?: React.ReactNode;
 }
 
@@ -21,11 +19,42 @@ export function DynamicSidebar({
   isSearch,
   openSidebar,
   toggleLeftSideBar,
-  toggleWidth,
-  isExpanded,
   children,
 }: SidebarProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const toggleWidth = () => {
+    setIsExpanded((prevState) => !prevState);
+  };
+
+  const [isLgScreen, setIsLgScreen] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+
+    const handleMediaQueryChange = (e: MediaQueryListEvent) => {
+      setIsLgScreen(e.matches);
+    };
+
+    setIsLgScreen(mediaQuery.matches);
+
+    mediaQuery.addEventListener("change", handleMediaQueryChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleMediaQueryChange);
+    };
+  }, []);
+
+  let opacityClass = "opacity-100";
+
+  if (isLgScreen) {
+    opacityClass = isExpanded ? "lg:opacity-100 delay-200" : "lg:opacity-0";
+  } else {
+    opacityClass = openSidebar
+      ? "opacity-100"
+      : "opacity-0 lg:opacity-100 delay-75";
+  }
 
   return (
     <>
@@ -57,7 +86,20 @@ export function DynamicSidebar({
           onMouseLeave={() => setIsHovered(false)}
         >
           <WorkSpaceSidebar openSidebar={openSidebar} user={user} />
-          {children}
+          <div
+            className={`py-6 bg-background h-full ease-in-out transition-[width] duration-500 w-full overflow-hidden lg:overflow-visible
+            ${
+              isExpanded
+                ? "lg:w-sidebar border-r border-border"
+                : "lg:w-0 border-none"
+            }`}
+          >
+            <div
+              className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${opacityClass}`}
+            >
+              {children}
+            </div>
+          </div>
           <div
             className={`h-full flex items-center justify-center transition-opacity ease-in-out duration-200 ${
               isHovered ? "opacity-100" : "opacity-0"

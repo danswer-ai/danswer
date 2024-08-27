@@ -47,15 +47,22 @@ const Main = () => {
   }
 
   return (
-    <div className="mb-8">
-      <Title className="mb-2">Most Liked Documents</Title>
-      <DocumentFeedbackTable documents={mostLikedDocuments} refresh={refresh} />
+    <div className="space-y-24">
+      <div>
+        <h3 className="pb-5 font-semibold">Most Liked Documents</h3>
+        <DocumentFeedbackTable
+          documents={mostLikedDocuments}
+          refresh={refresh}
+        />
+      </div>
 
-      <Title className="mb-2 mt-6">Most Disliked Documents</Title>
-      <DocumentFeedbackTable
-        documents={mostDislikedDocuments}
-        refresh={refresh}
-      />
+      <div>
+        <h3 className=" pb-5 font-semibold">Most Disliked Documents</h3>
+        <DocumentFeedbackTable
+          documents={mostDislikedDocuments}
+          refresh={refresh}
+        />
+      </div>
     </div>
   );
 };

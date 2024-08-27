@@ -242,11 +242,11 @@ export function ChatInputBar({
             onClick={() => setConfigModalActiveTab("assistant")}
             className="mr-4 min-w-6 min-h-6"
           />
-          <Sparkles
+          {/* <Sparkles
             size={24}
             onClick={() => setConfigModalActiveTab("models")}
             className="mr-4 min-w-6 min-h-6"
-          />
+          /> */}
           <Filter
             size={24}
             onClick={() => setConfigModalActiveTab("filters")}
@@ -461,13 +461,13 @@ export function ChatInputBar({
                 <Button
                   onClick={() => setConfigModalActiveTab("assistant")}
                   variant="ghost"
-                  className="mr-2"
+                  className="mr-2 border"
                 >
                   <Cpu size={16} />
                   {selectedAssistant ? selectedAssistant.name : "Assistants"}
                 </Button>
 
-                <Button
+                {/* <Button
                   onClick={() => setConfigModalActiveTab("models")}
                   variant="ghost"
                   className="mr-2"
@@ -477,7 +477,7 @@ export function ChatInputBar({
                     (selectedAssistant
                       ? selectedAssistant.llm_model_version_override || llmName
                       : llmName)}
-                </Button>
+                </Button> */}
                 <Button
                   onClick={() => setConfigModalActiveTab("filters")}
                   variant="ghost"

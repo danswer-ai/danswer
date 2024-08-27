@@ -1,11 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { UserSettingsButton } from "@/components/UserSettingsButton";
-import { Ellipsis, Bell } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import Image from "next/image";
 
-import Notion from "../../../../public/Notion.png";
-import Dropbox from "../../../../public/Dropbox.png";
-import Gitlab from "../../../../public/Gitlab.png";
 import ArnoldAi from "../../../../public/arnold_ai.png";
 import enMedD from "../../../../public/logo.png";
 import { Separator } from "@/components/ui/separator";
@@ -22,10 +18,10 @@ export const WorkSpaceSidebar = ({
   user,
 }: WorkSpaceSidebarProps) => {
   return (
-    <div className={`bg-background h-full p-4 border-r border-border`}>
+    <div className={`bg-background h-full px-4 py-6 border-r border-border`}>
       <div
         className={`h-full flex flex-col justify-between transition-opacity duration-300 ease-in-out lg:!opacity-100  ${
-          openSidebar ? "opacity-100 delay-200" : "opacity-0"
+          openSidebar ? "opacity-100 delay-200" : "opacity-0 delay-100"
         }`}
       >
         <div className="flex flex-col items-center gap-6">
@@ -34,7 +30,7 @@ export const WorkSpaceSidebar = ({
             alt="ArnoldAi Logo"
             width={40}
             height={40}
-            className="rounded-full min-w-10 min-h-10"
+            className="rounded-regular min-w-10 min-h-10"
           />
           <Separator />
           <div className="flex flex-col items-center gap-6">
