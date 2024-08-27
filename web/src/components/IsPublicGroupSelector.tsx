@@ -87,7 +87,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         !isAdmin ||
         formikProps.values.groups.length > 0) && (
         <>
-          <div className="flex gap-x-2 items-center">
+          <div className="flex mt-4 gap-x-2 items-center">
             <div className="block font-medium text-base">
               Assign group access for this {objectName}
             </div>

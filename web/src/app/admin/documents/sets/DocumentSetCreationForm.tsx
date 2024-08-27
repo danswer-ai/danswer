@@ -8,13 +8,19 @@ import {
   updateDocumentSet,
   DocumentSetCreationRequest,
 } from "./lib";
-import { ConnectorIndexingStatus, DocumentSet, UserGroup } from "@/lib/types";
+import {
+  ConnectorIndexingStatus,
+  DocumentSet,
+  UserGroup,
+  UserRole,
+} from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { Button, Divider } from "@tremor/react";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import React, { useEffect, useState } from "react";
+import { useUser } from "@/components/user/UserProvider";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -34,6 +40,7 @@ export const DocumentSetCreationForm = ({
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
   const isUpdate = existingDocumentSet !== undefined;
   const [localCcPairs, setLocalCcPairs] = useState(ccPairs);
+  const { user } = useUser();
 
   useEffect(() => {
     if (existingDocumentSet?.is_public) {
@@ -128,42 +135,161 @@ export const DocumentSetCreationForm = ({
                 )}
 
               <Divider />
-              <div className="flex flex-col gap-y-1">
-                <h2 className="mb-1 font-medium text-base">
-                  These are the connectors available to{" "}
-                  {userGroups && userGroups.length > 1
-                    ? "the selected group"
-                    : "the group you curate"}
-                  :
-                </h2>
-                <p className="mb-text-sm">
-                  All documents indexed by these selected connectors will be a
-                  part of this document set.
-                </p>
-                <FieldArray
-                  name="cc_pair_ids"
-                  render={(arrayHelpers: ArrayHelpers) => {
-                    // Filter visible cc pairs
-                    const visibleCcPairs = localCcPairs.filter(
-                      (ccPair) =>
-                        ccPair.public_doc ||
-                        (ccPair.groups.length > 0 &&
-                          props.values.groups.every((group) =>
-                            ccPair.groups.includes(group)
-                          ))
-                    );
 
-                    // Deselect filtered out cc pairs
-                    const visibleCcPairIds = visibleCcPairs.map(
-                      (ccPair) => ccPair.cc_pair_id
-                    );
-                    props.values.cc_pair_ids = props.values.cc_pair_ids.filter(
-                      (id) => visibleCcPairIds.includes(id)
-                    );
+              {user?.role === UserRole.CURATOR ? (
+                <>
+                  <div className="flex flex-col gap-y-1">
+                    <h2 className="mb-1 font-medium text-base">
+                      These are the connectors available to{" "}
+                      {userGroups && userGroups.length > 1
+                        ? "the selected group"
+                        : "the group you curate"}
+                      :
+                    </h2>
 
-                    return (
+                    <p className="mb-text-sm">
+                      All documents indexed by these selected connectors will be
+                      a part of this document set.
+                    </p>
+                    <FieldArray
+                      name="cc_pair_ids"
+                      render={(arrayHelpers: ArrayHelpers) => {
+                        // Filter visible cc pairs
+                        const visibleCcPairs = localCcPairs.filter(
+                          (ccPair) =>
+                            ccPair.public_doc ||
+                            (ccPair.groups.length > 0 &&
+                              props.values.groups.every((group) =>
+                                ccPair.groups.includes(group)
+                              ))
+                        );
+
+                        // Deselect filtered out cc pairs
+                        const visibleCcPairIds = visibleCcPairs.map(
+                          (ccPair) => ccPair.cc_pair_id
+                        );
+                        props.values.cc_pair_ids =
+                          props.values.cc_pair_ids.filter((id) =>
+                            visibleCcPairIds.includes(id)
+                          );
+
+                        return (
+                          <div className="mb-3 flex gap-2 flex-wrap">
+                            {visibleCcPairs.map((ccPair) => {
+                              const ind = props.values.cc_pair_ids.indexOf(
+                                ccPair.cc_pair_id
+                              );
+                              let isSelected = ind !== -1;
+                              return (
+                                <div
+                                  key={`${ccPair.connector.id}-${ccPair.credential.id}`}
+                                  className={
+                                    `
+                                  px-3 
+                                  py-1
+                                  rounded-lg 
+                                  border
+                                  border-border 
+                                  w-fit 
+                                  flex 
+                                  cursor-pointer ` +
+                                    (isSelected
+                                      ? " bg-background-strong"
+                                      : " hover:bg-hover")
+                                  }
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      arrayHelpers.remove(ind);
+                                    } else {
+                                      arrayHelpers.push(ccPair.cc_pair_id);
+                                    }
+                                  }}
+                                >
+                                  <div className="my-auto">
+                                    <ConnectorTitle
+                                      connector={ccPair.connector}
+                                      ccPairId={ccPair.cc_pair_id}
+                                      ccPairName={ccPair.name}
+                                      isLink={false}
+                                      showMetadata={false}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <FieldArray
+                      name="cc_pair_ids"
+                      render={() => {
+                        // Filter non-visible cc pairs
+                        const nonVisibleCcPairs = localCcPairs.filter(
+                          (ccPair) =>
+                            !ccPair.public_doc &&
+                            (ccPair.groups.length === 0 ||
+                              !props.values.groups.every((group) =>
+                                ccPair.groups.includes(group)
+                              ))
+                        );
+
+                        return nonVisibleCcPairs.length > 0 ? (
+                          <>
+                            <Divider />
+                            <h2 className="mb-1 font-medium text-base">
+                              These connectors are not available to the{" "}
+                              {userGroups && userGroups.length > 1
+                                ? `group${props.values.groups.length > 1 ? "s" : ""} you have selected`
+                                : "group you curate"}
+                              :
+                            </h2>
+                            <p className="mb-3 text-sm">
+                              Only connectors that are directly assigned to the
+                              group you are trying to add the document set to
+                              will be available.
+                            </p>
+                            <div className="mb-3 flex gap-2 flex-wrap">
+                              {nonVisibleCcPairs.map((ccPair) => (
+                                <div
+                                  key={`${ccPair.connector.id}-${ccPair.credential.id}`}
+                                  className="px-3 py-1 rounded-lg border border-non-selectable-border w-fit flex cursor-not-allowed"
+                                >
+                                  <div className="my-auto">
+                                    <ConnectorTitle
+                                      connector={ccPair.connector}
+                                      ccPairId={ccPair.cc_pair_id}
+                                      ccPairName={ccPair.name}
+                                      isLink={false}
+                                      showMetadata={false}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : null;
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <h2 className="mb-1 font-medium text-base">
+                    Pick your connectors:
+                  </h2>
+                  <p className="mb-3 text-xs">
+                    All documents indexed by the selected connectors will be a
+                    part of this document set.
+                  </p>
+                  <FieldArray
+                    name="cc_pair_ids"
+                    render={(arrayHelpers: ArrayHelpers) => (
                       <div className="mb-3 flex gap-2 flex-wrap">
-                        {visibleCcPairs.map((ccPair) => {
+                        {ccPairs.map((ccPair) => {
                           const ind = props.values.cc_pair_ids.indexOf(
                             ccPair.cc_pair_id
                           );
@@ -173,14 +299,14 @@ export const DocumentSetCreationForm = ({
                               key={`${ccPair.connector.id}-${ccPair.credential.id}`}
                               className={
                                 `
-                                  px-3 
-                                  py-1
-                                  rounded-lg 
-                                  border
-                                  border-border 
-                                  w-fit 
-                                  flex 
-                                  cursor-pointer ` +
+                              px-3 
+                              py-1
+                              rounded-lg 
+                              border
+                              border-border 
+                              w-fit 
+                              flex 
+                              cursor-pointer ` +
                                 (isSelected
                                   ? " bg-background-strong"
                                   : " hover:bg-hover")
@@ -206,62 +332,10 @@ export const DocumentSetCreationForm = ({
                           );
                         })}
                       </div>
-                    );
-                  }}
-                />
-              </div>
-              <div>
-                <FieldArray
-                  name="cc_pair_ids"
-                  render={() => {
-                    // Filter non-visible cc pairs
-                    const nonVisibleCcPairs = localCcPairs.filter(
-                      (ccPair) =>
-                        !ccPair.public_doc &&
-                        (ccPair.groups.length === 0 ||
-                          !props.values.groups.every((group) =>
-                            ccPair.groups.includes(group)
-                          ))
-                    );
-
-                    return nonVisibleCcPairs.length > 0 ? (
-                      <>
-                        <Divider />
-                        <h2 className="mb-1 font-medium text-base">
-                          These connectors are not available to the{" "}
-                          {userGroups && userGroups.length > 1
-                            ? `group${props.values.groups.length > 1 ? "s" : ""} you have selected`
-                            : "group you curate"}
-                          :
-                        </h2>
-                        <p className="mb-3 text-sm">
-                          Only connectors that are directly assigned to the
-                          group you are trying to add the document set to will
-                          be available.
-                        </p>
-                        <div className="mb-3 flex gap-2 flex-wrap">
-                          {nonVisibleCcPairs.map((ccPair) => (
-                            <div
-                              key={`${ccPair.connector.id}-${ccPair.credential.id}`}
-                              className="px-3 py-1 rounded-lg border border-non-selectable-border w-fit flex cursor-not-allowed"
-                            >
-                              <div className="my-auto">
-                                <ConnectorTitle
-                                  connector={ccPair.connector}
-                                  ccPairId={ccPair.cc_pair_id}
-                                  ccPairName={ccPair.name}
-                                  isLink={false}
-                                  showMetadata={false}
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    ) : null;
-                  }}
-                />
-              </div>
+                    )}
+                  />
+                </div>
+              )}
 
               <div className="flex mt-6">
                 <Button
