@@ -126,6 +126,7 @@ export async function fetchChatData(searchParams: {
       `Failed to fetch chat sessions - ${chatSessionsResponse?.text()}`
     );
   }
+
   // Larger ID -> created later
   chatSessions.sort((a, b) => (a.id > b.id ? -1 : 1));
 
