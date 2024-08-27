@@ -552,7 +552,6 @@ export function SelectorFormField({
     <div className="mb-4">
       {label && <Label>{label}</Label>}
       {subtext && <SubLabel>{subtext}</SubLabel>}
-
       <div className="mt-2">
         <DefaultDropdown
           options={options}
