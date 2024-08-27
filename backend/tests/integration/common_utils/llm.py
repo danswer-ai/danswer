@@ -31,7 +31,7 @@ class LLMProvider(BaseModel):
             custom_config=None,
             fast_default_model_name=None,
             is_public=True,
-            groups=None,
+            groups=[],
             display_model_names=None,
             model_names=None,
         )
