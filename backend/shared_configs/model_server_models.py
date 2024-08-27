@@ -19,6 +19,9 @@ class EmbedRequest(BaseModel):
     manual_query_prefix: str | None = None
     manual_passage_prefix: str | None = None
 
+    # This disables the "model_" protected namespace for pydantic
+    model_config = {"protected_namespaces": ()}
+
 
 class EmbedResponse(BaseModel):
     embeddings: list[Embedding]
@@ -30,6 +33,9 @@ class RerankRequest(BaseModel):
     model_name: str
     provider_type: RerankerProvider | None = None
     api_key: str | None = None
+
+    # This disables the "model_" protected namespace for pydantic
+    model_config = {"protected_namespaces": ()}
 
 
 class RerankResponse(BaseModel):

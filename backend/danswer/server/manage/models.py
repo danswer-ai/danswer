@@ -245,7 +245,7 @@ class SlackBotConfig(BaseModel):
 
 class FullModelVersionResponse(BaseModel):
     current_settings: SavedSearchSettings
-    secondary_settings: SavedSearchSettings | None
+    secondary_settings: SavedSearchSettings | None = None
 
 
 class AllUsersResponse(BaseModel):

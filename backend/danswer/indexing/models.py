@@ -102,6 +102,9 @@ class EmbeddingModelDetail(BaseModel):
     provider_type: EmbeddingProvider | None = None
     api_key: str | None = None
 
+    # This disables the "model_" protected namespace for pydantic
+    model_config = {"protected_namespaces": ()}
+
     @classmethod
     def from_db_model(
         cls,
@@ -122,6 +125,9 @@ class IndexingSetting(EmbeddingModelDetail):
     model_dim: int
     index_name: str | None
     multipass_indexing: bool
+
+    # This disables the "model_" protected namespace for pydantic
+    model_config = {"protected_namespaces": ()}
 
     @classmethod
     def from_db_model(cls, search_settings: "SearchSettings") -> "IndexingSetting":
