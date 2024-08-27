@@ -75,6 +75,14 @@ Employee(EmployeeId primary key,FirstName,LastName,Title,ReportsTo, BirthDate,Ad
 QUERY: <USER_QUERY>
 RESPONSE:"""
 
+SUMMARIZATION_PROMPT_FOR_TABULAR_DATA = """Your Knowledge expert acting as data analyst, your responsible for generating short summary in 100 words based on give tabular data.
+Give tabular data is out of this query {}
+Tabular data is {}
+
+analyze above tabular data and user query, try to identify domain data and provide title and summary in paragraphs and bullet points, DONT USE YOUR EXISTING KNOWLEDGE.
+
+"""
+
 
 class SqlGenerationResponse(BaseModel):
     db_response: str | None = None
@@ -184,10 +192,14 @@ class SqlGenerationTool(Tool):
         if self.files:
             dataframe = self.generate_dataframe_from_excel(self.files)
             if not dataframe.empty:
-                sql_generation_tool_output = self.generate_sql_for_dataframe.generate_sql_query(schema=dataframe.dtypes, requirement=query)
+                sql_generation_tool_output = self.generate_sql_for_dataframe.generate_sql_query(schema=dataframe.dtypes,
+                                                                                                requirement=query)
             else:
                 sql_generation_tool_output = None
         else:
+            '''
+            if it is sql db
+            '''
             prompt_builder = AnswerPromptBuilder(history, llm_config)
             prompt_builder.update_system_prompt(
                 default_build_system_message(self.prompt_config)
@@ -210,6 +222,7 @@ class SqlGenerationTool(Tool):
             # Convert rows to a list of dictionaries
             # Each row will be converted to a dictionary using column names
             result_list = [dict(row._mapping) for row in dbrows]
+
 
         isTableResponse = "json" in query
         isChartInQuery = "chart" in query.lower()
@@ -235,12 +248,24 @@ class SqlGenerationTool(Tool):
                     final_response = "No records fetched from uploaded Excel. Please check your Excel or rephrase your query!"
             else:
                 table_response = self.format_as_markdown_table(result_list)
-                final_response = table_response
+                tabular_data_summarization = self.tabular_data_summarizer(query, result_list)
+                final_response = tabular_data_summarization + "\n" + table_response
 
         yield ToolResponse(
             id=SQL_GENERATION_RESPONSE_ID,
             response=final_response
         )
+
+    def tabular_data_summarizer(self, user_query, tabular_data: list):
+
+        #formatted_table = "\n".join(["\t".join(row) for row in tabular_data])
+        #SUMMARIZATION_PROMPT_FOR_TABULAR_DATA.format(user_query, formatted_table)
+        logger.info(SUMMARIZATION_PROMPT_FOR_TABULAR_DATA)
+
+        llm_response = self.llm.invoke(prompt=SUMMARIZATION_PROMPT_FOR_TABULAR_DATA.format(user_query, tabular_data))
+        sql_query = llm_response.content
+
+        return sql_query
 
     def generate_dataframe_from_excel(self, files):
         file = files[0]  # first file only
@@ -256,10 +281,11 @@ class SqlGenerationTool(Tool):
         filtered_df = self.dataframe_inmemory_sql.execute_sql(sql_query)
         logger.debug(f'dataframe_in_memory_sql df: {filtered_df}')
         chart_type = self.plot_charts.find_chart_type(filtered_df)
-        column_names = self.resolve_plot_parameters.resolve_graph_parameters_from_chart_type_and_sql_and_requirements(sql_query=sql_query,
-                                                                                                                      schema=filtered_df.info,
-                                                                                                                      requirement=user_query,
-                                                                                                                      chart_type=chart_type)
+        column_names = self.resolve_plot_parameters.resolve_graph_parameters_from_chart_type_and_sql_and_requirements(
+            sql_query=sql_query,
+            schema=filtered_df.info,
+            requirement=user_query,
+            chart_type=chart_type)
         image_path = self.plot_charts.generate_chart_and_save(dataframe=filtered_df,
                                                               field_names=column_names,
                                                               chart_type=chart_type)
