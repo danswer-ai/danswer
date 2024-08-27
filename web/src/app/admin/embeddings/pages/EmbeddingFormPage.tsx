@@ -416,7 +416,6 @@ export default function EmbeddingForm() {
             <Card>
               <AdvancedEmbeddingFormPage
                 numRerank={rerankingDetails.num_rerank}
-                setRerankingDetails={setRerankingDetails}
                 advancedEmbeddingDetails={advancedEmbeddingDetails}
                 updateAdvancedEmbeddingDetails={updateAdvancedEmbeddingDetails}
               />

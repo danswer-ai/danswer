@@ -1,7 +1,6 @@
 import React, { Dispatch, forwardRef, SetStateAction, useState } from "react";
 import { Formik, Form, FormikProps } from "formik";
 import * as Yup from "yup";
-import { EditingValue } from "@/components/credentials/EditingValue";
 import {
   RerankerProvider,
   RerankingDetails,
@@ -11,6 +10,7 @@ import { FiExternalLink } from "react-icons/fi";
 import { CohereIcon, MixedBreadIcon } from "@/components/icons/icons";
 import { Modal } from "@/components/Modal";
 import { Button } from "@tremor/react";
+import { TextFormField } from "@/components/admin/connectors/Field";
 
 interface RerankingDetailsFormProps {
   setRerankingDetails: Dispatch<SetStateAction<RerankingDetails>>;
@@ -69,7 +69,7 @@ const RerankingDetailsForm = forwardRef<
             </button>
           </div>
 
-          <div className="px-2 ">
+          <div className="px-2">
             <button
               onClick={() => setModelTab("open")}
               className={` mx-2 p-2 font-bold  ${
@@ -101,7 +101,7 @@ const RerankingDetailsForm = forwardRef<
           enableReinitialize={true}
         >
           {({ values, setFieldValue }) => (
-            <Form className="space-y-6">
+            <Form>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(modelTab
                   ? rerankingModels.filter(
@@ -191,14 +191,13 @@ const RerankingDetailsForm = forwardRef<
                   title="API Key Configuration"
                 >
                   <div className="w-full px-4">
-                    <EditingValue
-                      optional={false}
-                      currentValue={values.api_key}
-                      onChange={(value: string | null) => {
+                    <TextFormField
+                      placeholder={values.api_key || undefined}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = e.target.value;
                         setRerankingDetails({ ...values, api_key: value });
                         setFieldValue("api_key", value);
                       }}
-                      setFieldValue={setFieldValue}
                       type="password"
                       label="Cohere API Key"
                       name="api_key"

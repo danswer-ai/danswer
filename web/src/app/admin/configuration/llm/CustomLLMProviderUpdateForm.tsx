@@ -219,8 +219,6 @@ export function CustomLLMProviderUpdateForm({
               placeholder="Display Name"
             />
 
-            <Divider />
-
             <TextFormField
               name="provider"
               label="Provider Name"
@@ -426,7 +424,7 @@ export function CustomLLMProviderUpdateForm({
                   <>
                     <BooleanFormField
                       small
-                      noPadding
+                      removeIndent
                       alignTop
                       name="is_public"
                       label="Is Public?"
