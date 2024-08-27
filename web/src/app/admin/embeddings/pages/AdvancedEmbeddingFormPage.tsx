@@ -13,7 +13,6 @@ interface AdvancedEmbeddingFormPageProps {
     key: keyof AdvancedSearchConfiguration,
     value: any
   ) => void;
-  setRerankingDetails: Dispatch<SetStateAction<RerankingDetails>>;
   advancedEmbeddingDetails: AdvancedSearchConfiguration;
   numRerank: number;
 }
