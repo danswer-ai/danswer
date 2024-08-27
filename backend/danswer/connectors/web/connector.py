@@ -84,6 +84,19 @@ def check_internet_connection(url: str) -> None:
     try:
         response = requests.get(url, timeout=3)
         response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        status_code = e.response.status_code
+        error_msg = {
+            400: "Bad Request",
+            401: "Unauthorized",
+            403: "Forbidden",
+            404: "Not Found",
+            500: "Internal Server Error",
+            502: "Bad Gateway",
+            503: "Service Unavailable",
+            504: "Gateway Timeout",
+        }.get(status_code, "HTTP Error")
+        raise Exception(f"{error_msg} ({status_code}) for {url} - {e}")
     except requests.exceptions.SSLError as e:
         cause = (
             e.args[0].reason
@@ -91,8 +104,8 @@ def check_internet_connection(url: str) -> None:
             else e.args
         )
         raise Exception(f"SSL error {str(cause)}")
-    except (requests.RequestException, ValueError):
-        raise Exception(f"Unable to reach {url} - check your internet connection")
+    except (requests.RequestException, ValueError) as e:
+        raise Exception(f"Unable to reach {url} - check your internet connection: {e}")
 
 
 def is_valid_url(url: str) -> bool:
