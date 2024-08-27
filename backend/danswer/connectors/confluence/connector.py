@@ -45,6 +45,14 @@ logger = setup_logger()
 # 2. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
 
 
+NO_PERMISSIONS_TO_VIEW_ATTACHMENTS_ERROR_STR = (
+    "User not permitted to view attachments on content"
+)
+NO_PARENT_OR_NO_PERMISSIONS_ERROR_STR = (
+    "No parent or not permitted to view content with id"
+)
+
+
 def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, str]:
     """Sample
     URL w/ page: https://danswer.atlassian.net/wiki/spaces/1234abcd/pages/5678efgh/overview
@@ -203,16 +211,22 @@ def _comment_dfs(
         comments_str += "\nComment:\n" + parse_html_page(
             comment_html, confluence_client
         )
-        child_comment_pages = get_page_child_by_type(
-            comment_page["id"],
-            type="comment",
-            start=None,
-            limit=None,
-            expand="body.storage.value",
-        )
-        comments_str = _comment_dfs(
-            comments_str, child_comment_pages, confluence_client
-        )
+        try:
+            child_comment_pages = get_page_child_by_type(
+                comment_page["id"],
+                type="comment",
+                start=None,
+                limit=None,
+                expand="body.storage.value",
+            )
+            comments_str = _comment_dfs(
+                comments_str, child_comment_pages, confluence_client
+            )
+        except HTTPError as e:
+            # not the cleanest, but I'm not aware of a nicer way to check the error
+            if NO_PARENT_OR_NO_PERMISSIONS_ERROR_STR not in str(e):
+                raise
+
     return comments_str
 
 
@@ -632,6 +646,14 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     files_attachment_content.append(attachment_content)
 
         except Exception as e:
+            if isinstance(
+                e, HTTPError
+            ) and NO_PERMISSIONS_TO_VIEW_ATTACHMENTS_ERROR_STR in str(e):
+                logger.warning(
+                    f"User does not have access to attachments on page '{page_id}'"
+                )
+                return "", []
+
             if not self.continue_on_failure:
                 raise e
             logger.exception(

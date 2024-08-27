@@ -201,7 +201,8 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
 
 # Avoid to get archived pages
 CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
-    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
+    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "true").lower()
+    == "true"
 )
 
 # Save pages labels as Danswer metadata tags
