@@ -127,7 +127,7 @@ export const ChatSidebar = ({
         <Link href="/assistants/mine" className="mt-3 mb-1 mx-3">
           <BasicClickable fullWidth>
             <div className="flex items-center text-default font-medium">
-              <FaBrain className="ml-1 mr-2" /> Manage Assistants
+              <FaBrain className="ml-1 mr-2" /> Manage Plugins
             </div>
           </BasicClickable>
         </Link>

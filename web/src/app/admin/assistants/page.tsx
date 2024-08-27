@@ -24,7 +24,7 @@ export default async function Page() {
 
   return (
     <div className="mx-auto container">
-      <AdminPageTitle icon={<RobotIcon size={32} />} title="Assistants" />
+      <AdminPageTitle icon={<RobotIcon size={32} />} title="Plugins" />
 
       <Text className="mb-2">
         Assistants are a way to build custom search/question-answering
@@ -43,20 +43,20 @@ export default async function Page() {
       <div>
         <Divider />
 
-        <Title>Create an Assistant</Title>
+        <Title>Create an Plugin</Title>
         <Link
           href="/admin/assistants/new"
           className="flex py-2 px-4 mt-2 border border-border h-fit cursor-pointer hover:bg-hover text-sm w-40"
         >
           <div className="mx-auto flex">
             <FiPlusSquare className="my-auto mr-2" />
-            New Assistant
+            New Plugin
           </div>
         </Link>
 
         <Divider />
 
-        <Title>Existing Assistants</Title>
+        <Title>Existing Plugins</Title>
         <PersonasTable personas={personas} />
       </div>
     </div>

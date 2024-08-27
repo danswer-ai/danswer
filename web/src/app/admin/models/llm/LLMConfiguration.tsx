@@ -144,8 +144,8 @@ export function LLMConfiguration() {
         <>
           <Text className="mb-4">
             If multiple LLM providers are enabled, the default provider will be
-            used for all &quot;Default&quot; Assistants. For user-created
-            Assistants, you can select the LLM provider/model that best fits the
+            used for all &quot;Default&quot; Plugins. For user-created
+            Plugins, you can select the LLM provider/model that best fits the
             use case!
           </Text>
           <ConfiguredLLMProviderDisplay

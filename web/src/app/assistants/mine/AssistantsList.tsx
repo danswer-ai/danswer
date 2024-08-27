@@ -279,14 +279,14 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
     <>
       {popup}
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <AssistantsPageTitle>My Assistants</AssistantsPageTitle>
+        <AssistantsPageTitle>My Plugins</AssistantsPageTitle>
 
         <div className="grid grid-cols-2 gap-4 mt-3">
           <Link href="/assistants/new">
             <NavigationButton>
               <div className="flex justify-center">
                 <FiPlus className="mr-2 my-auto" size={20} />
-                Create New Assistant
+                Create New Plugin
               </div>
             </NavigationButton>
           </Link>
@@ -295,26 +295,26 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
             <NavigationButton>
               <div className="flex justify-center">
                 <FiSearch className="mr-2 my-auto" size={20} />
-                View Available Assistants
+                View Available Plugins
               </div>
             </NavigationButton>
           </Link>
         </div>
 
         <p className="mt-6 text-center text-base">
-          Assistants allow you to customize your experience for a specific
+          Plugins allow you to customize your experience for a specific
           purpose. Specifically, they combine instructions, extra knowledge, and
           any combination of tools.
         </p>
 
         <Divider />
 
-        <h3 className="text-xl font-bold mb-4">Active Assistants</h3>
+        <h3 className="text-xl font-bold mb-4">Active Plugins</h3>
 
         <Text>
-          The order the assistants appear below will be the order they appear in
-          the Assistants dropdown. The first assistant listed will be your
-          default assistant when you start a new chat.
+          The order the plugins appear below will be the order they appear in
+          the Plugins dropdown. The first plugin listed will be your
+          default plugin when you start a new chat.
         </Text>
 
         <div className="w-full p-4 mt-3">
@@ -337,11 +337,11 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
           <>
             <Divider />
 
-            <h3 className="text-xl font-bold mb-4">Your Hidden Assistants</h3>
+            <h3 className="text-xl font-bold mb-4">Your Hidden Plugins</h3>
 
             <Text>
-              Assistants you&apos;ve created that aren&apos;t currently visible
-              in the Assistants selector.
+              Plugins you&apos;ve created that aren&apos;t currently visible
+              in the Plugins selector.
             </Text>
 
             <div className="w-full p-4">

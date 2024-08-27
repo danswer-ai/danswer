@@ -29,7 +29,7 @@ export default async function Page() {
       />
 
       <Text className="mb-2">
-        Tools allow assistants to retrieve information or take actions.
+        Tools allow plugins to retrieve information or take actions.
       </Text>
 
       <div>
