@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.access.models import DocumentAccess
 from danswer.connectors.models import Document
@@ -46,7 +47,7 @@ class DocAwareChunk(BaseChunk):
 
     mini_chunk_texts: list[str] | None
 
-    large_chunk_reference_ids: list[int] = []
+    large_chunk_reference_ids: list[int] = Field(default_factory=list)
 
     def to_short_descriptor(self) -> str:
         """Used when logging the identity of a chunk"""

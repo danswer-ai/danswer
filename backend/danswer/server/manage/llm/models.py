@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.llm.llm_provider_options import fetch_models_for_provider
 
@@ -63,7 +64,7 @@ class LLMProvider(BaseModel):
     default_model_name: str
     fast_default_model_name: str | None = None
     is_public: bool = True
-    groups: list[int] = []
+    groups: list[int] = Field(default_factory=list)
     display_model_names: list[str] | None = None
 
 

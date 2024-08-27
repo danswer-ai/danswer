@@ -3,6 +3,7 @@ from typing import List
 from typing import Optional
 
 from pydantic import BaseModel
+from pydantic import Field
 
 
 class Message(BaseModel):
@@ -22,7 +23,7 @@ class Message(BaseModel):
     edit_history: Any = None
     reactions: List[Any]
     submessages: List[Any]
-    flags: List[str] = []
+    flags: List[str] = Field(default_factory=list)
     display_recipient: Optional[str] = None
     type: Optional[str] = None
     stream_id: int
@@ -39,4 +40,4 @@ class GetMessagesResponse(BaseModel):
     found_newest: Optional[bool] = None
     history_limited: Optional[bool] = None
     anchor: Optional[str] = None
-    messages: List[Message] = []
+    messages: List[Message] = Field(default_factory=list)

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
+from pydantic import Field
 from pydantic import field_validator
 from pydantic import model_validator
 
@@ -188,12 +189,12 @@ class SlackBotConfigCreationRequest(BaseModel):
     respond_to_bots: bool = False
     enable_auto_filters: bool = False
     # If no team members, assume respond in the channel to everyone
-    respond_member_group_list: list[str] = []
-    answer_filters: list[AllowedAnswerFilters] = []
+    respond_member_group_list: list[str] = Field(default_factory=list)
+    answer_filters: list[AllowedAnswerFilters] = Field(default_factory=list)
     # list of user emails
     follow_up_tags: list[str] | None = None
     response_type: SlackBotResponseType
-    standard_answer_categories: list[int] = []
+    standard_answer_categories: list[int] = Field(default_factory=list)
 
     @field_validator("answer_filters", mode="before")
     @classmethod

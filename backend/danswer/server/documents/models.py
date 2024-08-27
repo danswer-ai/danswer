@@ -3,6 +3,7 @@ from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
@@ -48,7 +49,7 @@ class ConnectorBase(BaseModel):
 
 class ConnectorUpdateRequest(ConnectorBase):
     is_public: bool | None = None
-    groups: list[int] = []
+    groups: list[int] = Field(default_factory=list)
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -94,7 +95,7 @@ class CredentialBase(BaseModel):
     source: DocumentSource
     name: str | None = None
     curator_public: bool = False
-    groups: list[int] = []
+    groups: list[int] = Field(default_factory=list)
 
 
 class CredentialSnapshot(CredentialBase):
@@ -257,7 +258,7 @@ class ConnectorCredentialPairIdentifier(BaseModel):
 class ConnectorCredentialPairMetadata(BaseModel):
     name: str | None = None
     is_public: bool | None = None
-    groups: list[int] = []
+    groups: list[int] = Field(default_factory=list)
 
 
 class ConnectorCredentialPairDescriptor(BaseModel):
