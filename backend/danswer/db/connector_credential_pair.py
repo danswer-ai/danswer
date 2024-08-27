@@ -14,10 +14,10 @@ from danswer.db.connector import fetch_connector_by_id
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
+from danswer.db.models import SearchSettings
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.db.models import UserGroup__ConnectorCredentialPair
@@ -159,12 +159,12 @@ def get_connector_credential_pair_from_id(
 def get_last_successful_attempt_time(
     connector_id: int,
     credential_id: int,
-    embedding_model: EmbeddingModel,
+    search_settings: SearchSettings,
     db_session: Session,
 ) -> float:
     """Gets the timestamp of the last successful index run stored in
     the CC Pair row in the database"""
-    if embedding_model.status == IndexModelStatus.PRESENT:
+    if search_settings.status == IndexModelStatus.PRESENT:
         connector_credential_pair = get_connector_credential_pair(
             connector_id, credential_id, db_session
         )
@@ -186,7 +186,7 @@ def get_last_successful_attempt_time(
         .filter(
             ConnectorCredentialPair.connector_id == connector_id,
             ConnectorCredentialPair.credential_id == credential_id,
-            IndexAttempt.embedding_model_id == embedding_model.id,
+            IndexAttempt.search_settings_id == search_settings.id,
             IndexAttempt.status == IndexingStatus.SUCCESS,
         )
         .order_by(IndexAttempt.time_started.desc())
@@ -445,11 +445,11 @@ def resync_cc_pair(
                 ConnectorCredentialPair,
                 IndexAttempt.connector_credential_pair_id == ConnectorCredentialPair.id,
             )
-            .join(EmbeddingModel, IndexAttempt.embedding_model_id == EmbeddingModel.id)
+            .join(SearchSettings, IndexAttempt.search_settings_id == SearchSettings.id)
             .filter(
                 ConnectorCredentialPair.connector_id == connector_id,
                 ConnectorCredentialPair.credential_id == credential_id,
-                EmbeddingModel.status == IndexModelStatus.PRESENT,
+                SearchSettings.status == IndexModelStatus.PRESENT,
             )
         )
 

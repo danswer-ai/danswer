@@ -49,7 +49,7 @@ export default async function Home() {
     fetchSS("/manage/document-set"),
     fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
-    fetchSS("/search-settings/get-embedding-models"),
+    fetchSS("/search-settings/get-all-search-settings"),
     fetchSS("/query/user-searches"),
   ];
 

@@ -54,3 +54,17 @@ LOG_FILE_NAME = os.environ.get("LOG_FILE_NAME") or "danswer"
 DEV_LOGGING_ENABLED = os.environ.get("DEV_LOGGING_ENABLED", "").lower() == "true"
 # notset, debug, info, notice, warning, error, or critical
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")
+
+
+# Fields which should only be set on new search setting
+PRESERVED_SEARCH_FIELDS = [
+    "provider_type",
+    "api_key",
+    "model_name",
+    "index_name",
+    "multipass_indexing",
+    "model_dim",
+    "normalize",
+    "passage_prefix",
+    "query_prefix",
+]

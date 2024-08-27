@@ -131,7 +131,7 @@ export function WhitelabelingForm() {
               disabled={isSubmitting}
             />
 
-            <Label>Custom Logo</Label>
+            <Label className="mt-4">Custom Logo</Label>
 
             {values.use_custom_logo ? (
               <div className="mt-3">
@@ -183,10 +183,8 @@ export function WhitelabelingForm() {
               setShowAdvancedOptions={setShowAdvancedOptions}
             />
 
-            <br />
-
             {showAdvancedOptions && (
-              <>
+              <div className="w-full flex flex-col gap-y-4">
                 <Text>
                   Read{" "}
                   <Link
@@ -197,101 +195,99 @@ export function WhitelabelingForm() {
                   </Link>{" "}
                   to see whitelabelling examples in action.
                 </Text>
-                <div className="mt-4">
-                  <TextFormField
-                    label="Chat Header Content"
-                    name="custom_header_content"
-                    subtext={`Custom Markdown content that will be displayed as a banner at the top of the Chat page.`}
-                    placeholder="Your header content..."
-                    disabled={isSubmitting}
-                  />
-                </div>
+
+                <TextFormField
+                  label="Chat Header Content"
+                  name="custom_header_content"
+                  subtext={`Custom Markdown content that will be displayed as a banner at the top of the Chat page.`}
+                  placeholder="Your header content..."
+                  disabled={isSubmitting}
+                />
 
                 <Divider />
 
-                <div className="mt-4">
-                  <TextFormField
-                    label="Popup Header"
-                    name="custom_popup_header"
-                    subtext={`The title for the popup that will be displayed for each user on their initial visit 
-        to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${
-          values.application_name || "Danswer"
-        }!".`}
-                    placeholder="Initial Popup Header"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                <div className="mt-4">
-                  <TextFormField
-                    label="Popup Content"
-                    name="custom_popup_content"
-                    subtext={`Custom Markdown content that will be displayed as a popup on initial visit to the application.`}
-                    placeholder="Your popup content..."
-                    isTextArea
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                <div className="mt-4">
-                  <TextFormField
-                    label="Chat Footer Text"
-                    name="custom_lower_disclaimer_content"
-                    subtext={`Custom Markdown content that will be displayed at the bottom of the Chat page.`}
-                    placeholder="Your disclaimer content..."
-                    isTextArea
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <Label>Chat Footer Logotype</Label>
-
-                {values.use_custom_logotype ? (
-                  <div className="mt-3">
-                    <SubLabel>Current Custom Logotype: </SubLabel>
-                    <img
-                      src={"/api/enterprise-settings/logotype?u=" + Date.now()}
-                      alt="logotype"
-                      style={{ objectFit: "contain" }}
-                      className="w-32 h-32 mb-10 mt-4"
-                    />
-
-                    <Button
-                      color="red"
-                      size="xs"
-                      type="button"
-                      className="mb-8"
-                      onClick={async () => {
-                        const valuesWithoutLogotype = {
-                          ...values,
-                          use_custom_logotype: false,
-                        };
-                        await updateEnterpriseSettings(valuesWithoutLogotype);
-                        setValues(valuesWithoutLogotype);
-                      }}
-                    >
-                      Delete
-                    </Button>
-
-                    <SubLabel>
-                      Override your uploaded custom logotype by uploading a new
-                      image below and clicking the Update button. This logotype
-                      is the text-based logo that will be rendered at the bottom
-                      right of the chat screen.
-                    </SubLabel>
-                  </div>
-                ) : (
-                  <SubLabel>
-                    Add a custom logotype by uploading a new image below and
-                    clicking the Update button. This logotype is the text-based
-                    logo that will be rendered at the bottom right of the chat
-                    screen.
-                  </SubLabel>
-                )}
-                <ImageUpload
-                  selectedFile={selectedLogotype}
-                  setSelectedFile={setSelectedLogotype}
+                <TextFormField
+                  label="Popup Header"
+                  name="custom_popup_header"
+                  subtext={`The title for the popup that will be displayed for each user on their initial visit 
+                  to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${
+                    values.application_name || "Danswer"
+                  }!".`}
+                  placeholder="Initial Popup Header"
+                  disabled={isSubmitting}
                 />
-              </>
+
+                <TextFormField
+                  label="Popup Content"
+                  name="custom_popup_content"
+                  subtext={`Custom Markdown content that will be displayed as a popup on initial visit to the application.`}
+                  placeholder="Your popup content..."
+                  isTextArea
+                  disabled={isSubmitting}
+                />
+
+                <TextFormField
+                  label="Chat Footer Text"
+                  name="custom_lower_disclaimer_content"
+                  subtext={`Custom Markdown content that will be displayed at the bottom of the Chat page.`}
+                  placeholder="Your disclaimer content..."
+                  isTextArea
+                  disabled={isSubmitting}
+                />
+
+                <div>
+                  <Label>Chat Footer Logotype</Label>
+
+                  {values.use_custom_logotype ? (
+                    <div className="mt-3">
+                      <SubLabel>Current Custom Logotype: </SubLabel>
+                      <img
+                        src={
+                          "/api/enterprise-settings/logotype?u=" + Date.now()
+                        }
+                        alt="logotype"
+                        style={{ objectFit: "contain" }}
+                        className="w-32 h-32 mb-10 mt-4"
+                      />
+
+                      <Button
+                        color="red"
+                        size="xs"
+                        type="button"
+                        className="mb-8"
+                        onClick={async () => {
+                          const valuesWithoutLogotype = {
+                            ...values,
+                            use_custom_logotype: false,
+                          };
+                          await updateEnterpriseSettings(valuesWithoutLogotype);
+                          setValues(valuesWithoutLogotype);
+                        }}
+                      >
+                        Delete
+                      </Button>
+
+                      <SubLabel>
+                        Override your uploaded custom logotype by uploading a
+                        new image below and clicking the Update button. This
+                        logotype is the text-based logo that will be rendered at
+                        the bottom right of the chat screen.
+                      </SubLabel>
+                    </div>
+                  ) : (
+                    <SubLabel>
+                      Add a custom logotype by uploading a new image below and
+                      clicking the Update button. This logotype is the
+                      text-based logo that will be rendered at the bottom right
+                      of the chat screen.
+                    </SubLabel>
+                  )}
+                  <ImageUpload
+                    selectedFile={selectedLogotype}
+                    setSelectedFile={setSelectedLogotype}
+                  />
+                </div>
+              </div>
             )}
 
             <Button type="submit" className="mt-4">

@@ -22,6 +22,7 @@ from danswer.db.document import upsert_documents_complete
 from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.index_attempt import create_index_attempt_error
 from danswer.db.models import Document as DBDocument
+from danswer.db.search_settings import get_current_search_settings
 from danswer.db.tag import create_or_add_document_tag
 from danswer.db.tag import create_or_add_document_tag_list
 from danswer.document_index.interfaces import DocumentIndex
@@ -30,7 +31,6 @@ from danswer.indexing.chunker import Chunker
 from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
-from danswer.search.search_settings import get_search_settings
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 from shared_configs.enums import EmbeddingProvider
@@ -359,7 +359,7 @@ def build_indexing_pipeline(
     attempt_id: int | None = None,
 ) -> IndexingPipelineProtocol:
     """Builds a pipeline which takes in a list (batch) of docs and indexes them."""
-    search_settings = get_search_settings()
+    search_settings = get_current_search_settings(db_session)
     multipass = (
         search_settings.multipass_indexing
         if search_settings

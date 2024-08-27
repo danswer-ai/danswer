@@ -45,9 +45,10 @@ from danswer.danswerbot.slack.utils import read_slack_thread
 from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import rephrase_slack_message
 from danswer.danswerbot.slack.utils import respond_in_thread
-from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.search_settings import get_current_search_settings
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.retrieval.search_runner import download_nltk_data
@@ -468,13 +469,16 @@ if __name__ == "__main__":
                     # This happens on the very first time the listener process comes up
                     # or the tokens have updated (set up for the first time)
                     with Session(get_sqlalchemy_engine()) as db_session:
-                        embedding_model = get_current_db_embedding_model(db_session)
-                        if embedding_model.provider_type is None:
-                            warm_up_bi_encoder(
-                                embedding_model=embedding_model,
-                                model_server_host=MODEL_SERVER_HOST,
-                                model_server_port=MODEL_SERVER_PORT,
-                            )
+                        search_settings = get_current_search_settings(db_session)
+                        embedding_model = EmbeddingModel.from_db_model(
+                            search_settings=search_settings,
+                            server_host=MODEL_SERVER_HOST,
+                            server_port=MODEL_SERVER_PORT,
+                        )
+
+                        warm_up_bi_encoder(
+                            embedding_model=embedding_model,
+                        )
 
                 slack_bot_tokens = latest_slack_bot_tokens
                 # potentially may cause a message to be dropped, but it is complicated
