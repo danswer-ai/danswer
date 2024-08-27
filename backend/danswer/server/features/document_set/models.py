@@ -14,8 +14,8 @@ class DocumentSetCreationRequest(BaseModel):
     cc_pair_ids: list[int]
     is_public: bool
     # For Private Document Sets, who should be able to access these
-    users: list[UUID] | None = None
-    groups: list[int] | None = None
+    users: list[UUID] = []
+    groups: list[int] = []
 
 
 class DocumentSetUpdateRequest(BaseModel):

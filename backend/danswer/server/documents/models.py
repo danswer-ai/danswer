@@ -48,7 +48,7 @@ class ConnectorBase(BaseModel):
 
 class ConnectorUpdateRequest(ConnectorBase):
     is_public: bool | None = None
-    groups: list[int] | None = None
+    groups: list[int] = []
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -257,7 +257,7 @@ class ConnectorCredentialPairIdentifier(BaseModel):
 class ConnectorCredentialPairMetadata(BaseModel):
     name: str | None = None
     is_public: bool | None = None
-    groups: list[int] | None = None
+    groups: list[int] = []
 
 
 class ConnectorCredentialPairDescriptor(BaseModel):
