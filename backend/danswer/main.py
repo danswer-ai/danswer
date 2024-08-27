@@ -109,6 +109,7 @@ from danswer.server.token_rate_limits.api import (
 from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
 from danswer.tools.built_in_tools import load_builtin_tools
 from danswer.tools.built_in_tools import refresh_built_in_tools_cache
+from danswer.utils.gpu_utils import gpu_status_request
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -192,32 +193,36 @@ def setup_postgres(db_session: Session) -> None:
     auto_add_search_tool_to_personas(db_session)
 
 
-def translate_saved_search_settings(db_session: Session) -> None:
-    kv_store = get_dynamic_config_store()
-    # connector_count = db_session.query(Connector).count()
-
+def update_default_multipass_indexing(db_session: Session) -> None:
     docs_exist = check_docs_exist(db_session)
     connectors_exist = check_connectors_exist(db_session)
-    if not docs_exist and not connectors_exist:
-        import requests
-        from shared_configs.configs import MODEL_SERVER_HOST
-        from shared_configs.configs import MODEL_SERVER_PORT
+    logger.debug(f"Docs exist: {docs_exist}, Connectors exist: {connectors_exist}")
 
-        response = requests.get(
-            f"http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}/api/gpu-status"
+    if not docs_exist and not connectors_exist:
+        logger.info(
+            "No existing docs or connectors found. Checking GPU availability for multipass indexing."
+        )
+        gpu_available = gpu_status_request()
+        logger.info(f"GPU availability: {gpu_available}")
+
+        current_settings = get_current_search_settings(db_session)
+        if current_settings:
+            logger.notice(f"Updating multipass indexing setting to: {gpu_available}")
+            updated_settings = SavedSearchSettings.from_db_model(current_settings)
+            updated_settings.multipass_indexing = gpu_available
+            update_current_search_settings(db_session, updated_settings)
+        else:
+            logger.warning(
+                "No current search settings found. Skipping multipass indexing update."
+            )
+    else:
+        logger.debug(
+            "Existing docs or connectors found. Skipping multipass indexing update."
         )
 
-        if response.status_code == 200:
-            gpu_status = response.json()
-            print(f"GPU Status: {gpu_status}")
-            if gpu_status["gpu_available"]:
-                print(f"GPU is available. Type: {gpu_status['type']}")
-            else:
-                print("GPU is not available")
-        else:
-            print(
-                f"Error: Unable to fetch GPU status. Status code: {response.status_code}"
-            )
+
+def translate_saved_search_settings(db_session: Session) -> None:
+    kv_store = get_dynamic_config_store()
 
     try:
         search_settings_dict = kv_store.load(KV_SEARCH_SETTINGS)
@@ -364,6 +369,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         setup_postgres(db_session)
 
         translate_saved_search_settings(db_session)
+
+        update_default_multipass_indexing(db_session)
 
         # Does the user need to trigger a reindexing to bring the document index
         # into a good state, marked in the kv store
