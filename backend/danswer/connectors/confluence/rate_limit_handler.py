@@ -55,5 +55,7 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
                 else:
                     # re-raise, let caller handle
                     raise
+            except AttributeError:
+                logger.warning("Confluence Internal Error, retrying...")
 
     return cast(F, wrapped_call)
