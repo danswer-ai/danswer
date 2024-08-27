@@ -284,7 +284,7 @@ export const AIMessage = ({
               assistant={alternativeAssistant || currentPersona}
             />
             <div className="w-full">
-              <div className=" max-w-message-max break-words">
+              <div className="max-w-message-max break-words">
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
                     {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
@@ -446,7 +446,7 @@ export const AIMessage = ({
                                     className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
                                   >
                                     <Citation link={doc.link} index={ind + 1} />
-                                    <p className="shrink truncate ellipsis break-all ">
+                                    <p className="shrink truncate ellipsis break-all">
                                       {doc.semantic_identifier ||
                                         doc.document_id}
                                     </p>

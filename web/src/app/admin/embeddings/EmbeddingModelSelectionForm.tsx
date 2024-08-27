@@ -227,7 +227,7 @@ export function EmbeddingModelSelection({
         />
       )}
 
-      <p className=" t mb-4">
+      <p className="t mb-4">
         Select from cloud, self-hosted models, or continue with your current
         embedding model.
       </p>
@@ -242,7 +242,7 @@ export function EmbeddingModelSelection({
         >
           Current
         </button>
-        <div className="px-2 ">
+        <div className="px-2">
           <button
             onClick={() => setModelTab("cloud")}
             className={`mx-2 p-2 font-bold  ${
@@ -254,7 +254,7 @@ export function EmbeddingModelSelection({
             Cloud-based
           </button>
         </div>
-        <div className="px-2 ">
+        <div className="px-2">
           <button
             onClick={() => setModelTab("open")}
             className={` mx-2 p-2 font-bold  ${

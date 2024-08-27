@@ -101,7 +101,7 @@ export function SourceSelector({
         showDocSidebar ? "4xl:block" : "!block"
       } duration-1000 flex  ease-out transition-all transform origin-top-right`}
     >
-      <div className=" mb-4 pb-2 flex border-b border-border text-emphasis">
+      <div className="mb-4 pb-2 flex border-b border-border text-emphasis">
         <h2 className="font-bold my-auto">Filters</h2>
         <FiFilter className="my-auto ml-2" size="16" />
       </div>

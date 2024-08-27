@@ -69,7 +69,7 @@ const RerankingDetailsForm = forwardRef<
             </button>
           </div>
 
-          <div className="px-2 ">
+          <div className="px-2">
             <button
               onClick={() => setModelTab("open")}
               className={` mx-2 p-2 font-bold  ${

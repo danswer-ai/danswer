@@ -338,7 +338,7 @@ export function ChatInputBar({
                       updateInputPrompt(currentPrompt);
                     }}
                   >
-                    <p className="font-bold ">{currentPrompt.prompt}</p>
+                    <p className="font-bold">{currentPrompt.prompt}</p>
                     <p className="line-clamp-1">
                       {currentPrompt.id == selectedAssistant.id && "(default) "}
                       {currentPrompt.content}
@@ -511,7 +511,7 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex items-center space-x-3 mr-12 px-4 pb-2 ">
+            <div className="flex items-center space-x-3 mr-12 px-4 pb-2">
               <Popup
                 removePadding
                 content={(close) => (

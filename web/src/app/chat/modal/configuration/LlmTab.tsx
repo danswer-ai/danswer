@@ -44,7 +44,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     return (
       <div className="w-full">
         <div className="flex w-full justify-between content-center mb-2 gap-x-2">
-          <label className="block text-sm font-medium ">Choose Model</label>
+          <label className="block text-sm font-medium">Choose Model</label>
           <button
             onClick={() => {
               close();

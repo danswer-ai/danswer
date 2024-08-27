@@ -218,7 +218,7 @@ export function LLMProviderUpdateForm({
       }}
     >
       {({ values, setFieldValue }) => (
-        <Form className="w-full items-stretch	">
+        <Form className="w-full items-stretch">
           <TextFormField
             name="name"
             label="Display Name"
