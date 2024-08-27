@@ -4,12 +4,12 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
-from danswer.db.embedding_model import get_current_db_embedding_provider
 from danswer.db.engine import get_session
 from danswer.db.llm import fetch_existing_embedding_providers
 from danswer.db.llm import remove_embedding_provider
 from danswer.db.llm import upsert_cloud_embedding_provider
 from danswer.db.models import User
+from danswer.db.search_settings import get_current_db_embedding_provider
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.server.manage.embedding.models import CloudEmbeddingProvider
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest

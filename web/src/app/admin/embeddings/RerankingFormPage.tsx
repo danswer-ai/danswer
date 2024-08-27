@@ -114,32 +114,36 @@ const RerankingDetailsForm = forwardRef<
                     )
                 ).map((card) => {
                   const isSelected =
-                    values.provider_type === card.provider &&
+                    values.rerank_provider_type === card.rerank_provider_type &&
                     values.rerank_model_name === card.modelName;
                   return (
                     <div
-                      key={`${card.provider}-${card.modelName}`}
+                      key={`${card.rerank_provider_type}-${card.modelName}`}
                       className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
                         isSelected
                           ? "border-blue-500 bg-blue-50 shadow-md"
                           : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
                       }`}
                       onClick={() => {
-                        if (card.provider) {
+                        if (card.rerank_provider_type) {
                           setIsApiKeyModalOpen(true);
                         }
                         setRerankingDetails({
                           ...values,
-                          provider_type: card.provider!,
+                          rerank_provider_type: card.rerank_provider_type!,
                           rerank_model_name: card.modelName,
                         });
-                        setFieldValue("provider_type", card.provider);
+                        setFieldValue(
+                          "rerank_provider_type",
+                          card.rerank_provider_type
+                        );
                         setFieldValue("rerank_model_name", card.modelName);
                       }}
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center">
-                          {card.provider === RerankerProvider.COHERE ? (
+                          {card.rerank_provider_type ===
+                          RerankerProvider.COHERE ? (
                             <CohereIcon size={24} className="mr-2" />
                           ) : (
                             <MixedBreadIcon size={24} className="mr-2" />

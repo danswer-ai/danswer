@@ -7,7 +7,9 @@ from pydantic import validator
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Persona
+from danswer.db.models import SearchSettings
 from danswer.indexing.models import BaseChunk
+from danswer.indexing.models import IndexingSetting
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
@@ -22,28 +24,61 @@ MAX_METRICS_CONTENT = (
 class RerankingDetails(BaseModel):
     # If model is None (or num_rerank is 0), then reranking is turned off
     rerank_model_name: str | None
-    provider_type: RerankerProvider | None
-    api_key: str | None
+    rerank_provider_type: RerankerProvider | None
+    rerank_api_key: str | None
 
     num_rerank: int
 
-
-class SavedSearchSettings(RerankingDetails):
-    # Empty for no additional expansion
-    multilingual_expansion: list[str]
-    # Encompasses both mini and large chunks
-    multipass_indexing: bool
-
     # For faster flows where the results should start immediately
     # this more time intensive step can be skipped
-    disable_rerank_for_streaming: bool
+    disable_rerank_for_streaming: bool = False
 
-    def to_reranking_detail(self) -> RerankingDetails:
-        return RerankingDetails(
-            rerank_model_name=self.rerank_model_name,
-            provider_type=self.provider_type,
-            api_key=self.api_key,
-            num_rerank=self.num_rerank,
+    @classmethod
+    def from_db_model(cls, search_settings: SearchSettings) -> "RerankingDetails":
+        return cls(
+            rerank_model_name=search_settings.rerank_model_name,
+            rerank_provider_type=search_settings.rerank_provider_type,
+            rerank_api_key=search_settings.rerank_api_key,
+            num_rerank=search_settings.num_rerank,
+        )
+
+
+class InferenceSettings(RerankingDetails):
+    # Empty for no additional expansion
+    multilingual_expansion: list[str]
+
+
+class SearchSettingsCreationRequest(InferenceSettings, IndexingSetting):
+    @classmethod
+    def from_db_model(
+        cls, search_settings: SearchSettings
+    ) -> "SearchSettingsCreationRequest":
+        inference_settings = InferenceSettings.from_db_model(search_settings)
+        indexing_setting = IndexingSetting.from_db_model(search_settings)
+
+        return cls(**inference_settings.dict(), **indexing_setting.dict())
+
+
+class SavedSearchSettings(InferenceSettings, IndexingSetting):
+    @classmethod
+    def from_db_model(cls, search_settings: SearchSettings) -> "SavedSearchSettings":
+        return cls(
+            # Indexing Setting
+            model_name=search_settings.model_name,
+            model_dim=search_settings.model_dim,
+            normalize=search_settings.normalize,
+            query_prefix=search_settings.query_prefix,
+            passage_prefix=search_settings.passage_prefix,
+            provider_type=search_settings.provider_type,
+            index_name=search_settings.index_name,
+            multipass_indexing=search_settings.multipass_indexing,
+            # Reranking Details
+            rerank_model_name=search_settings.rerank_model_name,
+            rerank_provider_type=search_settings.rerank_provider_type,
+            rerank_api_key=search_settings.rerank_api_key,
+            num_rerank=search_settings.num_rerank,
+            # Multilingual Expansion
+            multilingual_expansion=search_settings.multilingual_expansion,
         )
 
 

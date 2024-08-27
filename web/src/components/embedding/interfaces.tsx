@@ -41,8 +41,10 @@ export interface EmbeddingModelDescriptor {
   normalize: boolean;
   query_prefix: string;
   passage_prefix: string;
-  provider_type?: string | null;
+  provider_type: string | null;
   description: string;
+  api_key: string | null;
+  index_name: string | null;
 }
 
 export interface CloudEmbeddingModel extends EmbeddingModelDescriptor {
@@ -82,6 +84,9 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     link: "https://huggingface.co/nomic-ai/nomic-embed-text-v1",
     query_prefix: "search_query: ",
     passage_prefix: "search_document: ",
+    index_name: "",
+    provider_type: null,
+    api_key: null,
   },
   {
     model_name: "intfloat/e5-base-v2",
@@ -92,6 +97,9 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     link: "https://huggingface.co/intfloat/e5-base-v2",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
+    index_name: "",
+    provider_type: null,
+    api_key: null,
   },
   {
     model_name: "intfloat/e5-small-v2",
@@ -102,6 +110,9 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     link: "https://huggingface.co/intfloat/e5-small-v2",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
+    index_name: "",
+    provider_type: null,
+    api_key: null,
   },
   {
     model_name: "intfloat/multilingual-e5-base",
@@ -112,6 +123,9 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     link: "https://huggingface.co/intfloat/multilingual-e5-base",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
+    index_name: "",
+    provider_type: null,
+    api_key: null,
   },
   {
     model_name: "intfloat/multilingual-e5-small",
@@ -122,6 +136,9 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     link: "https://huggingface.co/intfloat/multilingual-e5-base",
     query_prefix: "query: ",
     passage_prefix: "passage: ",
+    index_name: "",
+    provider_type: null,
+    api_key: null,
   },
 ];
 
@@ -150,6 +167,8 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         normalize: false,
         query_prefix: "",
         passage_prefix: "",
+        index_name: "",
+        api_key: null,
       },
       {
         model_name: "embed-english-light-v3.0",
@@ -164,6 +183,8 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         normalize: false,
         query_prefix: "",
         passage_prefix: "",
+        index_name: "",
+        api_key: null,
       },
     ],
   },
@@ -190,6 +211,8 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         mtebScore: 64.6,
         maxContext: 8191,
         enabled: false,
+        index_name: "",
+        api_key: null,
       },
       {
         provider_type: EmbeddingProvider.OPENAI,
@@ -204,6 +227,8 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         enabled: false,
         mtebScore: 62.3,
         maxContext: 8191,
+        index_name: "",
+        api_key: null,
       },
     ],
   },
@@ -231,6 +256,8 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         normalize: false,
         query_prefix: "",
         passage_prefix: "",
+        index_name: "",
+        api_key: null,
       },
       {
         provider_type: EmbeddingProvider.GOOGLE,
@@ -244,6 +271,8 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         normalize: false,
         query_prefix: "",
         passage_prefix: "",
+        index_name: "",
+        api_key: null,
       },
     ],
   },
@@ -270,6 +299,8 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         normalize: false,
         query_prefix: "",
         passage_prefix: "",
+        index_name: "",
+        api_key: null,
       },
       {
         provider_type: EmbeddingProvider.VOYAGE,
@@ -284,6 +315,8 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         normalize: false,
         query_prefix: "",
         passage_prefix: "",
+        index_name: "",
+        api_key: null,
       },
     ],
   },
