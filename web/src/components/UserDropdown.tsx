@@ -104,7 +104,7 @@ export function UserDropdown({
                       className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
                     >
                       <FaBrain className="my-auto mr-2 text-lg" />
-                      My Assistants
+                      My Plugins
                     </Link>
                   </>
                 )}
