@@ -70,6 +70,8 @@ class ComposeEmailTool(Tool):
         self.llm_config = llm_config
         self.llm = llm
 
+        logger.info(f'Logged in user details :{self.user.email}')
+
     @property
     def name(self) -> str:
         return self._NAME
@@ -152,7 +154,7 @@ class ComposeEmailTool(Tool):
             self.llm.invoke(prompt=prompt)
         )
 
-        self.send_email_to_recipients(query, mail_response)
+        self.send_email_to_recipients(mail_response)
 
         yield ToolResponse(
             id=COMPOSE_EMAIL_RESPONSE_ID,
@@ -168,7 +170,6 @@ class ComposeEmailTool(Tool):
         # this forces pydantic to make them JSON serializable for us
         return composed_email_response
 
-    @staticmethod
-    def send_email_to_recipients(query_text, email_content):
+    def send_email_to_recipients(self, email_content):
         email_service = EmailService()
-        email_service.process_email(query_text, email_content)
+        email_service.send_email(self.user.email, email_content)
