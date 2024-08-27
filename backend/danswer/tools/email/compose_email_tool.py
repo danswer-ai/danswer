@@ -58,10 +58,10 @@ class ComposeEmailTool(Tool):
     def __init__(
             self,
             user: User | None,
-            persona: Persona,
-            prompt_config: PromptConfig,
-            llm_config: LLMConfig,
-            llm: LLM | None
+            persona=None,
+            prompt_config=None,
+            llm_config=None,
+            llm=None
     ) -> None:
         self.history = None
         self.user = user
@@ -70,7 +70,7 @@ class ComposeEmailTool(Tool):
         self.llm_config = llm_config
         self.llm = llm
 
-        logger.info(f'Logged in user details :{self.user.email}')
+        logger.info(f"Logged in user details: {'not logged in' if self.user is None else self.user.email}")
 
     @property
     def name(self) -> str:
@@ -154,7 +154,8 @@ class ComposeEmailTool(Tool):
             self.llm.invoke(prompt=prompt)
         )
 
-        self.send_email_to_recipients(mail_response)
+        if self.user is not None:
+            self.send_email_to_recipients(mail_response)
 
         yield ToolResponse(
             id=COMPOSE_EMAIL_RESPONSE_ID,
