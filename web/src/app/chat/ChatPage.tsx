@@ -2154,10 +2154,7 @@ export function ChatPage({
                               enterpriseSettings.use_custom_logotype && (
                                 <div className="hidden lg:block absolute right-0 bottom-0">
                                   <img
-                                    src={
-                                      "/api/enterprise-settings/logotype?u=" +
-                                      Date.now()
-                                    }
+                                    src="/api/enterprise-settings/logotype"
                                     alt="logotype"
                                     style={{ objectFit: "contain" }}
                                     className="w-fit h-8"
