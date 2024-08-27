@@ -744,7 +744,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             if attachment_content is None:
                 continue
 
-            creator_email = attachment["history"]["createdBy"]["email"]
+            creator_email = attachment["history"]["createdBy"].get("email")
 
             comment = attachment["metadata"].get("comment", "")
             doc_metadata: dict[str, str | list[str]] = {"comment": comment}
