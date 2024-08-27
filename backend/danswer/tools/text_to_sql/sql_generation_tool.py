@@ -83,6 +83,7 @@ analyze above tabular data and user query, try to identify domain data and provi
 
 """
 
+
 class SqlGenerationResponse(BaseModel):
     db_response: str | None = None
 
