@@ -115,17 +115,14 @@ export const DanswerApiKeyForm = ({
                 subtext="If set, this API key will have access to admin level server API's."
               />
 
-              <div className="flex">
-                <Button
-                  type="submit"
-                  size="xs"
-                  color="green"
-                  disabled={isSubmitting}
-                  className="mx-auto w-64"
-                >
-                  {isUpdate ? "Update!" : "Create!"}
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                size="xs"
+                color="green"
+                disabled={isSubmitting}
+              >
+                {isUpdate ? "Update!" : "Create!"}
+              </Button>
             </Form>
           )}
         </Formik>

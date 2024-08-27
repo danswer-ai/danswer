@@ -272,7 +272,7 @@ export const AIMessage = ({
     <div
       id="danswer-ai-message"
       ref={trackedElementRef}
-      className={"py-5 px-5 relative flex "}
+      className={"py-5 ml-4 px-5 relative flex "}
     >
       <div
         className={`mx-auto ${shared ? "w-full" : "w-[90%]"}  max-w-message-max`}
@@ -284,7 +284,7 @@ export const AIMessage = ({
               assistant={alternativeAssistant || currentPersona}
             />
             <div className="w-full">
-              <div className="max-w-message-max  break-words">
+              <div className=" max-w-message-max break-words">
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
                     {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (

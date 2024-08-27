@@ -463,148 +463,190 @@ export function AssistantEditor({
           }
 
           return (
-            <Form className="w-full">
-              <div className="text-text-950 pb-6 flex flex-col gap-y-6">
-                <div className="w-full flex gap-x-2 justify-center">
-                  <Popover
-                    open={isIconDropdownOpen}
-                    onOpenChange={setIsIconDropdownOpen}
-                    content={
-                      <div
-                        className="p-1 cursor-pointer border-dashed rounded-full flex border border-border border-2 border-dashed"
-                        style={{
-                          borderStyle: "dashed",
-                          borderWidth: "1.5px",
-                          borderSpacing: "4px",
-                        }}
-                        onClick={() =>
-                          setIsIconDropdownOpen(!isIconDropdownOpen)
-                        }
-                      >
-                        {values.uploaded_image ? (
-                          <img
-                            src={URL.createObjectURL(values.uploaded_image)}
-                            alt="Uploaded assistant icon"
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : existingPersona?.uploaded_image_id &&
-                          !removePersonaImage ? (
-                          <img
-                            src={buildImgUrl(
-                              existingPersona?.uploaded_image_id
-                            )}
-                            alt="Uploaded assistant icon"
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          createSVG(
-                            {
-                              encodedGrid: values.icon_shape,
-                              filledSquares: 0,
-                            },
-                            values.icon_color,
-                            undefined,
-                            true
-                          )
-                        )}
-                      </div>
-                    }
-                    popover={
-                      <div className="bg-white text-text-800 flex flex-col gap-y-1 w-[300px] border border-border rounded-lg shadow-lg p-2">
-                        <label className="block w-full flex gap-x-2 text-left items-center px-4 py-2 hover:bg-background-100 rounded cursor-pointer">
-                          <CameraIcon />
-                          Upload {values.uploaded_image && " New "} Photo
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setFieldValue("uploaded_image", file);
-                                setIsIconDropdownOpen(false);
-                              }
-                            }}
-                          />
-                        </label>
+            <Form className="w-full text-text-950">
+              <div className="w-full flex gap-x-2 justify-center">
+                <Popover
+                  open={isIconDropdownOpen}
+                  onOpenChange={setIsIconDropdownOpen}
+                  content={
+                    <div
+                      className="p-1 cursor-pointer border-dashed rounded-full flex border border-border border-2 border-dashed"
+                      style={{
+                        borderStyle: "dashed",
+                        borderWidth: "1.5px",
+                        borderSpacing: "4px",
+                      }}
+                      onClick={() => setIsIconDropdownOpen(!isIconDropdownOpen)}
+                    >
+                      {values.uploaded_image ? (
+                        <img
+                          src={URL.createObjectURL(values.uploaded_image)}
+                          alt="Uploaded assistant icon"
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : existingPersona?.uploaded_image_id &&
+                        !removePersonaImage ? (
+                        <img
+                          src={buildImgUrl(existingPersona?.uploaded_image_id)}
+                          alt="Uploaded assistant icon"
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        createSVG(
+                          {
+                            encodedGrid: values.icon_shape,
+                            filledSquares: 0,
+                          },
+                          values.icon_color,
+                          undefined,
+                          true
+                        )
+                      )}
+                    </div>
+                  }
+                  popover={
+                    <div className="bg-white text-text-800 flex flex-col gap-y-1 w-[300px] border border-border rounded-lg shadow-lg p-2">
+                      <label className="block w-full flex gap-x-2 text-left items-center px-4 py-2 hover:bg-background-100 rounded cursor-pointer">
+                        <CameraIcon />
+                        Upload {values.uploaded_image && " New "} Photo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setFieldValue("uploaded_image", file);
+                              setIsIconDropdownOpen(false);
+                            }
+                          }}
+                        />
+                      </label>
 
-                        {values.uploaded_image && (
+                      {values.uploaded_image && (
+                        <button
+                          onClick={() => {
+                            setFieldValue("uploaded_image", null);
+                            setRemovePersonaImage(false);
+                          }}
+                          className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
+                        >
+                          <TrashIcon />
+                          {removePersonaImage
+                            ? "Revert to Previous "
+                            : "Remove "}
+                          Image
+                        </button>
+                      )}
+
+                      {!values.uploaded_image &&
+                        (!existingPersona?.uploaded_image_id ||
+                          removePersonaImage) && (
                           <button
-                            onClick={() => {
-                              setFieldValue("uploaded_image", null);
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newShape = generateRandomIconShape();
+                              const randomColor =
+                                colorOptions[
+                                  Math.floor(
+                                    Math.random() * colorOptions.length
+                                  )
+                                ];
+                              setFieldValue("icon_shape", newShape.encodedGrid);
+                              setFieldValue("icon_color", randomColor);
+                            }}
+                            className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
+                          >
+                            <NewChatIcon />
+                            Generate New Icon
+                          </button>
+                        )}
+
+                      {existingPersona?.uploaded_image_id &&
+                        removePersonaImage &&
+                        !values.uploaded_image && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setRemovePersonaImage(false);
+                              setFieldValue("uploaded_image", null);
+                            }}
+                            className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
+                          >
+                            <SwapIcon />
+                            Revert to Previous Image
+                          </button>
+                        )}
+
+                      {existingPersona?.uploaded_image_id &&
+                        !removePersonaImage &&
+                        !values.uploaded_image && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRemovePersonaImage(true);
                             }}
                             className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
                           >
                             <TrashIcon />
-                            {removePersonaImage
-                              ? "Revert to Previous "
-                              : "Remove "}
-                            Image
+                            Remove Image
                           </button>
                         )}
+                    </div>
+                  }
+                  align="start"
+                  side="bottom"
+                />
+                <TooltipProvider delayDuration={50}>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <FiInfo size={12} />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="center">
+                      <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                        This icon will visually represent your Assistant
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
 
-                        {!values.uploaded_image &&
-                          (!existingPersona?.uploaded_image_id ||
-                            removePersonaImage) && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const newShape = generateRandomIconShape();
-                                const randomColor =
-                                  colorOptions[
-                                    Math.floor(
-                                      Math.random() * colorOptions.length
-                                    )
-                                  ];
-                                setFieldValue(
-                                  "icon_shape",
-                                  newShape.encodedGrid
-                                );
-                                setFieldValue("icon_color", randomColor);
-                              }}
-                              className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
-                            >
-                              <NewChatIcon />
-                              Generate New Icon
-                            </button>
-                          )}
+              <TextFormField
+                name="name"
+                tooltip="Used to identify the Assistant in the UI."
+                label="Name"
+                placeholder="e.g. 'Email Assistant'"
+              />
 
-                        {existingPersona?.uploaded_image_id &&
-                          removePersonaImage &&
-                          !values.uploaded_image && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setRemovePersonaImage(false);
-                                setFieldValue("uploaded_image", null);
-                              }}
-                              className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
-                            >
-                              <SwapIcon />
-                              Revert to Previous Image
-                            </button>
-                          )}
+              <TextFormField
+                tooltip="Used for identifying assistants and their use cases."
+                name="description"
+                label="Description"
+                placeholder="e.g. 'Use this Assistant to help draft professional emails'"
+              />
 
-                        {existingPersona?.uploaded_image_id &&
-                          !removePersonaImage &&
-                          !values.uploaded_image && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setRemovePersonaImage(true);
-                              }}
-                              className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
-                            >
-                              <TrashIcon />
-                              Remove Image
-                            </button>
-                          )}
-                      </div>
-                    }
-                    align="start"
-                    side="bottom"
-                  />
+              <TextFormField
+                tooltip="Gives your assistant a prime directive"
+                name="system_prompt"
+                label="Instructions"
+                isTextArea={true}
+                placeholder="e.g. 'You are a professional email writing assistant that always uses a polite enthusiastic tone, emphasizes action items, and leaves blanks for the human to fill in when you have unknowns'"
+                onChange={(e) => {
+                  setFieldValue("system_prompt", e.target.value);
+                  triggerFinalPromptUpdate(
+                    e.target.value,
+                    values.task_prompt,
+                    searchToolEnabled()
+                  );
+                }}
+                error={finalPromptError}
+              />
+
+              <div>
+                <div className="flex gap-x-2 items-center">
+                  <div className="block  font-medium text-base">
+                    Default AI Model{" "}
+                  </div>
                   <TooltipProvider delayDuration={50}>
                     <Tooltip>
                       <TooltipTrigger>
@@ -612,478 +654,421 @@ export function AssistantEditor({
                       </TooltipTrigger>
                       <TooltipContent side="top" align="center">
                         <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                          This icon will visually represent your Assistant
+                          Select a Large Language Model (Generative AI model) to
+                          power this Assistant
                         </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-
-                <TextFormField
-                  name="name"
-                  tooltip="Used to identify the Assistant in the UI."
-                  label="Name"
-                  placeholder="e.g. 'Email Assistant'"
-                />
-
-                <TextFormField
-                  tooltip="Used for identifying assistants and their use cases."
-                  name="description"
-                  label="Description"
-                  placeholder="e.g. 'Use this Assistant to help draft professional emails'"
-                />
-
-                <TextFormField
-                  tooltip="Gives your assistant a prime directive"
-                  name="system_prompt"
-                  label="Instructions"
-                  isTextArea={true}
-                  placeholder="e.g. 'You are a professional email writing assistant that always uses a polite enthusiastic tone, emphasizes action items, and leaves blanks for the human to fill in when you have unknowns'"
-                  onChange={(e) => {
-                    setFieldValue("system_prompt", e.target.value);
-                    triggerFinalPromptUpdate(
-                      e.target.value,
-                      values.task_prompt,
-                      searchToolEnabled()
-                    );
-                  }}
-                  error={finalPromptError}
-                />
-
-                <div>
-                  <div className="flex gap-x-2 items-center">
-                    <div className="block  font-medium text-base">
-                      Default AI Model{" "}
-                    </div>
-                    <TooltipProvider delayDuration={50}>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <FiInfo size={12} />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" align="center">
-                          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                            Select a Large Language Model (Generative AI model)
-                            to power this Assistant
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <p className="my-1 font-description text-base text-text-400">
-                    Your assistant will use the user&apos;s set default unless
-                    otherwise specified below.
-                    {admin &&
-                      user?.preferences.default_model &&
-                      `  Your current (user-specific) default model is ${getDisplayNameForModel(destructureValue(user?.preferences?.default_model!).modelName)}`}
-                  </p>
-                  {admin ? (
-                    <div className="mb-2 flex items-starts">
-                      <div className="w-96">
-                        <SelectorFormField
-                          defaultValue={`User default`}
-                          name="llm_model_provider_override"
-                          options={llmProviders.map((llmProvider) => ({
-                            name: llmProvider.name,
-                            value: llmProvider.name,
-                            icon: llmProvider.icon,
-                          }))}
-                          includeDefault={true}
-                          onSelect={(selected) => {
-                            if (
-                              selected !== values.llm_model_provider_override
-                            ) {
-                              setFieldValue("llm_model_version_override", null);
-                            }
-                            setFieldValue(
-                              "llm_model_provider_override",
-                              selected
-                            );
-                          }}
-                        />
-                      </div>
-
-                      {values.llm_model_provider_override && (
-                        <div className="w-96 ml-4">
-                          <SelectorFormField
-                            name="llm_model_version_override"
-                            options={
-                              modelOptionsByProvider.get(
-                                values.llm_model_provider_override
-                              ) || []
-                            }
-                            maxHeight="max-h-72"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="max-w-sm">
-                      <LlmList
-                        scrollable
-                        userDefault={
-                          user?.preferences?.default_model!
-                            ? destructureValue(
-                                user?.preferences?.default_model!
-                              ).modelName
-                            : null
-                        }
-                        llmProviders={llmProviders}
-                        currentLlm={values.llm_model_version_override}
-                        onSelect={(value: string | null) => {
-                          if (value !== null) {
-                            const { modelName, provider, name } =
-                              destructureValue(value);
-                            setFieldValue(
-                              "llm_model_version_override",
-                              modelName
-                            );
-                            setFieldValue("llm_model_provider_override", name);
-                          } else {
+                <p className="my-1 font-description text-base text-text-400">
+                  Your assistant will use the user&apos;s set default unless
+                  otherwise specified below.
+                  {admin &&
+                    user?.preferences.default_model &&
+                    `  Your current (user-specific) default model is ${getDisplayNameForModel(destructureValue(user?.preferences?.default_model!).modelName)}`}
+                </p>
+                {admin ? (
+                  <div className="mb-2 flex items-starts">
+                    <div className="w-96">
+                      <SelectorFormField
+                        defaultValue={`User default`}
+                        name="llm_model_provider_override"
+                        options={llmProviders.map((llmProvider) => ({
+                          name: llmProvider.name,
+                          value: llmProvider.name,
+                          icon: llmProvider.icon,
+                        }))}
+                        includeDefault={true}
+                        onSelect={(selected) => {
+                          if (selected !== values.llm_model_provider_override) {
                             setFieldValue("llm_model_version_override", null);
-                            setFieldValue("llm_model_provider_override", null);
                           }
+                          setFieldValue(
+                            "llm_model_provider_override",
+                            selected
+                          );
                         }}
                       />
                     </div>
-                  )}
+
+                    {values.llm_model_provider_override && (
+                      <div className="w-96 ml-4">
+                        <SelectorFormField
+                          name="llm_model_version_override"
+                          options={
+                            modelOptionsByProvider.get(
+                              values.llm_model_provider_override
+                            ) || []
+                          }
+                          maxHeight="max-h-72"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="max-w-sm">
+                    <LlmList
+                      scrollable
+                      userDefault={
+                        user?.preferences?.default_model!
+                          ? destructureValue(user?.preferences?.default_model!)
+                              .modelName
+                          : null
+                      }
+                      llmProviders={llmProviders}
+                      currentLlm={values.llm_model_version_override}
+                      onSelect={(value: string | null) => {
+                        if (value !== null) {
+                          const { modelName, provider, name } =
+                            destructureValue(value);
+                          setFieldValue(
+                            "llm_model_version_override",
+                            modelName
+                          );
+                          setFieldValue("llm_model_provider_override", name);
+                        } else {
+                          setFieldValue("llm_model_version_override", null);
+                          setFieldValue("llm_model_provider_override", null);
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="flex gap-x-2 items-center">
+                  <div className="block font-medium text-base">
+                    Capabilities{" "}
+                  </div>
+                  <TooltipProvider delayDuration={50}>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <FiInfo size={12} />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" align="center">
+                        <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                          You can give your assistant advanced capabilities like
+                          image generation
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <div className="block text-sm font-description text-subtle">
+                    Advanced
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-y-4">
-                  <div className="flex gap-x-2 items-center">
-                    <div className="block font-medium text-base">
-                      Capabilities{" "}
-                    </div>
+                <div className="mt-4 flex flex-col gap-y-4  ml-1">
+                  {imageGenerationTool && (
                     <TooltipProvider delayDuration={50}>
                       <Tooltip>
-                        <TooltipTrigger>
-                          <FiInfo size={12} />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" align="center">
-                          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                            You can give your assistant advanced capabilities
-                            like image generation
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <div className="block text-sm font-description text-subtle">
-                      Advanced
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-col gap-y-4  ml-1">
-                    {imageGenerationTool && (
-                      <TooltipProvider delayDuration={50}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div
-                              className={`w-fit ${
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`w-fit ${
+                              !checkLLMSupportsImageInput(
+                                providerDisplayNameToProviderName.get(
+                                  values.llm_model_provider_override || ""
+                                ) || "",
+                                values.llm_model_version_override || ""
+                              )
+                                ? "opacity-70 cursor-not-allowed"
+                                : ""
+                            }`}
+                          >
+                            <BooleanFormField
+                              removeIndent
+                              name={`enabled_tools_map.${imageGenerationTool.id}`}
+                              label="Image Generation Tool"
+                              onChange={() => {
+                                toggleToolInValues(imageGenerationTool.id);
+                              }}
+                              disabled={
                                 !checkLLMSupportsImageInput(
                                   providerDisplayNameToProviderName.get(
                                     values.llm_model_provider_override || ""
                                   ) || "",
                                   values.llm_model_version_override || ""
                                 )
-                                  ? "opacity-70 cursor-not-allowed"
-                                  : ""
-                              }`}
-                            >
-                              <BooleanFormField
-                                removeIndent
-                                name={`enabled_tools_map.${imageGenerationTool.id}`}
-                                label="Image Generation Tool"
-                                onChange={() => {
-                                  toggleToolInValues(imageGenerationTool.id);
-                                }}
-                                disabled={
-                                  !checkLLMSupportsImageInput(
-                                    providerDisplayNameToProviderName.get(
-                                      values.llm_model_provider_override || ""
-                                    ) || "",
-                                    values.llm_model_version_override || ""
-                                  )
-                                }
-                              />
-                            </div>
-                          </TooltipTrigger>
-                          {!checkLLMSupportsImageInput(
-                            providerDisplayNameToProviderName.get(
-                              values.llm_model_provider_override || ""
-                            ) || "",
-                            values.llm_model_version_override || ""
-                          ) && (
-                            <TooltipContent side="top" align="center">
-                              <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                                To use Image Generation, select GPT-4o or
-                                another image compatible model as the default
-                                model for this Assistant.
-                              </p>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+                              }
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        {!checkLLMSupportsImageInput(
+                          providerDisplayNameToProviderName.get(
+                            values.llm_model_provider_override || ""
+                          ) || "",
+                          values.llm_model_version_override || ""
+                        ) && (
+                          <TooltipContent side="top" align="center">
+                            <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                              To use Image Generation, select GPT-4o or another
+                              image compatible model as the default model for
+                              this Assistant.
+                            </p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
 
-                    {searchTool && (
-                      <TooltipProvider delayDuration={50}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div
-                              className={`w-fit ${
-                                ccPairs.length === 0
-                                  ? "opacity-70 cursor-not-allowed"
-                                  : ""
-                              }`}
-                            >
-                              <BooleanFormField
-                                name={`enabled_tools_map.${searchTool.id}`}
-                                label="Search Tool"
-                                removeIndent
-                                onChange={() => {
-                                  setFieldValue("num_chunks", null);
-                                  toggleToolInValues(searchTool.id);
-                                }}
-                                disabled={ccPairs.length === 0}
-                              />
-                            </div>
-                          </TooltipTrigger>
-                          {ccPairs.length === 0 && (
-                            <TooltipContent side="top" align="center">
-                              <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                                To use the Search Tool, you need to have at
-                                least one Connector-Credential pair configured.
-                              </p>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+                  {searchTool && (
+                    <TooltipProvider delayDuration={50}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`w-fit ${
+                              ccPairs.length === 0
+                                ? "opacity-70 cursor-not-allowed"
+                                : ""
+                            }`}
+                          >
+                            <BooleanFormField
+                              name={`enabled_tools_map.${searchTool.id}`}
+                              label="Search Tool"
+                              removeIndent
+                              onChange={() => {
+                                setFieldValue("num_chunks", null);
+                                toggleToolInValues(searchTool.id);
+                              }}
+                              disabled={ccPairs.length === 0}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        {ccPairs.length === 0 && (
+                          <TooltipContent side="top" align="center">
+                            <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                              To use the Search Tool, you need to have at least
+                              one Connector-Credential pair configured.
+                            </p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
 
-                    {ccPairs.length > 0 && searchTool && (
-                      <>
-                        {searchToolEnabled() && (
-                          <CollapsibleSection prompt="Configure Search">
-                            <div>
-                              {ccPairs.length > 0 && (
-                                <>
-                                  <Label small>Document Sets</Label>
-                                  <div>
-                                    <SubLabel>
-                                      <>
-                                        Select which{" "}
-                                        {!user || user.role === "admin" ? (
-                                          <Link
-                                            href="/admin/documents/sets"
-                                            className="text-blue-500"
-                                            target="_blank"
-                                          >
-                                            Document Sets
-                                          </Link>
-                                        ) : (
-                                          "Document Sets"
-                                        )}{" "}
-                                        this Assistant should search through. If
-                                        none are specified, the Assistant will
-                                        search through all available documents
-                                        in order to try and respond to queries.
-                                      </>
-                                    </SubLabel>
-                                  </div>
+                  {ccPairs.length > 0 && searchTool && (
+                    <>
+                      {searchToolEnabled() && (
+                        <CollapsibleSection prompt="Configure Search">
+                          <div>
+                            {ccPairs.length > 0 && (
+                              <>
+                                <Label small>Document Sets</Label>
+                                <div>
+                                  <SubLabel>
+                                    <>
+                                      Select which{" "}
+                                      {!user || user.role === "admin" ? (
+                                        <Link
+                                          href="/admin/documents/sets"
+                                          className="text-blue-500"
+                                          target="_blank"
+                                        >
+                                          Document Sets
+                                        </Link>
+                                      ) : (
+                                        "Document Sets"
+                                      )}{" "}
+                                      this Assistant should search through. If
+                                      none are specified, the Assistant will
+                                      search through all available documents in
+                                      order to try and respond to queries.
+                                    </>
+                                  </SubLabel>
+                                </div>
 
-                                  {documentSets.length > 0 ? (
-                                    <FieldArray
-                                      name="document_set_ids"
-                                      render={(arrayHelpers: ArrayHelpers) => (
-                                        <div>
-                                          <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
-                                            {documentSets.map((documentSet) => {
-                                              const ind =
-                                                values.document_set_ids.indexOf(
-                                                  documentSet.id
-                                                );
-                                              let isSelected = ind !== -1;
-                                              return (
-                                                <DocumentSetSelectable
-                                                  key={documentSet.id}
-                                                  documentSet={documentSet}
-                                                  isSelected={isSelected}
-                                                  onSelect={() => {
-                                                    if (isSelected) {
-                                                      arrayHelpers.remove(ind);
-                                                    } else {
-                                                      arrayHelpers.push(
-                                                        documentSet.id
-                                                      );
-                                                    }
-                                                  }}
-                                                />
+                                {documentSets.length > 0 ? (
+                                  <FieldArray
+                                    name="document_set_ids"
+                                    render={(arrayHelpers: ArrayHelpers) => (
+                                      <div>
+                                        <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
+                                          {documentSets.map((documentSet) => {
+                                            const ind =
+                                              values.document_set_ids.indexOf(
+                                                documentSet.id
                                               );
-                                            })}
-                                          </div>
+                                            let isSelected = ind !== -1;
+                                            return (
+                                              <DocumentSetSelectable
+                                                key={documentSet.id}
+                                                documentSet={documentSet}
+                                                isSelected={isSelected}
+                                                onSelect={() => {
+                                                  if (isSelected) {
+                                                    arrayHelpers.remove(ind);
+                                                  } else {
+                                                    arrayHelpers.push(
+                                                      documentSet.id
+                                                    );
+                                                  }
+                                                }}
+                                              />
+                                            );
+                                          })}
                                         </div>
-                                      )}
-                                    />
-                                  ) : (
-                                    <Italic className="text-sm">
-                                      No Document Sets available.{" "}
-                                      {user?.role !== "admin" && (
-                                        <>
-                                          If this functionality would be useful,
-                                          reach out to the administrators of
-                                          Danswer for assistance.
-                                        </>
-                                      )}
-                                    </Italic>
-                                  )}
+                                      </div>
+                                    )}
+                                  />
+                                ) : (
+                                  <Italic className="text-sm">
+                                    No Document Sets available.{" "}
+                                    {user?.role !== "admin" && (
+                                      <>
+                                        If this functionality would be useful,
+                                        reach out to the administrators of
+                                        Danswer for assistance.
+                                      </>
+                                    )}
+                                  </Italic>
+                                )}
 
-                                  <div className="mt-4 flex flex-col gap-y-4">
-                                    <TextFormField
-                                      small={true}
-                                      name="num_chunks"
-                                      label="Number of Chunks"
-                                      tooltip="How many chunks to feed the LLM"
-                                      placeholder="Defaults to 10 chunks."
-                                      onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (
-                                          value === "" ||
-                                          /^[0-9]+$/.test(value)
-                                        ) {
-                                          setFieldValue("num_chunks", value);
-                                        }
-                                      }}
-                                    />
-
-                                    <BooleanFormField
-                                      small
-                                      removeIndent
-                                      alignTop
-                                      name="llm_relevance_filter"
-                                      label="Apply LLM Relevance Filter"
-                                      subtext={
-                                        "If enabled, the LLM will filter out chunks that are not relevant to the user query."
+                                <div className="mt-4 flex flex-col gap-y-4">
+                                  <TextFormField
+                                    small={true}
+                                    name="num_chunks"
+                                    label="Number of Chunks"
+                                    tooltip="How many chunks to feed the LLM"
+                                    placeholder="Defaults to 10 chunks."
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      if (
+                                        value === "" ||
+                                        /^[0-9]+$/.test(value)
+                                      ) {
+                                        setFieldValue("num_chunks", value);
                                       }
-                                    />
+                                    }}
+                                  />
 
-                                    <BooleanFormField
-                                      small
-                                      removeIndent
-                                      alignTop
-                                      name="include_citations"
-                                      label="Include Citations"
-                                      subtext={`
+                                  <BooleanFormField
+                                    small
+                                    removeIndent
+                                    alignTop
+                                    name="llm_relevance_filter"
+                                    label="Apply LLM Relevance Filter"
+                                    subtext={
+                                      "If enabled, the LLM will filter out chunks that are not relevant to the user query."
+                                    }
+                                  />
+
+                                  <BooleanFormField
+                                    small
+                                    removeIndent
+                                    alignTop
+                                    name="include_citations"
+                                    label="Include Citations"
+                                    subtext={`
                                       If set, the response will include bracket citations ([1], [2], etc.) 
                                       for each document used by the LLM to help inform the response. This is 
                                       the same technique used by the default Assistants. In general, we recommend 
                                       to leave this enabled in order to increase trust in the LLM answer.`}
-                                    />
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </CollapsibleSection>
-                        )}
-                      </>
-                    )}
-
-                    {internetSearchTool && (
-                      <BooleanFormField
-                        removeIndent
-                        name={`enabled_tools_map.${internetSearchTool.id}`}
-                        label={internetSearchTool.display_name}
-                        onChange={() => {
-                          toggleToolInValues(internetSearchTool.id);
-                        }}
-                      />
-                    )}
-
-                    {customTools.length > 0 && (
-                      <>
-                        {customTools.map((tool) => (
-                          <BooleanFormField
-                            removeIndent
-                            alignTop={tool.description != null}
-                            key={tool.id}
-                            name={`enabled_tools_map.${tool.id}`}
-                            label={tool.name}
-                            subtext={tool.description}
-                            onChange={() => {
-                              toggleToolInValues(tool.id);
-                            }}
-                          />
-                        ))}
-                      </>
-                    )}
-                  </div>
-
-                  <Divider />
-                  <AdvancedOptionsToggle
-                    showAdvancedOptions={showAdvancedOptions}
-                    setShowAdvancedOptions={setShowAdvancedOptions}
-                  />
-
-                  {showAdvancedOptions && (
-                    <>
-                      {llmProviders.length > 0 && (
-                        <>
-                          <TextFormField
-                            name="task_prompt"
-                            label="Reminders (Optional)"
-                            isTextArea={true}
-                            placeholder="e.g. 'Remember to reference all of the points mentioned in my message to you and focus on identifying action items that can move things forward'"
-                            onChange={(e) => {
-                              setFieldValue("task_prompt", e.target.value);
-                              triggerFinalPromptUpdate(
-                                values.system_prompt,
-                                e.target.value,
-                                searchToolEnabled()
-                              );
-                            }}
-                            explanationText="Learn about prompting in our docs!"
-                            explanationLink="https://docs.danswer.dev/guides/assistants"
-                          />
-                        </>
-                      )}
-
-                      <div className="mb-6 flex flex-col">
-                        <div className="flex gap-x-2 items-center">
-                          <div className="block font-medium text-base">
-                            Starter Messages (Optional){" "}
+                                  />
+                                </div>
+                              </>
+                            )}
                           </div>
-                        </div>
-                        <FieldArray
-                          name="starter_messages"
-                          render={(
-                            arrayHelpers: ArrayHelpers<StarterMessage[]>
-                          ) => (
-                            <div>
-                              {values.starter_messages &&
-                                values.starter_messages.length > 0 &&
-                                values.starter_messages.map(
-                                  (
-                                    starterMessage: StarterMessage,
-                                    index: number
-                                  ) => {
-                                    return (
-                                      <div
-                                        key={index}
-                                        className={
-                                          index === 0 ? "mt-2" : "mt-6"
-                                        }
-                                      >
-                                        <div className="flex">
-                                          <div className="w-full mr-6 border border-border p-3 rounded">
-                                            <div>
-                                              <Label small>Name</Label>
-                                              <SubLabel>
-                                                Shows up as the
-                                                &quot;title&quot; for this
-                                                Starter Message. For example,
-                                                &quot;Write an email&quot;.
-                                              </SubLabel>
-                                              <Field
-                                                name={`starter_messages[${index}].name`}
-                                                className={`
+                        </CollapsibleSection>
+                      )}
+                    </>
+                  )}
+
+                  {internetSearchTool && (
+                    <BooleanFormField
+                      removeIndent
+                      name={`enabled_tools_map.${internetSearchTool.id}`}
+                      label={internetSearchTool.display_name}
+                      onChange={() => {
+                        toggleToolInValues(internetSearchTool.id);
+                      }}
+                    />
+                  )}
+
+                  {customTools.length > 0 && (
+                    <>
+                      {customTools.map((tool) => (
+                        <BooleanFormField
+                          removeIndent
+                          alignTop={tool.description != null}
+                          key={tool.id}
+                          name={`enabled_tools_map.${tool.id}`}
+                          label={tool.name}
+                          subtext={tool.description}
+                          onChange={() => {
+                            toggleToolInValues(tool.id);
+                          }}
+                        />
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+              <Divider />
+              <AdvancedOptionsToggle
+                showAdvancedOptions={showAdvancedOptions}
+                setShowAdvancedOptions={setShowAdvancedOptions}
+              />
+
+              {showAdvancedOptions && (
+                <>
+                  {llmProviders.length > 0 && (
+                    <>
+                      <TextFormField
+                        name="task_prompt"
+                        label="Reminders (Optional)"
+                        isTextArea={true}
+                        placeholder="e.g. 'Remember to reference all of the points mentioned in my message to you and focus on identifying action items that can move things forward'"
+                        onChange={(e) => {
+                          setFieldValue("task_prompt", e.target.value);
+                          triggerFinalPromptUpdate(
+                            values.system_prompt,
+                            e.target.value,
+                            searchToolEnabled()
+                          );
+                        }}
+                        explanationText="Learn about prompting in our docs!"
+                        explanationLink="https://docs.danswer.dev/guides/assistants"
+                      />
+                    </>
+                  )}
+
+                  <div className="mb-6 flex flex-col">
+                    <div className="flex gap-x-2 items-center">
+                      <div className="block font-medium text-base">
+                        Starter Messages (Optional){" "}
+                      </div>
+                    </div>
+                    <FieldArray
+                      name="starter_messages"
+                      render={(
+                        arrayHelpers: ArrayHelpers<StarterMessage[]>
+                      ) => (
+                        <div>
+                          {values.starter_messages &&
+                            values.starter_messages.length > 0 &&
+                            values.starter_messages.map(
+                              (
+                                starterMessage: StarterMessage,
+                                index: number
+                              ) => {
+                                return (
+                                  <div
+                                    key={index}
+                                    className={index === 0 ? "mt-2" : "mt-6"}
+                                  >
+                                    <div className="flex">
+                                      <div className="w-full mr-6 border border-border p-3 rounded">
+                                        <div>
+                                          <Label small>Name</Label>
+                                          <SubLabel>
+                                            Shows up as the &quot;title&quot;
+                                            for this Starter Message. For
+                                            example, &quot;Write an email&quot;.
+                                          </SubLabel>
+                                          <Field
+                                            name={`starter_messages[${index}].name`}
+                                            className={`
                                         border 
                                         border-border 
                                         bg-background 
@@ -1093,27 +1078,27 @@ export function AssistantEditor({
                                         px-3 
                                         mr-4
                                       `}
-                                                autoComplete="off"
-                                              />
-                                              <ErrorMessage
-                                                name={`starter_messages[${index}].name`}
-                                                component="div"
-                                                className="text-error text-sm mt-1"
-                                              />
-                                            </div>
+                                            autoComplete="off"
+                                          />
+                                          <ErrorMessage
+                                            name={`starter_messages[${index}].name`}
+                                            component="div"
+                                            className="text-error text-sm mt-1"
+                                          />
+                                        </div>
 
-                                            <div className="mt-3">
-                                              <Label small>Description</Label>
-                                              <SubLabel>
-                                                A description which tells the
-                                                user what they might want to use
-                                                this Starter Message for. For
-                                                example &quot;to a client about
-                                                a new feature&quot;
-                                              </SubLabel>
-                                              <Field
-                                                name={`starter_messages.${index}.description`}
-                                                className={`
+                                        <div className="mt-3">
+                                          <Label small>Description</Label>
+                                          <SubLabel>
+                                            A description which tells the user
+                                            what they might want to use this
+                                            Starter Message for. For example
+                                            &quot;to a client about a new
+                                            feature&quot;
+                                          </SubLabel>
+                                          <Field
+                                            name={`starter_messages.${index}.description`}
+                                            className={`
                                         border 
                                         border-border 
                                         bg-background 
@@ -1123,29 +1108,28 @@ export function AssistantEditor({
                                         px-3 
                                         mr-4
                                       `}
-                                                autoComplete="off"
-                                              />
-                                              <ErrorMessage
-                                                name={`starter_messages[${index}].description`}
-                                                component="div"
-                                                className="text-error text-sm mt-1"
-                                              />
-                                            </div>
+                                            autoComplete="off"
+                                          />
+                                          <ErrorMessage
+                                            name={`starter_messages[${index}].description`}
+                                            component="div"
+                                            className="text-error text-sm mt-1"
+                                          />
+                                        </div>
 
-                                            <div className="mt-3">
-                                              <Label small>Message</Label>
-                                              <SubLabel>
-                                                The actual message to be sent as
-                                                the initial user message if a
-                                                user selects this starter
-                                                prompt. For example, &quot;Write
-                                                me an email to a client about a
-                                                new billing feature we just
-                                                released.&quot;
-                                              </SubLabel>
-                                              <Field
-                                                name={`starter_messages[${index}].message`}
-                                                className={`
+                                        <div className="mt-3">
+                                          <Label small>Message</Label>
+                                          <SubLabel>
+                                            The actual message to be sent as the
+                                            initial user message if a user
+                                            selects this starter prompt. For
+                                            example, &quot;Write me an email to
+                                            a client about a new billing feature
+                                            we just released.&quot;
+                                          </SubLabel>
+                                          <Field
+                                            name={`starter_messages[${index}].message`}
+                                            className={`
                                           border 
                                           border-border 
                                           bg-background 
@@ -1155,80 +1139,78 @@ export function AssistantEditor({
                                           px-3 
                                           mr-4
                                       `}
-                                                as="textarea"
-                                                autoComplete="off"
-                                              />
-                                              <ErrorMessage
-                                                name={`starter_messages[${index}].message`}
-                                                component="div"
-                                                className="text-error text-sm mt-1"
-                                              />
-                                            </div>
-                                          </div>
-                                          <div className="my-auto">
-                                            <FiX
-                                              className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                                              onClick={() =>
-                                                arrayHelpers.remove(index)
-                                              }
-                                            />
-                                          </div>
+                                            as="textarea"
+                                            autoComplete="off"
+                                          />
+                                          <ErrorMessage
+                                            name={`starter_messages[${index}].message`}
+                                            component="div"
+                                            className="text-error text-sm mt-1"
+                                          />
                                         </div>
                                       </div>
-                                    );
-                                  }
-                                )}
+                                      <div className="my-auto">
+                                        <FiX
+                                          className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                                          onClick={() =>
+                                            arrayHelpers.remove(index)
+                                          }
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                            )}
 
-                              <Button
-                                onClick={() => {
-                                  arrayHelpers.push({
-                                    name: "",
-                                    description: "",
-                                    message: "",
-                                  });
-                                }}
-                                className="text-white mt-3"
-                                size="xs"
-                                type="button"
-                                icon={FiPlus}
-                                color="green"
-                              >
-                                Add New
-                              </Button>
-                            </div>
-                          )}
-                        />
-                      </div>
-
-                      {isPaidEnterpriseFeaturesEnabled &&
-                        userGroups &&
-                        userGroups.length > 0 && (
-                          <IsPublicGroupSelector
-                            formikProps={{
-                              values,
-                              isSubmitting,
-                              setFieldValue,
-                              ...formikProps,
+                          <Button
+                            onClick={() => {
+                              arrayHelpers.push({
+                                name: "",
+                                description: "",
+                                message: "",
+                              });
                             }}
-                            objectName="assistant"
-                            enforceGroupSelection={false}
-                          />
-                        )}
-                    </>
-                  )}
-
-                  <div className="flex">
-                    <Button
-                      className="mx-auto"
-                      color="green"
-                      size="md"
-                      type="submit"
-                      disabled={isSubmitting || isRequestSuccessful}
-                    >
-                      {isUpdate ? "Update!" : "Create!"}
-                    </Button>
+                            className="text-white mt-3"
+                            size="xs"
+                            type="button"
+                            icon={FiPlus}
+                            color="green"
+                          >
+                            Add New
+                          </Button>
+                        </div>
+                      )}
+                    />
                   </div>
-                </div>
+
+                  {isPaidEnterpriseFeaturesEnabled &&
+                    userGroups &&
+                    userGroups.length > 0 && (
+                      <IsPublicGroupSelector
+                        formikProps={{
+                          values,
+                          isSubmitting,
+                          setFieldValue,
+                          ...formikProps,
+                        }}
+                        objectName="assistant"
+                        enforceGroupSelection={false}
+                      />
+                    )}
+                </>
+              )}
+
+              <div className="flex">
+                <Button
+                  className="mx-auto"
+                  color="green"
+                  size="md"
+                  type="submit"
+                  disabled={isSubmitting || isRequestSuccessful}
+                >
+                  {isUpdate ? "Update!" : "Create!"}
+                </Button>
               </div>
             </Form>
           );

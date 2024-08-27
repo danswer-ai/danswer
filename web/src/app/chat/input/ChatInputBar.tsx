@@ -483,7 +483,7 @@ export function ChatInputBar({
                 outline-none
                 placeholder-subtle
                 resize-none
-                px-4
+                px-5
                 py-4
                 h-14
               `}
