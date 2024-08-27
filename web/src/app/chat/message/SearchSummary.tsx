@@ -132,8 +132,7 @@ export function SearchSummary({
             setIsEditing(false);
           }}
           variant="ghost"
-          size="xs"
-          className="!p-1.5 !px-[7px]"
+          size="smallIcon"
         >
           <Check size={16} />
         </Button>
@@ -143,8 +142,7 @@ export function SearchSummary({
             setIsEditing(false);
           }}
           variant="ghost"
-          size="xs"
-          className="!p-1.5 !px-[7px]"
+          size="smallIcon"
         >
           <X size={16} />
         </Button>
@@ -174,8 +172,7 @@ export function SearchSummary({
             <div className="my-auto mx-2">
               <Button
                 variant="ghost"
-                size="xs"
-                className="!p-1.5 !px-[7px]"
+                size="smallIcon"
                 onClick={() => setIsEditing(true)}
               >
                 <Pencil size={16} />

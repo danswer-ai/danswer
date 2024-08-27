@@ -339,16 +339,14 @@ export const AIMessage = ({
               <CopyButton content={content.toString()} />
               <Button
                 variant="ghost"
-                size="xs"
-                className="!p-1.5 !px-[7px]"
+                size="smallIcon"
                 onClick={() => handleFeedback("like")}
               >
                 <ThumbsUp size={16} />
               </Button>
               <Button
                 variant="ghost"
-                size="xs"
-                className="!p-1.5 !px-[7px]"
+                size="smallIcon"
                 onClick={() => handleFeedback("dislike")}
               >
                 <ThumbsDown size={16} />
@@ -376,8 +374,7 @@ function MessageSwitcher({
     <div className="flex items-center text-sm space-x-0.5">
       <Button
         variant="ghost"
-        size="xs"
-        className="!p-1.5 !px-[7px]"
+        size="smallIcon"
         onClick={currentPage === 1 ? undefined : handlePrevious}
       >
         <ChevronLeft />
@@ -387,8 +384,7 @@ function MessageSwitcher({
       </span>
       <Button
         variant="ghost"
-        size="xs"
-        className="!p-1.5 !px-[7px]"
+        size="smallIcon"
         onClick={currentPage === totalPages ? undefined : handleNext}
       >
         <ChevronRight />
@@ -567,8 +563,7 @@ export const HumanMessage = ({
                       <div className="bg-hover absolute -top-11 right-0 rounded">
                         <Button
                           variant="ghost"
-                          size="xs"
-                          className="!p-1.5 !px-[7px]"
+                          size="smallIcon"
                           onClick={() => {
                             setIsEditing(true);
                             setIsHovered(false);

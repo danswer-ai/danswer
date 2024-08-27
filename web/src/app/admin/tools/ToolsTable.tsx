@@ -1,20 +1,22 @@
 "use client";
 
-import {
-  Text,
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-} from "@tremor/react";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { useRouter } from "next/navigation";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { FiCheckCircle, FiEdit2, FiXCircle } from "react-icons/fi";
+import { FiEdit2 } from "react-icons/fi";
 import { TrashIcon } from "@/components/icons/icons";
 import { deleteCustomTool } from "@/lib/tools/edit";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CircleCheckBig, CircleX, Pencil } from "lucide-react";
 
 export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
   const router = useRouter();
@@ -28,28 +30,31 @@ export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
       {popup}
 
       <Table>
-        <TableHead>
+        <TableHeader>
           <TableRow>
-            <TableHeaderCell>Name</TableHeaderCell>
-            <TableHeaderCell>Description</TableHeaderCell>
-            <TableHeaderCell>Built In?</TableHeaderCell>
-            <TableHeaderCell>Delete</TableHeaderCell>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Built In?</TableHead>
+            <TableHead>Delete</TableHead>
           </TableRow>
-        </TableHead>
+        </TableHeader>
         <TableBody>
           {sortedTools.map((tool) => (
             <TableRow key={tool.id.toString()}>
               <TableCell>
-                <div className="flex">
+                <div className="flex items-center gap-2">
                   {tool.in_code_tool_id === null && (
-                    <FiEdit2
-                      className="mr-1 my-auto cursor-pointer"
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() =>
                         router.push(
                           `/admin/tools/edit/${tool.id}?u=${Date.now()}`
                         )
                       }
-                    />
+                    >
+                      <Pencil size={16} />
+                    </Button>
                   )}
                   <p className="text font-medium whitespace-normal break-none">
                     {tool.name}
@@ -61,38 +66,37 @@ export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 {tool.in_code_tool_id === null ? (
-                  <span>
-                    <FiXCircle className="inline-block mr-1 my-auto" />
+                  <Badge variant="secondary">
+                    <CircleX size={14} />
                     No
-                  </span>
+                  </Badge>
                 ) : (
-                  <span>
-                    <FiCheckCircle className="inline-block mr-1 my-auto" />
+                  <Badge variant="success">
+                    <CircleCheckBig size={14} />
                     Yes
-                  </span>
+                  </Badge>
                 )}
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 <div className="flex">
                   {tool.in_code_tool_id === null ? (
-                    <div className="my-auto">
-                      <div
-                        className="hover:bg-hover rounded p-1 cursor-pointer"
-                        onClick={async () => {
-                          const response = await deleteCustomTool(tool.id);
-                          if (response.data) {
-                            router.refresh();
-                          } else {
-                            setPopup({
-                              message: `Failed to delete tool - ${response.error}`,
-                              type: "error",
-                            });
-                          }
-                        }}
-                      >
-                        <TrashIcon />
-                      </div>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={async () => {
+                        const response = await deleteCustomTool(tool.id);
+                        if (response.data) {
+                          router.refresh();
+                        } else {
+                          setPopup({
+                            message: `Failed to delete tool - ${response.error}`,
+                            type: "error",
+                          });
+                        }
+                      }}
+                    >
+                      <TrashIcon />
+                    </Button>
                   ) : (
                     "-"
                   )}

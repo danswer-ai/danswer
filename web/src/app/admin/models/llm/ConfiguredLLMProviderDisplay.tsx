@@ -126,7 +126,7 @@ function LLMProviderDisplay({
 
         <div className="ml-auto">
           <Button
-            variant={existingLlmProvider ? "secondary" : "default"}
+            variant={existingLlmProvider ? "outline" : "default"}
             onClick={() => setFormIsVisible(true)}
           >
             {existingLlmProvider ? "Edit" : "Set up"}
@@ -164,7 +164,7 @@ export function ConfiguredLLMProviderDisplay({
   });
 
   return (
-    <div className="flex flex-col gap-y-4">
+    <div className="flex flex-col gap-y-4 pb-10">
       {existingLlmProviders.map((provider) => {
         const defaultProviderDesciptor = llmProviderDescriptors.find(
           (llmProviderDescriptors) =>

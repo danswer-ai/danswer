@@ -1,21 +1,10 @@
 import { useQueryHistory } from "../lib";
 
-import {
-  Card,
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-  Text,
-} from "@tremor/react";
+import { Card } from "@tremor/react";
 import { Divider } from "@tremor/react";
-import { Select, SelectItem } from "@tremor/react";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { ChatSessionMinimal } from "../usage/types";
 import { timestampToReadableDate } from "@/lib/dateUtils";
-import { FiFrown, FiMinus, FiSmile } from "react-icons/fi";
 import { useState } from "react";
 import { Feedback } from "@/lib/types";
 import { DateRangeSelector } from "../DateRangeSelector";
@@ -23,6 +12,22 @@ import { PageSelector } from "@/components/PageSelector";
 import Link from "next/link";
 import { FeedbackBadge } from "./FeedbackBadge";
 import { DownloadAsCSV } from "./DownloadAsCSV";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Frown, Minus, Smile } from "lucide-react";
 
 const NUM_IN_PAGE = 20;
 
@@ -37,14 +42,14 @@ function QueryHistoryTableRow({
       className="hover:bg-hover-light cursor-pointer relative"
     >
       <TableCell>
-        <Text className="whitespace-normal line-clamp-5">
+        <p className="whitespace-normal line-clamp-5">
           {chatSessionMinimal.first_user_message || "-"}
-        </Text>
+        </p>
       </TableCell>
       <TableCell>
-        <Text className="whitespace-normal line-clamp-5">
+        <p className="whitespace-normal line-clamp-5">
           {chatSessionMinimal.first_ai_message || "-"}
-        </Text>
+        </p>
       </TableCell>
       <TableCell>
         <FeedbackBadge feedback={chatSessionMinimal.feedback_type} />
@@ -74,22 +79,26 @@ function SelectFeedbackType({
 }) {
   return (
     <div>
-      <Text className="my-auto mr-2 font-medium mb-1">Feedback Type</Text>
+      <p className="my-auto mr-2 font-medium mb-1">Feedback Type</p>
       <div className="max-w-sm space-y-6">
         <Select
           value={value}
           onValueChange={onValueChange as (value: string) => void}
-          enableClear={false}
         >
-          <SelectItem value="all" icon={FiMinus}>
-            Any
-          </SelectItem>
-          <SelectItem value="like" icon={FiSmile}>
-            Like
-          </SelectItem>
-          <SelectItem value="dislike" icon={FiFrown}>
-            Dislike
-          </SelectItem>
+          <SelectTrigger>
+            <SelectValue placeholder="Select an option" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">
+              <Minus size={16} className="inline mr-2" /> Any
+            </SelectItem>
+            <SelectItem value="like">
+              <Smile size={16} className="inline mr-2" /> Like
+            </SelectItem>
+            <SelectItem value="dislike">
+              <Frown size={16} className="inline mr-2" /> Dislike
+            </SelectItem>
+          </SelectContent>
         </Select>
       </div>
     </div>
@@ -128,16 +137,16 @@ export function QueryHistoryTable() {
           </div>
           <Divider />
           <Table className="mt-5">
-            <TableHead>
+            <TableHeader>
               <TableRow>
-                <TableHeaderCell>First User Message</TableHeaderCell>
-                <TableHeaderCell>First AI Response</TableHeaderCell>
-                <TableHeaderCell>Feedback</TableHeaderCell>
-                <TableHeaderCell>User</TableHeaderCell>
-                <TableHeaderCell>Persona</TableHeaderCell>
-                <TableHeaderCell>Date</TableHeaderCell>
+                <TableHead>First User Message</TableHead>
+                <TableHead>First AI Response</TableHead>
+                <TableHead>Feedback</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Persona</TableHead>
+                <TableHead>Date</TableHead>
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {chatSessionData
                 .slice(NUM_IN_PAGE * (page - 1), NUM_IN_PAGE * page)

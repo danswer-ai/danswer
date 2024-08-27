@@ -24,7 +24,7 @@ export function IndexAttemptStatus({
   if (status === "failed") {
     const icon = (
       <Badge variant="destructive">
-        <TriangleAlert size={14} /> Failed
+        <TriangleAlert size={14} className="mr-0.5" /> Failed
       </Badge>
     );
     if (errorMsg) {
@@ -35,19 +35,19 @@ export function IndexAttemptStatus({
   } else if (status === "success") {
     badge = (
       <Badge variant="success">
-        <CircleCheckBig size={14} /> Succeeded
+        <CircleCheckBig size={14} className="mr-0.5" /> Succeeded
       </Badge>
     );
   } else if (status === "in_progress") {
     badge = (
       <Badge variant="warning">
-        <Clock size={14} /> In Progress
+        <Clock size={14} className="mr-0.5" /> In Progress
       </Badge>
     );
   } else if (status === "not_started") {
     badge = (
       <Badge variant="outline">
-        <Clock size={14} /> Scheduled
+        <Clock size={14} className="mr-0.5" /> Scheduled
       </Badge>
     );
   }
@@ -71,19 +71,19 @@ export function CCPairStatus({
   if (isDeleting) {
     badge = (
       <Badge variant="destructive">
-        <TriangleAlert size={14} /> Deleting
+        <TriangleAlert size={14} className="mr-0.5" /> Deleting
       </Badge>
     );
   } else if (disabled) {
     badge = (
       <Badge variant="warning">
-        <CirclePause size={14} /> Paused
+        <CirclePause size={14} className="mr-0.5" /> Paused
       </Badge>
     );
   } else if (status === "failed") {
     badge = (
       <Badge variant="destructive">
-        <TriangleAlert size={14} /> Error
+        <TriangleAlert size={14} className="mr-0.5" /> Error
       </Badge>
     );
   } else {

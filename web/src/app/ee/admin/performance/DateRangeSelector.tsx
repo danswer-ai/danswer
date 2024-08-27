@@ -2,7 +2,6 @@ import {
   DateRangePicker,
   DateRangePickerItem,
   DateRangePickerValue,
-  Text,
 } from "@tremor/react";
 import { getXDaysAgo } from "./dateUtils";
 
@@ -17,7 +16,7 @@ export function DateRangeSelector({
 }) {
   return (
     <div>
-      <Text className="my-auto mr-2 font-medium mb-1">Date Range</Text>
+      <p className="my-auto mr-2 font-medium mb-1">Date Range</p>
       <DateRangePicker
         className="max-w-md"
         value={value}

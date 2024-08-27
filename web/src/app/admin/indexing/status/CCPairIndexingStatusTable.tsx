@@ -315,11 +315,7 @@ export function CCPairIndexingStatusTable({
                     <a
                       href={`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`}
                     >
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        className="!p-1.5 !px-[7px]"
-                      >
+                      <Button variant="ghost" size="icon">
                         <Pencil size={16} />
                       </Button>
                     </a>

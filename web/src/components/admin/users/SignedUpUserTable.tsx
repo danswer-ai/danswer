@@ -5,15 +5,23 @@ import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import useSWRMutation from "swr/mutation";
-import {
+/* import {
   Table,
   TableHead,
   TableRow,
   TableHeaderCell,
   TableBody,
   TableCell,
-} from "@tremor/react";
+} from "@tremor/react"; */
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Props {
   users: Array<User>;
@@ -80,7 +88,7 @@ const DeactivaterButton = ({
     <Button
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
-      variant="destructive"
+      variant="outline"
     >
       {deactivate ? "Deactivate" : "Activate"}
     </Button>
@@ -134,18 +142,18 @@ const SignedUpUserTable = ({
           />
         ) : null}
         <Table className="overflow-auto">
-          <TableHead>
+          <TableHeader>
             <TableRow>
-              <TableHeaderCell>Email</TableHeaderCell>
-              <TableHeaderCell>Role</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>
                 <div className="flex">
                   <div className="ml-auto">Actions</div>
                 </div>
-              </TableHeaderCell>
+              </TableHead>
             </TableRow>
-          </TableHead>
+          </TableHeader>
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>

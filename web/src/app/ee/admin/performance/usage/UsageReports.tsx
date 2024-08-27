@@ -2,7 +2,6 @@
 
 import { errorHandlingFetcher } from "@/lib/fetcher";
 
-import { FiDownload, FiDownloadCloud } from "react-icons/fi";
 import {
   DateRangePicker,
   DateRangePickerItem,
@@ -18,7 +17,6 @@ import {
   Title,
 } from "@tremor/react";
 import useSWR from "swr";
-import { Button } from "@tremor/react";
 import { useState } from "react";
 import { UsageReport } from "./types";
 import { ThreeDotsLoader } from "@/components/Loading";
@@ -26,6 +24,8 @@ import Link from "next/link";
 import { humanReadableFormat, humanReadableFormatWithTime } from "@/lib/time";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { PageSelector } from "@/components/PageSelector";
+import { Button } from "@/components/ui/button";
+import { CloudDownload, Download } from "lucide-react";
 
 function GenerateReportInput() {
   const [dateRange, setDateRange] = useState<DateRangePickerValue | undefined>(
@@ -131,15 +131,8 @@ function GenerateReportInput() {
           All time
         </DateRangePickerItem>
       </DateRangePicker>
-      <Button
-        color={"blue"}
-        icon={FiDownloadCloud}
-        size="xs"
-        loading={isLoading}
-        disabled={isLoading}
-        onClick={() => requestReport()}
-      >
-        Generate Report
+      <Button disabled={isLoading} onClick={() => requestReport()}>
+        <CloudDownload size={16} /> Generate Report
       </Button>
       <p className="mt-1 text-xs">This can take a few minutes.</p>
       {errorOccurred && (
@@ -223,7 +216,7 @@ function UsageReportsTable() {
                       href={`/api/admin/usage-report/${r.report_name}`}
                       className="flex justify-center"
                     >
-                      <FiDownload color="primary" />
+                      <Download size={16} />
                     </Link>
                   </TableCell>
                 </TableRow>

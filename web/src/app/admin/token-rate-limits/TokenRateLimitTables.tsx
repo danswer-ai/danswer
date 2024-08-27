@@ -1,15 +1,5 @@
 "use client";
 
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-  Title,
-  Text,
-} from "@tremor/react";
 import { DeleteButton } from "@/components/DeleteButton";
 import { deleteTokenRateLimit, updateTokenRateLimit } from "./lib";
 import { ThreeDotsLoader } from "@/components/Loading";
@@ -17,6 +7,14 @@ import { TokenRateLimitDisplay } from "./types";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type TokenRateLimitTableArgs = {
   tokenRateLimits: TokenRateLimitDisplay[];
@@ -62,35 +60,27 @@ export const TokenRateLimitTable = ({
   if (tokenRateLimits.length === 0) {
     return (
       <div>
-        {!hideHeading && title && <Title>{title}</Title>}
-        {!hideHeading && description && (
-          <Text className="my-2">{description}</Text>
-        )}
-        <Text className={`${!hideHeading && "my-8"}`}>
-          No token rate limits set!
-        </Text>
+        {!hideHeading && title && <h3 className="font-semibold">{title}</h3>}
+        {!hideHeading && description && <p className="my-2">{description}</p>}
+        <p className={`${!hideHeading && "my-8"}`}>No token rate limits set!</p>
       </div>
     );
   }
 
   return (
     <div>
-      {!hideHeading && title && <Title>{title}</Title>}
-      {!hideHeading && description && (
-        <Text className="my-2">{description}</Text>
-      )}
+      {!hideHeading && title && <h3 className="font-semibold">{title}</h3>}
+      {!hideHeading && description && <p className="my-2">{description}</p>}
       <Table className={`overflow-visible ${!hideHeading && "my-8"}`}>
-        <TableHead>
+        <TableHeader>
           <TableRow>
-            <TableHeaderCell>Enabled</TableHeaderCell>
-            {shouldRenderGroupName() && (
-              <TableHeaderCell>Group Name</TableHeaderCell>
-            )}
-            <TableHeaderCell>Time Window (Hours)</TableHeaderCell>
-            <TableHeaderCell>Token Budget (Thousands)</TableHeaderCell>
-            <TableHeaderCell>Delete</TableHeaderCell>
+            <TableHead>Enabled</TableHead>
+            {shouldRenderGroupName() && <TableHead>Group Name</TableHead>}
+            <TableHead>Time Window (Hours)</TableHead>
+            <TableHead>Token Budget (Thousands)</TableHead>
+            <TableHead>Delete</TableHead>
           </TableRow>
-        </TableHead>
+        </TableHeader>
         <TableBody>
           {tokenRateLimits.map((tokenRateLimit) => {
             return (
@@ -149,7 +139,7 @@ export const GenericTokenRateLimitTable = ({
   }
 
   if (!isLoading && error) {
-    return <Text>Failed to load token rate limits</Text>;
+    return <p>Failed to load token rate limits</p>;
   }
 
   let processedData = data;

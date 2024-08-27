@@ -1,6 +1,5 @@
 "use client";
 
-import { Text } from "@tremor/react";
 import { Persona } from "./interfaces";
 import { useRouter } from "next/navigation";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
@@ -9,19 +8,19 @@ import { useState } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
 import { deletePersona, personaComparator } from "./lib";
-import { FiEdit2 } from "react-icons/fi";
 import { TrashIcon } from "@/components/icons/icons";
+import { Pencil } from "lucide-react";
 
 function PersonaTypeDisplay({ persona }: { persona: Persona }) {
   if (persona.default_persona) {
-    return <Text>Built-In</Text>;
+    return <p>Built-In</p>;
   }
 
   if (persona.is_public) {
-    return <Text>Global</Text>;
+    return <p>Global</p>;
   }
 
-  return <Text>Personal {persona.owner && <>({persona.owner.email})</>}</Text>;
+  return <p>Personal {persona.owner && <>({persona.owner.email})</>}</p>;
 }
 
 export function PersonasTable({ personas }: { personas: Persona[] }) {
@@ -75,11 +74,11 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
     <div>
       {popup}
 
-      <Text className="my-2">
+      <p className="my-2">
         Assistants will be displayed as options on the Chat / Search interfaces
         in the order they are displayed below. Assistants marked as hidden will
         not be displayed.
-      </Text>
+      </p>
 
       <DraggableTable
         headers={["Name", "Description", "Type", "Is Visible", "Delete"]}
@@ -89,7 +88,8 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
             cells: [
               <div key="name" className="flex">
                 {!persona.default_persona && (
-                  <FiEdit2
+                  <Pencil
+                    size={16}
                     className="mr-1 my-auto cursor-pointer"
                     onClick={() =>
                       router.push(

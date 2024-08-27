@@ -11,8 +11,9 @@ import {
   SubLabel,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-import { Button, Divider } from "@tremor/react";
 import { ImageUpload } from "./ImageUpload";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export function WhitelabelingForm() {
   const router = useRouter();
@@ -104,7 +105,7 @@ export function WhitelabelingForm() {
             {values.use_custom_logo ? (
               <div className="mt-3">
                 <SubLabel>Current Custom Logo: </SubLabel>
-                <img
+                <Image
                   src={"/api/enterprise-settings/logo?u=" + Date.now()}
                   alt="logo"
                   style={{ objectFit: "contain" }}
@@ -112,9 +113,7 @@ export function WhitelabelingForm() {
                 />
 
                 <Button
-                  color="red"
-                  size="xs"
-                  type="button"
+                  variant="destructive"
                   className="mb-8"
                   onClick={async () => {
                     const valuesWithoutLogo = {
@@ -144,9 +143,7 @@ export function WhitelabelingForm() {
               setSelectedFile={setSelectedFile}
             />
 
-            <Divider />
-
-            <div className="mt-4">
+            <div className="pt-10">
               <TextFormField
                 label="Custom Chat Header Content"
                 name="custom_header_content"
@@ -156,9 +153,7 @@ export function WhitelabelingForm() {
               />
             </div>
 
-            <Divider />
-
-            <div className="mt-4">
+            <div className="pt-4">
               <TextFormField
                 label="Custom Popup Header"
                 name="custom_popup_header"
@@ -171,7 +166,7 @@ export function WhitelabelingForm() {
               />
             </div>
 
-            <div className="mt-4">
+            <div className="pt-4">
               <TextFormField
                 label="Custom Popup Content"
                 name="custom_popup_content"
