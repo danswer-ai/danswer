@@ -13,6 +13,9 @@ import bs4
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 
+from danswer.configs.app_configs import (
+    CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD,
+)
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
@@ -548,10 +551,64 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             logger.exception("Ran into exception when fetching labels from Confluence")
             return []
 
+    @classmethod
+    def _attachment_to_download_link(
+        cls, confluence_client: Confluence, attachment: dict[str, Any]
+    ) -> str:
+        return confluence_client.url + attachment["_links"]["download"]
+
+    @classmethod
+    def _attachment_to_content(
+        cls,
+        confluence_client: Confluence,
+        attachment: dict[str, Any],
+    ) -> str | None:
+        """If it returns None, assume that we should skip this attachment."""
+        if attachment["metadata"]["mediaType"] in [
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/svg+xml",
+            "video/mp4",
+            "video/quicktime",
+        ]:
+            return None
+
+        download_link = cls._attachment_to_download_link(confluence_client, attachment)
+
+        attachment_size = attachment["extensions"]["fileSize"]
+        if attachment_size > CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD:
+            logger.warning(
+                f"Skipping {download_link} due to size. "
+                f"size={attachment_size} "
+                f"threshold={CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD}"
+            )
+            return None
+
+        response = confluence_client._session.get(download_link)
+        if response.status_code != 200:
+            logger.warning(
+                f"Failed to fetch {download_link} with invalid status code {response.status_code}"
+            )
+            return None
+
+        extracted_text = extract_file_text(
+            attachment["title"], io.BytesIO(response.content), False
+        )
+        if len(extracted_text) > CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD:
+            logger.warning(
+                f"Skipping {download_link} due to char count. "
+                f"char count={len(extracted_text)} "
+                f"threshold={CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD}"
+            )
+            return None
+
+        return extracted_text
+
     def _fetch_attachments(
         self, confluence_client: Confluence, page_id: str, files_in_used: list[str]
     ) -> tuple[str, list[dict[str, Any]]]:
-        unused_attachments = []
+        unused_attachments: list = []
 
         get_attachments_from_content = make_confluence_call_handle_rate_limit(
             confluence_client.get_attachments_from_content
@@ -564,38 +621,15 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 page_id, start=0, limit=500, expand=expand
             )
             for attachment in attachments_container["results"]:
-                if attachment["metadata"]["mediaType"] in [
-                    "image/jpeg",
-                    "image/png",
-                    "image/gif",
-                    "image/svg+xml",
-                    "video/mp4",
-                    "video/quicktime",
-                ]:
-                    continue
-
-                download_link = confluence_client.url + attachment["_links"]["download"]
-
-                attachment_size = attachment["extensions"]["fileSize"]
-                if attachment_size > CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD:
-                    logger.warning(
-                        f"Skipping {download_link} due to size. "
-                        f"size={attachment_size} "
-                        f"threshold={CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD}"
-                    )
-                    continue
-
                 if attachment["title"] not in files_in_used:
                     unused_attachments.append(attachment)
                     continue
 
-                response = confluence_client._session.get(download_link)
-
-                if response.status_code == 200:
-                    extract = extract_file_text(
-                        attachment["title"], io.BytesIO(response.content), False
-                    )
-                    files_attachment_content.append(extract)
+                attachment_content = self._attachment_to_content(
+                    confluence_client, attachment
+                )
+                if attachment_content:
+                    files_attachment_content.append(attachment_content)
 
         except Exception as e:
             if not self.continue_on_failure:
@@ -610,7 +644,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
     ) -> tuple[list[Document], list[dict[str, Any]], int]:
         doc_batch: list[Document] = []
-        unused_attachments = []
+        unused_attachments: list[dict[str, Any]] = []
 
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
@@ -701,15 +735,14 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             if time_filter and not time_filter(last_updated):
                 continue
 
-            download_url = self.confluence_client.url + attachment["_links"]["download"]
-
-            response = self.confluence_client._session.get(download_url)
-            if response.status_code != 200:
-                continue
-
-            extracted_text = extract_file_text(
-                attachment["title"], io.BytesIO(response.content), False
+            attachment_url = self._attachment_to_download_link(
+                self.confluence_client, attachment
             )
+            attachment_content = self._attachment_to_content(
+                self.confluence_client, attachment
+            )
+            if attachment_content is None:
+                continue
 
             creator_email = attachment["history"]["createdBy"]["email"]
 
@@ -725,8 +758,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
             doc_batch.append(
                 Document(
-                    id=download_url,
-                    sections=[Section(link=download_url, text=extracted_text)],
+                    id=attachment_url,
+                    sections=[Section(link=attachment_url, text=attachment_content)],
                     source=DocumentSource.CONFLUENCE,
                     semantic_identifier=attachment["title"],
                     doc_updated_at=last_updated,
