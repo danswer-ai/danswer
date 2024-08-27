@@ -41,7 +41,7 @@ async function Page() {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch assistants - ${assistantsFetchError}`}
+        errorMsg={`Failed to fetch plugins - ${assistantsFetchError}`}
       />
     );
   }

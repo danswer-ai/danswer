@@ -128,13 +128,13 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                 ],
               },
               {
-                name: "Custom Assistants",
+                name: "Custom Plugins",
                 items: [
                   {
                     name: (
                       <div className="flex">
                         <RobotIcon size={18} />
-                        <div className="ml-1">Assistants</div>
+                        <div className="ml-1">Plugins</div>
                       </div>
                     ),
                     link: "/admin/assistants",

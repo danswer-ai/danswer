@@ -8,6 +8,7 @@ import { HoverPopup } from "@/components/HoverPopup";
 import { Modal } from "@/components/Modal";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
+import { getAssistantIcon } from "@/lib/constants";
 
 const MAX_PERSONAS_TO_DISPLAY = 4;
 
@@ -43,8 +44,9 @@ export function ChatIntro({
         <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
           <div className="flex">
             <div className="mx-auto">
-              <Logo height={80} width={80} className="m-auto" />
-
+              <div className="flex justify-center">
+                <img src={getAssistantIcon(selectedPersona.id)} alt={selectedPersona.name} width={80} />
+              </div>
               <div className="m-auto text-3xl font-bold text-strong mt-4 w-fit">
                 {selectedPersona?.name || "How can I help you today?"}
               </div>

@@ -8,10 +8,12 @@ export function Logo({
   height,
   width,
   className,
+  isFullSize
 }: {
   height?: number;
   width?: number;
   className?: string;
+  isFullSize?: boolean;
 }) {
   const settings = useContext(SettingsContext);
 
@@ -24,6 +26,10 @@ export function Logo({
     !settings.enterpriseSettings.use_custom_logo
   ) {
     return (
+      isFullSize ? 
+      <div style={{width}} className={className}>
+        <img src="/logo.svg" alt="Logo" width={width} />
+      </div> :
       <div style={{ height, width }} className={className}>
         <Image src="/logo.png" alt="Logo" width={width} height={height} />
       </div>

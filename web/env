@@ -1,0 +1,16 @@
+
+NEXT_PUBLIC_ASSISTANTS_ICON_MAPPING='{
+  "-1": "/svgs/icon-chat.svg",
+  "0": "/svgs/icon-chat.svg",
+  "4": "/svgs/icon-redhat-agent.svg",
+  "2": "/svgs/icon-summary-generation.svg",
+  "3": "/svgs/icon-email.svg",
+  "8": "/svgs/icon-infographic.svg",
+  "5": "/svgs/icon-ner.svg",
+  "6": "/svgs/icon-redhat-agent.svg",
+  "1": "/svgs/icon-smart-table-analyzer.svg",
+  "12": "/svgs/icon-smart-table-analyzer.svg",
+  "15": "/svgs/icon-smart-table-analyzer.svg",
+  "17": "/svgs/icon-email.svg",
+  "22": "/svgs/icon-email.svg"
+}'

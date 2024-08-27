@@ -5,9 +5,18 @@ const env_version = process.env.DANSWER_VERSION; // version from env variable
 const version = env_version || package_version;
 
 /** @type {import('next').NextConfig} */
+
+// next.config.js
+const iconMapping = process.env.NEXT_PUBLIC_ASSISTANTS_ICON_MAPPING
+  ? JSON.parse(process.env.NEXT_PUBLIC_ASSISTANTS_ICON_MAPPING)
+  : {};
+
 const nextConfig = {
   output: "standalone",
   swcMinify: true,
+  env: {
+    NEXT_PUBLIC_ASSISTANTS_ICON_MAPPING: JSON.stringify(iconMapping),
+  },
   rewrites: async () => {
     // In production, something else (nginx in the one box setup) should take
     // care of this rewrite. TODO (chris): better support setups where
@@ -17,7 +26,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://127.0.0.1:8080/:path*", // Proxy to Backend
+        destination: `${process.env.INTERNAL_URL || 'http://127.0.0.1:8080'}/:path*`, // Proxy to Backend
       },
     ];
   },
@@ -32,19 +41,19 @@ const nextConfig = {
     return defaultRedirects.concat([
       {
         source: "/api/chat/send-message:params*",
-        destination: "http://127.0.0.1:8080/chat/send-message:params*", // Proxy to Backend
+        destination: `${process.env.INTERNAL_URL || 'http://127.0.0.1:8080'}/chat/send-message:params*`, // Proxy to Backend
         permanent: true,
       },
       {
         source: "/api/query/stream-answer-with-quote:params*",
         destination:
-          "http://127.0.0.1:8080/query/stream-answer-with-quote:params*", // Proxy to Backend
+          `${process.env.INTERNAL_URL || 'http://127.0.0.1:8080'}/query/stream-answer-with-quote:params*`, // Proxy to Backend
         permanent: true,
       },
       {
         source: "/api/query/stream-query-validation:params*",
         destination:
-          "http://127.0.0.1:8080/query/stream-query-validation:params*", // Proxy to Backend
+          `${process.env.INTERNAL_URL || 'http://127.0.0.1:8080'}/query/stream-query-validation:params*`, // Proxy to Backend
         permanent: true,
       },
     ]);
