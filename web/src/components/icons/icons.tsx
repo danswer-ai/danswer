@@ -85,6 +85,7 @@ import clickupIcon from "../../../public/Clickup.svg";
 import cohereIcon from "../../../public/Cohere.svg";
 import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
+import highSpotIcon from "../../../public/HighSpot.png";
 
 import { FaRobot } from "react-icons/fa";
 
@@ -1525,6 +1526,19 @@ export const WikipediaIcon = ({
     <Image src={wikipediaIcon} alt="Logo" width="96" height="96" />
   </div>
 );
+
+export const HighSpotIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={highSpotIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
 
 /* 
 EE Icons

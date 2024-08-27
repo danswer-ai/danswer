@@ -32,6 +32,7 @@ import {
   ZulipIcon,
   MediaWikiIcon,
   WikipediaIcon,
+  HighSpotIcon,
   S3Icon,
   OCIStorageIcon,
   GoogleStorageIcon,
@@ -271,6 +272,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Google Storage",
     category: SourceCategory.Storage,
     docs: "https://docs.danswer.dev/connectors/google_storage",
+  },
+  highspot: {
+    icon: HighSpotIcon,
+    displayName: "HighSpot",
+    category: SourceCategory.Wiki,
+    docs: "https://docs.danswer.dev/connectors/highspot",
   },
   // currently used for the Internet Search tool docs, which is why
   // a globe is used

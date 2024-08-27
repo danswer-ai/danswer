@@ -763,6 +763,25 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
       },
     ],
   },
+  highspot: {
+    description: "Configure HighSpot connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter your HighSpot subdomain:",
+        label: "HighSpot subdomain",
+        name: "highspot_subdomain",
+        optional: true,
+      },
+      {
+        type: "text",
+        query: "Enter your HighSpot API URL:",
+        label: "HighSpot API URL",
+        name: "highspot_api_url",
+        optional: true,
+      },
+    ],
+  },
 };
 
 // CONNECTORS
@@ -946,3 +965,8 @@ export interface MediaWikiConfig extends MediaWikiBaseConfig {
 }
 
 export interface WikipediaConfig extends MediaWikiBaseConfig {}
+
+export interface HighSpotConfig {
+  highspot_api_url: string;
+  highspot_subdomain?: string;
+}

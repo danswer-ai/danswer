@@ -182,6 +182,13 @@ export interface AxeroCredentialJson {
   axero_api_token: string;
 }
 
+export interface HighSpotCredentialJson {
+  highspot_api_url: string;
+  highspot_api_key: string;
+  highspot_api_secret: string;
+  highspot_subdomain: string;
+}
+
 export interface MediaWikiCredentialJson {}
 export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
 
@@ -282,6 +289,11 @@ export const credentialTemplates: Record<ValidSources, any> = {
     access_key_id: "",
     secret_access_key: "",
   } as OCICredentialJson,
+  highspot: {
+    highspot_api_key: "",
+    highspot_api_secret: "",
+  } as HighSpotCredentialJson,
+
   google_sites: null,
   file: null,
   wikipedia: null,
@@ -423,6 +435,10 @@ export const credentialDisplayNames: Record<string, string> = {
   // Axero
   base_url: "Axero Base URL",
   axero_api_token: "Axero API Token",
+
+  // HighSpot
+  highspot_api_key: "HighSpot API Key",
+  highspot_api_secret: "HighSpot API Secret",
 };
 export function getDisplayNameForCredentialKey(key: string): string {
   return credentialDisplayNames[key] || key;
