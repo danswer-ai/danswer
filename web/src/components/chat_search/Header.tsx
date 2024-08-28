@@ -86,7 +86,7 @@ export default function FunctionalHeader({
             ${sidebarToggled ? "w-[250px]" : "w-[0px]"}
             `}
         />
-        <div className="w-full  mobile:-mx-20 desktop:px-4">
+        <div className="w-full mobile:-mx-20 desktop:px-4">
           <ChatBanner />
         </div>
 
