@@ -14,8 +14,8 @@ import { GMAIL_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
-import { Card } from "@tremor/react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 type GmailCredentialJsonTypes = "authorized_user" | "service_account";
 
@@ -328,67 +328,69 @@ export const GmailOAuthSection = ({
         </p>
 
         <Card>
-          <Formik
-            initialValues={{
-              gmail_delegated_user: "",
-            }}
-            validationSchema={Yup.object().shape({
-              gmail_delegated_user: Yup.string().optional(),
-            })}
-            onSubmit={async (values, formikHelpers) => {
-              formikHelpers.setSubmitting(true);
+          <CardContent>
+            <Formik
+              initialValues={{
+                gmail_delegated_user: "",
+              }}
+              validationSchema={Yup.object().shape({
+                gmail_delegated_user: Yup.string().optional(),
+              })}
+              onSubmit={async (values, formikHelpers) => {
+                formikHelpers.setSubmitting(true);
 
-              const response = await fetch(
-                "/api/manage/admin/connector/gmail/service-account-credential",
-                {
-                  method: "PUT",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    gmail_delegated_user: values.gmail_delegated_user,
-                  }),
+                const response = await fetch(
+                  "/api/manage/admin/connector/gmail/service-account-credential",
+                  {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      gmail_delegated_user: values.gmail_delegated_user,
+                    }),
+                  }
+                );
+
+                if (response.ok) {
+                  setPopup({
+                    message: "Successfully created service account credential",
+                    type: "success",
+                  });
+                } else {
+                  const errorMsg = await response.text();
+                  setPopup({
+                    message: `Failed to create service account credential - ${errorMsg}`,
+                    type: "error",
+                  });
                 }
-              );
-
-              if (response.ok) {
-                setPopup({
-                  message: "Successfully created service account credential",
-                  type: "success",
-                });
-              } else {
-                const errorMsg = await response.text();
-                setPopup({
-                  message: `Failed to create service account credential - ${errorMsg}`,
-                  type: "error",
-                });
-              }
-              refreshCredentials();
-            }}
-          >
-            {({ isSubmitting }) => (
-              <Form>
-                <TextFormField
-                  name="gmail_delegated_user"
-                  label="[Optional] User email to impersonate:"
-                  subtext="If left blank, enMedD CHP will use the service account itself."
-                />
-                <div className="flex">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className={
-                      "bg-slate-500 hover:bg-slate-700 text-inverted " +
-                      "font-bold py-2 px-4 rounded focus:outline-none " +
-                      "focus:shadow-outline w-full max-w-sm mx-auto"
-                    }
-                  >
-                    Submit
-                  </button>
-                </div>
-              </Form>
-            )}
-          </Formik>
+                refreshCredentials();
+              }}
+            >
+              {({ isSubmitting }) => (
+                <Form>
+                  <TextFormField
+                    name="gmail_delegated_user"
+                    label="[Optional] User email to impersonate:"
+                    subtext="If left blank, enMedD CHP will use the service account itself."
+                  />
+                  <div className="flex">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={
+                        "bg-slate-500 hover:bg-slate-700 text-inverted " +
+                        "font-bold py-2 px-4 rounded focus:outline-none " +
+                        "focus:shadow-outline w-full max-w-sm mx-auto"
+                      }
+                    >
+                      Submit
+                    </button>
+                  </div>
+                </Form>
+              )}
+            </Formik>
+          </CardContent>
         </Card>
       </div>
     );

@@ -1,12 +1,13 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { AssistantEditor } from "../AssistantEditor";
 import { BackButton } from "@/components/BackButton";
-import { Card, Title } from "@tremor/react";
+import { Title } from "@tremor/react";
 import { DeletePersonaButton } from "./DeletePersonaButton";
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { SuccessfulPersonaUpdateRedirectType } from "../enums";
 import { RobotIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const [values, error] = await fetchAssistantEditorInfoSS(params.id);
@@ -20,11 +21,13 @@ export default async function Page({ params }: { params: { id: string } }) {
     body = (
       <>
         <Card>
-          <AssistantEditor
-            {...values}
-            defaultPublic={true}
-            redirectType={SuccessfulPersonaUpdateRedirectType.ADMIN}
-          />
+          <CardContent>
+            <AssistantEditor
+              {...values}
+              defaultPublic={true}
+              redirectType={SuccessfulPersonaUpdateRedirectType.ADMIN}
+            />
+          </CardContent>
         </Card>
 
         <div className="mt-12">

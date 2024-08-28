@@ -4,8 +4,8 @@ import { Bubble } from "@/components/Bubble";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { getFinalLLM } from "@/lib/llm/utils";
 import React from "react";
-import { FiBookmark, FiImage, FiSearch } from "react-icons/fi";
 import { Card, CardContent } from "@/components/ui/card";
+import { Bookmark } from "lucide-react";
 
 interface AssistantsTabProps {
   selectedAssistant: Persona;
@@ -56,7 +56,7 @@ export function AssistantsTab({
                       {assistant.document_sets.map((set) => (
                         <Bubble key={set.id} isSelected={false}>
                           <div className="flex flex-row gap-1">
-                            <FiBookmark className="mr-1 my-auto" />
+                            <Bookmark size={16} className="mr-1 my-auto" />
                             {set.name}
                           </div>
                         </Bubble>

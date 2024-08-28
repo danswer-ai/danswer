@@ -4,7 +4,6 @@ import { SourceMetadata } from "@/lib/search/interfaces";
 import { InfoIcon, defaultTailwindCSS } from "../../icons/icons";
 import { HoverPopup } from "../../HoverPopup";
 import { FiBook, FiBookmark, FiFilter, FiMap, FiX } from "react-icons/fi";
-import { DateRangeSelector } from "../DateRangeSelector";
 import { DateRangePickerValue } from "@tremor/react";
 import { FilterDropdown } from "./FilterDropdown";
 import { listSourceMetadata } from "@/lib/sources";
@@ -22,6 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Brain } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { SortSearch } from "../SortSearch";
+import { DateRangeSearchSelector } from "../DateRangeSearchSelector";
 
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="flex p-2 text-sm font-bold">{children}</div>
@@ -83,7 +83,7 @@ export function SourceSelector({
       <div className="lg:hidden">
         <SortSearch isMobile />
 
-        <DateRangeSelector
+        <DateRangeSearchSelector
           isMobile
           value={timeRange}
           onValueChange={setTimeRange}
@@ -230,7 +230,10 @@ export function HorizontalFilters({
     <div>
       <div className="flex flex-col gap-3 md:flex-row">
         <div className="w-64">
-          <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
+          <DateRangeSearchSelector
+            value={timeRange}
+            onValueChange={setTimeRange}
+          />
         </div>
 
         <Select

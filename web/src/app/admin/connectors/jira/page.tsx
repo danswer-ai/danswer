@@ -24,7 +24,8 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Divider, Text, Title, Button } from "@tremor/react";
+import { Divider, Text, Title, Button } from "@tremor/react";
+import { Card, CardContent } from "@/components/ui/card";
 
 // Copied from the `extract_jira_project` function
 const extractJiraProject = (url: string): string | null => {
@@ -157,62 +158,66 @@ const Main = () => {
           </Text>
           <Title className="mt-6 mb-2 ml-auto mr-auto">Cloud</Title>
           <Card className="mt-4">
-            <CredentialForm<JiraCredentialJson>
-              formBody={
-                <>
-                  <TextFormField name="jira_user_email" label="Username:" />
-                  <TextFormField
-                    name="jira_api_token"
-                    label="Access Token:"
-                    type="password"
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                jira_user_email: Yup.string().required(
-                  "Please enter your username on Jira"
-                ),
-                jira_api_token: Yup.string().required(
-                  "Please enter your Jira access token"
-                ),
-              })}
-              initialValues={{
-                jira_user_email: "",
-                jira_api_token: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
+            <CardContent>
+              <CredentialForm<JiraCredentialJson>
+                formBody={
+                  <>
+                    <TextFormField name="jira_user_email" label="Username:" />
+                    <TextFormField
+                      name="jira_api_token"
+                      label="Access Token:"
+                      type="password"
+                    />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  jira_user_email: Yup.string().required(
+                    "Please enter your username on Jira"
+                  ),
+                  jira_api_token: Yup.string().required(
+                    "Please enter your Jira access token"
+                  ),
+                })}
+                initialValues={{
+                  jira_user_email: "",
+                  jira_api_token: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
           <Title className="mt-6 mb-2 ml-auto mr-auto">Server</Title>
           <Card className="mt-4">
-            <CredentialForm<JiraServerCredentialJson>
-              formBody={
-                <>
-                  <TextFormField
-                    name="jira_api_token"
-                    label="Personal Access Token:"
-                    type="password"
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                jira_api_token: Yup.string().required(
-                  "Please enter your Jira personal access token"
-                ),
-              })}
-              initialValues={{
-                jira_api_token: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
+            <CardContent>
+              <CredentialForm<JiraServerCredentialJson>
+                formBody={
+                  <>
+                    <TextFormField
+                      name="jira_api_token"
+                      label="Personal Access Token:"
+                      type="password"
+                    />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  jira_api_token: Yup.string().required(
+                    "Please enter your Jira personal access token"
+                  ),
+                })}
+                initialValues={{
+                  jira_api_token: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -299,52 +304,54 @@ const Main = () => {
             </>
           )}
           <Card className="mt-4">
-            <h2 className="mb-3 font-bold">Add a New Project</h2>
-            <ConnectorForm<JiraConfig>
-              nameBuilder={(values) =>
-                `JiraConnector-${values.jira_project_url}`
-              }
-              ccPairNameBuilder={(values) =>
-                extractJiraProject(values.jira_project_url)
-              }
-              credentialId={jiraCredential.id}
-              source="jira"
-              inputType="poll"
-              formBody={
-                <>
-                  <TextFormField
-                    name="jira_project_url"
-                    label="Jira Project URL:"
-                  />
-                </>
-              }
-              formBodyBuilder={(values) => {
-                return (
+            <CardContent>
+              <h2 className="mb-3 font-bold">Add a New Project</h2>
+              <ConnectorForm<JiraConfig>
+                nameBuilder={(values) =>
+                  `JiraConnector-${values.jira_project_url}`
+                }
+                ccPairNameBuilder={(values) =>
+                  extractJiraProject(values.jira_project_url)
+                }
+                credentialId={jiraCredential.id}
+                source="jira"
+                inputType="poll"
+                formBody={
                   <>
-                    <Divider />
-                    {TextArrayFieldBuilder({
-                      name: "comment_email_blacklist",
-                      label: "Disable comments from users:",
-                      subtext: `
-                      This is generally useful to ignore certain bots. Add user emails which comments should NOT be indexed.`,
-                    })(values)}
+                    <TextFormField
+                      name="jira_project_url"
+                      label="Jira Project URL:"
+                    />
                   </>
-                );
-              }}
-              validationSchema={Yup.object().shape({
-                jira_project_url: Yup.string().required(
-                  "Please enter any link to your jira project"
-                ),
-                comment_email_blacklist: Yup.array()
-                  .of(Yup.string().required("Emails names must be strings"))
-                  .required(),
-              })}
-              initialValues={{
-                jira_project_url: "",
-                comment_email_blacklist: [],
-              }}
-              refreshFreq={10 * 60} // 10 minutes
-            />
+                }
+                formBodyBuilder={(values) => {
+                  return (
+                    <>
+                      <Divider />
+                      {TextArrayFieldBuilder({
+                        name: "comment_email_blacklist",
+                        label: "Disable comments from users:",
+                        subtext: `
+                      This is generally useful to ignore certain bots. Add user emails which comments should NOT be indexed.`,
+                      })(values)}
+                    </>
+                  );
+                }}
+                validationSchema={Yup.object().shape({
+                  jira_project_url: Yup.string().required(
+                    "Please enter any link to your jira project"
+                  ),
+                  comment_email_blacklist: Yup.array()
+                    .of(Yup.string().required("Emails names must be strings"))
+                    .required(),
+                })}
+                initialValues={{
+                  jira_project_url: "",
+                  comment_email_blacklist: [],
+                }}
+                refreshFreq={10 * 60} // 10 minutes
+              />
+            </CardContent>
           </Card>
         </>
       ) : (

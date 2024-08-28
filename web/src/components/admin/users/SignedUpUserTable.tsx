@@ -5,14 +5,6 @@ import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import useSWRMutation from "swr/mutation";
-/* import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-} from "@tremor/react"; */
 import { Button } from "@/components/ui/button";
 import {
   Table,

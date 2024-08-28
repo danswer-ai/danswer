@@ -80,8 +80,6 @@ import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { LuChevronsLeftRight } from "react-icons/lu";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;

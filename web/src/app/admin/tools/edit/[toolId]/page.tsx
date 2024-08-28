@@ -1,11 +1,12 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Card, Text, Title } from "@tremor/react";
+import { Text, Title } from "@tremor/react";
 import { ToolEditor } from "@/app/admin/tools/ToolEditor";
 import { fetchToolByIdSS } from "@/lib/tools/fetchTools";
 import { DeleteToolButton } from "./DeleteToolButton";
 import { FiTool } from "react-icons/fi";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { BackButton } from "@/components/BackButton";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function Page({ params }: { params: { toolId: string } }) {
   const tool = await fetchToolByIdSS(params.toolId);
@@ -26,7 +27,9 @@ export default async function Page({ params }: { params: { toolId: string } }) {
         <div>
           <div>
             <Card>
-              <ToolEditor tool={tool} />
+              <CardContent>
+                <ToolEditor tool={tool} />
+              </CardContent>
             </Card>
 
             <Title className="mt-12">Delete Tool</Title>

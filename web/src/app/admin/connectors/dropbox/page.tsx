@@ -20,9 +20,10 @@ import {
   DropboxConfig,
   DropboxCredentialJson,
 } from "@/lib/types";
-import { Card, Text, Title, Button } from "@tremor/react";
+import { Text, Title, Button } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -127,31 +128,33 @@ const Main = () => {
             on the enMedD CHP docs to obtain a Dropbox token.
           </Text>
           <Card className="mt-4 mb-4">
-            <CredentialForm<DropboxCredentialJson>
-              formBody={
-                <>
-                  <TextFormField
-                    name="dropbox_access_token"
-                    label="Dropbox API Token:"
-                    type="password"
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                dropbox_access_token: Yup.string().required(
-                  "Please enter your Dropbox API token"
-                ),
-              })}
-              initialValues={{
-                dropbox_access_token: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
-                  mutate("/api/manage/admin/connector/indexing-status");
+            <CardContent>
+              <CredentialForm<DropboxCredentialJson>
+                formBody={
+                  <>
+                    <TextFormField
+                      name="dropbox_access_token"
+                      label="Dropbox API Token:"
+                      type="password"
+                    />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  dropbox_access_token: Yup.string().required(
+                    "Please enter your Dropbox API token"
+                  ),
+                })}
+                initialValues={{
+                  dropbox_access_token: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                    mutate("/api/manage/admin/connector/indexing-status");
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -187,22 +190,24 @@ const Main = () => {
       {dropboxCredential && dropboxConnectorIndexingStatuses.length === 0 && (
         <>
           <Card className="mt-4">
-            <h2 className="mb-3 font-bold">Create Connection</h2>
-            <p className="mb-4 text-sm">
-              Press connect below to start the connection to your Dropbox
-              instance.
-            </p>
-            <ConnectorForm<DropboxConfig>
-              nameBuilder={(values) => `Dropbox`}
-              ccPairNameBuilder={(values) => `Dropbox`}
-              source="dropbox"
-              inputType="poll"
-              formBody={<></>}
-              validationSchema={Yup.object().shape({})}
-              initialValues={{}}
-              // refreshFreq={10 * 60} // disabled re-indexing
-              credentialId={dropboxCredential.id}
-            />
+            <CardContent>
+              <h2 className="mb-3 font-bold">Create Connection</h2>
+              <p className="mb-4 text-sm">
+                Press connect below to start the connection to your Dropbox
+                instance.
+              </p>
+              <ConnectorForm<DropboxConfig>
+                nameBuilder={(values) => `Dropbox`}
+                ccPairNameBuilder={(values) => `Dropbox`}
+                source="dropbox"
+                inputType="poll"
+                formBody={<></>}
+                validationSchema={Yup.object().shape({})}
+                initialValues={{}}
+                // refreshFreq={10 * 60} // disabled re-indexing
+                credentialId={dropboxCredential.id}
+              />
+            </CardContent>
           </Card>
         </>
       )}

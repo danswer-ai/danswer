@@ -1,12 +1,7 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { getDatesList, useQueryAnalytics } from "../lib";
-import {
-  AreaChart,
-  Card,
-  Title,
-  Text,
-  DateRangePickerValue,
-} from "@tremor/react";
+import { AreaChart, Title, Text, DateRangePickerValue } from "@tremor/react";
+import { Card, CardContent } from "@/components/ui/card";
 
 export function FeedbackChart({
   timeRange,
@@ -67,9 +62,11 @@ export function FeedbackChart({
 
   return (
     <Card className="mt-8">
-      <Title>Feedback</Title>
-      <Text>Thumbs Up / Thumbs Down over time</Text>
-      {chart}
+      <CardContent>
+        <Title>Feedback</Title>
+        <Text>Thumbs Up / Thumbs Down over time</Text>
+        {chart}
+      </CardContent>
     </Card>
   );
 }

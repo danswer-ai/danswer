@@ -3,7 +3,7 @@
 import { ToolEditor } from "@/app/admin/tools/ToolEditor";
 import { BackButton } from "@/components/BackButton";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card } from "@tremor/react";
+import { Card, CardContent } from "@/components/ui/card";
 import { FiTool } from "react-icons/fi";
 
 export default function NewToolPage() {
@@ -17,7 +17,9 @@ export default function NewToolPage() {
       />
 
       <Card>
-        <ToolEditor />
+        <CardContent>
+          <ToolEditor />
+        </CardContent>
       </Card>
     </div>
   );

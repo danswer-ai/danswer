@@ -1,6 +1,3 @@
-"use client";
-
-import * as React from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, CircleX } from "lucide-react";
 import { DateRange } from "react-day-picker";
@@ -21,23 +18,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FilterManager } from "@/lib/hooks";
+import { HTMLAttributes, useState } from "react";
 
 export function FilterDatePicker({
   filterManager,
-}: React.HTMLAttributes<HTMLDivElement> & {
+}: HTMLAttributes<HTMLDivElement> & {
   filterManager: FilterManager;
 }) {
   const { timeRange, setTimeRange } = filterManager;
-  const [calendarValue, setCalendarValue] = React.useState<
-    DateRange | undefined
-  >(
+  const [calendarValue, setCalendarValue] = useState<DateRange | undefined>(
     timeRange?.from && timeRange?.to
       ? { from: timeRange.from, to: timeRange.to }
       : undefined
   );
-  const [selectValue, setSelectValue] = React.useState<string>(
-    timeRange?.selectValue || ""
-  );
+  const [selectValue, setSelectValue] = useState<string>("");
 
   const handleSelectChange = (value: string) => {
     const now = new Date();
@@ -60,18 +54,15 @@ export function FilterDatePicker({
     const newDate = { from: startDate, to: now };
     setSelectValue(value);
     setCalendarValue(newDate);
-    setTimeRange({ from: startDate, to: now, selectValue: value });
+    setTimeRange(newDate); // Set timeRange without selectValue
   };
 
   const handleDateSelect = (newDate: DateRange | undefined) => {
     setCalendarValue(newDate);
-    setTimeRange(
-      newDate ? { from: newDate.from, to: newDate.to, selectValue: "" } : null
-    );
+    setTimeRange(newDate ? { from: newDate.from, to: newDate.to } : null); // Set timeRange without selectValue
 
-    // Reset selectValue when calendarValue changes
     if (newDate) {
-      setSelectValue("");
+      setSelectValue(""); // Reset selectValue when calendarValue changes
     }
   };
 
@@ -131,10 +122,7 @@ export function FilterDatePicker({
         </PopoverContent>
       </Popover>
 
-      <Select
-        value={selectValue ? selectValue : ""}
-        onValueChange={handleSelectChange}
-      >
+      <Select value={selectValue} onValueChange={handleSelectChange}>
         <SelectTrigger className="md:w-[150px] rounded-l-none !rounded-r-regular">
           <SelectValue placeholder="Select Range" />
         </SelectTrigger>

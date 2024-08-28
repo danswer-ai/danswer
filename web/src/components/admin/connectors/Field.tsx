@@ -16,6 +16,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label as ShadcnLabel } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function SectionHeader({
   children,
@@ -284,14 +291,31 @@ export function SelectorFormField({
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <div className="mt-2">
-        <DefaultDropdown
-          options={options}
-          selected={field.value}
-          onSelect={onSelect || ((selected) => setFieldValue(name, selected))}
-          includeDefault={includeDefault}
-          side={side}
-          maxHeight={maxHeight}
-        />
+        <Select
+          value={field.value || ""}
+          onValueChange={(selected) => {
+            if (onSelect) {
+              onSelect(selected);
+            } else {
+              setFieldValue(name, selected);
+            }
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select an option" />
+          </SelectTrigger>
+          <SelectContent>
+            {includeDefault && <SelectItem value="default">Default</SelectItem>}
+            {options.map((option) => (
+              <SelectItem
+                key={String(option.value)}
+                value={String(option.value)}
+              >
+                {option.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <ErrorMessage

@@ -38,6 +38,13 @@ import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@/components/ui/button";
 import { X, Plus } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -666,14 +673,8 @@ export function AssistantEditor({
                           <div className="w-96">
                             <SubLabel>LLM Provider</SubLabel>
 
-                            <SelectorFormField
-                              name="llm_model_provider_override"
-                              options={llmProviders.map((llmProvider) => ({
-                                name: llmProvider.name,
-                                value: llmProvider.name,
-                              }))}
-                              includeDefault={true}
-                              onSelect={(selected) => {
+                            <Select
+                              onValueChange={(selected) => {
                                 if (
                                   selected !==
                                   values.llm_model_provider_override
@@ -688,7 +689,25 @@ export function AssistantEditor({
                                   selected
                                 );
                               }}
-                            />
+                              value={
+                                values.llm_model_provider_override || "default"
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select LLM Provider" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="default">Default</SelectItem>
+                                {llmProviders.map((llmProvider) => (
+                                  <SelectItem
+                                    key={llmProvider.name}
+                                    value={llmProvider.name}
+                                  >
+                                    {llmProvider.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
 
                           {values.llm_model_provider_override && (
@@ -816,7 +835,7 @@ export function AssistantEditor({
                             className="mt-3"
                             type="button"
                           >
-                            <Plus className="mr-1.5" /> Add New
+                            <Plus size={16} /> Add New
                           </Button>
                         </div>
                       )}

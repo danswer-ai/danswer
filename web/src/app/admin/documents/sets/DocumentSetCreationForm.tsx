@@ -14,6 +14,7 @@ import { Divider, Text } from "@tremor/react";
 import { FiUsers } from "react-icons/fi";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -132,22 +133,8 @@ export const DocumentSetCreationForm = ({
                     const ind = values.cc_pair_ids.indexOf(ccPair.cc_pair_id);
                     let isSelected = ind !== -1;
                     return (
-                      <div
+                      <Badge
                         key={`${ccPair.connector.id}-${ccPair.credential.id}`}
-                        className={
-                          `
-                              px-3 
-                              py-1
-                              rounded-regular 
-                              border
-                              border-border 
-                              w-fit 
-                              flex 
-                              cursor-pointer ` +
-                          (isSelected
-                            ? " bg-background-strong"
-                            : " hover:bg-hover")
-                        }
                         onClick={() => {
                           if (isSelected) {
                             arrayHelpers.remove(ind);
@@ -155,6 +142,10 @@ export const DocumentSetCreationForm = ({
                             arrayHelpers.push(ccPair.cc_pair_id);
                           }
                         }}
+                        variant={isSelected ? "default" : "outline"}
+                        className={`cursor-pointer px-3 py-1.5 text-sm ${
+                          isSelected ? "text-white" : ""
+                        }`}
                       >
                         <div className="my-auto">
                           <ConnectorTitle
@@ -165,7 +156,7 @@ export const DocumentSetCreationForm = ({
                             showMetadata={false}
                           />
                         </div>
-                      </div>
+                      </Badge>
                     );
                   })}
                 </div>

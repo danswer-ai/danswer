@@ -22,8 +22,9 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Text, Title, Button } from "@tremor/react";
+import { Text, Title, Button } from "@tremor/react";
 import { ErrorCallout } from "@/components/ErrorCallout";
+import { Card, CardContent } from "@/components/ui/card";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -126,46 +127,48 @@ const MainSection = () => {
             to create an Azure AD application and obtain these values.
           </Text>
           <Card className="mt-2">
-            <CredentialForm<TeamsCredentialJson>
-              formBody={
-                <>
-                  <TextFormField
-                    name="teams_client_id"
-                    label="Application (client) ID:"
-                  />
-                  <TextFormField
-                    name="teams_directory_id"
-                    label="Directory (tenant) ID:"
-                  />
-                  <TextFormField
-                    name="teams_client_secret"
-                    label="Client Secret:"
-                    type="password"
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                teams_client_id: Yup.string().required(
-                  "Please enter your Application (client) ID"
-                ),
-                teams_directory_id: Yup.string().required(
-                  "Please enter your Directory (tenant) ID"
-                ),
-                teams_client_secret: Yup.string().required(
-                  "Please enter your Client Secret"
-                ),
-              })}
-              initialValues={{
-                teams_client_id: "",
-                teams_directory_id: "",
-                teams_client_secret: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
+            <CardContent>
+              <CredentialForm<TeamsCredentialJson>
+                formBody={
+                  <>
+                    <TextFormField
+                      name="teams_client_id"
+                      label="Application (client) ID:"
+                    />
+                    <TextFormField
+                      name="teams_directory_id"
+                      label="Directory (tenant) ID:"
+                    />
+                    <TextFormField
+                      name="teams_client_secret"
+                      label="Client Secret:"
+                      type="password"
+                    />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  teams_client_id: Yup.string().required(
+                    "Please enter your Application (client) ID"
+                  ),
+                  teams_directory_id: Yup.string().required(
+                    "Please enter your Directory (tenant) ID"
+                  ),
+                  teams_client_secret: Yup.string().required(
+                    "Please enter your Client Secret"
+                  ),
+                })}
+                initialValues={{
+                  teams_client_id: "",
+                  teams_directory_id: "",
+                  teams_client_secret: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -215,40 +218,42 @@ const MainSection = () => {
 
       {teamsCredential ? (
         <Card className="mt-4">
-          <ConnectorForm<TeamsConfig>
-            nameBuilder={(values) =>
-              values.teams && values.teams.length > 0
-                ? `Teams-${values.teams.join("-")}`
-                : "Teams"
-            }
-            ccPairNameBuilder={(values) =>
-              values.teams && values.teams.length > 0
-                ? `Teams-${values.teams.join("-")}`
-                : "Teams"
-            }
-            source="teams"
-            inputType="poll"
-            // formBody={<></>}
-            formBodyBuilder={TextArrayFieldBuilder({
-              name: "teams",
-              label: "Teams:",
-              subtext:
-                "Specify 0 or more Teams to index.  " +
-                "For example, specifying the Team 'Support' for the 'chp-ai' Org will cause  " +
-                "us to only index messages sent in channels belonging to the 'Support' Team. " +
-                "If no Teams are specified, all Teams in your organization will be indexed.",
-            })}
-            validationSchema={Yup.object().shape({
-              teams: Yup.array()
-                .of(Yup.string().required("Team names must be strings"))
-                .required(),
-            })}
-            initialValues={{
-              teams: [],
-            }}
-            credentialId={teamsCredential.id}
-            refreshFreq={10 * 60} // 10 minutes
-          />
+          <CardContent>
+            <ConnectorForm<TeamsConfig>
+              nameBuilder={(values) =>
+                values.teams && values.teams.length > 0
+                  ? `Teams-${values.teams.join("-")}`
+                  : "Teams"
+              }
+              ccPairNameBuilder={(values) =>
+                values.teams && values.teams.length > 0
+                  ? `Teams-${values.teams.join("-")}`
+                  : "Teams"
+              }
+              source="teams"
+              inputType="poll"
+              // formBody={<></>}
+              formBodyBuilder={TextArrayFieldBuilder({
+                name: "teams",
+                label: "Teams:",
+                subtext:
+                  "Specify 0 or more Teams to index.  " +
+                  "For example, specifying the Team 'Support' for the 'chp-ai' Org will cause  " +
+                  "us to only index messages sent in channels belonging to the 'Support' Team. " +
+                  "If no Teams are specified, all Teams in your organization will be indexed.",
+              })}
+              validationSchema={Yup.object().shape({
+                teams: Yup.array()
+                  .of(Yup.string().required("Team names must be strings"))
+                  .required(),
+              })}
+              initialValues={{
+                teams: [],
+              }}
+              credentialId={teamsCredential.id}
+              refreshFreq={10 * 60} // 10 minutes
+            />
+          </CardContent>
         </Card>
       ) : (
         <Text>

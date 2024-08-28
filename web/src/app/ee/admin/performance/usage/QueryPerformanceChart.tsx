@@ -1,14 +1,9 @@
 "use client";
 
-import {
-  Card,
-  AreaChart,
-  Title,
-  Text,
-  DateRangePickerValue,
-} from "@tremor/react";
+import { AreaChart, Title, Text, DateRangePickerValue } from "@tremor/react";
 import { getDatesList, useQueryAnalytics, useUserAnalytics } from "../lib";
 import { ThreeDotsLoader } from "@/components/Loading";
+import { Card, CardContent } from "@/components/ui/card";
 
 export function QueryPerformanceChart({
   timeRange,
@@ -86,9 +81,11 @@ export function QueryPerformanceChart({
 
   return (
     <Card className="mt-8">
-      <Title>Usage</Title>
-      <Text>Usage over time</Text>
-      {chart}
+      <CardContent>
+        <Title>Usage</Title>
+        <Text>Usage over time</Text>
+        {chart}
+      </CardContent>
     </Card>
   );
 }

@@ -20,14 +20,14 @@ export function ModelOption({
   onSelect?: (model: EmbeddingModelDescriptor) => void;
 }) {
   return (
-    <Card className="flex flex-col justify-between">
-      <CardHeader className="pb-4">
+    <Card className="flex flex-col">
+      <CardHeader className="pb-0">
         <CardTitle className="flex">
           {model.isDefault && <FiStar className="my-auto mr-1 text-accent" />}
           {model.model_name}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pb-4">
+      <CardContent>
         <div>
           <div className="mx-1 mt-1 text-sm">
             {model.description
@@ -47,7 +47,7 @@ export function ModelOption({
       </CardContent>
 
       {onSelect && (
-        <CardFooter>
+        <CardFooter className="mt-auto">
           <Button onClick={() => onSelect(model)}>Select Model</Button>
         </CardFooter>
       )}

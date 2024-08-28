@@ -1,10 +1,10 @@
-import { TableCell, TableRow } from "@tremor/react";
+import { TableCell, TableRow } from "../ui/table";
 import { DragHandle } from "./DragHandle";
 import { Row } from "./interfaces";
 
 export function StaticRow({ row }: { row: Row }) {
   return (
-    <TableRow className="bg-background border-b border-border">
+    <TableRow>
       <TableCell>
         <DragHandle isDragging />
       </TableCell>

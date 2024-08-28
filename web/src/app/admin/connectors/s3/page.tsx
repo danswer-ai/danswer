@@ -19,10 +19,11 @@ import {
   S3Config,
   S3CredentialJson,
 } from "@/lib/types";
-import { Card, Text, Title, Button } from "@tremor/react";
+import { Text, Title, Button } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const S3Main = () => {
   const { popup, setPopup } = usePopup();
@@ -131,33 +132,35 @@ const S3Main = () => {
             </ul>
           </Text>
           <Card className="mt-4">
-            <CredentialForm<S3CredentialJson>
-              formBody={
-                <>
-                  <TextFormField
-                    name="aws_access_key_id"
-                    label="AWS Access Key ID:"
-                  />
-                  <TextFormField
-                    name="aws_secret_access_key"
-                    label="AWS Secret Access Key:"
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                aws_access_key_id: Yup.string().default(""),
-                aws_secret_access_key: Yup.string().default(""),
-              })}
-              initialValues={{
-                aws_access_key_id: "",
-                aws_secret_access_key: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
+            <CardContent>
+              <CredentialForm<S3CredentialJson>
+                formBody={
+                  <>
+                    <TextFormField
+                      name="aws_access_key_id"
+                      label="AWS Access Key ID:"
+                    />
+                    <TextFormField
+                      name="aws_secret_access_key"
+                      label="AWS Secret Access Key:"
+                    />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  aws_access_key_id: Yup.string().default(""),
+                  aws_secret_access_key: Yup.string().default(""),
+                })}
+                initialValues={{
+                  aws_access_key_id: "",
+                  aws_secret_access_key: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -199,43 +202,45 @@ const S3Main = () => {
       {s3Credential && (
         <>
           <Card className="mt-4">
-            <h2 className="mb-3 font-bold">Create Connection</h2>
-            <Text className="mb-4">
-              Press connect below to start the connection to your S3 bucket.
-            </Text>
-            <ConnectorForm<S3Config>
-              nameBuilder={(values) => `S3Connector-${values.bucket_name}`}
-              ccPairNameBuilder={(values) =>
-                `S3Connector-${values.bucket_name}`
-              }
-              source="s3"
-              inputType="poll"
-              formBodyBuilder={(values) => (
-                <div>
-                  <TextFormField name="bucket_name" label="Bucket Name:" />
-                  <TextFormField
-                    name="prefix"
-                    label="Path Prefix (optional):"
-                  />
-                </div>
-              )}
-              validationSchema={Yup.object().shape({
-                bucket_type: Yup.string()
-                  .oneOf(["s3"])
-                  .required("Bucket type must be s3"),
-                bucket_name: Yup.string().required(
-                  "Please enter the name of the s3 bucket to index, e.g. my-test-bucket"
-                ),
-                prefix: Yup.string().default(""),
-              })}
-              initialValues={{
-                bucket_type: "s3",
-                bucket_name: "",
-                prefix: "",
-              }}
-              refreshFreq={60 * 60 * 24} // 1 day
-              credentialId={s3Credential.id}
-            />
+            <CardContent>
+              <h2 className="mb-3 font-bold">Create Connection</h2>
+              <Text className="mb-4">
+                Press connect below to start the connection to your S3 bucket.
+              </Text>
+              <ConnectorForm<S3Config>
+                nameBuilder={(values) => `S3Connector-${values.bucket_name}`}
+                ccPairNameBuilder={(values) =>
+                  `S3Connector-${values.bucket_name}`
+                }
+                source="s3"
+                inputType="poll"
+                formBodyBuilder={(values) => (
+                  <div>
+                    <TextFormField name="bucket_name" label="Bucket Name:" />
+                    <TextFormField
+                      name="prefix"
+                      label="Path Prefix (optional):"
+                    />
+                  </div>
+                )}
+                validationSchema={Yup.object().shape({
+                  bucket_type: Yup.string()
+                    .oneOf(["s3"])
+                    .required("Bucket type must be s3"),
+                  bucket_name: Yup.string().required(
+                    "Please enter the name of the s3 bucket to index, e.g. my-test-bucket"
+                  ),
+                  prefix: Yup.string().default(""),
+                })}
+                initialValues={{
+                  bucket_type: "s3",
+                  bucket_name: "",
+                  prefix: "",
+                }}
+                refreshFreq={60 * 60 * 24} // 1 day
+                credentialId={s3Credential.id}
+              />
+            </CardContent>
           </Card>
         </>
       )}

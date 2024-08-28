@@ -7,7 +7,6 @@ import { Text } from "@tremor/react";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { destructureValue, getFinalLLM, structureValue } from "@/lib/llm/utils";
 import { updateModelOverrideForChatSession } from "../../lib";
-import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import {
   Select,
