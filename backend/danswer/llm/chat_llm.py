@@ -34,6 +34,7 @@ from danswer.llm.interfaces import LLMConfig
 from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.llm.utils import get_llm_max_output_tokens
 from danswer.llm.utils import get_max_input_tokens
+from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.utils.logger import setup_logger
 
 
@@ -243,8 +244,12 @@ class DefaultMultiLLM(LLM):
             model_name=self.config.model_name, model_provider=self.config.model_provider
         )
 
+        llm_tokenizer = get_tokenizer(
+            model_name=self.config.model_name,
+            provider_type=self.config.model_provider,
+        )
         # Calculate tokens in the input prompt
-        input_tokens = sum(len(self._tokenizer.encode(str(m))) for m in prompt)
+        input_tokens = sum(len(llm_tokenizer.encode(str(m))) for m in prompt)
 
         # Calculate available tokens for output
         available_output_tokens = max_context_tokens - input_tokens
