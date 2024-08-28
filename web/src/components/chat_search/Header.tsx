@@ -7,7 +7,6 @@ import { NewChatIcon } from "../icons/icons";
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 import { ChatSession } from "@/app/chat/interfaces";
 import Link from "next/link";
-import { SettingsContext } from "../settings/SettingsProvider";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
@@ -65,7 +64,7 @@ export default function FunctionalHeader({
     router.push(newChatUrl);
   };
   return (
-    <div className="left-0 sticky bg-transparent top-0 z-20 w-full relative flex">
+    <div className="left-0 sticky bg-black top-0 z-20 w-full relative flex">
       <div className="mt-2 mx-2.5 cursor-pointer text-text-700 relative flex w-full">
         <LogoType
           assistantId={currentChatSession?.persona_id}
@@ -87,7 +86,7 @@ export default function FunctionalHeader({
             ${sidebarToggled ? "w-[250px]" : "w-[0px]"}
             `}
         />
-        <div className="w-full mobile:-mx-20 desktop:px-4">
+        <div className="w-full  mobile:-mx-20 desktop:px-4">
           <ChatBanner />
         </div>
 
@@ -129,9 +128,9 @@ export default function FunctionalHeader({
         </div>
       </div>
 
-      {/* {page != "assistants" && (
-        <div className="h-24 left-0 absolute top-0 z-10 w-full bg-gradient-to-b via-50% z-[-1] from-background via-background to-background/10 flex" />
-      )} */}
+      {page != "assistants" && (
+        <div className="h-20 left-0 absolute top-0 z-10 w-full bg-gradient-to-b via-50% z-[-1] from-background via-background to-background/10 flex" />
+      )}
     </div>
   );
 }

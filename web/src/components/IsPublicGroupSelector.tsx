@@ -127,15 +127,15 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                         <div
                           key={userGroup.id}
                           className={`
-                        px-3 
-                        py-1
-                        rounded-lg 
-                        border
-                        border-border 
-                        w-fit 
-                        flex 
-                        cursor-pointer 
-                        ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
+                          px-3 
+                          py-1
+                          rounded-lg 
+                          border
+                          border-border 
+                          w-fit 
+                          flex 
+                          cursor-pointer 
+                          ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
                       `}
                           onClick={() => {
                             if (isSelected) {
