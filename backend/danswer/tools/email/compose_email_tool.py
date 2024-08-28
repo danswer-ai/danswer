@@ -58,10 +58,10 @@ class ComposeEmailTool(Tool):
     def __init__(
             self,
             user: User | None,
-            persona=None,
-            prompt_config=None,
-            llm_config=None,
-            llm=None
+            persona: Persona,
+            prompt_config: PromptConfig,
+            llm_config: LLMConfig,
+            llm: LLM | None
     ) -> None:
         self.history = None
         self.user = user
