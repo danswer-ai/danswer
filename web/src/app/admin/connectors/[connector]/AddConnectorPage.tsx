@@ -468,7 +468,6 @@ export default function AddConnector({
             >
               {(formikProps) => {
                 setFormValues(formikProps.values);
-                console.log(formikProps.values);
                 handleFormStatusChange(
                   formikProps.isValid && isFormSubmittable(formikProps.values)
                 );
