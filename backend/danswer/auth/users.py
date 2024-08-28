@@ -196,24 +196,17 @@ def send_user_verification_email(
 
 
 def verify_sso_token(token: str) -> dict:
-    print("VERIFYING")
     try:
-        print(token)
-        print("DECODING")
-        # payload = jwt.decode(token, settings.SSO_SECRET_KEY, algorithms=["HS256"])
         payload = jwt.decode(token, "SSO_SECRET_KEY", algorithms=["HS256"])
-        print(payload)
+
         if datetime.now(timezone.utc) > datetime.fromtimestamp(
             payload["exp"], timezone.utc
         ):
-            print("EXPIRED")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
             )
         return payload
-    except jwt.PyJWTError as e:
-        print(e)
-
+    except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
@@ -226,12 +219,9 @@ async def get_or_create_user(email: str, user_id: str, tenant_id: str) -> User:
     async with get_async_session_context() as session:
         async with get_user_db_context(session) as user_db:
             existing_user = await user_db.get_by_email(email)
+            print(email)
             if existing_user:
                 return existing_user
-
-            # Generate a random password
-            uuid.uuid4().hex
-            # hashed_password = get_password_hash(random_password)
 
             new_user = {
                 "email": email,
@@ -244,7 +234,9 @@ async def get_or_create_user(email: str, user_id: str, tenant_id: str) -> User:
                 "is_active": True,
                 "is_superuser": False,
                 "is_verified": True,
+                # "tenant_id": uuid.UUID(tenant_id),
             }
+
             created_user = await user_db.create(new_user)
             return created_user
 

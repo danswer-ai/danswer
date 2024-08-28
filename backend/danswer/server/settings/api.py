@@ -65,7 +65,16 @@ async def sso_callback(
     )
     print(user)
     session_token = await create_user_session(user, strategy)
-    print("HIII")
+    print("Session creation attempt completed")
+    logger.info(
+        f"Session token created: {session_token[:10]}..."
+    )  # Log first 10 chars for security
+    logger.info(f"User email: {user.email}")
+    logger.info(f"User ID: {user.id}")
+    logger.info(f"User role: {user.role}")
+    logger.info(f"Session expiry time: {SESSION_EXPIRE_TIME_SECONDS} seconds")
+    print(f"Full session token (for debugging, remove in production): {session_token}")
+
     response = RedirectResponse(url="/")
     response.set_cookie(
         key="session",
@@ -131,7 +140,7 @@ def fetch_settings(
     return UserSettings(
         **general_settings.model_dump(),
         notifications=user_notifications,
-        needs_reindexing=needs_reindexing
+        needs_reindexing=needs_reindexing,
     )
 
 
