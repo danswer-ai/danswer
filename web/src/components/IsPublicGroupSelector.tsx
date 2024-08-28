@@ -88,41 +88,45 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
 
       {(!formikProps.values.is_public ||
         !isAdmin ||
-        formikProps.values.groups.length > 0) && (
-        <>
-          <div className="flex mt-4 gap-x-2 items-center">
-            <div className="block font-medium text-base">
-              Assign group access for this {objectName}
+        formikProps.values.groups.length > 0) &&
+        userGroups &&
+        userGroups.length > 0 && (
+          <>
+            <div className="flex mt-4 gap-x-2 items-center">
+              <div className="block font-medium text-base">
+                Assign group access for this {objectName}
+              </div>
             </div>
-          </div>
-          <Text className="mb-3">
-            {isAdmin || !enforceGroupSelection ? (
-              <>
-                This {objectName} will be visible/accessible by the groups
-                selected below
-              </>
-            ) : (
-              <>
-                Curators must select one or more groups to give access to this{" "}
-                {objectName}
-              </>
-            )}
-          </Text>
-          <FieldArray
-            name="groups"
-            render={(arrayHelpers: ArrayHelpers) => (
-              <div className="flex gap-2 flex-wrap mb-4">
-                {userGroupsIsLoading ? (
-                  <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
-                ) : (
-                  userGroups &&
-                  userGroups.map((userGroup: UserGroup) => {
-                    const ind = formikProps.values.groups.indexOf(userGroup.id);
-                    let isSelected = ind !== -1;
-                    return (
-                      <div
-                        key={userGroup.id}
-                        className={`
+            <Text className="mb-3">
+              {isAdmin || !enforceGroupSelection ? (
+                <>
+                  This {objectName} will be visible/accessible by the groups
+                  selected below
+                </>
+              ) : (
+                <>
+                  Curators must select one or more groups to give access to this{" "}
+                  {objectName}
+                </>
+              )}
+            </Text>
+            <FieldArray
+              name="groups"
+              render={(arrayHelpers: ArrayHelpers) => (
+                <div className="flex gap-2 flex-wrap mb-4">
+                  {userGroupsIsLoading ? (
+                    <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+                  ) : (
+                    userGroups &&
+                    userGroups.map((userGroup: UserGroup) => {
+                      const ind = formikProps.values.groups.indexOf(
+                        userGroup.id
+                      );
+                      let isSelected = ind !== -1;
+                      return (
+                        <div
+                          key={userGroup.id}
+                          className={`
                         px-3 
                         py-1
                         rounded-lg 
@@ -133,31 +137,32 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                         cursor-pointer 
                         ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
                       `}
-                        onClick={() => {
-                          if (isSelected) {
-                            arrayHelpers.remove(ind);
-                          } else {
-                            arrayHelpers.push(userGroup.id);
-                          }
-                        }}
-                      >
-                        <div className="my-auto flex">
-                          <FiUsers className="my-auto mr-2" /> {userGroup.name}
+                          onClick={() => {
+                            if (isSelected) {
+                              arrayHelpers.remove(ind);
+                            } else {
+                              arrayHelpers.push(userGroup.id);
+                            }
+                          }}
+                        >
+                          <div className="my-auto flex">
+                            <FiUsers className="my-auto mr-2" />{" "}
+                            {userGroup.name}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-          />
-          <ErrorMessage
-            name="groups"
-            component="div"
-            className="text-error text-sm mt-1"
-          />
-        </>
-      )}
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            />
+            <ErrorMessage
+              name="groups"
+              component="div"
+              className="text-error text-sm mt-1"
+            />
+          </>
+        )}
     </div>
   );
 };

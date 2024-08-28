@@ -111,6 +111,19 @@ export function SourceSelector({
         <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
       </div>
 
+      {availableTags.length > 0 && (
+        <>
+          <div className="mt-4 mb-2">
+            <SectionTitle>Tags</SectionTitle>
+          </div>
+          <TagFilter
+            tags={availableTags}
+            selectedTags={selectedTags}
+            setSelectedTags={setSelectedTags}
+          />
+        </>
+      )}
+
       {existingSources.length > 0 && (
         <div className="mt-4">
           <div className="flex w-full gap-x-2 items-center">
@@ -189,19 +202,6 @@ export function SourceSelector({
               </div>
             ))}
           </div>
-        </>
-      )}
-
-      {availableTags.length > 0 && (
-        <>
-          <div className="mt-4 mb-2">
-            <SectionTitle>Tags</SectionTitle>
-          </div>
-          <TagFilter
-            tags={availableTags}
-            selectedTags={selectedTags}
-            setSelectedTags={setSelectedTags}
-          />
         </>
       )}
     </div>

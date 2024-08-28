@@ -65,7 +65,6 @@ export function ChatBanner() {
         w-full
         mx-auto
         relative
-        bg-background-100
         shadow-sm
         rounded
         border-l-8 border-l-400
