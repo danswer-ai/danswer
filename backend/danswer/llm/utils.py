@@ -32,7 +32,7 @@ from litellm.exceptions import UnprocessableEntityError  # type: ignore
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
-from danswer.configs.model_configs import GEN_AI_MODEL_DEFAULT_MAX_TOKENS
+from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.db.models import ChatMessage
 from danswer.file_store.models import ChatFileType
@@ -363,9 +363,9 @@ def get_llm_max_tokens(
         raise RuntimeError("No max tokens found for LLM")
     except Exception:
         logger.exception(
-            f"Failed to get max tokens for LLM with name {model_name}. Defaulting to {GEN_AI_MODEL_DEFAULT_MAX_TOKENS}."
+            f"Failed to get max tokens for LLM with name {model_name}. Defaulting to {GEN_AI_MODEL_FALLBACK_MAX_TOKENS}."
         )
-        return GEN_AI_MODEL_DEFAULT_MAX_TOKENS
+        return GEN_AI_MODEL_FALLBACK_MAX_TOKENS
 
 
 def get_llm_max_output_tokens(
@@ -398,10 +398,10 @@ def get_llm_max_output_tokens(
         logger.error(f"No max output tokens found for LLM: {model_name}")
         raise RuntimeError("No max output tokens found for LLM")
     except Exception:
-        default_output_tokens = int(GEN_AI_MODEL_DEFAULT_MAX_TOKENS * 0.25)
+        default_output_tokens = int(GEN_AI_MODEL_FALLBACK_MAX_TOKENS)
         logger.exception(
             f"Failed to get max output tokens for LLM with name {model_name}. "
-            f"Defaulting to {default_output_tokens} (25% of {GEN_AI_MODEL_DEFAULT_MAX_TOKENS})."
+            f"Defaulting to {default_output_tokens} (fallback max tokens)."
         )
         return default_output_tokens
 
