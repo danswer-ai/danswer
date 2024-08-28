@@ -17,7 +17,7 @@ from danswer.configs.app_configs import (
     CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD,
 )
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD
-from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
@@ -433,9 +433,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     start=start_ind,
                     limit=batch_size,
                     status=(
-                        "current"
-                        if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
-                        else None
+                        None if CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES else "current"
                     ),
                     expand="body.storage.value,version",
                 )
@@ -456,9 +454,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                                 start=start_ind + i,
                                 limit=1,
                                 status=(
-                                    "current"
-                                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
-                                    else None
+                                    None
+                                    if CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES
+                                    else "current"
                                 ),
                                 expand="body.storage.value,version",
                             )
