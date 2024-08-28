@@ -486,27 +486,10 @@ export default function AddConnector({
                     />
                     {isPaidEnterpriseFeaturesEnabled && (
                       <>
-                        <Divider className="my-0 py-0" />
-                        {formikProps.values.groups.length > 0 ? (
-                          <IsPublicGroupSelector
-                            formikProps={formikProps}
-                            objectName="Connector"
-                          />
-                        ) : (
-                          <AdminBooleanFormField
-                            subtext={`If set, then documents indexed by this connector will be visible to all users. If turned off, then only users who explicitly have been given access to the documents (e.g. through a User Group) will have access`}
-                            checked={formikProps.values.is_public}
-                            onChange={(e) => {
-                              const value = e.target.checked;
-                              formikProps.setFieldValue("is_public", value);
-                              if (value) {
-                                formikProps.setFieldValue("groups", []);
-                              }
-                            }}
-                            label={"Documents are Public?"}
-                            name={"is_public"}
-                          />
-                        )}
+                        <IsPublicGroupSelector
+                          formikProps={formikProps}
+                          objectName="Connector"
+                        />
                       </>
                     )}
                   </div>

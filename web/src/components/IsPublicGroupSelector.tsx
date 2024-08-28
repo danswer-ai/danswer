@@ -28,6 +28,9 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   useEffect(() => {
     if (user && userGroups) {
       const isUserAdmin = user.role === UserRole.ADMIN;
+      if (!isUserAdmin) {
+        formikProps.setFieldValue("is_public", false);
+      }
       if (userGroups.length === 1 && !isUserAdmin) {
         formikProps.setFieldValue("groups", [userGroups[0].id]);
         setShouldHideContent(true);
