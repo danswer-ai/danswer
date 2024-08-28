@@ -135,6 +135,9 @@ def find_last_index(lst: list[int], max_prompt_tokens: int) -> int:
     """From the back, find the index of the last element to include
     before the list exceeds the maximum"""
     running_sum = 0
+    print(
+        f"find_last_index called with list of length {len(lst)} and max_prompt_tokens {max_prompt_tokens}"
+    )
 
     last_ind = 0
     for i in range(len(lst) - 1, -1, -1):
