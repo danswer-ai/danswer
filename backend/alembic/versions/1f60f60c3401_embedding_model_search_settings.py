@@ -15,8 +15,8 @@ from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 # revision identifiers, used by Alembic.
 revision = "1f60f60c3401"
 down_revision = "f17bf3b0d9f1"
-branch_labels = None
-depends_on = None
+branch_labels: None = None
+depends_on: None = None
 
 
 def upgrade() -> None:
