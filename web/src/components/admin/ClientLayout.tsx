@@ -18,16 +18,18 @@ import {
   ZoomInIconSkeleton,
   SlackIconSkeleton,
   DocumentSetIconSkeleton,
-  EmbeddingIconSkeleton,
   AssistantsIconSkeleton,
   ClosedBookIcon,
+  SearchIcon,
 } from "@/components/icons/icons";
 
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
 import { UserDropdown } from "../UserDropdown";
 import { User } from "@/lib/types";
 import { usePathname } from "next/navigation";
-import { PencilCircle } from "@phosphor-icons/react";
+import { SettingsContext } from "../settings/SettingsProvider";
+import { useContext } from "react";
+import { CustomTooltip } from "../tooltip/CustomTooltip";
 
 export function ClientLayout({
   user,
@@ -39,8 +41,12 @@ export function ClientLayout({
   enableEnterprise: boolean;
 }) {
   const pathname = usePathname();
+  const settings = useContext(SettingsContext);
 
-  if (pathname.startsWith("/admin/connectors")) {
+  if (
+    pathname.startsWith("/admin/connectors") ||
+    pathname.startsWith("/admin/embeddings")
+  ) {
     return <>{children}</>;
   }
 
@@ -158,26 +164,28 @@ export function ClientLayout({
                 ],
               },
               {
-                name: "Model Configs",
+                name: "Configuration",
                 items: [
                   {
                     name: (
                       <div className="flex">
-                        {/* <FiCpu size={18} /> */}
                         <CpuIconSkeleton size={18} />
                         <div className="ml-1">LLM</div>
                       </div>
                     ),
-                    link: "/admin/models/llm",
+                    link: "/admin/configuration/llm",
                   },
                   {
+                    error: settings?.settings.needs_reindexing,
                     name: (
                       <div className="flex">
-                        <EmbeddingIconSkeleton />
-                        <div className="ml-1">Embedding</div>
+                        <SearchIcon />
+                        <CustomTooltip content="Navigate here to update your search settings">
+                          <div className="ml-1">Search Settings</div>
+                        </CustomTooltip>
                       </div>
                     ),
-                    link: "/admin/models/embedding",
+                    link: "/admin/configuration/search",
                   },
                 ],
               },

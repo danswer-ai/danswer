@@ -31,7 +31,7 @@ from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.db.index_attempt import get_last_attempt_for_cc_pair
 from danswer.db.index_attempt import get_not_started_index_attempts
 from danswer.db.index_attempt import mark_attempt_failed
-from danswer.db.models import Connector
+from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
@@ -45,6 +45,7 @@ from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import LOG_LEVEL
 from shared_configs.configs import MODEL_SERVER_PORT
 
+
 logger = setup_logger()
 
 # If the indexing dies, it's most likely due to resource constraints,
@@ -57,12 +58,14 @@ _UNEXPECTED_STATE_FAILURE_REASON = (
 
 
 def _should_create_new_indexing(
-    connector: Connector,
+    cc_pair: ConnectorCredentialPair,
     last_index: IndexAttempt | None,
     model: EmbeddingModel,
     secondary_index_building: bool,
     db_session: Session,
 ) -> bool:
+    connector = cc_pair.connector
+
     # User can still manually create single indexing attempts via the UI for the
     # currently in use index
     if DISABLE_INDEX_UPDATE_ON_SWAP:
@@ -89,10 +92,10 @@ def _should_create_new_indexing(
                 return False
         return True
 
-    # If the connector is disabled or is the ingestion API, don't index
+    # If the connector is paused or is the ingestion API, don't index
     # NOTE: during an embedding model switch over, the following logic
     # is bypassed by the above check for a future model
-    if connector.disabled or connector.id == 0:
+    if not cc_pair.status.is_active() or connector.id == 0:
         return False
 
     if not last_index:
@@ -115,16 +118,6 @@ def _should_create_new_indexing(
     current_db_time = get_db_current_time(db_session)
     time_since_index = current_db_time - last_index.time_updated
     return time_since_index.total_seconds() >= connector.refresh_freq
-
-
-def _is_indexing_job_marked_as_finished(index_attempt: IndexAttempt | None) -> bool:
-    if index_attempt is None:
-        return False
-
-    return (
-        index_attempt.status == IndexingStatus.FAILED
-        or index_attempt.status == IndexingStatus.SUCCESS
-    )
 
 
 def _mark_run_failed(
@@ -187,7 +180,7 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                     cc_pair.id, model.id, db_session
                 )
                 if not _should_create_new_indexing(
-                    connector=cc_pair.connector,
+                    cc_pair=cc_pair,
                     last_index=last_attempt,
                     model=model,
                     secondary_index_building=len(embedding_models) > 1,
@@ -212,10 +205,12 @@ def cleanup_indexing_jobs(
             )
 
             # do nothing for ongoing jobs that haven't been stopped
-            if not job.done() and not _is_indexing_job_marked_as_finished(
-                index_attempt
-            ):
-                continue
+            if not job.done():
+                if not index_attempt:
+                    continue
+
+                if not index_attempt.is_finished():
+                    continue
 
             if job.status == "error":
                 logger.error(job.exception())
@@ -352,6 +347,7 @@ def kickoff_indexing_jobs(
             secondary_str = " (secondary index)" if use_secondary_index else ""
             logger.info(
                 f"Indexing dispatched{secondary_str}: "
+                f"attempt_id={attempt.id} "
                 f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.credential_id}'"
@@ -383,7 +379,7 @@ def update_loop(
         # batch of documents indexed
 
         if db_embedding_model.cloud_provider_id is None:
-            logger.debug("Running a first inference to warm up embedding model")
+            logger.notice("Running a first inference to warm up embedding model")
             warm_up_bi_encoder(
                 embedding_model=db_embedding_model,
                 model_server_host=INDEXING_MODEL_SERVER_HOST,
@@ -450,7 +446,7 @@ def update__main() -> None:
     set_is_ee_based_on_env_variable()
     init_sqlalchemy_engine(POSTGRES_INDEXER_APP_NAME)
 
-    logger.info("Starting indexing service")
+    logger.notice("Starting indexing service")
     update_loop()
 
 

@@ -8,7 +8,14 @@ import {
   FiGlobe,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import {
   DanswerDocument,
@@ -52,6 +59,7 @@ import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
+import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -154,10 +162,17 @@ export const AIMessage = ({
       return content;
     }
 
-    const codeBlockRegex = /```[\s\S]*?```|```[\s\S]*?$/g;
+    const codeBlockRegex = /```(\w*)\n[\s\S]*?```|```[\s\S]*?$/g;
     const matches = content.match(codeBlockRegex);
 
     if (matches) {
+      content = matches.reduce((acc, match) => {
+        if (!match.match(/```\w+/)) {
+          return acc.replace(match, match.replace("```", "```plaintext"));
+        }
+        return acc;
+      }, content);
+
       const lastMatch = matches[matches.length - 1];
       if (!lastMatch.endsWith("```")) {
         return content;
@@ -166,7 +181,6 @@ export const AIMessage = ({
 
     return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
   };
-
   const finalContent = processContent(content as string);
 
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
@@ -241,44 +255,8 @@ export const AIMessage = ({
               size="small"
               assistant={alternativeAssistant || currentPersona}
             />
-
             <div className="w-full">
               <div className="max-w-message-max break-words">
-                {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
-                  danswerSearchToolEnabledForPersona && (
-                    <>
-                      {query !== undefined &&
-                        handleShowRetrieved !== undefined &&
-                        isCurrentlyShowingRetrieved !== undefined &&
-                        !retrievalDisabled && (
-                          <div className="my-1">
-                            <SearchSummary
-                              query={query}
-                              hasDocs={hasDocs || false}
-                              messageId={messageId}
-                              finished={toolCall?.tool_result != undefined}
-                              isCurrentlyShowingRetrieved={
-                                isCurrentlyShowingRetrieved
-                              }
-                              handleShowRetrieved={handleShowRetrieved}
-                              handleSearchQueryEdit={handleSearchQueryEdit}
-                            />
-                          </div>
-                        )}
-                      {handleForceSearch &&
-                        content &&
-                        query === undefined &&
-                        !hasDocs &&
-                        !retrievalDisabled && (
-                          <div className="my-1">
-                            <SkippedSearch
-                              handleForceSearch={handleForceSearch}
-                            />
-                          </div>
-                        )}
-                    </>
-                  )}
-
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
                     {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
@@ -356,7 +334,7 @@ export const AIMessage = ({
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <div className="overflow-x-auto w-full pr-2 max-w-[675px]">
+                          <div className="overflow-x-visible w-full pr-2 max-w-[675px]">
                             <ReactMarkdown
                               key={messageId}
                               className="prose max-w-full"
@@ -400,7 +378,6 @@ export const AIMessage = ({
                                     );
                                   }
                                 },
-
                                 code: (props) => (
                                   <CodeBlock
                                     className="w-full"
@@ -427,7 +404,6 @@ export const AIMessage = ({
                     ) : isComplete ? null : (
                       <></>
                     )}
-
                     {isComplete && docs && docs.length > 0 && (
                       <div className="mt-2 -mx-8 w-full mb-4 flex relative">
                         <div className="w-full">
@@ -441,7 +417,7 @@ export const AIMessage = ({
                               `}
                                 >
                                   <a
-                                    href={doc.link}
+                                    href={doc.link || undefined}
                                     target="_blank"
                                     className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
                                   >
@@ -611,6 +587,7 @@ export const HumanMessage = ({
   onEdit,
   onMessageSelection,
   shared,
+  stopGenerating = () => null,
 }: {
   shared?: boolean;
   content: string;
@@ -619,6 +596,7 @@ export const HumanMessage = ({
   otherMessagesCanSwitchTo?: number[];
   onEdit?: (editedContent: string) => void;
   onMessageSelection?: (messageId: number) => void;
+  stopGenerating?: () => void;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -665,7 +643,6 @@ export const HumanMessage = ({
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
-
             <div className="flex justify-end">
               <div className="w-full ml-8 flex w-full max-w-message-max break-words">
                 {isEditing ? (
@@ -845,16 +822,18 @@ export const HumanMessage = ({
                   <MessageSwitcher
                     currentPage={currentMessageInd + 1}
                     totalPages={otherMessagesCanSwitchTo.length}
-                    handlePrevious={() =>
+                    handlePrevious={() => {
+                      stopGenerating();
                       onMessageSelection(
                         otherMessagesCanSwitchTo[currentMessageInd - 1]
-                      )
-                    }
-                    handleNext={() =>
+                      );
+                    }}
+                    handleNext={() => {
+                      stopGenerating();
                       onMessageSelection(
                         otherMessagesCanSwitchTo[currentMessageInd + 1]
-                      )
-                    }
+                      );
+                    }}
                   />
                 </div>
               )}

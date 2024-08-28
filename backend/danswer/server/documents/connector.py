@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.background.celery.celery_utils import get_deletion_status
+from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
@@ -62,8 +62,6 @@ from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
-from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
-from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_finished_index_attempt_for_cc_pair
@@ -389,7 +387,6 @@ def get_connector_indexing_status(
     ]
 
     latest_index_attempts = get_latest_index_attempts(
-        connector_credential_pair_identifiers=cc_pair_identifiers,
         secondary_index=secondary_index,
         db_session=db_session,
     )
@@ -432,6 +429,7 @@ def get_connector_indexing_status(
             ConnectorIndexingStatus(
                 cc_pair_id=cc_pair.id,
                 name=cc_pair.name,
+                cc_pair_status=cc_pair.status,
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
                 credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=cc_pair.is_public,
@@ -456,7 +454,7 @@ def get_connector_indexing_status(
                     if latest_index_attempt
                     else None
                 ),
-                deletion_attempt=get_deletion_status(
+                deletion_attempt=get_deletion_attempt_snapshot(
                     connector_id=connector.id,
                     credential_id=credential.id,
                     db_session=db_session,
@@ -550,12 +548,6 @@ def update_connector_from_model(
             status_code=404, detail=f"Connector {connector_id} does not exist"
         )
 
-    if updated_connector.disabled:
-        cancel_indexing_attempts_for_connector(connector_id, db_session)
-
-        # Just for good measure
-        cancel_indexing_attempts_past_model(db_session)
-
     return ConnectorSnapshot(
         id=updated_connector.id,
         name=updated_connector.name,
@@ -570,7 +562,6 @@ def update_connector_from_model(
         indexing_start=updated_connector.indexing_start,
         time_created=updated_connector.time_created,
         time_updated=updated_connector.time_updated,
-        disabled=updated_connector.disabled,
     )
 
 
@@ -793,7 +784,6 @@ def get_connector_by_id(
         ],
         time_created=connector.time_created,
         time_updated=connector.time_updated,
-        disabled=connector.disabled,
     )
 
 

@@ -76,8 +76,14 @@ class CitationInfo(BaseModel):
     document_id: str
 
 
+class MessageResponseIDInfo(BaseModel):
+    user_message_id: int | None
+    reserved_assistant_message_id: int
+
+
 class StreamingError(BaseModel):
     error: str
+    stack_trace: str | None = None
 
 
 class DanswerQuote(BaseModel):

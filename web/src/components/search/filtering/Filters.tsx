@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { DocumentSet, Tag, ValidSources } from "@/lib/types";
 import { SourceMetadata } from "@/lib/search/interfaces";
-import { InfoIcon, defaultTailwindCSS } from "../../icons/icons";
+import {
+  GearIcon,
+  InfoIcon,
+  MinusIcon,
+  PlusCircleIcon,
+  PlusIcon,
+  defaultTailwindCSS,
+} from "../../icons/icons";
 import { HoverPopup } from "../../HoverPopup";
 import {
   FiBook,
@@ -75,6 +82,19 @@ export function SourceSelector({
     });
   };
 
+  let allSourcesSelected = selectedSources.length > 0;
+
+  const toggleAllSources = () => {
+    if (allSourcesSelected) {
+      setSelectedSources([]);
+    } else {
+      const allSources = listSourceMetadata().filter((source) =>
+        existingSources.includes(source.internalName)
+      );
+      setSelectedSources(allSources);
+    }
+  };
+
   return (
     <div
       className={`hidden ${
@@ -93,7 +113,17 @@ export function SourceSelector({
 
       {existingSources.length > 0 && (
         <div className="mt-4">
-          <SectionTitle>Sources</SectionTitle>
+          <div className="flex w-full gap-x-2 items-center">
+            <div className="font-bold text-xs  mt-2 flex items-center gap-x-2">
+              <p>Sources</p>
+              <input
+                type="checkbox"
+                checked={allSourcesSelected}
+                onChange={toggleAllSources}
+                className="my-auto form-checkbox h-3 w-3 text-primary border-background-900 rounded"
+              />
+            </div>
+          </div>
           <div className="px-1">
             {listSourceMetadata()
               .filter((source) => existingSources.includes(source.internalName))
@@ -417,6 +447,8 @@ export function HorizontalSourceSelector({
             icon={<FiMap size={16} />}
             defaultDisplay="Sources"
             width="w-fit max-w-24 ellipsis truncate"
+            dropdownWidth="max-w-36 w-fit"
+            optionClassName="truncate break-all ellipsis"
           />
         )}
 
@@ -435,7 +467,9 @@ export function HorizontalSourceSelector({
             handleSelect={(option) => handleDocumentSetSelect(option.key)}
             icon={<FiBook size={16} />}
             defaultDisplay="Sets"
-            width="w-fit max-w-24 ellipsis"
+            width="w-fit max-w-24 ellipsis truncate"
+            dropdownWidth="max-w-36 w-fit"
+            optionClassName="truncate break-all ellipsis"
           />
         )}
 
@@ -465,7 +499,9 @@ export function HorizontalSourceSelector({
             }}
             icon={<FiTag size={16} />}
             defaultDisplay="Tags"
-            width="w-fit max-w-24 ellipsis"
+            width="w-fit max-w-24 ellipsis truncate"
+            dropdownWidth="max-w-80 w-fit"
+            optionClassName="truncate break-all ellipsis"
           />
         )}
       </div>

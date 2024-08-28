@@ -19,7 +19,7 @@ logger = setup_logger()
 
 def verify_auth_setting() -> None:
     # All the Auth flows are valid for EE version
-    logger.info(f"Using Auth Type: {AUTH_TYPE.value}")
+    logger.notice(f"Using Auth Type: {AUTH_TYPE.value}")
 
 
 async def optional_user_(

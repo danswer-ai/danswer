@@ -87,6 +87,7 @@ export interface Message {
   childrenMessageIds?: number[];
   latestChildMessageId?: number | null;
   alternateAssistantID?: number | null;
+  stackTrace?: string | null;
 }
 
 export interface BackendChatSession {
@@ -117,6 +118,11 @@ export interface BackendMessage {
   alternate_assistant_id?: number | null;
 }
 
+export interface MessageResponseIDInfo {
+  user_message_id: number | null;
+  reserved_assistant_message_id: number;
+}
+
 export interface DocumentsResponse {
   top_documents: DanswerDocument[];
   rephrased_query: string | null;
@@ -128,4 +134,5 @@ export interface ImageGenerationDisplay {
 
 export interface StreamingError {
   error: string;
+  stack_trace: string;
 }

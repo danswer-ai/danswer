@@ -3,6 +3,7 @@ from typing import cast
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -55,7 +56,18 @@ def fetch_settings(
     Postgres calls"""
     general_settings = load_settings()
     user_notifications = get_user_notifications(user, db_session)
-    return UserSettings(**general_settings.dict(), notifications=user_notifications)
+
+    try:
+        kv_store = get_dynamic_config_store()
+        needs_reindexing = cast(bool, kv_store.load(KV_REINDEX_KEY))
+    except ConfigNotFoundError:
+        needs_reindexing = False
+
+    return UserSettings(
+        **general_settings.dict(),
+        notifications=user_notifications,
+        needs_reindexing=needs_reindexing
+    )
 
 
 @basic_router.post("/notifications/{notification_id}/dismiss")
@@ -87,8 +99,8 @@ def get_user_notifications(
 
     kv_store = get_dynamic_config_store()
     try:
-        need_index = cast(bool, kv_store.load(KV_REINDEX_KEY))
-        if not need_index:
+        needs_index = cast(bool, kv_store.load(KV_REINDEX_KEY))
+        if not needs_index:
             dismiss_all_notifications(
                 notif_type=NotificationType.REINDEX, db_session=db_session
             )
@@ -99,21 +111,35 @@ def get_user_notifications(
         logger.warning("Could not find reindex flag")
         return []
 
-    reindex_notifs = get_notifications(
-        user=user, notif_type=NotificationType.REINDEX, db_session=db_session
-    )
+    try:
+        # Need a transaction in order to prevent under-counting current notifications
+        db_session.begin()
 
-    if not reindex_notifs:
-        notif = create_notification(
+        reindex_notifs = get_notifications(
             user=user, notif_type=NotificationType.REINDEX, db_session=db_session
         )
-        return [Notification.from_model(notif)]
 
-    if len(reindex_notifs) > 1:
-        logger.error("User has multiple reindex notifications")
+        if not reindex_notifs:
+            notif = create_notification(
+                user=user,
+                notif_type=NotificationType.REINDEX,
+                db_session=db_session,
+            )
+            db_session.flush()
+            db_session.commit()
+            return [Notification.from_model(notif)]
 
-    reindex_notif = reindex_notifs[0]
+        if len(reindex_notifs) > 1:
+            logger.error("User has multiple reindex notifications")
 
-    update_notification_last_shown(notification=reindex_notif, db_session=db_session)
+        reindex_notif = reindex_notifs[0]
+        update_notification_last_shown(
+            notification=reindex_notif, db_session=db_session
+        )
 
-    return [Notification.from_model(reindex_notif)]
+        db_session.commit()
+        return [Notification.from_model(reindex_notif)]
+    except SQLAlchemyError:
+        logger.exception("Error while processing notifications")
+        db_session.rollback()
+        return []

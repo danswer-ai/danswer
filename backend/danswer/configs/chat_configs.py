@@ -44,7 +44,7 @@ DISABLE_LLM_QUERY_REPHRASE = (
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds
 # Weighting factor between Vector and Keyword Search, 1 for completely vector search
-HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.62)))
+HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.5)))
 HYBRID_ALPHA_KEYWORD = max(
     0, min(1, float(os.environ.get("HYBRID_ALPHA_KEYWORD") or 0.4))
 )
@@ -53,7 +53,7 @@ HYBRID_ALPHA_KEYWORD = max(
 # Content. This is to avoid cases where the Content is very relevant but it may not be clear
 # if the title is separated out. Title is most of a "boost" than a separate field.
 TITLE_CONTENT_RATIO = max(
-    0, min(1, float(os.environ.get("TITLE_CONTENT_RATIO") or 0.20))
+    0, min(1, float(os.environ.get("TITLE_CONTENT_RATIO") or 0.10))
 )
 
 # A list of languages passed to the LLM to rephase the query

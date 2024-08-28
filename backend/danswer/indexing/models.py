@@ -46,6 +46,8 @@ class DocAwareChunk(BaseChunk):
 
     mini_chunk_texts: list[str] | None
 
+    large_chunk_reference_ids: list[int] = []
+
     def to_short_descriptor(self) -> str:
         """Used when logging the identity of a chunk"""
         return (
@@ -99,6 +101,7 @@ class EmbeddingModelDetail(BaseModel):
     passage_prefix: str | None
     cloud_provider_id: int | None = None
     cloud_provider_name: str | None = None
+    index_name: str | None = None
 
     @classmethod
     def from_model(
@@ -112,4 +115,5 @@ class EmbeddingModelDetail(BaseModel):
             query_prefix=embedding_model.query_prefix,
             passage_prefix=embedding_model.passage_prefix,
             cloud_provider_id=embedding_model.cloud_provider_id,
+            index_name=embedding_model.index_name,
         )

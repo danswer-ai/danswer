@@ -512,6 +512,18 @@ export const SearchSection = ({
   const [firstSearch, setFirstSearch] = useState(true);
   const [searchState, setSearchState] = useState<searchState>("input");
 
+  // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
+  const [untoggled, setUntoggled] = useState(false);
+
+  const explicitlyUntoggle = () => {
+    setShowDocSidebar(false);
+
+    setUntoggled(true);
+    setTimeout(() => {
+      setUntoggled(false);
+    }, 200);
+  };
+
   useSidebarVisibility({
     toggledSidebar,
     sidebarElementRef,
@@ -569,7 +581,7 @@ export const SearchSection = ({
 
   return (
     <>
-      <div className="flex relative w-full pr-[8px] h-full text-default">
+      <div className="flex relative pr-[8px] h-full text-default">
         {popup}
         {currentFeedback && (
           <FeedbackModal
@@ -600,7 +612,7 @@ export const SearchSection = ({
             duration-300 
             ease-in-out
             ${
-              showDocSidebar || toggledSidebar
+              !untoggled && (showDocSidebar || toggledSidebar)
                 ? "opacity-100 w-[250px] translate-x-0"
                 : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }
@@ -608,6 +620,7 @@ export const SearchSection = ({
         >
           <div className="w-full relative">
             <HistorySidebar
+              explicitlyUntoggle={explicitlyUntoggle}
               reset={() => setQuery("")}
               page="search"
               ref={innerSidebarElementRef}
@@ -618,7 +631,7 @@ export const SearchSection = ({
           </div>
         </div>
 
-        <div className="absolute left-0 w-full top-0">
+        <div className="absolute include-scrollbar h-screen overflow-y-auto left-0 w-full top-0">
           <FunctionalHeader
             sidebarToggled={toggledSidebar}
             reset={() => setQuery("")}
@@ -644,7 +657,7 @@ export const SearchSection = ({
 
             {
               <div
-                className={`desktop:px-24 w-full  ${chatBannerPresent && "mt-10"} pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto`}
+                className={`desktop:px-24 w-full ${chatBannerPresent && "mt-10"} pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto`}
               >
                 <div className="absolute z-10 mobile:px-4 mobile:max-w-searchbar-max mobile:w-[90%] top-12 desktop:left-0 hidden 2xl:block mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 desktop:w-52 3xl:w-64">
                   {!settings?.isMobile &&
@@ -664,6 +677,7 @@ export const SearchSection = ({
                     <div className="mt-6">
                       {!(agenticResults && isFetching) || disabledAgentic ? (
                         <SearchResultsDisplay
+                          searchState={searchState}
                           disabledAgentic={disabledAgentic}
                           contentEnriched={contentEnriched}
                           comments={comments}
@@ -705,6 +719,7 @@ export const SearchSection = ({
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic
                       }
+                      showingSidebar={showDocSidebar || toggledSidebar}
                       agentic={agentic}
                       query={query}
                       setQuery={setQuery}
@@ -736,6 +751,7 @@ export const SearchSection = ({
                     <div className="mt-6">
                       {!(agenticResults && isFetching) || disabledAgentic ? (
                         <SearchResultsDisplay
+                          searchState={searchState}
                           disabledAgentic={disabledAgentic}
                           contentEnriched={contentEnriched}
                           comments={comments}

@@ -16,6 +16,18 @@ from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
+from litellm.exceptions import APIConnectionError  # type: ignore
+from litellm.exceptions import APIError  # type: ignore
+from litellm.exceptions import AuthenticationError  # type: ignore
+from litellm.exceptions import BadRequestError  # type: ignore
+from litellm.exceptions import BudgetExceededError  # type: ignore
+from litellm.exceptions import ContentPolicyViolationError  # type: ignore
+from litellm.exceptions import ContextWindowExceededError  # type: ignore
+from litellm.exceptions import NotFoundError  # type: ignore
+from litellm.exceptions import PermissionDeniedError  # type: ignore
+from litellm.exceptions import RateLimitError  # type: ignore
+from litellm.exceptions import Timeout  # type: ignore
+from litellm.exceptions import UnprocessableEntityError  # type: ignore
 
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
@@ -29,11 +41,62 @@ from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import LOG_LEVEL
 
-
 if TYPE_CHECKING:
     from danswer.llm.answering.models import PreviousMessage
 
 logger = setup_logger()
+
+
+def litellm_exception_to_error_msg(e: Exception, llm: LLM) -> str:
+    error_msg = str(e)
+
+    if isinstance(e, BadRequestError):
+        error_msg = "Bad request: The server couldn't process your request. Please check your input."
+    elif isinstance(e, AuthenticationError):
+        error_msg = "Authentication failed: Please check your API key and credentials."
+    elif isinstance(e, PermissionDeniedError):
+        error_msg = (
+            "Permission denied: You don't have the necessary permissions for this operation."
+            "Ensure you have access to this model."
+        )
+    elif isinstance(e, NotFoundError):
+        error_msg = "Resource not found: The requested resource doesn't exist."
+    elif isinstance(e, UnprocessableEntityError):
+        error_msg = "Unprocessable entity: The server couldn't process your request due to semantic errors."
+    elif isinstance(e, RateLimitError):
+        error_msg = (
+            "Rate limit exceeded: Please slow down your requests and try again later."
+        )
+    elif isinstance(e, ContextWindowExceededError):
+        error_msg = (
+            "Context window exceeded: Your input is too long for the model to process."
+        )
+        if llm is not None:
+            try:
+                max_context = get_max_input_tokens(
+                    model_name=llm.config.model_name,
+                    model_provider=llm.config.model_provider,
+                )
+                error_msg += f"Your invoked model ({llm.config.model_name}) has a maximum context size of {max_context}"
+            except Exception:
+                logger.warning(
+                    "Unable to get maximum input token for LiteLLM excpetion handling"
+                )
+    elif isinstance(e, ContentPolicyViolationError):
+        error_msg = "Content policy violation: Your request violates the content policy. Please revise your input."
+    elif isinstance(e, APIConnectionError):
+        error_msg = "API connection error: Failed to connect to the API. Please check your internet connection."
+    elif isinstance(e, BudgetExceededError):
+        error_msg = (
+            "Budget exceeded: You've exceeded your allocated budget for API usage."
+        )
+    elif isinstance(e, Timeout):
+        error_msg = "Request timed out: The operation took too long to complete. Please try again."
+    elif isinstance(e, APIError):
+        error_msg = f"API error: An error occurred while communicating with the API. Details: {str(e)}"
+    else:
+        error_msg = "An unexpected error occurred while processing your request. Please try again later."
+    return error_msg
 
 
 def translate_danswer_msg_to_langchain(
@@ -275,9 +338,11 @@ def get_llm_max_tokens(
         return GEN_AI_MAX_TOKENS
 
     try:
-        model_obj = model_map.get(f"{model_provider}/{model_name}")
-        if not model_obj:
-            model_obj = model_map[model_name]
+        model_obj = (
+            model_map.get(f"{model_provider}/{model_name}")
+            or model_map.get(model_name)
+            or model_map[model_name.split("/")[1]]
+        )
 
         if "max_input_tokens" in model_obj:
             return model_obj["max_input_tokens"]

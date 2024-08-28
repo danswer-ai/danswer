@@ -40,15 +40,17 @@ def get_local_intent_model(
     if _INTENT_MODEL is None:
         try:
             # Calculate where the cache should be, then load from local if available
+            logger.notice(f"Loading model from local cache: {model_name_or_path}")
             local_path = snapshot_download(
                 repo_id=model_name_or_path, revision=tag, local_files_only=True
             )
             _INTENT_MODEL = HybridClassifier.from_pretrained(local_path)
+            logger.notice(f"Loaded model from local cache: {local_path}")
         except Exception as e:
             logger.warning(f"Failed to load model directly: {e}")
             try:
                 # Attempt to download the model snapshot
-                logger.info(f"Downloading model snapshot for {model_name_or_path}")
+                logger.notice(f"Downloading model snapshot for {model_name_or_path}")
                 local_path = snapshot_download(repo_id=model_name_or_path, revision=tag)
                 _INTENT_MODEL = HybridClassifier.from_pretrained(local_path)
             except Exception as e:
@@ -60,28 +62,37 @@ def get_local_intent_model(
 
 
 def warm_up_intent_model() -> None:
-    logger.info(f"Warming up Intent Model: {INTENT_MODEL_VERSION}")
+    logger.notice(f"Warming up Intent Model: {INTENT_MODEL_VERSION}")
     intent_tokenizer = get_intent_model_tokenizer()
     tokens = intent_tokenizer(
         MODEL_WARM_UP_STRING, return_tensors="pt", truncation=True, padding=True
     )
+
     intent_model = get_local_intent_model()
-    intent_model(query_ids=tokens["input_ids"], query_mask=tokens["attention_mask"])
+    device = intent_model.device
+    intent_model(
+        query_ids=tokens["input_ids"].to(device),
+        query_mask=tokens["attention_mask"].to(device),
+    )
 
 
 @simple_log_function_time()
 def run_inference(tokens: BatchEncoding) -> tuple[list[float], list[float]]:
     intent_model = get_local_intent_model()
+    device = intent_model.device
 
     outputs = intent_model(
-        query_ids=tokens["input_ids"], query_mask=tokens["attention_mask"]
+        query_ids=tokens["input_ids"].to(device),
+        query_mask=tokens["attention_mask"].to(device),
     )
 
     token_logits = outputs["token_logits"]
     intent_logits = outputs["intent_logits"]
-    intent_probabilities = F.softmax(intent_logits, dim=-1).numpy()[0]
 
-    token_probabilities = F.softmax(token_logits, dim=-1).numpy()[0]
+    # Move tensors to CPU before applying softmax and converting to numpy
+    intent_probabilities = F.softmax(intent_logits.cpu(), dim=-1).numpy()[0]
+    token_probabilities = F.softmax(token_logits.cpu(), dim=-1).numpy()[0]
+
     # Extract the probabilities for the positive class (index 1) for each token
     token_positive_probs = token_probabilities[:, 1].tolist()
 

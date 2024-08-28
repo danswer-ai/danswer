@@ -79,6 +79,7 @@ def list_personas_admin(
             db_session=db_session,
             user_id=None,  # user_id = None -> give back all personas
             include_deleted=include_deleted,
+            joinedload_all=True,
         )
     ]
 
@@ -190,7 +191,10 @@ def list_personas(
     return [
         PersonaSnapshot.from_model(persona)
         for persona in get_personas(
-            user_id=user_id, include_deleted=include_deleted, db_session=db_session
+            user_id=user_id,
+            include_deleted=include_deleted,
+            db_session=db_session,
+            joinedload_all=True,
         )
     ]
 

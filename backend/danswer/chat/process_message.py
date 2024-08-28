@@ -1,3 +1,4 @@
+import traceback
 from collections.abc import Callable
 from collections.abc import Iterator
 from functools import partial
@@ -11,6 +12,7 @@ from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import ImageGenerationDisplay
 from danswer.chat.models import LLMRelevanceFilterResponse
+from danswer.chat.models import MessageResponseIDInfo
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import BING_API_KEY
@@ -27,6 +29,7 @@ from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_db_search_doc_by_id
 from danswer.db.chat import get_doc_query_identifiers_from_model
 from danswer.db.chat import get_or_create_root_message
+from danswer.db.chat import reserve_message_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -51,6 +54,7 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.interfaces import LLMConfig
+from danswer.llm.utils import litellm_exception_to_error_msg
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
@@ -240,6 +244,7 @@ ChatPacket = (
     | CitationInfo
     | ImageGenerationDisplay
     | CustomToolResponse
+    | MessageResponseIDInfo
 )
 ChatPacketStream = Iterator[ChatPacket]
 
@@ -255,9 +260,9 @@ def stream_chat_message_objects(
     max_document_percentage: float = CHAT_TARGET_CHUNK_PERCENTAGE,
     # if specified, uses the last user message and does not create a new user message based
     # on the `new_msg_req.message`. Currently, requires a state where the last message is a
-    # user message (e.g. this can only be used for the chat-seeding flow).
     use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
+    is_connected: Callable[[], bool] | None = None,
 ) -> ChatPacketStream:
     """Streams in order:
     1. [conditional] Retrieved documents if a search needs to be run
@@ -447,10 +452,19 @@ def stream_chat_message_objects(
                     else default_num_chunks
                 ),
                 max_window_percentage=max_document_percentage,
-                use_sections=new_msg_req.chunks_above > 0
-                or new_msg_req.chunks_below > 0,
             )
-
+        reserved_message_id = reserve_message_id(
+            db_session=db_session,
+            chat_session_id=chat_session_id,
+            parent_message=user_message.id
+            if user_message is not None
+            else parent_message.id,
+            message_type=MessageType.ASSISTANT,
+        )
+        yield MessageResponseIDInfo(
+            user_message_id=user_message.id if user_message else None,
+            reserved_assistant_message_id=reserved_message_id,
+        )
         # Cannot determine these without the LLM step or breaking out early
         partial_response = partial(
             create_new_chat_message,
@@ -583,6 +597,7 @@ def stream_chat_message_objects(
 
         # LLM prompt building, response capturing, etc.
         answer = Answer(
+            is_connected=is_connected,
             question=final_msg.message,
             latest_query_files=latest_query_files,
             answer_style_config=AnswerStyleConfig(
@@ -616,6 +631,7 @@ def stream_chat_message_objects(
         ai_message_files = None  # any files to associate with the AI message e.g. dall-e generated images
         dropped_indices = None
         tool_result = None
+
         for packet in answer.processed_streamed_output:
             if isinstance(packet, ToolResponse):
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
@@ -691,30 +707,18 @@ def stream_chat_message_objects(
                 if isinstance(packet, ToolCallFinalResult):
                     tool_result = packet
                 yield cast(ChatPacket, packet)
-
+        logger.debug("Reached end of stream")
     except Exception as e:
         error_msg = str(e)
         logger.exception(f"Failed to process chat message: {error_msg}")
 
-        if "Illegal header value b'Bearer  '" in error_msg:
-            error_msg = (
-                f"Authentication error: Invalid or empty API key provided for '{llm.config.model_provider}'. "
-                "Please check your API key configuration."
-            )
-        elif (
-            "Invalid leading whitespace, reserved character(s), or return character(s) in header value"
-            in error_msg
-        ):
-            error_msg = (
-                f"Authentication error: Invalid API key format for '{llm.config.model_provider}'. "
-                "Please ensure your API key does not contain leading/trailing whitespace or invalid characters."
-            )
-        elif llm.config.api_key and llm.config.api_key.lower() in error_msg.lower():
-            error_msg = f"LLM failed to respond. Invalid API key error from '{llm.config.model_provider}'."
-        else:
-            error_msg = "An unexpected error occurred while processing your request. Please try again later."
+        stack_trace = traceback.format_exc()
+        client_error_msg = litellm_exception_to_error_msg(e, llm)
+        if llm.config.api_key and len(llm.config.api_key) > 2:
+            error_msg = error_msg.replace(llm.config.api_key, "[REDACTED_API_KEY]")
+            stack_trace = stack_trace.replace(llm.config.api_key, "[REDACTED_API_KEY]")
 
-        yield StreamingError(error=error_msg)
+        yield StreamingError(error=client_error_msg, stack_trace=stack_trace)
         db_session.rollback()
         return
 
@@ -734,6 +738,7 @@ def stream_chat_message_objects(
                 tool_name_to_tool_id[tool.name] = tool_id
 
         gen_ai_response_message = partial_response(
+            reserved_message_id=reserved_message_id,
             message=answer.llm_answer,
             rephrased_query=(
                 qa_docs_response.rephrased_query if qa_docs_response else None
@@ -754,6 +759,8 @@ def stream_chat_message_objects(
             if tool_result
             else [],
         )
+
+        logger.debug("Committing messages")
         db_session.commit()  # actually save user / assistant message
 
         msg_detail_response = translate_db_message_to_chat_message_detail(
@@ -762,7 +769,8 @@ def stream_chat_message_objects(
 
         yield msg_detail_response
     except Exception as e:
-        logger.exception(e)
+        error_msg = str(e)
+        logger.exception(error_msg)
 
         # Frontend will erase whatever answer and show this instead
         yield StreamingError(error="Failed to parse LLM output")
@@ -774,6 +782,7 @@ def stream_chat_message(
     user: User | None,
     use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
+    is_connected: Callable[[], bool] | None = None,
 ) -> Iterator[str]:
     with get_session_context_manager() as db_session:
         objects = stream_chat_message_objects(
@@ -782,6 +791,7 @@ def stream_chat_message(
             db_session=db_session,
             use_existing_user_message=use_existing_user_message,
             litellm_additional_headers=litellm_additional_headers,
+            is_connected=is_connected,
         )
         for obj in objects:
             yield get_json_line(obj.dict())

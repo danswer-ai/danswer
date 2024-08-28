@@ -21,6 +21,7 @@ import {
   CpuIconSkeleton,
   FileIcon,
   SendIcon,
+  StopGeneratingIcon,
 } from "@/components/icons/icons";
 import { IconType } from "react-icons";
 import Popup from "../../../components/popup/Popup";
@@ -31,6 +32,9 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { StopCircle } from "@phosphor-icons/react/dist/ssr";
+import { Square } from "@phosphor-icons/react";
+import { ChatState } from "../types";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -39,10 +43,11 @@ export function ChatInputBar({
   selectedDocuments,
   message,
   setMessage,
+  stopGenerating,
   onSubmit,
-  isStreaming,
   filterManager,
   llmOverrideManager,
+  chatState,
 
   // assistants
   selectedAssistant,
@@ -59,6 +64,8 @@ export function ChatInputBar({
   inputPrompts,
 }: {
   openModelSettings: () => void;
+  chatState: ChatState;
+  stopGenerating: () => void;
   showDocs: () => void;
   selectedDocuments: DanswerDocument[];
   assistantOptions: Persona[];
@@ -68,7 +75,6 @@ export function ChatInputBar({
   message: string;
   setMessage: (message: string) => void;
   onSubmit: () => void;
-  isStreaming: boolean;
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
@@ -268,14 +274,14 @@ export function ChatInputBar({
 
   return (
     <div>
-      <div className="flex justify-center pb-2 max-w-screen-lg mx-auto mb-2">
+      <div className="flex justify-center max-w-screen-lg mx-auto">
         <div
           className="
             w-[90%]
+            max-w-searchbar-max
             shrink
             relative
             desktop:px-4
-            max-w-searchbar-max
             mx-auto
           "
         >
@@ -528,6 +534,7 @@ export function ChatInputBar({
                 mobilePosition="top-right"
               >
                 <ChatInputOption
+                  toggle
                   flexPriority="shrink"
                   name={
                     selectedAssistant ? selectedAssistant.name : "Assistants"
@@ -559,6 +566,7 @@ export function ChatInputBar({
               >
                 <ChatInputOption
                   flexPriority="second"
+                  toggle
                   name={
                     settings?.isMobile
                       ? undefined
@@ -595,24 +603,38 @@ export function ChatInputBar({
                 }}
               />
             </div>
+
             <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">
-              <div
-                className="cursor-pointer"
-                onClick={() => {
-                  if (message) {
-                    onSubmit();
-                  }
-                }}
-              >
-                <SendIcon
-                  size={28}
-                  className={`text-emphasis text-white p-1 rounded-full ${
-                    message && !isStreaming
-                      ? "bg-background-800"
-                      : "bg-[#D7D7D7]"
-                  }`}
-                />
-              </div>
+              {chatState == "streaming" ||
+              chatState == "toolBuilding" ||
+              chatState == "loading" ? (
+                <button
+                  className={`cursor-pointer ${chatState != "streaming" ? "bg-background-400" : "bg-background-800"}  h-[28px] w-[28px] rounded-full`}
+                  onClick={stopGenerating}
+                  disabled={chatState != "streaming"}
+                >
+                  <StopGeneratingIcon
+                    size={10}
+                    className={`text-emphasis m-auto text-white flex-none
+                      }`}
+                  />
+                </button>
+              ) : (
+                <button
+                  className="cursor-pointer"
+                  onClick={() => {
+                    if (message) {
+                      onSubmit();
+                    }
+                  }}
+                  disabled={chatState != "input"}
+                >
+                  <SendIcon
+                    size={28}
+                    className={`text-emphasis text-white p-1 rounded-full  ${chatState == "input" && message ? "bg-background-800" : "bg-background-400"} `}
+                  />
+                </button>
+              )}
             </div>
           </div>
         </div>

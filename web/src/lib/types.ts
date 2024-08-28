@@ -1,6 +1,7 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Credential } from "./connectors/credentials";
 import { Connector } from "./connectors/connectors";
+import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/types";
 
 export interface UserPreferences {
   chosen_assistants: number[] | null;
@@ -13,13 +14,15 @@ export enum UserStatus {
   deactivated = "deactivated",
 }
 
+export type UserRole = "basic" | "admin";
+
 export interface User {
   id: string;
   email: string;
   is_active: string;
   is_superuser: string;
   is_verified: string;
-  role: "basic" | "admin";
+  role: UserRole;
   preferences: UserPreferences;
   status: UserStatus;
   current_token_created_at?: Date;
@@ -35,6 +38,7 @@ export interface MinimalUserSnapshot {
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
+  | "completed_with_errors"
   | "failed"
   | "in_progress"
   | "not_started";
@@ -56,6 +60,7 @@ export interface IndexAttemptSnapshot {
   docs_removed_from_index: number;
   total_docs_indexed: number;
   error_msg: string | null;
+  error_count: number;
   full_exception_trace: string | null;
   time_started: string | null;
   time_updated: string;
@@ -67,6 +72,7 @@ export interface ConnectorIndexingStatus<
 > {
   cc_pair_id: number;
   name: string | null;
+  cc_pair_status: ConnectorCredentialPairStatus;
   connector: Connector<ConnectorConfigType>;
   credential: Credential<ConnectorCredentialType>;
   public_doc: boolean;

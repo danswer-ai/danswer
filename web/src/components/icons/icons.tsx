@@ -53,6 +53,9 @@ import awsWEBP from "../../../public/Amazon.webp";
 import azureIcon from "../../../public/Azure.png";
 
 import anthropicSVG from "../../../public/Anthropic.svg";
+import nomicSVG from "../../../public/nomic.svg";
+import microsoftIcon from "../../../public/microsoft.png";
+import mixedBreadSVG from "../../../public/Mixedbread.png";
 
 import OCIStorageSVG from "../../../public/OCI.svg";
 import googleCloudStorageIcon from "../../../public/GoogleCloudStorage.png";
@@ -71,6 +74,7 @@ import slackIcon from "../../../public/Slack.png";
 import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.png";
 import salesforceIcon from "../../../public/Salesforce.png";
+
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
 import mediawikiIcon from "../../../public/MediaWiki.svg";
@@ -82,8 +86,7 @@ import cohereIcon from "../../../public/Cohere.svg";
 import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
 
-import { FaRobot, FaSlack } from "react-icons/fa";
-import { IconType } from "react-icons";
+import { FaRobot } from "react-icons/fa";
 
 export interface IconProps {
   size?: number;
@@ -277,6 +280,48 @@ export const OpenSourceIcon = ({
     </div>
   );
 };
+export const MixedBreadIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={mixedBreadSVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const NomicIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={nomicSVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const MicrosoftIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={microsoftIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
 export const AnthropicIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -291,7 +336,7 @@ export const AnthropicIcon = ({
   );
 };
 
-export const LefToLineIcon = ({
+export const LeftToLineIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
@@ -1718,6 +1763,29 @@ export const FilledLikeIcon = ({
   );
 };
 
+export const StopGeneratingIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <svg
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="200"
+      height="200"
+      viewBox="0 0 14 14"
+    >
+      <path
+        fill="currentColor"
+        fill-rule="evenodd"
+        d="M1.5 0A1.5 1.5 0 0 0 0 1.5v11A1.5 1.5 0 0 0 1.5 14h11a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 12.5 0z"
+        clip-rule="evenodd"
+      />
+    </svg>
+  );
+};
+
 export const LikeFeedbackIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -2485,6 +2553,98 @@ export const ClosedBookIcon = ({
         stroke-linecap="round"
         stroke-linejoin="round"
         d="M12.5 13.54H3a1.5 1.5 0 0 1 0-3h8.5a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H3A1.5 1.5 0 0 0 1.5 2v10m10-1.46v3"
+      />
+    </svg>
+  );
+};
+
+export const PinIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <svg
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="200"
+      height="200"
+      viewBox="0 0 24 24"
+    >
+      <path
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.5"
+        d="m17.942 6.076l2.442 2.442a1.22 1.22 0 0 1-.147 1.855l-1.757.232a1.697 1.697 0 0 0-.94.452c-.72.696-1.453 1.428-2.674 2.637c-.21.212-.358.478-.427.769l-.94 3.772a1.22 1.22 0 0 1-1.978.379l-3.04-3.052l-3.052-3.04a1.221 1.221 0 0 1 .379-1.978l3.747-.964a1.8 1.8 0 0 0 .77-.44c1.379-1.355 1.88-1.855 2.66-2.698c.233-.25.383-.565.428-.903l.232-1.783a1.221 1.221 0 0 1 1.856-.146zm-9.51 9.498L3.256 20.75"
+      />
+    </svg>
+  );
+};
+
+export const TwoRightArrowIcons = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <svg
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="200"
+      height="200"
+      viewBox="0 0 24 24"
+    >
+      <path
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.5"
+        d="m5.36 19l5.763-5.763a1.738 1.738 0 0 0 0-2.474L5.36 5m7 14l5.763-5.763a1.738 1.738 0 0 0 0-2.474L12.36 5"
+      />
+    </svg>
+  );
+};
+
+export const PlusIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <svg
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="200"
+      height="200"
+      viewBox="0 0 16 16"
+    >
+      <path
+        fill="currentColor"
+        d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5z"
+      />
+    </svg>
+  );
+};
+
+export const MinusIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <svg
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="200"
+      height="200"
+      viewBox="0 0 16 16"
+    >
+      <path
+        fill="currentColor"
+        d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5z"
       />
     </svg>
   );

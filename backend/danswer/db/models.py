@@ -43,6 +43,7 @@ from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.constants import TokenRateLimitScope
 from danswer.connectors.models import InputType
 from danswer.db.enums import ChatSessionSharedStatus
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.enums import IndexingStatus
 from danswer.db.enums import IndexModelStatus
 from danswer.db.enums import TaskStatus
@@ -119,7 +120,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     # if specified, controls the assistants that are shown to the user + their order
     # if not specified, all assistants are shown
     chosen_assistants: Mapped[list[int]] = mapped_column(
-        postgresql.ARRAY(Integer), nullable=True
+        postgresql.JSONB(), nullable=True
     )
 
     oidc_expiry: Mapped[datetime.datetime] = mapped_column(
@@ -197,6 +198,9 @@ class ApiKey(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+    # Add this relationship to access the User object via user_id
+    user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
 
 
 class Notification(Base):
@@ -361,6 +365,9 @@ class ConnectorCredentialPair(Base):
         nullable=False,
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[ConnectorCredentialPairStatus] = mapped_column(
+        Enum(ConnectorCredentialPairStatus, native_enum=False), nullable=False
+    )
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
@@ -490,7 +497,6 @@ class Connector(Base):
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    disabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     credentials: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
@@ -654,6 +660,8 @@ class IndexAttempt(Base):
         "EmbeddingModel", back_populates="index_attempts"
     )
 
+    error_rows = relationship("IndexAttemptError", back_populates="index_attempt")
+
     __table_args__ = (
         Index(
             "ix_index_attempt_latest_for_connector_credential_pair",
@@ -669,6 +677,53 @@ class IndexAttempt(Base):
             f"error_msg={self.error_msg!r})>"
             f"time_created={self.time_created!r}, "
             f"time_updated={self.time_updated!r}, "
+        )
+
+    def is_finished(self) -> bool:
+        return self.status.is_terminal()
+
+
+class IndexAttemptError(Base):
+    """
+    Represents an error that was encountered during an IndexAttempt.
+    """
+
+    __tablename__ = "index_attempt_errors"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    index_attempt_id: Mapped[int] = mapped_column(
+        ForeignKey("index_attempt.id"),
+        nullable=True,
+    )
+
+    # The index of the batch where the error occurred (if looping thru batches)
+    # Just informational.
+    batch: Mapped[int | None] = mapped_column(Integer, default=None)
+    doc_summaries: Mapped[list[Any]] = mapped_column(postgresql.JSONB())
+    error_msg: Mapped[str | None] = mapped_column(Text, default=None)
+    traceback: Mapped[str | None] = mapped_column(Text, default=None)
+    time_created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    # This is the reverse side of the relationship
+    index_attempt = relationship("IndexAttempt", back_populates="error_rows")
+
+    __table_args__ = (
+        Index(
+            "index_attempt_id",
+            "time_created",
+        ),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<IndexAttempt(id={self.id!r}, "
+            f"index_attempt_id={self.index_attempt_id!r}, "
+            f"error_msg={self.error_msg!r})>"
+            f"time_created={self.time_created!r}, "
         )
 
 

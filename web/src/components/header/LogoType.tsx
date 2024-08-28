@@ -6,7 +6,7 @@ import {
   NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
   NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
 } from "@/lib/constants";
-import { LefToLineIcon, NewChatIcon, RightToLineIcon } from "../icons/icons";
+import { LeftToLineIcon, NewChatIcon, RightToLineIcon } from "../icons/icons";
 import { Tooltip } from "../tooltip/Tooltip";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { Logo } from "../Logo";
@@ -21,6 +21,7 @@ export default function LogoType({
   toggled,
   showArrow,
   assistantId,
+  explicitlyUntoggle = () => null,
 }: {
   hideOnMobile?: boolean;
   toggleSidebar?: () => void;
@@ -29,6 +30,7 @@ export default function LogoType({
   toggled?: boolean;
   showArrow?: boolean;
   assistantId?: number;
+  explicitlyUntoggle?: () => void;
 }) {
   const combinedSettings = useContext(SettingsContext);
   const enterpriseSettings = combinedSettings?.enterpriseSettings;
@@ -50,7 +52,7 @@ export default function LogoType({
         </div>
       )}
       <div
-        className={` ${showArrow ? "desktop:invisible" : "invisible"} break-words inline-block w-fit ml-2 text-text-700 text-xl`}
+        className={`bg-black cursor-pointer ${showArrow ? "desktop:invisible" : "invisible"} break-words inline-block w-fit ml-2 text-text-700 text-xl`}
       >
         <div className="max-w-[175px]">
           {enterpriseSettings && enterpriseSettings.application_name ? (
@@ -91,16 +93,24 @@ export default function LogoType({
           </Link>
         </Tooltip>
       )}
-      {showArrow && (
+      {showArrow && toggleSidebar && (
         <Tooltip
           delayDuration={0}
           content={toggled ? `Unpin sidebar` : "Pin sidebar"}
         >
-          <button className="mr-3 my-auto ml-auto" onClick={toggleSidebar}>
+          <button
+            className="mr-3 my-auto ml-auto"
+            onClick={() => {
+              toggleSidebar();
+              if (toggled) {
+                explicitlyUntoggle();
+              }
+            }}
+          >
             {!toggled && !combinedSettings?.isMobile ? (
               <RightToLineIcon />
             ) : (
-              <LefToLineIcon />
+              <LeftToLineIcon />
             )}
           </button>
         </Tooltip>

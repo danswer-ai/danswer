@@ -24,7 +24,7 @@ import { getDisplayNameForModel } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
-import { GroupsIcon, PaintingIcon, SwapIcon } from "@/components/icons/icons";
+import { GroupsIcon } from "@/components/icons/icons";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useUserGroups } from "@/lib/hooks";
@@ -42,13 +42,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FiInfo, FiPlus, FiX } from "react-icons/fi";
 import * as Yup from "yup";
-import { FullLLMProvider } from "../models/llm/interfaces";
+import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 import { IconImageSelection } from "@/components/assistants/AssistantIconCreation";
-import { FaSwatchbook } from "react-icons/fa";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -115,6 +114,7 @@ export function AssistantEditor({
 
   const [finalPrompt, setFinalPrompt] = useState<string | null>("");
   const [finalPromptError, setFinalPromptError] = useState<string>("");
+  const [removePersonaImage, setRemovePersonaImage] = useState(false);
 
   const triggerFinalPromptUpdate = async (
     systemPrompt: string,
@@ -229,6 +229,9 @@ export function AssistantEditor({
     groups: existingPersona?.groups ?? [],
   };
 
+  const [existingPersonaImageId, setExistingPersonaImageId] = useState<
+    string | null
+  >(existingPersona?.uploaded_image_id || null);
   return (
     <div>
       {popup}
@@ -353,6 +356,7 @@ export function AssistantEditor({
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
               tool_ids: enabledTools,
+              remove_image: removePersonaImage,
             });
           } else {
             [promptResponse, personaResponse] = await createPersona({
@@ -489,7 +493,9 @@ export function AssistantEditor({
 
                   <IconImageSelection
                     setFieldValue={setFieldValue}
-                    existingPersona={existingPersona!}
+                    existingPersonaImageId={existingPersonaImageId!}
+                    setExistingPersonaImageId={setExistingPersonaImageId}
+                    setRemovePersonaImage={setRemovePersonaImage}
                   />
                 </div>
 
@@ -604,40 +610,95 @@ export function AssistantEditor({
                     </div>
                   </div>
 
-                  <div className="mt-2 ml-1">
-                    {imageGenerationTool &&
-                      checkLLMSupportsImageInput(
-                        providerDisplayNameToProviderName.get(
-                          values.llm_model_provider_override || ""
-                        ) ||
-                          defaultProviderName ||
-                          "",
-                        values.llm_model_version_override ||
-                          defaultModelName ||
-                          ""
-                      ) && (
-                        <BooleanFormField
-                          noPadding
-                          name={`enabled_tools_map.${imageGenerationTool.id}`}
-                          label="Image Generation Tool"
-                          onChange={() => {
-                            toggleToolInValues(imageGenerationTool.id);
-                          }}
-                        />
-                      )}
+                  <div className="mt-2 flex flex-col  ml-1">
+                    {imageGenerationTool && (
+                      <TooltipProvider delayDuration={50}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={`w-fit ${
+                                !checkLLMSupportsImageInput(
+                                  providerDisplayNameToProviderName.get(
+                                    values.llm_model_provider_override || ""
+                                  ) || "",
+                                  values.llm_model_version_override || ""
+                                )
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
+                            >
+                              <BooleanFormField
+                                noPadding
+                                name={`enabled_tools_map.${imageGenerationTool.id}`}
+                                label="Image Generation Tool"
+                                onChange={() => {
+                                  toggleToolInValues(imageGenerationTool.id);
+                                }}
+                                disabled={
+                                  !checkLLMSupportsImageInput(
+                                    providerDisplayNameToProviderName.get(
+                                      values.llm_model_provider_override || ""
+                                    ) || "",
+                                    values.llm_model_version_override || ""
+                                  )
+                                }
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          {!checkLLMSupportsImageInput(
+                            providerDisplayNameToProviderName.get(
+                              values.llm_model_provider_override || ""
+                            ) || "",
+                            values.llm_model_version_override || ""
+                          ) && (
+                            <TooltipContent side="top" align="center">
+                              <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                                To use Image Generation, select GPT-4o as the
+                                default model for this Assistant.
+                              </p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+
+                    {searchTool && (
+                      <TooltipProvider delayDuration={50}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={`w-fit ${
+                                ccPairs.length === 0
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
+                            >
+                              <BooleanFormField
+                                name={`enabled_tools_map.${searchTool.id}`}
+                                label="Search Tool"
+                                noPadding
+                                onChange={() => {
+                                  setFieldValue("num_chunks", null);
+                                  toggleToolInValues(searchTool.id);
+                                }}
+                                disabled={ccPairs.length === 0}
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          {ccPairs.length === 0 && (
+                            <TooltipContent side="top" align="center">
+                              <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                                To use the Search Tool, you need to have at
+                                least one Connector-Credential pair configured.
+                              </p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
 
                     {ccPairs.length > 0 && searchTool && (
                       <>
-                        <BooleanFormField
-                          name={`enabled_tools_map.${searchTool.id}`}
-                          label="Search Tool"
-                          noPadding
-                          onChange={() => {
-                            setFieldValue("num_chunks", null);
-                            toggleToolInValues(searchTool.id);
-                          }}
-                        />
-
                         {searchToolEnabled() && (
                           <CollapsibleSection prompt="Configure Search">
                             <div>

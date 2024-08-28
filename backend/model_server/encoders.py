@@ -207,7 +207,7 @@ def get_embedding_model(
         _GLOBAL_MODELS_DICT = {}
 
     if model_name not in _GLOBAL_MODELS_DICT:
-        logger.info(f"Loading {model_name}")
+        logger.notice(f"Loading {model_name}")
         # Some model architectures that aren't built into the Transformers or Sentence
         # Transformer need to be downloaded to be loaded locally. This does not mean
         # data is sent to remote servers for inference, however the remote code can
@@ -229,7 +229,7 @@ def get_local_reranking_model(
 ) -> CrossEncoder:
     global _RERANK_MODEL
     if _RERANK_MODEL is None:
-        logger.info(f"Loading {model_name}")
+        logger.notice(f"Loading {model_name}")
         model = CrossEncoder(model_name)
         _RERANK_MODEL = model
     return _RERANK_MODEL
@@ -283,6 +283,7 @@ def embed_text(
 
     elif model_name is not None:
         prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
+
         local_model = get_embedding_model(
             model_name=model_name, max_context_length=max_context_length
         )

@@ -8,6 +8,8 @@ from email.mime.text import MIMEText
 from typing import Optional
 from typing import Tuple
 
+from email_validator import EmailNotValidError
+from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -40,6 +42,7 @@ from danswer.configs.app_configs import SMTP_PASS
 from danswer.configs.app_configs import SMTP_PORT
 from danswer.configs.app_configs import SMTP_SERVER
 from danswer.configs.app_configs import SMTP_USER
+from danswer.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.app_configs import WEB_DOMAIN
@@ -59,10 +62,7 @@ from danswer.db.users import get_user_by_email
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
-from danswer.utils.variable_functionality import (
-    fetch_versioned_implementation,
-)
-
+from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
 
@@ -81,7 +81,7 @@ def verify_auth_setting() -> None:
             "User must choose a valid user authentication method: "
             "disabled, basic, or google_oauth"
         )
-    logger.info(f"Using Auth Type: {AUTH_TYPE.value}")
+    logger.notice(f"Using Auth Type: {AUTH_TYPE.value}")
 
 
 def get_display_email(email: str | None, space_less: bool = False) -> str:
@@ -106,8 +106,28 @@ def user_needs_to_be_verified() -> bool:
 
 def verify_email_is_invited(email: str) -> None:
     whitelist = get_invited_users()
-    if (whitelist and email not in whitelist) or not email:
-        raise PermissionError("User not on allowed user whitelist")
+    if not whitelist:
+        return
+
+    if not email:
+        raise PermissionError("Email must be specified")
+
+    email_info = validate_email(email)  # can raise EmailNotValidError
+
+    for email_whitelist in whitelist:
+        try:
+            # normalized emails are now being inserted into the db
+            # we can remove this normalization on read after some time has passed
+            email_info_whitelist = validate_email(email_whitelist)
+        except EmailNotValidError:
+            continue
+
+        # oddly, normalization does not include lowercasing the user part of the
+        # email address ... which we want to allow
+        if email_info.normalized.lower() == email_info_whitelist.normalized.lower():
+            return
+
+    raise PermissionError("User not on allowed user whitelist")
 
 
 def verify_email_in_whitelist(email: str) -> None:
@@ -202,10 +222,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             is_verified_by_default=is_verified_by_default,
         )
 
-        # NOTE: google oauth expires after 1hr. We don't want to force the user to
-        # re-authenticate that frequently, so for now we'll just ignore this for
-        # google oauth users
-        if expires_at and AUTH_TYPE != AuthType.GOOGLE_OAUTH:
+        # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
+        # re-authenticate that frequently, so by default this is disabled
+        if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
             oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
             await self.user_db.update(user, update_dict={"oidc_expiry": oidc_expiry})
         return user
@@ -213,7 +232,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
     ) -> None:
-        logger.info(f"User {user.id} has registered.")
+        logger.notice(f"User {user.id} has registered.")
         optional_telemetry(
             record_type=RecordType.SIGN_UP,
             data={"action": "create"},
@@ -223,14 +242,14 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
-        logger.info(f"User {user.id} has forgot their password. Reset token: {token}")
+        logger.notice(f"User {user.id} has forgot their password. Reset token: {token}")
 
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
         verify_email_domain(user.email)
 
-        logger.info(
+        logger.notice(
             f"Verification requested for user {user.id}. Verification token: {token}"
         )
 
