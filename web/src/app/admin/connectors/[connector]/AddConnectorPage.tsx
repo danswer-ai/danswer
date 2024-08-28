@@ -167,6 +167,28 @@ export default function AddConnector({
     } = formValues;
     const { pruneFreq, indexingStart, refreshFreq } = advancedSettings;
 
+    // Apply transforms from connectors.ts configuration
+    const transformedConnectorSpecificConfig = Object.entries(
+      connector_specific_config
+    ).reduce(
+      (acc, [key, value]) => {
+        const matchingConfigValue = configuration.values.find(
+          (configValue) => configValue.name === key
+        );
+        if (
+          matchingConfigValue &&
+          "transform" in matchingConfigValue &&
+          matchingConfigValue.transform
+        ) {
+          acc[key] = matchingConfigValue.transform(value as string[]);
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {} as Record<string, any>
+    );
+
     const AdvancedConfig: AdvancedConfigFinal = {
       pruneFreq: advancedSettings.pruneFreq * 60 * 60 * 24,
       indexingStart: convertStringToDateTime(indexingStart),
@@ -211,7 +233,7 @@ export default function AddConnector({
 
     const { message, isSuccess, response } = await submitConnector<any>(
       {
-        connector_specific_config: connector_specific_config,
+        connector_specific_config: transformedConnectorSpecificConfig,
         input_type: connector == "web" ? "load_state" : "poll", // single case
         name: name,
         source: connector,
@@ -468,7 +490,6 @@ export default function AddConnector({
             >
               {(formikProps) => {
                 setFormValues(formikProps.values);
-                console.log(formikProps.values);
                 handleFormStatusChange(
                   formikProps.isValid && isFormSubmittable(formikProps.values)
                 );
