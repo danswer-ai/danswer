@@ -133,9 +133,7 @@ export function CodeBlock({
         )}
       </div>
       <pre {...props} className="overflow-x-scroll" style={{ padding: "1rem" }}>
-        <code className={`text-sm overflow-x-auto ${className}`}>
-          {children}
-        </code>
+        <code className={`text-xs overflow-x-auto `}>{children}</code>
       </pre>
     </div>
   );

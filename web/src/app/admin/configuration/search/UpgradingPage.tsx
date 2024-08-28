@@ -40,7 +40,7 @@ export default function UpgradingPage({
       method: "POST",
     });
     if (response.ok) {
-      mutate("/api/search-settings/get-secondary-embedding-model");
+      mutate("/api/search-settings/get-secondary-search-settings");
     } else {
       alert(
         `Failed to cancel embedding model update - ${await response.text()}`

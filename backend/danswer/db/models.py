@@ -5,7 +5,7 @@ from typing import Any
 from typing import Literal
 from typing import NotRequired
 from typing import Optional
-from typing import TypedDict
+from typing_extensions import TypedDict  # noreorder
 from uuid import UUID
 
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
@@ -34,6 +34,7 @@ from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
@@ -56,6 +57,7 @@ from danswer.search.enums import RecencyBiasSetting
 from danswer.utils.encryption import decrypt_bytes_to_string
 from danswer.utils.encryption import encrypt_string_to_bytes
 from shared_configs.enums import EmbeddingProvider
+from shared_configs.enums import RerankerProvider
 
 
 class Base(DeclarativeBase):
@@ -543,33 +545,47 @@ class Credential(Base):
     user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
 
-class EmbeddingModel(Base):
-    __tablename__ = "embedding_model"
+class SearchSettings(Base):
+    __tablename__ = "search_settings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     model_name: Mapped[str] = mapped_column(String)
     model_dim: Mapped[int] = mapped_column(Integer)
     normalize: Mapped[bool] = mapped_column(Boolean)
-    query_prefix: Mapped[str] = mapped_column(String)
-    passage_prefix: Mapped[str] = mapped_column(String)
+    query_prefix: Mapped[str | None] = mapped_column(String, nullable=True)
+    passage_prefix: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[IndexModelStatus] = mapped_column(
         Enum(IndexModelStatus, native_enum=False)
     )
     index_name: Mapped[str] = mapped_column(String)
-
-    # New field for cloud provider relationship
     provider_type: Mapped[EmbeddingProvider | None] = mapped_column(
         ForeignKey("embedding_provider.provider_type"), nullable=True
     )
 
+    # Mini and Large Chunks (large chunk also checks for model max context)
+    multipass_indexing: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    multilingual_expansion: Mapped[list[str]] = mapped_column(
+        postgresql.ARRAY(String), default=[]
+    )
+
+    # Reranking settings
+    disable_rerank_for_streaming: Mapped[bool] = mapped_column(Boolean, default=False)
+    rerank_model_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    rerank_provider_type: Mapped[RerankerProvider | None] = mapped_column(
+        Enum(RerankerProvider, native_enum=False), nullable=True
+    )
+    rerank_api_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    num_rerank: Mapped[int] = mapped_column(Integer, default=NUM_POSTPROCESSED_RESULTS)
+
     cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(
         "CloudEmbeddingProvider",
-        back_populates="embedding_models",
+        back_populates="search_settings",
         foreign_keys=[provider_type],
     )
 
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
-        "IndexAttempt", back_populates="embedding_model"
+        "IndexAttempt", back_populates="search_settings"
     )
 
     __table_args__ = (
@@ -628,8 +644,8 @@ class IndexAttempt(Base):
     # only filled if status = "failed" AND an unhandled exception caused the failure
     full_exception_trace: Mapped[str | None] = mapped_column(Text, default=None)
     # Nullable because in the past, we didn't allow swapping out embedding models live
-    embedding_model_id: Mapped[int] = mapped_column(
-        ForeignKey("embedding_model.id"),
+    search_settings_id: Mapped[int] = mapped_column(
+        ForeignKey("search_settings.id"),
         nullable=False,
     )
     time_created: Mapped[datetime.datetime] = mapped_column(
@@ -651,8 +667,8 @@ class IndexAttempt(Base):
         "ConnectorCredentialPair", back_populates="index_attempts"
     )
 
-    embedding_model: Mapped[EmbeddingModel] = relationship(
-        "EmbeddingModel", back_populates="index_attempts"
+    search_settings: Mapped[SearchSettings] = relationship(
+        "SearchSettings", back_populates="index_attempts"
     )
 
     error_rows = relationship("IndexAttemptError", back_populates="index_attempt")
@@ -1070,10 +1086,10 @@ class CloudEmbeddingProvider(Base):
         Enum(EmbeddingProvider), primary_key=True
     )
     api_key: Mapped[str | None] = mapped_column(EncryptedString())
-    embedding_models: Mapped[list["EmbeddingModel"]] = relationship(
-        "EmbeddingModel",
+    search_settings: Mapped[list["SearchSettings"]] = relationship(
+        "SearchSettings",
         back_populates="cloud_provider",
-        foreign_keys="EmbeddingModel.provider_type",
+        foreign_keys="SearchSettings.provider_type",
     )
 
     def __repr__(self) -> str:

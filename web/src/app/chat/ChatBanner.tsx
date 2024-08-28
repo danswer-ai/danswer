@@ -94,7 +94,7 @@ export function ChatBanner() {
               content={settings.enterpriseSettings.custom_header_content}
             />
           </div>
-          <div className="absolute bottom-0 right-0 ">
+          <div className="absolute bottom-0 right-0">
             {isOverflowing && (
               <Popover
                 open={isPopoverOpen}

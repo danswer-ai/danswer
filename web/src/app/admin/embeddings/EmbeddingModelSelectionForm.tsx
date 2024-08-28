@@ -93,10 +93,10 @@ export function EmbeddingModelSelection({
 
   const onConfirmSelection = async (model: EmbeddingModelDescriptor) => {
     const response = await fetch(
-      "/api/search-settings/set-new-embedding-model",
+      "/api/search-settings/set-new-search-settings",
       {
         method: "POST",
-        body: JSON.stringify(model),
+        body: JSON.stringify({ ...model, index_name: null }),
         headers: {
           "Content-Type": "application/json",
         },
@@ -104,7 +104,7 @@ export function EmbeddingModelSelection({
     );
     if (response.ok) {
       setShowTentativeModel(null);
-      mutate("/api/search-settings/get-secondary-embedding-model");
+      mutate("/api/search-settings/get-secondary-search-settings");
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
       }
@@ -227,7 +227,7 @@ export function EmbeddingModelSelection({
         />
       )}
 
-      <p className=" t mb-4">
+      <p className="t mb-4">
         Select from cloud, self-hosted models, or continue with your current
         embedding model.
       </p>
@@ -242,7 +242,7 @@ export function EmbeddingModelSelection({
         >
           Current
         </button>
-        <div className="px-2 ">
+        <div className="px-2">
           <button
             onClick={() => setModelTab("cloud")}
             className={`mx-2 p-2 font-bold  ${
@@ -254,7 +254,7 @@ export function EmbeddingModelSelection({
             Cloud-based
           </button>
         </div>
-        <div className="px-2 ">
+        <div className="px-2">
           <button
             onClick={() => setModelTab("open")}
             className={` mx-2 p-2 font-bold  ${

@@ -63,7 +63,6 @@ from danswer.db.credentials import delete_google_drive_service_account_credentia
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_cnts_for_cc_pairs
-from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
@@ -71,6 +70,7 @@ from danswer.db.index_attempt import get_latest_finished_index_attempt_for_cc_pa
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
 from danswer.db.models import UserRole
+from danswer.db.search_settings import get_current_search_settings
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.file_store.file_store import get_default_file_store
 from danswer.server.documents.models import AuthStatus
@@ -705,7 +705,7 @@ def connector_run_once(
         )
     ]
 
-    embedding_model = get_current_db_embedding_model(db_session)
+    search_settings = get_current_search_settings(db_session)
 
     connector_credential_pairs = [
         get_connector_credential_pair(run_info.connector_id, credential_id, db_session)
@@ -716,7 +716,7 @@ def connector_run_once(
     index_attempt_ids = [
         create_index_attempt(
             connector_credential_pair_id=connector_credential_pair.id,
-            embedding_model_id=embedding_model.id,
+            search_settings_id=search_settings.id,
             from_beginning=run_info.from_beginning,
             db_session=db_session,
         )

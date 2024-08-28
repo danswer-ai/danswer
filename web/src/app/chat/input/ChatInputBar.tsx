@@ -32,9 +32,8 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { StopCircle } from "@phosphor-icons/react/dist/ssr";
-import { Square } from "@phosphor-icons/react";
 import { ChatState } from "../types";
+
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
@@ -274,12 +273,10 @@ export function ChatInputBar({
 
   return (
     <div id="danswer-chat-input">
-      <div className="flex justify-center max-w-screen-lg mx-auto">
+      <div className="flex justify-center mx-auto">
         <div
           className="
-            w-[90%]
-            max-w-searchbar-max
-            shrink
+            w-[800px]
             relative
             desktop:px-4
             mx-auto
@@ -341,7 +338,7 @@ export function ChatInputBar({
                       updateInputPrompt(currentPrompt);
                     }}
                   >
-                    <p className="font-bold ">{currentPrompt.prompt}</p>
+                    <p className="font-bold">{currentPrompt.prompt}</p>
                     <p className="line-clamp-1">
                       {currentPrompt.id == selectedAssistant.id && "(default) "}
                       {currentPrompt.content}
@@ -486,8 +483,7 @@ export function ChatInputBar({
                 outline-none
                 placeholder-subtle
                 resize-none
-                pl-4
-                pr-12
+                px-5
                 py-4
                 h-14
               `}
@@ -515,7 +511,7 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex items-center space-x-3 mr-12 px-4 pb-2 ">
+            <div className="flex items-center space-x-3 mr-12 px-4 pb-2">
               <Popup
                 removePadding
                 content={(close) => (
@@ -559,7 +555,6 @@ export function ChatInputBar({
                     ref={ref}
                     llmOverrideManager={llmOverrideManager}
                     chatSessionId={chatSessionId}
-                    currentAssistant={selectedAssistant}
                   />
                 )}
                 position="top"

@@ -26,7 +26,10 @@ from danswer.db.models import User__UserGroup
 from danswer.db.models import UserRole
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from danswer.server.features.document_set.models import DocumentSetUpdateRequest
+from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+
+logger = setup_logger()
 
 
 def _add_user_filters(
@@ -233,9 +236,9 @@ def insert_document_set(
         )
 
         db_session.commit()
-    except:
+    except Exception as e:
         db_session.rollback()
-        raise
+        logger.error(f"Error creating document set: {e}")
 
     return new_document_set_row, ds_cc_pairs
 
@@ -466,26 +469,6 @@ def fetch_all_document_sets_for_user(
     stmt = select(DocumentSetDBModel).distinct()
     stmt = _add_user_filters(stmt, user, get_editable=get_editable)
     return db_session.scalars(stmt).all()
-
-
-def fetch_user_document_sets(
-    user_id: UUID | None, db_session: Session
-) -> list[tuple[DocumentSetDBModel, list[ConnectorCredentialPair]]]:
-    # If Auth is turned off, all document sets become visible
-    # document sets are not permission enforced, only for organizational purposes
-    # the documents themselves are permission enforced
-    if user_id is None:
-        return fetch_document_sets(
-            user_id=user_id, db_session=db_session, include_outdated=True
-        )
-
-    versioned_fetch_doc_sets_fn = fetch_versioned_implementation(
-        "danswer.db.document_set", "fetch_document_sets"
-    )
-
-    return versioned_fetch_doc_sets_fn(
-        user_id=user_id, db_session=db_session, include_outdated=True
-    )
 
 
 def fetch_documents_for_document_set_paginated(

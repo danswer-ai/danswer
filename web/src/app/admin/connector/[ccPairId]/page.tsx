@@ -128,7 +128,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
       {popup}
       <BackButton />
       <div className="pb-1 flex mt-1">
-        <div className="mr-2 my-auto ">
+        <div className="mr-2 my-auto">
           <SourceIcon iconSize={24} sourceType={ccPair.connector.source} />
         </div>
 
