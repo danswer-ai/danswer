@@ -89,6 +89,9 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
       {(!formikProps.values.is_public ||
         !isAdmin ||
         formikProps.values.groups.length > 0) &&
+      userGroupsIsLoading ? (
+        <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+      ) : (
         userGroups &&
         userGroups.length > 0 && (
           <>
@@ -114,19 +117,13 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
               name="groups"
               render={(arrayHelpers: ArrayHelpers) => (
                 <div className="flex gap-2 flex-wrap mb-4">
-                  {userGroupsIsLoading ? (
-                    <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
-                  ) : (
-                    userGroups &&
-                    userGroups.map((userGroup: UserGroup) => {
-                      const ind = formikProps.values.groups.indexOf(
-                        userGroup.id
-                      );
-                      let isSelected = ind !== -1;
-                      return (
-                        <div
-                          key={userGroup.id}
-                          className={`
+                  {userGroups.map((userGroup: UserGroup) => {
+                    const ind = formikProps.values.groups.indexOf(userGroup.id);
+                    let isSelected = ind !== -1;
+                    return (
+                      <div
+                        key={userGroup.id}
+                        className={`
                         px-3 
                         py-1
                         rounded-lg 
@@ -137,22 +134,20 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                         cursor-pointer 
                         ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
                     `}
-                          onClick={() => {
-                            if (isSelected) {
-                              arrayHelpers.remove(ind);
-                            } else {
-                              arrayHelpers.push(userGroup.id);
-                            }
-                          }}
-                        >
-                          <div className="my-auto flex">
-                            <FiUsers className="my-auto mr-2" />{" "}
-                            {userGroup.name}
-                          </div>
+                        onClick={() => {
+                          if (isSelected) {
+                            arrayHelpers.remove(ind);
+                          } else {
+                            arrayHelpers.push(userGroup.id);
+                          }
+                        }}
+                      >
+                        <div className="my-auto flex">
+                          <FiUsers className="my-auto mr-2" /> {userGroup.name}
                         </div>
-                      );
-                    })
-                  )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             />
@@ -162,7 +157,8 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
               className="text-error text-sm mt-1"
             />
           </>
-        )}
+        )
+      )}
     </div>
   );
 };
