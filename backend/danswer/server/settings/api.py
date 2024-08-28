@@ -3,12 +3,24 @@ from typing import cast
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
+from fastapi.responses import RedirectResponse
+from fastapi.security import OAuth2PasswordBearer
+from fastapi_users.authentication import Strategy
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from danswer.auth.users import create_user_session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.auth.users import get_database_strategy
+from danswer.auth.users import get_or_create_user
+from danswer.auth.users import get_user_manager
 from danswer.auth.users import is_user_admin
+from danswer.auth.users import UserManager
+from danswer.auth.users import verify_sso_token
+from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import NotificationType
 from danswer.db.engine import get_session
@@ -28,12 +40,65 @@ from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
 from danswer.utils.logger import setup_logger
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+admin_router = APIRouter(prefix="/admin/settings")
+basic_router = APIRouter(prefix="/settings")
 
 logger = setup_logger()
 
 
-admin_router = APIRouter(prefix="/admin/settings")
-basic_router = APIRouter(prefix="/settings")
+@basic_router.post("/auth/sso-callback")
+async def sso_callback(
+    sso_token: str = Query(
+        ..., alias="sso_token"
+    ),  # Get SSO token from query parameters
+    strategy: Strategy = Depends(get_database_strategy),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    print("SSO callback reached")
+
+    payload = verify_sso_token(sso_token)
+    print("hi")
+    user = await get_or_create_user(
+        payload["email"], payload["user_id"], payload["tenant_id"]
+    )
+    print(user)
+    session_token = await create_user_session(user, strategy)
+    print("HIII")
+    response = RedirectResponse(url="/")
+    response.set_cookie(
+        key="session",
+        value=session_token,
+        httponly=True,
+        max_age=SESSION_EXPIRE_TIME_SECONDS,
+        secure=WEB_DOMAIN.startswith("https"),
+    )
+    return response
+
+
+# @basic_router.post("/auth/sso-callback")
+# async def sso_callback(
+#     user = Depends(current_user),
+#     token: str = Depends(oauth2_scheme),
+#     strategy: Strategy = Depends(get_database_strategy),
+#     user_manager: UserManager = Depends(get_user_manager),
+# ):
+#     print('SSO callback reached')
+
+#     payload = verify_sso_token(token)
+#     user = await get_or_create_user(payload["email"], payload["user_id"], payload["tenant_id"])
+#     session_token = await create_user_session(user, strategy)
+
+#     response = RedirectResponse(url="/")
+#     response.set_cookie(
+#         key="session",
+#         value=session_token,
+#         httponly=True,
+#         max_age=SESSION_EXPIRE_TIME_SECONDS,
+#         secure=WEB_DOMAIN.startswith("https"),
+#     )
+#     return response
 
 
 @admin_router.put("")

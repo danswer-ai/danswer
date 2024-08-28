@@ -11,7 +11,6 @@ from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from danswer.auth.schemas import UserRole
 from danswer.db.engine import get_async_session
 from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.models import AccessToken
@@ -46,11 +45,11 @@ async def get_user_count() -> int:
 # Need to override this because FastAPI Users doesn't give flexibility for backend field creation logic in OAuth flow
 class SQLAlchemyUserAdminDB(SQLAlchemyUserDatabase):
     async def create(self, create_dict: Dict[str, Any]) -> UP:
-        user_count = await get_user_count()
-        if user_count == 0 or create_dict["email"] in get_default_admin_user_emails():
-            create_dict["role"] = UserRole.ADMIN
-        else:
-            create_dict["role"] = UserRole.BASIC
+        await get_user_count()
+        # if user_count == 0 or create_dict["email"] in get_default_admin_user_emails():
+        #     create_dict["role"] = UserRole.ADMIN
+        # else:
+        #     create_dict["role"] = UserRole.BASIC
         return await super().create(create_dict)
 
 

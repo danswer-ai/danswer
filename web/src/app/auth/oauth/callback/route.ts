@@ -3,6 +3,9 @@ import { buildUrl } from "@/lib/utilsSS";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (request: NextRequest) => {
+  console.log("request", request);
+  console.log("HELLO");
+  console.log("request.nextUrl.search", request.nextUrl.search);
   // Wrapper around the FastAPI endpoint /auth/oauth/callback,
   // which adds back a redirect to the main app.
   const url = new URL(buildUrl("/auth/oauth/callback"));

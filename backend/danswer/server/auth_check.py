@@ -34,6 +34,7 @@ PUBLIC_ENDPOINT_SPECS = [
     ("/auth/reset-password", {"POST"}),
     ("/auth/request-verify-token", {"POST"}),
     ("/auth/verify", {"POST"}),
+    ("/settings/auth/sso-callback", {"POST"}),
     ("/users/me", {"GET"}),
     ("/users/me", {"PATCH"}),
     ("/users/{id}", {"GET"}),
