@@ -6,8 +6,8 @@ from tests.integration.common_utils.connectors import ConnectorClient
 from tests.integration.common_utils.constants import MAX_DELAY
 from tests.integration.common_utils.document_sets import DocumentSetClient
 from tests.integration.common_utils.seed_documents import TestDocumentClient
-from tests.integration.common_utils.user_groups import UserGroupClient
-from tests.integration.common_utils.user_groups import UserGroupCreate
+from tests.integration.common_utils.user_groups import TestUserGroup
+from tests.integration.common_utils.user_groups import UserGroupManager
 from tests.integration.common_utils.vespa import TestVespaClient
 
 
@@ -70,41 +70,18 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     print("Document sets created and synced")
 
     # if so, create ACLs
-    user_group_1 = UserGroupClient.create_user_group(
-        UserGroupCreate(
-            name="Test User Group 1", user_ids=[], cc_pair_ids=[c1_details.cc_pair_id]
-        )
+    user_group_1: TestUserGroup = UserGroupManager.build_test_user_group(
+        name="Test User Group 1",
+        user_ids=[],
+        cc_pair_ids=[c1_details.cc_pair_id],
     )
-    user_group_2 = UserGroupClient.create_user_group(
-        UserGroupCreate(
-            name="Test User Group 2",
-            user_ids=[],
-            cc_pair_ids=[c1_details.cc_pair_id, c2_details.cc_pair_id],
-        )
+    user_group_1.id = UserGroupManager.upsert_test_user_group(user_group_1)
+    user_group_2: TestUserGroup = UserGroupManager.build_test_user_group(
+        name="Test User Group 2",
+        user_ids=[],
+        cc_pair_ids=[c1_details.cc_pair_id, c2_details.cc_pair_id],
     )
-
-    # wait for user groups to be available
-    start = time.time()
-    while True:
-        user_groups = {ug.id: ug for ug in UserGroupClient.fetch_user_groups()}
-
-        if not (
-            user_group_1 in user_groups.keys() and user_group_2 in user_groups.keys()
-        ):
-            raise RuntimeError("User groups not found")
-
-        if (
-            user_groups[user_group_1].is_up_to_date
-            and user_groups[user_group_2].is_up_to_date
-        ):
-            break
-
-        if time.time() - start > MAX_DELAY:
-            raise TimeoutError("User groups were not synced within the max delay")
-
-        time.sleep(2)
-
-    print("User groups created and synced")
+    user_group_2.id = UserGroupManager.upsert_test_user_group(user_group_2)
 
     # delete connector 1
     ConnectorClient.update_connector_status(
@@ -172,16 +149,16 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     assert doc_set_2_found
 
     # validate user groups
-    all_user_groups = UserGroupClient.fetch_user_groups()
+    all_user_groups = UserGroupManager.fetch_user_groups()
     assert len(all_user_groups) == 2
 
     user_group_1_found = False
     user_group_2_found = False
     for user_group in all_user_groups:
-        if user_group.id == user_group_1:
+        if user_group.id == user_group_1.id:
             user_group_1_found = True
             assert user_group.cc_pairs == []
-        if user_group.id == user_group_2:
+        if user_group.id == user_group_2.id:
             user_group_2_found = True
             assert len(user_group.cc_pairs) == 1
             assert user_group.cc_pairs[0].id == c2_details.cc_pair_id
