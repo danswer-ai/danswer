@@ -389,8 +389,9 @@ def get_llm_max_output_tokens(
         # Fallback to a fraction of max_tokens if max_output_tokens is not specified
         if "max_tokens" in model_obj:
             max_output_tokens = int(
-                model_obj["max_tokens"] * 0.25
-            )  # Assuming 25% of max_tokens for output
+                model_obj["max_tokens"]
+                * 0.25  # could make this an environment variable
+            )
             logger.info(
                 f"Max output tokens for {model_name}: {max_output_tokens} (25% of max_tokens)"
             )
