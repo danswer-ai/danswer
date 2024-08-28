@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.access.models import DocumentAccess
 from danswer.connectors.models import Document
@@ -24,9 +25,8 @@ class BaseChunk(BaseModel):
     chunk_id: int
     blurb: str  # The first sentence(s) of the first Section of the chunk
     content: str
-    source_links: dict[
-        int, str
-    ] | None  # Holds the link and the offsets into the raw Chunk text
+    # Holds the link and the offsets into the raw Chunk text
+    source_links: dict[int, str] | None
     section_continuation: bool  # True if this Chunk's start is not at the start of a Section
 
 
@@ -47,7 +47,7 @@ class DocAwareChunk(BaseChunk):
 
     mini_chunk_texts: list[str] | None
 
-    large_chunk_reference_ids: list[int] = []
+    large_chunk_reference_ids: list[int] = Field(default_factory=list)
 
     def to_short_descriptor(self) -> str:
         """Used when logging the identity of a chunk"""
@@ -85,7 +85,7 @@ class DocMetadataAwareIndexChunk(IndexChunk):
         document_sets: set[str],
         boost: int,
     ) -> "DocMetadataAwareIndexChunk":
-        index_chunk_data = index_chunk.dict()
+        index_chunk_data = index_chunk.model_dump()
         return cls(
             **index_chunk_data,
             access=access,
@@ -101,6 +101,9 @@ class EmbeddingModelDetail(BaseModel):
     passage_prefix: str | None
     provider_type: EmbeddingProvider | None = None
     api_key: str | None = None
+
+    # This disables the "model_" protected namespace for pydantic
+    model_config = {"protected_namespaces": ()}
 
     @classmethod
     def from_db_model(
@@ -122,6 +125,9 @@ class IndexingSetting(EmbeddingModelDetail):
     model_dim: int
     index_name: str | None
     multipass_indexing: bool
+
+    # This disables the "model_" protected namespace for pydantic
+    model_config = {"protected_namespaces": ()}
 
     @classmethod
     def from_db_model(cls, search_settings: "SearchSettings") -> "IndexingSetting":

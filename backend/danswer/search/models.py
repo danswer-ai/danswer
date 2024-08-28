@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
-from pydantic import validator
+from pydantic import ConfigDict
+from pydantic import Field
+from pydantic import field_validator
 
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
@@ -112,7 +114,8 @@ class ChunkContext(BaseModel):
     chunks_below: int | None = None
     full_doc: bool = False
 
-    @validator("chunks_above", "chunks_below", pre=True, each_item=False)
+    @field_validator("chunks_above", "chunks_below")
+    @classmethod
     def check_non_negative(cls, value: int, field: Any) -> int:
         if value is not None and value < 0:
             raise ValueError(f"{field.name} must be non-negative")
@@ -137,9 +140,7 @@ class SearchRequest(ChunkContext):
     hybrid_alpha: float | None = None
     rerank_settings: RerankingDetails | None = None
     evaluation_type: LLMEvaluationType = LLMEvaluationType.UNSPECIFIED
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class SearchQuery(ChunkContext):
@@ -163,9 +164,7 @@ class SearchQuery(ChunkContext):
 
     num_hits: int = NUM_RETURNED_HITS
     offset: int = 0
-
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class RetrievalDetails(ChunkContext):
@@ -209,7 +208,7 @@ class InferenceChunk(BaseChunk):
     updated_at: datetime | None
     primary_owners: list[str] | None = None
     secondary_owners: list[str] | None = None
-    large_chunk_reference_ids: list[int] = []
+    large_chunk_reference_ids: list[int] = Field(default_factory=list)
 
     @property
     def unique_id(self) -> str:
@@ -268,7 +267,7 @@ class InferenceChunkUncleaned(InferenceChunk):
         # Assumes the cleaning has already been applied and just needs to translate to the right type
         inference_chunk_data = {
             k: v
-            for k, v in self.dict().items()
+            for k, v in self.model_dump().items()
             if k
             not in ["metadata_suffix"]  # May be other fields to throw out in the future
         }
@@ -288,7 +287,7 @@ class SearchDoc(BaseModel):
     document_id: str
     chunk_ind: int
     semantic_identifier: str
-    link: str | None
+    link: str | None = None
     blurb: str
     source_type: DocumentSource
     boost: int
@@ -297,7 +296,7 @@ class SearchDoc(BaseModel):
     # be `True` when doing an admin search
     hidden: bool
     metadata: dict[str, str | list[str]]
-    score: float | None
+    score: float | None = None
     is_relevant: bool | None = None
     relevance_explanation: str | None = None
     # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
@@ -305,13 +304,13 @@ class SearchDoc(BaseModel):
     # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]
     match_highlights: list[str]
     # when the doc was last updated
-    updated_at: datetime | None
-    primary_owners: list[str] | None
-    secondary_owners: list[str] | None
+    updated_at: datetime | None = None
+    primary_owners: list[str] | None = None
+    secondary_owners: list[str] | None = None
     is_internet: bool = False
 
-    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
-        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+    def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().model_dump(*args, **kwargs)  # type: ignore
         initial_dict["updated_at"] = (
             self.updated_at.isoformat() if self.updated_at else None
         )
@@ -329,7 +328,7 @@ class SavedSearchDoc(SearchDoc):
         """IMPORTANT: careful using this and not providing a db_doc_id If db_doc_id is not
         provided, it won't be able to actually fetch the saved doc and info later on. So only skip
         providing this if the SavedSearchDoc will not be used in the future"""
-        search_doc_data = search_doc.dict()
+        search_doc_data = search_doc.model_dump()
         search_doc_data["score"] = search_doc_data.get("score") or 0.0
         return cls(**search_doc_data, db_doc_id=db_doc_id)
 

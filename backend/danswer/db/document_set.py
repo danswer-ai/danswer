@@ -26,7 +26,10 @@ from danswer.db.models import User__UserGroup
 from danswer.db.models import UserRole
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from danswer.server.features.document_set.models import DocumentSetUpdateRequest
+from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+
+logger = setup_logger()
 
 
 def _add_user_filters(
@@ -233,9 +236,9 @@ def insert_document_set(
         )
 
         db_session.commit()
-    except:
+    except Exception as e:
         db_session.rollback()
-        raise
+        logger.error(f"Error creating document set: {e}")
 
     return new_document_set_row, ds_cc_pairs
 

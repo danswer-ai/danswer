@@ -323,7 +323,7 @@ def verify_user_logged_in(
 
 
 class ChosenDefaultModelRequest(BaseModel):
-    default_model: str | None
+    default_model: str | None = None
 
 
 @router.patch("/user/default-model")

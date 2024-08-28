@@ -3,6 +3,7 @@ from functools import partial
 from typing import Protocol
 
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
@@ -40,9 +41,7 @@ logger = setup_logger()
 class DocumentBatchPrepareContext(BaseModel):
     updatable_docs: list[Document]
     id_to_db_doc_map: dict[str, DBDocument]
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class IndexingPipelineProtocol(Protocol):

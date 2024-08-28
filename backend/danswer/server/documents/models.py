@@ -3,6 +3,7 @@ from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
@@ -40,14 +41,15 @@ class ConnectorBase(BaseModel):
     source: DocumentSource
     input_type: InputType
     connector_specific_config: dict[str, Any]
-    refresh_freq: int | None  # In seconds, None for one time index with no refresh
-    prune_freq: int | None
-    indexing_start: datetime | None
+    # In seconds, None for one time index with no refresh
+    refresh_freq: int | None = None
+    prune_freq: int | None = None
+    indexing_start: datetime | None = None
 
 
 class ConnectorUpdateRequest(ConnectorBase):
     is_public: bool | None = None
-    groups: list[int] | None = None
+    groups: list[int] = Field(default_factory=list)
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -93,7 +95,7 @@ class CredentialBase(BaseModel):
     source: DocumentSource
     name: str | None = None
     curator_public: bool = False
-    groups: list[int] = []
+    groups: list[int] = Field(default_factory=list)
 
 
 class CredentialSnapshot(CredentialBase):
@@ -254,21 +256,21 @@ class ConnectorCredentialPairIdentifier(BaseModel):
 
 
 class ConnectorCredentialPairMetadata(BaseModel):
-    name: str | None
-    is_public: bool
-    groups: list[int] | None
+    name: str | None = None
+    is_public: bool | None = None
+    groups: list[int] = Field(default_factory=list)
 
 
 class ConnectorCredentialPairDescriptor(BaseModel):
     id: int
-    name: str | None
+    name: str | None = None
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
 
 
 class RunConnectorRequest(BaseModel):
     connector_id: int
-    credential_ids: list[int] | None
+    credential_ids: list[int] | None = None
     from_beginning: bool = False
 
 
