@@ -411,7 +411,8 @@ export function ChatInputBar({
                     }
                   };
                   input.click();
-                }}
+                }}                
+                selectedTool={selectedAssistant?.tools[0]?.name}
               />
             </div>
             <div className="absolute bottom-2.5 right-10">
