@@ -28,11 +28,12 @@ from danswer.configs.model_configs import DISABLE_LITELLM_STREAMING
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_API_VERSION
 from danswer.configs.model_configs import GEN_AI_LLM_PROVIDER_TYPE
-from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import LLMConfig
 from danswer.llm.interfaces import ToolChoiceOptions
+from danswer.llm.utils import get_llm_max_output_tokens
+from danswer.llm.utils import get_max_input_tokens
 from danswer.utils.logger import setup_logger
 
 
@@ -193,10 +194,10 @@ class DefaultMultiLLM(LLM):
         timeout: int,
         model_provider: str,
         model_name: str,
+        max_output_tokens: int | None = None,
         api_base: str | None = GEN_AI_API_ENDPOINT,
         api_version: str | None = GEN_AI_API_VERSION,
         custom_llm_provider: str | None = GEN_AI_LLM_PROVIDER_TYPE,
-        max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
         temperature: float = GEN_AI_TEMPERATURE,
         custom_config: dict[str, str] | None = None,
         extra_headers: dict[str, str] | None = None,
@@ -209,7 +210,15 @@ class DefaultMultiLLM(LLM):
         self._api_base = api_base
         self._api_version = api_version
         self._custom_llm_provider = custom_llm_provider
-        self._max_output_tokens = max_output_tokens
+        self._max_output_tokens = (
+            max_output_tokens
+            if max_output_tokens is not None
+            else get_llm_max_output_tokens(
+                model_map=litellm.model_cost,
+                model_name=model_name,
+                model_provider=model_provider,
+            )
+        )
         self._custom_config = custom_config
 
         # NOTE: have to set these as environment variables for Litellm since
@@ -228,6 +237,21 @@ class DefaultMultiLLM(LLM):
     def log_model_configs(self) -> None:
         logger.debug(f"Config: {self.config}")
 
+    def _calculate_max_tokens(self, prompt: LanguageModelInput) -> int:
+        # Get max input tokens for the model
+        max_context_tokens = get_max_input_tokens(
+            model_name=self.config.model_name, model_provider=self.config.model_provider
+        )
+
+        # Calculate tokens in the input prompt
+        input_tokens = sum(len(self._tokenizer.encode(str(m))) for m in prompt)
+
+        # Calculate available tokens for output
+        available_output_tokens = max_context_tokens - input_tokens
+
+        # Return the lesser of available tokens or configured max
+        return min(self._max_output_tokens, available_output_tokens)
+
     def _completion(
         self,
         prompt: LanguageModelInput,
@@ -235,6 +259,8 @@ class DefaultMultiLLM(LLM):
         tool_choice: ToolChoiceOptions | None,
         stream: bool,
     ) -> litellm.ModelResponse | litellm.CustomStreamWrapper:
+        max_tokens = self._calculate_max_tokens(prompt)
+
         if isinstance(prompt, list):
             prompt = [
                 _convert_message_to_dict(msg) if isinstance(msg, BaseMessage) else msg
@@ -259,9 +285,7 @@ class DefaultMultiLLM(LLM):
                 stream=stream,
                 # model params
                 temperature=self._temperature,
-                max_tokens=self._max_output_tokens
-                if self._max_output_tokens > 0
-                else None,
+                max_tokens=max_tokens if self._max_output_tokens > 0 else None,
                 timeout=self._timeout,
                 # For now, we don't support parallel tool calls
                 # NOTE: we can't pass this in if tools are not specified
