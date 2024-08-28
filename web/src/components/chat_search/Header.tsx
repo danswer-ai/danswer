@@ -64,7 +64,7 @@ export default function FunctionalHeader({
     router.push(newChatUrl);
   };
   return (
-    <div className="left-0 sticky bg-black top-0 z-20 w-full relative flex">
+    <div className="left-0 sticky top-0 z-20 w-full relative flex">
       <div className="mt-2 mx-2.5 cursor-pointer text-text-700 relative flex w-full">
         <LogoType
           assistantId={currentChatSession?.persona_id}
