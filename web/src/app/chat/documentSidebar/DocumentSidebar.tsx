@@ -52,6 +52,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
 
     return (
       <div
+        id="danswer-chat-sidebar"
         className={`fixed inset-0 transition-opacity duration-300 z-50 bg-black/80 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
@@ -68,7 +69,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             width: initialWidth,
           }}
         >
-          <div className="pb-6 flex-initial overflow-y-hidden flex flex-col h-screen ">
+          <div className="pb-6 flex-initial overflow-y-hidden flex flex-col h-screen">
             {popup}
             <div className="pl-3 mx-2 pr-6 mt-3 flex text-text-800 flex-col text-2xl text-emphasis flex font-semibold">
               {dedupedDocuments.length} Documents

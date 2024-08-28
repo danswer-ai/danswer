@@ -1,24 +1,25 @@
 "use client";
 
+import * as Yup from "yup";
 import { TrashIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
-import { Card, Title } from "@tremor/react";
+import { Card, Divider, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useFormContext } from "@/components/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { submitConnector } from "@/components/admin/connectors/ConnectorForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { submitFiles } from "./pages/utils/files";
 import { submitGoogleSite } from "./pages/utils/google_site";
 import AdvancedFormPage from "./pages/Advanced";
-import DynamicConnectionForm from "./pages/Create";
+import DynamicConnectionForm from "./pages/DynamicConnectorCreationForm";
 import CreateCredential from "@/components/credentials/actions/CreateCredential";
 import ModifyCredential from "@/components/credentials/actions/ModifyCredential";
 import { ValidSources } from "@/lib/types";
@@ -37,9 +38,15 @@ import {
   useGmailCredentials,
   useGoogleDriveCredentials,
 } from "./pages/utils/hooks";
-import { FormikProps } from "formik";
+import { Formik, FormikProps } from "formik";
+import {
+  IsPublicGroupSelector,
+  IsPublicGroupSelectorFormType,
+} from "@/components/IsPublicGroupSelector";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { AdminBooleanFormField } from "@/components/credentials/CredentialFields";
 
-export type AdvancedConfig = {
+export type AdvancedConfigFinal = {
   pruneFreq: number | null;
   refreshFreq: number | null;
   indexingStart: Date | null;
@@ -50,7 +57,6 @@ export default function AddConnector({
 }: {
   connector: ValidSources;
 }) {
-  const [name, setName] = useState("");
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
 
@@ -59,45 +65,64 @@ export default function AddConnector({
     errorHandlingFetcher,
     { refreshInterval: 5000 }
   );
+
+  const { data: editableCredentials } = useSWR<Credential<any>[]>(
+    buildSimilarCredentialInfoURL(connector, true),
+    errorHandlingFetcher,
+    { refreshInterval: 5000 }
+  );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const credentialTemplate = credentialTemplates[connector];
 
-  const { setFormStep, setAlowCreate, formStep, nextFormStep, prevFormStep } =
-    useFormContext();
+  const {
+    setFormStep,
+    setAllowAdvanced,
+    setAlowCreate,
+    formStep,
+    nextFormStep,
+    prevFormStep,
+  } = useFormContext();
 
   const { popup, setPopup } = usePopup();
 
   const configuration: ConnectionConfiguration = connectorConfigs[connector];
+  const [formValues, setFormValues] = useState<
+    Record<string, any> & IsPublicGroupSelectorFormType
+  >({
+    name: "",
+    groups: [],
+    is_public: false,
+    ...configuration.values.reduce(
+      (acc, field) => {
+        if (field.type === "list") {
+          acc[field.name] = field.default || [];
+        } else if (field.type === "checkbox") {
+          acc[field.name] = field.default || false;
+        } else if (field.default !== undefined) {
+          acc[field.name] = field.default;
+        }
+        return acc;
+      },
+      {} as { [record: string]: any }
+    ),
+  });
 
-  const initialValues = configuration.values.reduce(
-    (acc, field) => {
-      if (field.type === "list") {
-        acc[field.name] = field.default || [];
-      } else if (field.default !== undefined) {
-        acc[field.name] = field.default;
-      }
-      return acc;
-    },
-    {} as { [record: string]: any }
-  );
-
-  const [values, setValues] = useState<{ [record: string]: any } | null>(
-    Object.keys(initialValues).length > 0 ? initialValues : null
-  );
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   // Default to 10 minutes unless otherwise specified
-  const defaultRefresh = configuration.overrideDefaultFreq || 10;
-  // Default is 30 days
-  const defaultPrune = 30;
+  const defaultAdvancedSettings = {
+    refreshFreq: formValues.overrideDefaultFreq || 10,
+    pruneFreq: 30,
+    indexingStart: null as string | null,
+  };
 
-  const [refreshFreq, setRefreshFreq] = useState<number>(defaultRefresh || 0);
-  const [pruneFreq, setPruneFreq] = useState<number>(defaultPrune);
-  const [indexingStart, setIndexingStart] = useState<Date | null>(null);
-  const [isPublic, setIsPublic] = useState(true);
+  const [advancedSettings, setAdvancedSettings] = useState(
+    defaultAdvancedSettings
+  );
+
   const [createConnectorToggle, setCreateConnectorToggle] = useState(false);
   const formRef = useRef<FormikProps<any>>(null);
-  const [advancedFormPageState, setAdvancedFormPageState] = useState(true);
 
   const [isFormValid, setIsFormValid] = useState(false);
 
@@ -110,9 +135,12 @@ export default function AddConnector({
   const { liveGmailCredential } = useGmailCredentials();
 
   const credentialActivated =
-    liveGDriveCredential || liveGmailCredential || currentCredential;
+    (connector === "google_drive" && liveGDriveCredential) ||
+    (connector === "gmail" && liveGmailCredential) ||
+    currentCredential;
 
   const noCredentials = credentialTemplate == null;
+
   if (noCredentials && 1 != formStep) {
     setFormStep(Math.max(1, formStep));
   }
@@ -121,35 +149,35 @@ export default function AddConnector({
     setFormStep(Math.min(formStep, 0));
   }
 
-  const resetAdvancedConfigs = () => {
-    const resetRefreshFreq = defaultRefresh || 0;
-    const resetPruneFreq = defaultPrune;
-    const resetIndexingStart = null;
+  const resetAdvancedConfigs = (formikProps: FormikProps<any>) => {
+    formikProps.resetForm({ values: defaultAdvancedSettings });
+    setAdvancedSettings(defaultAdvancedSettings);
+  };
 
-    setRefreshFreq(resetRefreshFreq);
-    setPruneFreq(resetPruneFreq);
-    setIndexingStart(resetIndexingStart);
-    setAdvancedFormPageState((advancedFormPageState) => !advancedFormPageState);
-    // Update the form values
-    if (formRef.current) {
-      formRef.current.setFieldValue("refreshFreq", resetRefreshFreq);
-      formRef.current.setFieldValue("pruneFreq", resetPruneFreq);
-      formRef.current.setFieldValue("indexingStart", resetIndexingStart);
-    }
+  const convertStringToDateTime = (indexingStart: string | null) => {
+    return indexingStart ? new Date(indexingStart) : null;
   };
 
   const createConnector = async () => {
-    const AdvancedConfig: AdvancedConfig = {
-      pruneFreq: pruneFreq * 60 * 60 * 24,
-      indexingStart,
-      refreshFreq: refreshFreq * 60,
+    const {
+      name,
+      groups,
+      is_public: isPublic,
+      ...connector_specific_config
+    } = formValues;
+    const { pruneFreq, indexingStart, refreshFreq } = advancedSettings;
+
+    const AdvancedConfig: AdvancedConfigFinal = {
+      pruneFreq: advancedSettings.pruneFreq * 60 * 60 * 24,
+      indexingStart: convertStringToDateTime(indexingStart),
+      refreshFreq: advancedSettings.refreshFreq * 60,
     };
 
     // google sites-specific handling
     if (connector == "google_site") {
       const response = await submitGoogleSite(
         selectedFiles,
-        values?.base_url,
+        formValues?.base_url,
         setPopup,
         AdvancedConfig,
         name
@@ -170,7 +198,8 @@ export default function AddConnector({
         setSelectedFiles,
         name,
         AdvancedConfig,
-        isPublic
+        isPublic,
+        groups
       );
       if (response) {
         setTimeout(() => {
@@ -182,19 +211,20 @@ export default function AddConnector({
 
     const { message, isSuccess, response } = await submitConnector<any>(
       {
-        connector_specific_config: values,
+        connector_specific_config: connector_specific_config,
         input_type: connector == "web" ? "load_state" : "poll", // single case
         name: name,
         source: connector,
         refresh_freq: refreshFreq * 60 || null,
         prune_freq: pruneFreq * 60 * 60 * 24 || null,
-        indexing_start: indexingStart,
+        indexing_start: convertStringToDateTime(indexingStart),
+        is_public: isPublic,
+        groups: groups,
       },
       undefined,
       credentialActivated ? false : true,
       isPublic
     );
-
     // If no credential
     if (!credentialActivated) {
       if (isSuccess) {
@@ -218,7 +248,8 @@ export default function AddConnector({
         response.id,
         credential?.id!,
         name,
-        isPublic
+        isPublic,
+        groups
       );
       if (linkCredentialResponse.ok) {
         setPopup({
@@ -247,7 +278,7 @@ export default function AddConnector({
   };
 
   const displayName = getSourceDisplayName(connector) || connector;
-  if (!credentials) {
+  if (!credentials || !editableCredentials) {
     return <></>;
   }
 
@@ -280,17 +311,41 @@ export default function AddConnector({
     refresh();
   };
 
-  const updateValues = (field: string, value: any) => {
-    if (field == "name") {
-      return;
-    }
-    setValues((values) => {
-      if (!values) {
-        return { [field]: value };
-      } else {
-        return { ...values, [field]: value };
-      }
-    });
+  const validationSchema = Yup.object().shape({
+    name: Yup.string().required("Connector Name is required"),
+    ...configuration.values.reduce(
+      (acc, field) => {
+        let schema: any =
+          field.type === "list"
+            ? Yup.array().of(Yup.string())
+            : field.type === "checkbox"
+              ? Yup.boolean()
+              : Yup.string();
+
+        if (!field.optional) {
+          schema = schema.required(`${field.label} is required`);
+        }
+        acc[field.name] = schema;
+        return acc;
+      },
+      {} as Record<string, any>
+    ),
+  });
+
+  const advancedValidationSchema = Yup.object().shape({
+    indexingStart: Yup.string().nullable(),
+    pruneFreq: Yup.number().min(0, "Prune frequency must be non-negative"),
+    refreshFreq: Yup.number().min(0, "Refresh frequency must be non-negative"),
+  });
+
+  const isFormSubmittable = (values: any) => {
+    return (
+      values.name.trim() !== "" &&
+      Object.keys(values).every((key) => {
+        const field = configuration.values.find((f) => f.name === key);
+        return field?.optional || values[key] !== "";
+      })
+    );
   };
 
   return (
@@ -350,6 +405,7 @@ export default function AddConnector({
                 source={connector}
                 defaultedCredential={currentCredential!}
                 credentials={credentials}
+                editableCredentials={editableCredentials}
                 onDeleteCredential={onDeleteCredential}
                 onSwitch={onSwap}
               />
@@ -403,18 +459,60 @@ export default function AddConnector({
       {formStep == 1 && (
         <>
           <Card>
-            <DynamicConnectionForm
-              setSelectedFiles={setSelectedFiles}
-              selectedFiles={selectedFiles}
-              setIsPublic={setIsPublic}
-              updateValues={updateValues}
-              setName={setName}
-              config={configuration}
-              isPublic={isPublic}
-              defaultValues={values}
-              initialName={name}
-              onFormStatusChange={handleFormStatusChange}
-            />
+            <Formik
+              initialValues={formValues}
+              validationSchema={validationSchema}
+              onSubmit={() => {
+                // Can be utilized for logging purposes
+              }}
+            >
+              {(formikProps) => {
+                setFormValues(formikProps.values);
+                console.log(formikProps.values);
+                handleFormStatusChange(
+                  formikProps.isValid && isFormSubmittable(formikProps.values)
+                );
+                setAllowAdvanced(
+                  formikProps.isValid && isFormSubmittable(formikProps.values)
+                );
+
+                return (
+                  <div className="w-full py-4 flex gap-y-6 flex-col max-w-2xl mx-auto">
+                    <DynamicConnectionForm
+                      values={formikProps.values}
+                      config={configuration}
+                      setSelectedFiles={setSelectedFiles}
+                      selectedFiles={selectedFiles}
+                    />
+                    {isPaidEnterpriseFeaturesEnabled && (
+                      <>
+                        <Divider className="my-0 py-0" />
+                        {formikProps.values.groups.length > 0 ? (
+                          <IsPublicGroupSelector
+                            formikProps={formikProps}
+                            objectName="Connector"
+                          />
+                        ) : (
+                          <AdminBooleanFormField
+                            subtext={`If set, then documents indexed by this connector will be visible to all users. If turned off, then only users who explicitly have been given access to the documents (e.g. through a User Group) will have access`}
+                            checked={formikProps.values.is_public}
+                            onChange={(e) => {
+                              const value = e.target.checked;
+                              formikProps.setFieldValue("is_public", value);
+                              if (value) {
+                                formikProps.setFieldValue("groups", []);
+                              }
+                            }}
+                            label={"Documents are Public?"}
+                            name={"is_public"}
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
+                );
+              }}
+            </Formik>
           </Card>
           <div className={`mt-4 w-full grid grid-cols-3`}>
             {!noCredentials ? (
@@ -430,7 +528,10 @@ export default function AddConnector({
             )}
             <button
               className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-              disabled={!isFormValid}
+              disabled={
+                !isFormValid ||
+                (connector == "file" && selectedFiles.length == 0)
+              }
               onClick={async () => {
                 await createConnector();
               }}
@@ -460,26 +561,32 @@ export default function AddConnector({
       {formStep === 2 && (
         <>
           <Card>
-            <AdvancedFormPage
-              key={advancedFormPageState ? 0 : 1}
-              setIndexingStart={setIndexingStart}
-              indexingStart={indexingStart}
-              currentPruneFreq={pruneFreq}
-              currentRefreshFreq={refreshFreq}
-              setPruneFreq={setPruneFreq}
-              setRefreshFreq={setRefreshFreq}
-              ref={formRef}
-            />
+            <Formik
+              initialValues={advancedSettings}
+              validationSchema={advancedValidationSchema}
+              onSubmit={() => {}}
+            >
+              {(formikProps) => {
+                setAdvancedSettings(formikProps.values);
 
-            <div className="mt-4 flex w-full mx-auto max-w-2xl justify-start">
-              <button
-                className="flex gap-x-1 bg-red-500 hover:bg-red-500/80 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded "
-                onClick={() => resetAdvancedConfigs()}
-              >
-                <TrashIcon size={20} className="text-white" />
-                <div className="w-full items-center gap-x-2 flex">Reset</div>
-              </button>
-            </div>
+                return (
+                  <>
+                    <AdvancedFormPage formikProps={formikProps} ref={formRef} />
+                    <div className="mt-4 flex w-full mx-auto max-w-2xl justify-start">
+                      <button
+                        className="flex gap-x-1 bg-red-500 hover:bg-red-500/80 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded "
+                        onClick={() => resetAdvancedConfigs(formikProps)}
+                      >
+                        <TrashIcon size={20} className="text-white" />
+                        <div className="w-full items-center gap-x-2 flex">
+                          Reset
+                        </div>
+                      </button>
+                    </div>
+                  </>
+                );
+              }}
+            </Formik>
           </Card>
           <div className={`mt-4 grid grid-cols-3 w-full `}>
             <button

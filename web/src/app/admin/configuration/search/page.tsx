@@ -36,14 +36,14 @@ function Main() {
     isLoading: isLoadingCurrentModel,
     error: currentEmeddingModelError,
   } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
-    "/api/search-settings/get-current-embedding-model",
+    "/api/search-settings/get-current-search-settings",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
 
   const { data: searchSettings, isLoading: isLoadingSearchSettings } =
     useSWR<SavedSearchSettings | null>(
-      "/api/search-settings/get-search-settings",
+      "/api/search-settings/get-current-search-settings",
       errorHandlingFetcher,
       { refreshInterval: 5000 } // 5 seconds
     );
@@ -53,7 +53,7 @@ function Main() {
     isLoading: isLoadingFutureModel,
     error: futureEmeddingModelError,
   } = useSWR<CloudEmbeddingModel | HostedEmbeddingModel | null>(
-    "/api/search-settings/get-secondary-embedding-model",
+    "/api/search-settings/get-secondary-search-settings",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
@@ -79,7 +79,7 @@ function Main() {
     (provider) =>
       provider.embedding_models.map((model) => ({
         ...model,
-        cloud_provider_id: provider.id,
+        provider_type: provider.provider_type,
         model_name: model.model_name, // Ensure model_name is set for consistency
       }))
   );

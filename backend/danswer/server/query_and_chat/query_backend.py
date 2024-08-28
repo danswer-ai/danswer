@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
@@ -15,9 +15,9 @@ from danswer.db.chat import get_first_messages_for_chat_sessions
 from danswer.db.chat import get_search_docs_for_chat_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
-from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.db.search_settings import get_current_search_settings
 from danswer.db.tag import get_tags_by_value_prefix_for_source_types
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
@@ -50,7 +50,7 @@ basic_router = APIRouter(prefix="/query")
 @admin_router.post("/search")
 def admin_search(
     question: AdminSearchRequest,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AdminSearchResponse:
     query = question.query
@@ -63,9 +63,9 @@ def admin_search(
         tags=question.filters.tags,
         access_control_list=user_acl_filters,
     )
-    embedding_model = get_current_db_embedding_model(db_session)
+    search_settings = get_current_search_settings(db_session)
     document_index = get_default_document_index(
-        primary_index_name=embedding_model.index_name, secondary_index_name=None
+        primary_index_name=search_settings.index_name, secondary_index_name=None
     )
     if not isinstance(document_index, VespaIndex):
         raise HTTPException(

@@ -32,6 +32,7 @@ from litellm.exceptions import UnprocessableEntityError  # type: ignore
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
+from danswer.configs.model_configs import GEN_AI_MODEL_DEFAULT_MAX_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.db.models import ChatMessage
 from danswer.file_store.models import ChatFileType
@@ -338,11 +339,9 @@ def get_llm_max_tokens(
         return GEN_AI_MAX_TOKENS
 
     try:
-        model_obj = (
-            model_map.get(f"{model_provider}/{model_name}")
-            or model_map.get(model_name)
-            or model_map[model_name.split("/")[1]]
-        )
+        model_obj = model_map.get(f"{model_provider}/{model_name}")
+        if not model_obj:
+            model_obj = model_map[model_name]
 
         if "max_input_tokens" in model_obj:
             return model_obj["max_input_tokens"]
@@ -353,9 +352,9 @@ def get_llm_max_tokens(
         raise RuntimeError("No max tokens found for LLM")
     except Exception:
         logger.exception(
-            f"Failed to get max tokens for LLM with name {model_name}. Defaulting to 4096."
+            f"Failed to get max tokens for LLM with name {model_name}. Defaulting to {GEN_AI_MODEL_DEFAULT_MAX_TOKENS}."
         )
-        return 4096
+        return GEN_AI_MODEL_DEFAULT_MAX_TOKENS
 
 
 def get_max_input_tokens(

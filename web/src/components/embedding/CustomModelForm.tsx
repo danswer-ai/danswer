@@ -35,7 +35,13 @@ export function CustomModelForm({
           normalize: Yup.boolean().required(),
         })}
         onSubmit={async (values, formikHelpers) => {
-          onSubmit({ ...values, model_dim: parseInt(values.model_dim) });
+          onSubmit({
+            ...values,
+            model_dim: parseInt(values.model_dim),
+            api_key: null,
+            provider_type: null,
+            index_name: null,
+          });
         }}
       >
         {({ isSubmitting, setFieldValue }) => (

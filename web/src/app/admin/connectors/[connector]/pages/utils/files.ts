@@ -2,15 +2,16 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { FileConfig } from "@/lib/connectors/connectors";
-import { AdvancedConfig } from "../../AddConnectorPage";
+import { AdvancedConfigFinal } from "../../AddConnectorPage";
 
 export const submitFiles = async (
   selectedFiles: File[],
   setPopup: (popup: PopupSpec) => void,
   setSelectedFiles: (files: File[]) => void,
   name: string,
-  advancedConfig: AdvancedConfig,
-  isPublic: boolean
+  advancedConfig: AdvancedConfigFinal,
+  isPublic: boolean,
+  groups?: number[]
 ) => {
   const formData = new FormData();
 
@@ -43,6 +44,8 @@ export const submitFiles = async (
     refresh_freq: null,
     prune_freq: null,
     indexing_start: null,
+    is_public: isPublic,
+    groups: groups,
   });
   if (connectorErrorMsg || !connector) {
     setPopup({
@@ -60,6 +63,8 @@ export const submitFiles = async (
     credential_json: {},
     admin_public: true,
     source: "file",
+    curator_public: isPublic,
+    groups: groups,
     name,
   });
   if (!createCredentialResponse.ok) {
@@ -77,7 +82,8 @@ export const submitFiles = async (
     connector.id,
     credentialId,
     name,
-    isPublic
+    isPublic,
+    groups
   );
   if (!credentialResponse.ok) {
     const credentialResponseJson = await credentialResponse.json();

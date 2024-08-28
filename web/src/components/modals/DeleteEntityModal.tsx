@@ -1,13 +1,15 @@
 import { FiTrash, FiX } from "react-icons/fi";
-import { ModalWrapper } from "./ModalWrapper";
+import { ModalWrapper } from "@/components/modals/ModalWrapper";
 import { BasicClickable } from "@/components/BasicClickable";
 
-export const DeleteChatModal = ({
-  chatSessionName,
+export const DeleteEntityModal = ({
   onClose,
   onSubmit,
+  entityType,
+  entityName,
 }: {
-  chatSessionName: string;
+  entityType: string;
+  entityName: string;
   onClose: () => void;
   onSubmit: () => void;
 }) => {
@@ -15,11 +17,11 @@ export const DeleteChatModal = ({
     <ModalWrapper onClose={onClose}>
       <>
         <div className="flex mb-4">
-          <h2 className="my-auto text-2xl font-bold">Delete chat?</h2>
+          <h2 className="my-auto text-2xl font-bold">Delete {entityType}?</h2>
         </div>
         <p className="mb-4">
           Click below to confirm that you want to delete{" "}
-          <b>&quot;{chatSessionName.slice(0, 30)}&quot;</b>
+          <b>&quot;{entityName}&quot;</b>
         </p>
         <div className="flex">
           <div className="mx-auto">

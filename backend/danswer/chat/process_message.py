@@ -32,13 +32,13 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import reserve_message_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
-from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import ToolCall
 from danswer.db.models import User
 from danswer.db.persona import get_persona_by_id
+from danswer.db.search_settings import get_current_search_settings
 from danswer.document_index.factory import get_default_document_index
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import FileDescriptor
@@ -270,6 +270,11 @@ def stream_chat_message_objects(
     3. [always] A set of streamed LLM tokens or an error anywhere along the line if something fails
     4. [always] Details on the final AI response message that is created
     """
+    # Currently surrounding context is not supported for chat
+    # Chat is already token heavy and harder for the model to process plus it would roll history over much faster
+    new_msg_req.chunks_above = 0
+    new_msg_req.chunks_below = 0
+
     try:
         user_id = user.id if user is not None else None
 
@@ -326,9 +331,9 @@ def stream_chat_message_objects(
             Callable[[str], list[int]], llm_tokenizer.encode
         )
 
-        embedding_model = get_current_db_embedding_model(db_session)
+        search_settings = get_current_search_settings(db_session)
         document_index = get_default_document_index(
-            primary_index_name=embedding_model.index_name, secondary_index_name=None
+            primary_index_name=search_settings.index_name, secondary_index_name=None
         )
 
         # Every chat Session begins with an empty root message
@@ -346,7 +351,15 @@ def stream_chat_message_objects(
             parent_message = root_message
 
         user_message = None
-        if not use_existing_user_message:
+
+        if new_msg_req.regenerate:
+            final_msg, history_msgs = create_chat_chain(
+                stop_at_message_id=parent_id,
+                chat_session_id=chat_session_id,
+                db_session=db_session,
+            )
+
+        elif not use_existing_user_message:
             # Create new message at the right place in the tree and update the parent's child pointer
             # Don't commit yet until we verify the chat message chain
             user_message = create_new_chat_message(
@@ -465,12 +478,18 @@ def stream_chat_message_objects(
             user_message_id=user_message.id if user_message else None,
             reserved_assistant_message_id=reserved_message_id,
         )
+
+        overridden_model = (
+            new_msg_req.llm_override.model_version if new_msg_req.llm_override else None
+        )
+
         # Cannot determine these without the LLM step or breaking out early
         partial_response = partial(
             create_new_chat_message,
             chat_session_id=chat_session_id,
             parent_message=final_msg,
             prompt_id=prompt_id,
+            overridden_model=overridden_model,
             # message=,
             # rephrased_query=,
             # token_count=,
@@ -794,4 +813,4 @@ def stream_chat_message(
             is_connected=is_connected,
         )
         for obj in objects:
-            yield get_json_line(obj.dict())
+            yield get_json_line(obj.model_dump())

@@ -9,6 +9,7 @@ from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SearchResponse
+from danswer.tools.custom.base_tool_types import ToolResultType
 
 
 class LlmDoc(BaseModel):
@@ -34,11 +35,12 @@ class QADocsResponse(RetrievalDocs):
     applied_time_cutoff: datetime | None
     recency_bias_multiplier: float
 
-    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
-        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+    def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().model_dump(mode="json", *args, **kwargs)  # type: ignore
         initial_dict["applied_time_cutoff"] = (
             self.applied_time_cutoff.isoformat() if self.applied_time_cutoff else None
         )
+
         return initial_dict
 
 
@@ -130,7 +132,7 @@ class ImageGenerationDisplay(BaseModel):
 
 
 class CustomToolResponse(BaseModel):
-    response: dict
+    response: ToolResultType
     tool_name: str
 
 

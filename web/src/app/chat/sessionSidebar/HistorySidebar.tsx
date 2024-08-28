@@ -1,19 +1,11 @@
 "use client";
 
 import { FiEdit, FiFolderPlus } from "react-icons/fi";
-import {
-  ForwardedRef,
-  forwardRef,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { ForwardedRef, forwardRef, useContext, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
-
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
-
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -184,7 +176,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
           )}
           <div className="border-b border-border pb-4 mx-3" />
           <PagesTab
-            stopGenerating={stopGenerating}
             newFolderId={newFolderId}
             showDeleteModal={showDeleteModal}
             showShareModal={showShareModal}

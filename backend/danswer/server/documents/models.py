@@ -3,6 +3,7 @@ from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
@@ -40,13 +41,15 @@ class ConnectorBase(BaseModel):
     source: DocumentSource
     input_type: InputType
     connector_specific_config: dict[str, Any]
-    refresh_freq: int | None  # In seconds, None for one time index with no refresh
-    prune_freq: int | None
-    indexing_start: datetime | None
+    # In seconds, None for one time index with no refresh
+    refresh_freq: int | None = None
+    prune_freq: int | None = None
+    indexing_start: datetime | None = None
 
 
-class ConnectorCredentialBase(ConnectorBase):
-    is_public: bool
+class ConnectorUpdateRequest(ConnectorBase):
+    is_public: bool | None = None
+    groups: list[int] = Field(default_factory=list)
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -91,6 +94,8 @@ class CredentialBase(BaseModel):
     admin_public: bool
     source: DocumentSource
     name: str | None = None
+    curator_public: bool = False
+    groups: list[int] = Field(default_factory=list)
 
 
 class CredentialSnapshot(CredentialBase):
@@ -98,6 +103,11 @@ class CredentialSnapshot(CredentialBase):
     user_id: UUID | None
     time_created: datetime
     time_updated: datetime
+    name: str | None
+    source: DocumentSource
+    credential_json: dict[str, Any]
+    admin_public: bool
+    curator_public: bool
 
     @classmethod
     def from_credential_db_model(cls, credential: Credential) -> "CredentialSnapshot":
@@ -105,7 +115,7 @@ class CredentialSnapshot(CredentialBase):
             id=credential.id,
             credential_json=(
                 mask_credential_dict(credential.credential_json)
-                if MASK_CREDENTIAL_PREFIX
+                if MASK_CREDENTIAL_PREFIX and credential.credential_json
                 else credential.credential_json
             ),
             user_id=credential.user_id,
@@ -114,6 +124,7 @@ class CredentialSnapshot(CredentialBase):
             time_updated=credential.time_updated,
             source=credential.source or DocumentSource.NOT_APPLICABLE,
             name=credential.name,
+            curator_public=credential.curator_public,
         )
 
 
@@ -185,6 +196,8 @@ class CCPairFullInfo(BaseModel):
     credential: CredentialSnapshot
     index_attempts: list[IndexAttemptSnapshot]
     latest_deletion_attempt: DeletionAttemptSnapshot | None
+    is_public: bool
+    is_editable_for_current_user: bool
 
     @classmethod
     def from_models(
@@ -193,6 +206,7 @@ class CCPairFullInfo(BaseModel):
         index_attempt_models: list[IndexAttempt],
         latest_deletion_attempt: DeletionAttemptSnapshot | None,
         num_docs_indexed: int,  # not ideal, but this must be computed separately
+        is_editable_for_current_user: bool,
     ) -> "CCPairFullInfo":
         return cls(
             id=cc_pair_model.id,
@@ -210,6 +224,8 @@ class CCPairFullInfo(BaseModel):
                 for index_attempt_model in index_attempt_models
             ],
             latest_deletion_attempt=latest_deletion_attempt,
+            is_public=cc_pair_model.is_public,
+            is_editable_for_current_user=is_editable_for_current_user,
         )
 
 
@@ -222,6 +238,7 @@ class ConnectorIndexingStatus(BaseModel):
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     owner: str
+    groups: list[int]
     public_doc: bool
     last_finished_status: IndexingStatus | None
     last_status: IndexingStatus | None
@@ -239,20 +256,21 @@ class ConnectorCredentialPairIdentifier(BaseModel):
 
 
 class ConnectorCredentialPairMetadata(BaseModel):
-    name: str | None
-    is_public: bool
+    name: str | None = None
+    is_public: bool | None = None
+    groups: list[int] = Field(default_factory=list)
 
 
 class ConnectorCredentialPairDescriptor(BaseModel):
     id: int
-    name: str | None
+    name: str | None = None
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
 
 
 class RunConnectorRequest(BaseModel):
     connector_id: int
-    credential_ids: list[int] | None
+    credential_ids: list[int] | None = None
     from_beginning: bool = False
 
 

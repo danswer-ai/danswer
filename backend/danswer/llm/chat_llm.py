@@ -62,13 +62,13 @@ def _convert_litellm_message_to_langchain_message(
     litellm_message: litellm.Message,
 ) -> BaseMessage:
     # Extracting the basic attributes from the litellm message
-    content = litellm_message.content
+    content = litellm_message.content or ""
     role = litellm_message.role
 
     # Handling function calls and tool calls if present
     tool_calls = (
         cast(
-            list[litellm.utils.ChatCompletionMessageToolCall],
+            list[litellm.ChatCompletionMessageToolCall],
             litellm_message.tool_calls,
         )
         if hasattr(litellm_message, "tool_calls")
@@ -87,7 +87,7 @@ def _convert_litellm_message_to_langchain_message(
                     "args": json.loads(tool_call.function.arguments),
                     "id": tool_call.id,
                 }
-                for tool_call in tool_calls
+                for tool_call in (tool_calls if tool_calls else [])
             ],
         )
     elif role == "system":
@@ -296,9 +296,11 @@ class DefaultMultiLLM(LLM):
         response = cast(
             litellm.ModelResponse, self._completion(prompt, tools, tool_choice, False)
         )
-        return _convert_litellm_message_to_langchain_message(
-            response.choices[0].message
-        )
+        choice = response.choices[0]
+        if hasattr(choice, "message"):
+            return _convert_litellm_message_to_langchain_message(choice.message)
+        else:
+            raise ValueError("Unexpected response choice type")
 
     def _stream_implementation(
         self,
@@ -314,7 +316,10 @@ class DefaultMultiLLM(LLM):
             return
 
         output = None
-        response = self._completion(prompt, tools, tool_choice, True)
+        response = cast(
+            litellm.CustomStreamWrapper,
+            self._completion(prompt, tools, tool_choice, True),
+        )
         try:
             for part in response:
                 if len(part["choices"]) == 0:

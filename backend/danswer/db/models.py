@@ -5,7 +5,7 @@ from typing import Any
 from typing import Literal
 from typing import NotRequired
 from typing import Optional
-from typing import TypedDict
+from typing_extensions import TypedDict  # noreorder
 from uuid import UUID
 
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
@@ -34,6 +34,7 @@ from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
@@ -56,6 +57,7 @@ from danswer.search.enums import RecencyBiasSetting
 from danswer.utils.encryption import decrypt_bytes_to_string
 from danswer.utils.encryption import encrypt_string_to_bytes
 from shared_configs.enums import EmbeddingProvider
+from shared_configs.enums import RerankerProvider
 
 
 class Base(DeclarativeBase):
@@ -529,6 +531,8 @@ class Credential(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    curator_public: Mapped[bool] = mapped_column(Boolean, default=False)
+
     connectors: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
         back_populates="credential",
@@ -541,32 +545,47 @@ class Credential(Base):
     user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
 
-class EmbeddingModel(Base):
-    __tablename__ = "embedding_model"
+class SearchSettings(Base):
+    __tablename__ = "search_settings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     model_name: Mapped[str] = mapped_column(String)
     model_dim: Mapped[int] = mapped_column(Integer)
     normalize: Mapped[bool] = mapped_column(Boolean)
-    query_prefix: Mapped[str] = mapped_column(String)
-    passage_prefix: Mapped[str] = mapped_column(String)
+    query_prefix: Mapped[str | None] = mapped_column(String, nullable=True)
+    passage_prefix: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[IndexModelStatus] = mapped_column(
         Enum(IndexModelStatus, native_enum=False)
     )
     index_name: Mapped[str] = mapped_column(String)
-
-    # New field for cloud provider relationship
-    cloud_provider_id: Mapped[int | None] = mapped_column(
-        ForeignKey("embedding_provider.id")
+    provider_type: Mapped[EmbeddingProvider | None] = mapped_column(
+        ForeignKey("embedding_provider.provider_type"), nullable=True
     )
+
+    # Mini and Large Chunks (large chunk also checks for model max context)
+    multipass_indexing: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    multilingual_expansion: Mapped[list[str]] = mapped_column(
+        postgresql.ARRAY(String), default=[]
+    )
+
+    # Reranking settings
+    disable_rerank_for_streaming: Mapped[bool] = mapped_column(Boolean, default=False)
+    rerank_model_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    rerank_provider_type: Mapped[RerankerProvider | None] = mapped_column(
+        Enum(RerankerProvider, native_enum=False), nullable=True
+    )
+    rerank_api_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    num_rerank: Mapped[int] = mapped_column(Integer, default=NUM_POSTPROCESSED_RESULTS)
+
     cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(
         "CloudEmbeddingProvider",
-        back_populates="embedding_models",
-        foreign_keys=[cloud_provider_id],
+        back_populates="search_settings",
+        foreign_keys=[provider_type],
     )
 
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
-        "IndexAttempt", back_populates="embedding_model"
+        "IndexAttempt", back_populates="search_settings"
     )
 
     __table_args__ = (
@@ -586,15 +605,7 @@ class EmbeddingModel(Base):
 
     def __repr__(self) -> str:
         return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}',\
-          cloud_provider='{self.cloud_provider.name if self.cloud_provider else 'None'}')>"
-
-    @property
-    def provider_type(self) -> EmbeddingProvider | None:
-        return (
-            EmbeddingProvider(self.cloud_provider.name.lower())
-            if self.cloud_provider is not None
-            else None
-        )
+          cloud_provider='{self.cloud_provider.provider_type if self.cloud_provider else 'None'}')>"
 
     @property
     def api_key(self) -> str | None:
@@ -633,8 +644,8 @@ class IndexAttempt(Base):
     # only filled if status = "failed" AND an unhandled exception caused the failure
     full_exception_trace: Mapped[str | None] = mapped_column(Text, default=None)
     # Nullable because in the past, we didn't allow swapping out embedding models live
-    embedding_model_id: Mapped[int] = mapped_column(
-        ForeignKey("embedding_model.id"),
+    search_settings_id: Mapped[int] = mapped_column(
+        ForeignKey("search_settings.id"),
         nullable=False,
     )
     time_created: Mapped[datetime.datetime] = mapped_column(
@@ -656,8 +667,8 @@ class IndexAttempt(Base):
         "ConnectorCredentialPair", back_populates="index_attempts"
     )
 
-    embedding_model: Mapped[EmbeddingModel] = relationship(
-        "EmbeddingModel", back_populates="index_attempts"
+    search_settings: Mapped[SearchSettings] = relationship(
+        "SearchSettings", back_populates="index_attempts"
     )
 
     error_rows = relationship("IndexAttemptError", back_populates="index_attempt")
@@ -897,6 +908,7 @@ class ChatMessage(Base):
         Integer, ForeignKey("persona.id"), nullable=True
     )
 
+    overridden_model: Mapped[str | None] = mapped_column(String, nullable=True)
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
@@ -1070,24 +1082,18 @@ class LLMProvider(Base):
 class CloudEmbeddingProvider(Base):
     __tablename__ = "embedding_provider"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True)
+    provider_type: Mapped[EmbeddingProvider] = mapped_column(
+        Enum(EmbeddingProvider), primary_key=True
+    )
     api_key: Mapped[str | None] = mapped_column(EncryptedString())
-    default_model_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("embedding_model.id"), nullable=True
-    )
-
-    embedding_models: Mapped[list["EmbeddingModel"]] = relationship(
-        "EmbeddingModel",
+    search_settings: Mapped[list["SearchSettings"]] = relationship(
+        "SearchSettings",
         back_populates="cloud_provider",
-        foreign_keys="EmbeddingModel.cloud_provider_id",
-    )
-    default_model: Mapped["EmbeddingModel"] = relationship(
-        "EmbeddingModel", foreign_keys=[default_model_id]
+        foreign_keys="SearchSettings.provider_type",
     )
 
     def __repr__(self) -> str:
-        return f"<EmbeddingProvider(name='{self.name}')>"
+        return f"<EmbeddingProvider(type='{self.provider_type}')>"
 
 
 class DocumentSet(Base):
@@ -1206,6 +1212,8 @@ class Persona(Base):
     description: Mapped[str] = mapped_column(String)
     # Number of chunks to pass to the LLM for generation.
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
+    chunks_above: Mapped[int] = mapped_column(Integer)
+    chunks_below: Mapped[int] = mapped_column(Integer)
     # Pass every chunk through LLM for evaluation, fairly expensive
     # Can be turned off globally by admin, in which case, this setting is ignored
     llm_relevance_filter: Mapped[bool] = mapped_column(Boolean)
@@ -1455,6 +1463,8 @@ class SamlAccount(Base):
 class User__UserGroup(Base):
     __tablename__ = "user__user_group"
 
+    is_curator: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
     user_group_id: Mapped[int] = mapped_column(
         ForeignKey("user_group.id"), primary_key=True
     )
@@ -1519,6 +1529,17 @@ class DocumentSet__UserGroup(Base):
     )
 
 
+class Credential__UserGroup(Base):
+    __tablename__ = "credential__user_group"
+
+    credential_id: Mapped[int] = mapped_column(
+        ForeignKey("credential.id"), primary_key=True
+    )
+    user_group_id: Mapped[int] = mapped_column(
+        ForeignKey("user_group.id"), primary_key=True
+    )
+
+
 class UserGroup(Base):
     __tablename__ = "user_group"
 
@@ -1534,6 +1555,10 @@ class UserGroup(Base):
     users: Mapped[list[User]] = relationship(
         "User",
         secondary=User__UserGroup.__table__,
+    )
+    user_group_relationships: Mapped[list[User__UserGroup]] = relationship(
+        "User__UserGroup",
+        viewonly=True,
     )
     cc_pairs: Mapped[list[ConnectorCredentialPair]] = relationship(
         "ConnectorCredentialPair",
@@ -1555,6 +1580,10 @@ class UserGroup(Base):
         "DocumentSet",
         secondary=DocumentSet__UserGroup.__table__,
         viewonly=True,
+    )
+    credentials: Mapped[list[Credential]] = relationship(
+        "Credential",
+        secondary=Credential__UserGroup.__table__,
     )
 
 

@@ -4,7 +4,7 @@ import requests
 
 from danswer.server.features.document_set.models import DocumentSet
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
-from tests.integration.common.constants import API_SERVER_URL
+from tests.integration.common_utils.constants import API_SERVER_URL
 
 
 class DocumentSetClient:
@@ -14,14 +14,14 @@ class DocumentSetClient:
     ) -> int:
         response = requests.post(
             f"{API_SERVER_URL}/manage/admin/document-set",
-            json=doc_set_creation_request.dict(),
+            json=doc_set_creation_request.model_dump(),
         )
         response.raise_for_status()
         return cast(int, response.json())
 
     @staticmethod
     def fetch_document_sets() -> list[DocumentSet]:
-        response = requests.get(f"{API_SERVER_URL}/manage/admin/document-set")
+        response = requests.get(f"{API_SERVER_URL}/manage/document-set")
         response.raise_for_status()
 
         document_sets = [

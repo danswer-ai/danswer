@@ -25,7 +25,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="flex bg-background text-default ">
+    <div className="flex bg-background text-default">
       <div
         className={`flex-none
                   bg-background-100

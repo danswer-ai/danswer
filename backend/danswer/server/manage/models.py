@@ -1,12 +1,14 @@
 from datetime import datetime
-from typing import Any
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
-from pydantic import root_validator
-from pydantic import validator
+from pydantic import ConfigDict
+from pydantic import Field
+from pydantic import field_validator
+from pydantic import model_validator
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
 from danswer.configs.constants import AuthType
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
@@ -16,7 +18,7 @@ from danswer.db.models import SlackBotResponseType
 from danswer.db.models import StandardAnswer as StandardAnswerModel
 from danswer.db.models import StandardAnswerCategory as StandardAnswerCategoryModel
 from danswer.db.models import User
-from danswer.indexing.models import EmbeddingModelDetail
+from danswer.search.models import SavedSearchSettings
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
@@ -38,8 +40,8 @@ class AuthTypeResponse(BaseModel):
 
 
 class UserPreferences(BaseModel):
-    chosen_assistants: list[int] | None
-    default_model: str | None
+    chosen_assistants: list[int] | None = None
+    default_model: str | None = None
 
 
 class UserInfo(BaseModel):
@@ -74,7 +76,11 @@ class UserInfo(BaseModel):
                     default_model=user.default_model,
                 )
             ),
-            oidc_expiry=user.oidc_expiry,
+            # set to None if TRACK_EXTERNAL_IDP_EXPIRY is False so that we avoid cases
+            # where they previously had this set + used OIDC, and now they switched to
+            # basic auth are now constantly getting redirected back to the login page
+            # since their "oidc_expiry is old"
+            oidc_expiry=user.oidc_expiry if TRACK_EXTERNAL_IDP_EXPIRY else None,
             current_token_created_at=current_token_created_at,
             current_token_expiry_length=expiry_length,
         )
@@ -82,6 +88,11 @@ class UserInfo(BaseModel):
 
 class UserByEmail(BaseModel):
     user_email: str
+
+
+class UserRoleUpdateRequest(BaseModel):
+    user_email: str
+    new_role: UserRole
 
 
 class UserRoleResponse(BaseModel):
@@ -148,7 +159,8 @@ class StandardAnswerCreationRequest(BaseModel):
     answer: str
     categories: list[int]
 
-    @validator("categories", pre=True)
+    @field_validator("categories", mode="before")
+    @classmethod
     def validate_categories(cls, value: list[int]) -> list[int]:
         if len(value) < 1:
             raise ValueError(
@@ -160,9 +172,7 @@ class StandardAnswerCreationRequest(BaseModel):
 class SlackBotTokens(BaseModel):
     bot_token: str
     app_token: str
-
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class SlackBotConfigCreationRequest(BaseModel):
@@ -170,23 +180,24 @@ class SlackBotConfigCreationRequest(BaseModel):
     # in the future, `document_sets` will probably be replaced
     # by an optional `PersonaSnapshot` object. Keeping it like this
     # for now for simplicity / speed of development
-    document_sets: list[int] | None
+    document_sets: list[int] | None = None
     persona_id: (
         int | None
-    )  # NOTE: only one of `document_sets` / `persona_id` should be set
+    ) = None  # NOTE: only one of `document_sets` / `persona_id` should be set
     channel_names: list[str]
     respond_tag_only: bool = False
     respond_to_bots: bool = False
     enable_auto_filters: bool = False
     # If no team members, assume respond in the channel to everyone
-    respond_member_group_list: list[str] = []
-    answer_filters: list[AllowedAnswerFilters] = []
+    respond_member_group_list: list[str] = Field(default_factory=list)
+    answer_filters: list[AllowedAnswerFilters] = Field(default_factory=list)
     # list of user emails
     follow_up_tags: list[str] | None = None
     response_type: SlackBotResponseType
-    standard_answer_categories: list[int] = []
+    standard_answer_categories: list[int] = Field(default_factory=list)
 
-    @validator("answer_filters", pre=True)
+    @field_validator("answer_filters", mode="before")
+    @classmethod
     def validate_filters(cls, value: list[str]) -> list[str]:
         if any(test not in VALID_SLACK_FILTERS for test in value):
             raise ValueError(
@@ -194,14 +205,12 @@ class SlackBotConfigCreationRequest(BaseModel):
             )
         return value
 
-    @root_validator
-    def validate_document_sets_and_persona_id(
-        cls, values: dict[str, Any]
-    ) -> dict[str, Any]:
-        if values.get("document_sets") and values.get("persona_id"):
+    @model_validator(mode="after")
+    def validate_document_sets_and_persona_id(self) -> "SlackBotConfigCreationRequest":
+        if self.document_sets and self.persona_id:
             raise ValueError("Only one of `document_sets` / `persona_id` should be set")
 
-        return values
+        return self
 
 
 class SlackBotConfig(BaseModel):
@@ -236,8 +245,8 @@ class SlackBotConfig(BaseModel):
 
 
 class FullModelVersionResponse(BaseModel):
-    current_model: EmbeddingModelDetail
-    secondary_model: EmbeddingModelDetail | None
+    current_settings: SavedSearchSettings
+    secondary_settings: SavedSearchSettings | None
 
 
 class AllUsersResponse(BaseModel):

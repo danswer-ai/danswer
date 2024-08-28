@@ -4,7 +4,7 @@ import requests
 
 from ee.danswer.server.user_group.models import UserGroup
 from ee.danswer.server.user_group.models import UserGroupCreate
-from tests.integration.common.constants import API_SERVER_URL
+from tests.integration.common_utils.constants import API_SERVER_URL
 
 
 class UserGroupClient:
@@ -12,7 +12,7 @@ class UserGroupClient:
     def create_user_group(user_group_creation_request: UserGroupCreate) -> int:
         response = requests.post(
             f"{API_SERVER_URL}/manage/admin/user-group",
-            json=user_group_creation_request.dict(),
+            json=user_group_creation_request.model_dump(),
         )
         response.raise_for_status()
         return cast(int, response.json()["id"])

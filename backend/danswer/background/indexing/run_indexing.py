@@ -11,12 +11,9 @@ from danswer.background.indexing.tracer import DanswerTracer
 from danswer.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
 from danswer.configs.app_configs import INDEXING_TRACER_INTERVAL
 from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
+from danswer.connectors.connector_runner import ConnectorRunner
 from danswer.connectors.factory import instantiate_connector
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import IndexAttemptMetadata
-from danswer.connectors.models import InputType
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.engine import get_sqlalchemy_engine
@@ -42,12 +39,12 @@ logger = setup_logger()
 INDEXING_TRACER_NUM_PRINT_ENTRIES = 5
 
 
-def _get_document_generator(
+def _get_connector_runner(
     db_session: Session,
     attempt: IndexAttempt,
     start_time: datetime,
     end_time: datetime,
-) -> GenerateDocumentsOutput:
+) -> ConnectorRunner:
     """
     NOTE: `start_time` and `end_time` are only used for poll connectors
 
@@ -77,31 +74,9 @@ def _get_document_generator(
         )
         raise e
 
-    if task == InputType.LOAD_STATE:
-        assert isinstance(runnable_connector, LoadConnector)
-        doc_batch_generator = runnable_connector.load_from_state()
-
-    elif task == InputType.POLL:
-        assert isinstance(runnable_connector, PollConnector)
-        if (
-            attempt.connector_credential_pair.connector_id is None
-            or attempt.connector_credential_pair.connector_id is None
-        ):
-            raise ValueError(
-                f"Polling attempt {attempt.id} is missing connector_id or credential_id, "
-                f"can't fetch time range."
-            )
-
-        logger.info(f"Polling for updates between {start_time} and {end_time}")
-        doc_batch_generator = runnable_connector.poll_source(
-            start=start_time.timestamp(), end=end_time.timestamp()
-        )
-
-    else:
-        # Event types cannot be handled by a background type
-        raise RuntimeError(f"Invalid task type: {task}")
-
-    return doc_batch_generator
+    return ConnectorRunner(
+        connector=runnable_connector, time_range=(start_time, end_time)
+    )
 
 
 def _run_indexing(
@@ -115,20 +90,20 @@ def _run_indexing(
     """
     start_time = time.time()
 
-    db_embedding_model = index_attempt.embedding_model
-    index_name = db_embedding_model.index_name
+    search_settings = index_attempt.search_settings
+    index_name = search_settings.index_name
 
     # Only update cc-pair status for primary index jobs
     # Secondary index syncs at the end when swapping
-    is_primary = index_attempt.embedding_model.status == IndexModelStatus.PRESENT
+    is_primary = search_settings.status == IndexModelStatus.PRESENT
 
     # Indexing is only done into one index at a time
     document_index = get_default_document_index(
         primary_index_name=index_name, secondary_index_name=None
     )
 
-    embedding_model = DefaultIndexingEmbedder.from_db_embedding_model(
-        db_embedding_model
+    embedding_model = DefaultIndexingEmbedder.from_db_search_settings(
+        search_settings=search_settings
     )
 
     indexing_pipeline = build_indexing_pipeline(
@@ -136,7 +111,7 @@ def _run_indexing(
         embedder=embedding_model,
         document_index=document_index,
         ignore_time_skip=index_attempt.from_beginning
-        or (db_embedding_model.status == IndexModelStatus.FUTURE),
+        or (search_settings.status == IndexModelStatus.FUTURE),
         db_session=db_session,
     )
 
@@ -153,7 +128,7 @@ def _run_indexing(
             else get_last_successful_attempt_time(
                 connector_id=db_connector.id,
                 credential_id=db_credential.id,
-                embedding_model=index_attempt.embedding_model,
+                search_settings=index_attempt.search_settings,
                 db_session=db_session,
             )
         )
@@ -189,7 +164,7 @@ def _run_indexing(
                 datetime(1970, 1, 1, tzinfo=timezone.utc),
             )
 
-            doc_batch_generator = _get_document_generator(
+            connector_runner = _get_connector_runner(
                 db_session=db_session,
                 attempt=index_attempt,
                 start_time=window_start,
@@ -201,7 +176,7 @@ def _run_indexing(
             tracer_counter = 0
             if INDEXING_TRACER_INTERVAL > 0:
                 tracer.snap()
-            for doc_batch in doc_batch_generator:
+            for doc_batch in connector_runner.run():
                 # Check if connector is disabled mid run and stop if so unless it's the secondary
                 # index being built. We want to populate it even for paused connectors
                 # Often paused connectors are sources that aren't updated frequently but the
@@ -210,7 +185,7 @@ def _run_indexing(
                 if (
                     (
                         db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
-                        and db_embedding_model.status != IndexModelStatus.FUTURE
+                        and search_settings.status != IndexModelStatus.FUTURE
                     )
                     # if it's deleting, we don't care if this is a secondary index
                     or db_cc_pair.status == ConnectorCredentialPairStatus.DELETING

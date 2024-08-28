@@ -1,5 +1,5 @@
-import { Dispatch, SetStateAction, useEffect, useRef } from "react";
-import { ModalWrapper } from "./ModalWrapper";
+import { Dispatch, SetStateAction, useState, useEffect, useRef } from "react";
+import { ModalWrapper } from "@/components/modals/ModalWrapper";
 import { Badge, Text } from "@tremor/react";
 import { getDisplayNameForModel, LlmOverride } from "@/lib/hooks";
 import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
@@ -14,11 +14,13 @@ export function SetDefaultModelModal({
   onClose,
   setLlmOverride,
   defaultModel,
+  refreshUser,
 }: {
   llmProviders: LLMProviderDescriptor[];
   setLlmOverride: Dispatch<SetStateAction<LlmOverride>>;
   onClose: () => void;
   defaultModel: string | null;
+  refreshUser: () => void;
 }) {
   const { popup, setPopup } = usePopup();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -103,6 +105,7 @@ export function SetDefaultModelModal({
           message: "Default model updated successfully",
           type: "success",
         });
+        refreshUser();
         router.refresh();
       } else {
         throw new Error("Failed to update default model");

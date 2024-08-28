@@ -31,8 +31,9 @@ FAVOR_RECENT_DECAY_MULTIPLIER = 2.0
 DISABLE_LLM_QUERY_ANSWERABILITY = QA_PROMPT_OVERRIDE == "weak"
 # For the highest matching base size chunk, how many chunks above and below do we pull in by default
 # Note this is not in any of the deployment configs yet
-CONTEXT_CHUNKS_ABOVE = int(os.environ.get("CONTEXT_CHUNKS_ABOVE") or 0)
-CONTEXT_CHUNKS_BELOW = int(os.environ.get("CONTEXT_CHUNKS_BELOW") or 0)
+# Currently only applies to search flow not chat
+CONTEXT_CHUNKS_ABOVE = int(os.environ.get("CONTEXT_CHUNKS_ABOVE") or 1)
+CONTEXT_CHUNKS_BELOW = int(os.environ.get("CONTEXT_CHUNKS_BELOW") or 1)
 # Whether the LLM should be used to decide if a search would help given the chat history
 DISABLE_LLM_CHOOSE_SEARCH = (
     os.environ.get("DISABLE_LLM_CHOOSE_SEARCH", "").lower() == "true"

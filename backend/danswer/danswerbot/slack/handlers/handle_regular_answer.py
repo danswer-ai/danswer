@@ -37,6 +37,7 @@ from danswer.db.models import Persona
 from danswer.db.models import SlackBotConfig
 from danswer.db.models import SlackBotResponseType
 from danswer.db.persona import fetch_persona_by_id
+from danswer.db.search_settings import get_current_search_settings
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
@@ -48,8 +49,8 @@ from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.models import BaseFilters
+from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
-from danswer.search.search_settings import get_search_settings
 from danswer.utils.logger import DanswerLoggingAdapter
 
 
@@ -146,7 +147,12 @@ def handle_regular_answer(
             if len(new_message_request.messages) > 1:
                 persona = cast(
                     Persona,
-                    fetch_persona_by_id(db_session, new_message_request.persona_id),
+                    fetch_persona_by_id(
+                        db_session,
+                        new_message_request.persona_id,
+                        user=None,
+                        get_editable=False,
+                    ),
                 )
                 llm, _ = get_llms_for_persona(persona)
 
@@ -223,7 +229,8 @@ def handle_regular_answer(
         )
 
         # Always apply reranking settings if it exists, this is the non-streaming flow
-        saved_search_settings = get_search_settings()
+        with Session(get_sqlalchemy_engine()) as db_session:
+            saved_search_settings = get_current_search_settings(db_session)
 
         # This includes throwing out answer via reflexion
         answer = _get_answer(
@@ -236,7 +243,7 @@ def handle_regular_answer(
                 persona_id=persona.id if persona is not None else 0,
                 retrieval_options=retrieval_details,
                 chain_of_thought=not disable_cot,
-                rerank_settings=saved_search_settings.to_reranking_detail()
+                rerank_settings=RerankingDetails.from_db_model(saved_search_settings)
                 if saved_search_settings
                 else None,
             )

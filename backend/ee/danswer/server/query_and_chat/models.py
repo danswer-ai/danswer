@@ -17,7 +17,7 @@ class StandardAnswerRequest(BaseModel):
 
 
 class StandardAnswerResponse(BaseModel):
-    standard_answers: list[StandardAnswer] = []
+    standard_answers: list[StandardAnswer] = Field(default_factory=list)
 
 
 class DocumentSearchRequest(ChunkContext):
@@ -64,6 +64,7 @@ class SimpleDoc(BaseModel):
     blurb: str
     match_highlights: list[str]
     source_type: DocumentSource
+    metadata: dict | None
 
 
 class ChatBasicResponse(BaseModel):

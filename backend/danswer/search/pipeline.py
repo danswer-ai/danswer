@@ -7,11 +7,10 @@ from sqlalchemy.orm import Session
 
 from danswer.chat.models import SectionRelevancePiece
 from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
-from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import User
+from danswer.db.search_settings import get_current_search_settings
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaChunkRequest
-from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prune_and_merge import _merge_sections
 from danswer.llm.answering.prune_and_merge import ChunkRange
@@ -56,7 +55,6 @@ class SearchPipeline:
         ) = None,
         rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
         prompt_config: PromptConfig | None = None,
-        pruning_config: DocumentPruningConfig | None = None,
     ):
         self.search_request = search_request
         self.user = user
@@ -67,13 +65,12 @@ class SearchPipeline:
         self.retrieval_metrics_callback = retrieval_metrics_callback
         self.rerank_metrics_callback = rerank_metrics_callback
 
-        self.embedding_model = get_current_db_embedding_model(db_session)
+        self.search_settings = get_current_search_settings(db_session)
         self.document_index = get_default_document_index(
-            primary_index_name=self.embedding_model.index_name,
+            primary_index_name=self.search_settings.index_name,
             secondary_index_name=None,
         )
         self.prompt_config: PromptConfig | None = prompt_config
-        self.pruning_config: DocumentPruningConfig | None = pruning_config
 
         # Preprocessing steps generate this
         self._search_query: SearchQuery | None = None
@@ -139,10 +136,6 @@ class SearchPipeline:
     """Retrieval and Postprocessing"""
 
     def _get_chunks(self) -> list[InferenceChunk]:
-        """TODO as a future extension:
-        If large chunks (above 512 tokens) are used which cannot be directly fed to the LLM,
-        This step should run the two retrievals to get all of the base size chunks
-        """
         if self._retrieved_chunks is not None:
             return self._retrieved_chunks
 
@@ -178,7 +171,6 @@ class SearchPipeline:
         chunk_requests: list[VespaChunkRequest] = []
 
         # Full doc setting takes priority
-
         if self.search_query.full_doc:
             seen_document_ids = set()
 

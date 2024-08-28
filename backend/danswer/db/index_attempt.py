@@ -11,11 +11,11 @@ from sqlalchemy.orm import Session
 
 from danswer.connectors.models import Document
 from danswer.connectors.models import DocumentErrorSummary
-from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexAttemptError
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
+from danswer.db.models import SearchSettings
 from danswer.server.documents.models import ConnectorCredentialPair
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
@@ -27,14 +27,14 @@ logger = setup_logger()
 
 def get_last_attempt_for_cc_pair(
     cc_pair_id: int,
-    embedding_model_id: int,
+    search_settings_id: int,
     db_session: Session,
 ) -> IndexAttempt | None:
     return (
         db_session.query(IndexAttempt)
         .filter(
             IndexAttempt.connector_credential_pair_id == cc_pair_id,
-            IndexAttempt.embedding_model_id == embedding_model_id,
+            IndexAttempt.search_settings_id == search_settings_id,
         )
         .order_by(IndexAttempt.time_updated.desc())
         .first()
@@ -50,13 +50,13 @@ def get_index_attempt(
 
 def create_index_attempt(
     connector_credential_pair_id: int,
-    embedding_model_id: int,
+    search_settings_id: int,
     db_session: Session,
     from_beginning: bool = False,
 ) -> int:
     new_attempt = IndexAttempt(
         connector_credential_pair_id=connector_credential_pair_id,
-        embedding_model_id=embedding_model_id,
+        search_settings_id=search_settings_id,
         from_beginning=from_beginning,
         status=IndexingStatus.NOT_STARTED,
     )
@@ -162,7 +162,7 @@ def update_docs_indexed(
 def get_last_attempt(
     connector_id: int,
     credential_id: int,
-    embedding_model_id: int | None,
+    search_settings_id: int | None,
     db_session: Session,
 ) -> IndexAttempt | None:
     stmt = (
@@ -171,7 +171,7 @@ def get_last_attempt(
         .where(
             ConnectorCredentialPair.connector_id == connector_id,
             ConnectorCredentialPair.credential_id == credential_id,
-            IndexAttempt.embedding_model_id == embedding_model_id,
+            IndexAttempt.search_settings_id == search_settings_id,
         )
     )
 
@@ -188,12 +188,12 @@ def get_latest_index_attempts(
     ids_stmt = select(
         IndexAttempt.connector_credential_pair_id,
         func.max(IndexAttempt.id).label("max_id"),
-    ).join(EmbeddingModel, IndexAttempt.embedding_model_id == EmbeddingModel.id)
+    ).join(SearchSettings, IndexAttempt.search_settings_id == SearchSettings.id)
 
     if secondary_index:
-        ids_stmt = ids_stmt.where(EmbeddingModel.status == IndexModelStatus.FUTURE)
+        ids_stmt = ids_stmt.where(SearchSettings.status == IndexModelStatus.FUTURE)
     else:
-        ids_stmt = ids_stmt.where(EmbeddingModel.status == IndexModelStatus.PRESENT)
+        ids_stmt = ids_stmt.where(SearchSettings.status == IndexModelStatus.PRESENT)
 
     ids_stmt = ids_stmt.group_by(IndexAttempt.connector_credential_pair_id)
     ids_subquery = ids_stmt.subquery()
@@ -229,8 +229,8 @@ def get_index_attempts_for_connector(
             )
         )
     if only_current:
-        stmt = stmt.join(EmbeddingModel).where(
-            EmbeddingModel.status == IndexModelStatus.PRESENT
+        stmt = stmt.join(SearchSettings).where(
+            SearchSettings.status == IndexModelStatus.PRESENT
         )
 
     stmt = stmt.order_by(IndexAttempt.time_created.desc())
@@ -242,19 +242,20 @@ def get_latest_finished_index_attempt_for_cc_pair(
     secondary_index: bool,
     db_session: Session,
 ) -> IndexAttempt | None:
-    stmt = select(IndexAttempt).where(
+    stmt = select(IndexAttempt).distinct()
+    stmt = stmt.where(
         IndexAttempt.connector_credential_pair_id == connector_credential_pair_id,
         IndexAttempt.status.not_in(
             [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]
         ),
     )
     if secondary_index:
-        stmt = stmt.join(EmbeddingModel).where(
-            EmbeddingModel.status == IndexModelStatus.FUTURE
+        stmt = stmt.join(SearchSettings).where(
+            SearchSettings.status == IndexModelStatus.FUTURE
         )
     else:
-        stmt = stmt.join(EmbeddingModel).where(
-            EmbeddingModel.status == IndexModelStatus.PRESENT
+        stmt = stmt.join(SearchSettings).where(
+            SearchSettings.status == IndexModelStatus.PRESENT
         )
     stmt = stmt.order_by(desc(IndexAttempt.time_created))
     stmt = stmt.limit(1)
@@ -285,8 +286,8 @@ def get_index_attempts_for_cc_pair(
             )
         )
     if only_current:
-        stmt = stmt.join(EmbeddingModel).where(
-            EmbeddingModel.status == IndexModelStatus.PRESENT
+        stmt = stmt.join(SearchSettings).where(
+            SearchSettings.status == IndexModelStatus.PRESENT
         )
 
     stmt = stmt.order_by(IndexAttempt.time_created.desc())
@@ -308,19 +309,19 @@ def delete_index_attempts(
 
 
 def expire_index_attempts(
-    embedding_model_id: int,
+    search_settings_id: int,
     db_session: Session,
 ) -> None:
     delete_query = (
         delete(IndexAttempt)
-        .where(IndexAttempt.embedding_model_id == embedding_model_id)
+        .where(IndexAttempt.search_settings_id == search_settings_id)
         .where(IndexAttempt.status == IndexingStatus.NOT_STARTED)
     )
     db_session.execute(delete_query)
 
     update_query = (
         update(IndexAttempt)
-        .where(IndexAttempt.embedding_model_id == embedding_model_id)
+        .where(IndexAttempt.search_settings_id == search_settings_id)
         .where(IndexAttempt.status != IndexingStatus.SUCCESS)
         .values(
             status=IndexingStatus.FAILED,
@@ -344,10 +345,10 @@ def cancel_indexing_attempts_for_ccpair(
     )
 
     if not include_secondary_index:
-        subquery = select(EmbeddingModel.id).where(
-            EmbeddingModel.status != IndexModelStatus.FUTURE
+        subquery = select(SearchSettings.id).where(
+            SearchSettings.status != IndexModelStatus.FUTURE
         )
-        stmt = stmt.where(IndexAttempt.embedding_model_id.in_(subquery))
+        stmt = stmt.where(IndexAttempt.search_settings_id.in_(subquery))
 
     db_session.execute(stmt)
 
@@ -365,8 +366,8 @@ def cancel_indexing_attempts_past_model(
             IndexAttempt.status.in_(
                 [IndexingStatus.IN_PROGRESS, IndexingStatus.NOT_STARTED]
             ),
-            IndexAttempt.embedding_model_id == EmbeddingModel.id,
-            EmbeddingModel.status == IndexModelStatus.PAST,
+            IndexAttempt.search_settings_id == SearchSettings.id,
+            SearchSettings.status == IndexModelStatus.PAST,
         )
         .values(status=IndexingStatus.FAILED)
     )
@@ -375,7 +376,7 @@ def cancel_indexing_attempts_past_model(
 
 
 def count_unique_cc_pairs_with_successful_index_attempts(
-    embedding_model_id: int | None,
+    search_settings_id: int | None,
     db_session: Session,
 ) -> int:
     """Collect all of the Index Attempts that are successful and for the specified embedding model
@@ -385,7 +386,7 @@ def count_unique_cc_pairs_with_successful_index_attempts(
         db_session.query(IndexAttempt.connector_credential_pair_id)
         .join(ConnectorCredentialPair)
         .filter(
-            IndexAttempt.embedding_model_id == embedding_model_id,
+            IndexAttempt.search_settings_id == search_settings_id,
             IndexAttempt.status == IndexingStatus.SUCCESS,
         )
         .distinct()

@@ -1,4 +1,4 @@
-import { User } from "@/lib/types";
+import { User, UserRole } from "@/lib/types";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,
@@ -32,7 +32,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
     if (!user) {
       return redirect("/auth/login");
     }
-    if (user.role !== "admin") {
+    if (user.role === UserRole.BASIC) {
       return redirect("/");
     }
     if (!user.is_verified && requiresVerification) {

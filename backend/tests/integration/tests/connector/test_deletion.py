@@ -2,13 +2,13 @@ import time
 
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
-from tests.integration.common.connectors import ConnectorClient
-from tests.integration.common.constants import MAX_DELAY
-from tests.integration.common.document_sets import DocumentSetClient
-from tests.integration.common.seed_documents import TestDocumentClient
-from tests.integration.common.user_groups import UserGroupClient
-from tests.integration.common.user_groups import UserGroupCreate
-from tests.integration.common.vespa import TestVespaClient
+from tests.integration.common_utils.connectors import ConnectorClient
+from tests.integration.common_utils.constants import MAX_DELAY
+from tests.integration.common_utils.document_sets import DocumentSetClient
+from tests.integration.common_utils.seed_documents import TestDocumentClient
+from tests.integration.common_utils.user_groups import UserGroupClient
+from tests.integration.common_utils.user_groups import UserGroupCreate
+from tests.integration.common_utils.vespa import TestVespaClient
 
 
 def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
@@ -129,12 +129,12 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     print("Connector 1 deleted")
 
     # validate vespa documents
-    c1_vespa_docs = vespa_client.get_documents_by_id(c1_seed_res.document_ids)[
-        "documents"
-    ]
-    c2_vespa_docs = vespa_client.get_documents_by_id(c2_seed_res.document_ids)[
-        "documents"
-    ]
+    c1_vespa_docs = vespa_client.get_documents_by_id(
+        [doc.id for doc in c1_seed_res.documents]
+    )["documents"]
+    c2_vespa_docs = vespa_client.get_documents_by_id(
+        [doc.id for doc in c2_seed_res.documents]
+    )["documents"]
 
     assert len(c1_vespa_docs) == 0
     assert len(c2_vespa_docs) == 5

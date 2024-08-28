@@ -230,3 +230,10 @@ code[class*="language-"] {
 .code-line .token.attr-name {
   color: theme("colors.token-attr-name");
 }
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  align-items: start;
+}

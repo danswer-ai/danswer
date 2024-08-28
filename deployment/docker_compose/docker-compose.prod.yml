@@ -1,7 +1,7 @@
 version: "3"
 services:
   api_server:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -30,7 +30,7 @@ services:
         max-file: "6"
 
   background:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -58,7 +58,7 @@ services:
         max-file: "6"
 
   web_server:
-    image: danswer/danswer-web-server:latest
+    image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -98,7 +98,7 @@ services:
         max-file: "6"
 
   inference_model_server:
-    image: danswer/danswer-model-server:latest
+    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -124,7 +124,7 @@ services:
         max-file: "6"
 
   indexing_model_server:
-    image: danswer/danswer-model-server:latest
+    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
