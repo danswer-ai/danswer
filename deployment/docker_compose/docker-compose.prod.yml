@@ -1,14 +1,14 @@
 version: '3'
 services:
   api_server:
-    image: danswer/danswer-backend:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
     command: >
       /bin/sh -c "alembic upgrade head &&
       echo \"Starting enMedD AI Api Server\" &&
-      uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
+      uvicorn enmedd.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
       - index
@@ -31,7 +31,7 @@ services:
 
 
   background:
-    image: danswer/danswer-backend:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -59,7 +59,7 @@ services:
         max-file: "6"
 
   web_server:
-    image: danswer/danswer-web-server:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -100,7 +100,7 @@ services:
 
 
   inference_model_server:
-    image: danswer/danswer-model-server:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-model-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -127,7 +127,7 @@ services:
 
 
   indexing_model_server:
-    image: danswer/danswer-model-server:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-model-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server

@@ -35,6 +35,7 @@ export interface QuotesInfoPacket {
   quotes: Quote[];
 }
 
+// TODO: replace the interface name
 export interface DanswerDocument {
   document_id: string;
   link: string;

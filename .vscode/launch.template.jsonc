@@ -54,7 +54,7 @@
                 "PYTHONUNBUFFERED": "1"
             },
             "args": [
-                "danswer.main:app",
+                "enmedd.main:app",
                 "--reload",
                 "--port",
                 "8080"
@@ -64,7 +64,7 @@
             "name": "Indexing",
             "type": "python",
             "request": "launch",
-            "program": "danswer/background/update.py",
+            "program": "enmedd/background/update.py",
             "cwd": "${workspaceFolder}/backend",
             "envFile": "${workspaceFolder}/.env",
             "env": {

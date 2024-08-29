@@ -9,7 +9,7 @@ import json
 from typing import cast
 from alembic import op
 import sqlalchemy as sa
-from danswer.dynamic_configs.factory import get_dynamic_config_store
+from enmedd.dynamic_configs.factory import get_dynamic_config_store
 
 # revision identifiers, used by Alembic.
 revision = "703313b75876"

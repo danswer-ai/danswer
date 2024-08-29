@@ -154,7 +154,7 @@ export function LLMConfiguration() {
         </>
       ) : (
         <Callout title="No LLM providers configured yet" color="yellow">
-          Please set one up below in order to start using enMedD CHP!
+          Please set one up below in order to start using enMedD AI!
         </Callout>
       )}
 

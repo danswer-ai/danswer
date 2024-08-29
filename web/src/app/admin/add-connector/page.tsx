@@ -71,19 +71,22 @@ export default function Page() {
         source.category.toLowerCase().includes(lowerSearchTerm)
     );
 
-    return Object.values(SourceCategory).reduce((acc, category) => {
-      if (category === SourceCategory.Disabled) {
-        return acc;
-      }
+    return Object.values(SourceCategory).reduce(
+      (acc, category) => {
+        if (category === SourceCategory.Disabled) {
+          return acc;
+        }
 
-      acc[category] = sources.filter(
-        (source) =>
-          source.category === category &&
-          (filtered.includes(source) ||
-            category.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      return acc;
-    }, {} as Record<SourceCategory, SourceMetadata[]>);
+        acc[category] = sources.filter(
+          (source) =>
+            source.category === category &&
+            (filtered.includes(source) ||
+              category.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+        return acc;
+      },
+      {} as Record<SourceCategory, SourceMetadata[]>
+    );
   }, [sources, searchTerm]);
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -111,8 +114,8 @@ export default function Page() {
       />
 
       <p className="p-2.5 pt-0">
-        Connect enMedD CHP to your organization&apos;s knowledge sources.
-        We&apos;ll automatically sync your data into enMedD CHP, so you can find
+        Connect enMedD AI to your organization&apos;s knowledge sources.
+        We&apos;ll automatically sync your data into enMedD AI, so you can find
         exactly what you&apos;re looking for in one place.
       </p>
 

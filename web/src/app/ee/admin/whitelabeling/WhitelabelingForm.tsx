@@ -94,8 +94,8 @@ export function WhitelabelingForm() {
             <TextFormField
               label="Application Name"
               name="application_name"
-              subtext={`The custom name you are giving enMedD CHP for your organization. This will replace 'enMedD CHP' everywhere in the UI.`}
-              placeholder="Custom name which will replace 'enMedD CHP'"
+              subtext={`The custom name you are giving enMedD AI for your organization. This will replace 'enMedD AI' everywhere in the UI.`}
+              placeholder="Custom name which will replace 'enMedD AI'"
               disabled={isSubmitting}
             />
 
@@ -135,7 +135,7 @@ export function WhitelabelingForm() {
               </div>
             ) : (
               <SubLabel>
-                Specify your own logo to replace the standard enMedD CHP logo.
+                Specify your own logo to replace the standard enMedD AI logo.
               </SubLabel>
             )}
 
@@ -164,7 +164,7 @@ export function WhitelabelingForm() {
                 name="custom_popup_header"
                 subtext={`The title for the popup that will be displayed for each user on their initial visit 
                 to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${
-                  values.application_name || "enMedD CHP"
+                  values.application_name || "enMedD AI"
                 }!".`}
                 placeholder="Initial Popup Header"
                 disabled={isSubmitting}

@@ -17,7 +17,7 @@ export interface User {
   is_superuser: string;
   is_verified: string;
   role: "basic" | "admin";
-  workspace_id?: number;
+  workspace?: Workspace;
   full_name?: string;
   company_name?: string;
   company_email?: string;
@@ -411,6 +411,13 @@ export interface Tag {
   tag_key: string;
   tag_value: string;
   source: ValidSources;
+}
+
+export interface Workspace {
+  id: number;
+  workspace_name: string;
+  custom_logo: string;
+  custom_header_logo: string;
 }
 
 /* EE Only Types */

@@ -24,7 +24,7 @@ export function SwitchModelModal({
           <br />
           Please click the button below to choose a new model. Don&apos;t worry,
           the re-indexing necessary for the switch will happen in the background
-          - your use of enMedD CHP will not be interrupted.
+          - your use of enMedD AI will not be interrupted.
         </Text>
 
         <div className="flex mt-4">

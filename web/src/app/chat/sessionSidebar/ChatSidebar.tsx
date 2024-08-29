@@ -168,7 +168,7 @@ export const ChatSidebar = ({
 
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
                     <p className="text-xs text-subtle -mt-1.5">
-                      Powered by enMedD CHP
+                      Powered by enMedD AI
                     </p>
                   )}
                 </div>

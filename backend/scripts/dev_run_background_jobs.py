@@ -59,7 +59,7 @@ def run_jobs(exclude_indexing: bool) -> None:
     if not exclude_indexing:
         update_env = os.environ.copy()
         update_env["PYTHONPATH"] = "."
-        cmd_indexing = ["python", "danswer/background/update.py"]
+        cmd_indexing = ["python", "enmedd/background/update.py"]
 
         indexing_process = subprocess.Popen(
             cmd_indexing,

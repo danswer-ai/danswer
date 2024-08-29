@@ -550,7 +550,7 @@ export function AssistantEditor({
                                       <>
                                         If this functionality would be useful,
                                         reach out to the administrators of
-                                        enMedD CHP for assistance.
+                                        enMedD AI for assistance.
                                       </>
                                     )}
                                   </Italic>

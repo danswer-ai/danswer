@@ -17,7 +17,7 @@
       "command": [
         "/bin/sh",
         "-c",
-        "alembic upgrade head && echo \"Starting Danswer Api Server\" && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
+        "alembic upgrade head && echo \"Starting enMedD AI Api Server\" && uvicorn enmedd.main:app --host 0.0.0.0 --port 8080"
       ],
       "environment": [
         { "name": "AUTH_TYPE", "value": "disabled" },

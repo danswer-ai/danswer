@@ -14,6 +14,7 @@ export const keywordSearch = async ({
     method: "POST",
     body: JSON.stringify({
       query,
+      // TODO: replace the naming convention used here
       collection: "danswer_index",
       ...(sources.length > 0
         ? {

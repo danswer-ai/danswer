@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from transformers import logging as transformer_logging  # type:ignore
 
-from danswer import __version__
-from danswer.utils.logger import setup_logger
+from enmedd import __version__
+from enmedd.utils.logger import setup_logger
 from model_server.custom_models import router as custom_models_router
 from model_server.custom_models import warm_up_intent_model
 from model_server.encoders import router as encoders_router
@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 def get_model_app() -> FastAPI:
     application = FastAPI(
-        title="enMedD CHP Model Server", version=__version__, lifespan=lifespan
+        title="enMedD AI Model Server", version=__version__, lifespan=lifespan
     )
 
     application.include_router(management_router)
@@ -69,7 +69,7 @@ app = get_model_app()
 
 if __name__ == "__main__":
     logger.info(
-        f"Starting enMedD CHP Model Server on http://{MODEL_SERVER_ALLOWED_HOST}:{str(MODEL_SERVER_PORT)}/"
+        f"Starting enMedD AI Model Server on http://{MODEL_SERVER_ALLOWED_HOST}:{str(MODEL_SERVER_PORT)}/"
     )
     logger.info(f"Model Server Version: {__version__}")
     uvicorn.run(app, host=MODEL_SERVER_ALLOWED_HOST, port=MODEL_SERVER_PORT)

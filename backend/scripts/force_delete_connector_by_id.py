@@ -13,27 +13,27 @@ sys.path.append(parent_dir)
 # pylint: disable=E402
 # flake8: noqa: E402
 
-# Now import Danswer modules
-from danswer.db.models import DocumentSet__ConnectorCredentialPair
-from danswer.db.connector import fetch_connector_by_id
-from danswer.db.document import get_documents_for_connector_credential_pair
-from danswer.db.index_attempt import (
+# Now import enMedD AI modules
+from enmedd.db.models import DocumentSet__ConnectorCredentialPair
+from enmedd.db.connector import fetch_connector_by_id
+from enmedd.db.document import get_documents_for_connector_credential_pair
+from enmedd.db.index_attempt import (
     delete_index_attempts,
     cancel_indexing_attempts_for_connector,
 )
-from danswer.db.models import ConnectorCredentialPair
-from danswer.document_index.interfaces import DocumentIndex
-from danswer.utils.logger import setup_logger
-from danswer.configs.constants import DocumentSource
-from danswer.db.connector_credential_pair import (
+from enmedd.db.models import ConnectorCredentialPair
+from enmedd.document_index.interfaces import DocumentIndex
+from enmedd.utils.logger import setup_logger
+from enmedd.configs.constants import DocumentSource
+from enmedd.db.connector_credential_pair import (
     get_connector_credential_pair_from_id,
     get_connector_credential_pair,
 )
-from danswer.db.engine import get_session_context_manager
-from danswer.document_index.factory import get_default_document_index
-from danswer.file_store.file_store import get_default_file_store
-from danswer.document_index.document_index_utils import get_both_index_names
-from danswer.db.document import delete_documents_complete__no_commit
+from enmedd.db.engine import get_session_context_manager
+from enmedd.document_index.factory import get_default_document_index
+from enmedd.file_store.file_store import get_default_file_store
+from enmedd.document_index.document_index_utils import get_both_index_names
+from enmedd.db.document import delete_documents_complete__no_commit
 
 # pylint: enable=E402
 # flake8: noqa: E402
@@ -113,7 +113,7 @@ def unsafe_deletion(
 def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
     user_input = input(
         "DO NOT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. \
-        IT MAY CAUSE ISSUES with your Danswer instance! \
+        IT MAY CAUSE ISSUES with your enMedD AI instance! \
         Are you SURE you want to continue? (enter 'Y' to continue): "
     )
     if user_input != "Y":
