@@ -220,6 +220,7 @@ services:
 
       # Enterprise Edition only
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
+      - MEECHUM_AUTH=${MEECHUM_AUTH:-false}
 
   inference_model_server:
     image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
