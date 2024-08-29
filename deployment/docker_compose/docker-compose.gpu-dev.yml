@@ -1,7 +1,7 @@
 version: "3"
 services:
   api_server:
-    image:  471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -95,7 +95,7 @@ services:
         max-file: "6"
 
   background:
-    image:  471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile

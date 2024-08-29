@@ -1,4 +1,5 @@
 ## 💃 Main Features
+
 - Chat UI with the ability to select documents to chat with.
 - Create custom AI Assistants with different prompts and backing knowledge sets.
 - Connect enMedD AI with LLM of your choice (self-host for a fully airgapped solution).
@@ -16,12 +17,16 @@
 
 Efficiently pulls the latest changes from:
 
+<<<<<<< HEAD
+- Web
+=======
 - Web 
+>>>>>>> 9a95c3f4b3639441c5b4d2b7e9f14f2ea9801f6a
 - File/s
-- Cloud Storages such as AWS S3, Cloudflare R2, Google Storage, and Oracle Storage 
+- Cloud Storages such as AWS S3, Cloudflare R2, Google Storage, and Oracle Storage
 - Gmail
 - Google Drive
-- Github 
+- Github
 - Gitlab
 - Confluence
 - Jira
