@@ -61,7 +61,7 @@ function SummaryRow({
   return (
     <TableRow
       onClick={onToggle}
-      className="border-border bg-white rounded-sm !border sbg-white cursor-pointer"
+      className="border-border bg-white rounded-sm !border cursor-pointer"
     >
       <TableCell className={`py-4 w-[${columnWidths.first}]`}>
         <div className="text-xl flex items-center truncate ellipsis gap-x-2 font-semibold">
@@ -457,7 +457,7 @@ export function CCPairIndexingStatusTable({
               placeholder="Search connectors..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="ml-2 w-96 h-9 flex-none rounded-md border-2 border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="ml-2 w-96 h-9 flex-none rounded-md border border-border bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
 
             <Button className="h-9" onClick={() => toggleSources()}>
