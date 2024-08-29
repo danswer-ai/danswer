@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "family": "inference_model_server",
   "networkMode": "awsvpc",
   "containerDefinitions": [
@@ -20,29 +19,6 @@
           "awslogs-group": "/ecs/inference_model_server",
           "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
-=======
-    "family": "inference_model_server",
-    "networkMode": "awsvpc",
-    "containerDefinitions": [
-      {
-        "name": "inference_model_server",
-        "image": "471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest",
-        "essential": true,
-        "memory": 5120,
-        "cpu": 2560,
-        "command": [
-          "/bin/sh",
-          "-c",
-          "echo \"Starting Inference Model Server\" && gunicorn -b 0.0.0.0:8000 enmedd.inference_model_server:app"
-        ],
-        "logConfiguration": {
-          "logDriver": "awslogs",
-          "options": {
-            "awslogs-group": "/ecs/inference_model_server",
-            "awslogs-region": "us-east-1",
-            "awslogs-stream-prefix": "ecs"
-          }
->>>>>>> 9a95c3f4b3639441c5b4d2b7e9f14f2ea9801f6a
         }
       }
     }

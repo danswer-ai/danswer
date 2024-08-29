@@ -55,7 +55,7 @@ export default async function GalleryPage({
         }}
       >
         <div className="relative flex h-screen overflow-x-hidden bg-background">
-          <DynamicSidebar user={user}>
+          <DynamicSidebar openSidebar={true} user={user}>
             <ChatSidebar
               existingChats={chatSessions}
               currentChatSession={null}
