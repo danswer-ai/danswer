@@ -27,7 +27,7 @@ class RerankingDetails(BaseModel):
     # If model is None (or num_rerank is 0), then reranking is turned off
     rerank_model_name: str | None
     rerank_provider_type: RerankerProvider | None
-    rerank_api_key: str | None
+    rerank_api_key: str | None = None
 
     num_rerank: int
 

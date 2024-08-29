@@ -33,6 +33,7 @@ export interface SelectOption extends Option {
 export interface ListOption extends Option {
   type: "list";
   default?: string[];
+  transform?: (values: string[]) => string[];
 }
 
 export interface TextOption extends Option {
@@ -363,6 +364,8 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
         name: "channels",
         description: `Specify 0 or more channels to index. For example, specifying the channel "support" will cause us to only index all content within the "#support" channel. If no channels are specified, all channels in your workspace will be indexed.`,
         optional: true,
+        // Slack channels can only be lowercase
+        transform: (values) => values.map((value) => value.toLowerCase()),
       },
       {
         type: "checkbox",
