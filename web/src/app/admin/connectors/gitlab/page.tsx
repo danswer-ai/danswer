@@ -107,11 +107,7 @@ const Main = () => {
         <>
           <Text>
             If you don&apos;t have an access token, read the guide{" "}
-            <a
-              className="text-blue-500"
-              href="https://docs.danswer.dev/connectors/gitlab"
-              target="_blank"
-            >
+            <a className="text-blue-500" href="#" target="_blank">
               here
             </a>{" "}
             on how to get one from Gitlab.

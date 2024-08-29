@@ -79,7 +79,7 @@ export const ChatSidebar = ({
             `}
         id="chat-sidebar"
       >
-        <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-6">
+        <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
           {/* <Image src={EnmeddLogo} alt="enmedd-logo" height={40} /> */}
           <div className="flex">
             {enterpriseSettings && enterpriseSettings.application_name ? (
@@ -110,22 +110,6 @@ export const ChatSidebar = ({
         </div>
 
         <div className="h-full overflow-auto">
-          {/* <div className="flex px-4">
-            {enterpriseSettings && enterpriseSettings.application_name ? (
-              <div>
-                <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
-
-                {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                  <p className="text-xs text-subtle -mt-1.5">
-                    Powered by enMedD CHP
-                  </p>
-                )}
-              </div>
-            ) : (
-              <></>
-            )}
-          </div> */}
-
           <div className="px-4 text-sm flex flex-col">
             {settings.search_page_enabled && (
               <>

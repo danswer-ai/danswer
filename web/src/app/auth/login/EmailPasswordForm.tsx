@@ -10,7 +10,6 @@ import { requestEmailVerification } from "../lib";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
-import { fetchSettingsSS } from "@/components/settings/lib";
 
 export function EmailPasswordForm({
   isSignup = false,

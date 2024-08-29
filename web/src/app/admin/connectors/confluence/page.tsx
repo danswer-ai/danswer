@@ -152,11 +152,7 @@ const Main = () => {
         <>
           <Text>
             To use the Confluence connector, first follow the guide{" "}
-            <a
-              className="text-link"
-              href="https://docs.danswer.dev/connectors/confluence#setting-up"
-              target="_blank"
-            >
+            <a className="text-link" href="#" target="_blank">
               here
             </a>{" "}
             to generate an Access Token.
@@ -210,7 +206,7 @@ const Main = () => {
             &quot;Index&quot; to Index. Based on the provided link, we will
             index the ENTIRE SPACE, not just the specified page. For example,
             entering{" "}
-            <a href="https://danswer.atlassian.net/wiki/spaces/Engineering/overview">
+            <a href="#">
               <i>Atlassian engineering overview</i>{" "}
             </a>
             and clicking the Index button will index the whole{" "}
