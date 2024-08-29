@@ -28,7 +28,7 @@ export function StripeCheckoutButton({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ newQuantity, newPlan }),
+        body: JSON.stringify({ quantity: newQuantity, plan: newPlan }),
       });
 
       if (!response.ok) {
@@ -71,10 +71,12 @@ export function StripeCheckoutButton({
           : newPlan > currentPlan ||
               (newPlan === currentPlan && newQuantity > currentQuantity)
             ? "Upgrade Plan"
-            : newPlan < currentPlan ||
-                (newPlan === currentPlan && newQuantity < currentQuantity)
-              ? "Downgrade Plan"
-              : "Change Plan"}
+            : newPlan == BillingPlanType.ENTERPRISE
+              ? "Talk to us"
+              : // : newPlan < currentPlan ||
+                newPlan === currentPlan && newQuantity < currentQuantity
+                ? "Upgrade Plan"
+                : "Change Plan"}
     </button>
   );
 }

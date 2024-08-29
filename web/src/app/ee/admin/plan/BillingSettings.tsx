@@ -1,27 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { BillingPlanType } from "@/app/admin/settings/interfaces";
 import { useContext, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { Form, Formik } from "formik";
-import * as Yup from "yup";
-import {
-  Label,
-  SubLabel,
-  TextFormField,
-} from "@/components/admin/connectors/Field";
 import { Button, Divider, Text, Card } from "@tremor/react";
-import Link from "next/link";
 import { StripeCheckoutButton } from "./StripeCheckoutButton";
 import { CheckmarkIcon, XIcon } from "@/components/icons/icons";
 import { FiAward, FiDollarSign, FiStar } from "react-icons/fi";
-// import { StripeCheckoutButton } from "@/components/StripeButton";
 
 export function BillingSettings() {
-  const router = useRouter();
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-
   const settings = useContext(SettingsContext);
   const cloudSettings = settings?.cloudSettings;
 
@@ -259,31 +246,32 @@ export function BillingSettings() {
         <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
           <div className="px-8 py-6">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">
-              Tenant Merging
+              Tenant Deletion
             </h2>
             <p className="text-gray-600 mb-6">
-              Merge your tenant with another to consolidate resources and users.
+              Permanently delete your tenant and all associated data.
             </p>
             <div
-              className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6"
+              className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6"
               role="alert"
             >
               <p className="font-bold">Warning:</p>
-              <p>Merging tenants will result in the following:</p>
+              <p>Deleting your tenant will result in the following:</p>
               <ul className="list-disc list-inside mt-2">
-                <li>Data from the other tenant will be abandoned</li>
                 <li>
-                  Billing for the merged tenant will transfer to this account
+                  All data associated with this tenant will be permanently
+                  deleted
                 </li>
+                <li>This action cannot be undone</li>
               </ul>
             </div>
             <Button
               onClick={() => {
                 alert("not implemented");
               }}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-md hover:shadow-lg"
+              className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-md hover:shadow-lg"
             >
-              Start Tenant Merge Process
+              Delete Tenant
             </Button>
           </div>
         </Card>
