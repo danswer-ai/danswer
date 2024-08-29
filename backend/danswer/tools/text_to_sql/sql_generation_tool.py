@@ -236,7 +236,7 @@ class SqlGenerationTool(Tool):
             isTableResponse = "json" in query
             isChartInQuery = "chart" in query.lower()
             # isChartInQuery = True
-            if not result_list and filtered_df is None :
+            if not result_list or filtered_df is None :
                 final_response = "No result found. Please rephrase your query!"
             else:
                 if isTableResponse:
