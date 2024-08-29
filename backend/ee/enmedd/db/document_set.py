@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 from enmedd.db.models import ConnectorCredentialPair
 from enmedd.db.models import DocumentSet
 from enmedd.db.models import DocumentSet__ConnectorCredentialPair
-from enmedd.db.models import DocumentSet__User
 from enmedd.db.models import DocumentSet__Teamspace
-from enmedd.db.models import User__Teamspace
+from enmedd.db.models import DocumentSet__User
 from enmedd.db.models import Teamspace
+from enmedd.db.models import User__Teamspace
 
 
 def make_doc_set_private(

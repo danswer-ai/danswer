@@ -82,7 +82,10 @@ export async function fetchAssistantEditorInfoSS(
   const llmProviders = (await llmProvidersResponse.json()) as FullLLMProvider[];
 
   if (assistantId && assistantResponse && !assistantResponse.ok) {
-    return [null, `Failed to fetch Assistant - ${await assistantResponse.text()}`];
+    return [
+      null,
+      `Failed to fetch Assistant - ${await assistantResponse.text()}`,
+    ];
   }
   const existingAssistant = assistantResponse
     ? ((await assistantResponse.json()) as Assistant)

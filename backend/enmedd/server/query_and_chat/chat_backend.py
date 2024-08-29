@@ -17,6 +17,7 @@ from enmedd.chat.process_message import stream_chat_message
 from enmedd.configs.app_configs import WEB_DOMAIN
 from enmedd.configs.constants import FileOrigin
 from enmedd.configs.constants import MessageType
+from enmedd.db.assistant import get_assistant_by_id
 from enmedd.db.chat import create_chat_session
 from enmedd.db.chat import create_new_chat_message
 from enmedd.db.chat import delete_chat_session
@@ -32,7 +33,6 @@ from enmedd.db.engine import get_session
 from enmedd.db.feedback import create_chat_message_feedback
 from enmedd.db.feedback import create_doc_retrieval_feedback
 from enmedd.db.models import User
-from enmedd.db.assistant import get_assistant_by_id
 from enmedd.document_index.document_index_utils import get_both_index_names
 from enmedd.document_index.factory import get_default_document_index
 from enmedd.file_processing.extract_file_text import extract_file_text

@@ -45,7 +45,9 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
       ) as Assistant;
     });
 
-  const updateAssistantOrder = async (orderedAssistantIds: UniqueIdentifier[]) => {
+  const updateAssistantOrder = async (
+    orderedAssistantIds: UniqueIdentifier[]
+  ) => {
     setFinalAssistants(orderedAssistantIds.map((id) => id.toString()));
 
     const displayPriorityMap = new Map<UniqueIdentifier, number>();
@@ -111,7 +113,10 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                   >
                     {assistant.description}
                   </p>,
-                  <AssistantTypeDisplay key={assistant.id} assistant={assistant} />,
+                  <AssistantTypeDisplay
+                    key={assistant.id}
+                    assistant={assistant}
+                  />,
                   <div
                     key="is_visible"
                     onClick={async () => {
@@ -155,7 +160,9 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                         <div
                           className="hover:bg-hover rounded p-1 cursor-pointer"
                           onClick={async () => {
-                            const response = await deleteAssistant(assistant.id);
+                            const response = await deleteAssistant(
+                              assistant.id
+                            );
                             if (response.ok) {
                               router.refresh();
                             } else {

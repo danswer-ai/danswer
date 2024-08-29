@@ -15,6 +15,7 @@ from enmedd.chat.models import StreamingError
 from enmedd.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from enmedd.configs.chat_configs import QA_TIMEOUT
 from enmedd.configs.constants import MessageType
+from enmedd.db.assistant import get_prompt_by_id
 from enmedd.db.chat import create_chat_session
 from enmedd.db.chat import create_db_search_doc
 from enmedd.db.chat import create_new_chat_message
@@ -23,7 +24,6 @@ from enmedd.db.chat import translate_db_message_to_chat_message_detail
 from enmedd.db.chat import translate_db_search_doc_to_server_search_doc
 from enmedd.db.engine import get_session_context_manager
 from enmedd.db.models import User
-from enmedd.db.assistant import get_prompt_by_id
 from enmedd.llm.answering.answer import Answer
 from enmedd.llm.answering.models import AnswerStyleConfig
 from enmedd.llm.answering.models import CitationConfig
@@ -187,7 +187,9 @@ def stream_answer_objects(
         question=query_msg.message,
         answer_style_config=answer_config,
         prompt_config=PromptConfig.from_model(prompt),
-        llm=get_main_llm_from_tuple(get_llms_for_assistant(assistant=chat_session.assistant)),
+        llm=get_main_llm_from_tuple(
+            get_llms_for_assistant(assistant=chat_session.assistant)
+        ),
         single_message_history=history_str,
         tools=[search_tool],
         force_use_tool=ForceUseTool(

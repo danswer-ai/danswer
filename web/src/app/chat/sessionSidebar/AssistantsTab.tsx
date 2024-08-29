@@ -54,7 +54,9 @@ export function AssistantsTab({
   onAssistantChange: (assistant: Assistant | null) => void;
   user: User | null;
 }) {
-  const globalAssistants = assistants.filter((assistant) => assistant.is_public);
+  const globalAssistants = assistants.filter(
+    (assistant) => assistant.is_public
+  );
   const personalAssistants = assistants.filter(
     (assistant) =>
       (!user || assistant.users.some((u) => u.id === user.id)) &&

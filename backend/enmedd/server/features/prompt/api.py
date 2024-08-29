@@ -5,13 +5,13 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from enmedd.auth.users import current_user
-from enmedd.db.engine import get_session
-from enmedd.db.models import User
 from enmedd.db.assistant import get_assistants_by_ids
 from enmedd.db.assistant import get_prompt_by_id
 from enmedd.db.assistant import get_prompts
 from enmedd.db.assistant import mark_prompt_as_deleted
 from enmedd.db.assistant import upsert_prompt
+from enmedd.db.engine import get_session
+from enmedd.db.models import User
 from enmedd.server.features.prompt.models import CreatePromptRequest
 from enmedd.server.features.prompt.models import PromptSnapshot
 from enmedd.utils.logger import setup_logger

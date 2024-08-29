@@ -121,7 +121,9 @@ export function ChatInputBar({
 
   // Update selected assistant
   const updateCurrentAssistant = (assistant: Assistant) => {
-    onSetSelectedAssistant(assistant.id == selectedAssistant.id ? null : assistant);
+    onSetSelectedAssistant(
+      assistant.id == selectedAssistant.id ? null : assistant
+    );
     hideSuggestions();
     setMessage("");
   };
@@ -298,7 +300,8 @@ export function ChatInputBar({
                   key={filteredAssistants.length}
                   target="_blank"
                   className={`${
-                    assistantIconIndex == filteredAssistants.length && "bg-hover"
+                    assistantIconIndex == filteredAssistants.length &&
+                    "bg-hover"
                   } px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
                   href="/assistants/new"
                 >

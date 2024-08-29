@@ -5,9 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from enmedd.configs.constants import TokenRateLimitScope
+from enmedd.db.models import Teamspace
 from enmedd.db.models import TokenRateLimit
 from enmedd.db.models import TokenRateLimit__Teamspace
-from enmedd.db.models import Teamspace
 from enmedd.server.token_rate_limits.models import TokenRateLimitArgs
 
 

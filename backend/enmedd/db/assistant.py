@@ -13,18 +13,18 @@ from sqlalchemy.orm import Session
 from enmedd.auth.schemas import UserRole
 from enmedd.db.document_set import get_document_sets_by_ids
 from enmedd.db.engine import get_sqlalchemy_engine
-from enmedd.db.models import DocumentSet
 from enmedd.db.models import Assistant
-from enmedd.db.models import Assistant__User
 from enmedd.db.models import Assistant__Teamspace
+from enmedd.db.models import Assistant__User
+from enmedd.db.models import DocumentSet
 from enmedd.db.models import Prompt
 from enmedd.db.models import StarterMessage
 from enmedd.db.models import Tool
 from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
 from enmedd.search.enums import RecencyBiasSetting
-from enmedd.server.features.assistant.models import CreateAssistantRequest
 from enmedd.server.features.assistant.models import AssistantSnapshot
+from enmedd.server.features.assistant.models import CreateAssistantRequest
 from enmedd.utils.logger import setup_logger
 from enmedd.utils.variable_functionality import fetch_versioned_implementation
 
@@ -43,7 +43,9 @@ def make_assistant_private(
         ).delete(synchronize_session="fetch")
 
         for user_uuid in user_ids:
-            db_session.add(Assistant__User(assistant_id=assistant_id, user_id=user_uuid))
+            db_session.add(
+                Assistant__User(assistant_id=assistant_id, user_id=user_uuid)
+            )
 
         db_session.commit()
 
@@ -186,7 +188,9 @@ def get_assistants(
         access_conditions = or_(
             Assistant.is_public == True,  # noqa: E712
             Assistant.id.in_(  # User has access through list of users with access
-                select(Assistant__User.assistant_id).where(Assistant__User.user_id == user_id)
+                select(Assistant__User.assistant_id).where(
+                    Assistant__User.user_id == user_id
+                )
             ),
             Assistant.id.in_(  # User is part of a group that has access
                 select(Assistant__Teamspace.assistant_id).where(
@@ -209,7 +213,9 @@ def mark_assistant_as_deleted(
     user: User | None,
     db_session: Session,
 ) -> None:
-    assistant = get_assistant_by_id(assistant_id=assistant_id, user=user, db_session=db_session)
+    assistant = get_assistant_by_id(
+        assistant_id=assistant_id, user=user, db_session=db_session
+    )
     assistant.deleted = True
     db_session.commit()
 
@@ -220,7 +226,10 @@ def mark_assistant_as_not_deleted(
     db_session: Session,
 ) -> None:
     assistant = get_assistant_by_id(
-        assistant_id=assistant_id, user=user, db_session=db_session, include_deleted=True
+        assistant_id=assistant_id,
+        user=user,
+        db_session=db_session,
+        include_deleted=True,
     )
     if assistant.deleted:
         assistant.deleted = False
@@ -234,7 +243,9 @@ def mark_delete_assistant_by_name(
 ) -> None:
     stmt = (
         update(Assistant)
-        .where(Assistant.name == assistant_name, Assistant.default_assistant == is_default)
+        .where(
+            Assistant.name == assistant_name, Assistant.default_assistant == is_default
+        )
         .values(deleted=True)
     )
 
@@ -443,7 +454,9 @@ def update_assistant_visibility(
     is_visible: bool,
     db_session: Session,
 ) -> None:
-    assistant = get_assistant_by_id(assistant_id=assistant_id, user=None, db_session=db_session)
+    assistant = get_assistant_by_id(
+        assistant_id=assistant_id, user=None, db_session=db_session
+    )
     assistant.is_visible = is_visible
     db_session.commit()
 
@@ -540,7 +553,9 @@ def get_assistant_by_id(
 
     # if user is an admin, they should have access to all Assistants
     if user is not None and user.role != UserRole.ADMIN:
-        or_conditions.extend([Assistant.user_id == user.id, Assistant.user_id.is_(None)])
+        or_conditions.extend(
+            [Assistant.user_id == user.id, Assistant.user_id.is_(None)]
+        )
 
         # if we aren't editing, also give access to all public assistants
         if not is_for_edit:

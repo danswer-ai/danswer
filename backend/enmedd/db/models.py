@@ -141,7 +141,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
     prompts: Mapped[list["Prompt"]] = relationship("Prompt", back_populates="user")
     # Assistants owned by this user
-    assistants: Mapped[list["Assistant"]] = relationship("Assistant", back_populates="user")
+    assistants: Mapped[list["Assistant"]] = relationship(
+        "Assistant", back_populates="user"
+    )
     # Custom tools created by this user
     custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
 
@@ -182,7 +184,9 @@ NOTE: must be at the top since they are referenced by other tables
 class Assistant__DocumentSet(Base):
     __tablename__ = "assistant__document_set"
 
-    assistant_id: Mapped[int] = mapped_column(ForeignKey("assistant.id"), primary_key=True)
+    assistant_id: Mapped[int] = mapped_column(
+        ForeignKey("assistant.id"), primary_key=True
+    )
     document_set_id: Mapped[int] = mapped_column(
         ForeignKey("document_set.id"), primary_key=True
     )
@@ -191,14 +195,18 @@ class Assistant__DocumentSet(Base):
 class Assistant__Prompt(Base):
     __tablename__ = "assistant__prompt"
 
-    assistant_id: Mapped[int] = mapped_column(ForeignKey("assistant.id"), primary_key=True)
+    assistant_id: Mapped[int] = mapped_column(
+        ForeignKey("assistant.id"), primary_key=True
+    )
     prompt_id: Mapped[int] = mapped_column(ForeignKey("prompt.id"), primary_key=True)
 
 
 class Assistant__User(Base):
     __tablename__ = "assistant__user"
 
-    assistant_id: Mapped[int] = mapped_column(ForeignKey("assistant.id"), primary_key=True)
+    assistant_id: Mapped[int] = mapped_column(
+        ForeignKey("assistant.id"), primary_key=True
+    )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
 
 
@@ -258,7 +266,9 @@ class Document__Tag(Base):
 class Assistant__Tool(Base):
     __tablename__ = "assistant__tool"
 
-    assistant_id: Mapped[int] = mapped_column(ForeignKey("assistant.id"), primary_key=True)
+    assistant_id: Mapped[int] = mapped_column(
+        ForeignKey("assistant.id"), primary_key=True
+    )
     tool_id: Mapped[int] = mapped_column(ForeignKey("tool.id"), primary_key=True)
 
 
@@ -1197,7 +1207,9 @@ class Teamspace__ConnectorCredentialPair(Base):
 class Assistant__Teamspace(Base):
     __tablename__ = "assistant__teamspace"
 
-    assistant_id: Mapped[int] = mapped_column(ForeignKey("assistant.id"), primary_key=True)
+    assistant_id: Mapped[int] = mapped_column(
+        ForeignKey("assistant.id"), primary_key=True
+    )
     teamspace_id: Mapped[int] = mapped_column(
         ForeignKey("teamspace.id"), primary_key=True
     )

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from enmedd.access.utils import prefix_user
 from enmedd.access.utils import prefix_teamspace
+from enmedd.access.utils import prefix_user
 from enmedd.configs.constants import PUBLIC_DOC_PAT
 
 

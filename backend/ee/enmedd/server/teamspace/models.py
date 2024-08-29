@@ -6,8 +6,8 @@ from enmedd.db.models import Teamspace as TeamspaceModel
 from enmedd.server.documents.models import ConnectorCredentialPairDescriptor
 from enmedd.server.documents.models import ConnectorSnapshot
 from enmedd.server.documents.models import CredentialSnapshot
-from enmedd.server.features.document_set.models import DocumentSet
 from enmedd.server.features.assistant.models import AssistantSnapshot
+from enmedd.server.features.document_set.models import DocumentSet
 from enmedd.server.manage.models import UserInfo
 from enmedd.server.manage.models import UserPreferences
 

@@ -21,10 +21,10 @@ from ee.enmedd.server.query_history.api import router as query_history_router
 from ee.enmedd.server.reporting.usage_export_api import router as usage_export_router
 from ee.enmedd.server.saml import router as saml_router
 from ee.enmedd.server.seeding import seed_db
+from ee.enmedd.server.teamspace.api import router as teamspace_router
 from ee.enmedd.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
-from ee.enmedd.server.teamspace.api import router as teamspace_router
 from ee.enmedd.utils.encryption import test_encryption
 from enmedd.auth.users import auth_backend
 from enmedd.auth.users import fastapi_users

@@ -17,11 +17,11 @@ from ee.enmedd.db.token_limit import fetch_all_user_token_rate_limits
 from enmedd.db.engine import get_session_context_manager
 from enmedd.db.models import ChatMessage
 from enmedd.db.models import ChatSession
+from enmedd.db.models import Teamspace
 from enmedd.db.models import TokenRateLimit
 from enmedd.db.models import TokenRateLimit__Teamspace
 from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
-from enmedd.db.models import Teamspace
 from enmedd.server.query_and_chat.token_limit import _get_cutoff_time
 from enmedd.server.query_and_chat.token_limit import _is_rate_limited
 from enmedd.server.query_and_chat.token_limit import _user_is_rate_limited_by_global

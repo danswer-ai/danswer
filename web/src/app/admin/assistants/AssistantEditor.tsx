@@ -109,7 +109,8 @@ export function AssistantEditor({
     }
   };
 
-  const isUpdate = existingAssistant !== undefined && existingAssistant !== null;
+  const isUpdate =
+    existingAssistant !== undefined && existingAssistant !== null;
   const existingPrompt = existingAssistant?.prompts[0] ?? null;
 
   useEffect(() => {

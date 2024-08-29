@@ -34,6 +34,7 @@ from enmedd.configs.app_configs import USER_AUTH_SECRET
 from enmedd.configs.app_configs import WEB_DOMAIN
 from enmedd.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from enmedd.configs.constants import AuthType
+from enmedd.db.assistant import delete_old_default_assistants
 from enmedd.db.connector import create_initial_default_connector
 from enmedd.db.connector_credential_pair import associate_default_cc_pair
 from enmedd.db.connector_credential_pair import get_connector_credential_pairs
@@ -45,7 +46,6 @@ from enmedd.db.engine import get_sqlalchemy_engine
 from enmedd.db.engine import warm_up_connections
 from enmedd.db.index_attempt import cancel_indexing_attempts_past_model
 from enmedd.db.index_attempt import expire_index_attempts
-from enmedd.db.assistant import delete_old_default_assistants
 from enmedd.db.swap_index import check_index_swap
 from enmedd.document_index.factory import get_default_document_index
 from enmedd.llm.llm_initialization import load_llm_providers
@@ -57,10 +57,10 @@ from enmedd.server.documents.connector import router as connector_router
 from enmedd.server.documents.credential import router as credential_router
 from enmedd.server.documents.document import router as document_router
 from enmedd.server.enmedd_api.ingestion import router as enmedd_api_server
-from enmedd.server.features.document_set.api import router as document_set_router
-from enmedd.server.features.folder.api import router as folder_router
 from enmedd.server.features.assistant.api import admin_router as admin_assistant_router
 from enmedd.server.features.assistant.api import basic_router as assistant_router
+from enmedd.server.features.document_set.api import router as document_set_router
+from enmedd.server.features.folder.api import router as folder_router
 from enmedd.server.features.prompt.api import basic_router as prompt_router
 from enmedd.server.features.tool.api import admin_router as admin_tool_router
 from enmedd.server.features.tool.api import router as tool_router

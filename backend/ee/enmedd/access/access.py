@@ -50,6 +50,6 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
     NOTE: is imported in enmedd.access.access by `fetch_versioned_implementation`
     DO NOT REMOVE."""
     teamspaces = fetch_teamspaces_for_user(db_session, user.id) if user else []
-    return set(
-        [prefix_teamspace(teamspace.name) for teamspace in teamspaces]
-    ).union(get_acl_for_user_without_groups(user, db_session))
+    return set([prefix_teamspace(teamspace.name) for teamspace in teamspaces]).union(
+        get_acl_for_user_without_groups(user, db_session)
+    )

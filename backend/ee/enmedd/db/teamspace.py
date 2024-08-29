@@ -11,11 +11,11 @@ from ee.enmedd.server.teamspace.models import TeamspaceUpdate
 from enmedd.db.models import ConnectorCredentialPair
 from enmedd.db.models import Document
 from enmedd.db.models import DocumentByConnectorCredentialPair
+from enmedd.db.models import Teamspace
+from enmedd.db.models import Teamspace__ConnectorCredentialPair
 from enmedd.db.models import TokenRateLimit__Teamspace
 from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
-from enmedd.db.models import Teamspace
-from enmedd.db.models import Teamspace__ConnectorCredentialPair
 from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
 
 

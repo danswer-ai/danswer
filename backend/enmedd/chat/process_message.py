@@ -18,6 +18,7 @@ from enmedd.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
 from enmedd.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
 from enmedd.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from enmedd.configs.constants import MessageType
+from enmedd.db.assistant import get_assistant_by_id
 from enmedd.db.chat import attach_files_to_chat_message
 from enmedd.db.chat import create_db_search_doc
 from enmedd.db.chat import create_new_chat_message
@@ -34,7 +35,6 @@ from enmedd.db.llm import fetch_existing_llm_providers
 from enmedd.db.models import SearchDoc as DbSearchDoc
 from enmedd.db.models import ToolCall
 from enmedd.db.models import User
-from enmedd.db.assistant import get_assistant_by_id
 from enmedd.document_index.factory import get_default_document_index
 from enmedd.file_store.models import ChatFileType
 from enmedd.file_store.models import FileDescriptor

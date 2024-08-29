@@ -4,8 +4,8 @@ from langchain.schema.messages import SystemMessage
 from enmedd.chat.models import LlmDoc
 from enmedd.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from enmedd.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
-from enmedd.db.models import Assistant
 from enmedd.db.assistant import get_default_prompt__read_only
+from enmedd.db.models import Assistant
 from enmedd.file_store.utils import InMemoryChatFile
 from enmedd.llm.answering.models import PromptConfig
 from enmedd.llm.factory import get_llms_for_assistant
@@ -97,7 +97,9 @@ def compute_max_document_tokens_for_assistant(
     actual_user_input: str | None = None,
     max_llm_token_override: int | None = None,
 ) -> int:
-    prompt = assistant.prompts[0] if assistant.prompts else get_default_prompt__read_only()
+    prompt = (
+        assistant.prompts[0] if assistant.prompts else get_default_prompt__read_only()
+    )
     return compute_max_document_tokens(
         prompt_config=PromptConfig.from_model(prompt),
         llm_config=get_main_llm_from_tuple(get_llms_for_assistant(assistant)).config,

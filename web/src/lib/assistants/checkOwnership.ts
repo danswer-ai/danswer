@@ -2,7 +2,10 @@ import { Assistant } from "@/app/admin/assistants/interfaces";
 import { User } from "../types";
 import { checkUserIsNoAuthUser } from "../user";
 
-export function checkUserOwnsAssistant(user: User | null, assistant: Assistant) {
+export function checkUserOwnsAssistant(
+  user: User | null,
+  assistant: Assistant
+) {
   return checkUserIdOwnsAssistant(user?.id, assistant);
 }
 

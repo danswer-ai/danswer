@@ -24,7 +24,10 @@ export function AssistantsGallery({
   assistants: Assistant[];
   user: User | null;
 }) {
-  function filterAssistants(assistants: Assistant[], query: string): Assistant[] {
+  function filterAssistants(
+    assistants: Assistant[],
+    query: string
+  ): Assistant[] {
     return assistants.filter(
       (assistant) =>
         assistant.name.toLowerCase().includes(query.toLowerCase()) ||

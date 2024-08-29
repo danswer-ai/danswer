@@ -3,16 +3,16 @@ from typing import cast
 import yaml
 from sqlalchemy.orm import Session
 
-from enmedd.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from enmedd.configs.chat_configs import ASSISTANTS_YAML
+from enmedd.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from enmedd.configs.chat_configs import PROMPTS_YAML
+from enmedd.db.assistant import get_prompt_by_name
+from enmedd.db.assistant import upsert_assistant
+from enmedd.db.assistant import upsert_prompt
 from enmedd.db.document_set import get_or_create_document_set_by_name
 from enmedd.db.engine import get_sqlalchemy_engine
 from enmedd.db.models import DocumentSet as DocumentSetDBModel
 from enmedd.db.models import Prompt as PromptDBModel
-from enmedd.db.assistant import get_prompt_by_name
-from enmedd.db.assistant import upsert_assistant
-from enmedd.db.assistant import upsert_prompt
 from enmedd.search.enums import RecencyBiasSetting
 
 

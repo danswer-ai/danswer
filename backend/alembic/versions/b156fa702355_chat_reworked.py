@@ -142,10 +142,14 @@ def upgrade() -> None:
     )
     op.execute("UPDATE assistant SET recency_bias = 'BASE_DECAY'")
     op.alter_column("assistant", "recency_bias", nullable=False)
-    op.alter_column("assistant", "description", existing_type=sa.VARCHAR(), nullable=True)
+    op.alter_column(
+        "assistant", "description", existing_type=sa.VARCHAR(), nullable=True
+    )
     op.execute("UPDATE assistant SET description = ''")
     op.alter_column("assistant", "description", nullable=False)
-    op.create_foreign_key("assistant__user_fk", "assistant", "user", ["user_id"], ["id"])
+    op.create_foreign_key(
+        "assistant__user_fk", "assistant", "user", ["user_id"], ["id"]
+    )
     op.drop_column("assistant", "datetime_aware")
     op.drop_column("assistant", "tools")
     op.drop_column("assistant", "hint_text")
@@ -220,7 +224,9 @@ def upgrade() -> None:
         sa.Column("citations", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     )
     op.add_column("chat_message", sa.Column("error", sa.Text(), nullable=True))
-    op.drop_constraint("fk_chat_message_assistant_id", "chat_message", type_="foreignkey")
+    op.drop_constraint(
+        "fk_chat_message_assistant_id", "chat_message", type_="foreignkey"
+    )
     op.create_foreign_key(
         "chat_message__prompt_fk", "chat_message", "prompt", ["prompt_id"], ["id"]
     )
@@ -346,7 +352,9 @@ def downgrade() -> None:
     )
     op.execute("UPDATE assistant SET datetime_aware = TRUE")
     op.alter_column("assistant", "datetime_aware", nullable=False)
-    op.alter_column("assistant", "description", existing_type=sa.VARCHAR(), nullable=True)
+    op.alter_column(
+        "assistant", "description", existing_type=sa.VARCHAR(), nullable=True
+    )
     op.drop_column("assistant", "recency_bias")
     op.drop_column("assistant", "llm_filter_extraction")
     op.drop_column("assistant", "llm_relevance_filter")

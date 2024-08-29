@@ -7,8 +7,6 @@ from sqlalchemy.orm import Session
 
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
-from enmedd.db.engine import get_session
-from enmedd.db.models import User
 from enmedd.db.assistant import create_update_assistant
 from enmedd.db.assistant import get_assistant_by_id
 from enmedd.db.assistant import get_assistants
@@ -17,9 +15,11 @@ from enmedd.db.assistant import mark_assistant_as_not_deleted
 from enmedd.db.assistant import update_all_assistants_display_priority
 from enmedd.db.assistant import update_assistant_shared_users
 from enmedd.db.assistant import update_assistant_visibility
+from enmedd.db.engine import get_session
+from enmedd.db.models import User
 from enmedd.llm.answering.prompts.utils import build_dummy_prompt
-from enmedd.server.features.assistant.models import CreateAssistantRequest
 from enmedd.server.features.assistant.models import AssistantSnapshot
+from enmedd.server.features.assistant.models import CreateAssistantRequest
 from enmedd.server.features.assistant.models import PromptTemplateResponse
 from enmedd.server.models import DisplayPriorityRequest
 from enmedd.utils.logger import setup_logger

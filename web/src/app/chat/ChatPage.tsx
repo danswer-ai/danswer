@@ -388,21 +388,21 @@ export function ChatPage({
       )
     : { aiMessage: null };
 
-  const [selectedAssistants, setSelectedAssistants] = useState<Assistant | undefined>(
-    () => {
-      if (existingChatSessionAssistantId !== undefined) {
-        return filteredAssistants.find(
-          (assistant) => assistant.id === existingChatSessionAssistantId
-        );
-      } else if (defaultSelectedAssistantsId !== undefined) {
-        return filteredAssistants.find(
-          (assistant) => assistant.id === defaultSelectedAssistantsId
-        );
-      } else {
-        return undefined;
-      }
+  const [selectedAssistants, setSelectedAssistants] = useState<
+    Assistant | undefined
+  >(() => {
+    if (existingChatSessionAssistantId !== undefined) {
+      return filteredAssistants.find(
+        (assistant) => assistant.id === existingChatSessionAssistantId
+      );
+    } else if (defaultSelectedAssistantsId !== undefined) {
+      return filteredAssistants.find(
+        (assistant) => assistant.id === defaultSelectedAssistantsId
+      );
+    } else {
+      return undefined;
     }
-  );
+  });
   const liveAssistant =
     selectedAssistants || filteredAssistants[0] || availableAssistants[0];
 
@@ -993,7 +993,11 @@ export function ChatPage({
 
   const handleImageUpload = (acceptedFiles: File[]) => {
     const llmAcceptsImages = checkLLMSupportsImageInput(
-      ...getFinalLLM(llmProviders, liveAssistant, llmOverrideManager.llmOverride)
+      ...getFinalLLM(
+        llmProviders,
+        liveAssistant,
+        llmOverrideManager.llmOverride
+      )
     );
     const imageFiles = acceptedFiles.filter((file) =>
       file.type.startsWith("image/")
@@ -1350,7 +1354,8 @@ export function ChatPage({
                               message.alternateAssistantID != null
                                 ? availableAssistants.find(
                                     (assistant) =>
-                                      assistant.id == message.alternateAssistantID
+                                      assistant.id ==
+                                      message.alternateAssistantID
                                   )
                                 : null;
 
