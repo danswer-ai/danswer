@@ -51,6 +51,9 @@ class ConnectorUpdateRequest(ConnectorBase):
     is_public: bool | None = None
     groups: list[int] = Field(default_factory=list)
 
+    def to_connector_base(self) -> ConnectorBase:
+        return ConnectorBase(**self.model_dump(exclude={"is_public", "groups"}))
+
 
 class ConnectorSnapshot(ConnectorBase):
     id: int

@@ -40,13 +40,14 @@ def test_whole_curator_flow(reset: None) -> None:
     response.raise_for_status()
     user_group_1.id = int(response.json()["id"])
     UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    # Making curator a curator of user_group_1
     assert UserGroupManager.set_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
     ).ok
 
-    # Creating a credential
+    # Creating a credential as curator
     test_credential = CredentialManager.build_test_credential(
         source=DocumentSource.FILE,
         name="curator_test_credential",
@@ -57,7 +58,7 @@ def test_whole_curator_flow(reset: None) -> None:
         test_credential, user_performing_action=curator
     ).json()["id"]
 
-    # Creating a connector
+    # Creating a connector as curator
     test_connector = ConnectorManager.build_test_connector(
         name="curator_test_connector",
         source=DocumentSource.FILE,
@@ -70,7 +71,7 @@ def test_whole_curator_flow(reset: None) -> None:
 
     assert test_connector.id is not None
     assert test_credential.id is not None
-    # Creating a CC pair
+    # Creating a CC pair as curator
     test_cc_pair = CCPairManager.build_test_cc_pair(
         connector_id=test_connector.id,
         credential_id=test_credential.id,

@@ -19,7 +19,6 @@ from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.models import DocumentSource
 from danswer.db.models import User
-from danswer.db.models import UserRole
 from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import CredentialDataUpdateRequest
 from danswer.server.documents.models import CredentialSnapshot
@@ -131,16 +130,12 @@ def create_credential_from_model(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
-    if (
-        user
-        and user.role != UserRole.ADMIN
-        and not _ignore_credential_permissions(credential_info.source)
-    ):
+    if not _ignore_credential_permissions(credential_info.source):
         validate_curator_request(
             db_session=db_session,
             user=user,
-            groups=credential_info.groups,
-            is_public=credential_info.curator_public,
+            target_group_ids=credential_info.groups,
+            object_is_public=credential_info.curator_public,
         )
 
     credential = create_credential(credential_info, user, db_session)

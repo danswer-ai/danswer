@@ -75,7 +75,6 @@ from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.file_store.file_store import get_default_file_store
 from danswer.server.documents.models import AuthStatus
 from danswer.server.documents.models import AuthUrl
-from danswer.server.documents.models import ConnectorBase
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
 from danswer.server.documents.models import ConnectorSnapshot
@@ -93,6 +92,7 @@ from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.documents.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
+from ee.danswer.db.user_group import validate_curator_request
 
 logger = setup_logger()
 
@@ -514,35 +514,6 @@ def _validate_connector_allowed(source: DocumentSource) -> None:
     )
 
 
-def _check_connector_permissions(
-    connector_data: ConnectorUpdateRequest, user: User | None
-) -> ConnectorBase:
-    """
-    This is not a proper permission check, but this should prevent curators creating bad situations
-    until a long-term solution is implemented (Replacing CC pairs/Connectors with Connections)
-    """
-    if user and user.role != UserRole.ADMIN:
-        if connector_data.is_public:
-            raise HTTPException(
-                status_code=400,
-                detail="Public connectors can only be created by admins",
-            )
-        if not connector_data.groups:
-            raise HTTPException(
-                status_code=400,
-                detail="Connectors created by curators must have groups",
-            )
-    return ConnectorBase(
-        name=connector_data.name,
-        source=connector_data.source,
-        input_type=connector_data.input_type,
-        connector_specific_config=connector_data.connector_specific_config,
-        refresh_freq=connector_data.refresh_freq,
-        prune_freq=connector_data.prune_freq,
-        indexing_start=connector_data.indexing_start,
-    )
-
-
 @router.post("/admin/connector")
 def create_connector_from_model(
     connector_data: ConnectorUpdateRequest,
@@ -551,7 +522,13 @@ def create_connector_from_model(
 ) -> ObjectCreationIdResponse:
     try:
         _validate_connector_allowed(connector_data.source)
-        connector_base = _check_connector_permissions(connector_data, user)
+        validate_curator_request(
+            db_session=db_session,
+            user=user,
+            target_group_ids=connector_data.groups,
+            object_is_public=connector_data.is_public,
+        )
+        connector_base = connector_data.to_connector_base()
         return create_connector(
             db_session=db_session,
             connector_data=connector_base,
@@ -613,7 +590,13 @@ def update_connector_from_model(
 ) -> ConnectorSnapshot | StatusResponse[int]:
     try:
         _validate_connector_allowed(connector_data.source)
-        connector_base = _check_connector_permissions(connector_data, user)
+        validate_curator_request(
+            db_session=db_session,
+            user=user,
+            target_group_ids=connector_data.groups,
+            object_is_public=connector_data.is_public,
+        )
+        connector_base = connector_data.to_connector_base()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
