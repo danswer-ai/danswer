@@ -109,22 +109,6 @@ export const ChatSidebar = ({
         </div>
 
         <div className="h-full overflow-auto">
-          {/* <div className="flex px-4">
-            {enterpriseSettings && enterpriseSettings.application_name ? (
-              <div>
-                <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
-
-                {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                  <p className="text-xs text-subtle -mt-1.5">
-                    Powered by enMedD CHP
-                  </p>
-                )}
-              </div>
-            ) : (
-              <></>
-            )}
-          </div> */}
-
           <div className="px-4 text-sm flex flex-col">
             {settings.search_page_enabled && (
               <>
