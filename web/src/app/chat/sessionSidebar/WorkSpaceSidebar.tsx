@@ -51,6 +51,9 @@ export const WorkSpaceSidebar = ({
               side="right"
               delayDuration={0}
             >
+              {/*   {settings!.enterpriseSettings!.application_name
+                ? settings!.enterpriseSettings!.application_name
+                : ""} */}
               Jollibee
             </CustomTooltip>
 
