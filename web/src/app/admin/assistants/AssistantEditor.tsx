@@ -59,7 +59,7 @@ function Label({ children }: { children: string | JSX.Element }) {
 }
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <div className="text-sm text-subtle mb-2">{children}</div>;
+  return <span className="text-sm text-subtle mb-2">{children}</span>;
 }
 
 export function AssistantEditor({

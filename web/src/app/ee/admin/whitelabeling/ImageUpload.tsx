@@ -1,5 +1,6 @@
 import { SubLabel } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Dropzone from "react-dropzone";
@@ -47,14 +48,18 @@ export function ImageUpload({
           <section>
             <div
               {...getRootProps()}
-              className={
+              /* className={
                 "flex flex-col items-center w-full px-4 py-12 rounded " +
                 "shadow-lg tracking-wide border border-border cursor-pointer" +
                 (dragActive ? " border-accent" : "")
-              }
+              } */
+              className={`bg-background p-4 flex items-center gap-4 border w-fit rounded-regular shadow-sm ${
+                dragActive ? " border-accent" : ""
+              }`}
             >
               <input {...getInputProps()} />
-              <b className="">
+              <Button>Upload</Button>
+              <b className="text-emphasis">
                 Drag and drop a .png or .jpg file, or click to select a file!
               </b>
             </div>
@@ -66,6 +71,8 @@ export function ImageUpload({
                   src={tmpImageUrl}
                   alt="uploaded-image"
                   className="mt-4 max-w-xs max-h-64"
+                  width={256}
+                  height={256}
                 />
               </div>
             )}

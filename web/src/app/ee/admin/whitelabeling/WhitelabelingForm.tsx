@@ -6,11 +6,7 @@ import { useContext, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Form, Formik } from "formik";
 import * as Yup from "yup";
-import {
-  Label,
-  SubLabel,
-  TextFormField,
-} from "@/components/admin/connectors/Field";
+import { SubLabel, TextFormField } from "@/components/admin/connectors/Field";
 import { ImageUpload } from "./ImageUpload";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -95,26 +91,29 @@ export function WhitelabelingForm() {
             <TextFormField
               label="Application Name"
               name="application_name"
-              subtext={`The custom name you are giving enMedD CHP for your organization. This will replace 'enMedD CHP' everywhere in the UI.`}
-              placeholder="Custom name which will replace 'enMedD CHP'"
+              subtext={`The custom name you are giving Danswer for your organization. This will replace 'Danswer' everywhere in the UI.`}
+              placeholder="Custom name which will replace 'Danswer'"
               disabled={isSubmitting}
             />
 
-            <Label>Custom Logo</Label>
-
             {values.use_custom_logo ? (
-              <div className="mt-3">
-                <SubLabel>Current Custom Logo: </SubLabel>
+              <div className="pt-3 flex flex-col items-start gap-3 pb-4">
+                <div>
+                  <h3 className="font-semibold">Custom Logo</h3>
+                  <SubLabel>Current Custom Logo: </SubLabel>
+                </div>
                 <Image
                   src={"/api/enterprise-settings/logo?u=" + Date.now()}
                   alt="logo"
                   style={{ objectFit: "contain" }}
-                  className="w-32 h-32 mb-10 mt-4"
+                  className="w-32 h-32"
+                  width={128}
+                  height={128}
                 />
 
                 <Button
                   variant="destructive"
-                  className="mb-8"
+                  type="button"
                   onClick={async () => {
                     const valuesWithoutLogo = {
                       ...values,
@@ -134,7 +133,7 @@ export function WhitelabelingForm() {
               </div>
             ) : (
               <SubLabel>
-                Specify your own logo to replace the standard enMedD CHP logo.
+                Specify your own logo to replace the standard Danswer logo.
               </SubLabel>
             )}
 
@@ -143,7 +142,7 @@ export function WhitelabelingForm() {
               setSelectedFile={setSelectedFile}
             />
 
-            <div className="pt-10">
+            <div className="pt-4">
               <TextFormField
                 label="Custom Chat Header Content"
                 name="custom_header_content"
@@ -159,7 +158,7 @@ export function WhitelabelingForm() {
                 name="custom_popup_header"
                 subtext={`The title for the popup that will be displayed for each user on their initial visit 
                 to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${
-                  values.application_name || "enMedD CHP"
+                  values.application_name || "Danswer"
                 }!".`}
                 placeholder="Initial Popup Header"
                 disabled={isSubmitting}

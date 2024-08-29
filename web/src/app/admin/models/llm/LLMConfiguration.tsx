@@ -71,7 +71,7 @@ function DefaultLLMProviderDisplay({
   return (
     <div>
       {popup}
-      <div className="flex p-3 border rounded shadow-md border-border md:w-96">
+      <div className="flex p-3 border rounded shadow-sm border-border md:w-96">
         <div className="my-auto">
           <div className="font-bold">{providerName} </div>
         </div>

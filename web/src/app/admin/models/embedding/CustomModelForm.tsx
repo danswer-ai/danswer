@@ -15,7 +15,7 @@ export function CustomModelForm({
   onSubmit: (model: EmbeddingModelDescriptor) => void;
 }) {
   return (
-    <div>
+    <div className="h-full">
       <Formik
         initialValues={{
           model_name: "",

@@ -1,24 +1,19 @@
 "use client";
 
-import { ThreeDotsLoader } from "@/components/Loading";
 import { getDatesList, useQueryAnalytics } from "../lib";
-import {
-  AreaChart,
-  Area,
-  CartesianGrid,
-  XAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { ThreeDotsLoader } from "@/components/Loading";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DateRange } from "react-day-picker";
 import {
+  ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { SubLabel } from "@/components/admin/connectors/Field";
 
 export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
   const {
@@ -44,32 +39,27 @@ export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
     const initialDate = timeRange.from || new Date(queryAnalyticsData[0].date);
     const dateRange = getDatesList(initialDate);
 
-    const dateToQueryAnalytics = new Map(
-      queryAnalyticsData.map((queryAnalyticsEntry) => [
-        queryAnalyticsEntry.date,
-        queryAnalyticsEntry,
-      ])
-    );
-
     const data = dateRange.map((dateStr) => {
-      const queryAnalyticsForDate = dateToQueryAnalytics.get(dateStr);
+      const queryAnalyticsForDate = queryAnalyticsData.find(
+        (entry) => entry.date === dateStr
+      );
       return {
-        Day: dateStr,
+        date: dateStr,
         "Positive Feedback": queryAnalyticsForDate?.total_likes || 0,
         "Negative Feedback": queryAnalyticsForDate?.total_dislikes || 0,
       };
     });
 
     const chartConfig = {
-      positiveFeedback: {
+      "Positive Feedback": {
         label: "Positive Feedback",
-        color: "#4c51bf",
+        color: "#2039f3",
       },
-      negativeFeedback: {
+      "Negative Feedback": {
         label: "Negative Feedback",
-        color: "#f43f5e",
+        color: "#60a5fa",
       },
-    };
+    } satisfies ChartConfig;
 
     chart = (
       <ChartContainer
@@ -79,39 +69,27 @@ export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
         <AreaChart data={data}>
           <ChartLegend content={<ChartLegendContent />} />
           <defs>
-            <linearGradient
-              id="fillPositiveFeedback"
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="1"
-            >
+            <linearGradient id="fillPositive" x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="5%"
-                stopColor={chartConfig.positiveFeedback.color}
+                stopColor={chartConfig["Positive Feedback"].color}
                 stopOpacity={0.8}
               />
               <stop
                 offset="95%"
-                stopColor={chartConfig.positiveFeedback.color}
+                stopColor={chartConfig["Positive Feedback"].color}
                 stopOpacity={0.1}
               />
             </linearGradient>
-            <linearGradient
-              id="fillNegativeFeedback"
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="1"
-            >
+            <linearGradient id="fillNegative" x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="5%"
-                stopColor={chartConfig.negativeFeedback.color}
+                stopColor={chartConfig["Negative Feedback"].color}
                 stopOpacity={0.8}
               />
               <stop
                 offset="95%"
-                stopColor={chartConfig.negativeFeedback.color}
+                stopColor={chartConfig["Negative Feedback"].color}
                 stopOpacity={0.1}
               />
             </linearGradient>
@@ -146,17 +124,17 @@ export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
             }
           />
           <Area
-            dataKey="queries"
+            dataKey="Positive Feedback"
             type="natural"
-            fill="url(#fillPositiveFeedback)"
-            stroke={chartConfig.positiveFeedback.color}
+            fill="url(#fillPositive)"
+            stroke={chartConfig["Positive Feedback"].color}
             stackId="a"
           />
           <Area
-            dataKey="negativeFeedback"
+            dataKey="Negative Feedback"
             type="natural"
-            fill="url(#fillNegativeFeedback)"
-            stroke={chartConfig.negativeFeedback.color}
+            fill="url(#fillNegative)"
+            stroke={chartConfig["Negative Feedback"].color}
             stackId="a"
           />
         </AreaChart>
@@ -169,9 +147,7 @@ export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
       <CardHeader className="border-b">
         <div className="flex flex-col">
           <h3 className="font-semibold">Feedback</h3>
-          <span className="text-sm text-subtle">
-            Thumbs Up / Thumbs Down over time
-          </span>
+          <SubLabel>Thumbs Up / Thumbs Down over time</SubLabel>
         </div>
       </CardHeader>
       <CardContent>{chart}</CardContent>

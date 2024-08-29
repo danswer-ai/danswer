@@ -27,7 +27,7 @@ export function ChatPopup() {
   let popupTitle = settings.enterpriseSettings.custom_popup_header;
   if (!popupTitle) {
     popupTitle = `Welcome to ${
-      settings.enterpriseSettings.application_name || "enMedD CHP"
+      settings.enterpriseSettings.application_name || "enMedD AI"
     }!`;
   }
 
@@ -54,7 +54,7 @@ export function ChatPopup() {
 
         <div className="flex w-full">
           <Button
-            className="mx-auto mt-4"
+            className="mx-auto mt-6"
             onClick={() => {
               localStorage.setItem(
                 ALL_USERS_INITIAL_POPUP_FLOW_COMPLETED,

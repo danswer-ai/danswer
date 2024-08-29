@@ -37,7 +37,7 @@ export function Label({ children }: { children: string | JSX.Element }) {
 }
 
 export function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <div className="text-sm text-subtle mb-2">{children}</div>;
+  return <span className="text-sm text-subtle mb-2">{children}</span>;
 }
 
 export function ManualErrorMessage({ children }: { children: string }) {
@@ -83,8 +83,8 @@ export function TextFormField({
   }
 
   return (
-    <div className="mb-4 grid gap-2">
-      <div className="grid gap-1.5 leading-none">
+    <div className="grid gap-2 pb-6">
+      <div className="grid gap-0.5 leading-none">
         <ShadcnLabel
           htmlFor={label}
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"

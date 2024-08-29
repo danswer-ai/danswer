@@ -18,6 +18,7 @@ import {
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 const IsVisibleSection = ({
   document,
@@ -90,62 +91,66 @@ export const DocumentFeedbackTable = ({
 
   return (
     <div>
-      <Table className="overflow-visible">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Document Name</TableHead>
-            <TableHead>Is Searchable?</TableHead>
-            <TableHead>Score</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {documents
-            .slice((page - 1) * numToDisplay, page * numToDisplay)
-            .map((document) => {
-              return (
-                <TableRow key={document.document_id}>
-                  <TableCell className="whitespace-normal break-all">
-                    <a
-                      className="text-blue-600"
-                      href={document.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {document.semantic_id}
-                    </a>
-                  </TableCell>
-                  <TableCell>
-                    <IsVisibleSection
-                      document={document}
-                      onUpdate={async (response) => {
-                        if (response.ok) {
-                          refresh();
-                        } else {
-                          setPopup({
-                            message: `Error updating hidden status - ${getErrorMsg(
-                              response
-                            )}`,
-                            type: "error",
-                          });
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div key={document.document_id} className="w-fit">
-                      <ScoreSection
-                        documentId={document.document_id}
-                        initialScore={document.boost}
-                        refresh={refresh}
-                        setPopup={setPopup}
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-        </TableBody>
-      </Table>
+      <Card>
+        <CardContent className="p-0">
+          <Table className="overflow-visible">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Document Name</TableHead>
+                <TableHead>Is Searchable?</TableHead>
+                <TableHead>Score</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documents
+                .slice((page - 1) * numToDisplay, page * numToDisplay)
+                .map((document) => {
+                  return (
+                    <TableRow key={document.document_id}>
+                      <TableCell className="whitespace-normal break-all">
+                        <a
+                          className="text-blue-600"
+                          href={document.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {document.semantic_id}
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <IsVisibleSection
+                          document={document}
+                          onUpdate={async (response) => {
+                            if (response.ok) {
+                              refresh();
+                            } else {
+                              setPopup({
+                                message: `Error updating hidden status - ${getErrorMsg(
+                                  response
+                                )}`,
+                                type: "error",
+                              });
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div key={document.document_id} className="w-fit">
+                          <ScoreSection
+                            documentId={document.document_id}
+                            initialScore={document.boost}
+                            refresh={refresh}
+                            setPopup={setPopup}
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <div className="flex pt-10">
         <div className="mx-auto">

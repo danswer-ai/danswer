@@ -101,7 +101,6 @@ import {
   convertDateToStartOfDay,
   getXDaysAgo,
 } from "./dateUtils";
-import { THIRTY_DAYS } from "./DateRangeSelector";
 import { DateRange } from "react-day-picker";
 
 export const useTimeRange = () => {

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { DateRangeSelector } from "../DateRangeSelector";
+import { SubLabel } from "@/components/admin/connectors/Field";
 
 export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
   const {
@@ -160,7 +161,7 @@ export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
       <CardHeader className="border-b">
         <div className="flex flex-col">
           <h3 className="font-semibold">Usage</h3>
-          <span className="text-sm text-subtle">Usage over time</span>
+          <SubLabel>Usage over time</SubLabel>
         </div>
       </CardHeader>
       <CardContent>{chart}</CardContent>

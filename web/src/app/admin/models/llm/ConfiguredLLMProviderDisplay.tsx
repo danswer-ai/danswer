@@ -6,9 +6,9 @@ import { CustomLLMProviderUpdateForm } from "./CustomLLMProviderUpdateForm";
 import { useState } from "react";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import { mutate } from "swr";
-import { Badge } from "@tremor/react";
 import isEqual from "lodash/isEqual";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 function LLMProviderUpdateModal({
   llmProviderDescriptor,
@@ -75,7 +75,7 @@ function LLMProviderDisplay({
   return (
     <div>
       {popup}
-      <div className="flex p-3 border rounded shadow-md border-border md:w-96">
+      <div className="flex p-3 border rounded shadow-sm border-border md:w-96">
         <div className="my-auto">
           <div className="font-bold">{providerName} </div>
           <div className="text-xs italic">({existingLlmProvider.provider})</div>
@@ -113,13 +113,9 @@ function LLMProviderDisplay({
         {existingLlmProvider && (
           <div className="my-auto ml-3">
             {existingLlmProvider.is_default_provider ? (
-              <Badge color="orange" size="xs">
-                Default
-              </Badge>
+              <Badge variant="outline">Default</Badge>
             ) : (
-              <Badge color="green" size="xs">
-                Enabled
-              </Badge>
+              <Badge variant="success">Enabled</Badge>
             )}
           </div>
         )}

@@ -1233,7 +1233,7 @@ export function ChatPage({
                     >
                       {/* ChatBanner is a custom banner that displays a admin-specified message at 
                       the top of the chat page. Only used in the EE version of the app. */}
-                      <ChatBanner />
+                      {/*  <ChatBanner /> */}
 
                       {messageHistory.length === 0 &&
                         !isFetchingChatMessages &&
