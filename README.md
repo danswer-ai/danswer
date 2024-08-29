@@ -34,27 +34,13 @@ By combining LLMs and team specific knowledge, spectra becomes a subject matter 
 it had access to your team's unique knowledge! It enables questions such as "A customer wants feature X, is this already
 supported?" or "Where's the pull request for feature Y?"
 
-<h3>Usage</h3>
-
-spectra Web App:
-
-https://github.com/spectra-ai/spectra/assets/32520769/563be14c-9304-47b5-bf0a-9049c2b6f410
-
-
-Or, plug spectra into your existing Slack workflows (more integrations to come 😁):
-
-https://github.com/spectra-ai/spectra/assets/25087905/3e19739b-d178-4371-9a38-011430bdec1b
-
-
-For more details on the Admin UI to manage connectors and users, check out our 
-<strong><a href="https://www.youtube.com/watch?v=geNzY1nbCnU">Full Video Demo</a></strong>!
 
 ## Deployment
 
 spectra can easily be run locally (even on a laptop) or deployed on a virtual machine with a single
 `docker compose` command. Checkout our [docs](https://docs.spectra.dev/quickstart) to learn more.
 
-We also have built-in support for deployment on Kubernetes. Files for that can be found [here](https://github.com/spectra-ai/spectra/tree/main/deployment/kubernetes).
+We also have built-in support for deployment on Kubernetes. Files for that can be found [here](https://github.com/sernddev/docudive/tree/main/deployment/kubernetes).
 
 
 ## 💃 Main Features 
@@ -117,13 +103,8 @@ There are two editions of spectra:
     * Usage analytics and query history accessible to admins
     * Whitelabeling
     * API key authentication
-    * Encryption of secrets
-    * Any many more! Checkout [our website](https://www.spectra.ai/) for the latest.
+    * Encryption of secrets    
 
-To try the spectra Enterprise Edition: 
-
-  1. Checkout our [Cloud product](https://app.spectra.ai/signup).
-  2. For self-hosting, contact us at [founders@spectra.ai](mailto:founders@spectra.ai) or book a call with us on our [Cal](https://cal.com/team/spectra/founders).
 
 ## 💡 Contributing
 Looking to contribute? Please check out the [Contribution Guide](CONTRIBUTING.md) for more details.

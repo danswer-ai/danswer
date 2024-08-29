@@ -34,7 +34,6 @@ from danswer.llm.interfaces import LLMConfig
 from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.utils.logger import setup_logger
 
-
 logger = setup_logger()
 
 # If a user configures a different model and it doesn't support all the same
@@ -58,7 +57,7 @@ def _base_msg_to_role(msg: BaseMessage) -> str:
 
 
 def _convert_litellm_message_to_langchain_message(
-    litellm_message: litellm.Message,
+        litellm_message: litellm.Message,
 ) -> BaseMessage:
     # Extracting the basic attributes from the litellm message
     content = litellm_message.content
@@ -141,7 +140,7 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
 
 
 def _convert_delta_to_message_chunk(
-    _dict: dict[str, Any], curr_msg: BaseMessage | None
+        _dict: dict[str, Any], curr_msg: BaseMessage | None
 ) -> BaseMessageChunk:
     """Adapted from langchain_community.chat_models.litellm._convert_delta_to_message_chunk"""
     role = _dict.get("role") or (_base_msg_to_role(curr_msg) if curr_msg else None)
@@ -192,18 +191,18 @@ class DefaultMultiLLM(LLM):
     }
 
     def __init__(
-        self,
-        api_key: str | None,
-        timeout: int,
-        model_provider: str,
-        model_name: str,
-        api_base: str | None = GEN_AI_API_ENDPOINT,
-        api_version: str | None = GEN_AI_API_VERSION,
-        custom_llm_provider: str | None = GEN_AI_LLM_PROVIDER_TYPE,
-        max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
-        temperature: float = GEN_AI_TEMPERATURE,
-        custom_config: dict[str, str] | None = None,
-        extra_headers: dict[str, str] | None = None,
+            self,
+            api_key: str | None,
+            timeout: int,
+            model_provider: str,
+            model_name: str,
+            api_base: str | None = GEN_AI_API_ENDPOINT,
+            api_version: str | None = GEN_AI_API_VERSION,
+            custom_llm_provider: str | None = GEN_AI_LLM_PROVIDER_TYPE,
+            max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
+            temperature: float = GEN_AI_TEMPERATURE,
+            custom_config: dict[str, str] | None = None,
+            extra_headers: dict[str, str] | None = None,
     ):
         self._timeout = timeout
         self._model_provider = model_provider
@@ -261,11 +260,11 @@ class DefaultMultiLLM(LLM):
         logger.info(f"Config: {self.config}")
 
     def _completion(
-        self,
-        prompt: LanguageModelInput,
-        tools: list[dict] | None,
-        tool_choice: ToolChoiceOptions | None,
-        stream: bool,
+            self,
+            prompt: LanguageModelInput,
+            tools: list[dict] | None,
+            tool_choice: ToolChoiceOptions | None,
+            stream: bool, metadata = None
     ) -> litellm.ModelResponse | litellm.CustomStreamWrapper:
         if isinstance(prompt, list):
             prompt = [
@@ -275,6 +274,9 @@ class DefaultMultiLLM(LLM):
         elif isinstance(prompt, str):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 
+        if metadata is None:
+           metadata = {
+        "generation_name": "docudive"}
         try:
             return litellm.completion(
                 # model choice
@@ -293,6 +295,8 @@ class DefaultMultiLLM(LLM):
                 temperature=self._temperature,
                 max_tokens=self._max_output_tokens,
                 timeout=self._timeout,
+                # langfuse
+                metadata=metadata,
                 **self._model_kwargs,
             )
         except Exception as e:
@@ -311,10 +315,10 @@ class DefaultMultiLLM(LLM):
         )
 
     def invoke(
-        self,
-        prompt: LanguageModelInput,
-        tools: list[dict] | None = None,
-        tool_choice: ToolChoiceOptions | None = None,
+            self,
+            prompt: LanguageModelInput,
+            tools: list[dict] | None = None,
+            tool_choice: ToolChoiceOptions | None = None, metadata = None
     ) -> BaseMessage:
         if LOG_ALL_MODEL_INTERACTIONS:
             self.log_model_configs()
@@ -328,10 +332,10 @@ class DefaultMultiLLM(LLM):
         )
 
     def stream(
-        self,
-        prompt: LanguageModelInput,
-        tools: list[dict] | None = None,
-        tool_choice: ToolChoiceOptions | None = None,
+            self,
+            prompt: LanguageModelInput,
+            tools: list[dict] | None = None,
+            tool_choice: ToolChoiceOptions | None = None, metadata =None
     ) -> Iterator[BaseMessage]:
         if LOG_ALL_MODEL_INTERACTIONS:
             self.log_model_configs()

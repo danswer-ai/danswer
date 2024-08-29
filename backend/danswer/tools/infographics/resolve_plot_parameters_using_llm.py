@@ -61,11 +61,11 @@ class ResolvePlotParametersUsingLLM:
         return prompt
 
     def resolve_graph_parameters_from_chart_type_and_sql_and_requirements(self, sql_query, schema, requirement,
-                                                                          chart_type) -> list:
+                                                                          chart_type, metadata) -> list:
         """ Resolve graph parameters by querying the LLM with constructed prompts. """
         prompt = self.construct_prompt(sql_query, schema, requirement, chart_type)
         try:
-            llm_response = self.llm.invoke(prompt=prompt)
+            llm_response = self.llm.invoke(prompt=prompt, metadata=metadata)
             field_names = llm_response.content
             field_names = json.loads(field_names)
             print(f"field_names : {field_names}, type(field_names) = {type(field_names)}")

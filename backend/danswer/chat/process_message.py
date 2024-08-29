@@ -236,6 +236,26 @@ ChatPacket = (
 ChatPacketStream = Iterator[ChatPacket]
 
 
+def set_metadata(chat_session_id, parent_id, reference_doc_ids, retrieval_options, prompt_id, user_id):
+   return {
+        "generation_name": "docudive",  # set langfuse Generation Name
+        "generation_id": chat_session_id,  # set langfuse Generation ID
+        "parent_observation_id": parent_id,  # set langfuse Parent Observation ID
+        "version": "test-generation-version",  # set langfuse Generation Version
+        "trace_user_id": user_id,  # set langfuse Trace User ID
+        "session_id": chat_session_id,  # set langfuse Session ID
+        "tags": [prompt_id, "tag2"],  # set langfuse Tags
+        "trace_name": "new-trace-name",  # set langfuse Trace Name
+        "trace_id": "trace-id22",  # set langfuse Trace ID
+        #"trace_metadata": {"key": "value"},  # set langfuse Trace Metadata
+        #"trace_version": "test-trace-version",
+        # set langfuse Trace Version (if not set, defaults to Generation Version)
+        #"trace_release": "test-trace-release",  # set langfuse Trace Release
+        "existing_trace_id": parent_id,
+        "trace_metadata": {"key": "updated_trace_value"},
+    }
+
+
 def stream_chat_message_objects(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
@@ -273,6 +293,9 @@ def stream_chat_message_objects(
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
         alternate_assistant_id = new_msg_req.alternate_assistant_id
+
+        #set metadata
+        metadata = set_metadata(chat_session_id, parent_id, reference_doc_ids, retrieval_options, new_msg_req.prompt_id, user_id)
 
         # use alternate persona if alternative assistant id is passed in
         if alternate_assistant_id is not None:
@@ -489,7 +512,8 @@ def stream_chat_message_objects(
                         prompt_config=prompt_config,
                         llm_config=llm.config,
                         llm=llm,
-                        files=latest_query_files
+                        files=latest_query_files,
+                        metadata =metadata
                     )
                     tool_dict[db_tool_model.id] = [sql_generation_tool]
                 elif tool_cls.__name__ == SummaryGenerationTool.__name__:
