@@ -27,9 +27,21 @@ export interface EnterpriseSettings {
   custom_popup_content: string | null;
 }
 
+export enum BillingPlanType {
+  FREE = "free",
+  PREMIUM = "premium",
+  ENTERPRISE = "enterprise",
+}
+
+export interface CloudSettings {
+  numberOfSeats: number;
+  planType: BillingPlanType;
+}
+
 export interface CombinedSettings {
   settings: Settings;
   enterpriseSettings: EnterpriseSettings | null;
+  cloudSettings: CloudSettings | null;
   customAnalyticsScript: string | null;
   isMobile?: boolean;
   webVersion: string | null;

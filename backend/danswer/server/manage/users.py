@@ -1,13 +1,18 @@
+import os
 import re
 from datetime import datetime
 from datetime import timezone
+from enum import Enum
 
+import stripe
 from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Request
 from fastapi import status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import Column
 from sqlalchemy import desc
@@ -27,6 +32,7 @@ from danswer.auth.users import current_user
 from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from danswer.configs.app_configs import STRIPE_PRICE
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
 from danswer.db.engine import get_session
@@ -46,6 +52,13 @@ from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
 from ee.danswer.db.user_group import remove_curator_status__no_commit
+
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+# STRIPE_PRICE = os.getenv("STRIPE_PRICE")
+
+
+stripe.api_key = "sk_test_51NwZq2HlhTYqRZibT2cssHV8E5QcLAUmaRLQPMjGb5aOxOWomVxOmzRgxf82ziDBuGdPP2GIDod8xe6DyqeGgUDi00KbsHPoT4"
 
 logger = setup_logger()
 
@@ -317,6 +330,66 @@ def verify_user_logged_in(
     )
 
     return user_info
+
+
+class BillingPlanType(str, Enum):
+    FREE = "free"
+    PREMIUM = "premium"
+    ENTERPRISE = "enterprise"
+
+
+class CheckoutSessionUpdateBillingStatus(BaseModel):
+    quantity: int
+    plan: BillingPlanType
+
+
+@router.post("/create-checkout-session")
+async def create_checkout_session(
+    request: Request,
+    checkout_billing: CheckoutSessionUpdateBillingStatus,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+):
+    quantity = checkout_billing.quantity
+    plan = checkout_billing.plan
+
+    logger.info(f"Creating checkout session for plan: {plan} with quantity: {quantity}")
+
+    user_email = "pablosfsanchez@gmail.com"
+
+    success_url = "http://localhost:3000/billing/success"
+    cancel_url = "http://localhost:3000/billing/cancel"
+
+    logger.info(f"Stripe price being used: {STRIPE_PRICE}")
+    logger.info(
+        f"Creating checkout session with success_url: {success_url} and cancel_url: {cancel_url}"
+    )
+
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            customer_email=user_email,
+            line_items=[
+                {
+                    "price": STRIPE_PRICE,
+                    "quantity": quantity,
+                },
+            ],
+            mode="subscription",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={"tenant_id": str("random tenant")},
+        )
+        logger.info(
+            f"Checkout session created successfully with id: {checkout_session.id}"
+        )
+    except stripe.error.InvalidRequestError as e:
+        logger.error(f"Stripe error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Stripe error: {str(e)}")
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+
+    return JSONResponse({"sessionId": checkout_session.id})
 
 
 """APIs to adjust user preferences"""

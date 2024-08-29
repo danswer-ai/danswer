@@ -30,15 +30,19 @@ import { usePathname } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { useContext } from "react";
 import { CustomTooltip } from "../tooltip/CustomTooltip";
+import { CLOUD_ENABLED } from "@/lib/constants";
+import { BellSimpleRinging } from "@phosphor-icons/react";
 
 export function ClientLayout({
   user,
   children,
   enableEnterprise,
+  cloudEnabled,
 }: {
   user: User | null;
   children: React.ReactNode;
   enableEnterprise: boolean;
+  cloudEnabled: boolean;
 }) {
   const isCurator =
     user?.role === UserRole.CURATOR || user?.role === UserRole.GLOBAL_CURATOR;
@@ -314,6 +318,20 @@ export function ClientLayout({
                                   </div>
                                 ),
                                 link: "/admin/whitelabeling",
+                              },
+                            ]
+                          : []),
+
+                        ...(cloudEnabled
+                          ? [
+                              {
+                                name: (
+                                  <div className="flex">
+                                    <BellSimpleRinging size={18} />
+                                    <div className="ml-1">Billing</div>
+                                  </div>
+                                ),
+                                link: "/admin/plan",
                               },
                             ]
                           : []),

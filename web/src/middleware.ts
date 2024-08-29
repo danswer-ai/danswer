@@ -9,6 +9,7 @@ const eePaths = [
   "/admin/performance/query-history",
   "/admin/whitelabeling",
   "/admin/performance/custom-analytics",
+  "/admin/plan",
 ];
 const eePathsForMatcher = eePaths.map((path) => `${path}/:path*`);
 

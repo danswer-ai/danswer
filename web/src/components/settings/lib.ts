@@ -1,4 +1,6 @@
 import {
+  BillingPlanType,
+  CloudSettings,
   CombinedSettings,
   EnterpriseSettings,
   Settings,
@@ -85,10 +87,15 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
     }
 
     const webVersion = getWebVersion();
+    const cloudSettings: CloudSettings = {
+      numberOfSeats: 10,
+      planType: BillingPlanType.PREMIUM,
+    };
 
     const combinedSettings: CombinedSettings = {
       settings,
       enterpriseSettings,
+      cloudSettings,
       customAnalyticsScript,
       webVersion,
     };
