@@ -44,7 +44,6 @@ import {
   IsPublicGroupSelectorFormType,
 } from "@/components/IsPublicGroupSelector";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
-import { AdminBooleanFormField } from "@/components/credentials/CredentialFields";
 
 export type AdvancedConfigFinal = {
   pruneFreq: number | null;
@@ -214,10 +213,6 @@ export default function AddConnector({
 
     // file-specific handling
     if (connector == "file" && selectedFiles.length > 0) {
-      console.log("CREATING NEW FIEL");
-      console.log(formValues);
-      console.log(isPublic);
-      // return
       const response = await submitFiles(
         selectedFiles,
         setPopup,
