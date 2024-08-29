@@ -1,5 +1,5 @@
 # This file is used to demonstrate how to use the backend APIs directly
-# In this case, the equivalent of asking a question in Danswer Chat in a new chat session
+# In this case, the equivalent of asking a question in enMedD Chat in a new chat session
 import argparse
 import json
 import os
@@ -10,9 +10,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def create_new_chat_session(danswer_url: str, api_key: str | None) -> int:
+# TODO: replace the parameter names here
+def create_new_chat_session(enmedd_url: str, api_key: str | None) -> int:
     headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
-    session_endpoint = danswer_url + "/api/chat/create-chat-session"
+    session_endpoint = enmedd_url + "/api/chat/create-chat-session"
 
     response = requests.post(
         session_endpoint,
@@ -25,10 +26,10 @@ def create_new_chat_session(danswer_url: str, api_key: str | None) -> int:
     return new_session_id
 
 
-def process_question(danswer_url: str, question: str, api_key: str | None) -> None:
-    message_endpoint = danswer_url + "/api/chat/send-message"
+def process_question(enmedd_url: str, question: str, api_key: str | None) -> None:
+    message_endpoint = enmedd_url + "/api/chat/send-message"
 
-    chat_session_id = create_new_chat_session(danswer_url, api_key)
+    chat_session_id = create_new_chat_session(enmedd_url, api_key)
 
     headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
 
@@ -67,23 +68,23 @@ def process_question(danswer_url: str, question: str, api_key: str | None) -> No
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Sample API Usage")
     parser.add_argument(
-        "--danswer-url",
+        "--enmedd-url",
         type=str,
         default="http://localhost:80",
-        help="enMedD CHP URL, should point to enMedD CHP nginx.",
+        help="enMedD AI URL, should point to enMedD AI nginx.",
     )
     parser.add_argument(
         "--test-question",
         type=str,
-        default="What is enMedD CHP?",
+        default="What is enMedD AI?",
         help="Test question for new Chat Session.",
     )
 
     # Not needed if Auth is disabled
-    # Or for Danswer MIT API key must be replaced with session cookie
-    api_key = os.environ.get("DANSWER_API_KEY")
+    # API key must be replaced with session cookie
+    api_key = os.environ.get("ENMEDD_API_KEY")
 
     args = parser.parse_args()
     process_question(
-        danswer_url=args.danswer_url, question=args.test_question, api_key=api_key
+        enmedd_url=args.enmedd_url, question=args.test_question, api_key=api_key
     )

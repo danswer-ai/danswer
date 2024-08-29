@@ -16,7 +16,7 @@ export const LoginText = () => {
       <h1 className="my-2 text-3xl font-bold">Login</h1>
       <p>
         Welcome back to{" "}
-        {settings?.enterpriseSettings?.application_name || "enMedD CHP"}! Please
+        {settings?.enterpriseSettings?.application_name || "enMedD AI"}! Please
         enter your details
       </p>
     </div>

@@ -1,7 +1,7 @@
 import { HoverPopup } from "@/components/HoverPopup";
 import { SourceIcon } from "@/components/SourceIcon";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { EnmeddDocument } from "@/lib/search/interfaces";
 import {
   DocumentMetadataBlock,
   buildDocumentSummaryDisplay,
@@ -11,7 +11,7 @@ import { Info, Radio } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
 
 interface DocumentDisplayProps {
-  document: DanswerDocument;
+  document: EnmeddDocument;
   queryEventId: number | null;
   isAIPick: boolean;
   isSelected: boolean;

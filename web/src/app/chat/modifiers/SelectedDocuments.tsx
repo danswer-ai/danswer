@@ -1,12 +1,12 @@
 import { BasicClickable } from "@/components/BasicClickable";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { EnmeddDocument } from "@/lib/search/interfaces";
 import { useState } from "react";
 import { FiBook, FiFilter } from "react-icons/fi";
 
 export function SelectedDocuments({
   selectedDocuments,
 }: {
-  selectedDocuments: DanswerDocument[];
+  selectedDocuments: EnmeddDocument[];
 }) {
   if (selectedDocuments.length === 0) {
     return null;

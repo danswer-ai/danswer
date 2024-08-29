@@ -6,76 +6,90 @@
 */
 
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Web Server",
-      "type": "node",
-      "request": "launch",
-      "cwd": "${workspaceRoot}/web",
-      "runtimeExecutable": "npm",
-      "envFile": "${workspaceFolder}/.env",
-      "runtimeArgs": ["run", "dev"],
-      "console": "integratedTerminal",
-    },
-    {
-      "name": "Model Server",
-      "type": "python",
-      "request": "launch",
-      "module": "uvicorn",
-      "cwd": "${workspaceFolder}/backend",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "LOG_LEVEL": "DEBUG",
-        "PYTHONUNBUFFERED": "1",
-      },
-      "args": ["model_server.main:app", "--reload", "--port", "9000"],
-    },
-    {
-      "name": "API Server",
-      "type": "python",
-      "request": "launch",
-      "module": "uvicorn",
-      "cwd": "${workspaceFolder}/backend",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "LOG_ALL_MODEL_INTERACTIONS": "True",
-        "LOG_LEVEL": "DEBUG",
-        "PYTHONUNBUFFERED": "1",
-      },
-      "args": ["danswer.main:app", "--reload", "--port", "8080"],
-    },
-    {
-      "name": "Indexing",
-      "type": "python",
-      "request": "launch",
-      "program": "danswer/background/update.py",
-      "cwd": "${workspaceFolder}/backend",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "ENABLE_MINI_CHUNK": "false",
-        "LOG_LEVEL": "DEBUG",
-        "PYTHONUNBUFFERED": "1",
-        "PYTHONPATH": ".",
-      },
-    },
-    // Celery and all async jobs, usually would include indexing as well but this is handled separately above for dev
-    {
-      "name": "Background Jobs",
-      "type": "python",
-      "request": "launch",
-      "program": "scripts/dev_run_background_jobs.py",
-      "cwd": "${workspaceFolder}/backend",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "LOG_LEVEL": "DEBUG",
-        "PYTHONUNBUFFERED": "1",
-        "PYTHONPATH": ".",
-      },
-      "args": ["--no-indexing"],
-    },
-  ],
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Web Server",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}/web",
+            "runtimeExecutable": "npm",
+            "envFile": "${workspaceFolder}/.env",
+            "runtimeArgs": [
+                "run", "dev"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Model Server",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "LOG_LEVEL": "DEBUG",
+                "PYTHONUNBUFFERED": "1"
+            },
+            "args": [
+                "model_server.main:app",
+                "--reload",
+                "--port",
+                "9000"
+            ]
+        },
+        {
+            "name": "API Server",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "LOG_ALL_MODEL_INTERACTIONS": "True",
+                "LOG_LEVEL": "DEBUG",
+                "PYTHONUNBUFFERED": "1"
+            },
+            "args": [
+                "enmedd.main:app",
+                "--reload",
+                "--port",
+                "8080"
+            ]
+        },
+        {
+            "name": "Indexing",
+            "type": "python",
+            "request": "launch",
+            "program": "enmedd/background/update.py",
+            "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "ENABLE_MINI_CHUNK": "false",
+                "LOG_LEVEL": "DEBUG",
+                "PYTHONUNBUFFERED": "1",
+                "PYTHONPATH": "."
+            }
+        },
+        // Celery and all async jobs, usually would include indexing as well but this is handled separately above for dev
+        {
+            "name": "Background Jobs",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/dev_run_background_jobs.py",
+            "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "LOG_LEVEL": "DEBUG",
+                "PYTHONUNBUFFERED": "1",
+                "PYTHONPATH": "."
+            },
+            "args": [
+                "--no-indexing"
+            ]
+        }
+    ]
 }

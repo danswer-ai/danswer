@@ -12,7 +12,7 @@ export default async function Page() {
       />
 
       <Text className="mb-8">
-        Manage general enMedD CHP settings applicable to all users in the
+        Manage general enMedD AI settings applicable to all users in the
         workspace.
       </Text>
 

@@ -88,7 +88,7 @@ const MainSection = () => {
         The Sharepoint connector allows you to index and search through your
         Sharepoint files. Once setup, your Word documents, Excel files,
         PowerPoint presentations, OneNote notebooks, PDFs, and uploaded files
-        will be queryable within enMedD CHP.
+        will be queryable within enMedD AI.
       </Text>
 
       <Title className="mt-6 mb-2 ml-auto mr-auto">

@@ -3,7 +3,7 @@
 import { FeedbackType } from "../types";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { EnmeddDocument } from "@/lib/search/interfaces";
 import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { ThreeDots } from "react-loader-spinner";
@@ -99,7 +99,7 @@ export const AIMessage = ({
   files?: FileDescriptor[];
   query?: string;
   personaName?: string;
-  citedDocuments?: [string, DanswerDocument][] | null;
+  citedDocuments?: [string, EnmeddDocument][] | null;
   toolCall?: ToolCallMetadata;
   isComplete?: boolean;
   hasDocs?: boolean;

@@ -1,24 +1,25 @@
 {
-  "family": "inference_model_server",
-  "networkMode": "awsvpc",
-  "containerDefinitions": [
-    {
-      "name": "inference_model_server",
-      "image": "471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest",
-      "essential": true,
-      "memory": 5120,
-      "cpu": 2560,
-      "command": [
-        "/bin/sh",
-        "-c",
-        "echo \"Starting Inference Model Server\" && gunicorn -b 0.0.0.0:8000 danswer.inference_model_server:app"
-      ],
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "/ecs/inference_model_server",
-          "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "ecs"
+    "family": "inference_model_server",
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+      {
+        "name": "inference_model_server",
+        "image": "471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest",
+        "essential": true,
+        "memory": 5120,
+        "cpu": 2560,
+        "command": [
+          "/bin/sh",
+          "-c",
+          "echo \"Starting Inference Model Server\" && gunicorn -b 0.0.0.0:8000 enmedd.inference_model_server:app"
+        ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/inference_model_server",
+            "awslogs-region": "us-east-1",
+            "awslogs-stream-prefix": "ecs"
+          }
         }
       }
     }

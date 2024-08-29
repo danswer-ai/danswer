@@ -2,7 +2,7 @@
 
 import React from "react";
 import {
-  DanswerDocument,
+  EnmeddDocument,
   SearchResponse,
   Quote,
   FlowType,
@@ -23,7 +23,7 @@ import { ConnectorIndexingStatus } from "@/lib/types";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 
 const getSelectedDocumentIds = (
-  documents: DanswerDocument[],
+  documents: EnmeddDocument[],
   selectedIndices: number[]
 ) => {
   const selectedDocumentIds = new Set<string>();
