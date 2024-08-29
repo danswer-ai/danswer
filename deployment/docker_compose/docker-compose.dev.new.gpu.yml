@@ -20,7 +20,6 @@ services:
       - index
       - inference_model_server
     restart: always
-
     ports:
       - "8080:8080"
     environment:
@@ -374,6 +373,19 @@ services:
     volumes:
       - /data/spectra_data/db_volume:/var/lib/postgresql/data
 
+  pgadmin:
+    #container_name: pgadmin_container
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@v.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+       - /data/spectra_data/pgadmin:/var/lib/pgadmin
+
+    ports:
+      - "6432:80"
 
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
@@ -443,7 +455,7 @@ services:
       - "3456:3456"
     environment:
       - DATABASE_URL=postgresql://postgres:password@relational_db:5432/langfuse
-      - NEXTAUTH_URL=http://host.docker.internal:3456
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://host.docker.internal:3456}
       - NEXTAUTH_SECRET=mysecret
       - SALT=mysalt
       - PORT=3456

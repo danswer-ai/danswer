@@ -103,7 +103,7 @@ class GenerateSqlForDataframe:
 
         return df_prompt
 
-    def generate_sql_query(self, schema, requirement, previous_sql_queries=None, previous_response_errors=None) -> list:
+    def generate_sql_query(self, schema, requirement, previous_sql_queries=None, previous_response_errors=None, metadata=None) -> list:
         """ Generate SQL Query by querying the LLM with constructed prompts. """
         if previous_response_errors and previous_sql_queries:
             prompt = self.construct_prompt_from_requirements_and_previous_data(schema, requirement,
@@ -113,7 +113,7 @@ class GenerateSqlForDataframe:
             prompt = self.construct_prompt_from_requirements(schema, requirement)
 
         try:
-            llm_response = self.llm.invoke(prompt=prompt)
+            llm_response = self.llm.invoke(prompt=prompt, metadata=metadata)
             sql_query = llm_response.content
             logger.info(
                 f'SQL Query generated successfully. SQL Query : {sql_query}, type(field_names) = {type(sql_query)}')
