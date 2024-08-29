@@ -239,6 +239,11 @@ class DefaultMultiLLM(LLM):
         logger.debug(f"Config: {self.config}")
 
     def _calculate_max_tokens(self, prompt: LanguageModelInput) -> int:
+        # This method can be used for calculating the maximum tokens for the stream,
+        # but it isn't used in practice due to the computational cost of counting tokens
+        # and because LLM providers automatically cut off at the maximum output.
+        # The implementation is kept for potential future use or debugging purposes.
+
         # Get max input tokens for the model
         max_context_tokens = get_max_input_tokens(
             model_name=self.config.model_name, model_provider=self.config.model_provider
@@ -264,8 +269,6 @@ class DefaultMultiLLM(LLM):
         tool_choice: ToolChoiceOptions | None,
         stream: bool,
     ) -> litellm.ModelResponse | litellm.CustomStreamWrapper:
-        max_tokens = self._calculate_max_tokens(prompt)
-
         if isinstance(prompt, list):
             prompt = [
                 _convert_message_to_dict(msg) if isinstance(msg, BaseMessage) else msg
@@ -290,7 +293,6 @@ class DefaultMultiLLM(LLM):
                 stream=stream,
                 # model params
                 temperature=self._temperature,
-                max_tokens=max_tokens if self._max_output_tokens > 0 else None,
                 timeout=self._timeout,
                 # For now, we don't support parallel tool calls
                 # NOTE: we can't pass this in if tools are not specified
