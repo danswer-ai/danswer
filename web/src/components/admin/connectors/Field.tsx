@@ -396,17 +396,27 @@ export const BooleanFormField = ({
   alignTop,
   checked,
 }: BooleanFormFieldProps) => {
+  const [field, meta, helpers] = useField<boolean>(name);
+  const { setValue } = helpers;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.checked);
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
   return (
     <div>
       <label className="flex text-sm">
         <Field
-          disabled={disabled}
-          name={name}
-          checked={checked}
           type="checkbox"
+          {...field}
+          checked={checked !== undefined ? checked : field.value}
+          disabled={disabled}
+          onChange={handleChange}
           className={`${removeIndent ? "mr-2" : "mx-3"}     
-            px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
-          {...(onChange ? { onChange } : {})}
+              px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
         />
         {!noLabel && (
           <div>

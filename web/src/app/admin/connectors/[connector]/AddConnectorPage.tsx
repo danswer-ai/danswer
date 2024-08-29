@@ -214,6 +214,10 @@ export default function AddConnector({
 
     // file-specific handling
     if (connector == "file" && selectedFiles.length > 0) {
+      console.log("CREATING NEW FIEL");
+      console.log(formValues);
+      console.log(isPublic);
+      // return
       const response = await submitFiles(
         selectedFiles,
         setPopup,
@@ -489,6 +493,7 @@ export default function AddConnector({
               }}
             >
               {(formikProps) => {
+                console.log(formikProps.values);
                 setFormValues(formikProps.values);
                 handleFormStatusChange(
                   formikProps.isValid && isFormSubmittable(formikProps.values)
