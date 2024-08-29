@@ -142,7 +142,7 @@ export function WhitelabelingForm() {
               setSelectedFile={setSelectedFile}
             />
 
-            <div className="pt-4">
+            {/*  <div className="pt-4">
               <TextFormField
                 label="Custom Chat Header Content"
                 name="custom_header_content"
@@ -150,9 +150,9 @@ export function WhitelabelingForm() {
                 placeholder="Your header content..."
                 disabled={isSubmitting}
               />
-            </div>
+            </div> */}
 
-            <div className="pt-4">
+            <div className="pt-8">
               <TextFormField
                 label="Custom Popup Header"
                 name="custom_popup_header"
@@ -165,7 +165,7 @@ export function WhitelabelingForm() {
               />
             </div>
 
-            <div className="pt-4">
+            <div>
               <TextFormField
                 label="Custom Popup Content"
                 name="custom_popup_content"
@@ -176,9 +176,7 @@ export function WhitelabelingForm() {
               />
             </div>
 
-            <Button type="submit" className="mt-4">
-              Update
-            </Button>
+            <Button type="submit">Update</Button>
           </Form>
         )}
       </Formik>

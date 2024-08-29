@@ -22,7 +22,7 @@ export default function AnalyticsPage() {
       />
 
       <Card className="mb-12">
-        <CardHeader>
+        <CardHeader className="">
           <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
         </CardHeader>
         <CardContent>

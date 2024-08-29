@@ -60,9 +60,9 @@ const EditRow = ({ documentSet }: { documentSet: DocumentSet }) => {
           </Button>
         }
       >
-        <div>
-          <InfoIcon className="flex flex-shrink-0 mt-1 mr-2" /> Cannot update
-          while syncing! Wait for the sync to finish, then try again.
+        <div className="flex items-center gap-1">
+          <InfoIcon /> Cannot update while syncing! Wait for the sync to finish,
+          then try again.
         </div>
       </CustomTooltip>
     </div>
@@ -190,7 +190,7 @@ const DocumentSetTable = ({
         </CardContent>
       </Card>
 
-      <div className="flex mt-3">
+      <div className="flex pt-6">
         <div className="mx-auto">
           <PageSelector
             totalPages={Math.ceil(documentSets.length / numToDisplay)}

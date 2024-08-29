@@ -83,13 +83,7 @@ export function ChatTab({
           ([dateRange, chatSessions]) => {
             if (chatSessions.length > 0) {
               return (
-                <div
-                  key={dateRange}
-                  /*  className={`pb-4 ${
-                    dateRange !== "Previous 30 Days" ? "border-b" : ""
-                  }`} */
-                  className={`pt-4`}
-                >
+                <div key={dateRange} className={`pt-4`}>
                   <div className="px-4 text-sm text-dark-900 flex pb-2 font-semibold">
                     {dateRange}
                   </div>

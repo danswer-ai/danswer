@@ -152,7 +152,7 @@ export const DocumentFeedbackTable = ({
         </CardContent>
       </Card>
 
-      <div className="flex pt-10">
+      <div className="flex pt-6">
         <div className="mx-auto">
           <PageSelector
             totalPages={Math.ceil(documents.length / numToDisplay)}

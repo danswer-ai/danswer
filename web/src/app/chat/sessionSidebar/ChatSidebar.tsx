@@ -327,7 +327,7 @@ export const ChatSidebar = ({
           </div> */}
 
           <div className="px-4 text-sm flex flex-col">
-            <Separator className="mb-6" />
+            <Separator className="mb-2" />
 
             {settings.search_page_enabled && (
               <Link

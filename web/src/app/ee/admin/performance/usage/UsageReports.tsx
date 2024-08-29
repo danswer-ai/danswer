@@ -2,7 +2,6 @@
 
 import { errorHandlingFetcher } from "@/lib/fetcher";
 
-import { Divider, Text, Title } from "@tremor/react";
 import useSWR from "swr";
 import { useState } from "react";
 import { UsageReport } from "./types";
@@ -157,7 +156,7 @@ function UsageReportsTable() {
 
   return (
     <div>
-      <Title className="mb-2 mt-6 mx-auto"> Previous Reports </Title>
+      <h3 className="font-semibold pt-8 p-4">Previous Reports</h3>
       {usageReportsIsLoading ? (
         <div className="flex justify-center w-full">
           <ThreeDotsLoader />
@@ -209,22 +208,6 @@ function UsageReportsTable() {
               ))}
             </TableBody>
           </Table>
-          <div className="mt-3 flex">
-            <div className="mx-auto">
-              <PageSelector
-                totalPages={totalPages}
-                currentPage={page}
-                onPageChange={(newPage) => {
-                  setPage(newPage);
-                  window.scrollTo({
-                    top: 0,
-                    left: 0,
-                    behavior: "smooth",
-                  });
-                }}
-              />
-            </div>
-          </div>
         </>
       )}
     </div>
@@ -232,14 +215,53 @@ function UsageReportsTable() {
 }
 
 export default function UsageReports() {
+  const [page, setPage] = useState(1);
+  const NUM_IN_PAGE = 10;
+
+  const {
+    data: usageReportsMetadata,
+    error: usageReportsError,
+    isLoading: usageReportsIsLoading,
+  } = useSWR<UsageReport[]>(USAGE_REPORT_URL, errorHandlingFetcher);
+
+  const paginatedReports = usageReportsMetadata
+    ? usageReportsMetadata
+        .slice(0)
+        .reverse()
+        .slice(NUM_IN_PAGE * (page - 1), NUM_IN_PAGE * page)
+    : [];
+
+  const totalPages = usageReportsMetadata
+    ? Math.ceil(usageReportsMetadata.length / NUM_IN_PAGE)
+    : 0;
+
   return (
-    <Card>
-      <CardHeader className="border-b">
-        <GenerateReportInput />
-      </CardHeader>
-      <CardContent>
-        <UsageReportsTable />
-      </CardContent>
-    </Card>
+    <div>
+      <Card>
+        <CardHeader className="border-b">
+          <GenerateReportInput />
+        </CardHeader>
+        <CardContent className="p-0">
+          <UsageReportsTable />
+        </CardContent>
+      </Card>
+
+      <div className="pt-6 flex">
+        <div className="mx-auto">
+          <PageSelector
+            totalPages={totalPages}
+            currentPage={page}
+            onPageChange={(newPage) => {
+              setPage(newPage);
+              window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: "smooth",
+              });
+            }}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
