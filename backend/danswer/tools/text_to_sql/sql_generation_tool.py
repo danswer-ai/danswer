@@ -197,7 +197,7 @@ class SqlGenerationTool(Tool):
             dataframe = None
             result_list = []
             if self.files:
-                dataframe = self.generate_dataframe_from_excel(self.files[0], self.metadata) # first file only
+                dataframe = self.generate_dataframe_from_excel(self.files[0]) # first file only
                 if not dataframe.empty:
                     sql_generation_tool_output = self.generate_sql_for_dataframe.generate_sql_query(schema=dataframe.dtypes,
                                                                                                     requirement=query, metadata = self.metadata)
