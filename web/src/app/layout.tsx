@@ -7,11 +7,12 @@ import {
 } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
+  MEECHUM_AUTH,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
 } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
-import { buildClientUrl } from "@/lib/utilsSS";
+import { buildClientUrl, fetchSS } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 import { EnterpriseSettings } from "./admin/settings/interfaces";
@@ -53,6 +54,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  if (MEECHUM_AUTH) {
+    const response = await fetchSS("/settings/refresh-token");
+    console.log(response);
+  }
+  console.log(MEECHUM_AUTH);
+
   const combinedSettings = await fetchSettingsSS();
   if (!combinedSettings) {
     // Just display a simple full page error if fetching fails.
