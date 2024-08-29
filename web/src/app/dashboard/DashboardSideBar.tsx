@@ -27,7 +27,7 @@ export default function DashboardSideBar() {
                 <Link href="/assistants/mine">
                     <BasicClickable fullWidth>
                         <div className="flex items-center text-default font-medium">
-                            <FaBrain className="ml-1 mr-2" /> Manage Assistants
+                            <FaBrain className="ml-1 mr-2" /> Manage Plugins
                         </div>
                     </BasicClickable>
                 </Link>

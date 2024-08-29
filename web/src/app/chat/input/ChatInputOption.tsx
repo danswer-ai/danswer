@@ -8,9 +8,9 @@ interface ChatInputOptionProps {
   icon: IconType;
   onClick: () => void;
   size?: number;
-
   options?: { name: string; value: number; onClick?: () => void }[];
   flexPriority?: "shrink" | "stiff" | "second";
+  selectedTool: string;
 }
 
 const ChatInputOption = ({
@@ -20,6 +20,7 @@ const ChatInputOption = ({
   size = 16,
   options,
   flexPriority,
+  selectedTool
 }: ChatInputOptionProps) => {
   const [isDropupVisible, setDropupVisible] = useState(false);
 
@@ -81,19 +82,21 @@ const ChatInputOption = ({
 
   if (!dropdownContent) {
     return (
-      <div
-        onClick={onClick}
-        className={`text-ellipsis
-          ${flexPriority == "shrink" && "flex-shrink-[10000] flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap overflow-hidden"}
-          ${flexPriority == "second" && "flex-shrink flex-basis-0 min-w-[30px] whitespace-nowrap overflow-hidden"}
-          ${flexPriority == "stiff" && "flex-none whitespace-nowrap overflow-hidden"}
-          `}
-      >
-        {option}
+      <div style={{ display: selectedTool == 'ComposeEmailTool'
+        ? 'none' : 'block' }}>
+        <div
+          onClick={onClick}
+          className={`text-ellipsis
+            ${flexPriority == "shrink" && "flex-shrink-[10000] flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap overflow-hidden"}
+            ${flexPriority == "second" && "flex-shrink flex-basis-0 min-w-[30px] whitespace-nowrap overflow-hidden"}
+            ${flexPriority == "stiff" && "flex-none whitespace-nowrap overflow-hidden"}
+            `}
+        >
+          {option}
+        </div>
       </div>
     );
-  }
-
+  }  
   return (
     <Popover
       open={isDropupVisible}

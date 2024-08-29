@@ -75,18 +75,6 @@ class ResolvePlotParametersUsingLLM:
             logger.error("Failed to resolve graph parameters: %s", str(e))
             return []
 
-    def post_process(self, text):
-        return "".join([json.loads(token)['response'] for token in text['text'].strip().split('\n')])
-
-    def get_database_schema(self) -> str:
-        """ Return the database schema. """
-        return """
-            Album(AlbumId primary key, Title, ArtistId),
-            Artist(ArtistId primary key,Name),
-            Customer(CustomerId primary key,FirstName,LastName,Company,Address,City,State,Country),
-            Employee(EmployeeId primary key,FirstName,LastName,Title,ReportsTo, BirthDate,Address,City,State,Country,Phone,Email)
-        """
-
 
 if __name__ == '__main__':
     llm_config = LLMConfig(model_name="model_v1", other_configurations={})
