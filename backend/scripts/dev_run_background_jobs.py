@@ -2,9 +2,11 @@ import argparse
 import os
 import subprocess
 import threading
+
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 def monitor_process(process_name: str, process: subprocess.Popen) -> None:
     assert process.stdout is not None
@@ -23,7 +25,7 @@ def run_jobs(exclude_indexing: bool) -> None:
     cmd_worker = [
         "celery",
         "-A",
-        "ee.danswer.background.celery",
+        "ee.enmedd.background.celery",
         "worker",
         "--pool=threads",
         "--autoscale=3,10",
@@ -34,7 +36,7 @@ def run_jobs(exclude_indexing: bool) -> None:
     cmd_beat = [
         "celery",
         "-A",
-        "ee.danswer.background.celery",
+        "ee.enmedd.background.celery",
         "beat",
         "--loglevel=INFO",
     ]
@@ -57,7 +59,7 @@ def run_jobs(exclude_indexing: bool) -> None:
     if not exclude_indexing:
         update_env = os.environ.copy()
         update_env["PYTHONPATH"] = "."
-        cmd_indexing = ["python", "danswer/background/update.py"]
+        cmd_indexing = ["python", "enmedd/background/update.py"]
 
         indexing_process = subprocess.Popen(
             cmd_indexing,
@@ -76,7 +78,7 @@ def run_jobs(exclude_indexing: bool) -> None:
     try:
         update_env = os.environ.copy()
         update_env["PYTHONPATH"] = "."
-        cmd_perm_sync = ["python", "ee.danswer/background/permission_sync.py"]
+        cmd_perm_sync = ["python", "ee.enmedd/background/permission_sync.py"]
 
         indexing_process = subprocess.Popen(
             cmd_perm_sync,

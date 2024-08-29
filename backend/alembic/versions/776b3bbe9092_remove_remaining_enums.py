@@ -8,9 +8,9 @@ Create Date: 2024-03-22 21:34:27.629444
 from alembic import op
 import sqlalchemy as sa
 
-from danswer.db.models import IndexModelStatus
-from danswer.search.enums import RecencyBiasSetting
-from danswer.search.models import SearchType
+from enmedd.db.models import IndexModelStatus
+from enmedd.search.enums import RecencyBiasSetting
+from enmedd.search.models import SearchType
 
 # revision identifiers, used by Alembic.
 revision = "776b3bbe9092"

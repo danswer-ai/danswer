@@ -19,12 +19,12 @@ snapshot_download('mixedbread-ai/mxbai-rerank-xsmall-v1')"
 WORKDIR /app
 
 # Utils used by model server
-COPY ./danswer/utils/logger.py /app/danswer/utils/logger.py
+COPY ./enmedd/utils/logger.py /app/enmedd/utils/logger.py
 
 # Place to fetch version information
-COPY ./danswer/__init__.py /app/danswer/__init__.py
+COPY ./enmedd/__init__.py /app/enmedd/__init__.py
 
-# Shared between Danswer Backend and Model Server
+# Shared between enMedD AI Backend and Model Server
 COPY ./shared_configs /app/shared_configs
 
 # Model Server main code

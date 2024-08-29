@@ -19,7 +19,7 @@
       "runtimeExecutable": "npm",
       "envFile": "${workspaceFolder}/.env",
       "runtimeArgs": ["run", "dev"],
-      "console": "integratedTerminal",
+      "console": "integratedTerminal"
     },
     {
       "name": "Model Server",
@@ -30,9 +30,9 @@
       "envFile": "${workspaceFolder}/.env",
       "env": {
         "LOG_LEVEL": "DEBUG",
-        "PYTHONUNBUFFERED": "1",
+        "PYTHONUNBUFFERED": "1"
       },
-      "args": ["model_server.main:app", "--reload", "--port", "9000"],
+      "args": ["model_server.main:app", "--reload", "--port", "9000"]
     },
     {
       "name": "API Server",
@@ -44,23 +44,23 @@
       "env": {
         "LOG_ALL_MODEL_INTERACTIONS": "True",
         "LOG_LEVEL": "DEBUG",
-        "PYTHONUNBUFFERED": "1",
+        "PYTHONUNBUFFERED": "1"
       },
-      "args": ["danswer.main:app", "--reload", "--port", "8080"],
+      "args": ["enmedd.main:app", "--reload", "--port", "8080"]
     },
     {
       "name": "Indexing",
       "type": "python",
       "request": "launch",
-      "program": "danswer/background/update.py",
+      "program": "enmedd/background/update.py",
       "cwd": "${workspaceFolder}/backend",
       "envFile": "${workspaceFolder}/.env",
       "env": {
         "ENABLE_MINI_CHUNK": "false",
         "LOG_LEVEL": "DEBUG",
         "PYTHONUNBUFFERED": "1",
-        "PYTHONPATH": ".",
-      },
+        "PYTHONPATH": "."
+      }
     },
     // Celery and all async jobs, usually would include indexing as well but this is handled separately above for dev
     {
@@ -73,9 +73,9 @@
       "env": {
         "LOG_LEVEL": "DEBUG",
         "PYTHONUNBUFFERED": "1",
-        "PYTHONPATH": ".",
+        "PYTHONPATH": "."
       },
-      "args": ["--no-indexing"],
-    },
-  ],
+      "args": ["--no-indexing"]
+    }
+  ]
 }

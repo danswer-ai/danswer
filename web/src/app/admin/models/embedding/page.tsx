@@ -159,10 +159,10 @@ function Main() {
               To complete the initial setup, let&apos;s add a connector!
               <br />
               <br />
-              Connectors are the way that enMedD CHP gets data from your
+              Connectors are the way that enMedD AI gets data from your
               organization&apos;s various data sources. Once setup, we&apos;ll
-              automatically sync data from your apps and docs into enMedD CHP,
-              so you can search all through all of them in one place.
+              automatically sync data from your apps and docs into enMedD AI, so
+              you can search all through all of them in one place.
             </div>
             <div className="flex">
               <Link className="mx-auto mt-2 w-fit" href="/admin/add-connector">
@@ -197,7 +197,7 @@ function Main() {
 
       <Text>
         Embedding models are used to generate embeddings for your documents,
-        which then power enMedD CHP&apos;s search.
+        which then power enMedD AI&apos;s search.
       </Text>
 
       {currentModel ? (
@@ -277,9 +277,9 @@ function Main() {
               </a>
               .
               <br />
-              <b>NOTE:</b> not all models listed will work with enMedD CHP,
-              since some have unique interfaces or special requirements. If in
-              doubt, reach out to the enMedD CHP team.
+              <b>NOTE:</b> not all models listed will work with enMedD AI, since
+              some have unique interfaces or special requirements. If in doubt,
+              reach out to the enMedD AI team.
             </Text>
 
             <div className="flex w-full">

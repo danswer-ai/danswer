@@ -16,7 +16,7 @@ import EnmeddLogo from "../../../public/logo-brand.png";
 import { HeaderTitle } from "@/components/header/Header";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
+import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED } from "@/lib/constants";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Logo } from "@/components/Logo";
 
@@ -61,9 +61,9 @@ export const SearchSidebar = ({
                     {enterpriseSettings.application_name}
                   </HeaderTitle>
 
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
+                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED && (
                     <p className="text-xs text-subtle -mt-1.5">
-                      Powered by enMedD CHP
+                      Powered by enMedD AI
                     </p>
                   )}
                 </div>

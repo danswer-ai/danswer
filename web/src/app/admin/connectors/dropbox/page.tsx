@@ -125,7 +125,7 @@ const Main = () => {
             >
               setup guide
             </a>{" "}
-            on the enMedD CHP docs to obtain a Dropbox token.
+            on the enMedD AI docs to obtain a Dropbox token.
           </Text>
           <Card className="mt-4 mb-4">
             <CardContent>

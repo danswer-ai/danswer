@@ -114,8 +114,8 @@ export default function Page() {
       />
 
       <p className="p-2.5 pt-0">
-        Connect enMedD CHP to your organization&apos;s knowledge sources.
-        We&apos;ll automatically sync your data into enMedD CHP, so you can find
+        Connect enMedD AI to your organization&apos;s knowledge sources.
+        We&apos;ll automatically sync your data into enMedD AI, so you can find
         exactly what you&apos;re looking for in one place.
       </p>
 

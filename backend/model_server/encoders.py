@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
-from danswer.utils.logger import setup_logger
+from enmedd.utils.logger import setup_logger
 from model_server.constants import MODEL_WARM_UP_STRING
 from model_server.utils import simple_log_function_time
 from shared_configs.configs import CROSS_EMBED_CONTEXT_SIZE

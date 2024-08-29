@@ -1,6 +1,6 @@
 # Copy this file to .env at the base of the repo and fill in the <REPLACE THIS> values
 # This will help with development iteration speed and reduce repeat tasks for dev
-# Also check out danswer/backend/scripts/restart_containers.sh for a script to restart the containers which Danswer relies on outside of VSCode/Cursor processes
+# Also check out enmedd/backend/scripts/restart_containers.sh for a script to restart the containers which enMedD AI relies on outside of VSCode/Cursor processes
 
 # For local dev, often user Authentication is not needed
 AUTH_TYPE=disabled
@@ -36,17 +36,11 @@ GEN_AI_API_KEY=<REPLACE THIS>
 GEN_AI_MODEL_VERSION=gpt-3.5-turbo
 FAST_GEN_AI_MODEL_VERSION=gpt-3.5-turbo
 
-# For Danswer Slack Bot, overrides the UI values so no need to set this up via UI every time
-# Only needed if using DanswerBot
-#DANSWER_BOT_SLACK_APP_TOKEN=<REPLACE THIS>
-#DANSWER_BOT_SLACK_BOT_TOKEN=<REPLACE THIS>
-
-
 # Python stuff
 PYTHONPATH=./backend
 PYTHONUNBUFFERED=1
 
 
-# Enable the full set of Danswer Enterprise Edition features
+# Enable the full set of enMedD Enterprise Edition features
 # NOTE: DO NOT ENABLE THIS UNLESS YOU HAVE A PAID ENTERPRISE LICENSE (or if you are using this for local testing/development)
 ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=False

@@ -17,6 +17,13 @@ export interface User {
   is_superuser: string;
   is_verified: string;
   role: "basic" | "admin";
+  workspace?: Workspace;
+  full_name?: string;
+  company_name?: string;
+  company_email?: string;
+  company_billing?: string;
+  billing_email_address?: string;
+  vat?: string;
   preferences: UserPreferences;
   status: UserStatus;
 }
@@ -404,6 +411,13 @@ export interface Tag {
   tag_key: string;
   tag_value: string;
   source: ValidSources;
+}
+
+export interface Workspace {
+  id: number;
+  workspace_name: string;
+  custom_logo: string;
+  custom_header_logo: string;
 }
 
 /* EE Only Types */

@@ -8,9 +8,9 @@ import requests
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
-from danswer.configs.app_configs import DOCUMENT_INDEX_NAME  # noqa: E402
-from danswer.document_index.vespa.index import DOCUMENT_ID_ENDPOINT  # noqa: E402
-from danswer.utils.logger import setup_logger  # noqa: E402
+from enmedd.configs.app_configs import DOCUMENT_INDEX_NAME  # noqa: E402
+from enmedd.document_index.vespa.index import DOCUMENT_ID_ENDPOINT  # noqa: E402
+from enmedd.utils.logger import setup_logger  # noqa: E402
 
 logger = setup_logger()
 

@@ -48,9 +48,9 @@ if __name__ == "__main__":
             temperature=2,
         )
         print(response.choices[0].message.content)
-        print("Success! Feel free to use this API key for enMedD CHP.")
+        print("Success! Feel free to use this API key for enMedD AI.")
     except Exception:
         print(
-            "Failed, provided API key is invalid for enMedD CHP, please address the error from OpenAI."
+            "Failed, provided API key is invalid for enMedD AI, please address the error from OpenAI."
         )
         raise

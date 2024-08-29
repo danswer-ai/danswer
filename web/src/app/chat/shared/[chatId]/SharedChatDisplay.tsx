@@ -12,7 +12,8 @@ import { Button, Callout, Divider } from "@tremor/react";
 import { useRouter } from "next/navigation";
 import { useChatContext } from "@/components/context/ChatContext";
 
-function BackToDanswerButton() {
+// TODO: replace the component name
+function BackToEnmeddButton() {
   const router = useRouter();
 
   return (
@@ -39,7 +40,7 @@ export function SharedChatDisplay({
           </Callout>
         </div>
 
-        <BackToDanswerButton />
+        <BackToEnmeddButton />
       </div>
     );
   }
@@ -97,7 +98,7 @@ export function SharedChatDisplay({
         </div>
       </div>
 
-      <BackToDanswerButton />
+      <BackToEnmeddButton />
     </div>
   );
 }

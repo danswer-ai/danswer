@@ -1,0 +1,85 @@
+# Currently in the UI, each Persona only has one prompt, which is why there are 3 very similar personas defined below.
+
+personas:
+  # This id field can be left blank for other default personas, however an id 0 persona must exist
+  # Careful setting specific IDs, this won't autoincrement the next ID value for postgres
+  - id: 0
+    name: "enMedD AI"
+    description: >
+      Assistant with access to documents from your Connected Sources.
+    # Default Prompt objects attached to the persona, see prompts.yaml
+    prompts:
+      - "Answer-Question"
+    # Default number of chunks to include as context, set to 0 to disable retrieval
+    # Remove the field to set to the system default number of chunks/tokens to pass to Gen AI
+    # Each chunk is 512 tokens long
+    num_chunks: 10
+    # Enable/Disable usage of the LLM chunk filter feature whereby each chunk is passed to the LLM to determine
+    # if the chunk is useful or not towards the latest user query
+    # This feature can be overriden for all personas via DISABLE_LLM_CHUNK_FILTER env variable
+    llm_relevance_filter: true
+    # Enable/Disable usage of the LLM to extract query time filters including source type and time range filters
+    llm_filter_extraction: true
+    # Decay documents priority as they age, options are:
+    # - favor_recent (2x base by default, configurable)
+    # - base_decay
+    # - no_decay
+    # - auto (model chooses between favor_recent and base_decay based on user query)
+    recency_bias: "auto"
+    # Default Document Sets for this persona, specified as a list of names here.
+    # If the document set by the name exists, it will be attached to the persona
+    # If the document set by the name does not exist, it will be created as an empty document set with no connectors
+    # The admin can then use the UI to add new connectors to the document set
+    # Example:
+    # document_sets:
+    #   - "HR Resources"
+    #   - "Engineer Onboarding"
+    #   - "Benefits"
+    document_sets: []
+    starter_messages:
+      [
+        {
+          "name": "Business Advice",
+          "description": "Ask me anything about starting, running, or growing a business.",
+          "message": "What business advice do you need?",
+        },
+        {
+          "name": "Marketing Strategy",
+          "description": "Let's discuss your target audience, messaging, and channels.",
+          "message": "How can I improve my marketing strategy?",
+        },
+        {
+          "name": "Financial Planning",
+          "description": "Ask me about budgeting, cash flow, or investment.",
+          "message": "Do you have any questions about business finance?",
+        },
+        {
+          "name": "Employee Management",
+          "description": "Let's discuss hiring, onboarding, performance reviews, or team building.",
+          "message": "How can I improve my employee management skills?",
+        },
+      ]
+
+  - id: 1
+    name: "GPT"
+    description: >
+      Assistant with no access to documents. Chat with just the Language Model.
+    prompts:
+      - "OnlyLLM"
+    num_chunks: 0
+    llm_relevance_filter: true
+    llm_filter_extraction: true
+    recency_bias: "auto"
+    document_sets: []
+
+  - id: 2
+    name: "Paraphrase"
+    description: >
+      Assistant that is heavily constrained and only provides exact quotes from Connected Sources.
+    prompts:
+      - "Paraphrase"
+    num_chunks: 10
+    llm_relevance_filter: true
+    llm_filter_extraction: true
+    recency_bias: "auto"
+    document_sets: []

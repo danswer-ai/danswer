@@ -316,7 +316,7 @@ export const GmailOAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-2">
-          When using a Gmail Service Account, you can either have enMedD CHP act
+          When using a Gmail Service Account, you can either have enMedD AI act
           as the service account itself OR you can specify an account for the
           service account to impersonate.
           <br />
@@ -372,7 +372,7 @@ export const GmailOAuthSection = ({
                   <TextFormField
                     name="gmail_delegated_user"
                     label="[Optional] User email to impersonate:"
-                    subtext="If left blank, enMedD CHP will use the service account itself."
+                    subtext="If left blank, enMedD AI will use the service account itself."
                   />
                   <div className="flex">
                     <button
