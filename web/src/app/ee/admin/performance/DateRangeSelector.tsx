@@ -15,13 +15,10 @@ export function DateRangeSelector({
   onValueChange: (value: DateRange) => void;
 }) {
   return (
-    <div>
-      <p className="my-auto mr-2 font-medium mb-1">Date Range</p>
-      <CustomDatePicker
-        value={value}
-        onValueChange={onValueChange}
-        predefinedRanges={predefinedRanges}
-      />
-    </div>
+    <CustomDatePicker
+      value={value}
+      onValueChange={onValueChange}
+      predefinedRanges={predefinedRanges}
+    />
   );
 }

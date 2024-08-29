@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { CustomDatePicker } from "@/components/CustomDatePicker";
 import { DateRange } from "react-day-picker";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 const predefinedRanges = [
   { value: "7d", label: "Last 7 days" },
@@ -99,28 +100,34 @@ function GenerateReportInput() {
   lastYear.setFullYear(today.getFullYear() - 1);
 
   return (
-    <div className="pb-8">
-      <Title className="pb-2">Generate Usage Reports</Title>
-      <p className="pb-8">
-        Generate usage statistics for users in the workspace.
-      </p>
-      <div className="pb-4">
-        <CustomDatePicker
-          value={dateRange}
-          onValueChange={setDateRange}
-          predefinedRanges={predefinedRanges}
-        />
+    <div className="flex justify-between items-center">
+      <div>
+        <div className="flex flex-col">
+          <h3 className="font-semibold">Generate Usage Reports</h3>
+          <span className="text-subtle text-sm">
+            Generate usage statistics for users in the workspace.
+          </span>
+        </div>
+        <div className="pt-4">
+          <CustomDatePicker
+            value={dateRange}
+            onValueChange={setDateRange}
+            predefinedRanges={predefinedRanges}
+          />
+        </div>
       </div>
-      <Button disabled={isLoading} onClick={() => requestReport()}>
-        <CloudDownload size={16} /> Generate Report
-      </Button>
-      <p className="pt-2 text-xs">This can take a few minutes.</p>
-      {errorOccurred && (
-        <ErrorCallout
-          errorTitle="Something went wrong."
-          errorMsg={errorOccurred?.toString()}
-        />
-      )}
+      <div>
+        <Button disabled={isLoading} onClick={() => requestReport()}>
+          <CloudDownload size={16} /> Generate Report
+        </Button>
+        <p className="pt-2 text-xs text-subtle">This can take a few minutes.</p>
+        {errorOccurred && (
+          <ErrorCallout
+            errorTitle="Something went wrong."
+            errorMsg={errorOccurred?.toString()}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -192,11 +199,10 @@ function UsageReportsTable() {
                     {humanReadableFormatWithTime(r.time_created)}
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/api/admin/usage-report/${r.report_name}`}
-                      className="flex justify-center"
-                    >
-                      <Download size={16} />
+                    <Link href={`/api/admin/usage-report/${r.report_name}`}>
+                      <Button variant="ghost" size="icon">
+                        <Download size={16} />
+                      </Button>
                     </Link>
                   </TableCell>
                 </TableRow>
@@ -227,10 +233,13 @@ function UsageReportsTable() {
 
 export default function UsageReports() {
   return (
-    <div className="mx-auto container">
-      <GenerateReportInput />
-      <Divider />
-      <UsageReportsTable />
-    </div>
+    <Card>
+      <CardHeader className="border-b">
+        <GenerateReportInput />
+      </CardHeader>
+      <CardContent>
+        <UsageReportsTable />
+      </CardContent>
+    </Card>
   );
 }

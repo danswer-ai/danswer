@@ -89,6 +89,11 @@ export function CustomDatePicker({
   };
 
   const calendarValue = value || getDateRange(selectedRange);
+  const displayRange = calendarValue.from
+    ? `${format(calendarValue.from, "LLL dd, y")}${
+        calendarValue.to ? ` - ${format(calendarValue.to, "LLL dd, y")}` : ""
+      }`
+    : "Select Range";
 
   return (
     <div className="flex">
@@ -99,12 +104,7 @@ export function CustomDatePicker({
             className="rounded-r-none items-center gap-2"
           >
             <CalendarIcon size={16} />
-            {calendarValue.from && calendarValue.to
-              ? `${format(calendarValue.from, "LLL dd, y")} - ${format(
-                  calendarValue.to,
-                  "LLL dd, y"
-                )}`
-              : "Select Range"}
+            {displayRange}
           </Button>
         </PopoverTrigger>
         <PopoverContent align="start">
@@ -118,7 +118,7 @@ export function CustomDatePicker({
       </Popover>
 
       <Select value={selectedRange} onValueChange={handleSelectPredefinedRange}>
-        <SelectTrigger className="md:w-48 rounded-l-none !rounded-r-regular">
+        <SelectTrigger className="md:w-40 rounded-l-none !rounded-r-regular">
           <SelectValue placeholder="Select range" />
         </SelectTrigger>
         <SelectContent>

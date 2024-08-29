@@ -1119,7 +1119,7 @@ export function ChatPage({
     <>
       {livePersona && (
         <div className="fixed top-0 left-0 flex w-full z-top-bar bg-background">
-          <div className="flex w-full items-start px-4 py-6 justify-between">
+          <div className="flex w-full items-start px-4 pt-6 justify-between">
             <div className="flex lg:hidden items-center gap-2">
               <Button variant="ghost" size="icon" onClick={toggleLeftSideBar}>
                 <PanelRightClose size={24} />
