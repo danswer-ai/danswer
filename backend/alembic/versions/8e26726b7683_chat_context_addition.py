@@ -18,23 +18,23 @@ depends_on: None = None
 
 def upgrade() -> None:
     op.create_table(
-        "persona",
+        "assistant",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("system_text", sa.Text(), nullable=True),
         sa.Column("tools_text", sa.Text(), nullable=True),
         sa.Column("hint_text", sa.Text(), nullable=True),
-        sa.Column("default_persona", sa.Boolean(), nullable=False),
+        sa.Column("default_assistant", sa.Boolean(), nullable=False),
         sa.Column("deleted", sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.add_column("chat_message", sa.Column("persona_id", sa.Integer(), nullable=True))
+    op.add_column("chat_message", sa.Column("assistant_id", sa.Integer(), nullable=True))
     op.create_foreign_key(
-        "fk_chat_message_persona_id", "chat_message", "persona", ["persona_id"], ["id"]
+        "fk_chat_message_assistant_id", "chat_message", "assistant", ["assistant_id"], ["id"]
     )
 
 
 def downgrade() -> None:
-    op.drop_constraint("fk_chat_message_persona_id", "chat_message", type_="foreignkey")
-    op.drop_column("chat_message", "persona_id")
-    op.drop_table("persona")
+    op.drop_constraint("fk_chat_message_assistant_id", "chat_message", type_="foreignkey")
+    op.drop_column("chat_message", "assistant_id")
+    op.drop_table("assistant")

@@ -33,14 +33,14 @@ class SimpleQueryRequest(BaseModel):
 
 
 class UpdateChatSessionThreadRequest(BaseModel):
-    # If not specified, use enMedD AI default persona
+    # If not specified, use enMedD AI default assistant
     chat_session_id: int
     new_alternate_model: str
 
 
 class ChatSessionCreationRequest(BaseModel):
-    # If not specified, use enMedD AI default persona
-    persona_id: int = 0
+    # If not specified, use enMedD AI default assistant
+    assistant_id: int = 0
     description: str | None = None
 
 
@@ -103,7 +103,7 @@ class CreateChatMessageRequest(ChunkContext):
     # will disable Query Rewording if specified
     query_override: str | None = None
 
-    # allows the caller to override the Persona / Prompt
+    # allows the caller to override the Assistant / Prompt
     llm_override: LLMOverride | None = None
     prompt_override: PromptOverride | None = None
 
@@ -147,7 +147,7 @@ class RenameChatSessionResponse(BaseModel):
 class ChatSessionDetails(BaseModel):
     id: int
     name: str
-    persona_id: int
+    assistant_id: int
     time_created: str
     shared_status: ChatSessionSharedStatus
     folder_id: int | None
@@ -199,8 +199,8 @@ class ChatMessageDetail(BaseModel):
 class ChatSessionDetailResponse(BaseModel):
     chat_session_id: int
     description: str
-    persona_id: int
-    persona_name: str
+    assistant_id: int
+    assistant_name: str
     messages: list[ChatMessageDetail]
     time_created: datetime
     shared_status: ChatSessionSharedStatus

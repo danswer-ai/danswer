@@ -32,7 +32,7 @@ from enmedd.db.engine import get_session
 from enmedd.db.feedback import create_chat_message_feedback
 from enmedd.db.feedback import create_doc_retrieval_feedback
 from enmedd.db.models import User
-from enmedd.db.persona import get_persona_by_id
+from enmedd.db.assistant import get_assistant_by_id
 from enmedd.document_index.document_index_utils import get_both_index_names
 from enmedd.document_index.factory import get_default_document_index
 from enmedd.file_processing.extract_file_text import extract_file_text
@@ -40,7 +40,7 @@ from enmedd.file_store.file_store import get_default_file_store
 from enmedd.file_store.models import ChatFileType
 from enmedd.file_store.models import FileDescriptor
 from enmedd.llm.answering.prompts.citations_prompt import (
-    compute_max_document_tokens_for_persona,
+    compute_max_document_tokens_for_assistant,
 )
 from enmedd.llm.exceptions import GenAIDisabledException
 from enmedd.llm.factory import get_default_llms
@@ -92,7 +92,7 @@ def get_user_chat_sessions(
             ChatSessionDetails(
                 id=chat.id,
                 name=chat.description,
-                persona_id=chat.persona_id,
+                assistant_id=chat.assistant_id,
                 time_created=chat.time_created.isoformat(),
                 shared_status=chat.shared_status,
                 folder_id=chat.folder_id,
@@ -160,8 +160,8 @@ def get_chat_session(
     return ChatSessionDetailResponse(
         chat_session_id=session_id,
         description=chat_session.description,
-        persona_id=chat_session.persona_id,
-        persona_name=chat_session.persona.name,
+        assistant_id=chat_session.assistant_id,
+        assistant_name=chat_session.assistant.name,
         current_alternate_model=chat_session.current_alternate_model,
         messages=[
             translate_db_message_to_chat_message_detail(
@@ -187,11 +187,11 @@ def create_new_chat_session(
             description=chat_session_creation_request.description
             or "",  # Leave the naming till later to prevent delay
             user_id=user_id,
-            persona_id=chat_session_creation_request.persona_id,
+            assistant_id=chat_session_creation_request.assistant_id,
         )
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(status_code=400, detail="Invalid Persona provided.")
+        raise HTTPException(status_code=400, detail="Invalid Assistant provided.")
 
     return CreateChatSessionID(chat_session_id=new_chat_session.id)
 
@@ -378,22 +378,22 @@ class MaxSelectedDocumentTokens(BaseModel):
 
 @router.get("/max-selected-document-tokens")
 def get_max_document_tokens(
-    persona_id: int,
+    assistant_id: int,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> MaxSelectedDocumentTokens:
     try:
-        persona = get_persona_by_id(
-            persona_id=persona_id,
+        assistant = get_assistant_by_id(
+            assistant_id=assistant_id,
             user=user,
             db_session=db_session,
             is_for_edit=False,
         )
     except ValueError:
-        raise HTTPException(status_code=404, detail="Persona not found")
+        raise HTTPException(status_code=404, detail="Assistant not found")
 
     return MaxSelectedDocumentTokens(
-        max_tokens=compute_max_document_tokens_for_persona(persona),
+        max_tokens=compute_max_document_tokens_for_assistant(assistant),
     )
 
 
@@ -402,7 +402,7 @@ def get_max_document_tokens(
 
 class ChatSeedRequest(BaseModel):
     # standard chat session stuff
-    persona_id: int
+    assistant_id: int
     prompt_id: int | None = None
 
     # overrides / seeding
@@ -431,13 +431,13 @@ def seed_chat(
             db_session=db_session,
             description=chat_seed_request.description or "",
             user_id=None,  # this chat session is "unassigned" until a user visits the web UI
-            persona_id=chat_seed_request.persona_id,
+            assistant_id=chat_seed_request.assistant_id,
             llm_override=chat_seed_request.llm_override,
             prompt_override=chat_seed_request.prompt_override,
         )
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(status_code=400, detail="Invalid Persona provided.")
+        raise HTTPException(status_code=400, detail="Invalid Assistant provided.")
 
     if chat_seed_request.message is not None:
         root_message = get_or_create_root_message(
@@ -448,8 +448,8 @@ def seed_chat(
             parent_message=root_message,
             prompt_id=chat_seed_request.prompt_id
             or (
-                new_chat_session.persona.prompts[0].id
-                if new_chat_session.persona.prompts
+                new_chat_session.assistant.prompts[0].id
+                if new_chat_session.assistant.prompts
                 else None
             ),
             message=chat_seed_request.message,

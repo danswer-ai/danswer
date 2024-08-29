@@ -45,7 +45,7 @@ from enmedd.db.engine import get_sqlalchemy_engine
 from enmedd.db.engine import warm_up_connections
 from enmedd.db.index_attempt import cancel_indexing_attempts_past_model
 from enmedd.db.index_attempt import expire_index_attempts
-from enmedd.db.persona import delete_old_default_personas
+from enmedd.db.assistant import delete_old_default_assistants
 from enmedd.db.swap_index import check_index_swap
 from enmedd.document_index.factory import get_default_document_index
 from enmedd.llm.llm_initialization import load_llm_providers
@@ -59,8 +59,8 @@ from enmedd.server.documents.document import router as document_router
 from enmedd.server.enmedd_api.ingestion import router as enmedd_api_server
 from enmedd.server.features.document_set.api import router as document_set_router
 from enmedd.server.features.folder.api import router as folder_router
-from enmedd.server.features.persona.api import admin_router as admin_persona_router
-from enmedd.server.features.persona.api import basic_router as persona_router
+from enmedd.server.features.assistant.api import admin_router as admin_assistant_router
+from enmedd.server.features.assistant.api import basic_router as assistant_router
 from enmedd.server.features.prompt.api import basic_router as prompt_router
 from enmedd.server.features.tool.api import admin_router as admin_tool_router
 from enmedd.server.features.tool.api import router as tool_router
@@ -82,7 +82,7 @@ from enmedd.server.settings.api import basic_router as settings_router
 from enmedd.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
-from enmedd.tools.built_in_tools import auto_add_search_tool_to_personas
+from enmedd.tools.built_in_tools import auto_add_search_tool_to_assistants
 from enmedd.tools.built_in_tools import load_builtin_tools
 from enmedd.tools.built_in_tools import refresh_built_in_tools_cache
 from enmedd.utils.logger import setup_logger
@@ -211,14 +211,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         logger.info("Loading LLM providers from env variables")
         load_llm_providers(db_session)
 
-        logger.info("Loading default Prompts and Personas")
-        delete_old_default_personas(db_session)
+        logger.info("Loading default Prompts and Assistants")
+        delete_old_default_assistants(db_session)
         load_chat_yamls()
 
         logger.info("Loading built-in tools")
         load_builtin_tools(db_session)
         refresh_built_in_tools_cache(db_session)
-        auto_add_search_tool_to_personas(db_session)
+        auto_add_search_tool_to_assistants(db_session)
 
         logger.info("Verifying Document Index(s) is/are available.")
         document_index = get_default_document_index(
@@ -271,8 +271,8 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, folder_router)
     include_router_with_global_prefix_prepended(application, document_set_router)
     include_router_with_global_prefix_prepended(application, secondary_index_router)
-    include_router_with_global_prefix_prepended(application, persona_router)
-    include_router_with_global_prefix_prepended(application, admin_persona_router)
+    include_router_with_global_prefix_prepended(application, assistant_router)
+    include_router_with_global_prefix_prepended(application, admin_assistant_router)
     include_router_with_global_prefix_prepended(application, prompt_router)
     include_router_with_global_prefix_prepended(application, tool_router)
     include_router_with_global_prefix_prepended(application, admin_tool_router)

@@ -4,11 +4,11 @@ from langchain.schema.messages import SystemMessage
 from enmedd.chat.models import LlmDoc
 from enmedd.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from enmedd.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
-from enmedd.db.models import Persona
-from enmedd.db.persona import get_default_prompt__read_only
+from enmedd.db.models import Assistant
+from enmedd.db.assistant import get_default_prompt__read_only
 from enmedd.file_store.utils import InMemoryChatFile
 from enmedd.llm.answering.models import PromptConfig
-from enmedd.llm.factory import get_llms_for_persona
+from enmedd.llm.factory import get_llms_for_assistant
 from enmedd.llm.factory import get_main_llm_from_tuple
 from enmedd.llm.interfaces import LLMConfig
 from enmedd.llm.utils import build_content_with_imgs
@@ -92,15 +92,15 @@ def compute_max_document_tokens(
     )
 
 
-def compute_max_document_tokens_for_persona(
-    persona: Persona,
+def compute_max_document_tokens_for_assistant(
+    assistant: Assistant,
     actual_user_input: str | None = None,
     max_llm_token_override: int | None = None,
 ) -> int:
-    prompt = persona.prompts[0] if persona.prompts else get_default_prompt__read_only()
+    prompt = assistant.prompts[0] if assistant.prompts else get_default_prompt__read_only()
     return compute_max_document_tokens(
         prompt_config=PromptConfig.from_model(prompt),
-        llm_config=get_main_llm_from_tuple(get_llms_for_persona(persona)).config,
+        llm_config=get_main_llm_from_tuple(get_llms_for_assistant(assistant)).config,
         actual_user_input=actual_user_input,
         max_llm_token_override=max_llm_token_override,
     )

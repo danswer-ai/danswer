@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "./lib/constants";
 
 const eePaths = [
-  "/admin/groups",
+  "/admin/teams",
   "/admin/api-key",
   "/admin/performance/usage",
   "/admin/performance/query-history",

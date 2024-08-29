@@ -37,7 +37,6 @@ def fetch_no_auth_user(store: DynamicConfigStore) -> UserInfo:
         is_verified=True,
         role=UserRole.ADMIN,
         preferences=load_no_auth_user_preferences(store),
-        workspace=None,
         full_name=None,
         company_name=None,
         company_email=None,

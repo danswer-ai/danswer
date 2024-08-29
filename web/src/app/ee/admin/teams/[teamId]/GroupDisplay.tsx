@@ -4,9 +4,9 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { AddMemberForm } from "./AddMemberForm";
-import { updateUserGroup } from "./lib";
+import { updateTeamspace } from "./lib";
 import { LoadingAnimation } from "@/components/Loading";
-import { ConnectorIndexingStatus, User, UserGroup } from "@/lib/types";
+import { ConnectorIndexingStatus, User, Teamspace } from "@/lib/types";
 import { AddConnectorForm } from "./AddConnectorForm";
 import {
   Table,
@@ -28,15 +28,15 @@ import { Button } from "@/components/ui/button";
 interface GroupDisplayProps {
   users: User[];
   ccPairs: ConnectorIndexingStatus<any, any>[];
-  userGroup: UserGroup;
-  refreshUserGroup: () => void;
+  teamspace: Teamspace;
+  refreshTeamspace: () => void;
 }
 
 export const GroupDisplay = ({
   users,
   ccPairs,
-  userGroup,
-  refreshUserGroup,
+  teamspace,
+  refreshTeamspace,
 }: GroupDisplayProps) => {
   const { popup, setPopup } = usePopup();
   const [addMemberFormVisible, setAddMemberFormVisible] = useState(false);
@@ -48,7 +48,7 @@ export const GroupDisplay = ({
 
       <div className="text-sm mb-3 flex">
         <Text className="mr-1">Status:</Text>{" "}
-        {userGroup.is_up_to_date ? (
+        {teamspace.is_up_to_date ? (
           <div className="text-success font-bold">Up to date</div>
         ) : (
           <div className="text-accent font-bold">
@@ -64,7 +64,7 @@ export const GroupDisplay = ({
       </div>
 
       <div className="mt-2">
-        {userGroup.users.length > 0 ? (
+        {teamspace.users.length > 0 ? (
           <>
             <Table className="overflow-visible">
               <TableHead>
@@ -76,7 +76,7 @@ export const GroupDisplay = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {userGroup.users.map((user) => {
+                {teamspace.users.map((user) => {
                   return (
                     <TableRow key={user.id}>
                       <TableCell className="whitespace-normal break-all">
@@ -87,16 +87,16 @@ export const GroupDisplay = ({
                           <div className="ml-auto m-2">
                             <DeleteButton
                               onClick={async () => {
-                                const response = await updateUserGroup(
-                                  userGroup.id,
+                                const response = await updateTeamspace(
+                                  teamspace.id,
                                   {
-                                    user_ids: userGroup.users
+                                    user_ids: teamspace.users
                                       .filter(
-                                        (userGroupUser) =>
-                                          userGroupUser.id !== user.id
+                                        (teamspaceUser) =>
+                                          teamspaceUser.id !== user.id
                                       )
-                                      .map((userGroupUser) => userGroupUser.id),
-                                    cc_pair_ids: userGroup.cc_pairs.map(
+                                      .map((teamspaceUser) => teamspaceUser.id),
+                                    cc_pair_ids: teamspace.cc_pairs.map(
                                       (ccPair) => ccPair.id
                                     ),
                                   }
@@ -116,7 +116,7 @@ export const GroupDisplay = ({
                                     type: "error",
                                   });
                                 }
-                                refreshUserGroup();
+                                refreshTeamspace();
                               }}
                             />
                           </div>
@@ -136,7 +136,7 @@ export const GroupDisplay = ({
       <Button
         className="mt-3"
         onClick={() => setAddMemberFormVisible(true)}
-        disabled={!userGroup.is_up_to_date}
+        disabled={!teamspace.is_up_to_date}
       >
         Add Users
       </Button>
@@ -144,10 +144,10 @@ export const GroupDisplay = ({
       {addMemberFormVisible && (
         <AddMemberForm
           users={users}
-          userGroup={userGroup}
+          teamspace={teamspace}
           onClose={() => {
             setAddMemberFormVisible(false);
-            refreshUserGroup();
+            refreshTeamspace();
           }}
           setPopup={setPopup}
         />
@@ -157,7 +157,7 @@ export const GroupDisplay = ({
 
       <h2 className="text-xl font-bold mt-8">Connectors</h2>
       <div className="mt-2">
-        {userGroup.cc_pairs.length > 0 ? (
+        {teamspace.cc_pairs.length > 0 ? (
           <>
             <Table className="overflow-visible">
               <TableHead>
@@ -169,7 +169,7 @@ export const GroupDisplay = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {userGroup.cc_pairs.map((ccPair) => {
+                {teamspace.cc_pairs.map((ccPair) => {
                   return (
                     <TableRow key={ccPair.id}>
                       <TableCell className="whitespace-normal break-all">
@@ -184,16 +184,16 @@ export const GroupDisplay = ({
                           <div className="ml-auto m-2">
                             <DeleteButton
                               onClick={async () => {
-                                const response = await updateUserGroup(
-                                  userGroup.id,
+                                const response = await updateTeamspace(
+                                  teamspace.id,
                                   {
-                                    user_ids: userGroup.users.map(
-                                      (userGroupUser) => userGroupUser.id
+                                    user_ids: teamspace.users.map(
+                                      (teamspaceUser) => teamspaceUser.id
                                     ),
-                                    cc_pair_ids: userGroup.cc_pairs
+                                    cc_pair_ids: teamspace.cc_pairs
                                       .filter(
-                                        (userGroupCCPair) =>
-                                          userGroupCCPair.id != ccPair.id
+                                        (teamspaceCCPair) =>
+                                          teamspaceCCPair.id != ccPair.id
                                       )
                                       .map((ccPair) => ccPair.id),
                                   }
@@ -213,7 +213,7 @@ export const GroupDisplay = ({
                                     type: "error",
                                   });
                                 }
-                                refreshUserGroup();
+                                refreshTeamspace();
                               }}
                             />
                           </div>
@@ -233,7 +233,7 @@ export const GroupDisplay = ({
       <Button
         className="mt-3"
         onClick={() => setAddConnectorFormVisible(true)}
-        disabled={!userGroup.is_up_to_date}
+        disabled={!teamspace.is_up_to_date}
       >
         Add Connectors
       </Button>
@@ -241,10 +241,10 @@ export const GroupDisplay = ({
       {addConnectorFormVisible && (
         <AddConnectorForm
           ccPairs={ccPairs}
-          userGroup={userGroup}
+          teamspace={teamspace}
           onClose={() => {
             setAddConnectorFormVisible(false);
-            refreshUserGroup();
+            refreshTeamspace();
           }}
           setPopup={setPopup}
         />
@@ -255,9 +255,9 @@ export const GroupDisplay = ({
       <h2 className="text-xl font-bold mt-8 mb-2">Document Sets</h2>
 
       <div>
-        {userGroup.document_sets.length > 0 ? (
+        {teamspace.document_sets.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {userGroup.document_sets.map((documentSet) => {
+            {teamspace.document_sets.map((documentSet) => {
               return (
                 <Bubble isSelected key={documentSet.id}>
                   <div className="flex">
@@ -277,17 +277,17 @@ export const GroupDisplay = ({
 
       <Divider />
 
-      <h2 className="text-xl font-bold mt-8 mb-2">Personas</h2>
+      <h2 className="text-xl font-bold mt-8 mb-2">Assistants</h2>
 
       <div>
-        {userGroup.document_sets.length > 0 ? (
+        {teamspace.document_sets.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {userGroup.personas.map((persona) => {
+            {teamspace.assistants.map((assistant) => {
               return (
-                <Bubble isSelected key={persona.id}>
+                <Bubble isSelected key={assistant.id}>
                   <div className="flex">
                     <RobotIcon />
-                    <Text className="ml-1">{persona.name}</Text>
+                    <Text className="ml-1">{assistant.name}</Text>
                   </div>
                 </Bubble>
               );
@@ -295,7 +295,7 @@ export const GroupDisplay = ({
           </div>
         ) : (
           <>
-            <Text>No Personas in this group...</Text>
+            <Text>No Assistants in this group...</Text>
           </>
         )}
       </div>
@@ -305,11 +305,11 @@ export const GroupDisplay = ({
       <h2 className="text-xl font-bold mt-8 mb-2">Token Rate Limits</h2>
 
       <GenericTokenRateLimitTable
-        fetchUrl={`/api/admin/token-rate-limits/user-group/${userGroup.id}`}
+        fetchUrl={`/api/admin/token-rate-limits/teamspace/${teamspace.id}`}
         hideHeading
       />
 
-      <AddTokenRateLimitForm setPopup={setPopup} userGroupId={userGroup.id} />
+      <AddTokenRateLimitForm setPopup={setPopup} teamspaceId={teamspace.id} />
     </div>
   );
 };

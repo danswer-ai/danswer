@@ -18,7 +18,7 @@ export const searchRequestStreamed = async ({
   documentSets,
   timeRange,
   tags,
-  persona,
+  assistant,
   updateCurrentAnswer,
   updateQuotes,
   updateDocs,
@@ -44,8 +44,8 @@ export const searchRequestStreamed = async ({
       method: "POST",
       body: JSON.stringify({
         messages: [threadMessage],
-        persona_id: persona.id,
-        prompt_id: persona.id === 0 ? null : persona.prompts[0]?.id,
+        assistant_id: assistant.id,
+        prompt_id: assistant.id === 0 ? null : assistant.prompts[0]?.id,
         retrieval_options: {
           run_search: "always",
           real_time: true,

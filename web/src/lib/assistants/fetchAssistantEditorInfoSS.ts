@@ -1,4 +1,4 @@
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import { CCPairBasicInfo, DocumentSet, User } from "../types";
 import { getCurrentUserSS } from "../userSS";
 import { fetchSS } from "../utilsSS";
@@ -7,7 +7,7 @@ import { ToolSnapshot } from "../tools/interfaces";
 import { fetchToolsSS } from "../tools/fetchTools";
 
 export async function fetchAssistantEditorInfoSS(
-  personaId?: number | string
+  assistantId?: number | string
 ): Promise<
   | [
       {
@@ -15,7 +15,7 @@ export async function fetchAssistantEditorInfoSS(
         documentSets: DocumentSet[];
         llmProviders: FullLLMProvider[];
         user: User | null;
-        existingPersona: Persona | null;
+        existingAssistant: Assistant | null;
         tools: ToolSnapshot[];
       },
       null,
@@ -31,8 +31,8 @@ export async function fetchAssistantEditorInfoSS(
     getCurrentUserSS(),
     fetchToolsSS(),
   ];
-  if (personaId) {
-    tasks.push(fetchSS(`/persona/${personaId}`));
+  if (assistantId) {
+    tasks.push(fetchSS(`/assistant/${assistantId}`));
   } else {
     tasks.push((async () => null)());
   }
@@ -43,7 +43,7 @@ export async function fetchAssistantEditorInfoSS(
     llmProvidersResponse,
     user,
     toolsResponse,
-    personaResponse,
+    assistantResponse,
   ] = (await Promise.all(tasks)) as [
     Response,
     Response,
@@ -81,11 +81,11 @@ export async function fetchAssistantEditorInfoSS(
   }
   const llmProviders = (await llmProvidersResponse.json()) as FullLLMProvider[];
 
-  if (personaId && personaResponse && !personaResponse.ok) {
-    return [null, `Failed to fetch Persona - ${await personaResponse.text()}`];
+  if (assistantId && assistantResponse && !assistantResponse.ok) {
+    return [null, `Failed to fetch Assistant - ${await assistantResponse.text()}`];
   }
-  const existingPersona = personaResponse
-    ? ((await personaResponse.json()) as Persona)
+  const existingAssistant = assistantResponse
+    ? ((await assistantResponse.json()) as Assistant)
     : null;
 
   return [
@@ -94,7 +94,7 @@ export async function fetchAssistantEditorInfoSS(
       documentSets,
       llmProviders,
       user,
-      existingPersona,
+      existingAssistant,
       tools: toolsResponse,
     },
     null,

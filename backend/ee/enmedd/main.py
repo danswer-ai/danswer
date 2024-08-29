@@ -24,7 +24,7 @@ from ee.enmedd.server.seeding import seed_db
 from ee.enmedd.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
-from ee.enmedd.server.user_group.api import router as user_group_router
+from ee.enmedd.server.teamspace.api import router as teamspace_router
 from ee.enmedd.utils.encryption import test_encryption
 from enmedd.auth.users import auth_backend
 from enmedd.auth.users import fastapi_users
@@ -77,7 +77,7 @@ def get_application() -> FastAPI:
         include_router_with_global_prefix_prepended(application, saml_router)
 
     # RBAC / group access control
-    include_router_with_global_prefix_prepended(application, user_group_router)
+    include_router_with_global_prefix_prepended(application, teamspace_router)
     # Analytics endpoints
     include_router_with_global_prefix_prepended(application, analytics_router)
     include_router_with_global_prefix_prepended(application, query_history_router)

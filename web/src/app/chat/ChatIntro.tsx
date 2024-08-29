@@ -1,17 +1,17 @@
 import { getSourceMetadataForSources } from "@/lib/sources";
 import { ValidSources } from "@/lib/types";
-import { Persona } from "../admin/assistants/interfaces";
+import { Assistant } from "../admin/assistants/interfaces";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Badge } from "@/components/ui/badge";
 import { Bookmark, Info } from "lucide-react";
 
 export function ChatIntro({
   availableSources,
-  livePersona,
+  liveAssistant,
   children,
 }: {
   availableSources: ValidSources[];
-  livePersona: Persona;
+  liveAssistant: Assistant;
   children?: React.ReactNode;
 }) {
   const availableSourceMetadata = getSourceMetadataForSources(availableSources);
@@ -23,7 +23,7 @@ export function ChatIntro({
           <div className="flex">
             <div>
               <h1 className="flex flex-col text-[2.5rem] md:text-[3.5rem] font-semibold leading-[1.2] tracking-tighter">
-                <span className="h1-bg">Hi, I am {livePersona?.name},</span>
+                <span className="h1-bg">Hi, I am {liveAssistant?.name},</span>
                 <span className="h1-bg">How can I help you today?</span>
               </h1>
             </div>
@@ -31,13 +31,13 @@ export function ChatIntro({
 
           {children}
 
-          {livePersona && livePersona.num_chunks !== 0 && (
+          {liveAssistant && liveAssistant.num_chunks !== 0 && (
             <div className="pt-4">
-              {livePersona.document_sets.length > 0 && (
+              {liveAssistant.document_sets.length > 0 && (
                 <div className="mt-2">
                   <p className="mt-4 mb-1 font-bold ">Knowledge Sets: </p>
                   <div className="flex flex-wrap gap-2">
-                    {livePersona.document_sets.map((documentSet) => (
+                    {liveAssistant.document_sets.map((documentSet) => (
                       <div key={documentSet.id} className="w-fit">
                         <HoverPopup
                           mainContent={

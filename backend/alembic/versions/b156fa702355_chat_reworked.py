@@ -86,24 +86,24 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
-        "persona__prompt",
-        sa.Column("persona_id", sa.Integer(), nullable=False),
+        "assistant__prompt",
+        sa.Column("assistant_id", sa.Integer(), nullable=False),
         sa.Column("prompt_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["persona_id"],
-            ["persona.id"],
+            ["assistant_id"],
+            ["assistant.id"],
         ),
         sa.ForeignKeyConstraint(
             ["prompt_id"],
             ["prompt.id"],
         ),
-        sa.PrimaryKeyConstraint("persona_id", "prompt_id"),
+        sa.PrimaryKeyConstraint("assistant_id", "prompt_id"),
     )
 
-    # Changes to persona first so chat_sessions can have the right persona
-    # The empty persona will be overwritten on server startup
+    # Changes to assistant first so chat_sessions can have the right assistant
+    # The empty assistant will be overwritten on server startup
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column(
             "user_id",
             fastapi_users_db_sqlalchemy.generics.GUID(),
@@ -111,59 +111,59 @@ def upgrade() -> None:
         ),
     )
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column(
             "search_type",
             searchtype_enum,
             nullable=True,
         ),
     )
-    op.execute("UPDATE persona SET search_type = 'HYBRID'")
-    op.alter_column("persona", "search_type", nullable=False)
+    op.execute("UPDATE assistant SET search_type = 'HYBRID'")
+    op.alter_column("assistant", "search_type", nullable=False)
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("llm_relevance_filter", sa.Boolean(), nullable=True),
     )
-    op.execute("UPDATE persona SET llm_relevance_filter = TRUE")
-    op.alter_column("persona", "llm_relevance_filter", nullable=False)
+    op.execute("UPDATE assistant SET llm_relevance_filter = TRUE")
+    op.alter_column("assistant", "llm_relevance_filter", nullable=False)
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("llm_filter_extraction", sa.Boolean(), nullable=True),
     )
-    op.execute("UPDATE persona SET llm_filter_extraction = TRUE")
-    op.alter_column("persona", "llm_filter_extraction", nullable=False)
+    op.execute("UPDATE assistant SET llm_filter_extraction = TRUE")
+    op.alter_column("assistant", "llm_filter_extraction", nullable=False)
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column(
             "recency_bias",
             recencybiassetting_enum,
             nullable=True,
         ),
     )
-    op.execute("UPDATE persona SET recency_bias = 'BASE_DECAY'")
-    op.alter_column("persona", "recency_bias", nullable=False)
-    op.alter_column("persona", "description", existing_type=sa.VARCHAR(), nullable=True)
-    op.execute("UPDATE persona SET description = ''")
-    op.alter_column("persona", "description", nullable=False)
-    op.create_foreign_key("persona__user_fk", "persona", "user", ["user_id"], ["id"])
-    op.drop_column("persona", "datetime_aware")
-    op.drop_column("persona", "tools")
-    op.drop_column("persona", "hint_text")
-    op.drop_column("persona", "apply_llm_relevance_filter")
-    op.drop_column("persona", "retrieval_enabled")
-    op.drop_column("persona", "system_text")
+    op.execute("UPDATE assistant SET recency_bias = 'BASE_DECAY'")
+    op.alter_column("assistant", "recency_bias", nullable=False)
+    op.alter_column("assistant", "description", existing_type=sa.VARCHAR(), nullable=True)
+    op.execute("UPDATE assistant SET description = ''")
+    op.alter_column("assistant", "description", nullable=False)
+    op.create_foreign_key("assistant__user_fk", "assistant", "user", ["user_id"], ["id"])
+    op.drop_column("assistant", "datetime_aware")
+    op.drop_column("assistant", "tools")
+    op.drop_column("assistant", "hint_text")
+    op.drop_column("assistant", "apply_llm_relevance_filter")
+    op.drop_column("assistant", "retrieval_enabled")
+    op.drop_column("assistant", "system_text")
 
-    # Need to create a persona row so fk can work
-    result = bind.execute(sa.text("SELECT 1 FROM persona WHERE id = 0"))
+    # Need to create a assistant row so fk can work
+    result = bind.execute(sa.text("SELECT 1 FROM assistant WHERE id = 0"))
     exists = result.fetchone()
     if not exists:
         op.execute(
             sa.text(
                 """
-                INSERT INTO persona (
+                INSERT INTO assistant (
                     id, user_id, name, description, search_type, num_chunks,
                     llm_relevance_filter, llm_filter_extraction, recency_bias,
-                    llm_model_version_override, default_persona, deleted
+                    llm_model_version_override, default_assistant, deleted
                 ) VALUES (
                     0, NULL, '', '', 'HYBRID', NULL,
                     TRUE, TRUE, 'BASE_DECAY', NULL, TRUE, FALSE
@@ -173,8 +173,8 @@ def upgrade() -> None:
         )
     delete_statement = sa.text(
         """
-        DELETE FROM persona
-        WHERE name = 'Danswer' AND default_persona = TRUE AND id != 0
+        DELETE FROM assistant
+        WHERE name = 'Danswer' AND default_assistant = TRUE AND id != 0
         """
     )
 
@@ -220,12 +220,12 @@ def upgrade() -> None:
         sa.Column("citations", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     )
     op.add_column("chat_message", sa.Column("error", sa.Text(), nullable=True))
-    op.drop_constraint("fk_chat_message_persona_id", "chat_message", type_="foreignkey")
+    op.drop_constraint("fk_chat_message_assistant_id", "chat_message", type_="foreignkey")
     op.create_foreign_key(
         "chat_message__prompt_fk", "chat_message", "prompt", ["prompt_id"], ["id"]
     )
     op.drop_column("chat_message", "parent_edit_number")
-    op.drop_column("chat_message", "persona_id")
+    op.drop_column("chat_message", "assistant_id")
     op.drop_column("chat_message", "reference_docs")
     op.drop_column("chat_message", "edit_number")
     op.drop_column("chat_message", "latest")
@@ -235,12 +235,12 @@ def upgrade() -> None:
     op.alter_column("chat_session", "one_shot", nullable=False)
     op.alter_column(
         "chat_session",
-        "persona_id",
+        "assistant_id",
         existing_type=sa.INTEGER(),
         nullable=True,
     )
-    op.execute("UPDATE chat_session SET persona_id = 0")
-    op.alter_column("chat_session", "persona_id", nullable=False)
+    op.execute("UPDATE chat_session SET assistant_id = 0")
+    op.alter_column("chat_session", "assistant_id", nullable=False)
     op.add_column(
         "document_retrieval_feedback",
         sa.Column("chat_message_id", sa.Integer(), nullable=False),
@@ -296,7 +296,7 @@ def downgrade() -> None:
         "document_retrieval_feedback",
         type_="foreignkey",
     )
-    op.drop_constraint("persona__user_fk", "persona", type_="foreignkey")
+    op.drop_constraint("assistant__user_fk", "assistant", type_="foreignkey")
     op.drop_constraint("chat_message__prompt_fk", "chat_message", type_="foreignkey")
     op.drop_constraint(
         "chat_message__search_doc_chat_message_id_fkey",
@@ -304,11 +304,11 @@ def downgrade() -> None:
         type_="foreignkey",
     )
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("system_text", sa.TEXT(), autoincrement=False, nullable=True),
     )
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column(
             "retrieval_enabled",
             sa.BOOLEAN(),
@@ -316,10 +316,10 @@ def downgrade() -> None:
             nullable=True,
         ),
     )
-    op.execute("UPDATE persona SET retrieval_enabled = TRUE")
-    op.alter_column("persona", "retrieval_enabled", nullable=False)
+    op.execute("UPDATE assistant SET retrieval_enabled = TRUE")
+    op.alter_column("assistant", "retrieval_enabled", nullable=False)
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column(
             "apply_llm_relevance_filter",
             sa.BOOLEAN(),
@@ -328,11 +328,11 @@ def downgrade() -> None:
         ),
     )
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("hint_text", sa.TEXT(), autoincrement=False, nullable=True),
     )
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column(
             "tools",
             postgresql.JSONB(astext_type=sa.Text()),
@@ -341,24 +341,24 @@ def downgrade() -> None:
         ),
     )
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("datetime_aware", sa.BOOLEAN(), autoincrement=False, nullable=True),
     )
-    op.execute("UPDATE persona SET datetime_aware = TRUE")
-    op.alter_column("persona", "datetime_aware", nullable=False)
-    op.alter_column("persona", "description", existing_type=sa.VARCHAR(), nullable=True)
-    op.drop_column("persona", "recency_bias")
-    op.drop_column("persona", "llm_filter_extraction")
-    op.drop_column("persona", "llm_relevance_filter")
-    op.drop_column("persona", "search_type")
-    op.drop_column("persona", "user_id")
+    op.execute("UPDATE assistant SET datetime_aware = TRUE")
+    op.alter_column("assistant", "datetime_aware", nullable=False)
+    op.alter_column("assistant", "description", existing_type=sa.VARCHAR(), nullable=True)
+    op.drop_column("assistant", "recency_bias")
+    op.drop_column("assistant", "llm_filter_extraction")
+    op.drop_column("assistant", "llm_relevance_filter")
+    op.drop_column("assistant", "search_type")
+    op.drop_column("assistant", "user_id")
     op.add_column(
         "document_retrieval_feedback",
         sa.Column("qa_event_id", sa.INTEGER(), autoincrement=False, nullable=False),
     )
     op.drop_column("document_retrieval_feedback", "chat_message_id")
     op.alter_column(
-        "chat_session", "persona_id", existing_type=sa.INTEGER(), nullable=True
+        "chat_session", "assistant_id", existing_type=sa.INTEGER(), nullable=True
     )
     op.drop_column("chat_session", "one_shot")
     op.add_column(
@@ -396,7 +396,7 @@ def downgrade() -> None:
     )
     op.add_column(
         "chat_message",
-        sa.Column("persona_id", sa.INTEGER(), autoincrement=False, nullable=True),
+        sa.Column("assistant_id", sa.INTEGER(), autoincrement=False, nullable=True),
     )
     op.add_column(
         "chat_message",
@@ -408,10 +408,10 @@ def downgrade() -> None:
         ),
     )
     op.create_foreign_key(
-        "fk_chat_message_persona_id",
+        "fk_chat_message_assistant_id",
         "chat_message",
-        "persona",
-        ["persona_id"],
+        "assistant",
+        ["assistant_id"],
         ["id"],
     )
     op.drop_column("chat_message", "error")
@@ -488,7 +488,7 @@ def downgrade() -> None:
         sa.PrimaryKeyConstraint("id", name="query_event_pkey"),
     )
     op.drop_table("chat_message__search_doc")
-    op.drop_table("persona__prompt")
+    op.drop_table("assistant__prompt")
     op.drop_table("prompt")
     op.drop_table("search_doc")
     op.create_unique_constraint(

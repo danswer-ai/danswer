@@ -38,12 +38,12 @@ def upgrade() -> None:
     )
 
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("llm_model_provider_override", sa.String(), nullable=True),
     )
 
 
 def downgrade() -> None:
-    op.drop_column("persona", "llm_model_provider_override")
+    op.drop_column("assistant", "llm_model_provider_override")
 
     op.drop_table("llm_provider")

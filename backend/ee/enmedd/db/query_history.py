@@ -46,7 +46,7 @@ def fetch_chat_sessions_eagerly_by_time(
         .outerjoin(ChatMessage, ChatSession.id == ChatMessage.chat_session_id)
         .options(
             joinedload(ChatSession.user),
-            joinedload(ChatSession.persona),
+            joinedload(ChatSession.assistant),
             contains_eager(ChatSession.messages).joinedload(
                 ChatMessage.chat_message_feedbacks
             ),

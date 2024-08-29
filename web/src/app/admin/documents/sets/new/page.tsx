@@ -5,14 +5,14 @@ import { BookmarkIcon } from "@/components/icons/icons";
 import { DocumentSetCreationForm } from "../DocumentSetCreationForm";
 import {
   useConnectorCredentialIndexingStatus,
-  useUserGroups,
+  useTeamspaces,
 } from "@/lib/hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { useRouter } from "next/navigation";
-import { UserGroup } from "@/lib/types";
+import { Teamspace } from "@/lib/types";
 import { refreshDocumentSets } from "../hooks";
 import { Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,9 +28,9 @@ function Main() {
   } = useConnectorCredentialIndexingStatus();
 
   // EE only
-  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
+  const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
 
-  if (isCCPairsLoading || userGroupsIsLoading) {
+  if (isCCPairsLoading || teamspacesIsLoading) {
     return <ThreeDotsLoader />;
   }
 
@@ -51,7 +51,7 @@ function Main() {
         <CardContent>
           <DocumentSetCreationForm
             ccPairs={ccPairs}
-            userGroups={userGroups}
+            teamspaces={teamspaces}
             onClose={() => {
               refreshDocumentSets();
               router.push("/admin/documents/sets");

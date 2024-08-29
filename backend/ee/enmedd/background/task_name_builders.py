@@ -1,5 +1,5 @@
-def name_user_group_sync_task(user_group_id: int) -> str:
-    return f"user_group_sync_task__{user_group_id}"
+def name_teamspace_sync_task(teamspace_id: int) -> str:
+    return f"teamspace_sync_task__{teamspace_id}"
 
 
 def name_chat_ttl_task(retention_limit_days: int) -> str:

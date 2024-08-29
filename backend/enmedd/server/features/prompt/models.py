@@ -10,7 +10,7 @@ class CreatePromptRequest(BaseModel):
     task_prompt: str
     include_citations: bool = False
     datetime_aware: bool = False
-    persona_ids: list[int] | None = None
+    assistant_ids: list[int] | None = None
 
 
 class PromptSnapshot(BaseModel):
@@ -22,7 +22,7 @@ class PromptSnapshot(BaseModel):
     include_citations: bool
     datetime_aware: bool
     default_prompt: bool
-    # Not including persona info, not needed
+    # Not including assistant info, not needed
 
     @classmethod
     def from_model(cls, prompt: Prompt) -> "PromptSnapshot":

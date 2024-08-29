@@ -232,8 +232,8 @@ class GoogleServiceAccountKey(BaseModel):
 
 
 class GoogleServiceAccountCredentialRequest(BaseModel):
-    google_drive_delegated_user: str | None  # email of user to impersonate
-    gmail_delegated_user: str | None  # email of user to impersonate
+    google_drive_delegated_user: str | None  # email of user to imassistantte
+    gmail_delegated_user: str | None  # email of user to imassistantte
 
 
 class FileUploadResponse(BaseModel):

@@ -12,7 +12,7 @@ export default function IsPublicField({
       subtext={
         "If set, then documents indexed by this connector will be " +
         "visible to all users. If turned off, then only users who explicitly " +
-        "have been given access to the documents (e.g. through a User Group) " +
+        "have been given access to the documents (e.g. through a Teamspace) " +
         "will have access"
       }
     />

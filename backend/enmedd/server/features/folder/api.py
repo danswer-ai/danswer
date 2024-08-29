@@ -47,7 +47,7 @@ def get_folders(
                     ChatSessionDetails(
                         id=chat_session.id,
                         name=chat_session.description,
-                        persona_id=chat_session.persona_id,
+                        assistant_id=chat_session.assistant_id,
                         time_created=chat_session.time_created.isoformat(),
                         shared_status=chat_session.shared_status,
                         folder_id=folder.id,

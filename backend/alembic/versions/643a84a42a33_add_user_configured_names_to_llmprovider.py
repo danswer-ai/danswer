@@ -25,18 +25,18 @@ def upgrade() -> None:
     op.execute("UPDATE llm_provider SET name = 'Azure OpenAI' WHERE name = 'azure'")
     op.execute("UPDATE llm_provider SET name = 'AWS Bedrock' WHERE name = 'bedrock'")
 
-    # update personas to use the new provider names
+    # update assistants to use the new provider names
     op.execute(
-        "UPDATE persona SET llm_model_provider_override = 'OpenAI' WHERE llm_model_provider_override = 'openai'"
+        "UPDATE assistant SET llm_model_provider_override = 'OpenAI' WHERE llm_model_provider_override = 'openai'"
     )
     op.execute(
-        "UPDATE persona SET llm_model_provider_override = 'Anthropic' WHERE llm_model_provider_override = 'anthropic'"
+        "UPDATE assistant SET llm_model_provider_override = 'Anthropic' WHERE llm_model_provider_override = 'anthropic'"
     )
     op.execute(
-        "UPDATE persona SET llm_model_provider_override = 'Azure OpenAI' WHERE llm_model_provider_override = 'azure'"
+        "UPDATE assistant SET llm_model_provider_override = 'Azure OpenAI' WHERE llm_model_provider_override = 'azure'"
     )
     op.execute(
-        "UPDATE persona SET llm_model_provider_override = 'AWS Bedrock' WHERE llm_model_provider_override = 'bedrock'"
+        "UPDATE assistant SET llm_model_provider_override = 'AWS Bedrock' WHERE llm_model_provider_override = 'bedrock'"
     )
 
 
