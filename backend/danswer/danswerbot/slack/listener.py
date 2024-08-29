@@ -134,7 +134,7 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
 
             is_dm = event.get("channel_type") == "im"
             is_tagged = bot_tag_id and bot_tag_id in msg
-            is_danswer_bot_msg = bot_tag_id and bot_tag_id in event.get("user")
+            is_danswer_bot_msg = bot_tag_id and bot_tag_id in event.get("user", "")
 
             # DanswerBot should never respond to itself
             if is_danswer_bot_msg:
