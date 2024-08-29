@@ -44,7 +44,7 @@ export default function EmbeddingForm() {
     });
 
   const [rerankingDetails, setRerankingDetails] = useState<RerankingDetails>({
-    api_key: "",
+    rerank_api_key: "",
     num_rerank: 0,
     rerank_provider_type: null,
     rerank_model_name: "",
@@ -118,7 +118,7 @@ export default function EmbeddingForm() {
           searchSettings.disable_rerank_for_streaming,
       });
       setRerankingDetails({
-        api_key: searchSettings.api_key,
+        rerank_api_key: searchSettings.rerank_api_key,
         num_rerank: searchSettings.num_rerank,
         rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
@@ -128,17 +128,17 @@ export default function EmbeddingForm() {
 
   const originalRerankingDetails: RerankingDetails = searchSettings
     ? {
-        api_key: searchSettings.api_key,
-        num_rerank: searchSettings.num_rerank,
-        rerank_provider_type: searchSettings.rerank_provider_type,
-        rerank_model_name: searchSettings.rerank_model_name,
-      }
+      rerank_api_key: searchSettings.rerank_api_key,
+      num_rerank: searchSettings.num_rerank,
+      rerank_provider_type: searchSettings.rerank_provider_type,
+      rerank_model_name: searchSettings.rerank_model_name,
+    }
     : {
-        api_key: "",
-        num_rerank: 0,
-        rerank_provider_type: null,
-        rerank_model_name: "",
-      };
+      rerank_api_key: "",
+      num_rerank: 0,
+      rerank_provider_type: null,
+      rerank_model_name: "",
+    };
 
   useEffect(() => {
     if (currentEmbeddingModel) {
@@ -239,7 +239,7 @@ export default function EmbeddingForm() {
   const needsReIndex =
     currentEmbeddingModel != selectedProvider ||
     searchSettings?.multipass_indexing !=
-      advancedEmbeddingDetails.multipass_indexing;
+    advancedEmbeddingDetails.multipass_indexing;
 
   const ReIndexingButton = ({ needsReIndex }: { needsReIndex: boolean }) => {
     return needsReIndex ? (
@@ -269,8 +269,8 @@ export default function EmbeddingForm() {
               )}
               {searchSettings?.multipass_indexing !=
                 advancedEmbeddingDetails.multipass_indexing && (
-                <li>Multipass indexing modification</li>
-              )}
+                  <li>Multipass indexing modification</li>
+                )}
             </ul>
           </div>
         </div>

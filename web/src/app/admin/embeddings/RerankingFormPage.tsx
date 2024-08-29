@@ -45,11 +45,10 @@ const RerankingDetailsForm = forwardRef<
           {originalRerankingDetails.rerank_model_name && (
             <button
               onClick={() => setModelTab(null)}
-              className={`mx-2 p-2 font-bold  ${
-                !modelTab
-                  ? "rounded bg-background-900 text-text-100 underline"
-                  : " hover:underline bg-background-100"
-              }`}
+              className={`mx-2 p-2 font-bold  ${!modelTab
+                ? "rounded bg-background-900 text-text-100 underline"
+                : " hover:underline bg-background-100"
+                }`}
             >
               Current
             </button>
@@ -59,11 +58,10 @@ const RerankingDetailsForm = forwardRef<
           >
             <button
               onClick={() => setModelTab("cloud")}
-              className={`mr-2 p-2 font-bold  ${
-                modelTab == "cloud"
-                  ? "rounded bg-background-900 text-text-100 underline"
-                  : " hover:underline bg-background-100"
-              }`}
+              className={`mr-2 p-2 font-bold  ${modelTab == "cloud"
+                ? "rounded bg-background-900 text-text-100 underline"
+                : " hover:underline bg-background-100"
+                }`}
             >
               Cloud-based
             </button>
@@ -72,11 +70,10 @@ const RerankingDetailsForm = forwardRef<
           <div className="px-2">
             <button
               onClick={() => setModelTab("open")}
-              className={` mx-2 p-2 font-bold  ${
-                modelTab == "open"
-                  ? "rounded bg-background-900 text-text-100 underline"
-                  : "hover:underline bg-background-100"
-              }`}
+              className={` mx-2 p-2 font-bold  ${modelTab == "open"
+                ? "rounded bg-background-900 text-text-100 underline"
+                : "hover:underline bg-background-100"
+                }`}
             >
               Self-hosted
             </button>
@@ -92,7 +89,7 @@ const RerankingDetailsForm = forwardRef<
               .nullable()
               .oneOf(Object.values(RerankerProvider))
               .optional(),
-            api_key: Yup.string().nullable(),
+            rerank_api_key: Yup.string().nullable(),
             num_rerank: Yup.number().min(1, "Must be at least 1"),
           })}
           onSubmit={async (_, { setSubmitting }) => {
@@ -105,13 +102,13 @@ const RerankingDetailsForm = forwardRef<
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(modelTab
                   ? rerankingModels.filter(
-                      (model) => model.cloud == (modelTab == "cloud")
-                    )
+                    (model) => model.cloud == (modelTab == "cloud")
+                  )
                   : rerankingModels.filter(
-                      (modelCard) =>
-                        modelCard.modelName ==
-                        originalRerankingDetails.rerank_model_name
-                    )
+                    (modelCard) =>
+                      modelCard.modelName ==
+                      originalRerankingDetails.rerank_model_name
+                  )
                 ).map((card) => {
                   const isSelected =
                     values.rerank_provider_type === card.rerank_provider_type &&
@@ -119,11 +116,10 @@ const RerankingDetailsForm = forwardRef<
                   return (
                     <div
                       key={`${card.rerank_provider_type}-${card.modelName}`}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                        isSelected
-                          ? "border-blue-500 bg-blue-50 shadow-md"
-                          : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
-                      }`}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${isSelected
+                        ? "border-blue-500 bg-blue-50 shadow-md"
+                        : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
+                        }`}
                       onClick={() => {
                         if (card.rerank_provider_type) {
                           setIsApiKeyModalOpen(true);
@@ -143,7 +139,7 @@ const RerankingDetailsForm = forwardRef<
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center">
                           {card.rerank_provider_type ===
-                          RerankerProvider.COHERE ? (
+                            RerankerProvider.COHERE ? (
                             <CohereIcon size={24} className="mr-2" />
                           ) : (
                             <MixedBreadIcon size={24} className="mr-2" />
@@ -192,15 +188,15 @@ const RerankingDetailsForm = forwardRef<
                 >
                   <div className="w-full px-4">
                     <TextFormField
-                      placeholder={values.api_key || undefined}
+                      placeholder={values.rerank_api_key || undefined}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const value = e.target.value;
-                        setRerankingDetails({ ...values, api_key: value });
-                        setFieldValue("api_key", value);
+                        setRerankingDetails({ ...values, rerank_api_key: value });
+                        setFieldValue("rerank_api_key", value);
                       }}
                       type="password"
                       label="Cohere API Key"
-                      name="api_key"
+                      name="rerank_api_key"
                     />
                     <div className="mt-4 flex justify-between">
                       <Button
@@ -210,7 +206,7 @@ const RerankingDetailsForm = forwardRef<
                               setFieldValue(
                                 key,
                                 originalRerankingDetails[
-                                  key as keyof RerankingDetails
+                                key as keyof RerankingDetails
                                 ]
                               );
                             }
