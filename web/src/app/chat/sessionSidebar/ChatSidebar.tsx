@@ -79,7 +79,7 @@ export const ChatSidebar = ({
             `}
         id="chat-sidebar"
       >
-        <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-6">
+        <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
           {/* <Image src={EnmeddLogo} alt="enmedd-logo" height={40} /> */}
           <div className="flex">
             {enterpriseSettings && enterpriseSettings.application_name ? (
