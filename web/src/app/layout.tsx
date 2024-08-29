@@ -55,10 +55,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   if (MEECHUM_AUTH) {
-    const response = await fetchSS("/settings/refresh-token");
-    console.log(response);
+    await fetchSS("/settings/refresh-token");
   }
-  console.log(MEECHUM_AUTH);
 
   const combinedSettings = await fetchSettingsSS();
   if (!combinedSettings) {
