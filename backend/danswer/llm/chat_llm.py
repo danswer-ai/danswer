@@ -32,8 +32,6 @@ from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import LLMConfig
 from danswer.llm.interfaces import ToolChoiceOptions
-from danswer.llm.utils import get_max_input_tokens
-from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.utils.logger import setup_logger
 
 
@@ -239,29 +237,29 @@ class DefaultMultiLLM(LLM):
     def log_model_configs(self) -> None:
         logger.debug(f"Config: {self.config}")
 
-    def _calculate_max_output_tokens(self, prompt: LanguageModelInput) -> int:
-        # This method can be used for calculating the maximum tokens for the stream,
-        # but it isn't used in practice due to the computational cost of counting tokens
-        # and because LLM providers automatically cut off at the maximum output.
-        # The implementation is kept for potential future use or debugging purposes.
+    # def _calculate_max_output_tokens(self, prompt: LanguageModelInput) -> int:
+    #     # NOTE: This method can be used for calculating the maximum tokens for the stream,
+    #     # but it isn't used in practice due to the computational cost of counting tokens
+    #     # and because LLM providers automatically cut off at the maximum output.
+    #     # The implementation is kept for potential future use or debugging purposes.
 
-        # Get max input tokens for the model
-        max_context_tokens = get_max_input_tokens(
-            model_name=self.config.model_name, model_provider=self.config.model_provider
-        )
+    #     # Get max input tokens for the model
+    #     max_context_tokens = get_max_input_tokens(
+    #         model_name=self.config.model_name, model_provider=self.config.model_provider
+    #     )
 
-        llm_tokenizer = get_tokenizer(
-            model_name=self.config.model_name,
-            provider_type=self.config.model_provider,
-        )
-        # Calculate tokens in the input prompt
-        input_tokens = sum(len(llm_tokenizer.encode(str(m))) for m in prompt)
+    #     llm_tokenizer = get_tokenizer(
+    #         model_name=self.config.model_name,
+    #         provider_type=self.config.model_provider,
+    #     )
+    #     # Calculate tokens in the input prompt
+    #     input_tokens = sum(len(llm_tokenizer.encode(str(m))) for m in prompt)
 
-        # Calculate available tokens for output
-        available_output_tokens = max_context_tokens - input_tokens
+    #     # Calculate available tokens for output
+    #     available_output_tokens = max_context_tokens - input_tokens
 
-        # Return the lesser of available tokens or configured max
-        return min(self._max_output_tokens, available_output_tokens)
+    #     # Return the lesser of available tokens or configured max
+    #     return min(self._max_output_tokens, available_output_tokens)
 
     def _completion(
         self,
