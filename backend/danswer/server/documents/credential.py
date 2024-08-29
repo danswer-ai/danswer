@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
-from danswer.auth.users import validate_curator_request
 from danswer.db.credentials import alter_credential
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import CREDENTIAL_PERMISSIONS_TO_IGNORE
@@ -28,6 +27,7 @@ from danswer.server.documents.models import CredentialSwapRequest
 from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
+from ee.danswer.db.user_group import validate_curator_request
 
 logger = setup_logger()
 
@@ -137,6 +137,8 @@ def create_credential_from_model(
         and not _ignore_credential_permissions(credential_info.source)
     ):
         validate_curator_request(
+            db_session=db_session,
+            user=user,
             groups=credential_info.groups,
             is_public=credential_info.curator_public,
         )

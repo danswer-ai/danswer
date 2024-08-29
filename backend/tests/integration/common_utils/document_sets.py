@@ -25,6 +25,6 @@ class DocumentSetClient:
         response.raise_for_status()
 
         document_sets = [
-            DocumentSet.parse_obj(doc_set_data) for doc_set_data in response.json()
+            DocumentSet.model_validate(doc_set_data) for doc_set_data in response.json()
         ]
         return document_sets

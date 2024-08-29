@@ -557,6 +557,7 @@ def create_connector_from_model(
             connector_data=connector_base,
         )
     except ValueError as e:
+        logger.error(f"Error creating connector: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 

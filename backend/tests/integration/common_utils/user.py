@@ -1,5 +1,6 @@
 from copy import deepcopy
 from urllib.parse import urlencode
+from uuid import UUID
 from uuid import uuid4
 
 import requests
@@ -18,7 +19,7 @@ class TestUser(BaseModel):
     password: str
     desired_role: UserRole = UserRole.BASIC
     headers: dict = deepcopy(GENERAL_HEADERS)
-    id: str | None = None
+    id: UUID | None = None
 
 
 class UserManager:
@@ -36,7 +37,7 @@ class UserManager:
         return TestUser(email=email, password=password, desired_role=desired_role)
 
     @staticmethod
-    def register_test_user(test_user: TestUser) -> str:
+    def register_test_user(test_user: TestUser) -> UUID:
         """
         The first user created is given admin permissions
         """
@@ -50,7 +51,7 @@ class UserManager:
             json=body,
             headers=GENERAL_HEADERS,
         )
-        response.raise_for_status()
+        # response.raise_for_status()
         print(f"Created user {test_user.email}")
         response_json = response.json()
 

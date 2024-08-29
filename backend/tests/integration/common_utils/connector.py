@@ -4,7 +4,7 @@ from typing import Any
 
 import requests
 from pydantic import BaseModel
-from pydantic import Field
+from requests import Response
 
 from danswer.connectors.models import InputType
 from danswer.server.documents.models import ConnectorUpdateRequest
@@ -27,12 +27,12 @@ class ConnectorManager:
         name: str | None = None,
         source: DocumentSource = DocumentSource.FILE,
         input_type: InputType = InputType.LOAD_STATE,
-        connector_specific_config: dict[str, Any] = Field(default_factory=dict),
+        connector_specific_config: dict[str, Any] | None = None,
         refresh_freq: int | None = None,
         prune_freq: int | None = None,
         indexing_start: datetime | None = None,
         is_public: bool = True,
-        groups: list[int] = Field(default_factory=list),
+        groups: list[int] | None = None,
     ) -> TestConnector:
         if not name:
             name = "test-connector-" + str(uuid.uuid4())
@@ -41,41 +41,45 @@ class ConnectorManager:
             name=name,
             source=source,
             input_type=input_type,
-            connector_specific_config=connector_specific_config,
+            connector_specific_config=connector_specific_config or {},
             refresh_freq=refresh_freq,
             prune_freq=prune_freq,
             indexing_start=indexing_start,
             is_public=is_public,
-            groups=groups,
+            groups=groups or [],
         )
 
         return TestConnector(connector_update_request=connector)
 
     @staticmethod
-    def upsert_test_connector(
+    def send_connector(
         test_connector: TestConnector,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
+    ) -> Response:
         request = test_connector.connector_update_request.model_dump()
-        if test_connector.id:
-            response = requests.post(
-                url=f"{_CONNECTOR_URL}/{test_connector.id}",
-                json=request,
-                headers=user_performing_action.headers
-                if user_performing_action
-                else GENERAL_HEADERS,
-            )
-        else:
-            response = requests.post(
-                url=_CONNECTOR_URL,
-                json=request,
-                headers=user_performing_action.headers
-                if user_performing_action
-                else GENERAL_HEADERS,
-            )
-        if response.ok:
-            test_connector.id = response.json().get("id")
-        return response.ok
+        return requests.post(
+            url=_CONNECTOR_URL,
+            json=request,
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+
+    @staticmethod
+    def edit_connector(
+        test_connector: TestConnector,
+        user_performing_action: TestUser | None = None,
+    ) -> Response:
+        request = test_connector.connector_update_request.model_dump()
+        if not test_connector.id:
+            raise ValueError("Connector ID is required for this operation")
+        return requests.post(
+            url=f"{_CONNECTOR_URL}/{test_connector.id}",
+            json=request,
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
 
     @staticmethod
     def delete(

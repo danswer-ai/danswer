@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
-from danswer.auth.users import validate_curator_request
 from danswer.db.document_set import check_document_sets_are_public
 from danswer.db.document_set import fetch_all_document_sets_for_user
 from danswer.db.document_set import insert_document_set
@@ -20,6 +19,7 @@ from danswer.server.features.document_set.models import CheckDocSetPublicRespons
 from danswer.server.features.document_set.models import DocumentSet
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from danswer.server.features.document_set.models import DocumentSetUpdateRequest
+from ee.danswer.db.user_group import validate_curator_request
 
 
 router = APIRouter(prefix="/manage")
@@ -33,6 +33,8 @@ def create_document_set(
 ) -> int:
     if user and user.role != UserRole.ADMIN:
         validate_curator_request(
+            db_session=db_session,
+            user=user,
             groups=document_set_creation_request.groups,
             is_public=document_set_creation_request.is_public,
         )
@@ -55,6 +57,8 @@ def patch_document_set(
 ) -> None:
     if user and user.role != UserRole.ADMIN:
         validate_curator_request(
+            db_session=db_session,
+            user=user,
             groups=document_set_update_request.groups,
             is_public=document_set_update_request.is_public,
         )

@@ -75,13 +75,16 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
         user_ids=[],
         cc_pair_ids=[c1_details.cc_pair_id],
     )
-    user_group_1.id = UserGroupManager.upsert_test_user_group(user_group_1)
+    response = UserGroupManager.send_user_group(user_group_1)
+    user_group_1.id = int(response.json()["id"])
+
     user_group_2: TestUserGroup = UserGroupManager.build_test_user_group(
         name="Test User Group 2",
         user_ids=[],
         cc_pair_ids=[c1_details.cc_pair_id, c2_details.cc_pair_id],
     )
-    user_group_2.id = UserGroupManager.upsert_test_user_group(user_group_2)
+    response = UserGroupManager.send_user_group(user_group_2)
+    user_group_2.id = int(response.json()["id"])
 
     # delete connector 1
     ConnectorClient.update_connector_status(

@@ -3,7 +3,7 @@ from typing import Any
 
 import requests
 from pydantic import BaseModel
-from pydantic import Field
+from requests import Response
 
 from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import DocumentSource
@@ -22,53 +22,52 @@ class TestCredential(BaseModel):
 class CredentialManager:
     @staticmethod
     def build_test_credential(
-        credential_json: dict[str, Any] = Field(default_factory=dict),
+        credential_json: dict[str, Any] | None = None,
         admin_public: bool = True,
-        name: str = Field(default_factory=str),
+        name: str | None = None,
         source: DocumentSource = DocumentSource.FILE,
         curator_public: bool = True,
-        groups: list[int] = Field(default_factory=list),
+        groups: list[int] | None = None,
     ) -> TestCredential:
+        if name is None:
+            name = "test-credential-" + str(uuid.uuid4())
         base_credential = CredentialBase(
-            credential_json=credential_json,
+            credential_json=credential_json or {},
             admin_public=admin_public,
             source=source,
-            name=name or "test-credential-" + str(uuid.uuid4()),
+            name=name,
             curator_public=curator_public,
-            groups=groups,
+            groups=groups or [],
         )
         return TestCredential(base_credential=base_credential)
 
     @staticmethod
-    def upsert_test_credential(
+    def send_credential(
         test_credential: TestCredential, user_performing_action: TestUser | None = None
-    ) -> bool:
-        if test_credential.id:
-            response = requests.post(
-                url=f"{_CREDENTIAL_URL}/{test_credential.id}",
-                json=test_credential.model_dump(exclude={"id"}),
-                headers=user_performing_action.headers
+    ) -> Response:
+        return requests.post(
+            url=_CREDENTIAL_URL,
+            json=test_credential.base_credential.model_dump(),
+            headers=(
+                user_performing_action.headers
                 if user_performing_action
-                else GENERAL_HEADERS,
-            )
-        else:
-            response = requests.post(
-                url=_CREDENTIAL_URL,
-                json=test_credential.model_dump(),
-                headers=(
-                    user_performing_action.headers
-                    if user_performing_action
-                    else GENERAL_HEADERS
-                ),
-            )
+                else GENERAL_HEADERS
+            ),
+        )
 
-        if response.ok:
-            data = response.json()
-            id = data.get("id")
-            if id:
-                test_credential.id = id
-
-        return response.ok
+    @staticmethod
+    def edit_credential(
+        test_credential: TestCredential, user_performing_action: TestUser | None = None
+    ) -> Response:
+        if not test_credential.id:
+            raise ValueError("Credential ID is required to edit a credential")
+        return requests.put(
+            url=f"{_CREDENTIAL_URL}/{test_credential.id}",
+            json=test_credential.base_credential.model_dump(),
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
 
     @staticmethod
     def delete_credential(

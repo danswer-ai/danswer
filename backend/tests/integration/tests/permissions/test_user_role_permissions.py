@@ -1,6 +1,10 @@
+"""
+This file tests the ability of different user types to set the role of other users.
+"""
 from danswer.db.models import UserRole
 from tests.integration.common_utils.user import TestUser
 from tests.integration.common_utils.user import UserManager
+from tests.integration.common_utils.user_groups import UserGroupManager
 
 
 def test_user_role_setting_permissions(reset: None) -> None:
@@ -25,7 +29,7 @@ def test_user_role_setting_permissions(reset: None) -> None:
         name="curator",
         desired_role=UserRole.CURATOR,
     )
-    assert UserManager.register_test_user(curator)
+    curator.id = UserManager.register_test_user(curator)
     assert UserManager.login_test_user(curator)
 
     # Creating a curator without adding to a group should not work
@@ -52,3 +56,38 @@ def test_user_role_setting_permissions(reset: None) -> None:
     )
     assert not UserManager.verify_role(global_curator)
     global_curator.desired_role = UserRole.GLOBAL_CURATOR
+
+    # Creating a user group
+    user_group_1 = UserGroupManager.build_test_user_group(
+        name="user_group_1",
+        user_ids=[],
+        cc_pair_ids=[],
+    )
+    response = UserGroupManager.send_user_group(
+        user_group_1,
+        user_performing_action=admin_user,
+    )
+    response.raise_for_status()
+    user_group_1.id = int(response.json()["id"])
+    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    # This should fail because the curator is not in the user group
+    assert not UserGroupManager.set_curator(
+        test_user_group=user_group_1,
+        user_to_set_as_curator=curator,
+        user_performing_action=admin_user,
+    ).ok
+
+    # Adding the curator to the user group
+    user_group_1.user_group_creation_request.user_ids = [curator.id]
+    response = UserGroupManager.edit_user_group(
+        user_group_1, user_performing_action=admin_user
+    )
+    response.raise_for_status()
+    user_group_1.id = int(response.json()["id"])
+    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    # This should work because the curator is in the user group
+    assert UserGroupManager.set_curator(
+        test_user_group=user_group_1,
+        user_to_set_as_curator=curator,
+        user_performing_action=admin_user,
+    ).ok

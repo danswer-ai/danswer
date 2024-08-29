@@ -2,11 +2,13 @@ import uuid
 
 import requests
 from pydantic import BaseModel
+from requests import Response
 
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.server.documents.models import CCStatusUpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
+from danswer.server.documents.models import ConnectorIndexingStatus
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.user import TestUser
@@ -40,25 +42,17 @@ class CCPairManager:
         )
 
     @staticmethod
-    def upsert_test_cc_pair(
+    def send_cc_pair(
         test_cc_pair: TestConnectorCredentialPair,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
-        response = requests.put(
+    ) -> Response:
+        return requests.put(
             url=f"{API_SERVER_URL}/manage/connector/{test_cc_pair.connector_id}/credential/{test_cc_pair.credential_id}",
-            json=test_cc_pair.metadata.model_dump_json(),
+            json=test_cc_pair.metadata.model_dump(),
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
-
-        if response.ok:
-            test_cc_pair.id = response.json().get("data")
-            print(f"Created connector credential pair {test_cc_pair.id}")
-        else:
-            print(f"Failed to create connector credential pair: {response.status_code}")
-
-        return response.ok
 
     @staticmethod
     def pause_cc_pair(
@@ -73,7 +67,7 @@ class CCPairManager:
         )
         response = requests.put(
             url=f"{API_SERVER_URL}/manage/admin/cc-pair/{test_cc_pair.id}/status",
-            json=updated_status_request.model_dump_json(),
+            json=updated_status_request.model_dump(),
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
@@ -107,7 +101,7 @@ class CCPairManager:
         )
         response = requests.put(
             url=f"{API_SERVER_URL}/manage/admin/deletion-attempt",
-            json=cc_pair_identifier.model_dump_json(),
+            json=cc_pair_identifier.model_dump(),
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
@@ -124,3 +118,35 @@ class CCPairManager:
             )
 
         return response.ok
+
+    @staticmethod
+    def fetch_cc_all_pairs(
+        user_performing_action: TestUser | None = None,
+    ) -> Response:
+        return requests.get(
+            url=f"{API_SERVER_URL}/manage/admin/connector/indexing-status",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+
+    @staticmethod
+    def verify_cc_pairs(
+        test_cc_pairs: list[TestConnectorCredentialPair],
+        user_performing_action: TestUser | None = None,
+    ) -> bool:
+        response = CCPairManager.fetch_cc_all_pairs(user_performing_action)
+        if not response.ok:
+            return False
+        statuses = [ConnectorIndexingStatus(**status) for status in response.json()]
+        for cc_pair in test_cc_pairs:
+            if cc_pair.id is None:
+                return False
+            if not any(
+                status.cc_pair_id == cc_pair.id
+                and status.connector.id == cc_pair.connector_id
+                and status.credential.id == cc_pair.credential_id
+                for status in statuses
+            ):
+                return False
+        return True
