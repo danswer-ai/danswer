@@ -21,6 +21,7 @@ import {
   AssistantsIconSkeleton,
   ClosedBookIcon,
   SearchIcon,
+  CreditCardIcon,
 } from "@/components/icons/icons";
 import { UserRole } from "@/lib/types";
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
@@ -29,9 +30,6 @@ import { User } from "@/lib/types";
 import { usePathname } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { useContext } from "react";
-import { CustomTooltip } from "../tooltip/CustomTooltip";
-import { CLOUD_ENABLED } from "@/lib/constants";
-import { BellSimpleRinging } from "@phosphor-icons/react";
 
 export function ClientLayout({
   user,
@@ -327,7 +325,7 @@ export function ClientLayout({
                               {
                                 name: (
                                   <div className="flex">
-                                    <BellSimpleRinging size={18} />
+                                    <CreditCardIcon size={18} />
                                     <div className="ml-1">Billing</div>
                                   </div>
                                 ),
