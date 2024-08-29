@@ -26,6 +26,7 @@ export interface EnterpriseSettings {
   custom_popup_header: string | null;
   custom_popup_content: string | null;
 }
+import { FiStar, FiDollarSign, FiAward } from "react-icons/fi";
 
 export enum BillingPlanType {
   FREE = "free",

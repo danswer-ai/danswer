@@ -7,24 +7,28 @@ import { BillingPlanType } from "@/app/admin/settings/interfaces";
 // import { buildUrl } from '@/lib/utilsSS';
 
 export function StripeCheckoutButton({
-  quantity,
-  plan,
+  newQuantity,
+  newPlan,
+  currentQuantity,
+  currentPlan,
 }: {
-  quantity: number;
-  plan: BillingPlanType;
+  newQuantity: number;
+  newPlan: BillingPlanType;
+  currentQuantity: number;
+  currentPlan: BillingPlanType;
 }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
     setIsLoading(true);
-    console.log(quantity);
+    console.log(newQuantity);
     try {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ quantity, plan }),
+        body: JSON.stringify({ newQuantity, newPlan }),
       });
 
       if (!response.ok) {
@@ -50,10 +54,27 @@ export function StripeCheckoutButton({
   return (
     <button
       onClick={handleClick}
-      disabled={isLoading}
-      className="py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300"
+      className={`py-2 px-4 text-white rounded ${
+        currentPlan === newPlan && currentQuantity === newQuantity
+          ? "bg-gray-400 cursor-not-allowed"
+          : "bg-blue-500 hover:bg-blue-600"
+      } disabled:bg-blue-300`}
+      disabled={
+        (currentPlan === newPlan && currentQuantity === newQuantity) ||
+        isLoading
+      }
     >
-      {isLoading ? "Loading..." : "Proceed to Checkout"}
+      {isLoading
+        ? "Loading..."
+        : currentPlan === newPlan && currentQuantity === newQuantity
+          ? "No Changes"
+          : newPlan > currentPlan ||
+              (newPlan === currentPlan && newQuantity > currentQuantity)
+            ? "Upgrade Plan"
+            : newPlan < currentPlan ||
+                (newPlan === currentPlan && newQuantity < currentQuantity)
+              ? "Downgrade Plan"
+              : "Change Plan"}
     </button>
   );
 }
