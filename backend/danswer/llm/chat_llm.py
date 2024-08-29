@@ -32,7 +32,6 @@ from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import LLMConfig
 from danswer.llm.interfaces import ToolChoiceOptions
-from danswer.llm.utils import get_llm_max_output_tokens
 from danswer.llm.utils import get_max_input_tokens
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.utils.logger import setup_logger
@@ -211,15 +210,17 @@ class DefaultMultiLLM(LLM):
         self._api_base = api_base
         self._api_version = api_version
         self._custom_llm_provider = custom_llm_provider
-        self._max_output_tokens = (
-            max_output_tokens
-            if max_output_tokens is not None
-            else get_llm_max_output_tokens(
-                model_map=litellm.model_cost,
-                model_name=model_name,
-                model_provider=model_provider,
-            )
-        )
+
+        # This can be used to store the maximum output tkoens for this model.
+        # self._max_output_tokens = (
+        #     max_output_tokens
+        #     if max_output_tokens is not None
+        #     else get_llm_max_output_tokens(
+        #         model_map=litellm.model_cost,
+        #         model_name=model_name,
+        #         model_provider=model_provider,
+        #     )
+        # )
         self._custom_config = custom_config
 
         # NOTE: have to set these as environment variables for Litellm since
@@ -238,7 +239,7 @@ class DefaultMultiLLM(LLM):
     def log_model_configs(self) -> None:
         logger.debug(f"Config: {self.config}")
 
-    def _calculate_max_tokens(self, prompt: LanguageModelInput) -> int:
+    def _calculate_max_output_tokens(self, prompt: LanguageModelInput) -> int:
         # This method can be used for calculating the maximum tokens for the stream,
         # but it isn't used in practice due to the computational cost of counting tokens
         # and because LLM providers automatically cut off at the maximum output.

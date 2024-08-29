@@ -30,10 +30,10 @@ from litellm.exceptions import Timeout  # type: ignore
 from litellm.exceptions import UnprocessableEntityError  # type: ignore
 
 from danswer.configs.constants import MessageType
-from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
+from danswer.configs.model_configs import GEN_AI_NUM_RESERVED_OUTPUT_TOKENS
 from danswer.db.models import ChatMessage
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import InMemoryChatFile
@@ -409,7 +409,7 @@ def get_llm_max_output_tokens(
 def get_max_input_tokens(
     model_name: str,
     model_provider: str,
-    output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
+    output_tokens: int = GEN_AI_NUM_RESERVED_OUTPUT_TOKENS,
 ) -> int:
     # NOTE: we previously used `litellm.get_max_tokens()`, but despite the name, this actually
     # returns the max OUTPUT tokens. Under the hood, this uses the `litellm.model_cost` dict,

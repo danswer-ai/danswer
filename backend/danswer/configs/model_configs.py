@@ -83,7 +83,9 @@ GEN_AI_MAX_TOKENS = int(os.environ.get("GEN_AI_MAX_TOKENS") or 0) or None
 
 # Set this to be enough for an answer + quotes. Also used for Chat
 # This is the minimum token context we will leave for the LLM to generate an answer
-GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 1024)
+GEN_AI_NUM_RESERVED_OUTPUT_TOKENS = int(
+    os.environ.get("GEN_AI_NUM_RESERVED_OUTPUT_TOKENS") or 1024
+)
 
 # Typically, GenAI models nowadays are at least 4K tokens
 GEN_AI_MODEL_FALLBACK_MAX_TOKENS = 4096
