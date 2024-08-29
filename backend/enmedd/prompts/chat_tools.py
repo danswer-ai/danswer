@@ -2,8 +2,8 @@
 # The current generation of LLM is too unreliable for this task.
 # enMedD AI retrieval call as a tool option
 # TODO: rename all the variable names here
-DANSWER_TOOL_NAME = "Current Search"
-DANSWER_TOOL_DESCRIPTION = (
+TOOL_NAME = "Current Search"
+TOOL_DESCRIPTION = (
     "A search tool that can find information on any topic "
     "including up to date and proprietary knowledge."
 )

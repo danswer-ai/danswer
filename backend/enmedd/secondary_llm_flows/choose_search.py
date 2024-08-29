@@ -10,7 +10,7 @@ from enmedd.llm.answering.models import PreviousMessage
 from enmedd.llm.interfaces import LLM
 from enmedd.llm.utils import dict_based_prompt_to_langchain_prompt
 from enmedd.llm.utils import message_to_string
-from enmedd.llm.utils import translate_danswer_msg_to_langchain
+from enmedd.llm.utils import translate_enmedd_msg_to_langchain
 from enmedd.prompts.chat_prompts import AGGRESSIVE_SEARCH_TEMPLATE
 from enmedd.prompts.chat_prompts import NO_SEARCH
 from enmedd.prompts.chat_prompts import REQUIRE_SEARCH_HINT
@@ -32,7 +32,7 @@ def check_if_need_search_multi_message(
         return True
 
     prompt_msgs: list[BaseMessage] = [SystemMessage(content=REQUIRE_SEARCH_SYSTEM_MSG)]
-    prompt_msgs.extend([translate_danswer_msg_to_langchain(msg) for msg in history])
+    prompt_msgs.extend([translate_enmedd_msg_to_langchain(msg) for msg in history])
 
     last_query = query_message.message
 

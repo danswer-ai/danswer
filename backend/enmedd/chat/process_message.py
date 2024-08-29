@@ -6,9 +6,9 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from enmedd.chat.chat_utils import create_chat_chain
+from enmedd.chat.models import AnswerPiece
 from enmedd.chat.models import CitationInfo
 from enmedd.chat.models import CustomToolResponse
-from enmedd.chat.models import DanswerAnswerPiece
 from enmedd.chat.models import ImageGenerationDisplay
 from enmedd.chat.models import LlmDoc
 from enmedd.chat.models import LLMRelevanceFilterResponse
@@ -181,7 +181,7 @@ ChatPacket = (
     | QADocsResponse
     | LLMRelevanceFilterResponse
     | ChatMessageDetail
-    | DanswerAnswerPiece
+    | AnswerPiece
     | CitationInfo
     | ImageGenerationDisplay
     | CustomToolResponse

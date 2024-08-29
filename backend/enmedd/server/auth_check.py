@@ -23,7 +23,6 @@ PUBLIC_ENDPOINT_SPECS = [
     # just returns auth type, needs to be accessible before the user is logged
     # in to determine what flow to give the user
     ("/auth/type", {"GET"}),
-    # just gets the version of Danswer (e.g. 0.3.11)
     ("/version", {"GET"}),
     # stuff related to basic auth
     ("/auth/register", {"POST"}),

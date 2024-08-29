@@ -5,10 +5,10 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from enmedd.chat.chat_utils import reorganize_citations
+from enmedd.chat.models import AnswerPiece
 from enmedd.chat.models import CitationInfo
-from enmedd.chat.models import DanswerAnswerPiece
-from enmedd.chat.models import DanswerContexts
-from enmedd.chat.models import DanswerQuotes
+from enmedd.chat.models import EnmeddContexts
+from enmedd.chat.models import EnmeddQuotes
 from enmedd.chat.models import LLMRelevanceFilterResponse
 from enmedd.chat.models import QADocsResponse
 from enmedd.chat.models import StreamingError
@@ -63,9 +63,9 @@ AnswerObjectIterator = Iterator[
     QueryRephrase
     | QADocsResponse
     | LLMRelevanceFilterResponse
-    | DanswerAnswerPiece
-    | DanswerQuotes
-    | DanswerContexts
+    | AnswerPiece
+    | EnmeddQuotes
+    | EnmeddContexts
     | StreamingError
     | ChatMessageDetail
     | CitationInfo
@@ -87,7 +87,6 @@ def stream_answer_objects(
     timeout: int = QA_TIMEOUT,
     bypass_acl: bool = False,
     use_citations: bool = False,
-    danswerbot_flow: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -95,7 +94,7 @@ def stream_answer_objects(
     """Streams in order:
     1. [always] Retrieved documents, stops flow if nothing is found
     2. [conditional] LLM selected chunk indices if LLM chunk filtering is turned on
-    3. [always] A set of streamed DanswerAnswerPiece and DanswerQuotes at the end
+    3. [always] A set of streamed AnswerPiece and EnmeddQuotes at the end
                 or an error anywhere along the line if something fails
     4. [always] Details on the final AI response message that is created
     """
@@ -109,7 +108,6 @@ def stream_answer_objects(
         user_id=user_id,
         persona_id=query_req.persona_id,
         one_shot=True,
-        danswerbot_flow=danswerbot_flow,
     )
 
     llm_tokenizer = get_default_llm_token_encode()
@@ -304,7 +302,6 @@ def get_search_answer(
     enable_reflexion: bool = False,
     bypass_acl: bool = False,
     use_citations: bool = False,
-    danswerbot_flow: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -320,7 +317,6 @@ def get_search_answer(
         db_session=db_session,
         bypass_acl=bypass_acl,
         use_citations=use_citations,
-        danswerbot_flow=danswerbot_flow,
         timeout=answer_generation_timeout,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
@@ -330,20 +326,20 @@ def get_search_answer(
     for packet in results:
         if isinstance(packet, QueryRephrase):
             qa_response.rephrase = packet.rephrased_query
-        if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
+        if isinstance(packet, AnswerPiece) and packet.answer_piece:
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
             qa_response.docs = packet
         elif isinstance(packet, LLMRelevanceFilterResponse):
             qa_response.llm_chunks_indices = packet.relevant_chunk_indices
-        elif isinstance(packet, DanswerQuotes):
+        elif isinstance(packet, EnmeddQuotes):
             qa_response.quotes = packet
         elif isinstance(packet, CitationInfo):
             if qa_response.citations:
                 qa_response.citations.append(packet)
             else:
                 qa_response.citations = [packet]
-        elif isinstance(packet, DanswerContexts):
+        elif isinstance(packet, EnmeddContexts):
             qa_response.contexts = packet
         elif isinstance(packet, StreamingError):
             qa_response.error_msg = packet.error

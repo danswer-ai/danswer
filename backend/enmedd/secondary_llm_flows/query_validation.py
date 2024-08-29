@@ -1,7 +1,7 @@
 import re
 from collections.abc import Iterator
 
-from enmedd.chat.models import DanswerAnswerPiece
+from enmedd.chat.models import AnswerPiece
 from enmedd.chat.models import StreamingError
 from enmedd.configs.chat_configs import DISABLE_LLM_QUERY_ANSWERABILITY
 from enmedd.llm.exceptions import GenAIDisabledException
@@ -106,18 +106,14 @@ def stream_query_answerability(
                 reason_ind = model_output.find(THOUGHT_PAT.upper())
                 remaining = model_output[reason_ind + len(THOUGHT_PAT.upper()) :]
                 if remaining:
-                    yield get_json_line(
-                        DanswerAnswerPiece(answer_piece=remaining).dict()
-                    )
+                    yield get_json_line(AnswerPiece(answer_piece=remaining).dict())
                 continue
 
             if reasoning_pat_found:
                 hold_answerable = hold_answerable + token
                 if hold_answerable == ANSWERABLE_PAT.upper()[: len(hold_answerable)]:
                     continue
-                yield get_json_line(
-                    DanswerAnswerPiece(answer_piece=hold_answerable).dict()
-                )
+                yield get_json_line(AnswerPiece(answer_piece=hold_answerable).dict())
                 hold_answerable = ""
 
         reasoning = extract_answerability_reasoning(model_output)

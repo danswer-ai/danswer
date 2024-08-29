@@ -10,7 +10,7 @@ from ee.enmedd.server.query_and_chat.models import ChatBasicResponse
 from ee.enmedd.server.query_and_chat.models import SimpleDoc
 from enmedd.auth.users import current_user
 from enmedd.chat.chat_utils import create_chat_chain
-from enmedd.chat.models import DanswerAnswerPiece
+from enmedd.chat.models import AnswerPiece
 from enmedd.chat.models import QADocsResponse
 from enmedd.chat.models import StreamingError
 from enmedd.chat.process_message import stream_chat_message_objects
@@ -107,8 +107,8 @@ def handle_simplified_chat_message(
 
     answer = ""
     for packet in packets:
-        # TODO: remove the dansweranswerpiece in the database
-        if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
+        # TODO: remove the AnswerPiece in the database
+        if isinstance(packet, AnswerPiece) and packet.answer_piece:
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
             response.simple_search_docs = translate_doc_response_to_simple_doc(packet)

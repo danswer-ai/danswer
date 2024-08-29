@@ -86,7 +86,7 @@ def tokenizer_trim_chunks(
 
 
 # TODO: rename the function names
-def translate_danswer_msg_to_langchain(
+def translate_enmedd_msg_to_langchain(
     msg: Union[ChatMessage, "PreviousMessage"],
 ) -> BaseMessage:
     # If the message is a `ChatMessage`, it doesn't have the downloaded files
@@ -108,7 +108,7 @@ def translate_history_to_basemessages(
     history: list[ChatMessage] | list["PreviousMessage"],
 ) -> tuple[list[BaseMessage], list[int]]:
     history_basemessages = [
-        translate_danswer_msg_to_langchain(msg)
+        translate_enmedd_msg_to_langchain(msg)
         for msg in history
         if msg.token_count != 0
     ]

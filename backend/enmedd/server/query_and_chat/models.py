@@ -222,5 +222,5 @@ class AdminSearchResponse(BaseModel):
 
 
 # TODO: replace the name here
-class DanswerAnswer(BaseModel):
+class EnmeddAnswer(BaseModel):
     answer: str | None

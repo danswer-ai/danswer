@@ -9,7 +9,7 @@ import { HeaderWrapper } from "./HeaderWrapper";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
 import Logo from "../../../public/logo-brand.png";
-import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
+import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED } from "@/lib/constants";
 import { ConnectorIcon, NotebookIcon } from "../icons/icons";
 import { AdminSidebar } from "../admin/connectors/AdminSidebar";
 import { SideBar } from "../SideBar";
@@ -62,7 +62,7 @@ export function Header({ user }: HeaderProps) {
                   <HeaderTitle>
                     {enterpriseSettings.application_name}
                   </HeaderTitle>
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
+                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED && (
                     <p className="text-xs text-subtle -mt-1.5">
                       Powered by enMedD AI
                     </p>

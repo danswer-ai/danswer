@@ -18,7 +18,7 @@ from enmedd.one_shot_answer.models import DirectQARequest
 from enmedd.search.models import IndexFilters
 from enmedd.search.models import SearchDoc
 from enmedd.search.preprocessing.access_filters import build_access_filters_for_user
-from enmedd.search.preprocessing.danswer_helper import recommend_search_flow
+from enmedd.search.preprocessing.enmedd_helper import recommend_search_flow
 from enmedd.search.utils import chunks_or_sections_to_search_docs
 from enmedd.secondary_llm_flows.query_validation import get_query_answerability
 from enmedd.secondary_llm_flows.query_validation import stream_query_answerability

@@ -48,7 +48,7 @@ class LLMRelevanceFilterResponse(BaseModel):
 
 
 # TODO: replace all the class names into enmedd
-class DanswerAnswerPiece(BaseModel):
+class AnswerPiece(BaseModel):
     # A small piece of a complete answer. Used for streaming back answers.
     answer_piece: str | None  # if None, specifies the end of an Answer
 
@@ -64,7 +64,7 @@ class StreamingError(BaseModel):
     error: str
 
 
-class DanswerQuote(BaseModel):
+class EnmeddQuote(BaseModel):
     # This is during inference so everything is a string by this point
     quote: str
     document_id: str
@@ -74,28 +74,28 @@ class DanswerQuote(BaseModel):
     blurb: str
 
 
-class DanswerQuotes(BaseModel):
-    quotes: list[DanswerQuote]
+class EnmeddQuotes(BaseModel):
+    quotes: list[EnmeddQuote]
 
 
-class DanswerContext(BaseModel):
+class EnmeddContext(BaseModel):
     content: str
     document_id: str
     semantic_identifier: str
     blurb: str
 
 
-class DanswerContexts(BaseModel):
-    contexts: list[DanswerContext]
+class EnmeddContexts(BaseModel):
+    contexts: list[EnmeddContext]
 
 
-class DanswerAnswer(BaseModel):
+class EnmeddAnswer(BaseModel):
     answer: str | None
 
 
-class QAResponse(SearchResponse, DanswerAnswer):
-    quotes: list[DanswerQuote] | None
-    contexts: list[DanswerContexts] | None
+class QAResponse(SearchResponse, EnmeddAnswer):
+    quotes: list[EnmeddQuote] | None
+    contexts: list[EnmeddContexts] | None
     predicted_flow: QueryFlow
     predicted_search: SearchType
     eval_res_valid: bool | None = None
@@ -113,10 +113,10 @@ class CustomToolResponse(BaseModel):
 
 
 AnswerQuestionPossibleReturn = (
-    DanswerAnswerPiece
-    | DanswerQuotes
+    AnswerPiece
+    | EnmeddQuotes
     | CitationInfo
-    | DanswerContexts
+    | EnmeddContexts
     | ImageGenerationDisplay
     | CustomToolResponse
     | StreamingError

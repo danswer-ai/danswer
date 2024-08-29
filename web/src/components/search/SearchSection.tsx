@@ -6,7 +6,7 @@ import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
 import { CCPairBasicInfo, Connector, DocumentSet, Tag } from "@/lib/types";
 import {
-  DanswerDocument,
+  EnmeddDocument,
   Quote,
   SearchResponse,
   FlowType,
@@ -114,7 +114,7 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       quotes,
     }));
-  const updateDocs = (documents: DanswerDocument[]) =>
+  const updateDocs = (documents: EnmeddDocument[]) =>
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,

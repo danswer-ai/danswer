@@ -7,8 +7,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from enmedd.chat.chat_utils import llm_doc_from_inference_section
-from enmedd.chat.models import DanswerContext
-from enmedd.chat.models import DanswerContexts
+from enmedd.chat.models import EnmeddContext
+from enmedd.chat.models import EnmeddContexts
 from enmedd.chat.models import LlmDoc
 from enmedd.db.models import Persona
 from enmedd.db.models import User
@@ -231,9 +231,9 @@ class SearchTool(Tool):
         )
         yield ToolResponse(
             id=SEARCH_DOC_CONTENT_ID,
-            response=DanswerContexts(
+            response=EnmeddContexts(
                 contexts=[
-                    DanswerContext(
+                    EnmeddContext(
                         content=section.content,
                         document_id=section.document_id,
                         semantic_identifier=section.semantic_identifier,

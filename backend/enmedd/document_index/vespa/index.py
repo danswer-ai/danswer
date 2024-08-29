@@ -77,7 +77,7 @@ logger = setup_logger()
 
 # TODO: replace the variable name and the default string value
 VESPA_DIM_REPLACEMENT_PAT = "VARIABLE_DIM"
-DANSWER_CHUNK_REPLACEMENT_PAT = "DANSWER_CHUNK_NAME"
+CHUNK_REPLACEMENT_PAT = "ENMEDD_CHUNK_NAME"
 DOCUMENT_REPLACEMENT_PAT = "DOCUMENT_REPLACEMENT"
 DATE_REPLACEMENT = "DATE_REPLACEMENT"
 
@@ -87,7 +87,7 @@ VESPA_APPLICATION_ENDPOINT = f"{VESPA_CONFIG_SERVER_URL}/application/v2"
 
 # main search application
 VESPA_APP_CONTAINER_URL = f"http://{VESPA_HOST}:{VESPA_PORT}"
-# danswer_chunk below is defined in vespa/app_configs/schemas/danswer_chunk.sd
+# enmedd_chunk below is defined in vespa/app_configs/schemas/enmedd_chunk.sd
 DOCUMENT_ID_ENDPOINT = (
     f"{VESPA_APP_CONTAINER_URL}/document/v1/default/{{index_name}}/docid"
 )
@@ -766,7 +766,7 @@ class VespaIndex(DocumentIndex):
             os.getcwd(), "enmedd", "document_index", "vespa", "app_config"
         )
         # TODO : rename the file for this
-        schema_file = os.path.join(vespa_schema_path, "schemas", "danswer_chunk.sd")
+        schema_file = os.path.join(vespa_schema_path, "schemas", "enmedd_chunk.sd")
         services_file = os.path.join(vespa_schema_path, "services.xml")
         overrides_file = os.path.join(vespa_schema_path, "validation-overrides.xml")
 
@@ -798,13 +798,13 @@ class VespaIndex(DocumentIndex):
             schema_template = schema_f.read()
 
         schema = schema_template.replace(
-            DANSWER_CHUNK_REPLACEMENT_PAT, self.index_name
+            CHUNK_REPLACEMENT_PAT, self.index_name
         ).replace(VESPA_DIM_REPLACEMENT_PAT, str(index_embedding_dim))
         zip_dict[f"schemas/{schema_names[0]}.sd"] = schema.encode("utf-8")
 
         if self.secondary_index_name:
             upcoming_schema = schema_template.replace(
-                DANSWER_CHUNK_REPLACEMENT_PAT, self.secondary_index_name
+                CHUNK_REPLACEMENT_PAT, self.secondary_index_name
             ).replace(VESPA_DIM_REPLACEMENT_PAT, str(secondary_index_embedding_dim))
             zip_dict[f"schemas/{schema_names[1]}.sd"] = upcoming_schema.encode("utf-8")
 

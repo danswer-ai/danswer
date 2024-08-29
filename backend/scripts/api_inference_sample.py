@@ -68,7 +68,7 @@ def process_question(enmedd_url: str, question: str, api_key: str | None) -> Non
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Sample API Usage")
     parser.add_argument(
-        "--danswer-url",
+        "--enmedd-url",
         type=str,
         default="http://localhost:80",
         help="enMedD AI URL, should point to enMedD AI nginx.",

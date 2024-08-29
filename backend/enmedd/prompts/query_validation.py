@@ -33,10 +33,10 @@ Slack channel the user is referring to.
 {ANSWERABLE_PAT.upper()} False
 ```
 
-{QUESTION_PAT.upper()} Danswer is unreachable.
+{QUESTION_PAT.upper()} enMedD AI is unreachable.
 ```
-{THOUGHT_PAT.upper()} The system searches documents related to Danswer being unreachable. \
-Assuming the documents from search contains situations where Danswer is not reachable and \
+{THOUGHT_PAT.upper()} The system searches documents related to enMedD AI being unreachable. \
+Assuming the documents from search contains situations where enMedD AI is not reachable and \
 contains a fix, the query may be answerable.
 {ANSWERABLE_PAT.upper()} True
 ```

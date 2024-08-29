@@ -1,9 +1,9 @@
 import re
 from collections.abc import Iterator
 
+from enmedd.chat.models import AnswerPiece
 from enmedd.chat.models import AnswerQuestionStreamReturn
 from enmedd.chat.models import CitationInfo
-from enmedd.chat.models import DanswerAnswerPiece
 from enmedd.chat.models import LlmDoc
 from enmedd.configs.chat_configs import STOP_STREAM_PAT
 from enmedd.llm.answering.models import StreamProcessor
@@ -25,7 +25,7 @@ def extract_citations_from_stream(
     context_docs: list[LlmDoc],
     doc_id_to_rank_map: dict[str, int],
     stop_stream: str | None = STOP_STREAM_PAT,
-) -> Iterator[DanswerAnswerPiece | CitationInfo]:
+) -> Iterator[AnswerPiece | CitationInfo]:
     llm_out = ""
     max_citation_num = len(context_docs)
     curr_segment = ""
@@ -103,14 +103,14 @@ def extract_citations_from_stream(
             curr_segment = curr_segment[:-1]
             prepend_bracket = True
 
-        yield DanswerAnswerPiece(answer_piece=curr_segment)
+        yield AnswerPiece(answer_piece=curr_segment)
         curr_segment = ""
 
     if curr_segment:
         if prepend_bracket:
-            yield DanswerAnswerPiece(answer_piece="[" + curr_segment)
+            yield AnswerPiece(answer_piece="[" + curr_segment)
         else:
-            yield DanswerAnswerPiece(answer_piece=curr_segment)
+            yield AnswerPiece(answer_piece=curr_segment)
 
 
 def build_citation_processor(

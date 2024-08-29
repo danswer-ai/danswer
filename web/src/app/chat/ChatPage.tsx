@@ -52,7 +52,7 @@ import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
 import { StarterMessage } from "./StarterMessage";
-import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
+import { AnswerPiecePacket, EnmeddDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
@@ -754,7 +754,7 @@ export function ChatPage({
       selectedDocuments.length > 0
         ? RetrievalType.SelectedDocs
         : RetrievalType.None;
-    let documents: DanswerDocument[] = selectedDocuments;
+    let documents: EnmeddDocument[] = selectedDocuments;
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;

@@ -33,8 +33,8 @@ def create_embedding_model(
         passage_prefix=model_details.passage_prefix,
         status=status,
         # Every single embedding model except the initial one from migrations has this name
-        # The initial one from migration is called "danswer_chunk"
-        index_name=f"danswer_chunk_{clean_model_name(model_details.model_name)}",
+        # The initial one from migration is called "enmedd_chunk"
+        index_name=f"enmedd_chunk_{clean_model_name(model_details.model_name)}",
     )
 
     db_session.add(embedding_model)
@@ -100,7 +100,7 @@ def get_old_default_embedding_model() -> EmbeddingModel:
         query_prefix=(ASYM_QUERY_PREFIX if is_overridden else ""),
         passage_prefix=(ASYM_PASSAGE_PREFIX if is_overridden else ""),
         status=IndexModelStatus.PRESENT,
-        index_name="danswer_chunk",
+        index_name="enmedd_chunk",
     )
 
 
@@ -112,5 +112,5 @@ def get_new_default_embedding_model(is_present: bool) -> EmbeddingModel:
         query_prefix=ASYM_QUERY_PREFIX,
         passage_prefix=ASYM_PASSAGE_PREFIX,
         status=IndexModelStatus.PRESENT if is_present else IndexModelStatus.FUTURE,
-        index_name=f"danswer_chunk_{clean_model_name(DOCUMENT_ENCODER_MODEL)}",
+        index_name=f"enmedd_chunk_{clean_model_name(DOCUMENT_ENCODER_MODEL)}",
     )

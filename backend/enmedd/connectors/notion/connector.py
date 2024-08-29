@@ -225,8 +225,6 @@ class NotionConnector(LoadConnector, PollConnector):
                     logger.warning(
                         f"Skipping 'ai_block' ('{result_block_id}') for base block '{base_block_id}': "
                         f"Notion API does not currently support reading AI blocks (as of 24/02/09) "
-                        # TODO: take note of this in the knowledge base
-                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1053)"
                     )
                     continue
 
@@ -234,7 +232,6 @@ class NotionConnector(LoadConnector, PollConnector):
                     logger.warning(
                         f"Skipping unsupported block type '{result_type}' "
                         f"('{result_block_id}') for base block '{base_block_id}': "
-                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1230)"
                     )
                     continue
 

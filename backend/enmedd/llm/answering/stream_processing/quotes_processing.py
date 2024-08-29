@@ -8,11 +8,11 @@ from typing import Optional
 
 import regex
 
+from enmedd.chat.models import AnswerPiece
 from enmedd.chat.models import AnswerQuestionStreamReturn
-from enmedd.chat.models import DanswerAnswer
-from enmedd.chat.models import DanswerAnswerPiece
-from enmedd.chat.models import DanswerQuote
-from enmedd.chat.models import DanswerQuotes
+from enmedd.chat.models import EnmeddAnswer
+from enmedd.chat.models import EnmeddQuote
+from enmedd.chat.models import EnmeddQuotes
 from enmedd.chat.models import LlmDoc
 from enmedd.configs.chat_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from enmedd.prompts.constants import ANSWER_PAT
@@ -93,8 +93,8 @@ def match_quotes_to_docs(
     max_error_percent: float = QUOTE_ALLOWED_ERROR_PERCENT,
     fuzzy_search: bool = False,
     prefix_only_length: int = 100,
-) -> DanswerQuotes:
-    danswer_quotes: list[DanswerQuote] = []
+) -> EnmeddQuotes:
+    enmedd_quotes: list[EnmeddQuote] = []
     for quote in quotes:
         max_edits = math.ceil(float(len(quote)) * max_error_percent)
 
@@ -131,8 +131,8 @@ def match_quotes_to_docs(
                 else:
                     break
 
-            danswer_quotes.append(
-                DanswerQuote(
+            enmedd_quotes.append(
+                EnmeddQuote(
                     quote=quote,
                     document_id=doc.document_id,
                     link=curr_link,
@@ -143,7 +143,7 @@ def match_quotes_to_docs(
             )
             break
 
-    return DanswerQuotes(quotes=danswer_quotes)
+    return EnmeddQuotes(quotes=enmedd_quotes)
 
 
 def separate_answer_quotes(
@@ -161,7 +161,7 @@ def process_answer(
     answer_raw: str,
     docs: list[LlmDoc],
     is_json_prompt: bool = True,
-) -> tuple[DanswerAnswer, DanswerQuotes]:
+) -> tuple[EnmeddAnswer, EnmeddQuotes]:
     """Used (1) in the non-streaming case to process the model output
     into an Answer and Quotes AND (2) after the complete streaming response
     has been received to process the model output into an Answer and Quotes."""
@@ -171,17 +171,17 @@ def process_answer(
             logger.debug("Answer matched UNCERTAINTY_PAT")
         else:
             logger.debug("No answer extracted from raw output")
-        return DanswerAnswer(answer=None), DanswerQuotes(quotes=[])
+        return EnmeddAnswer(answer=None), EnmeddQuotes(quotes=[])
 
     logger.info(f"Answer: {answer}")
     if not quote_strings:
         logger.debug("No quotes extracted from raw output")
-        return DanswerAnswer(answer=answer), DanswerQuotes(quotes=[])
+        return EnmeddAnswer(answer=answer), EnmeddQuotes(quotes=[])
     logger.info(f"All quotes (including unmatched): {quote_strings}")
     quotes = match_quotes_to_docs(quote_strings, docs)
     logger.debug(f"Final quotes: {quotes}")
 
-    return DanswerAnswer(answer=answer), quotes
+    return EnmeddAnswer(answer=answer), quotes
 
 
 def _stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
@@ -197,7 +197,7 @@ def _stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
 
 def _extract_quotes_from_completed_token_stream(
     model_output: str, context_docs: list[LlmDoc], is_json_prompt: bool = True
-) -> DanswerQuotes:
+) -> EnmeddQuotes:
     answer, quotes = process_answer(model_output, context_docs, is_json_prompt)
     if answer:
         logger.info(answer)
@@ -211,7 +211,7 @@ def process_model_tokens(
     tokens: Iterator[str],
     context_docs: list[LlmDoc],
     is_json_prompt: bool = True,
-) -> Generator[DanswerAnswerPiece | DanswerQuotes, None, None]:
+) -> Generator[AnswerPiece | EnmeddQuotes, None, None]:
     """Used in the streaming case to process the model output
     into an Answer and Quotes
 
@@ -252,23 +252,23 @@ def process_model_tokens(
                 if token:
                     try:
                         answer_token_section = token.index('"')
-                        yield DanswerAnswerPiece(
+                        yield AnswerPiece(
                             answer_piece=hold_quote + token[:answer_token_section]
                         )
                     except ValueError:
                         logger.error("Quotation mark not found in token")
-                        yield DanswerAnswerPiece(answer_piece=hold_quote + token)
-                yield DanswerAnswerPiece(answer_piece=None)
+                        yield AnswerPiece(answer_piece=hold_quote + token)
+                yield AnswerPiece(answer_piece=None)
                 continue
             elif not is_json_prompt:
                 if quote_pat in hold_quote + token or quote_loose in hold_quote + token:
                     found_answer_end = True
-                    yield DanswerAnswerPiece(answer_piece=None)
+                    yield AnswerPiece(answer_piece=None)
                     continue
                 if hold_quote + token in quote_pat_full:
                     hold_quote += token
                     continue
-            yield DanswerAnswerPiece(answer_piece=hold_quote + token)
+            yield AnswerPiece(answer_piece=hold_quote + token)
             hold_quote = ""
 
     logger.debug(f"Raw Model QnA Output: {model_output}")

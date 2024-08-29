@@ -71,7 +71,7 @@ def _process_file(
         encoding = detect_encoding(file)
         # TODO: rename the property name here
         file_content_raw, file_metadata = read_text_file(
-            file, encoding=encoding, ignore_danswer_metadata=False
+            file, encoding=encoding, ignore_enmedd_metadata=False
         )
 
     # Using the PDF reader function directly to pass in password cleanly
@@ -101,7 +101,7 @@ def _process_file(
     dt_str = all_metadata.get("doc_updated_at")
     final_time_updated = time_str_to_utc(dt_str) if dt_str else time_updated
 
-    # Metadata tags separate from the Danswer specific fields
+    # Metadata tags separate from the enMedD specific fields
     metadata_tags = {
         k: v
         for k, v in all_metadata.items()

@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
 
 import {
-  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
+  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED,
   NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
 } from "@/lib/constants";
 
@@ -166,7 +166,7 @@ export const ChatSidebar = ({
                     {enterpriseSettings.application_name}
                   </HeaderTitle>
 
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
+                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED && (
                     <p className="text-xs text-subtle -mt-1.5">
                       Powered by enMedD AI
                     </p>

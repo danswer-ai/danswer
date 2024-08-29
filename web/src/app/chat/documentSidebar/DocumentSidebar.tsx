@@ -1,4 +1,4 @@
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { EnmeddDocument } from "@/lib/search/interfaces";
 import { Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -40,8 +40,8 @@ function SectionHeader({
 interface DocumentSidebarProps {
   closeSidebar: () => void;
   selectedMessage: Message | null;
-  selectedDocuments: DanswerDocument[] | null;
-  toggleDocumentSelection: (document: DanswerDocument) => void;
+  selectedDocuments: EnmeddDocument[] | null;
+  toggleDocumentSelection: (document: EnmeddDocument) => void;
   clearSelectedDocuments: () => void;
   selectedDocumentTokens: number;
   maxTokens: number;

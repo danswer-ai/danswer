@@ -10,7 +10,7 @@ from enmedd.search.models import InferenceChunk
 
 # TODO: rename the default string value for this
 DEFAULT_BATCH_SIZE = 30
-DEFAULT_INDEX_NAME = "danswer_chunk"
+DEFAULT_INDEX_NAME = "enmedd_chunk"
 
 
 def get_both_index_names(db_session: Session) -> tuple[str, str | None]:

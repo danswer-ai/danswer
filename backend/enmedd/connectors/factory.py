@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from enmedd.configs.constants import DocumentSource
 from enmedd.connectors.blob.connector import BlobStorageConnector
 from enmedd.connectors.confluence.connector import ConfluenceConnector
-from enmedd.connectors.danswer_jira.connector import JiraConnector
 from enmedd.connectors.dropbox.connector import DropboxConnector
 from enmedd.connectors.file.connector import LocalFileConnector
 from enmedd.connectors.github.connector import GithubConnector
@@ -21,6 +20,7 @@ from enmedd.connectors.interfaces import BaseConnector
 from enmedd.connectors.interfaces import EventConnector
 from enmedd.connectors.interfaces import LoadConnector
 from enmedd.connectors.interfaces import PollConnector
+from enmedd.connectors.jira.connector import JiraConnector
 from enmedd.connectors.models import InputType
 from enmedd.connectors.notion.connector import NotionConnector
 from enmedd.connectors.productboard.connector import ProductboardConnector

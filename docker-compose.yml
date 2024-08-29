@@ -205,7 +205,7 @@ services:
       # Enterprise Edition only
         - NEXT_PUBLIC_THEME=${NEXT_PUBLIC_THEME:-}
         # TODO: rename the env. config variable
-        - NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED=${NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED:-false}
+        - NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED=${NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED:-false}
     depends_on:
       - api_server
     ports:

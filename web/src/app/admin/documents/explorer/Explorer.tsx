@@ -3,7 +3,7 @@
 import { adminSearch } from "./lib";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { EnmeddDocument } from "@/lib/search/interfaces";
 import { buildDocumentSummaryDisplay } from "@/components/search/DocumentDisplay";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { updateHiddenStatus } from "../lib";
@@ -24,7 +24,7 @@ const DocumentDisplay = ({
   refresh,
   setPopup,
 }: {
-  document: DanswerDocument;
+  document: EnmeddDocument;
   refresh: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }) => {
@@ -117,7 +117,7 @@ export function Explorer({
 
   const [query, setQuery] = useState(initialSearchValue || "");
   const [timeoutId, setTimeoutId] = useState<number | null>(null);
-  const [results, setResults] = useState<DanswerDocument[]>([]);
+  const [results, setResults] = useState<EnmeddDocument[]>([]);
 
   const filterManager = useFilters();
 

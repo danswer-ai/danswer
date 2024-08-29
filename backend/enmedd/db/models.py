@@ -685,7 +685,6 @@ class ChatSession(Base):
     description: Mapped[str] = mapped_column(Text)
     # One-shot direct answering, currently the two types of chats are not mixed
     one_shot: Mapped[bool] = mapped_column(Boolean, default=False)
-    danswerbot_flow: Mapped[bool] = mapped_column(Boolean, default=False)
     # Only ever set to True if system is set to not hard-delete chats
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     # controls whether or not this conversation is viewable by others

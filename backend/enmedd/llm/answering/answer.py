@@ -7,9 +7,9 @@ from langchain_core.messages import AIMessageChunk
 from langchain_core.messages import HumanMessage
 
 from enmedd.chat.chat_utils import llm_doc_from_inference_section
+from enmedd.chat.models import AnswerPiece
 from enmedd.chat.models import AnswerQuestionPossibleReturn
 from enmedd.chat.models import CitationInfo
-from enmedd.chat.models import DanswerAnswerPiece
 from enmedd.chat.models import LlmDoc
 from enmedd.configs.chat_configs import QA_PROMPT_OVERRIDE
 from enmedd.file_store.utils import InMemoryChatFile
@@ -462,7 +462,7 @@ class Answer:
     def llm_answer(self) -> str:
         answer = ""
         for packet in self.processed_streamed_output:
-            if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
+            if isinstance(packet, AnswerPiece) and packet.answer_piece:
                 answer += packet.answer_piece
 
         return answer

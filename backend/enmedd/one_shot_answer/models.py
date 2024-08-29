@@ -5,8 +5,8 @@ from pydantic import Field
 from pydantic import root_validator
 
 from enmedd.chat.models import CitationInfo
-from enmedd.chat.models import DanswerContexts
-from enmedd.chat.models import DanswerQuotes
+from enmedd.chat.models import EnmeddContexts
+from enmedd.chat.models import EnmeddQuotes
 from enmedd.chat.models import QADocsResponse
 from enmedd.configs.constants import MessageType
 from enmedd.search.models import ChunkContext
@@ -55,11 +55,11 @@ class OneShotQAResponse(BaseModel):
     # This is built piece by piece, any of these can be None as the flow could break
     answer: str | None = None
     rephrase: str | None = None
-    quotes: DanswerQuotes | None = None
+    quotes: EnmeddQuotes | None = None
     citations: list[CitationInfo] | None = None
     docs: QADocsResponse | None = None
     llm_chunks_indices: list[int] | None = None
     error_msg: str | None = None
     answer_valid: bool = True  # Reflexion result, default True if Reflexion not run
     chat_message_id: int | None = None
-    contexts: DanswerContexts | None = None
+    contexts: EnmeddContexts | None = None

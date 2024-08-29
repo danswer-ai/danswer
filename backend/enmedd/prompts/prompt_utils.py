@@ -17,7 +17,7 @@ from enmedd.search.models import InferenceChunk
 
 
 MOST_BASIC_PROMPT = "You are a helpful AI assistant."
-DANSWER_DATETIME_REPLACEMENT = "DANSWER_DATETIME_REPLACEMENT"
+DATETIME_REPLACEMENT = "DATETIME_REPLACEMENT"
 BASIC_TIME_STR = "The current date is {datetime_info}."
 
 
@@ -36,9 +36,9 @@ def get_current_llm_day_time(
 
 
 def add_date_time_to_prompt(prompt_str: str) -> str:
-    if DANSWER_DATETIME_REPLACEMENT in prompt_str:
+    if DATETIME_REPLACEMENT in prompt_str:
         return prompt_str.replace(
-            DANSWER_DATETIME_REPLACEMENT,
+            DATETIME_REPLACEMENT,
             get_current_llm_day_time(full_sentence=False, include_day_of_week=True),
         )
 

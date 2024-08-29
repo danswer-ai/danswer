@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { useChatContext } from "@/components/context/ChatContext";
 
 // TODO: replace the component name
-function BackToDanswerButton() {
+function BackToEnmeddButton() {
   const router = useRouter();
 
   return (
@@ -40,7 +40,7 @@ export function SharedChatDisplay({
           </Callout>
         </div>
 
-        <BackToDanswerButton />
+        <BackToEnmeddButton />
       </div>
     );
   }
@@ -98,7 +98,7 @@ export function SharedChatDisplay({
         </div>
       </div>
 
-      <BackToDanswerButton />
+      <BackToEnmeddButton />
     </div>
   );
 }

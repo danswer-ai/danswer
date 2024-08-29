@@ -102,7 +102,7 @@ EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
 # DB Configs
 #####
 # TODO: change the string value into enmedd
-DOCUMENT_INDEX_NAME = "danswer_index"
+DOCUMENT_INDEX_NAME = "enmedd_index"
 # Vespa is now the default document index store for both keyword and vector
 DOCUMENT_INDEX_TYPE = os.environ.get(
     "DOCUMENT_INDEX_TYPE", DocumentIndexType.COMBINED.value
@@ -115,7 +115,7 @@ VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
 VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
 # The default below is for dockerized deployment
 VESPA_DEPLOYMENT_ZIP = (
-    os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
+    os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/enmedd/vespa-app.zip"
 )
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
 try:
@@ -140,9 +140,6 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 #####
 POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
 
-# View the list here:
-# TODO: take note of this
-# https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/factory.py
 # If this is empty, all connectors are enabled, this is an option for security heavy orgs where
 # only very select connectors are enabled and admins cannot add other connector types
 ENABLED_CONNECTOR_TYPES = os.environ.get("ENABLED_CONNECTOR_TYPES") or ""
@@ -191,7 +188,7 @@ CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
     os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
 )
 
-# Save pages labels as Danswer metadata tags
+# Save pages labels as enMedD metadata tags
 # The reason to skip this would be to reduce the number of calls to Confluence due to rate limit concerns
 CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
     os.environ.get("CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING", "").lower() == "true"
