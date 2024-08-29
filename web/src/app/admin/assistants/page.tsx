@@ -1,13 +1,13 @@
 import { PersonasTable } from "./PersonaTable";
-import { FiPlusSquare } from "react-icons/fi";
 import Link from "next/link";
 import { Divider, Text, Title } from "@tremor/react";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Persona } from "./interfaces";
-import { LinkIcon, RobotIcon } from "@/components/icons/icons";
+import { RobotIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Button } from "@/components/ui/button";
+import { SquarePlus } from "lucide-react";
 
 export default async function Page() {
   const personaResponse = await fetchSS("/admin/persona");
@@ -47,7 +47,7 @@ export default async function Page() {
         <Title>Create an Assistant</Title>
         <Link href="/admin/assistants/new" className="flex items-center">
           <Button className="mt-2">
-            <FiPlusSquare className="my-auto mr-2" />
+            <SquarePlus size={16} />
             New Assistant
           </Button>
         </Link>

@@ -1,4 +1,13 @@
 import React from "react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./ui/pagination";
 
 const PAGINATION_OPTIONS_ON_EACH_SIDE = 2;
 
@@ -38,47 +47,6 @@ const scrollUp = () => {
   setTimeout(() => window.scrollTo({ top: 0 }), 50);
 };
 
-type PageLinkProps = {
-  linkText: string | number;
-  pageChangeHandler?: () => void;
-  active?: boolean;
-  unclickable?: boolean;
-};
-
-const PageLink = ({
-  linkText,
-  pageChangeHandler,
-  active,
-  unclickable,
-}: PageLinkProps) => (
-  <div
-    className={`
-    select-none
-    inline-block 
-    text-sm 
-    border 
-    px-3 
-    py-1 
-    leading-5 
-    -ml-px 
-    border-border
-    ${!unclickable ? "hover:bg-hover" : ""}
-    ${!unclickable ? "cursor-pointer" : ""}
-    first:ml-0 
-    first:rounded-l-md 
-    last:rounded-r-md
-    ${active ? "bg-background-strong" : ""}
-  `}
-    onClick={() => {
-      if (pageChangeHandler) {
-        pageChangeHandler();
-      }
-    }}
-  >
-    {linkText}
-  </div>
-);
-
 export interface PageSelectorProps {
   currentPage: number;
   totalPages: number;
@@ -100,50 +68,73 @@ export const PageSelector = ({
   };
 
   return (
-    <div style={{ display: "inline-block" }}>
-      <PageLink
-        linkText="‹"
-        pageChangeHandler={() => {
-          onPageChange(Math.max(currentPage - 1, 1));
-          modifiedScrollUp();
-        }}
-      />
-      {!paginationOptions.includes(1) && (
-        <>
-          <PageLink
-            linkText="1"
-            active={currentPage === 1}
-            pageChangeHandler={() => {
-              onPageChange(1);
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            href="#"
+            onClick={() => {
+              onPageChange(Math.max(currentPage - 1, 1));
               modifiedScrollUp();
             }}
+            className={
+              currentPage === 1 ? "pointer-events-none opacity-50" : ""
+            }
           />
-          <PageLink linkText="..." unclickable={true} />
-        </>
-      )}
-      {(!paginationOptions.includes(1)
-        ? paginationOptions.slice(2)
-        : paginationOptions
-      ).map((page) => {
-        return (
-          <PageLink
-            key={page}
-            active={page === currentPage}
-            linkText={page}
-            pageChangeHandler={() => {
-              onPageChange(page);
+        </PaginationItem>
+
+        {!paginationOptions.includes(1) && (
+          <>
+            <PaginationItem>
+              <PaginationLink
+                href="#"
+                onClick={() => {
+                  onPageChange(1);
+                  modifiedScrollUp();
+                }}
+              >
+                1
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationEllipsis />
+            </PaginationItem>
+          </>
+        )}
+
+        {(!paginationOptions.includes(1)
+          ? paginationOptions.slice(2)
+          : paginationOptions
+        ).map((page) => {
+          return (
+            <PaginationItem key={page}>
+              <PaginationLink
+                href="#"
+                isActive={page === currentPage}
+                onClick={() => {
+                  onPageChange(page);
+                  modifiedScrollUp();
+                }}
+              >
+                {page}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        })}
+
+        <PaginationItem>
+          <PaginationNext
+            href="#"
+            onClick={() => {
+              onPageChange(Math.min(currentPage + 1, totalPages));
               modifiedScrollUp();
             }}
+            className={
+              currentPage === totalPages ? "pointer-events-none opacity-50" : ""
+            }
           />
-        );
-      })}
-      <PageLink
-        linkText="›"
-        pageChangeHandler={() => {
-          onPageChange(Math.min(currentPage + 1, totalPages));
-          modifiedScrollUp();
-        }}
-      />
-    </div>
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
   );
 };

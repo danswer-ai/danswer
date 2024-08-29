@@ -1,9 +1,10 @@
 import { User } from "@/lib/types";
-import { useState } from "react";
-import { FiPlus, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import { SearchMultiSelectDropdown } from "@/components/Dropdown";
 import { UsersIcon } from "@/components/icons/icons";
-import { Button } from "@/components/Button";
+import { Button } from "@/components/ui/button";
+import { Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface UserEditorProps {
   selectedUserIds: string[];
@@ -29,14 +30,14 @@ export const UserEditor = ({
       <div className="mb-2 flex flex-wrap gap-x-2">
         {selectedUsers.length > 0 &&
           selectedUsers.map((selectedUser) => (
-            <div
+            <Badge
               key={selectedUser.id}
               onClick={() => {
                 setSelectedUserIds(
                   selectedUserIds.filter((userId) => userId !== selectedUser.id)
                 );
               }}
-              className={`
+              /*  className={`
                   flex 
                   rounded-regular 
                   px-2 
@@ -44,10 +45,12 @@ export const UserEditor = ({
                   border 
                   border-border 
                   hover:bg-hover-light 
-                  cursor-pointer`}
+                  cursor-pointer`} */
+              variant="outline"
             >
-              {selectedUser.email} <FiX className="ml-1 my-auto" />
-            </div>
+              {selectedUser.email}{" "}
+              <X className="ml-1 my-auto cursor-pointer" size={14} />
+            </Badge>
           ))}
       </div>
 
@@ -73,11 +76,11 @@ export const UserEditor = ({
             ]);
           }}
           itemComponent={({ option }) => (
-            <div className="flex px-4 py-2.5 cursor-pointer hover:bg-hover">
+            <div className="flex">
               <UsersIcon className="mr-2 my-auto" />
               {option.name}
               <div className="ml-auto my-auto">
-                <FiPlus />
+                <Plus size={16} />
               </div>
             </div>
           )}

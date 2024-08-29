@@ -1,18 +1,21 @@
-import { ThreeDotsLoader } from "@/components/Loading";
-import { getDatesList, useQueryAnalytics } from "../lib";
-import {
-  AreaChart,
-  Card,
-  Title,
-  Text,
-  DateRangePickerValue,
-} from "@tremor/react";
+"use client";
 
-export function FeedbackChart({
-  timeRange,
-}: {
-  timeRange: DateRangePickerValue;
-}) {
+import { getDatesList, useQueryAnalytics } from "../lib";
+import { ThreeDotsLoader } from "@/components/Loading";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { DateRange } from "react-day-picker";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { SubLabel } from "@/components/admin/connectors/Field";
+
+export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
   const {
     data: queryAnalyticsData,
     isLoading: isQueryAnalyticsLoading,
@@ -36,40 +39,118 @@ export function FeedbackChart({
     const initialDate = timeRange.from || new Date(queryAnalyticsData[0].date);
     const dateRange = getDatesList(initialDate);
 
-    const dateToQueryAnalytics = new Map(
-      queryAnalyticsData.map((queryAnalyticsEntry) => [
-        queryAnalyticsEntry.date,
-        queryAnalyticsEntry,
-      ])
-    );
+    const data = dateRange.map((dateStr) => {
+      const queryAnalyticsForDate = queryAnalyticsData.find(
+        (entry) => entry.date === dateStr
+      );
+      return {
+        date: dateStr,
+        "Positive Feedback": queryAnalyticsForDate?.total_likes || 0,
+        "Negative Feedback": queryAnalyticsForDate?.total_dislikes || 0,
+      };
+    });
+
+    const chartConfig = {
+      "Positive Feedback": {
+        label: "Positive Feedback",
+        color: "#2039f3",
+      },
+      "Negative Feedback": {
+        label: "Negative Feedback",
+        color: "#60a5fa",
+      },
+    } satisfies ChartConfig;
 
     chart = (
-      <AreaChart
-        className="mt-4 h-80"
-        data={dateRange.map((dateStr) => {
-          const queryAnalyticsForDate = dateToQueryAnalytics.get(dateStr);
-          return {
-            Day: dateStr,
-            "Positive Feedback": queryAnalyticsForDate?.total_likes || 0,
-            "Negative Feedback": queryAnalyticsForDate?.total_dislikes || 0,
-          };
-        })}
-        categories={["Positive Feedback", "Negative Feedback"]}
-        index="Day"
-        colors={["indigo", "fuchsia"]}
-        valueFormatter={(number: number) =>
-          `${Intl.NumberFormat("us").format(number).toString()}`
-        }
-        yAxisWidth={60}
-      />
+      <ChartContainer
+        config={chartConfig}
+        className="aspect-auto h-[250px] w-full"
+      >
+        <AreaChart data={data}>
+          <ChartLegend content={<ChartLegendContent />} />
+          <defs>
+            <linearGradient id="fillPositive" x1="0" y1="0" x2="0" y2="1">
+              <stop
+                offset="5%"
+                stopColor={chartConfig["Positive Feedback"].color}
+                stopOpacity={0.8}
+              />
+              <stop
+                offset="95%"
+                stopColor={chartConfig["Positive Feedback"].color}
+                stopOpacity={0.1}
+              />
+            </linearGradient>
+            <linearGradient id="fillNegative" x1="0" y1="0" x2="0" y2="1">
+              <stop
+                offset="5%"
+                stopColor={chartConfig["Negative Feedback"].color}
+                stopOpacity={0.8}
+              />
+              <stop
+                offset="95%"
+                stopColor={chartConfig["Negative Feedback"].color}
+                stopOpacity={0.1}
+              />
+            </linearGradient>
+          </defs>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="date"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            minTickGap={32}
+            tickFormatter={(value) => {
+              const date = new Date(value);
+              return date.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              });
+            }}
+          />
+          <ChartTooltip
+            cursor={false}
+            content={
+              <ChartTooltipContent
+                labelFormatter={(value) => {
+                  return new Date(value).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  });
+                }}
+                indicator="dot"
+              />
+            }
+          />
+          <Area
+            dataKey="Positive Feedback"
+            type="natural"
+            fill="url(#fillPositive)"
+            stroke={chartConfig["Positive Feedback"].color}
+            stackId="a"
+          />
+          <Area
+            dataKey="Negative Feedback"
+            type="natural"
+            fill="url(#fillNegative)"
+            stroke={chartConfig["Negative Feedback"].color}
+            stackId="a"
+          />
+        </AreaChart>
+      </ChartContainer>
     );
   }
 
   return (
     <Card className="mt-8">
-      <Title>Feedback</Title>
-      <Text>Thumbs Up / Thumbs Down over time</Text>
-      {chart}
+      <CardHeader className="border-b">
+        <div className="flex flex-col">
+          <h3 className="font-semibold">Feedback</h3>
+          <SubLabel>Thumbs Up / Thumbs Down over time</SubLabel>
+        </div>
+      </CardHeader>
+      <CardContent>{chart}</CardContent>
     </Card>
   );
 }

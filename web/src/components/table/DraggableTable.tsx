@@ -1,12 +1,3 @@
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-} from "@tremor/react";
-import { DraggableTableBody } from "./DraggableTableBody";
 import React, { useMemo, useState } from "react";
 import {
   closestCenter,
@@ -30,6 +21,13 @@ import {
 import { DraggableRow } from "./DraggableRow";
 import { Row } from "./interfaces";
 import { StaticRow } from "./StaticRow";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 
 export function DraggableTable({
   headers,
@@ -84,15 +82,15 @@ export function DraggableTable({
       collisionDetection={closestCenter}
       modifiers={[restrictToVerticalAxis]}
     >
-      <Table className="overflow-y-visible">
-        <TableHead>
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableHeaderCell></TableHeaderCell>
+            <TableHead></TableHead>
             {headers.map((header, ind) => (
-              <TableHeaderCell key={ind}>{header}</TableHeaderCell>
+              <TableHead key={ind}>{header}</TableHead>
             ))}
           </TableRow>
-        </TableHead>
+        </TableHeader>
 
         <TableBody>
           <SortableContext items={items} strategy={verticalListSortingStrategy}>
@@ -103,7 +101,7 @@ export function DraggableTable({
 
           <DragOverlay>
             {selectedRow && (
-              <Table className="overflow-y-visible">
+              <Table>
                 <TableBody>
                   <StaticRow key={selectedRow.id} row={selectedRow} />
                 </TableBody>

@@ -19,8 +19,9 @@ import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePublicCredentials } from "@/lib/hooks";
-import { Card, Divider, Text, Title, Button } from "@tremor/react";
+import { Divider, Text, Title, Button } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Main = () => {
   const { mutate } = useSWRConfig();
@@ -116,42 +117,45 @@ const Main = () => {
             on how to get one from Gitlab.
           </Text>
           <Card className="mt-4">
-            <CredentialForm<GitlabCredentialJson>
-              formBody={
-                <>
-                  <Text>
-                    If you are using GitLab Cloud, keep the default value below
-                  </Text>
-                  <TextFormField
-                    name="gitlab_url"
-                    label="GitLab URL:"
-                    type="text"
-                    placeholder="https://gitlab.com"
-                  />
+            <CardContent>
+              <CredentialForm<GitlabCredentialJson>
+                formBody={
+                  <>
+                    <Text>
+                      If you are using GitLab Cloud, keep the default value
+                      below
+                    </Text>
+                    <TextFormField
+                      name="gitlab_url"
+                      label="GitLab URL:"
+                      type="text"
+                      placeholder="https://gitlab.com"
+                    />
 
-                  <TextFormField
-                    name="gitlab_access_token"
-                    label="Access Token:"
-                    type="password"
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                gitlab_url: Yup.string().default("https://gitlab.com"),
-                gitlab_access_token: Yup.string().required(
-                  "Please enter the access token for Gitlab"
-                ),
-              })}
-              initialValues={{
-                gitlab_access_token: "",
-                gitlab_url: "https://gitlab.com",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
+                    <TextFormField
+                      name="gitlab_access_token"
+                      label="Access Token:"
+                      type="password"
+                    />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  gitlab_url: Yup.string().default("https://gitlab.com"),
+                  gitlab_access_token: Yup.string().required(
+                    "Please enter the access token for Gitlab"
+                  ),
+                })}
+                initialValues={{
+                  gitlab_access_token: "",
+                  gitlab_url: "https://gitlab.com",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -201,41 +205,43 @@ const Main = () => {
 
       {gitlabCredential ? (
         <Card className="mt-4">
-          <h2 className="mb-3 font-bold">Connect to a New Project</h2>
-          <ConnectorForm<GitlabConfig>
-            nameBuilder={(values) =>
-              `GitlabConnector-${values.project_owner}/${values.project_name}`
-            }
-            ccPairNameBuilder={(values) =>
-              `${values.project_owner}/${values.project_name}`
-            }
-            source="gitlab"
-            inputType="poll"
-            formBody={
-              <>
-                <TextFormField name="project_owner" label="Project Owner:" />
-                <TextFormField name="project_name" label="Project Name:" />
-              </>
-            }
-            validationSchema={Yup.object().shape({
-              project_owner: Yup.string().required(
-                "Please enter the owner of the project to index"
-              ),
-              project_name: Yup.string().required(
-                "Please enter the name of the project to index"
-              ),
-              include_mrs: Yup.boolean().required(),
-              include_issues: Yup.boolean().required(),
-            })}
-            initialValues={{
-              project_owner: "",
-              project_name: "",
-              include_mrs: true,
-              include_issues: true,
-            }}
-            refreshFreq={10 * 60} // 10 minutes
-            credentialId={gitlabCredential.id}
-          />
+          <CardContent>
+            <h2 className="mb-3 font-bold">Connect to a New Project</h2>
+            <ConnectorForm<GitlabConfig>
+              nameBuilder={(values) =>
+                `GitlabConnector-${values.project_owner}/${values.project_name}`
+              }
+              ccPairNameBuilder={(values) =>
+                `${values.project_owner}/${values.project_name}`
+              }
+              source="gitlab"
+              inputType="poll"
+              formBody={
+                <>
+                  <TextFormField name="project_owner" label="Project Owner:" />
+                  <TextFormField name="project_name" label="Project Name:" />
+                </>
+              }
+              validationSchema={Yup.object().shape({
+                project_owner: Yup.string().required(
+                  "Please enter the owner of the project to index"
+                ),
+                project_name: Yup.string().required(
+                  "Please enter the name of the project to index"
+                ),
+                include_mrs: Yup.boolean().required(),
+                include_issues: Yup.boolean().required(),
+              })}
+              initialValues={{
+                project_owner: "",
+                project_name: "",
+                include_mrs: true,
+                include_issues: true,
+              }}
+              refreshFreq={10 * 60} // 10 minutes
+              credentialId={gitlabCredential.id}
+            />
+          </CardContent>
         </Card>
       ) : (
         <Text>
@@ -251,7 +257,7 @@ const Main = () => {
 export default function Page() {
   return (
     <div className="container mx-auto">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
 

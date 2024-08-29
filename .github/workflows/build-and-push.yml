@@ -62,4 +62,3 @@ jobs:
 
           docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_WEB_REPOSITORY }}:$IMAGE_TAG
           docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_WEB_REPOSITORY }}:latest
-

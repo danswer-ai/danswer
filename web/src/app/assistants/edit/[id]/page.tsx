@@ -1,11 +1,12 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Card, Text, Title } from "@tremor/react";
+import { Text, Title } from "@tremor/react";
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
 import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
 import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { DeletePersonaButton } from "@/app/admin/assistants/[id]/DeletePersonaButton";
 import { LargeBackButton } from "../../LargeBackButton";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const [values, error] = await fetchAssistantEditorInfoSS(params.id);
@@ -23,11 +24,13 @@ export default async function Page({ params }: { params: { id: string } }) {
         <div className="px-32">
           <div className="mx-auto container">
             <Card>
-              <AssistantEditor
-                {...values}
-                defaultPublic={false}
-                redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
-              />
+              <CardContent>
+                <AssistantEditor
+                  {...values}
+                  defaultPublic={false}
+                  redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
+                />
+              </CardContent>
             </Card>
 
             <Title className="mt-12">Delete Assistant</Title>

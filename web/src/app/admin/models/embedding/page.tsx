@@ -3,7 +3,7 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Card, Text, Title } from "@tremor/react";
+import { Text, Title } from "@tremor/react";
 import { FiPackage } from "react-icons/fi";
 import useSWR, { mutate } from "swr";
 import { ModelOption, ModelSelector } from "./ModelSelector";
@@ -22,6 +22,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { Connector, ConnectorIndexingStatus } from "@/lib/types";
 import Link from "next/link";
 import { CustomModelForm } from "./CustomModelForm";
+import { Card, CardContent } from "@/components/ui/card";
 
 function Main() {
   const [tentativeNewEmbeddingModel, setTentativeNewEmbeddingModel] =
@@ -283,7 +284,9 @@ function Main() {
 
             <div className="flex w-full">
               <Card className="mx-auto mt-4 2xl:w-4/6">
-                <CustomModelForm onSubmit={onSelect} />
+                <CardContent>
+                  <CustomModelForm onSubmit={onSelect} />
+                </CardContent>
               </Card>
             </div>
           </div>

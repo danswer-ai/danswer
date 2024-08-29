@@ -1,5 +1,4 @@
-import { Divider } from "@tremor/react";
-import { FiX } from "react-icons/fi";
+import { X } from "lucide-react";
 
 interface ModalProps {
   children: JSX.Element | string;
@@ -26,7 +25,7 @@ export function Modal({
     <div>
       <div
         className={`
-        fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm
+        fixed inset-0 bg-background-inverted bg-opacity-30 backdrop-blur-sm
         flex items-center justify-center z-modal
       `}
         onClick={onOutsideClick}
@@ -45,7 +44,7 @@ export function Modal({
               onClick={onOutsideClick}
               className="absolute top-6 right-6 cursor-pointer"
             >
-              <FiX size={20} />
+              <X size={20} />
             </div>
           )}
           <>
@@ -56,7 +55,7 @@ export function Modal({
                 >
                   {title}
                 </h2>
-                {!hideDividerForTitle && <Divider />}
+                {/*    {!hideDividerForTitle && <Divider />} */}
               </div>
             )}
           </>

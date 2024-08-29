@@ -21,7 +21,8 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Divider, Text, Title, Button } from "@tremor/react";
+import { Divider, Text, Title, Button } from "@tremor/react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -126,47 +127,49 @@ const Main = () => {
             as we are only performing read actions.
           </Text>
           <Card className="mt-4 mb-4">
-            <CredentialForm<ZendeskCredentialJson>
-              formBody={
-                <>
-                  <TextFormField
-                    name="zendesk_subdomain"
-                    label="Zendesk Domain (ie. https://chp.zendesk.com):"
-                  />
-                  <TextFormField
-                    name="zendesk_email"
-                    label="Zendesk User Email:"
-                  />
-                  <TextFormField
-                    name="zendesk_token"
-                    label="Zendesk API Token:"
-                    type="password"
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                zendesk_subdomain: Yup.string().required(
-                  "Please enter the subdomain for your Zendesk instance"
-                ),
-                zendesk_email: Yup.string().required(
-                  "Please enter your user email to user with the token"
-                ),
-                zendesk_token: Yup.string().required(
-                  "Please enter your Zendesk API token"
-                ),
-              })}
-              initialValues={{
-                zendesk_subdomain: "",
-                zendesk_email: "",
-                zendesk_token: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
-                  mutate("/api/manage/admin/connector/indexing-status");
+            <CardContent>
+              <CredentialForm<ZendeskCredentialJson>
+                formBody={
+                  <>
+                    <TextFormField
+                      name="zendesk_subdomain"
+                      label="Zendesk Domain (ie. https://chp.zendesk.com):"
+                    />
+                    <TextFormField
+                      name="zendesk_email"
+                      label="Zendesk User Email:"
+                    />
+                    <TextFormField
+                      name="zendesk_token"
+                      label="Zendesk API Token:"
+                      type="password"
+                    />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  zendesk_subdomain: Yup.string().required(
+                    "Please enter the subdomain for your Zendesk instance"
+                  ),
+                  zendesk_email: Yup.string().required(
+                    "Please enter your user email to user with the token"
+                  ),
+                  zendesk_token: Yup.string().required(
+                    "Please enter your Zendesk API token"
+                  ),
+                })}
+                initialValues={{
+                  zendesk_subdomain: "",
+                  zendesk_email: "",
+                  zendesk_token: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                    mutate("/api/manage/admin/connector/indexing-status");
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -207,22 +210,24 @@ const Main = () => {
       {zendeskCredential && zendeskConnectorIndexingStatuses.length === 0 && (
         <>
           <Card className="mt-4">
-            <h2 className="mb-3 font-bold">Create Connection</h2>
-            <p className="mb-4 text-sm">
-              Press connect below to start the connection to your Zendesk
-              instance.
-            </p>
-            <ConnectorForm<ZendeskConfig>
-              nameBuilder={(values) => `ZendeskConnector`}
-              ccPairNameBuilder={(values) => `ZendeskConnector`}
-              source="zendesk"
-              inputType="poll"
-              formBody={<></>}
-              validationSchema={Yup.object().shape({})}
-              initialValues={{}}
-              refreshFreq={10 * 60} // 10 minutes
-              credentialId={zendeskCredential.id}
-            />
+            <CardContent>
+              <h2 className="mb-3 font-bold">Create Connection</h2>
+              <p className="mb-4 text-sm">
+                Press connect below to start the connection to your Zendesk
+                instance.
+              </p>
+              <ConnectorForm<ZendeskConfig>
+                nameBuilder={(values) => `ZendeskConnector`}
+                ccPairNameBuilder={(values) => `ZendeskConnector`}
+                source="zendesk"
+                inputType="poll"
+                formBody={<></>}
+                validationSchema={Yup.object().shape({})}
+                initialValues={{}}
+                refreshFreq={10 * 60} // 10 minutes
+                credentialId={zendeskCredential.id}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -243,7 +248,7 @@ const Main = () => {
 export default function Page() {
   return (
     <div className="container mx-auto">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
 

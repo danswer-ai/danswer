@@ -21,7 +21,8 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Divider, Text, Title, Button } from "@tremor/react";
+import { Divider, Text, Title, Button } from "@tremor/react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -131,29 +132,31 @@ const Main = () => {
             using the new integration.
           </Text>
           <Card className="mt-2 mb-4">
-            <CredentialForm<NotionCredentialJson>
-              formBody={
-                <TextFormField
-                  name="notion_integration_token"
-                  label="Integration Token:"
-                  type="password"
-                />
-              }
-              validationSchema={Yup.object().shape({
-                notion_integration_token: Yup.string().required(
-                  "Please enter the Notion Integration token for the enMedD AI integration."
-                ),
-              })}
-              initialValues={{
-                notion_integration_token: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
-                  mutate("/api/manage/admin/connector/indexing-status");
+            <CardContent>
+              <CredentialForm<NotionCredentialJson>
+                formBody={
+                  <TextFormField
+                    name="notion_integration_token"
+                    label="Integration Token:"
+                    type="password"
+                  />
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  notion_integration_token: Yup.string().required(
+                    "Please enter the Notion Integration token for the enMedD AI integration."
+                  ),
+                })}
+                initialValues={{
+                  notion_integration_token: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                    mutate("/api/manage/admin/connector/indexing-status");
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -204,43 +207,47 @@ const Main = () => {
       {notionCredential && (
         <>
           <Card className="mt-4">
-            <h2 className="mb-1 font-bold">Create New Connection</h2>
-            <p className="mb-4 text-sm">
-              Press connect below to start the connection to Notion.
-            </p>
-            <ConnectorForm<NotionConfig>
-              nameBuilder={(values) =>
-                values.root_page_id
-                  ? `NotionConnector-${values.root_page_id}`
-                  : "NotionConnector"
-              }
-              ccPairNameBuilder={(values) =>
-                values.root_page_id ? `Notion-${values.root_page_id}` : "Notion"
-              }
-              source="notion"
-              inputType="poll"
-              formBody={
-                <>
-                  <TextFormField
-                    name="root_page_id"
-                    label="[Optional] Root Page ID"
-                    subtext={
-                      "If specified, will only index the specified page + all of its child pages. " +
-                      "If left blank, will index all pages the integration has been given access to."
-                    }
-                    autoCompleteDisabled={true}
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                root_page_id: Yup.string(),
-              })}
-              initialValues={{
-                root_page_id: "",
-              }}
-              refreshFreq={10 * 60} // 10 minutes
-              credentialId={notionCredential.id}
-            />
+            <CardContent>
+              <h2 className="mb-1 font-bold">Create New Connection</h2>
+              <p className="mb-4 text-sm">
+                Press connect below to start the connection to Notion.
+              </p>
+              <ConnectorForm<NotionConfig>
+                nameBuilder={(values) =>
+                  values.root_page_id
+                    ? `NotionConnector-${values.root_page_id}`
+                    : "NotionConnector"
+                }
+                ccPairNameBuilder={(values) =>
+                  values.root_page_id
+                    ? `Notion-${values.root_page_id}`
+                    : "Notion"
+                }
+                source="notion"
+                inputType="poll"
+                formBody={
+                  <>
+                    <TextFormField
+                      name="root_page_id"
+                      label="[Optional] Root Page ID"
+                      subtext={
+                        "If specified, will only index the specified page + all of its child pages. " +
+                        "If left blank, will index all pages the integration has been given access to."
+                      }
+                      autoCompleteDisabled={true}
+                    />
+                  </>
+                }
+                validationSchema={Yup.object().shape({
+                  root_page_id: Yup.string(),
+                })}
+                initialValues={{
+                  root_page_id: "",
+                }}
+                refreshFreq={10 * 60} // 10 minutes
+                credentialId={notionCredential.id}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -261,7 +268,7 @@ const Main = () => {
 export default function Page() {
   return (
     <div className="container mx-auto">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
 

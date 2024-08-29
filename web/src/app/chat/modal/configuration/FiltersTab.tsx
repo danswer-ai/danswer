@@ -2,13 +2,13 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { FilterManager } from "@/lib/hooks";
 import { listSourceMetadata } from "@/lib/sources";
 import { useRef, useState } from "react";
-import { Divider, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Bubble } from "@/components/Bubble";
 import { FiX } from "react-icons/fi";
-import { DatePicker } from "./DatePicker";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { FilterDatePicker } from "./FilterDatePicker";
 
 export function FiltersTab({
   filterManager,
@@ -37,7 +37,7 @@ export function FiltersTab({
               selected, will only search after the specified date.
             </Text>
             <div className="mt-2">
-              <DatePicker />
+              <FilterDatePicker filterManager={filterManager} />
             </div>
           </div>
 

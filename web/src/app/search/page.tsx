@@ -23,7 +23,7 @@ import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingM
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
-import { Bar } from "./bar";
+import { Bar } from "@/components/Bar";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -171,7 +171,7 @@ export default async function Home() {
 
       <InstantSSRAutoRefresh />
 
-      <div className="w-full pt-20 lg:pt-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 h-screen overflow-hidden">
+      <div className="container pt-20 lg:pt-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 h-screen overflow-hidden">
         <SearchSection
           ccPairs={ccPairs}
           documentSets={documentSets}

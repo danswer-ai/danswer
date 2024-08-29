@@ -6,7 +6,6 @@ export function NavigationButton({
   return (
     <div
       className="
-        text-default
         py-2
         px-4
         rounded-full

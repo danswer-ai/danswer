@@ -3,7 +3,7 @@ import { containsObject, objectsAreEquivalent } from "@/lib/contains";
 import { Tag } from "@/lib/types";
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { FiTag, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 
 export function TagFilter({
   tags,

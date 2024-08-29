@@ -16,6 +16,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label as ShadcnLabel } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function SectionHeader({
   children,
@@ -30,7 +37,7 @@ export function Label({ children }: { children: string | JSX.Element }) {
 }
 
 export function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <div className="text-sm text-subtle mb-2">{children}</div>;
+  return <span className="text-sm text-subtle mb-2">{children}</span>;
 }
 
 export function ManualErrorMessage({ children }: { children: string }) {
@@ -76,8 +83,8 @@ export function TextFormField({
   }
 
   return (
-    <div className="mb-4 grid gap-2">
-      <div className="grid gap-1.5 leading-none">
+    <div className="grid gap-2 pb-4">
+      <div className="grid gap-0.5 leading-none">
         <ShadcnLabel
           htmlFor={label}
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -284,14 +291,31 @@ export function SelectorFormField({
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <div className="mt-2">
-        <DefaultDropdown
-          options={options}
-          selected={field.value}
-          onSelect={onSelect || ((selected) => setFieldValue(name, selected))}
-          includeDefault={includeDefault}
-          side={side}
-          maxHeight={maxHeight}
-        />
+        <Select
+          value={field.value || ""}
+          onValueChange={(selected) => {
+            if (onSelect) {
+              onSelect(selected);
+            } else {
+              setFieldValue(name, selected);
+            }
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select an option" />
+          </SelectTrigger>
+          <SelectContent>
+            {includeDefault && <SelectItem value="default">Default</SelectItem>}
+            {options.map((option) => (
+              <SelectItem
+                key={String(option.value)}
+                value={String(option.value)}
+              >
+                {option.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <ErrorMessage

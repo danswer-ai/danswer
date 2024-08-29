@@ -141,7 +141,7 @@ export function AssistantSharingModal({
             {sharedStatus}
           </div>
 
-          <h3 className="text-default font-bold mb-4 mt-3">Share Assistant:</h3>
+          <h3 className="ault font-bold mb-4 mt-3">Share Assistant:</h3>
           <div className="mt-4">
             <SearchMultiSelectDropdown
               options={allUsers

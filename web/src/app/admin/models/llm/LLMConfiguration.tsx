@@ -4,7 +4,7 @@ import { Modal } from "@/components/Modal";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { useState } from "react";
 import useSWR from "swr";
-import { Callout, Text, Title } from "@tremor/react";
+import { Callout } from "@tremor/react";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
@@ -71,7 +71,7 @@ function DefaultLLMProviderDisplay({
   return (
     <div>
       {popup}
-      <div className="flex p-3 border rounded shadow-md border-border md:w-96">
+      <div className="flex p-3 border rounded shadow-sm border-border md:w-96">
         <div className="my-auto">
           <div className="font-bold">{providerName} </div>
         </div>
@@ -137,16 +137,16 @@ export function LLMConfiguration() {
 
   return (
     <>
-      <Title className="mb-2">Enabled LLM Providers</Title>
+      <h3 className="pb-5 font-semibold">Enabled LLM Providers</h3>
 
       {existingLlmProviders.length > 0 ? (
         <>
-          <Text className="mb-4">
+          <p className="pb-4">
             If multiple LLM providers are enabled, the default provider will be
             used for all &quot;Default&quot; Assistants. For user-created
             Assistants, you can select the LLM provider/model that best fits the
             use case!
-          </Text>
+          </p>
           <ConfiguredLLMProviderDisplay
             existingLlmProviders={existingLlmProviders}
             llmProviderDescriptors={llmProviderDescriptors}
@@ -158,11 +158,11 @@ export function LLMConfiguration() {
         </Callout>
       )}
 
-      <Title className="mt-6 mb-2">Add LLM Provider</Title>
-      <Text className="mb-4">
+      <h3 className="pb-5 font-semibold">Add LLM Provider</h3>
+      <p className="pb-4">
         Add a new LLM provider by either selecting from one of the default
         providers or by specifying your own custom LLM provider.
-      </Text>
+      </p>
 
       <div className="flex flex-col gap-y-4">
         {llmProviderDescriptors.map((llmProviderDescriptor) => {

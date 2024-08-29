@@ -9,12 +9,13 @@ import {
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
 import { useState } from "react";
-import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
 import { destructureValue } from "./llm/utils";
 import { ChatSession } from "@/app/chat/interfaces";
 import { UsersResponse } from "./users/interfaces";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { DateRange } from "react-day-picker";
+import { DateRangePickerValue } from "@tremor/react";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -80,7 +81,21 @@ export const useConnectorCredentialIndexingStatus = (
     refreshIndexingStatus: () => mutate(INDEXING_STATUS_URL),
   };
 };
+/* 
+export const useTimeRange = (initialValue?: DateRange) => {
+  return useState<DateRange | null>(initialValue ?? null);
+};
 
+export interface FilterManager {
+  timeRange: DateRange | null;
+  setTimeRange: React.Dispatch<React.SetStateAction<DateRange | null>>;
+  selectedSources: SourceMetadata[];
+  setSelectedSources: React.Dispatch<React.SetStateAction<SourceMetadata[]>>;
+  selectedDocumentSets: string[];
+  setSelectedDocumentSets: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedTags: Tag[];
+  setSelectedTags: React.Dispatch<React.SetStateAction<Tag[]>>;
+} */
 export const useTimeRange = (initialValue?: DateRangePickerValue) => {
   return useState<DateRangePickerValue | null>(null);
 };

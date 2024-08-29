@@ -1,20 +1,20 @@
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-  Button,
-} from "@tremor/react";
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import CenteredPageSelector from "./CenteredPageSelector";
 import { type PageSelectorProps } from "@/components/PageSelector";
 import useSWR from "swr";
 import { type User, UserStatus } from "@/lib/types";
 import useSWRMutation from "swr/mutation";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   users: Array<User>;
@@ -37,7 +37,10 @@ const RemoveUserButton = ({
     { onSuccess, onError }
   );
   return (
-    <Button onClick={() => trigger({ user_email: user.email })}>
+    <Button
+      variant="outline"
+      onClick={() => trigger({ user_email: user.email })}
+    >
       Uninivite User
     </Button>
   );
@@ -69,15 +72,15 @@ const InvitedUserTable = ({
 
   return (
     <>
-      <Table className="overflow-visible">
-        <TableHead>
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableHeaderCell>Email</TableHeaderCell>
-            <TableHeaderCell>
+            <TableHead>Email</TableHead>
+            <TableHead>
               <div className="flex justify-end">Actions</div>
-            </TableHeaderCell>
+            </TableHead>
           </TableRow>
-        </TableHead>
+        </TableHeader>
         <TableBody>
           {users.map((user) => (
             <TableRow key={user.email}>

@@ -10,7 +10,6 @@ import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import React, { useState, useEffect } from "react";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
-import { Button } from "@tremor/react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -20,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label as ShadcnLabel } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 function CheckboxComponent({
   label,
@@ -110,9 +111,9 @@ function IntegerInput({
     <label className="flex flex-col text-sm mb-4">
       <Label>{label}</Label>
       <SubLabel>{sublabel}</SubLabel>
-      <input
+      <Input
         type="number"
-        className="mt-1 p-2 border rounded w-full max-w-xs"
+        className="w-full max-w-xs"
         value={value ?? ""}
         onChange={onChange}
         min="1"
@@ -279,15 +280,10 @@ export function SettingsForm() {
             id="chatRetentionInput"
             placeholder="Infinite Retention"
           />
-          <Button
-            onClick={handleSetChatRetention}
-            color="green"
-            size="xs"
-            className="mr-3"
-          >
+          <Button onClick={handleSetChatRetention} className="mr-3">
             Set Retention Limit
           </Button>
-          <Button onClick={handleClearChatRetention} color="blue" size="xs">
+          <Button onClick={handleClearChatRetention} variant="outline">
             Retain All
           </Button>
         </>

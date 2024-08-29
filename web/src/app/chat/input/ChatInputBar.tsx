@@ -19,7 +19,10 @@ import {
   Info,
   CirclePlus,
   X,
+  Filter,
+  Sparkles,
 } from "lucide-react";
+import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -41,6 +44,7 @@ export function ChatInputBar({
   setConfigModalActiveTab,
   textAreaRef,
   alternativeAssistant,
+  activeTab,
 }: {
   onSetSelectedAssistant: (alternativeAssistant: Persona | null) => void;
   personas: Persona[];
@@ -59,6 +63,7 @@ export function ChatInputBar({
   handleFileUpload: (files: File[]) => void;
   setConfigModalActiveTab: (tab: string) => void;
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
+  activeTab: string | null;
 }) {
   // handle re-sizing of the text area
 
@@ -198,37 +203,62 @@ export function ChatInputBar({
     }
   };
 
+  const divRef = useRef<HTMLDivElement>(null);
   const [isShowing, setIsShowing] = useState(false);
 
   const handleShowTools = () => {
     setIsShowing(!isShowing);
   };
 
+  const handleClickOutside = (event: MouseEvent) => {
+    if (divRef.current && !divRef.current.contains(event.target as Node)) {
+      setIsShowing(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div>
       <div className="flex justify-center items-center max-w-full mx-auto mb-2 px-5 2xl:px-0">
         <div
-          className={`flex md:hidden items-center trasition-[width] ease-in-out duration-500 ${
+          ref={divRef}
+          className={`flex md:hidden items-center trasition-all ease-in-out duration-500 ${
             isShowing ? "w-[200px]" : "w-10"
           }`}
         >
           <CirclePlus
             size={24}
-            className="mr-4 min-w-6"
+            className="mr-4 min-w-6 min-h-6"
             onClick={handleShowTools}
           />
           <Cpu
             size={24}
-            onClick={() => setConfigModalActiveTab("assistants")}
-            className="mr-4"
+            onClick={() => setConfigModalActiveTab("assistant")}
+            className="mr-4 min-w-6 min-h-6"
+          />
+          {/* <Sparkles
+            size={24}
+            onClick={() => setConfigModalActiveTab("models")}
+            className="mr-4 min-w-6 min-h-6"
+          /> */}
+          <Filter
+            size={24}
+            onClick={() => setConfigModalActiveTab("filters")}
+            className="mr-4 min-w-6 min-h-6"
           />
           <Paperclip
             size={24}
-            className="mr-4"
+            className="mr-4 min-w-6 min-h-6"
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file";
-              input.multiple = true; // Allow multiple files
+              input.multiple = true;
               input.onchange = (event: any) => {
                 const files = Array.from(event?.target?.files || []) as File[];
                 if (files.length > 0) {
@@ -238,8 +268,6 @@ export function ChatInputBar({
               input.click();
             }}
           />
-          <ImagePlus size={24} className="mr-4" />
-          <Mic size={24} className="mr-4" />
         </div>
         <div className="relative w-full mx-auto shrink 2xl:w-searchbar 3xl:px-0">
           {showSuggestions && filteredPersonas.length > 0 && (
@@ -297,6 +325,10 @@ export function ChatInputBar({
             <Send size={16} />
           </Button>
 
+          <div>
+            <SelectedFilterDisplay filterManager={filterManager} />
+          </div>
+
           <div
             className="
                 opacity-100
@@ -304,16 +336,14 @@ export function ChatInputBar({
                 h-fit
                 flex
                 flex-col
-                border
-                border-input-colored
                 rounded-xl
                 overflow-hidden
                 bg-background
                 [&:has(textarea:focus)]::ring-1
                 [&:has(textarea:focus)]::ring-black
-                shadow-sm
                 px-4
                 lg:px-6
+                border
               "
           >
             {alternativeAssistant && (
@@ -391,6 +421,8 @@ export function ChatInputBar({
                   py-3
                   xl:py-6
                   pr-10
+                  min-h-10
+                  md:min-h-[72px]
                   ${
                     textAreaRef.current &&
                     textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT
@@ -402,7 +434,7 @@ export function ChatInputBar({
                   break-word
                   overscroll-contain
                   outline-none
-                  placeholder-subtle
+                  placeholder:text-subtle
                   resize-none
                   placeholder:text-nowrap
                   placeholder:text-ellipsis
@@ -426,15 +458,35 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="hidden md:flex items-center justify-between py-5 overflow-hidden border-t border-border-light">
+            <div className="hidden md:flex items-center justify-between py-4 overflow-hidden border-t border-border-light">
               <div className="flex w-auto items-center">
                 <Button
-                  onClick={() => setConfigModalActiveTab("assistants")}
-                  variant="outline"
-                  className="mr-2"
+                  onClick={() => setConfigModalActiveTab("assistant")}
+                  variant="ghost"
+                  className="mr-2 border"
                 >
                   <Cpu size={16} />
-                  {selectedAssistant?.name}
+                  {selectedAssistant ? selectedAssistant.name : "Assistants"}
+                </Button>
+
+                {/* <Button
+                  onClick={() => setConfigModalActiveTab("models")}
+                  variant="ghost"
+                  className="mr-2"
+                >
+                  <Sparkles size={16} />
+                  {llmOverrideManager.llmOverride.modelName ||
+                    (selectedAssistant
+                      ? selectedAssistant.llm_model_version_override || llmName
+                      : llmName)}
+                </Button> */}
+                <Button
+                  onClick={() => setConfigModalActiveTab("filters")}
+                  variant="ghost"
+                  className="mr-2"
+                >
+                  <Filter size={16} />
+                  Filters
                 </Button>
 
                 <Button
@@ -454,15 +506,8 @@ export function ChatInputBar({
                   }}
                   variant="ghost"
                 >
-                  <Paperclip size={20} className="text-primary" />
-                </Button>
-
-                <Button variant="ghost">
-                  <ImagePlus size={20} className="text-primary" />
-                </Button>
-
-                <Button variant="ghost">
-                  <Mic size={20} className="text-primary" />
+                  <Paperclip size={16} />
+                  File
                 </Button>
               </div>
               <div>

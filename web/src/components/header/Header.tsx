@@ -2,7 +2,7 @@
 
 import { User } from "@/lib/types";
 import Link from "next/link";
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 
 import { FiMenu, FiMessageSquare, FiSearch } from "react-icons/fi";
 import { HeaderWrapper } from "./HeaderWrapper";
@@ -24,7 +24,6 @@ interface HeaderProps {
 }
 
 export function Header({ user }: HeaderProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -32,19 +31,10 @@ export function Header({ user }: HeaderProps) {
   const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
 
-  const handleClose = () => {
-    setIsMenuOpen(false);
-  };
-
   return (
     <HeaderWrapper>
       <div className="flex items-center h-full">
-        <FiMenu
-          size={18}
-          className="mr-6 lg:hidden"
-          onClick={() => setIsMenuOpen(true)}
-        />
-        {isMenuOpen && <SideBar isHeader handleClose={handleClose} />}
+        <SideBar />
         <Link
           className="flex flex-col py-3"
           href={

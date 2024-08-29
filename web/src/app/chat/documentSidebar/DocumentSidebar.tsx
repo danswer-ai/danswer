@@ -2,12 +2,11 @@ import { EnmeddDocument } from "@/lib/search/interfaces";
 import { Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { FiFileText } from "react-icons/fi";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { Message, RetrievalType } from "../interfaces";
 import { ForwardedRef, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
-import { PanelRightClose } from "lucide-react";
+import { FileText, PanelRightClose } from "lucide-react";
 
 function SectionHeader({
   name,
@@ -15,7 +14,7 @@ function SectionHeader({
   closeHeader,
 }: {
   name: string;
-  icon: React.FC<{ className: string }>;
+  icon?: boolean;
   closeHeader?: () => void;
 }) {
   return (
@@ -24,7 +23,7 @@ function SectionHeader({
     >
       <div className="flex justify-between w-full mt-auto items-center pb-3.5">
         <p className="flex truncate text-dark-900">
-          {icon({ className: "my-auto mr-1" })}
+          {icon && <FileText size={24} className="my-auto mr-2" />}
           {name}
         </p>
         {closeHeader && (
@@ -107,12 +106,12 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                     ? "Referenced Documents"
                     : "Retrieved Sources"
                 }
-                icon={FiFileText}
+                icon
                 closeHeader={closeSidebar}
               />
             </div>
             {currentDocuments ? (
-              <div className="flex flex-col overflow-y-auto dark-scrollbar p-6 pb-0 mb-6">
+              <div className="flex flex-col overflow-y-auto dark-scrollbar p-6 pb-0">
                 <div>
                   {dedupedDocuments.length > 0 ? (
                     dedupedDocuments.map((document, ind) => (
@@ -144,7 +143,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                     ))
                   ) : (
                     <div>
-                      <Text>No documents found for the query.</Text>
+                      <p>No documents found for the query.</p>
                     </div>
                   )}
                 </div>
@@ -152,10 +151,10 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             ) : (
               !isLoading && (
                 <div className="p-6">
-                  <Text>
+                  <p>
                     When you run ask a question, the retrieved documents will
                     show up here!
-                  </Text>
+                  </p>
                 </div>
               )
             )}

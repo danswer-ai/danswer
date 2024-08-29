@@ -23,7 +23,8 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Text, Title, Button } from "@tremor/react";
+import { Text, Title, Button } from "@tremor/react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -127,46 +128,48 @@ const MainSection = () => {
             to create an Azure AD application and obtain these values.
           </Text>
           <Card className="mt-2">
-            <CredentialForm<SharepointCredentialJson>
-              formBody={
-                <>
-                  <TextFormField
-                    name="sp_client_id"
-                    label="Application (client) ID:"
-                  />
-                  <TextFormField
-                    name="sp_directory_id"
-                    label="Directory (tenant) ID:"
-                  />
-                  <TextFormField
-                    name="sp_client_secret"
-                    label="Client Secret:"
-                    type="password"
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                sp_client_id: Yup.string().required(
-                  "Please enter your Application (client) ID"
-                ),
-                sp_directory_id: Yup.string().required(
-                  "Please enter your Directory (tenant) ID"
-                ),
-                sp_client_secret: Yup.string().required(
-                  "Please enter your Client Secret"
-                ),
-              })}
-              initialValues={{
-                sp_client_id: "",
-                sp_directory_id: "",
-                sp_client_secret: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
+            <CardContent>
+              <CredentialForm<SharepointCredentialJson>
+                formBody={
+                  <>
+                    <TextFormField
+                      name="sp_client_id"
+                      label="Application (client) ID:"
+                    />
+                    <TextFormField
+                      name="sp_directory_id"
+                      label="Directory (tenant) ID:"
+                    />
+                    <TextFormField
+                      name="sp_client_secret"
+                      label="Client Secret:"
+                      type="password"
+                    />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  sp_client_id: Yup.string().required(
+                    "Please enter your Application (client) ID"
+                  ),
+                  sp_directory_id: Yup.string().required(
+                    "Please enter your Directory (tenant) ID"
+                  ),
+                  sp_client_secret: Yup.string().required(
+                    "Please enter your Client Secret"
+                  ),
+                })}
+                initialValues={{
+                  sp_client_id: "",
+                  sp_directory_id: "",
+                  sp_client_secret: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -217,47 +220,49 @@ const MainSection = () => {
 
       {sharepointCredential ? (
         <Card className="mt-4">
-          <ConnectorForm<SharepointConfig>
-            nameBuilder={(values) =>
-              values.sites && values.sites.length > 0
-                ? `Sharepoint-${values.sites.join("-")}`
-                : "Sharepoint"
-            }
-            ccPairNameBuilder={(values) =>
-              values.sites && values.sites.length > 0
-                ? `Sharepoint-${values.sites.join("-")}`
-                : "Sharepoint"
-            }
-            source="sharepoint"
-            inputType="poll"
-            // formBody={<></>}
-            formBodyBuilder={TextArrayFieldBuilder({
-              name: "sites",
-              label: "Sites:",
-              subtext: (
-                <>
-                  <br />
-                  <ul>
-                    <li>
-                      • If no sites are specified, all sites in your
-                      organization will be indexed (Sites.Read.All permission
-                      required).
-                    </li>
-                  </ul>
-                </>
-              ),
-            })}
-            validationSchema={Yup.object().shape({
-              sites: Yup.array()
-                .of(Yup.string().required("Site names must be strings"))
-                .required(),
-            })}
-            initialValues={{
-              sites: [],
-            }}
-            credentialId={sharepointCredential.id}
-            refreshFreq={10 * 60} // 10 minutes
-          />
+          <CardContent>
+            <ConnectorForm<SharepointConfig>
+              nameBuilder={(values) =>
+                values.sites && values.sites.length > 0
+                  ? `Sharepoint-${values.sites.join("-")}`
+                  : "Sharepoint"
+              }
+              ccPairNameBuilder={(values) =>
+                values.sites && values.sites.length > 0
+                  ? `Sharepoint-${values.sites.join("-")}`
+                  : "Sharepoint"
+              }
+              source="sharepoint"
+              inputType="poll"
+              // formBody={<></>}
+              formBodyBuilder={TextArrayFieldBuilder({
+                name: "sites",
+                label: "Sites:",
+                subtext: (
+                  <>
+                    <br />
+                    <ul>
+                      <li>
+                        • If no sites are specified, all sites in your
+                        organization will be indexed (Sites.Read.All permission
+                        required).
+                      </li>
+                    </ul>
+                  </>
+                ),
+              })}
+              validationSchema={Yup.object().shape({
+                sites: Yup.array()
+                  .of(Yup.string().required("Site names must be strings"))
+                  .required(),
+              })}
+              initialValues={{
+                sites: [],
+              }}
+              credentialId={sharepointCredential.id}
+              refreshFreq={10 * 60} // 10 minutes
+            />
+          </CardContent>
         </Card>
       ) : (
         <Text>
@@ -273,7 +278,7 @@ const MainSection = () => {
 export default function Page() {
   return (
     <div className="container mx-auto">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
 

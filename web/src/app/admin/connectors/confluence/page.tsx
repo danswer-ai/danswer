@@ -20,8 +20,9 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
-import { Card, Divider, Text, Title, Button } from "@tremor/react";
+import { Divider, Text, Title, Button } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, CardContent } from "@/components/ui/card";
 
 const extractSpaceFromCloudUrl = (wikiUrl: string): string => {
   const parsedUrl = new URL(wikiUrl);
@@ -161,35 +162,40 @@ const Main = () => {
             to generate an Access Token.
           </Text>
           <Card className="mt-4">
-            <CredentialForm<ConfluenceCredentialJson>
-              formBody={
-                <>
-                  <TextFormField name="confluence_username" label="Username:" />
-                  <TextFormField
-                    name="confluence_access_token"
-                    label="Access Token:"
-                    type="password"
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                confluence_username: Yup.string().required(
-                  "Please enter your username on Confluence"
-                ),
-                confluence_access_token: Yup.string().required(
-                  "Please enter your Confluence access token"
-                ),
-              })}
-              initialValues={{
-                confluence_username: "",
-                confluence_access_token: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
+            <CardContent>
+              <CredentialForm<ConfluenceCredentialJson>
+                formBody={
+                  <>
+                    <TextFormField
+                      name="confluence_username"
+                      label="Username:"
+                    />
+                    <TextFormField
+                      name="confluence_access_token"
+                      label="Access Token:"
+                      type="password"
+                    />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  confluence_username: Yup.string().required(
+                    "Please enter your username on Confluence"
+                  ),
+                  confluence_access_token: Yup.string().required(
+                    "Please enter your Confluence access token"
+                  ),
+                })}
+                initialValues={{
+                  confluence_username: "",
+                  confluence_access_token: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -271,32 +277,37 @@ const Main = () => {
           )}
 
           <Card className="mt-4">
-            <h2 className="mb-3 font-bold">Add a New Space</h2>
-            <ConnectorForm<ConfluenceConfig>
-              nameBuilder={(values) =>
-                `ConfluenceConnector-${values.wiki_page_url}`
-              }
-              ccPairNameBuilder={(values) =>
-                extractSpaceFromUrl(values.wiki_page_url)
-              }
-              source="confluence"
-              inputType="poll"
-              formBody={
-                <>
-                  <TextFormField name="wiki_page_url" label="Confluence URL:" />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                wiki_page_url: Yup.string().required(
-                  "Please enter any link to your confluence"
-                ),
-              })}
-              initialValues={{
-                wiki_page_url: "",
-              }}
-              refreshFreq={10 * 60} // 10 minutes
-              credentialId={confluenceCredential.id}
-            />
+            <CardContent>
+              <h2 className="mb-3 font-bold">Add a New Space</h2>
+              <ConnectorForm<ConfluenceConfig>
+                nameBuilder={(values) =>
+                  `ConfluenceConnector-${values.wiki_page_url}`
+                }
+                ccPairNameBuilder={(values) =>
+                  extractSpaceFromUrl(values.wiki_page_url)
+                }
+                source="confluence"
+                inputType="poll"
+                formBody={
+                  <>
+                    <TextFormField
+                      name="wiki_page_url"
+                      label="Confluence URL:"
+                    />
+                  </>
+                }
+                validationSchema={Yup.object().shape({
+                  wiki_page_url: Yup.string().required(
+                    "Please enter any link to your confluence"
+                  ),
+                })}
+                initialValues={{
+                  wiki_page_url: "",
+                }}
+                refreshFreq={10 * 60} // 10 minutes
+                credentialId={confluenceCredential.id}
+              />
+            </CardContent>
           </Card>
         </>
       ) : (
@@ -313,7 +324,7 @@ const Main = () => {
 export default function Page() {
   return (
     <div className="container mx-auto">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
 

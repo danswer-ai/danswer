@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { FiEdit2 } from "react-icons/fi";
 import { CheckmarkIcon } from "./icons/icons";
+import { Pencil } from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 export function EditableValue({
   initialValue,
@@ -20,8 +22,8 @@ export function EditableValue({
 
   if (isOpen) {
     return (
-      <div className="my-auto h-full flex">
-        <input
+      <div className="my-auto h-full flex items-center gap-2">
+        <Input
           value={editedValue}
           onChange={(e) => {
             setEditedValue(e.target.value);
@@ -38,36 +40,30 @@ export function EditableValue({
               onSubmit(initialValue);
             }
           }}
-          className="border bg-background-strong border-gray-300 rounded py-1 px-1 w-12 h-4 my-auto"
+          className="w-12 h-8"
         />
-        <div
+        <Button
           onClick={async () => {
             const success = await onSubmit(editedValue);
             if (success) {
               setIsOpen(false);
             }
           }}
-          className="cursor-pointer my-auto ml-2"
+          variant="ghost"
+          size="smallIcon"
         >
           <CheckmarkIcon size={16} className="text-green-700" />
-        </div>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div
-        className="flex my-auto cursor-pointer hover:bg-hover rounded"
-        onClick={() => setIsOpen(true)}
-      >
-        <div className={"flex " + (consistentWidth && " w-6")}>
-          <div className="ml-auto my-auto">{initialValue || emptyDisplay}</div>
-        </div>
-        <div className="cursor-pointer ml-2 my-auto h-4">
-          <FiEdit2 size={16} />
-        </div>
-      </div>
+    <div className="flex items-center gap-2">
+      <span>{initialValue || emptyDisplay}</span>
+      <Button onClick={() => setIsOpen(true)} variant="ghost" size="icon">
+        <Pencil size={14} />
+      </Button>
     </div>
   );
 }

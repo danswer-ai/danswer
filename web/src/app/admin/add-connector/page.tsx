@@ -43,7 +43,7 @@ function SourceTile({
             />
           </div>
         }
-        style="bg-primary border-none text-white"
+        style="bg-primary border-none text-inverted"
       >
         {sourceMetadata.displayName}
       </CustomTooltip>

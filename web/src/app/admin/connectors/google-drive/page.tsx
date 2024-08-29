@@ -15,7 +15,6 @@ import {
   GoogleDriveCredentialJson,
   GoogleDriveServiceAccountCredentialJson,
 } from "@/lib/types";
-import { linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import {
   BooleanFormField,
@@ -26,7 +25,8 @@ import { googleDriveConnectorNameBuilder } from "./utils";
 import { DriveOAuthSection, DriveJsonUploadSection } from "./Credential";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Card, Divider, Text, Title } from "@tremor/react";
+import { Divider, Text, Title } from "@tremor/react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface GoogleDriveConnectorManagementProps {
   googleDrivePublicCredential?: Credential<GoogleDriveCredentialJson>;
@@ -190,70 +190,72 @@ const GoogleDriveConnectorManagement = ({
         <h2 className="font-bold mt-3 text-sm">Add New Connector:</h2>
       )}
       <Card className="mt-4">
-        <ConnectorForm<GoogleDriveConfig>
-          nameBuilder={googleDriveConnectorNameBuilder}
-          source="google_drive"
-          inputType="poll"
-          formBodyBuilder={(values) => (
-            <>
-              {TextArrayFieldBuilder({
-                name: "folder_paths",
-                label: "Folder Paths",
-                subtext:
-                  "Specify 0 or more folder paths to index! For example, specifying the path " +
-                  "'Engineering/Materials' will cause us to only index all files contained " +
-                  "within the 'Materials' folder within the 'Engineering' folder. " +
-                  "If no folder paths are specified, we will index all documents in your drive.",
-              })(values)}
-              <BooleanFormField
-                name="include_shared"
-                label="Include Shared Files + Shared Drives"
-                subtext={
-                  "If checked, then we will also index all documents + drives shared with you. " +
-                  "If this is combined with folder paths, then we will only index documents " +
-                  "that match both criteria."
-                }
-              />
-              <BooleanFormField
-                name="follow_shortcuts"
-                label="Follow Shortcuts"
-                subtext={
-                  "If checked, then will follow shortcuts to files and folder and " +
-                  "attempt to index those as well."
-                }
-              />
-              <BooleanFormField
-                name="only_org_public"
-                label="Only Org-Wide Public Docs"
-                subtext={
-                  "If checked, then only documents that are shared to the entire organization " +
-                  "are included. Note: if you have multiple orgs, this check will pass for docs " +
-                  "shared with any of the orgs."
-                }
-              />
-            </>
-          )}
-          validationSchema={Yup.object().shape({
-            folder_paths: Yup.array()
-              .of(
-                Yup.string().required(
-                  "Please specify a folder path for your google drive e.g. 'Engineering/Materials'"
+        <CardContent>
+          <ConnectorForm<GoogleDriveConfig>
+            nameBuilder={googleDriveConnectorNameBuilder}
+            source="google_drive"
+            inputType="poll"
+            formBodyBuilder={(values) => (
+              <>
+                {TextArrayFieldBuilder({
+                  name: "folder_paths",
+                  label: "Folder Paths",
+                  subtext:
+                    "Specify 0 or more folder paths to index! For example, specifying the path " +
+                    "'Engineering/Materials' will cause us to only index all files contained " +
+                    "within the 'Materials' folder within the 'Engineering' folder. " +
+                    "If no folder paths are specified, we will index all documents in your drive.",
+                })(values)}
+                <BooleanFormField
+                  name="include_shared"
+                  label="Include Shared Files + Shared Drives"
+                  subtext={
+                    "If checked, then we will also index all documents + drives shared with you. " +
+                    "If this is combined with folder paths, then we will only index documents " +
+                    "that match both criteria."
+                  }
+                />
+                <BooleanFormField
+                  name="follow_shortcuts"
+                  label="Follow Shortcuts"
+                  subtext={
+                    "If checked, then will follow shortcuts to files and folder and " +
+                    "attempt to index those as well."
+                  }
+                />
+                <BooleanFormField
+                  name="only_org_public"
+                  label="Only Org-Wide Public Docs"
+                  subtext={
+                    "If checked, then only documents that are shared to the entire organization " +
+                    "are included. Note: if you have multiple orgs, this check will pass for docs " +
+                    "shared with any of the orgs."
+                  }
+                />
+              </>
+            )}
+            validationSchema={Yup.object().shape({
+              folder_paths: Yup.array()
+                .of(
+                  Yup.string().required(
+                    "Please specify a folder path for your google drive e.g. 'Engineering/Materials'"
+                  )
                 )
-              )
-              .required(),
-            include_shared: Yup.boolean().required(),
-            follow_shortcuts: Yup.boolean().required(),
-            only_org_public: Yup.boolean().required(),
-          })}
-          initialValues={{
-            folder_paths: [],
-            include_shared: false,
-            follow_shortcuts: false,
-            only_org_public: false,
-          }}
-          refreshFreq={10 * 60} // 10 minutes
-          credentialId={liveCredential.id}
-        />
+                .required(),
+              include_shared: Yup.boolean().required(),
+              follow_shortcuts: Yup.boolean().required(),
+              only_org_public: Yup.boolean().required(),
+            })}
+            initialValues={{
+              folder_paths: [],
+              include_shared: false,
+              follow_shortcuts: false,
+              only_org_public: false,
+            }}
+            refreshFreq={10 * 60} // 10 minutes
+            credentialId={liveCredential.id}
+          />
+        </CardContent>
       </Card>
     </div>
   );
@@ -412,7 +414,7 @@ const Main = () => {
 export default function Page() {
   return (
     <div className="mx-auto container">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
 

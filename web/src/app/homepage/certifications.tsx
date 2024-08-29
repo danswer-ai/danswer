@@ -40,7 +40,7 @@ export default function Certifications() {
           </div>
         </div>
 
-        <button className="py-3 px-6 bg-[#2039F3] text-white rounded-[5px] text-xl font-semibold">
+        <button className="py-3 px-6 bg-[#2039F3] text-inverted rounded-[5px] text-xl font-semibold">
           Learn more
         </button>
       </div>

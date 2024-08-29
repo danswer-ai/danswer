@@ -1,23 +1,24 @@
-import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-} from "@tremor/react";
 import { PageSelector } from "@/components/PageSelector";
 import { DocumentBoostStatus } from "@/lib/types";
 import { updateHiddenStatus } from "../lib";
 import { numToDisplay } from "./constants";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { getErrorMsg } from "@/lib/fetchUtils";
-import { HoverPopup } from "@/components/HoverPopup";
-import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { ScoreSection } from "../ScoreEditor";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { CustomTooltip } from "@/components/CustomTooltip";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 const IsVisibleSection = ({
   document,
@@ -27,10 +28,10 @@ const IsVisibleSection = ({
   onUpdate: (response: Response) => void;
 }) => {
   return (
-    <HoverPopup
-      mainContent={
+    <CustomTooltip
+      trigger={
         document.hidden ? (
-          <div
+          <Badge
             onClick={async () => {
               const response = await updateHiddenStatus(
                 document.document_id,
@@ -38,15 +39,14 @@ const IsVisibleSection = ({
               );
               onUpdate(response);
             }}
-            className="flex text-error cursor-pointer hover:bg-hover py-1 px-2 w-fit rounded-full"
+            variant="outline"
+            className="p-2 px-4 gap-2 text-error"
           >
-            <div className="select-none">Hidden</div>
-            <div className="ml-1 my-auto">
-              <CustomCheckbox checked={false} />
-            </div>
-          </div>
+            Hidden
+            <Checkbox checked={false} />
+          </Badge>
         ) : (
-          <div
+          <Badge
             onClick={async () => {
               const response = await updateHiddenStatus(
                 document.document_id,
@@ -54,31 +54,28 @@ const IsVisibleSection = ({
               );
               onUpdate(response);
             }}
-            className="flex cursor-pointer hover:bg-hover py-1 px-2 w-fit rounded-full"
+            variant="outline"
+            className="p-2 px-4 gap-2"
           >
-            <div className="my-auto select-none">Visible</div>
-            <div className="ml-1 my-auto">
-              <CustomCheckbox checked={true} />
-            </div>
-          </div>
+            Visible
+            <Checkbox checked={true} />
+          </Badge>
         )
       }
-      popupContent={
-        <div className="text-xs">
-          {document.hidden ? (
-            <div className="flex">
-              <FiEye className="my-auto mr-1" /> Unhide
-            </div>
-          ) : (
-            <div className="flex">
-              <FiEyeOff className="my-auto mr-1" />
-              Hide
-            </div>
-          )}
-        </div>
-      }
-      direction="left"
-    />
+    >
+      <div className="text-xs">
+        {document.hidden ? (
+          <div className="flex">
+            <FiEye className="my-auto mr-1" /> Unhide
+          </div>
+        ) : (
+          <div className="flex">
+            <FiEyeOff className="my-auto mr-1" />
+            Hide
+          </div>
+        )}
+      </div>
+    </CustomTooltip>
   );
 };
 
@@ -94,69 +91,68 @@ export const DocumentFeedbackTable = ({
 
   return (
     <div>
-      <Table className="overflow-visible">
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Document Name</TableHeaderCell>
-            <TableHeaderCell>Is Searchable?</TableHeaderCell>
-            <TableHeaderCell>Score</TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {documents
-            .slice((page - 1) * numToDisplay, page * numToDisplay)
-            .map((document) => {
-              return (
-                <TableRow key={document.document_id}>
-                  <TableCell className="whitespace-normal break-all">
-                    <a
-                      className="text-blue-600"
-                      href={document.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {document.semantic_id}
-                    </a>
-                  </TableCell>
-                  <TableCell>
-                    <IsVisibleSection
-                      document={document}
-                      onUpdate={async (response) => {
-                        if (response.ok) {
-                          refresh();
-                        } else {
-                          setPopup({
-                            message: `Error updating hidden status - ${getErrorMsg(
-                              response
-                            )}`,
-                            type: "error",
-                          });
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="ml-auto flex w-16">
-                      <div
-                        key={document.document_id}
-                        className="h-10 ml-auto mr-8"
-                      >
-                        <ScoreSection
-                          documentId={document.document_id}
-                          initialScore={document.boost}
-                          refresh={refresh}
-                          setPopup={setPopup}
+      <Card>
+        <CardContent className="p-0">
+          <Table className="overflow-visible">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Document Name</TableHead>
+                <TableHead>Is Searchable?</TableHead>
+                <TableHead>Score</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documents
+                .slice((page - 1) * numToDisplay, page * numToDisplay)
+                .map((document) => {
+                  return (
+                    <TableRow key={document.document_id}>
+                      <TableCell className="whitespace-normal break-all">
+                        <a
+                          className="text-blue-600"
+                          href={document.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {document.semantic_id}
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <IsVisibleSection
+                          document={document}
+                          onUpdate={async (response) => {
+                            if (response.ok) {
+                              refresh();
+                            } else {
+                              setPopup({
+                                message: `Error updating hidden status - ${getErrorMsg(
+                                  response
+                                )}`,
+                                type: "error",
+                              });
+                            }
+                          }}
                         />
-                      </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-        </TableBody>
-      </Table>
+                      </TableCell>
+                      <TableCell>
+                        <div key={document.document_id} className="w-fit">
+                          <ScoreSection
+                            documentId={document.document_id}
+                            initialScore={document.boost}
+                            refresh={refresh}
+                            setPopup={setPopup}
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-      <div className="mt-3 flex">
+      <div className="flex pt-6">
         <div className="mx-auto">
           <PageSelector
             totalPages={Math.ceil(documents.length / numToDisplay)}

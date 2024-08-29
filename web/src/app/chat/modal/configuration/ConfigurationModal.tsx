@@ -4,60 +4,12 @@ import React, { useEffect } from "react";
 import { Modal } from "../../../../components/Modal";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { FiltersTab } from "./FiltersTab";
-import { FiCpu, FiFilter, FiX } from "react-icons/fi";
-import { IconType } from "react-icons";
-import { FaBrain } from "react-icons/fa";
 import { AssistantsTab } from "./AssistantsTab";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { LlmTab } from "./LlmTab";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Cpu, Sparkles, Filter, X } from "lucide-react";
-
-const TabButton = ({
-  label,
-  icon: Icon,
-  isActive,
-  onClick,
-}: {
-  label: string;
-  icon: IconType;
-  isActive: boolean;
-  onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className={` 
-      pb-4
-      pt-6
-      px-2
-      text-emphasis 
-      font-bold 
-      ${isActive ? "border-b-2 border-accent" : ""} 
-      hover:bg-hover-light 
-      hover:text-strong 
-      transition 
-      duration-200 
-      ease-in-out
-      flex
-    `}
-  >
-    <Icon className="inline-block my-auto mr-2" size="16" />
-    <p className="my-auto">{label}</p>
-  </button>
-);
+import { Cpu, Filter } from "lucide-react";
 
 export function ConfigurationModal({
   activeTab,
@@ -105,17 +57,19 @@ export function ConfigurationModal({
     >
       <Tabs
         defaultValue="assistant"
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value)}
         className="w-full flex flex-col gap-4"
         orientation="vertical"
       >
-        <TabsList className="!flex flex-col !h-auto w-[150px] sm:flex-row sm:w-[500px]">
+        <TabsList className="w-fit">
           <TabsTrigger value="assistant" className="w-full">
             <Cpu size={16} className="mr-2" /> My Assistant
           </TabsTrigger>
-          <TabsTrigger value="model" className="w-full">
+          {/*  <TabsTrigger value="models" className="w-full">
             <Sparkles size={16} className="mr-2" />
             Model
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="filters" className="w-full">
             <Filter size={16} className="mr-2" /> Filters
           </TabsTrigger>
@@ -133,13 +87,13 @@ export function ConfigurationModal({
             />
           </div>
         </TabsContent>
-        <TabsContent value="model">
+        {/* <TabsContent value="models">
           <LlmTab
             chatSessionId={chatSessionId}
             llmOverrideManager={llmOverrideManager}
             currentAssistant={selectedAssistant}
           />
-        </TabsContent>
+        </TabsContent> */}
         <TabsContent value="filters">
           <FiltersTab filterManager={filterManager} />
         </TabsContent>

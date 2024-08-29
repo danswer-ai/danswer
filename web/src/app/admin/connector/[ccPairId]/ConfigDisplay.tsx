@@ -1,6 +1,7 @@
+import { Card, CardContent } from "@/components/ui/card";
 import { getNameFromPath } from "@/lib/fileUtils";
 import { ValidSources } from "@/lib/types";
-import { List, ListItem, Card, Title } from "@tremor/react";
+import { List, ListItem, Title } from "@tremor/react";
 
 function convertObjectToString(obj: any): string | any {
   // Check if obj is an object and not an array or null
@@ -57,14 +58,16 @@ export function ConfigDisplay({
     <>
       <Title className="mb-2">Configuration</Title>
       <Card>
-        <List>
-          {configEntries.map(([key, value]) => (
-            <ListItem key={key}>
-              <span>{key}</span>
-              <span>{convertObjectToString(value) || "-"}</span>
-            </ListItem>
-          ))}
-        </List>
+        <CardContent>
+          <List>
+            {configEntries.map(([key, value]) => (
+              <ListItem key={key}>
+                <span>{key}</span>
+                <span>{convertObjectToString(value) || "-"}</span>
+              </ListItem>
+            ))}
+          </List>
+        </CardContent>
       </Card>
     </>
   );

@@ -1,8 +1,8 @@
 import { useSortable } from "@dnd-kit/sortable";
-import { TableCell, TableRow } from "@tremor/react";
 import { CSS } from "@dnd-kit/utilities";
 import { DragHandle } from "./DragHandle";
 import { Row } from "./interfaces";
+import { TableCell, TableRow } from "../ui/table";
 
 export function DraggableRow({
   row,

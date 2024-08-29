@@ -15,7 +15,7 @@ type DateRangeSelectorProps = {
   isMobile?: boolean;
 };
 
-export function DateRangeSelector({
+export function DateRangeSearchSelector({
   value,
   onValueChange,
   isMobile,

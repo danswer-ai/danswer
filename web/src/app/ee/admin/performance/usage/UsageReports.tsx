@@ -2,23 +2,7 @@
 
 import { errorHandlingFetcher } from "@/lib/fetcher";
 
-import { FiDownload, FiDownloadCloud } from "react-icons/fi";
-import {
-  DateRangePicker,
-  DateRangePickerItem,
-  DateRangePickerValue,
-  Divider,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-  Text,
-  Title,
-} from "@tremor/react";
 import useSWR from "swr";
-import { Button } from "@tremor/react";
 import { useState } from "react";
 import { UsageReport } from "./types";
 import { ThreeDotsLoader } from "@/components/Loading";
@@ -26,11 +10,30 @@ import Link from "next/link";
 import { humanReadableFormat, humanReadableFormatWithTime } from "@/lib/time";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { PageSelector } from "@/components/PageSelector";
+import { Button } from "@/components/ui/button";
+import { CloudDownload, Download } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { CustomDatePicker } from "@/components/CustomDatePicker";
+import { DateRange } from "react-day-picker";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+
+const predefinedRanges = [
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "today", label: "Today" },
+  { value: "allTime", label: "All Time" },
+  { value: "lastYear", label: "Last Year" },
+];
 
 function GenerateReportInput() {
-  const [dateRange, setDateRange] = useState<DateRangePickerValue | undefined>(
-    undefined
-  );
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
 
   const [errorOccurred, setErrorOccurred] = useState<Error | null>(null);
@@ -49,9 +52,9 @@ function GenerateReportInput() {
       let period_from: string | null = null;
       let period_to: string | null = null;
 
-      if (dateRange?.selectValue != "allTime" && dateRange?.from) {
-        period_from = dateRange?.from?.toISOString();
-        period_to = dateRange?.to?.toISOString() ?? new Date().toISOString();
+      if (dateRange?.from && dateRange?.to) {
+        period_from = dateRange.from.toISOString();
+        period_to = dateRange.to.toISOString();
       }
 
       const res = await fetch("/api/admin/generate-usage-report", {
@@ -96,58 +99,34 @@ function GenerateReportInput() {
   lastYear.setFullYear(today.getFullYear() - 1);
 
   return (
-    <div className="mb-8">
-      <Title className="mb-2">Generate Usage Reports</Title>
-      <Text className="mb-8">
-        Generate usage statistics for users in the workspace.
-      </Text>
-      <DateRangePicker
-        maxDate={new Date()}
-        defaultValue={{
-          from: undefined,
-          to: undefined,
-          selectValue: "allTime",
-        }}
-        className="mb-3"
-        enableClear={false}
-        selectPlaceholder="Range"
-        value={dateRange}
-        onValueChange={setDateRange}
-      >
-        <DateRangePickerItem key="lastWeek" value="lastWeek" from={lastWeek}>
-          Last 7 days
-        </DateRangePickerItem>
-        <DateRangePickerItem key="lastMonth" value="lastMonth" from={lastMonth}>
-          Last 30 days
-        </DateRangePickerItem>
-        <DateRangePickerItem key="lastYear" value="lastYear" from={lastYear}>
-          Last year
-        </DateRangePickerItem>
-        <DateRangePickerItem
-          key="allTime"
-          value="allTime"
-          from={new Date(1970, 0, 1)}
-        >
-          All time
-        </DateRangePickerItem>
-      </DateRangePicker>
-      <Button
-        color={"blue"}
-        icon={FiDownloadCloud}
-        size="xs"
-        loading={isLoading}
-        disabled={isLoading}
-        onClick={() => requestReport()}
-      >
-        Generate Report
-      </Button>
-      <p className="mt-1 text-xs">This can take a few minutes.</p>
-      {errorOccurred && (
-        <ErrorCallout
-          errorTitle="Something went wrong."
-          errorMsg={errorOccurred?.toString()}
-        />
-      )}
+    <div className="flex justify-between items-center">
+      <div>
+        <div className="flex flex-col">
+          <h3 className="font-semibold">Generate Usage Reports</h3>
+          <span className="text-subtle text-sm">
+            Generate usage statistics for users in the workspace.
+          </span>
+        </div>
+        <div className="pt-4">
+          <CustomDatePicker
+            value={dateRange}
+            onValueChange={setDateRange}
+            predefinedRanges={predefinedRanges}
+          />
+        </div>
+      </div>
+      <div>
+        <Button disabled={isLoading} onClick={() => requestReport()}>
+          <CloudDownload size={16} /> Generate Report
+        </Button>
+        <p className="pt-2 text-xs text-subtle">This can take a few minutes.</p>
+        {errorOccurred && (
+          <ErrorCallout
+            errorTitle="Something went wrong."
+            errorMsg={errorOccurred?.toString()}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -177,7 +156,7 @@ function UsageReportsTable() {
 
   return (
     <div>
-      <Title className="mb-2 mt-6 mx-auto"> Previous Reports </Title>
+      <h3 className="font-semibold pt-8 p-4">Previous Reports</h3>
       {usageReportsIsLoading ? (
         <div className="flex justify-center w-full">
           <ThreeDotsLoader />
@@ -190,15 +169,15 @@ function UsageReportsTable() {
       ) : (
         <>
           <Table>
-            <TableHead>
+            <TableHeader>
               <TableRow>
-                <TableHeaderCell>Report</TableHeaderCell>
-                <TableHeaderCell>Period</TableHeaderCell>
-                <TableHeaderCell>Generated By</TableHeaderCell>
-                <TableHeaderCell>Time Generated</TableHeaderCell>
-                <TableHeaderCell>Download</TableHeaderCell>
+                <TableHead>Report</TableHead>
+                <TableHead>Period</TableHead>
+                <TableHead>Generated By</TableHead>
+                <TableHead>Time Generated</TableHead>
+                <TableHead>Download</TableHead>
               </TableRow>
-            </TableHead>
+            </TableHeader>
 
             <TableBody>
               {paginatedReports.map((r) => (
@@ -219,33 +198,16 @@ function UsageReportsTable() {
                     {humanReadableFormatWithTime(r.time_created)}
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/api/admin/usage-report/${r.report_name}`}
-                      className="flex justify-center"
-                    >
-                      <FiDownload color="primary" />
+                    <Link href={`/api/admin/usage-report/${r.report_name}`}>
+                      <Button variant="ghost" size="icon">
+                        <Download size={16} />
+                      </Button>
                     </Link>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          <div className="mt-3 flex">
-            <div className="mx-auto">
-              <PageSelector
-                totalPages={totalPages}
-                currentPage={page}
-                onPageChange={(newPage) => {
-                  setPage(newPage);
-                  window.scrollTo({
-                    top: 0,
-                    left: 0,
-                    behavior: "smooth",
-                  });
-                }}
-              />
-            </div>
-          </div>
         </>
       )}
     </div>
@@ -253,11 +215,53 @@ function UsageReportsTable() {
 }
 
 export default function UsageReports() {
+  const [page, setPage] = useState(1);
+  const NUM_IN_PAGE = 10;
+
+  const {
+    data: usageReportsMetadata,
+    error: usageReportsError,
+    isLoading: usageReportsIsLoading,
+  } = useSWR<UsageReport[]>(USAGE_REPORT_URL, errorHandlingFetcher);
+
+  const paginatedReports = usageReportsMetadata
+    ? usageReportsMetadata
+        .slice(0)
+        .reverse()
+        .slice(NUM_IN_PAGE * (page - 1), NUM_IN_PAGE * page)
+    : [];
+
+  const totalPages = usageReportsMetadata
+    ? Math.ceil(usageReportsMetadata.length / NUM_IN_PAGE)
+    : 0;
+
   return (
-    <div className="mx-auto container">
-      <GenerateReportInput />
-      <Divider />
-      <UsageReportsTable />
+    <div>
+      <Card>
+        <CardHeader className="border-b">
+          <GenerateReportInput />
+        </CardHeader>
+        <CardContent className="p-0">
+          <UsageReportsTable />
+        </CardContent>
+      </Card>
+
+      <div className="pt-6 flex">
+        <div className="mx-auto">
+          <PageSelector
+            totalPages={totalPages}
+            currentPage={page}
+            onPageChange={(newPage) => {
+              setPage(newPage);
+              window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: "smooth",
+              });
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

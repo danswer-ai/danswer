@@ -80,8 +80,6 @@ import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { LuChevronsLeftRight } from "react-icons/lu";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1121,7 +1119,7 @@ export function ChatPage({
     <>
       {livePersona && (
         <div className="fixed top-0 left-0 flex w-full z-top-bar bg-background">
-          <div className="flex w-full items-start p-4 justify-between">
+          <div className="flex w-full items-start px-4 pt-6 justify-between">
             <div className="flex lg:hidden items-center gap-2">
               <Button variant="ghost" size="icon" onClick={toggleLeftSideBar}>
                 <PanelRightClose size={24} />
@@ -1168,13 +1166,11 @@ export function ChatPage({
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <div className="relative flex overflow-x-hidden bg-background text-default h-full">
+      <div className="relative flex overflow-x-hidden bg-background ault h-full">
         <DynamicSidebar
           user={user}
           openSidebar={openSidebar}
           toggleLeftSideBar={toggleLeftSideBar}
-          toggleWidth={toggleWidth}
-          isExpanded={isExpanded}
         >
           <ChatSidebar
             existingChats={chatSessions}
@@ -1182,8 +1178,6 @@ export function ChatPage({
             folders={folders}
             openedFolders={openedFolders}
             toggleSideBar={toggleLeftSideBar}
-            openSidebar={openSidebar}
-            isExpanded={isExpanded}
           />
         </DynamicSidebar>
 
@@ -1239,7 +1233,7 @@ export function ChatPage({
                     >
                       {/* ChatBanner is a custom banner that displays a admin-specified message at 
                       the top of the chat page. Only used in the EE version of the app. */}
-                      <ChatBanner />
+                      {/*  <ChatBanner /> */}
 
                       {messageHistory.length === 0 &&
                         !isFetchingChatMessages &&
@@ -1254,10 +1248,15 @@ export function ChatPage({
                               selectedPersona &&
                               messageHistory.length === 0 &&
                               !isFetchingChatMessages && (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 md:pt-8">
                                   {currentPersona.starter_messages.map(
                                     (starterMessage, i) => (
-                                      <div key={i} className="w-full">
+                                      <div
+                                        key={i}
+                                        className={`w-full ${
+                                          i > 1 ? "hidden md:flex" : ""
+                                        }`}
+                                      >
                                         <StarterMessage
                                           starterMessage={starterMessage}
                                           onClick={() =>
@@ -1276,7 +1275,7 @@ export function ChatPage({
                         )}
 
                       <div
-                        className={`mt-4 py-20 lg:py-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
+                        className={`mt-4 pt-20 pb-10 md:pb-14 lg:py-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
                           hasPerformedInitialScroll ? "" : " invisible"
                         } ${messageHistory.length === 0 ? "hidden" : "block"}`}
                       >
@@ -1560,6 +1559,7 @@ export function ChatPage({
                           handleFileUpload={handleImageUpload}
                           setConfigModalActiveTab={setConfigModalActiveTab}
                           textAreaRef={textAreaRef}
+                          activeTab={configModalActiveTab}
                         />
                       </div>
                     </div>
@@ -1570,7 +1570,7 @@ export function ChatPage({
                       <AnimatePresence>
                         {!showDocSidebar && (
                           <motion.div
-                            className={`fixed w-full h-full bg-black bg-opacity-20 inset-0 z-overlay 2xl:hidden`}
+                            className={`fixed w-full h-full bg-background-inverted bg-opacity-20 inset-0 z-overlay 2xl:hidden`}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: !showDocSidebar ? 1 : 0 }}
                             exit={{ opacity: 0 }}

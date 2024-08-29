@@ -20,10 +20,11 @@ import {
   OCIConfig,
   OCICredentialJson,
 } from "@/lib/types";
-import { Card, Select, SelectItem, Text, Title, Button } from "@tremor/react";
+import { Select, SelectItem, Text, Title, Button } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const OCIMain = () => {
   const { popup, setPopup } = usePopup();
@@ -133,43 +134,45 @@ const OCIMain = () => {
             </ul>
           </Text>
           <Card className="mt-4">
-            <CredentialForm<OCICredentialJson>
-              formBody={
-                <>
-                  <TextFormField
-                    name="access_key_id"
-                    label="OCI Access Key ID:"
-                  />
-                  <TextFormField
-                    name="secret_access_key"
-                    label="OCI Secret Access Key:"
-                  />
-                  <TextFormField name="namespace" label="Namespace:" />
-                  <TextFormField name="region" label="Region:" />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                access_key_id: Yup.string().required(
-                  "OCI Access Key ID is required"
-                ),
-                secret_access_key: Yup.string().required(
-                  "OCI Secret Access Key is required"
-                ),
-                namespace: Yup.string().required("Namespace is required"),
-                region: Yup.string().required("Region is required"),
-              })}
-              initialValues={{
-                access_key_id: "",
-                secret_access_key: "",
-                namespace: "",
-                region: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
+            <CardContent>
+              <CredentialForm<OCICredentialJson>
+                formBody={
+                  <>
+                    <TextFormField
+                      name="access_key_id"
+                      label="OCI Access Key ID:"
+                    />
+                    <TextFormField
+                      name="secret_access_key"
+                      label="OCI Secret Access Key:"
+                    />
+                    <TextFormField name="namespace" label="Namespace:" />
+                    <TextFormField name="region" label="Region:" />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  access_key_id: Yup.string().required(
+                    "OCI Access Key ID is required"
+                  ),
+                  secret_access_key: Yup.string().required(
+                    "OCI Secret Access Key is required"
+                  ),
+                  namespace: Yup.string().required("Namespace is required"),
+                  region: Yup.string().required("Region is required"),
+                })}
+                initialValues={{
+                  access_key_id: "",
+                  secret_access_key: "",
+                  namespace: "",
+                  region: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -211,43 +214,45 @@ const OCIMain = () => {
       {ociCredential && (
         <>
           <Card className="mt-4">
-            <h2 className="mb-3 font-bold">Create Connection</h2>
-            <Text className="mb-4">
-              Press connect below to start the connection to your OCI bucket.
-            </Text>
-            <ConnectorForm<OCIConfig>
-              nameBuilder={(values) => `OCIConnector-${values.bucket_name}`}
-              ccPairNameBuilder={(values) =>
-                `OCIConnector-${values.bucket_name}`
-              }
-              source="oci_storage"
-              inputType="poll"
-              formBodyBuilder={(values) => (
-                <div>
-                  <TextFormField name="bucket_name" label="Bucket Name:" />
-                  <TextFormField
-                    name="prefix"
-                    label="Path Prefix (optional):"
-                  />
-                </div>
-              )}
-              validationSchema={Yup.object().shape({
-                bucket_type: Yup.string()
-                  .oneOf(["oci_storage"])
-                  .required("Bucket type must be oci_storage"),
-                bucket_name: Yup.string().required(
-                  "Please enter the name of the OCI bucket to index, e.g. my-test-bucket"
-                ),
-                prefix: Yup.string().default(""),
-              })}
-              initialValues={{
-                bucket_type: "oci_storage",
-                bucket_name: "",
-                prefix: "",
-              }}
-              refreshFreq={60 * 60 * 24} // 1 day
-              credentialId={ociCredential.id}
-            />
+            <CardContent>
+              <h2 className="mb-3 font-bold">Create Connection</h2>
+              <Text className="mb-4">
+                Press connect below to start the connection to your OCI bucket.
+              </Text>
+              <ConnectorForm<OCIConfig>
+                nameBuilder={(values) => `OCIConnector-${values.bucket_name}`}
+                ccPairNameBuilder={(values) =>
+                  `OCIConnector-${values.bucket_name}`
+                }
+                source="oci_storage"
+                inputType="poll"
+                formBodyBuilder={(values) => (
+                  <div>
+                    <TextFormField name="bucket_name" label="Bucket Name:" />
+                    <TextFormField
+                      name="prefix"
+                      label="Path Prefix (optional):"
+                    />
+                  </div>
+                )}
+                validationSchema={Yup.object().shape({
+                  bucket_type: Yup.string()
+                    .oneOf(["oci_storage"])
+                    .required("Bucket type must be oci_storage"),
+                  bucket_name: Yup.string().required(
+                    "Please enter the name of the OCI bucket to index, e.g. my-test-bucket"
+                  ),
+                  prefix: Yup.string().default(""),
+                })}
+                initialValues={{
+                  bucket_type: "oci_storage",
+                  bucket_name: "",
+                  prefix: "",
+                }}
+                refreshFreq={60 * 60 * 24} // 1 day
+                credentialId={ociCredential.id}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -258,7 +263,7 @@ const OCIMain = () => {
 export default function Page() {
   return (
     <div className="container mx-auto">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
       <AdminPageTitle

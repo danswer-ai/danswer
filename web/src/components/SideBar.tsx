@@ -1,18 +1,4 @@
 import {
-  FiActivity,
-  FiBarChart2,
-  FiCpu,
-  FiImage,
-  FiMessageSquare,
-  FiPackage,
-  FiSearch,
-  FiSettings,
-  FiShield,
-  FiSlack,
-  FiTool,
-  FiX,
-} from "react-icons/fi";
-import {
   BookmarkIcon,
   ConnectorIcon,
   DatabaseIcon,
@@ -24,71 +10,42 @@ import {
   UsersIcon,
   ZoomInIcon,
 } from "./icons/icons";
-import enmeddLogo from "../../public/logo-brand.png";
 import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "@/lib/constants";
 import { AdminSidebar } from "./admin/connectors/AdminSidebar";
-import Image from "next/image";
-import Link from "next/link";
+import {
+  Cpu,
+  Package,
+  Settings,
+  Shield,
+  Wrench,
+  Image as ImageIcon,
+  Activity,
+} from "lucide-react";
 
-interface SideBarProps {
-  isHeader?: boolean;
-  handleClose?: () => void;
-}
+interface SideBarProps {}
 
-export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
+export const SideBar: React.FC<SideBarProps> = ({}) => {
   return (
-    <div
-      className={`${
-        isHeader
-          ? "bg-background-weak h-full z-[9999] fixed top-0 left-0 pb-16 w-screen md:w-80 flex lg:hidden flex-col overflow-auto gap-6"
-          : "hidden h-full pt-12 pb-8 overflow-auto border-r w-80 bg-background-weak border-border lg:flex"
-      }`}
-    >
-      <div className="flex items-center justify-between w-full h-16 px-6 py-4 border-b lg:hidden">
-        <Image src={enmeddLogo} alt="enmedd-logo" width={112} />
-        <FiX onClick={handleClose} />
-      </div>
-
-      <div className="flex flex-col gap-6 lg:hidden">
-        <Link href="/search" className={" flex-col lg:hover:bg-hover flex"}>
-          <div className="flex px-6 ">
-            <div className={"flex text-strong items-center gap-1"}>
-              <FiSearch className="" />
-              <h1 className="flex text-sm font-bold">Search</h1>
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/chat" className="flex flex-col lg:hover:bg-hover">
-          <div className="flex px-6 ">
-            <div className="flex items-center gap-1 text-strong">
-              <FiMessageSquare className="" />
-              <h1 className="flex text-sm font-bold">Chat</h1>
-            </div>
-          </div>
-        </Link>
-      </div>
-
+    <div className="w-sidebar h-full border-r px-4 overflow-y-auto bg-background">
       <AdminSidebar
-        handleClose={handleClose}
         collections={[
           {
             name: "Connectors",
             items: [
               {
                 name: (
-                  <div className="flex">
-                    <NotebookIcon size={18} />
-                    <div className="ml-1">Existing Connectors</div>
+                  <div className="flex items-center gap-2">
+                    <NotebookIcon size={20} />
+                    <div>Existing Connectors</div>
                   </div>
                 ),
                 link: "/admin/indexing/status",
               },
               {
                 name: (
-                  <div className="flex">
-                    <ConnectorIcon size={18} />
-                    <div className="ml-1.5">Add Connector</div>
+                  <div className="flex items-center gap-2">
+                    <ConnectorIcon size={20} />
+                    <div>Add Connector</div>
                   </div>
                 ),
                 link: "/admin/add-connector",
@@ -100,27 +57,27 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
             items: [
               {
                 name: (
-                  <div className="flex">
-                    <BookmarkIcon size={18} />
-                    <div className="ml-1">Document Sets</div>
+                  <div className="flex items-center gap-2">
+                    <BookmarkIcon size={20} />
+                    <div>Document Sets</div>
                   </div>
                 ),
                 link: "/admin/documents/sets",
               },
               {
                 name: (
-                  <div className="flex">
-                    <ZoomInIcon size={18} />
-                    <div className="ml-1">Explorer</div>
+                  <div className="flex items-center gap-2">
+                    <ZoomInIcon size={20} />
+                    <div>Explorer</div>
                   </div>
                 ),
                 link: "/admin/documents/explorer",
               },
               {
                 name: (
-                  <div className="flex">
-                    <ThumbsUpIcon size={18} />
-                    <div className="ml-1">Feedback</div>
+                  <div className="flex items-center gap-2">
+                    <ThumbsUpIcon size={20} />
+                    <div>Feedback</div>
                   </div>
                 ),
                 link: "/admin/documents/feedback",
@@ -132,18 +89,18 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
             items: [
               {
                 name: (
-                  <div className="flex">
-                    <RobotIcon size={18} />
-                    <div className="ml-1">Assistants</div>
+                  <div className="flex items-center gap-2">
+                    <RobotIcon size={20} />
+                    <div>Assistants</div>
                   </div>
                 ),
                 link: "/admin/assistants",
               },
               {
                 name: (
-                  <div className="flex">
-                    <FiTool size={18} className="my-auto" />
-                    <div className="ml-1">Tools</div>
+                  <div className="flex items-center gap-2">
+                    <Wrench size={20} className="my-auto" />
+                    <div>Tools</div>
                   </div>
                 ),
                 link: "/admin/tools",
@@ -155,18 +112,18 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
             items: [
               {
                 name: (
-                  <div className="flex">
-                    <FiCpu size={18} />
-                    <div className="ml-1">LLM</div>
+                  <div className="flex items-center gap-2">
+                    <Cpu size={20} />
+                    <div>LLM</div>
                   </div>
                 ),
                 link: "/admin/models/llm",
               },
               {
                 name: (
-                  <div className="flex">
-                    <FiPackage size={18} />
-                    <div className="ml-1">Embedding</div>
+                  <div className="flex items-center gap-2">
+                    <Package size={20} />
+                    <div>Embedding</div>
                   </div>
                 ),
                 link: "/admin/models/embedding",
@@ -178,9 +135,9 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
             items: [
               {
                 name: (
-                  <div className="flex">
-                    <UsersIcon size={18} />
-                    <div className="ml-1">Users</div>
+                  <div className="flex items-center gap-2">
+                    <UsersIcon size={20} />
+                    <div>Users</div>
                   </div>
                 ),
                 link: "/admin/users",
@@ -189,18 +146,18 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
                 ? [
                     {
                       name: (
-                        <div className="flex">
-                          <GroupsIcon size={18} />
-                          <div className="ml-1">Groups</div>
+                        <div className="flex items-center gap-2">
+                          <GroupsIcon size={20} />
+                          <div>Groups</div>
                         </div>
                       ),
                       link: "/admin/groups",
                     },
                     {
                       name: (
-                        <div className="flex">
-                          <KeyIcon size={18} />
-                          <div className="ml-1">API Keys</div>
+                        <div className="flex items-center gap-2">
+                          <KeyIcon size={20} />
+                          <div>API Keys</div>
                         </div>
                       ),
                       link: "/admin/api-key",
@@ -209,9 +166,9 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
                 : []),
               {
                 name: (
-                  <div className="flex">
-                    <FiShield size={18} />
-                    <div className="ml-1">Token Rate Limits</div>
+                  <div className="flex items-center gap-2">
+                    <Shield size={20} />
+                    <div>Token Rate Limits</div>
                   </div>
                 ),
                 link: "/admin/token-rate-limits",
@@ -225,27 +182,27 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
                   items: [
                     {
                       name: (
-                        <div className="flex">
-                          <FiActivity size={18} />
-                          <div className="ml-1">Usage Statistics</div>
+                        <div className="flex items-center gap-2">
+                          <Activity size={20} />
+                          <div>Usage Statistics</div>
                         </div>
                       ),
                       link: "/admin/performance/usage",
                     },
                     {
                       name: (
-                        <div className="flex">
-                          <DatabaseIcon size={18} />
-                          <div className="ml-1">Query History</div>
+                        <div className="flex items-center gap-2">
+                          <DatabaseIcon size={20} />
+                          <div>Query History</div>
                         </div>
                       ),
                       link: "/admin/performance/query-history",
                     },
                     // {
                     //   name: (
-                    //     <div className="flex">
-                    //       <FiBarChart2 size={18} />
-                    //       <div className="ml-1">Custom Analytics</div>
+                    //     <div className="flex items-center gap-2">
+                    //       <FiBarChart2 size={20} />
+                    //       <div >Custom Analytics</div>
                     //     </div>
                     //   ),
                     //   link: "/admin/performance/custom-analytics",
@@ -259,9 +216,9 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
             items: [
               {
                 name: (
-                  <div className="flex">
-                    <FiSettings size={18} />
-                    <div className="ml-1">Workspace Settings</div>
+                  <div className="flex items-center gap-2">
+                    <Settings size={20} />
+                    <div>Workspace Settings</div>
                   </div>
                 ),
                 link: "/admin/settings",
@@ -270,9 +227,9 @@ export const SideBar: React.FC<SideBarProps> = ({ isHeader, handleClose }) => {
                 ? [
                     {
                       name: (
-                        <div className="flex">
-                          <FiImage size={18} />
-                          <div className="ml-1">Whitelabeling</div>
+                        <div className="flex items-center gap-2">
+                          <ImageIcon size={20} />
+                          <div>Whitelabeling</div>
                         </div>
                       ),
                       link: "/admin/whitelabeling",

@@ -51,7 +51,7 @@ export default function Platform() {
           ))}
         </div>
 
-        <button className="py-3 px-6 bg-[#2039F3] text-white rounded-[5px] font-semibold  text-lg">
+        <button className="py-3 px-6 bg-[#2039F3] text-inverted rounded-[5px] font-semibold  text-lg">
           Get a Demo
         </button>
       </div>

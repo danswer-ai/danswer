@@ -22,9 +22,9 @@ export function ChatBanner() {
       rounded
       border-border
       border
-      flex`}
+      flex mt-10`}
     >
-      <div className="flex flex-col mx-auto text-sm text-emphasis">
+      <div className="flex flex-col mx-auto text-sm ">
         <div className="my-auto">
           <ReactMarkdown
             className="max-w-full prose"

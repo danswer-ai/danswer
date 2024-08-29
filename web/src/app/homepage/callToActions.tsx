@@ -5,7 +5,7 @@ export default function CallToActions() {
     <Wrapper>
       <div className="w-full py-32">
         <div className="relative flex flex-col items-center gap-6 md:p-28 overflow-hidden rounded-xl md:rounded-3xl bg-[rgb(17,_24,_39)] isolate p-10">
-          <h3 className="text-3xl font-bold text-center text-white md:text-4xl">
+          <h3 className="text-3xl font-bold text-center text-inverted md:text-4xl">
             A plan to fit your needs
           </h3>
 
@@ -13,7 +13,7 @@ export default function CallToActions() {
             Deploy secure and powerful AI applications in minutes
           </p>
 
-          <button className="py-3 px-6 bg-[#2039F3] text-white rounded-[5px] text-xl font-semibold">
+          <button className="py-3 px-6 bg-[#2039F3] text-inverted rounded-[5px] text-xl font-semibold">
             Get a Demo
           </button>
 

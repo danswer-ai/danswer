@@ -7,7 +7,6 @@ import { Text } from "@tremor/react";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { destructureValue, getFinalLLM, structureValue } from "@/lib/llm/utils";
 import { updateModelOverrideForChatSession } from "../../lib";
-import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import {
   Select,
@@ -78,6 +77,15 @@ export function LlmTab({
 
       <div className="xl:w-96">
         <Select
+          value={
+            llmOverride.name && llmOverride.provider && llmOverride.modelName
+              ? structureValue(
+                  llmOverride.name,
+                  llmOverride.provider,
+                  llmOverride.modelName
+                )
+              : undefined
+          }
           onValueChange={(value) => {
             setLlmOverride(destructureValue(value as string));
             if (chatSessionId) {

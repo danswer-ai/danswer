@@ -1,16 +1,7 @@
 "use client";
 
 import { AdminPageTitle } from "@/components/admin/Title";
-import {
-  Tab,
-  TabGroup,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Text,
-} from "@tremor/react";
 import { useState } from "react";
-import { FiGlobe, FiShield, FiUser, FiUsers } from "react-icons/fi";
 import {
   insertGlobalTokenRateLimit,
   insertGroupTokenRateLimit,
@@ -22,6 +13,8 @@ import { mutate } from "swr";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { CreateRateLimitModal } from "./CreateRateLimitModal";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Globe, Shield, User, Users } from "lucide-react";
 
 const BASE_URL = "/api/admin/token-rate-limits";
 const GLOBAL_TOKEN_FETCH_URL = `${BASE_URL}/global`;
@@ -107,37 +100,29 @@ function Main() {
     <div>
       {popup}
 
-      <Text className="mb-2">
+      <p className="mb-2">
         Token rate limits enable you control how many tokens can be spent in a
         given time period. With token rate limits, you can:
-      </Text>
+      </p>
 
       <ul className="list-disc mt-2 ml-4 mb-2">
         <li>
-          <Text>
-            Set a global rate limit to control your organization&apos;s overall
-            token spend.
-          </Text>
+          Set a global rate limit to control your organization&apos;s overall
+          token spend.
         </li>
         {isPaidEnterpriseFeaturesEnabled && (
           <>
             <li>
-              <Text>
-                Set rate limits for users to ensure that no single user can
-                spend too many tokens.
-              </Text>
+              Set rate limits for users to ensure that no single user can spend
+              too many tokens.
             </li>
             <li>
-              <Text>
-                Set rate limits for user groups to control token spend for your
-                teams.
-              </Text>
+              Set rate limits for user groups to control token spend for your
+              teams.
             </li>
           </>
         )}
-        <li>
-          <Text>Enable and disable rate limits on the fly.</Text>
-        </li>
+        <li>Enable and disable rate limits on the fly.</li>
       </ul>
 
       <CreateRateLimitModal
@@ -149,44 +134,55 @@ function Main() {
       />
 
       {isPaidEnterpriseFeaturesEnabled && (
-        <TabGroup className="mt-6" index={tabIndex} onIndexChange={setTabIndex}>
-          <TabList variant="line">
-            <Tab icon={FiGlobe}>Global</Tab>
-            <Tab icon={FiUser}>User</Tab>
-            <Tab icon={FiUsers}>User Groups</Tab>
-          </TabList>
-          <TabPanels className="mt-6">
-            <TabPanel>
-              <GenericTokenRateLimitTable
-                fetchUrl={GLOBAL_TOKEN_FETCH_URL}
-                title={"Global Token Rate Limits"}
-                description={GLOBAL_DESCRIPTION}
-              />
-            </TabPanel>
-            <TabPanel>
-              <GenericTokenRateLimitTable
-                fetchUrl={USER_TOKEN_FETCH_URL}
-                title={"User Token Rate Limits"}
-                description={USER_DESCRIPTION}
-              />
-            </TabPanel>
-            <TabPanel>
-              <GenericTokenRateLimitTable
-                fetchUrl={USER_GROUP_FETCH_URL}
-                title={"User Group Token Rate Limits"}
-                description={USER_GROUP_DESCRIPTION}
-                responseMapper={(data: Record<string, TokenRateLimit[]>) =>
-                  Object.entries(data).flatMap(([group_name, elements]) =>
-                    elements.map((element) => ({
-                      ...element,
-                      group_name,
-                    }))
-                  )
-                }
-              />
-            </TabPanel>
-          </TabPanels>
-        </TabGroup>
+        <Tabs
+          value={tabIndex.toString()}
+          onValueChange={(value) => setTabIndex(Number(value))}
+          className="mt-6"
+        >
+          <TabsList className="border-b border-gray-200">
+            <TabsTrigger value="0">
+              <Globe size={16} className="mr-2" />
+              Global
+            </TabsTrigger>
+            <TabsTrigger value="1">
+              <User size={16} className="mr-2" />
+              User
+            </TabsTrigger>
+            <TabsTrigger value="2">
+              <Users size={16} className="mr-2" />
+              User Groups
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="0" className="mt-6">
+            <GenericTokenRateLimitTable
+              fetchUrl={GLOBAL_TOKEN_FETCH_URL}
+              title={"Global Token Rate Limits"}
+              description={GLOBAL_DESCRIPTION}
+            />
+          </TabsContent>
+          <TabsContent value="1" className="mt-6">
+            <GenericTokenRateLimitTable
+              fetchUrl={USER_TOKEN_FETCH_URL}
+              title={"User Token Rate Limits"}
+              description={USER_DESCRIPTION}
+            />
+          </TabsContent>
+          <TabsContent value="2" className="mt-6">
+            <GenericTokenRateLimitTable
+              fetchUrl={USER_GROUP_FETCH_URL}
+              title={"User Group Token Rate Limits"}
+              description={USER_GROUP_DESCRIPTION}
+              responseMapper={(data: Record<string, TokenRateLimit[]>) =>
+                Object.entries(data).flatMap(([group_name, elements]) =>
+                  elements.map((element) => ({
+                    ...element,
+                    group_name,
+                  }))
+                )
+              }
+            />
+          </TabsContent>
+        </Tabs>
       )}
 
       {!isPaidEnterpriseFeaturesEnabled && (
@@ -205,7 +201,7 @@ function Main() {
 export default function Page() {
   return (
     <div className="mx-auto container">
-      <AdminPageTitle title="Token Rate Limits" icon={<FiShield size={32} />} />
+      <AdminPageTitle title="Token Rate Limits" icon={<Shield size={32} />} />
 
       <Main />
     </div>

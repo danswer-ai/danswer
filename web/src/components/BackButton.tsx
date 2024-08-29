@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { FiChevronLeft } from "react-icons/fi";
+import { Button } from "./ui/button";
 
 export function BackButton({
   behaviorOverride,
@@ -12,18 +13,7 @@ export function BackButton({
   const router = useRouter();
 
   return (
-    <div
-      className={`
-        my-auto 
-        flex 
-        mb-1 
-        hover:bg-hover-light 
-        w-fit 
-        p-1
-        pr-2 
-        cursor-pointer 
-        rounded-regular 
-        text-sm`}
+    <Button
       onClick={() => {
         if (behaviorOverride) {
           behaviorOverride();
@@ -31,9 +21,11 @@ export function BackButton({
           router.back();
         }
       }}
+      variant="ghost"
+      className="mb-5"
     >
       <FiChevronLeft className="mr-1 my-auto" />
       Back
-    </div>
+    </Button>
   );
 }

@@ -54,7 +54,7 @@ export function ChatPopup() {
 
         <div className="flex w-full">
           <Button
-            className="mx-auto mt-4"
+            className="mx-auto mt-6"
             onClick={() => {
               localStorage.setItem(
                 ALL_USERS_INITIAL_POPUP_FLOW_COMPLETED,

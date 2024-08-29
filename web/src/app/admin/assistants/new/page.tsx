@@ -2,10 +2,10 @@ import { AssistantEditor } from "../AssistantEditor";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { RobotIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
-import { Card } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { SuccessfulPersonaUpdateRedirectType } from "../enums";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function Page() {
   const [values, error] = await fetchAssistantEditorInfoSS();
@@ -18,11 +18,13 @@ export default async function Page() {
   } else {
     body = (
       <Card>
-        <AssistantEditor
-          {...values}
-          defaultPublic={true}
-          redirectType={SuccessfulPersonaUpdateRedirectType.ADMIN}
-        />
+        <CardContent>
+          <AssistantEditor
+            {...values}
+            defaultPublic={true}
+            redirectType={SuccessfulPersonaUpdateRedirectType.ADMIN}
+          />
+        </CardContent>
       </Card>
     );
   }

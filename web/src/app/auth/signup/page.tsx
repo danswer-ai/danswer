@@ -75,19 +75,6 @@ const Page = async () => {
                   </Link>
                 </p>
               </div>
-              <div className="mt-10">
-                <Button variant="outline" className="w-full">
-                  <GmailIcon /> Continue with Gmail
-                </Button>
-              </div>
-
-              <div className="mt-8 flex items-center w-full">
-                <Separator className="flex flex-1" />
-                <span className="flex flex-1 text-xs text-dark-500 items-center justify-center whitespace-nowrap mx-2 w-full">
-                  Or continue with
-                </span>
-                <Separator className="flex flex-1" />
-              </div>
 
               <div className="py-8">
                 <EmailPasswordForm

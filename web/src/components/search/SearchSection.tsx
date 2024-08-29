@@ -25,11 +25,11 @@ import { PersonaSelector } from "./PersonaSelector";
 import { computeAvailableFilters } from "@/lib/filters";
 import { useRouter } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
-import { DateRangeSelector } from "./DateRangeSelector";
 import { SortSearch } from "./SortSearch";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Filter } from "lucide-react";
 import { Button } from "../ui/button";
+import { DateRangeSearchSelector } from "./DateRangeSearchSelector";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -243,7 +243,7 @@ export const SearchSection = ({
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="lg:hidden">
-                <Filter size={16} className="text-emphasis" />
+                <Filter size={16} className="" />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-[85vw] sm:w-full">
@@ -269,7 +269,7 @@ export const SearchSection = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <DateRangeSelector
+            <DateRangeSearchSelector
               value={filterManager.timeRange}
               onValueChange={filterManager.setTimeRange}
             />

@@ -1,45 +1,47 @@
 {
-    "family": "indexing_model_server",
-    "networkMode": "awsvpc",
-    "containerDefinitions": [
-      {
-        "name": "indexing_model_server",
-        "image": "471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest",
-        "essential": true,
-        "memory": 512,
-        "cpu": 256,
-        "command": [
-          "/bin/sh",
-          "-c",
-          "if [ \"${DISABLE_MODEL_SERVER:-false}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000; fi"
-        ],
-        "environment": [
-          { "name": "MIN_THREADS_ML_MODELS", "value": "${MIN_THREADS_ML_MODELS}" },
-          { "name": "INDEXING_ONLY", "value": "True" },
-          { "name": "LOG_LEVEL", "value": "${LOG_LEVEL:-info}" }
-        ],
-        "mountPoints": [
-          {
-            "sourceVolume": "model_cache_huggingface",
-            "containerPath": "/root/.cache/huggingface"
-          }
-        ],
-        "logConfiguration": {
-          "logDriver": "json-file",
-          "options": {
-            "max-size": "50m",
-            "max-file": "6"
-          }
+  "family": "indexing_model_server",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "indexing_model_server",
+      "image": "471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest",
+      "essential": true,
+      "memory": 512,
+      "cpu": 256,
+      "command": [
+        "/bin/sh",
+        "-c",
+        "if [ \"${DISABLE_MODEL_SERVER:-false}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000; fi"
+      ],
+      "environment": [
+        {
+          "name": "MIN_THREADS_ML_MODELS",
+          "value": "${MIN_THREADS_ML_MODELS}"
+        },
+        { "name": "INDEXING_ONLY", "value": "True" },
+        { "name": "LOG_LEVEL", "value": "${LOG_LEVEL:-info}" }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "model_cache_huggingface",
+          "containerPath": "/root/.cache/huggingface"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "json-file",
+        "options": {
+          "max-size": "50m",
+          "max-file": "6"
         }
       }
-    ],
-    "volumes": [
-      {
-        "name": "model_cache_huggingface",
-        "host": {
-          "sourcePath": "/path/to/local/model_cache_huggingface"
-        }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "model_cache_huggingface",
+      "host": {
+        "sourcePath": "/path/to/local/model_cache_huggingface"
       }
-    ]
-  }
-  
+    }
+  ]
+}

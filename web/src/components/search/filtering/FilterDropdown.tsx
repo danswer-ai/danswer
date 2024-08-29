@@ -48,7 +48,7 @@ export function FilterDropdown({
                     py-2.5 
                     select-none 
                     cursor-pointer 
-                    text-emphasis
+                    
                     hover:bg-hover-light
                     ${
                       ind === options.length - 1 ? "" : "border-b border-border"

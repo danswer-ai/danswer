@@ -6,25 +6,23 @@ import { KeyIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR, { mutate } from "swr";
-import {
-  Button,
-  Divider,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-  Text,
-  Title,
-} from "@tremor/react";
+import { Divider } from "@tremor/react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
-import { Table } from "@tremor/react";
 import { DeleteButton } from "@/components/DeleteButton";
 import { FiCopy, FiEdit2, FiRefreshCw, FiX } from "react-icons/fi";
 import { Modal } from "@/components/Modal";
 import { Spinner } from "@/components/Spinner";
 import { deleteApiKey, regenerateApiKey } from "./lib";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { EnmeddApiKeyForm } from "./EnmeddApiKeyForm";
 
 const API_KEY_TEXT = `
@@ -44,16 +42,16 @@ function NewApiKeyModal({
     <Modal onOutsideClick={onClose}>
       <div className="px-8 py-8">
         <div className="flex w-full border-b border-border mb-4 pb-4">
-          <Title>New API Key</Title>
+          <h3 className="font-semibold">New API Key</h3>
           <div onClick={onClose} className="ml-auto p-1 rounded hover:bg-hover">
             <FiX size={18} />
           </div>
         </div>
         <div className="h-32">
-          <Text className="mb-4">
+          <p className="pb-4">
             Make sure you copy your new API key. You won’t be able to see this
             key again.
-          </Text>
+          </p>
 
           <div className="flex mt-2">
             <b className="my-auto break-all">{apiKey}</b>
@@ -71,9 +69,9 @@ function NewApiKeyModal({
             </div>
           </div>
           {copyClicked && (
-            <Text className="text-success text-xs font-medium mt-1">
+            <p className="text-success text-xs font-medium pt-1">
               API Key copied!
-            </Text>
+            </p>
           )}
         </div>
       </div>
@@ -114,12 +112,7 @@ function Main() {
   }
 
   const newApiKeyButton = (
-    <Button
-      color="green"
-      size="xs"
-      className="mt-3"
-      onClick={() => setShowCreateUpdateForm(true)}
-    >
+    <Button onClick={() => setShowCreateUpdateForm(true)}>
       Create API Key
     </Button>
   );
@@ -128,7 +121,7 @@ function Main() {
     return (
       <div>
         {popup}
-        <Text>{API_KEY_TEXT}</Text>
+        <p className="pb-5">{API_KEY_TEXT}</p>
         {newApiKeyButton}
 
         {showCreateUpdateForm && (
@@ -162,21 +155,21 @@ function Main() {
 
       {keyIsGenerating && <Spinner />}
 
-      <Text>{API_KEY_TEXT}</Text>
+      <p className="pb-5">{API_KEY_TEXT}</p>
       {newApiKeyButton}
 
       <Divider />
 
-      <Title className="mt-6">Existing API Keys</Title>
+      <h3 className="font-semibold pt-5">Existing API Keys</h3>
       <Table className="overflow-visible">
-        <TableHead>
+        <TableHeader>
           <TableRow>
-            <TableHeaderCell>Name</TableHeaderCell>
-            <TableHeaderCell>API Key</TableHeaderCell>
-            <TableHeaderCell>Regenerate</TableHeaderCell>
-            <TableHeaderCell>Delete</TableHeaderCell>
+            <TableHead>Name</TableHead>
+            <TableHead>API Key</TableHead>
+            <TableHead>Regenerate</TableHead>
+            <TableHead>Delete</TableHead>
           </TableRow>
-        </TableHead>
+        </TableHeader>
         <TableBody>
           {apiKeys.map((apiKey) => (
             <TableRow key={apiKey.api_key_id}>

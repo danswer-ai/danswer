@@ -20,8 +20,9 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
-import { Card, Text, Title, Button } from "@tremor/react";
+import { Text, Title, Button } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -140,30 +141,32 @@ const Main = () => {
             to generate an Access Token.
           </Text>
           <Card className="mt-4">
-            <CredentialForm<ProductboardCredentialJson>
-              formBody={
-                <>
-                  <TextFormField
-                    name="productboard_access_token"
-                    label="Access Token:"
-                    type="password"
-                  />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                productboard_access_token: Yup.string().required(
-                  "Please enter your Productboard access token"
-                ),
-              })}
-              initialValues={{
-                productboard_access_token: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
+            <CardContent>
+              <CredentialForm<ProductboardCredentialJson>
+                formBody={
+                  <>
+                    <TextFormField
+                      name="productboard_access_token"
+                      label="Access Token:"
+                      type="password"
+                    />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  productboard_access_token: Yup.string().required(
+                    "Please enter your Productboard access token"
+                  ),
+                })}
+                initialValues={{
+                  productboard_access_token: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -240,7 +243,7 @@ const Main = () => {
 export default function Page() {
   return (
     <div className="container mx-auto">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
 

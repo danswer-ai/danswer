@@ -14,17 +14,16 @@ import {
   convertDateToStartOfDay,
   getXDaysAgo,
 } from "./dateUtils";
-import { THIRTY_DAYS } from "./DateRangeSelector";
+import { DateRange } from "react-day-picker";
 
 export const useTimeRange = () => {
-  return useState<DateRangePickerValue>({
+  return useState<DateRange>({
     to: new Date(),
     from: getXDaysAgo(30),
-    selectValue: THIRTY_DAYS,
   });
 };
 
-export const useQueryAnalytics = (timeRange: DateRangePickerValue) => {
+export const useQueryAnalytics = (timeRange: DateRange) => {
   const url = buildApiPath("/api/analytics/admin/query", {
     start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
     end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
@@ -37,7 +36,7 @@ export const useQueryAnalytics = (timeRange: DateRangePickerValue) => {
   };
 };
 
-export const useUserAnalytics = (timeRange: DateRangePickerValue) => {
+export const useUserAnalytics = (timeRange: DateRange) => {
   const url = buildApiPath("/api/analytics/admin/user", {
     start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
     end: convertDateToEndOfDay(timeRange.to)?.toISOString(),

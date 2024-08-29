@@ -1,10 +1,10 @@
-import { Card } from "@tremor/react";
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
 import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
 import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { LargeBackButton } from "../LargeBackButton";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function Page() {
   const [values, error] = await fetchAssistantEditorInfoSS();
@@ -22,12 +22,14 @@ export default async function Page() {
         <div className="px-32">
           <div className="container mx-auto">
             <Card>
-              <AssistantEditor
-                {...values}
-                defaultPublic={false}
-                redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
-                shouldAddAssistantToUserPreferences={true}
-              />
+              <CardContent>
+                <AssistantEditor
+                  {...values}
+                  defaultPublic={false}
+                  redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
+                  shouldAddAssistantToUserPreferences={true}
+                />
+              </CardContent>
             </Card>
           </div>
         </div>

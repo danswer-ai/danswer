@@ -46,7 +46,7 @@ export function DocumentPreview({
             rounded-xs
           "
         >
-          <FiFileText className="w-6 h-6 text-white" />
+          <FiFileText className="w-6 h-6 text-inverted" />
         </div>
       </div>
       <div className="ml-4 relative">

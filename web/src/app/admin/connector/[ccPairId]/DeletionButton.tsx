@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { CCPairFullInfo } from "./types";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { FiTrash } from "react-icons/fi";
 import { deleteCCPair } from "@/lib/documentDeletion";
 import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
@@ -13,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Trash } from "lucide-react";
 
 export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
   const { popup, setPopup } = usePopup();
@@ -50,7 +50,7 @@ export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
               disabled={!ccPair.connector.disabled || isDeleting}
               variant="destructive"
             >
-              <FiTrash className="mr-1.5" /> Re-Enable
+              <Trash size={16} /> Re-Enable
             </Button>
           </TooltipTrigger>
           <TooltipContent>

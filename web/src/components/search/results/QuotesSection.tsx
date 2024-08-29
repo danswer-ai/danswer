@@ -125,9 +125,7 @@ export const QuotesSection = (props: QuotesSectionProps) => {
   return (
     <ResponseSection
       status={status}
-      header={
-        <div className="ml-2 text-emphasis">{<QuotesHeader {...props} />}</div>
-      }
+      header={<div className="ml-2 ">{<QuotesHeader {...props} />}</div>}
       body={<QuotesBody {...props} />}
       desiredOpenStatus={true}
       isNotControllable={true}

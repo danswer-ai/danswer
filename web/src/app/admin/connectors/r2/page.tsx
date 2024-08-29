@@ -19,10 +19,11 @@ import {
   R2Config,
   R2CredentialJson,
 } from "@/lib/types";
-import { Card, Select, SelectItem, Text, Title, Button } from "@tremor/react";
+import { Select, SelectItem, Text, Title, Button } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const R2Main = () => {
   const { popup, setPopup } = usePopup();
@@ -132,40 +133,42 @@ const R2Main = () => {
             </ul>
           </Text>
           <Card className="mt-4">
-            <CredentialForm<R2CredentialJson>
-              formBody={
-                <>
-                  <TextFormField
-                    name="r2_access_key_id"
-                    label="R2 Access Key ID:"
-                  />
-                  <TextFormField
-                    name="r2_secret_access_key"
-                    label="R2 Secret Access Key:"
-                  />
-                  <TextFormField name="account_id" label="Account ID:" />
-                </>
-              }
-              validationSchema={Yup.object().shape({
-                r2_access_key_id: Yup.string().required(
-                  "R2 Access Key ID is required"
-                ),
-                r2_secret_access_key: Yup.string().required(
-                  "R2 Secret Access Key is required"
-                ),
-                account_id: Yup.string().required("Account ID is required"),
-              })}
-              initialValues={{
-                r2_access_key_id: "",
-                r2_secret_access_key: "",
-                account_id: "",
-              }}
-              onSubmit={(isSuccess) => {
-                if (isSuccess) {
-                  refreshCredentials();
+            <CardContent>
+              <CredentialForm<R2CredentialJson>
+                formBody={
+                  <>
+                    <TextFormField
+                      name="r2_access_key_id"
+                      label="R2 Access Key ID:"
+                    />
+                    <TextFormField
+                      name="r2_secret_access_key"
+                      label="R2 Secret Access Key:"
+                    />
+                    <TextFormField name="account_id" label="Account ID:" />
+                  </>
                 }
-              }}
-            />
+                validationSchema={Yup.object().shape({
+                  r2_access_key_id: Yup.string().required(
+                    "R2 Access Key ID is required"
+                  ),
+                  r2_secret_access_key: Yup.string().required(
+                    "R2 Secret Access Key is required"
+                  ),
+                  account_id: Yup.string().required("Account ID is required"),
+                })}
+                initialValues={{
+                  r2_access_key_id: "",
+                  r2_secret_access_key: "",
+                  account_id: "",
+                }}
+                onSubmit={(isSuccess) => {
+                  if (isSuccess) {
+                    refreshCredentials();
+                  }
+                }}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -207,43 +210,45 @@ const R2Main = () => {
       {r2Credential && (
         <>
           <Card className="mt-4">
-            <h2 className="mb-3 font-bold">Create Connection</h2>
-            <Text className="mb-4">
-              Press connect below to start the connection to your R2 bucket.
-            </Text>
-            <ConnectorForm<R2Config>
-              nameBuilder={(values) => `R2Connector-${values.bucket_name}`}
-              ccPairNameBuilder={(values) =>
-                `R2Connector-${values.bucket_name}`
-              }
-              source="r2"
-              inputType="poll"
-              formBodyBuilder={(values) => (
-                <div>
-                  <TextFormField name="bucket_name" label="Bucket Name:" />
-                  <TextFormField
-                    name="prefix"
-                    label="Path Prefix (optional):"
-                  />
-                </div>
-              )}
-              validationSchema={Yup.object().shape({
-                bucket_type: Yup.string()
-                  .oneOf(["r2"])
-                  .required("Bucket type must be r2"),
-                bucket_name: Yup.string().required(
-                  "Please enter the name of the r2 bucket to index, e.g. my-test-bucket"
-                ),
-                prefix: Yup.string().default(""),
-              })}
-              initialValues={{
-                bucket_type: "r2",
-                bucket_name: "",
-                prefix: "",
-              }}
-              refreshFreq={60 * 60 * 24} // 1 day
-              credentialId={r2Credential.id}
-            />
+            <CardContent>
+              <h2 className="mb-3 font-bold">Create Connection</h2>
+              <Text className="mb-4">
+                Press connect below to start the connection to your R2 bucket.
+              </Text>
+              <ConnectorForm<R2Config>
+                nameBuilder={(values) => `R2Connector-${values.bucket_name}`}
+                ccPairNameBuilder={(values) =>
+                  `R2Connector-${values.bucket_name}`
+                }
+                source="r2"
+                inputType="poll"
+                formBodyBuilder={(values) => (
+                  <div>
+                    <TextFormField name="bucket_name" label="Bucket Name:" />
+                    <TextFormField
+                      name="prefix"
+                      label="Path Prefix (optional):"
+                    />
+                  </div>
+                )}
+                validationSchema={Yup.object().shape({
+                  bucket_type: Yup.string()
+                    .oneOf(["r2"])
+                    .required("Bucket type must be r2"),
+                  bucket_name: Yup.string().required(
+                    "Please enter the name of the r2 bucket to index, e.g. my-test-bucket"
+                  ),
+                  prefix: Yup.string().default(""),
+                })}
+                initialValues={{
+                  bucket_type: "r2",
+                  bucket_name: "",
+                  prefix: "",
+                }}
+                refreshFreq={60 * 60 * 24} // 1 day
+                credentialId={r2Credential.id}
+              />
+            </CardContent>
           </Card>
         </>
       )}
@@ -256,7 +261,7 @@ export default function Page() {
 
   return (
     <div className="container mx-auto">
-      <div className="mb-4">
+      <div>
         <HealthCheckBanner />
       </div>
       <AdminPageTitle icon={<R2Icon size={32} />} title="R2 Storage" />

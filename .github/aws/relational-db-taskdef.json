@@ -10,7 +10,10 @@
       "cpu": 512,
       "environment": [
         { "name": "POSTGRES_USER", "value": "${POSTGRES_USER:postgres}" },
-        { "name": "POSTGRES_PASSWORD", "value": "${POSTGRES_PASSWORD:password}" }
+        {
+          "name": "POSTGRES_PASSWORD",
+          "value": "${POSTGRES_PASSWORD:password}"
+        }
       ],
       "portMappings": [
         {

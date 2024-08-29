@@ -27,8 +27,8 @@ const config = {
         ring: "hsl(var(--ring))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
+          DEFAULT: "#2039f3",
+          foreground: "#b8d7ff",
           300: "#D7EAFF",
           light: "#F1F5F9",
         },
@@ -63,24 +63,23 @@ const config = {
 
         // background
         background: "#ffffff",
+        "background-inverted": "#000000",
         "background-subtle": "#e5e7eb", // gray-200
         "background-emphasis": "#f6f7f8",
         "background-strong": "#eaecef",
-        "background-search": "#ffffff",
         "background-custom-header": "#f3f4f6",
-        "background-inverted": "#000000",
         "background-weak": "#f3f4f6", // gray-100
         "background-dark": "#111827", // gray-900
 
         // text or icons
+        default: "rgba(14, 14, 15, 0.8)",
+        strong: "#111827", // gray-900
+        inverted: "#ffffff", // white
         light: "#e5e7eb", // gray-200
         link: "#3b82f6", // blue-500
         "link-hover": "#1d4ed8", // blue-700
         subtle: "#6b7280", // gray-500
-        default: "rgba(14, 14, 15, 0.8)", // gray-600
         emphasis: "#374151", // gray-700
-        strong: "#111827", // gray-900
-        inverted: "#ffffff", // white
         error: "#ef4444", // red-500
         alert: "#f59e0b", // amber-600
         accent: "#6671d0",
@@ -94,29 +93,11 @@ const config = {
         // hover
         "hover-light": "#f3f4f6", // gray-100
         hover: "#e5e7eb", // gray-200
-        "hover-emphasis": "#d1d5db", // gray-300
-        "accent-hover": "#5964c2",
 
         // keyword highlighting
         highlight: {
           text: "#FFA726", // yellow-100
         },
-
-        // scrollbar
-        scrollbar: {
-          track: "#f9fafb",
-          thumb: "#e5e7eb",
-          "thumb-hover": "#d1d5db",
-
-          dark: {
-            thumb: "#989a9c",
-            "thumb-hover": "#c7cdd2",
-          },
-        },
-
-        // bubbles in chat for each "user"
-        user: "#fb7185", // yellow-400
-        ai: "#60a5fa", // blue-400
 
         // for display documents
         document: "#ec4899", // pink-500

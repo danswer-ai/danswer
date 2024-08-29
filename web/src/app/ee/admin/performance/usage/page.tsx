@@ -8,7 +8,7 @@ import { useTimeRange } from "../lib";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { FiActivity } from "react-icons/fi";
 import UsageReports from "./UsageReports";
-import { Divider } from "@tremor/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useTimeRange();
@@ -21,11 +21,15 @@ export default function AnalyticsPage() {
         icon={<FiActivity size={32} />}
       />
 
-      <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
-
-      <QueryPerformanceChart timeRange={timeRange} />
-      <FeedbackChart timeRange={timeRange} />
-      <Divider />
+      <Card className="mb-12">
+        <CardHeader className="">
+          <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
+        </CardHeader>
+        <CardContent>
+          <QueryPerformanceChart timeRange={timeRange} />
+          <FeedbackChart timeRange={timeRange} />
+        </CardContent>
+      </Card>
       <UsageReports />
     </main>
   );

@@ -24,7 +24,6 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { HidableSection } from "./HidableSection";
-import { FiPlus, FiX } from "react-icons/fi";
 import { useUserGroups } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
@@ -36,15 +35,13 @@ import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { checkLLMSupportsImageInput } from "@/lib/llm/utils";
-import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@/components/ui/button";
+import { X, Plus } from "lucide-react";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -58,13 +55,11 @@ function findImageGenerationTool(tools: ToolSnapshot[]) {
 }
 
 function Label({ children }: { children: string | JSX.Element }) {
-  return (
-    <div className="block font-medium text-base text-emphasis">{children}</div>
-  );
+  return <div className="block font-medium text-base ">{children}</div>;
 }
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <div className="text-sm text-subtle mb-2">{children}</div>;
+  return <span className="text-sm text-subtle mb-2">{children}</span>;
 }
 
 export function AssistantEditor({
@@ -678,14 +673,8 @@ export function AssistantEditor({
                           <div className="w-96">
                             <SubLabel>LLM Provider</SubLabel>
 
-                            <SelectorFormField
-                              name="llm_model_provider_override"
-                              options={llmProviders.map((llmProvider) => ({
-                                name: llmProvider.name,
-                                value: llmProvider.name,
-                              }))}
-                              includeDefault={true}
-                              onSelect={(selected) => {
+                            <Select
+                              onValueChange={(selected) => {
                                 if (
                                   selected !==
                                   values.llm_model_provider_override
@@ -700,7 +689,25 @@ export function AssistantEditor({
                                   selected
                                 );
                               }}
-                            />
+                              value={
+                                values.llm_model_provider_override || "default"
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select LLM Provider" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="default">Default</SelectItem>
+                                {llmProviders.map((llmProvider) => (
+                                  <SelectItem
+                                    key={llmProvider.name}
+                                    value={llmProvider.name}
+                                  >
+                                    {llmProvider.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
 
                           {values.llm_model_provider_override && (
@@ -805,7 +812,7 @@ export function AssistantEditor({
                                       </div>
                                     </div>
                                     <div className="my-auto">
-                                      <FiX
+                                      <X
                                         className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
                                         onClick={() =>
                                           arrayHelpers.remove(index)
@@ -828,7 +835,7 @@ export function AssistantEditor({
                             className="mt-3"
                             type="button"
                           >
-                            <FiPlus className="mr-1.5" /> Add New
+                            <Plus size={16} /> Add New
                           </Button>
                         </div>
                       )}
