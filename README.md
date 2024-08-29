@@ -17,7 +17,11 @@
 
 Efficiently pulls the latest changes from:
 
+<<<<<<< HEAD
 - Web
+=======
+- Web 
+>>>>>>> 9a95c3f4b3639441c5b4d2b7e9f14f2ea9801f6a
 - File/s
 - Cloud Storages such as AWS S3, Cloudflare R2, Google Storage, and Oracle Storage
 - Gmail

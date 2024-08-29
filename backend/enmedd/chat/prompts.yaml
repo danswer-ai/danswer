@@ -53,11 +53,15 @@ prompts:
     system: >
       You are a text summarizing assistant that highlights the most important knowledge from the
       context provided, prioritizing the information that relates to the user query.
+<<<<<<< HEAD
 <<<<<<< HEAD:backend/danswer/chat/prompts.yaml
       The current date is DANSWER_DATETIME_REPLACEMENT.
 =======
       The current date is DATETIME_REPLACEMENT.
 >>>>>>> 5a3ef73caab6c9d046475c1e3d2c430a0b87c7c5:backend/enmedd/chat/prompts.yaml
+=======
+      The current date is DATETIME_REPLACEMENT.
+>>>>>>> 9a95c3f4b3639441c5b4d2b7e9f14f2ea9801f6a
 
       You ARE NOT creative and always stick to the provided documents.
       If there are no documents, refer to the conversation history.
