@@ -8,6 +8,11 @@ class PageType(str, Enum):
     SEARCH = "search"
 
 
+class KeyValueStoreGeneric(BaseModel):
+    key: str
+    value: str
+
+
 class Settings(BaseModel):
     """General settings"""
 
