@@ -1,6 +1,6 @@
 "use client";
 
-import { Text, Title } from "@tremor/react";
+import { Button, Card, Text, Title } from "@tremor/react";
 
 import {
   CloudEmbeddingProvider,
@@ -8,11 +8,13 @@ import {
   AVAILABLE_CLOUD_PROVIDERS,
   CloudEmbeddingProviderFull,
   EmbeddingModelDescriptor,
+  EmbeddingProvider,
 } from "../../../../components/embedding/interfaces";
 import { EmbeddingDetails } from "../EmbeddingModelSelectionForm";
 import { FiExternalLink, FiInfo } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
+import { LiteLLMModelForm } from "@/components/embedding/LiteLLMModelForm";
 
 export default function CloudEmbeddingPage({
   currentModel,
@@ -39,6 +41,7 @@ export default function CloudEmbeddingPage({
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
 }) {
+  const [configureLiteLLM, setConfigureLiteLLM] = useState(false);
   function hasProviderTypeinArray(
     arr: Array<{ provider_type: string }>,
     searchName: string
@@ -122,6 +125,43 @@ export default function CloudEmbeddingPage({
             </div>
           </div>
         ))}
+
+        <Text className="mt-6">
+          Alternatively, you can use a self-hosted model using the LiteLLM
+          proxy. This allows you to leverage various LLM providers through a
+          unified interface that you control.{" "}
+          <a
+            href="https://docs.litellm.ai/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline"
+          >
+            Learn more about LiteLLM
+          </a>
+        </Text>
+        {!configureLiteLLM && (
+          <Button onClick={() => setConfigureLiteLLM(true)} className="mt-4">
+            Configure LiteLLM model
+          </Button>
+        )}
+        {currentModel.provider_type}
+
+        {configureLiteLLM && (
+          <div className="w-full flex">
+            <Card
+              className={`mt-4 2xl:w-4/6 mx-auto ${currentModel.provider_type == EmbeddingProvider.LITELLM && "border border-blue-500"} `}
+            >
+              <LiteLLMModelForm
+                currentValues={
+                  currentModel.provider_type == EmbeddingProvider.LITELLM
+                    ? (currentModel as CloudEmbeddingModel)
+                    : null
+                }
+                setShowTentativeModel={setShowTentativeModel}
+              />
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -548,6 +548,7 @@ class Credential(Base):
 class SearchSettings(Base):
     __tablename__ = "search_settings"
 
+    api_url: Mapped[str | None] = mapped_column(String, nullable=True)
     id: Mapped[int] = mapped_column(primary_key=True)
     model_name: Mapped[str] = mapped_column(String)
     model_dim: Mapped[int] = mapped_column(Integer)

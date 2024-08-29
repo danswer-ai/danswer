@@ -41,6 +41,7 @@ export default function EmbeddingForm() {
       multipass_indexing: true,
       multilingual_expansion: [],
       disable_rerank_for_streaming: false,
+      api_url: null,
     });
 
   const [rerankingDetails, setRerankingDetails] = useState<RerankingDetails>({
@@ -116,6 +117,7 @@ export default function EmbeddingForm() {
         multilingual_expansion: searchSettings.multilingual_expansion,
         disable_rerank_for_streaming:
           searchSettings.disable_rerank_for_streaming,
+        api_url: null,
       });
       setRerankingDetails({
         api_key: searchSettings.api_key,

@@ -49,6 +49,7 @@ def create_search_settings(
         rerank_provider_type=search_settings.rerank_provider_type,
         rerank_api_key=search_settings.rerank_api_key,
         num_rerank=search_settings.num_rerank,
+        api_url=search_settings.api_url,
     )
 
     db_session.add(embedding_model)
