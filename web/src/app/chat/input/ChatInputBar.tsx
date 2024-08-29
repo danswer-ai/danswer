@@ -421,7 +421,8 @@ export function ChatInputBar({
                   py-3
                   xl:py-6
                   pr-10
-                  min-h-[72px]
+                  min-h-10
+                  md:min-h-[72px]
                   ${
                     textAreaRef.current &&
                     textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT

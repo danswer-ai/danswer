@@ -2,6 +2,15 @@ import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "./icons/icons";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 import { Popover } from "./popover/Popover";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 export interface Option<T> {
   name: string;

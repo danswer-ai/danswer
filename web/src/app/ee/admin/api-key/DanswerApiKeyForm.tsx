@@ -3,8 +3,7 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { createApiKey, updateApiKey } from "./lib";
 import { Modal } from "@/components/Modal";
-import { XIcon } from "@/components/icons/icons";
-import { Button, Divider, Text } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 
 interface DanswerApiKeyFormProps {
   onClose: () => void;
@@ -24,20 +23,9 @@ export const DanswerApiKeyForm = ({
   return (
     <Modal onOutsideClick={onClose} width="w-2/6">
       <div className="px-8 py-6 bg-background">
-        <h2 className="text-xl font-bold flex">
+        <h2 className="text-xl font-bold flex pb-6">
           {isUpdate ? "Update API Key" : "Create a new API Key"}
-          <div
-            onClick={onClose}
-            className="ml-auto hover:bg-hover p-1.5 rounded"
-          >
-            <XIcon
-              size={20}
-              className="my-auto flex flex-shrink-0 cursor-pointer"
-            />
-          </div>
         </h2>
-
-        <Divider />
 
         <Formik
           initialValues={{
@@ -77,10 +65,10 @@ export const DanswerApiKeyForm = ({
         >
           {({ isSubmitting, values, setFieldValue }) => (
             <Form>
-              <Text className="mb-4 text-lg">
+              <p className="mb-4 text-lg">
                 Choose a memorable name for your API key. This is optional and
                 can be added or changed later!
-              </Text>
+              </p>
 
               <TextFormField
                 name="name"
@@ -91,8 +79,6 @@ export const DanswerApiKeyForm = ({
               <div className="flex">
                 <Button
                   type="submit"
-                  size="xs"
-                  color="green"
                   disabled={isSubmitting}
                   className="mx-auto w-64"
                 >

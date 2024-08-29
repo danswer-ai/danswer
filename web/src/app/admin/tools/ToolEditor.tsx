@@ -102,7 +102,7 @@ function ToolForm({
         />
         <Button
           type="button"
-          className="absolute bottom-4 right-4 "
+          className="absolute bottom-8 right-4"
           onClick={() => {
             const definition = values.definition;
             if (definition) {

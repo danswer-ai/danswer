@@ -3,7 +3,7 @@ import { DocumentSet, Tag, ValidSources } from "@/lib/types";
 import { SourceMetadata } from "@/lib/search/interfaces";
 import { InfoIcon, defaultTailwindCSS } from "../../icons/icons";
 import { HoverPopup } from "../../HoverPopup";
-import { FiBook, FiBookmark, FiFilter, FiMap, FiX } from "react-icons/fi";
+import { FiBook, FiBookmark, FiMap, FiX } from "react-icons/fi";
 import { DateRangePickerValue } from "@tremor/react";
 import { FilterDropdown } from "./FilterDropdown";
 import { listSourceMetadata } from "@/lib/sources";
@@ -110,7 +110,7 @@ export function SourceSelector({
                   >
                     <SourceIcon
                       sourceType={source.internalName}
-                      iconSize={24}
+                      iconSize={18}
                     />
                     <span className="ml-3 text-sm">{source.displayName}</span>
                   </label>
@@ -138,7 +138,7 @@ export function SourceSelector({
                   <CustomTooltip
                     trigger={
                       <div className="flex my-auto mr-3">
-                        <Brain size={24} />
+                        <Brain size={18} />
                       </div>
                     }
                   >

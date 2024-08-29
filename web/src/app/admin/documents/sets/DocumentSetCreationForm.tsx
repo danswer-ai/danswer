@@ -118,10 +118,8 @@ export const DocumentSetCreationForm = ({
 
             <Divider />
 
-            <h2 className="mb-1 font-medium text-base">
-              Pick your connectors:
-            </h2>
-            <p className="mb-3 text-xs">
+            <h2 className="mb-1 font-medium">Pick your connectors:</h2>
+            <p className="mb-3 text-xs text-subtle">
               All documents indexed by the selected connectors will be a part of
               this document set.
             </p>

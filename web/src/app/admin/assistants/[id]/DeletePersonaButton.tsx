@@ -1,10 +1,10 @@
 "use client";
 
-import { FiTrash } from "react-icons/fi";
 import { deletePersona } from "../lib";
 import { useRouter } from "next/navigation";
 import { SuccessfulPersonaUpdateRedirectType } from "../enums";
 import { Button } from "@/components/ui/button";
+import { Trash } from "lucide-react";
 
 export function DeletePersonaButton({
   personaId,
@@ -31,7 +31,7 @@ export function DeletePersonaButton({
       }}
       variant="destructive"
     >
-      <FiTrash className="mr-1.5" /> Delete
+      <Trash size={16} /> Delete
     </Button>
   );
 }
