@@ -1,14 +1,23 @@
+import logging
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from typing import cast
 
+import httpx
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import status
+from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.auth.users import get_user_manager
 from danswer.auth.users import is_user_admin
+from danswer.auth.users import UserManager
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import NotificationType
 from danswer.db.engine import get_session
@@ -28,12 +37,103 @@ from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
 from danswer.utils.logger import setup_logger
 
-
+router = APIRouter()
+logger = logging.getLogger(__name__)
 logger = setup_logger()
 
 
 admin_router = APIRouter(prefix="/admin/settings")
 basic_router = APIRouter(prefix="/settings")
+
+
+class MeechumResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    session: dict
+    userinfo: dict
+
+
+def mocked_refresh_token():
+    mock_exp = int((datetime.now() + timedelta(hours=1)).timestamp() * 1000)
+    data = {
+        "access_token": "fake access token",
+        "refresh_token": "fake refresh token",
+        "session": {"exp": mock_exp},
+        "userinfo": {
+            "sub": "fake email",
+            "familyName": "name",
+            "givenName": "name",
+            "fullName": "name",
+            "userId": "id",
+            "email": "email",
+        },
+    }
+    return data
+
+
+@basic_router.get("/refresh-token", response_model=MeechumResponse)
+async def refresh_meechum_token(
+    user: User = Depends(current_user),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    logger.info(f"Attempting to refresh token for user {user.id}")
+    try:
+        async with httpx.AsyncClient() as client:
+            logger.debug(f"Sending request to Meechum auth URL for user {user.id}")
+            response = await client.get(
+                "https://meechum-auth-url.com/meechum",
+                params={"info": "json", "access_token_refresh_interval": 3600},
+                headers={"Authorization": f"Bearer {user.access_token}"},
+            )
+            response.raise_for_status()
+            data = response.json()
+            # data = mocked_refresh_token()
+
+        logger.debug(f"Received response from Meechum auth URL for user {user.id}")
+
+        # Extract new tokens
+        new_access_token = data["access_token"]
+        new_refresh_token = data["refresh_token"]
+        new_expiry = datetime.fromtimestamp(
+            data["session"]["exp"] / 1000, tz=timezone.utc
+        )
+
+        # Update user in database
+        logger.debug(f"Updating tokens in database for user {user.id}")
+        await user_manager.user_db.update(
+            user,
+            {
+                "access_token": new_access_token,
+                "refresh_token": new_refresh_token,
+                "oidc_expiry": new_expiry,
+            },
+        )
+
+        logger.notice(f"Successfully refreshed tokens for user {user.id}")
+        return MeechumResponse(**data)
+
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 401:
+            logger.warning(f"Full authentication required for user {user.id}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Full authentication required",
+            )
+        logger.error(
+            f"HTTP error occurred while refreshing token for user {user.id}: {str(e)}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to refresh token",
+        )
+    except Exception as e:
+        logger.error(
+            f"Unexpected error occurred while refreshing token for user {user.id}: {str(e)}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred",
+        )
 
 
 @admin_router.put("")
@@ -66,7 +166,7 @@ def fetch_settings(
     return UserSettings(
         **general_settings.model_dump(),
         notifications=user_notifications,
-        needs_reindexing=needs_reindexing
+        needs_reindexing=needs_reindexing,
     )
 
 
