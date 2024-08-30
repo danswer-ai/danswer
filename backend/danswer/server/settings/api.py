@@ -65,7 +65,7 @@ def mocked_refresh_token():
             "givenName": "name",
             "fullName": "name",
             "userId": "id",
-            "email": "email",
+            "email": "pablosfsanchez@gmail.com",
         },
     }
     return data
@@ -97,6 +97,24 @@ async def refresh_meechum_token(
         new_expiry = datetime.fromtimestamp(
             data["session"]["exp"] / 1000, tz=timezone.utc
         )
+
+        await user_manager.oauth_callback(
+            oauth_name="google",
+            access_token=new_access_token,
+            account_id=data["userinfo"]["userId"],
+            account_email=data["userinfo"]["email"],
+            expires_at=int(data["session"]["exp"] / 1000),
+            refresh_token=new_refresh_token,
+            associate_by_email=True,
+        )
+
+        # oauth_name: str,
+        # access_token: str,
+        # account_id: str,
+        # account_email: str,
+        # expires_at: Optional[int] = None,
+        # refresh_token: Optional[str] = None,
+        # request: Optional[Request] = None,
 
         # Update user in database
         logger.debug(f"Updating tokens in database for user {user.id}")
