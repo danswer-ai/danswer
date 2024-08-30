@@ -14,14 +14,14 @@ from ee.danswer.db.user_group import fetch_user_groups_for_user
 
 
 def _get_access_for_document(
-    document_id: list[str],
+    document_id: str,
     db_session: Session,
 ) -> Optional[DocumentAccess]:
     id_to_access = _get_access_for_documents([document_id], db_session)
     if len(id_to_access) == 0:
         return None
 
-    return next(iter(id_to_access.items()))
+    return next(iter(id_to_access.values()))
 
 
 def _get_access_for_documents(
