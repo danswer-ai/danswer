@@ -61,8 +61,6 @@ def evaluate_inference_section(
     try:
         model_output = message_to_string(llm.invoke(filled_llm_prompt))
 
-        raise Exception("error")
-
         # Search for the "Useful Analysis" section in the model output
         # This regex looks for "2. Useful Analysis" (case-insensitive) followed by an optional colon,
         # then any text up to "3. Final Relevance"
@@ -83,7 +81,7 @@ def evaluate_inference_section(
     except Exception as e:
         logger.exception(f"An issue occured during the agentic evaluation process. {e}")
         relevant = False
-        analysis = None
+        analysis = ""
 
     return SectionRelevancePiece(
         document_id=document_id,

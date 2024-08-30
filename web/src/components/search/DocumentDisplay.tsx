@@ -19,6 +19,7 @@ import { FiTag } from "react-icons/fi";
 import { DISABLE_LLM_DOC_RELEVANCE } from "@/lib/constants";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { CustomTooltip, TooltipGroup } from "../tooltip/CustomTooltip";
+import { WarningCircle } from "@phosphor-icons/react";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -337,7 +338,6 @@ export const AgenticDocumentDisplay = ({
             )}
 
             {(contentEnriched || additional_relevance) &&
-              relevance_explanation &&
               (isHovered || alternativeToggled) && (
                 <button
                   onClick={() =>
@@ -367,7 +367,13 @@ export const AgenticDocumentDisplay = ({
                   document.match_highlights,
                   document.blurb
                 )
-              : relevance_explanation}
+              : relevance_explanation || (
+                  <span className="flex gap-x-1 items-center">
+                    {" "}
+                    <WarningCircle />
+                    Model failed to produce an analysis of the document
+                  </span>
+                )}
           </p>
         </div>
       </div>
