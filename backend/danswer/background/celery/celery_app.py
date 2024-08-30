@@ -6,6 +6,7 @@ from typing import cast
 from celery import Celery  # type: ignore
 from celery.contrib.abortable import AbortableTask  # type: ignore
 from celery.exceptions import TaskRevokedError
+from celery.utils.log import get_task_logger
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -59,6 +60,8 @@ celery_backend_url = (
     f"redis://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_NUMBER_CELERY}"
 )
 celery_app = Celery(__name__, broker=celery_broker_url, backend=celery_backend_url)
+# use this within celery tasks to get celery task specific logging
+task_logger = get_task_logger(__name__)
 
 
 _SYNC_BATCH_SIZE = 100
@@ -110,7 +113,10 @@ def cleanup_connector_credential_pair_task(
                 cc_pair=cc_pair,
             )
         except Exception as e:
-            logger.exception(f"Failed to run connector_deletion due to {e}")
+            task_logger.exception(
+                f"Failed to run connector_deletion. "
+                f"connector_id={connector_id} credential_id={credential_id}"
+            )
             raise e
 
 
@@ -129,7 +135,9 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
             )
 
             if not cc_pair:
-                logger.warning(f"ccpair not found for {connector_id} {credential_id}")
+                task_logger.warning(
+                    f"ccpair not found for {connector_id} {credential_id}"
+                )
                 return
 
             runnable_connector = instantiate_connector(
@@ -161,12 +169,12 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
             )
 
             if len(doc_ids_to_remove) == 0:
-                logger.info(
+                task_logger.info(
                     f"No docs to prune from {cc_pair.connector.source} connector"
                 )
                 return
 
-            logger.info(
+            task_logger.info(
                 f"pruning {len(doc_ids_to_remove)} doc(s) from {cc_pair.connector.source} connector"
             )
             delete_connector_credential_pair_batch(
@@ -176,8 +184,8 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
                 document_index=document_index,
             )
         except Exception as e:
-            logger.exception(
-                f"Failed to run pruning for connector id {connector_id} due to {e}"
+            task_logger.exception(
+                f"Failed to run pruning for connector id {connector_id}."
             )
             raise e
 
@@ -291,11 +299,13 @@ def check_for_document_sets_sync_task() -> None:
 def check_for_cc_pair_deletion_task() -> None:
     """Runs periodically to check if any deletion tasks should be run"""
     with Session(get_sqlalchemy_engine()) as db_session:
-        # check if any document sets are not synced
+        # check if any cc pairs are up for deletion
         cc_pairs = get_connector_credential_pairs(db_session)
         for cc_pair in cc_pairs:
             if should_kick_off_deletion_of_cc_pair(cc_pair, db_session):
-                logger.notice(f"Deleting the {cc_pair.name} connector credential pair")
+                task_logger.info(
+                    f"Deleting the {cc_pair.name} connector credential pair"
+                )
                 cleanup_connector_credential_pair_task.apply_async(
                     kwargs=dict(
                         connector_id=cc_pair.connector.id,
@@ -342,7 +352,9 @@ def kombu_message_cleanup_task(self: Any) -> int:
             db_session.commit()
 
     if ctx["deleted"] > 0:
-        logger.info(f"Deleted {ctx['deleted']} orphaned messages from kombu_message.")
+        task_logger.info(
+            f"Deleted {ctx['deleted']} orphaned messages from kombu_message."
+        )
 
     return ctx["deleted"]
 
@@ -436,7 +448,7 @@ def check_for_prune_task() -> None:
                 credential=cc_pair.credential,
                 db_session=db_session,
             ):
-                logger.info(f"Pruning the {cc_pair.connector.name} connector")
+                task_logger.info(f"Pruning the {cc_pair.connector.name} connector")
 
                 prune_documents_task.apply_async(
                     kwargs=dict(
