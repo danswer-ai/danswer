@@ -53,10 +53,10 @@ const ToggleSwitch = () => {
         onClick={() => handleTabChange("search")}
       >
         <SearchIcon size={16} className="mr-2" />
-        <p className="items-baseline flex">
+        <div className="flex items-end">
           Search
-          <span className="text-xs ml-2">{commandSymbol}S</span>
-        </p>
+          <div className="ml-2 flex items-end">{commandSymbol}S</div>
+        </div>
       </button>
       <button
         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 ease-in-out flex items-center relative z-10 ${
@@ -67,10 +67,10 @@ const ToggleSwitch = () => {
         onClick={() => handleTabChange("chat")}
       >
         <ChatIcon size={16} className="mr-2" />
-        <p className="items-baseline flex">
+        <div className="items-end flex">
           Chat
-          <span className="text-xs ml-2">{commandSymbol}D</span>
-        </p>
+          <div className="ml-2 flex items-end">{commandSymbol}D</div>
+        </div>
       </button>
     </div>
   );
