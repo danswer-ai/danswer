@@ -11,7 +11,7 @@ from tests.integration.common_utils.connector import ConnectorManager
 from tests.integration.common_utils.credential import CredentialManager
 from tests.integration.common_utils.user import TestUser
 from tests.integration.common_utils.user import UserManager
-from tests.integration.common_utils.user_groups import UserGroupManager
+from tests.integration.common_utils.user_group import UserGroupManager
 
 
 def test_cc_pair_permissions(reset: None) -> None:

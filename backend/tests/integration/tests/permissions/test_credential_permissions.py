@@ -9,7 +9,7 @@ from danswer.server.documents.models import DocumentSource
 from tests.integration.common_utils.credential import CredentialManager
 from tests.integration.common_utils.user import TestUser
 from tests.integration.common_utils.user import UserManager
-from tests.integration.common_utils.user_groups import UserGroupManager
+from tests.integration.common_utils.user_group import UserGroupManager
 
 
 def test_credential_permissions(reset: None) -> None:

@@ -5,8 +5,8 @@ from tests.integration.common_utils.document_set import DocumentSetManager
 from tests.integration.common_utils.seed_documents import TestDocumentManager
 from tests.integration.common_utils.user import TestUser
 from tests.integration.common_utils.user import UserManager
-from tests.integration.common_utils.user_groups import TestUserGroup
-from tests.integration.common_utils.user_groups import UserGroupManager
+from tests.integration.common_utils.user_group import TestUserGroup
+from tests.integration.common_utils.user_group import UserGroupManager
 from tests.integration.common_utils.vespa import TestVespaClient
 
 

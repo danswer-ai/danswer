@@ -9,7 +9,7 @@ from danswer.server.documents.models import DocumentSource
 from tests.integration.common_utils.connector import ConnectorManager
 from tests.integration.common_utils.user import TestUser
 from tests.integration.common_utils.user import UserManager
-from tests.integration.common_utils.user_groups import UserGroupManager
+from tests.integration.common_utils.user_group import UserGroupManager
 
 
 def test_connector_permissions(reset: None) -> None:
