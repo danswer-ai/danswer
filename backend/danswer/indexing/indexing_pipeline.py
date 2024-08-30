@@ -16,7 +16,8 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.db.document import get_documents_by_ids
 from danswer.db.document import prepare_to_modify_documents
-from danswer.db.document import update_docs_updated_at
+from danswer.db.document import update_docs_last_modified__no_commit
+from danswer.db.document import update_docs_updated_at__no_commit
 from danswer.db.document import upsert_documents_complete
 from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.index_attempt import create_index_attempt_error
@@ -335,15 +336,23 @@ def index_doc_batch(
         ]
 
         # Update the time of latest version of the doc successfully indexed
+        last_modified_ids = []
         ids_to_new_updated_at = {}
         for doc in successful_docs:
+            last_modified_ids.append(doc.id)
             if doc.doc_updated_at is None:
                 continue
             ids_to_new_updated_at[doc.id] = doc.doc_updated_at
 
-        update_docs_updated_at(
+        update_docs_updated_at__no_commit(
             ids_to_new_updated_at=ids_to_new_updated_at, db_session=db_session
         )
+
+        update_docs_last_modified__no_commit(
+            document_ids=last_modified_ids, db_session=db_session
+        )
+
+        db_session.commit()
 
     return len([r for r in insertion_records if r.already_existed is False]), len(
         access_aware_chunks

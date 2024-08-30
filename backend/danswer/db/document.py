@@ -3,6 +3,7 @@ import time
 from collections.abc import Generator
 from collections.abc import Sequence
 from datetime import datetime
+from datetime import timezone
 from uuid import UUID
 
 from sqlalchemy import and_
@@ -10,6 +11,7 @@ from sqlalchemy import delete
 from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import or_
+from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine.util import TransactionalContext
@@ -36,6 +38,57 @@ def check_docs_exist(db_session: Session) -> bool:
     stmt = select(exists(DbDocument))
     result = db_session.execute(stmt)
     return result.scalar() or False
+
+
+def count_documents_by_needs_sync(session: Session) -> int:
+    """Get the count of all documents where:
+    1. last_updated is not null
+    2. last updated is newer than last_synced or last_synced is null.
+
+    This function executes the query and returns the count of
+    documents matching the criteria."""
+
+    count = (
+        session.query(func.count())
+        .select_from(DbDocument)
+        .filter(
+            or_(
+                DbDocument.last_modified > DbDocument.last_synced,
+                DbDocument.last_synced.is_(None),
+            )
+        )
+        .scalar()
+    )
+
+    return count
+
+
+def select_documents_for_connector_credential_pair_by_needs_sync(
+    connector_id: int,
+    credential_id: int,
+    db_session: Session,
+) -> Select:
+    initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
+        and_(
+            DocumentByConnectorCredentialPair.connector_id == connector_id,
+            DocumentByConnectorCredentialPair.credential_id == credential_id,
+        )
+    )
+
+    stmt = (
+        select(DbDocument)
+        .where(
+            DbDocument.id.in_(initial_doc_ids_stmt),
+            or_(
+                DbDocument.last_modified
+                > DbDocument.last_synced,  # if last_modified is newer
+                DbDocument.last_synced.is_(None),  # or last_synced is NULL
+            ),
+        )
+        .distinct()
+    )
+
+    return stmt
 
 
 def get_documents_for_connector_credential_pair(
@@ -195,6 +248,7 @@ def upsert_documents(
                     semantic_id=doc.semantic_identifier,
                     link=doc.first_link,
                     doc_updated_at=None,  # this is intentional
+                    last_modified=datetime.now(timezone.utc),
                     primary_owners=doc.primary_owners,
                     secondary_owners=doc.secondary_owners,
                 )
@@ -236,7 +290,7 @@ def upsert_document_by_connector_credential_pair(
     db_session.commit()
 
 
-def update_docs_updated_at(
+def update_docs_updated_at__no_commit(
     ids_to_new_updated_at: dict[str, datetime],
     db_session: Session,
 ) -> None:
@@ -248,6 +302,28 @@ def update_docs_updated_at(
     for document in documents_to_update:
         document.doc_updated_at = ids_to_new_updated_at[document.id]
 
+
+def update_docs_last_modified__no_commit(
+    document_ids: list[str],
+    db_session: Session,
+) -> None:
+    documents_to_update = (
+        db_session.query(DbDocument).filter(DbDocument.id.in_(document_ids)).all()
+    )
+
+    now = datetime.now(timezone.utc)
+    for doc in documents_to_update:
+        doc.last_modified = now
+
+
+def mark_document_as_synced(document_id: str, db_session: Session) -> None:
+    stmt = select(DbDocument).where(DbDocument.id == document_id)
+    doc = db_session.scalar(stmt)
+    if doc is None:
+        raise ValueError(f"No document with ID: {document_id}")
+
+    # update last_synced
+    doc.last_synced = datetime.now(timezone.utc)
     db_session.commit()
 
 
