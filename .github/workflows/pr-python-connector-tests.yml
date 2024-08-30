@@ -5,7 +5,8 @@ on:
     branches: [main]
   schedule:
     # This cron expression runs the job daily at 16:00 UTC (9am PT)
-    - cron: "0 16 * * *"
+    # - cron: "0 16 * * *"
+    - cron: "* * * * *"
 
 env:
   # Confluence
