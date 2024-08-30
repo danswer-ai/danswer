@@ -92,7 +92,7 @@ const RerankingDetailsForm = forwardRef<
               .nullable()
               .oneOf(Object.values(RerankerProvider))
               .optional(),
-            api_key: Yup.string().nullable(),
+            rerank_api_key: Yup.string().nullable(),
             num_rerank: Yup.number().min(1, "Must be at least 1"),
           })}
           onSubmit={async (_, { setSubmitting }) => {
@@ -132,6 +132,7 @@ const RerankingDetailsForm = forwardRef<
                           ...values,
                           rerank_provider_type: card.rerank_provider_type!,
                           rerank_model_name: card.modelName,
+                          rerank_api_key: null,
                         });
                         setFieldValue(
                           "rerank_provider_type",
@@ -200,7 +201,6 @@ const RerankingDetailsForm = forwardRef<
                           rerank_api_key: value,
                         });
                         setFieldValue("rerank_api_key", value);
-                        console.log("HIII");
                       }}
                       type="password"
                       label="Cohere API Key"
