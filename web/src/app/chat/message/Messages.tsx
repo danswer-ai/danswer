@@ -11,6 +11,8 @@ import {
   FiChevronLeft,
   FiTool,
   FiGlobe,
+  FiFileText,
+  FiMail
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
 import { useEffect, useRef, useState } from "react";
@@ -97,6 +99,8 @@ export const AIMessage = ({
   isComplete,
   hasDocs,
   handleFeedback,
+  sendEmailToInbox,
+  sendEmailToDraft,
   isCurrentlyShowingRetrieved,
   handleShowRetrieved,
   handleSearchQueryEdit,
@@ -116,6 +120,8 @@ export const AIMessage = ({
   isComplete?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;
+  sendEmailToInbox?: () => void;
+  sendEmailToDraft?: () => void;
   isCurrentlyShowingRetrieved?: boolean;
   handleShowRetrieved?: (messageNumber: number | null) => void;
   handleSearchQueryEdit?: (query: string) => void;
@@ -389,6 +395,22 @@ export const AIMessage = ({
                 icon={FiThumbsDown}
                 onClick={() => handleFeedback("dislike")}
               />
+               <Hoverable
+                icon={FiMail}
+                onClick={() => {
+                  if(typeof sendEmailToInbox === 'function' ) { 
+                    sendEmailToInbox()
+                  }
+                }}
+              />
+              {/* <Hoverable
+                icon={FiFileText}
+                onClick={() => {
+                  if(typeof sendEmailToDraft === 'function' ) { 
+                    sendEmailToDraft()
+                  }
+                }}
+              /> */}
             </div>
           )}
         </div>

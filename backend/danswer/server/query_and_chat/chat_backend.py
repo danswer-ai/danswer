@@ -65,6 +65,7 @@ from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
+from danswer.tools.email.send_email import EmailService
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -326,6 +327,22 @@ def set_message_as_latest(
         user_id=user_id,
         db_session=db_session,
     )
+
+
+@router.put("/send-mail/{chat_message_id}")
+def send_email_to_inbox(
+        chat_message_id: int,
+        user: User | None = Depends(current_user),
+        db_session: Session = Depends(get_session),
+) -> None:
+    logger.info(
+        f"Email sending request received from user: {'not logged in' if user is None else user.email}, "
+        f"email will be sending to inbox")
+    user_id = user.id if user else None
+    chat_message = get_chat_message(chat_message_id, user_id, db_session)
+    email_content = chat_message.message
+    email_service = EmailService()
+    email_service.send_email(user.email, email_content)
 
 
 @router.post("/create-chat-message-feedback")
