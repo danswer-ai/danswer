@@ -1,0 +1,24 @@
+version: '3'
+services:
+  llm-service:
+#    build:
+#      dockerfile: Dockerfile
+    image: fastchat_docker_llm-service:latest
+    container_name: fastchat_v1  
+    ports:
+      - "9196:9196"
+      - "9197:9197"
+      - "9198:9198"
+      - "9199:9199"
+    entrypoint: /bin/bash
+    command: -c "while true;do sleep 3600; done"
+    restart: always
+    volumes:
+#     - /data/home/venkat:/home/data
+     - /mnt/USB/models:/app/models
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
