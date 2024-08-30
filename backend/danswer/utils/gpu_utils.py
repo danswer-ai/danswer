@@ -7,7 +7,7 @@ from shared_configs.configs import MODEL_SERVER_PORT
 logger = setup_logger()
 
 
-def gpu_status_request() -> bool:
+def gpu_status_request(indexing: bool = False) -> bool:
     model_server_url = f"{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}"
 
     if "http" not in model_server_url:
