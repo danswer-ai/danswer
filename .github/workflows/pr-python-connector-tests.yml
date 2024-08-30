@@ -43,8 +43,9 @@ jobs:
         shell: script -q -e -c "bash --noprofile --norc -eo pipefail {0}"
         run: py.test -o junit_family=xunit2 -xv --ff backend/tests/daily/connector
 
-      - name: Check if scheduled run
-        # if: failure() && github.event_name == 'schedule'
+      - name: Alert on Failure
+        # && github.event_name == 'schedule'
+        if: failure() 
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         run: |
