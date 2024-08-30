@@ -86,7 +86,6 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
                   optional={field.optional}
                   description={field.description}
                   name={field.name}
-                  showNeverIfZero
                 />
               ) : field.type === "checkbox" ? (
                 <AdminBooleanFormField
