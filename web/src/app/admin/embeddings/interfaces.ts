@@ -4,7 +4,7 @@ import { NonNullChain } from "typescript";
 export interface RerankingDetails {
   rerank_model_name: string | null;
   rerank_provider_type: RerankerProvider | null;
-  api_key: string | null;
+  rerank_api_key: string | null;
   num_rerank: number;
 }
 

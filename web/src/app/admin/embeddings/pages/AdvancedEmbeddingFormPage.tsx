@@ -15,6 +15,7 @@ interface AdvancedEmbeddingFormPageProps {
   ) => void;
   advancedEmbeddingDetails: AdvancedSearchConfiguration;
   numRerank: number;
+  updateNumRerank: (value: number) => void;
 }
 
 const AdvancedEmbeddingFormPage = forwardRef<
@@ -22,7 +23,12 @@ const AdvancedEmbeddingFormPage = forwardRef<
   AdvancedEmbeddingFormPageProps
 >(
   (
-    { updateAdvancedEmbeddingDetails, advancedEmbeddingDetails, numRerank },
+    {
+      updateAdvancedEmbeddingDetails,
+      advancedEmbeddingDetails,
+      numRerank,
+      updateNumRerank,
+    },
     ref
   ) => {
     return (
@@ -154,6 +160,10 @@ const AdvancedEmbeddingFormPage = forwardRef<
                 name="disableRerankForStreaming"
               />
               <NumberInput
+                onChange={(value: number) => {
+                  updateNumRerank(value);
+                  setFieldValue("num_rerank", value);
+                }}
                 description="Number of results to rerank"
                 optional={false}
                 value={values.num_rerank}

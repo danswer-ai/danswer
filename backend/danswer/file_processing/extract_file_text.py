@@ -177,7 +177,11 @@ def read_text_file(
     return file_content_raw, metadata
 
 
-def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
+def read_pdf_file(
+    file: IO[Any],
+    pdf_pass: str | None = None,
+) -> str:
+    metadata = {}
     try:
         pdf_reader = PdfReader(file)
 
@@ -197,8 +201,16 @@ def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
                 # can be discoverable by title.
                 return ""
 
-        return TEXT_SECTION_SEPARATOR.join(
-            page.extract_text() for page in pdf_reader.pages
+        # Extract metadata from the PDF, removing leading '/' from keys if present
+        # This standardizes the metadata keys for consistency
+        metadata = {
+            k[1:] if k.startswith("/") else k: v for k, v in pdf_reader.metadata.items()
+        }
+        return (
+            TEXT_SECTION_SEPARATOR.join(
+                page.extract_text() for page in pdf_reader.pages
+            ),
+            metadata,
         )
     except PdfStreamError:
         logger.exception("PDF file is not a valid PDF")
@@ -207,7 +219,7 @@ def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
 
     # File is still discoverable by title
     # but the contents are not included as they cannot be parsed
-    return ""
+    return "", metadata
 
 
 def docx_to_text(file: IO[Any]) -> str:
@@ -273,7 +285,7 @@ def extract_file_text(
     break_on_unprocessable: bool = True,
 ) -> str:
     extension_to_function: dict[str, Callable[[IO[Any]], str]] = {
-        ".pdf": pdf_to_text,
+        ".pdf": read_pdf_file,
         ".docx": docx_to_text,
         ".pptx": pptx_to_text,
         ".xlsx": xlsx_to_text,

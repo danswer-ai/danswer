@@ -11,6 +11,7 @@ class EnterpriseSettings(BaseModel):
     use_custom_logotype: bool = False
 
     # custom Chat components
+    two_lines_for_chat_header: bool | None = None
     custom_lower_disclaimer_content: str | None = None
     custom_header_content: str | None = None
     custom_popup_header: str | None = None

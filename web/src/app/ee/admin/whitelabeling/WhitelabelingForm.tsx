@@ -7,6 +7,7 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Form, Formik } from "formik";
 import * as Yup from "yup";
 import {
+  BooleanFormField,
   Label,
   SubLabel,
   TextFormField,
@@ -55,7 +56,8 @@ export function WhitelabelingForm() {
           application_name: enterpriseSettings?.application_name || null,
           use_custom_logo: enterpriseSettings?.use_custom_logo || false,
           use_custom_logotype: enterpriseSettings?.use_custom_logotype || false,
-
+          two_lines_for_chat_header:
+            enterpriseSettings?.two_lines_for_chat_header || false,
           custom_header_content:
             enterpriseSettings?.custom_header_content || "",
           custom_popup_header: enterpriseSettings?.custom_popup_header || "",
@@ -68,6 +70,7 @@ export function WhitelabelingForm() {
           use_custom_logo: Yup.boolean().required(),
           use_custom_logotype: Yup.boolean().required(),
           custom_header_content: Yup.string().nullable(),
+          two_lines_for_chat_header: Yup.boolean().nullable(),
           custom_popup_header: Yup.string().nullable(),
           custom_popup_content: Yup.string().nullable(),
           custom_lower_disclaimer_content: Yup.string().nullable(),
@@ -202,6 +205,12 @@ export function WhitelabelingForm() {
                   subtext={`Custom Markdown content that will be displayed as a banner at the top of the Chat page.`}
                   placeholder="Your header content..."
                   disabled={isSubmitting}
+                />
+
+                <BooleanFormField
+                  name="two_lines_for_chat_header"
+                  label="Two lines for chat header?"
+                  subtext="If enabled, the chat header will be displayed on two lines instead of one."
                 />
 
                 <Divider />
