@@ -8,7 +8,7 @@ from langchain_core.messages import BaseMessage
 from requests import Timeout
 
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
-from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
+from danswer.configs.model_configs import GEN_AI_NUM_RESERVED_OUTPUT_TOKENS
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.llm.utils import convert_lm_input_to_basic_string
@@ -38,7 +38,7 @@ class CustomModelServer(LLM):
         api_key: str | None,
         timeout: int,
         endpoint: str | None = GEN_AI_API_ENDPOINT,
-        max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
+        max_output_tokens: int = GEN_AI_NUM_RESERVED_OUTPUT_TOKENS,
     ):
         if not endpoint:
             raise ValueError(

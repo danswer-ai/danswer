@@ -38,6 +38,7 @@ from danswer.danswerbot.slack.handlers.handle_message import (
 from danswer.danswerbot.slack.handlers.handle_message import schedule_feedback_reminder
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.tokens import fetch_tokens
+from danswer.danswerbot.slack.utils import check_message_limit
 from danswer.danswerbot.slack.utils import decompose_action_id
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
 from danswer.danswerbot.slack.utils import get_danswer_bot_app_id
@@ -130,9 +131,19 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
 
         if event_type == "message":
             bot_tag_id = get_danswer_bot_app_id(client.web_client)
+
+            is_dm = event.get("channel_type") == "im"
+            is_tagged = bot_tag_id and bot_tag_id in msg
+            is_danswer_bot_msg = bot_tag_id and bot_tag_id in event.get("user", "")
+
+            # DanswerBot should never respond to itself
+            if is_danswer_bot_msg:
+                logger.info("Ignoring message from DanswerBot")
+                return False
+
             # DMs with the bot don't pick up the @DanswerBot so we have to keep the
             # caught events_api
-            if bot_tag_id and bot_tag_id in msg and event.get("channel_type") != "im":
+            if is_tagged and not is_dm:
                 # Let the tag flow handle this case, don't reply twice
                 return False
 
@@ -199,6 +210,9 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
                 "Cannot respond to DanswerBot command without sender to respond to."
             )
             return False
+
+    if not check_message_limit():
+        return False
 
     logger.debug(f"Handling Slack request with Payload: '{req.payload}'")
     return True
