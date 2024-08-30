@@ -119,7 +119,7 @@ celery_app.conf.beat_schedule = {
         "task": "check_for_user_groups_sync_task",
         "schedule": timedelta(seconds=5),
     },
-    "autogenerate_usage_report": {
+    "autogenerate-usage-report": {
         "task": "autogenerate_usage_report_task",
         "schedule": timedelta(days=30),  # TODO: change this to config flag
     },
