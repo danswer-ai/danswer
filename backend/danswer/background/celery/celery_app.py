@@ -21,10 +21,6 @@ from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.background.task_utils import name_cc_prune_task
 from danswer.background.task_utils import name_document_set_sync_task
 from danswer.configs.app_configs import JOB_TIMEOUT
-from danswer.configs.app_configs import REDIS_DB_NUMBER_CELERY
-from danswer.configs.app_configs import REDIS_HOST
-from danswer.configs.app_configs import REDIS_PASSWORD
-from danswer.configs.app_configs import REDIS_PORT
 from danswer.configs.constants import PostgresAdvisoryLocks
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import InputType
@@ -48,23 +44,15 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-CELERY_PASSWORD_PART = ""
-if REDIS_PASSWORD:
-    CELERY_PASSWORD_PART = f":{REDIS_PASSWORD}@"
-
-# example celery_broker_url: "redis://:password@localhost:6379/15"
-celery_broker_url = (
-    f"redis://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_NUMBER_CELERY}"
-)
-celery_backend_url = (
-    f"redis://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_NUMBER_CELERY}"
-)
-celery_app = Celery(__name__, broker=celery_broker_url, backend=celery_backend_url)
 # use this within celery tasks to get celery task specific logging
 task_logger = get_task_logger(__name__)
 
 
 _SYNC_BATCH_SIZE = 100
+celery_app = Celery(__name__)
+celery_app.config_from_object(
+    "danswer.background.celery.celeryconfig"
+)  # Load configuration from 'celeryconfig.py'
 
 
 #####
