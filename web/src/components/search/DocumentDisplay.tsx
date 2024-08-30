@@ -231,7 +231,7 @@ export const DocumentDisplay = ({
               {document.semantic_identifier || document.document_id}
             </p>
           </a>
-          <div className="ml-auto flex gap-x-2">
+          <div className="ml-auto flex items-center">
             <TooltipGroup>
               {isHovered && messageId && (
                 <DocumentFeedbackBlock
@@ -253,7 +253,7 @@ export const DocumentDisplay = ({
                   >
                     <CustomTooltip showTick line content="Toggle content">
                       <LightBulbIcon
-                        className={`${settings?.isMobile && alternativeToggled ? "text-green-600" : "text-blue-600"} h-4 w-4 cursor-pointer`}
+                        className={`${settings?.isMobile && alternativeToggled ? "text-green-600" : "text-blue-600"} my-auto ml-2 h-4 w-4 cursor-pointer`}
                       />
                     </CustomTooltip>
                   </button>
@@ -327,30 +327,32 @@ export const AgenticDocumentDisplay = ({
             </p>
           </a>
 
-          <div className="ml-auto flex gap-x-2">
-            {isHovered && messageId && (
-              <DocumentFeedbackBlock
-                documentId={document.document_id}
-                messageId={messageId}
-                documentRank={documentRank}
-                setPopup={setPopup}
-              />
-            )}
-
-            {(contentEnriched || additional_relevance) &&
-              (isHovered || alternativeToggled) && (
-                <button
-                  onClick={() =>
-                    setAlternativeToggled(
-                      (alternativeToggled) => !alternativeToggled
-                    )
-                  }
-                >
-                  <CustomTooltip showTick line content="Toggle content">
-                    <BookIcon className="text-blue-400" />
-                  </CustomTooltip>
-                </button>
+          <div className="ml-auto items-center flex">
+            <TooltipGroup>
+              {isHovered && messageId && (
+                <DocumentFeedbackBlock
+                  documentId={document.document_id}
+                  messageId={messageId}
+                  documentRank={documentRank}
+                  setPopup={setPopup}
+                />
               )}
+
+              {(contentEnriched || additional_relevance) &&
+                (isHovered || alternativeToggled) && (
+                  <button
+                    onClick={() =>
+                      setAlternativeToggled(
+                        (alternativeToggled) => !alternativeToggled
+                      )
+                    }
+                  >
+                    <CustomTooltip showTick line content="Toggle content">
+                      <BookIcon className="ml-2 my-auto text-blue-400" />
+                    </CustomTooltip>
+                  </button>
+                )}
+            </TooltipGroup>
           </div>
         </div>
         <div className="mt-1">

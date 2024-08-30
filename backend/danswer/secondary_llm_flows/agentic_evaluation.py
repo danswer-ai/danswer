@@ -61,6 +61,11 @@ def evaluate_inference_section(
     try:
         model_output = message_to_string(llm.invoke(filled_llm_prompt))
 
+        import random
+
+        if random.random() < 0.1:
+            raise Exception("Random error in agentic evaluation")
+
         # Search for the "Useful Analysis" section in the model output
         # This regex looks for "2. Useful Analysis" (case-insensitive) followed by an optional colon,
         # then any text up to "3. Final Relevance"
