@@ -276,7 +276,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     ) -> models.UP:
         verify_email_is_invited(user_create.email)
         verify_email_domain(user_create.email)
-        print("CReATING")
         if hasattr(user_create, "role"):
             user_count = await get_user_count()
             if user_count == 0 or user_create.email in get_default_admin_user_emails():
@@ -472,8 +471,7 @@ async def optional_user(
     versioned_fetch_user = fetch_versioned_implementation(
         "danswer.auth.users", "optional_user_"
     )
-    val = await versioned_fetch_user(request, user, db_session)
-    return val
+    return await versioned_fetch_user(request, user, db_session)
 
 
 async def double_check_user(
