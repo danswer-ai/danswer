@@ -14,16 +14,13 @@ from danswer.document_index.vespa.shared_utils.utils import remove_invalid_unico
 from danswer.document_index.vespa.shared_utils.utils import (
     replace_invalid_doc_id_characters,
 )
-from danswer.document_index.vespa_constants import ACCESS_CONTROL_LIST
 from danswer.document_index.vespa_constants import BLURB
-from danswer.document_index.vespa_constants import BOOST
 from danswer.document_index.vespa_constants import CHUNK_ID
 from danswer.document_index.vespa_constants import CONTENT
 from danswer.document_index.vespa_constants import CONTENT_SUMMARY
 from danswer.document_index.vespa_constants import DOC_UPDATED_AT
 from danswer.document_index.vespa_constants import DOCUMENT_ID
 from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
-from danswer.document_index.vespa_constants import DOCUMENT_SETS
 from danswer.document_index.vespa_constants import EMBEDDINGS
 from danswer.document_index.vespa_constants import LARGE_CHUNK_REFERENCE_IDS
 from danswer.document_index.vespa_constants import METADATA
@@ -162,14 +159,16 @@ def _index_vespa_chunk(
         METADATA_SUFFIX: chunk.metadata_suffix_keyword,
         EMBEDDINGS: embeddings_name_vector_map,
         TITLE_EMBEDDING: chunk.title_embedding,
-        BOOST: chunk.boost,
         DOC_UPDATED_AT: _vespa_get_updated_at_attribute(document.doc_updated_at),
         PRIMARY_OWNERS: get_experts_stores_representations(document.primary_owners),
         SECONDARY_OWNERS: get_experts_stores_representations(document.secondary_owners),
         # the only `set` vespa has is `weightedset`, so we have to give each
         # element an arbitrary weight
-        ACCESS_CONTROL_LIST: {acl_entry: 1 for acl_entry in chunk.access.to_acl()},
-        DOCUMENT_SETS: {document_set: 1 for document_set in chunk.document_sets},
+        # rkuo: acl, docset and boost metadata are now only updated through the metadata sync queue
+        # which only calls VespaIndex.update
+        # ACCESS_CONTROL_LIST: {acl_entry: 1 for acl_entry in chunk.access.to_acl()},
+        # DOCUMENT_SETS: {document_set: 1 for document_set in chunk.document_sets},
+        # BOOST: chunk.boost,
     }
 
     vespa_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{vespa_chunk_id}"

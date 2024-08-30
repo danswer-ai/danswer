@@ -3,52 +3,76 @@ from datetime import timedelta
 from typing import Any
 from typing import cast
 
-from celery import Celery  # type: ignore
+from celery import Celery
+from celery import signals
+from celery import Task
 from celery.contrib.abortable import AbortableTask  # type: ignore
+from celery.exceptions import SoftTimeLimitExceeded
 from celery.exceptions import TaskRevokedError
+from celery.signals import beat_init
+from celery.signals import worker_init
+from celery.states import READY_STATES
 from celery.utils.log import get_task_logger
+from redis import Redis
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from danswer.access.access import get_access_for_document
+from danswer.background.celery.celery_redis import RedisConnector
+from danswer.background.celery.celery_redis import RedisDocumentSet
+from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
 from danswer.background.celery.celery_utils import should_kick_off_deletion_of_cc_pair
 from danswer.background.celery.celery_utils import should_prune_cc_pair
-from danswer.background.celery.celery_utils import should_sync_doc_set
 from danswer.background.connector_deletion import delete_connector_credential_pair
 from danswer.background.connector_deletion import delete_connector_credential_pair_batch
 from danswer.background.task_utils import build_celery_task_wrapper
 from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.background.task_utils import name_cc_prune_task
-from danswer.background.task_utils import name_document_set_sync_task
 from danswer.configs.app_configs import JOB_TIMEOUT
+from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
+from danswer.configs.constants import DanswerCeleryPriority
+from danswer.configs.constants import DanswerRedisLocks
+from danswer.configs.constants import POSTGRES_CELERY_BEAT_APP_NAME
+from danswer.configs.constants import POSTGRES_CELERY_WORKER_APP_NAME
 from danswer.configs.constants import PostgresAdvisoryLocks
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import InputType
-from danswer.db.connector_credential_pair import get_connector_credential_pair
+from danswer.db.connector_credential_pair import (
+    get_connector_credential_pair,
+)
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
+from danswer.db.document import count_documents_by_needs_sync
+from danswer.db.document import get_document
 from danswer.db.document import get_documents_for_connector_credential_pair
-from danswer.db.document import prepare_to_modify_documents
+from danswer.db.document import mark_document_as_synced
 from danswer.db.document_set import delete_document_set
+from danswer.db.document_set import fetch_document_set_for_document
 from danswer.db.document_set import fetch_document_sets
-from danswer.db.document_set import fetch_document_sets_for_documents
-from danswer.db.document_set import fetch_documents_for_document_set_paginated
 from danswer.db.document_set import get_document_set_by_id
 from danswer.db.document_set import mark_document_set_as_synced
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.models import DocumentSet
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
+from danswer.redis.redis_pool import RedisPool
 from danswer.utils.logger import setup_logger
+from danswer.utils.variable_functionality import fetch_versioned_implementation
+from danswer.utils.variable_functionality import (
+    fetch_versioned_implementation_with_fallback,
+)
+from danswer.utils.variable_functionality import noop_fallback
 
 logger = setup_logger()
 
 # use this within celery tasks to get celery task specific logging
 task_logger = get_task_logger(__name__)
 
+redis_pool = RedisPool()
 
-_SYNC_BATCH_SIZE = 100
 celery_app = Celery(__name__)
 celery_app.config_from_object(
     "danswer.background.celery.celeryconfig"
@@ -178,106 +202,104 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
             raise e
 
 
-@build_celery_task_wrapper(name_document_set_sync_task)
-@celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def sync_document_set_task(document_set_id: int) -> None:
-    """For document sets marked as not up to date, sync the state from postgres
-    into the datastore. Also handles deletions."""
-
-    def _sync_document_batch(document_ids: list[str], db_session: Session) -> None:
-        logger.debug(f"Syncing document sets for: {document_ids}")
-
-        # Acquires a lock on the documents so that no other process can modify them
-        with prepare_to_modify_documents(
-            db_session=db_session, document_ids=document_ids
-        ):
-            # get current state of document sets for these documents
-            document_set_map = {
-                document_id: document_sets
-                for document_id, document_sets in fetch_document_sets_for_documents(
-                    document_ids=document_ids, db_session=db_session
-                )
-            }
-
-            # update Vespa
-            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-            document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
-            )
-            update_requests = [
-                UpdateRequest(
-                    document_ids=[document_id],
-                    document_sets=set(document_set_map.get(document_id, [])),
-                )
-                for document_id in document_ids
-            ]
-            document_index.update(update_requests=update_requests)
-
-    with Session(get_sqlalchemy_engine()) as db_session:
-        try:
-            cursor = None
-            while True:
-                document_batch, cursor = fetch_documents_for_document_set_paginated(
-                    document_set_id=document_set_id,
-                    db_session=db_session,
-                    current_only=False,
-                    last_document_id=cursor,
-                    limit=_SYNC_BATCH_SIZE,
-                )
-                _sync_document_batch(
-                    document_ids=[document.id for document in document_batch],
-                    db_session=db_session,
-                )
-                if cursor is None:
-                    break
-
-            # if there are no connectors, then delete the document set. Otherwise, just
-            # mark it as successfully synced.
-            document_set = cast(
-                DocumentSet,
-                get_document_set_by_id(
-                    db_session=db_session, document_set_id=document_set_id
-                ),
-            )  # casting since we "know" a document set with this ID exists
-            if not document_set.connector_credential_pairs:
-                delete_document_set(
-                    document_set_row=document_set, db_session=db_session
-                )
-                logger.info(
-                    f"Successfully deleted document set with ID: '{document_set_id}'!"
-                )
-            else:
-                mark_document_set_as_synced(
-                    document_set_id=document_set_id, db_session=db_session
-                )
-                logger.info(f"Document set sync for '{document_set_id}' complete!")
-
-        except Exception:
-            logger.exception("Failed to sync document set %s", document_set_id)
-            raise
-
-
 #####
 # Periodic Tasks
 #####
 @celery_app.task(
-    name="check_for_document_sets_sync_task",
+    name="check_for_vespa_sync_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_document_sets_sync_task() -> None:
-    """Runs periodically to check if any sync tasks should be run and adds them
-    to the queue"""
-    with Session(get_sqlalchemy_engine()) as db_session:
-        # check if any document sets are not synced
-        document_set_info = fetch_document_sets(
-            user_id=None, db_session=db_session, include_outdated=True
-        )
-        for document_set, _ in document_set_info:
-            if should_sync_doc_set(document_set, db_session):
-                logger.info(f"Syncing the {document_set.name} document set")
-                sync_document_set_task.apply_async(
-                    kwargs=dict(document_set_id=document_set.id),
+def check_for_vespa_sync_task() -> None:
+    """Runs periodically to check if any document needs syncing.
+    Generates sets of tasks for Celery if syncing is needed."""
+
+    r = redis_pool.get_client()
+
+    lock_beat = r.lock(
+        DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK,
+        timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
+    )
+
+    try:
+        # these tasks should never overlap
+        if not lock_beat.acquire(blocking=False):
+            return
+
+        with Session(get_sqlalchemy_engine()) as db_session:
+            # only generate stale doc sync tasks if the fence is down
+            if not r.exists(RedisConnector.get_fence_key()):
+                r.delete(RedisConnector.get_taskset_key())  # delete the taskset
+                # add tasks to celery and build up the task set to monitor in redis
+                stale_doc_count = count_documents_by_needs_sync(db_session)
+                if stale_doc_count > 0:
+                    task_logger.info(
+                        f"Stale documents found (at least {stale_doc_count}). Generating sync tasks by cc pair."
+                    )
+
+                    total_tasks_generated = 0
+                    cc_pairs = get_connector_credential_pairs(db_session)
+                    for cc_pair in cc_pairs:
+                        rc = RedisConnector(cc_pair.id)
+                        tasks_generated = rc.generate_tasks(
+                            celery_app, db_session, r, lock_beat
+                        )
+                        if tasks_generated and tasks_generated > 0:
+                            task_logger.info(
+                                f"RedisConnector.generate_tasks finished. "
+                                f"cc_pair_id={cc_pair.id} tasks_generated={tasks_generated}"
+                            )
+
+                            total_tasks_generated += tasks_generated
+
+                    task_logger.info(
+                        f"All per connector generate_tasks finished. total_tasks_generated={total_tasks_generated}"
+                    )
+                    r.set(RedisConnector.get_fence_key(), total_tasks_generated)
+
+            # check if any document sets are not synced
+            document_set_info = fetch_document_sets(
+                user_id=None, db_session=db_session, include_outdated=True
+            )
+            for document_set, _ in document_set_info:
+                lock_beat.reacquire()
+
+                # don't generate sync tasks if we're up to date
+                if document_set.is_up_to_date:
+                    continue
+
+                rds = RedisDocumentSet(document_set.id)
+
+                # don't generate document set sync tasks if tasks are still pending
+                if r.exists(rds.fence_key):
+                    continue
+
+                # add tasks to celery and build up the task set to monitor in redis
+                r.delete(rds.taskset_key)
+
+                # Add all documents that need to be updated into the queue
+                task_logger.info(
+                    f"RedisDocumentSet.generate_tasks starting. document_set_id={document_set.id}"
                 )
+                tasks_generated = rds.generate_tasks(
+                    celery_app, db_session, r, lock_beat
+                )
+                if tasks_generated and tasks_generated > 0:
+                    task_logger.info(
+                        f"RedisDocumentSet.generate_tasks finished. "
+                        f"document_set_id={document_set.id} tasks_generated={tasks_generated}"
+                    )
+
+                    # set this only after all tasks have been added
+                    r.set(rds.fence_key, tasks_generated)
+    except SoftTimeLimitExceeded:
+        task_logger.info(
+            "Soft time limit exceeded, task is being terminated gracefully."
+        )
+    except Exception:
+        task_logger.exception("Unexpected exception")
+    finally:
+        if lock_beat.owned():
+            lock_beat.release()
 
 
 @celery_app.task(
@@ -447,19 +469,301 @@ def check_for_prune_task() -> None:
                 )
 
 
+@celery_app.task(
+    name="vespa_metadata_sync_task",
+    bind=True,
+    soft_time_limit=45,
+    time_limit=60,
+    max_retries=3,
+)
+def vespa_metadata_sync_task(self: Task, document_id: str) -> bool:
+    task_logger.info(f"document_id={document_id}")
+
+    try:
+        with Session(get_sqlalchemy_engine()) as db_session:
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+            )
+
+            doc = get_document(document_id, db_session)
+            if not doc:
+                return False
+
+            # document set sync
+            update_doc_sets: set[str] | None = None
+            doc_sets = fetch_document_set_for_document(document_id, db_session)
+            if doc_sets:
+                update_doc_sets = set(doc_sets)
+
+            # User group sync
+            doc_access = get_access_for_document(
+                document_id=document_id, db_session=db_session
+            )
+            update_request = UpdateRequest(
+                document_ids=[document_id],
+                document_sets=update_doc_sets,
+                access=doc_access,
+                boost=doc.boost,
+                hidden=doc.hidden,
+            )
+
+            # update Vespa
+            document_index.update(update_requests=[update_request])
+
+            # update db last. Worst case = we crash right before this and
+            # the sync might repeat again later
+            mark_document_as_synced(document_id, db_session)
+    except SoftTimeLimitExceeded:
+        task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
+    except Exception as e:
+        task_logger.exception("Unexpected exception")
+
+        # Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
+        countdown = 2 ** (self.request.retries + 4)
+        self.retry(exc=e, countdown=countdown)
+
+    return True
+
+
+@signals.task_postrun.connect
+def celery_task_postrun(
+    sender: Any | None = None,
+    task_id: str | None = None,
+    task: Task | None = None,
+    args: tuple | None = None,
+    kwargs: dict | None = None,
+    retval: Any | None = None,
+    state: str | None = None,
+    **kwds: Any,
+) -> None:
+    if not task:
+        return
+
+    # This function runs after any task completes (both success and failure)
+    task_logger.debug(f"Task {task.name} (ID: {task_id}) completed with state: {state}")
+    # logger.debug(f"Result: {retval}")
+
+    if state not in READY_STATES:
+        return
+
+    if not task_id:
+        return
+
+    if task_id.startswith(RedisConnector.PREFIX):
+        r = redis_pool.get_client()
+        r.srem(RedisConnector.get_taskset_key(), task_id)
+        return
+
+    if task_id.startswith(RedisDocumentSet.PREFIX):
+        r = redis_pool.get_client()
+        document_set_id = RedisDocumentSet.get_id_from_task_id(task_id)
+        if document_set_id is not None:
+            rds = RedisDocumentSet(document_set_id)
+            r.srem(rds.taskset_key, task_id)
+        return
+
+    if task_id.startswith(RedisUserGroup.PREFIX):
+        r = redis_pool.get_client()
+        usergroup_id = RedisUserGroup.get_id_from_task_id(task_id)
+        if usergroup_id is not None:
+            rug = RedisUserGroup(usergroup_id)
+            r.srem(rug.taskset_key, task_id)
+        return
+
+
+def process_connector_taskset(r: Redis, db_session: Session) -> None:
+    fence_value = r.get(RedisConnector.get_fence_key())
+    if fence_value is None:
+        return
+
+    initial_count = int(fence_value)
+
+    count = r.scard(RedisConnector.get_taskset_key())
+    task_logger.info(f"Stale documents: remaining={count} initial={initial_count}")
+    if count == 0:
+        r.delete(RedisConnector.get_taskset_key())
+        r.delete(RedisConnector.get_fence_key())
+        task_logger.info(f"Successfully synced stale documents. count={initial_count}")
+
+
+def process_document_set_taskset(
+    key_bytes: bytes, r: Redis, db_session: Session
+) -> None:
+    fence_key = key_bytes.decode("utf-8")
+    document_set_id = RedisDocumentSet.get_id_from_fence_key(fence_key)
+    if document_set_id is None:
+        task_logger.warning("could not parse document set id from {key}")
+        return
+
+    rds = RedisDocumentSet(document_set_id)
+
+    fence_value = r.get(rds.fence_key)
+    if fence_value is None:
+        return
+
+    initial_count = int(fence_value)
+
+    count = r.scard(rds.taskset_key)
+    task_logger.info(
+        f"document_set_id={document_set_id} remaining={count} initial={initial_count}"
+    )
+    if count == 0:
+        document_set = cast(
+            DocumentSet,
+            get_document_set_by_id(
+                db_session=db_session, document_set_id=document_set_id
+            ),
+        )  # casting since we "know" a document set with this ID exists
+        if not document_set.connector_credential_pairs:
+            # if there are no connectors, then delete the document set.
+            delete_document_set(document_set_row=document_set, db_session=db_session)
+            task_logger.info(
+                f"Successfully deleted document set with ID: '{document_set_id}'!"
+            )
+        else:
+            mark_document_set_as_synced(document_set_id, db_session)
+            task_logger.info(
+                f"Successfully synced document set with ID: '{document_set_id}'!"
+            )
+
+        r.delete(rds.taskset_key)
+        r.delete(rds.fence_key)
+
+
+def process_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -> None:
+    key = key_bytes.decode("utf-8")
+    usergroup_id = RedisUserGroup.get_id_from_fence_key(key)
+    if not usergroup_id:
+        task_logger.warning("Could not parse usergroup id from {key}")
+        return
+
+    rug = RedisUserGroup(usergroup_id)
+    fence_value = r.get(rug.fence_key)
+    if fence_value is None:
+        return
+
+    initial_count = int(fence_value)
+    count = r.scard(rug.taskset_key)
+    task_logger.info(
+        f"usergroup_id={usergroup_id} remaining={count} initial={initial_count}"
+    )
+    if count == 0:
+        fetch_user_group = fetch_versioned_implementation(
+            "danswer.db.user_group", "fetch_user_group"
+        )
+
+        user_group = fetch_user_group(db_session=db_session, user_group_id=usergroup_id)
+        if user_group.is_up_for_deletion:
+            delete_user_group = fetch_versioned_implementation_with_fallback(
+                "danswer.db.user_group", "delete_user_group", noop_fallback
+            )
+
+            delete_user_group(db_session=db_session, user_group=user_group)
+            task_logger.info(f" Deleted usergroup. id='{usergroup_id}'")
+        else:
+            mark_user_group_as_synced = fetch_versioned_implementation_with_fallback(
+                "danswer.db.user_group", "mark_user_group_as_synced", noop_fallback
+            )
+
+            mark_user_group_as_synced(db_session=db_session, user_group=user_group)
+            task_logger.info(f"Synced usergroup. id='{usergroup_id}'")
+
+        r.delete(rug.taskset_key)
+        r.delete(rug.fence_key)
+
+
+@celery_app.task(name="monitor_vespa_sync", soft_time_limit=300)
+def monitor_vespa_sync() -> None:
+    """This is a celery beat task that monitors and finalizes metadata sync tasksets.
+    It scans for fence values and then gets the counts of any associated tasksets.
+    If the count is 0, that means all tasks finished and we should clean up.
+
+    This task lock timeout is CELERY_METADATA_SYNC_BEAT_LOCK_TIMEOUT seconds, so don't
+    do anything too expensive in this function!
+    """
+    r = redis_pool.get_client()
+
+    lock_beat = r.lock(
+        DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK,
+        timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
+    )
+
+    try:
+        # prevent overlapping tasks
+        if not lock_beat.acquire(blocking=False):
+            return
+
+        with Session(get_sqlalchemy_engine()) as db_session:
+            if r.exists(RedisConnector.get_fence_key()):
+                process_connector_taskset(r, db_session)
+
+            for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
+                process_document_set_taskset(key_bytes, r, db_session)
+
+            for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
+                process_usergroup_taskset(key_bytes, r, db_session)
+
+        #
+        # r_celery = celery_app.broker_connection().channel().client
+        # length = celery_get_queue_length(DanswerCeleryQueues.VESPA_METADATA_SYNC, r_celery)
+        # task_logger.warning(f"queue={DanswerCeleryQueues.VESPA_METADATA_SYNC} length={length}")
+    except SoftTimeLimitExceeded:
+        task_logger.info(
+            "Soft time limit exceeded, task is being terminated gracefully."
+        )
+    finally:
+        if lock_beat.owned():
+            lock_beat.release()
+
+
+@beat_init.connect
+def on_beat_init(sender: Any, **kwargs: Any) -> None:
+    init_sqlalchemy_engine(POSTGRES_CELERY_BEAT_APP_NAME)
+
+
+@worker_init.connect
+def on_worker_init(sender: Any, **kwargs: Any) -> None:
+    init_sqlalchemy_engine(POSTGRES_CELERY_WORKER_APP_NAME)
+
+    # TODO(rkuo): this is singleton work that should be done on startup exactly once
+    # if we run multiple workers, we'll need to centralize where this cleanup happens
+    r = redis_pool.get_client()
+
+    r.delete(DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK)
+    r.delete(DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK)
+
+    r.delete(RedisConnector.get_taskset_key())
+    r.delete(RedisConnector.get_fence_key())
+
+    for key in r.scan_iter(RedisDocumentSet.TASKSET_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisUserGroup.TASKSET_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
+        r.delete(key)
+
+
 #####
 # Celery Beat (Periodic Tasks) Settings
 #####
 celery_app.conf.beat_schedule = {
-    "check-for-document-set-sync": {
-        "task": "check_for_document_sets_sync_task",
+    "check-for-vespa-sync": {
+        "task": "check_for_vespa_sync_task",
         "schedule": timedelta(seconds=5),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
     },
     "check-for-cc-pair-deletion": {
         "task": "check_for_cc_pair_deletion_task",
         # don't need to check too often, since we kick off a deletion initially
         # during the API call that actually marks the CC pair for deletion
         "schedule": timedelta(minutes=1),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
     },
 }
 celery_app.conf.beat_schedule.update(
@@ -467,6 +771,7 @@ celery_app.conf.beat_schedule.update(
         "check-for-prune": {
             "task": "check_for_prune_task",
             "schedule": timedelta(seconds=5),
+            "options": {"priority": DanswerCeleryPriority.HIGH},
         },
     }
 )
@@ -475,6 +780,16 @@ celery_app.conf.beat_schedule.update(
         "kombu-message-cleanup": {
             "task": "kombu_message_cleanup_task",
             "schedule": timedelta(seconds=3600),
+            "options": {"priority": DanswerCeleryPriority.LOWEST},
+        },
+    }
+)
+celery_app.conf.beat_schedule.update(
+    {
+        "monitor-vespa-sync": {
+            "task": "monitor_vespa_sync",
+            "schedule": timedelta(seconds=5),
+            "options": {"priority": DanswerCeleryPriority.HIGH},
         },
     }
 )

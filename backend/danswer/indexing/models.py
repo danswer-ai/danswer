@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from danswer.access.models import DocumentAccess
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
 from shared_configs.enums import EmbeddingProvider
@@ -61,6 +60,8 @@ class IndexChunk(DocAwareChunk):
     title_embedding: Embedding | None
 
 
+# TODO(rkuo): we are no longer setting metadata on initial indexing
+# it is updated through the metadata queue.
 class DocMetadataAwareIndexChunk(IndexChunk):
     """An `IndexChunk` that contains all necessary metadata to be indexed. This includes
     the following:
@@ -73,24 +74,24 @@ class DocMetadataAwareIndexChunk(IndexChunk):
            negative -> ranked lower.
     """
 
-    access: "DocumentAccess"
-    document_sets: set[str]
-    boost: int
+    # access: "DocumentAccess"
+    # document_sets: set[str]
+    # boost: int
 
     @classmethod
     def from_index_chunk(
         cls,
         index_chunk: IndexChunk,
-        access: "DocumentAccess",
-        document_sets: set[str],
-        boost: int,
+        # access: "DocumentAccess",
+        # document_sets: set[str],
+        # boost: int,
     ) -> "DocMetadataAwareIndexChunk":
         index_chunk_data = index_chunk.dict()
         return cls(
             **index_chunk_data,
-            access=access,
-            document_sets=document_sets,
-            boost=boost,
+            # access=access,
+            # document_sets=document_sets,
+            # boost=boost,
         )
 
 

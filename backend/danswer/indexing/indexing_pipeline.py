@@ -5,10 +5,8 @@ from typing import Protocol
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from danswer.access.access import get_access_for_documents
 from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.app_configs import INDEXING_EXCEPTION_LIMIT
-from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
 )
@@ -19,7 +17,6 @@ from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document import update_docs_last_modified__no_commit
 from danswer.db.document import update_docs_updated_at__no_commit
 from danswer.db.document import upsert_documents_complete
-from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.index_attempt import create_index_attempt_error
 from danswer.db.models import Document as DBDocument
 from danswer.db.tag import create_or_add_document_tag
@@ -294,30 +291,10 @@ def index_doc_batch(
     # NOTE: don't need to acquire till here, since this is when the actual race condition
     # with Vespa can occur.
     with prepare_to_modify_documents(db_session=db_session, document_ids=updatable_ids):
-        # Attach the latest status from Postgres (source of truth for access) to each
-        # chunk. This access status will be attached to each chunk in the document index
-        # TODO: attach document sets to the chunk based on the status of Postgres as well
-        document_id_to_access_info = get_access_for_documents(
-            document_ids=updatable_ids, db_session=db_session
-        )
-        document_id_to_document_set = {
-            document_id: document_sets
-            for document_id, document_sets in fetch_document_sets_for_documents(
-                document_ids=updatable_ids, db_session=db_session
-            )
-        }
+        # doc aware metadata is sent via the metadata sync queue now
         access_aware_chunks = [
             DocMetadataAwareIndexChunk.from_index_chunk(
                 index_chunk=chunk,
-                access=document_id_to_access_info[chunk.source_document.id],
-                document_sets=set(
-                    document_id_to_document_set.get(chunk.source_document.id, [])
-                ),
-                boost=(
-                    ctx.id_to_db_doc_map[chunk.source_document.id].boost
-                    if chunk.source_document.id in ctx.id_to_db_doc_map
-                    else DEFAULT_BOOST
-                ),
             )
             for chunk in chunks_with_embeddings
         ]
