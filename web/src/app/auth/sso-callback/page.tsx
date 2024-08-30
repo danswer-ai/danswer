@@ -36,7 +36,7 @@ export default function SSOCallback() {
           console.log(data);
           setAuthStatus("Authentication successful!");
 
-          // Set the session cookie manually
+          // Set the session cookie manually TODO validate safety
           document.cookie = `fastapiusersauth=${data.session_token}; max-age=${data.max_age}; path=/; secure; samesite=lax`;
 
           // Redirect to the dashboard

@@ -33,6 +33,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
 
 class UserCreate(schemas.BaseUserCreate):
     role: UserRole = UserRole.BASIC
+    tenant_id: int | None = None
 
 
 class UserUpdate(schemas.BaseUserUpdate):

@@ -256,16 +256,19 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         user_id: str,
         tenant_id: str,
     ) -> models.UP:
-        user = await self.get_by_email(email)
-        if not user:
+        try:
+            user = await self.get_by_email(email)
+
+        except Exception:
             # user_create = UserCreate(email=email, password=secrets.token_urlsafe(32))
-            user_create = UserCreate(role=UserRole.BASIC)
+            user_create = UserCreate(
+                role=UserRole.BASIC, password="password", email=email, is_verified=True
+            )
             user = await self.create(user_create)
 
-        # Update user with tenant information if needed
+            # Update user with tenant information if needed
         if user.tenant_id != tenant_id:
             await self.user_db.update(user, {"tenant_id": tenant_id})
-
         return user
 
     async def create(
@@ -282,6 +285,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 user_create.role = UserRole.ADMIN
             else:
                 user_create.role = UserRole.BASIC
+        print("Creating user")
+
         return await super().create(user_create, safe=safe, request=request)  # type: ignore
 
     async def oauth_callback(
