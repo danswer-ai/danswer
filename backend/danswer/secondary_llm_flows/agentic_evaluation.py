@@ -59,7 +59,6 @@ def evaluate_inference_section(
     )
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     try:
-        raise RuntimeError("Test")
         model_output = message_to_string(llm.invoke(filled_llm_prompt))
 
         # Search for the "Useful Analysis" section in the model output
@@ -81,7 +80,7 @@ def evaluate_inference_section(
         relevant = last_line.strip().lower().startswith("true")
     except Exception as e:
         logger.exception(f"An issue occured during the agentic evaluation process. {e}")
-        relevant = True
+        relevant = False
         analysis = None
 
     return SectionRelevancePiece(
