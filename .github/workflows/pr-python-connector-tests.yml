@@ -5,8 +5,7 @@ on:
     branches: [main]
   schedule:
     # This cron expression runs the job daily at 16:00 UTC (9am PT)
-    # - cron: "0 16 * * *"
-    - cron: "* * * * *"
+    - cron: "0 16 * * *"
 
 env:
   # Confluence
@@ -45,7 +44,7 @@ jobs:
         run: py.test -o junit_family=xunit2 -xv --ff backend/tests/daily/connector
 
       - name: Check if scheduled run
-        if: failure() && github.event_name == 'schedule'
+        # if: failure() && github.event_name == 'schedule'
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         run: |
