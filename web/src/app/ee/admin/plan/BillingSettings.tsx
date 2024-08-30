@@ -1,14 +1,18 @@
 "use client";
 
 import { BillingPlanType } from "@/app/admin/settings/interfaces";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Button, Divider, Text, Card } from "@tremor/react";
 import { StripeCheckoutButton } from "./StripeCheckoutButton";
 import { CheckmarkIcon, XIcon } from "@/components/icons/icons";
-import { FiAward, FiDollarSign, FiStar } from "react-icons/fi";
+import { FiAward, FiDollarSign, FiHelpCircle, FiStar } from "react-icons/fi";
+import Cookies from "js-cookie";
+import { Modal } from "@/components/Modal";
+import { Logo } from "@/components/Logo";
+import Link from "next/link";
 
-export function BillingSettings() {
+export function BillingSettings({ newUser }: { newUser: boolean }) {
   const settings = useContext(SettingsContext);
   const cloudSettings = settings?.cloudSettings;
 
@@ -53,6 +57,7 @@ export function BillingSettings() {
   const [newSeats, setNewSeats] = useState(seats);
   const [newPlan, setNewPlan] = useState(currentPlan);
   const [isOpen, setIsOpen] = useState(false);
+  const [isNewUserOpen, setIsNewUserOpen] = useState(true);
 
   function getBillingPlanIcon(planType: BillingPlanType) {
     switch (planType) {
@@ -67,11 +72,49 @@ export function BillingSettings() {
     }
   }
 
+  const handleCloseModal = () => {
+    setIsNewUserOpen(false);
+    Cookies.set("new_auth_user", "false");
+  };
+
   return (
     <div className="max-w-4xl mr-auto space-y-8 p-6">
+      {newUser && isNewUserOpen && (
+        <Modal
+          onOutsideClick={handleCloseModal}
+          className="max-w-lg w-full p-8  bg-bg-50 rounded-lg shadow-xl"
+        >
+          <>
+            <h2 className="text-3xl font-extrabold text-text-900 mb-6 text-center">
+              Welcome to Danswer!
+            </h2>
+            <div className="text-center mb-8">
+              <Logo className="mx-auto mb-4" height={150} width={150} />
+              <p className="text-lg text-text-700 leading-relaxed">
+                We're thrilled to have you on board! Here, you can manage your
+                billing settings and explore your plan details.
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <Button
+                onClick={handleCloseModal}
+                className="px-8 py-3 bg-blue-600 text-white text-lg font-semibold rounded-full hover:bg-blue-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              >
+                Let's Get Started
+              </Button>
+              <Button
+                onClick={() => window.open("mailto:support@danswer.ai")}
+                className="border-0 hover:underline ml-4 px-4 py-2 bg-gray-200 w-fit text-text-700 text-sm font-medium rounded-full hover:bg-gray-300 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 flex items-center"
+              >
+                Questions?
+              </Button>
+            </div>
+          </>
+        </Modal>
+      )}
       <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="px-8 py-6">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+          <h2 className="text-3xl font-bold text-text-800 mb-6 flex items-center">
             Your Plan
             <svg
               className="w-8 h-8 ml-2 text-blue-600"
@@ -90,9 +133,9 @@ export function BillingSettings() {
           </h2>
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <p className="text-lg text-gray-600 flex items-center">
+              <p className="text-lg text-text-600 flex items-center">
                 <svg
-                  className="w-5 h-5 mr-2 text-gray-500"
+                  className="w-5 h-5 mr-2 text-text-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -112,9 +155,9 @@ export function BillingSettings() {
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <p className="text-lg text-gray-600 flex items-center">
+              <p className="text-lg text-text-600 flex items-center">
                 <svg
-                  className="w-5 h-5 mr-2 text-gray-500"
+                  className="w-5 h-5 mr-2 text-text-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -137,7 +180,7 @@ export function BillingSettings() {
             <Divider />
 
             <div className="mt-6 relative">
-              <label className="block text-lg font-medium text-gray-700 mb-2 flex items-center">
+              <label className="block text-lg font-medium text-text-700 mb-2 flex items-center">
                 New Tier:
               </label>
               <div
@@ -149,7 +192,7 @@ export function BillingSettings() {
                   <span className="ml-2 capitalize">{newPlan}</span>
                 </span>
                 <svg
-                  className="w-5 h-5 text-gray-400"
+                  className="w-5 h-5 text-text-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -185,7 +228,7 @@ export function BillingSettings() {
               )}
             </div>
             <div className="mt-6">
-              <label className="block text-lg font-medium text-gray-700 mb-2 flex items-center">
+              <label className="block text-lg font-medium text-text-700 mb-2 flex items-center">
                 New Number of Seats:
               </label>
               {newPlan === BillingPlanType.FREE ? (
@@ -219,7 +262,7 @@ export function BillingSettings() {
 
       <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="px-6 py-4">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">Features</h2>
+          <h2 className="text-3xl font-bold text-text-800 mb-4">Features</h2>
           <ul className="space-y-3">
             {features.map((feature, index) => (
               <li key={index} className="flex items-center text-lg">
@@ -232,7 +275,7 @@ export function BillingSettings() {
                 </span>
                 <span
                   className={
-                    feature.included ? "text-gray-800" : "text-gray-500"
+                    feature.included ? "text-text-800" : "text-text-500"
                   }
                 >
                   {feature.name}
@@ -245,10 +288,10 @@ export function BillingSettings() {
       {currentPlan !== BillingPlanType.FREE && (
         <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
           <div className="px-8 py-6">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">
+            <h2 className="text-3xl font-bold text-text-800 mb-4">
               Tenant Deletion
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-text-600 mb-6">
               Permanently delete your tenant and all associated data.
             </p>
             <div

@@ -2,11 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, Text } from "@tremor/react";
-import { Spinner } from "@/components/Spinner";
-import { SpinnerBall } from "@phosphor-icons/react/dist/ssr";
-import LogoType from "@/components/header/LogoType";
 import { Logo } from "@/components/Logo";
-import { HeaderTitle } from "@/components/header/HeaderTitle";
 
 export default function SSOCallback() {
   const router = useRouter();
@@ -39,7 +35,7 @@ export default function SSOCallback() {
           setTimeout(() => {
             setAuthStatus("Redirecting to dashboard...");
             setTimeout(() => {
-              router.push("/admin/plan");
+              router.replace("/admin/plan");
             }, 1000);
           }, 1000);
         } else {
@@ -78,9 +74,8 @@ export default function SSOCallback() {
         ) : (
           <div className="space-y-6 flex flex-col">
             <div className="flex mx-auto">
-              <Logo height={80} width={80} />
+              <Logo height={200} width={200} />
             </div>
-            <SpinnerBall size="large" className="mx-auto text-neutral-600" />
             <Text className="text-2xl font-semibold text-text-900">
               {authStatus}
             </Text>

@@ -59,16 +59,13 @@ async def sso_callback(
     print("SSO callback reached")
 
     payload = verify_sso_token(sso_token)
-    print("hi")
+
     user = await get_or_create_user(
         payload["email"], payload["user_id"], payload["tenant_id"]
     )
-    print(user)
+
     session_token = await create_user_session(user, strategy)
-    print("Session creation attempt completed")
-    logger.info(
-        f"Session token created: {session_token[:10]}..."
-    )  # Log first 10 chars for security
+    logger.info(f"Session token created: {session_token[:10]}...")
     logger.info(f"User email: {user.email}")
     logger.info(f"User ID: {user.id}")
     logger.info(f"User role: {user.role}")
@@ -84,30 +81,6 @@ async def sso_callback(
         secure=WEB_DOMAIN.startswith("https"),
     )
     return response
-
-
-# @basic_router.post("/auth/sso-callback")
-# async def sso_callback(
-#     user = Depends(current_user),
-#     token: str = Depends(oauth2_scheme),
-#     strategy: Strategy = Depends(get_database_strategy),
-#     user_manager: UserManager = Depends(get_user_manager),
-# ):
-#     print('SSO callback reached')
-
-#     payload = verify_sso_token(token)
-#     user = await get_or_create_user(payload["email"], payload["user_id"], payload["tenant_id"])
-#     session_token = await create_user_session(user, strategy)
-
-#     response = RedirectResponse(url="/")
-#     response.set_cookie(
-#         key="session",
-#         value=session_token,
-#         httponly=True,
-#         max_age=SESSION_EXPIRE_TIME_SECONDS,
-#         secure=WEB_DOMAIN.startswith("https"),
-#     )
-#     return response
 
 
 @admin_router.put("")

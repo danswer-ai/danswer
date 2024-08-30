@@ -276,6 +276,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     ) -> models.UP:
         verify_email_is_invited(user_create.email)
         verify_email_domain(user_create.email)
+        print("CReATING")
         if hasattr(user_create, "role"):
             user_count = await get_user_count()
             if user_count == 0 or user_create.email in get_default_admin_user_emails():
@@ -360,7 +361,7 @@ async def sso_authenticate(
 ) -> models.UP:
     user = await self.get_by_email(email)
     if not user:
-        user_create = UserCreate(UserRole.BASIC)
+        user_create = UserCreate(role=UserRole.BASIC)
         user = await self.create(user_create)
 
     # Update user with tenant information if needed

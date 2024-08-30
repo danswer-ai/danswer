@@ -239,7 +239,6 @@ def _datetime_from_string(datetime_string: str) -> datetime:
     else:
         # If not in UTC, translate it
         datetime_object = datetime_object.astimezone(timezone.utc)
-
     return datetime_object
 
 

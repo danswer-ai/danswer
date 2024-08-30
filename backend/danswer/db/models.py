@@ -128,10 +128,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     oidc_expiry: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMPAware(timezone=True), nullable=True
     )
+    tenant_id: Mapped[str] = mapped_column(Text, nullable=True)
 
-    default_model: Mapped[str] = mapped_column(Text, nullable=True)
     # organized in typical structured fashion
     # formatted as `displayName__provider__modelName`
+    default_model: Mapped[str] = mapped_column(Text, nullable=True)
 
     # relationships
     credentials: Mapped[list["Credential"]] = relationship(
