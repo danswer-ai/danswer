@@ -283,7 +283,7 @@ def extract_file_text(
     file_name: str | None,
     file: IO[Any],
     break_on_unprocessable: bool = True,
-) -> str:
+) -> tuple[str, dict]:
     extension_to_function: dict[str, Callable[[IO[Any]], str]] = {
         ".pdf": read_pdf_file,
         ".docx": docx_to_text,
