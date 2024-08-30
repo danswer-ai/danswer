@@ -3,9 +3,13 @@ import uuid
 import requests
 from pydantic import BaseModel
 
+from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
+from ee.danswer.server.api_key.models import APIKeyArgs
 from tests.integration.common_utils.connectors import ConnectorClient
 from tests.integration.common_utils.constants import API_SERVER_URL
+from tests.integration.common_utils.constants import GENERAL_HEADERS
+from tests.integration.common_utils.user import TestUser
 
 
 class SimpleTestDocument(BaseModel):
@@ -18,10 +22,33 @@ class SeedDocumentResponse(BaseModel):
     documents: list[SimpleTestDocument]
 
 
-class TestDocumentClient:
+class TestDocumentManager:
+    @staticmethod
+    def get_api_key(
+        name: str | None = None,
+        role: UserRole = UserRole.ADMIN,
+        user_performing_action: TestUser | None = None,
+    ) -> str:
+        api_key_request = APIKeyArgs(
+            name=name,
+            role=role,
+        )
+        api_key_response = requests.post(
+            f"{API_SERVER_URL}/admin/api-key",
+            json=api_key_request.model_dump(),
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        api_key_response.raise_for_status()
+        return api_key_response.json()["api_key"]
+
     @staticmethod
     def seed_documents(
-        num_docs: int = 5, cc_pair_id: int | None = None
+        num_docs: int = 5,
+        cc_pair_id: int | None = None,
+        user_performing_action: TestUser | None = None,
+        api_key: str | None = None,
     ) -> SeedDocumentResponse:
         if not cc_pair_id:
             connector_details = ConnectorClient.create_connector()
@@ -52,6 +79,10 @@ class TestDocumentClient:
             response = requests.post(
                 f"{API_SERVER_URL}/danswer-api/ingestion",
                 json=document,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
             )
             response.raise_for_status()
 
@@ -69,4 +100,4 @@ class TestDocumentClient:
 
 
 if __name__ == "__main__":
-    seed_documents_resp = TestDocumentClient.seed_documents()
+    seed_documents_resp = TestDocumentManager.seed_documents()

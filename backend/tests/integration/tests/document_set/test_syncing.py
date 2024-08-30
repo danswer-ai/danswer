@@ -2,7 +2,7 @@ import time
 
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from tests.integration.common_utils.document_sets import DocumentSetClient
-from tests.integration.common_utils.seed_documents import TestDocumentClient
+from tests.integration.common_utils.seed_documents import TestDocumentManager
 from tests.integration.common_utils.vespa import TestVespaClient
 
 
@@ -10,7 +10,7 @@ def test_multiple_document_sets_syncing_same_connnector(
     reset: None, vespa_client: TestVespaClient
 ) -> None:
     # Seed documents
-    seed_result = TestDocumentClient.seed_documents(num_docs=5)
+    seed_result = TestDocumentManager.seed_documents(num_docs=5)
     cc_pair_id = seed_result.cc_pair_id
 
     # Create first document set

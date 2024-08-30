@@ -34,19 +34,6 @@ def fetch_user_groups(
 
 class UserGroupManager:
     @staticmethod
-    def fetch_user_groups(
-        user_performing_action: TestUser | None = None,
-    ) -> list[UserGroup]:
-        response = requests.get(
-            f"{API_SERVER_URL}/manage/admin/user-group",
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
-        )
-        response.raise_for_status()
-        return [UserGroup(**ug) for ug in response.json()]
-
-    @staticmethod
     def create(
         name: str | None = None,
         user_ids: list[str] = Field(default_factory=list),
@@ -114,20 +101,30 @@ class UserGroupManager:
         return response.ok
 
     @staticmethod
+    def fetch_user_groups(
+        user_performing_action: TestUser | None = None,
+    ) -> list[UserGroup]:
+        response = requests.get(
+            f"{API_SERVER_URL}/manage/admin/user-group",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        return [UserGroup(**ug) for ug in response.json()]
+
     @staticmethod
     def verify_user_group(
-        test_user_group: TestUserGroup,
+        user_group: TestUserGroup,
         user_performing_action: TestUser | None = None,
     ) -> bool:
         all_user_groups = UserGroupManager.fetch_user_groups(user_performing_action)
-        for user_group in all_user_groups:
-            if user_group.id == test_user_group.id:
-                assert len(user_group.cc_pairs) == len(
-                    test_user_group.user_group_creation_request.cc_pair_ids
-                )
-                assert len(user_group.users) == len(
-                    test_user_group.user_group_creation_request.user_ids
-                )
+        for fetched_user_group in all_user_groups:
+            if user_group.id == fetched_user_group.id:
+                if len(user_group.cc_pair_ids) != len(fetched_user_group.cc_pairs):
+                    return False
+                if len(user_group.user_ids) != len(fetched_user_group.users):
+                    return False
                 return True
         return False
 

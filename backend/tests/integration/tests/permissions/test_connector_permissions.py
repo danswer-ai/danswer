@@ -106,7 +106,7 @@ def test_connector_permissions(reset: None) -> None:
 
     # Test deleting the connector
     assert ConnectorManager.delete_connector(
-        valid_connector, user_performing_action=curator
+        connector=valid_connector, user_performing_action=curator
     )
 
     # Verify the deletion

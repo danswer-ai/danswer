@@ -2,13 +2,13 @@ import requests
 
 from tests.integration.common_utils.connectors import ConnectorClient
 from tests.integration.common_utils.constants import API_SERVER_URL
-from tests.integration.common_utils.seed_documents import TestDocumentClient
+from tests.integration.common_utils.seed_documents import TestDocumentManager
 
 
 def test_send_message_simple_with_history(reset: None) -> None:
     # create connectors
     c1_details = ConnectorClient.create_connector(name_prefix="tc1")
-    c1_seed_res = TestDocumentClient.seed_documents(
+    c1_seed_res = TestDocumentManager.seed_documents(
         num_docs=5, cc_pair_id=c1_details.cc_pair_id
     )
 
