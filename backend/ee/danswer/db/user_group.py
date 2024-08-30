@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import delete
 from sqlalchemy import func
+from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy.orm import Session
@@ -60,7 +61,7 @@ def fetch_user_groups_for_user(
 
 def select_documents_by_usergroup(
     user_group_id: int,
-) -> select:
+) -> Select:
     """This returns a statement that should be executed using
     .yield_per() to minimize overhead. The primary consumers of this function
     are the cleanup tasks."""
@@ -352,6 +353,10 @@ def update_user_group(
     user_group_id: int,
     user_group_update: UserGroupUpdate,
 ) -> UserGroup:
+    """If successful, this can set db_user_group.is_up_to_date = False.
+    That will be processed by check_for_vespa_user_groups_sync_task and trigger
+    a long running background sync to Vespa.
+    """
     stmt = select(UserGroup).where(UserGroup.id == user_group_id)
     db_user_group = db_session.scalar(stmt)
     if db_user_group is None:
