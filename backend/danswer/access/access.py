@@ -23,7 +23,7 @@ def _get_access_for_document(
     if not info:
         return None
 
-    return DocumentAccess.build(info.user_ids, [], info.is_public)
+    return DocumentAccess.build(info[1], [], info[2])
 
 
 def get_access_for_document(
