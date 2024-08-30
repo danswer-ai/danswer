@@ -92,7 +92,7 @@ from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.documents.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.user_group import validate_curator_request
+from ee.danswer.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
 
@@ -522,7 +522,7 @@ def create_connector_from_model(
 ) -> ObjectCreationIdResponse:
     try:
         _validate_connector_allowed(connector_data.source)
-        validate_curator_request(
+        validate_user_creation_permissions(
             db_session=db_session,
             user=user,
             target_group_ids=connector_data.groups,
@@ -585,12 +585,15 @@ def create_connector_with_mock_credential(
 def update_connector_from_model(
     connector_id: int,
     connector_data: ConnectorUpdateRequest,
-    user: User = Depends(current_admin_user),
+    user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ConnectorSnapshot | StatusResponse[int]:
+    logger.info(
+        f"Updating connector {connector_id} with data {connector_data.__dict__}"
+    )
     try:
         _validate_connector_allowed(connector_data.source)
-        validate_curator_request(
+        validate_user_creation_permissions(
             db_session=db_session,
             user=user,
             target_group_ids=connector_data.groups,

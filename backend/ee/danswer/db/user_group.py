@@ -31,7 +31,7 @@ from ee.danswer.server.user_group.models import UserGroupUpdate
 logger = setup_logger()
 
 
-def validate_curator_request(
+def validate_user_creation_permissions(
     db_session: Session,
     user: User | None,
     target_group_ids: list[int] | None,
@@ -51,14 +51,14 @@ def validate_curator_request(
         detail = "User does not have permission to create public credentials"
         logger.error(detail)
         raise HTTPException(
-            status_code=401,
+            status_code=402,
             detail=detail,
         )
     if not target_group_ids:
         detail = "Curators must specify 1+ groups"
         logger.error(detail)
         raise HTTPException(
-            status_code=401,
+            status_code=402,
             detail=detail,
         )
     user_curated_groups = fetch_user_groups_for_user(
@@ -70,7 +70,7 @@ def validate_curator_request(
         detail = "Curators cannot control groups they don't curate"
         logger.error(detail)
         raise HTTPException(
-            status_code=401,
+            status_code=402,
             detail=detail,
         )
 

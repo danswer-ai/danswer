@@ -20,7 +20,6 @@ from danswer.document_index.vespa.index import VespaIndex
 from danswer.indexing.models import IndexingSetting
 from danswer.main import setup_postgres
 from danswer.main import setup_vespa
-from tests.integration.common_utils.llm import seed_default_openai_provider
 
 
 def _run_migrations(
@@ -168,5 +167,5 @@ def reset_all() -> None:
     print("Resetting Vespa...")
     reset_vespa()
     print("Seeding LLM Providers...")
-    seed_default_openai_provider()
-    print("Finished resetting all.")
+    # seed_default_openai_provider()
+    # print("Finished resetting all.")

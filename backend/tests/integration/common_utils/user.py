@@ -1,6 +1,5 @@
 from copy import deepcopy
 from urllib.parse import urlencode
-from uuid import UUID
 from uuid import uuid4
 
 import requests
@@ -15,18 +14,16 @@ from tests.integration.common_utils.constants import GENERAL_HEADERS
 
 
 class TestUser(BaseModel):
+    id: str
     email: str
     password: str
-    desired_role: UserRole = UserRole.BASIC
     headers: dict = deepcopy(GENERAL_HEADERS)
-    id: UUID | None = None
 
 
 class UserManager:
     @staticmethod
-    def build_test_user(
+    def create(
         name: str | None = None,
-        desired_role: UserRole = UserRole.BASIC,
     ) -> TestUser:
         if name is None:
             name = f"test{str(uuid4())}"
@@ -34,31 +31,31 @@ class UserManager:
         email = f"{name}@test.com"
         password = "test"
 
-        return TestUser(email=email, password=password, desired_role=desired_role)
-
-    @staticmethod
-    def register_test_user(test_user: TestUser) -> UUID:
-        """
-        The first user created is given admin permissions
-        """
         body = {
-            "email": test_user.email,
-            "username": test_user.email,
-            "password": test_user.password,
+            "email": email,
+            "username": email,
+            "password": password,
         }
         response = requests.post(
             url=f"{API_SERVER_URL}/auth/register",
             json=body,
             headers=GENERAL_HEADERS,
         )
-        # response.raise_for_status()
-        print(f"Created user {test_user.email}")
-        response_json = response.json()
+        response.raise_for_status()
 
-        return response_json["id"]
+        test_user = TestUser(
+            id=response.json()["id"],
+            email=email,
+            password=password,
+        )
+        print(f"Created user {test_user.email}")
+
+        test_user.headers["Cookie"] = UserManager.login_as_user(test_user)
+
+        return test_user
 
     @staticmethod
-    def login_test_user(test_user: TestUser) -> bool:
+    def login_as_user(test_user: TestUser) -> str:
         data = urlencode(
             {
                 "username": test_user.email,
@@ -73,37 +70,35 @@ class UserManager:
             data=data,
             headers=headers,
         )
+        response.raise_for_status()
+        result_cookie = next(iter(response.cookies), None)
 
-        if response.ok:
-            result_cookie = next(iter(response.cookies), None)
-            if result_cookie:
-                test_user.headers[
-                    "Cookie"
-                ] = f"{result_cookie.name}={result_cookie.value}"
+        if result_cookie:
             print(f"Logged in as {test_user.email}")
-        else:
-            print(f"Failed to login as {test_user.email}")
+            return f"{result_cookie.name}={result_cookie.value}"
 
-        return response.ok
+        return ""
 
     @staticmethod
-    def verify_role(test_user: TestUser) -> bool:
+    def verify_role(user_to_verify: TestUser, target_role: UserRole) -> bool:
         response = requests.get(
             url=f"{API_SERVER_URL}/me",
-            headers=test_user.headers,
+            headers=user_to_verify.headers,
         )
         response.raise_for_status()
-        return test_user.desired_role == UserRole(response.json().get("role", ""))
+        return target_role == UserRole(response.json().get("role", ""))
 
     @staticmethod
     def set_role(
-        user: TestUser, user_to_perform_action: TestUser | None = None
+        user_to_set: TestUser,
+        target_role: UserRole,
+        user_to_perform_action: TestUser | None = None,
     ) -> bool:
         if user_to_perform_action is None:
-            user_to_perform_action = user
+            user_to_perform_action = user_to_set
         response = requests.patch(
             url=f"{API_SERVER_URL}/manage/set-user-role",
-            json={"user_email": user.email, "new_role": user.desired_role.value},
+            json={"user_email": user_to_set.email, "new_role": target_role.value},
             headers=user_to_perform_action.headers,
         )
         return response.ok
@@ -130,10 +125,6 @@ class UserManager:
             invited_pages=data["invited_pages"],
         )
         for accepted_user in all_users.accepted:
-            if (
-                accepted_user.email == user.email
-                and accepted_user.role == user.desired_role
-                and accepted_user.id == user.id
-            ):
+            if accepted_user.email == user.email and accepted_user.id == user.id:
                 return True
         return False

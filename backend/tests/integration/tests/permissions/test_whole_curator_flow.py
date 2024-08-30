@@ -13,76 +13,73 @@ from tests.integration.common_utils.user_groups import UserGroupManager
 
 def test_whole_curator_flow(reset: None) -> None:
     # Creating an admin user (first user created is automatically an admin)
-    admin_user: TestUser = UserManager.build_test_user(
-        name="admin_user",
-        desired_role=UserRole.ADMIN,
-    )
-    admin_user.id = UserManager.register_test_user(admin_user)
-    assert UserManager.login_test_user(admin_user)
+    admin_user: TestUser = UserManager.create(name="admin_user")
+    assert UserManager.verify_role(admin_user, UserRole.ADMIN)
 
     # Creating a curator
-    curator: TestUser = UserManager.build_test_user(
-        name="curator",
-        desired_role=UserRole.CURATOR,
-    )
-    curator.id = UserManager.register_test_user(curator)
-    assert UserManager.login_test_user(curator)
+    curator: TestUser = UserManager.create(name="curator")
 
     # Creating a user group
-    user_group_1 = UserGroupManager.build_test_user_group(
+    user_group_1 = UserGroupManager.create(
         name="user_group_1",
         user_ids=[curator.id],
         cc_pair_ids=[],
+        user_performing_action=admin_user,
     )
-    response = UserGroupManager.send_user_group(
-        user_group_1, user_performing_action=admin_user
-    )
-    response.raise_for_status()
-    user_group_1.id = int(response.json()["id"])
     UserGroupManager.wait_for_user_groups_to_sync(admin_user)
     # Making curator a curator of user_group_1
     assert UserGroupManager.set_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
-    ).ok
+    )
+    assert UserManager.verify_role(curator, UserRole.CURATOR)
 
     # Creating a credential as curator
-    test_credential = CredentialManager.build_test_credential(
-        source=DocumentSource.FILE,
+    test_credential = CredentialManager.create(
         name="curator_test_credential",
+        source=DocumentSource.FILE,
         curator_public=False,
         groups=[user_group_1.id],
+        user_performing_action=curator,
     )
-    test_credential.id = CredentialManager.send_credential(
-        test_credential, user_performing_action=curator
-    ).json()["id"]
 
     # Creating a connector as curator
-    test_connector = ConnectorManager.build_test_connector(
+    test_connector = ConnectorManager.create(
         name="curator_test_connector",
         source=DocumentSource.FILE,
-        groups=[user_group_1.id],
         is_public=False,
+        groups=[user_group_1.id],
+        user_performing_action=curator,
     )
-    test_connector.id = ConnectorManager.send_connector(
+
+    # Test editing the connector
+    test_connector.name = "updated_test_connector"
+    assert ConnectorManager.edit_connector(
         test_connector, user_performing_action=curator
-    ).json()["id"]
+    )
 
     assert test_connector.id is not None
     assert test_credential.id is not None
     # Creating a CC pair as curator
-    test_cc_pair = CCPairManager.build_test_cc_pair(
+    test_cc_pair = CCPairManager.create(
         connector_id=test_connector.id,
         credential_id=test_credential.id,
         name="curator_test_cc_pair",
         groups=[user_group_1.id],
         is_public=False,
+        user_performing_action=curator,
     )
-    test_cc_pair.id = CCPairManager.send_cc_pair(
-        test_cc_pair, user_performing_action=curator
-    ).json()["data"]
 
-    assert CCPairManager.verify_cc_pairs(
-        [test_cc_pair], user_performing_action=admin_user
-    )
+    assert CCPairManager.verify_cc_pair(test_cc_pair, user_performing_action=admin_user)
+
+    # Verify that the curator can pause and unpause the CC pair
+    assert CCPairManager.pause_cc_pair(test_cc_pair, user_performing_action=curator)
+
+    # Verify that the curator can delete the CC pair
+    assert CCPairManager.delete_cc_pair(test_cc_pair, user_performing_action=curator)
+    CCPairManager.wait_for_cc_pairs_deletion_complete(user_performing_action=curator)
+
+    # Verify that the CC pair has been deleted
+    all_cc_pairs = CCPairManager.get_all_cc_pairs(user_performing_action=admin_user)
+    assert not any(cc_pair.cc_pair_id == test_cc_pair.id for cc_pair in all_cc_pairs)

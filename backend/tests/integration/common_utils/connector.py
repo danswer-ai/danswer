@@ -1,10 +1,8 @@
 import uuid
-from datetime import datetime
 from typing import Any
 
 import requests
 from pydantic import BaseModel
-from requests import Response
 
 from danswer.connectors.models import InputType
 from danswer.server.documents.models import ConnectorUpdateRequest
@@ -18,78 +16,127 @@ _CONNECTOR_URL = f"{API_SERVER_URL}/manage/admin/connector"
 
 class TestConnector(BaseModel):
     id: int | None = None
-    connector_update_request: ConnectorUpdateRequest
+    name: str
+    source: DocumentSource
+    input_type: InputType
+    connector_specific_config: dict[str, Any]
+    groups: list[int] | None = None
+    is_public: bool | None = None
 
 
 class ConnectorManager:
     @staticmethod
-    def build_test_connector(
+    def create(
         name: str | None = None,
         source: DocumentSource = DocumentSource.FILE,
         input_type: InputType = InputType.LOAD_STATE,
         connector_specific_config: dict[str, Any] | None = None,
-        refresh_freq: int | None = None,
-        prune_freq: int | None = None,
-        indexing_start: datetime | None = None,
         is_public: bool = True,
         groups: list[int] | None = None,
+        user_performing_action: TestUser | None = None,
     ) -> TestConnector:
-        if not name:
+        if name is None:
             name = "test-connector-" + str(uuid.uuid4())
 
-        connector = ConnectorUpdateRequest(
+        connector_update_request = ConnectorUpdateRequest(
             name=name,
             source=source,
             input_type=input_type,
             connector_specific_config=connector_specific_config or {},
-            refresh_freq=refresh_freq,
-            prune_freq=prune_freq,
-            indexing_start=indexing_start,
             is_public=is_public,
             groups=groups or [],
         )
 
-        return TestConnector(connector_update_request=connector)
-
-    @staticmethod
-    def send_connector(
-        test_connector: TestConnector,
-        user_performing_action: TestUser | None = None,
-    ) -> Response:
-        request = test_connector.connector_update_request.model_dump()
-        return requests.post(
+        response = requests.post(
             url=_CONNECTOR_URL,
-            json=request,
+            json=connector_update_request.model_dump(),
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+
+        response_data = response.json()
+        return TestConnector(
+            id=response_data.get("id"),
+            name=name,
+            source=source,
+            input_type=input_type,
+            connector_specific_config=connector_specific_config or {},
+            groups=groups,
+            is_public=is_public,
         )
 
     @staticmethod
     def edit_connector(
-        test_connector: TestConnector,
+        connector: TestConnector,
         user_performing_action: TestUser | None = None,
-    ) -> Response:
-        request = test_connector.connector_update_request.model_dump()
-        if not test_connector.id:
-            raise ValueError("Connector ID is required for this operation")
-        return requests.post(
-            url=f"{_CONNECTOR_URL}/{test_connector.id}",
-            json=request,
+    ) -> bool:
+        print(connector.__dict__)
+        if not connector.id:
+            raise ValueError("Connector ID is required to edit a connector")
+        response = requests.patch(
+            url=f"{_CONNECTOR_URL}/{connector.id}",
+            json=connector.model_dump(exclude={"id"}),
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
+        response.raise_for_status()  # This will raise an HTTPError if the request failed
+        return True
 
     @staticmethod
-    def delete(
-        test_connector: TestConnector,
+    def delete_connector(
+        connector: TestConnector,
         user_performing_action: TestUser | None = None,
     ) -> bool:
         response = requests.delete(
-            url=f"{_CONNECTOR_URL}/{test_connector.id}",
+            url=f"{_CONNECTOR_URL}/{connector.id}",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
-        return response.ok
+        response.raise_for_status()  # This will raise an HTTPError if the request failed
+        return True
+
+    @staticmethod
+    def get_all_connectors(
+        user_performing_action: TestUser | None = None,
+    ) -> list[TestConnector]:
+        response = requests.get(
+            url=f"{API_SERVER_URL}/manage/connector",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        return [
+            TestConnector(
+                id=conn.get("id"),
+                name=conn.get("name", ""),
+                source=conn.get("source", DocumentSource.FILE),
+                input_type=conn.get("input_type", InputType.LOAD_STATE),
+                connector_specific_config=conn.get("connector_specific_config", {}),
+            )
+            for conn in response.json()
+        ]
+
+    @staticmethod
+    def get_connector(
+        connector_id: int, user_performing_action: TestUser | None = None
+    ) -> TestConnector:
+        response = requests.get(
+            url=f"{API_SERVER_URL}/manage/connector/{connector_id}",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        conn = response.json()
+        return TestConnector(
+            id=conn.get("id"),
+            name=conn.get("name", ""),
+            source=conn.get("source", DocumentSource.FILE),
+            input_type=conn.get("input_type", InputType.LOAD_STATE),
+            connector_specific_config=conn.get("connector_specific_config", {}),
+        )

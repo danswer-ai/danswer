@@ -26,7 +26,7 @@ from danswer.server.documents.models import CredentialSwapRequest
 from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.user_group import validate_curator_request
+from ee.danswer.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
 
@@ -79,7 +79,7 @@ def get_cc_source_full_info(
     ]
 
 
-@router.get("/credentials/{id}")
+@router.get("/credential/{id}")
 def list_credentials_by_id(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -104,7 +104,7 @@ def delete_credential_by_id_admin(
     )
 
 
-@router.put("/admin/credentials/swap")
+@router.put("/admin/credential/swap")
 def swap_credentials_for_connector(
     credential_swap_req: CredentialSwapRequest,
     user: User | None = Depends(current_user),
@@ -131,7 +131,7 @@ def create_credential_from_model(
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     if not _ignore_credential_permissions(credential_info.source):
-        validate_curator_request(
+        validate_user_creation_permissions(
             db_session=db_session,
             user=user,
             target_group_ids=credential_info.groups,
@@ -176,7 +176,7 @@ def get_credential_by_id(
     return CredentialSnapshot.from_credential_db_model(credential)
 
 
-@router.put("/admin/credentials/{credential_id}")
+@router.put("/admin/credential/{credential_id}")
 def update_credential_data(
     credential_id: int,
     credential_update: CredentialDataUpdateRequest,

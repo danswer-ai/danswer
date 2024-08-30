@@ -335,9 +335,13 @@ def add_credential_to_connector(
         raise HTTPException(status_code=404, detail="Connector does not exist")
 
     if credential is None:
+        error_msg = (
+            f"Credential {credential_id} does not exist or does not belong to user"
+        )
+        logger.error(error_msg)
         raise HTTPException(
             status_code=401,
-            detail="Credential does not exist or does not belong to user",
+            detail=error_msg,
         )
 
     existing_association = (

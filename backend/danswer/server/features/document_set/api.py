@@ -18,7 +18,7 @@ from danswer.server.features.document_set.models import CheckDocSetPublicRespons
 from danswer.server.features.document_set.models import DocumentSet
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from danswer.server.features.document_set.models import DocumentSetUpdateRequest
-from ee.danswer.db.user_group import validate_curator_request
+from ee.danswer.db.user_group import validate_user_creation_permissions
 
 
 router = APIRouter(prefix="/manage")
@@ -30,7 +30,7 @@ def create_document_set(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> int:
-    validate_curator_request(
+    validate_user_creation_permissions(
         db_session=db_session,
         user=user,
         target_group_ids=document_set_creation_request.groups,
@@ -53,7 +53,7 @@ def patch_document_set(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    validate_curator_request(
+    validate_user_creation_permissions(
         db_session=db_session,
         user=user,
         target_group_ids=document_set_update_request.groups,

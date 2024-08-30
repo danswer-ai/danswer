@@ -45,6 +45,8 @@ class ConnectorBase(BaseModel):
     refresh_freq: int | None = None
     prune_freq: int | None = None
     indexing_start: datetime | None = None
+    is_public: bool = True
+    groups: list[int] = Field(default_factory=list)
 
 
 class ConnectorUpdateRequest(ConnectorBase):
@@ -106,11 +108,6 @@ class CredentialSnapshot(CredentialBase):
     user_id: UUID | None
     time_created: datetime
     time_updated: datetime
-    name: str | None
-    source: DocumentSource
-    credential_json: dict[str, Any]
-    admin_public: bool
-    curator_public: bool
 
     @classmethod
     def from_credential_db_model(cls, credential: Credential) -> "CredentialSnapshot":

@@ -20,13 +20,13 @@ from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import get_index_attempts_for_connector
 from danswer.db.models import User
-from danswer.db.models import UserRole
 from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import CCStatusUpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
+from ee.danswer.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
 
@@ -153,11 +153,15 @@ def associate_credential_to_connector(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    if user and user.role != UserRole.ADMIN and metadata.is_public:
-        raise HTTPException(
-            status_code=400,
-            detail="Public connections cannot be created by non-admin users",
-        )
+    logger.info(
+        f"Updating connector {connector_id} credential {credential_id} with data {metadata.__dict__}"
+    )
+    validate_user_creation_permissions(
+        db_session=db_session,
+        user=user,
+        target_group_ids=metadata.groups,
+        object_is_public=metadata.is_public,
+    )
 
     try:
         response = add_credential_to_connector(

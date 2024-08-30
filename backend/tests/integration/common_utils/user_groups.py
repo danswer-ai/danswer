@@ -1,14 +1,11 @@
 import time
-from uuid import UUID
 from uuid import uuid4
 
 import requests
 from pydantic import BaseModel
 from pydantic import Field
-from requests import Response
 
 from ee.danswer.server.user_group.models import UserGroup
-from ee.danswer.server.user_group.models import UserGroupCreate
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
@@ -16,89 +13,26 @@ from tests.integration.common_utils.user import TestUser
 
 
 class TestUserGroup(BaseModel):
-    id: int | None = None
-    user_group_creation_request: UserGroupCreate
+    id: int
+    name: str
+    user_ids: list[str]
+    cc_pair_ids: list[int]
+
+
+def fetch_user_groups(
+    user_performing_action: TestUser | None = None,
+) -> list[UserGroup]:
+    response = requests.get(
+        f"{API_SERVER_URL}/manage/admin/user-group",
+        headers=user_performing_action.headers
+        if user_performing_action
+        else GENERAL_HEADERS,
+    )
+    response.raise_for_status()
+    return [UserGroup(**ug) for ug in response.json()]
 
 
 class UserGroupManager:
-    @staticmethod
-    def build_test_user_group(
-        name: str | None = None,
-        user_ids: list[UUID] = Field(default_factory=list),
-        cc_pair_ids: list[int] = Field(default_factory=list),
-    ) -> TestUserGroup:
-        if name is None:
-            name = f"test_group_{str(uuid4())}"
-        user_group_creation_request = UserGroupCreate(
-            name=name,
-            user_ids=user_ids,
-            cc_pair_ids=cc_pair_ids,
-        )
-        return TestUserGroup(
-            user_group_creation_request=user_group_creation_request,
-        )
-
-    @staticmethod
-    def send_user_group(
-        test_user_group: TestUserGroup,
-        user_performing_action: TestUser | None = None,
-    ) -> Response:
-        request = {
-            "name": test_user_group.user_group_creation_request.name,
-            "user_ids": [
-                str(uid) for uid in test_user_group.user_group_creation_request.user_ids
-            ],
-            "cc_pair_ids": test_user_group.user_group_creation_request.cc_pair_ids,
-        }
-        return requests.post(
-            f"{API_SERVER_URL}/manage/admin/user-group",
-            json=request,
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
-        )
-
-    @staticmethod
-    def edit_user_group(
-        test_user_group: TestUserGroup,
-        user_performing_action: TestUser | None = None,
-    ) -> Response:
-        if not test_user_group.id:
-            raise ValueError("User group has no ID")
-        user_group_update = {
-            "user_ids": [
-                str(uid) for uid in test_user_group.user_group_creation_request.user_ids
-            ],
-            "cc_pair_ids": test_user_group.user_group_creation_request.cc_pair_ids,
-        }
-        return requests.patch(
-            f"{API_SERVER_URL}/manage/admin/user-group/{test_user_group.id}",
-            json=user_group_update,
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
-        )
-
-    @staticmethod
-    def set_curator(
-        test_user_group: TestUserGroup,
-        user_to_set_as_curator: TestUser,
-        user_performing_action: TestUser | None = None,
-    ) -> Response:
-        if not user_to_set_as_curator.id:
-            raise ValueError("User has no ID")
-        set_curator_request = {
-            "user_id": str(user_to_set_as_curator.id),
-            "is_curator": True,
-        }
-        return requests.post(
-            f"{API_SERVER_URL}/manage/admin/user-group/{test_user_group.id}/set-curator",
-            json=set_curator_request,
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
-        )
-
     @staticmethod
     def fetch_user_groups(
         user_performing_action: TestUser | None = None,
@@ -112,6 +46,74 @@ class UserGroupManager:
         response.raise_for_status()
         return [UserGroup(**ug) for ug in response.json()]
 
+    @staticmethod
+    def create(
+        name: str | None = None,
+        user_ids: list[str] = Field(default_factory=list),
+        cc_pair_ids: list[int] = Field(default_factory=list),
+        user_performing_action: TestUser | None = None,
+    ) -> TestUserGroup:
+        if not name:
+            name = f"test-user-group-{str(uuid4())}"
+        request = {
+            "name": name,
+            "user_ids": user_ids,
+            "cc_pair_ids": cc_pair_ids,
+        }
+        response = requests.post(
+            f"{API_SERVER_URL}/manage/admin/user-group",
+            json=request,
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        test_user_group = TestUserGroup(
+            id=response.json()["id"],
+            name=response.json()["name"],
+            user_ids=[user["id"] for user in response.json()["users"]],
+            cc_pair_ids=[cc_pair["id"] for cc_pair in response.json()["cc_pairs"]],
+        )
+        return test_user_group
+
+    @staticmethod
+    def edit_user_group(
+        user_group: TestUserGroup,
+        user_performing_action: TestUser | None = None,
+    ) -> bool:
+        if not user_group.id:
+            raise ValueError("User group has no ID")
+        response = requests.patch(
+            f"{API_SERVER_URL}/manage/admin/user-group/{user_group.id}",
+            json=user_group.model_dump(),
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        return response.ok
+
+    @staticmethod
+    def set_curator(
+        test_user_group: TestUserGroup,
+        user_to_set_as_curator: TestUser,
+        user_performing_action: TestUser | None = None,
+    ) -> bool:
+        if not user_to_set_as_curator.id:
+            raise ValueError("User has no ID")
+        set_curator_request = {
+            "user_id": user_to_set_as_curator.id,
+            "is_curator": True,
+        }
+        response = requests.post(
+            f"{API_SERVER_URL}/manage/admin/user-group/{test_user_group.id}/set-curator",
+            json=set_curator_request,
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        return response.ok
+
+    @staticmethod
     @staticmethod
     def verify_user_group(
         test_user_group: TestUserGroup,
