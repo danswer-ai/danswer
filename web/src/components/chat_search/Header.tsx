@@ -11,7 +11,6 @@ import { pageType } from "@/app/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
 import LogoType from "../header/LogoType";
-import { SettingsContext } from "../settings/SettingsProvider";
 
 export default function FunctionalHeader({
   user,
@@ -30,7 +29,6 @@ export default function FunctionalHeader({
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
   toggleSidebar?: () => void;
 }) {
-  const settings = useContext(SettingsContext);
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
