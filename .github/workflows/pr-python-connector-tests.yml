@@ -41,4 +41,14 @@ jobs:
 
       - name: Run Tests
         shell: script -q -e -c "bash --noprofile --norc -eo pipefail {0}"
-        run: py.test -o junit_family=xunit2 -xv --ff backend/tests/daily/connectors
+        run: py.test -o junit_family=xunit2 -xv --ff backend/tests/daily/connector
+
+      - name: Check if scheduled run
+        if: failure() && github.event_name == 'schedule'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          curl -X POST \
+            -H 'Content-type: application/json' \
+            --data '{"text":"Scheduled Connector Tests failed! Check the run at: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+            $SLACK_WEBHOOK
