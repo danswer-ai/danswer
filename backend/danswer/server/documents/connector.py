@@ -552,6 +552,7 @@ def create_connector_from_model(
     try:
         _validate_connector_allowed(connector_data.source)
         connector_base = _check_connector_permissions(connector_data, user)
+
         return create_connector(
             db_session=db_session,
             connector_data=connector_base,

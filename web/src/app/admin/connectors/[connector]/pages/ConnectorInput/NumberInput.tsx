@@ -1,5 +1,5 @@
 import { SubLabel } from "@/components/admin/connectors/Field";
-import { Field } from "formik";
+import { Field, useFormikContext } from "formik";
 
 export default function NumberInput({
   label,
@@ -8,6 +8,7 @@ export default function NumberInput({
   description,
   name,
   showNeverIfZero,
+  onChange,
 }: {
   value?: number;
   label: string;
@@ -15,7 +16,10 @@ export default function NumberInput({
   optional?: boolean;
   description?: string;
   showNeverIfZero?: boolean;
+  onChange?: (value: number) => void;
 }) {
+  const { setFieldValue } = useFormikContext();
+
   return (
     <div className="w-full flex flex-col">
       <label className="block text-base font-medium text-text-700 mb-1">
@@ -29,6 +33,14 @@ export default function NumberInput({
         name={name}
         min="-1"
         value={value === 0 && showNeverIfZero ? "Never" : value}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          const newValue =
+            e.target.value === "Never" ? 0 : Number(e.target.value);
+          setFieldValue(name, newValue);
+          if (onChange) {
+            onChange(newValue);
+          }
+        }}
         className={`mt-2 block w-full px-3 py-2 
                 bg-white border border-gray-300 rounded-md 
                 text-sm shadow-sm placeholder-gray-400

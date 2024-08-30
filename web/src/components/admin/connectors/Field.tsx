@@ -149,6 +149,17 @@ export function TextFormField({
   if (isTextArea && !heightString) {
     heightString = "h-28";
   }
+  const [field, , helpers] = useField(name);
+  const { setValue } = helpers;
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setValue(e.target.value);
+    if (onChange) {
+      onChange(e as React.ChangeEvent<HTMLInputElement>);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -200,7 +211,7 @@ export function TextFormField({
           disabled={disabled}
           placeholder={placeholder}
           autoComplete={autoCompleteDisabled ? "off" : undefined}
-          // onChange={onChange}
+          onChange={handleChange}
         />
         {includeRevert && (
           <div className="flex-none mt-auto">
@@ -396,17 +407,27 @@ export const BooleanFormField = ({
   alignTop,
   checked,
 }: BooleanFormFieldProps) => {
+  const [field, meta, helpers] = useField<boolean>(name);
+  const { setValue } = helpers;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.checked);
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
   return (
     <div>
       <label className="flex text-sm">
         <Field
-          disabled={disabled}
-          name={name}
-          checked={checked}
           type="checkbox"
+          {...field}
+          checked={checked !== undefined ? checked : field.value}
+          disabled={disabled}
+          onChange={handleChange}
           className={`${removeIndent ? "mr-2" : "mx-3"}     
-            px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
-          {...(onChange ? { onChange } : {})}
+              px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
         />
         {!noLabel && (
           <div>
