@@ -135,6 +135,9 @@ class ComposeEmailTool(Tool):
         )
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
+
+        logger.info(f"Email plugin - mail composing started")
+
         query = cast(str, kwargs["query"])
 
         prompt_builder = AnswerPromptBuilder(self.history, self.llm_config)
@@ -154,8 +157,7 @@ class ComposeEmailTool(Tool):
             self.llm.invoke(prompt=prompt)
         )
 
-        if self.user is not None:
-            self.send_email_to_recipients(mail_response)
+        logger.info(f"Email plugin - mail composing completed")
 
         yield ToolResponse(
             id=COMPOSE_EMAIL_RESPONSE_ID,
@@ -170,7 +172,3 @@ class ComposeEmailTool(Tool):
         # subfields that are not serializable by default (datetime)
         # this forces pydantic to make them JSON serializable for us
         return composed_email_response
-
-    def send_email_to_recipients(self, email_content):
-        email_service = EmailService()
-        email_service.send_email(self.user.email, email_content)

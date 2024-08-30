@@ -444,6 +444,21 @@ export function ChatPage({
     [FeedbackType, number] | null
   >(null);
 
+  const sendEmailToInbox = async (messageId: number) =>{
+    const response = await fetch("/api/chat/send-mail/" + messageId, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
+    return response.ok;
+  };
+
+  const sendEmailToDraft = async (messageId: number) =>{
+    const mailtoLink = `mailto:${selectedPersona?.users[0].email}?subject=${encodeURIComponent("Subject")}&body=${encodeURIComponent("Email body")}`;
+    window.location.href = mailtoLink;
+  };
+
   const [sharingModalVisible, setSharingModalVisible] =
     useState<boolean>(false);
 
@@ -1345,6 +1360,24 @@ export function ChatPage({
                                             feedbackType,
                                             message.messageId as number,
                                           ])
+                                  }
+                                  sendEmailToInbox={
+                                    i === messageHistory.length - 1 &&
+                                    isStreaming
+                                      ? undefined
+                                      : () =>
+                                        sendEmailToInbox(
+                                            message.messageId as number,
+                                          )
+                                  }
+                                  sendEmailToDraft={
+                                    i === messageHistory.length - 1 &&
+                                    isStreaming
+                                      ? undefined
+                                      : () =>
+                                        sendEmailToDraft(
+                                            message.messageId as number,
+                                          )
                                   }
                                   handleSearchQueryEdit={
                                     i === messageHistory.length - 1 &&
