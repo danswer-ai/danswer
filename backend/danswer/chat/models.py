@@ -51,6 +51,7 @@ class LLMRelevanceFilterResponse(BaseModel):
 class RelevanceAnalysis(BaseModel):
     relevant: bool
     content: str | None = None
+    error: str | None = None
 
 
 class SectionRelevancePiece(RelevanceAnalysis):

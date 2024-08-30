@@ -51,6 +51,7 @@ def evaluate_inference_section(
     center_metadata = document.center_chunk.metadata
     center_metadata_str = _get_metadata_str(center_metadata) if center_metadata else ""
 
+    error = None
     messages = _get_agent_eval_messages(
         title=semantic_id,
         content=contents,
@@ -60,6 +61,7 @@ def evaluate_inference_section(
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     try:
         model_output = message_to_string(llm.invoke(filled_llm_prompt))
+        # raise Exception(model_output)
 
         # Search for the "Useful Analysis" section in the model output
         # This regex looks for "2. Useful Analysis" (case-insensitive) followed by an optional colon,
@@ -82,10 +84,12 @@ def evaluate_inference_section(
         logger.exception(f"An issue occured during the agentic evaluation process. {e}")
         relevant = False
         analysis = None
+        error = "An issue occured during the agentic evaluation process."
 
     return SectionRelevancePiece(
         document_id=document_id,
         chunk_id=document.center_chunk.chunk_id,
         relevant=relevant,
         content=analysis,
+        error=error,
     )
