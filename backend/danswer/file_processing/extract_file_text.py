@@ -180,7 +180,7 @@ def read_text_file(
 def read_pdf_file(
     file: IO[Any],
     pdf_pass: str | None = None,
-) -> str:
+) -> tuple[str, dict]:
     metadata = {}
     try:
         pdf_reader = PdfReader(file)
@@ -283,7 +283,7 @@ def extract_file_text(
     file_name: str | None,
     file: IO[Any],
     break_on_unprocessable: bool = True,
-) -> tuple[str, dict]:
+) -> str:
     extension_to_function: dict[str, Callable[[IO[Any]], str]] = {
         ".pdf": read_pdf_file,
         ".docx": docx_to_text,
