@@ -1,0 +1,3 @@
+docker compose -f docker-compose.dev.new.gpu.yml -p docudive-stack stop web_server
+docker compose -f docker-compose.dev.new.gpu.yml -p docudive-stack build web_server
+docker compose -f docker-compose.dev.new.gpu.yml -p docudive-stack start web_server

@@ -1,0 +1,9 @@
+[program:llma8b_worker]
+command=python3 -m fastchat.serve.vllm_worker --model-name 'Mixtral-8x7B-Instruct-v0.1' --model-path /app/models/mistralai/Mixtral-8x7B-Instruct-v0.1/models--mistralai--Mixtral-8x7B-Instruct-v0.1/snapshots/1e637f2d7cb0a9d6fb1922f305cb784995190a83 --host '0.0.0.0' --num-gpus 2 --dtype half
+stdout_logfile=/dev/stdout 
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr 
+stderr_logfile_maxbytes=0
+autorestart=true 
+startretries=100 
+startsecs=60
