@@ -149,6 +149,17 @@ export function TextFormField({
   if (isTextArea && !heightString) {
     heightString = "h-28";
   }
+  const [field, , helpers] = useField(name);
+  const { setValue } = helpers;
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setValue(e.target.value);
+    if (onChange) {
+      onChange(e as React.ChangeEvent<HTMLInputElement>);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -200,7 +211,7 @@ export function TextFormField({
           disabled={disabled}
           placeholder={placeholder}
           autoComplete={autoCompleteDisabled ? "off" : undefined}
-          // onChange={onChange}
+          onChange={handleChange}
         />
         {includeRevert && (
           <div className="flex-none mt-auto">

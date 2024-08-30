@@ -192,15 +192,19 @@ const RerankingDetailsForm = forwardRef<
                 >
                   <div className="w-full px-4">
                     <TextFormField
-                      placeholder={values.api_key || undefined}
+                      placeholder={values.rerank_api_key || undefined}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const value = e.target.value;
-                        setRerankingDetails({ ...values, api_key: value });
-                        setFieldValue("api_key", value);
+                        setRerankingDetails({
+                          ...values,
+                          rerank_api_key: value,
+                        });
+                        setFieldValue("rerank_api_key", value);
+                        console.log("HIII");
                       }}
                       type="password"
                       label="Cohere API Key"
-                      name="api_key"
+                      name="rerank_api_key"
                     />
                     <div className="mt-4 flex justify-between">
                       <Button
