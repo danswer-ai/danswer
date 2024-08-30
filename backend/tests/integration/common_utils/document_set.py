@@ -143,7 +143,7 @@ class DocumentSetManager:
     def verify_document_set_sync(
         document_set: TestDocumentSet,
         user_performing_action: TestUser | None = None,
-    ) -> None:
+    ) -> bool:
         doc_sets = DocumentSetManager.get_all_document_sets(user_performing_action)
         for doc_set in doc_sets:
             if doc_set.id == document_set.id:

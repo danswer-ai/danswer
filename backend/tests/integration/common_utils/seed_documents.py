@@ -45,8 +45,8 @@ class TestDocumentManager:
 
     @staticmethod
     def seed_documents(
+        cc_pair_id: int,
         num_docs: int = NUM_DOCS,
-        cc_pair_id: int | None = None,
         user_with_api_key: TestUser | None = None,
     ) -> SeedDocumentResponse:
         # Create and ingest some documents
@@ -91,7 +91,3 @@ class TestDocumentManager:
                 for document in documents
             ],
         )
-
-
-if __name__ == "__main__":
-    seed_documents_resp = TestDocumentManager.seed_documents()

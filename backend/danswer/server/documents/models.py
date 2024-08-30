@@ -45,12 +45,10 @@ class ConnectorBase(BaseModel):
     refresh_freq: int | None = None
     prune_freq: int | None = None
     indexing_start: datetime | None = None
-    is_public: bool = True
-    groups: list[int] = Field(default_factory=list)
 
 
 class ConnectorUpdateRequest(ConnectorBase):
-    is_public: bool | None = None
+    is_public: bool = True
     groups: list[int] = Field(default_factory=list)
 
     def to_connector_base(self) -> ConnectorBase:

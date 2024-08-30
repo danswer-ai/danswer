@@ -12,7 +12,7 @@ from tests.integration.common_utils.user import TestUser
 
 
 class TestCredential(BaseModel):
-    id: int | None = None
+    id: int
     name: str
     credential_json: dict[str, Any]
     admin_public: bool
@@ -34,7 +34,25 @@ class CredentialManager:
     ) -> TestCredential:
         name = f"{name}-credential" if name else f"test-credential-{uuid4()}"
 
-        credential = TestCredential(
+        credential_request = {
+            "name": name,
+            "credential_json": credential_json or {},
+            "admin_public": admin_public,
+            "source": source,
+            "curator_public": curator_public,
+            "groups": groups or [],
+        }
+        response = requests.post(
+            url=f"{API_SERVER_URL}/manage/credential",
+            json=credential_request,
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+
+        response.raise_for_status()
+        return TestCredential(
+            id=response.json()["id"],
             name=name,
             credential_json=credential_json or {},
             admin_public=admin_public,
@@ -42,17 +60,6 @@ class CredentialManager:
             curator_public=curator_public,
             groups=groups or [],
         )
-
-        response = requests.post(
-            url=f"{API_SERVER_URL}/manage/credential",
-            json=credential.model_dump(exclude={"id"}),
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
-        )
-        response.raise_for_status()
-        credential.id = response.json()["id"]
-        return credential
 
     @staticmethod
     def edit_credential(

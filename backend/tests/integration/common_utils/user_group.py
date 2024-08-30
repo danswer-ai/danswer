@@ -18,19 +18,6 @@ class TestUserGroup(BaseModel):
     cc_pair_ids: list[int]
 
 
-def fetch_user_groups(
-    user_performing_action: TestUser | None = None,
-) -> list[UserGroup]:
-    response = requests.get(
-        f"{API_SERVER_URL}/manage/admin/user-group",
-        headers=user_performing_action.headers
-        if user_performing_action
-        else GENERAL_HEADERS,
-    )
-    response.raise_for_status()
-    return [UserGroup(**ug) for ug in response.json()]
-
-
 class UserGroupManager:
     @staticmethod
     def create(

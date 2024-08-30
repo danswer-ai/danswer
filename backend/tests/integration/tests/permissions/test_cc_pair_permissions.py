@@ -23,7 +23,7 @@ def test_cc_pair_permissions(reset: None) -> None:
 
     # Creating a user group
     user_group_1 = UserGroupManager.create(
-        name="user_group_1",
+        name="curated_user_group",
         user_ids=[curator.id],
         cc_pair_ids=[],
         user_performing_action=admin_user,
@@ -38,25 +38,41 @@ def test_cc_pair_permissions(reset: None) -> None:
 
     # Creating another user group that the user is not a curator of
     user_group_2 = UserGroupManager.create(
-        name="user_group_2",
+        name="uncurated_user_group",
         user_ids=[curator.id],
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
     UserGroupManager.wait_for_user_groups_to_sync(admin_user)
 
-    # Create a connector and credential for testing
-    connector = ConnectorManager.create(
-        name="test_connector",
+    # Create a credentials that the curator is and is not curator of
+    connector_1 = ConnectorManager.create(
+        name="curator_owned_connector",
         source=DocumentSource.CONFLUENCE,
         groups=[user_group_1.id],
         is_public=False,
         user_performing_action=admin_user,
     )
-    credential = CredentialManager.create(
-        name="test_credential",
+    # currently we dont enforce permissions at the connector level
+    # pending cc_pair -> connector rework
+    # connector_2 = ConnectorManager.create(
+    #     name="curator_visible_connector",
+    #     source=DocumentSource.CONFLUENCE,
+    #     groups=[user_group_2.id],
+    #     is_public=False,
+    #     user_performing_action=admin_user,
+    # )
+    credential_1 = CredentialManager.create(
+        name="curator_owned_credential",
         source=DocumentSource.CONFLUENCE,
         groups=[user_group_1.id],
+        curator_public=False,
+        user_performing_action=admin_user,
+    )
+    credential_2 = CredentialManager.create(
+        name="curator_visible_credential",
+        source=DocumentSource.CONFLUENCE,
+        groups=[user_group_2.id],
         curator_public=False,
         user_performing_action=admin_user,
     )
@@ -67,11 +83,13 @@ def test_cc_pair_permissions(reset: None) -> None:
     Curators should not be able to:
     - Create a public cc pair
     - Create a cc pair for a user group they are not a curator of
+    - Create a cc pair for a user group that the connector does not belong to (NOT WORKING)
+    - Create a cc pair for a user group that the credential does not belong to
     """
     with pytest.raises(HTTPError):
         CCPairManager.create(
-            connector_id=connector.id,
-            credential_id=credential.id,
+            connector_id=connector_1.id,
+            credential_id=credential_1.id,
             name="invalid_cc_pair_1",
             groups=[user_group_1.id],
             is_public=True,
@@ -80,10 +98,32 @@ def test_cc_pair_permissions(reset: None) -> None:
 
     with pytest.raises(HTTPError):
         CCPairManager.create(
-            connector_id=connector.id,
-            credential_id=credential.id,
+            connector_id=connector_1.id,
+            credential_id=credential_1.id,
             name="invalid_cc_pair_2",
             groups=[user_group_1.id, user_group_2.id],
+            is_public=False,
+            user_performing_action=curator,
+        )
+
+    # This test is currently disabled because permissions are
+    # not enforced at the connector level
+    # with pytest.raises(HTTPError):
+    #     CCPairManager.create(
+    #         connector_id=connector_2.id,
+    #         credential_id=credential_1.id,
+    #         name="invalid_cc_pair_3",
+    #         groups=[user_group_1.id],
+    #         is_public=False,
+    #         user_performing_action=curator,
+    #     )
+
+    with pytest.raises(HTTPError):
+        CCPairManager.create(
+            connector_id=connector_1.id,
+            credential_id=credential_2.id,
+            name="invalid_cc_pair_4",
+            groups=[user_group_1.id],
             is_public=False,
             user_performing_action=curator,
         )
@@ -93,9 +133,9 @@ def test_cc_pair_permissions(reset: None) -> None:
     - Create a private cc pair for a user group they are a curator of
     """
     valid_cc_pair = CCPairManager.create(
-        connector_id=connector.id,
-        credential_id=credential.id,
         name="valid_cc_pair",
+        connector_id=connector_1.id,
+        credential_id=credential_1.id,
         groups=[user_group_1.id],
         is_public=False,
         user_performing_action=curator,
