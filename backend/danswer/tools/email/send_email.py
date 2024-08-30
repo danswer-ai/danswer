@@ -45,7 +45,7 @@ class EmailService:
                 server.sendmail(EMAIL_FROM, receiver_email, msg.as_string())
                 self.logger.info(f'Email sent successfully to {receiver_email}')
         except (smtplib.SMTPException, ConnectionRefusedError) as e:
-            self.logger.info(f'Error sending email:{e}')
+            self.logger.error(f'Error sending email:{e}')
 
     @staticmethod
     def extract_subject(input_text):

@@ -451,7 +451,20 @@ export function ChatPage({
         "Content-Type": "application/json",
       }
     });
-    return response.ok;
+    
+    if (response.ok) {
+      setPopup({
+        message: `Email sent to ${selectedPersona?.users[0].email} successfully!`,
+        type: "success",
+      });
+    } else {
+      const responseJson = await response.json();
+      const errorMsg = responseJson.detail || responseJson.message;
+      setPopup({
+        message: `Failed to send email - ${errorMsg}`,
+        type: "error",
+      });
+    }
   };
 
   const sendEmailToDraft = async (messageId: number) =>{

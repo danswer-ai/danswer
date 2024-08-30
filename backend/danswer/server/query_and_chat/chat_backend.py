@@ -335,14 +335,17 @@ def send_email_to_inbox(
         user: User | None = Depends(current_user),
         db_session: Session = Depends(get_session),
 ) -> None:
-    logger.info(
-        f"Email sending request received from user: {'not logged in' if user is None else user.email}, "
-        f"email will be sending to inbox")
-    user_id = user.id if user else None
-    chat_message = get_chat_message(chat_message_id, user_id, db_session)
-    email_content = chat_message.message
-    email_service = EmailService()
-    email_service.send_email(user.email, email_content)
+    try:
+        logger.info(
+            f"Email sending request received from user: {'not logged in' if user is None else user.email}, "
+            f"email will be sending to inbox")
+        user_id = user.id if user else None
+        chat_message = get_chat_message(chat_message_id, user_id, db_session)
+        email_content = chat_message.message
+        email_service = EmailService()
+        email_service.send_email(user.email, email_content)
+    except Exception as e:
+        logger.error(f'Error in email sending endpoint: {e}')
 
 
 @router.post("/create-chat-message-feedback")
