@@ -4,7 +4,6 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Query
-from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi_users.authentication import Strategy
 from sqlalchemy.exc import SQLAlchemyError
@@ -14,7 +13,6 @@ from danswer.auth.users import create_user_session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import get_database_strategy
-from danswer.auth.users import get_or_create_user
 from danswer.auth.users import get_user_manager
 from danswer.auth.users import is_user_admin
 from danswer.auth.users import UserManager
@@ -50,9 +48,7 @@ logger = setup_logger()
 
 @basic_router.post("/auth/sso-callback")
 async def sso_callback(
-    sso_token: str = Query(
-        ..., alias="sso_token"
-    ),  # Get SSO token from query parameters
+    sso_token: str = Query(..., alias="sso_token"),
     strategy: Strategy = Depends(get_database_strategy),
     user_manager: UserManager = Depends(get_user_manager),
 ):
@@ -60,27 +56,93 @@ async def sso_callback(
 
     payload = verify_sso_token(sso_token)
 
-    user = await get_or_create_user(
+    user = await user_manager.sso_authenticate(
         payload["email"], payload["user_id"], payload["tenant_id"]
     )
 
     session_token = await create_user_session(user, strategy)
     logger.info(f"Session token created: {session_token[:10]}...")
-    logger.info(f"User email: {user.email}")
-    logger.info(f"User ID: {user.id}")
-    logger.info(f"User role: {user.role}")
-    logger.info(f"Session expiry time: {SESSION_EXPIRE_TIME_SECONDS} seconds")
-    print(f"Full session token (for debugging, remove in production): {session_token}")
 
-    response = RedirectResponse(url="/")
-    response.set_cookie(
-        key="session",
-        value=session_token,
-        httponly=True,
-        max_age=SESSION_EXPIRE_TIME_SECONDS,
-        secure=WEB_DOMAIN.startswith("https"),
-    )
-    return response
+    return {
+        "session_token": session_token,
+        "max_age": SESSION_EXPIRE_TIME_SECONDS,
+        "domain": WEB_DOMAIN.split("://")[-1],
+    }
+
+    # response = Response(status_code=302)
+    # response.set_cookie(
+    #     key="session",
+    #     value=session_token,
+    #     httponly=True,
+    #     max_age=SESSION_EXPIRE_TIME_SECONDS,
+    #     secure=WEB_DOMAIN.startswith("https"),
+    #     samesite="lax",Shou
+    #     domain=WEB_DOMAIN.split("://")[-1],
+    # )
+    # response.headers["Location"] = "/"
+    # return response
+
+
+# @basic_router.post("/auth/sso-callback")
+# async def sso_callback(
+#     sso_token: str = Query(
+#         ..., alias="sso_token"
+#     ),  # Get SSO token from query parameters
+#     strategy: Strategy = Depends(get_database_strategy),
+#     user_manager: UserManager = Depends(get_user_manager),
+# ):
+#     print("SSO callback reached")
+#     print("SSO callback reached")
+
+#     payload = verify_sso_token(sso_token)
+
+#     user = await user_manager.sso_authenticate(
+#         payload["email"], payload["user_id"], payload["tenant_id"]
+#     )
+
+#     session_token = await create_user_session(user, strategy)
+#     logger.info(f"Session token created: {session_token[:10]}...")
+#     logger.info(f"User email: {user.email}")
+#     logger.info(f"User ID: {user.id}")
+#     logger.info(f"User role: {user.role}")
+#     logger.info(f"Session expiry time: {SESSION_EXPIRE_TIME_SECONDS} seconds")
+
+#     response = RedirectResponse(url="/", status_code=302)
+#     response.set_cookie(
+#         key="session",
+#         value=session_token,
+#         httponly=True,
+#         max_age=SESSION_EXPIRE_TIME_SECONDS,
+#         secure=WEB_DOMAIN.startswith("https"),
+#         samesite="lax",
+#         domain=WEB_DOMAIN.split("://")[-1],  # Remove protocol from domain
+#     )
+#     return response
+
+#     # payload = verify_sso_token(sso_token)
+
+#     # user = await get_or_create_user(
+#     #     payload["email"], payload["user_id"], payload["tenant_id"]
+#     # )
+
+#     # session_token = await create_user_session(user, strategy)
+#     # logger.info(f"Session token created: {session_token[:10]}...")
+#     # logger.info(f"User email: {user.email}")
+#     # logger.info(f"User ID: {user.id}")
+#     # logger.info(f"User role: {user.role}")
+#     # logger.info(f"Session expiry time: {SESSION_EXPIRE_TIME_SECONDS} seconds")
+
+#     # response = RedirectResponse(url="/", status_code=302)
+#     # response.set_cookie(
+#     #     key="session",
+#     #     value=session_token,
+#     #     httponly=True,
+#     #     max_age=SESSION_EXPIRE_TIME_SECONDS,
+#     #     secure=WEB_DOMAIN.startswith("https"),
+#     #     samesite="lax",
+#     #     domain=WEB_DOMAIN.split("://")[-1],  # Remove protocol from domain
+#     # )
+#     # return response
 
 
 @admin_router.put("")

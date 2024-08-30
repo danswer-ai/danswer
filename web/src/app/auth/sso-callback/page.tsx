@@ -27,19 +27,23 @@ export default function SSOCallback() {
             headers: {
               "Content-Type": "application/json",
             },
+            credentials: "include",
           }
         );
 
         if (response.ok) {
+          const data = await response.json();
+          console.log(data);
           setAuthStatus("Authentication successful!");
-          setTimeout(() => {
-            setAuthStatus("Redirecting to dashboard...");
-            setTimeout(() => {
-              router.replace("/admin/plan");
-            }, 1000);
-          }, 1000);
+
+          // Set the session cookie manually
+          document.cookie = `fastapiusersauth=${data.session_token}; max-age=${data.max_age}; path=/; secure; samesite=lax`;
+
+          // Redirect to the dashboard
+          router.replace("/admin/plan");
         } else {
           const errorData = await response.json();
+          console.error("Authentication failed:", errorData);
           setError(errorData.detail || "Authentication failed");
         }
       } catch (error) {
@@ -50,6 +54,7 @@ export default function SSOCallback() {
 
     verifyToken();
   }, [router, searchParams]);
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-background-50 to-blue-50">
       <Card className="max-w-lg p-8 text-center shadow-xl rounded-xl bg-white">
