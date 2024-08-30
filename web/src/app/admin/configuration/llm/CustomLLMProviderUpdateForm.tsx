@@ -211,7 +211,7 @@ export function CustomLLMProviderUpdateForm({
     >
       {({ values, setFieldValue }) => {
         return (
-          <Form>
+          <Form className="gap-y-6 mt-8">
             <TextFormField
               name="name"
               label="Display Name"

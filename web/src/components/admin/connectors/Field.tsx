@@ -570,7 +570,7 @@ export function SelectorFormField({
   const { setFieldValue } = useFormikContext();
 
   return (
-    <div className="mb-4">
+    <div>
       {label && <Label>{label}</Label>}
       {subtext && <SubLabel>{subtext}</SubLabel>}
       <div className="mt-2">
