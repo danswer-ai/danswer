@@ -588,9 +588,6 @@ def update_connector_from_model(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ConnectorSnapshot | StatusResponse[int]:
-    logger.info(
-        f"Updating connector {connector_id} with data {connector_data.__dict__}"
-    )
     try:
         _validate_connector_allowed(connector_data.source)
         validate_user_creation_permissions(

@@ -153,9 +153,6 @@ def associate_credential_to_connector(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    logger.info(
-        f"Updating connector {connector_id} credential {credential_id} with data {metadata.__dict__}"
-    )
     validate_user_creation_permissions(
         db_session=db_session,
         user=user,
