@@ -63,6 +63,7 @@ const RerankingDetailsForm = forwardRef<
             });
             setFieldValue("rerank_provider_type", null);
             setFieldValue("rerank_model_name", null);
+            setFieldValue("rerank_api_key", null);
           };
 
           return (
@@ -74,10 +75,11 @@ const RerankingDetailsForm = forwardRef<
                 {originalRerankingDetails.rerank_model_name && (
                   <button
                     onClick={() => setModelTab(null)}
-                    className={`mx-2 p-2 font-bold  ${!modelTab
-                      ? "rounded bg-background-900 text-text-100 underline"
-                      : " hover:underline bg-background-100"
-                      }`}
+                    className={`mx-2 p-2 font-bold  ${
+                      !modelTab
+                        ? "rounded bg-background-900 text-text-100 underline"
+                        : " hover:underline bg-background-100"
+                    }`}
                   >
                     Current
                   </button>
@@ -87,10 +89,11 @@ const RerankingDetailsForm = forwardRef<
                 >
                   <button
                     onClick={() => setModelTab("cloud")}
-                    className={`mr-2 p-2 font-bold  ${modelTab == "cloud"
-                      ? "rounded bg-background-900 text-text-100 underline"
-                      : " hover:underline bg-background-100"
-                      }`}
+                    className={`mr-2 p-2 font-bold  ${
+                      modelTab == "cloud"
+                        ? "rounded bg-background-900 text-text-100 underline"
+                        : " hover:underline bg-background-100"
+                    }`}
                   >
                     Cloud-based
                   </button>
@@ -99,10 +102,11 @@ const RerankingDetailsForm = forwardRef<
                 <div className="px-2">
                   <button
                     onClick={() => setModelTab("open")}
-                    className={` mx-2 p-2 font-bold  ${modelTab == "open"
-                      ? "rounded bg-background-900 text-text-100 underline"
-                      : "hover:underline bg-background-100"
-                      }`}
+                    className={` mx-2 p-2 font-bold  ${
+                      modelTab == "open"
+                        ? "rounded bg-background-900 text-text-100 underline"
+                        : "hover:underline bg-background-100"
+                    }`}
                   >
                     Self-hosted
                   </button>
@@ -119,29 +123,30 @@ const RerankingDetailsForm = forwardRef<
                 )}
               </div>
 
-
               <Form>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(modelTab
                     ? rerankingModels.filter(
-                      (model) => model.cloud == (modelTab == "cloud")
-                    )
+                        (model) => model.cloud == (modelTab == "cloud")
+                      )
                     : rerankingModels.filter(
-                      (modelCard) =>
-                        modelCard.modelName ==
-                        originalRerankingDetails.rerank_model_name
-                    )
+                        (modelCard) =>
+                          modelCard.modelName ==
+                          originalRerankingDetails.rerank_model_name
+                      )
                   ).map((card) => {
                     const isSelected =
-                      values.rerank_provider_type === card.rerank_provider_type &&
+                      values.rerank_provider_type ===
+                        card.rerank_provider_type &&
                       values.rerank_model_name === card.modelName;
                     return (
                       <div
                         key={`${card.rerank_provider_type}-${card.modelName}`}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${isSelected
-                          ? "border-blue-500 bg-blue-50 shadow-md"
-                          : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
-                          }`}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-50 shadow-md"
+                            : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
+                        }`}
                         onClick={() => {
                           if (card.rerank_provider_type) {
                             setIsApiKeyModalOpen(true);
@@ -162,79 +167,7 @@ const RerankingDetailsForm = forwardRef<
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center">
                             {card.rerank_provider_type ===
-                              RerankerProvider.COHERE ? (
-                              <CohereIcon size={24} className="mr-2" />
-                            ) : (
-                              <MixedBreadIcon size={24} className="mr-2" />
-                            )}
-                            <h3 className="font-bold text-lg">
-                              {card.displayName}
-                            </h3>
-                          </div>
-                          {card.link && (
-                            <a
-                              href={card.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
-                            >
-                              <FiExternalLink size={18} />
-                            </a>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          {card.description}
-                        </p>
-                        <div className="text-xs text-gray-500">
-                          {card.cloud ? "Cloud-based" : "Self-hosted"}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(modelTab
-                    ? rerankingModels.filter(
-                      (model) => model.cloud == (modelTab == "cloud")
-                    )
-                    : rerankingModels.filter(
-                      (modelCard) =>
-                        modelCard.modelName ==
-                        originalRerankingDetails.rerank_model_name
-                    )
-                  ).map((card) => {
-                    const isSelected =
-                      values.rerank_provider_type ===
-                      card.rerank_provider_type &&
-                      values.rerank_model_name === card.modelName;
-                    return (
-                      <div
-                        key={`${card.rerank_provider_type}-${card.modelName}`}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${isSelected
-                          ? "border-blue-500 bg-blue-50 shadow-md"
-                          : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
-                          }`}
-                        onClick={() => {
-                          if (card.rerank_provider_type) {
-                            setIsApiKeyModalOpen(true);
-                          }
-                          setRerankingDetails({
-                            ...values,
-                            rerank_provider_type: card.rerank_provider_type!,
-                            rerank_model_name: card.modelName,
-                          });
-                          setFieldValue(
-                            "rerank_provider_type",
-                            card.rerank_provider_type
-                          );
-                          setFieldValue("rerank_model_name", card.modelName);
-                        }}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center">
-                            {card.rerank_provider_type ===
-                              RerankerProvider.COHERE ? (
+                            RerankerProvider.COHERE ? (
                               <CohereIcon size={24} className="mr-2" />
                             ) : (
                               <MixedBreadIcon size={24} className="mr-2" />
@@ -273,7 +206,7 @@ const RerankingDetailsForm = forwardRef<
                         setFieldValue(
                           key,
                           originalRerankingDetails[
-                          key as keyof RerankingDetails
+                            key as keyof RerankingDetails
                           ]
                         );
                       });
@@ -288,7 +221,10 @@ const RerankingDetailsForm = forwardRef<
                         placeholder={values.rerank_api_key || undefined}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const value = e.target.value;
-                          setRerankingDetails({ ...values, rerank_api_key: value });
+                          setRerankingDetails({
+                            ...values,
+                            rerank_api_key: value,
+                          });
                           setFieldValue("api_key", value);
                         }}
                         type="password"
@@ -303,7 +239,7 @@ const RerankingDetailsForm = forwardRef<
                                 setFieldValue(
                                   key,
                                   originalRerankingDetails[
-                                  key as keyof RerankingDetails
+                                    key as keyof RerankingDetails
                                   ]
                                 );
                               }
@@ -328,17 +264,13 @@ const RerankingDetailsForm = forwardRef<
                   </Modal>
                 )}
               </Form>
-
-
-
-
-            </div>)
+            </div>
+          );
         }}
-      </ Formik>
-    )
+      </Formik>
+    );
   }
-
-)
+);
 
 RerankingDetailsForm.displayName = "RerankingDetailsForm";
 export default RerankingDetailsForm;
