@@ -74,14 +74,18 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         <>
           <BooleanFormField
             name="is_public"
-            label="Is Public?"
+            label={
+              publicToWhom === "Curators"
+                ? `Make this ${objectName} Curator Accessible?`
+                : `Make this ${objectName} Public?`
+            }
             disabled={!isAdmin}
             subtext={
               <span className="block mt-2 text-sm text-gray-500">
                 If set, then this {objectName} will be usable by{" "}
-                <b>All {publicToWhom}</b>. Otherwise, only <b>{publicToWhom}</b>{" "}
-                who have explicitly been given access to this {objectName} (e.g.
-                via a User Group) and <b>All Admins</b> will have access.
+                <b>All {publicToWhom}</b>. Otherwise, only <b>Admins</b> and{" "}
+                <b>{publicToWhom}</b> who have explicitly been given access to
+                this {objectName} (e.g. via a User Group) will have access.
               </span>
             }
           />
