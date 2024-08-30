@@ -44,7 +44,6 @@ import {
   IsPublicGroupSelectorFormType,
 } from "@/components/IsPublicGroupSelector";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
-import { AdminBooleanFormField } from "@/components/credentials/CredentialFields";
 
 export type AdvancedConfigFinal = {
   pruneFreq: number | null;
@@ -489,6 +488,7 @@ export default function AddConnector({
               }}
             >
               {(formikProps) => {
+                console.log(formikProps.values);
                 setFormValues(formikProps.values);
                 handleFormStatusChange(
                   formikProps.isValid && isFormSubmittable(formikProps.values)
