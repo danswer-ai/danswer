@@ -136,7 +136,7 @@ export default function FunctionalWrapper({
       {(!settings ||
         (settings.search_page_enabled && settings.chat_page_enabled)) && (
         <div
-          className={`mobile:hidden z-30 flex fixed ${chatBannerPresent ? "top-20" : "top-4"} left-1/2 transform -translate-x-1/2`}
+          className={`mobile:hidden z-30 flex fixed ${chatBannerPresent ? "top-14" : "top-4"} left-1/2 transform -translate-x-1/2`}
         >
           <div
             style={{ transition: "width 0.30s ease-out" }}

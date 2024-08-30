@@ -41,6 +41,7 @@ export function ChatBanner() {
         w-full
         mx-auto
         relative
+        cursor-default
         shadow-sm
         rounded
         border-l-8 border-l-400
@@ -53,7 +54,7 @@ export function ChatBanner() {
         <div className="relative">
           <div
             ref={contentRef}
-            className="line-clamp-2 text-center w-full overflow-hidden pr-8"
+            className="line-clamp-1 text-center w-full overflow-hidden pr-8"
           >
             <MinimalMarkdown
               content={settings.enterpriseSettings.custom_header_content}
