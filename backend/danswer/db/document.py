@@ -401,3 +401,12 @@ def get_documents_by_cc_pair(
         .filter(ConnectorCredentialPair.id == cc_pair_id)
         .all()
     )
+
+
+def get_document(
+    document_id: str,
+    db_session: Session,
+) -> DbDocument | None:
+    stmt = select(DbDocument).where(DbDocument.id == document_id)
+    doc: DbDocument | None = db_session.execute(stmt).scalar_one_or_none()
+    return doc
