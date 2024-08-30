@@ -1,6 +1,7 @@
 import time
 from abc import ABC
 from abc import abstractmethod
+from typing import cast
 from uuid import uuid4
 
 import redis
@@ -290,6 +291,6 @@ def celery_get_queue_length(queue: str, r: Redis) -> int:
             queue_name += str(i)
 
         length = r.llen(queue_name)
-        total_length += length
+        total_length += cast(int, length)
 
     return total_length

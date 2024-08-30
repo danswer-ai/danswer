@@ -106,13 +106,14 @@ def check_for_vespa_user_groups_sync_task() -> None:
                 tasks_generated = rug.generate_tasks(
                     celery_app, db_session, r, lock_beat
                 )
-                task_logger.info(
-                    f"generate_tasks finished. "
-                    f"usergroup_id={usergroup.id} tasks_generated={tasks_generated}"
-                )
+                if tasks_generated and tasks_generated > 0:
+                    task_logger.info(
+                        f"generate_tasks finished. "
+                        f"usergroup_id={usergroup.id} tasks_generated={tasks_generated}"
+                    )
 
-                # set this only after all tasks have been added
-                r.set(rug.fence_key, tasks_generated)
+                    # set this only after all tasks have been added
+                    r.set(rug.fence_key, tasks_generated)
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."

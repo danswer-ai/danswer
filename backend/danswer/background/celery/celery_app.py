@@ -577,7 +577,11 @@ def process_connector_taskset(r: Redis, db_session: Session) -> None:
     if fence_value is None:
         return
 
-    initial_count = int(fence_value)
+    try:
+        initial_count = int(cast(int, fence_value))
+    except ValueError:
+        task_logger.error("The value is not an integer.")
+        return
 
     count = r.scard(RedisConnector.get_taskset_key())
     task_logger.info(f"Stale documents: remaining={count} initial={initial_count}")
@@ -602,7 +606,11 @@ def process_document_set_taskset(
     if fence_value is None:
         return
 
-    initial_count = int(fence_value)
+    try:
+        initial_count = int(cast(int, fence_value))
+    except ValueError:
+        task_logger.error("The value is not an integer.")
+        return
 
     count = r.scard(rds.taskset_key)
     task_logger.info(
@@ -643,7 +651,12 @@ def process_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -
     if fence_value is None:
         return
 
-    initial_count = int(fence_value)
+    try:
+        initial_count = int(cast(int, fence_value))
+    except ValueError:
+        task_logger.error("The value is not an integer.")
+        return
+
     count = r.scard(rug.taskset_key)
     task_logger.info(
         f"usergroup_id={usergroup_id} remaining={count} initial={initial_count}"
