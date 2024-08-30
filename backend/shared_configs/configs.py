@@ -53,7 +53,7 @@ LOG_FILE_NAME = os.environ.get("LOG_FILE_NAME") or "danswer"
 # Enable generating persistent log files for local dev environments
 DEV_LOGGING_ENABLED = os.environ.get("DEV_LOGGING_ENABLED", "").lower() == "true"
 # notset, debug, info, notice, warning, error, or critical
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "debug")
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")
 
 
 # Fields which should only be set on new search setting
