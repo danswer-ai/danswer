@@ -44,8 +44,7 @@ jobs:
         run: py.test -o junit_family=xunit2 -xv --ff backend/tests/daily/connector
 
       - name: Alert on Failure
-        # && github.event_name == 'schedule'
-        if: failure() 
+        if: failure() && github.event_name == 'schedule'
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         run: |
