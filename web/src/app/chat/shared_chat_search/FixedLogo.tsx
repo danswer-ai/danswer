@@ -34,7 +34,9 @@ export default function FixedLogo() {
                 )}
               </div>
             ) : (
-              <HeaderTitle>Danswer</HeaderTitle>
+              <h1 className="flex text-2xl text-strong font-bold my-auto">
+                Eve<sup className="ai-superscript">AI</sup>
+              </h1>
             )}
           </div>
         </div>
