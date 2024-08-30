@@ -70,9 +70,17 @@ class DocumentSetManager:
         document_set: TestDocumentSet,
         user_performing_action: TestUser | None = None,
     ) -> bool:
+        doc_set_update_request = {
+            "id": document_set.id,
+            "description": document_set.description,
+            "cc_pair_ids": document_set.cc_pair_ids,
+            "is_public": document_set.is_public,
+            "users": document_set.users,
+            "groups": document_set.groups,
+        }
         response = requests.patch(
-            f"{API_SERVER_URL}/manage/admin/document-set/{document_set.id}",
-            json=document_set.model_dump(exclude={"id"}),
+            f"{API_SERVER_URL}/manage/admin/document-set",
+            json=doc_set_update_request,
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
@@ -140,7 +148,7 @@ class DocumentSetManager:
             time.sleep(2)
 
     @staticmethod
-    def verify_document_set_sync(
+    def verify_document_set(
         document_set: TestDocumentSet,
         user_performing_action: TestUser | None = None,
     ) -> bool:
@@ -149,9 +157,9 @@ class DocumentSetManager:
             if doc_set.id == document_set.id:
                 return (
                     doc_set.name == document_set.name
-                    and doc_set.cc_pair_ids == document_set.cc_pair_ids
+                    and set(doc_set.cc_pair_ids) == set(document_set.cc_pair_ids)
                     and doc_set.is_public == document_set.is_public
-                    and doc_set.users == document_set.users
-                    and doc_set.groups == document_set.groups
+                    and set(doc_set.users) == set(document_set.users)
+                    and set(doc_set.groups) == set(document_set.groups)
                 )
         return False

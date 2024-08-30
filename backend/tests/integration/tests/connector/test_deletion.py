@@ -122,11 +122,11 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     )
     assert len(all_doc_sets) == 2
 
-    assert DocumentSetManager.verify_document_set_sync(
+    assert DocumentSetManager.verify_document_set(
         document_set=doc_set_1,
         user_performing_action=admin_user,
     )
-    assert DocumentSetManager.verify_document_set_sync(
+    assert DocumentSetManager.verify_document_set(
         document_set=doc_set_2,
         user_performing_action=admin_user,
     )
