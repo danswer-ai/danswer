@@ -54,7 +54,7 @@ export function ChatBanner() {
         <div className="relative">
           <div
             ref={contentRef}
-            className="line-clamp-1 text-center w-full overflow-hidden pr-8"
+            className={`${settings.enterpriseSettings.two_lines_for_chat_header ? "line-clamp-2" : "line-clamp-1"} text-center w-full overflow-hidden pr-8`}
           >
             <MinimalMarkdown
               content={settings.enterpriseSettings.custom_header_content}

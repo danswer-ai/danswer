@@ -249,6 +249,7 @@ export function ChatPage({
 
     updateChatState("input", currentSession);
   };
+
   // this is for "@"ing assistants
 
   // this is used to track which assistant is being used to generate the current message
@@ -1723,8 +1724,12 @@ export function ChatPage({
                             )}
                           <div
                             className={
-                              "mt-4 -ml-4 w-full mx-auto " +
-                              "absolute mobile:top-0 desktop:top-12 left-0" +
+                              "-ml-4 w-full mx-auto " +
+                              "absolute mobile:top-0 desktop:top-12 left-0 " +
+                              (settings?.enterpriseSettings
+                                ?.two_lines_for_chat_header
+                                ? "mt-20 "
+                                : "mt-8") +
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }
                           >
