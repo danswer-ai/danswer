@@ -30,10 +30,8 @@ export default function SSOCallback() {
             credentials: "include",
           }
         );
-
         if (response.ok) {
           const data = await response.json();
-          console.log(data);
           setAuthStatus("Authentication successful!");
 
           // Set the session cookie manually TODO validate safety

@@ -21,7 +21,6 @@ export function StripeCheckoutButton({
 
   const handleClick = async () => {
     setIsLoading(true);
-    console.log(newQuantity);
     try {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",

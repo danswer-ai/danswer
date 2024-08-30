@@ -285,7 +285,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 user_create.role = UserRole.ADMIN
             else:
                 user_create.role = UserRole.BASIC
-        print("Creating user")
 
         return await super().create(user_create, safe=safe, request=request)  # type: ignore
 
