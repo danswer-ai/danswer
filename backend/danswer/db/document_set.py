@@ -148,6 +148,10 @@ def insert_document_set(
 def update_document_set(
     document_set_update_request: DocumentSetUpdateRequest, db_session: Session
 ) -> tuple[DocumentSetDBModel, list[DocumentSet__ConnectorCredentialPair]]:
+    """If successful, this sets document_set_row.is_up_to_date = False.
+    That will be processed via Celery in check_for_vespa_sync_task
+    and trigger a long running background sync to Vespa.
+    """
     if not document_set_update_request.cc_pair_ids:
         # It's cc-pairs in actuality but the UI displays this error
         raise ValueError("Cannot create a document set with no Connectors")
@@ -241,6 +245,7 @@ def mark_document_set_as_to_be_deleted(
     """Cleans up all document_set -> cc_pair relationships and marks the document set
     as needing an update. The actual document set row will be deleted by the background
     job which syncs these changes to Vespa."""
+
     # start a transaction
     db_session.begin()
 
@@ -473,7 +478,7 @@ def fetch_documents_for_document_set_paginated(
 def select_documents_by_docset(
     document_set_id: int,
     current_only: bool = True,
-) -> select:
+) -> Select:
     """This returns a statement that should be executed using
     .yield_per() to minimize overhead. The primary consumers of this function
     are the cleanup tasks."""
@@ -516,7 +521,7 @@ def select_documents_by_docset(
     return stmt
 
 
-def fetch_document_sets_for_document(
+def fetch_document_set_for_document(
     document_id: str,
     db_session: Session,
 ) -> list[str] | None:
@@ -531,7 +536,7 @@ def fetch_document_sets_for_document(
     if not result:
         return None
 
-    return result[0]
+    return result[0][1]
 
 
 def fetch_document_sets_for_documents(
