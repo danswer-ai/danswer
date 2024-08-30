@@ -25,7 +25,6 @@ const AdvancedFormPage = forwardRef<FormikProps<any>, AdvancedFormPageProps>(
         <Form>
           <div key="prune_freq">
             <NumberInput
-              showNeverIfZero
               description={`
                   Checks all documents against the source to delete those that no longer exist.
                   Note: This process checks every document, so be cautious when increasing frequency.
@@ -42,7 +41,6 @@ const AdvancedFormPage = forwardRef<FormikProps<any>, AdvancedFormPageProps>(
             <NumberInput
               description="This is how frequently we pull new documents from the source (in minutes). If you input 0, we will never pull new documents for this connector."
               value={refreshFreq}
-              showNeverIfZero
               label="Refresh Frequency (minutes)"
               name="refreshFreq"
             />
