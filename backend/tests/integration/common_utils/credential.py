@@ -1,5 +1,5 @@
-import uuid
 from typing import Any
+from uuid import uuid4
 
 import requests
 from pydantic import BaseModel
@@ -32,8 +32,7 @@ class CredentialManager:
         groups: list[int] | None = None,
         user_performing_action: TestUser | None = None,
     ) -> TestCredential:
-        if name is None:
-            name = "test-credential-" + str(uuid.uuid4())
+        name = f"{name}-credential" if name else f"test-credential-{uuid4()}"
 
         credential = TestCredential(
             name=name,

@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import requests
 from pydantic import BaseModel
-from pydantic import Field
 
 from ee.danswer.server.user_group.models import UserGroup
 from tests.integration.common_utils.constants import API_SERVER_URL
@@ -36,16 +35,16 @@ class UserGroupManager:
     @staticmethod
     def create(
         name: str | None = None,
-        user_ids: list[str] = Field(default_factory=list),
-        cc_pair_ids: list[int] = Field(default_factory=list),
+        user_ids: list[str] | None = None,
+        cc_pair_ids: list[int] | None = None,
         user_performing_action: TestUser | None = None,
     ) -> TestUserGroup:
-        if not name:
-            name = f"test-user-group-{str(uuid4())}"
+        name = f"{name}-user-group" if name else f"test-user-group-{uuid4()}"
+
         request = {
             "name": name,
-            "user_ids": user_ids,
-            "cc_pair_ids": cc_pair_ids,
+            "user_ids": user_ids or [],
+            "cc_pair_ids": cc_pair_ids or [],
         }
         response = requests.post(
             f"{API_SERVER_URL}/manage/admin/user-group",

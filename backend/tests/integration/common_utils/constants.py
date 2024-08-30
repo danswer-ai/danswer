@@ -7,3 +7,5 @@ API_SERVER_URL = f"{API_SERVER_PROTOCOL}://{API_SERVER_HOST}:{API_SERVER_PORT}"
 MAX_DELAY = 30
 
 GENERAL_HEADERS = {"Content-Type": "application/json"}
+
+NUM_DOCS = 5

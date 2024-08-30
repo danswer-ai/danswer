@@ -1,4 +1,4 @@
-import uuid
+from uuid import uuid4
 
 import requests
 from pydantic import BaseModel
@@ -6,9 +6,9 @@ from pydantic import BaseModel
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
 from ee.danswer.server.api_key.models import APIKeyArgs
-from tests.integration.common_utils.connectors import ConnectorClient
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
+from tests.integration.common_utils.constants import NUM_DOCS
 from tests.integration.common_utils.user import TestUser
 
 
@@ -24,11 +24,12 @@ class SeedDocumentResponse(BaseModel):
 
 class TestDocumentManager:
     @staticmethod
-    def get_api_key(
+    def add_api_key_to_user(
+        user: TestUser,
         name: str | None = None,
         role: UserRole = UserRole.ADMIN,
-        user_performing_action: TestUser | None = None,
-    ) -> str:
+    ) -> TestUser:
+        name = f"{name}-api-key" if name else f"test-api-key-{uuid4()}"
         api_key_request = APIKeyArgs(
             name=name,
             role=role,
@@ -36,28 +37,22 @@ class TestDocumentManager:
         api_key_response = requests.post(
             f"{API_SERVER_URL}/admin/api-key",
             json=api_key_request.model_dump(),
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=user.headers,
         )
         api_key_response.raise_for_status()
-        return api_key_response.json()["api_key"]
+        user.headers["Authorization"] = f"Bearer {api_key_response.json()['api_key']}"
+        return user
 
     @staticmethod
     def seed_documents(
-        num_docs: int = 5,
+        num_docs: int = NUM_DOCS,
         cc_pair_id: int | None = None,
-        user_performing_action: TestUser | None = None,
-        api_key: str | None = None,
+        user_with_api_key: TestUser | None = None,
     ) -> SeedDocumentResponse:
-        if not cc_pair_id:
-            connector_details = ConnectorClient.create_connector()
-            cc_pair_id = connector_details.cc_pair_id
-
         # Create and ingest some documents
         documents: list[dict] = []
         for _ in range(num_docs):
-            document_id = f"test-doc-{uuid.uuid4()}"
+            document_id = f"test-doc-{uuid4()}"
             document = {
                 "document": {
                     "id": document_id,
@@ -79,10 +74,9 @@ class TestDocumentManager:
             response = requests.post(
                 f"{API_SERVER_URL}/danswer-api/ingestion",
                 json=document,
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
+                headers=user_with_api_key.headers
+                if user_with_api_key
+                else GENERAL_HEADERS,
             )
             response.raise_for_status()
 

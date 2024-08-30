@@ -1,5 +1,5 @@
-import uuid
 from typing import Any
+from uuid import uuid4
 
 import requests
 from pydantic import BaseModel
@@ -11,11 +11,9 @@ from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.user import TestUser
 
-_CONNECTOR_URL = f"{API_SERVER_URL}/manage/admin/connector"
-
 
 class TestConnector(BaseModel):
-    id: int | None = None
+    id: int
     name: str
     source: DocumentSource
     input_type: InputType
@@ -35,8 +33,7 @@ class ConnectorManager:
         groups: list[int] | None = None,
         user_performing_action: TestUser | None = None,
     ) -> TestConnector:
-        if name is None:
-            name = "test-connector-" + str(uuid.uuid4())
+        name = f"{name}-connector" if name else f"test-connector-{uuid4()}"
 
         connector_update_request = ConnectorUpdateRequest(
             name=name,
@@ -48,7 +45,7 @@ class ConnectorManager:
         )
 
         response = requests.post(
-            url=_CONNECTOR_URL,
+            url=f"{API_SERVER_URL}/manage/admin/connector",
             json=connector_update_request.model_dump(),
             headers=user_performing_action.headers
             if user_performing_action
@@ -76,7 +73,7 @@ class ConnectorManager:
         if not connector.id:
             raise ValueError("Connector ID is required to edit a connector")
         response = requests.patch(
-            url=f"{_CONNECTOR_URL}/{connector.id}",
+            url=f"{API_SERVER_URL}/manage/admin/connector/{connector.id}",
             json=connector.model_dump(exclude={"id"}),
             headers=user_performing_action.headers
             if user_performing_action
@@ -91,7 +88,7 @@ class ConnectorManager:
         user_performing_action: TestUser | None = None,
     ) -> bool:
         response = requests.delete(
-            url=f"{_CONNECTOR_URL}/{connector.id}",
+            url=f"{API_SERVER_URL}/manage/admin/connector/{connector.id}",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,

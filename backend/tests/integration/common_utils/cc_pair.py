@@ -1,19 +1,24 @@
 import time
-import uuid
+from typing import Any
+from uuid import uuid4
 
 import requests
 from pydantic import BaseModel
 
+from danswer.connectors.models import InputType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
+from danswer.server.documents.models import DocumentSource
+from tests.integration.common_utils.connector import ConnectorManager
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
+from tests.integration.common_utils.credential import CredentialManager
 from tests.integration.common_utils.user import TestUser
 
 
-class TestConnectorCredentialPair(BaseModel):
+class TestCCPair(BaseModel):
     id: int
     name: str
     connector_id: int
@@ -22,7 +27,78 @@ class TestConnectorCredentialPair(BaseModel):
     groups: list[int]
 
 
+def _cc_pair_creator(
+    connector_id: int,
+    credential_id: int,
+    name: str | None = None,
+    is_public: bool = False,
+    groups: list[int] | None = None,
+    user_performing_action: TestUser | None = None,
+) -> TestCCPair:
+    name = f"{name}-cc-pair" if name else f"test-cc-pair-{uuid4()}"
+
+    request = {
+        "name": name,
+        "is_public": is_public,
+        "groups": groups or [],
+    }
+
+    response = requests.put(
+        url=f"{API_SERVER_URL}/manage/connector/{connector_id}/credential/{credential_id}",
+        json=request,
+        headers=user_performing_action.headers
+        if user_performing_action
+        else GENERAL_HEADERS,
+    )
+    response.raise_for_status()
+    return TestCCPair(
+        id=response.json()["data"],
+        name=name,
+        connector_id=connector_id,
+        credential_id=credential_id,
+        is_public=is_public,
+        groups=groups or [],
+    )
+
+
 class CCPairManager:
+    @staticmethod
+    def create_pair_from_scratch(
+        name: str | None = None,
+        is_public: bool = False,
+        groups: list[int] | None = None,
+        source: DocumentSource = DocumentSource.FILE,
+        input_type: InputType = InputType.LOAD_STATE,
+        connector_specific_config: dict[str, Any] | None = None,
+        credential_json: dict[str, Any] | None = None,
+        user_performing_action: TestUser | None = None,
+    ) -> TestCCPair:
+        connector = ConnectorManager.create(
+            name=name,
+            source=source,
+            input_type=input_type,
+            connector_specific_config=connector_specific_config,
+            is_public=is_public,
+            groups=groups,
+            user_performing_action=user_performing_action,
+        )
+        credential = CredentialManager.create(
+            credential_json=credential_json,
+            name=name,
+            source=source,
+            curator_public=is_public,
+            groups=groups,
+            user_performing_action=user_performing_action,
+        )
+        return _cc_pair_creator(
+            connector_id=connector.id,
+            credential_id=credential.id,
+            name=name,
+            is_public=is_public,
+            groups=groups,
+            user_performing_action=user_performing_action,
+        )
+
     @staticmethod
     def create(
         connector_id: int,
@@ -31,36 +107,19 @@ class CCPairManager:
         is_public: bool = False,
         groups: list[int] | None = None,
         user_performing_action: TestUser | None = None,
-    ) -> TestConnectorCredentialPair:
-        if name is None:
-            name = "test-cc-pair-" + str(uuid.uuid4())
-
-        request = {
-            "name": name,
-            "is_public": is_public,
-            "groups": groups or [],
-        }
-
-        response = requests.put(
-            url=f"{API_SERVER_URL}/manage/connector/{connector_id}/credential/{credential_id}",
-            json=request,
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
-        )
-        response.raise_for_status()
-        return TestConnectorCredentialPair(
-            id=response.json()["data"],
-            name=name,
+    ) -> TestCCPair:
+        return _cc_pair_creator(
             connector_id=connector_id,
             credential_id=credential_id,
+            name=name,
             is_public=is_public,
-            groups=groups or [],
+            groups=groups,
+            user_performing_action=user_performing_action,
         )
 
     @staticmethod
     def pause_cc_pair(
-        cc_pair: TestConnectorCredentialPair,
+        cc_pair: TestCCPair,
         user_performing_action: TestUser | None = None,
     ) -> bool:
         return requests.put(
@@ -73,7 +132,7 @@ class CCPairManager:
 
     @staticmethod
     def delete_cc_pair(
-        cc_pair: TestConnectorCredentialPair,
+        cc_pair: TestCCPair,
         user_performing_action: TestUser | None = None,
     ) -> bool:
         cc_pair_identifier = ConnectorCredentialPairIdentifier(
@@ -103,17 +162,17 @@ class CCPairManager:
 
     @staticmethod
     def verify_cc_pair(
-        test_cc_pair: TestConnectorCredentialPair,
+        cc_pair: TestCCPair,
         user_performing_action: TestUser | None = None,
     ) -> bool:
         all_cc_pairs = CCPairManager.get_all_cc_pairs(user_performing_action)
-        for cc_pair in all_cc_pairs:
-            if cc_pair.cc_pair_id == test_cc_pair.id:
+        for retrieved_cc_pair in all_cc_pairs:
+            if retrieved_cc_pair.cc_pair_id == cc_pair.id:
                 return (
-                    cc_pair.name == test_cc_pair.name
-                    and cc_pair.connector.id == test_cc_pair.connector_id
-                    and cc_pair.credential.id == test_cc_pair.credential_id
-                    and set(cc_pair.groups) == set(test_cc_pair.groups)
+                    retrieved_cc_pair.name == cc_pair.name
+                    and retrieved_cc_pair.connector.id == cc_pair.connector_id
+                    and retrieved_cc_pair.credential.id == cc_pair.credential_id
+                    and set(retrieved_cc_pair.groups) == set(cc_pair.groups)
                 )
         return False
 

@@ -1,7 +1,6 @@
 from danswer.server.documents.models import DocumentSource
 from tests.integration.common_utils.cc_pair import CCPairManager
-from tests.integration.common_utils.connector import ConnectorManager
-from tests.integration.common_utils.credential import CredentialManager
+from tests.integration.common_utils.constants import NUM_DOCS
 from tests.integration.common_utils.document_set import DocumentSetManager
 from tests.integration.common_utils.seed_documents import TestDocumentManager
 from tests.integration.common_utils.user import TestUser
@@ -16,50 +15,30 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     admin_user: TestUser = UserManager.create(name="admin_user")
 
     # create connectors
-    connector_1 = ConnectorManager.create(
-        name="tc1",
+    cc_pair_1 = CCPairManager.create_pair_from_scratch(
         source=DocumentSource.INGESTION_API,
         user_performing_action=admin_user,
     )
-    connector_2 = ConnectorManager.create(
-        name="tc2",
+    cc_pair_2 = CCPairManager.create_pair_from_scratch(
         source=DocumentSource.INGESTION_API,
         user_performing_action=admin_user,
     )
-    credential_1 = CredentialManager.create(
-        name="tc1",
-        source=DocumentSource.INGESTION_API,
-        user_performing_action=admin_user,
+
+    # add api key to user
+    admin_user = TestDocumentManager.add_api_key_to_user(
+        user=admin_user,
     )
-    credential_2 = CredentialManager.create(
-        name="tc2",
-        source=DocumentSource.INGESTION_API,
-        user_performing_action=admin_user,
-    )
-    cc_pair_1 = CCPairManager.create(
-        connector_id=connector_1.id,
-        credential_id=credential_1.id,
-        user_performing_action=admin_user,
-    )
-    cc_pair_2 = CCPairManager.create(
-        connector_id=connector_2.id,
-        credential_id=credential_2.id,
-        user_performing_action=admin_user,
-    )
-    api_key = TestDocumentManager.get_api_key(
-        user_performing_action=admin_user,
-    )
-    c1_seed_res = TestDocumentManager.seed_documents(
-        num_docs=5,
+
+    # seed documents
+    cc_1_seeded_docs = TestDocumentManager.seed_documents(
+        num_docs=NUM_DOCS,
         cc_pair_id=cc_pair_1.id,
-        user_performing_action=admin_user,
-        api_key=api_key,
+        user_with_api_key=admin_user,
     )
-    c2_seed_res = TestDocumentManager.seed_documents(
-        num_docs=5,
+    cc_2_seeded_docs = TestDocumentManager.seed_documents(
+        num_docs=NUM_DOCS,
         cc_pair_id=cc_pair_2.id,
-        user_performing_action=admin_user,
-        api_key=api_key,
+        user_with_api_key=admin_user,
     )
 
     # create document sets
@@ -68,7 +47,6 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
         cc_pair_ids=[cc_pair_1.id],
         user_performing_action=admin_user,
     )
-
     doc_set_2 = DocumentSetManager.create(
         name="Test Document Set 2",
         cc_pair_ids=[cc_pair_1.id, cc_pair_2.id],
@@ -80,17 +58,12 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
 
     print("Document sets created and synced")
 
-    # if so, create ACLs
+    # create user groups
     user_group_1: TestUserGroup = UserGroupManager.create(
-        name="Test User Group 1",
-        user_ids=[],
         cc_pair_ids=[cc_pair_1.id],
         user_performing_action=admin_user,
     )
-
     user_group_2: TestUserGroup = UserGroupManager.create(
-        name="Test User Group 2",
-        user_ids=[],
         cc_pair_ids=[cc_pair_1.id, cc_pair_2.id],
         user_performing_action=admin_user,
     )
@@ -104,23 +77,28 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
         cc_pair=cc_pair_1,
         user_performing_action=admin_user,
     )
+
+    # Update local records to match the database for later comparison
     user_group_1.cc_pair_ids = []
     user_group_2.cc_pair_ids = [cc_pair_2.id]
     doc_set_1.cc_pair_ids = []
     doc_set_2.cc_pair_ids = [cc_pair_2.id]
+    cc_pair_1.groups = []
+    cc_pair_2.groups = [user_group_2.id]
 
     CCPairManager.wait_for_cc_pairs_deletion_complete(user_performing_action=admin_user)
 
     # validate vespa documents
-    c1_vespa_docs = vespa_client.get_documents_by_id(
-        [doc.id for doc in c1_seed_res.documents]
+    cc_1_vespa_docs = vespa_client.get_documents_by_id(
+        [doc.id for doc in cc_1_seeded_docs.documents]
     )["documents"]
-    c2_vespa_docs = vespa_client.get_documents_by_id(
-        [doc.id for doc in c2_seed_res.documents]
+    cc_2_vespa_docs = vespa_client.get_documents_by_id(
+        [doc.id for doc in cc_2_seeded_docs.documents]
     )["documents"]
 
-    assert len(c1_vespa_docs) == 0
-    assert len(c2_vespa_docs) == 5
+    # Deleting the connector should delete the documents from vespa
+    assert len(cc_1_vespa_docs) == 0
+    assert len(cc_2_vespa_docs) == NUM_DOCS
 
     # TODO: fix this
     # import json
@@ -130,15 +108,13 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     #     "PUBLIC": 1,
     #     "group:Test User Group 2": 1,
     # }
-    # assert doc["fields"]["document_sets"] == {"Test Document Set 2": 1}
+    # assert doc["fields"]["document_sets"] == {f"{doc_set_2.name}": 1}
 
     # check that only connector 1 is deleted
-    # TODO: check for the CC pair rather than the connector once the refactor is done
-    all_cc_pairs = CCPairManager.get_all_cc_pairs(
+    assert CCPairManager.verify_cc_pair(
+        cc_pair=cc_pair_2,
         user_performing_action=admin_user,
     )
-    assert len(all_cc_pairs) == 1
-    assert all_cc_pairs[0].cc_pair_id == cc_pair_2.id
 
     # validate document sets
     all_doc_sets = DocumentSetManager.get_all_document_sets(
@@ -169,17 +145,3 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
         user_group=user_group_2,
         user_performing_action=admin_user,
     )
-
-    user_group_1_found = False
-    user_group_2_found = False
-    for user_group in all_user_groups:
-        if user_group.id == user_group_1.id:
-            user_group_1_found = True
-            assert len(user_group.cc_pairs) == 0
-        if user_group.id == user_group_2.id:
-            user_group_2_found = True
-            assert len(user_group.cc_pairs) == 1
-            assert user_group.cc_pairs[0].id == cc_pair_2.id
-
-    assert user_group_1_found
-    assert user_group_2_found

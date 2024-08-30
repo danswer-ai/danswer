@@ -166,6 +166,4 @@ def reset_all() -> None:
     reset_postgres()
     print("Resetting Vespa...")
     reset_vespa()
-    print("Seeding LLM Providers...")
-    # seed_default_openai_provider()
-    # print("Finished resetting all.")
+    print("Finished resetting all.")
