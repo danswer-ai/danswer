@@ -15,10 +15,12 @@ export type IsPublicGroupSelectorFormType = {
 export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   formikProps,
   objectName,
+  publicToWhom = "Users",
   enforceGroupSelection = true,
 }: {
   formikProps: FormikProps<T>;
   objectName: string;
+  publicToWhom?: string;
   enforceGroupSelection?: boolean;
 }) => {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
@@ -76,53 +78,54 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
             disabled={!isAdmin}
             subtext={
               <span className="block mt-2 text-sm text-gray-500">
-                If set, then this {objectName} will be visible to{" "}
-                <b>all users</b>. If turned off, then only users who explicitly
-                have been given access to this {objectName} (e.g. through a User
-                Group) will have access.
+                If set, then this {objectName} will be usable by{" "}
+                <b>All {publicToWhom}</b>. Otherwise, only <b>{publicToWhom}</b>{" "}
+                who have explicitly been given access to this {objectName} (e.g.
+                via a User Group) and <b>All Admins</b> will have access.
               </span>
             }
           />
         </>
       )}
 
-      {(!formikProps.values.is_public ||
-        !isAdmin ||
-        formikProps.values.groups.length > 0) && (
-        <>
-          <div className="flex mt-4 gap-x-2 items-center">
-            <div className="block font-medium text-base">
-              Assign group access for this {objectName}
+      {(!formikProps.values.is_public || !isAdmin) &&
+        formikProps.values.groups.length > 0 && (
+          <>
+            <div className="flex mt-4 gap-x-2 items-center">
+              <div className="block font-medium text-base">
+                Assign group access for this {objectName}
+              </div>
             </div>
-          </div>
-          <Text className="mb-3">
-            {isAdmin || !enforceGroupSelection ? (
-              <>
-                This {objectName} will be visible/accessible by the groups
-                selected below
-              </>
-            ) : (
-              <>
-                Curators must select one or more groups to give access to this{" "}
-                {objectName}
-              </>
-            )}
-          </Text>
-          <FieldArray
-            name="groups"
-            render={(arrayHelpers: ArrayHelpers) => (
-              <div className="flex gap-2 flex-wrap mb-4">
-                {userGroupsIsLoading ? (
-                  <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
-                ) : (
-                  userGroups &&
-                  userGroups.map((userGroup: UserGroup) => {
-                    const ind = formikProps.values.groups.indexOf(userGroup.id);
-                    let isSelected = ind !== -1;
-                    return (
-                      <div
-                        key={userGroup.id}
-                        className={`
+            <Text className="mb-3">
+              {isAdmin || !enforceGroupSelection ? (
+                <>
+                  This {objectName} will be visible/accessible by the groups
+                  selected below
+                </>
+              ) : (
+                <>
+                  Curators must select one or more groups to give access to this{" "}
+                  {objectName}
+                </>
+              )}
+            </Text>
+            <FieldArray
+              name="groups"
+              render={(arrayHelpers: ArrayHelpers) => (
+                <div className="flex gap-2 flex-wrap mb-4">
+                  {userGroupsIsLoading ? (
+                    <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+                  ) : (
+                    userGroups &&
+                    userGroups.map((userGroup: UserGroup) => {
+                      const ind = formikProps.values.groups.indexOf(
+                        userGroup.id
+                      );
+                      let isSelected = ind !== -1;
+                      return (
+                        <div
+                          key={userGroup.id}
+                          className={`
                         px-3 
                         py-1
                         rounded-lg 
@@ -133,31 +136,32 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                         cursor-pointer 
                         ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
                       `}
-                        onClick={() => {
-                          if (isSelected) {
-                            arrayHelpers.remove(ind);
-                          } else {
-                            arrayHelpers.push(userGroup.id);
-                          }
-                        }}
-                      >
-                        <div className="my-auto flex">
-                          <FiUsers className="my-auto mr-2" /> {userGroup.name}
+                          onClick={() => {
+                            if (isSelected) {
+                              arrayHelpers.remove(ind);
+                            } else {
+                              arrayHelpers.push(userGroup.id);
+                            }
+                          }}
+                        >
+                          <div className="my-auto flex">
+                            <FiUsers className="my-auto mr-2" />{" "}
+                            {userGroup.name}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-          />
-          <ErrorMessage
-            name="groups"
-            component="div"
-            className="text-error text-sm mt-1"
-          />
-        </>
-      )}
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            />
+            <ErrorMessage
+              name="groups"
+              component="div"
+              className="text-error text-sm mt-1"
+            />
+          </>
+        )}
     </div>
   );
 };

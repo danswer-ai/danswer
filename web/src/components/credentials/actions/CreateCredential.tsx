@@ -223,7 +223,7 @@ export default function CreateCredential({
             ))}
             {!swapConnector && (
               <div className="mt-4 flex flex-col sm:flex-row justify-between items-end">
-                <div className="w-full sm:w-3/4 mb-4 sm:mb-0">
+                <div className="w-full sm:w-3/4 mb-2 sm:mb-0">
                   {isPaidEnterpriseFeaturesEnabled && (
                     <div className="flex flex-col items-start">
                       {isAdmin && (
@@ -236,12 +236,13 @@ export default function CreateCredential({
                         <IsPublicGroupSelector
                           formikProps={formikProps}
                           objectName="credential"
+                          publicToWhom="Curators"
                         />
                       )}
                     </div>
                   )}
                 </div>
-                <div className="w-full sm:w-1/4">
+                <div className="w-full sm:w-1/4 mb-0">
                   <CreateButton
                     onClick={() =>
                       handleSubmit(formikProps.values, formikProps, "create")
