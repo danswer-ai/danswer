@@ -37,7 +37,7 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
 
   return (
     <div className="pl-0">
-      <nav className="space-y-2 ">
+      <nav className="space-y-2">
         <div className="w-full justify-center mb-4 flex">
           <div className="w-52">
             <Link

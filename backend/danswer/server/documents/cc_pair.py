@@ -170,7 +170,7 @@ def associate_credential_to_connector(
             connector_id=connector_id,
             credential_id=credential_id,
             cc_pair_name=metadata.name,
-            is_public=metadata.is_public,
+            is_public=True if metadata.is_public is None else metadata.is_public,
             groups=metadata.groups,
         )
 

@@ -3,10 +3,10 @@ from abc import abstractmethod
 
 from sqlalchemy.orm import Session
 
-from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.embedding_model import get_secondary_db_embedding_model
-from danswer.db.models import EmbeddingModel as DbEmbeddingModel
 from danswer.db.models import IndexModelStatus
+from danswer.db.models import SearchSettings
+from danswer.db.search_settings import get_current_search_settings
+from danswer.db.search_settings import get_secondary_search_settings
 from danswer.indexing.models import ChunkEmbedding
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
@@ -156,7 +156,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
                     title_embed_dict[title] = title_embedding
 
             new_embedded_chunk = IndexChunk(
-                **chunk.dict(),
+                **chunk.model_dump(),
                 embeddings=ChunkEmbedding(
                     full_embedding=chunk_embeddings[0],
                     mini_chunk_embeddings=chunk_embeddings[1:],
@@ -169,37 +169,37 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         return embedded_chunks
 
     @classmethod
-    def from_db_embedding_model(
-        cls, embedding_model: DbEmbeddingModel
+    def from_db_search_settings(
+        cls, search_settings: SearchSettings
     ) -> "DefaultIndexingEmbedder":
         return cls(
-            model_name=embedding_model.model_name,
-            normalize=embedding_model.normalize,
-            query_prefix=embedding_model.query_prefix,
-            passage_prefix=embedding_model.passage_prefix,
-            provider_type=embedding_model.provider_type,
-            api_key=embedding_model.api_key,
+            model_name=search_settings.model_name,
+            normalize=search_settings.normalize,
+            query_prefix=search_settings.query_prefix,
+            passage_prefix=search_settings.passage_prefix,
+            provider_type=search_settings.provider_type,
+            api_key=search_settings.api_key,
         )
 
 
-def get_embedding_model_from_db_embedding_model(
+def get_embedding_model_from_search_settings(
     db_session: Session, index_model_status: IndexModelStatus = IndexModelStatus.PRESENT
 ) -> IndexingEmbedder:
-    db_embedding_model: DbEmbeddingModel | None
+    search_settings: SearchSettings | None
     if index_model_status == IndexModelStatus.PRESENT:
-        db_embedding_model = get_current_db_embedding_model(db_session)
+        search_settings = get_current_search_settings(db_session)
     elif index_model_status == IndexModelStatus.FUTURE:
-        db_embedding_model = get_secondary_db_embedding_model(db_session)
-        if not db_embedding_model:
+        search_settings = get_secondary_search_settings(db_session)
+        if not search_settings:
             raise RuntimeError("No secondary index configured")
     else:
         raise RuntimeError("Not supporting embedding model rollbacks")
 
     return DefaultIndexingEmbedder(
-        model_name=db_embedding_model.model_name,
-        normalize=db_embedding_model.normalize,
-        query_prefix=db_embedding_model.query_prefix,
-        passage_prefix=db_embedding_model.passage_prefix,
-        provider_type=db_embedding_model.provider_type,
-        api_key=db_embedding_model.api_key,
+        model_name=search_settings.model_name,
+        normalize=search_settings.normalize,
+        query_prefix=search_settings.query_prefix,
+        passage_prefix=search_settings.passage_prefix,
+        provider_type=search_settings.provider_type,
+        api_key=search_settings.api_key,
     )

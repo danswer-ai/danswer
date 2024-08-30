@@ -48,7 +48,6 @@ export default async function Page({
       )}
       <ChatProvider
         value={{
-          user,
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,

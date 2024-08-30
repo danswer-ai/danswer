@@ -369,10 +369,12 @@ def update_user_group(
     added_user_ids = list(updated_user_ids - current_user_ids)
     removed_user_ids = list(current_user_ids - updated_user_ids)
 
-    if (removed_user_ids or added_user_ids) and (
-        not user or user.role != UserRole.ADMIN
-    ):
-        raise ValueError("Only admins can add or remove users from user groups")
+    # LEAVING THIS HERE FOR NOW FOR GIVING DIFFERENT ROLES
+    # ACCESS TO DIFFERENT PERMISSIONS
+    # if (removed_user_ids or added_user_ids) and (
+    #     not user or user.role != UserRole.ADMIN
+    # ):
+    #     raise ValueError("Only admins can add or remove users from user groups")
 
     if removed_user_ids:
         _cleanup_user__user_group_relationships__no_commit(

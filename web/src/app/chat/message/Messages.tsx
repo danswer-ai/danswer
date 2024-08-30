@@ -85,7 +85,10 @@ function FileDisplay({
   return (
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
-        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
+        <div
+          id="danswer-file"
+          className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}
+        >
           <div className="flex flex-col gap-2">
             {nonImgFiles.map((file) => {
               return (
@@ -102,7 +105,10 @@ function FileDisplay({
         </div>
       )}
       {imageFiles && imageFiles.length > 0 && (
-        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
+        <div
+          id="danswer-image"
+          className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}
+        >
           <div className="flex flex-col gap-2">
             {imageFiles.map((file) => {
               return <InMessageImage key={file.id} fileId={file.id} />;
@@ -225,13 +231,8 @@ export const AIMessage = ({
       }
       return content;
     };
-
     content = trimIncompleteCodeSection(content);
   }
-
-  const danswerSearchToolEnabledForPersona = currentPersona.tools.some(
-    (tool) => tool.in_code_tool_id === SEARCH_TOOL_NAME
-  );
 
   let filteredDocs: FilteredDanswerDocument[] = [];
 
@@ -268,11 +269,15 @@ export const AIMessage = ({
     otherMessagesCanSwitchTo.length > 1;
 
   return (
-    <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
+    <div
+      id="danswer-ai-message"
+      ref={trackedElementRef}
+      className={"py-5 ml-4 px-5 relative flex "}
+    >
       <div
-        className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-message-max`}
+        className={`mx-auto ${shared ? "w-full" : "w-[90%]"}  max-w-message-max`}
       >
-        <div className={`${!shared && "mobile:ml-4 xl:ml-8"}`}>
+        <div className={`desktop:mr-12 ${!shared && "mobile:ml-0 md:ml-8"}`}>
           <div className="flex">
             <AssistantIcon
               size="small"
@@ -353,10 +358,10 @@ export const AIMessage = ({
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <div className="overflow-x-visible w-full pr-2 max-w-[675px]">
+                          <div className="overflow-x-visible w-full pr-2">
                             <ReactMarkdown
                               key={messageId}
-                              className="prose max-w-full"
+                              className="prose max-w-full text-base"
                               components={{
                                 a: (props) => {
                                   const { node, ...rest } = props;
@@ -441,7 +446,7 @@ export const AIMessage = ({
                                     className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
                                   >
                                     <Citation link={doc.link} index={ind + 1} />
-                                    <p className="shrink truncate ellipsis break-all ">
+                                    <p className="shrink truncate ellipsis break-all">
                                       {doc.semantic_identifier ||
                                         doc.document_id}
                                     </p>
@@ -717,18 +722,17 @@ export const HumanMessage = ({
 
   return (
     <div
+      id="danswer-human-message"
       className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
-        className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-searchbar-max`}
-      >
+      <div className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-[790px]`}>
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
             <div className="flex justify-end">
-              <div className="w-full ml-8 flex w-full max-w-message-max break-words">
+              <div className="w-full ml-8 flex w-full w-[800px] break-words">
                 {isEditing ? (
                   <div className="w-full">
                     <div
@@ -749,24 +753,24 @@ export const HumanMessage = ({
                       <textarea
                         ref={textareaRef}
                         className={`
-                      m-0 
-                      w-full 
-                      h-auto
-                      shrink
-                      border-0
-                      rounded-lg 
-                      overflow-y-hidden
-                      bg-background-emphasis 
-                      whitespace-normal 
-                      break-word
-                      overscroll-contain
-                      outline-none 
-                      placeholder-gray-400 
-                      resize-none
-                      pl-4
-                      overflow-y-auto
-                      pr-12 
-                      py-4`}
+                        m-0 
+                        w-full 
+                        h-auto
+                        shrink
+                        border-0
+                        rounded-lg 
+                        overflow-y-hidden
+                        bg-background-emphasis 
+                        whitespace-normal 
+                        break-word
+                        overscroll-contain
+                        outline-none 
+                        placeholder-gray-400 
+                        resize-none
+                        pl-4
+                        overflow-y-auto
+                        pr-12 
+                        py-4`}
                         aria-multiline
                         role="textarea"
                         value={editedContent}
@@ -890,7 +894,7 @@ export const HumanMessage = ({
                     ) : (
                       <div className="h-[27px]" />
                     )}
-                    <p className="ml-auto rounded-lg p-1">{content}</p>
+                    <div className="ml-auto rounded-lg p-1">{content}</div>
                   </>
                 )}
               </div>
