@@ -23,6 +23,7 @@ export interface EnterpriseSettings {
   // custom Chat components
   custom_lower_disclaimer_content: string | null;
   custom_header_content: string | null;
+  two_lines_for_chat_header: boolean | null;
   custom_popup_header: string | null;
   custom_popup_content: string | null;
 }
