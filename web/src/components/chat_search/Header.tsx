@@ -11,6 +11,7 @@ import { pageType } from "@/app/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
 import LogoType from "../header/LogoType";
+import { SettingsContext } from "../settings/SettingsProvider";
 
 export default function FunctionalHeader({
   user,
@@ -29,6 +30,7 @@ export default function FunctionalHeader({
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
   toggleSidebar?: () => void;
 }) {
+  const settings = useContext(SettingsContext);
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -64,7 +66,9 @@ export default function FunctionalHeader({
     router.push(newChatUrl);
   };
   return (
-    <div className="left-0 h-0 sticky top-0 z-20 w-full relative flex">
+    <div
+      className={`left-0 bg-transparent sticky top-0 z-20 w-full relative flex`}
+    >
       <div className="mt-2 mx-2.5 cursor-pointer text-text-700 relative flex w-full">
         <LogoType
           assistantId={currentChatSession?.persona_id}
