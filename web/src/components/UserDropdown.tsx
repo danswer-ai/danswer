@@ -147,13 +147,11 @@ export function UserDropdown({
             )}
 
             {showLogout && (
-              <>
-                <DropdownOption
-                  onClick={handleLogout}
-                  icon={<FiLogOut className="my-auto mr-2 text-lg" />}
-                  label="Log out"
-                />
-              </>
+              <DropdownOption
+                onClick={handleLogout}
+                icon={<FiLogOut className="my-auto mr-2 text-lg" />}
+                label="Log out"
+              />
             )}
           </div>
         }
