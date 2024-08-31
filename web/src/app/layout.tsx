@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: dynamicSettings.enterpriseSettings?.application_name ?? "enMedD AI",
-    description: "enMedD Conversational Health Platform",
+    description: "enMedD: Empowering Health Devices of Tomorrow",
     icons: {
       icon: logoLocation,
     },
