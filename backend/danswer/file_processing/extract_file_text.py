@@ -294,7 +294,7 @@ def extract_file_text(
     file_name: str | None,
     file: IO[Any],
     break_on_unprocessable: bool = True,
-) -> tuple[str, dict]:
+) -> str:
     extension_to_function: dict[str, Callable[[IO[Any]], str]] = {
         ".pdf": pdf_to_text,
         ".docx": docx_to_text,
