@@ -110,6 +110,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     company_billing: Mapped[str] = mapped_column(Text, nullable=True)
     billing_email_address: Mapped[str] = mapped_column(String, nullable=True)
     vat: Mapped[str] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
         "OAuthAccount", lazy="joined"

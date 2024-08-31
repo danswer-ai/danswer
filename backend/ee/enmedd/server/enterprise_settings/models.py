@@ -7,10 +7,10 @@ class EnterpriseSettings(BaseModel):
     NOTE: don't put anything sensitive in here, as this is accessible without auth."""
 
     application_name: str | None = None
+    application_description: str | None = None
     use_custom_logo: bool = False
 
     # custom Chat components
-    custom_header_content: str | None = None
     custom_popup_header: str | None = None
     custom_popup_content: str | None = None
 
