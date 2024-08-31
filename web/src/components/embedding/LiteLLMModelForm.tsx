@@ -18,7 +18,7 @@ export function LiteLLMModelForm({
         initialValues={
           currentValues || {
             model_name: "",
-            model_dim: 1536,
+            model_dim: 768,
             normalize: false,
             query_prefix: "",
             passage_prefix: "",
@@ -26,7 +26,6 @@ export function LiteLLMModelForm({
             api_key: "",
             enabled: true,
             api_url: "",
-            temperature: 0.7,
             description: "",
             index_name: "",
             pricePerMillion: 0,
@@ -45,10 +44,6 @@ export function LiteLLMModelForm({
           api_key: Yup.string().optional(),
           enabled: Yup.boolean(),
           api_url: Yup.string().required("API base URL is required"),
-          temperature: Yup.number()
-            .min(0)
-            .max(1)
-            .required("Temperature is required"),
           description: Yup.string(),
           index_name: Yup.string().nullable(),
           pricePerMillion: Yup.number(),
@@ -74,7 +69,7 @@ export function LiteLLMModelForm({
               name="model_name"
               label="Model Name:"
               subtext="The name of the LiteLLM model"
-              placeholder="e.g. 'gpt-3.5-turbo'"
+              placeholder="e.g. 'all-MiniLM-L6-v2'"
               autoCompleteDisabled={true}
             />
 
@@ -105,15 +100,6 @@ export function LiteLLMModelForm({
               name="passage_prefix"
               label="Passage Prefix:"
               subtext="Prefix for passage embeddings"
-              autoCompleteDisabled={true}
-            />
-
-            <TextFormField
-              name="temperature"
-              label="Temperature:"
-              subtext="Controls randomness in responses (0-1)"
-              placeholder="E.g. '0.7'"
-              type="number"
               autoCompleteDisabled={true}
             />
 
