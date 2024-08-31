@@ -50,6 +50,7 @@ def upsert_cloud_embedding_provider(
             setattr(existing_provider, key, value)
     else:
         new_provider = CloudEmbeddingProviderModel(**provider.model_dump())
+
         db_session.add(new_provider)
         existing_provider = new_provider
     db_session.commit()

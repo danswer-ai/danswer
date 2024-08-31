@@ -161,6 +161,7 @@ class EmbeddingModel:
                 manual_passage_prefix=self.passage_prefix,
                 api_url=self.api_url,
             )
+            print(embed_request.__dict__)
 
             response = self._make_model_server_request(embed_request)
             embeddings.extend(response.embeddings)

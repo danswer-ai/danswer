@@ -61,6 +61,7 @@ PRESERVED_SEARCH_FIELDS = [
     "provider_type",
     "api_key",
     "model_name",
+    "api_url",
     "index_name",
     "multipass_indexing",
     "model_dim",
