@@ -12,6 +12,7 @@ from danswer.chat.models import AnswerQuestionPossibleReturn
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
+from danswer.chat.models import MessageChunkWithStopReason
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
 from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.models import AnswerStyleConfig
@@ -190,7 +191,12 @@ class Answer:
 
     def _raw_output_for_explicit_tool_calling_llms(
         self,
-    ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
+    ) -> Iterator[
+        MessageChunkWithStopReason
+        | ToolCallKickoff
+        | ToolResponse
+        | ToolCallFinalResult
+    ]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
 
         tool_call_chunk: AIMessageChunk | None = None
@@ -238,10 +244,18 @@ class Answer:
                     else:
                         tool_call_chunk += message  # type: ignore
                 else:
-                    if message.content:
-                        if self.is_cancelled:
-                            return
-                        yield cast(str, message.content)
+                    if "content" in message.__dict__:
+                        stop_reason = None
+                        keyword_arguments = message.additional_kwargs
+                        if (
+                            "usage_metadata" in keyword_arguments
+                            and "stop" in keyword_arguments["usage_metadata"]
+                        ):
+                            stop_reason = keyword_arguments["usage_metadata"]["stop"]
+
+                        yield MessageChunkWithStopReason(
+                            content=cast(str, message.content), stop_reason=stop_reason
+                        )
 
             if not tool_call_chunk:
                 return  # no tool call needed

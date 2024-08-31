@@ -44,6 +44,11 @@ class QADocsResponse(RetrievalDocs):
         return initial_dict
 
 
+class MessageChunkWithStopReason(BaseModel):
+    content: str
+    stop: str | None = None
+
+
 class LLMRelevanceFilterResponse(BaseModel):
     relevant_chunk_indices: list[int]
 
@@ -69,6 +74,9 @@ class DocumentRelevance(BaseModel):
 class DanswerAnswerPiece(BaseModel):
     # A small piece of a complete answer. Used for streaming back answers.
     answer_piece: str | None  # if None, specifies the end of an Answer
+    stop_reason: str | None = (
+        None  # Reason for stopping the answer generation, if applicable
+    )
 
 
 # An intermediate representation of citations, later translated into

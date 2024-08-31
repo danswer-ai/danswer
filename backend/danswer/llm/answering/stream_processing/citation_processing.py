@@ -5,12 +5,12 @@ from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
+from danswer.chat.models import MessageChunkWithStopReason
 from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.llm.answering.models import StreamProcessor
 from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 from danswer.prompts.constants import TRIPLE_BACKTICK
 from danswer.utils.logger import setup_logger
-
 
 logger = setup_logger()
 
@@ -69,8 +69,10 @@ def extract_citations_from_stream(
     raw_out = ""
     current_citations: list[int] = []
     past_cite_count = 0
+    stop_reason = None
     for raw_token in tokens:
-        raw_out += raw_token
+        print(raw_token)
+
         if stop_stream:
             next_hold = hold + raw_token
             if stop_stream in next_hold:
@@ -83,8 +85,13 @@ def extract_citations_from_stream(
         else:
             token = raw_token
 
-        curr_segment += token
-        llm_out += token
+        if isinstance(token, MessageChunkWithStopReason):
+            raw_out += token.content
+
+            content = token.content
+            curr_segment += content
+            llm_out += content
+            stop_reason = token.stop
 
         citation_pattern = r"\[(\d+)\]"
 
@@ -190,7 +197,10 @@ def extract_citations_from_stream(
                     last_citation_end = end + length_to_add
 
             if last_citation_end > 0:
-                yield DanswerAnswerPiece(answer_piece=curr_segment[:last_citation_end])
+                yield DanswerAnswerPiece(
+                    answer_piece=curr_segment[:last_citation_end],
+                    stop_reason=stop_reason,
+                )
                 curr_segment = curr_segment[last_citation_end:]
         if possible_citation_found:
             continue

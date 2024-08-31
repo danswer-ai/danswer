@@ -17,6 +17,7 @@ export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
 export interface AnswerPiecePacket {
   answer_piece: string;
+  stop_reason: string | null;
 }
 
 export interface ErrorMessagePacket {
