@@ -2,20 +2,13 @@ import time
 from uuid import uuid4
 
 import requests
-from pydantic import BaseModel
 
 from ee.danswer.server.user_group.models import UserGroup
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
-from tests.integration.common_utils.user import TestUser
-
-
-class TestUserGroup(BaseModel):
-    id: int
-    name: str
-    user_ids: list[str]
-    cc_pair_ids: list[int]
+from tests.integration.common_utils.test_models import TestUser
+from tests.integration.common_utils.test_models import TestUserGroup
 
 
 class UserGroupManager:
@@ -116,11 +109,22 @@ class UserGroupManager:
 
     @staticmethod
     def wait_for_sync(
+        user_groups_to_check: list[TestUserGroup] | None = None,
         user_performing_action: TestUser | None = None,
     ) -> None:
         start = time.time()
         while True:
             user_groups = UserGroupManager.get_all(user_performing_action)
+            if user_groups_to_check:
+                check_ids = {user_group.id for user_group in user_groups_to_check}
+                user_group_ids = {user_group.id for user_group in user_groups}
+                if not check_ids.issubset(user_group_ids):
+                    raise RuntimeError("Document set not found")
+                user_groups = [
+                    user_group
+                    for user_group in user_groups
+                    if user_group.id in check_ids
+                ]
             if all(ug.is_up_to_date for ug in user_groups):
                 return
 

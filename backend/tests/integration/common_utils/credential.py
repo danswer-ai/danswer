@@ -2,23 +2,13 @@ from typing import Any
 from uuid import uuid4
 
 import requests
-from pydantic import BaseModel
 
 from danswer.server.documents.models import CredentialSnapshot
 from danswer.server.documents.models import DocumentSource
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.user import TestUser
-
-
-class TestCredential(BaseModel):
-    id: int
-    name: str
-    credential_json: dict[str, Any]
-    admin_public: bool
-    source: DocumentSource
-    curator_public: bool
-    groups: list[int]
+from tests.integration.common_utils.test_models import TestCredential
+from tests.integration.common_utils.test_models import TestUser
 
 
 class CredentialManager:

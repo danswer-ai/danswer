@@ -2,24 +2,12 @@ import os
 from uuid import uuid4
 
 import requests
-from pydantic import BaseModel
 
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.user import TestUser
-
-
-class TestLLMProvider(BaseModel):
-    id: int
-    name: str
-    provider: str
-    api_key: str
-    default_model_name: str
-    is_public: bool
-    groups: list[int]
-    api_base: str | None = None
-    api_version: str | None = None
+from tests.integration.common_utils.test_models import TestLLMProvider
+from tests.integration.common_utils.test_models import TestUser
 
 
 class LLMProviderManager:

@@ -2,24 +2,12 @@ import time
 from uuid import uuid4
 
 import requests
-from pydantic import BaseModel
-from pydantic import Field
 
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
-from tests.integration.common_utils.user import TestUser
-
-
-class TestDocumentSet(BaseModel):
-    id: int
-    name: str
-    description: str
-    cc_pair_ids: list[int] = Field(default_factory=list)
-    is_public: bool
-    is_up_to_date: bool
-    users: list[str] = Field(default_factory=list)
-    groups: list[int] = Field(default_factory=list)
+from tests.integration.common_utils.test_models import TestDocumentSet
+from tests.integration.common_utils.test_models import TestUser
 
 
 class DocumentSetManager:
@@ -131,12 +119,19 @@ class DocumentSetManager:
 
     @staticmethod
     def wait_for_sync(
+        document_sets_to_check: list[TestDocumentSet] | None = None,
         user_performing_action: TestUser | None = None,
     ) -> None:
         # wait for document sets to be synced
         start = time.time()
         while True:
             doc_sets = DocumentSetManager.get_all(user_performing_action)
+            if document_sets_to_check:
+                check_ids = {doc_set.id for doc_set in document_sets_to_check}
+                doc_set_ids = {doc_set.id for doc_set in doc_sets}
+                if not check_ids.issubset(doc_set_ids):
+                    raise RuntimeError("Document set not found")
+                doc_sets = [doc_set for doc_set in doc_sets if doc_set.id in check_ids]
             all_up_to_date = all(doc_set.is_up_to_date for doc_set in doc_sets)
 
             if all_up_to_date:

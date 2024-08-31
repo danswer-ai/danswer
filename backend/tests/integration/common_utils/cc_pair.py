@@ -3,7 +3,6 @@ from typing import Any
 from uuid import uuid4
 
 import requests
-from pydantic import BaseModel
 
 from danswer.connectors.models import InputType
 from danswer.db.enums import ConnectorCredentialPairStatus
@@ -15,23 +14,15 @@ from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
 from tests.integration.common_utils.credential import CredentialManager
-from tests.integration.common_utils.user import TestUser
-
-
-class TestCCPair(BaseModel):
-    id: int
-    name: str
-    connector_id: int
-    credential_id: int
-    is_public: bool
-    groups: list[int]
+from tests.integration.common_utils.test_models import TestCCPair
+from tests.integration.common_utils.test_models import TestUser
 
 
 def _cc_pair_creator(
     connector_id: int,
     credential_id: int,
     name: str | None = None,
-    is_public: bool = False,
+    is_public: bool = True,
     groups: list[int] | None = None,
     user_performing_action: TestUser | None = None,
 ) -> TestCCPair:
@@ -65,7 +56,7 @@ class CCPairManager:
     @staticmethod
     def create_from_scratch(
         name: str | None = None,
-        is_public: bool = False,
+        is_public: bool = True,
         groups: list[int] | None = None,
         source: DocumentSource = DocumentSource.FILE,
         input_type: InputType = InputType.LOAD_STATE,
@@ -104,7 +95,7 @@ class CCPairManager:
         connector_id: int,
         credential_id: int,
         name: str | None = None,
-        is_public: bool = False,
+        is_public: bool = True,
         groups: list[int] | None = None,
         user_performing_action: TestUser | None = None,
     ) -> TestCCPair:

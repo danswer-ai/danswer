@@ -6,7 +6,7 @@ from tests.integration.common_utils.cc_pair import TestCCPair
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import NUM_DOCS
 from tests.integration.common_utils.llm import LLMProviderManager
-from tests.integration.common_utils.seed_documents import TestDocumentManager
+from tests.integration.common_utils.seed_documents import DocumentManager
 from tests.integration.common_utils.user import TestUser
 from tests.integration.common_utils.user import UserManager
 
@@ -19,13 +19,13 @@ def test_send_message_simple_with_history(reset: None) -> None:
     cc_pair_1: TestCCPair = CCPairManager.create_from_scratch(
         user_performing_action=admin_user,
     )
-    admin_user = TestDocumentManager.add_api_key_to_user(
+    admin_user = DocumentManager.add_api_key_to_user(
         user=admin_user,
     )
     LLMProviderManager.create(user_performing_action=admin_user)
-    cc_pair_1_seeded_docs = TestDocumentManager.seed_documents(
+    cc_pair_1 = DocumentManager.seed_and_attach_docs(
+        cc_pair=cc_pair_1,
         num_docs=NUM_DOCS,
-        cc_pair_id=cc_pair_1.id,
         user_with_api_key=admin_user,
     )
 
@@ -34,7 +34,7 @@ def test_send_message_simple_with_history(reset: None) -> None:
         json={
             "messages": [
                 {
-                    "message": cc_pair_1_seeded_docs.documents[0].content,
+                    "message": cc_pair_1.documents[0].content,
                     "role": MessageType.USER.value,
                 }
             ],
@@ -48,13 +48,10 @@ def test_send_message_simple_with_history(reset: None) -> None:
     response_json = response.json()
 
     # Check that the top document is the correct document
-    assert (
-        response_json["simple_search_docs"][0]["id"]
-        == cc_pair_1_seeded_docs.documents[0].id
-    )
+    assert response_json["simple_search_docs"][0]["id"] == cc_pair_1.documents[0].id
 
     # assert that the metadata is correct
-    for doc in cc_pair_1_seeded_docs.documents:
+    for doc in cc_pair_1.documents:
         found_doc = next(
             (x for x in response_json["simple_search_docs"] if x["id"] == doc.id), None
         )

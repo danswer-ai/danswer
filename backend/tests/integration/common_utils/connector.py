@@ -2,24 +2,14 @@ from typing import Any
 from uuid import uuid4
 
 import requests
-from pydantic import BaseModel
 
 from danswer.connectors.models import InputType
 from danswer.server.documents.models import ConnectorUpdateRequest
 from danswer.server.documents.models import DocumentSource
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.user import TestUser
-
-
-class TestConnector(BaseModel):
-    id: int
-    name: str
-    source: DocumentSource
-    input_type: InputType
-    connector_specific_config: dict[str, Any]
-    groups: list[int] | None = None
-    is_public: bool | None = None
+from tests.integration.common_utils.test_models import TestConnector
+from tests.integration.common_utils.test_models import TestUser
 
 
 class ConnectorManager:
