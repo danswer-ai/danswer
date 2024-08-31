@@ -297,8 +297,8 @@ def test_citation_extraction(
     expected_citations: list[str],
 ) -> None:
     # Turn string into MessageChunkWithStopReason
-    input_tokens = [MessageChunkWithStopReason(content=token) for token in input_tokens]
-    final_answer_text, citations = process_text(input_tokens, mock_data)
+    input_chunks = [MessageChunkWithStopReason(content=token) for token in input_tokens]
+    final_answer_text, citations = process_text(input_chunks, mock_data)
     assert (
         final_answer_text.strip() == expected_text.strip()
     ), f"Test '{test_name}' failed: Final answer text does not match expected output."

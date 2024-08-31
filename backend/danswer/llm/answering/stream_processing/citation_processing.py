@@ -72,7 +72,8 @@ def extract_citations_from_stream(
     stop_reason = None
     for raw_token in tokens:
         if stop_stream:
-            next_hold = hold + raw_token
+            next_hold = hold + raw_token.content
+            stop_reason = raw_token.stop_reason
             if stop_stream in next_hold:
                 break
             if next_hold == stop_stream[: len(next_hold)]:
