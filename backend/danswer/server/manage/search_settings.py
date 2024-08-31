@@ -25,7 +25,6 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.search.models import SavedSearchSettings
 from danswer.search.models import SearchSettingsCreationRequest
-from danswer.server.manage.embedding.models import CloudEmbeddingProvider
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.models import FullModelVersionResponse
 from danswer.server.models import IdReturn
@@ -35,16 +34,6 @@ from shared_configs.configs import ALT_INDEX_SUFFIX
 
 router = APIRouter(prefix="/search-settings")
 logger = setup_logger()
-
-
-def create_litellm_provider(db_session: Session) -> CloudEmbeddingProvider:
-    """Creates a new LiteLLM embedding provider in the database."""
-    return upsert_cloud_embedding_provider(
-        db_session=db_session,
-        provider=CloudEmbeddingProviderCreationRequest(
-            provider_type=EmbeddingProvider.LITELLM,
-        ),
-    )
 
 
 @router.post("/set-new-search-settings")
@@ -62,14 +51,15 @@ def set_new_search_settings(
     # Validate cloud provider exists or create new LiteLLM provider
     if search_settings_new.provider_type is not None:
         if search_settings_new.provider_type == EmbeddingProvider.LITELLM:
-            # Create new LiteLLM provider if it doesn't exist
-            cloud_provider = get_embedding_provider_from_provider_type(
-                db_session, provider_type=EmbeddingProvider.LITELLM
+            # Update or create LiteLLM provider
+            # This is a placeholder and should be replaced with actual implementation
+            upsert_cloud_embedding_provider(
+                db_session,
+                provider=CloudEmbeddingProviderCreationRequest(
+                    provider_type=EmbeddingProvider.LITELLM,
+                    api_url=search_settings_new.api_url,
+                ),
             )
-            if cloud_provider is None:
-                # Logic to create new LiteLLM provider
-                # This is a placeholder and should be replaced with actual implementation
-                create_litellm_provider(db_session)
 
         else:
             cloud_provider = get_embedding_provider_from_provider_type(

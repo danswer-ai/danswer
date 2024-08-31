@@ -548,7 +548,6 @@ class Credential(Base):
 class SearchSettings(Base):
     __tablename__ = "search_settings"
 
-    api_url: Mapped[str | None] = mapped_column(String, nullable=True)
     id: Mapped[int] = mapped_column(primary_key=True)
     model_name: Mapped[str] = mapped_column(String)
     model_dim: Mapped[int] = mapped_column(Integer)
@@ -607,6 +606,10 @@ class SearchSettings(Base):
     def __repr__(self) -> str:
         return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}',\
           cloud_provider='{self.cloud_provider.provider_type if self.cloud_provider else 'None'}')>"
+
+    @property
+    def api_url(self) -> str | None:
+        return self.cloud_provider.api_url if self.cloud_provider is not None else None
 
     @property
     def api_key(self) -> str | None:
@@ -1086,6 +1089,7 @@ class CloudEmbeddingProvider(Base):
     provider_type: Mapped[EmbeddingProvider] = mapped_column(
         Enum(EmbeddingProvider), primary_key=True
     )
+    api_url: Mapped[str | None] = mapped_column(String, nullable=True)
     api_key: Mapped[str | None] = mapped_column(EncryptedString())
     search_settings: Mapped[list["SearchSettings"]] = relationship(
         "SearchSettings",

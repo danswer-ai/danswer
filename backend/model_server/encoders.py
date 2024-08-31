@@ -274,7 +274,7 @@ def embed_text(
         logger.error("No texts provided for embedding")
         raise ValueError("No texts provided for embedding.")
 
-    if api_url:
+    if provider_type == EmbeddingProvider.LITELLM:
         logger.debug(f"Using LiteLLM proxy for embedding with URL: {api_url}")
         try:
             return embed_with_litellm_proxy(texts, api_url, model_name or "")
@@ -282,7 +282,7 @@ def embed_text(
             logger.exception(f"Error during LiteLLM proxy embedding: {str(e)}")
             raise
 
-    if provider_type is not None:
+    elif provider_type is not None:
         logger.debug(f"Using cloud provider {provider_type} for embedding")
         if api_key is None:
             logger.error("API key not provided for cloud model")

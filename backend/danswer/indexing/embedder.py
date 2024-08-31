@@ -48,8 +48,8 @@ class IndexingEmbedder(ABC):
             passage_prefix=passage_prefix,
             normalize=normalize,
             api_key=api_key,
-            api_url=self.api_url,
             provider_type=provider_type,
+            api_url=api_url,
             # The below are globally set, this flow always uses the indexing one
             server_host=INDEXING_MODEL_SERVER_HOST,
             server_port=INDEXING_MODEL_SERVER_PORT,
@@ -166,7 +166,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
                     title_embed_dict[title] = title_embedding
 
             new_embedded_chunk = IndexChunk(
-                **chunk.model_dump(),
+                **chunk.dict(),
                 embeddings=ChunkEmbedding(
                     full_embedding=chunk_embeddings[0],
                     mini_chunk_embeddings=chunk_embeddings[1:],
@@ -213,4 +213,5 @@ def get_embedding_model_from_search_settings(
         passage_prefix=search_settings.passage_prefix,
         provider_type=search_settings.provider_type,
         api_key=search_settings.api_key,
+        api_url=search_settings.api_url,
     )

@@ -17,7 +17,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("search_settings", sa.Column("api_url", sa.String(), nullable=True))
+    op.add_column(
+        "embedding_provider", sa.Column("api_url", sa.String(), nullable=True)
+    )
 
 
 def downgrade() -> None:
