@@ -322,14 +322,6 @@ export const AIMessage = ({
                       </>
                     ) : null}
 
-                    {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
-                      !query &&
-                      continueGenerating && (
-                        <ContinueGenerating
-                          handleContinueGenerating={continueGenerating}
-                        />
-                      )}
-
                     {toolCall &&
                       !TOOLS_WITH_CUSTOM_HANDLING.includes(
                         toolCall.tool_name
@@ -647,6 +639,11 @@ export const AIMessage = ({
             </div>
           </div>
         </div>
+        {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+          !query &&
+          continueGenerating && (
+            <ContinueGenerating handleContinueGenerating={continueGenerating} />
+          )}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { EmphasizedClickable } from "@/components/BasicClickable";
+import { useEffect, useState } from "react";
 import { FiBook, FiPlayCircle } from "react-icons/fi";
 
 export function ContinueGenerating({
@@ -6,22 +7,30 @@ export function ContinueGenerating({
 }: {
   handleContinueGenerating: () => void;
 }) {
-  return (
-    <div className="flex text-sm !pt-0">
-      <div className="flex mb-auto">
-        <FiPlayCircle className="my-auto flex-none mr-2" size={14} />
-        <div className="my-auto cursor-default">
-          <span className="mobile:hidden">
-            The AI stopped generating due to the LLM's limits. Continue?
-          </span>
-          <span className="desktop:hidden">Continue?</span>
-        </div>
-      </div>
+  const [showExplanation, setShowExplanation] = useState(false);
 
-      <div className="ml-auto my-auto" onClick={handleContinueGenerating}>
-        <EmphasizedClickable size="sm">
-          <div className="w-24 text-xs">Continue</div>
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowExplanation(true);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="flex justify-center w-full">
+      <div className="relative group">
+        <EmphasizedClickable onClick={handleContinueGenerating}>
+          <>
+            <FiPlayCircle className="mr-2" />
+            Continue Generation
+          </>
         </EmphasizedClickable>
+        {showExplanation && (
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+            LLM reached its token limit. Click to continue.
+          </div>
+        )}
       </div>
     </div>
   );
