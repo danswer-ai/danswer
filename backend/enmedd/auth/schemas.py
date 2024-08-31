@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from enum import Enum
 from typing import List
 from typing import Optional
@@ -20,6 +21,7 @@ class UserStatus(str, Enum):
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
     role: UserRole
+    created_at: datetime
     chosen_assistants: Optional[List[int]]
     full_name: Optional[str]
     company_name: Optional[str]
