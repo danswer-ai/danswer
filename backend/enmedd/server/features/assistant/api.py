@@ -7,84 +7,84 @@ from sqlalchemy.orm import Session
 
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
+from enmedd.db.assistant import create_update_assistant
+from enmedd.db.assistant import get_assistant_by_id
+from enmedd.db.assistant import get_assistants
+from enmedd.db.assistant import mark_assistant_as_deleted
+from enmedd.db.assistant import mark_assistant_as_not_deleted
+from enmedd.db.assistant import update_all_assistants_display_priority
+from enmedd.db.assistant import update_assistant_shared_users
+from enmedd.db.assistant import update_assistant_visibility
 from enmedd.db.engine import get_session
 from enmedd.db.models import User
-from enmedd.db.persona import create_update_persona
-from enmedd.db.persona import get_persona_by_id
-from enmedd.db.persona import get_personas
-from enmedd.db.persona import mark_persona_as_deleted
-from enmedd.db.persona import mark_persona_as_not_deleted
-from enmedd.db.persona import update_all_personas_display_priority
-from enmedd.db.persona import update_persona_shared_users
-from enmedd.db.persona import update_persona_visibility
 from enmedd.llm.answering.prompts.utils import build_dummy_prompt
-from enmedd.server.features.persona.models import CreatePersonaRequest
-from enmedd.server.features.persona.models import PersonaSnapshot
-from enmedd.server.features.persona.models import PromptTemplateResponse
+from enmedd.server.features.assistant.models import AssistantSnapshot
+from enmedd.server.features.assistant.models import CreateAssistantRequest
+from enmedd.server.features.assistant.models import PromptTemplateResponse
 from enmedd.server.models import DisplayPriorityRequest
 from enmedd.utils.logger import setup_logger
 
 logger = setup_logger()
 
 
-admin_router = APIRouter(prefix="/admin/persona")
-basic_router = APIRouter(prefix="/persona")
+admin_router = APIRouter(prefix="/admin/assistant")
+basic_router = APIRouter(prefix="/assistant")
 
 
 class IsVisibleRequest(BaseModel):
     is_visible: bool
 
 
-@admin_router.patch("/{persona_id}/visible")
-def patch_persona_visibility(
-    persona_id: int,
+@admin_router.patch("/{assistant_id}/visible")
+def patch_assistant_visibility(
+    assistant_id: int,
     is_visible_request: IsVisibleRequest,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    update_persona_visibility(
-        persona_id=persona_id,
+    update_assistant_visibility(
+        assistant_id=assistant_id,
         is_visible=is_visible_request.is_visible,
         db_session=db_session,
     )
 
 
 @admin_router.put("/display-priority")
-def patch_persona_display_priority(
+def patch_assistant_display_priority(
     display_priority_request: DisplayPriorityRequest,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    update_all_personas_display_priority(
+    update_all_assistants_display_priority(
         display_priority_map=display_priority_request.display_priority_map,
         db_session=db_session,
     )
 
 
 @admin_router.get("")
-def list_personas_admin(
+def list_assistants_admin(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
-) -> list[PersonaSnapshot]:
+) -> list[AssistantSnapshot]:
     return [
-        PersonaSnapshot.from_model(persona)
-        for persona in get_personas(
+        AssistantSnapshot.from_model(assistant)
+        for assistant in get_assistants(
             db_session=db_session,
-            user_id=None,  # user_id = None -> give back all personas
+            user_id=None,  # user_id = None -> give back all assistants
             include_deleted=include_deleted,
         )
     ]
 
 
-@admin_router.patch("/{persona_id}/undelete")
-def undelete_persona(
-    persona_id: int,
+@admin_router.patch("/{assistant_id}/undelete")
+def undelete_assistant(
+    assistant_id: int,
     user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    mark_persona_as_not_deleted(
-        persona_id=persona_id,
+    mark_assistant_as_not_deleted(
+        assistant_id=assistant_id,
         user=user,
         db_session=db_session,
     )
@@ -94,90 +94,90 @@ def undelete_persona(
 
 
 @basic_router.post("")
-def create_persona(
-    create_persona_request: CreatePersonaRequest,
+def create_assistant(
+    create_assistant_request: CreateAssistantRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> PersonaSnapshot:
-    return create_update_persona(
-        persona_id=None,
-        create_persona_request=create_persona_request,
+) -> AssistantSnapshot:
+    return create_update_assistant(
+        assistant_id=None,
+        create_assistant_request=create_assistant_request,
         user=user,
         db_session=db_session,
     )
 
 
-@basic_router.patch("/{persona_id}")
-def update_persona(
-    persona_id: int,
-    update_persona_request: CreatePersonaRequest,
+@basic_router.patch("/{assistant_id}")
+def update_assistant(
+    assistant_id: int,
+    update_assistant_request: CreateAssistantRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> PersonaSnapshot:
-    return create_update_persona(
-        persona_id=persona_id,
-        create_persona_request=update_persona_request,
+) -> AssistantSnapshot:
+    return create_update_assistant(
+        assistant_id=assistant_id,
+        create_assistant_request=update_assistant_request,
         user=user,
         db_session=db_session,
     )
 
 
-class PersonaShareRequest(BaseModel):
+class AssistantShareRequest(BaseModel):
     user_ids: list[UUID]
 
 
-@basic_router.patch("/{persona_id}/share")
-def share_persona(
-    persona_id: int,
-    persona_share_request: PersonaShareRequest,
+@basic_router.patch("/{assistant_id}/share")
+def share_assistant(
+    assistant_id: int,
+    assistant_share_request: AssistantShareRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    update_persona_shared_users(
-        persona_id=persona_id,
-        user_ids=persona_share_request.user_ids,
+    update_assistant_shared_users(
+        assistant_id=assistant_id,
+        user_ids=assistant_share_request.user_ids,
         user=user,
         db_session=db_session,
     )
 
 
-@basic_router.delete("/{persona_id}")
-def delete_persona(
-    persona_id: int,
+@basic_router.delete("/{assistant_id}")
+def delete_assistant(
+    assistant_id: int,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    mark_persona_as_deleted(
-        persona_id=persona_id,
+    mark_assistant_as_deleted(
+        assistant_id=assistant_id,
         user=user,
         db_session=db_session,
     )
 
 
 @basic_router.get("")
-def list_personas(
+def list_assistants(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
-) -> list[PersonaSnapshot]:
+) -> list[AssistantSnapshot]:
     user_id = user.id if user is not None else None
     return [
-        PersonaSnapshot.from_model(persona)
-        for persona in get_personas(
+        AssistantSnapshot.from_model(assistant)
+        for assistant in get_assistants(
             user_id=user_id, include_deleted=include_deleted, db_session=db_session
         )
     ]
 
 
-@basic_router.get("/{persona_id}")
-def get_persona(
-    persona_id: int,
+@basic_router.get("/{assistant_id}")
+def get_assistant(
+    assistant_id: int,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> PersonaSnapshot:
-    return PersonaSnapshot.from_model(
-        get_persona_by_id(
-            persona_id=persona_id,
+) -> AssistantSnapshot:
+    return AssistantSnapshot.from_model(
+        get_assistant_by_id(
+            assistant_id=assistant_id,
             user=user,
             db_session=db_session,
             is_for_edit=False,

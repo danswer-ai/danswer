@@ -4,7 +4,7 @@ from enmedd.configs.model_configs import GEN_AI_TEMPERATURE
 from enmedd.db.engine import get_session_context_manager
 from enmedd.db.llm import fetch_default_provider
 from enmedd.db.llm import fetch_provider
-from enmedd.db.models import Persona
+from enmedd.db.models import Assistant
 from enmedd.llm.chat_llm import DefaultMultiLLM
 from enmedd.llm.exceptions import GenAIDisabledException
 from enmedd.llm.headers import build_llm_extra_headers
@@ -18,8 +18,8 @@ def get_main_llm_from_tuple(
     return llms[0]
 
 
-def get_llms_for_persona(
-    persona: Persona,
+def get_llms_for_assistant(
+    assistant: Assistant,
     llm_override: LLMOverride | None = None,
     additional_headers: dict[str, str] | None = None,
 ) -> tuple[LLM, LLM]:
@@ -27,7 +27,7 @@ def get_llms_for_persona(
     model_version_override = llm_override.model_version if llm_override else None
     temperature_override = llm_override.temperature if llm_override else None
 
-    provider_name = model_provider_override or persona.llm_model_provider_override
+    provider_name = model_provider_override or assistant.llm_model_provider_override
     if not provider_name:
         return get_default_llms(
             temperature=temperature_override or GEN_AI_TEMPERATURE,
@@ -40,7 +40,7 @@ def get_llms_for_persona(
     if not llm_provider:
         raise ValueError("No LLM provider found")
 
-    model = model_version_override or persona.llm_model_version_override
+    model = model_version_override or assistant.llm_model_version_override
     fast_model = llm_provider.fast_default_model_name or llm_provider.default_model_name
     if not model:
         raise ValueError("No model name found")

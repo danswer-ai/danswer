@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session
 
-from ee.enmedd.db.user_group import fetch_user_groups_for_documents
-from ee.enmedd.db.user_group import fetch_user_groups_for_user
+from ee.enmedd.db.teamspace import fetch_teamspaces_for_documents
+from ee.enmedd.db.teamspace import fetch_teamspaces_for_user
 from enmedd.access.access import (
     _get_access_for_documents as get_access_for_documents_without_groups,
 )
 from enmedd.access.access import _get_acl_for_user as get_acl_for_user_without_groups
 from enmedd.access.models import DocumentAccess
-from enmedd.access.utils import prefix_user_group
+from enmedd.access.utils import prefix_teamspace
 from enmedd.db.models import User
 from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
 
@@ -22,9 +22,9 @@ def _get_access_for_documents(
         db_session=db_session,
         cc_pair_to_delete=cc_pair_to_delete,
     )
-    user_group_info = {
+    teamspace_info = {
         document_id: group_names
-        for document_id, group_names in fetch_user_groups_for_documents(
+        for document_id, group_names in fetch_teamspaces_for_documents(
             db_session=db_session,
             document_ids=document_ids,
             cc_pair_to_delete=cc_pair_to_delete,
@@ -34,7 +34,7 @@ def _get_access_for_documents(
     return {
         document_id: DocumentAccess(
             user_ids=non_ee_access.user_ids,
-            user_groups=user_group_info.get(document_id, []),  # type: ignore
+            teamspaces=teamspace_info.get(document_id, []),  # type: ignore
             is_public=non_ee_access.is_public,
         )
         for document_id, non_ee_access in non_ee_access_dict.items()
@@ -49,7 +49,7 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
 
     NOTE: is imported in enmedd.access.access by `fetch_versioned_implementation`
     DO NOT REMOVE."""
-    user_groups = fetch_user_groups_for_user(db_session, user.id) if user else []
-    return set(
-        [prefix_user_group(user_group.name) for user_group in user_groups]
-    ).union(get_acl_for_user_without_groups(user, db_session))
+    teamspaces = fetch_teamspaces_for_user(db_session, user.id) if user else []
+    return set([prefix_teamspace(teamspace.name) for teamspace in teamspaces]).union(
+        get_acl_for_user_without_groups(user, db_session)
+    )

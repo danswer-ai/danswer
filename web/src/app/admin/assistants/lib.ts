@@ -1,6 +1,6 @@
-import { Persona, Prompt, StarterMessage } from "./interfaces";
+import { Assistant, Prompt, StarterMessage } from "./interfaces";
 
-interface PersonaCreationRequest {
+interface AssistantCreationRequest {
   name: string;
   description: string;
   system_prompt: string;
@@ -18,7 +18,7 @@ interface PersonaCreationRequest {
   tool_ids: number[]; // Added tool_ids to the interface
 }
 
-interface PersonaUpdateRequest {
+interface AssistantUpdateRequest {
   id: number;
   existingPromptId: number | undefined;
   name: string;
@@ -38,17 +38,17 @@ interface PersonaUpdateRequest {
   tool_ids: number[]; // Added tool_ids to the interface
 }
 
-function promptNameFromPersonaName(personaName: string) {
-  return `default-prompt__${personaName}`;
+function promptNameFromAssistantName(assistantName: string) {
+  return `default-prompt__${assistantName}`;
 }
 
 function createPrompt({
-  personaName,
+  assistantName,
   systemPrompt,
   taskPrompt,
   includeCitations,
 }: {
-  personaName: string;
+  assistantName: string;
   systemPrompt: string;
   taskPrompt: string;
   includeCitations: boolean;
@@ -59,8 +59,8 @@ function createPrompt({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      name: promptNameFromPersonaName(personaName),
-      description: `Default prompt for persona ${personaName}`,
+      name: promptNameFromAssistantName(assistantName),
+      description: `Default prompt for assistant ${assistantName}`,
       system_prompt: systemPrompt,
       task_prompt: taskPrompt,
       include_citations: includeCitations,
@@ -70,13 +70,13 @@ function createPrompt({
 
 function updatePrompt({
   promptId,
-  personaName,
+  assistantName,
   systemPrompt,
   taskPrompt,
   includeCitations,
 }: {
   promptId: number;
-  personaName: string;
+  assistantName: string;
   systemPrompt: string;
   taskPrompt: string;
   includeCitations: boolean;
@@ -87,8 +87,8 @@ function updatePrompt({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      name: promptNameFromPersonaName(personaName),
-      description: `Default prompt for persona ${personaName}`,
+      name: promptNameFromAssistantName(assistantName),
+      description: `Default prompt for assistant ${assistantName}`,
       system_prompt: systemPrompt,
       task_prompt: taskPrompt,
       include_citations: includeCitations,
@@ -96,8 +96,8 @@ function updatePrompt({
   });
 }
 
-function buildPersonaAPIBody(
-  creationRequest: PersonaCreationRequest | PersonaUpdateRequest,
+function buildAssistantAPIBody(
+  creationRequest: AssistantCreationRequest | AssistantUpdateRequest,
   promptId: number
 ) {
   const {
@@ -131,40 +131,40 @@ function buildPersonaAPIBody(
   };
 }
 
-export async function createPersona(
-  personaCreationRequest: PersonaCreationRequest
+export async function createAssistant(
+  assistantCreationRequest: AssistantCreationRequest
 ): Promise<[Response, Response | null]> {
   // first create prompt
   const createPromptResponse = await createPrompt({
-    personaName: personaCreationRequest.name,
-    systemPrompt: personaCreationRequest.system_prompt,
-    taskPrompt: personaCreationRequest.task_prompt,
-    includeCitations: personaCreationRequest.include_citations,
+    assistantName: assistantCreationRequest.name,
+    systemPrompt: assistantCreationRequest.system_prompt,
+    taskPrompt: assistantCreationRequest.task_prompt,
+    includeCitations: assistantCreationRequest.include_citations,
   });
   const promptId = createPromptResponse.ok
     ? (await createPromptResponse.json()).id
     : null;
 
-  const createPersonaResponse =
+  const createAssistantResponse =
     promptId !== null
-      ? await fetch("/api/persona", {
+      ? await fetch("/api/assistant", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(
-            buildPersonaAPIBody(personaCreationRequest, promptId)
+            buildAssistantAPIBody(assistantCreationRequest, promptId)
           ),
         })
       : null;
 
-  return [createPromptResponse, createPersonaResponse];
+  return [createPromptResponse, createAssistantResponse];
 }
 
-export async function updatePersona(
-  personaUpdateRequest: PersonaUpdateRequest
+export async function updateAssistant(
+  assistantUpdateRequest: AssistantUpdateRequest
 ): Promise<[Response, Response | null]> {
-  const { id, existingPromptId } = personaUpdateRequest;
+  const { id, existingPromptId } = assistantUpdateRequest;
 
   // first update prompt
   let promptResponse;
@@ -172,40 +172,40 @@ export async function updatePersona(
   if (existingPromptId !== undefined) {
     promptResponse = await updatePrompt({
       promptId: existingPromptId,
-      personaName: personaUpdateRequest.name,
-      systemPrompt: personaUpdateRequest.system_prompt,
-      taskPrompt: personaUpdateRequest.task_prompt,
-      includeCitations: personaUpdateRequest.include_citations,
+      assistantName: assistantUpdateRequest.name,
+      systemPrompt: assistantUpdateRequest.system_prompt,
+      taskPrompt: assistantUpdateRequest.task_prompt,
+      includeCitations: assistantUpdateRequest.include_citations,
     });
     promptId = existingPromptId;
   } else {
     promptResponse = await createPrompt({
-      personaName: personaUpdateRequest.name,
-      systemPrompt: personaUpdateRequest.system_prompt,
-      taskPrompt: personaUpdateRequest.task_prompt,
-      includeCitations: personaUpdateRequest.include_citations,
+      assistantName: assistantUpdateRequest.name,
+      systemPrompt: assistantUpdateRequest.system_prompt,
+      taskPrompt: assistantUpdateRequest.task_prompt,
+      includeCitations: assistantUpdateRequest.include_citations,
     });
     promptId = promptResponse.ok ? (await promptResponse.json()).id : null;
   }
 
-  const updatePersonaResponse =
+  const updateAssistantResponse =
     promptResponse.ok && promptId
-      ? await fetch(`/api/persona/${id}`, {
+      ? await fetch(`/api/assistant/${id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(
-            buildPersonaAPIBody(personaUpdateRequest, promptId)
+            buildAssistantAPIBody(assistantUpdateRequest, promptId)
           ),
         })
       : null;
 
-  return [promptResponse, updatePersonaResponse];
+  return [promptResponse, updateAssistantResponse];
 }
 
-export function deletePersona(personaId: number) {
-  return fetch(`/api/persona/${personaId}`, {
+export function deleteAssistant(assistantId: number) {
+  return fetch(`/api/assistant/${assistantId}`, {
     method: "DELETE",
   });
 }
@@ -226,7 +226,7 @@ export function buildFinalPrompt(
     )
     .join("&");
 
-  return fetch(`/api/persona/utils/prompt-explorer?${queryString}`);
+  return fetch(`/api/assistant/utils/prompt-explorer?${queryString}`);
 }
 
 function smallerNumberFirstComparator(a: number, b: number) {
@@ -251,7 +251,7 @@ function closerToZeroNegativesFirstComparator(a: number, b: number) {
   return absA > absB ? 1 : -1;
 }
 
-export function personaComparator(a: Persona, b: Persona) {
+export function assistantComparator(a: Assistant, b: Assistant) {
   if (a.display_priority === null && b.display_priority === null) {
     return closerToZeroNegativesFirstComparator(a.id, b.id);
   }

@@ -1,6 +1,6 @@
 import { DateRangePickerValue } from "@tremor/react";
 import { Tag, ValidSources } from "../types";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 
 export const FlowType = {
   SEARCH: "search",
@@ -107,7 +107,7 @@ export interface SearchRequestArgs {
   documentSets: string[];
   timeRange: DateRangePickerValue | null;
   tags: Tag[];
-  persona: Persona;
+  assistant: Assistant;
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;
   updateDocs: (documents: EnmeddDocument[]) => void;

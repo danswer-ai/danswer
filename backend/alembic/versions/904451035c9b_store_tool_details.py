@@ -18,15 +18,15 @@ depends_on: None = None
 
 def upgrade() -> None:
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("tools", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     )
-    op.drop_column("persona", "tools_text")
+    op.drop_column("assistant", "tools_text")
 
 
 def downgrade() -> None:
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("tools_text", sa.TEXT(), autoincrement=False, nullable=True),
     )
-    op.drop_column("persona", "tools")
+    op.drop_column("assistant", "tools")

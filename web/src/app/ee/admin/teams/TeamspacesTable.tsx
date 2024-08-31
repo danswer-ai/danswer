@@ -5,10 +5,10 @@ import { LoadingAnimation } from "@/components/Loading";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { TrashIcon } from "@/components/icons/icons";
-import { deleteUserGroup } from "./lib";
+import { deleteTeamspace } from "./lib";
 import { useRouter } from "next/navigation";
 import { FiEdit2, FiUser } from "react-icons/fi";
-import { User, UserGroup } from "@/lib/types";
+import { User, Teamspace } from "@/lib/types";
 import Link from "next/link";
 import { DeleteButton } from "@/components/DeleteButton";
 import {
@@ -30,21 +30,21 @@ const SimpleUserDisplay = ({ user }: { user: User }) => {
   );
 };
 
-interface UserGroupsTableProps {
-  userGroups: UserGroup[];
+interface TeamspacesTableProps {
+  teamspaces: Teamspace[];
   setPopup: (popupSpec: PopupSpec | null) => void;
   refresh: () => void;
 }
 
-export const UserGroupsTable = ({
-  userGroups,
+export const TeamspacesTable = ({
+  teamspaces,
   setPopup,
   refresh,
-}: UserGroupsTableProps) => {
+}: TeamspacesTableProps) => {
   const router = useRouter();
 
   // sort by name for consistent ordering
-  userGroups.sort((a, b) => {
+  teamspaces.sort((a, b) => {
     if (a.name < b.name) {
       return -1;
     } else if (a.name > b.name) {
@@ -67,28 +67,28 @@ export const UserGroupsTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {userGroups
-            .filter((userGroup) => !userGroup.is_up_for_deletion)
-            .map((userGroup) => {
+          {teamspaces
+            .filter((teamspace) => !teamspace.is_up_for_deletion)
+            .map((teamspace) => {
               return (
-                <TableRow key={userGroup.id}>
+                <TableRow key={teamspace.id}>
                   <TableCell>
                     <Link
                       className="whitespace-normal break-all flex cursor-pointer p-2 rounded hover:bg-hover w-fit"
-                      href={`/admin/groups/${userGroup.id}`}
+                      href={`/admin/teams/${teamspace.id}`}
                     >
                       <FiEdit2 className="my-auto mr-2" />
-                      <p className="text font-medium">{userGroup.name}</p>
+                      <p className="text font-medium">{teamspace.name}</p>
                     </Link>
                   </TableCell>
                   <TableCell>
-                    {userGroup.cc_pairs.length > 0 ? (
+                    {teamspace.cc_pairs.length > 0 ? (
                       <div>
-                        {userGroup.cc_pairs.map((ccPairDescriptor, ind) => {
+                        {teamspace.cc_pairs.map((ccPairDescriptor, ind) => {
                           return (
                             <div
                               className={
-                                ind !== userGroup.cc_pairs.length - 1
+                                ind !== teamspace.cc_pairs.length - 1
                                   ? "mb-3"
                                   : ""
                               }
@@ -109,17 +109,17 @@ export const UserGroupsTable = ({
                     )}
                   </TableCell>
                   <TableCell>
-                    {userGroup.users.length > 0 ? (
+                    {teamspace.users.length > 0 ? (
                       <div>
-                        {userGroup.users.length <= MAX_USERS_TO_DISPLAY ? (
-                          userGroup.users.map((user) => {
+                        {teamspace.users.length <= MAX_USERS_TO_DISPLAY ? (
+                          teamspace.users.map((user) => {
                             return (
                               <SimpleUserDisplay key={user.id} user={user} />
                             );
                           })
                         ) : (
                           <div>
-                            {userGroup.users
+                            {teamspace.users
                               .slice(0, MAX_USERS_TO_DISPLAY)
                               .map((user) => {
                                 return (
@@ -130,7 +130,7 @@ export const UserGroupsTable = ({
                                 );
                               })}
                             <div>
-                              + {userGroup.users.length - MAX_USERS_TO_DISPLAY}{" "}
+                              + {teamspace.users.length - MAX_USERS_TO_DISPLAY}{" "}
                               more
                             </div>
                           </div>
@@ -141,7 +141,7 @@ export const UserGroupsTable = ({
                     )}
                   </TableCell>
                   <TableCell>
-                    {userGroup.is_up_to_date ? (
+                    {teamspace.is_up_to_date ? (
                       <div className="text-success">Up to date!</div>
                     ) : (
                       <div className="w-10">
@@ -153,16 +153,16 @@ export const UserGroupsTable = ({
                     <DeleteButton
                       onClick={async (event) => {
                         event.stopPropagation();
-                        const response = await deleteUserGroup(userGroup.id);
+                        const response = await deleteTeamspace(teamspace.id);
                         if (response.ok) {
                           setPopup({
-                            message: `User Group "${userGroup.name}" deleted`,
+                            message: `Teamspace "${teamspace.name}" deleted`,
                             type: "success",
                           });
                         } else {
                           const errorMsg = (await response.json()).detail;
                           setPopup({
-                            message: `Failed to delete User Group - ${errorMsg}`,
+                            message: `Failed to delete Teamspace - ${errorMsg}`,
                             type: "error",
                           });
                         }
@@ -203,19 +203,19 @@ export const UserGroupsTable = ({
             key: "delete",
           },
         ]}
-        data={userGroups
-          .filter((userGroup) => !userGroup.is_up_for_deletion)
-          .map((userGroup) => {
+        data={teamspaces
+          .filter((teamspace) => !teamspace.is_up_for_deletion)
+          .map((teamspace) => {
             return {
-              id: userGroup.id,
-              name: userGroup.name,
+              id: teamspace.id,
+              name: teamspace.name,
               ccPairs: (
                 <div>
-                  {userGroup.cc_pairs.map((ccPairDescriptor, ind) => {
+                  {teamspace.cc_pairs.map((ccPairDescriptor, ind) => {
                     return (
                       <div
                         className={
-                          ind !== userGroup.cc_pairs.length - 1 ? "mb-3" : ""
+                          ind !== teamspace.cc_pairs.length - 1 ? "mb-3" : ""
                         }
                         key={ccPairDescriptor.id}
                       >
@@ -232,13 +232,13 @@ export const UserGroupsTable = ({
               ),
               users: (
                 <div>
-                  {userGroup.users.length <= MAX_USERS_TO_DISPLAY ? (
-                    userGroup.users.map((user) => {
+                  {teamspace.users.length <= MAX_USERS_TO_DISPLAY ? (
+                    teamspace.users.map((user) => {
                       return <SimpleUserDisplay key={user.id} user={user} />;
                     })
                   ) : (
                     <div>
-                      {userGroup.users
+                      {teamspace.users
                         .slice(0, MAX_USERS_TO_DISPLAY)
                         .map((user) => {
                           return (
@@ -246,13 +246,13 @@ export const UserGroupsTable = ({
                           );
                         })}
                       <div className="text-gray-300">
-                        + {userGroup.users.length - MAX_USERS_TO_DISPLAY} more
+                        + {teamspace.users.length - MAX_USERS_TO_DISPLAY} more
                       </div>
                     </div>
                   )}
                 </div>
               ),
-              status: userGroup.is_up_to_date ? (
+              status: teamspace.is_up_to_date ? (
                 <div className="text-emerald-600">Up to date!</div>
               ) : (
                 <div className="text-gray-300 w-10">
@@ -264,16 +264,16 @@ export const UserGroupsTable = ({
                   className="cursor-pointer"
                   onClick={async (event) => {
                     event.stopPropagation();
-                    const response = await deleteUserGroup(userGroup.id);
+                    const response = await deleteTeamspace(teamspace.id);
                     if (response.ok) {
                       setPopup({
-                        message: `User Group "${userGroup.name}" deleted`,
+                        message: `Teamspace "${teamspace.name}" deleted`,
                         type: "success",
                       });
                     } else {
                       const errorMsg = (await response.json()).detail;
                       setPopup({
-                        message: `Failed to delete User Group - ${errorMsg}`,
+                        message: `Failed to delete Teamspace - ${errorMsg}`,
                         type: "error",
                       });
                     }
@@ -286,7 +286,7 @@ export const UserGroupsTable = ({
             };
           })}
         onSelect={(data) => {
-          router.push(`/admin/groups/${data.id}`);
+          router.push(`/admin/teams/${data.id}`);
         }}
       />
     </div>

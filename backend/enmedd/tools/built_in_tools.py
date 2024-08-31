@@ -6,7 +6,7 @@ from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from enmedd.db.models import Persona
+from enmedd.db.models import Assistant
 from enmedd.db.models import Tool as ToolDBModel
 from enmedd.tools.images.image_generation_tool import ImageGenerationTool
 from enmedd.tools.search.search_tool import SearchTool
@@ -77,11 +77,11 @@ def load_builtin_tools(db_session: Session) -> None:
     logger.info("All built-in tools are loaded/verified.")
 
 
-def auto_add_search_tool_to_personas(db_session: Session) -> None:
+def auto_add_search_tool_to_assistants(db_session: Session) -> None:
     """
-    Automatically adds the SearchTool to all Persona objects in the database that have
+    Automatically adds the SearchTool to all Assistant objects in the database that have
     `num_chunks` either unset or set to a value that isn't 0. This is done to migrate
-    Persona objects that were created before the concept of Tools were added.
+    Assistant objects that were created before the concept of Tools were added.
     """
     # Fetch the SearchTool from the database based on in_code_tool_id from BUILT_IN_TOOLS
     search_tool_id = next(
@@ -102,26 +102,26 @@ def auto_add_search_tool_to_personas(db_session: Session) -> None:
     if not search_tool:
         raise RuntimeError("SearchTool not found in the database.")
 
-    # Fetch all Personas that need the SearchTool added
-    personas_to_update = (
+    # Fetch all Assistants that need the SearchTool added
+    assistants_to_update = (
         db_session.execute(
-            select(Persona).where(
-                or_(Persona.num_chunks.is_(None), Persona.num_chunks != 0)
+            select(Assistant).where(
+                or_(Assistant.num_chunks.is_(None), Assistant.num_chunks != 0)
             )
         )
         .scalars()
         .all()
     )
 
-    # Add the SearchTool to each relevant Persona
-    for persona in personas_to_update:
-        if search_tool not in persona.tools:
-            persona.tools.append(search_tool)
-            logger.info(f"Added SearchTool to Persona ID: {persona.id}")
+    # Add the SearchTool to each relevant Assistant
+    for assistant in assistants_to_update:
+        if search_tool not in assistant.tools:
+            assistant.tools.append(search_tool)
+            logger.info(f"Added SearchTool to Assistant ID: {assistant.id}")
 
     # Commit changes to the database
     db_session.commit()
-    logger.info("Completed adding SearchTool to relevant Personas.")
+    logger.info("Completed adding SearchTool to relevant Assistants.")
 
 
 _built_in_tools_cache: dict[int, Type[Tool]] | None = None

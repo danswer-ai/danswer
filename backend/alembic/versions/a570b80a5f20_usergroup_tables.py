@@ -1,4 +1,4 @@
-"""UserGroup tables
+"""Teamspace tables
 
 Revision ID: a570b80a5f20
 Revises: 904451035c9b
@@ -18,7 +18,7 @@ depends_on: None = None
 
 def upgrade() -> None:
     op.create_table(
-        "user_group",
+        "teamspace",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("is_up_to_date", sa.Boolean(), nullable=False),
@@ -27,26 +27,26 @@ def upgrade() -> None:
         sa.UniqueConstraint("name"),
     )
     op.create_table(
-        "user__user_group",
-        sa.Column("user_group_id", sa.Integer(), nullable=False),
+        "user__teamspace",
+        sa.Column("teamspace_id", sa.Integer(), nullable=False),
         sa.Column(
             "user_id",
             fastapi_users_db_sqlalchemy.generics.GUID(),
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
-            ["user_group_id"],
-            ["user_group.id"],
+            ["teamspace_id"],
+            ["teamspace.id"],
         ),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],
         ),
-        sa.PrimaryKeyConstraint("user_group_id", "user_id"),
+        sa.PrimaryKeyConstraint("teamspace_id", "user_id"),
     )
     op.create_table(
-        "user_group__connector_credential_pair",
-        sa.Column("user_group_id", sa.Integer(), nullable=False),
+        "teamspace__connector_credential_pair",
+        sa.Column("teamspace_id", sa.Integer(), nullable=False),
         sa.Column("cc_pair_id", sa.Integer(), nullable=False),
         sa.Column("is_current", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
@@ -54,14 +54,14 @@ def upgrade() -> None:
             ["connector_credential_pair.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["user_group_id"],
-            ["user_group.id"],
+            ["teamspace_id"],
+            ["teamspace.id"],
         ),
-        sa.PrimaryKeyConstraint("user_group_id", "cc_pair_id", "is_current"),
+        sa.PrimaryKeyConstraint("teamspace_id", "cc_pair_id", "is_current"),
     )
 
 
 def downgrade() -> None:
-    op.drop_table("user_group__connector_credential_pair")
-    op.drop_table("user__user_group")
-    op.drop_table("user_group")
+    op.drop_table("teamspace__connector_credential_pair")
+    op.drop_table("user__teamspace")
+    op.drop_table("teamspace")
