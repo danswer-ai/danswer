@@ -99,6 +99,7 @@ class EmbeddingModelDetail(BaseModel):
     normalize: bool
     query_prefix: str | None
     passage_prefix: str | None
+    api_url: str | None
     provider_type: EmbeddingProvider | None = None
     api_key: str | None = None
 
@@ -117,6 +118,7 @@ class EmbeddingModelDetail(BaseModel):
             passage_prefix=search_settings.passage_prefix,
             provider_type=search_settings.provider_type,
             api_key=search_settings.api_key,
+            api_url=search_settings.api_url,
         )
 
 
@@ -140,4 +142,5 @@ class IndexingSetting(EmbeddingModelDetail):
             provider_type=search_settings.provider_type,
             index_name=search_settings.index_name,
             multipass_indexing=search_settings.multipass_indexing,
+            api_url=search_settings.api_url,
         )
