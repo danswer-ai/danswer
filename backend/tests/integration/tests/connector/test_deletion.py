@@ -1,4 +1,5 @@
 import time
+from uuid import uuid4
 
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
@@ -188,3 +189,123 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
 
     assert user_group_1_found
     assert user_group_2_found
+
+
+def test_connector_deletion_for_overlapping_connectors(
+    reset: None, vespa_client: TestVespaClient
+) -> None:
+    """Checks to make sure that connectors with overlapping documents work properly. Specifically, that the overlapping
+    document (1) still exists and (2) has the right document set / group post-deletion of one of the connectors.
+    """
+
+    # create connectors
+    c1_details = ConnectorClient.create_connector(name_prefix="tc1")
+    c2_details = ConnectorClient.create_connector(name_prefix="tc2")
+
+    doc_ids = [str(uuid4())]
+    c1_seed_res = TestDocumentClient.seed_documents(
+        cc_pair_id=c1_details.cc_pair_id, document_ids=doc_ids
+    )
+    TestDocumentClient.seed_documents(
+        cc_pair_id=c2_details.cc_pair_id, document_ids=doc_ids
+    )
+
+    # create document set
+    doc_set_id = DocumentSetClient.create_document_set(
+        DocumentSetCreationRequest(
+            name="Test Document Set",
+            description="Test",
+            cc_pair_ids=[c1_details.cc_pair_id],
+            is_public=True,
+            users=[],
+            groups=[],
+        )
+    )
+
+    # wait for document sets to be synced
+    start = time.time()
+    while True:
+        doc_sets = DocumentSetClient.fetch_document_sets()
+        doc_set_1 = next(
+            (doc_set for doc_set in doc_sets if doc_set.id == doc_set_id), None
+        )
+
+        if not doc_set_1:
+            raise RuntimeError("Document set not found")
+
+        if doc_set_1.is_up_to_date:
+            break
+
+        if time.time() - start > MAX_DELAY:
+            raise TimeoutError("Document sets were not synced within the max delay")
+
+        time.sleep(2)
+
+    print("Document sets created and synced")
+
+    # create a user group and attach it to connector 1
+    user_group_id = UserGroupClient.create_user_group(
+        UserGroupCreate(
+            name="Test User Group", user_ids=[], cc_pair_ids=[c1_details.cc_pair_id]
+        )
+    )
+
+    # wait for user group to be available
+    start = time.time()
+    while True:
+        user_groups = {ug.id: ug for ug in UserGroupClient.fetch_user_groups()}
+
+        if user_group_id not in user_groups:
+            raise RuntimeError("User group not found")
+
+        if user_groups[user_group_id].is_up_to_date:
+            break
+
+        if time.time() - start > MAX_DELAY:
+            raise TimeoutError("User group was not synced within the max delay")
+
+        time.sleep(2)
+
+    print("User group created and synced")
+
+    # delete connector 1
+    ConnectorClient.update_connector_status(
+        cc_pair_id=c1_details.cc_pair_id, status=ConnectorCredentialPairStatus.PAUSED
+    )
+    ConnectorClient.delete_connector(
+        connector_id=c1_details.connector_id, credential_id=c1_details.credential_id
+    )
+
+    # wait for deletion to finish
+    start = time.time()
+    while True:
+        connectors = ConnectorClient.get_connectors()
+        if c1_details.connector_id not in [c["id"] for c in connectors]:
+            break
+
+        if time.time() - start > MAX_DELAY:
+            raise TimeoutError("Connector 1 was not deleted within the max delay")
+
+        time.sleep(2)
+
+    print("Connector 1 deleted")
+
+    # check that only connector 2 is deleted
+    # TODO: check for the CC pair rather than the connector once the refactor is done
+    all_connectors = ConnectorClient.get_connectors()
+    assert len(all_connectors) == 1
+    assert all_connectors[0]["id"] == c2_details.connector_id
+
+    # validate vespa documents
+    c1_vespa_docs = vespa_client.get_documents_by_id(
+        [doc.id for doc in c1_seed_res.documents]
+    )["documents"]
+
+    assert len(c1_vespa_docs) == 1
+
+    for doc in c1_vespa_docs:
+        assert doc["fields"]["access_control_list"] == {
+            "PUBLIC": 1,
+        }
+        # no document_sets in the "fields" means that it's unset e.g. no document sets
+        assert "document_sets" not in doc["fields"]

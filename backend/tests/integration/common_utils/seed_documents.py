@@ -21,16 +21,23 @@ class SeedDocumentResponse(BaseModel):
 class TestDocumentClient:
     @staticmethod
     def seed_documents(
-        num_docs: int = 5, cc_pair_id: int | None = None
+        num_docs: int = 5,
+        cc_pair_id: int | None = None,
+        document_ids: list[str] | None = None,
     ) -> SeedDocumentResponse:
         if not cc_pair_id:
             connector_details = ConnectorClient.create_connector()
             cc_pair_id = connector_details.cc_pair_id
 
+        # Use provided document_ids if available, otherwise generate random UUIDs
+        if document_ids is None:
+            document_ids = [f"test-doc-{uuid.uuid4()}" for _ in range(num_docs)]
+        else:
+            num_docs = len(document_ids)
+
         # Create and ingest some documents
         documents: list[dict] = []
-        for _ in range(num_docs):
-            document_id = f"test-doc-{uuid.uuid4()}"
+        for document_id in document_ids:
             document = {
                 "document": {
                     "id": document_id,

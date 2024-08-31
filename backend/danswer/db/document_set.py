@@ -525,19 +525,18 @@ def fetch_document_sets_for_documents(
 ) -> Sequence[tuple[str, list[str]]]:
     """Gives back a list of (document_id, list[document_set_names]) tuples"""
     stmt = (
-        select(Document.id, func.array_agg(DocumentSetDBModel.name))
-        .join(
-            DocumentSet__ConnectorCredentialPair,
-            DocumentSetDBModel.id
-            == DocumentSet__ConnectorCredentialPair.document_set_id,
+        select(
+            Document.id,
+            func.coalesce(
+                func.array_remove(func.array_agg(DocumentSetDBModel.name), None), []
+            ).label("document_set_names"),
         )
-        .join(
-            ConnectorCredentialPair,
-            ConnectorCredentialPair.id
-            == DocumentSet__ConnectorCredentialPair.connector_credential_pair_id,
-        )
-        .join(
+        .outerjoin(
             DocumentByConnectorCredentialPair,
+            Document.id == DocumentByConnectorCredentialPair.id,
+        )
+        .outerjoin(
+            ConnectorCredentialPair,
             and_(
                 DocumentByConnectorCredentialPair.connector_id
                 == ConnectorCredentialPair.connector_id,
@@ -545,16 +544,33 @@ def fetch_document_sets_for_documents(
                 == ConnectorCredentialPair.credential_id,
             ),
         )
-        .join(
-            Document,
-            Document.id == DocumentByConnectorCredentialPair.id,
+        .outerjoin(
+            DocumentSet__ConnectorCredentialPair,
+            ConnectorCredentialPair.id
+            == DocumentSet__ConnectorCredentialPair.connector_credential_pair_id,
+        )
+        .outerjoin(
+            DocumentSetDBModel,
+            DocumentSetDBModel.id
+            == DocumentSet__ConnectorCredentialPair.document_set_id,
         )
         .where(Document.id.in_(document_ids))
         # don't include CC pairs that are being deleted
         # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
         # as we can assume their document sets are no longer relevant
-        .where(ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING)
-        .where(DocumentSet__ConnectorCredentialPair.is_current == True)  # noqa: E712
+        .where(
+            or_(
+                ConnectorCredentialPair.status.is_(None),
+                ConnectorCredentialPair.status
+                != ConnectorCredentialPairStatus.DELETING,
+            )
+        )
+        .where(
+            or_(
+                DocumentSet__ConnectorCredentialPair.is_current.is_(None),
+                DocumentSet__ConnectorCredentialPair.is_current == True,  # noqa: E712
+            )
+        )
         .group_by(Document.id)
     )
     return db_session.execute(stmt).all()  # type: ignore

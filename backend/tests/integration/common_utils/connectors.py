@@ -18,7 +18,8 @@ class ConnectorCreationDetails(BaseModel):
 class ConnectorClient:
     @staticmethod
     def create_connector(
-        name_prefix: str = "test_connector", credential_id: int | None = None
+        name_prefix: str = "test_connector",
+        credential_id: int | None = None,
     ) -> ConnectorCreationDetails:
         unique_id = uuid.uuid4()
 

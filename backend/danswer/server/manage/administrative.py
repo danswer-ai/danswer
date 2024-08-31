@@ -166,10 +166,14 @@ def create_deletion_attempt_for_connector_id(
         get_editable=True,
     )
     if cc_pair is None:
+        error = (
+            f"Connector with ID '{connector_id}' and credential ID "
+            f"'{credential_id}' does not exist. Has it already been deleted?"
+        )
+        logger.error(error)
         raise HTTPException(
             status_code=404,
-            detail=f"Connector with ID '{connector_id}' and credential ID "
-            f"'{credential_id}' does not exist. Has it already been deleted?",
+            detail=error,
         )
 
     # Cancel any scheduled indexing attempts
@@ -182,6 +186,7 @@ def create_deletion_attempt_for_connector_id(
         connector_credential_pair=cc_pair, db_session=db_session
     )
     if deletion_attempt_disallowed_reason:
+        logger.error(deletion_attempt_disallowed_reason)
         raise HTTPException(
             status_code=400,
             detail=deletion_attempt_disallowed_reason,
