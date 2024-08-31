@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from collections.abc import Iterator
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from langchain.schema.messages import AIMessage
@@ -158,3 +159,8 @@ class PromptConfig(BaseModel):
         )
 
     model_config = ConfigDict(frozen=True)
+
+
+class StopReason(Enum):
+    LENGTH_LIMIT = "length_limit"
+    CANCELLED = "cancelled"

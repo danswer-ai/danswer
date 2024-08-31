@@ -138,7 +138,9 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
 
 
 def _convert_delta_to_message_chunk(
-    _dict: dict[str, Any], curr_msg: BaseMessage | None
+    _dict: dict[str, Any],
+    curr_msg: BaseMessage | None,
+    stop_reason: str | None = None,
 ) -> BaseMessageChunk:
     """Adapted from langchain_community.chat_models.litellm._convert_delta_to_message_chunk"""
     role = _dict.get("role") or (_base_msg_to_role(curr_msg) if curr_msg else None)
@@ -150,6 +152,7 @@ def _convert_delta_to_message_chunk(
         list[litellm.utils.ChatCompletionDeltaToolCall] | None, _dict.get("tool_calls")
     )
 
+    print("role is ", role)
     if role == "user":
         return HumanMessageChunk(content=content)
     elif role == "assistant":
@@ -163,12 +166,23 @@ def _convert_delta_to_message_chunk(
                 args=tool_call.function.arguments,
                 index=0,  # only support a single tool call atm
             )
+
             return AIMessageChunk(
                 content=content,
-                additional_kwargs=additional_kwargs,
                 tool_call_chunks=[tool_call_chunk],
+                additional_kwargs={
+                    "usage_metadata": {"stop": stop_reason},
+                    **additional_kwargs,
+                },
             )
-        return AIMessageChunk(content=content, additional_kwargs=additional_kwargs)
+
+        return AIMessageChunk(
+            content=content,
+            additional_kwargs={
+                "usage_metadata": {"stop": stop_reason},
+                **additional_kwargs,
+            },
+        )
     elif role == "system":
         return SystemMessageChunk(content=content)
     elif role == "function":
@@ -288,6 +302,7 @@ class DefaultMultiLLM(LLM):
                 # streaming choice
                 stream=stream,
                 # model params
+                max_tokens=4,
                 temperature=self._temperature,
                 timeout=self._timeout,
                 # For now, we don't support parallel tool calls
@@ -351,8 +366,23 @@ class DefaultMultiLLM(LLM):
             for part in response:
                 if len(part["choices"]) == 0:
                     continue
-                delta = part["choices"][0]["delta"]
-                message_chunk = _convert_delta_to_message_chunk(delta, output)
+
+                choices = part["choices"][0]
+                # pr
+                # print(choices)
+
+                finish_reason = choices["finish_reason"]
+                delta = choices["delta"]
+                # print(part["choices"][0])
+                # print(finish_reason)
+                # print('\n\n\n')
+
+                message_chunk = _convert_delta_to_message_chunk(
+                    delta,
+                    output,
+                    stop_reason=finish_reason,
+                )
+
                 if output is None:
                     output = message_chunk
                 else:

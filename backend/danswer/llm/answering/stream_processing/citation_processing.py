@@ -91,7 +91,7 @@ def extract_citations_from_stream(
             content = token.content
             curr_segment += content
             llm_out += content
-            stop_reason = token.stop
+            stop_reason = token.stop_reason
 
         citation_pattern = r"\[(\d+)\]"
 

@@ -46,7 +46,7 @@ class QADocsResponse(RetrievalDocs):
 
 class MessageChunkWithStopReason(BaseModel):
     content: str
-    stop: str | None = None
+    stop_reason: str | None = None
 
 
 class LLMRelevanceFilterResponse(BaseModel):
