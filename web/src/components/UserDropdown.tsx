@@ -58,7 +58,6 @@ export function UserDropdown({
   if (!combinedSettings) {
     return null;
   }
-  const settings = combinedSettings.settings;
 
   const handleLogout = () => {
     logout().then((isSuccess) => {
@@ -143,9 +142,10 @@ export function UserDropdown({
               )
             )}
 
-            {(showAdminPanel || showCuratorPanel) && (
+            {showLogout && (showCuratorPanel || showAdminPanel) && (
               <div className="border-t border-border my-1" />
             )}
+
             {showLogout && (
               <DropdownOption
                 onClick={handleLogout}
