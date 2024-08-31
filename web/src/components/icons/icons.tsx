@@ -1275,6 +1275,21 @@ export const LinearIcon = ({
   );
 };
 
+export const JiraServiceManagementIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  // Jira Icon has a bit more surrounding whitespace than other icons, which is why we need to adjust it here
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={jiraSVG} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
 export const SlabIcon = ({
   size = 16,
   className = defaultTailwindCSS,

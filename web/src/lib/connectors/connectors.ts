@@ -265,6 +265,25 @@ Selecting the "Index Recursively" checkbox will index the single page's children
       },
     ],
   },
+  jira_service_management: {
+    description: "Configure Jira Service Management connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter your Jira Service Management domain url:",
+        label: "Jira Service Management Domain Url",
+        name: "jira_service_management_domain_url",
+        optional: false,
+      },
+      {
+        type: "text",
+        query: "Enter your project key:",
+        label: "Jira Service Management Project Key",
+        name: "jira_service_management_project_key",
+        optional: false,
+      },
+    ],
+  },
   salesforce: {
     description: "Configure Salesforce connector",
     values: [

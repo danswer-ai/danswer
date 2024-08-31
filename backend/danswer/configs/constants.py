@@ -101,6 +101,7 @@ class DocumentSource(str, Enum):
     GOOGLE_CLOUD_STORAGE = "google_cloud_storage"
     OCI_STORAGE = "oci_storage"
     NOT_APPLICABLE = "not_applicable"
+    JIRA_SERVICE_MANAGEMENT = "jira_service_management"
 
 
 class NotificationType(str, Enum):

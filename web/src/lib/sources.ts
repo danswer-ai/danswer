@@ -111,6 +111,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     category: SourceCategory.ProjectManagement,
     docs: "https://docs.danswer.dev/connectors/jira",
   },
+  jira_service_management: {
+    icon: JiraIcon,
+    displayName: "Jira Service Management",
+    category: SourceCategory.ProjectManagement,
+    docs: "https://docs.danswer.dev/connectors/jira_service_management",
+  },
   notion: {
     icon: NotionIcon,
     displayName: "Notion",

@@ -40,6 +40,12 @@ export interface JiraCredentialJson {
   jira_api_token: string;
 }
 
+export interface JiraServiceManagementCredentialJson {
+  jira_user_email: string | null;
+  jira_api_token: string;
+}
+
+
 export interface JiraServerCredentialJson {
   jira_api_token: string;
 }
@@ -205,6 +211,10 @@ export const credentialTemplates: Record<ValidSources, any> = {
     jira_user_email: null,
     jira_api_token: "",
   } as JiraCredentialJson,
+  jira_service_management: {
+    jira_user_email: null,
+    jira_api_token: "",
+  } as JiraServiceManagementCredentialJson,
   productboard: { productboard_access_token: "" } as ProductboardCredentialJson,
   slab: { slab_bot_token: "" } as SlabCredentialJson,
   notion: { notion_integration_token: "" } as NotionCredentialJson,
