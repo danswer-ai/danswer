@@ -73,11 +73,14 @@ export const SearchSidebar = ({
             )}
           </div>
 
-          <div className="lg:hidden">
-            <Button variant="ghost" size="icon" onClick={toggleSideBar}>
-              <PanelLeftClose size={24} />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSideBar}
+            className="lg:hidden"
+          >
+            <PanelLeftClose size={24} />
+          </Button>
         </div>
 
         <div className="h-full overflow-auto">

@@ -22,6 +22,7 @@ import { usePublicCredentials } from "@/lib/hooks";
 import { Divider, Text, Title, Button } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const Main = () => {
   const { mutate } = useSWRConfig();
@@ -260,6 +261,7 @@ export default function Page() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
 
       <AdminPageTitle
         icon={<GitlabIcon size={32} />}

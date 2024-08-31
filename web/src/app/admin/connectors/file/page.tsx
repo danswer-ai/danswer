@@ -28,6 +28,7 @@ import IsPublicField from "@/components/admin/connectors/IsPublicField";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -292,6 +293,7 @@ export default function File() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
 
       <AdminPageTitle icon={<FileIcon size={32} />} title="File" />
 

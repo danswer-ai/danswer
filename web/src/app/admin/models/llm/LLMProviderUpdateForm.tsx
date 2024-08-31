@@ -1,7 +1,6 @@
 import { LoadingAnimation } from "@/components/Loading";
 import { Divider, Text } from "@tremor/react";
 import { Form, Formik } from "formik";
-import { FiTrash } from "react-icons/fi";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import {
   SelectorFormField,
@@ -14,6 +13,7 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";
 import { Button } from "@/components/ui/button";
+import { Trash } from "lucide-react";
 
 export function LLMProviderUpdateForm({
   llmProviderDescriptor,
@@ -303,7 +303,7 @@ export function LLMProviderUpdateForm({
                 {isTesting ? (
                   <LoadingAnimation text="Testing" />
                 ) : existingLlmProvider ? (
-                  "Updates"
+                  "Update"
                 ) : (
                   "Enable"
                 )}
@@ -330,7 +330,7 @@ export function LLMProviderUpdateForm({
                     onClose();
                   }}
                 >
-                  <FiTrash className="mr-1.5" /> Delete
+                  <Trash size={16} /> Delete
                 </Button>
               )}
             </div>

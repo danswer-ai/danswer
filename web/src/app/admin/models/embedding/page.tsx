@@ -134,20 +134,6 @@ function Main() {
 
   return (
     <div>
-      {tentativeNewEmbeddingModel && (
-        <ModelSelectionConfirmaionModal
-          selectedModel={tentativeNewEmbeddingModel}
-          isCustom={
-            AVAILABLE_MODELS.find(
-              (model) =>
-                model.model_name === tentativeNewEmbeddingModel.model_name
-            ) === undefined
-          }
-          onConfirm={() => onConfirm(tentativeNewEmbeddingModel)}
-          onCancel={() => setTentativeNewEmbeddingModel(null)}
-        />
-      )}
-
       {showAddConnectorPopup && (
         <Modal>
           <div>
@@ -255,6 +241,20 @@ function Main() {
               )}
               setSelectedModel={onSelect}
             />
+
+            {tentativeNewEmbeddingModel && (
+              <ModelSelectionConfirmaionModal
+                selectedModel={tentativeNewEmbeddingModel}
+                isCustom={
+                  AVAILABLE_MODELS.find(
+                    (model) =>
+                      model.model_name === tentativeNewEmbeddingModel.model_name
+                  ) === undefined
+                }
+                onConfirm={() => onConfirm(tentativeNewEmbeddingModel)}
+                onCancel={() => setTentativeNewEmbeddingModel(null)}
+              />
+            )}
 
             <Text className="mt-6">
               Alternatively, (if you know what you&apos;re doing) you can

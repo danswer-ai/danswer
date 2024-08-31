@@ -21,6 +21,7 @@ import { Spinner } from "@/components/Spinner";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Button, Text, Title } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 export default function GoogleSites() {
   const { mutate } = useSWRConfig();
@@ -54,6 +55,7 @@ export default function GoogleSites() {
         <div>
           <HealthCheckBanner />
         </div>
+        <BackButton />
 
         <AdminPageTitle
           icon={<GoogleSitesIcon size={32} />}

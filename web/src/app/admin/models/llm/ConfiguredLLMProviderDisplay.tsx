@@ -9,6 +9,7 @@ import { mutate } from "swr";
 import isEqual from "lodash/isEqual";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CustomModal } from "@/components/CustomModal";
 
 function LLMProviderUpdateModal({
   llmProviderDescriptor,
@@ -30,29 +31,27 @@ function LLMProviderUpdateModal({
       llmProviderDescriptor?.name ||
       "Custom LLM Provider";
   return (
-    <Modal
-      title={`${llmProviderDescriptor ? "Configure" : "Setup"} ${providerName}`}
-      onOutsideClick={() => onClose()}
-    >
-      <div className="max-h-[70vh] overflow-y-auto px-4">
-        {llmProviderDescriptor ? (
-          <LLMProviderUpdateForm
-            llmProviderDescriptor={llmProviderDescriptor}
-            onClose={onClose}
-            existingLlmProvider={existingLlmProvider}
-            shouldMarkAsDefault={shouldMarkAsDefault}
-            setPopup={setPopup}
-          />
-        ) : (
-          <CustomLLMProviderUpdateForm
-            onClose={onClose}
-            existingLlmProvider={existingLlmProvider}
-            shouldMarkAsDefault={shouldMarkAsDefault}
-            setPopup={setPopup}
-          />
-        )}
-      </div>
-    </Modal>
+    <div className="px-4">
+      <h2 className="text-2xl font-semibold pb-6">{`${
+        llmProviderDescriptor ? "Configure" : "Setup"
+      } ${providerName}`}</h2>
+      {llmProviderDescriptor ? (
+        <LLMProviderUpdateForm
+          llmProviderDescriptor={llmProviderDescriptor}
+          onClose={onClose}
+          existingLlmProvider={existingLlmProvider}
+          shouldMarkAsDefault={shouldMarkAsDefault}
+          setPopup={setPopup}
+        />
+      ) : (
+        <CustomLLMProviderUpdateForm
+          onClose={onClose}
+          existingLlmProvider={existingLlmProvider}
+          shouldMarkAsDefault={shouldMarkAsDefault}
+          setPopup={setPopup}
+        />
+      )}
+    </div>
   );
 }
 
@@ -72,6 +71,11 @@ function LLMProviderDisplay({
     existingLlmProvider?.name ||
     llmProviderDescriptor?.display_name ||
     llmProviderDescriptor?.name;
+
+  const handleClose = () => {
+    setFormIsVisible(false);
+  };
+
   return (
     <div>
       {popup}
@@ -121,15 +125,29 @@ function LLMProviderDisplay({
         )}
 
         <div className="ml-auto">
-          <Button
-            variant={existingLlmProvider ? "outline" : "default"}
-            onClick={() => setFormIsVisible(true)}
+          <CustomModal
+            trigger={
+              <Button
+                variant={existingLlmProvider ? "outline" : "default"}
+                onClick={() => setFormIsVisible(true)}
+              >
+                {existingLlmProvider ? "Edit" : "Set up"}
+              </Button>
+            }
+            onClose={handleClose}
+            open={formIsVisible}
           >
-            {existingLlmProvider ? "Edit" : "Set up"}
-          </Button>
+            <LLMProviderUpdateModal
+              llmProviderDescriptor={llmProviderDescriptor}
+              onClose={handleClose}
+              existingLlmProvider={existingLlmProvider}
+              shouldMarkAsDefault={shouldMarkAsDefault}
+              setPopup={setPopup}
+            />
+          </CustomModal>
         </div>
       </div>
-      {formIsVisible && (
+      {/*   {formIsVisible && (
         <LLMProviderUpdateModal
           llmProviderDescriptor={llmProviderDescriptor}
           onClose={() => setFormIsVisible(false)}
@@ -137,7 +155,7 @@ function LLMProviderDisplay({
           shouldMarkAsDefault={shouldMarkAsDefault}
           setPopup={setPopup}
         />
-      )}
+      )} */}
     </div>
   );
 }

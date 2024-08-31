@@ -23,7 +23,7 @@ import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingM
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
-import { Bar } from "@/components/Bar";
+import { SearchBars } from "./SearchBars";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -149,7 +149,7 @@ export default async function Home() {
 
   return (
     <div className="relative flex h-full">
-      <Bar user={user} />
+      <SearchBars user={user} />
 
       <HealthCheckBanner />
 

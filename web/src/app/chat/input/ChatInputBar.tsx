@@ -225,7 +225,7 @@ export function ChatInputBar({
 
   return (
     <div>
-      <div className="flex justify-center items-center max-w-full mx-auto mb-2 px-5 2xl:px-0">
+      <div className="flex justify-center items-center max-w-full mx-auto px-5 2xl:px-0">
         <div
           ref={divRef}
           className={`flex md:hidden items-center trasition-all ease-in-out duration-500 ${

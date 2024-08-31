@@ -1,5 +1,6 @@
 "use client";
 
+import { BackButton } from "@/components/BackButton";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { SourceIcon } from "@/components/SourceIcon";
 import { AdminPageTitle } from "@/components/admin/Title";
@@ -31,7 +32,7 @@ function SourceTile({
       <CustomTooltip
         trigger={
           <div
-            className={`hover:border-primary border rounded-lg flex items-center justify-center p-[18px] ${
+            className={`hover:border-primary border rounded-lg flex items-center justify-center p-[18px] w-16 h-16 ${
               category?.toLocaleLowerCase() === "coming soon"
                 ? "cursor-not-allowed grayscale"
                 : ""
@@ -43,6 +44,7 @@ function SourceTile({
             />
           </div>
         }
+        delayDuration={0}
         style="bg-primary border-none text-inverted"
       >
         {sourceMetadata.displayName}
@@ -141,7 +143,7 @@ export default function Page() {
             <span className="font-bold pb-2 block text-lg md:text-2xl text-strong">
               {category}
             </span>
-            <div className="flex flex-wrap gap-4 pt-6">
+            <div className="flex items-center flex-wrap gap-4 pt-6">
               {sources.map((source, sourceInd) => (
                 <SourceTile
                   key={source.internalName}

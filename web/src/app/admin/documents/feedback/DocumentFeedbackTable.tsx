@@ -40,7 +40,7 @@ const IsVisibleSection = ({
               onUpdate(response);
             }}
             variant="outline"
-            className="p-2 px-4 gap-2 text-error"
+            className="py-1.5 px-3 gap-1.5 text-error"
           >
             Hidden
             <Checkbox checked={false} />
@@ -55,7 +55,7 @@ const IsVisibleSection = ({
               onUpdate(response);
             }}
             variant="outline"
-            className="p-2 px-4 gap-2"
+            className="p-1.5 px-3 gap-1.5"
           >
             Visible
             <Checkbox checked={true} />

@@ -23,6 +23,7 @@ import { usePublicCredentials } from "@/lib/hooks";
 import { Text, Title, Button } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -246,6 +247,7 @@ export default function Page() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
 
       <AdminPageTitle
         icon={<ProductboardIcon size={32} />}

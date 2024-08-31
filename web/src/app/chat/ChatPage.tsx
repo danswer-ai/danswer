@@ -80,6 +80,7 @@ import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
+import TopBar from "@/components/TopBar";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1105,11 +1106,6 @@ export function ChatPage({
   };
 
   const [openSidebar, setOpenSidebar] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
-
-  const toggleWidth = () => {
-    setIsExpanded((prevState) => !prevState);
-  };
 
   const toggleLeftSideBar = () => {
     setOpenSidebar((prevState) => !prevState);
@@ -1118,45 +1114,36 @@ export function ChatPage({
   return (
     <>
       {livePersona && (
-        <div className="fixed top-0 left-0 flex w-full z-top-bar bg-background">
-          <div className="flex w-full items-start px-4 pt-6 justify-between">
-            <div className="flex lg:hidden items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={toggleLeftSideBar}>
-                <PanelRightClose size={24} />
-              </Button>
-              <Image src={Logo} alt="Logo" width={112} />
-            </div>
-
-            <div className="flex ml-auto gap-2 items-center">
-              {chatSessionIdRef.current !== null && (
-                <ShareChatSessionModal
-                  chatSessionId={chatSessionIdRef.current}
-                  existingSharedStatus={chatSessionSharedStatus}
-                  onShare={(shared) =>
-                    setChatSessionSharedStatus(
-                      shared
-                        ? ChatSessionSharedStatus.Public
-                        : ChatSessionSharedStatus.Private
-                    )
-                  }
+        <TopBar toggleLeftSideBar={toggleLeftSideBar}>
+          <div className="flex ml-auto gap-2 items-center">
+            {chatSessionIdRef.current !== null && (
+              <ShareChatSessionModal
+                chatSessionId={chatSessionIdRef.current}
+                existingSharedStatus={chatSessionSharedStatus}
+                onShare={(shared) =>
+                  setChatSessionSharedStatus(
+                    shared
+                      ? ChatSessionSharedStatus.Public
+                      : ChatSessionSharedStatus.Private
+                  )
+                }
+              >
+                <div
+                  onClick={() => setSharingModalVisible(true)}
+                  className="h-10 w-10 hover:bg-light hover:text-accent-foreground inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-regular text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                 >
-                  <div
-                    onClick={() => setSharingModalVisible(true)}
-                    className="h-10 w-10 hover:bg-light hover:text-accent-foreground inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-regular text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-                  >
-                    <Share size={20} />
-                  </div>
-                </ShareChatSessionModal>
-              )}
+                  <Share size={20} />
+                </div>
+              </ShareChatSessionModal>
+            )}
 
-              {retrievalEnabled && showDocSidebar && (
-                <Button onClick={toggleSidebar} variant="ghost" size="icon">
-                  <PanelLeftClose size={24} />
-                </Button>
-              )}
-            </div>
+            {retrievalEnabled && showDocSidebar && (
+              <Button onClick={toggleSidebar} variant="ghost" size="icon">
+                <PanelLeftClose size={24} />
+              </Button>
+            )}
           </div>
-        </div>
+        </TopBar>
       )}
 
       <HealthCheckBanner />
