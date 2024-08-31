@@ -89,7 +89,18 @@ def delete_connector_credential_pair_batch(
                     document_ids=document_ids_to_update,
                 )
             }
+            import json
 
+            logger.debug(
+                "Document sets for documents to update: "
+                + json.dumps(
+                    {
+                        doc_id: list(doc_sets)
+                        for doc_id, doc_sets in new_doc_sets_for_documents.items()
+                    },
+                    indent=2,
+                )
+            )
             # determine future ACLs for documents in batch
             access_for_documents = get_access_for_documents(
                 document_ids=document_ids_to_update,
