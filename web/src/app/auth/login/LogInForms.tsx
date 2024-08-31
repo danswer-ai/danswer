@@ -10,15 +10,8 @@ import { requestEmailVerification } from "../lib";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
-import { fetchSettingsSS } from "@/components/settings/lib";
 
-export function EmailPasswordForm({
-  isSignup = false,
-  shouldVerify,
-}: {
-  isSignup?: boolean;
-  shouldVerify?: boolean;
-}) {
+export function LogInForms({}: {}) {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
   const [isWorking, setIsWorking] = useState(false);
@@ -37,35 +30,9 @@ export function EmailPasswordForm({
           password: Yup.string().required(),
         })}
         onSubmit={async (values) => {
-          if (isSignup) {
-            // login is fast, no need to show a spinner
-            setIsWorking(true);
-            const response = await basicSignup(values.email, values.password);
-
-            if (!response.ok) {
-              const errorDetail = (await response.json()).detail;
-
-              let errorMsg = "Unknown error";
-              if (errorDetail === "REGISTER_USER_ALREADY_EXISTS") {
-                errorMsg =
-                  "An account already exists with the specified email.";
-              }
-              setPopup({
-                type: "error",
-                message: `Failed to sign up - ${errorMsg}`,
-              });
-              return;
-            }
-          }
-
           const loginResponse = await basicLogin(values.email, values.password);
           if (loginResponse.ok) {
-            if (isSignup && shouldVerify) {
-              await requestEmailVerification(values.email);
-              router.push("/auth/waiting-on-verification");
-            } else {
-              router.push("/chat");
-            }
+            router.push("/");
           } else {
             setIsWorking(false);
             const errorDetail = (await loginResponse.json()).detail;
@@ -99,7 +66,7 @@ export function EmailPasswordForm({
 
             <div className="flex">
               <Button type="submit" disabled={isSubmitting} className="w-full">
-                {isSignup ? "Sign Up" : "Log In"}
+                Log In
               </Button>
             </div>
           </Form>
