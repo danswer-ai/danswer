@@ -45,7 +45,7 @@ def _make_query(
         raise e
     
 
-class JiraManagementServiceConnector(LoadConnector, PollConnector):
+class JiraServiceManagementConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         domain_url: str,
@@ -125,7 +125,7 @@ class JiraManagementServiceConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
-    connector = JiraManagementServiceConnector(
+    connector = JiraServiceManagementConnector(
         os.environ["JIRA_SERVICE_MANAGEMENT_DOMAIN_URL"],
         os.environ["JIRA_SERVICE_MANAGEMENT_PROJECT_KEY"]
     )

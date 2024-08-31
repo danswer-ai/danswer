@@ -43,7 +43,7 @@ from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.wikipedia.connector import WikipediaConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
-from danswer.connectors.jira_service_management.connector import JiraManagementServiceConnector
+from danswer.connectors.jira_service_management.connector import JiraServiceManagementConnector
 from danswer.db.credentials import backend_update_credential_json
 from danswer.db.models import Credential
 
@@ -96,7 +96,7 @@ def identify_connector_class(
         DocumentSource.R2: BlobStorageConnector,
         DocumentSource.GOOGLE_CLOUD_STORAGE: BlobStorageConnector,
         DocumentSource.OCI_STORAGE: BlobStorageConnector,
-        DocumentSource.JIRA_SERVICE_MANAGEMENT: JiraManagementServiceConnector,
+        DocumentSource.JIRA_SERVICE_MANAGEMENT: JiraServiceManagementConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
