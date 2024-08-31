@@ -275,9 +275,8 @@ def embed_text(
         raise ValueError("No texts provided for embedding.")
 
     if api_url:
-        logger.notice(f"Using LiteLLM proxy for embedding with URL: {api_url}")
+        logger.debug(f"Using LiteLLM proxy for embedding with URL: {api_url}")
         try:
-            # loop = asyncio.get_event_loop()
             return embed_with_litellm_proxy(texts, api_url, model_name or "")
         except Exception as e:
             logger.exception(f"Error during LiteLLM proxy embedding: {str(e)}")

@@ -39,12 +39,11 @@ logger = setup_logger()
 
 def create_litellm_provider(db_session: Session) -> CloudEmbeddingProvider:
     """Creates a new LiteLLM embedding provider in the database."""
-    new_LLM = CloudEmbeddingProviderCreationRequest(
-        provider_type=EmbeddingProvider.LITELLM,
-    )
     return upsert_cloud_embedding_provider(
         db_session=db_session,
-        provider=new_LLM,
+        provider=CloudEmbeddingProviderCreationRequest(
+            provider_type=EmbeddingProvider.LITELLM,
+        ),
     )
 
 
