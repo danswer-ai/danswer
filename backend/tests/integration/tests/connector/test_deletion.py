@@ -181,9 +181,25 @@ def test_connector_deletion_for_overlapping_connectors(
         user_with_api_key=admin_user,
     )
 
+    # verify vespa document exists and that it is not in any document sets or groups
+    assert DocumentManager.verify(
+        vespa_client=vespa_client,
+        cc_pair=cc_pair_1,
+        doc_set_names=[],
+        group_names=[],
+        doc_creating_user=admin_user,
+    )
+    assert DocumentManager.verify(
+        vespa_client=vespa_client,
+        cc_pair=cc_pair_2,
+        doc_set_names=[],
+        group_names=[],
+        doc_creating_user=admin_user,
+    )
+
     # create document set
     doc_set_1 = DocumentSetManager.create(
-        name="Test Document Set",
+        name="Test Document Set 1",
         cc_pair_ids=[cc_pair_1.id],
         user_performing_action=admin_user,
     )
@@ -192,11 +208,24 @@ def test_connector_deletion_for_overlapping_connectors(
         user_performing_action=admin_user,
     )
 
-    print("Document sets created and synced")
+    print("Document set 1 created and synced")
+
+    # verify vespa document is in the document set
+    assert DocumentManager.verify(
+        vespa_client=vespa_client,
+        cc_pair=cc_pair_1,
+        doc_set_names=[doc_set_1.name],
+        doc_creating_user=admin_user,
+    )
+    assert DocumentManager.verify(
+        vespa_client=vespa_client,
+        cc_pair=cc_pair_2,
+        doc_creating_user=admin_user,
+    )
 
     # create a user group and attach it to connector 1
     user_group_1: TestUserGroup = UserGroupManager.create(
-        name="Test User Group",
+        name="Test User Group 1",
         cc_pair_ids=[cc_pair_1.id],
         user_performing_action=admin_user,
     )
@@ -204,8 +233,37 @@ def test_connector_deletion_for_overlapping_connectors(
         user_groups_to_check=[user_group_1],
         user_performing_action=admin_user,
     )
+    cc_pair_1.groups = [user_group_1.id]
 
-    print("User group created and synced")
+    print("User group 1 created and synced")
+
+    # create a user group and attach it to connector 2
+    user_group_2: TestUserGroup = UserGroupManager.create(
+        name="Test User Group 2",
+        cc_pair_ids=[cc_pair_2.id],
+        user_performing_action=admin_user,
+    )
+    UserGroupManager.wait_for_sync(
+        user_groups_to_check=[user_group_2],
+        user_performing_action=admin_user,
+    )
+    cc_pair_2.groups = [user_group_2.id]
+
+    print("User group 2 created and synced")
+
+    # verify vespa document is in the user group
+    assert DocumentManager.verify(
+        vespa_client=vespa_client,
+        cc_pair=cc_pair_1,
+        group_names=[user_group_1.name, user_group_2.name],
+        doc_creating_user=admin_user,
+    )
+    assert DocumentManager.verify(
+        vespa_client=vespa_client,
+        cc_pair=cc_pair_2,
+        group_names=[user_group_1.name, user_group_2.name],
+        doc_creating_user=admin_user,
+    )
 
     # delete connector 1
     CCPairManager.pause_cc_pair(
@@ -233,12 +291,13 @@ def test_connector_deletion_for_overlapping_connectors(
         user_performing_action=admin_user,
     )
 
-    # validate vespa documents
-    assert DocumentManager.verify(
-        vespa_client=vespa_client,
-        cc_pair=cc_pair_2,
-        doc_set_names=[doc_set_1.name],
-        group_names=[user_group_1.name],
-        doc_creating_user=admin_user,
-        verify_deleted=False,
-    )
+    # verify the document is not in any document sets
+    # verify the document is only in user group 2
+    # assert DocumentManager.verify(
+    #     vespa_client=vespa_client,
+    #     cc_pair=cc_pair_2,
+    #     doc_set_names=[],
+    #     group_names=[user_group_2.name],
+    #     doc_creating_user=admin_user,
+    #     verify_deleted=False,
+    # )

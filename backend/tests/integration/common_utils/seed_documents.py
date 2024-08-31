@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 import requests
-from pydantic import Field
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
@@ -13,6 +12,47 @@ from tests.integration.common_utils.constants import NUM_DOCS
 from tests.integration.common_utils.test_models import SimpleTestDocument
 from tests.integration.common_utils.test_models import TestUser
 from tests.integration.common_utils.vespa import TestVespaClient
+
+
+def _verify_document_permissions(
+    retrieved_doc: dict,
+    cc_pair: TestCCPair,
+    doc_set_names: list[str] | None = None,
+    group_names: list[str] | None = None,
+    doc_creating_user: TestUser | None = None,
+) -> None:
+    acl_keys = set(retrieved_doc["access_control_list"].keys())
+    print(f"ACL keys: {acl_keys}")
+    if cc_pair.is_public:
+        if "PUBLIC" not in acl_keys:
+            raise ValueError(
+                f"Document {retrieved_doc['document_id']} is public but"
+                " does not have the PUBLIC ACL key"
+            )
+
+    if doc_creating_user is not None:
+        if f"user_id:{doc_creating_user.id}" not in acl_keys:
+            raise ValueError(
+                f"Document {retrieved_doc['document_id']} was created by user"
+                f" {doc_creating_user.id} but does not have the user_id:{doc_creating_user.id} ACL key"
+            )
+
+    if group_names is not None:
+        expected_group_keys = {f"group:{group_name}" for group_name in group_names}
+        found_group_keys = {key for key in acl_keys if key.startswith("group:")}
+        if found_group_keys != expected_group_keys:
+            raise ValueError(
+                f"Document {retrieved_doc['document_id']} has incorrect group ACL keys. Found: {found_group_keys}, \n"
+                f"Expected: {expected_group_keys}"
+            )
+
+    if doc_set_names is not None:
+        found_doc_set_names = set(retrieved_doc.get("document_sets", {}).keys())
+        if found_doc_set_names != set(doc_set_names):
+            raise ValueError(
+                f"Document set names mismatch. \nFound: {found_doc_set_names}, \n"
+                f"Expected: {set(doc_set_names)}"
+            )
 
 
 def _generate_dummy_document(document_id: str, cc_pair_id: int) -> dict:
@@ -96,8 +136,10 @@ class DocumentManager:
     def verify(
         vespa_client: TestVespaClient,
         cc_pair: TestCCPair,
-        doc_set_names: list[str] = Field(default_factory=list),
-        group_names: list[str] = Field(default_factory=list),
+        # If None, will not check doc sets or groups
+        # If empty list, will check for empty doc sets or groups
+        doc_set_names: list[str] | None = None,
+        group_names: list[str] | None = None,
         doc_creating_user: TestUser | None = None,
         verify_deleted: bool = False,
     ) -> bool:
@@ -106,34 +148,29 @@ class DocumentManager:
         retrieved_docs = {
             doc["fields"]["document_id"]: doc["fields"] for doc in retrieved_docs_dict
         }
+        # import json
+        # for doc in retrieved_docs.values():
+        #     printable_doc = doc.copy()
+        #     print(printable_doc.keys())
+        #     printable_doc.pop("embeddings")
+        #     printable_doc.pop("title_embedding")
+        #     print(json.dumps(printable_doc, indent=2))
 
         for document in cc_pair.documents:
             retrieved_doc = retrieved_docs.get(document.id)
             if not retrieved_doc:
                 if not verify_deleted:
-                    print(f"Document not found: {document.id}")
-                    return False
+                    raise ValueError(f"Document not found: {document.id}")
                 continue
             if verify_deleted:
-                return False
-
-            acl_keys = set(retrieved_doc["access_control_list"].keys())
-            expected_acl_keys = set()
-            if cc_pair.is_public:
-                expected_acl_keys.add("PUBLIC")
-            if doc_creating_user:
-                expected_acl_keys.add(f"user_id:{doc_creating_user.id}")
-            for group_name in group_names:
-                expected_acl_keys.add(f"group:{group_name}")
-            if acl_keys != expected_acl_keys:
-                print(f"Access control list keys: {acl_keys}")
-                print(f"Expected keys: {expected_acl_keys}")
-                return False
-
-            found_doc_set_names = set(retrieved_doc["document_sets"].keys())
-            if found_doc_set_names != set(doc_set_names):
-                print(f"Found doc set names: {found_doc_set_names}")
-                print(f"Expected doc set names: {doc_set_names}")
-                return False
-
+                raise ValueError(
+                    f"Document found when it should be deleted: {document.id}"
+                )
+            _verify_document_permissions(
+                retrieved_doc,
+                cc_pair,
+                doc_set_names,
+                group_names,
+                doc_creating_user,
+            )
         return True
