@@ -1,14 +1,14 @@
 "use client";
 
 import { GroupsIcon } from "@/components/icons/icons";
-import { UserGroupsTable } from "./UserGroupsTable";
-import { UserGroupCreationForm } from "./UserGroupCreationForm";
+import { TeamspacesTable } from "./TeamspacesTable";
+import { TeamspaceCreationForm } from "./TeamspaceCreationForm";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { ThreeDotsLoader } from "@/components/Loading";
 import {
   useConnectorCredentialIndexingStatus,
-  useUserGroups,
+  useTeamspaces,
   useUsers,
 } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
@@ -19,7 +19,7 @@ const Main = () => {
   const { popup, setPopup } = usePopup();
   const [showForm, setShowForm] = useState(false);
 
-  const { data, isLoading, error, refreshUserGroups } = useUserGroups();
+  const { data, isLoading, error, refreshTeamspaces } = useTeamspaces();
 
   const {
     data: ccPairs,
@@ -52,20 +52,20 @@ const Main = () => {
   return (
     <>
       {popup}
-      <Button onClick={() => setShowForm(true)}>Create New User Group</Button>
+      <Button onClick={() => setShowForm(true)}>Create New Teamspace</Button>
       {data.length > 0 && (
         <div className="pt-5">
-          <UserGroupsTable
-            userGroups={data}
+          <TeamspacesTable
+            teamspaces={data}
             setPopup={setPopup}
-            refresh={refreshUserGroups}
+            refresh={refreshTeamspaces}
           />
         </div>
       )}
       {showForm && (
-        <UserGroupCreationForm
+        <TeamspaceCreationForm
           onClose={() => {
-            refreshUserGroups();
+            refreshTeamspaces();
             setShowForm(false);
           }}
           setPopup={setPopup}
@@ -81,7 +81,7 @@ const Page = () => {
   return (
     <div className="mx-auto container">
       <AdminPageTitle
-        title="Manage Users Groups"
+        title="Manage Teamspaces"
         icon={<GroupsIcon size={32} />}
       />
 

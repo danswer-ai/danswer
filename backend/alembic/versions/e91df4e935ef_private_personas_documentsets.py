@@ -1,4 +1,4 @@
-"""Private Personas DocumentSets
+"""Private Assistants DocumentSets
 
 Revision ID: e91df4e935ef
 Revises: 91fd3b470d1a
@@ -36,28 +36,28 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("document_set_id", "user_id"),
     )
     op.create_table(
-        "persona__user",
-        sa.Column("persona_id", sa.Integer(), nullable=False),
+        "assistant__user",
+        sa.Column("assistant_id", sa.Integer(), nullable=False),
         sa.Column(
             "user_id",
             fastapi_users_db_sqlalchemy.generics.GUID(),
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
-            ["persona_id"],
-            ["persona.id"],
+            ["assistant_id"],
+            ["assistant.id"],
         ),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],
         ),
-        sa.PrimaryKeyConstraint("persona_id", "user_id"),
+        sa.PrimaryKeyConstraint("assistant_id", "user_id"),
     )
     op.create_table(
-        "document_set__user_group",
+        "document_set__teamspace",
         sa.Column("document_set_id", sa.Integer(), nullable=False),
         sa.Column(
-            "user_group_id",
+            "teamspace_id",
             sa.Integer(),
             nullable=False,
         ),
@@ -66,28 +66,28 @@ def upgrade() -> None:
             ["document_set.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["user_group_id"],
-            ["user_group.id"],
+            ["teamspace_id"],
+            ["teamspace.id"],
         ),
-        sa.PrimaryKeyConstraint("document_set_id", "user_group_id"),
+        sa.PrimaryKeyConstraint("document_set_id", "teamspace_id"),
     )
     op.create_table(
-        "persona__user_group",
-        sa.Column("persona_id", sa.Integer(), nullable=False),
+        "assistant__teamspace",
+        sa.Column("assistant_id", sa.Integer(), nullable=False),
         sa.Column(
-            "user_group_id",
+            "teamspace_id",
             sa.Integer(),
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
-            ["persona_id"],
-            ["persona.id"],
+            ["assistant_id"],
+            ["assistant.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["user_group_id"],
-            ["user_group.id"],
+            ["teamspace_id"],
+            ["teamspace.id"],
         ),
-        sa.PrimaryKeyConstraint("persona_id", "user_group_id"),
+        sa.PrimaryKeyConstraint("assistant_id", "teamspace_id"),
     )
 
     op.add_column(
@@ -99,20 +99,20 @@ def upgrade() -> None:
     op.alter_column("document_set", "is_public", nullable=False)
 
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("is_public", sa.Boolean(), nullable=True),
     )
     # fill in is_public for existing rows
-    op.execute("UPDATE persona SET is_public = true WHERE is_public IS NULL")
-    op.alter_column("persona", "is_public", nullable=False)
+    op.execute("UPDATE assistant SET is_public = true WHERE is_public IS NULL")
+    op.alter_column("assistant", "is_public", nullable=False)
 
 
 def downgrade() -> None:
-    op.drop_column("persona", "is_public")
+    op.drop_column("assistant", "is_public")
 
     op.drop_column("document_set", "is_public")
 
-    op.drop_table("persona__user")
+    op.drop_table("assistant__user")
     op.drop_table("document_set__user")
-    op.drop_table("persona__user_group")
-    op.drop_table("document_set__user_group")
+    op.drop_table("assistant__teamspace")
+    op.drop_table("document_set__teamspace")

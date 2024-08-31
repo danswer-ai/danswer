@@ -24,7 +24,7 @@ import {
   StreamingError,
   ToolCallMetadata,
 } from "./interfaces";
-import { Persona } from "../admin/assistants/interfaces";
+import { Assistant } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
 import { SEARCH_PARAM_NAMES } from "./searchParams";
 
@@ -46,7 +46,7 @@ export async function updateModelOverrideForChatSession(
 }
 
 export async function createChatSession(
-  personaId: number,
+  assistantId: number,
   description: string | null
 ): Promise<number> {
   const createChatSessionResponse = await fetch(
@@ -57,7 +57,7 @@ export async function createChatSession(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        persona_id: personaId,
+        assistant_id: assistantId,
         description,
       }),
     }
@@ -505,8 +505,8 @@ export function removeMessage(
 
 export function checkAnyAssistantHasSearch(
   messageHistory: Message[],
-  availablePersonas: Persona[],
-  livePersona: Persona
+  availableAssistants: Assistant[],
+  liveAssistant: Assistant
 ): boolean {
   const response =
     messageHistory.some((message) => {
@@ -517,20 +517,20 @@ export function checkAnyAssistantHasSearch(
         return false;
       }
 
-      const alternateAssistant = availablePersonas.find(
-        (persona) => persona.id === message.alternateAssistantID
+      const alternateAssistant = availableAssistants.find(
+        (assistant) => assistant.id === message.alternateAssistantID
       );
 
       return alternateAssistant
-        ? personaIncludesRetrieval(alternateAssistant)
+        ? assistantIncludesRetrieval(alternateAssistant)
         : false;
-    }) || personaIncludesRetrieval(livePersona);
+    }) || assistantIncludesRetrieval(liveAssistant);
 
   return response;
 }
 
-export function personaIncludesRetrieval(selectedPersona: Persona) {
-  return selectedPersona.num_chunks !== 0;
+export function assistantIncludesRetrieval(selectedAssistant: Assistant) {
+  return selectedAssistant.num_chunks !== 0;
 }
 
 const PARAMS_TO_SKIP = [
@@ -539,20 +539,20 @@ const PARAMS_TO_SKIP = [
   SEARCH_PARAM_NAMES.TITLE,
   // only use these if explicitly passed in
   SEARCH_PARAM_NAMES.CHAT_ID,
-  SEARCH_PARAM_NAMES.PERSONA_ID,
+  SEARCH_PARAM_NAMES.ASSISTANT_ID,
 ];
 
 export function buildChatUrl(
   existingSearchParams: ReadonlyURLSearchParams,
   chatSessionId: number | null,
-  personaId: number | null
+  assistantId: number | null
 ) {
   const finalSearchParams: string[] = [];
   if (chatSessionId) {
     finalSearchParams.push(`${SEARCH_PARAM_NAMES.CHAT_ID}=${chatSessionId}`);
   }
-  if (personaId !== null) {
-    finalSearchParams.push(`${SEARCH_PARAM_NAMES.PERSONA_ID}=${personaId}`);
+  if (assistantId !== null) {
+    finalSearchParams.push(`${SEARCH_PARAM_NAMES.ASSISTANT_ID}=${assistantId}`);
   }
 
   existingSearchParams.forEach((value, key) => {

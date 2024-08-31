@@ -38,7 +38,7 @@ def handle_search_request(
             search_type=search_request.search_type,
             human_selected_filters=search_request.retrieval_options.filters,
             enable_auto_detect_filters=search_request.retrieval_options.enable_auto_detect_filters,
-            persona=None,  # For simplicity, default settings should be good for this search
+            assistant=None,  # For simplicity, default settings should be good for this search
             offset=search_request.retrieval_options.offset,
             limit=search_request.retrieval_options.limit,
             skip_rerank=search_request.skip_rerank,

@@ -238,7 +238,7 @@ class KeywordCapable(abc.ABC):
         - query: unmodified user query
         - filters: standard filter object
         - time_decay_multiplier: how much to decay the document scores as they age. Some queries
-                based on the persona settings, will have this be a 2x or 3x of the default
+                based on the assistant settings, will have this be a 2x or 3x of the default
         - num_to_retrieve: number of highest matching chunks to return
         - offset: number of highest matching chunks to skip (kind of like pagination)
 
@@ -273,7 +273,7 @@ class VectorCapable(abc.ABC):
                 dimensionality for the primary index
         - filters: standard filter object
         - time_decay_multiplier: how much to decay the document scores as they age. Some queries
-                based on the persona settings, will have this be a 2x or 3x of the default
+                based on the assistant settings, will have this be a 2x or 3x of the default
         - num_to_retrieve: number of highest matching chunks to return
         - offset: number of highest matching chunks to skip (kind of like pagination)
 
@@ -314,7 +314,7 @@ class HybridCapable(abc.ABC):
                 dimensionality for the primary index
         - filters: standard filter object
         - time_decay_multiplier: how much to decay the document scores as they age. Some queries
-                based on the persona settings, will have this be a 2x or 3x of the default
+                based on the assistant settings, will have this be a 2x or 3x of the default
         - num_to_retrieve: number of highest matching chunks to return
         - offset: number of highest matching chunks to skip (kind of like pagination)
         - hybrid_alpha: weighting between the keyword and vector search results. It is important

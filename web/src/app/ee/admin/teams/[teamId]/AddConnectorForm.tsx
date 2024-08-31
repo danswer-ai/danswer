@@ -4,21 +4,21 @@ import { Modal } from "@/components/Modal";
 import { UsersIcon } from "@/components/icons/icons";
 import { useState } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
-import { updateUserGroup } from "./lib";
+import { updateTeamspace } from "./lib";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { Connector, ConnectorIndexingStatus, UserGroup } from "@/lib/types";
+import { Connector, ConnectorIndexingStatus, Teamspace } from "@/lib/types";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 
 interface AddConnectorFormProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
-  userGroup: UserGroup;
+  teamspace: Teamspace;
   onClose: () => void;
   setPopup: (popupSpec: PopupSpec) => void;
 }
 
 export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
   ccPairs,
-  userGroup,
+  teamspace,
   onClose,
   setPopup,
 }) => {
@@ -71,8 +71,8 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
               .filter(
                 (ccPair) =>
                   !selectedCCPairIds.includes(ccPair.cc_pair_id) &&
-                  !userGroup.cc_pairs
-                    .map((userGroupCCPair) => userGroupCCPair.id)
+                  !teamspace.cc_pairs
+                    .map((teamspaceCCPair) => teamspaceCCPair.id)
                     .includes(ccPair.cc_pair_id)
               )
               // remove public docs, since they don't make sense as part of a group
@@ -120,14 +120,14 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
               const newCCPairIds = [
                 ...Array.from(
                   new Set(
-                    userGroup.cc_pairs
+                    teamspace.cc_pairs
                       .map((ccPair) => ccPair.id)
                       .concat(selectedCCPairIds)
                   )
                 ),
               ];
-              const response = await updateUserGroup(userGroup.id, {
-                user_ids: userGroup.users.map((user) => user.id),
+              const response = await updateTeamspace(teamspace.id, {
+                user_ids: teamspace.users.map((user) => user.id),
                 cc_pair_ids: newCCPairIds,
               });
               if (response.ok) {

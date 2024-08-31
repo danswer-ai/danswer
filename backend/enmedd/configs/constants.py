@@ -130,7 +130,7 @@ class MessageType(str, Enum):
 
 class TokenRateLimitScope(str, Enum):
     USER = "user"
-    USER_GROUP = "user_group"
+    TEAMSPACE = "teamspace"
     GLOBAL = "global"
 
 

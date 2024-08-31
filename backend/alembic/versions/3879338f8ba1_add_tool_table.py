@@ -25,21 +25,21 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
-        "persona__tool",
-        sa.Column("persona_id", sa.Integer(), nullable=False),
+        "assistant__tool",
+        sa.Column("assistant_id", sa.Integer(), nullable=False),
         sa.Column("tool_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["persona_id"],
-            ["persona.id"],
+            ["assistant_id"],
+            ["assistant.id"],
         ),
         sa.ForeignKeyConstraint(
             ["tool_id"],
             ["tool.id"],
         ),
-        sa.PrimaryKeyConstraint("persona_id", "tool_id"),
+        sa.PrimaryKeyConstraint("assistant_id", "tool_id"),
     )
 
 
 def downgrade() -> None:
-    op.drop_table("persona__tool")
+    op.drop_table("assistant__tool")
     op.drop_table("tool")

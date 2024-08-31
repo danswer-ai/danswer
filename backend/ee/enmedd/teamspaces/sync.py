@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 
-from ee.enmedd.db.user_group import delete_user_group
-from ee.enmedd.db.user_group import fetch_documents_for_user_group_paginated
-from ee.enmedd.db.user_group import fetch_user_group
-from ee.enmedd.db.user_group import mark_user_group_as_synced
+from ee.enmedd.db.teamspace import delete_teamspace
+from ee.enmedd.db.teamspace import fetch_documents_for_teamspace_paginated
+from ee.enmedd.db.teamspace import fetch_teamspace
+from ee.enmedd.db.teamspace import mark_teamspace_as_synced
 from enmedd.access.access import get_access_for_documents
 from enmedd.db.document import prepare_to_modify_documents
 from enmedd.db.embedding_model import get_current_db_embedding_model
@@ -18,7 +18,7 @@ logger = setup_logger()
 _SYNC_BATCH_SIZE = 100
 
 
-def _sync_user_group_batch(
+def _sync_teamspace_batch(
     document_ids: list[str], document_index: DocumentIndex, db_session: Session
 ) -> None:
     logger.debug(f"Syncing document sets for: {document_ids}")
@@ -45,8 +45,8 @@ def _sync_user_group_batch(
         db_session.commit()
 
 
-def sync_user_groups(user_group_id: int, db_session: Session) -> None:
-    """Sync the status of Postgres for the specified user group"""
+def sync_teamspaces(teamspace_id: int, db_session: Session) -> None:
+    """Sync the status of Postgres for the specified teamspace"""
     db_embedding_model = get_current_db_embedding_model(db_session)
     secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
 
@@ -57,22 +57,22 @@ def sync_user_groups(user_group_id: int, db_session: Session) -> None:
         else None,
     )
 
-    user_group = fetch_user_group(db_session=db_session, user_group_id=user_group_id)
-    if user_group is None:
-        raise ValueError(f"User group '{user_group_id}' does not exist")
+    teamspace = fetch_teamspace(db_session=db_session, teamspace_id=teamspace_id)
+    if teamspace is None:
+        raise ValueError(f"Teamspace '{teamspace_id}' does not exist")
 
     cursor = None
     while True:
         # NOTE: this may miss some documents, but that is okay. Any new documents added
         # will be added with the correct group membership
-        document_batch, cursor = fetch_documents_for_user_group_paginated(
+        document_batch, cursor = fetch_documents_for_teamspace_paginated(
             db_session=db_session,
-            user_group_id=user_group_id,
+            teamspace_id=teamspace_id,
             last_document_id=cursor,
             limit=_SYNC_BATCH_SIZE,
         )
 
-        _sync_user_group_batch(
+        _sync_teamspace_batch(
             document_ids=[document.id for document in document_batch],
             document_index=document_index,
             db_session=db_session,
@@ -81,7 +81,7 @@ def sync_user_groups(user_group_id: int, db_session: Session) -> None:
         if cursor is None:
             break
 
-    if user_group.is_up_for_deletion:
-        delete_user_group(db_session=db_session, user_group=user_group)
+    if teamspace.is_up_for_deletion:
+        delete_teamspace(db_session=db_session, teamspace=teamspace)
     else:
-        mark_user_group_as_synced(db_session=db_session, user_group=user_group)
+        mark_teamspace_as_synced(db_session=db_session, teamspace=teamspace)

@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
 from ee.enmedd.background.task_name_builders import name_chat_ttl_task
-from ee.enmedd.background.task_name_builders import name_user_group_sync_task
-from enmedd.db.models import UserGroup
+from ee.enmedd.background.task_name_builders import name_teamspace_sync_task
+from enmedd.db.models import Teamspace
 from enmedd.db.tasks import check_task_is_live_and_not_timed_out
 from enmedd.db.tasks import get_latest_task
 from enmedd.utils.logger import setup_logger
@@ -10,10 +10,10 @@ from enmedd.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def should_sync_user_groups(user_group: UserGroup, db_session: Session) -> bool:
-    if user_group.is_up_to_date:
+def should_sync_teamspaces(teamspace: Teamspace, db_session: Session) -> bool:
+    if teamspace.is_up_to_date:
         return False
-    task_name = name_user_group_sync_task(user_group.id)
+    task_name = name_teamspace_sync_task(teamspace.id)
     latest_sync = get_latest_task(task_name, db_session)
 
     if latest_sync and check_task_is_live_and_not_timed_out(latest_sync, db_session):

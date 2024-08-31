@@ -21,14 +21,14 @@ depends_on: None = None
 
 def upgrade() -> None:
     op.alter_column(
-        "persona",
+        "assistant",
         "search_type",
         type_=sa.String,
         existing_type=sa.Enum(SearchType, native_enum=False),
         existing_nullable=False,
     )
     op.alter_column(
-        "persona",
+        "assistant",
         "recency_bias",
         type_=sa.String,
         existing_type=sa.Enum(RecencyBiasSetting, native_enum=False),
@@ -49,14 +49,14 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.alter_column(
-        "persona",
+        "assistant",
         "search_type",
         type_=sa.Enum(SearchType, native_enum=False),
         existing_type=sa.String(length=50),
         existing_nullable=False,
     )
     op.alter_column(
-        "persona",
+        "assistant",
         "recency_bias",
         type_=sa.Enum(RecencyBiasSetting, native_enum=False),
         existing_type=sa.String(length=50),

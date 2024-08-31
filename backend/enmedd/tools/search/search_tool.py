@@ -10,7 +10,7 @@ from enmedd.chat.chat_utils import llm_doc_from_inference_section
 from enmedd.chat.models import EnmeddContext
 from enmedd.chat.models import EnmeddContexts
 from enmedd.chat.models import LlmDoc
-from enmedd.db.models import Persona
+from enmedd.db.models import Assistant
 from enmedd.db.models import User
 from enmedd.dynamic_configs.interface import JSON_ro
 from enmedd.llm.answering.doc_pruning import prune_documents
@@ -65,7 +65,7 @@ class SearchTool(Tool):
         self,
         db_session: Session,
         user: User | None,
-        persona: Persona,
+        assistant: Assistant,
         retrieval_options: RetrievalDetails | None,
         prompt_config: PromptConfig,
         llm: LLM,
@@ -80,7 +80,7 @@ class SearchTool(Tool):
         bypass_acl: bool = False,
     ) -> None:
         self.user = user
-        self.persona = persona
+        self.assistant = assistant
         self.retrieval_options = retrieval_options
         self.prompt_config = prompt_config
         self.llm = llm
@@ -203,7 +203,7 @@ class SearchTool(Tool):
                 human_selected_filters=(
                     self.retrieval_options.filters if self.retrieval_options else None
                 ),
-                persona=self.persona,
+                assistant=self.assistant,
                 offset=self.retrieval_options.offset
                 if self.retrieval_options
                 else None,

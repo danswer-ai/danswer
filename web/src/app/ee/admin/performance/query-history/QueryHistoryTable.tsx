@@ -53,7 +53,7 @@ function QueryHistoryTableRow({
         <FeedbackBadge feedback={chatSessionMinimal.feedback_type} />
       </TableCell>
       <TableCell>{chatSessionMinimal.user_email || "-"}</TableCell>
-      <TableCell>{chatSessionMinimal.persona_name || "Unknown"}</TableCell>
+      <TableCell>{chatSessionMinimal.assistant_name || "Unknown"}</TableCell>
       <TableCell>
         {timestampToReadableDate(chatSessionMinimal.time_created)}
       </TableCell>
@@ -143,7 +143,7 @@ export function QueryHistoryTable() {
                     <TableHead>First AI Response</TableHead>
                     <TableHead>Feedback</TableHead>
                     <TableHead>User</TableHead>
-                    <TableHead>Persona</TableHead>
+                    <TableHead>Assistant</TableHead>
                     <TableHead>Date</TableHead>
                   </TableRow>
                 </TableHeader>

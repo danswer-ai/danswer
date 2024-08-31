@@ -18,7 +18,7 @@ def create_new_chat_session(enmedd_url: str, api_key: str | None) -> int:
     response = requests.post(
         session_endpoint,
         headers=headers,
-        json={"persona_id": 0},  # Global default Persona/Assistant ID
+        json={"assistant_id": 0},  # Global default Assistant/Assistant ID
     )
     response.raise_for_status()
 

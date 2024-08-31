@@ -1,32 +1,32 @@
 "use client";
 
-import { deletePersona } from "../lib";
+import { deleteAssistant } from "../lib";
 import { useRouter } from "next/navigation";
-import { SuccessfulPersonaUpdateRedirectType } from "../enums";
+import { SuccessfulAssistantUpdateRedirectType } from "../enums";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 
-export function DeletePersonaButton({
-  personaId,
+export function DeleteAssistantButton({
+  assistantId,
   redirectType,
 }: {
-  personaId: number;
-  redirectType: SuccessfulPersonaUpdateRedirectType;
+  assistantId: number;
+  redirectType: SuccessfulAssistantUpdateRedirectType;
 }) {
   const router = useRouter();
 
   return (
     <Button
       onClick={async () => {
-        const response = await deletePersona(personaId);
+        const response = await deleteAssistant(assistantId);
         if (response.ok) {
           router.push(
-            redirectType === SuccessfulPersonaUpdateRedirectType.ADMIN
+            redirectType === SuccessfulAssistantUpdateRedirectType.ADMIN
               ? `/admin/assistants?u=${Date.now()}`
               : `/chat`
           );
         } else {
-          alert(`Failed to delete persona - ${await response.text()}`);
+          alert(`Failed to delete assistant - ${await response.text()}`);
         }
       }}
       variant="destructive"

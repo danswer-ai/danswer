@@ -5,9 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from enmedd.configs.constants import TokenRateLimitScope
+from enmedd.db.models import Teamspace
 from enmedd.db.models import TokenRateLimit
-from enmedd.db.models import TokenRateLimit__UserGroup
-from enmedd.db.models import UserGroup
+from enmedd.db.models import TokenRateLimit__Teamspace
 from enmedd.server.token_rate_limits.models import TokenRateLimitArgs
 
 
@@ -48,18 +48,18 @@ def fetch_all_global_token_rate_limits(
     return token_rate_limits
 
 
-def fetch_all_user_group_token_rate_limits(
-    db_session: Session, group_id: int, enabled_only: bool = False, ordered: bool = True
+def fetch_all_teamspace_token_rate_limits(
+    db_session: Session, team_id: int, enabled_only: bool = False, ordered: bool = True
 ) -> Sequence[TokenRateLimit]:
     query = (
         select(TokenRateLimit)
         .join(
-            TokenRateLimit__UserGroup,
-            TokenRateLimit.id == TokenRateLimit__UserGroup.rate_limit_id,
+            TokenRateLimit__Teamspace,
+            TokenRateLimit.id == TokenRateLimit__Teamspace.rate_limit_id,
         )
         .where(
-            TokenRateLimit__UserGroup.user_group_id == group_id,
-            TokenRateLimit.scope == TokenRateLimitScope.USER_GROUP,
+            TokenRateLimit__Teamspace.teamspace_id == team_id,
+            TokenRateLimit.scope == TokenRateLimitScope.TEAMSPACE,
         )
     )
 
@@ -73,16 +73,16 @@ def fetch_all_user_group_token_rate_limits(
     return token_rate_limits
 
 
-def fetch_all_user_group_token_rate_limits_by_group(
+def fetch_all_teamspace_token_rate_limits_by_group(
     db_session: Session,
 ) -> Sequence[Row[tuple[TokenRateLimit, str]]]:
     query = (
-        select(TokenRateLimit, UserGroup.name)
+        select(TokenRateLimit, Teamspace.name)
         .join(
-            TokenRateLimit__UserGroup,
-            TokenRateLimit.id == TokenRateLimit__UserGroup.rate_limit_id,
+            TokenRateLimit__Teamspace,
+            TokenRateLimit.id == TokenRateLimit__Teamspace.rate_limit_id,
         )
-        .join(UserGroup, UserGroup.id == TokenRateLimit__UserGroup.user_group_id)
+        .join(Teamspace, Teamspace.id == TokenRateLimit__Teamspace.teamspace_id)
     )
 
     return db_session.execute(query).all()
@@ -120,22 +120,22 @@ def insert_global_token_rate_limit(
     return token_limit
 
 
-def insert_user_group_token_rate_limit(
+def insert_teamspace_token_rate_limit(
     db_session: Session,
     token_rate_limit_settings: TokenRateLimitArgs,
-    group_id: int,
+    team_id: int,
 ) -> TokenRateLimit:
     token_limit = TokenRateLimit(
         enabled=token_rate_limit_settings.enabled,
         token_budget=token_rate_limit_settings.token_budget,
         period_hours=token_rate_limit_settings.period_hours,
-        scope=TokenRateLimitScope.USER_GROUP,
+        scope=TokenRateLimitScope.TEAMSPACE,
     )
     db_session.add(token_limit)
     db_session.flush()
 
-    rate_limit = TokenRateLimit__UserGroup(
-        rate_limit_id=token_limit.id, user_group_id=group_id
+    rate_limit = TokenRateLimit__Teamspace(
+        rate_limit_id=token_limit.id, teamspace_id=team_id
     )
     db_session.add(rate_limit)
     db_session.commit()
@@ -168,8 +168,8 @@ def delete_token_rate_limit(
     if token_limit is None:
         raise ValueError(f"TokenRateLimit with id '{token_rate_limit_id}' not found")
 
-    db_session.query(TokenRateLimit__UserGroup).filter(
-        TokenRateLimit__UserGroup.rate_limit_id == token_rate_limit_id
+    db_session.query(TokenRateLimit__Teamspace).filter(
+        TokenRateLimit__Teamspace.rate_limit_id == token_rate_limit_id
     ).delete()
 
     db_session.delete(token_limit)

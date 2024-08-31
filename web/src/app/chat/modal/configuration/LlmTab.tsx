@@ -4,7 +4,7 @@ import React, { useCallback, useRef, useState } from "react";
 import { debounce } from "lodash";
 import { DefaultDropdown } from "@/components/Dropdown";
 import { Text } from "@tremor/react";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import { destructureValue, getFinalLLM, structureValue } from "@/lib/llm/utils";
 import { updateModelOverrideForChatSession } from "../../lib";
 import { Slider } from "@/components/ui/slider";
@@ -22,7 +22,7 @@ export function LlmTab({
   chatSessionId,
 }: {
   llmOverrideManager: LlmOverrideManager;
-  currentAssistant: Persona;
+  currentAssistant: Assistant;
   chatSessionId?: number;
 }) {
   const { llmProviders } = useChatContext();

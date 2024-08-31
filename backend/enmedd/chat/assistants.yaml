@@ -1,13 +1,13 @@
-# Currently in the UI, each Persona only has one prompt, which is why there are 3 very similar personas defined below.
+# Currently in the UI, each Assistant only has one prompt, which is why there are 3 very similar assistants defined below.
 
-personas:
-  # This id field can be left blank for other default personas, however an id 0 persona must exist
+assistants:
+  # This id field can be left blank for other default assistants, however an id 0 assistant must exist
   # Careful setting specific IDs, this won't autoincrement the next ID value for postgres
   - id: 0
     name: "enMedD AI"
     description: >
       Assistant with access to documents from your Connected Sources.
-    # Default Prompt objects attached to the persona, see prompts.yaml
+    # Default Prompt objects attached to the assistant, see prompts.yaml
     prompts:
       - "Answer-Question"
     # Default number of chunks to include as context, set to 0 to disable retrieval
@@ -16,7 +16,7 @@ personas:
     num_chunks: 10
     # Enable/Disable usage of the LLM chunk filter feature whereby each chunk is passed to the LLM to determine
     # if the chunk is useful or not towards the latest user query
-    # This feature can be overriden for all personas via DISABLE_LLM_CHUNK_FILTER env variable
+    # This feature can be overriden for all assistants via DISABLE_LLM_CHUNK_FILTER env variable
     llm_relevance_filter: true
     # Enable/Disable usage of the LLM to extract query time filters including source type and time range filters
     llm_filter_extraction: true
@@ -26,8 +26,8 @@ personas:
     # - no_decay
     # - auto (model chooses between favor_recent and base_decay based on user query)
     recency_bias: "auto"
-    # Default Document Sets for this persona, specified as a list of names here.
-    # If the document set by the name exists, it will be attached to the persona
+    # Default Document Sets for this assistant, specified as a list of names here.
+    # If the document set by the name exists, it will be attached to the assistant
     # If the document set by the name does not exist, it will be created as an empty document set with no connectors
     # The admin can then use the UI to add new connectors to the document set
     # Example:

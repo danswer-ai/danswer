@@ -1,41 +1,41 @@
 import { Form, Formik } from "formik";
 import * as Yup from "yup";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { ConnectorIndexingStatus, User, UserGroup } from "@/lib/types";
+import { ConnectorIndexingStatus, User, Teamspace } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { createUserGroup } from "./lib";
+import { createTeamspace } from "./lib";
 import { UserEditor } from "./UserEditor";
 import { ConnectorEditor } from "./ConnectorEditor";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
 
-interface UserGroupCreationFormProps {
+interface TeamspaceCreationFormProps {
   onClose: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
   users: User[];
   ccPairs: ConnectorIndexingStatus<any, any>[];
-  existingUserGroup?: UserGroup;
+  existingTeamspace?: Teamspace;
 }
 
-export const UserGroupCreationForm = ({
+export const TeamspaceCreationForm = ({
   onClose,
   setPopup,
   users,
   ccPairs,
-  existingUserGroup,
-}: UserGroupCreationFormProps) => {
-  const isUpdate = existingUserGroup !== undefined;
+  existingTeamspace,
+}: TeamspaceCreationFormProps) => {
+  const isUpdate = existingTeamspace !== undefined;
 
   return (
     <Modal onOutsideClick={onClose}>
       <div className="px-8 py-6 bg-background">
         <h2 className="text-xl font-bold flex">
-          {isUpdate ? "Update a User Group" : "Create a new User Group"}
+          {isUpdate ? "Update a Teamspace" : "Create a new Teamspace"}
         </h2>
 
         <Formik
           initialValues={{
-            name: existingUserGroup ? existingUserGroup.name : "",
+            name: existingTeamspace ? existingTeamspace.name : "",
             user_ids: [] as string[],
             cc_pair_ids: [] as number[],
           }}
@@ -47,13 +47,13 @@ export const UserGroupCreationForm = ({
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
             let response;
-            response = await createUserGroup(values);
+            response = await createTeamspace(values);
             formikHelpers.setSubmitting(false);
             if (response.ok) {
               setPopup({
                 message: isUpdate
-                  ? "Successfully updated user group!"
-                  : "Successfully created user group!",
+                  ? "Successfully updated teamspace!"
+                  : "Successfully created teamspace!",
                 type: "success",
               });
               onClose();
@@ -62,8 +62,8 @@ export const UserGroupCreationForm = ({
               const errorMsg = responseJson.detail || responseJson.message;
               setPopup({
                 message: isUpdate
-                  ? `Error updating user group - ${errorMsg}`
-                  : `Error creating user group - ${errorMsg}`,
+                  ? `Error updating teamspace - ${errorMsg}`
+                  : `Error creating teamspace - ${errorMsg}`,
                 type: "error",
               });
             }
@@ -75,7 +75,7 @@ export const UserGroupCreationForm = ({
                 <TextFormField
                   name="name"
                   label="Name:"
-                  placeholder="A name for the User Group"
+                  placeholder="A name for the Teamspace"
                   disabled={isUpdate}
                   autoCompleteDisabled={true}
                 />
