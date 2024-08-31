@@ -54,13 +54,27 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
               message: `Failed to sign up - ${errorMsg}`,
             });
             return;
-          } else {
+          }
+          const loginResponse = await basicLogin(values.email, values.password);
+          if (loginResponse.ok) {
             if (shouldVerify) {
               await requestEmailVerification(values.email);
               router.push("/auth/waiting-on-verification");
             } else {
               router.push("/");
             }
+          } else {
+            setIsWorking(false);
+            const errorDetail = (await loginResponse.json()).detail;
+
+            let errorMsg = "Unknown error";
+            if (errorDetail === "LOGIN_BAD_CREDENTIALS") {
+              errorMsg = "Invalid email or password";
+            }
+            setPopup({
+              type: "error",
+              message: `Failed to login - ${errorMsg}`,
+            });
           }
         }}
       >
