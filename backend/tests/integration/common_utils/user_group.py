@@ -50,7 +50,7 @@ class UserGroupManager:
         return test_user_group
 
     @staticmethod
-    def edit_user_group(
+    def edit(
         user_group: TestUserGroup,
         user_performing_action: TestUser | None = None,
     ) -> bool:
@@ -66,7 +66,7 @@ class UserGroupManager:
         return response.ok
 
     @staticmethod
-    def set_curator(
+    def set_user_to_curator(
         test_user_group: TestUserGroup,
         user_to_set_as_curator: TestUser,
         user_performing_action: TestUser | None = None,
@@ -87,7 +87,7 @@ class UserGroupManager:
         return response.ok
 
     @staticmethod
-    def fetch_user_groups(
+    def get_all(
         user_performing_action: TestUser | None = None,
     ) -> list[UserGroup]:
         response = requests.get(
@@ -100,11 +100,11 @@ class UserGroupManager:
         return [UserGroup(**ug) for ug in response.json()]
 
     @staticmethod
-    def verify_user_group(
+    def verify(
         user_group: TestUserGroup,
         user_performing_action: TestUser | None = None,
     ) -> bool:
-        all_user_groups = UserGroupManager.fetch_user_groups(user_performing_action)
+        all_user_groups = UserGroupManager.get_all(user_performing_action)
         for fetched_user_group in all_user_groups:
             if user_group.id == fetched_user_group.id:
                 if len(user_group.cc_pair_ids) != len(fetched_user_group.cc_pairs):
@@ -115,12 +115,12 @@ class UserGroupManager:
         return False
 
     @staticmethod
-    def wait_for_user_groups_to_sync(
+    def wait_for_sync(
         user_performing_action: TestUser | None = None,
     ) -> None:
         start = time.time()
         while True:
-            user_groups = UserGroupManager.fetch_user_groups(user_performing_action)
+            user_groups = UserGroupManager.get_all(user_performing_action)
             if all(ug.is_up_to_date for ug in user_groups):
                 return
 

@@ -65,7 +65,7 @@ class ConnectorManager:
         )
 
     @staticmethod
-    def edit_connector(
+    def edit(
         connector: TestConnector,
         user_performing_action: TestUser | None = None,
     ) -> bool:
@@ -83,7 +83,7 @@ class ConnectorManager:
         return True
 
     @staticmethod
-    def delete_connector(
+    def delete(
         connector: TestConnector,
         user_performing_action: TestUser | None = None,
     ) -> bool:
@@ -97,7 +97,7 @@ class ConnectorManager:
         return True
 
     @staticmethod
-    def get_all_connectors(
+    def get_all(
         user_performing_action: TestUser | None = None,
     ) -> list[TestConnector]:
         response = requests.get(
@@ -119,7 +119,7 @@ class ConnectorManager:
         ]
 
     @staticmethod
-    def get_connector(
+    def get(
         connector_id: int, user_performing_action: TestUser | None = None
     ) -> TestConnector:
         response = requests.get(

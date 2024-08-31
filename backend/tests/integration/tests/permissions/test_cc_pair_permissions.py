@@ -28,9 +28,9 @@ def test_cc_pair_permissions(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    UserGroupManager.wait_for_sync(admin_user)
     # setting the user as a curator for the user group
-    assert UserGroupManager.set_curator(
+    assert UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -43,7 +43,7 @@ def test_cc_pair_permissions(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    UserGroupManager.wait_for_sync(admin_user)
 
     # Create a credentials that the curator is and is not curator of
     connector_1 = ConnectorManager.create(
@@ -143,22 +143,20 @@ def test_cc_pair_permissions(reset: None) -> None:
     assert valid_cc_pair.id is not None
 
     # Verify the created cc pair
-    assert CCPairManager.verify_cc_pair(valid_cc_pair, user_performing_action=curator)
+    assert CCPairManager.verify(valid_cc_pair, user_performing_action=curator)
 
     # Verify that the cc pair can be found in the list of all cc pairs
-    all_cc_pairs = CCPairManager.get_all_cc_pairs(user_performing_action=curator)
+    all_cc_pairs = CCPairManager.get_all(user_performing_action=curator)
     assert any(cc_pair.cc_pair_id == valid_cc_pair.id for cc_pair in all_cc_pairs)
 
     # Test pausing the cc pair
     assert CCPairManager.pause_cc_pair(valid_cc_pair, user_performing_action=curator)
 
     # Test deleting the cc pair
-    assert CCPairManager.delete_cc_pair(valid_cc_pair, user_performing_action=curator)
-    CCPairManager.wait_for_cc_pairs_deletion_complete(user_performing_action=curator)
+    assert CCPairManager.delete(valid_cc_pair, user_performing_action=curator)
+    CCPairManager.wait_for_deletion_completion(user_performing_action=curator)
     # Verify the deletion
-    all_cc_pairs_after_delete = CCPairManager.get_all_cc_pairs(
-        user_performing_action=curator
-    )
+    all_cc_pairs_after_delete = CCPairManager.get_all(user_performing_action=curator)
     assert not any(
         cc_pair.cc_pair_id == valid_cc_pair.id for cc_pair in all_cc_pairs_after_delete
     )

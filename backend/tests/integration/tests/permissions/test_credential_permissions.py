@@ -26,9 +26,9 @@ def test_credential_permissions(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    UserGroupManager.wait_for_sync(admin_user)
     # setting the user as a curator for the user group
-    assert UserGroupManager.set_curator(
+    assert UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -41,7 +41,7 @@ def test_credential_permissions(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    UserGroupManager.wait_for_sync(admin_user)
 
     # END OF HAPPY PATH
 
@@ -82,34 +82,24 @@ def test_credential_permissions(reset: None) -> None:
     assert valid_credential.id is not None
 
     # Verify the created credential
-    assert CredentialManager.verify_credential(
-        valid_credential, user_performing_action=curator
-    )
+    assert CredentialManager.verify(valid_credential, user_performing_action=curator)
 
     # Verify that the credential can be found in the list of all credentials
-    all_credentials = CredentialManager.get_all_credentials(
-        user_performing_action=curator
-    )
+    all_credentials = CredentialManager.get_all(user_performing_action=curator)
     assert any(cred.id == valid_credential.id for cred in all_credentials)
 
     # Test editing the credential
     valid_credential.name = "updated_valid_credential"
-    assert CredentialManager.edit_credential(
-        valid_credential, user_performing_action=curator
-    )
+    assert CredentialManager.edit(valid_credential, user_performing_action=curator)
 
     # Verify the edit
-    assert CredentialManager.verify_credential(
-        valid_credential, user_performing_action=curator
-    )
+    assert CredentialManager.verify(valid_credential, user_performing_action=curator)
 
     # Test deleting the credential
-    assert CredentialManager.delete_credential(
-        valid_credential, user_performing_action=curator
-    )
+    assert CredentialManager.delete(valid_credential, user_performing_action=curator)
 
     # Verify the deletion
-    all_credentials_after_delete = CredentialManager.get_all_credentials(
+    all_credentials_after_delete = CredentialManager.get_all(
         user_performing_action=curator
     )
     assert all(cred.id != valid_credential.id for cred in all_credentials_after_delete)

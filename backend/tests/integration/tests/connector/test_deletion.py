@@ -15,11 +15,11 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     admin_user: TestUser = UserManager.create(name="admin_user")
 
     # create connectors
-    cc_pair_1 = CCPairManager.create_pair_from_scratch(
+    cc_pair_1 = CCPairManager.create_from_scratch(
         source=DocumentSource.INGESTION_API,
         user_performing_action=admin_user,
     )
-    cc_pair_2 = CCPairManager.create_pair_from_scratch(
+    cc_pair_2 = CCPairManager.create_from_scratch(
         source=DocumentSource.INGESTION_API,
         user_performing_action=admin_user,
     )
@@ -54,7 +54,7 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     )
 
     # wait for document sets to be synced
-    DocumentSetManager.wait_for_document_set_sync(user_performing_action=admin_user)
+    DocumentSetManager.wait_for_sync(user_performing_action=admin_user)
 
     print("Document sets created and synced")
 
@@ -73,7 +73,7 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
         cc_pair=cc_pair_1,
         user_performing_action=admin_user,
     )
-    CCPairManager.delete_cc_pair(
+    CCPairManager.delete(
         cc_pair=cc_pair_1,
         user_performing_action=admin_user,
     )
@@ -86,7 +86,7 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     cc_pair_1.groups = []
     cc_pair_2.groups = [user_group_2.id]
 
-    CCPairManager.wait_for_cc_pairs_deletion_complete(user_performing_action=admin_user)
+    CCPairManager.wait_for_deletion_completion(user_performing_action=admin_user)
 
     # validate vespa documents
     cc_1_vespa_docs = vespa_client.get_documents_by_id(
@@ -111,37 +111,37 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     # assert doc["fields"]["document_sets"] == {f"{doc_set_2.name}": 1}
 
     # check that only connector 1 is deleted
-    assert CCPairManager.verify_cc_pair(
+    assert CCPairManager.verify(
         cc_pair=cc_pair_2,
         user_performing_action=admin_user,
     )
 
     # validate document sets
-    all_doc_sets = DocumentSetManager.get_all_document_sets(
+    all_doc_sets = DocumentSetManager.get_all(
         user_performing_action=admin_user,
     )
     assert len(all_doc_sets) == 2
 
-    assert DocumentSetManager.verify_document_set(
+    assert DocumentSetManager.verify(
         document_set=doc_set_1,
         user_performing_action=admin_user,
     )
-    assert DocumentSetManager.verify_document_set(
+    assert DocumentSetManager.verify(
         document_set=doc_set_2,
         user_performing_action=admin_user,
     )
 
     # validate user groups
-    all_user_groups = UserGroupManager.fetch_user_groups(
+    all_user_groups = UserGroupManager.get_all(
         user_performing_action=admin_user,
     )
     assert len(all_user_groups) == 2
 
-    assert UserGroupManager.verify_user_group(
+    assert UserGroupManager.verify(
         user_group=user_group_1,
         user_performing_action=admin_user,
     )
-    assert UserGroupManager.verify_user_group(
+    assert UserGroupManager.verify(
         user_group=user_group_2,
         user_performing_action=admin_user,
     )

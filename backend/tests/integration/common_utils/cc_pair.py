@@ -63,7 +63,7 @@ def _cc_pair_creator(
 
 class CCPairManager:
     @staticmethod
-    def create_pair_from_scratch(
+    def create_from_scratch(
         name: str | None = None,
         is_public: bool = False,
         groups: list[int] | None = None,
@@ -131,7 +131,7 @@ class CCPairManager:
         ).ok
 
     @staticmethod
-    def delete_cc_pair(
+    def delete(
         cc_pair: TestCCPair,
         user_performing_action: TestUser | None = None,
     ) -> bool:
@@ -148,7 +148,7 @@ class CCPairManager:
         ).ok
 
     @staticmethod
-    def get_all_cc_pairs(
+    def get_all(
         user_performing_action: TestUser | None = None,
     ) -> list[ConnectorIndexingStatus]:
         response = requests.get(
@@ -161,11 +161,11 @@ class CCPairManager:
         return [ConnectorIndexingStatus(**cc_pair) for cc_pair in response.json()]
 
     @staticmethod
-    def verify_cc_pair(
+    def verify(
         cc_pair: TestCCPair,
         user_performing_action: TestUser | None = None,
     ) -> bool:
-        all_cc_pairs = CCPairManager.get_all_cc_pairs(user_performing_action)
+        all_cc_pairs = CCPairManager.get_all(user_performing_action)
         for retrieved_cc_pair in all_cc_pairs:
             if retrieved_cc_pair.cc_pair_id == cc_pair.id:
                 return (
@@ -177,12 +177,12 @@ class CCPairManager:
         return False
 
     @staticmethod
-    def wait_for_cc_pairs_deletion_complete(
+    def wait_for_deletion_completion(
         user_performing_action: TestUser | None = None,
     ) -> None:
         start = time.time()
         while True:
-            cc_pairs = CCPairManager.get_all_cc_pairs(user_performing_action)
+            cc_pairs = CCPairManager.get_all(user_performing_action)
             if all(
                 cc_pair.cc_pair_status != ConnectorCredentialPairStatus.DELETING
                 for cc_pair in cc_pairs

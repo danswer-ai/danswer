@@ -66,7 +66,7 @@ class DocumentSetManager:
         )
 
     @staticmethod
-    def edit_document_set(
+    def edit(
         document_set: TestDocumentSet,
         user_performing_action: TestUser | None = None,
     ) -> bool:
@@ -89,7 +89,7 @@ class DocumentSetManager:
         return True
 
     @staticmethod
-    def delete_document_set(
+    def delete(
         document_set: TestDocumentSet,
         user_performing_action: TestUser | None = None,
     ) -> bool:
@@ -103,7 +103,7 @@ class DocumentSetManager:
         return True
 
     @staticmethod
-    def get_all_document_sets(
+    def get_all(
         user_performing_action: TestUser | None = None,
     ) -> list[TestDocumentSet]:
         response = requests.get(
@@ -130,13 +130,13 @@ class DocumentSetManager:
         ]
 
     @staticmethod
-    def wait_for_document_set_sync(
+    def wait_for_sync(
         user_performing_action: TestUser | None = None,
     ) -> None:
         # wait for document sets to be synced
         start = time.time()
         while True:
-            doc_sets = DocumentSetManager.get_all_document_sets(user_performing_action)
+            doc_sets = DocumentSetManager.get_all(user_performing_action)
             all_up_to_date = all(doc_set.is_up_to_date for doc_set in doc_sets)
 
             if all_up_to_date:
@@ -148,11 +148,11 @@ class DocumentSetManager:
             time.sleep(2)
 
     @staticmethod
-    def verify_document_set(
+    def verify(
         document_set: TestDocumentSet,
         user_performing_action: TestUser | None = None,
     ) -> bool:
-        doc_sets = DocumentSetManager.get_all_document_sets(user_performing_action)
+        doc_sets = DocumentSetManager.get_all(user_performing_action)
         for doc_set in doc_sets:
             if doc_set.id == document_set.id:
                 return (

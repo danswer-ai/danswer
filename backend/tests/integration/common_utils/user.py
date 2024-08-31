@@ -104,9 +104,7 @@ class UserManager:
         return response.ok
 
     @staticmethod
-    def check_for_user(
-        user: TestUser, user_to_perform_action: TestUser | None = None
-    ) -> bool:
+    def verify(user: TestUser, user_to_perform_action: TestUser | None = None) -> bool:
         if user_to_perform_action is None:
             user_to_perform_action = user
         response = requests.get(

@@ -20,7 +20,7 @@ def test_multiple_document_sets_syncing_same_connnector(
     )
 
     # create connector
-    cc_pair_1 = CCPairManager.create_pair_from_scratch(
+    cc_pair_1 = CCPairManager.create_from_scratch(
         source=DocumentSource.INGESTION_API,
         user_performing_action=admin_user,
     )
@@ -42,21 +42,21 @@ def test_multiple_document_sets_syncing_same_connnector(
         user_performing_action=admin_user,
     )
 
-    DocumentSetManager.wait_for_document_set_sync(
+    DocumentSetManager.wait_for_sync(
         user_performing_action=admin_user,
     )
 
-    assert DocumentSetManager.verify_document_set(
+    assert DocumentSetManager.verify(
         document_set=doc_set_1,
         user_performing_action=admin_user,
     )
-    assert DocumentSetManager.verify_document_set(
+    assert DocumentSetManager.verify(
         document_set=doc_set_2,
         user_performing_action=admin_user,
     )
 
     # get names so we can compare to what is in vespa
-    doc_sets = DocumentSetManager.get_all_document_sets(
+    doc_sets = DocumentSetManager.get_all(
         user_performing_action=admin_user,
     )
     doc_set_names = {doc_set.name for doc_set in doc_sets}

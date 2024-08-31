@@ -26,9 +26,9 @@ def test_connector_permissions(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    UserGroupManager.wait_for_sync(admin_user)
     # setting the user as a curator for the user group
-    assert UserGroupManager.set_curator(
+    assert UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -41,7 +41,7 @@ def test_connector_permissions(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    UserGroupManager.wait_for_sync(admin_user)
 
     # END OF HAPPY PATH
 
@@ -82,35 +82,33 @@ def test_connector_permissions(reset: None) -> None:
     assert valid_connector.id is not None
 
     # Verify the created connector
-    created_connector = ConnectorManager.get_connector(
+    created_connector = ConnectorManager.get(
         valid_connector.id, user_performing_action=curator
     )
     assert created_connector.name == valid_connector.name
     assert created_connector.source == valid_connector.source
 
     # Verify that the connector can be found in the list of all connectors
-    all_connectors = ConnectorManager.get_all_connectors(user_performing_action=curator)
+    all_connectors = ConnectorManager.get_all(user_performing_action=curator)
     assert any(conn.id == valid_connector.id for conn in all_connectors)
 
     # Test editing the connector
     valid_connector.name = "updated_valid_connector"
-    assert ConnectorManager.edit_connector(
-        valid_connector, user_performing_action=curator
-    )
+    assert ConnectorManager.edit(valid_connector, user_performing_action=curator)
 
     # Verify the edit
-    updated_connector = ConnectorManager.get_connector(
+    updated_connector = ConnectorManager.get(
         valid_connector.id, user_performing_action=curator
     )
     assert updated_connector.name == "updated_valid_connector"
 
     # Test deleting the connector
-    assert ConnectorManager.delete_connector(
+    assert ConnectorManager.delete(
         connector=valid_connector, user_performing_action=curator
     )
 
     # Verify the deletion
-    all_connectors_after_delete = ConnectorManager.get_all_connectors(
+    all_connectors_after_delete = ConnectorManager.get_all(
         user_performing_action=curator
     )
     assert all(conn.id != valid_connector.id for conn in all_connectors_after_delete)

@@ -62,7 +62,7 @@ class CredentialManager:
         )
 
     @staticmethod
-    def edit_credential(
+    def edit(
         credential: TestCredential,
         user_performing_action: TestUser | None = None,
     ) -> bool:
@@ -80,7 +80,7 @@ class CredentialManager:
         return response.ok
 
     @staticmethod
-    def delete_credential(
+    def delete(
         credential: TestCredential,
         user_performing_action: TestUser | None = None,
     ) -> bool:
@@ -93,7 +93,7 @@ class CredentialManager:
         return response.ok
 
     @staticmethod
-    def get_credential(
+    def get(
         credential_id: int, user_performing_action: TestUser | None = None
     ) -> CredentialSnapshot:
         response = requests.get(
@@ -106,7 +106,7 @@ class CredentialManager:
         return CredentialSnapshot(**response.json())
 
     @staticmethod
-    def get_all_credentials(
+    def get_all(
         user_performing_action: TestUser | None = None,
     ) -> list[CredentialSnapshot]:
         response = requests.get(
@@ -119,11 +119,11 @@ class CredentialManager:
         return [CredentialSnapshot(**cred) for cred in response.json()]
 
     @staticmethod
-    def verify_credential(
+    def verify(
         test_credential: TestCredential,
         user_performing_action: TestUser | None = None,
     ) -> bool:
-        all_credentials = CredentialManager.get_all_credentials(user_performing_action)
+        all_credentials = CredentialManager.get_all(user_performing_action)
         for credential in all_credentials:
             if credential.id == test_credential.id:
                 return (

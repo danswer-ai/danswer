@@ -16,7 +16,7 @@ def test_send_message_simple_with_history(reset: None) -> None:
     admin_user: TestUser = UserManager.create(name="admin_user")
 
     # create connectors
-    cc_pair_1: TestCCPair = CCPairManager.create_pair_from_scratch(
+    cc_pair_1: TestCCPair = CCPairManager.create_from_scratch(
         user_performing_action=admin_user,
     )
     admin_user = TestDocumentManager.add_api_key_to_user(

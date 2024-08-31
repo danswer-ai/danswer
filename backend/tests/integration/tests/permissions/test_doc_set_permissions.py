@@ -23,10 +23,10 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    UserGroupManager.wait_for_sync(admin_user)
 
     # Setting the curator as a curator for the first user group
-    assert UserGroupManager.set_curator(
+    assert UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -39,17 +39,17 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    UserGroupManager.wait_for_sync(admin_user)
 
     # Admin creates a cc_pair
-    private_cc_pair = CCPairManager.create_pair_from_scratch(
+    private_cc_pair = CCPairManager.create_from_scratch(
         is_public=False,
         source=DocumentSource.INGESTION_API,
         user_performing_action=admin_user,
     )
 
     # Admin creates a public cc_pair
-    public_cc_pair = CCPairManager.create_pair_from_scratch(
+    public_cc_pair = CCPairManager.create_from_scratch(
         is_public=True,
         source=DocumentSource.INGESTION_API,
         user_performing_action=admin_user,
@@ -115,15 +115,13 @@ def test_doc_set_permissions_setup(reset: None) -> None:
     )
 
     # Verify that the valid document set was created
-    assert DocumentSetManager.verify_document_set(
+    assert DocumentSetManager.verify(
         document_set=valid_doc_set,
         user_performing_action=admin_user,
     )
 
     # Verify that only one document set exists
-    all_doc_sets = DocumentSetManager.get_all_document_sets(
-        user_performing_action=admin_user
-    )
+    all_doc_sets = DocumentSetManager.get_all(user_performing_action=admin_user)
     assert len(all_doc_sets) == 1
 
     # Add the private_cc_pair to the doc set on our end for later comparison
@@ -131,19 +129,19 @@ def test_doc_set_permissions_setup(reset: None) -> None:
 
     # Confirm the curator can't add the private_cc_pair to the doc set
     with pytest.raises(HTTPError):
-        DocumentSetManager.edit_document_set(
+        DocumentSetManager.edit(
             document_set=valid_doc_set,
             user_performing_action=curator,
         )
     # Confirm the admin can't add the private_cc_pair to the doc set
     with pytest.raises(HTTPError):
-        DocumentSetManager.edit_document_set(
+        DocumentSetManager.edit(
             document_set=valid_doc_set,
             user_performing_action=admin_user,
         )
 
     # Verify the document set has not been updated in the db
-    assert not DocumentSetManager.verify_document_set(
+    assert not DocumentSetManager.verify(
         document_set=valid_doc_set,
         user_performing_action=admin_user,
     )
@@ -152,24 +150,24 @@ def test_doc_set_permissions_setup(reset: None) -> None:
     user_group_1.cc_pair_ids.append(private_cc_pair.id)
 
     # Admin adds the cc_pair to the group the curator curates
-    UserGroupManager.edit_user_group(
+    UserGroupManager.edit(
         user_group=user_group_1,
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
-    assert UserGroupManager.verify_user_group(
+    UserGroupManager.wait_for_sync(admin_user)
+    assert UserGroupManager.verify(
         user_group=user_group_1,
         user_performing_action=admin_user,
     )
 
     # Confirm the curator can now add the cc_pair to the doc set
-    assert DocumentSetManager.edit_document_set(
+    assert DocumentSetManager.edit(
         document_set=valid_doc_set,
         user_performing_action=curator,
     )
-    DocumentSetManager.wait_for_document_set_sync(admin_user)
+    DocumentSetManager.wait_for_sync(admin_user)
     # Verify the updated document set
-    assert DocumentSetManager.verify_document_set(
+    assert DocumentSetManager.verify(
         document_set=valid_doc_set,
         user_performing_action=admin_user,
     )

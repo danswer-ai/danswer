@@ -58,10 +58,10 @@ def test_user_role_setting_permissions(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    UserGroupManager.wait_for_sync(admin_user)
 
     # This should fail because the curator is not in the user group
-    assert not UserGroupManager.set_curator(
+    assert not UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -69,13 +69,11 @@ def test_user_role_setting_permissions(reset: None) -> None:
 
     # Adding the curator to the user group
     user_group_1.user_ids = [curator.id]
-    assert UserGroupManager.edit_user_group(
-        user_group_1, user_performing_action=admin_user
-    )
-    UserGroupManager.wait_for_user_groups_to_sync(admin_user)
+    assert UserGroupManager.edit(user_group_1, user_performing_action=admin_user)
+    UserGroupManager.wait_for_sync(admin_user)
 
     # This should work because the curator is in the user group
-    assert UserGroupManager.set_curator(
+    assert UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
