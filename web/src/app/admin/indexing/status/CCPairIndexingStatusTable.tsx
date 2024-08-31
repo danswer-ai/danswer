@@ -14,6 +14,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -22,6 +23,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 const NUM_IN_PAGE = 20;
+
+function getOverallTotalDocs(
+  ccPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[]
+): number | void {
+  let totalDocs = 0;
+  ccPairsIndexingStatuses.forEach(
+    (ccPair: ConnectorIndexingStatus<any, any>) => {
+      totalDocs += ccPair.docs_indexed || 0;
+    }
+  );
+  return totalDocs;
+}
 
 function CCPairIndexingStatusDisplay({
   ccPairsIndexingStatus,
@@ -123,17 +136,16 @@ export function CCPairIndexingStatusTable({
           <TableBody>
             {ccPairsIndexingStatusesForPage.map((ccPairsIndexingStatus) => {
               return (
-                <TableRow key={ccPairsIndexingStatus.cc_pair_id}>
+                <ClickableTableRow
+                  key={ccPairsIndexingStatus.cc_pair_id}
+                  url={`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`}
+                >
                   <TableCell>
                     <div className="flex items-center gap-2 my-auto">
-                      <a
-                        href={`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`}
-                      >
-                        <Button variant="ghost" size="icon">
-                          <Pencil size={16} />
-                        </Button>
-                      </a>
-
+                      {/* dictates the padding of the whole row */}
+                      <div className="p-4">
+                        <Pencil size={16} />
+                      </div>
                       <div className="whitespace-normal break-all max-w-3xl">
                         <ConnectorTitle
                           connector={ccPairsIndexingStatus.connector}
@@ -159,9 +171,17 @@ export function CCPairIndexingStatusTable({
                     {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
                   </TableCell>
                   <TableCell>{ccPairsIndexingStatus.docs_indexed}</TableCell>
-                </TableRow>
+                </ClickableTableRow>
               );
             })}
+            <TableRow>
+              <TableCell>
+                <div>
+                  Total document indexed:{" "}
+                  {getOverallTotalDocs(ccPairsIndexingStatusesForPage) || 0}
+                </div>
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
         {ccPairsIndexingStatuses.length > NUM_IN_PAGE && (
