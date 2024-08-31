@@ -203,8 +203,8 @@ export function CCPairIndexingStatusTable({
               />
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
