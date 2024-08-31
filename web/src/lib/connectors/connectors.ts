@@ -273,6 +273,7 @@ Selecting the "Index Recursively" checkbox will index the single page's children
         query: "Enter your Jira Service Management domain url:",
         label: "Jira Service Management Domain Url",
         name: "jira_service_management_domain_url",
+        description: "This should be in the format of https://{your_domain_name}.atlassian.net",
         optional: false,
       },
       {
