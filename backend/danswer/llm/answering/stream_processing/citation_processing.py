@@ -21,7 +21,7 @@ def in_code_block(llm_text: str) -> bool:
 
 
 def extract_citations_from_stream(
-    tokens: Iterator[str],
+    tokens: Iterator[MessageChunkWithStopReason],
     context_docs: list[LlmDoc],
     doc_id_to_rank_map: DocumentIdOrderMapping,
     stop_stream: str | None = STOP_STREAM_PAT,
@@ -78,18 +78,18 @@ def extract_citations_from_stream(
             if next_hold == stop_stream[: len(next_hold)]:
                 hold = next_hold
                 continue
-            token = next_hold
+            token = MessageChunkWithStopReason(
+                content=next_hold, stop_reason=stop_reason
+            )
             hold = ""
         else:
             token = raw_token
 
-        if isinstance(token, MessageChunkWithStopReason):
-            raw_out += token.content
-
-            content = token.content
-            curr_segment += content
-            llm_out += content
-            stop_reason = token.stop_reason
+        raw_out += token.content
+        content = token.content
+        curr_segment += content
+        llm_out += content
+        stop_reason = token.stop_reason
 
         citation_pattern = r"\[(\d+)\]"
 
@@ -212,7 +212,9 @@ def extract_citations_from_stream(
 def build_citation_processor(
     context_docs: list[LlmDoc], doc_id_to_rank_map: DocumentIdOrderMapping
 ) -> StreamProcessor:
-    def stream_processor(tokens: Iterator[str]) -> AnswerQuestionStreamReturn:
+    def stream_processor(
+        tokens: Iterator[MessageChunkWithStopReason],
+    ) -> AnswerQuestionStreamReturn:
         yield from extract_citations_from_stream(
             tokens=tokens,
             context_docs=context_docs,
