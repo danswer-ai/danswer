@@ -6,7 +6,7 @@ import {
   AuthTypeMetadata,
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
-import { EmailPasswordForm } from "../login/EmailPasswordForm";
+import { SignupForms } from "./SignupForms";
 import Link from "next/link";
 
 import Logo from "../../../../public/logo-brand.png";
@@ -77,8 +77,7 @@ const Page = async () => {
               </div>
 
               <div className="py-8">
-                <EmailPasswordForm
-                  isSignup
+                <SignupForms
                   shouldVerify={authTypeMetadata?.requiresVerification}
                 />
               </div>
