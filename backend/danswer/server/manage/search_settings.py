@@ -52,7 +52,6 @@ def set_new_search_settings(
     if search_settings_new.provider_type is not None:
         if search_settings_new.provider_type == EmbeddingProvider.LITELLM:
             # Update or create LiteLLM provider
-            # This is a placeholder and should be replaced with actual implementation
             upsert_cloud_embedding_provider(
                 db_session,
                 provider=CloudEmbeddingProviderCreationRequest(
