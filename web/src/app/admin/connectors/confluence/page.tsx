@@ -23,6 +23,7 @@ import { usePublicCredentials } from "@/lib/hooks";
 import { Divider, Text, Title, Button } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const extractSpaceFromCloudUrl = (wikiUrl: string): string => {
   const parsedUrl = new URL(wikiUrl);
@@ -323,6 +324,7 @@ export default function Page() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
 
       <AdminPageTitle icon={<ConfluenceIcon size={32} />} title="Confluence" />
 

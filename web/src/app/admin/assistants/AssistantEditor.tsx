@@ -738,7 +738,7 @@ export function AssistantEditor({
                   defaultHidden
                 >
                   <>
-                    <div className="mb-4">
+                    <div className="pb-4">
                       <SubLabel>
                         Starter Messages help guide users to use this Assistant.
                         They are shown to the user as clickable options when

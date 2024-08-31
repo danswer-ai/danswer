@@ -116,10 +116,8 @@ export const DocumentSetCreationForm = ({
               autoCompleteDisabled={true}
             />
 
-            <Divider />
-
-            <h2 className="mb-1 font-medium">Pick your connectors:</h2>
-            <p className="mb-3 text-xs text-subtle">
+            <h2 className="pt-6 pb-1 font-medium">Pick your connectors:</h2>
+            <p className="pb-3 text-xs text-subtle">
               All documents indexed by the selected connectors will be a part of
               this document set.
             </p>
@@ -141,7 +139,7 @@ export const DocumentSetCreationForm = ({
                           }
                         }}
                         variant={isSelected ? "default" : "outline"}
-                        className={`cursor-pointer px-3 py-1.5 text-sm ${
+                        className={`cursor-pointer py-1.5  ${
                           isSelected ? "text-white" : ""
                         }`}
                       >

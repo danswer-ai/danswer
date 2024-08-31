@@ -55,7 +55,7 @@ export function CustomAnalyticsUpdateForm() {
           setSecretKey("");
         }}
       >
-        <div className="mb-4">
+        <div className="pb-4">
           <Label>Script</Label>
           <Text className="mb-3">
             Specify the Javascript that should run on page load in order to

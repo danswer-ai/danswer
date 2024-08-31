@@ -18,6 +18,8 @@ import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBad
 import { Connector, DocumentSet } from "@/lib/types";
 import { SourceIcon } from "@/components/SourceIcon";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const DocumentDisplay = ({
   document,
@@ -31,7 +33,7 @@ const DocumentDisplay = ({
   return (
     <div
       key={document.document_id}
-      className="mb-3 text-sm border-b border-border"
+      className="text-sm border-b border-border py-8"
     >
       <div className="relative flex">
         <a
@@ -49,8 +51,8 @@ const DocumentDisplay = ({
           </p>
         </a>
       </div>
-      <div className="flex flex-wrap mt-1 text-xs gap-x-2">
-        <div className="px-1 py-0.5 bg-hover rounded flex">
+      <div className="flex items-center flex-wrap pt-2 text-xs gap-x-2">
+        <Badge variant="outline" className="px-3 gap-1.5 max-h-[30px]">
           <p className="my-auto mr-1">Boost:</p>
           <ScoreSection
             documentId={document.document_id}
@@ -59,8 +61,8 @@ const DocumentDisplay = ({
             refresh={refresh}
             consistentWidth={false}
           />
-        </div>
-        <div
+        </Badge>
+        <Badge
           onClick={async () => {
             const response = await updateHiddenStatus(
               document.document_id,
@@ -77,7 +79,8 @@ const DocumentDisplay = ({
               });
             }
           }}
-          className="px-1 py-0.5 bg-hover hover:bg-hover-light rounded flex cursor-pointer select-none"
+          variant="outline"
+          className="py-1.5 px-3 gap-1.5"
         >
           <div className="my-auto">
             {document.hidden ? (
@@ -86,17 +89,15 @@ const DocumentDisplay = ({
               "Visible"
             )}
           </div>
-          <div className="my-auto ml-1">
-            <CustomCheckbox checked={!document.hidden} />
-          </div>
-        </div>
+          <CustomCheckbox checked={!document.hidden} />
+        </Badge>
       </div>
       {document.updated_at && (
-        <div className="mt-2">
+        <div className="pt-2">
           <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
         </div>
       )}
-      <p className="pt-2 pb-3 pl-1 break-words">
+      <p className="pt-6 pb-3 pl-1 break-words">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
     </div>
@@ -160,7 +161,7 @@ export function Explorer({
   return (
     <div>
       {popup}
-      <div className="justify-center py-2">
+      <div className="justify-center">
         <div className="relative">
           <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2" />
           <Input
@@ -192,7 +193,7 @@ export function Explorer({
         </div>
       </div>
       {results.length > 0 && (
-        <div className="mt-3">
+        <div className="">
           {results.map((document) => {
             return (
               <DocumentDisplay

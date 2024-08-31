@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 const NUM_IN_PAGE = 8;
 
@@ -42,7 +43,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
             <div className="overflow-y-auto mb-6">
               <div className="mb-6">
                 {!copyClicked ? (
-                  <div
+                  <Button
                     onClick={() => {
                       navigator.clipboard.writeText(
                         indexAttemptToDisplayTraceFor.full_exception_trace!
@@ -50,19 +51,15 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                       setCopyClicked(true);
                       setTimeout(() => setCopyClicked(false), 2000);
                     }}
-                    className="flex w-fit cursor-pointer hover:bg-hover-light p-2 border-border border rounded"
                   >
                     Copy full trace
-                    <CopyIcon className="ml-2 my-auto" />
-                  </div>
+                    <CopyIcon />
+                  </Button>
                 ) : (
-                  <div className="flex w-fit hover:bg-hover-light p-2 border-border border rounded cursor-default">
+                  <Button>
                     Copied to clipboard
-                    <CheckmarkIcon
-                      className="my-auto ml-2 flex flex-shrink-0 text-success"
-                      size={16}
-                    />
-                  </div>
+                    <CheckmarkIcon size={16} />
+                  </Button>
                 )}
               </div>
               <div className="whitespace-pre-wrap">

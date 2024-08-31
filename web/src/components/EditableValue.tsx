@@ -40,7 +40,7 @@ export function EditableValue({
               onSubmit(initialValue);
             }
           }}
-          className="w-12 h-8"
+          className="w-12 h-6 text-xs px-2"
         />
         <Button
           onClick={async () => {
@@ -52,7 +52,7 @@ export function EditableValue({
           variant="ghost"
           size="smallIcon"
         >
-          <CheckmarkIcon size={16} className="text-green-700" />
+          <CheckmarkIcon size={14} className="text-green-700" />
         </Button>
       </div>
     );
@@ -61,7 +61,7 @@ export function EditableValue({
   return (
     <div className="flex items-center gap-2">
       <span>{initialValue || emptyDisplay}</span>
-      <Button onClick={() => setIsOpen(true)} variant="ghost" size="icon">
+      <Button onClick={() => setIsOpen(true)} variant="ghost" size="smallIcon">
         <Pencil size={14} />
       </Button>
     </div>

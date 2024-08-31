@@ -10,7 +10,7 @@ import {
 import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
 import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
-import { FiPlus, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label as ShadcnLabel } from "@/components/ui/label";
@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Plus } from "lucide-react";
 
 export function SectionHeader({
   children,
@@ -87,7 +88,7 @@ export function TextFormField({
       <div className="grid gap-0.5 leading-none">
         <ShadcnLabel
           htmlFor={label}
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed"
         >
           {label}
         </ShadcnLabel>
@@ -129,7 +130,7 @@ interface BooleanFormFieldProps {
   name: string;
   label: string;
   subtext?: string | JSX.Element;
-  onChange?: (e: React.ChangeEvent<HTMLButtonElement>) => void;
+  onChange?: (checked: boolean) => void;
 }
 
 export const BooleanFormField = ({
@@ -138,19 +139,30 @@ export const BooleanFormField = ({
   subtext,
   onChange,
 }: BooleanFormFieldProps) => {
+  const [field, meta, helpers] = useField({ name, type: "checkbox" });
+
+  const handleCheckedChange = (checked: boolean) => {
+    helpers.setValue(checked);
+    if (onChange) {
+      onChange(checked);
+    }
+  };
+
   return (
-    <div className="mb-4">
-      <div className="flex text-sm mb-4 gap-3">
+    <div className="pb-4 pt-2">
+      <div className="flex text-sm pb-4 gap-3">
         <Field name={name}>
           {({ field }: FieldProps) => (
             <Checkbox
               {...field}
               name={name}
               id={label}
-              {...(onChange ? { onChange } : {})}
+              onCheckedChange={handleCheckedChange}
+              checked={field.checked}
             />
           )}
         </Field>
+
         <div className="grid gap-1.5 leading-none">
           <ShadcnLabel htmlFor={label}>{label}</ShadcnLabel>
           {subtext && (
@@ -184,7 +196,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
   type,
 }: TextArrayFieldProps<T>) {
   return (
-    <div className="mb-4">
+    <div className="pb-4">
       <Label>{label}</Label>
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
@@ -236,7 +248,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
               className="mt-3"
               type="button"
             >
-              <FiPlus className="mr-1.5" /> Add New
+              <Plus size={16} /> Add New
             </Button>
           </div>
         )}
@@ -272,7 +284,153 @@ interface SelectorFormFieldProps {
   onSelect?: (selected: string | number | null) => void;
 }
 
+/* export function SelectorFormField({
+  name,
+  label,
+  options,
+  subtext,
+  includeDefault = false,
+  side = "bottom",
+  maxHeight,
+  onSelect,
+}: SelectorFormFieldProps) {
+  const [field] = useField<string>(name);
+  const { setFieldValue } = useFormikContext();
+
+  const selectedOption = options.find(
+    (option) => String(option.value) === field.value
+  );
+
+  return (
+    <div className="pb-4">
+      {label && (
+        <ShadcnLabel
+          htmlFor={label}
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed"
+        >
+          {label}
+        </ShadcnLabel>
+      )}
+      {subtext && <SubLabel>{subtext}</SubLabel>}
+
+      <div className="mt-2">
+        <Select
+          onValueChange={
+            onSelect || ((selected) => setFieldValue(name, selected))
+          }
+          defaultValue={includeDefault ? "" : field.value}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select an option">
+              {selectedOption ? selectedOption.name : "Select an option"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {includeDefault && <SelectItem value="">Default Option</SelectItem>}
+            {options.map((option) => (
+              <SelectItem
+                key={String(option.value)}
+                value={String(option.value)}
+              >
+                {option.description ? (
+                  <div>
+                    <p>{option.name}</p>
+                    <p className="text-xs text-subtle group-hover:text-inverted group-focus:text-inverted">
+                      {option.description}
+                    </p>
+                  </div>
+                ) : (
+                  <>{option.name}</>
+                )}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <ErrorMessage
+        name={name}
+        component="div"
+        className="text-red-500 text-sm mt-1"
+      />
+    </div>
+  );
+} */
 export function SelectorFormField({
+  name,
+  label,
+  options,
+  subtext,
+  includeDefault = false,
+  side = "bottom",
+  maxHeight,
+  onSelect,
+}: SelectorFormFieldProps) {
+  const [field] = useField<string>(name);
+  const { setFieldValue } = useFormikContext();
+
+  const selectedOption = options.find(
+    (option) => String(option.value) === field.value
+  );
+
+  return (
+    <div className="pb-4">
+      {label && (
+        <ShadcnLabel
+          htmlFor={label}
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed"
+        >
+          {label}
+        </ShadcnLabel>
+      )}
+      {subtext && <SubLabel>{subtext}</SubLabel>}
+
+      <div className="mt-2">
+        <Select
+          onValueChange={
+            onSelect || ((selected) => setFieldValue(name, selected))
+          }
+          value={field.value || (includeDefault ? "" : undefined)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select an option">
+              {selectedOption ? selectedOption.name : "Select an option"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {includeDefault && (
+              <SelectItem value="default">Default Option</SelectItem>
+            )}
+            {options.map((option) => (
+              <SelectItem
+                key={String(option.value)}
+                value={String(option.value)}
+              >
+                {option.description ? (
+                  <div>
+                    <p>{option.name}</p>
+                    <p className="text-xs text-subtle group-hover:text-inverted group-focus:text-inverted">
+                      {option.description}
+                    </p>
+                  </div>
+                ) : (
+                  <>{option.name}</>
+                )}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <ErrorMessage
+        name={name}
+        component="div"
+        className="text-red-500 text-sm mt-1"
+      />
+    </div>
+  );
+}
+/* export function SelectorFormField({
   name,
   label,
   options,
@@ -291,31 +449,14 @@ export function SelectorFormField({
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <div className="mt-2">
-        <Select
-          value={field.value || ""}
-          onValueChange={(selected) => {
-            if (onSelect) {
-              onSelect(selected);
-            } else {
-              setFieldValue(name, selected);
-            }
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select an option" />
-          </SelectTrigger>
-          <SelectContent>
-            {includeDefault && <SelectItem value="default">Default</SelectItem>}
-            {options.map((option) => (
-              <SelectItem
-                key={String(option.value)}
-                value={String(option.value)}
-              >
-                {option.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <DefaultDropdown
+          options={options}
+          selected={field.value}
+          onSelect={onSelect || ((selected) => setFieldValue(name, selected))}
+          includeDefault={includeDefault}
+          side={side}
+          maxHeight={maxHeight}
+        />
       </div>
 
       <ErrorMessage
@@ -326,3 +467,4 @@ export function SelectorFormField({
     </div>
   );
 }
+ */

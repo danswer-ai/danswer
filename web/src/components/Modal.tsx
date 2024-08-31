@@ -49,7 +49,7 @@ export function Modal({
           )}
           <>
             {title && (
-              <div className="mb-4">
+              <div className="pb-4">
                 <h2
                   className={"my-auto font-bold " + (titleSize || "text-2xl")}
                 >

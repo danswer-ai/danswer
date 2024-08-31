@@ -27,6 +27,7 @@ import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Divider, Text, Title } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 interface GoogleDriveConnectorManagementProps {
   googleDrivePublicCredential?: Credential<GoogleDriveCredentialJson>;
@@ -417,6 +418,7 @@ export default function Page() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
 
       <AdminPageTitle
         icon={<GoogleDriveIcon size={32} />}

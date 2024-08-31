@@ -1,5 +1,6 @@
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
+import { Badge } from "@/components/ui/badge";
 
 interface ConnectorEditorProps {
   selectedCCPairIds: number[];
@@ -21,20 +22,10 @@ export const ConnectorEditor = ({
           const ind = selectedCCPairIds.indexOf(ccPair.cc_pair_id);
           let isSelected = ind !== -1;
           return (
-            <div
+            <Badge
               key={`${ccPair.connector.id}-${ccPair.credential.id}`}
-              className={
-                `
-          px-3 
-          py-1
-          rounded-regular 
-          border
-          border-border 
-          w-fit 
-          flex 
-          cursor-pointer ` +
-                (isSelected ? " bg-hover" : " hover:bg-hover-light")
-              }
+              className="cursor-pointer"
+              variant="outline"
               onClick={() => {
                 if (isSelected) {
                   setSetCCPairIds(
@@ -47,16 +38,14 @@ export const ConnectorEditor = ({
                 }
               }}
             >
-              <div className="my-auto">
-                <ConnectorTitle
-                  connector={ccPair.connector}
-                  ccPairId={ccPair.cc_pair_id}
-                  ccPairName={ccPair.name}
-                  isLink={false}
-                  showMetadata={false}
-                />
-              </div>
-            </div>
+              <ConnectorTitle
+                connector={ccPair.connector}
+                ccPairId={ccPair.cc_pair_id}
+                ccPairName={ccPair.name}
+                isLink={false}
+                showMetadata={false}
+              />
+            </Badge>
           );
         })}
     </div>

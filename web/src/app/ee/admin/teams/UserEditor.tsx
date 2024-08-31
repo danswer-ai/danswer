@@ -37,15 +37,6 @@ export const UserEditor = ({
                   selectedUserIds.filter((userId) => userId !== selectedUser.id)
                 );
               }}
-              /*  className={`
-                  flex 
-                  rounded-regular 
-                  px-2 
-                  py-1 
-                  border 
-                  border-border 
-                  hover:bg-hover-light 
-                  cursor-pointer`} */
               variant="outline"
             >
               {selectedUser.email}{" "}

@@ -25,6 +25,7 @@ import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const OCIMain = () => {
   const { popup, setPopup } = usePopup();
@@ -266,6 +267,7 @@ export default function Page() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
       <AdminPageTitle
         icon={<OCIStorageIcon size={32} />}
         title="Oracle Cloud Infrastructure"

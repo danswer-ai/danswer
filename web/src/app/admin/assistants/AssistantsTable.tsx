@@ -11,6 +11,8 @@ import { deleteAssistant, assistantComparator } from "./lib";
 import { TrashIcon } from "@/components/icons/icons";
 import { Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
   if (assistant.default_assistant) {
@@ -117,7 +119,7 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                     key={assistant.id}
                     assistant={assistant}
                   />,
-                  <div
+                  <Badge
                     key="is_visible"
                     onClick={async () => {
                       const response = await fetch(
@@ -141,7 +143,8 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                         });
                       }
                     }}
-                    className="px-1 py-0.5 hover:bg-hover-light rounded flex cursor-pointer select-none w-fit"
+                    variant="outline"
+                    className="py-1.5 px-3 w-[84px]"
                   >
                     <div className="my-auto w-12">
                       {!assistant.is_visible ? (
@@ -150,10 +153,8 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                         "Visible"
                       )}
                     </div>
-                    <div className="ml-1 my-auto">
-                      <CustomCheckbox checked={assistant.is_visible} />
-                    </div>
-                  </div>,
+                    <Checkbox checked={assistant.is_visible} />
+                  </Badge>,
                   <div key="edit" className="flex">
                     <div className="mx-auto my-auto">
                       {!assistant.default_assistant ? (

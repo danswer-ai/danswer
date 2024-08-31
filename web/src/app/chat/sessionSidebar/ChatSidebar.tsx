@@ -80,7 +80,6 @@ export const ChatSidebar = ({
         id="chat-sidebar"
       >
         <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
-          {/* <Image src={EnmeddLogo} alt="enmedd-logo" height={40} /> */}
           <div className="flex">
             {enterpriseSettings && enterpriseSettings.application_name ? (
               <div className="flex items-center gap-3">
@@ -102,11 +101,14 @@ export const ChatSidebar = ({
             )}
           </div>
 
-          <div className="lg:hidden">
-            <Button variant="ghost" size="icon" onClick={toggleSideBar}>
-              <PanelLeftClose size={24} />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSideBar}
+            className="lg:hidden"
+          >
+            <PanelLeftClose size={24} />
+          </Button>
         </div>
 
         <div className="h-full overflow-auto">

@@ -25,6 +25,7 @@ import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Text, Title, Button } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -281,6 +282,7 @@ export default function Page() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
 
       <AdminPageTitle icon={<SharepointIcon size={32} />} title="Sharepoint" />
 
