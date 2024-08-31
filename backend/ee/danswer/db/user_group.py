@@ -37,10 +37,25 @@ def fetch_user_group(db_session: Session, user_group_id: int) -> UserGroup | Non
 
 
 def fetch_user_groups(
-    db_session: Session, only_current: bool = True
+    db_session: Session, only_up_to_date: bool = True
 ) -> Sequence[UserGroup]:
+    """
+    Fetches user groups from the database.
+
+    This function retrieves a sequence of `UserGroup` objects from the database.
+    If `only_up_to_date` is set to `True`, it filters the user groups to return only those
+    that are marked as up-to-date (`is_up_to_date` is `True`).
+
+    Args:
+        db_session (Session): The SQLAlchemy session used to query the database.
+        only_up_to_date (bool, optional): Flag to determine whether to filter the results
+            to include only up to date user groups. Defaults to `True`.
+
+    Returns:
+        Sequence[UserGroup]: A sequence of `UserGroup` objects matching the query criteria.
+    """
     stmt = select(UserGroup)
-    if only_current:
+    if only_up_to_date:
         stmt = stmt.where(UserGroup.is_up_to_date == True)  # noqa: E712
     return db_session.scalars(stmt).all()
 

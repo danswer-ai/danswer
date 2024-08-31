@@ -1,3 +1,4 @@
+# These are helper objects for tracking the keys we need to write in redis
 import time
 from abc import ABC
 from abc import abstractmethod
@@ -244,7 +245,7 @@ class RedisConnector(RedisObjectHelper):
             return None
 
         stmt = select_documents_for_connector_credential_pair_by_needs_sync(
-            cc_pair.connector_id, cc_pair.credential_id, db_session
+            cc_pair.connector_id, cc_pair.credential_id
         )
         for doc in db_session.scalars(stmt).yield_per(1):
             current_time = time.time()

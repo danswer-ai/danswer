@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import Any
 from typing import cast
 
+import redis
 from celery import Celery
 from celery import signals
 from celery import Task
@@ -55,6 +56,7 @@ from danswer.db.document_set import mark_document_set_as_synced
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.models import DocumentSet
+from danswer.db.models import UserGroup
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
@@ -202,6 +204,129 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
             raise e
 
 
+def try_generate_stale_document_sync_tasks(
+    db_session: Session, r: Redis, lock_beat: redis.lock.Lock
+) -> int:
+    # the fence is up, do nothing
+    if r.exists(RedisConnector.get_fence_key()):
+        return 0
+
+    r.delete(RedisConnector.get_taskset_key())  # delete the taskset
+
+    # add tasks to celery and build up the task set to monitor in redis
+    stale_doc_count = count_documents_by_needs_sync(db_session)
+    if stale_doc_count == 0:
+        return 0
+
+    task_logger.info(
+        f"Stale documents found (at least {stale_doc_count}). Generating sync tasks by cc pair."
+    )
+
+    # rkuo: we could technically sync all stale docs in one big pass.
+    # but I feel it's more understandable to group the docs by cc_pair
+    total_tasks_generated = 0
+    cc_pairs = get_connector_credential_pairs(db_session)
+    for cc_pair in cc_pairs:
+        rc = RedisConnector(cc_pair.id)
+        tasks_generated = rc.generate_tasks(celery_app, db_session, r, lock_beat)
+
+        if not tasks_generated:
+            continue
+
+        if tasks_generated == 0:
+            continue
+
+        task_logger.info(
+            f"RedisConnector.generate_tasks finished. "
+            f"cc_pair_id={cc_pair.id} tasks_generated={tasks_generated}"
+        )
+
+        total_tasks_generated += tasks_generated
+
+    task_logger.info(
+        f"All per connector generate_tasks finished. total_tasks_generated={total_tasks_generated}"
+    )
+
+    r.set(RedisConnector.get_fence_key(), total_tasks_generated)
+    return total_tasks_generated
+
+
+def try_generate_document_set_sync_tasks(
+    document_set: DocumentSet, db_session: Session, r: Redis, lock_beat: redis.lock.Lock
+) -> int:
+    lock_beat.reacquire()
+
+    rds = RedisDocumentSet(document_set.id)
+
+    # don't generate document set sync tasks if tasks are still pending
+    if r.exists(rds.fence_key):
+        return 0
+
+    # don't generate sync tasks if we're up to date
+    if document_set.is_up_to_date:
+        return 0
+
+    # add tasks to celery and build up the task set to monitor in redis
+    r.delete(rds.taskset_key)
+
+    task_logger.info(
+        f"RedisDocumentSet.generate_tasks starting. document_set_id={document_set.id}"
+    )
+
+    # Add all documents that need to be updated into the queue
+    tasks_generated = rds.generate_tasks(celery_app, db_session, r, lock_beat)
+    if not tasks_generated:
+        return 0
+
+    if tasks_generated == 0:
+        return 0
+
+    task_logger.info(
+        f"RedisDocumentSet.generate_tasks finished. "
+        f"document_set_id={document_set.id} tasks_generated={tasks_generated}"
+    )
+
+    # set this only after all tasks have been added
+    r.set(rds.fence_key, tasks_generated)
+    return tasks_generated
+
+
+def try_generate_user_group_sync_tasks(
+    usergroup: UserGroup, db_session: Session, r: Redis, lock_beat: redis.lock.Lock
+) -> int:
+    lock_beat.reacquire()
+
+    rug = RedisUserGroup(usergroup.id)
+
+    # don't generate sync tasks if tasks are still pending
+    if r.exists(rug.fence_key):
+        return 0
+
+    if usergroup.is_up_to_date:
+        return 0
+
+    # add tasks to celery and build up the task set to monitor in redis
+    r.delete(rug.taskset_key)
+
+    # Add all documents that need to be updated into the queue
+    task_logger.info(f"generate_tasks starting. usergroup_id={usergroup.id}")
+    tasks_generated = rug.generate_tasks(celery_app, db_session, r, lock_beat)
+    if not tasks_generated:
+        return 0
+
+    if tasks_generated == 0:
+        return 0
+
+    task_logger.info(
+        f"generate_tasks finished. "
+        f"usergroup_id={usergroup.id} tasks_generated={tasks_generated}"
+    )
+
+    # set this only after all tasks have been added
+    r.set(rug.fence_key, tasks_generated)
+    return tasks_generated
+
+
 #####
 # Periodic Tasks
 #####
@@ -226,71 +351,33 @@ def check_for_vespa_sync_task() -> None:
             return
 
         with Session(get_sqlalchemy_engine()) as db_session:
-            # only generate stale doc sync tasks if the fence is down
-            if not r.exists(RedisConnector.get_fence_key()):
-                r.delete(RedisConnector.get_taskset_key())  # delete the taskset
-                # add tasks to celery and build up the task set to monitor in redis
-                stale_doc_count = count_documents_by_needs_sync(db_session)
-                if stale_doc_count > 0:
-                    task_logger.info(
-                        f"Stale documents found (at least {stale_doc_count}). Generating sync tasks by cc pair."
-                    )
-
-                    total_tasks_generated = 0
-                    cc_pairs = get_connector_credential_pairs(db_session)
-                    for cc_pair in cc_pairs:
-                        rc = RedisConnector(cc_pair.id)
-                        tasks_generated = rc.generate_tasks(
-                            celery_app, db_session, r, lock_beat
-                        )
-                        if tasks_generated and tasks_generated > 0:
-                            task_logger.info(
-                                f"RedisConnector.generate_tasks finished. "
-                                f"cc_pair_id={cc_pair.id} tasks_generated={tasks_generated}"
-                            )
-
-                            total_tasks_generated += tasks_generated
-
-                    task_logger.info(
-                        f"All per connector generate_tasks finished. total_tasks_generated={total_tasks_generated}"
-                    )
-                    r.set(RedisConnector.get_fence_key(), total_tasks_generated)
+            try_generate_stale_document_sync_tasks(db_session, r, lock_beat)
 
             # check if any document sets are not synced
             document_set_info = fetch_document_sets(
                 user_id=None, db_session=db_session, include_outdated=True
             )
             for document_set, _ in document_set_info:
-                lock_beat.reacquire()
-
-                # don't generate sync tasks if we're up to date
-                if document_set.is_up_to_date:
-                    continue
-
-                rds = RedisDocumentSet(document_set.id)
-
-                # don't generate document set sync tasks if tasks are still pending
-                if r.exists(rds.fence_key):
-                    continue
-
-                # add tasks to celery and build up the task set to monitor in redis
-                r.delete(rds.taskset_key)
-
-                # Add all documents that need to be updated into the queue
-                task_logger.info(
-                    f"RedisDocumentSet.generate_tasks starting. document_set_id={document_set.id}"
+                try_generate_document_set_sync_tasks(
+                    document_set, db_session, r, lock_beat
                 )
-                tasks_generated = rds.generate_tasks(
-                    celery_app, db_session, r, lock_beat
+
+            # check if any user groups are not synced
+            try:
+                fetch_user_groups = fetch_versioned_implementation(
+                    "danswer.db.user_group", "fetch_user_groups"
                 )
-                if tasks_generated and tasks_generated > 0:
-                    task_logger.info(
-                        f"RedisDocumentSet.generate_tasks finished. "
-                        f"document_set_id={document_set.id} tasks_generated={tasks_generated}"
+
+                user_groups = fetch_user_groups(
+                    db_session=db_session, only_up_to_date=False
+                )
+                for usergroup in user_groups:
+                    try_generate_user_group_sync_tasks(
+                        usergroup, db_session, r, lock_beat
                     )
-
-                    # set this only after all tasks have been added
-                    r.set(rds.fence_key, tasks_generated)
+            except ModuleNotFoundError:
+                # Always exceptions on the MIT version, which is expected
+                pass
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."
@@ -572,7 +659,7 @@ def celery_task_postrun(
         return
 
 
-def process_connector_taskset(r: Redis, db_session: Session) -> None:
+def monitor_connector_taskset(r: Redis, db_session: Session) -> None:
     fence_value = r.get(RedisConnector.get_fence_key())
     if fence_value is None:
         return
@@ -591,7 +678,7 @@ def process_connector_taskset(r: Redis, db_session: Session) -> None:
         task_logger.info(f"Successfully synced stale documents. count={initial_count}")
 
 
-def process_document_set_taskset(
+def monitor_document_set_taskset(
     key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
@@ -616,13 +703,14 @@ def process_document_set_taskset(
     task_logger.info(
         f"document_set_id={document_set_id} remaining={count} initial={initial_count}"
     )
-    if count == 0:
-        document_set = cast(
-            DocumentSet,
-            get_document_set_by_id(
-                db_session=db_session, document_set_id=document_set_id
-            ),
-        )  # casting since we "know" a document set with this ID exists
+    if count > 0:
+        return
+
+    document_set = cast(
+        DocumentSet,
+        get_document_set_by_id(db_session=db_session, document_set_id=document_set_id),
+    )  # casting since we "know" a document set with this ID exists
+    if document_set:
         if not document_set.connector_credential_pairs:
             # if there are no connectors, then delete the document set.
             delete_document_set(document_set_row=document_set, db_session=db_session)
@@ -635,11 +723,11 @@ def process_document_set_taskset(
                 f"Successfully synced document set with ID: '{document_set_id}'!"
             )
 
-        r.delete(rds.taskset_key)
-        r.delete(rds.fence_key)
+    r.delete(rds.taskset_key)
+    r.delete(rds.fence_key)
 
 
-def process_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -> None:
+def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -> None:
     key = key_bytes.decode("utf-8")
     usergroup_id = RedisUserGroup.get_id_from_fence_key(key)
     if not usergroup_id:
@@ -661,12 +749,23 @@ def process_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -
     task_logger.info(
         f"usergroup_id={usergroup_id} remaining={count} initial={initial_count}"
     )
-    if count == 0:
+    if count > 0:
+        return
+
+    try:
         fetch_user_group = fetch_versioned_implementation(
             "danswer.db.user_group", "fetch_user_group"
         )
+    except ModuleNotFoundError:
+        task_logger.exception(
+            "fetch_versioned_implementation failed to look up fetch_user_group."
+        )
+        return
 
-        user_group = fetch_user_group(db_session=db_session, user_group_id=usergroup_id)
+    user_group: UserGroup | None = fetch_user_group(
+        db_session=db_session, user_group_id=usergroup_id
+    )
+    if user_group:
         if user_group.is_up_for_deletion:
             delete_user_group = fetch_versioned_implementation_with_fallback(
                 "danswer.db.user_group", "delete_user_group", noop_fallback
@@ -682,8 +781,8 @@ def process_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -
             mark_user_group_as_synced(db_session=db_session, user_group=user_group)
             task_logger.info(f"Synced usergroup. id='{usergroup_id}'")
 
-        r.delete(rug.taskset_key)
-        r.delete(rug.fence_key)
+    r.delete(rug.taskset_key)
+    r.delete(rug.fence_key)
 
 
 @celery_app.task(name="monitor_vespa_sync", soft_time_limit=300)
@@ -709,13 +808,13 @@ def monitor_vespa_sync() -> None:
 
         with Session(get_sqlalchemy_engine()) as db_session:
             if r.exists(RedisConnector.get_fence_key()):
-                process_connector_taskset(r, db_session)
+                monitor_connector_taskset(r, db_session)
 
             for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
-                process_document_set_taskset(key_bytes, r, db_session)
+                monitor_document_set_taskset(key_bytes, r, db_session)
 
             for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
-                process_usergroup_taskset(key_bytes, r, db_session)
+                monitor_usergroup_taskset(key_bytes, r, db_session)
 
         #
         # r_celery = celery_app.broker_connection().channel().client

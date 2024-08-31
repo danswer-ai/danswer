@@ -64,9 +64,7 @@ def count_documents_by_needs_sync(session: Session) -> int:
 
 
 def select_documents_for_connector_credential_pair_by_needs_sync(
-    connector_id: int,
-    credential_id: int,
-    db_session: Session,
+    connector_id: int, credential_id: int
 ) -> Select:
     initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
         and_(
@@ -88,6 +86,19 @@ def select_documents_for_connector_credential_pair_by_needs_sync(
         .distinct()
     )
 
+    return stmt
+
+
+def select_documents_for_connector_credential_pair(
+    connector_id: int, credential_id: int | None = None
+) -> Select:
+    initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
+        and_(
+            DocumentByConnectorCredentialPair.connector_id == connector_id,
+            DocumentByConnectorCredentialPair.credential_id == credential_id,
+        )
+    )
+    stmt = select(DbDocument).where(DbDocument.id.in_(initial_doc_ids_stmt)).distinct()
     return stmt
 
 
