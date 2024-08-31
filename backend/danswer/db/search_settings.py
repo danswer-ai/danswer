@@ -49,6 +49,7 @@ def create_search_settings(
         rerank_provider_type=search_settings.rerank_provider_type,
         rerank_api_key=search_settings.rerank_api_key,
         num_rerank=search_settings.num_rerank,
+        api_url=search_settings.api_url,
     )
 
     db_session.add(embedding_model)
@@ -234,6 +235,7 @@ def get_old_default_embedding_model() -> IndexingSetting:
         passage_prefix=(ASYM_PASSAGE_PREFIX if is_overridden else ""),
         index_name="danswer_chunk",
         multipass_indexing=False,
+        api_url=None,
     )
 
 
@@ -246,4 +248,5 @@ def get_new_default_embedding_model() -> IndexingSetting:
         passage_prefix=ASYM_PASSAGE_PREFIX,
         index_name=f"danswer_chunk_{clean_model_name(DOCUMENT_ENCODER_MODEL)}",
         multipass_indexing=False,
+        api_url=None,
     )

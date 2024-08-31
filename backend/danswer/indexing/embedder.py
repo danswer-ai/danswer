@@ -32,6 +32,7 @@ class IndexingEmbedder(ABC):
         passage_prefix: str | None,
         provider_type: EmbeddingProvider | None,
         api_key: str | None,
+        api_url: str | None,
     ):
         self.model_name = model_name
         self.normalize = normalize
@@ -39,6 +40,7 @@ class IndexingEmbedder(ABC):
         self.passage_prefix = passage_prefix
         self.provider_type = provider_type
         self.api_key = api_key
+        self.api_url = api_url
 
         self.embedding_model = EmbeddingModel(
             model_name=model_name,
@@ -46,6 +48,7 @@ class IndexingEmbedder(ABC):
             passage_prefix=passage_prefix,
             normalize=normalize,
             api_key=api_key,
+            api_url=self.api_url,
             provider_type=provider_type,
             # The below are globally set, this flow always uses the indexing one
             server_host=INDEXING_MODEL_SERVER_HOST,
@@ -70,9 +73,16 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         passage_prefix: str | None,
         provider_type: EmbeddingProvider | None = None,
         api_key: str | None = None,
+        api_url: str | None = None,
     ):
         super().__init__(
-            model_name, normalize, query_prefix, passage_prefix, provider_type, api_key
+            model_name,
+            normalize,
+            query_prefix,
+            passage_prefix,
+            provider_type,
+            api_key,
+            api_url,
         )
 
     @log_function_time()
@@ -179,6 +189,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             passage_prefix=search_settings.passage_prefix,
             provider_type=search_settings.provider_type,
             api_key=search_settings.api_key,
+            api_url=search_settings.api_url,
         )
 
 

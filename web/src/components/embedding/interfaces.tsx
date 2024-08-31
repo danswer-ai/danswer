@@ -14,6 +14,7 @@ export enum EmbeddingProvider {
   COHERE = "Cohere",
   VOYAGE = "Voyage",
   GOOGLE = "Google",
+  LITELLM = "LiteLLM",
 }
 
 export interface CloudEmbeddingProvider {
@@ -44,6 +45,7 @@ export interface EmbeddingModelDescriptor {
   provider_type: string | null;
   description: string;
   api_key: string | null;
+  api_url: string | null;
   index_name: string | null;
 }
 
@@ -87,6 +89,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     index_name: "",
     provider_type: null,
     api_key: null,
+    api_url: null,
   },
   {
     model_name: "intfloat/e5-base-v2",
@@ -99,6 +102,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     passage_prefix: "passage: ",
     index_name: "",
     provider_type: null,
+    api_url: null,
     api_key: null,
   },
   {
@@ -113,6 +117,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     index_name: "",
     provider_type: null,
     api_key: null,
+    api_url: null,
   },
   {
     model_name: "intfloat/multilingual-e5-base",
@@ -126,6 +131,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     index_name: "",
     provider_type: null,
     api_key: null,
+    api_url: null,
   },
   {
     model_name: "intfloat/multilingual-e5-small",
@@ -139,6 +145,7 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     index_name: "",
     provider_type: null,
     api_key: null,
+    api_url: null,
   },
 ];
 
@@ -169,6 +176,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         passage_prefix: "",
         index_name: "",
         api_key: null,
+        api_url: null,
       },
       {
         model_name: "embed-english-light-v3.0",
@@ -185,6 +193,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         passage_prefix: "",
         index_name: "",
         api_key: null,
+        api_url: null,
       },
     ],
   },
@@ -213,6 +222,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         enabled: false,
         index_name: "",
         api_key: null,
+        api_url: null,
       },
       {
         provider_type: EmbeddingProvider.OPENAI,
@@ -229,6 +239,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         maxContext: 8191,
         index_name: "",
         api_key: null,
+        api_url: null,
       },
     ],
   },
@@ -258,6 +269,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         passage_prefix: "",
         index_name: "",
         api_key: null,
+        api_url: null,
       },
       {
         provider_type: EmbeddingProvider.GOOGLE,
@@ -273,6 +285,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         passage_prefix: "",
         index_name: "",
         api_key: null,
+        api_url: null,
       },
     ],
   },
@@ -301,6 +314,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         passage_prefix: "",
         index_name: "",
         api_key: null,
+        api_url: null,
       },
       {
         provider_type: EmbeddingProvider.VOYAGE,
@@ -317,6 +331,7 @@ export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
         passage_prefix: "",
         index_name: "",
         api_key: null,
+        api_url: null,
       },
     ],
   },

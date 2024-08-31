@@ -39,6 +39,7 @@ def test_embedding_configuration(
             api_key=test_llm_request.api_key,
             provider_type=test_llm_request.provider_type,
             normalize=False,
+            api_url=None,
             query_prefix=None,
             passage_prefix=None,
             model_name=None,

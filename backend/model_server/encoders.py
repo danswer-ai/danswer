@@ -2,6 +2,7 @@ import json
 from typing import Any
 from typing import Optional
 
+import httpx
 import openai
 import vertexai  # type: ignore
 import voyageai  # type: ignore
@@ -235,6 +236,22 @@ def get_local_reranking_model(
     return _RERANK_MODEL
 
 
+def embed_with_litellm_proxy(
+    texts: list[str], api_url: str, model: str
+) -> list[Embedding]:
+    with httpx.Client() as client:
+        response = client.post(
+            api_url,
+            json={
+                "model": model,
+                "input": texts,
+            },
+        )
+        response.raise_for_status()
+        result = response.json()
+        return [embedding["embedding"] for embedding in result["data"]]
+
+
 @simple_log_function_time()
 def embed_text(
     texts: list[str],
@@ -245,21 +262,35 @@ def embed_text(
     api_key: str | None,
     provider_type: EmbeddingProvider | None,
     prefix: str | None,
+    api_url: str | None,
 ) -> list[Embedding]:
+    logger.info(f"Embedding {len(texts)} texts with provider: {provider_type}")
+
     if not all(texts):
+        logger.error("Empty strings provided for embedding")
         raise ValueError("Empty strings are not allowed for embedding.")
 
-    # Third party API based embedding model
     if not texts:
+        logger.error("No texts provided for embedding")
         raise ValueError("No texts provided for embedding.")
-    elif provider_type is not None:
-        logger.debug(f"Embedding text with provider: {provider_type}")
+
+    if api_url:
+        logger.notice(f"Using LiteLLM proxy for embedding with URL: {api_url}")
+        try:
+            # loop = asyncio.get_event_loop()
+            return embed_with_litellm_proxy(texts, api_url, model_name or "")
+        except Exception as e:
+            logger.exception(f"Error during LiteLLM proxy embedding: {str(e)}")
+            raise
+
+    if provider_type is not None:
+        logger.debug(f"Using cloud provider {provider_type} for embedding")
         if api_key is None:
+            logger.error("API key not provided for cloud model")
             raise RuntimeError("API key not provided for cloud model")
 
         if prefix:
-            # This may change in the future if some providers require the user
-            # to manually append a prefix but this is not the case currently
+            logger.warning("Prefix provided for cloud model, which is not supported")
             raise ValueError(
                 "Prefix string is not valid for cloud models. "
                 "Cloud models take an explicit text type instead."
@@ -274,14 +305,15 @@ def embed_text(
             text_type=text_type,
         )
 
-        # Check for None values in embeddings
         if any(embedding is None for embedding in embeddings):
             error_message = "Embeddings contain None values\n"
             error_message += "Corresponding texts:\n"
             error_message += "\n".join(texts)
+            logger.error(error_message)
             raise ValueError(error_message)
 
     elif model_name is not None:
+        logger.debug(f"Using local model {model_name} for embedding")
         prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
 
         local_model = get_embedding_model(
@@ -296,10 +328,12 @@ def embed_text(
         ]
 
     else:
+        logger.error("Neither model name nor provider specified for embedding")
         raise ValueError(
             "Either model name or provider must be provided to run embeddings."
         )
 
+    logger.info(f"Successfully embedded {len(texts)} texts")
     return embeddings
 
 
@@ -344,6 +378,7 @@ async def process_embed_request(
             api_key=embed_request.api_key,
             provider_type=embed_request.provider_type,
             text_type=embed_request.text_type,
+            api_url=embed_request.api_url,
             prefix=prefix,
         )
         return EmbedResponse(embeddings=embeddings)
