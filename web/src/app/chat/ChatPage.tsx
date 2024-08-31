@@ -341,8 +341,6 @@ export function ChatPage({
           await onSubmit();
         }
         return;
-      } else {
-        setCanContinue(false);
       }
 
       clearSelectedDocuments();
@@ -631,6 +629,24 @@ export function ChatPage({
   const currentRegenerationState = (): RegenerationState | null => {
     return regenerationState.get(currentSessionId()) || null;
   };
+  const [canContinue, setCanContinue] = useState<Map<number | null, boolean>>(
+    new Map([[null, false]])
+  );
+
+  const updateCanContinue = (newState: boolean, sessionId?: number | null) => {
+    setCanContinue((prevState) => {
+      const newCanContinueState = new Map(prevState);
+      newCanContinueState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
+      return newCanContinueState;
+    });
+  };
+
+  const currentCanContinue = (): boolean => {
+    return canContinue.get(currentSessionId()) || false;
+  };
 
   const currentSessionChatState = currentChatState();
   const currentSessionRegenerationState = currentRegenerationState();
@@ -806,7 +822,6 @@ export function ChatPage({
     }
   };
 
-  const [canContinue, setCanContinue] = useState(false);
   useEffect(() => {
     adjustDocumentSidebarWidth(); // Adjust the width on initial render
     window.addEventListener("resize", adjustDocumentSidebarWidth); // Add resize event listener
@@ -898,8 +913,8 @@ export function ChatPage({
     modelOverRide?: LlmOverride;
     regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
-    setCanContinue(false);
     let frozenSessionId = currentSessionId();
+    updateCanContinue(false, frozenSessionId);
 
     if (currentChatState() != "input") {
       setPopup({
@@ -1150,7 +1165,7 @@ export function ChatPage({
               answer += (packet as AnswerPiecePacket).answer_piece;
               stopReason = (packet as AnswerPiecePacket).stop_reason;
               if (stopReason === StopReason.LENGTH_LIMIT) {
-                setCanContinue(true);
+                updateCanContinue(true, frozenSessionId);
               }
             } else if (Object.hasOwn(packet, "top_documents")) {
               documents = (packet as DocumentsResponse).top_documents;
@@ -1860,7 +1875,7 @@ export function ChatPage({
                                     <AIMessage
                                       continueGenerating={
                                         i == messageHistory.length - 1 &&
-                                        canContinue
+                                        currentCanContinue()
                                           ? continueGenerating
                                           : undefined
                                       }

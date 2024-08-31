@@ -553,7 +553,6 @@ class Answer:
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
             processed_stream.append(processed_packet)
-            print(processed_packet)
             yield processed_packet
 
         self._processed_stream = processed_stream
