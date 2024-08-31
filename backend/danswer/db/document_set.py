@@ -559,17 +559,10 @@ def fetch_document_sets_for_documents(
         # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
         # as we can assume their document sets are no longer relevant
         .where(
-            or_(
-                ConnectorCredentialPair.status.is_(None),
-                ConnectorCredentialPair.status
-                != ConnectorCredentialPairStatus.DELETING,
-            )
+            ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING,
         )
         .where(
-            or_(
-                DocumentSet__ConnectorCredentialPair.is_current.is_(None),
-                DocumentSet__ConnectorCredentialPair.is_current == True,  # noqa: E712
-            )
+            DocumentSet__ConnectorCredentialPair.is_current == True,  # noqa: E712
         )
         .group_by(Document.id)
     )
