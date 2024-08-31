@@ -206,15 +206,15 @@ def update_default_multipass_indexing(db_session: Session) -> None:
         logger.info(f"GPU availability: {gpu_available}")
 
         current_settings = get_current_search_settings(db_session)
-        if current_settings:
-            logger.notice(f"Updating multipass indexing setting to: {gpu_available}")
-            updated_settings = SavedSearchSettings.from_db_model(current_settings)
-            updated_settings.multipass_indexing = gpu_available
-            update_current_search_settings(db_session, updated_settings)
-        else:
-            logger.warning(
-                "No current search settings found. Skipping multipass indexing update."
-            )
+
+        logger.notice(f"Updating multipass indexing setting to: {gpu_available}")
+        updated_settings = SavedSearchSettings.from_db_model(current_settings)
+        # Enable multipass indexing if GPU is available or if using a cloud provider
+        updated_settings.multipass_indexing = (
+            gpu_available or current_settings.cloud_provider is not None
+        )
+        update_current_search_settings(db_session, updated_settings)
+
     else:
         logger.debug(
             "Existing docs or connectors found. Skipping multipass indexing update."
@@ -370,9 +370,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         translate_saved_search_settings(db_session)
 
-        # update multipass indexing setting based on GPU availability
-        update_default_multipass_indexing(db_session)
-
         # Does the user need to trigger a reindexing to bring the document index
         # into a good state, marked in the kv store
         mark_reindex_flag(db_session)
@@ -402,6 +399,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                     server_port=MODEL_SERVER_PORT,
                 ),
             )
+
+        # update multipass indexing setting based on GPU availability
+        update_default_multipass_indexing(db_session)
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield
