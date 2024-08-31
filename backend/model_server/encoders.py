@@ -276,6 +276,9 @@ def embed_text(
 
     if provider_type == EmbeddingProvider.LITELLM:
         logger.debug(f"Using LiteLLM proxy for embedding with URL: {api_url}")
+        if not api_url:
+            logger.error("API URL not provided for LiteLLM proxy")
+            raise ValueError("API URL is required for LiteLLM proxy embedding.")
         try:
             return embed_with_litellm_proxy(texts, api_url, model_name or "")
         except Exception as e:
