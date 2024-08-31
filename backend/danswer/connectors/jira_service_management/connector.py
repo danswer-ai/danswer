@@ -39,7 +39,7 @@ def _make_query(
             raise RuntimeError(
                 f"Error retrieving data from Jira Service Management: {response.text}"
             )
-        return response
+        return response.json()
     except Exception as e:
         logger.error(f"Unexpected error occurred while trying query url {full_url}")
         raise e
