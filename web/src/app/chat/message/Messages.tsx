@@ -65,6 +65,8 @@ import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
+import { EmphasizedClickable } from "@/components/BasicClickable";
+import { ContinueGenerating } from "./ContinueMessage";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -123,6 +125,7 @@ function FileDisplay({
 export const AIMessage = ({
   regenerate,
   overriddenModel,
+  continueGenerating,
   shared,
   isActive,
   toggleDocumentSelection,
@@ -150,6 +153,7 @@ export const AIMessage = ({
 }: {
   shared?: boolean;
   isActive?: boolean;
+  continueGenerating?: () => void;
   otherMessagesCanSwitchTo?: number[];
   onMessageSelection?: (messageId: number) => void;
   selectedDocuments?: DanswerDocument[] | null;
@@ -283,11 +287,12 @@ export const AIMessage = ({
               size="small"
               assistant={alternativeAssistant || currentPersona}
             />
+
             <div className="w-full">
               <div className="max-w-message-max break-words">
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
-                    {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
+                    {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
                       <>
                         {query !== undefined &&
                           handleShowRetrieved !== undefined &&
@@ -315,7 +320,16 @@ export const AIMessage = ({
                             </div>
                           )}
                       </>
-                    )}
+                    ) : null}
+
+                    {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+                      !query &&
+                      continueGenerating && (
+                        <ContinueGenerating
+                          handleContinueGenerating={continueGenerating}
+                        />
+                      )}
+
                     {toolCall &&
                       !TOOLS_WITH_CUSTOM_HANDLING.includes(
                         toolCall.tool_name

@@ -65,7 +65,11 @@ import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { StarterMessage } from "./StarterMessage";
-import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
+import {
+  AnswerPiecePacket,
+  DanswerDocument,
+  StopReason,
+} from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
@@ -337,7 +341,10 @@ export function ChatPage({
           await onSubmit();
         }
         return;
+      } else {
+        setCanContinue(false);
       }
+
       clearSelectedDocuments();
       setIsFetchingChatMessages(true);
       const response = await fetch(
@@ -799,6 +806,7 @@ export function ChatPage({
     }
   };
 
+  const [canContinue, setCanContinue] = useState(false);
   useEffect(() => {
     adjustDocumentSidebarWidth(); // Adjust the width on initial render
     window.addEventListener("resize", adjustDocumentSidebarWidth); // Add resize event listener
@@ -864,6 +872,13 @@ export function ChatPage({
     }
   };
 
+  const continueGenerating = () => {
+    onSubmit({
+      messageOverride:
+        "Continue Generating (pick up exactly where you left off)",
+    });
+  };
+
   const onSubmit = async ({
     messageIdToResend,
     messageOverride,
@@ -883,6 +898,7 @@ export function ChatPage({
     modelOverRide?: LlmOverride;
     regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
+    setCanContinue(false);
     let frozenSessionId = currentSessionId();
 
     if (currentChatState() != "input") {
@@ -978,6 +994,8 @@ export function ChatPage({
     let messageUpdates: Message[] | null = null;
 
     let answer = "";
+
+    let stopReason: StopReason | null = null;
     let query: string | null = null;
     let retrievalType: RetrievalType =
       selectedDocuments.length > 0
@@ -1063,7 +1081,6 @@ export function ChatPage({
             continue;
           }
 
-          console.log(packet);
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
               console.error(
@@ -1131,6 +1148,10 @@ export function ChatPage({
 
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
+              stopReason = (packet as AnswerPiecePacket).stop_reason;
+              if (stopReason === StopReason.LENGTH_LIMIT) {
+                setCanContinue(true);
+              }
             } else if (Object.hasOwn(packet, "top_documents")) {
               documents = (packet as DocumentsResponse).top_documents;
               retrievalType = RetrievalType.Search;
@@ -1238,6 +1259,7 @@ export function ChatPage({
                 alternateAssistantID: alternativeAssistant?.id,
                 stackTrace: stackTrace,
                 overridden_model: finalMessage?.overridden_model,
+                stopReason: stopReason,
               },
             ]);
           }
@@ -1836,6 +1858,12 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      continueGenerating={
+                                        i == messageHistory.length - 1 &&
+                                        canContinue
+                                          ? continueGenerating
+                                          : undefined
+                                      }
                                       overriddenModel={message.overridden_model}
                                       regenerate={createRegenerator({
                                         messageId: message.messageId,

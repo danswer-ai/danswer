@@ -71,8 +71,6 @@ def extract_citations_from_stream(
     past_cite_count = 0
     stop_reason = None
     for raw_token in tokens:
-        print(raw_token)
-
         if stop_stream:
             next_hold = hold + raw_token
             if stop_stream in next_hold:
@@ -204,7 +202,7 @@ def extract_citations_from_stream(
                 curr_segment = curr_segment[last_citation_end:]
         if possible_citation_found:
             continue
-        yield DanswerAnswerPiece(answer_piece=curr_segment)
+        yield DanswerAnswerPiece(answer_piece=curr_segment, stop_reason=stop_reason)
         curr_segment = ""
 
     if curr_segment:

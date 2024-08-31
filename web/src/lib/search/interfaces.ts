@@ -17,7 +17,12 @@ export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
 export interface AnswerPiecePacket {
   answer_piece: string;
-  stop_reason: string | null;
+  stop_reason: StopReason | null;
+}
+
+export enum StopReason {
+  LENGTH_LIMIT = "length",
+  CANCELLED = "cancelled",
 }
 
 export interface ErrorMessagePacket {

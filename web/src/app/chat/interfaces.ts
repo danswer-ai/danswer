@@ -2,6 +2,7 @@ import {
   DanswerDocument,
   Filters,
   SearchDanswerDocument,
+  StopReason,
 } from "@/lib/search/interfaces";
 
 export enum RetrievalType {
@@ -89,6 +90,7 @@ export interface Message {
   alternateAssistantID?: number | null;
   stackTrace?: string | null;
   overridden_model?: string;
+  stopReason?: StopReason | null;
 }
 
 export interface BackendChatSession {

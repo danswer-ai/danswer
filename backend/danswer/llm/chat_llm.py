@@ -152,7 +152,6 @@ def _convert_delta_to_message_chunk(
         list[litellm.utils.ChatCompletionDeltaToolCall] | None, _dict.get("tool_calls")
     )
 
-    print("role is ", role)
     if role == "user":
         return HumanMessageChunk(content=content)
     elif role == "assistant":
@@ -368,14 +367,9 @@ class DefaultMultiLLM(LLM):
                     continue
 
                 choices = part["choices"][0]
-                # pr
-                # print(choices)
 
                 finish_reason = choices["finish_reason"]
                 delta = choices["delta"]
-                # print(part["choices"][0])
-                # print(finish_reason)
-                # print('\n\n\n')
 
                 message_chunk = _convert_delta_to_message_chunk(
                     delta,
