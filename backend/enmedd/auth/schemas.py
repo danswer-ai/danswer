@@ -7,14 +7,6 @@ from fastapi_users import schemas
 from pydantic import EmailStr
 
 
-class Workspace(str, Enum):
-    workspace_id: int
-    instance_id: int
-    workspace_name: str
-    custom_logo: str
-    custom_header_logo: str
-
-
 class UserRole(str, Enum):
     BASIC = "basic"
     ADMIN = "admin"
@@ -35,7 +27,8 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
     company_billing: Optional[str]
     billing_email_address: Optional[EmailStr]
     vat: Optional[str]
-    workspace: Optional[list[Workspace]]
+    # TODO: create a default workspace for the users.
+    # Adding workspace here will create async blocking I/O
 
 
 class UserCreate(schemas.BaseUserCreate):
@@ -47,7 +40,6 @@ class UserCreate(schemas.BaseUserCreate):
     company_billing: Optional[str]
     billing_email_address: Optional[EmailStr]
     vat: Optional[str]
-    workspace: Optional[list[Workspace]]
 
 
 class UserUpdate(schemas.BaseUserUpdate):
@@ -59,4 +51,3 @@ class UserUpdate(schemas.BaseUserUpdate):
     company_billing: Optional[str]
     billing_email_address: Optional[EmailStr]
     vat: Optional[str]
-    workspace: Optional[list[Workspace]]
