@@ -316,7 +316,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self.recursive_indexer: RecursiveIndexer | None = None
         self.index_recursively = index_recursively
 
-        self.wiki_base = wiki_base
+        # Remove trailing slash from wiki_base if present
+        self.wiki_base = wiki_base.rstrip("/")
         self.space = space
         self.page_id = page_id
 

@@ -848,6 +848,7 @@ export interface ConfluenceConfig {
   wiki_base: string;
   space: string;
   page_id?: string;
+  is_cloud?: boolean;
   index_recursively?: boolean;
 }
 
