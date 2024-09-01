@@ -34,6 +34,7 @@ from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import STRIPE_PRICE
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
+from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
@@ -357,8 +358,8 @@ async def create_checkout_session(
 
     user_email = "pablosfsanchez@gmail.com"
 
-    success_url = "http://localhost:3000/billing/success"
-    cancel_url = "http://localhost:3000/billing/cancel"
+    success_url = f"{WEB_DOMAIN}/admin/plan?success=true"
+    cancel_url = f"{WEB_DOMAIN}/admin/plan?success=false"
 
     logger.info(f"Stripe price being used: {STRIPE_PRICE}")
     logger.info(
@@ -379,6 +380,7 @@ async def create_checkout_session(
             cancel_url=cancel_url,
             metadata={"tenant_id": str("random tenant")},
         )
+        print("I am setting a tenant id in my metadata")
         logger.info(
             f"Checkout session created successfully with id: {checkout_session.id}"
         )

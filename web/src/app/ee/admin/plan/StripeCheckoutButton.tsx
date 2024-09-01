@@ -35,6 +35,7 @@ export function StripeCheckoutButton({
       }
 
       const { sessionId } = await response.json();
+      console.log(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
       const stripe = await loadStripe(
         process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
       );

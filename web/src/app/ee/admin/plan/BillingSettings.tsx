@@ -3,18 +3,51 @@
 import { BillingPlanType } from "@/app/admin/settings/interfaces";
 import { useContext, useEffect, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { Button, Divider, Text, Card } from "@tremor/react";
+import { Button, Divider, Card } from "@tremor/react";
 import { StripeCheckoutButton } from "./StripeCheckoutButton";
-import { CheckmarkIcon, XIcon } from "@/components/icons/icons";
-import { FiAward, FiDollarSign, FiHelpCircle, FiStar } from "react-icons/fi";
+import {
+  CheckmarkIcon,
+  CheckmarkCircleIcon,
+  LightningIcon,
+  PeopleIcon,
+  XIcon,
+  ChevronDownIcon,
+} from "@/components/icons/icons";
+import { FiAward, FiDollarSign, FiStar } from "react-icons/fi";
 import Cookies from "js-cookie";
 import { Modal } from "@/components/Modal";
 import { Logo } from "@/components/Logo";
-import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { usePopup } from "@/components/admin/connectors/Popup";
 
 export function BillingSettings({ newUser }: { newUser: boolean }) {
   const settings = useContext(SettingsContext);
   const cloudSettings = settings?.cloudSettings;
+
+  const searchParams = useSearchParams();
+  const { popup, setPopup } = usePopup();
+
+  useEffect(() => {
+    const success = searchParams.get("success");
+    if (success === "true") {
+      setPopup({
+        message: "Your plan has been successfully updated!",
+        type: "success",
+      });
+    } else if (success === "false") {
+      setPopup({
+        message: "There was an error updating your plan",
+        type: "error",
+      });
+    }
+
+    // Clear the 'success' parameter from the URL
+    if (success) {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete("success");
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, []);
 
   if (!cloudSettings) {
     return null;
@@ -114,40 +147,14 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
       )}
       <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="px-8 py-6">
-          <h2 className="text-3xl font-bold text-text-800 mb-6 flex items-center">
+          <h2 className="text-3xl gap-x-2 font-bold text-text-800 mb-6 flex items-center">
             Your Plan
-            <svg
-              className="w-8 h-8 ml-2 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <CheckmarkCircleIcon size={24} className="text-blue-500" />
           </h2>
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <p className="text-lg text-text-600 flex items-center">
-                <svg
-                  className="w-5 h-5 mr-2 text-text-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
+              <p className="text-lg text-text-600 flex gap-x-2 items-center">
+                <LightningIcon size={20} />
                 Tier:
               </p>
               <span className="text-xl font-semibold text-blue-600 capitalize">
@@ -155,21 +162,8 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <p className="text-lg text-text-600 flex items-center">
-                <svg
-                  className="w-5 h-5 mr-2 text-text-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
+              <p className="text-lg text-text-600  gap-x-2 flex items-center">
+                <PeopleIcon size={20} />
                 Current Seats:
               </p>
               <span className="text-xl font-semibold text-blue-600">
@@ -191,20 +185,7 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
                   {getBillingPlanIcon(newPlan!)}
                   <span className="ml-2 capitalize">{newPlan}</span>
                 </span>
-                <svg
-                  className="w-5 h-5 text-text-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+                <ChevronDownIcon size={12} />
               </div>
               {isOpen && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -319,6 +300,7 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
           </div>
         </Card>
       )}
+      {popup}
     </div>
   );
 }

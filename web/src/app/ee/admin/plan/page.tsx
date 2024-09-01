@@ -13,7 +13,6 @@ export default async function Whitelabeling() {
         title="Billing"
         icon={<CreditCardIcon size={32} className="my-auto" />}
       />
-
       <BillingSettings newUser={newUser} />
     </div>
   );
