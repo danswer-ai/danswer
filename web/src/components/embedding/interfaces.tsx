@@ -2,6 +2,7 @@ import {
   CohereIcon,
   GoogleIcon,
   IconProps,
+  LiteLLMIcon,
   MicrosoftIcon,
   NomicIcon,
   OpenAIIcon,
@@ -20,6 +21,7 @@ export enum EmbeddingProvider {
 export interface CloudEmbeddingProvider {
   provider_type: EmbeddingProvider;
   api_key?: string;
+  api_url?: string;
   custom_config?: Record<string, string>;
   docsLink?: string;
 
@@ -72,7 +74,7 @@ export interface FullEmbeddingModelResponse {
 }
 
 export interface CloudEmbeddingProviderFull extends CloudEmbeddingProvider {
-  configured: boolean;
+  configured?: boolean;
 }
 
 export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
@@ -148,6 +150,15 @@ export const AVAILABLE_MODELS: HostedEmbeddingModel[] = [
     api_url: null,
   },
 ];
+
+export const LITELLM_CLOUD_PROVIDER: CloudEmbeddingProvider = {
+  provider_type: EmbeddingProvider.LITELLM,
+  website: "https://github.com/BerriAI/litellm",
+  icon: LiteLLMIcon,
+  description: "Open-source library to call LLM APIs using OpenAI format",
+  apiLink: "https://docs.litellm.ai/docs/proxy/quick_start",
+  embedding_models: [], // No default embedding models
+};
 
 export const AVAILABLE_CLOUD_PROVIDERS: CloudEmbeddingProvider[] = [
   {

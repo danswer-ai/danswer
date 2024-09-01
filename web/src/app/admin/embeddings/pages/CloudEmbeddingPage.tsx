@@ -9,6 +9,7 @@ import {
   CloudEmbeddingProviderFull,
   EmbeddingModelDescriptor,
   EmbeddingProvider,
+  LITELLM_CLOUD_PROVIDER,
 } from "../../../../components/embedding/interfaces";
 import { EmbeddingDetails } from "../EmbeddingModelSelectionForm";
 import { FiExternalLink, FiInfo } from "react-icons/fi";
@@ -19,6 +20,7 @@ import { LiteLLMModelForm } from "@/components/embedding/LiteLLMModelForm";
 export default function CloudEmbeddingPage({
   currentModel,
   embeddingProviderDetails,
+  embeddingModelDetails,
   newEnabledProviders,
   newUnenabledProviders,
   setShowTentativeProvider,
@@ -32,6 +34,7 @@ export default function CloudEmbeddingPage({
   currentModel: EmbeddingModelDescriptor | CloudEmbeddingModel;
   setAlreadySelectedModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   newUnenabledProviders: string[];
+  embeddingModelDetails?: CloudEmbeddingModel[];
   embeddingProviderDetails?: EmbeddingDetails[];
   newEnabledProviders: string[];
   setShowTentativeProvider: React.Dispatch<
@@ -41,9 +44,6 @@ export default function CloudEmbeddingPage({
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
 }) {
-  const [configureLiteLLM, setConfigureLiteLLM] = useState(
-    currentModel.provider_type == EmbeddingProvider.LITELLM
-  );
   function hasProviderTypeinArray(
     arr: Array<{ provider_type: string }>,
     searchName: string
@@ -66,6 +66,13 @@ export default function CloudEmbeddingPage({
             ))!),
     })
   );
+  const liteLLMProvider = embeddingProviderDetails?.find(
+    (provider) =>
+      provider.provider_type === EmbeddingProvider.LITELLM.toLowerCase()
+  );
+  console.log("embeddingProviderDetails");
+  console.log(embeddingProviderDetails);
+  console.log(liteLLMProvider);
 
   return (
     <div>
@@ -141,28 +148,113 @@ export default function CloudEmbeddingPage({
             Learn more about LiteLLM
           </a>
         </Text>
-        {!configureLiteLLM && (
-          <Button onClick={() => setConfigureLiteLLM(true)} className="mt-4">
-            Configure LiteLLM model
-          </Button>
-        )}
 
-        {configureLiteLLM && (
-          <div className="w-full flex">
-            <Card
-              className={`mt-4 2xl:w-4/6 mx-auto ${currentModel.provider_type == EmbeddingProvider.LITELLM && "border border-blue-500"} `}
-            >
-              <LiteLLMModelForm
-                currentValues={
-                  currentModel.provider_type == EmbeddingProvider.LITELLM
-                    ? (currentModel as CloudEmbeddingModel)
-                    : null
-                }
-                setShowTentativeModel={setShowTentativeModel}
-              />
-            </Card>
+        <div key={LITELLM_CLOUD_PROVIDER.provider_type} className="mt-4 w-full">
+          <div className="flex items-center mb-2">
+            {LITELLM_CLOUD_PROVIDER.icon({ size: 40 })}
+            <h2 className="ml-2  mt-2 text-xl font-bold">
+              {LITELLM_CLOUD_PROVIDER.provider_type}{" "}
+              {LITELLM_CLOUD_PROVIDER.provider_type == "Cohere" &&
+                "(recommended)"}
+            </h2>
+            <HoverPopup
+              mainContent={
+                <FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />
+              }
+              popupContent={
+                <div className="text-sm text-text-800 w-52">
+                  <div className="my-auto">
+                    {LITELLM_CLOUD_PROVIDER.description}
+                  </div>
+                </div>
+              }
+              style="dark"
+            />
           </div>
-        )}
+          <div className="w-full flex flex-col items-start">
+            {!liteLLMProvider ? (
+              <button
+                onClick={() => setShowTentativeProvider(LITELLM_CLOUD_PROVIDER)}
+                className="mb-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm cursor-pointer"
+              >
+                Provide API URL
+              </button>
+            ) : (
+              <button
+                onClick={() =>
+                  setChangeCredentialsProvider(LITELLM_CLOUD_PROVIDER)
+                }
+                className="mb-2 hover:underline text-sm cursor-pointer"
+              >
+                Modify API URL
+              </button>
+            )}
+
+            {!liteLLMProvider && (
+              <Card className="mt-2 w-full max-w-4xl bg-gray-50 border border-gray-200">
+                <div className="p-4">
+                  <Text className="text-lg font-semibold mb-2">
+                    API URL Required
+                  </Text>
+                  <Text className="text-sm text-gray-600 mb-4">
+                    Before you can add models, you need to provide an API URL
+                    for your LiteLLM proxy. Click the "Provide API URL" button
+                    above to set up your LiteLLM configuration.
+                  </Text>
+                  <div className="flex items-center">
+                    <FiInfo className="text-blue-500 mr-2" size={18} />
+                    <Text className="text-sm text-blue-500">
+                      Once configured, you'll be able to add and manage your
+                      LiteLLM models here.
+                    </Text>
+                  </div>
+                </div>
+              </Card>
+            )}
+            {liteLLMProvider && (
+              <>
+                <div className="flex mb-4 flex-wrap gap-4">
+                  {embeddingModelDetails
+                    ?.filter(
+                      (model) =>
+                        model.provider_type ===
+                        EmbeddingProvider.LITELLM.toLowerCase()
+                    )
+                    .map((model) => (
+                      <CloudModelCard
+                        key={model.model_name}
+                        model={model}
+                        provider={LITELLM_CLOUD_PROVIDER}
+                        currentModel={currentModel}
+                        setAlreadySelectedModel={setAlreadySelectedModel}
+                        setShowTentativeModel={setShowTentativeModel}
+                        setShowModelInQueue={setShowModelInQueue}
+                        setShowTentativeProvider={setShowTentativeProvider}
+                      />
+                    ))}
+                </div>
+
+                <Card
+                  className={`mt-2 w-full max-w-4xl ${
+                    currentModel.provider_type === EmbeddingProvider.LITELLM
+                      ? "border-2 border-blue-500"
+                      : ""
+                  }`}
+                >
+                  <LiteLLMModelForm
+                    provider={liteLLMProvider}
+                    currentValues={
+                      currentModel.provider_type === EmbeddingProvider.LITELLM
+                        ? (currentModel as CloudEmbeddingModel)
+                        : null
+                    }
+                    setShowTentativeModel={setShowTentativeModel}
+                  />
+                </Card>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -187,7 +279,9 @@ export function CloudModelCard({
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
 }) {
-  const enabled = model.model_name === currentModel.model_name;
+  const enabled =
+    model.model_name === currentModel.model_name &&
+    model.provider_type == currentModel.provider_type;
 
   return (
     <div
@@ -223,7 +317,10 @@ export function CloudModelCard({
           onClick={() => {
             if (enabled) {
               setAlreadySelectedModel(model);
-            } else if (provider.configured) {
+            } else if (
+              provider.configured ||
+              provider.provider_type === EmbeddingProvider.LITELLM
+            ) {
               setShowTentativeModel(model);
             } else {
               setShowModelInQueue(model);

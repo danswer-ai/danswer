@@ -11,8 +11,6 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import expire_index_attempts
-from danswer.db.llm import upsert_cloud_embedding_provider
-from danswer.db.models import EmbeddingProvider
 from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.db.search_settings import create_search_settings
@@ -25,7 +23,6 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.search.models import SavedSearchSettings
 from danswer.search.models import SearchSettingsCreationRequest
-from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.models import FullModelVersionResponse
 from danswer.server.models import IdReturn
 from danswer.utils.logger import setup_logger
@@ -50,26 +47,15 @@ def set_new_search_settings(
 
     # Validate cloud provider exists or create new LiteLLM provider
     if search_settings_new.provider_type is not None:
-        if search_settings_new.provider_type == EmbeddingProvider.LITELLM:
-            # Update or create LiteLLM provider
-            upsert_cloud_embedding_provider(
-                db_session,
-                provider=CloudEmbeddingProviderCreationRequest(
-                    provider_type=EmbeddingProvider.LITELLM,
-                    api_url=search_settings_new.api_url,
-                ),
-            )
+        cloud_provider = get_embedding_provider_from_provider_type(
+            db_session, provider_type=search_settings_new.provider_type
+        )
 
-        else:
-            cloud_provider = get_embedding_provider_from_provider_type(
-                db_session, provider_type=search_settings_new.provider_type
+        if cloud_provider is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"No embedding provider exists for cloud embedding type {search_settings_new.provider_type}",
             )
-
-            if cloud_provider is None:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"No embedding provider exists for cloud embedding type {search_settings_new.provider_type}",
-                )
 
     search_settings = get_current_search_settings(db_session)
 

@@ -1,16 +1,19 @@
-import { CloudEmbeddingModel } from "./interfaces";
+import { CloudEmbeddingModel, CloudEmbeddingProvider } from "./interfaces";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { TextFormField, BooleanFormField } from "../admin/connectors/Field";
 import { Dispatch, SetStateAction } from "react";
-import { Button } from "@tremor/react";
+import { Button, Text } from "@tremor/react";
+import { EmbeddingDetails } from "@/app/admin/embeddings/EmbeddingModelSelectionForm";
 
 export function LiteLLMModelForm({
   setShowTentativeModel,
   currentValues,
+  provider,
 }: {
   setShowTentativeModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   currentValues: CloudEmbeddingModel | null;
+  provider: EmbeddingDetails;
 }) {
   return (
     <div>
@@ -25,7 +28,7 @@ export function LiteLLMModelForm({
             provider_type: "LiteLLM",
             api_key: "",
             enabled: true,
-            api_url: "",
+            api_url: provider.api_url,
             description: "",
             index_name: "",
             pricePerMillion: 0,
@@ -57,14 +60,9 @@ export function LiteLLMModelForm({
       >
         {({ isSubmitting }) => (
           <Form>
-            <TextFormField
-              name="api_url"
-              label="API Base URL:"
-              subtext="The base URL for your hosted embedding model"
-              placeholder="e.g. 'http://localhost:4000/embeddings'"
-              autoCompleteDisabled={true}
-            />
-
+            <Text className="text-xl text-text-900 font-bold mb-4">
+              Add a new model to LiteLLM proxy at {provider.api_url}
+            </Text>
             <TextFormField
               name="model_name"
               label="Model Name:"
