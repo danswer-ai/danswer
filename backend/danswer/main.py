@@ -1,4 +1,5 @@
 import time
+import traceback
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -8,6 +9,7 @@ import uvicorn
 from fastapi import APIRouter
 from fastapi import FastAPI
 from fastapi import Request
+from fastapi import status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -407,9 +409,30 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     yield
 
 
+def log_http_error(_: Request, exc: Exception) -> JSONResponse:
+    status_code = getattr(exc, "status_code", 500)
+    if status_code >= 400:
+        error_msg = f"{str(exc)}\n"
+        error_msg += "".join(traceback.format_tb(exc.__traceback__))
+        logger.error(error_msg)
+    return JSONResponse(
+        status_code=status_code,
+        content={"detail": str(exc)},
+    )
+
+
 def get_application() -> FastAPI:
     application = FastAPI(
         title="Danswer Backend", version=__version__, lifespan=lifespan
+    )
+
+    # Add the custom exception handler
+    application.add_exception_handler(status.HTTP_400_BAD_REQUEST, log_http_error)
+    application.add_exception_handler(status.HTTP_401_UNAUTHORIZED, log_http_error)
+    application.add_exception_handler(status.HTTP_403_FORBIDDEN, log_http_error)
+    application.add_exception_handler(status.HTTP_404_NOT_FOUND, log_http_error)
+    application.add_exception_handler(
+        status.HTTP_500_INTERNAL_SERVER_ERROR, log_http_error
     )
 
     include_router_with_global_prefix_prepended(application, chat_router)
