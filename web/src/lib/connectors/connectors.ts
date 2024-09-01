@@ -249,7 +249,7 @@ Selecting the "Index Recursively" checkbox will index the single page's children
         name: "page_id",
         optional: true,
         description:
-          "Specific page ID to index (leave empty to index the entire space)",
+          "Specific page ID to index  - leave empty to index the entire space (e.g. `131368`)",
       },
       {
         type: "checkbox",
