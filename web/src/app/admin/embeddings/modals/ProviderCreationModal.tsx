@@ -13,11 +13,13 @@ export function ProviderCreationModal({
   onConfirm,
   onCancel,
   existingProvider,
+  proxyModel,
 }: {
   selectedProvider: CloudEmbeddingProvider;
   onConfirm: () => void;
   onCancel: () => void;
   existingProvider?: CloudEmbeddingProvider;
+  proxyModel?: boolean;
 }) {
   const useFileUpload = selectedProvider.provider_type == "Google";
 
@@ -29,6 +31,7 @@ export function ProviderCreationModal({
     provider_type:
       existingProvider?.provider_type || selectedProvider.provider_type,
     api_key: existingProvider?.api_key || "",
+    api_url: existingProvider?.api_url || "",
     custom_config: existingProvider?.custom_config
       ? Object.entries(existingProvider.custom_config)
       : [],
@@ -37,9 +40,14 @@ export function ProviderCreationModal({
 
   const validationSchema = Yup.object({
     provider_type: Yup.string().required("Provider type is required"),
-    api_key: useFileUpload
+    api_key: proxyModel
       ? Yup.string()
-      : Yup.string().required("API Key is required"),
+      : useFileUpload
+        ? Yup.string()
+        : Yup.string().required("API Key is required"),
+    api_url: proxyModel
+      ? Yup.string().required("API URL is required")
+      : Yup.string(),
     custom_config: Yup.array().of(Yup.array().of(Yup.string()).length(2)),
   });
 
@@ -87,6 +95,7 @@ export function ProviderCreationModal({
           body: JSON.stringify({
             provider_type: values.provider_type.toLowerCase().split(" ")[0],
             api_key: values.api_key,
+            api_url: values.api_url,
           }),
         }
       );
@@ -169,12 +178,19 @@ export function ProviderCreationModal({
                   target="_blank"
                   href={selectedProvider.apiLink}
                 >
-                  API KEY
+                  {proxyModel ? "API URL" : "API KEY"}
                 </a>
               </Text>
 
               <div className="flex w-full flex-col gap-y-2">
-                {useFileUpload ? (
+                {proxyModel ? (
+                  <TextFormField
+                    name="api_url"
+                    label="API URL"
+                    placeholder="API URL"
+                    type="text"
+                  />
+                ) : useFileUpload ? (
                   <>
                     <Label>Upload JSON File</Label>
                     <input
