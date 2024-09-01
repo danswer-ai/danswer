@@ -55,19 +55,10 @@ def test_multiple_document_sets_syncing_same_connnector(
         user_performing_action=admin_user,
     )
 
-    # get names so we can compare to what is in vespa
-    doc_sets = DocumentSetManager.get_all(
-        user_performing_action=admin_user,
-    )
-    doc_set_names = {doc_set.name for doc_set in doc_sets}
-
     # make sure documents are as expected
-    seeded_document_ids = [doc.id for doc in cc_pair_1.documents]
-
-    result = vespa_client.get_documents_by_id([doc.id for doc in cc_pair_1.documents])
-    documents = result["documents"]
-    assert len(documents) == len(cc_pair_1.documents)
-    assert all(doc["fields"]["document_id"] in seeded_document_ids for doc in documents)
-    assert all(
-        set(doc["fields"]["document_sets"].keys()) == doc_set_names for doc in documents
+    DocumentManager.verify(
+        vespa_client=vespa_client,
+        cc_pair=cc_pair_1,
+        doc_set_names=[doc_set_1.name, doc_set_2.name],
+        doc_creating_user=admin_user,
     )

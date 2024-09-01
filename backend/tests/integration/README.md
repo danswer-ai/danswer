@@ -64,3 +64,7 @@ The current testing coverage should be checked by reading the comments at the to
 ## Ideas for integration testing design
 ### Combine the "test" and "manager" classes
 This could make test writing a bit cleaner by preventing test writers from having to pass around objects into functions that the objects have a 1:1 relationship with.
+
+### Rework VespaClient
+Right now, its used a fixture and has to be passed around between manager classes.
+Could just be built where its used
