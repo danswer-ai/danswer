@@ -1,8 +1,10 @@
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic import Field
 
+from danswer.auth.schemas import UserRole
 from danswer.search.enums import RecencyBiasSetting
 from danswer.server.documents.models import DocumentSource
 from danswer.server.documents.models import InputType
@@ -15,6 +17,17 @@ This means the flow is:
 3. Retrieve data from db
 4. Compare db data with testing model to verify
 """
+
+
+class TestAPIKey(BaseModel):
+    api_key_id: int
+    api_key_display: str
+    api_key: str | None = None  # only present on initial creation
+    api_key_name: str | None = None
+    api_key_role: UserRole
+
+    user_id: UUID
+    headers: dict
 
 
 class TestUser(BaseModel):

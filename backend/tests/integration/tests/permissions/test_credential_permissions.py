@@ -30,7 +30,7 @@ def test_credential_permissions(reset: None) -> None:
         user_groups_to_check=[user_group_1], user_performing_action=admin_user
     )
     # setting the user as a curator for the user group
-    UserGroupManager.set_user_to_curator(
+    UserGroupManager.set_curator_status(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -49,11 +49,9 @@ def test_credential_permissions(reset: None) -> None:
 
     # END OF HAPPY PATH
 
-    """
-    Curators should not be able to:
-    - Create a public credential
-    - Create a credential for a user group they are not a curator of
-    """
+    """Tests for things Curators should not be able to do"""
+
+    # Curators should not be able to create a public credential
     with pytest.raises(HTTPError):
         CredentialManager.create(
             name="invalid_credential_1",
@@ -63,6 +61,7 @@ def test_credential_permissions(reset: None) -> None:
             user_performing_action=curator,
         )
 
+    # Curators should not be able to create a credential for a user group they are not a curator of
     with pytest.raises(HTTPError):
         CredentialManager.create(
             name="invalid_credential_2",
@@ -72,10 +71,8 @@ def test_credential_permissions(reset: None) -> None:
             user_performing_action=curator,
         )
 
-    """
-    Curators should be able to:
-    - Create a private credential for a user group they are a curator of
-    """
+    """Tests for things Curators should be able to do"""
+    # Curators should be able to create a private credential for a user group they are a curator of
     valid_credential = CredentialManager.create(
         name="valid_credential",
         source=DocumentSource.CONFLUENCE,

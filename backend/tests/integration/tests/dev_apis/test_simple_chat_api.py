@@ -4,11 +4,13 @@ from danswer.configs.constants import MessageType
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import NUM_DOCS
 from tests.integration.common_utils.llm import LLMProviderManager
+from tests.integration.common_utils.managers.api_key import APIKeyManager
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
-from tests.integration.common_utils.managers.cc_pair import TestCCPair
 from tests.integration.common_utils.managers.document import DocumentManager
-from tests.integration.common_utils.managers.user import TestUser
 from tests.integration.common_utils.managers.user import UserManager
+from tests.integration.common_utils.test_models import TestAPIKey
+from tests.integration.common_utils.test_models import TestCCPair
+from tests.integration.common_utils.test_models import TestUser
 
 
 def test_send_message_simple_with_history(reset: None) -> None:
@@ -19,14 +21,14 @@ def test_send_message_simple_with_history(reset: None) -> None:
     cc_pair_1: TestCCPair = CCPairManager.create_from_scratch(
         user_performing_action=admin_user,
     )
-    admin_user = UserManager.add_api_key_to_user(
-        user=admin_user,
+    api_key: TestAPIKey = APIKeyManager.create(
+        user_performing_action=admin_user,
     )
     LLMProviderManager.create(user_performing_action=admin_user)
     cc_pair_1 = DocumentManager.seed_and_attach_docs(
         cc_pair=cc_pair_1,
         num_docs=NUM_DOCS,
-        user_with_api_key=admin_user,
+        api_key=api_key,
     )
 
     response = requests.post(

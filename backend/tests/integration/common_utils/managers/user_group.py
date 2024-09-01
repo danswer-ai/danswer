@@ -59,16 +59,17 @@ class UserGroupManager:
         response.raise_for_status()
 
     @staticmethod
-    def set_user_to_curator(
+    def set_curator_status(
         test_user_group: TestUserGroup,
         user_to_set_as_curator: TestUser,
+        is_curator: bool = True,
         user_performing_action: TestUser | None = None,
     ) -> None:
         if not user_to_set_as_curator.id:
             raise ValueError("User has no ID")
         set_curator_request = {
             "user_id": user_to_set_as_curator.id,
-            "is_curator": True,
+            "is_curator": is_curator,
         }
         response = requests.post(
             f"{API_SERVER_URL}/manage/admin/user-group/{test_user_group.id}/set-curator",

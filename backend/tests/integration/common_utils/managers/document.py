@@ -6,6 +6,7 @@ from danswer.configs.constants import DocumentSource
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import NUM_DOCS
+from tests.integration.common_utils.managers.api_key import TestAPIKey
 from tests.integration.common_utils.managers.cc_pair import TestCCPair
 from tests.integration.common_utils.test_models import SimpleTestDocument
 from tests.integration.common_utils.test_models import TestUser
@@ -79,7 +80,7 @@ class DocumentManager:
         cc_pair: TestCCPair,
         num_docs: int = NUM_DOCS,
         document_ids: list[str] | None = None,
-        user_with_api_key: TestUser | None = None,
+        api_key: TestAPIKey | None = None,
     ) -> TestCCPair:
         # Use provided document_ids if available, otherwise generate random UUIDs
         if document_ids is None:
@@ -94,9 +95,7 @@ class DocumentManager:
             response = requests.post(
                 f"{API_SERVER_URL}/danswer-api/ingestion",
                 json=document,
-                headers=user_with_api_key.headers
-                if user_with_api_key
-                else GENERAL_HEADERS,
+                headers=api_key.headers if api_key else GENERAL_HEADERS,
             )
             response.raise_for_status()
 

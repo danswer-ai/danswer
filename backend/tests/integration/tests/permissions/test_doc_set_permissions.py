@@ -28,7 +28,7 @@ def test_doc_set_permissions_setup(reset: None) -> None:
     )
 
     # Setting the curator as a curator for the first user group
-    UserGroupManager.set_user_to_curator(
+    UserGroupManager.set_curator_status(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -61,15 +61,8 @@ def test_doc_set_permissions_setup(reset: None) -> None:
 
     # END OF HAPPY PATH
 
-    """
-    Curators should not be able to:
-    - Create a public document set
-    - Create a document set for a user group they are not a curator of
-    - Create a document set for zero user groups
-    No one should be able to:
-    - create a document set with no cc_pairs
-    - add a private cc_pair to a doc_set that doesn't share a mutual parent group
-    """
+    """Tests for things Curators/Admins should not be able to do"""
+
     # Test that curator cannot create a document set for the group they don't curate
     with pytest.raises(HTTPError):
         DocumentSetManager.create(
@@ -109,6 +102,17 @@ def test_doc_set_permissions_setup(reset: None) -> None:
             user_performing_action=curator,
         )
 
+    # Test that admin cannot create a document set with no cc_pairs
+    with pytest.raises(HTTPError):
+        DocumentSetManager.create(
+            name="Invalid Document Set 4",
+            is_public=False,
+            cc_pair_ids=[],
+            groups=[user_group_1.id],
+            user_performing_action=admin_user,
+        )
+
+    """Tests for things Curators should be able to do"""
     # Test that curator can create a document set for the group they curate
     valid_doc_set = DocumentSetManager.create(
         name="Valid Document Set",

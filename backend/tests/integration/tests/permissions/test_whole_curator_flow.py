@@ -30,7 +30,7 @@ def test_whole_curator_flow(reset: None) -> None:
         user_groups_to_check=[user_group_1], user_performing_action=admin_user
     )
     # Making curator a curator of user_group_1
-    UserGroupManager.set_user_to_curator(
+    UserGroupManager.set_curator_status(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,

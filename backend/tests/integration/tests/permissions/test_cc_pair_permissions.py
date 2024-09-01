@@ -32,7 +32,7 @@ def test_cc_pair_permissions(reset: None) -> None:
         user_groups_to_check=[user_group_1], user_performing_action=admin_user
     )
     # setting the user as a curator for the user group
-    UserGroupManager.set_user_to_curator(
+    UserGroupManager.set_curator_status(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -83,13 +83,9 @@ def test_cc_pair_permissions(reset: None) -> None:
 
     # END OF HAPPY PATH
 
-    """
-    Curators should not be able to:
-    - Create a public cc pair
-    - Create a cc pair for a user group they are not a curator of
-    - Create a cc pair for a user group that the connector does not belong to (NOT WORKING)
-    - Create a cc pair for a user group that the credential does not belong to
-    """
+    """Tests for things Curators should not be able to do"""
+
+    # Curators should not be able to create a public cc pair
     with pytest.raises(HTTPError):
         CCPairManager.create(
             connector_id=connector_1.id,
@@ -100,6 +96,8 @@ def test_cc_pair_permissions(reset: None) -> None:
             user_performing_action=curator,
         )
 
+    # Curators should not be able to create a cc
+    # pair for a user group they are not a curator of
     with pytest.raises(HTTPError):
         CCPairManager.create(
             connector_id=connector_1.id,
@@ -110,8 +108,22 @@ def test_cc_pair_permissions(reset: None) -> None:
             user_performing_action=curator,
         )
 
-    # This test is currently disabled because permissions are
-    # not enforced at the connector level
+    # Curators should not be able to create a cc
+    # pair without an attached user group
+    with pytest.raises(HTTPError):
+        CCPairManager.create(
+            connector_id=connector_1.id,
+            credential_id=credential_1.id,
+            name="invalid_cc_pair_2",
+            groups=[],
+            is_public=False,
+            user_performing_action=curator,
+        )
+
+    # # This test is currently disabled because permissions are
+    # # not enforced at the connector level
+    # # Curators should not be able to create a cc pair
+    # # for a user group that the connector does not belong to (NOT WORKING)
     # with pytest.raises(HTTPError):
     #     CCPairManager.create(
     #         connector_id=connector_2.id,
@@ -122,6 +134,8 @@ def test_cc_pair_permissions(reset: None) -> None:
     #         user_performing_action=curator,
     #     )
 
+    # Curators should not be able to create a cc
+    # pair for a user group that the credential does not belong to
     with pytest.raises(HTTPError):
         CCPairManager.create(
             connector_id=connector_1.id,
@@ -132,10 +146,10 @@ def test_cc_pair_permissions(reset: None) -> None:
             user_performing_action=curator,
         )
 
-    """
-    Curators should be able to:
-    - Create a private cc pair for a user group they are a curator of
-    """
+    """Tests for things Curators should be able to do"""
+
+    # Curators should be able to create a private
+    # cc pair for a user group they are a curator of
     valid_cc_pair = CCPairManager.create(
         name="valid_cc_pair",
         connector_id=connector_1.id,

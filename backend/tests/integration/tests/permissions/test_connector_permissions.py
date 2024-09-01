@@ -30,7 +30,7 @@ def test_connector_permissions(reset: None) -> None:
         user_groups_to_check=[user_group_1], user_performing_action=admin_user
     )
     # setting the user as a curator for the user group
-    UserGroupManager.set_user_to_curator(
+    UserGroupManager.set_curator_status(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -49,11 +49,9 @@ def test_connector_permissions(reset: None) -> None:
 
     # END OF HAPPY PATH
 
-    """
-    Curators should not be able to:
-    - Create a public connector
-    - Create a connector for a user group they are not a curator of
-    """
+    """Tests for things Curators should not be able to do"""
+
+    # Curators should not be able to create a public connector
     with pytest.raises(HTTPError):
         ConnectorManager.create(
             name="invalid_connector_1",
@@ -63,6 +61,8 @@ def test_connector_permissions(reset: None) -> None:
             user_performing_action=curator,
         )
 
+    # Curators should not be able to create a cc pair for a
+    # user group they are not a curator of
     with pytest.raises(HTTPError):
         ConnectorManager.create(
             name="invalid_connector_2",
@@ -72,10 +72,10 @@ def test_connector_permissions(reset: None) -> None:
             user_performing_action=curator,
         )
 
-    """
-    Curators should be able to:
-    - Create a private connector for a user group they are a curator of
-    """
+    """Tests for things Curators should be able to do"""
+
+    # Curators should be able to create a private
+    # connector for a user group they are a curator of
     valid_connector = ConnectorManager.create(
         name="valid_connector",
         source=DocumentSource.CONFLUENCE,

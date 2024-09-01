@@ -9,13 +9,15 @@ from uuid import uuid4
 
 from danswer.server.documents.models import DocumentSource
 from tests.integration.common_utils.constants import NUM_DOCS
+from tests.integration.common_utils.managers.api_key import APIKeyManager
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.document import DocumentManager
 from tests.integration.common_utils.managers.document_set import DocumentSetManager
-from tests.integration.common_utils.managers.user import TestUser
 from tests.integration.common_utils.managers.user import UserManager
-from tests.integration.common_utils.managers.user_group import TestUserGroup
 from tests.integration.common_utils.managers.user_group import UserGroupManager
+from tests.integration.common_utils.test_models import TestAPIKey
+from tests.integration.common_utils.test_models import TestUser
+from tests.integration.common_utils.test_models import TestUserGroup
 from tests.integration.common_utils.vespa import TestVespaClient
 
 
@@ -23,8 +25,8 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     # Creating an admin user (first user created is automatically an admin)
     admin_user: TestUser = UserManager.create(name="admin_user")
     # add api key to user
-    admin_user = UserManager.add_api_key_to_user(
-        user=admin_user,
+    api_key: TestAPIKey = APIKeyManager.create(
+        user_performing_action=admin_user,
     )
 
     # create connectors
@@ -41,12 +43,12 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     cc_pair_1 = DocumentManager.seed_and_attach_docs(
         cc_pair=cc_pair_1,
         num_docs=NUM_DOCS,
-        user_with_api_key=admin_user,
+        api_key=api_key,
     )
     cc_pair_2 = DocumentManager.seed_and_attach_docs(
         cc_pair=cc_pair_2,
         num_docs=NUM_DOCS,
-        user_with_api_key=admin_user,
+        api_key=api_key,
     )
 
     # create document sets
@@ -152,8 +154,8 @@ def test_connector_deletion_for_overlapping_connectors(
     # Creating an admin user (first user created is automatically an admin)
     admin_user: TestUser = UserManager.create(name="admin_user")
     # add api key to user
-    admin_user = UserManager.add_api_key_to_user(
-        user=admin_user,
+    api_key: TestAPIKey = APIKeyManager.create(
+        user_performing_action=admin_user,
     )
 
     # create connectors
@@ -170,12 +172,12 @@ def test_connector_deletion_for_overlapping_connectors(
     cc_pair_1 = DocumentManager.seed_and_attach_docs(
         cc_pair=cc_pair_1,
         document_ids=doc_ids,
-        user_with_api_key=admin_user,
+        api_key=api_key,
     )
     cc_pair_2 = DocumentManager.seed_and_attach_docs(
         cc_pair=cc_pair_2,
         document_ids=doc_ids,
-        user_with_api_key=admin_user,
+        api_key=api_key,
     )
 
     # verify vespa document exists and that it is not in any document sets or groups

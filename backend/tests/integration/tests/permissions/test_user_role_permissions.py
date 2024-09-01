@@ -72,7 +72,7 @@ def test_user_role_setting_permissions(reset: None) -> None:
 
     # This should fail because the curator is not in the user group
     with pytest.raises(HTTPError):
-        UserGroupManager.set_user_to_curator(
+        UserGroupManager.set_curator_status(
             test_user_group=user_group_1,
             user_to_set_as_curator=curator,
             user_performing_action=admin_user,
@@ -86,7 +86,7 @@ def test_user_role_setting_permissions(reset: None) -> None:
     )
 
     # This should work because the curator is in the user group
-    UserGroupManager.set_user_to_curator(
+    UserGroupManager.set_curator_status(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
