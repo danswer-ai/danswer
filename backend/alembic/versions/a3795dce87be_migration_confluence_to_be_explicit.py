@@ -16,10 +16,10 @@ branch_labels = None
 depends_on = None
 
 
-def extract_confluence_keys_from_url(wiki_url):
+def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, str, bool]:
     from urllib.parse import urlparse
 
-    def _extract_confluence_keys_from_cloud_url(wiki_url):
+    def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, str]:
         parsed_url = urlparse(wiki_url)
         wiki_base = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path.split('/spaces')[0]}"
         path_parts = parsed_url.path.split("/")
@@ -27,7 +27,9 @@ def extract_confluence_keys_from_url(wiki_url):
         page_id = path_parts[5] if len(path_parts) > 5 else ""
         return wiki_base, space, page_id
 
-    def _extract_confluence_keys_from_datacenter_url(wiki_url):
+    def _extract_confluence_keys_from_datacenter_url(
+        wiki_url: str,
+    ) -> tuple[str, str, str]:
         DISPLAY = "/display/"
         PAGE = "/pages/"
         parsed_url = urlparse(wiki_url)
@@ -53,7 +55,9 @@ def extract_confluence_keys_from_url(wiki_url):
     return wiki_base, space, page_id, is_confluence_cloud
 
 
-def reconstruct_confluence_url(wiki_base, space, page_id, is_cloud):
+def reconstruct_confluence_url(
+    wiki_base: str, space: str, page_id: str, is_cloud: bool
+) -> str:
     if is_cloud:
         url = f"{wiki_base}/spaces/{space}"
         if page_id:
@@ -65,7 +69,7 @@ def reconstruct_confluence_url(wiki_base, space, page_id, is_cloud):
     return url
 
 
-def upgrade():
+def upgrade() -> None:
     connector = table(
         "connector",
         column("id", sa.Integer),
@@ -109,7 +113,7 @@ def upgrade():
         )
 
 
-def downgrade():
+def downgrade() -> None:
     connector = table(
         "connector",
         column("id", sa.Integer),

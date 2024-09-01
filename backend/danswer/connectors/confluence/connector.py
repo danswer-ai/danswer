@@ -7,7 +7,6 @@ from datetime import timezone
 from functools import lru_cache
 from typing import Any
 from typing import cast
-from urllib.parse import urlparse
 
 import bs4
 from atlassian import Confluence  # type:ignore
@@ -51,79 +50,6 @@ NO_PERMISSIONS_TO_VIEW_ATTACHMENTS_ERROR_STR = (
 NO_PARENT_OR_NO_PERMISSIONS_ERROR_STR = (
     "No parent or not permitted to view content with id"
 )
-
-
-def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, str]:
-    """Sample
-    URL w/ page: https://danswer.atlassian.net/wiki/spaces/1234abcd/pages/5678efgh/overview
-    URL w/o page: https://danswer.atlassian.net/wiki/spaces/ASAM/overview
-
-    wiki_base is https://danswer.atlassian.net/wiki
-    space is 1234abcd
-    page_id is 5678efgh
-    """
-    parsed_url = urlparse(wiki_url)
-    wiki_base = (
-        parsed_url.scheme
-        + "://"
-        + parsed_url.netloc
-        + parsed_url.path.split("/spaces")[0]
-    )
-
-    path_parts = parsed_url.path.split("/")
-    space = path_parts[3]
-
-    page_id = path_parts[5] if len(path_parts) > 5 else ""
-    return wiki_base, space, page_id
-
-
-def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, str, str]:
-    """Sample
-    URL w/ page https://danswer.ai/confluence/display/1234abcd/pages/5678efgh/overview
-    URL w/o page https://danswer.ai/confluence/display/1234abcd/overview
-    wiki_base is https://danswer.ai/confluence
-    space is 1234abcd
-    page_id is 5678efgh
-    """
-    # /display/ is always right before the space and at the end of the base print()
-    DISPLAY = "/display/"
-    PAGE = "/pages/"
-
-    parsed_url = urlparse(wiki_url)
-    wiki_base = (
-        parsed_url.scheme
-        + "://"
-        + parsed_url.netloc
-        + parsed_url.path.split(DISPLAY)[0]
-    )
-    space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
-    page_id = ""
-    if (content := parsed_url.path.split(PAGE)) and len(content) > 1:
-        page_id = content[1]
-    return wiki_base, space, page_id
-
-
-def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, str, bool]:
-    is_confluence_cloud = (
-        ".atlassian.net/wiki/spaces/" in wiki_url
-        or ".jira.com/wiki/spaces/" in wiki_url
-    )
-
-    try:
-        if is_confluence_cloud:
-            wiki_base, space, page_id = _extract_confluence_keys_from_cloud_url(
-                wiki_url
-            )
-        else:
-            wiki_base, space, page_id = _extract_confluence_keys_from_datacenter_url(
-                wiki_url
-            )
-    except Exception as e:
-        error_msg = f"Not a valid Confluence Wiki Link, unable to extract wiki base, space, and page id. Exception: {e}"
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
-    return wiki_base, space, page_id, is_confluence_cloud
 
 
 @lru_cache()
