@@ -125,14 +125,12 @@ export const DocumentSetCreationForm = ({
                 placeholder="Describe what the document set represents"
                 autoCompleteDisabled={true}
               />
-              {isPaidEnterpriseFeaturesEnabled &&
-                userGroups &&
-                userGroups.length > 0 && (
-                  <IsPublicGroupSelector
-                    formikProps={props}
-                    objectName="document set"
-                  />
-                )}
+              {isPaidEnterpriseFeaturesEnabled && (
+                <IsPublicGroupSelector
+                  formikProps={props}
+                  objectName="document set"
+                />
+              )}
 
               <Divider />
 

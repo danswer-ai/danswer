@@ -15,10 +15,12 @@ export type IsPublicGroupSelectorFormType = {
 export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   formikProps,
   objectName,
+  publicToWhom = "Users",
   enforceGroupSelection = true,
 }: {
   formikProps: FormikProps<T>;
   objectName: string;
+  publicToWhom?: string;
   enforceGroupSelection?: boolean;
 }) => {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
@@ -72,34 +74,35 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         <>
           <BooleanFormField
             name="is_public"
-            label="Is Public?"
+            label={
+              publicToWhom === "Curators"
+                ? `Make this ${objectName} Curator Accessible?`
+                : `Make this ${objectName} Public?`
+            }
             disabled={!isAdmin}
             subtext={
               <span className="block mt-2 text-sm text-gray-500">
-                If set, then this {objectName} will be visible to{" "}
-                <b>all users</b>. If turned off, then only users who explicitly
-                have been given access to this {objectName} (e.g. through a User
-                Group) will have access.
+                If set, then this {objectName} will be usable by{" "}
+                <b>All {publicToWhom}</b>. Otherwise, only <b>Admins</b> and{" "}
+                <b>{publicToWhom}</b> who have explicitly been given access to
+                this {objectName} (e.g. via a User Group) will have access.
               </span>
             }
           />
         </>
       )}
 
-      {(!formikProps.values.is_public ||
-        isCurator ||
-        formikProps.values.groups.length > 0) &&
-        (userGroupsIsLoading ? (
-          <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
-        ) : (
-          userGroups &&
-          userGroups.length > 0 && (
-            <>
-              <div className="flex mt-4 gap-x-2 items-center">
-                <div className="block font-medium text-base">
-                  Assign group access for this {objectName}
-                </div>
+      {(!formikProps.values.is_public || isCurator) &&
+        formikProps.values.groups.length > 0 && (
+          <>
+            <div className="flex mt-4 gap-x-2 items-center">
+              <div className="block font-medium text-base">
+                Assign group access for this {objectName}
               </div>
+            </div>
+            {userGroupsIsLoading ? (
+              <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+            ) : (
               <Text className="mb-3">
                 {isAdmin || !enforceGroupSelection ? (
                   <>
@@ -113,11 +116,16 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                   </>
                 )}
               </Text>
-              <FieldArray
-                name="groups"
-                render={(arrayHelpers: ArrayHelpers) => (
-                  <div className="flex gap-2 flex-wrap mb-4">
-                    {userGroups.map((userGroup: UserGroup) => {
+            )}
+            <FieldArray
+              name="groups"
+              render={(arrayHelpers: ArrayHelpers) => (
+                <div className="flex gap-2 flex-wrap mb-4">
+                  {userGroupsIsLoading ? (
+                    <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+                  ) : (
+                    userGroups &&
+                    userGroups.map((userGroup: UserGroup) => {
                       const ind = formikProps.values.groups.indexOf(
                         userGroup.id
                       );
@@ -135,7 +143,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                         flex 
                         cursor-pointer 
                         ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
-                    `}
+                      `}
                           onClick={() => {
                             if (isSelected) {
                               arrayHelpers.remove(ind);
@@ -150,18 +158,18 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                           </div>
                         </div>
                       );
-                    })}
-                  </div>
-                )}
-              />
-              <ErrorMessage
-                name="groups"
-                component="div"
-                className="text-error text-sm mt-1"
-              />
-            </>
-          )
-        ))}
+                    })
+                  )}
+                </div>
+              )}
+            />
+            <ErrorMessage
+              name="groups"
+              component="div"
+              className="text-error text-sm mt-1"
+            />
+          </>
+        )}
     </div>
   );
 };

@@ -109,6 +109,7 @@ from danswer.server.token_rate_limits.api import (
 from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
 from danswer.tools.built_in_tools import load_builtin_tools
 from danswer.tools.built_in_tools import refresh_built_in_tools_cache
+from danswer.utils.gpu_utils import gpu_status_request
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -190,6 +191,34 @@ def setup_postgres(db_session: Session) -> None:
     load_builtin_tools(db_session)
     refresh_built_in_tools_cache(db_session)
     auto_add_search_tool_to_personas(db_session)
+
+
+def update_default_multipass_indexing(db_session: Session) -> None:
+    docs_exist = check_docs_exist(db_session)
+    connectors_exist = check_connectors_exist(db_session)
+    logger.debug(f"Docs exist: {docs_exist}, Connectors exist: {connectors_exist}")
+
+    if not docs_exist and not connectors_exist:
+        logger.info(
+            "No existing docs or connectors found. Checking GPU availability for multipass indexing."
+        )
+        gpu_available = gpu_status_request()
+        logger.info(f"GPU availability: {gpu_available}")
+
+        current_settings = get_current_search_settings(db_session)
+
+        logger.notice(f"Updating multipass indexing setting to: {gpu_available}")
+        updated_settings = SavedSearchSettings.from_db_model(current_settings)
+        # Enable multipass indexing if GPU is available or if using a cloud provider
+        updated_settings.multipass_indexing = (
+            gpu_available or current_settings.cloud_provider is not None
+        )
+        update_current_search_settings(db_session, updated_settings)
+
+    else:
+        logger.debug(
+            "Existing docs or connectors found. Skipping multipass indexing update."
+        )
 
 
 def translate_saved_search_settings(db_session: Session) -> None:
@@ -370,6 +399,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                     server_port=MODEL_SERVER_PORT,
                 ),
             )
+
+        # update multipass indexing setting based on GPU availability
+        update_default_multipass_indexing(db_session)
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield

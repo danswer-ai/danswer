@@ -236,6 +236,7 @@ export default function CreateCredential({
                         <IsPublicGroupSelector
                           formikProps={formikProps}
                           objectName="credential"
+                          publicToWhom="Curators"
                         />
                       )}
                     </div>
