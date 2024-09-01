@@ -66,7 +66,6 @@ def reconstruct_confluence_url(wiki_base, space, page_id, is_cloud):
 
 
 def upgrade():
-    # Create a temp table representation
     connector = table(
         "connector",
         column("id", sa.Integer),
@@ -80,15 +79,12 @@ def upgrade():
     confluence_connectors = connection.execute(
         sa.select(connector).where(
             sa.and_(
-                connector.c.source == "confluence", connector.c.input_type == "poll"
+                connector.c.source == "CONFLUENCE", connector.c.input_type == "POLL"
             )
         )
     ).fetchall()
 
-    # Update each Confluence connector
     for row in confluence_connectors:
-        print("updating")
-        print(row.connector_specific_config)
         config = row.connector_specific_config
         wiki_page_url = config["wiki_page_url"]
         wiki_base, space, page_id, is_cloud = extract_confluence_keys_from_url(
@@ -102,12 +98,10 @@ def upgrade():
             "is_cloud": is_cloud,
         }
 
-        # Preserve other config values
         for key, value in config.items():
             if key not in ["wiki_page_url"]:
                 new_config[key] = value
 
-        # Update the connector
         op.execute(
             connector.update()
             .where(connector.c.id == row.id)
@@ -128,7 +122,7 @@ def downgrade():
         op.get_bind()
         .execute(
             sa.select(connector).where(
-                connector.c.source == "confluence", connector.c.input_type == "poll"
+                connector.c.source == "CONFLUENCE", connector.c.input_type == "POLL"
             )
         )
         .fetchall()
