@@ -10,6 +10,7 @@ on:
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  
 
 jobs:
   integration-tests:
@@ -92,6 +93,8 @@ jobs:
         run: |
           cd deployment/docker_compose
           ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=true \
+          AUTH_TYPE=basic \
+          REQUIRE_EMAIL_VERIFICATION=false \
           IMAGE_TAG=it \
           docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build
         id: start_docker
