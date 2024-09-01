@@ -699,7 +699,7 @@ def monitor_document_set_taskset(
         task_logger.error("The value is not an integer.")
         return
 
-    count = r.scard(rds.taskset_key)
+    count = cast(int, r.scard(rds.taskset_key))
     task_logger.info(
         f"document_set_id={document_set_id} remaining={count} initial={initial_count}"
     )
@@ -745,7 +745,7 @@ def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -
         task_logger.error("The value is not an integer.")
         return
 
-    count = r.scard(rug.taskset_key)
+    count = cast(int, r.scard(rug.taskset_key))
     task_logger.info(
         f"usergroup_id={usergroup_id} remaining={count} initial={initial_count}"
     )
