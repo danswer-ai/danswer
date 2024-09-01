@@ -69,7 +69,7 @@ def set_user_role(
 
     if user_role_update_request.new_role == UserRole.CURATOR:
         raise HTTPException(
-            status_code=400,
+            status_code=402,
             detail="Curator role must be set via the User Group Menu",
         )
 
@@ -78,7 +78,7 @@ def set_user_role(
 
     if current_user.id == user_to_update.id:
         raise HTTPException(
-            status_code=400,
+            status_code=402,
             detail="An admin cannot demote themselves from admin role!",
         )
 
