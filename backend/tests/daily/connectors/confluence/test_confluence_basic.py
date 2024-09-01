@@ -8,7 +8,13 @@ from danswer.connectors.confluence.connector import ConfluenceConnector
 
 @pytest.fixture
 def confluence_connector() -> ConfluenceConnector:
-    connector = ConfluenceConnector(os.environ["CONFLUENCE_TEST_SPACE_URL"])
+    connector = ConfluenceConnector(
+        wiki_base=os.environ["CONFLUENCE_TEST_SPACE_URL"],
+        space=os.environ["CONFLUENCE_TEST_SPACE"],
+        is_cloud=os.environ.get("CONFLUENCE_IS_CLOUD", "true").lower() == "true",
+        page_id=os.environ.get("CONFLUENCE_TEST_PAGE_ID", ""),
+    )
+
     connector.load_credentials(
         {
             "confluence_username": os.environ["CONFLUENCE_USER_NAME"],

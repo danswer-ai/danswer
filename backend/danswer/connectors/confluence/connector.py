@@ -301,7 +301,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         wiki_base: str,
         space: str,
         is_cloud: bool,
-        page_id: str | None = None,
+        page_id: str = "",
         index_recursively: bool = True,
         batch_size: int = INDEX_BATCH_SIZE,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
@@ -794,7 +794,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
-    connector = ConfluenceConnector(os.environ["CONFLUENCE_TEST_SPACE_URL"])
+    connector = ConfluenceConnector(
+        wiki_base=os.environ["CONFLUENCE_TEST_SPACE_URL"],
+        space=os.environ["CONFLUENCE_TEST_SPACE"],
+        is_cloud=os.environ.get("CONFLUENCE_IS_CLOUD", "true").lower() == "true",
+        page_id=os.environ.get("CONFLUENCE_TEST_PAGE_ID", ""),
+        index_recursively=True,
+    )
     connector.load_credentials(
         {
             "confluence_username": os.environ["CONFLUENCE_USER_NAME"],
