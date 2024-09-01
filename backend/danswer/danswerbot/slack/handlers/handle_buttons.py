@@ -254,7 +254,7 @@ def handle_followup_button(
             client=client.web_client, channel_id=channel_id
         )
         slack_bot_config = get_slack_bot_config_for_channel(
-            channel_name=channel_name, db_session=db_session
+            channel_name=channel_name, db_session=db_session, is_dm=is_dm
         )
         if slack_bot_config:
             tag_names = slack_bot_config.channel_config.get("follow_up_tags")
