@@ -51,14 +51,14 @@ def validate_user_creation_permissions(
         detail = "User does not have permission to create public credentials"
         logger.error(detail)
         raise HTTPException(
-            status_code=402,
+            status_code=400,
             detail=detail,
         )
     if not target_group_ids:
         detail = "Curators must specify 1+ groups"
         logger.error(detail)
         raise HTTPException(
-            status_code=402,
+            status_code=400,
             detail=detail,
         )
     user_curated_groups = fetch_user_groups_for_user(
@@ -70,7 +70,7 @@ def validate_user_creation_permissions(
         detail = "Curators cannot control groups they don't curate"
         logger.error(detail)
         raise HTTPException(
-            status_code=402,
+            status_code=400,
             detail=detail,
         )
 
