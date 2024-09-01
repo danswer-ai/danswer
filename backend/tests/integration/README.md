@@ -9,6 +9,7 @@ The idea is that each test can use the manager class to create (.create()) a "te
 
 ## Instructions for Running Integration Tests Locally
 1. Launch danswer (using Docker or running with a debugger), ensuring the API server is running on port 8080.
+    a. If you'd like to set environment variables, you can do so by creating a `.env` file in the danswer/backend/tests/integration/ directory.
 2. Navigate to `danswer/backend`.
 3. Run the following command in the terminal:
    ```sh
