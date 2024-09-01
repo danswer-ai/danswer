@@ -372,7 +372,10 @@ class RecursiveIndexer:
 class ConfluenceConnector(LoadConnector, PollConnector):
     def __init__(
         self,
-        wiki_page_url: str,
+        wiki_base: str,
+        space: str,
+        is_cloud: bool,
+        page_id: str | None = None,
         index_recursively: bool = True,
         batch_size: int = INDEX_BATCH_SIZE,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
@@ -386,15 +389,14 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self.labels_to_skip = set(labels_to_skip)
         self.recursive_indexer: RecursiveIndexer | None = None
         self.index_recursively = index_recursively
-        (
-            self.wiki_base,
-            self.space,
-            self.page_id,
-            self.is_cloud,
-        ) = extract_confluence_keys_from_url(wiki_page_url)
+
+        self.wiki_base = wiki_base
+        self.space = space
+        self.page_id = page_id
+
+        self.is_cloud = is_cloud
 
         self.space_level_scan = False
-
         self.confluence_client: Confluence | None = None
 
         if self.page_id is None or self.page_id == "":
@@ -414,7 +416,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             username=username if self.is_cloud else None,
             password=access_token if self.is_cloud else None,
             token=access_token if not self.is_cloud else None,
-            cloud=self.is_cloud,
         )
         return None
 

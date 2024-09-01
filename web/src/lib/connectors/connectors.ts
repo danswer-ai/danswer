@@ -227,11 +227,29 @@ Selecting the "Index Recursively" checkbox will index the single page's children
     values: [
       {
         type: "text",
-        query: "Enter the wiki page URL:",
-        label: "Wiki Page URL",
-        name: "wiki_page_url",
+        query: "Enter the wiki base URL:",
+        label: "Wiki Base URL",
+        name: "wiki_base",
         optional: false,
-        description: "Enter any link to a Confluence space or Page",
+        description:
+          "The base URL of your Confluence instance (e.g., https://your-domain.atlassian.net/wiki)",
+      },
+      {
+        type: "text",
+        query: "Enter the space:",
+        label: "Space",
+        name: "space",
+        optional: false,
+        description: "The Confluence space name to index (e.g. `KB`)",
+      },
+      {
+        type: "text",
+        query: "Enter the page ID (optional):",
+        label: "Page ID",
+        name: "page_id",
+        optional: true,
+        description:
+          "Specific page ID to index (leave empty to index the entire space)",
       },
       {
         type: "checkbox",
@@ -240,6 +258,16 @@ Selecting the "Index Recursively" checkbox will index the single page's children
           "Index Recursively (if this is set and the Wiki Page URL leads to a page, we will index the page and all of its children instead of just the page)",
         name: "index_recursively",
         optional: false,
+      },
+      {
+        type: "checkbox",
+        query: "Is this a Confluence Cloud instance?",
+        label: "Is Cloud",
+        name: "is_cloud",
+        optional: false,
+        default: true,
+        description:
+          "Check if this is a Confluence Cloud instance, uncheck for Confluence Server/Data Center",
       },
     ],
   },
@@ -817,7 +845,9 @@ export interface GmailConfig {}
 export interface BookstackConfig {}
 
 export interface ConfluenceConfig {
-  wiki_page_url: string;
+  wiki_base: string;
+  space: string;
+  page_id?: string;
   index_recursively?: boolean;
 }
 
