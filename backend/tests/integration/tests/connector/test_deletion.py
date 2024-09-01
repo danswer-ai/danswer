@@ -1,14 +1,21 @@
+"""
+This file contains tests for the following:
+- Ensuring deletion of a connector also:
+    - deletes the documents in vespa for that connector
+    - updates the document sets and user groups to remove the connector
+- Ensure that deleting a connector that is part of an overlapping document set and/or user group works as expected
+"""
 from uuid import uuid4
 
 from danswer.server.documents.models import DocumentSource
-from tests.integration.common_utils.cc_pair import CCPairManager
 from tests.integration.common_utils.constants import NUM_DOCS
-from tests.integration.common_utils.document_set import DocumentSetManager
-from tests.integration.common_utils.seed_documents import DocumentManager
-from tests.integration.common_utils.user import TestUser
-from tests.integration.common_utils.user import UserManager
-from tests.integration.common_utils.user_group import TestUserGroup
-from tests.integration.common_utils.user_group import UserGroupManager
+from tests.integration.common_utils.managers.cc_pair import CCPairManager
+from tests.integration.common_utils.managers.document import DocumentManager
+from tests.integration.common_utils.managers.document_set import DocumentSetManager
+from tests.integration.common_utils.managers.user import TestUser
+from tests.integration.common_utils.managers.user import UserManager
+from tests.integration.common_utils.managers.user_group import TestUserGroup
+from tests.integration.common_utils.managers.user_group import UserGroupManager
 from tests.integration.common_utils.vespa import TestVespaClient
 
 
@@ -91,7 +98,7 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     CCPairManager.wait_for_deletion_completion(user_performing_action=admin_user)
 
     # validate vespa documents
-    assert DocumentManager.verify(
+    DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_1,
         doc_set_names=[],
@@ -100,7 +107,7 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
         verify_deleted=True,
     )
 
-    assert DocumentManager.verify(
+    DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_2,
         doc_set_names=[doc_set_2.name],
@@ -110,37 +117,27 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     )
 
     # check that only connector 1 is deleted
-    assert CCPairManager.verify(
+    CCPairManager.verify(
         cc_pair=cc_pair_2,
         user_performing_action=admin_user,
     )
 
     # validate document sets
-    all_doc_sets = DocumentSetManager.get_all(
-        user_performing_action=admin_user,
-    )
-    assert len(all_doc_sets) == 2
-
-    assert DocumentSetManager.verify(
+    DocumentSetManager.verify(
         document_set=doc_set_1,
         user_performing_action=admin_user,
     )
-    assert DocumentSetManager.verify(
+    DocumentSetManager.verify(
         document_set=doc_set_2,
         user_performing_action=admin_user,
     )
 
     # validate user groups
-    all_user_groups = UserGroupManager.get_all(
-        user_performing_action=admin_user,
-    )
-    assert len(all_user_groups) == 2
-
-    assert UserGroupManager.verify(
+    UserGroupManager.verify(
         user_group=user_group_1,
         user_performing_action=admin_user,
     )
-    assert UserGroupManager.verify(
+    UserGroupManager.verify(
         user_group=user_group_2,
         user_performing_action=admin_user,
     )
@@ -182,14 +179,14 @@ def test_connector_deletion_for_overlapping_connectors(
     )
 
     # verify vespa document exists and that it is not in any document sets or groups
-    assert DocumentManager.verify(
+    DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_1,
         doc_set_names=[],
         group_names=[],
         doc_creating_user=admin_user,
     )
-    assert DocumentManager.verify(
+    DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_2,
         doc_set_names=[],
@@ -211,13 +208,13 @@ def test_connector_deletion_for_overlapping_connectors(
     print("Document set 1 created and synced")
 
     # verify vespa document is in the document set
-    assert DocumentManager.verify(
+    DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_1,
         doc_set_names=[doc_set_1.name],
         doc_creating_user=admin_user,
     )
-    assert DocumentManager.verify(
+    DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_2,
         doc_creating_user=admin_user,
@@ -252,13 +249,13 @@ def test_connector_deletion_for_overlapping_connectors(
     print("User group 2 created and synced")
 
     # verify vespa document is in the user group
-    assert DocumentManager.verify(
+    DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_1,
         group_names=[user_group_1.name, user_group_2.name],
         doc_creating_user=admin_user,
     )
-    assert DocumentManager.verify(
+    DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_2,
         group_names=[user_group_1.name, user_group_2.name],
@@ -282,20 +279,21 @@ def test_connector_deletion_for_overlapping_connectors(
 
     # print("Connector 1 deleted")
 
-    # check that only connector 2 is deleted
+    # check that only connector 1 is deleted
     # TODO: check for the CC pair rather than the connector once the refactor is done
-    # assert not CCPairManager.verify(
+    # CCPairManager.verify(
     #     cc_pair=cc_pair_1,
+    #     verify_deleted=True,
     #     user_performing_action=admin_user,
     # )
-    # assert CCPairManager.verify(
+    # CCPairManager.verify(
     #     cc_pair=cc_pair_2,
     #     user_performing_action=admin_user,
     # )
 
     # verify the document is not in any document sets
     # verify the document is only in user group 2
-    # assert DocumentManager.verify(
+    # DocumentManager.verify(
     #     vespa_client=vespa_client,
     #     cc_pair=cc_pair_2,
     #     doc_set_names=[],

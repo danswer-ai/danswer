@@ -1,10 +1,10 @@
 from danswer.server.documents.models import DocumentSource
-from tests.integration.common_utils.cc_pair import CCPairManager
 from tests.integration.common_utils.constants import NUM_DOCS
-from tests.integration.common_utils.document_set import DocumentSetManager
-from tests.integration.common_utils.seed_documents import DocumentManager
-from tests.integration.common_utils.user import TestUser
-from tests.integration.common_utils.user import UserManager
+from tests.integration.common_utils.managers.cc_pair import CCPairManager
+from tests.integration.common_utils.managers.document import DocumentManager
+from tests.integration.common_utils.managers.document_set import DocumentSetManager
+from tests.integration.common_utils.managers.user import TestUser
+from tests.integration.common_utils.managers.user import UserManager
 from tests.integration.common_utils.vespa import TestVespaClient
 
 
@@ -46,11 +46,11 @@ def test_multiple_document_sets_syncing_same_connnector(
         user_performing_action=admin_user,
     )
 
-    assert DocumentSetManager.verify(
+    DocumentSetManager.verify(
         document_set=doc_set_1,
         user_performing_action=admin_user,
     )
-    assert DocumentSetManager.verify(
+    DocumentSetManager.verify(
         document_set=doc_set_2,
         user_performing_action=admin_user,
     )

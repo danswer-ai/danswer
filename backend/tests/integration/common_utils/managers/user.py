@@ -111,7 +111,7 @@ class UserManager:
         user_to_set: TestUser,
         target_role: UserRole,
         user_to_perform_action: TestUser | None = None,
-    ) -> bool:
+    ) -> None:
         if user_to_perform_action is None:
             user_to_perform_action = user_to_set
         response = requests.patch(
@@ -119,10 +119,10 @@ class UserManager:
             json={"user_email": user_to_set.email, "new_role": target_role.value},
             headers=user_to_perform_action.headers,
         )
-        return response.ok
+        response.raise_for_status()
 
     @staticmethod
-    def verify(user: TestUser, user_to_perform_action: TestUser | None = None) -> bool:
+    def verify(user: TestUser, user_to_perform_action: TestUser | None = None) -> None:
         if user_to_perform_action is None:
             user_to_perform_action = user
         response = requests.get(
@@ -142,5 +142,5 @@ class UserManager:
         )
         for accepted_user in all_users.accepted:
             if accepted_user.email == user.email and accepted_user.id == user.id:
-                return True
-        return False
+                return
+        raise ValueError(f"User {user.email} not found")

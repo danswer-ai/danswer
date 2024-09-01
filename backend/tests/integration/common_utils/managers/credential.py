@@ -55,11 +55,8 @@ class CredentialManager:
     def edit(
         credential: TestCredential,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
-        if not credential.id:
-            raise ValueError("Credential ID is required to edit a credential")
+    ) -> None:
         request = credential.model_dump(include={"name", "credential_json"})
-        print(request)
         response = requests.put(
             url=f"{API_SERVER_URL}/manage/admin/credential/{credential.id}",
             json=request,
@@ -67,20 +64,20 @@ class CredentialManager:
             if user_performing_action
             else GENERAL_HEADERS,
         )
-        return response.ok
+        response.raise_for_status()
 
     @staticmethod
     def delete(
         credential: TestCredential,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
+    ) -> None:
         response = requests.delete(
             url=f"{API_SERVER_URL}/manage/credential/{credential.id}",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
-        return response.ok
+        response.raise_for_status()
 
     @staticmethod
     def get(
@@ -110,16 +107,23 @@ class CredentialManager:
 
     @staticmethod
     def verify(
-        test_credential: TestCredential,
+        credential: TestCredential,
+        verify_deleted: bool = False,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
+    ) -> None:
         all_credentials = CredentialManager.get_all(user_performing_action)
-        for credential in all_credentials:
-            if credential.id == test_credential.id:
-                return (
-                    credential.name == test_credential.name
-                    and credential.admin_public == test_credential.admin_public
-                    and credential.source == test_credential.source
-                    and credential.curator_public == test_credential.curator_public
-                )
-        return False
+        for fetched_credential in all_credentials:
+            if credential.id == fetched_credential.id:
+                if verify_deleted:
+                    raise ValueError(
+                        f"Credential {credential.id} found but should be deleted"
+                    )
+                if (
+                    credential.name == fetched_credential.name
+                    and credential.admin_public == fetched_credential.admin_public
+                    and credential.source == fetched_credential.source
+                    and credential.curator_public == fetched_credential.curator_public
+                ):
+                    return
+        if not verify_deleted:
+            raise ValueError(f"Credential {credential.id} not found")

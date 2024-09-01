@@ -1,14 +1,14 @@
 import requests
 
 from danswer.configs.constants import MessageType
-from tests.integration.common_utils.cc_pair import CCPairManager
-from tests.integration.common_utils.cc_pair import TestCCPair
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import NUM_DOCS
 from tests.integration.common_utils.llm import LLMProviderManager
-from tests.integration.common_utils.seed_documents import DocumentManager
-from tests.integration.common_utils.user import TestUser
-from tests.integration.common_utils.user import UserManager
+from tests.integration.common_utils.managers.cc_pair import CCPairManager
+from tests.integration.common_utils.managers.cc_pair import TestCCPair
+from tests.integration.common_utils.managers.document import DocumentManager
+from tests.integration.common_utils.managers.user import TestUser
+from tests.integration.common_utils.managers.user import UserManager
 
 
 def test_send_message_simple_with_history(reset: None) -> None:

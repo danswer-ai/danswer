@@ -2,11 +2,11 @@ import pytest
 from requests.exceptions import HTTPError
 
 from danswer.server.documents.models import DocumentSource
-from tests.integration.common_utils.cc_pair import CCPairManager
-from tests.integration.common_utils.document_set import DocumentSetManager
-from tests.integration.common_utils.user import TestUser
-from tests.integration.common_utils.user import UserManager
-from tests.integration.common_utils.user_group import UserGroupManager
+from tests.integration.common_utils.managers.cc_pair import CCPairManager
+from tests.integration.common_utils.managers.document_set import DocumentSetManager
+from tests.integration.common_utils.managers.user import TestUser
+from tests.integration.common_utils.managers.user import UserManager
+from tests.integration.common_utils.managers.user_group import UserGroupManager
 
 
 def test_doc_set_permissions_setup(reset: None) -> None:
@@ -28,7 +28,7 @@ def test_doc_set_permissions_setup(reset: None) -> None:
     )
 
     # Setting the curator as a curator for the first user group
-    assert UserGroupManager.set_user_to_curator(
+    UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -119,7 +119,7 @@ def test_doc_set_permissions_setup(reset: None) -> None:
     )
 
     # Verify that the valid document set was created
-    assert DocumentSetManager.verify(
+    DocumentSetManager.verify(
         document_set=valid_doc_set,
         user_performing_action=admin_user,
     )
@@ -145,10 +145,11 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         )
 
     # Verify the document set has not been updated in the db
-    assert not DocumentSetManager.verify(
-        document_set=valid_doc_set,
-        user_performing_action=admin_user,
-    )
+    with pytest.raises(ValueError):
+        DocumentSetManager.verify(
+            document_set=valid_doc_set,
+            user_performing_action=admin_user,
+        )
 
     # Add the private_cc_pair to the user group on our end for later comparison
     user_group_1.cc_pair_ids.append(private_cc_pair.id)
@@ -161,13 +162,13 @@ def test_doc_set_permissions_setup(reset: None) -> None:
     UserGroupManager.wait_for_sync(
         user_groups_to_check=[user_group_1], user_performing_action=admin_user
     )
-    assert UserGroupManager.verify(
+    UserGroupManager.verify(
         user_group=user_group_1,
         user_performing_action=admin_user,
     )
 
     # Confirm the curator can now add the cc_pair to the doc set
-    assert DocumentSetManager.edit(
+    DocumentSetManager.edit(
         document_set=valid_doc_set,
         user_performing_action=curator,
     )
@@ -175,7 +176,7 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         document_sets_to_check=[valid_doc_set], user_performing_action=admin_user
     )
     # Verify the updated document set
-    assert DocumentSetManager.verify(
+    DocumentSetManager.verify(
         document_set=valid_doc_set,
         user_performing_action=admin_user,
     )

@@ -149,16 +149,23 @@ class DocumentSetManager:
     @staticmethod
     def verify(
         document_set: TestDocumentSet,
+        verify_deleted: bool = False,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
+    ) -> None:
         doc_sets = DocumentSetManager.get_all(user_performing_action)
         for doc_set in doc_sets:
             if doc_set.id == document_set.id:
-                return (
+                if verify_deleted:
+                    raise ValueError(
+                        f"Document set {document_set.id} found but should have been deleted"
+                    )
+                if (
                     doc_set.name == document_set.name
                     and set(doc_set.cc_pair_ids) == set(document_set.cc_pair_ids)
                     and doc_set.is_public == document_set.is_public
                     and set(doc_set.users) == set(document_set.users)
                     and set(doc_set.groups) == set(document_set.groups)
-                )
-        return False
+                ):
+                    return
+        if not verify_deleted:
+            raise ValueError(f"Document set {document_set.id} not found")

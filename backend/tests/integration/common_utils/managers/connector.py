@@ -58,10 +58,7 @@ class ConnectorManager:
     def edit(
         connector: TestConnector,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
-        print(connector.__dict__)
-        if not connector.id:
-            raise ValueError("Connector ID is required to edit a connector")
+    ) -> None:
         response = requests.patch(
             url=f"{API_SERVER_URL}/manage/admin/connector/{connector.id}",
             json=connector.model_dump(exclude={"id"}),
@@ -69,22 +66,20 @@ class ConnectorManager:
             if user_performing_action
             else GENERAL_HEADERS,
         )
-        response.raise_for_status()  # This will raise an HTTPError if the request failed
-        return True
+        response.raise_for_status()
 
     @staticmethod
     def delete(
         connector: TestConnector,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
+    ) -> None:
         response = requests.delete(
             url=f"{API_SERVER_URL}/manage/admin/connector/{connector.id}",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
-        response.raise_for_status()  # This will raise an HTTPError if the request failed
-        return True
+        response.raise_for_status()
 
     @staticmethod
     def get_all(

@@ -9,11 +9,11 @@ from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
 from danswer.server.documents.models import DocumentSource
-from tests.integration.common_utils.connector import ConnectorManager
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
-from tests.integration.common_utils.credential import CredentialManager
+from tests.integration.common_utils.managers.connector import ConnectorManager
+from tests.integration.common_utils.managers.credential import CredentialManager
 from tests.integration.common_utils.test_models import TestCCPair
 from tests.integration.common_utils.test_models import TestUser
 
@@ -112,31 +112,33 @@ class CCPairManager:
     def pause_cc_pair(
         cc_pair: TestCCPair,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
-        return requests.put(
+    ) -> None:
+        result = requests.put(
             url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/status",
             json={"status": "PAUSED"},
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
-        ).ok
+        )
+        result.raise_for_status()
 
     @staticmethod
     def delete(
         cc_pair: TestCCPair,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
+    ) -> None:
         cc_pair_identifier = ConnectorCredentialPairIdentifier(
             connector_id=cc_pair.connector_id,
             credential_id=cc_pair.credential_id,
         )
-        return requests.post(
+        result = requests.post(
             url=f"{API_SERVER_URL}/manage/admin/deletion-attempt",
             json=cc_pair_identifier.model_dump(),
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
-        ).ok
+        )
+        result.raise_for_status()
 
     @staticmethod
     def get_all(
@@ -154,18 +156,29 @@ class CCPairManager:
     @staticmethod
     def verify(
         cc_pair: TestCCPair,
+        verify_deleted: bool = False,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
+    ) -> None:
         all_cc_pairs = CCPairManager.get_all(user_performing_action)
         for retrieved_cc_pair in all_cc_pairs:
             if retrieved_cc_pair.cc_pair_id == cc_pair.id:
-                return (
+                if verify_deleted:
+                    # We assume that this check will be performed after the deletion is
+                    # already waited for
+                    raise ValueError(
+                        f"CC pair {cc_pair.id} found but should be deleted"
+                    )
+                if (
                     retrieved_cc_pair.name == cc_pair.name
                     and retrieved_cc_pair.connector.id == cc_pair.connector_id
                     and retrieved_cc_pair.credential.id == cc_pair.credential_id
+                    and retrieved_cc_pair.public_doc == cc_pair.is_public
                     and set(retrieved_cc_pair.groups) == set(cc_pair.groups)
-                )
-        return False
+                ):
+                    return
+
+        if not verify_deleted:
+            raise ValueError(f"CC pair {cc_pair.id} not found")
 
     @staticmethod
     def wait_for_deletion_completion(

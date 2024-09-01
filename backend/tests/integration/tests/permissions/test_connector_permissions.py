@@ -6,10 +6,10 @@ import pytest
 from requests.exceptions import HTTPError
 
 from danswer.server.documents.models import DocumentSource
-from tests.integration.common_utils.connector import ConnectorManager
-from tests.integration.common_utils.user import TestUser
-from tests.integration.common_utils.user import UserManager
-from tests.integration.common_utils.user_group import UserGroupManager
+from tests.integration.common_utils.managers.connector import ConnectorManager
+from tests.integration.common_utils.managers.user import TestUser
+from tests.integration.common_utils.managers.user import UserManager
+from tests.integration.common_utils.managers.user_group import UserGroupManager
 
 
 def test_connector_permissions(reset: None) -> None:
@@ -30,7 +30,7 @@ def test_connector_permissions(reset: None) -> None:
         user_groups_to_check=[user_group_1], user_performing_action=admin_user
     )
     # setting the user as a curator for the user group
-    assert UserGroupManager.set_user_to_curator(
+    UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -98,7 +98,7 @@ def test_connector_permissions(reset: None) -> None:
 
     # Test editing the connector
     valid_connector.name = "updated_valid_connector"
-    assert ConnectorManager.edit(valid_connector, user_performing_action=curator)
+    ConnectorManager.edit(valid_connector, user_performing_action=curator)
 
     # Verify the edit
     updated_connector = ConnectorManager.get(
@@ -107,9 +107,7 @@ def test_connector_permissions(reset: None) -> None:
     assert updated_connector.name == "updated_valid_connector"
 
     # Test deleting the connector
-    assert ConnectorManager.delete(
-        connector=valid_connector, user_performing_action=curator
-    )
+    ConnectorManager.delete(connector=valid_connector, user_performing_action=curator)
 
     # Verify the deletion
     all_connectors_after_delete = ConnectorManager.get_all(

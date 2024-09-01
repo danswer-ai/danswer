@@ -3,10 +3,10 @@ from uuid import uuid4
 import requests
 
 from danswer.configs.constants import DocumentSource
-from tests.integration.common_utils.cc_pair import TestCCPair
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import NUM_DOCS
+from tests.integration.common_utils.managers.cc_pair import TestCCPair
 from tests.integration.common_utils.test_models import SimpleTestDocument
 from tests.integration.common_utils.test_models import TestUser
 from tests.integration.common_utils.vespa import TestVespaClient
@@ -120,12 +120,13 @@ class DocumentManager:
         group_names: list[str] | None = None,
         doc_creating_user: TestUser | None = None,
         verify_deleted: bool = False,
-    ) -> bool:
+    ) -> None:
         doc_ids = [document.id for document in cc_pair.documents]
         retrieved_docs_dict = vespa_client.get_documents_by_id(doc_ids)["documents"]
         retrieved_docs = {
             doc["fields"]["document_id"]: doc["fields"] for doc in retrieved_docs_dict
         }
+        # Left this here for debugging purposes.
         # import json
         # for doc in retrieved_docs.values():
         #     printable_doc = doc.copy()
@@ -151,4 +152,3 @@ class DocumentManager:
                 group_names,
                 doc_creating_user,
             )
-        return True

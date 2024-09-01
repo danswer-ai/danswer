@@ -6,12 +6,12 @@ import pytest
 from requests.exceptions import HTTPError
 
 from danswer.server.documents.models import DocumentSource
-from tests.integration.common_utils.cc_pair import CCPairManager
-from tests.integration.common_utils.connector import ConnectorManager
-from tests.integration.common_utils.credential import CredentialManager
-from tests.integration.common_utils.user import TestUser
-from tests.integration.common_utils.user import UserManager
-from tests.integration.common_utils.user_group import UserGroupManager
+from tests.integration.common_utils.managers.cc_pair import CCPairManager
+from tests.integration.common_utils.managers.connector import ConnectorManager
+from tests.integration.common_utils.managers.credential import CredentialManager
+from tests.integration.common_utils.managers.user import TestUser
+from tests.integration.common_utils.managers.user import UserManager
+from tests.integration.common_utils.managers.user_group import UserGroupManager
 
 
 def test_cc_pair_permissions(reset: None) -> None:
@@ -32,7 +32,7 @@ def test_cc_pair_permissions(reset: None) -> None:
         user_groups_to_check=[user_group_1], user_performing_action=admin_user
     )
     # setting the user as a curator for the user group
-    assert UserGroupManager.set_user_to_curator(
+    UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
@@ -144,23 +144,22 @@ def test_cc_pair_permissions(reset: None) -> None:
         is_public=False,
         user_performing_action=curator,
     )
-    assert valid_cc_pair.id is not None
 
     # Verify the created cc pair
-    assert CCPairManager.verify(valid_cc_pair, user_performing_action=curator)
-
-    # Verify that the cc pair can be found in the list of all cc pairs
-    all_cc_pairs = CCPairManager.get_all(user_performing_action=curator)
-    assert any(cc_pair.cc_pair_id == valid_cc_pair.id for cc_pair in all_cc_pairs)
+    CCPairManager.verify(
+        cc_pair=valid_cc_pair,
+        user_performing_action=curator,
+    )
 
     # Test pausing the cc pair
-    assert CCPairManager.pause_cc_pair(valid_cc_pair, user_performing_action=curator)
+    CCPairManager.pause_cc_pair(valid_cc_pair, user_performing_action=curator)
 
     # Test deleting the cc pair
-    assert CCPairManager.delete(valid_cc_pair, user_performing_action=curator)
+    CCPairManager.delete(valid_cc_pair, user_performing_action=curator)
     CCPairManager.wait_for_deletion_completion(user_performing_action=curator)
-    # Verify the deletion
-    all_cc_pairs_after_delete = CCPairManager.get_all(user_performing_action=curator)
-    assert not any(
-        cc_pair.cc_pair_id == valid_cc_pair.id for cc_pair in all_cc_pairs_after_delete
+
+    CCPairManager.verify(
+        cc_pair=valid_cc_pair,
+        verify_deleted=True,
+        user_performing_action=curator,
     )

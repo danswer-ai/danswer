@@ -46,7 +46,7 @@ class UserGroupManager:
     def edit(
         user_group: TestUserGroup,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
+    ) -> None:
         if not user_group.id:
             raise ValueError("User group has no ID")
         response = requests.patch(
@@ -56,14 +56,14 @@ class UserGroupManager:
             if user_performing_action
             else GENERAL_HEADERS,
         )
-        return response.ok
+        response.raise_for_status()
 
     @staticmethod
     def set_user_to_curator(
         test_user_group: TestUserGroup,
         user_to_set_as_curator: TestUser,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
+    ) -> None:
         if not user_to_set_as_curator.id:
             raise ValueError("User has no ID")
         set_curator_request = {
@@ -77,7 +77,7 @@ class UserGroupManager:
             if user_performing_action
             else GENERAL_HEADERS,
         )
-        return response.ok
+        response.raise_for_status()
 
     @staticmethod
     def get_all(
@@ -95,17 +95,27 @@ class UserGroupManager:
     @staticmethod
     def verify(
         user_group: TestUserGroup,
+        verify_deleted: bool = False,
         user_performing_action: TestUser | None = None,
-    ) -> bool:
+    ) -> None:
         all_user_groups = UserGroupManager.get_all(user_performing_action)
         for fetched_user_group in all_user_groups:
             if user_group.id == fetched_user_group.id:
-                if len(user_group.cc_pair_ids) != len(fetched_user_group.cc_pairs):
-                    return False
-                if len(user_group.user_ids) != len(fetched_user_group.users):
-                    return False
-                return True
-        return False
+                if verify_deleted:
+                    raise ValueError(
+                        f"User group {user_group.id} found but should be deleted"
+                    )
+                fetched_cc_ids = {cc_pair.id for cc_pair in fetched_user_group.cc_pairs}
+                fetched_user_ids = {user.id for user in fetched_user_group.users}
+                user_group_cc_ids = set(user_group.cc_pair_ids)
+                user_group_user_ids = set(user_group.user_ids)
+                if (
+                    fetched_cc_ids == user_group_cc_ids
+                    and fetched_user_ids == user_group_user_ids
+                ):
+                    return
+        if not verify_deleted:
+            raise ValueError(f"User group {user_group.id} not found")
 
     @staticmethod
     def wait_for_sync(
