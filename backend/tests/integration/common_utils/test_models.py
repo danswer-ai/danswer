@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import Any
 
 from pydantic import BaseModel
@@ -7,7 +6,6 @@ from pydantic import Field
 from danswer.search.enums import RecencyBiasSetting
 from danswer.server.documents.models import DocumentSource
 from danswer.server.documents.models import InputType
-from tests.integration.common_utils.constants import GENERAL_HEADERS
 
 """
 These data models are used to represent the data on the testing side of things.
@@ -23,7 +21,7 @@ class TestUser(BaseModel):
     id: str
     email: str
     password: str
-    headers: dict = deepcopy(GENERAL_HEADERS)
+    headers: dict
 
 
 class TestCredential(BaseModel):

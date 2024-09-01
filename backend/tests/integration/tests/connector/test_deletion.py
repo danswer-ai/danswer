@@ -16,7 +16,7 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     # Creating an admin user (first user created is automatically an admin)
     admin_user: TestUser = UserManager.create(name="admin_user")
     # add api key to user
-    admin_user = DocumentManager.add_api_key_to_user(
+    admin_user = UserManager.add_api_key_to_user(
         user=admin_user,
     )
 
@@ -155,7 +155,7 @@ def test_connector_deletion_for_overlapping_connectors(
     # Creating an admin user (first user created is automatically an admin)
     admin_user: TestUser = UserManager.create(name="admin_user")
     # add api key to user
-    admin_user = DocumentManager.add_api_key_to_user(
+    admin_user = UserManager.add_api_key_to_user(
         user=admin_user,
     )
 

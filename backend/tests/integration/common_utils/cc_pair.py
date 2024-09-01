@@ -182,7 +182,7 @@ class CCPairManager:
 
             if time.time() - start > MAX_DELAY:
                 raise TimeoutError(
-                    "CC pairs deletion was not completed within the max delay"
+                    f"CC pairs deletion was not completed within the {MAX_DELAY} seconds"
                 )
             else:
                 print("Some CC pairs are still being deleted, waiting...")

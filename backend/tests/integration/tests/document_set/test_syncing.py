@@ -15,7 +15,7 @@ def test_multiple_document_sets_syncing_same_connnector(
     admin_user: TestUser = UserManager.create(name="admin_user")
 
     # add api key to user
-    admin_user = DocumentManager.add_api_key_to_user(
+    admin_user = UserManager.add_api_key_to_user(
         user=admin_user,
     )
 

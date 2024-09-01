@@ -129,7 +129,9 @@ class UserGroupManager:
                 return
 
             if time.time() - start > MAX_DELAY:
-                raise TimeoutError("User groups were not synced within the max delay")
+                raise TimeoutError(
+                    f"User groups were not synced within the {MAX_DELAY} seconds"
+                )
             else:
                 print("User groups were not synced yet, waiting...")
             time.sleep(2)

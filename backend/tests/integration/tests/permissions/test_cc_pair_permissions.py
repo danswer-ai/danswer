@@ -28,7 +28,9 @@ def test_cc_pair_permissions(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(admin_user)
+    UserGroupManager.wait_for_sync(
+        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    )
     # setting the user as a curator for the user group
     assert UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,
@@ -43,7 +45,9 @@ def test_cc_pair_permissions(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(admin_user)
+    UserGroupManager.wait_for_sync(
+        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    )
 
     # Create a credentials that the curator is and is not curator of
     connector_1 = ConnectorManager.create(

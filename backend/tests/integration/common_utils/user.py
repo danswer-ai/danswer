@@ -1,3 +1,4 @@
+from copy import deepcopy
 from urllib.parse import urlencode
 from uuid import uuid4
 
@@ -7,6 +8,7 @@ from danswer.db.models import UserRole
 from danswer.server.manage.models import AllUsersResponse
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
+from ee.danswer.server.api_key.models import APIKeyArgs
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.test_models import TestUser
@@ -39,6 +41,7 @@ class UserManager:
             id=response.json()["id"],
             email=email,
             password=password,
+            headers=deepcopy(GENERAL_HEADERS),
         )
         print(f"Created user {test_user.email}")
 
@@ -65,11 +68,34 @@ class UserManager:
         response.raise_for_status()
         result_cookie = next(iter(response.cookies), None)
 
-        if result_cookie:
-            print(f"Logged in as {test_user.email}")
-            return f"{result_cookie.name}={result_cookie.value}"
+        if not result_cookie:
+            raise Exception("Failed to login")
 
-        return ""
+        print(f"Logged in as {test_user.email}")
+        return f"{result_cookie.name}={result_cookie.value}"
+
+    @staticmethod
+    def add_api_key_to_user(
+        user: TestUser,
+        name: str | None = None,
+        api_key_role: UserRole = UserRole.ADMIN,
+        user_performing_action: TestUser | None = None,
+    ) -> TestUser:
+        if user_performing_action is None:
+            user_performing_action = user
+        name = f"{name}-api-key" if name else f"test-api-key-{uuid4()}"
+        api_key_request = APIKeyArgs(
+            name=name,
+            role=api_key_role,
+        )
+        api_key_response = requests.post(
+            f"{API_SERVER_URL}/admin/api-key",
+            json=api_key_request.model_dump(),
+            headers=user_performing_action.headers,
+        )
+        api_key_response.raise_for_status()
+        user.headers["Authorization"] = f"Bearer {api_key_response.json()['api_key']}"
+        return user
 
     @staticmethod
     def verify_role(user_to_verify: TestUser, target_role: UserRole) -> bool:

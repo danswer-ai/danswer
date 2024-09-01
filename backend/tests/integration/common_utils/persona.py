@@ -167,7 +167,7 @@ class PersonaManager:
         test_persona: TestPersona,
         user_performing_action: TestUser | None = None,
     ) -> bool:
-        all_personas = PersonaManager.get_all_personas(user_performing_action)
+        all_personas = PersonaManager.get_all(user_performing_action)
         for persona in all_personas:
             if persona.id == test_persona.id:
                 return (

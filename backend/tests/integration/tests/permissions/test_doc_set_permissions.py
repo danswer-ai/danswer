@@ -23,7 +23,9 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(admin_user)
+    UserGroupManager.wait_for_sync(
+        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    )
 
     # Setting the curator as a curator for the first user group
     assert UserGroupManager.set_user_to_curator(
@@ -39,7 +41,9 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(admin_user)
+    UserGroupManager.wait_for_sync(
+        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    )
 
     # Admin creates a cc_pair
     private_cc_pair = CCPairManager.create_from_scratch(
@@ -154,7 +158,9 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         user_group=user_group_1,
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(admin_user)
+    UserGroupManager.wait_for_sync(
+        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    )
     assert UserGroupManager.verify(
         user_group=user_group_1,
         user_performing_action=admin_user,
@@ -165,7 +171,9 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         document_set=valid_doc_set,
         user_performing_action=curator,
     )
-    DocumentSetManager.wait_for_sync(admin_user)
+    DocumentSetManager.wait_for_sync(
+        document_sets_to_check=[valid_doc_set], user_performing_action=admin_user
+    )
     # Verify the updated document set
     assert DocumentSetManager.verify(
         document_set=valid_doc_set,

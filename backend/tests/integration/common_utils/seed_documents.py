@@ -2,9 +2,7 @@ from uuid import uuid4
 
 import requests
 
-from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
-from ee.danswer.server.api_key.models import APIKeyArgs
 from tests.integration.common_utils.cc_pair import TestCCPair
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
@@ -76,26 +74,6 @@ def _generate_dummy_document(document_id: str, cc_pair_id: int) -> dict:
 
 
 class DocumentManager:
-    @staticmethod
-    def add_api_key_to_user(
-        user: TestUser,
-        name: str | None = None,
-        role: UserRole = UserRole.ADMIN,
-    ) -> TestUser:
-        name = f"{name}-api-key" if name else f"test-api-key-{uuid4()}"
-        api_key_request = APIKeyArgs(
-            name=name,
-            role=role,
-        )
-        api_key_response = requests.post(
-            f"{API_SERVER_URL}/admin/api-key",
-            json=api_key_request.model_dump(),
-            headers=user.headers,
-        )
-        api_key_response.raise_for_status()
-        user.headers["Authorization"] = f"Bearer {api_key_response.json()['api_key']}"
-        return user
-
     @staticmethod
     def seed_and_attach_docs(
         cc_pair: TestCCPair,

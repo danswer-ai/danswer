@@ -26,7 +26,9 @@ def test_whole_curator_flow(reset: None) -> None:
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(admin_user)
+    UserGroupManager.wait_for_sync(
+        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    )
     # Making curator a curator of user_group_1
     assert UserGroupManager.set_user_to_curator(
         test_user_group=user_group_1,

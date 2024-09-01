@@ -138,7 +138,11 @@ class DocumentSetManager:
                 break
 
             if time.time() - start > MAX_DELAY:
-                raise TimeoutError("Document sets were not synced within the max delay")
+                raise TimeoutError(
+                    f"Document sets were not synced within the {MAX_DELAY} seconds"
+                )
+            else:
+                print("Document sets were not synced yet, waiting...")
 
             time.sleep(2)
 
