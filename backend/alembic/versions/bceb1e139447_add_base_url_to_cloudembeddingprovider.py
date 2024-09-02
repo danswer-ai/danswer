@@ -1,7 +1,7 @@
 """Add base_url to CloudEmbeddingProvider
 
 Revision ID: bceb1e139447
-Revises: 1f60f60c3401
+Revises: a3795dce87be
 Create Date: 2024-08-28 17:00:52.554580
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "bceb1e139447"
-down_revision = "1f60f60c3401"
+down_revision = "a3795dce87be"
 branch_labels = None
 depends_on = None
 
