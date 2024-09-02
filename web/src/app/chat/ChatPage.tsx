@@ -65,7 +65,12 @@ import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { StarterMessage } from "./StarterMessage";
-import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
+import {
+  AnswerPiecePacket,
+  DanswerDocument,
+  StreamStopInfo,
+  StreamStopReason,
+} from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
@@ -94,6 +99,7 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
+import { Stop } from "@phosphor-icons/react";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -338,6 +344,7 @@ export function ChatPage({
         }
         return;
       }
+
       clearSelectedDocuments();
       setIsFetchingChatMessages(true);
       const response = await fetch(
@@ -624,6 +631,24 @@ export function ChatPage({
   const currentRegenerationState = (): RegenerationState | null => {
     return regenerationState.get(currentSessionId()) || null;
   };
+  const [canContinue, setCanContinue] = useState<Map<number | null, boolean>>(
+    new Map([[null, false]])
+  );
+
+  const updateCanContinue = (newState: boolean, sessionId?: number | null) => {
+    setCanContinue((prevState) => {
+      const newCanContinueState = new Map(prevState);
+      newCanContinueState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
+      return newCanContinueState;
+    });
+  };
+
+  const currentCanContinue = (): boolean => {
+    return canContinue.get(currentSessionId()) || false;
+  };
 
   const currentSessionChatState = currentChatState();
   const currentSessionRegenerationState = currentRegenerationState();
@@ -864,6 +889,13 @@ export function ChatPage({
     }
   };
 
+  const continueGenerating = () => {
+    onSubmit({
+      messageOverride:
+        "Continue Generating (pick up exactly where you left off)",
+    });
+  };
+
   const onSubmit = async ({
     messageIdToResend,
     messageOverride,
@@ -884,6 +916,7 @@ export function ChatPage({
     regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
     let frozenSessionId = currentSessionId();
+    updateCanContinue(false, frozenSessionId);
 
     if (currentChatState() != "input") {
       setPopup({
@@ -978,6 +1011,8 @@ export function ChatPage({
     let messageUpdates: Message[] | null = null;
 
     let answer = "";
+
+    let stopReason: StreamStopReason | null = null;
     let query: string | null = null;
     let retrievalType: RetrievalType =
       selectedDocuments.length > 0
@@ -1174,6 +1209,11 @@ export function ChatPage({
               stackTrace = (packet as StreamingError).stack_trace;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
+            } else if (Object.hasOwn(packet, "stop_reason")) {
+              const stop_reason = (packet as StreamStopInfo).stop_reason;
+              if (stop_reason === StreamStopReason.CONTEXT_LENGTH) {
+                updateCanContinue(true, frozenSessionId);
+              }
             }
 
             // on initial message send, we insert a dummy system message
@@ -1237,6 +1277,7 @@ export function ChatPage({
                 alternateAssistantID: alternativeAssistant?.id,
                 stackTrace: stackTrace,
                 overridden_model: finalMessage?.overridden_model,
+                stopReason: stopReason,
               },
             ]);
           }
@@ -1835,6 +1876,12 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      continueGenerating={
+                                        i == messageHistory.length - 1 &&
+                                        currentCanContinue()
+                                          ? continueGenerating
+                                          : undefined
+                                      }
                                       overriddenModel={message.overridden_model}
                                       regenerate={createRegenerator({
                                         messageId: message.messageId,
