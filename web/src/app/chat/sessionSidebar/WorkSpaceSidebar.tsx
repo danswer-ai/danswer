@@ -24,13 +24,6 @@ export const WorkSpaceSidebar = ({
   if (!settings?.enterpriseSettings!.application_name) {
     return null;
   } */
-  /*   const combinedSettings = useContext(SettingsContext);
-  if (!combinedSettings) {
-    return null;
-  }
-  const settings = combinedSettings.settings;
-
-  console.log(settings); */
 
   return (
     <div className={`bg-background h-full p-4 border-r border-border`}>
