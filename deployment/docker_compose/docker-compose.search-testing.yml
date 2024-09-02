@@ -12,6 +12,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
     restart: always
     ports:
       - "8080"
@@ -43,6 +44,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
     restart: always
     env_file:
       - .env_eval
