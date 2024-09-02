@@ -13,7 +13,7 @@ class Settings(BaseModel):
 
     chat_page_enabled: bool = True
     search_page_enabled: bool = True
-    default_page: PageType = PageType.SEARCH
+    default_page: PageType = PageType.CHAT
     maximum_chat_retention_days: int | None = None
 
     def check_validity(self) -> None:
