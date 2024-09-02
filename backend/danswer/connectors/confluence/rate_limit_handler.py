@@ -32,17 +32,24 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
             try:
                 return confluence_call(*args, **kwargs)
             except HTTPError as e:
+                # Check if the response or headers are None to avoid potential AttributeError
+                if e.response is None or e.response.headers is None:
+                    logger.warning("HTTPError with `None` as response or as headers")
+                    raise e
+
+                retry_after_header = e.response.headers.get("Retry-After")
                 if (
                     e.response.status_code == 429
                     or RATE_LIMIT_MESSAGE_LOWERCASE in e.response.text.lower()
                 ):
                     retry_after = None
-                    try:
-                        retry_after = int(e.response.headers.get("Retry-After"))
-                    except (ValueError, TypeError):
-                        pass
+                    if retry_after_header is not None:
+                        try:
+                            retry_after = int(retry_after_header)
+                        except ValueError:
+                            pass
 
-                    if retry_after:
+                    if retry_after is not None:
                         logger.warning(
                             f"Rate limit hit. Retrying after {retry_after} seconds..."
                         )

@@ -32,7 +32,6 @@ from litellm.exceptions import UnprocessableEntityError  # type: ignore
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
-from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_NUM_RESERVED_OUTPUT_TOKENS
 from danswer.db.models import ChatMessage
 from danswer.file_store.models import ChatFileType
@@ -331,7 +330,7 @@ def test_llm(llm: LLM) -> str | None:
 def get_llm_max_tokens(
     model_map: dict,
     model_name: str,
-    model_provider: str = GEN_AI_MODEL_PROVIDER,
+    model_provider: str,
 ) -> int:
     """Best effort attempt to get the max tokens for the LLM"""
     if GEN_AI_MAX_TOKENS:
@@ -371,7 +370,7 @@ def get_llm_max_tokens(
 def get_llm_max_output_tokens(
     model_map: dict,
     model_name: str,
-    model_provider: str = GEN_AI_MODEL_PROVIDER,
+    model_provider: str,
 ) -> int:
     """Best effort attempt to get the max output tokens for the LLM"""
     try:

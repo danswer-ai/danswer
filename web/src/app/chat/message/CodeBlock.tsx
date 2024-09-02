@@ -50,6 +50,12 @@ export function CodeBlock({
     );
     codeText = codeText.trim();
 
+    // Find the last occurrence of closing backticks
+    const lastBackticksIndex = codeText.lastIndexOf("```");
+    if (lastBackticksIndex !== -1) {
+      codeText = codeText.slice(0, lastBackticksIndex + 3);
+    }
+
     // Remove the language declaration and trailing backticks
     const codeLines = codeText.split("\n");
     if (
