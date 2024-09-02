@@ -393,8 +393,6 @@ def batch_search_api_retrieval(
             uncapped_requests.append(request)
             continue
 
-        # Suspected that adding too many or conditions will cause Vespa to timeout and return
-        # an empty list of hits (with no error status and coverage: 0 and degraded)
         if (
             chunk_count + range > MAX_ID_SEARCH_QUERY_SIZE
             or req_ind % MAX_OR_CONDITIONS == 0
