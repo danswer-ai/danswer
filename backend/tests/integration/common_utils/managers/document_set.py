@@ -132,7 +132,11 @@ class DocumentSetManager:
                 if not check_ids.issubset(doc_set_ids):
                     raise RuntimeError("Document set not found")
                 doc_sets = [doc_set for doc_set in doc_sets if doc_set.id in check_ids]
-            all_up_to_date = all(doc_set.is_up_to_date for doc_set in doc_sets)
+            all_up_to_date = True
+            for doc_set in doc_sets:
+                if not doc_set.is_up_to_date:
+                    all_up_to_date = False
+                    print(f"Document set {doc_set.id} is not up to date")
 
             if all_up_to_date:
                 break
