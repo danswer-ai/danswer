@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from collections.abc import Iterator
+from typing import Any
 from typing import cast
 from uuid import uuid4
 
@@ -37,6 +38,7 @@ from danswer.llm.answering.stream_processing.quotes_processing import (
 from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.llm.interfaces import LLM
+from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.tools.custom.custom_tool_prompt_builder import (
     build_user_message_for_custom_tool_for_non_tool_calling_llm,
@@ -299,8 +301,11 @@ class Answer:
 
     # This method processes the LLM stream and yields the content or stop information
     def _process_llm_stream(
-        self, prompt, tools: list[str] | None = None, tool_choice: str | None = None
-    ):
+        self,
+        prompt: Any,
+        tools: list[dict] | None = None,
+        tool_choice: ToolChoiceOptions | None = None,
+    ) -> Iterator[str | StreamStopInfo]:
         for message in self.llm.stream(
             prompt=prompt, tools=tools, tool_choice=tool_choice
         ):
@@ -532,7 +537,6 @@ class Answer:
                         yield item
                     else:
                         yield from process_answer_stream_fn(iter([item]))
-                # yield from process_answer_stream_fn(_stream())
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
