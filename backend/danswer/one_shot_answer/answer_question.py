@@ -235,7 +235,6 @@ def stream_answer_objects(
     )
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
-        print(packet)
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):
             # (likely fine that it comes after the initial creation of the search docs)

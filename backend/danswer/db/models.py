@@ -919,9 +919,6 @@ class ChatSession(Base):
     )
     persona: Mapped["Persona"] = relationship("Persona")
 
-    # def get_persona():
-    # return
-
 
 class ChatMessage(Base):
     """Note, the first message in a chain has no contents, it's a workaround to allow edits
