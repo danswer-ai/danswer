@@ -264,6 +264,8 @@ def test_connector_deletion_for_overlapping_connectors(
         doc_creating_user=admin_user,
     )
 
+    # EVERYTHING BELOW HERE IS CURRENTLY BROKEN AND NEEDS TO BE FIXED SERVER SIDE
+
     # delete connector 1
     CCPairManager.pause_cc_pair(
         cc_pair=cc_pair_1,
@@ -274,32 +276,30 @@ def test_connector_deletion_for_overlapping_connectors(
         user_performing_action=admin_user,
     )
 
-    # EVERYTHING BELOW HERE IS CURRENTLY BROKEN AND NEEDS TO BE FIXED SERVER SIDE
-
     # wait for deletion to finish
-    # CCPairManager.wait_for_deletion_completion(user_performing_action=admin_user)
+    CCPairManager.wait_for_deletion_completion(user_performing_action=admin_user)
 
-    # print("Connector 1 deleted")
+    print("Connector 1 deleted")
 
     # check that only connector 1 is deleted
     # TODO: check for the CC pair rather than the connector once the refactor is done
-    # CCPairManager.verify(
-    #     cc_pair=cc_pair_1,
-    #     verify_deleted=True,
-    #     user_performing_action=admin_user,
-    # )
-    # CCPairManager.verify(
-    #     cc_pair=cc_pair_2,
-    #     user_performing_action=admin_user,
-    # )
+    CCPairManager.verify(
+        cc_pair=cc_pair_1,
+        verify_deleted=True,
+        user_performing_action=admin_user,
+    )
+    CCPairManager.verify(
+        cc_pair=cc_pair_2,
+        user_performing_action=admin_user,
+    )
 
     # verify the document is not in any document sets
     # verify the document is only in user group 2
-    # DocumentManager.verify(
-    #     vespa_client=vespa_client,
-    #     cc_pair=cc_pair_2,
-    #     doc_set_names=[],
-    #     group_names=[user_group_2.name],
-    #     doc_creating_user=admin_user,
-    #     verify_deleted=False,
-    # )
+    DocumentManager.verify(
+        vespa_client=vespa_client,
+        cc_pair=cc_pair_2,
+        doc_set_names=[],
+        group_names=[user_group_2.name],
+        doc_creating_user=admin_user,
+        verify_deleted=False,
+    )

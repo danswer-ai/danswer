@@ -17,6 +17,7 @@ from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.app_configs import NUM_SECONDARY_INDEXING_WORKERS
+from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import POSTGRES_INDEXER_APP_NAME
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
@@ -46,7 +47,6 @@ from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import LOG_LEVEL
 from shared_configs.configs import MODEL_SERVER_PORT
 
-
 logger = setup_logger()
 
 # If the indexing dies, it's most likely due to resource constraints,
@@ -66,6 +66,10 @@ def _should_create_new_indexing(
     db_session: Session,
 ) -> bool:
     connector = cc_pair.connector
+
+    # don't kick off indexing for `NOT_APPLICABLE` sources
+    if connector.source == DocumentSource.NOT_APPLICABLE:
+        return False
 
     # User can still manually create single indexing attempts via the UI for the
     # currently in use index
