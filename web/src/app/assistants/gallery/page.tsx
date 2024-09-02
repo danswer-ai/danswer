@@ -27,7 +27,7 @@ export default async function GalleryPage({
     chatSessions,
     availableSources,
     documentSets,
-    assistants,
+    personas,
     tags,
     llmProviders,
     folders,
@@ -47,7 +47,7 @@ export default async function GalleryPage({
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availableAssistants: assistants,
+          availablePersonas: personas,
           availableTags: tags,
           llmProviders,
           folders,
@@ -55,7 +55,7 @@ export default async function GalleryPage({
         }}
       >
         <div className="relative flex h-screen overflow-x-hidden bg-background">
-          <DynamicSidebar openSidebar={true} user={user}>
+          <DynamicSidebar user={user}>
             <ChatSidebar
               existingChats={chatSessions}
               currentChatSession={null}
@@ -74,7 +74,7 @@ export default async function GalleryPage({
             </div>
 
             <div className="mt-4">
-              <AssistantsGallery assistants={assistants} user={user} />
+              <AssistantsGallery assistants={personas} user={user} />
             </div>
           </div>
         </div>

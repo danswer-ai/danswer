@@ -18,7 +18,7 @@ export interface Prompt {
   default_prompt: boolean;
 }
 
-export interface Assistant {
+export interface Persona {
   id: number;
   name: string;
   owner: MinimalUserSnapshot | null;
@@ -35,7 +35,7 @@ export interface Assistant {
   llm_model_provider_override?: string;
   llm_model_version_override?: string;
   starter_messages: StarterMessage[] | null;
-  default_assistant: boolean;
+  default_persona: boolean;
   users: MinimalUserSnapshot[];
   groups: number[];
 }

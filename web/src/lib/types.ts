@@ -1,4 +1,4 @@
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 
 export interface UserPreferences {
   chosen_assistants: number[] | null;
@@ -421,13 +421,13 @@ export interface Workspace {
 }
 
 /* EE Only Types */
-export interface Teamspace {
+export interface UserGroup {
   id: number;
   name: string;
   users: User[];
   cc_pairs: CCPairDescriptor<any, any>[];
   document_sets: DocumentSet[];
-  assistants: Assistant[];
+  personas: Persona[];
   is_up_to_date: boolean;
   is_up_for_deletion: boolean;
 }

@@ -32,7 +32,7 @@ export interface ChatSessionSnapshot {
   user_email: string | null;
   name: string | null;
   messages: MessageSnapshot[];
-  assistant_name: string | null;
+  persona_name: string | null;
   time_created: string;
 }
 
@@ -42,7 +42,7 @@ export interface ChatSessionMinimal {
   name: string | null;
   first_user_message: string;
   first_ai_message: string;
-  assistant_name: string | null;
+  persona_name: string | null;
   time_created: string;
   feedback_type: Feedback | "mixed" | null;
 }

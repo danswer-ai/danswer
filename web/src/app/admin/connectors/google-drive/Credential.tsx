@@ -252,7 +252,11 @@ export const DriveJsonUploadSection = ({
     <div className="mt-2">
       <p className="text-sm mb-2">
         Follow the guide{" "}
-        <a className="text-link" target="_blank">
+        <a
+          className="text-link"
+          target="_blank"
+          href="https://docs.danswer.dev/connectors/google_drive#authorization"
+        >
           here
         </a>{" "}
         to either (1) setup a google OAuth App in your company workspace or (2)
@@ -327,11 +331,11 @@ export const DriveOAuthSection = ({
         <p className="text-sm mb-2">
           When using a Google Drive Service Account, you can either have enMedD
           AI act as the service account itself OR you can specify an account for
-          the service account to imassistantte.
+          the service account to impersonate.
           <br />
           <br />
           If you want to use the service account itself, leave the{" "}
-          <b>&apos;User email to imassistantte&apos;</b> field blank when
+          <b>&apos;User email to impersonate&apos;</b> field blank when
           submitting. If you do choose this option, make sure you have shared
           the documents you want to index with the service account.
         </p>
@@ -384,7 +388,7 @@ export const DriveOAuthSection = ({
                 <Form>
                   <TextFormField
                     name="google_drive_delegated_user"
-                    label="[Optional] User email to imassistantte:"
+                    label="[Optional] User email to impersonate:"
                     subtext="If left blank, enMedD AI will use the service account itself."
                   />
                   <div className="flex">

@@ -1,4 +1,4 @@
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { Bubble } from "@/components/Bubble";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
@@ -8,10 +8,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Bookmark } from "lucide-react";
 
 interface AssistantsTabProps {
-  selectedAssistant: Assistant;
-  availableAssistants: Assistant[];
+  selectedAssistant: Persona;
+  availableAssistants: Persona[];
   llmProviders: LLMProviderDescriptor[];
-  onSelect: (assistant: Assistant) => void;
+  onSelect: (assistant: Persona) => void;
 }
 
 export function AssistantsTab({

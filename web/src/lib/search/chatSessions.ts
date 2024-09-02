@@ -1,8 +1,8 @@
-export async function createChatSession(assistantId?: number | null) {
+export async function createChatSession(personaId?: number | null) {
   const chatSessionResponse = await fetch("/api/chat/create-chat-session", {
     method: "POST",
     body: JSON.stringify({
-      assistant_id: assistantId,
+      persona_id: personaId,
     }),
     headers: {
       "Content-Type": "application/json",

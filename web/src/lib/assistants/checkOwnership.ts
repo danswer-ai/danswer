@@ -1,22 +1,19 @@
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { User } from "../types";
 import { checkUserIsNoAuthUser } from "../user";
 
-export function checkUserOwnsAssistant(
-  user: User | null,
-  assistant: Assistant
-) {
+export function checkUserOwnsAssistant(user: User | null, assistant: Persona) {
   return checkUserIdOwnsAssistant(user?.id, assistant);
 }
 
 export function checkUserIdOwnsAssistant(
   userId: string | undefined,
-  assistant: Assistant
+  assistant: Persona
 ) {
   return (
     (!userId ||
       checkUserIsNoAuthUser(userId) ||
       assistant.owner?.id === userId) &&
-    !assistant.default_assistant
+    !assistant.default_persona
   );
 }

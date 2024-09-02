@@ -9,7 +9,7 @@ import {
   ValidSources,
 } from "@/lib/types";
 import { ChatSession } from "@/app/chat/interfaces";
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 
@@ -18,7 +18,7 @@ interface ChatContextProps {
   chatSessions: ChatSession[];
   availableSources: ValidSources[];
   availableDocumentSets: DocumentSet[];
-  availableAssistants: Assistant[];
+  availablePersonas: Persona[];
   availableTags: Tag[];
   llmProviders: LLMProviderDescriptor[];
   folders: Folder[];

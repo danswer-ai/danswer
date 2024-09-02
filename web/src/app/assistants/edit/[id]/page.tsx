@@ -2,9 +2,9 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { Text, Title } from "@tremor/react";
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
 import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
-import { SuccessfulAssistantUpdateRedirectType } from "@/app/admin/assistants/enums";
-import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchAssistantEditorInfoSS";
-import { DeleteAssistantButton } from "@/app/admin/assistants/[id]/DeleteAssistantButton";
+import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
+import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
+import { DeletePersonaButton } from "@/app/admin/assistants/[id]/DeletePersonaButton";
 import { LargeBackButton } from "../../LargeBackButton";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -28,7 +28,7 @@ export default async function Page({ params }: { params: { id: string } }) {
                 <AssistantEditor
                   {...values}
                   defaultPublic={false}
-                  redirectType={SuccessfulAssistantUpdateRedirectType.CHAT}
+                  redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
                 />
               </CardContent>
             </Card>
@@ -38,9 +38,9 @@ export default async function Page({ params }: { params: { id: string } }) {
               Click the button below to permanently delete this assistant.
             </Text>
             <div className="flex mt-6">
-              <DeleteAssistantButton
-                assistantId={values.existingAssistant!.id}
-                redirectType={SuccessfulAssistantUpdateRedirectType.CHAT}
+              <DeletePersonaButton
+                personaId={values.existingPersona!.id}
+                redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
               />
             </div>
           </div>

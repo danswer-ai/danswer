@@ -5,7 +5,7 @@ import { Modal } from "../../../../components/Modal";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { FiltersTab } from "./FiltersTab";
 import { AssistantsTab } from "./AssistantsTab";
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,9 +26,9 @@ export function ConfigurationModal({
   activeTab: string | null;
   setActiveTab: (tab: string | null) => void;
   onClose: () => void;
-  availableAssistants: Assistant[];
-  selectedAssistant: Assistant;
-  setSelectedAssistant: (assistant: Assistant) => void;
+  availableAssistants: Persona[];
+  selectedAssistant: Persona;
+  setSelectedAssistant: (assistant: Persona) => void;
   filterManager: FilterManager;
   llmProviders: LLMProviderDescriptor[];
   llmOverrideManager: LlmOverrideManager;

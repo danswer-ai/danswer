@@ -1,8 +1,8 @@
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { User } from "../types";
 
 export function orderAssistantsForUser(
-  assistants: Assistant[],
+  assistants: Persona[],
   user: User | null
 ) {
   if (user && user.preferences && user.preferences.chosen_assistants) {

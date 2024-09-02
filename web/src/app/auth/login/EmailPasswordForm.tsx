@@ -1,7 +1,6 @@
 "use client";
 
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { basicLogin, basicSignup } from "@/lib/user";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
@@ -10,16 +9,22 @@ import { requestEmailVerification } from "../lib";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
-export function LogInForms({}: {}) {
+export function EmailPasswordForm({
+  isSignup = false,
+  shouldVerify,
+}: {
+  isSignup?: boolean;
+  shouldVerify?: boolean;
+}) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
   const [isWorking, setIsWorking] = useState(false);
 
   return (
     <>
       {isWorking && <Spinner />}
-      {popup}
       <Formik
         initialValues={{
           email: "",
@@ -30,9 +35,36 @@ export function LogInForms({}: {}) {
           password: Yup.string().required(),
         })}
         onSubmit={async (values) => {
+          if (isSignup) {
+            // login is fast, no need to show a spinner
+            setIsWorking(true);
+            const response = await basicSignup(values.email, values.password);
+
+            if (!response.ok) {
+              const errorDetail = (await response.json()).detail;
+
+              let errorMsg = "Unknown error";
+              if (errorDetail === "REGISTER_USER_ALREADY_EXISTS") {
+                errorMsg =
+                  "An account already exists with the specified email.";
+              }
+              toast({
+                title: "Error",
+                description: `Failed to sign up - ${errorMsg}`,
+                variant: "destructive",
+              });
+              return;
+            }
+          }
+
           const loginResponse = await basicLogin(values.email, values.password);
           if (loginResponse.ok) {
-            router.push("/");
+            if (isSignup && shouldVerify) {
+              await requestEmailVerification(values.email);
+              router.push("/auth/waiting-on-verification");
+            } else {
+              router.push("/chat");
+            }
           } else {
             setIsWorking(false);
             const errorDetail = (await loginResponse.json()).detail;
@@ -41,9 +73,10 @@ export function LogInForms({}: {}) {
             if (errorDetail === "LOGIN_BAD_CREDENTIALS") {
               errorMsg = "Invalid email or password";
             }
-            setPopup({
-              type: "error",
-              message: `Failed to login - ${errorMsg}`,
+            toast({
+              title: "Error",
+              description: `Failed to login - ${errorMsg}`,
+              variant: "destructive",
             });
           }
         }}
@@ -66,7 +99,7 @@ export function LogInForms({}: {}) {
 
             <div className="flex">
               <Button type="submit" disabled={isSubmitting} className="w-full">
-                Log In
+                {isSignup ? "Sign Up" : "Log In"}
               </Button>
             </div>
           </Form>

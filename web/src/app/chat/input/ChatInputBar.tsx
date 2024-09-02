@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
@@ -27,7 +27,7 @@ import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
-  assistants,
+  personas,
   message,
   setMessage,
   onSubmit,
@@ -46,8 +46,8 @@ export function ChatInputBar({
   alternativeAssistant,
   activeTab,
 }: {
-  onSetSelectedAssistant: (alternativeAssistant: Assistant | null) => void;
-  assistants: Assistant[];
+  onSetSelectedAssistant: (alternativeAssistant: Persona | null) => void;
+  personas: Persona[];
   message: string;
   setMessage: (message: string) => void;
   onSubmit: () => void;
@@ -56,8 +56,8 @@ export function ChatInputBar({
   retrievalDisabled: boolean;
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
-  selectedAssistant: Assistant;
-  alternativeAssistant: Assistant | null;
+  selectedAssistant: Persona;
+  alternativeAssistant: Persona | null;
   files: FileDescriptor[];
   setFiles: (files: FileDescriptor[]) => void;
   handleFileUpload: (files: File[]) => void;
@@ -119,11 +119,9 @@ export function ChatInputBar({
     setAssistantIconIndex(0);
   };
 
-  // Update selected assistant
-  const updateCurrentAssistant = (assistant: Assistant) => {
-    onSetSelectedAssistant(
-      assistant.id == selectedAssistant.id ? null : assistant
-    );
+  // Update selected persona
+  const updateCurrentPersona = (persona: Persona) => {
+    onSetSelectedAssistant(persona.id == selectedAssistant.id ? null : persona);
     hideSuggestions();
     setMessage("");
   };
@@ -165,8 +163,8 @@ export function ChatInputBar({
     }
   };
 
-  const filteredAssistants = assistants.filter((assistant) =>
-    assistant.name.toLowerCase().startsWith(
+  const filteredPersonas = personas.filter((persona) =>
+    persona.name.toLowerCase().startsWith(
       message
         .slice(message.lastIndexOf("@") + 1)
         .split(/\s/)[0]
@@ -179,23 +177,23 @@ export function ChatInputBar({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (
       showSuggestions &&
-      filteredAssistants.length > 0 &&
+      filteredPersonas.length > 0 &&
       (e.key === "Tab" || e.key == "Enter")
     ) {
       e.preventDefault();
-      if (assistantIconIndex == filteredAssistants.length) {
+      if (assistantIconIndex == filteredPersonas.length) {
         window.open("/assistants/new", "_blank");
         hideSuggestions();
         setMessage("");
       } else {
         const option =
-          filteredAssistants[assistantIconIndex >= 0 ? assistantIconIndex : 0];
-        updateCurrentAssistant(option);
+          filteredPersonas[assistantIconIndex >= 0 ? assistantIconIndex : 0];
+        updateCurrentPersona(option);
       }
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setAssistantIconIndex((assistantIconIndex) =>
-        Math.min(assistantIconIndex + 1, filteredAssistants.length)
+        Math.min(assistantIconIndex + 1, filteredPersonas.length)
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -272,36 +270,35 @@ export function ChatInputBar({
           />
         </div>
         <div className="relative w-full mx-auto shrink 2xl:w-searchbar 3xl:px-0">
-          {showSuggestions && filteredAssistants.length > 0 && (
+          {showSuggestions && filteredPersonas.length > 0 && (
             <div
               ref={suggestionsRef}
               className="absolute inset-x-0 top-0 w-full text-sm transform -translate-y-full"
             >
               <div className="py-1.5 bg-background border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
-                {filteredAssistants.map((currentAssistant, index) => (
+                {filteredPersonas.map((currentPersona, index) => (
                   <button
                     key={index}
                     className={`px-2 ${
                       assistantIconIndex == index && "bg-hover"
                     } rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
                     onClick={() => {
-                      updateCurrentAssistant(currentAssistant);
+                      updateCurrentPersona(currentPersona);
                     }}
                   >
-                    <p className="font-bold ">{currentAssistant.name}</p>
+                    <p className="font-bold ">{currentPersona.name}</p>
                     <p className="line-clamp-1">
-                      {currentAssistant.id == selectedAssistant.id &&
+                      {currentPersona.id == selectedAssistant.id &&
                         "(default) "}
-                      {currentAssistant.description}
+                      {currentPersona.description}
                     </p>
                   </button>
                 ))}
                 <a
-                  key={filteredAssistants.length}
+                  key={filteredPersonas.length}
                   target="_blank"
                   className={`${
-                    assistantIconIndex == filteredAssistants.length &&
-                    "bg-hover"
+                    assistantIconIndex == filteredPersonas.length && "bg-hover"
                   } px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
                   href="/assistants/new"
                 >

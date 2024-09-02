@@ -19,9 +19,14 @@ export const WorkSpaceSidebar = ({
   openSidebar,
   user,
 }: WorkSpaceSidebarProps) => {
+  /*   const settings = useContext(SettingsContext);
+
+  if (!settings?.enterpriseSettings!.application_name) {
+    return null;
+  } */
 
   return (
-    <div className={`bg-background h-full p-4 pb-6 border-r border-border`}>
+    <div className={`bg-background h-full p-4 border-r border-border`}>
       <div
         className={`h-full flex flex-col justify-between transition-opacity duration-300 ease-in-out lg:!opacity-100  ${
           openSidebar ? "opacity-100 delay-200" : "opacity-0 delay-100"
@@ -46,10 +51,10 @@ export const WorkSpaceSidebar = ({
               side="right"
               delayDuration={0}
             >
-              {/* {settings!.enterpriseSettings!.application_name
+              {/*   {settings!.enterpriseSettings!.application_name
                 ? settings!.enterpriseSettings!.application_name
                 : ""} */}
-              enMedD AI
+              Jollibee
             </CustomTooltip>
 
             <CustomTooltip

@@ -29,7 +29,7 @@ export default async function GalleryPage({
     chatSessions,
     availableSources,
     documentSets,
-    assistants,
+    personas,
     tags,
     llmProviders,
     folders,
@@ -49,7 +49,7 @@ export default async function GalleryPage({
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availableAssistants: assistants,
+          availablePersonas: personas,
           availableTags: tags,
           llmProviders,
           folders,
@@ -70,7 +70,7 @@ export default async function GalleryPage({
           <div
             className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative pt-24 px-4 2xl:pt-10`}
           >
-            <AssistantsList user={user} assistants={assistants} />
+            <AssistantsList user={user} assistants={personas} />
           </div>
         </div>
       </ChatProvider>

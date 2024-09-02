@@ -3,7 +3,7 @@ import { ReadonlyURLSearchParams } from "next/navigation";
 // search params
 export const SEARCH_PARAM_NAMES = {
   CHAT_ID: "chatId",
-  ASSISTANT_ID: "assistantId",
+  PERSONA_ID: "assistantId",
   // overrides
   TEMPERATURE: "temperature",
   MODEL_VERSION: "model-version",

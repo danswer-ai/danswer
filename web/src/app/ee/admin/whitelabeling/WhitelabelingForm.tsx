@@ -45,15 +45,16 @@ export function WhitelabelingForm() {
       <Formik
         initialValues={{
           application_name: enterpriseSettings?.application_name || null,
-          application_description:
-            enterpriseSettings?.application_description || null,
           use_custom_logo: enterpriseSettings?.use_custom_logo || false,
+          custom_header_content:
+            enterpriseSettings?.custom_header_content || "",
           custom_popup_header: enterpriseSettings?.custom_popup_header || "",
           custom_popup_content: enterpriseSettings?.custom_popup_content || "",
         }}
         validationSchema={Yup.object().shape({
           application_name: Yup.string().nullable(),
           use_custom_logo: Yup.boolean().required(),
+          custom_header_content: Yup.string().nullable(),
           custom_popup_header: Yup.string().nullable(),
           custom_popup_content: Yup.string().nullable(),
         })}
@@ -88,20 +89,13 @@ export function WhitelabelingForm() {
         {({ isSubmitting, values, setValues }) => (
           <Form>
             <TextFormField
-              label="Workspace Name"
+              label="Application Name"
               name="application_name"
-              subtext={`The custom name you are giving for your workspace. This will replace 'enMedD AI' everywhere in the UI.`}
+              subtext={`The custom name you are giving enMedD AI for your organization. This will replace 'enMedD AI' everywhere in the UI.`}
               placeholder="Custom name which will replace 'enMedD AI'"
               disabled={isSubmitting}
             />
-            <TextFormField
-              label="Description"
-              name="application_description"
-              subtext={`The custom description metadata you are giving ${values.application_name || "enMedD AI"} for your workspace.\
-                This will be seen when sharing the link or searching through the browser.`}
-              placeholder="Custom description for your workspace"
-              disabled={isSubmitting}
-            />
+
             {values.use_custom_logo ? (
               <div className="pt-3 flex flex-col items-start gap-3 pb-4">
                 <div>
@@ -147,6 +141,17 @@ export function WhitelabelingForm() {
               selectedFile={selectedFile}
               setSelectedFile={setSelectedFile}
             />
+
+            {/*  <div className="pt-4">
+              <TextFormField
+                label="Custom Chat Header Content"
+                name="custom_header_content"
+                subtext={`Custom Markdown content that will be displayed as a banner at the top of the Chat page.`}
+                placeholder="Your header content..."
+                disabled={isSubmitting}
+              />
+            </div> */}
+
             <div className="pt-8">
               <TextFormField
                 label="Custom Popup Header"

@@ -120,7 +120,10 @@ const Main = () => {
         <>
           <Text>
             See the Dropbox connector{" "}
-            <a className="text-blue-500" href="#">
+            <a
+              className="text-blue-500"
+              href="https://docs.danswer.dev/connectors/dropbox/overview"
+            >
               setup guide
             </a>{" "}
             on the enMedD AI docs to obtain a Dropbox token.

@@ -1,4 +1,4 @@
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 
 interface ShareAssistantRequest {
   userIds: string[];
@@ -8,7 +8,7 @@ interface ShareAssistantRequest {
 async function updateAssistantSharedStatus(
   request: ShareAssistantRequest
 ): Promise<null | string> {
-  const response = await fetch(`/api/assistant/${request.assistantId}/share`, {
+  const response = await fetch(`/api/persona/${request.assistantId}/share`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -27,7 +27,7 @@ async function updateAssistantSharedStatus(
 }
 
 export async function addUsersToAssistantSharedList(
-  existingAssistant: Assistant,
+  existingAssistant: Persona,
   newUserIds: string[]
 ): Promise<null | string> {
   // Merge existing user IDs with new user IDs, ensuring no duplicates
@@ -43,7 +43,7 @@ export async function addUsersToAssistantSharedList(
 }
 
 export async function removeUsersFromAssistantSharedList(
-  existingAssistant: Assistant,
+  existingAssistant: Persona,
   userIdsToRemove: string[]
 ): Promise<null | string> {
   // Filter out the user IDs to be removed from the existing user list

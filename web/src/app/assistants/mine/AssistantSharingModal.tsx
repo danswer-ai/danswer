@@ -3,7 +3,7 @@ import { Modal } from "@/components/Modal";
 import { MinimalUserSnapshot, User } from "@/lib/types";
 import { Button, Text } from "@tremor/react";
 import { FiPlus, FiX } from "react-icons/fi";
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { SearchMultiSelectDropdown } from "@/components/Dropdown";
 import { UsersIcon } from "@/components/icons/icons";
 import { AssistantSharedStatusDisplay } from "../AssistantSharedStatus";
@@ -18,7 +18,7 @@ import { Spinner } from "@/components/Spinner";
 import { useToast } from "@/hooks/use-toast";
 
 interface AssistantSharingModalProps {
-  assistant: Assistant;
+  assistant: Persona;
   user: User | null;
   allUsers: MinimalUserSnapshot[];
   show: boolean;

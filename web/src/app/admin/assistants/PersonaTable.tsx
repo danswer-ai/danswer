@@ -1,11 +1,11 @@
 "use client";
 
-import { Assistant } from "./interfaces";
+import { Persona } from "./interfaces";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
-import { deleteAssistant, assistantComparator } from "./lib";
+import { deletePersona, personaComparator } from "./lib";
 import { TrashIcon } from "@/components/icons/icons";
 import { Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,50 +14,48 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
-  if (assistant.default_assistant) {
+function PersonaTypeDisplay({ persona }: { persona: Persona }) {
+  if (persona.default_persona) {
     return <p>Built-In</p>;
   }
 
-  if (assistant.is_public) {
+  if (persona.is_public) {
     return <p>Global</p>;
   }
 
-  return <p>Personal {assistant.owner && <>({assistant.owner.email})</>}</p>;
+  return <p>Personal {persona.owner && <>({persona.owner.email})</>}</p>;
 }
 
-export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
+export function PersonasTable({ personas }: { personas: Persona[] }) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const availableAssistantIds = new Set(
-    assistants.map((assistant) => assistant.id.toString())
+  const availablePersonaIds = new Set(
+    personas.map((persona) => persona.id.toString())
   );
-  const sortedAssistants = [...assistants];
-  sortedAssistants.sort(assistantComparator);
+  const sortedPersonas = [...personas];
+  sortedPersonas.sort(personaComparator);
 
-  const [finalAssistants, setFinalAssistants] = useState<string[]>(
-    sortedAssistants.map((assistant) => assistant.id.toString())
+  const [finalPersonas, setFinalPersonas] = useState<string[]>(
+    sortedPersonas.map((persona) => persona.id.toString())
   );
-  const finalAssistantValues = finalAssistants
-    .filter((id) => availableAssistantIds.has(id))
+  const finalPersonaValues = finalPersonas
+    .filter((id) => availablePersonaIds.has(id))
     .map((id) => {
-      return sortedAssistants.find(
-        (assistant) => assistant.id.toString() === id
-      ) as Assistant;
+      return sortedPersonas.find(
+        (persona) => persona.id.toString() === id
+      ) as Persona;
     });
 
-  const updateAssistantOrder = async (
-    orderedAssistantIds: UniqueIdentifier[]
-  ) => {
-    setFinalAssistants(orderedAssistantIds.map((id) => id.toString()));
+  const updatePersonaOrder = async (orderedPersonaIds: UniqueIdentifier[]) => {
+    setFinalPersonas(orderedPersonaIds.map((id) => id.toString()));
 
     const displayPriorityMap = new Map<UniqueIdentifier, number>();
-    orderedAssistantIds.forEach((assistantId, ind) => {
-      displayPriorityMap.set(assistantId, ind);
+    orderedPersonaIds.forEach((personaId, ind) => {
+      displayPriorityMap.set(personaId, ind);
     });
 
-    const response = await fetch("/api/admin/assistant/display-priority", {
+    const response = await fetch("/api/admin/persona/display-priority", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -88,9 +86,9 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
         <CardContent className="p-0">
           <DraggableTable
             headers={["Name", "Description", "Type", "Is Visible", "Delete"]}
-            rows={finalAssistantValues.map((assistant) => {
+            rows={finalPersonaValues.map((persona) => {
               return {
-                id: assistant.id.toString(),
+                id: persona.id.toString(),
                 cells: [
                   <div key="name" className="flex gap-2 items-center">
                     {!persona.default_persona && (
@@ -106,31 +104,28 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                       </Button>
                     )}
                     <p className="text font-medium whitespace-normal break-none">
-                      {assistant.name}
+                      {persona.name}
                     </p>
                   </div>,
                   <p
                     key="description"
                     className="whitespace-normal break-all max-w-2xl"
                   >
-                    {assistant.description}
+                    {persona.description}
                   </p>,
-                  <AssistantTypeDisplay
-                    key={assistant.id}
-                    assistant={assistant}
-                  />,
+                  <PersonaTypeDisplay key={persona.id} persona={persona} />,
                   <Badge
                     key="is_visible"
                     onClick={async () => {
                       const response = await fetch(
-                        `/api/admin/assistant/${assistant.id}/visible`,
+                        `/api/admin/persona/${persona.id}/visible`,
                         {
                           method: "PATCH",
                           headers: {
                             "Content-Type": "application/json",
                           },
                           body: JSON.stringify({
-                            is_visible: !assistant.is_visible,
+                            is_visible: !persona.is_visible,
                           }),
                         }
                       );
@@ -147,14 +142,13 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                     variant="outline"
                     className="py-1.5 px-3 w-[84px]"
                   >
-                    <div className="my-auto w-12">
-                      {!assistant.is_visible ? (
-                        <div className="text-error">Hidden</div>
-                      ) : (
-                        "Visible"
-                      )}
-                    </div>
-                    <Checkbox checked={assistant.is_visible} />
+                    {!persona.is_visible ? (
+                      <div className="text-error">Hidden</div>
+                    ) : (
+                      "Visible"
+                    )}
+
+                    <Checkbox checked={persona.is_visible} />
                   </Badge>,
                   <div key="edit" className="flex">
                     <div className="mx-auto my-auto">
@@ -163,14 +157,12 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                           variant="ghost"
                           size="icon"
                           onClick={async () => {
-                            const response = await deleteAssistant(
-                              assistant.id
-                            );
+                            const response = await deletePersona(persona.id);
                             if (response.ok) {
                               router.refresh();
                             } else {
                               alert(
-                                `Failed to delete assistant - ${await response.text()}`
+                                `Failed to delete persona - ${await response.text()}`
                               );
                             }
                           }}
@@ -188,7 +180,7 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                 ],
               };
             })}
-            setRows={updateAssistantOrder}
+            setRows={updatePersonaOrder}
           />
         </CardContent>
       </Card>

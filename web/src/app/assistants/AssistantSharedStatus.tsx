@@ -1,5 +1,5 @@
 import { User } from "@/lib/types";
-import { Assistant } from "../admin/assistants/interfaces";
+import { Persona } from "../admin/assistants/interfaces";
 import { checkUserOwnsAssistant } from "@/lib/assistants/checkOwnership";
 import { FiLock, FiUnlock } from "react-icons/fi";
 
@@ -7,7 +7,7 @@ export function AssistantSharedStatusDisplay({
   assistant,
   user,
 }: {
-  assistant: Assistant;
+  assistant: Persona;
   user: User | null;
 }) {
   const isOwnedByUser = checkUserOwnsAssistant(user, assistant);

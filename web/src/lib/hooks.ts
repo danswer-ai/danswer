@@ -4,7 +4,7 @@ import {
   DocumentBoostStatus,
   Tag,
   User,
-  Teamspace,
+  UserGroup,
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
@@ -198,15 +198,15 @@ export function useLlmOverride(
 EE Only APIs
 */
 
-const TEAMSPACE_URL = "/api/manage/admin/teamspace";
+const USER_GROUP_URL = "/api/manage/admin/user-group";
 
-export const useTeamspaces = (): {
-  data: Teamspace[] | undefined;
+export const useUserGroups = (): {
+  data: UserGroup[] | undefined;
   isLoading: boolean;
   error: string;
-  refreshTeamspaces: () => void;
+  refreshUserGroups: () => void;
 } => {
-  const swrResponse = useSWR<Teamspace[]>(TEAMSPACE_URL, errorHandlingFetcher);
+  const swrResponse = useSWR<UserGroup[]>(USER_GROUP_URL, errorHandlingFetcher);
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   if (!isPaidEnterpriseFeaturesEnabled) {
@@ -216,12 +216,12 @@ export const useTeamspaces = (): {
         isLoading: false,
         error: "",
       },
-      refreshTeamspaces: () => {},
+      refreshUserGroups: () => {},
     };
   }
 
   return {
     ...swrResponse,
-    refreshTeamspaces: () => mutate(TEAMSPACE_URL),
+    refreshUserGroups: () => mutate(USER_GROUP_URL),
   };
 };

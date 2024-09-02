@@ -30,7 +30,7 @@ export function SharedChatDisplay({
 }: {
   chatSession: BackendChatSession | null;
 }) {
-  let { availableAssistants } = useChatContext();
+  let { availablePersonas } = useChatContext();
   if (!chatSession) {
     return (
       <div className="min-h-full w-full">
@@ -45,8 +45,8 @@ export function SharedChatDisplay({
     );
   }
 
-  const currentAssistant = availableAssistants.find(
-    (assistant) => assistant.id === chatSession.assistant_id
+  const currentPersona = availablePersonas.find(
+    (persona) => persona.id === chatSession.persona_id
   );
 
   const messages = buildLatestMessageChain(
@@ -82,11 +82,11 @@ export function SharedChatDisplay({
                 } else {
                   return (
                     <AIMessage
-                      currentAssistant={currentAssistant!}
+                      currentPersona={currentPersona!}
                       key={message.messageId}
                       messageId={message.messageId}
                       content={message.message}
-                      assistantName={chatSession.assistant_name}
+                      personaName={chatSession.persona_name}
                       citedDocuments={getCitedDocumentsFromMessage(message)}
                       isComplete
                     />

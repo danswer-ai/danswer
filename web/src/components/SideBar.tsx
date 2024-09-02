@@ -30,13 +30,13 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
       <AdminSidebar
         collections={[
           {
-            name: "Data Sources",
+            name: "Connectors",
             items: [
               {
                 name: (
                   <div className="flex items-center gap-2">
                     <NotebookIcon size={20} />
-                    <div>Existing Data Sources</div>
+                    <div>Existing Connectors</div>
                   </div>
                 ),
                 link: "/admin/indexing/status",
@@ -45,7 +45,7 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                 name: (
                   <div className="flex items-center gap-2">
                     <ConnectorIcon size={20} />
-                    <div>Add Data Sources</div>
+                    <div>Add Connector</div>
                   </div>
                 ),
                 link: "/admin/add-connector",
@@ -148,10 +148,10 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                       name: (
                         <div className="flex items-center gap-2">
                           <GroupsIcon size={20} />
-                          <div>Teamspaces</div>
+                          <div>Groups</div>
                         </div>
                       ),
-                      link: "/admin/teams",
+                      link: "/admin/groups",
                     },
                     {
                       name: (

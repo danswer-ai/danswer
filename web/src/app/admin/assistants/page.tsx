@@ -1,27 +1,27 @@
-import { AssistantsTable } from "./AssistantsTable";
+import { PersonasTable } from "./PersonaTable";
 import Link from "next/link";
 import { Divider, Text, Title } from "@tremor/react";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Assistant } from "./interfaces";
+import { Persona } from "./interfaces";
 import { RobotIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Button } from "@/components/ui/button";
 import { SquarePlus } from "lucide-react";
 
 export default async function Page() {
-  const assistantResponse = await fetchSS("/admin/assistant");
+  const personaResponse = await fetchSS("/admin/persona");
 
-  if (!assistantResponse.ok) {
+  if (!personaResponse.ok) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch assistants - ${await assistantResponse.text()}`}
+        errorMsg={`Failed to fetch personas - ${await personaResponse.text()}`}
       />
     );
   }
 
-  const assistants = (await assistantResponse.json()) as Assistant[];
+  const personas = (await personaResponse.json()) as Persona[];
 
   return (
     <div className="mx-auto container">
@@ -55,7 +55,7 @@ export default async function Page() {
         <Divider />
 
         <Title>Existing Assistants</Title>
-        <AssistantsTable assistants={assistants} />
+        <PersonasTable personas={personas} />
       </div>
     </div>
   );

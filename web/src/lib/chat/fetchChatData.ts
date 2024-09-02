@@ -12,13 +12,13 @@ import {
   ValidSources,
 } from "@/lib/types";
 import { ChatSession } from "@/app/chat/interfaces";
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { FullEmbeddingModelResponse } from "@/app/admin/models/embedding/embeddingModels";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
-import { assistantComparator } from "@/app/admin/assistants/lib";
+import { personaComparator } from "@/app/admin/assistants/lib";
 import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
@@ -29,12 +29,12 @@ interface FetchChatDataResult {
   ccPairs: CCPairBasicInfo[];
   availableSources: ValidSources[];
   documentSets: DocumentSet[];
-  assistants: Assistant[];
+  personas: Persona[];
   tags: Tag[];
   llmProviders: LLMProviderDescriptor[];
   folders: Folder[];
   openedFolders: Record<string, boolean>;
-  defaultAssistantId?: number;
+  defaultPersonaId?: number;
   finalDocumentSidebarInitialWidth?: number;
   shouldShowWelcomeModal: boolean;
   shouldDisplaySourcesIncompleteModal: boolean;
@@ -48,7 +48,7 @@ export async function fetchChatData(searchParams: {
     getCurrentUserSS(),
     fetchSS("/manage/indexing-status"),
     fetchSS("/manage/document-set"),
-    fetchSS("/assistant?include_default=true"),
+    fetchSS("/persona?include_default=true"),
     fetchSS("/chat/get-user-chat-sessions"),
     fetchSS("/query/valid-tags"),
     fetchLLMProvidersSS(),
@@ -74,7 +74,7 @@ export async function fetchChatData(searchParams: {
   const user = results[1] as User | null;
   const ccPairsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
-  const assistantsResponse = results[4] as Response | null;
+  const personasResponse = results[4] as Response | null;
   const chatSessionsResponse = results[5] as Response | null;
   const tagsResponse = results[6] as Response | null;
   const llmProviders = (results[7] || []) as LLMProviderDescriptor[];
@@ -122,17 +122,17 @@ export async function fetchChatData(searchParams: {
     );
   }
 
-  let assistants: Assistant[] = [];
-  if (assistantsResponse?.ok) {
-    assistants = await assistantsResponse.json();
+  let personas: Persona[] = [];
+  if (personasResponse?.ok) {
+    personas = await personasResponse.json();
   } else {
-    console.log(`Failed to fetch assistants - ${assistantsResponse?.status}`);
+    console.log(`Failed to fetch personas - ${personasResponse?.status}`);
   }
   // remove those marked as hidden by an admin
-  assistants = assistants.filter((assistant) => assistant.is_visible);
+  personas = personas.filter((persona) => persona.is_visible);
 
   // sort them in priority order
-  assistants.sort(assistantComparator);
+  personas.sort(personaComparator);
 
   let tags: Tag[] = [];
   if (tagsResponse?.ok) {
@@ -141,9 +141,9 @@ export async function fetchChatData(searchParams: {
     console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
   }
 
-  const defaultAssistantIdRaw = searchParams["assistantId"];
-  const defaultAssistantId = defaultAssistantIdRaw
-    ? parseInt(defaultAssistantIdRaw)
+  const defaultPersonaIdRaw = searchParams["assistantId"];
+  const defaultPersonaId = defaultPersonaIdRaw
+    ? parseInt(defaultPersonaIdRaw)
     : undefined;
 
   const documentSidebarCookieInitialWidth = cookies().get(
@@ -165,10 +165,10 @@ export async function fetchChatData(searchParams: {
       (ccPair) => ccPair.has_successful_run && ccPair.docs_indexed > 0
     );
 
-  // if no connectors are setup, only show assistants that are pure
+  // if no connectors are setup, only show personas that are pure
   // passthrough and don't do any retrieval
   if (!hasAnyConnectors) {
-    assistants = assistants.filter((assistant) => assistant.num_chunks === 0);
+    personas = personas.filter((persona) => persona.num_chunks === 0);
   }
 
   let folders: Folder[] = [];
@@ -189,12 +189,12 @@ export async function fetchChatData(searchParams: {
     ccPairs,
     availableSources,
     documentSets,
-    assistants,
+    personas,
     tags,
     llmProviders,
     folders,
     openedFolders,
-    defaultAssistantId,
+    defaultPersonaId,
     finalDocumentSidebarInitialWidth,
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,

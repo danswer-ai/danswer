@@ -11,14 +11,14 @@ import { fetchSS } from "@/lib/utilsSS";
 import { CCPairBasicInfo, DocumentSet, Tag, User } from "@/lib/types";
 import { cookies } from "next/headers";
 import { SearchType } from "@/lib/search/interfaces";
-import { Assistant } from "../admin/assistants/interfaces";
+import { Persona } from "../admin/assistants/interfaces";
 import {
   WelcomeModal,
   hasCompletedWelcomeFlowSS,
 } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { assistantComparator } from "../admin/assistants/lib";
+import { personaComparator } from "../admin/assistants/lib";
 import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
@@ -26,7 +26,7 @@ import { ChatPopup } from "../chat/ChatPopup";
 import { SearchBars } from "./SearchBars";
 
 export default async function Home() {
-  // Disable caching so we always get the up to date connector / document set / assistant info
+  // Disable caching so we always get the up to date connector / document set / persona info
   // importantly, this prevents users from adding a connector, going back to the main page,
   // and then getting hit with a "No Connectors" popup
   noStore();
@@ -36,7 +36,7 @@ export default async function Home() {
     getCurrentUserSS(),
     fetchSS("/manage/indexing-status"),
     fetchSS("/manage/document-set"),
-    fetchSS("/assistant"),
+    fetchSS("/persona"),
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
   ];
@@ -60,7 +60,7 @@ export default async function Home() {
   const user = results[1] as User | null;
   const ccPairsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
-  const assistantResponse = results[4] as Response | null;
+  const personaResponse = results[4] as Response | null;
   const tagsResponse = results[5] as Response | null;
   const embeddingModelResponse = results[6] as Response | null;
 
@@ -89,19 +89,19 @@ export default async function Home() {
     );
   }
 
-  let assistants: Assistant[] = [];
+  let personas: Persona[] = [];
 
-  if (assistantResponse?.ok) {
-    assistants = await assistantResponse.json();
+  if (personaResponse?.ok) {
+    personas = await personaResponse.json();
   } else {
-    console.log(`Failed to fetch assistants - ${assistantResponse?.status}`);
+    console.log(`Failed to fetch personas - ${personaResponse?.status}`);
   }
   // remove those marked as hidden by an admin
-  assistants = assistants.filter((assistant) => assistant.is_visible);
-  // hide assistants with no retrieval
-  assistants = assistants.filter((assistant) => assistant.num_chunks !== 0);
+  personas = personas.filter((persona) => persona.is_visible);
+  // hide personas with no retrieval
+  personas = personas.filter((persona) => persona.num_chunks !== 0);
   // sort them in priority order
-  assistants.sort(assistantComparator);
+  personas.sort(personaComparator);
 
   let tags: Tag[] = [];
   if (tagsResponse?.ok) {
@@ -175,7 +175,7 @@ export default async function Home() {
         <SearchSection
           ccPairs={ccPairs}
           documentSets={documentSets}
-          assistants={assistants}
+          personas={personas}
           tags={tags}
           defaultSearchType={searchTypeDefault}
         />

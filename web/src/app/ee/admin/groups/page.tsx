@@ -7,7 +7,7 @@ import { useState } from "react";
 import { ThreeDotsLoader } from "@/components/Loading";
 import {
   useConnectorCredentialIndexingStatus,
-  useTeamspaces,
+  useUserGroups,
   useUsers,
 } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 const Main = () => {
   const [showForm, setShowForm] = useState(false);
 
-  const { data, isLoading, error, refreshTeamspaces } = useTeamspaces();
+  const { data, isLoading, error, refreshUserGroups } = useUserGroups();
 
   const {
     data: ccPairs,
@@ -56,9 +56,9 @@ const Main = () => {
         </div>
       )}
       {showForm && (
-        <TeamspaceCreationForm
+        <UserGroupCreationForm
           onClose={() => {
-            refreshTeamspaces();
+            refreshUserGroups();
             setShowForm(false);
           }}
           users={users.accepted}
@@ -73,7 +73,7 @@ const Page = () => {
   return (
     <div className="mx-auto container">
       <AdminPageTitle
-        title="Manage Teamspaces"
+        title="Manage Users Groups"
         icon={<GroupsIcon size={32} />}
       />
 

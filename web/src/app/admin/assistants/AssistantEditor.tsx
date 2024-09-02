@@ -1,6 +1,6 @@
 "use client";
 
-import { CCPairBasicInfo, DocumentSet, User, Teamspace } from "@/lib/types";
+import { CCPairBasicInfo, DocumentSet, User, UserGroup } from "@/lib/types";
 import { Divider, Italic, Text } from "@tremor/react";
 import {
   ArrayHelpers,
@@ -12,7 +12,7 @@ import {
 } from "formik";
 
 import * as Yup from "yup";
-import { buildFinalPrompt, createAssistant, updateAssistant } from "./lib";
+import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 import { useRouter } from "next/navigation";
 import { Persona, StarterMessage } from "./interfaces";
 import Link from "next/link";
@@ -23,10 +23,10 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { HidableSection } from "./HidableSection";
-import { useTeamspaces } from "@/lib/hooks";
+import { useUserGroups } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
-import { SuccessfulAssistantUpdateRedirectType } from "./enums";
+import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { FullLLMProvider } from "../models/llm/interfaces";
 import { Option } from "@/components/Dropdown";
@@ -63,7 +63,7 @@ function SubLabel({ children }: { children: string | JSX.Element }) {
 }
 
 export function AssistantEditor({
-  existingAssistant,
+  existingPersona,
   ccPairs,
   documentSets,
   user,
@@ -73,12 +73,12 @@ export function AssistantEditor({
   tools,
   shouldAddAssistantToUserPreferences,
 }: {
-  existingAssistant?: Assistant | null;
+  existingPersona?: Persona | null;
   ccPairs: CCPairBasicInfo[];
   documentSets: DocumentSet[];
   user: User | null;
   defaultPublic: boolean;
-  redirectType: SuccessfulAssistantUpdateRedirectType;
+  redirectType: SuccessfulPersonaUpdateRedirectType;
   llmProviders: FullLLMProvider[];
   tools: ToolSnapshot[];
   shouldAddAssistantToUserPreferences?: boolean;
@@ -89,7 +89,7 @@ export function AssistantEditor({
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   // EE only
-  const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
+  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
 
   const [finalPrompt, setFinalPrompt] = useState<string | null>("");
   const [finalPromptError, setFinalPromptError] = useState<string>("");
@@ -109,16 +109,15 @@ export function AssistantEditor({
     }
   };
 
-  const isUpdate =
-    existingAssistant !== undefined && existingAssistant !== null;
-  const existingPrompt = existingAssistant?.prompts[0] ?? null;
+  const isUpdate = existingPersona !== undefined && existingPersona !== null;
+  const existingPrompt = existingPersona?.prompts[0] ?? null;
 
   useEffect(() => {
     if (isUpdate && existingPrompt) {
       triggerFinalPromptUpdate(
         existingPrompt.system_prompt,
         existingPrompt.task_prompt,
-        existingAssistant.num_chunks === 0
+        existingPersona.num_chunks === 0
       );
     }
   }, []);
@@ -150,8 +149,8 @@ export function AssistantEditor({
     (provider) => provider.provider === "openai"
   );
 
-  const assistantCurrentToolIds =
-    existingAssistant?.tools.map((tool) => tool.id) || [];
+  const personaCurrentToolIds =
+    existingPersona?.tools.map((tool) => tool.id) || [];
   const searchTool = findSearchTool(tools);
   const imageGenerationTool = providerSupportingImageGenerationExists
     ? findImageGenerationTool(tools)
@@ -169,35 +168,35 @@ export function AssistantEditor({
   ];
   const enabledToolsMap: { [key: number]: boolean } = {};
   availableTools.forEach((tool) => {
-    enabledToolsMap[tool.id] = assistantCurrentToolIds.includes(tool.id);
+    enabledToolsMap[tool.id] = personaCurrentToolIds.includes(tool.id);
   });
 
   const initialValues = {
-    name: existingAssistant?.name ?? "",
-    description: existingAssistant?.description ?? "",
+    name: existingPersona?.name ?? "",
+    description: existingPersona?.description ?? "",
     system_prompt: existingPrompt?.system_prompt ?? "",
     task_prompt: existingPrompt?.task_prompt ?? "",
-    is_public: existingAssistant?.is_public ?? defaultPublic,
+    is_public: existingPersona?.is_public ?? defaultPublic,
     document_set_ids:
-      existingAssistant?.document_sets?.map((documentSet) => documentSet.id) ??
+      existingPersona?.document_sets?.map((documentSet) => documentSet.id) ??
       ([] as number[]),
-    num_chunks: existingAssistant?.num_chunks ?? null,
-    include_citations: existingAssistant?.prompts[0]?.include_citations ?? true,
-    llm_relevance_filter: existingAssistant?.llm_relevance_filter ?? false,
+    num_chunks: existingPersona?.num_chunks ?? null,
+    include_citations: existingPersona?.prompts[0]?.include_citations ?? true,
+    llm_relevance_filter: existingPersona?.llm_relevance_filter ?? false,
     llm_model_provider_override:
-      existingAssistant?.llm_model_provider_override ?? null,
+      existingPersona?.llm_model_provider_override ?? null,
     llm_model_version_override:
-      existingAssistant?.llm_model_version_override ?? null,
-    starter_messages: existingAssistant?.starter_messages ?? [],
+      existingPersona?.llm_model_version_override ?? null,
+    starter_messages: existingPersona?.starter_messages ?? [],
     enabled_tools_map: enabledToolsMap,
-    //   search_tool_enabled: existingAssistant
-    //   ? assistantCurrentToolIds.includes(searchTool!.id)
+    //   search_tool_enabled: existingPersona
+    //   ? personaCurrentToolIds.includes(searchTool!.id)
     //   : ccPairs.length > 0,
     // image_generation_tool_enabled: imageGenerationTool
-    //   ? assistantCurrentToolIds.includes(imageGenerationTool.id)
+    //   ? personaCurrentToolIds.includes(imageGenerationTool.id)
     //   : false,
     // EE Only
-    groups: existingAssistant?.groups ?? [],
+    groups: existingPersona?.groups ?? [],
   };
 
   return (
@@ -310,10 +309,10 @@ export function AssistantEditor({
           const groups = values.is_public ? [] : values.groups;
 
           let promptResponse;
-          let assistantResponse;
+          let personaResponse;
           if (isUpdate) {
-            [promptResponse, assistantResponse] = await updateAssistant({
-              id: existingAssistant.id,
+            [promptResponse, personaResponse] = await updatePersona({
+              id: existingPersona.id,
               existingPromptId: existingPrompt?.id,
               ...values,
               num_chunks: numChunks,
@@ -323,7 +322,7 @@ export function AssistantEditor({
               tool_ids: enabledTools,
             });
           } else {
-            [promptResponse, assistantResponse] = await createAssistant({
+            [promptResponse, personaResponse] = await createPersona({
               ...values,
               num_chunks: numChunks,
               users:
@@ -337,10 +336,10 @@ export function AssistantEditor({
           if (!promptResponse.ok) {
             error = await promptResponse.text();
           }
-          if (!assistantResponse) {
+          if (!personaResponse) {
             error = "Failed to create Assistant - no response received";
-          } else if (!assistantResponse.ok) {
-            error = await assistantResponse.text();
+          } else if (!personaResponse.ok) {
+            error = await personaResponse.text();
           }
 
           if (error || !personaResponse) {
@@ -351,7 +350,7 @@ export function AssistantEditor({
             });
             formikHelpers.setSubmitting(false);
           } else {
-            const assistant = await assistantResponse.json();
+            const assistant = await personaResponse.json();
             const assistantId = assistant.id;
             if (
               shouldAddAssistantToUserPreferences &&
@@ -378,7 +377,7 @@ export function AssistantEditor({
               }
             }
             router.push(
-              redirectType === SuccessfulAssistantUpdateRedirectType.ADMIN
+              redirectType === SuccessfulPersonaUpdateRedirectType.ADMIN
                 ? `/admin/assistants?u=${Date.now()}`
                 : `/chat?assistantId=${assistantId}`
             );
@@ -852,7 +851,7 @@ export function AssistantEditor({
                 <Divider />
 
                 {isPaidEnterpriseFeaturesEnabled &&
-                  teamspaces &&
+                  userGroups &&
                   (!user || user.role === "admin") && (
                     <>
                       <HidableSection sectionTitle="Access">
@@ -860,38 +859,38 @@ export function AssistantEditor({
                           <BooleanFormField
                             name="is_public"
                             label="Is Public?"
-                            subtext="If set, this Assistant will be available to all users. If not, only the specified Teamspaces will be able to access it."
+                            subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
                           />
 
-                          {teamspaces &&
-                            teamspaces.length > 0 &&
+                          {userGroups &&
+                            userGroups.length > 0 &&
                             !values.is_public && (
                               <div>
                                 <Text>
-                                  Select which Teamspaces should have access to
+                                  Select which User Groups should have access to
                                   this Assistant.
                                 </Text>
                                 <div className="flex flex-wrap gap-2 mt-2">
-                                  {teamspaces.map((teamspace) => {
+                                  {userGroups.map((userGroup) => {
                                     const isSelected = values.groups.includes(
-                                      teamspace.id
+                                      userGroup.id
                                     );
                                     return (
                                       <Bubble
-                                        key={teamspace.id}
+                                        key={userGroup.id}
                                         isSelected={isSelected}
                                         onClick={() => {
                                           if (isSelected) {
                                             setFieldValue(
                                               "groups",
                                               values.groups.filter(
-                                                (id) => id !== teamspace.id
+                                                (id) => id !== userGroup.id
                                               )
                                             );
                                           } else {
                                             setFieldValue("groups", [
                                               ...values.groups,
-                                              teamspace.id,
+                                              userGroup.id,
                                             ]);
                                           }
                                         }}
@@ -899,7 +898,7 @@ export function AssistantEditor({
                                         <div className="flex">
                                           <GroupsIcon />
                                           <div className="ml-1">
-                                            {teamspace.name}
+                                            {userGroup.name}
                                           </div>
                                         </div>
                                       </Bubble>

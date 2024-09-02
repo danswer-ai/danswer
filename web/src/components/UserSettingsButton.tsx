@@ -51,6 +51,11 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
             className="flex items-center justify-center bg-background rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 ault py-2"
             onClick={() => setUserInfoVisible(!userInfoVisible)}
           >
+            {/* {user && user.email ? (
+              user.email[0].toUpperCase()
+            ) : (
+              <User size={25} className="mx-auto" />
+            )} */}
             <User size={25} className="mx-auto" />
           </div>
         </PopoverTrigger>
@@ -73,10 +78,10 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
                 </div>
                 <div className="flex flex-col w-[160px]">
                   <span className="truncate group-hover:text-inverted">
-                    {user!.full_name || "Unknown"}
+                    Johny Doe
                   </span>
                   <span className="text-dark-500 truncate group-hover:text-inverted">
-                    {user!.email || "unknown@email.com"}
+                    {user!.email}
                   </span>
                 </div>
               </Link>

@@ -14,7 +14,7 @@ import {
   StreamingError,
   ToolCallMetadata,
 } from "./interfaces";
-import { Assistant } from "../admin/assistants/interfaces";
+import { Persona } from "../admin/assistants/interfaces";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import {
@@ -28,7 +28,7 @@ import {
   handleChatFeedback,
   nameChatSession,
   PacketType,
-  assistantIncludesRetrieval,
+  personaIncludesRetrieval,
   processRawChatHistory,
   removeMessage,
   sendMessage,
@@ -88,10 +88,10 @@ const SYSTEM_MESSAGE_ID = -3;
 
 export function ChatPage({
   documentSidebarInitialWidth,
-  defaultSelectedAssistantsId,
+  defaultSelectedPersonaId,
 }: {
   documentSidebarInitialWidth?: number;
-  defaultSelectedAssistantsId?: number;
+  defaultSelectedPersonaId?: number;
 }) {
   const [configModalActiveTab, setConfigModalActiveTab] = useState<
     string | null
@@ -101,19 +101,19 @@ export function ChatPage({
     chatSessions,
     availableSources,
     availableDocumentSets,
-    availableAssistants,
+    availablePersonas,
     llmProviders,
     folders,
     openedFolders,
   } = useChatContext();
 
-  const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
+  const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
-  const [selectedAssistant, setSelectedAssistant] = useState<Assistant | null>(
+  const [selectedAssistant, setSelectedAssistant] = useState<Persona | null>(
     null
   );
   const [alternativeGeneratingAssistant, setAlternativeGeneratingAssistant] =
-    useState<Assistant | null>(null);
+    useState<Persona | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -128,7 +128,7 @@ export function ChatPage({
 
   const llmOverrideManager = useLlmOverride(selectedChatSession);
 
-  const existingChatSessionAssistantId = selectedChatSession?.assistant_id;
+  const existingChatSessionPersonaId = selectedChatSession?.persona_id;
 
   // used to track whether or not the initial "submit on load" has been performed
   // this only applies if `?submit-on-load=true` or `?submit-on-load=1` is in the URL
@@ -185,14 +185,14 @@ export function ChatPage({
     async function initialSessionFetch() {
       if (existingChatSessionId === null) {
         setIsFetchingChatMessages(false);
-        if (defaultSelectedAssistantsId !== undefined) {
-          setSelectedAssistants(
+        if (defaultSelectedPersonaId !== undefined) {
+          setSelectedPersona(
             filteredAssistants.find(
-              (assistant) => assistant.id === defaultSelectedAssistantsId
+              (persona) => persona.id === defaultSelectedPersonaId
             )
           );
         } else {
-          setSelectedAssistants(undefined);
+          setSelectedPersona(undefined);
         }
         setCompleteMessageDetail({
           sessionId: null,
@@ -218,9 +218,9 @@ export function ChatPage({
 
       const chatSession = (await response.json()) as BackendChatSession;
 
-      setSelectedAssistants(
+      setSelectedPersona(
         filteredAssistants.find(
-          (assistant) => assistant.id === chatSession.assistant_id
+          (persona) => persona.id === chatSession.persona_id
         )
       );
 
@@ -389,36 +389,36 @@ export function ChatPage({
       )
     : { aiMessage: null };
 
-  const [selectedAssistants, setSelectedAssistants] = useState<
-    Assistant | undefined
-  >(() => {
-    if (existingChatSessionAssistantId !== undefined) {
-      return filteredAssistants.find(
-        (assistant) => assistant.id === existingChatSessionAssistantId
-      );
-    } else if (defaultSelectedAssistantsId !== undefined) {
-      return filteredAssistants.find(
-        (assistant) => assistant.id === defaultSelectedAssistantsId
-      );
-    } else {
-      return undefined;
+  const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
+    () => {
+      if (existingChatSessionPersonaId !== undefined) {
+        return filteredAssistants.find(
+          (persona) => persona.id === existingChatSessionPersonaId
+        );
+      } else if (defaultSelectedPersonaId !== undefined) {
+        return filteredAssistants.find(
+          (persona) => persona.id === defaultSelectedPersonaId
+        );
+      } else {
+        return undefined;
+      }
     }
-  });
-  const liveAssistant =
-    selectedAssistants || filteredAssistants[0] || availableAssistants[0];
+  );
+  const livePersona =
+    selectedPersona || filteredAssistants[0] || availablePersonas[0];
 
   const [chatSessionSharedStatus, setChatSessionSharedStatus] =
     useState<ChatSessionSharedStatus>(ChatSessionSharedStatus.Private);
 
   useEffect(() => {
     if (messageHistory.length === 0 && chatSessionIdRef.current === null) {
-      setSelectedAssistants(
+      setSelectedPersona(
         filteredAssistants.find(
-          (assistant) => assistant.id === defaultSelectedAssistantsId
+          (persona) => persona.id === defaultSelectedPersonaId
         )
       );
     }
-  }, [defaultSelectedAssistantsId]);
+  }, [defaultSelectedPersonaId]);
 
   const [
     selectedDocuments,
@@ -427,14 +427,14 @@ export function ChatPage({
     selectedDocumentTokens,
   ] = useDocumentSelection();
   // just choose a conservative default, this will be updated in the
-  // background on initial load / on assistant change
+  // background on initial load / on persona change
   const [maxTokens, setMaxTokens] = useState<number>(4096);
 
-  // fetch # of allowed document tokens for the selected Assistant
+  // fetch # of allowed document tokens for the selected Persona
   useEffect(() => {
     async function fetchMaxTokens() {
       const response = await fetch(
-        `/api/chat/max-selected-document-tokens?assistant_id=${liveAssistant.id}`
+        `/api/chat/max-selected-document-tokens?persona_id=${livePersona.id}`
       );
       if (response.ok) {
         const maxTokens = (await response.json()).max_tokens as number;
@@ -443,12 +443,12 @@ export function ChatPage({
     }
 
     fetchMaxTokens();
-  }, [liveAssistant]);
+  }, [livePersona]);
 
   const filterManager = useFilters();
   const [finalAvailableSources, finalAvailableDocumentSets] =
     computeAvailableFilters({
-      selectedAssistant,
+      selectedPersona,
       availableSources,
       availableDocumentSets,
     });
@@ -650,7 +650,7 @@ export function ChatPage({
     queryOverride?: string;
     forceSearch?: boolean;
     isSeededChat?: boolean;
-    alternativeAssistant?: Assistant | null;
+    alternativeAssistant?: Persona | null;
   } = {}) => {
     setAlternativeGeneratingAssistant(alternativeAssistant);
 
@@ -662,7 +662,7 @@ export function ChatPage({
 
     if (isNewSession) {
       currChatSessionId = await createChatSession(
-        liveAssistant?.id || 0,
+        livePersona?.id || 0,
         searchParamBasedChatSessionName
       );
     } else {
@@ -771,7 +771,7 @@ export function ChatPage({
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
-        promptId: liveAssistant?.prompts[0]?.id || 0,
+        promptId: livePersona?.prompts[0]?.id || 0,
         filters: buildFilters(
           filterManager.selectedSources,
           filterManager.selectedDocumentSets,
@@ -985,23 +985,19 @@ export function ChatPage({
     }
   };
 
-  const onAssistantChange = (assistant: Assistant | null) => {
-    if (assistant && assistant.id !== liveAssistant.id) {
+  const onPersonaChange = (persona: Persona | null) => {
+    if (persona && persona.id !== livePersona.id) {
       // remove uploaded files
       setCurrentMessageFiles([]);
-      setSelectedAssistants(assistant);
+      setSelectedPersona(persona);
       textAreaRef.current?.focus();
-      router.push(buildChatUrl(searchParams, null, assistant.id));
+      router.push(buildChatUrl(searchParams, null, persona.id));
     }
   };
 
   const handleImageUpload = (acceptedFiles: File[]) => {
     const llmAcceptsImages = checkLLMSupportsImageInput(
-      ...getFinalLLM(
-        llmProviders,
-        liveAssistant,
-        llmOverrideManager.llmOverride
-      )
+      ...getFinalLLM(llmProviders, livePersona, llmOverrideManager.llmOverride)
     );
     const imageFiles = acceptedFiles.filter((file) =>
       file.type.startsWith("image/")
@@ -1086,29 +1082,29 @@ export function ChatPage({
   useEffect(() => {
     const includes = checkAnyAssistantHasSearch(
       messageHistory,
-      availableAssistants,
-      liveAssistant
+      availablePersonas,
+      livePersona
     );
     setRetrievalEnabled(includes);
-  }, [messageHistory, availableAssistants, liveAssistant]);
+  }, [messageHistory, availablePersonas, livePersona]);
 
   const [retrievalEnabled, setRetrievalEnabled] = useState(() => {
     return checkAnyAssistantHasSearch(
       messageHistory,
-      availableAssistants,
-      liveAssistant
+      availablePersonas,
+      livePersona
     );
   });
   const [editingRetrievalEnabled, setEditingRetrievalEnabled] = useState(false);
   const sidebarElementRef = useRef<HTMLDivElement>(null);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
 
-  const currentAssistant = selectedAssistant || liveAssistant;
+  const currentPersona = selectedAssistant || livePersona;
 
-  const updateSelectedAssistant = (newAssistant: Assistant | null) => {
+  const updateSelectedAssistant = (newAssistant: Persona | null) => {
     setSelectedAssistant(newAssistant);
     if (newAssistant) {
-      setEditingRetrievalEnabled(assistantIncludesRetrieval(newAssistant));
+      setEditingRetrievalEnabled(personaIncludesRetrieval(newAssistant));
     } else {
       setEditingRetrievalEnabled(false);
     }
@@ -1122,7 +1118,7 @@ export function ChatPage({
 
   return (
     <>
-      {liveAssistant && (
+      {livePersona && (
         <TopBar toggleLeftSideBar={toggleLeftSideBar}>
           <div className="flex ml-auto gap-2 items-center">
             {chatSessionIdRef.current !== null && (
@@ -1201,8 +1197,8 @@ export function ChatPage({
             onClose={() => setConfigModalActiveTab(null)}
             filterManager={filterManager}
             availableAssistants={filteredAssistants}
-            selectedAssistant={liveAssistant}
-            setSelectedAssistant={onAssistantChange}
+            selectedAssistant={livePersona}
+            setSelectedAssistant={onPersonaChange}
             llmProviders={llmProviders}
             llmOverrideManager={llmOverrideManager}
           />
@@ -1235,16 +1231,16 @@ export function ChatPage({
                         !isStreaming && (
                           <ChatIntro
                             availableSources={finalAvailableSources}
-                            liveAssistant={liveAssistant}
+                            livePersona={livePersona}
                           >
-                            {currentAssistant &&
-                              currentAssistant.starter_messages &&
-                              currentAssistant.starter_messages.length > 0 &&
-                              selectedAssistants &&
+                            {currentPersona &&
+                              currentPersona.starter_messages &&
+                              currentPersona.starter_messages.length > 0 &&
+                              selectedPersona &&
                               messageHistory.length === 0 &&
                               !isFetchingChatMessages && (
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 md:pt-8">
-                                  {currentAssistant.starter_messages.map(
+                                  {currentPersona.starter_messages.map(
                                     (starterMessage, i) => (
                                       <div
                                         key={i}
@@ -1343,10 +1339,9 @@ export function ChatPage({
 
                             const currentAlternativeAssistant =
                               message.alternateAssistantID != null
-                                ? availableAssistants.find(
-                                    (assistant) =>
-                                      assistant.id ==
-                                      message.alternateAssistantID
+                                ? availablePersonas.find(
+                                    (persona) =>
+                                      persona.id == message.alternateAssistantID
                                   )
                                 : null;
 
@@ -1360,7 +1355,7 @@ export function ChatPage({
                                 }
                               >
                                 <AIMessage
-                                  currentAssistant={liveAssistant}
+                                  currentPersona={livePersona}
                                   alternativeAssistant={
                                     currentAlternativeAssistant
                                   }
@@ -1368,7 +1363,7 @@ export function ChatPage({
                                   content={message.message}
                                   files={message.files}
                                   query={messageHistory[i]?.query || undefined}
-                                  assistantName={liveAssistant.name}
+                                  personaName={livePersona.name}
                                   citedDocuments={getCitedDocumentsFromMessage(
                                     message
                                   )}
@@ -1467,7 +1462,7 @@ export function ChatPage({
                                   }}
                                   retrievalDisabled={
                                     currentAlternativeAssistant
-                                      ? !assistantIncludesRetrieval(
+                                      ? !personaIncludesRetrieval(
                                           currentAlternativeAssistant!
                                         )
                                       : !retrievalEnabled
@@ -1479,9 +1474,9 @@ export function ChatPage({
                             return (
                               <div key={messageReactComponentKey}>
                                 <AIMessage
-                                  currentAssistant={liveAssistant}
+                                  currentPersona={livePersona}
                                   messageId={message.messageId}
-                                  assistantName={liveAssistant.name}
+                                  personaName={livePersona.name}
                                   content={
                                     <p className="my-auto text-sm text-red-700">
                                       {message.message}
@@ -1500,13 +1495,13 @@ export function ChatPage({
                               key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                             >
                               <AIMessage
-                                currentAssistant={liveAssistant}
+                                currentPersona={livePersona}
                                 alternativeAssistant={
                                   alternativeGeneratingAssistant ??
                                   selectedAssistant
                                 }
                                 messageId={null}
-                                assistantName={liveAssistant.name}
+                                personaName={livePersona.name}
                                 content={
                                   <div className="my-auto text-sm flex flex-col gap-1">
                                     <Skeleton className="h-5 w-full" />
@@ -1536,23 +1531,23 @@ export function ChatPage({
                       <div className="w-full pb-4">
                         <ChatInputBar
                           onSetSelectedAssistant={(
-                            alternativeAssistant: Assistant | null
+                            alternativeAssistant: Persona | null
                           ) => {
                             updateSelectedAssistant(alternativeAssistant);
                           }}
                           alternativeAssistant={selectedAssistant}
-                          assistants={filteredAssistants}
+                          personas={filteredAssistants}
                           message={message}
                           setMessage={setMessage}
                           onSubmit={onSubmit}
                           isStreaming={isStreaming}
                           setIsCancelled={setIsCancelled}
                           retrievalDisabled={
-                            !assistantIncludesRetrieval(currentAssistant)
+                            !personaIncludesRetrieval(currentPersona)
                           }
                           filterManager={filterManager}
                           llmOverrideManager={llmOverrideManager}
-                          selectedAssistant={liveAssistant}
+                          selectedAssistant={livePersona}
                           files={currentMessageFiles}
                           setFiles={setCurrentMessageFiles}
                           handleFileUpload={handleImageUpload}

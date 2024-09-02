@@ -1,30 +1,30 @@
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { DocumentSet, ValidSources } from "./types";
-import { getSourcesForAssistant } from "./sources";
+import { getSourcesForPersona } from "./sources";
 
 export function computeAvailableFilters({
-  selectedAssistant,
+  selectedPersona,
   availableSources,
   availableDocumentSets,
 }: {
-  selectedAssistant: Assistant | undefined | null;
+  selectedPersona: Persona | undefined | null;
   availableSources: ValidSources[];
   availableDocumentSets: DocumentSet[];
 }): [ValidSources[], DocumentSet[]] {
   const finalAvailableSources =
-    selectedAssistant && selectedAssistant.document_sets.length
-      ? getSourcesForAssistant(selectedAssistant)
+    selectedPersona && selectedPersona.document_sets.length
+      ? getSourcesForPersona(selectedPersona)
       : availableSources;
 
-  // only display document sets that are available to the assistant
+  // only display document sets that are available to the persona
   // in filters
-  const assistantDocumentSetIds =
-    selectedAssistant && selectedAssistant.document_sets.length
-      ? selectedAssistant.document_sets.map((documentSet) => documentSet.id)
+  const personaDocumentSetIds =
+    selectedPersona && selectedPersona.document_sets.length
+      ? selectedPersona.document_sets.map((documentSet) => documentSet.id)
       : null;
-  const finalAvailableDocumentSets = assistantDocumentSetIds
+  const finalAvailableDocumentSets = personaDocumentSetIds
     ? availableDocumentSets.filter((documentSet) =>
-        assistantDocumentSetIds.includes(documentSet.id)
+        personaDocumentSetIds.includes(documentSet.id)
       )
     : availableDocumentSets;
 

@@ -7,13 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AddMemberFormProps {
   users: User[];
-  teamspace: Teamspace;
+  userGroup: UserGroup;
   onClose: () => void;
 }
 
 export const AddMemberForm: React.FC<AddMemberFormProps> = ({
   users,
-  teamspace,
+  userGroup,
   onClose,
 }) => {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -26,20 +26,20 @@ export const AddMemberForm: React.FC<AddMemberFormProps> = ({
           selectedUserIds={selectedUserIds}
           setSelectedUserIds={setSelectedUserIds}
           allUsers={users}
-          existingUsers={teamspace.users}
+          existingUsers={userGroup.users}
           onSubmit={async (selectedUsers) => {
             const newUserIds = [
               ...Array.from(
                 new Set(
-                  teamspace.users
+                  userGroup.users
                     .map((user) => user.id)
                     .concat(selectedUsers.map((user) => user.id))
                 )
               ),
             ];
-            const response = await updateTeamspace(teamspace.id, {
+            const response = await updateUserGroup(userGroup.id, {
               user_ids: newUserIds,
-              cc_pair_ids: teamspace.cc_pairs.map((ccPair) => ccPair.id),
+              cc_pair_ids: userGroup.cc_pairs.map((ccPair) => ccPair.id),
             });
             if (response.ok) {
               toast({

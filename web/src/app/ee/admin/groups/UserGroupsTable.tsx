@@ -5,10 +5,10 @@ import { LoadingAnimation } from "@/components/Loading";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { TrashIcon } from "@/components/icons/icons";
-import { deleteTeamspace } from "./lib";
+import { deleteUserGroup } from "./lib";
 import { useRouter } from "next/navigation";
 import { FiEdit2, FiUser } from "react-icons/fi";
-import { User, Teamspace } from "@/lib/types";
+import { User, UserGroup } from "@/lib/types";
 import Link from "next/link";
 import { DeleteButton } from "@/components/DeleteButton";
 import {
@@ -40,12 +40,12 @@ interface UserGroupsTableProps {
 export const UserGroupsTable = ({
   userGroups,
   refresh,
-}: TeamspacesTableProps) => {
+}: UserGroupsTableProps) => {
   const router = useRouter();
   const { toast } = useToast();
 
   // sort by name for consistent ordering
-  teamspaces.sort((a, b) => {
+  userGroups.sort((a, b) => {
     if (a.name < b.name) {
       return -1;
     } else if (a.name > b.name) {
@@ -68,28 +68,28 @@ export const UserGroupsTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {teamspaces
-            .filter((teamspace) => !teamspace.is_up_for_deletion)
-            .map((teamspace) => {
+          {userGroups
+            .filter((userGroup) => !userGroup.is_up_for_deletion)
+            .map((userGroup) => {
               return (
-                <TableRow key={teamspace.id}>
+                <TableRow key={userGroup.id}>
                   <TableCell>
                     <Link
                       className="whitespace-normal break-all flex cursor-pointer p-2 rounded hover:bg-hover w-fit"
-                      href={`/admin/teams/${teamspace.id}`}
+                      href={`/admin/groups/${userGroup.id}`}
                     >
                       <FiEdit2 className="my-auto mr-2" />
-                      <p className="text font-medium">{teamspace.name}</p>
+                      <p className="text font-medium">{userGroup.name}</p>
                     </Link>
                   </TableCell>
                   <TableCell>
-                    {teamspace.cc_pairs.length > 0 ? (
+                    {userGroup.cc_pairs.length > 0 ? (
                       <div>
-                        {teamspace.cc_pairs.map((ccPairDescriptor, ind) => {
+                        {userGroup.cc_pairs.map((ccPairDescriptor, ind) => {
                           return (
                             <Badge
                               className={
-                                ind !== teamspace.cc_pairs.length - 1
+                                ind !== userGroup.cc_pairs.length - 1
                                   ? "mb-3"
                                   : ""
                               }
@@ -111,17 +111,17 @@ export const UserGroupsTable = ({
                     )}
                   </TableCell>
                   <TableCell>
-                    {teamspace.users.length > 0 ? (
+                    {userGroup.users.length > 0 ? (
                       <div>
-                        {teamspace.users.length <= MAX_USERS_TO_DISPLAY ? (
-                          teamspace.users.map((user) => {
+                        {userGroup.users.length <= MAX_USERS_TO_DISPLAY ? (
+                          userGroup.users.map((user) => {
                             return (
                               <SimpleUserDisplay key={user.id} user={user} />
                             );
                           })
                         ) : (
                           <div>
-                            {teamspace.users
+                            {userGroup.users
                               .slice(0, MAX_USERS_TO_DISPLAY)
                               .map((user) => {
                                 return (
@@ -132,7 +132,7 @@ export const UserGroupsTable = ({
                                 );
                               })}
                             <div>
-                              + {teamspace.users.length - MAX_USERS_TO_DISPLAY}{" "}
+                              + {userGroup.users.length - MAX_USERS_TO_DISPLAY}{" "}
                               more
                             </div>
                           </div>
@@ -143,7 +143,7 @@ export const UserGroupsTable = ({
                     )}
                   </TableCell>
                   <TableCell>
-                    {teamspace.is_up_to_date ? (
+                    {userGroup.is_up_to_date ? (
                       <div className="text-success">Up to date!</div>
                     ) : (
                       <div className="w-10">
@@ -155,7 +155,7 @@ export const UserGroupsTable = ({
                     <DeleteButton
                       onClick={async (event) => {
                         event.stopPropagation();
-                        const response = await deleteTeamspace(teamspace.id);
+                        const response = await deleteUserGroup(userGroup.id);
                         if (response.ok) {
                           toast({
                             title: "Success",

@@ -1,4 +1,4 @@
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { User } from "@/lib/types";
 import { Text } from "@tremor/react";
@@ -7,33 +7,33 @@ import { FaRobot } from "react-icons/fa";
 import { FiEdit2 } from "react-icons/fi";
 
 function AssistantDisplay({
-  assistant,
+  persona,
   onSelect,
   user,
 }: {
-  assistant: Assistant;
-  onSelect: (assistant: Assistant) => void;
+  persona: Persona;
+  onSelect: (persona: Persona) => void;
   user: User | null;
 }) {
   const isEditable =
-    (!user || user.id === assistant.owner?.id) &&
-    !assistant.default_assistant &&
-    (!assistant.is_public || !user || user.role === "admin");
+    (!user || user.id === persona.owner?.id) &&
+    !persona.default_persona &&
+    (!persona.is_public || !user || user.role === "admin");
 
   return (
     <div className="flex">
-      <div className="w-full" onClick={() => onSelect(assistant)}>
+      <div className="w-full" onClick={() => onSelect(persona)}>
         <BasicSelectable selected={false} fullWidth>
           <div className="flex">
             <div className="truncate w-48 3xl:w-56 flex">
-              <FaRobot className="mr-2 my-auto" size={16} /> {assistant.name}
+              <FaRobot className="mr-2 my-auto" size={16} /> {persona.name}
             </div>
           </div>
         </BasicSelectable>
       </div>
       {isEditable && (
         <div className="pl-2 my-auto">
-          <Link href={`/assistants/edit/${assistant.id}`}>
+          <Link href={`/assistants/edit/${persona.id}`}>
             <FiEdit2
               className="my-auto ml-auto hover:bg-hover p-0.5"
               size={20}
@@ -46,21 +46,19 @@ function AssistantDisplay({
 }
 
 export function AssistantsTab({
-  assistants,
-  onAssistantChange,
+  personas,
+  onPersonaChange,
   user,
 }: {
-  assistants: Assistant[];
-  onAssistantChange: (assistant: Assistant | null) => void;
+  personas: Persona[];
+  onPersonaChange: (persona: Persona | null) => void;
   user: User | null;
 }) {
-  const globalAssistants = assistants.filter(
-    (assistant) => assistant.is_public
-  );
-  const personalAssistants = assistants.filter(
-    (assistant) =>
-      (!user || assistant.users.some((u) => u.id === user.id)) &&
-      !assistant.is_public
+  const globalAssistants = personas.filter((persona) => persona.is_public);
+  const personalAssistants = personas.filter(
+    (persona) =>
+      (!user || persona.users.some((u) => u.id === user.id)) &&
+      !persona.is_public
   );
 
   return (
@@ -75,12 +73,12 @@ export function AssistantsTab({
             <div className="text-xs text-subtle flex pb-0.5 ml-1 mb-1.5 font-bold">
               Global
             </div>
-            {globalAssistants.map((assistant) => {
+            {globalAssistants.map((persona) => {
               return (
                 <AssistantDisplay
-                  key={assistant.id}
-                  assistant={assistant}
-                  onSelect={onAssistantChange}
+                  key={persona.id}
+                  persona={persona}
+                  onSelect={onPersonaChange}
                   user={user}
                 />
               );
@@ -93,12 +91,12 @@ export function AssistantsTab({
             <div className="text-xs text-subtle flex pb-0.5 ml-1 mb-1.5 mt-5 font-bold">
               Personal
             </div>
-            {personalAssistants.map((assistant) => {
+            {personalAssistants.map((persona) => {
               return (
                 <AssistantDisplay
-                  key={assistant.id}
-                  assistant={assistant}
-                  onSelect={onAssistantChange}
+                  key={persona.id}
+                  persona={persona}
+                  onSelect={onPersonaChange}
                   user={user}
                 />
               );

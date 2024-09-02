@@ -1,23 +1,23 @@
 import { Form, Formik } from "formik";
 import * as Yup from "yup";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { ConnectorIndexingStatus, User, Teamspace } from "@/lib/types";
+import { ConnectorIndexingStatus, User, UserGroup } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { createTeamspace } from "./lib";
+import { createUserGroup } from "./lib";
 import { UserEditor } from "./UserEditor";
 import { ConnectorEditor } from "./ConnectorEditor";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-interface TeamspaceCreationFormProps {
+interface UserGroupCreationFormProps {
   onClose: () => void;
   users: User[];
   ccPairs: ConnectorIndexingStatus<any, any>[];
-  existingTeamspace?: Teamspace;
+  existingUserGroup?: UserGroup;
 }
 
-export const TeamspaceCreationForm = ({
+export const UserGroupCreationForm = ({
   onClose,
   users,
   ccPairs,
@@ -30,12 +30,12 @@ export const TeamspaceCreationForm = ({
     <Modal onOutsideClick={onClose}>
       <div className="px-8 py-6 bg-background">
         <h2 className="text-xl font-bold flex">
-          {isUpdate ? "Update a Teamspace" : "Create a new Teamspace"}
+          {isUpdate ? "Update a User Group" : "Create a new User Group"}
         </h2>
 
         <Formik
           initialValues={{
-            name: existingTeamspace ? existingTeamspace.name : "",
+            name: existingUserGroup ? existingUserGroup.name : "",
             user_ids: [] as string[],
             cc_pair_ids: [] as number[],
           }}
@@ -47,7 +47,7 @@ export const TeamspaceCreationForm = ({
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
             let response;
-            response = await createTeamspace(values);
+            response = await createUserGroup(values);
             formikHelpers.setSubmitting(false);
             if (response.ok) {
               toast({
@@ -77,7 +77,7 @@ export const TeamspaceCreationForm = ({
                 <TextFormField
                   name="name"
                   label="Name:"
-                  placeholder="A name for the Teamspace"
+                  placeholder="A name for the User Group"
                   disabled={isUpdate}
                   autoCompleteDisabled={true}
                 />

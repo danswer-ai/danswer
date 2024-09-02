@@ -26,7 +26,7 @@ import Prism from "prismjs";
 
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
-import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Textarea } from "@/components/ui/textarea";
@@ -79,7 +79,7 @@ export const AIMessage = ({
   content,
   files,
   query,
-  assistantName,
+  personaName,
   citedDocuments,
   toolCall,
   isComplete,
@@ -90,15 +90,15 @@ export const AIMessage = ({
   handleSearchQueryEdit,
   handleForceSearch,
   retrievalDisabled,
-  currentAssistant,
+  currentPersona,
 }: {
-  alternativeAssistant?: Assistant | null;
-  currentAssistant: Assistant;
+  alternativeAssistant?: Persona | null;
+  currentPersona: Persona;
   messageId: number | null;
   content: string | JSX.Element;
   files?: FileDescriptor[];
   query?: string;
-  assistantName?: string;
+  personaName?: string;
   citedDocuments?: [string, EnmeddDocument][] | null;
   toolCall?: ToolCallMetadata;
   isComplete?: boolean;
@@ -156,11 +156,11 @@ export const AIMessage = ({
           <div className="flex">
             <AssistantIcon
               size="large"
-              assistant={alternativeAssistant || currentAssistant}
+              assistant={alternativeAssistant || currentPersona}
             />
 
             <div className="my-auto ml-2 font-bold text-inverted-inverted">
-              {assistantName || "enMedD AI"}
+              {personaName || "enMedD AI"}
             </div>
 
             {query === undefined &&

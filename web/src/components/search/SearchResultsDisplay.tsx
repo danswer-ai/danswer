@@ -37,13 +37,13 @@ export const SearchResultsDisplay = ({
   validQuestionResponse,
   isFetching,
   defaultOverrides,
-  assistantName = null,
+  personaName = null,
 }: {
   searchResponse: SearchResponse | null;
   validQuestionResponse: ValidQuestionResponse;
   isFetching: boolean;
   defaultOverrides: SearchDefaultOverrides;
-  assistantName?: string | null;
+  personaName?: string | null;
 }) => {
   const {
     data: indexAttemptData,
@@ -59,7 +59,7 @@ export const SearchResultsDisplay = ({
     return null;
   }
 
-  const isAssistant = assistantName !== null;
+  const isPersona = personaName !== null;
   const { answer, quotes, documents, error, messageId } = searchResponse;
 
   if (isFetching && !answer && !documents) {
@@ -139,7 +139,7 @@ export const SearchResultsDisplay = ({
               quotes={quotes}
               error={error}
               nonAnswerableReason={
-                validQuestionResponse.answerable === false && !isAssistant
+                validQuestionResponse.answerable === false && !isPersona
                   ? validQuestionResponse.reasoning
                   : ""
               }
@@ -147,7 +147,7 @@ export const SearchResultsDisplay = ({
             />
           </CardContent>
 
-          {quotes !== null && answer && !isAssistant && (
+          {quotes !== null && answer && !isPersona && (
             <CardFooter className="p-0 border-t pt-2">
               <QuotesSection
                 quotes={dedupedQuotes}
