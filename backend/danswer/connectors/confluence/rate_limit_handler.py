@@ -32,8 +32,11 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
             try:
                 return confluence_call(*args, **kwargs)
             except HTTPError as e:
+                # Check if the response or headers are None to avoid potential AttributeError
                 if e.response is None or e.response.headers is None:
+                    logger.warning("HTTPError with `None` as response or as headers")
                     raise e
+
                 retry_after_header = e.response.headers.get("Retry-After")
                 if (
                     e.response.status_code == 429
