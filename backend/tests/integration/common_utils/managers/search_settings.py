@@ -68,6 +68,7 @@ class SearchSettingsManager:
             if user_performing_action
             else GENERAL_HEADERS,
         )
+
         response.raise_for_status()
         return [
             TestSearchSettings(**search_settings) for search_settings in response.json()
