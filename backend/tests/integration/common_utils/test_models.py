@@ -120,6 +120,36 @@ class TestPersona(BaseModel):
     groups: list[int]
 
 
+class TestSearchSettings(BaseModel):
+    id: int
+    model_name: str
+    model_dim: int
+    normalize: bool
+    query_prefix: str | None
+    passage_prefix: str | None
+    index_name: str
+    provider_type: str | None
+    multipass_indexing: bool
+    multilingual_expansion: list[str]
+    disable_rerank_for_streaming: bool
+    rerank_model_name: str | None = None
+    rerank_provider_type: str | None = None
+    rerank_api_key: str | None = None
+    num_rerank: int
+
+
+class TestCloudEmbeddingProvider(BaseModel):
+    provider_type: str  # Assuming EmbeddingProvider is converted to string
+    api_key: str | None = None
+    api_url: str | None = None
+    model_name: str | None
+    dimensions: int | None
+    query_prefix: str | None
+    passage_prefix: str | None
+    batch_size: int | None
+    api_version: str | None
+
+
 #
 class TestChatSession(BaseModel):
     id: int

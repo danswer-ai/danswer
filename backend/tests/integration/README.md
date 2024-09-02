@@ -5,10 +5,10 @@ The integration tests are designed with a "manager" class and a "test" class for
 - **Manager Class**: Contains methods for each type of API call. Responsible for creating, deleting, and verifying the existence of an entity.
 - **Test Class**: Stores data for each entity being tested. This is our "expected state" of the object.
 
-The idea is that each test can use the manager class to create (.create()) a "test_" object. It can then perform an operation on the object (e.g., send a request to the API) and then check if the "test_" object is in the expected state by using the manager class (.verify()) function.
+The idea is that each test can use the manager class to create (`.create()`) a `test_` object. It can then perform an operation on the object (e.g., send a request to the API) and then check if the `test_` object is in the expected state by using the manager class (`.verify()`) function.
 
 ## Instructions for Running Integration Tests Locally
-1. Launch danswer (using Docker or running with a debugger), ensuring the API server is running on port 8080.
+1. Launch danswer (using Docker or running with a debugger), ensuring the API server is running on port 8080 with basic AUTH TYPE enabled.
     a. If you'd like to set environment variables, you can do so by creating a `.env` file in the danswer/backend/tests/integration/ directory.
 2. Navigate to `danswer/backend`.
 3. Run the following command in the terminal:
