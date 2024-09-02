@@ -101,11 +101,11 @@ class ProductboardConnector(PollConnector):
             metadata: dict[str, str | list[str]] = {}
             entity_type = feature.get("type", "feature")
             if entity_type:
-                metadata["entity_type"] = entity_type
+                metadata["entity_type"] = str(entity_type)
 
             status = feature.get("status", {}).get("name")
             if status:
-                metadata["status"] = status
+                metadata["status"] = str(status)
 
             yield Document(
                 id=feature["id"],
