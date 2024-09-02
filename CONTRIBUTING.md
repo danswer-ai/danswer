@@ -105,6 +105,11 @@ pip install -r danswer/backend/requirements/dev.txt
 pip install -r danswer/backend/requirements/model_server.txt
 ```
 
+If developing Enterprise Edition features, also install those requirements.
+```bash
+pip install -r danswer/backend/requirements/ee.txt
+```
+
 Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
 Once the above is done, navigate to `danswer/web` run:
 ```bash
