@@ -85,6 +85,7 @@ def check_internet_connection(url: str) -> None:
         response = requests.get(url, timeout=3)
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
+        # Extract status code from the response, defaulting to -1 if response is None
         status_code = e.response.status_code if e.response is not None else -1
         error_msg = {
             400: "Bad Request",
