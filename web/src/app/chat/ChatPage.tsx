@@ -1212,11 +1212,7 @@ export function ChatPage({
             } else if (Object.hasOwn(packet, "stop_reason")) {
               const stop_reason = (packet as StreamStopInfo).stop_reason;
               if (stop_reason === StreamStopReason.CONTEXT_LENGTH) {
-                stopReason = StreamStopReason.CONTEXT_LENGTH;
                 updateCanContinue(true, frozenSessionId);
-                console.log("UPDATING CAN CONTINUE go");
-              } else if (stop_reason === StreamStopReason.CANCELLED) {
-                stopReason = StreamStopReason.CANCELLED;
               }
             }
 

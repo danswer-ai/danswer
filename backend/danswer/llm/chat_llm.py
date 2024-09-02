@@ -219,7 +219,7 @@ class DefaultMultiLLM(LLM):
         self._api_version = api_version
         self._custom_llm_provider = custom_llm_provider
 
-        # This can be used to store the maximum output tkoens for this model.
+        # This can be used to store the maximum output tokens for this model.
         # self._max_output_tokens = (
         #     max_output_tokens
         #     if max_output_tokens is not None
@@ -301,7 +301,6 @@ class DefaultMultiLLM(LLM):
                 # streaming choice
                 stream=stream,
                 # model params
-                max_tokens=4,
                 temperature=self._temperature,
                 timeout=self._timeout,
                 # For now, we don't support parallel tool calls
