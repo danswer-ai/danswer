@@ -121,12 +121,12 @@ class RedisDocumentSet(RedisObjectHelper):
         redis_client: Redis,
         lock: redis.lock.Lock,
     ) -> int | None:
-        last_lock_time = time.time()
+        last_lock_time = time.monotonic()
 
         async_results = []
         stmt = select_documents_by_docset(self._id)
         for doc in db_session.scalars(stmt).yield_per(1):
-            current_time = time.time()
+            current_time = time.monotonic()
             if current_time - last_lock_time >= (
                 CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT / 4
             ):
@@ -167,7 +167,7 @@ class RedisUserGroup(RedisObjectHelper):
         redis_client: Redis,
         lock: redis.lock.Lock,
     ) -> int | None:
-        last_lock_time = time.time()
+        last_lock_time = time.monotonic()
 
         async_results = []
 
@@ -181,7 +181,7 @@ class RedisUserGroup(RedisObjectHelper):
 
         stmt = select_documents_by_usergroup(self._id)
         for doc in db_session.scalars(stmt).yield_per(1):
-            current_time = time.time()
+            current_time = time.monotonic()
             if current_time - last_lock_time >= (
                 CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT / 4
             ):
@@ -237,7 +237,7 @@ class RedisConnector(RedisObjectHelper):
         redis_client: Redis,
         lock: redis.lock.Lock,
     ) -> int | None:
-        last_lock_time = time.time()
+        last_lock_time = time.monotonic()
 
         async_results = []
         cc_pair = get_connector_credential_pair_from_id(self._id, db_session)
@@ -248,7 +248,7 @@ class RedisConnector(RedisObjectHelper):
             cc_pair.connector_id, cc_pair.credential_id
         )
         for doc in db_session.scalars(stmt).yield_per(1):
-            current_time = time.time()
+            current_time = time.monotonic()
             if current_time - last_lock_time >= (
                 CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT / 4
             ):
