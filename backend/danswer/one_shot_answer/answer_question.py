@@ -83,7 +83,6 @@ AnswerObjectIterator = Iterator[
 def stream_answer_objects(
     query_req: DirectQARequest,
     user: User | None,
-    temporary_persona: Persona | None,
     # These need to be passed in because in Web UI one shot flow,
     # we can have much more document as there is no history.
     # For Slack flow, we need to save more tokens for the thread context
@@ -99,6 +98,7 @@ def stream_answer_objects(
     retrieval_metrics_callback: (
         Callable[[RetrievalMetricsContainer], None] | None
     ) = None,
+    temporary_persona: Persona | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> AnswerObjectIterator:
     """Streams in order:
@@ -184,33 +184,27 @@ def stream_answer_objects(
         max_tokens=max_document_tokens,
     )
 
-    contains_tool = True
     if temporary_persona:
-        contains_tool = False
         for tool in temporary_persona.tools:
             if tool.in_code_tool_id == "SearchTool":
-                contains_tool = True
+                pass
 
-    search_tool = (
-        SearchTool(
-            db_session=db_session,
-            user=user,
-            evaluation_type=LLMEvaluationType.SKIP
-            if DISABLE_LLM_DOC_RELEVANCE
-            else query_req.evaluation_type,
-            persona=persona,
-            retrieval_options=query_req.retrieval_options,
-            prompt_config=prompt_config,
-            llm=llm,
-            fast_llm=fast_llm,
-            pruning_config=document_pruning_config,
-            bypass_acl=bypass_acl,
-            chunks_above=query_req.chunks_above,
-            chunks_below=query_req.chunks_below,
-            full_doc=query_req.full_doc,
-        )
-        if contains_tool
-        else None
+    search_tool = SearchTool(
+        db_session=db_session,
+        user=user,
+        evaluation_type=LLMEvaluationType.SKIP
+        if DISABLE_LLM_DOC_RELEVANCE
+        else query_req.evaluation_type,
+        persona=persona,
+        retrieval_options=query_req.retrieval_options,
+        prompt_config=prompt_config,
+        llm=llm,
+        fast_llm=fast_llm,
+        pruning_config=document_pruning_config,
+        bypass_acl=bypass_acl,
+        chunks_above=query_req.chunks_above,
+        chunks_below=query_req.chunks_below,
+        full_doc=query_req.full_doc,
     )
 
     answer_config = AnswerStyleConfig(
@@ -230,9 +224,8 @@ def stream_answer_objects(
             ForceUseTool(
                 tool_name=search_tool.name,
                 args={"query": rephrased_query},
+                force_use=True,
             )
-            if search_tool
-            else None
         ),
         # for now, don't use tool calling for this flow, as we haven't
         # tested quotes with tool calling too much yet

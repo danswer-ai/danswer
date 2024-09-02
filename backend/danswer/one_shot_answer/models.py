@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import model_validator
@@ -8,9 +10,9 @@ from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import QADocsResponse
 from danswer.configs.constants import MessageType
 from danswer.db.models import StarterMessage
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import RecencyBiasSetting
 from danswer.search.enums import SearchType
-from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import ChunkContext
 from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
@@ -40,13 +42,13 @@ class DocumentSetConfig(BaseModel):
 
 
 class ToolConfig(BaseModel):
-    id: int | None = None
+    id: int
 
 
 class PersonaConfig(BaseModel):
     name: str
     description: str
-    search_type: SearchType = SearchType.HYBRID
+    search_type: SearchType = SearchType.SEMANTIC
     num_chunks: float | None = None
     llm_relevance_filter: bool = False
     llm_filter_extraction: bool = False
@@ -67,11 +69,10 @@ class PersonaConfig(BaseModel):
 
 class DirectQARequest(ChunkContext):
     persona_config: PersonaConfig | None = None
-    persona_id: int | None = None
+    persona_id: int
 
     messages: list[ThreadMessage]
     prompt_id: int | None
-    persona_id: int
     multilingual_query_expansion: list[str] | None = None
     retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
     rerank_settings: RerankingDetails | None = None
