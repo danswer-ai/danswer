@@ -1,4 +1,4 @@
-import { Persona, Prompt, StarterMessage } from "./interfaces";
+import { Assistant, Prompt, StarterMessage } from "./interfaces";
 
 interface PersonaCreationRequest {
   name: string;
@@ -251,7 +251,7 @@ function closerToZeroNegativesFirstComparator(a: number, b: number) {
   return absA > absB ? 1 : -1;
 }
 
-export function personaComparator(a: Persona, b: Persona) {
+export function personaComparator(a: Assistant, b: Assistant) {
   if (a.display_priority === null && b.display_priority === null) {
     return closerToZeroNegativesFirstComparator(a.id, b.id);
   }
