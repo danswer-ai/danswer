@@ -477,10 +477,13 @@ def kombu_message_cleanup_task_helper(ctx: dict, db_session: Session) -> bool:
         bool: Returns True if there are more rows to process, False if not.
     """
 
-    # With the move to redis as celery's broker and backend, kombu tables may not even exist.
     inspector = inspect(db_session.bind)
+    if not inspector:
+        return False
+
+    # With the move to redis as celery's broker and backend, kombu tables may not even exist.
+    # We can fail silently.
     if not inspector.has_table("kombu_message"):
-        print("kombu_message table does not exist.")
         return False
 
     query = text(
