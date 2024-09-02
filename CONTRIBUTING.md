@@ -58,11 +58,22 @@ development purposes but also feel free to just use the containers and update wi
 
 
 ### Local Set Up
-It is recommended to use Python version 3.11
+It is recommended to use Python version 3.11.
 
 If using a lower version, modifications will have to be made to the code.
 If using a higher version, the version of Tensorflow we use may not be available for your platform.
 
+On macOS, ensure Homebrew is already set up. (https://brew.sh/)
+```bash
+brew install python@3.11
+```
+
+Add python 3.11 to your path: add the following line to ~/.zshrc
+```
+export PATH="$(brew --prefix)/opt/python@3.11/libexec/bin:$PATH"
+```
+
+You will need to open a new terminal for the path change above to take effect.
 
 #### Installing Requirements
 Currently, we use pip and recommend creating a virtual environment.
@@ -90,6 +101,18 @@ Install the required python dependencies:
 pip install -r danswer/backend/requirements/default.txt
 pip install -r danswer/backend/requirements/dev.txt
 pip install -r danswer/backend/requirements/model_server.txt
+```
+
+Now ensure the current directory is the top level of the checked out danswer repository.
+Next, install pre-commit hooks to follow the quality checks run on all Pull Requests.
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+macOS will likely require you to remove some quarantine attributes on some of the hooks for them to execute properly.
+```
+sudo xattr -r -d com.apple.quarantine ~/.cache/pre-commit
 ```
 
 Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
