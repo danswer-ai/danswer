@@ -230,11 +230,24 @@ class Answer:
                     self.tools, self.force_use_tool
                 )
             ]
-            yield from self._process_llm_stream(
+
+            for message in self.llm.stream(
                 prompt=prompt,
                 tools=final_tool_definitions if final_tool_definitions else None,
                 tool_choice="required" if self.force_use_tool.force_use else None,
-            )
+            ):
+                if isinstance(message, AIMessageChunk) and (
+                    message.tool_call_chunks or message.tool_calls
+                ):
+                    if tool_call_chunk is None:
+                        tool_call_chunk = message
+                    else:
+                        tool_call_chunk += message  # type: ignore
+                else:
+                    if message.content:
+                        if self.is_cancelled:
+                            return
+                        yield cast(str, message.content)
 
             if not tool_call_chunk:
                 return  # no tool call needed
