@@ -31,7 +31,7 @@ export default async function Page() {
     <div>
       <BackButton />
       <AdminPageTitle
-        title="Create a New Assistant"
+        title="Create a New Plugin"
         icon={<RobotIcon size={32} />}
       />
       {body}

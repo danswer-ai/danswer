@@ -53,7 +53,7 @@ export default async function Page({ params }: { params: { id: string } }) {
           <div className="flex my-auto">
             <LargeBackButton />
             <h1 className="flex text-xl text-strong font-bold my-auto">
-              Edit Assistant
+              Edit Plugin
             </h1>
           </div>
         </div>

@@ -43,6 +43,8 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import MarkdownImage from "./MarkdownImage";
+
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -173,227 +175,230 @@ export const AIMessage = ({
   ) : undefined;
 
   return (
-    <div className={"py-5 px-5 flex -mr-6 w-full"}>
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
-        <div className="ml-8">
-          <div className="flex">
-            <AssistantIcon
-              size="small"
-              assistant={alternativeAssistant || currentPersona}
-            />
+    <>
+      <div className={"py-5 px-5 flex -mr-6 w-full"}>
+        <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
+          <div className="ml-8">
+            <div className="flex">
+              <AssistantIcon
+                size="small"
+                assistant={alternativeAssistant || currentPersona}
+              />
 
-            <div className="font-bold text-emphasis ml-2 my-auto">
-              {alternativeAssistant
-                ? alternativeAssistant.name
-                : personaName || "Spectra"}
+              <div className="font-bold text-emphasis ml-2 my-auto">
+                {alternativeAssistant
+                  ? alternativeAssistant.name
+                  : personaName || "Spectra"}
+              </div>
+
+              {query === undefined &&
+                hasDocs &&
+                handleShowRetrieved !== undefined &&
+                isCurrentlyShowingRetrieved !== undefined &&
+                !retrievalDisabled && (
+                  <div className="flex w-message-xs 2xl:w-message-sm 3xl:w-message-default absolute ml-8">
+                    <div className="ml-auto">
+                      <ShowHideDocsButton
+                        messageId={messageId}
+                        isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
+                        handleShowRetrieved={handleShowRetrieved}
+                      />
+                    </div>
+                  </div>
+                )}
             </div>
 
-            {query === undefined &&
-              hasDocs &&
-              handleShowRetrieved !== undefined &&
-              isCurrentlyShowingRetrieved !== undefined &&
-              !retrievalDisabled && (
-                <div className="flex w-message-xs 2xl:w-message-sm 3xl:w-message-default absolute ml-8">
-                  <div className="ml-auto">
-                    <ShowHideDocsButton
-                      messageId={messageId}
-                      isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
-                      handleShowRetrieved={handleShowRetrieved}
+            <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
+              {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+                danswerSearchToolEnabledForPersona && (
+                  <>
+                    {query !== undefined &&
+                      handleShowRetrieved !== undefined &&
+                      isCurrentlyShowingRetrieved !== undefined &&
+                      !retrievalDisabled && (
+                        <div className="my-1">
+                          <SearchSummary
+                            query={query}
+                            hasDocs={hasDocs || false}
+                            messageId={messageId}
+                            isCurrentlyShowingRetrieved={
+                              isCurrentlyShowingRetrieved
+                            }
+                            handleShowRetrieved={handleShowRetrieved}
+                            handleSearchQueryEdit={handleSearchQueryEdit}
+                          />
+                        </div>
+                      )}
+                    {handleForceSearch &&
+                      content &&
+                      query === undefined &&
+                      !hasDocs &&
+                      !retrievalDisabled && (
+                        <div className="my-1">
+                          <SkippedSearch handleForceSearch={handleForceSearch} />
+                        </div>
+                      )}
+                  </>
+                )}
+
+              {toolCall &&
+                !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
+                  <div className="my-2">
+                    <ToolRunDisplay
+                      toolName={
+                        toolCall.tool_result && content
+                          ? `Used "${toolCall.tool_name}"`
+                          : `Using "${toolCall.tool_name}"`
+                      }
+                      toolLogo={<FiTool size={15} className="my-auto mr-1" />}
+                      isRunning={!toolCall.tool_result || !content}
                     />
                   </div>
-                </div>
-              )}
-          </div>
+                )}
 
-          <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
-            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
-              danswerSearchToolEnabledForPersona && (
-                <>
-                  {query !== undefined &&
-                    handleShowRetrieved !== undefined &&
-                    isCurrentlyShowingRetrieved !== undefined &&
-                    !retrievalDisabled && (
-                      <div className="my-1">
-                        <SearchSummary
-                          query={query}
-                          hasDocs={hasDocs || false}
-                          messageId={messageId}
-                          isCurrentlyShowingRetrieved={
-                            isCurrentlyShowingRetrieved
-                          }
-                          handleShowRetrieved={handleShowRetrieved}
-                          handleSearchQueryEdit={handleSearchQueryEdit}
-                        />
-                      </div>
-                    )}
-                  {handleForceSearch &&
-                    content &&
-                    query === undefined &&
-                    !hasDocs &&
-                    !retrievalDisabled && (
-                      <div className="my-1">
-                        <SkippedSearch handleForceSearch={handleForceSearch} />
-                      </div>
-                    )}
-                </>
-              )}
+              {toolCall &&
+                toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
+                !toolCall.tool_result && (
+                  <div className="my-2">
+                    <ToolRunDisplay
+                      toolName={`Generating images`}
+                      toolLogo={<FiImage size={15} className="my-auto mr-1" />}
+                      isRunning={!toolCall.tool_result}
+                    />
+                  </div>
+                )}
 
-            {toolCall &&
-              !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
+              {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
                 <div className="my-2">
                   <ToolRunDisplay
                     toolName={
-                      toolCall.tool_result && content
-                        ? `Used "${toolCall.tool_name}"`
-                        : `Using "${toolCall.tool_name}"`
+                      toolCall.tool_result
+                        ? `Searched the internet`
+                        : `Searching the internet`
                     }
-                    toolLogo={<FiTool size={15} className="my-auto mr-1" />}
-                    isRunning={!toolCall.tool_result || !content}
-                  />
-                </div>
-              )}
-
-            {toolCall &&
-              toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-              !toolCall.tool_result && (
-                <div className="my-2">
-                  <ToolRunDisplay
-                    toolName={`Generating images`}
-                    toolLogo={<FiImage size={15} className="my-auto mr-1" />}
+                    toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
                     isRunning={!toolCall.tool_result}
                   />
                 </div>
               )}
 
-            {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
-              <div className="my-2">
-                <ToolRunDisplay
-                  toolName={
-                    toolCall.tool_result
-                      ? `Searched the internet`
-                      : `Searching the internet`
-                  }
-                  toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
-                  isRunning={!toolCall.tool_result}
+              {content ? (
+                <>
+                  <FileDisplay files={files || []} />
+
+                  {typeof content === "string" ? (
+                    <ReactMarkdown
+                      key={messageId}
+                      className="prose max-w-full"
+                      components={{
+                        img: ({ node, ...props }) => <MarkdownImage {...props} />,
+                        a: (props) => {
+                          const { node, ...rest } = props;
+                          // for some reason <a> tags cause the onClick to not apply
+                          // and the links are unclickable
+                          // TODO: fix the fact that you have to double click to follow link
+                          // for the first link
+                          return (
+                            <a
+                              key={node?.position?.start?.offset}
+                              onClick={() =>
+                                rest.href
+                                  ? window.open(rest.href, "_blank")
+                                  : undefined
+                              }
+                              className="cursor-pointer text-link hover:text-link-hover"
+                              // href={rest.href}
+                              // target="_blank"
+                              // rel="noopener noreferrer"
+                            >
+                              {rest.children}
+                            </a>
+                          );
+                        },
+                        code: (props) => (
+                          <CodeBlock {...props} content={content as string} />
+                        ),
+                        p: ({ node, ...props }) => (
+                          <div {...props} className="text-default" />
+                        ),
+                      }}
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+                    >
+                      {content}
+                    </ReactMarkdown>
+                  ) : (
+                    content
+                  )}
+                </>
+              ) : isComplete ? null : (
+                defaultLoader
+              )}
+              {citedDocuments && citedDocuments.length > 0 && (
+                <div className="mt-2">
+                  <b className="text-sm text-emphasis">Sources:</b>
+                  <div className="flex flex-wrap gap-2">
+                    {citedDocuments
+                      .filter(([_, document]) => document.semantic_identifier)
+                      .map(([citationKey, document], ind) => {
+                        const display = (
+                          <div className="max-w-350 text-ellipsis text-sm border border-border py-1 px-2 rounded flex">
+                            <div className="mr-1 my-auto">
+                              {document.is_internet ? (
+                                <InternetSearchIcon url={document.link} />
+                              ) : (
+                                <SourceIcon
+                                  sourceType={document.source_type}
+                                  iconSize={16}
+                                />
+                              )}
+                            </div>
+                            [{citationKey}] {document!.semantic_identifier}
+                          </div>
+                        );
+                        if (document.link) {
+                          return (
+                            <a
+                              key={document.document_id}
+                              href={document.link}
+                              target="_blank"
+                              className="cursor-pointer hover:bg-hover"
+                            >
+                              {display}
+                            </a>
+                          );
+                        } else {
+                          return (
+                            <div
+                              key={document.document_id}
+                              className="cursor-default"
+                            >
+                              {display}
+                            </div>
+                          );
+                        }
+                      })}
+                  </div>
+                </div>
+              )}
+            </div>
+            {handleFeedback && (
+              <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1.5">
+                <CopyButton content={content.toString()} />
+                <Hoverable
+                  icon={FiThumbsUp}
+                  onClick={() => handleFeedback("like")}
+                />
+                <Hoverable
+                  icon={FiThumbsDown}
+                  onClick={() => handleFeedback("dislike")}
                 />
               </div>
             )}
-
-            {content ? (
-              <>
-                <FileDisplay files={files || []} />
-
-                {typeof content === "string" ? (
-                  <ReactMarkdown
-                    key={messageId}
-                    className="prose max-w-full"
-                    components={{
-                      a: (props) => {
-                        const { node, ...rest } = props;
-                        // for some reason <a> tags cause the onClick to not apply
-                        // and the links are unclickable
-                        // TODO: fix the fact that you have to double click to follow link
-                        // for the first link
-                        return (
-                          <a
-                            key={node?.position?.start?.offset}
-                            onClick={() =>
-                              rest.href
-                                ? window.open(rest.href, "_blank")
-                                : undefined
-                            }
-                            className="cursor-pointer text-link hover:text-link-hover"
-                            // href={rest.href}
-                            // target="_blank"
-                            // rel="noopener noreferrer"
-                          >
-                            {rest.children}
-                          </a>
-                        );
-                      },
-                      code: (props) => (
-                        <CodeBlock {...props} content={content as string} />
-                      ),
-                      p: ({ node, ...props }) => (
-                        <p {...props} className="text-default" />
-                      ),
-                    }}
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-                  >
-                    {content}
-                  </ReactMarkdown>
-                ) : (
-                  content
-                )}
-              </>
-            ) : isComplete ? null : (
-              defaultLoader
-            )}
-            {citedDocuments && citedDocuments.length > 0 && (
-              <div className="mt-2">
-                <b className="text-sm text-emphasis">Sources:</b>
-                <div className="flex flex-wrap gap-2">
-                  {citedDocuments
-                    .filter(([_, document]) => document.semantic_identifier)
-                    .map(([citationKey, document], ind) => {
-                      const display = (
-                        <div className="max-w-350 text-ellipsis text-sm border border-border py-1 px-2 rounded flex">
-                          <div className="mr-1 my-auto">
-                            {document.is_internet ? (
-                              <InternetSearchIcon url={document.link} />
-                            ) : (
-                              <SourceIcon
-                                sourceType={document.source_type}
-                                iconSize={16}
-                              />
-                            )}
-                          </div>
-                          [{citationKey}] {document!.semantic_identifier}
-                        </div>
-                      );
-                      if (document.link) {
-                        return (
-                          <a
-                            key={document.document_id}
-                            href={document.link}
-                            target="_blank"
-                            className="cursor-pointer hover:bg-hover"
-                          >
-                            {display}
-                          </a>
-                        );
-                      } else {
-                        return (
-                          <div
-                            key={document.document_id}
-                            className="cursor-default"
-                          >
-                            {display}
-                          </div>
-                        );
-                      }
-                    })}
-                </div>
-              </div>
-            )}
           </div>
-          {handleFeedback && (
-            <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1.5">
-              <CopyButton content={content.toString()} />
-              <Hoverable
-                icon={FiThumbsUp}
-                onClick={() => handleFeedback("like")}
-              />
-              <Hoverable
-                icon={FiThumbsDown}
-                onClick={() => handleFeedback("dislike")}
-              />
-            </div>
-          )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
