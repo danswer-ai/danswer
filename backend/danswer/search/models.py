@@ -81,6 +81,7 @@ class SavedSearchSettings(InferenceSettings, IndexingSetting):
             num_rerank=search_settings.num_rerank,
             # Multilingual Expansion
             multilingual_expansion=search_settings.multilingual_expansion,
+            api_url=search_settings.api_url,
         )
 
 

@@ -48,8 +48,11 @@ class ConnectorBase(BaseModel):
 
 
 class ConnectorUpdateRequest(ConnectorBase):
-    is_public: bool | None = None
+    is_public: bool = True
     groups: list[int] = Field(default_factory=list)
+
+    def to_connector_base(self) -> ConnectorBase:
+        return ConnectorBase(**self.model_dump(exclude={"is_public", "groups"}))
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -103,11 +106,6 @@ class CredentialSnapshot(CredentialBase):
     user_id: UUID | None
     time_created: datetime
     time_updated: datetime
-    name: str | None
-    source: DocumentSource
-    credential_json: dict[str, Any]
-    admin_public: bool
-    curator_public: bool
 
     @classmethod
     def from_credential_db_model(cls, credential: Credential) -> "CredentialSnapshot":
@@ -259,6 +257,10 @@ class ConnectorCredentialPairMetadata(BaseModel):
     name: str | None = None
     is_public: bool | None = None
     groups: list[int] = Field(default_factory=list)
+
+
+class CCStatusUpdateRequest(BaseModel):
+    status: ConnectorCredentialPairStatus
 
 
 class ConnectorCredentialPairDescriptor(BaseModel):

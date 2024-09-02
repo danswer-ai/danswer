@@ -18,6 +18,7 @@ class EmbedRequest(BaseModel):
     text_type: EmbedTextType
     manual_query_prefix: str | None = None
     manual_passage_prefix: str | None = None
+    api_url: str | None = None
 
     # This disables the "model_" protected namespace for pydantic
     model_config = {"protected_namespaces": ()}

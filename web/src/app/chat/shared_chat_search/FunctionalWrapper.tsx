@@ -122,6 +122,8 @@ export default function FunctionalWrapper({
   const settings = combinedSettings?.settings;
   const chatBannerPresent =
     combinedSettings?.enterpriseSettings?.custom_header_content;
+  const twoLines =
+    combinedSettings?.enterpriseSettings?.two_lines_for_chat_header;
 
   const [toggledSidebar, setToggledSidebar] = useState(initiallyToggled);
 
@@ -136,7 +138,7 @@ export default function FunctionalWrapper({
       {(!settings ||
         (settings.search_page_enabled && settings.chat_page_enabled)) && (
         <div
-          className={`mobile:hidden z-30 flex fixed ${chatBannerPresent ? "top-20" : "top-4"} left-1/2 transform -translate-x-1/2`}
+          className={`mobile:hidden z-30 flex fixed ${chatBannerPresent ? (twoLines ? "top-20" : "top-14") : "top-4"} left-1/2 transform -translate-x-1/2`}
         >
           <div
             style={{ transition: "width 0.30s ease-out" }}

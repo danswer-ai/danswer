@@ -7,7 +7,6 @@ from datetime import timezone
 from functools import lru_cache
 from typing import Any
 from typing import cast
-from urllib.parse import urlparse
 
 import bs4
 from atlassian import Confluence  # type:ignore
@@ -51,79 +50,6 @@ NO_PERMISSIONS_TO_VIEW_ATTACHMENTS_ERROR_STR = (
 NO_PARENT_OR_NO_PERMISSIONS_ERROR_STR = (
     "No parent or not permitted to view content with id"
 )
-
-
-def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str, str]:
-    """Sample
-    URL w/ page: https://danswer.atlassian.net/wiki/spaces/1234abcd/pages/5678efgh/overview
-    URL w/o page: https://danswer.atlassian.net/wiki/spaces/ASAM/overview
-
-    wiki_base is https://danswer.atlassian.net/wiki
-    space is 1234abcd
-    page_id is 5678efgh
-    """
-    parsed_url = urlparse(wiki_url)
-    wiki_base = (
-        parsed_url.scheme
-        + "://"
-        + parsed_url.netloc
-        + parsed_url.path.split("/spaces")[0]
-    )
-
-    path_parts = parsed_url.path.split("/")
-    space = path_parts[3]
-
-    page_id = path_parts[5] if len(path_parts) > 5 else ""
-    return wiki_base, space, page_id
-
-
-def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, str, str]:
-    """Sample
-    URL w/ page https://danswer.ai/confluence/display/1234abcd/pages/5678efgh/overview
-    URL w/o page https://danswer.ai/confluence/display/1234abcd/overview
-    wiki_base is https://danswer.ai/confluence
-    space is 1234abcd
-    page_id is 5678efgh
-    """
-    # /display/ is always right before the space and at the end of the base print()
-    DISPLAY = "/display/"
-    PAGE = "/pages/"
-
-    parsed_url = urlparse(wiki_url)
-    wiki_base = (
-        parsed_url.scheme
-        + "://"
-        + parsed_url.netloc
-        + parsed_url.path.split(DISPLAY)[0]
-    )
-    space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
-    page_id = ""
-    if (content := parsed_url.path.split(PAGE)) and len(content) > 1:
-        page_id = content[1]
-    return wiki_base, space, page_id
-
-
-def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, str, bool]:
-    is_confluence_cloud = (
-        ".atlassian.net/wiki/spaces/" in wiki_url
-        or ".jira.com/wiki/spaces/" in wiki_url
-    )
-
-    try:
-        if is_confluence_cloud:
-            wiki_base, space, page_id = _extract_confluence_keys_from_cloud_url(
-                wiki_url
-            )
-        else:
-            wiki_base, space, page_id = _extract_confluence_keys_from_datacenter_url(
-                wiki_url
-            )
-    except Exception as e:
-        error_msg = f"Not a valid Confluence Wiki Link, unable to extract wiki base, space, and page id. Exception: {e}"
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
-    return wiki_base, space, page_id, is_confluence_cloud
 
 
 @lru_cache()
@@ -372,7 +298,10 @@ class RecursiveIndexer:
 class ConfluenceConnector(LoadConnector, PollConnector):
     def __init__(
         self,
-        wiki_page_url: str,
+        wiki_base: str,
+        space: str,
+        is_cloud: bool,
+        page_id: str = "",
         index_recursively: bool = True,
         batch_size: int = INDEX_BATCH_SIZE,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
@@ -386,15 +315,15 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self.labels_to_skip = set(labels_to_skip)
         self.recursive_indexer: RecursiveIndexer | None = None
         self.index_recursively = index_recursively
-        (
-            self.wiki_base,
-            self.space,
-            self.page_id,
-            self.is_cloud,
-        ) = extract_confluence_keys_from_url(wiki_page_url)
+
+        # Remove trailing slash from wiki_base if present
+        self.wiki_base = wiki_base.rstrip("/")
+        self.space = space
+        self.page_id = page_id
+
+        self.is_cloud = is_cloud
 
         self.space_level_scan = False
-
         self.confluence_client: Confluence | None = None
 
         if self.page_id is None or self.page_id == "":
@@ -414,7 +343,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             username=username if self.is_cloud else None,
             password=access_token if self.is_cloud else None,
             token=access_token if not self.is_cloud else None,
-            cloud=self.is_cloud,
         )
         return None
 
@@ -866,7 +794,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
-    connector = ConfluenceConnector(os.environ["CONFLUENCE_TEST_SPACE_URL"])
+    connector = ConfluenceConnector(
+        wiki_base=os.environ["CONFLUENCE_TEST_SPACE_URL"],
+        space=os.environ["CONFLUENCE_TEST_SPACE"],
+        is_cloud=os.environ.get("CONFLUENCE_IS_CLOUD", "true").lower() == "true",
+        page_id=os.environ.get("CONFLUENCE_TEST_PAGE_ID", ""),
+        index_recursively=True,
+    )
     connector.load_credentials(
         {
             "confluence_username": os.environ["CONFLUENCE_USER_NAME"],

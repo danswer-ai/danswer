@@ -41,6 +41,7 @@ export default function EmbeddingForm() {
       multipass_indexing: true,
       multilingual_expansion: [],
       disable_rerank_for_streaming: false,
+      api_url: null,
     });
 
   const [rerankingDetails, setRerankingDetails] = useState<RerankingDetails>({
@@ -116,6 +117,7 @@ export default function EmbeddingForm() {
         multilingual_expansion: searchSettings.multilingual_expansion,
         disable_rerank_for_streaming:
           searchSettings.disable_rerank_for_streaming,
+        api_url: null,
       });
       setRerankingDetails({
         rerank_api_key: searchSettings.rerank_api_key,
@@ -415,10 +417,10 @@ export default function EmbeddingForm() {
           <>
             <Card>
               <AdvancedEmbeddingFormPage
-                updateNumRerank={(value: number) =>
+                updateNumRerank={(newNumRerank: number) =>
                   setRerankingDetails({
                     ...rerankingDetails,
-                    num_rerank: value,
+                    num_rerank: newNumRerank,
                   })
                 }
                 numRerank={rerankingDetails.num_rerank}

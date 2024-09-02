@@ -209,7 +209,9 @@ class SearchPipeline:
                 if inference_section is not None:
                     expanded_inference_sections.append(inference_section)
                 else:
-                    logger.warning("Skipped creation of section, no chunks found")
+                    logger.warning(
+                        "Skipped creation of section for full docs, no chunks found"
+                    )
 
             self._retrieved_sections = expanded_inference_sections
             return expanded_inference_sections
@@ -360,10 +362,10 @@ class SearchPipeline:
             try:
                 results = run_functions_in_parallel(function_calls=functions)
                 self._section_relevance = list(results.values())
-            except Exception:
+            except Exception as e:
                 raise ValueError(
-                    "An issue occured during the agentic evaluation proecss."
-                )
+                    "An issue occured during the agentic evaluation process."
+                ) from e
 
         elif self.search_query.evaluation_type == LLMEvaluationType.BASIC:
             if DISABLE_LLM_DOC_RELEVANCE:

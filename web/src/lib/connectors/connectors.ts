@@ -219,19 +219,37 @@ export const connectorConfigs: Record<ValidSources, ConnectionConfiguration> = {
   },
   confluence: {
     description: "Configure Confluence connector",
-    subtext: `Specify any link to a Confluence page below and click "Index" to Index. If the provided link is for an entire space, we will index the entire space. However, if you want to index a specific page, you can do so by entering the page's URL. 
-    
-For example, entering https://danswer.atlassian.net/wiki/spaces/Engineering/overview and clicking the Index button will index the whole Engineering Confluence space, but entering https://danswer.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page will index that page (and optionally the page's children). 
+    subtext: `Specify the base URL of your Confluence instance, the space name, and optionally a specific page ID to index. If no page ID is provided, the entire space will be indexed.
 
-Selecting the "Index Recursively" checkbox will index the single page's children in addition to itself.`,
+For example, entering "https://pablosfsanchez.atlassian.net/wiki" as the Wiki Base URL, "KB" as the Space, and "164331" as the Page ID will index the specific page at https://pablosfsanchez.atlassian.net/wiki/spaces/KB/pages/164331/Page. If you leave the Page ID empty, it will index the entire KB space.
+
+Selecting the "Index Recursively" checkbox will index the specified page and all of its children.`,
     values: [
       {
         type: "text",
-        query: "Enter the wiki page URL:",
-        label: "Wiki Page URL",
-        name: "wiki_page_url",
+        query: "Enter the wiki base URL:",
+        label: "Wiki Base URL",
+        name: "wiki_base",
         optional: false,
-        description: "Enter any link to a Confluence space or Page",
+        description:
+          "The base URL of your Confluence instance (e.g., https://your-domain.atlassian.net/wiki)",
+      },
+      {
+        type: "text",
+        query: "Enter the space:",
+        label: "Space",
+        name: "space",
+        optional: false,
+        description: "The Confluence space name to index (e.g. `KB`)",
+      },
+      {
+        type: "text",
+        query: "Enter the page ID (optional):",
+        label: "Page ID",
+        name: "page_id",
+        optional: true,
+        description:
+          "Specific page ID to index  - leave empty to index the entire space (e.g. `131368`)",
       },
       {
         type: "checkbox",
@@ -240,6 +258,16 @@ Selecting the "Index Recursively" checkbox will index the single page's children
           "Index Recursively (if this is set and the Wiki Page URL leads to a page, we will index the page and all of its children instead of just the page)",
         name: "index_recursively",
         optional: false,
+      },
+      {
+        type: "checkbox",
+        query: "Is this a Confluence Cloud instance?",
+        label: "Is Cloud",
+        name: "is_cloud",
+        optional: false,
+        default: true,
+        description:
+          "Check if this is a Confluence Cloud instance, uncheck for Confluence Server/Data Center",
       },
     ],
   },
@@ -817,7 +845,10 @@ export interface GmailConfig {}
 export interface BookstackConfig {}
 
 export interface ConfluenceConfig {
-  wiki_page_url: string;
+  wiki_base: string;
+  space: string;
+  page_id?: string;
+  is_cloud?: boolean;
   index_recursively?: boolean;
 }
 

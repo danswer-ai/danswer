@@ -1,4 +1,5 @@
 import time
+import traceback
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -8,6 +9,7 @@ import uvicorn
 from fastapi import APIRouter
 from fastapi import FastAPI
 from fastapi import Request
+from fastapi import status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -109,6 +111,7 @@ from danswer.server.token_rate_limits.api import (
 from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
 from danswer.tools.built_in_tools import load_builtin_tools
 from danswer.tools.built_in_tools import refresh_built_in_tools_cache
+from danswer.utils.gpu_utils import gpu_status_request
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -190,6 +193,34 @@ def setup_postgres(db_session: Session) -> None:
     load_builtin_tools(db_session)
     refresh_built_in_tools_cache(db_session)
     auto_add_search_tool_to_personas(db_session)
+
+
+def update_default_multipass_indexing(db_session: Session) -> None:
+    docs_exist = check_docs_exist(db_session)
+    connectors_exist = check_connectors_exist(db_session)
+    logger.debug(f"Docs exist: {docs_exist}, Connectors exist: {connectors_exist}")
+
+    if not docs_exist and not connectors_exist:
+        logger.info(
+            "No existing docs or connectors found. Checking GPU availability for multipass indexing."
+        )
+        gpu_available = gpu_status_request()
+        logger.info(f"GPU availability: {gpu_available}")
+
+        current_settings = get_current_search_settings(db_session)
+
+        logger.notice(f"Updating multipass indexing setting to: {gpu_available}")
+        updated_settings = SavedSearchSettings.from_db_model(current_settings)
+        # Enable multipass indexing if GPU is available or if using a cloud provider
+        updated_settings.multipass_indexing = (
+            gpu_available or current_settings.cloud_provider is not None
+        )
+        update_current_search_settings(db_session, updated_settings)
+
+    else:
+        logger.debug(
+            "Existing docs or connectors found. Skipping multipass indexing update."
+        )
 
 
 def translate_saved_search_settings(db_session: Session) -> None:
@@ -371,13 +402,37 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 ),
             )
 
+        # update multipass indexing setting based on GPU availability
+        update_default_multipass_indexing(db_session)
+
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield
+
+
+def log_http_error(_: Request, exc: Exception) -> JSONResponse:
+    status_code = getattr(exc, "status_code", 500)
+    if status_code >= 400:
+        error_msg = f"{str(exc)}\n"
+        error_msg += "".join(traceback.format_tb(exc.__traceback__))
+        logger.error(error_msg)
+    return JSONResponse(
+        status_code=status_code,
+        content={"detail": str(exc)},
+    )
 
 
 def get_application() -> FastAPI:
     application = FastAPI(
         title="Danswer Backend", version=__version__, lifespan=lifespan
+    )
+
+    # Add the custom exception handler
+    application.add_exception_handler(status.HTTP_400_BAD_REQUEST, log_http_error)
+    application.add_exception_handler(status.HTTP_401_UNAUTHORIZED, log_http_error)
+    application.add_exception_handler(status.HTTP_403_FORBIDDEN, log_http_error)
+    application.add_exception_handler(status.HTTP_404_NOT_FOUND, log_http_error)
+    application.add_exception_handler(
+        status.HTTP_500_INTERNAL_SERVER_ERROR, log_http_error
     )
 
     include_router_with_global_prefix_prepended(application, chat_router)

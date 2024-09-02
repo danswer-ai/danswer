@@ -579,6 +579,14 @@ export const SearchSection = ({
 
   const { popup, setPopup } = usePopup();
 
+  const shouldUseAgenticDisplay =
+    agenticResults &&
+    (searchResponse.documents || []).some(
+      (document) =>
+        searchResponse.additional_relevance &&
+        searchResponse.additional_relevance[document.document_id] !== undefined
+    );
+
   return (
     <>
       <div className="flex relative pr-[8px] h-full text-default">
@@ -756,7 +764,9 @@ export const SearchSection = ({
                           contentEnriched={contentEnriched}
                           comments={comments}
                           sweep={sweep}
-                          agenticResults={agenticResults && !disabledAgentic}
+                          agenticResults={
+                            shouldUseAgenticDisplay && !disabledAgentic
+                          }
                           performSweep={performSweep}
                           searchResponse={searchResponse}
                           isFetching={isFetching}
