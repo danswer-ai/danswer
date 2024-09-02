@@ -58,9 +58,16 @@ export default function UpgradingPage({
 
   const sortedReindexingProgress = useMemo(() => {
     return [...(ongoingReIndexingStatus || [])].sort((a, b) => {
-      return (
+      const statusComparison =
         statusOrder[a.latest_index_attempt?.status || "not_started"] -
-        statusOrder[b.latest_index_attempt?.status || "not_started"]
+        statusOrder[b.latest_index_attempt?.status || "not_started"];
+
+      if (statusComparison !== 0) {
+        return statusComparison;
+      }
+
+      return (
+        (a.latest_index_attempt?.id || 0) - (b.latest_index_attempt?.id || 0)
       );
     });
   }, [ongoingReIndexingStatus]);
