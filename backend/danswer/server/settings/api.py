@@ -36,6 +36,7 @@ from danswer.server.settings.models import UserSettings
 from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import CUSTOM_REFRESH_URL
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -56,38 +57,53 @@ class MeechumResponse(BaseModel):
 def mocked_refresh_token():
     mock_exp = int((datetime.now() + timedelta(hours=1)).timestamp() * 1000)
     data = {
-        "access_token": "fake access token",
-        "refresh_token": "fake refresh token",
+        "access_token": "Mock access token",
+        "refresh_token": "Mock refresh token",
         "session": {"exp": mock_exp},
         "userinfo": {
-            "sub": "fake email",
-            "familyName": "name",
-            "givenName": "name",
-            "fullName": "name",
-            "userId": "id",
-            "email": "pablosfsanchez@gmail.com",
+            "sub": "Mock email",
+            "familyName": "Mock name",
+            "givenName": "Mock name",
+            "fullName": "Mock name",
+            "userId": "Mock User ID",
+            "email": "Mock email",
         },
     }
     return data
 
 
 @basic_router.get("/refresh-token", response_model=MeechumResponse)
-async def refresh_meechum_token(
+async def refresh_access_token(
     user: User = Depends(current_user),
     user_manager: UserManager = Depends(get_user_manager),
 ):
+    if user is None:
+        logger.error("User is not authenticated")
+        raise HTTPException(
+            status_code=401,
+            detail="User is not authenticated",
+        )
     logger.info(f"Attempting to refresh token for user {user.id}")
+
+    if CUSTOM_REFRESH_URL is None:
+        logger.error(
+            "Custom refresh URL is not set and client is attempting to custom refresh"
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Custom refresh URL is not set",
+        )
+
     try:
         async with httpx.AsyncClient() as client:
-            logger.debug(f"Sending request to Meechum auth URL for user {user.id}")
+            logger.debug(f"Sending request to custom refresh URL for user {user.id}")
             response = await client.get(
-                "https://meechum-auth-url.com/meechum",
+                CUSTOM_REFRESH_URL,
                 params={"info": "json", "access_token_refresh_interval": 3600},
                 headers={"Authorization": f"Bearer {user.access_token}"},
             )
             response.raise_for_status()
             data = response.json()
-            # data = mocked_refresh_token()
 
         logger.debug(f"Received response from Meechum auth URL for user {user.id}")
 
@@ -97,6 +113,11 @@ async def refresh_meechum_token(
         new_expiry = datetime.fromtimestamp(
             data["session"]["exp"] / 1000, tz=timezone.utc
         )
+        if user.access_token == new_access_token:
+            logger.info(f"Access token has not been refreshed for user {user.id}")
+            return MeechumResponse(**data)
+
+        logger.debug(f"Access token has been refreshed for user {user.id}")
 
         await user_manager.oauth_callback(
             oauth_name="google",
@@ -107,14 +128,6 @@ async def refresh_meechum_token(
             refresh_token=new_refresh_token,
             associate_by_email=True,
         )
-
-        # oauth_name: str,
-        # access_token: str,
-        # account_id: str,
-        # account_email: str,
-        # expires_at: Optional[int] = None,
-        # refresh_token: Optional[str] = None,
-        # request: Optional[Request] = None,
 
         # Update user in database
         logger.debug(f"Updating tokens in database for user {user.id}")

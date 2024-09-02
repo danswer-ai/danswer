@@ -7,7 +7,7 @@ import {
 } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
-  MEECHUM_AUTH,
+  CUSTOM_REFRESH_URL,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
 } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
@@ -54,7 +54,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  if (MEECHUM_AUTH) {
+  if (CUSTOM_REFRESH_URL) {
     await fetchSS("/settings/refresh-token");
   }
 
