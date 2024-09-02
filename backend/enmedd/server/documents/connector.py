@@ -270,7 +270,7 @@ def upsert_service_account_credential(
 
     # first delete all existing service account credentials
     delete_google_drive_service_account_credentials(user, db_session)
-    # `user=None` since this credential is not a personal credential
+    # `user=None` since this credential is not a assistantl credential
     credential = create_credential(
         credential_data=credential_base, user=user, db_session=db_session
     )
@@ -295,7 +295,7 @@ def upsert_gmail_service_account_credential(
 
     # first delete all existing service account credentials
     delete_gmail_service_account_credentials(user, db_session)
-    # `user=None` since this credential is not a personal credential
+    # `user=None` since this credential is not a assistantl credential
     credential = create_credential(
         credential_data=credential_base, user=user, db_session=db_session
     )

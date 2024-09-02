@@ -277,17 +277,17 @@ export const GroupDisplay = ({
 
       <Divider />
 
-      <h2 className="text-xl font-bold mt-8 mb-2">Personas</h2>
+      <h2 className="text-xl font-bold mt-8 mb-2">Assistants</h2>
 
       <div>
         {userGroup.document_sets.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {userGroup.personas.map((persona) => {
+            {userGroup.assistants.map((assistant) => {
               return (
-                <Bubble isSelected key={persona.id}>
+                <Bubble isSelected key={assistant.id}>
                   <div className="flex">
                     <RobotIcon />
-                    <Text className="ml-1">{persona.name}</Text>
+                    <Text className="ml-1">{assistant.name}</Text>
                   </div>
                 </Bubble>
               );
@@ -295,7 +295,7 @@ export const GroupDisplay = ({
           </div>
         ) : (
           <>
-            <Text>No Personas in this group...</Text>
+            <Text>No Assistants in this group...</Text>
           </>
         )}
       </div>

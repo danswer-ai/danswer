@@ -17,132 +17,110 @@ import { Form, Formik } from "formik";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import Dropzone, { Accept } from "react-dropzone";
 
 type GoogleDriveCredentialJsonTypes = "authorized_user" | "service_account";
 
 const DriveJsonUpload = () => {
-  const { toast } = useToast();
   const { mutate } = useSWRConfig();
-  const [credentialJsonStr, setCredentialJsonStr] = useState<
-    string | undefined
-  >();
+  const { toast } = useToast();
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleFileUpload = async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    const reader = new FileReader();
+
+    reader.onload = async (loadEvent) => {
+      if (!loadEvent?.target?.result) {
+        return;
+      }
+      const credentialJsonStr = loadEvent.target.result as string;
+
+      try {
+        const appCredentialJson = JSON.parse(credentialJsonStr);
+        let credentialFileType: GoogleDriveCredentialJsonTypes;
+
+        if (appCredentialJson.web) {
+          credentialFileType = "authorized_user";
+        } else if (appCredentialJson.type === "service_account") {
+          credentialFileType = "service_account";
+        } else {
+          throw new Error(
+            "Unknown credential type, expected 'OAuth Web application'"
+          );
+        }
+
+        const endpoint =
+          credentialFileType === "authorized_user"
+            ? "/api/manage/admin/connector/gmail/app-credential"
+            : "/api/manage/admin/connector/gmail/service-account-key";
+
+        const response = await fetch(endpoint, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: credentialJsonStr,
+        });
+
+        if (response.ok) {
+          toast({
+            title: "Success",
+            description: "Successfully uploaded app credentials",
+            variant: "success",
+          });
+        } else {
+          const errorMsg = await response.text();
+          toast({
+            title: "Error",
+            description: `Failed to upload app credentials - ${errorMsg}`,
+            variant: "destructive",
+          });
+        }
+        mutate(endpoint);
+      } catch (e) {
+        toast({
+          title: "Error",
+          description: `Invalid file provided - ${e}`,
+          variant: "destructive",
+        });
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
+  const accept: Accept = {
+    "application/json": [".json"],
+  };
 
   return (
-    <>
-      <input
-        className={
-          "mr-3 text-sm text-gray-900 border border-gray-300 rounded-regular " +
-          "cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none " +
-          "dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-        }
-        type="file"
-        accept=".json"
-        onChange={(event) => {
-          if (!event.target.files) {
-            return;
-          }
-          const file = event.target.files[0];
-          const reader = new FileReader();
-
-          reader.onload = function (loadEvent) {
-            if (!loadEvent?.target?.result) {
-              return;
-            }
-            const fileContents = loadEvent.target.result;
-            setCredentialJsonStr(fileContents as string);
-          };
-
-          reader.readAsText(file);
-        }}
-      />
-
-      <Button
-        disabled={!credentialJsonStr}
-        onClick={async () => {
-          // check if the JSON is a app credential or a service account credential
-          let credentialFileType: GoogleDriveCredentialJsonTypes;
-          try {
-            const appCredentialJson = JSON.parse(credentialJsonStr!);
-            if (appCredentialJson.web) {
-              credentialFileType = "authorized_user";
-            } else if (appCredentialJson.type === "service_account") {
-              credentialFileType = "service_account";
-            } else {
-              throw new Error(
-                "Unknown credential type, expected one of 'OAuth Web application' or 'Service Account'"
-              );
-            }
-          } catch (e) {
-            toast({
-              title: "Error",
-              description: `Invalid file provided - ${e}`,
-              variant: "destructive",
-            });
-            return;
-          }
-
-          if (credentialFileType === "authorized_user") {
-            const response = await fetch(
-              "/api/manage/admin/connector/google-drive/app-credential",
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: credentialJsonStr,
-              }
-            );
-            if (response.ok) {
-              toast({
-                title: "Success",
-                description: "Successfully uploaded app credentials",
-                variant: "success",
-              });
-            } else {
-              const errorMsg = await response.text();
-              toast({
-                title: "Error",
-                description: `Failed to upload app credentials - ${errorMsg}`,
-                variant: "destructive",
-              });
-            }
-            mutate("/api/manage/admin/connector/google-drive/app-credential");
-          }
-
-          if (credentialFileType === "service_account") {
-            const response = await fetch(
-              "/api/manage/admin/connector/google-drive/service-account-key",
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: credentialJsonStr,
-              }
-            );
-            if (response.ok) {
-              toast({
-                title: "Success",
-                description: "Successfully uploaded app credentials",
-                variant: "success",
-              });
-            } else {
-              const errorMsg = await response.text();
-              toast({
-                title: "Error",
-                description: `Failed to upload app credentials - ${errorMsg}`,
-                variant: "destructive",
-              });
-            }
-            mutate(
-              "/api/manage/admin/connector/google-drive/service-account-key"
-            );
-          }
-        }}
-      >
-        Upload
-      </Button>
-    </>
+    <Dropzone
+      onDrop={(acceptedFiles) => {
+        handleFileUpload(acceptedFiles);
+        setDragActive(false);
+      }}
+      onDragLeave={() => setDragActive(false)}
+      onDragEnter={() => setDragActive(true)}
+      accept={accept}
+    >
+      {({ getRootProps, getInputProps }) => (
+        <section>
+          <div
+            {...getRootProps()}
+            className={`bg-background p-4 flex items-center gap-4 border w-fit rounded-regular shadow-sm ${
+              dragActive ? "border-accent" : ""
+            }`}
+          >
+            <input {...getInputProps()} />
+            <Button>Upload</Button>
+            <b className="">
+              Drag and drop a JSON file here, or click to select a file
+            </b>
+          </div>
+        </section>
+      )}
+    </Dropzone>
   );
 };
 
@@ -331,11 +309,11 @@ export const DriveOAuthSection = ({
         <p className="text-sm mb-2">
           When using a Google Drive Service Account, you can either have enMedD
           AI act as the service account itself OR you can specify an account for
-          the service account to impersonate.
+          the service account to imassistantte.
           <br />
           <br />
           If you want to use the service account itself, leave the{" "}
-          <b>&apos;User email to impersonate&apos;</b> field blank when
+          <b>&apos;User email to imassistantte&apos;</b> field blank when
           submitting. If you do choose this option, make sure you have shared
           the documents you want to index with the service account.
         </p>
@@ -388,7 +366,7 @@ export const DriveOAuthSection = ({
                 <Form>
                   <TextFormField
                     name="google_drive_delegated_user"
-                    label="[Optional] User email to impersonate:"
+                    label="[Optional] User email to imassistantte:"
                     subtext="If left blank, enMedD AI will use the service account itself."
                   />
                   <div className="flex">

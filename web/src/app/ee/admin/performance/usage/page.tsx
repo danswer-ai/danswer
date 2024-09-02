@@ -21,15 +21,13 @@ export default function AnalyticsPage() {
         icon={<FiActivity size={32} />}
       />
 
-      <Card className="mb-12">
-        <CardHeader className="">
+      <div className="mb-12 space-y-8">
+        <div>
           <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
-        </CardHeader>
-        <CardContent>
-          <QueryPerformanceChart timeRange={timeRange} />
-          <FeedbackChart timeRange={timeRange} />
-        </CardContent>
-      </Card>
+        </div>
+        <QueryPerformanceChart timeRange={timeRange} />
+        <FeedbackChart timeRange={timeRange} />
+      </div>
       <UsageReports />
     </main>
   );

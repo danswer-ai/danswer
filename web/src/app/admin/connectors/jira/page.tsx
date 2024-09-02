@@ -156,7 +156,7 @@ const Main = () => {
             >
               here
             </a>{" "}
-            to generate an Access Token (for cloud) or Personal Access Token
+            to generate an Access Token (for cloud) or Assistantl Access Token
             (for server). Submit only one form.
           </Text>
           <Title className="mt-6 mb-2 ml-auto mr-auto">Cloud</Title>
@@ -201,14 +201,14 @@ const Main = () => {
                   <>
                     <TextFormField
                       name="jira_api_token"
-                      label="Personal Access Token:"
+                      label="Assistantl Access Token:"
                       type="password"
                     />
                   </>
                 }
                 validationSchema={Yup.object().shape({
                   jira_api_token: Yup.string().required(
-                    "Please enter your Jira personal access token"
+                    "Please enter your Jira assistantl access token"
                   ),
                 })}
                 initialValues={{

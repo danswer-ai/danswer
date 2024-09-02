@@ -168,7 +168,7 @@ export const ChatSidebar = ({
               "/chat" +
               (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
               currentChatSession
-                ? `?assistantId=${currentChatSession.persona_id}`
+                ? `?assistantId=${currentChatSession.assistant_id}`
                 : "")
             }
             className=" w-full"

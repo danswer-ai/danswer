@@ -40,7 +40,7 @@ export function IndexAttemptStatus({
     );
   } else if (status === "in_progress") {
     badge = (
-      <Badge variant="warning">
+      <Badge variant="secondary">
         <Clock size={14} className="mr-0.5" /> In Progress
       </Badge>
     );
@@ -76,7 +76,7 @@ export function CCPairStatus({
     );
   } else if (disabled) {
     badge = (
-      <Badge variant="warning">
+      <Badge variant="secondary">
         <CirclePause size={14} className="mr-0.5" /> Paused
       </Badge>
     );

@@ -80,7 +80,7 @@ const DocumentDisplay = ({
             }
           }}
           variant="outline"
-          className="py-1.5 px-3 gap-1.5"
+          className="py-1.5 px-3 gap-1.5 cursor-pointer hover:opacity-80"
         >
           <div className="my-auto">
             {document.hidden ? (

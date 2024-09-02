@@ -141,7 +141,7 @@ export const DocumentSetCreationForm = ({
                           }
                         }}
                         variant={isSelected ? "default" : "outline"}
-                        className={`cursor-pointer py-1.5  ${
+                        className={`cursor-pointer py-1.5 hover:opacity-80 ${
                           isSelected ? "text-white" : ""
                         }`}
                       >

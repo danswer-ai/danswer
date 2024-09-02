@@ -1,18 +1,18 @@
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import { CustomDropdown, DefaultDropdownElement } from "../Dropdown";
 import { FiChevronDown } from "react-icons/fi";
 
-export function PersonaSelector({
-  personas,
-  selectedPersonaId,
-  onPersonaChange,
+export function AssistantSelector({
+  assistants,
+  selectedAssistantId,
+  onAssistantChange,
 }: {
-  personas: Persona[];
-  selectedPersonaId: number;
-  onPersonaChange: (persona: Persona) => void;
+  assistants: Assistant[];
+  selectedAssistantId: number;
+  onAssistantChange: (assistant: Assistant) => void;
 }) {
-  const currentlySelectedPersona = personas.find(
-    (persona) => persona.id === selectedPersonaId
+  const currentlySelectedAssistant = assistants.find(
+    (assistant) => assistant.id === selectedAssistantId
   );
 
   return (
@@ -31,13 +31,13 @@ export function PersonaSelector({
             overflow-y-auto 
             overscroll-contain`}
         >
-          {personas.map((persona, ind) => {
-            const isSelected = persona.id === selectedPersonaId;
+          {assistants.map((assistant, ind) => {
+            const isSelected = assistant.id === selectedAssistantId;
             return (
               <DefaultDropdownElement
-                key={persona.id}
-                name={persona.name}
-                onSelect={() => onPersonaChange(persona)}
+                key={assistant.id}
+                name={assistant.name}
+                onSelect={() => onAssistantChange(assistant)}
                 isSelected={isSelected}
               />
             );
@@ -46,7 +46,7 @@ export function PersonaSelector({
       }
     >
       <div className="select-none text-sm font-bold flex  px-2 py-1.5 cursor-pointer w-fit hover:bg-hover rounded">
-        {currentlySelectedPersona?.name || "Default"}
+        {currentlySelectedAssistant?.name || "Default"}
         <FiChevronDown className="my-auto ml-2" />
       </div>
     </CustomDropdown>

@@ -356,7 +356,7 @@ interface SelectorFormFieldProps {
     </div>
   );
 } */
-export function SelectorFormField({
+/* export function SelectorFormField({
   name,
   label,
   options,
@@ -429,8 +429,8 @@ export function SelectorFormField({
       />
     </div>
   );
-}
-/* export function SelectorFormField({
+} */
+export function SelectorFormField({
   name,
   label,
   options,
@@ -467,4 +467,3 @@ export function SelectorFormField({
     </div>
   );
 }
- */

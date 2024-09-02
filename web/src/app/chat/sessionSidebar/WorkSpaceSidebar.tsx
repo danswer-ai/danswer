@@ -9,6 +9,8 @@ import { CustomTooltip } from "@/components/CustomTooltip";
 import { Logo } from "@/components/Logo";
 import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { fetchSettingsSS } from "@/components/settings/lib";
+import Link from "next/link";
 
 interface WorkSpaceSidebarProps {
   openSidebar?: boolean;
@@ -19,11 +21,13 @@ export const WorkSpaceSidebar = ({
   openSidebar,
   user,
 }: WorkSpaceSidebarProps) => {
-  /*   const settings = useContext(SettingsContext);
-
-  if (!settings?.enterpriseSettings!.application_name) {
+  const combinedSettings = useContext(SettingsContext);
+  if (!combinedSettings) {
     return null;
-  } */
+  }
+  const settings = combinedSettings.settings;
+  const enterpriseSettings = combinedSettings.enterpriseSettings;
+  const defaultPage = settings.default_page;
 
   return (
     <div className={`bg-background h-full p-4 border-r border-border`}>
@@ -44,22 +48,21 @@ export const WorkSpaceSidebar = ({
           <div className="flex flex-col items-center gap-4 pt-4">
             <CustomTooltip
               trigger={
-                <div className="flex items-center">
+                <Link href={`/${defaultPage}`} className="flex items-center">
                   <Logo />
-                </div>
+                </Link>
               }
               side="right"
               delayDuration={0}
             >
-              {/*   {settings!.enterpriseSettings!.application_name
-                ? settings!.enterpriseSettings!.application_name
-                : ""} */}
-              Jollibee
+              {enterpriseSettings!.application_name
+                ? enterpriseSettings!.application_name
+                : ""}
             </CustomTooltip>
           </div>
         </div>
         <div className="flex flex-col items-center gap-4">
-          <UserSettingsButton user={user} />
+          <UserSettingsButton user={user} defaultPage={defaultPage} />
         </div>
       </div>
     </div>

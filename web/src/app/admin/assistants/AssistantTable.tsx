@@ -1,11 +1,11 @@
 "use client";
 
-import { Persona } from "./interfaces";
+import { Assistant } from "./interfaces";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
-import { deletePersona, personaComparator } from "./lib";
+import { deleteAssistant, assistantComparator } from "./lib";
 import { TrashIcon } from "@/components/icons/icons";
 import { Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,48 +14,50 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-function PersonaTypeDisplay({ persona }: { persona: Persona }) {
-  if (persona.default_persona) {
+function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
+  if (assistant.default_assistant) {
     return <p>Built-In</p>;
   }
 
-  if (persona.is_public) {
+  if (assistant.is_public) {
     return <p>Global</p>;
   }
 
-  return <p>Personal {persona.owner && <>({persona.owner.email})</>}</p>;
+  return <p>Assistantl {assistant.owner && <>({assistant.owner.email})</>}</p>;
 }
 
-export function PersonasTable({ personas }: { personas: Persona[] }) {
+export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const availablePersonaIds = new Set(
-    personas.map((persona) => persona.id.toString())
+  const availableAssistantIds = new Set(
+    assistants.map((assistant) => assistant.id.toString())
   );
-  const sortedPersonas = [...personas];
-  sortedPersonas.sort(personaComparator);
+  const sortedAssistants = [...assistants];
+  sortedAssistants.sort(assistantComparator);
 
-  const [finalPersonas, setFinalPersonas] = useState<string[]>(
-    sortedPersonas.map((persona) => persona.id.toString())
+  const [finalAssistants, setFinalAssistants] = useState<string[]>(
+    sortedAssistants.map((assistant) => assistant.id.toString())
   );
-  const finalPersonaValues = finalPersonas
-    .filter((id) => availablePersonaIds.has(id))
+  const finalAssistantValues = finalAssistants
+    .filter((id) => availableAssistantIds.has(id))
     .map((id) => {
-      return sortedPersonas.find(
-        (persona) => persona.id.toString() === id
-      ) as Persona;
+      return sortedAssistants.find(
+        (assistant) => assistant.id.toString() === id
+      ) as Assistant;
     });
 
-  const updatePersonaOrder = async (orderedPersonaIds: UniqueIdentifier[]) => {
-    setFinalPersonas(orderedPersonaIds.map((id) => id.toString()));
+  const updateAssistantOrder = async (
+    orderedAssistantIds: UniqueIdentifier[]
+  ) => {
+    setFinalAssistants(orderedAssistantIds.map((id) => id.toString()));
 
     const displayPriorityMap = new Map<UniqueIdentifier, number>();
-    orderedPersonaIds.forEach((personaId, ind) => {
-      displayPriorityMap.set(personaId, ind);
+    orderedAssistantIds.forEach((assistantId, ind) => {
+      displayPriorityMap.set(assistantId, ind);
     });
 
-    const response = await fetch("/api/admin/persona/display-priority", {
+    const response = await fetch("/api/admin/assistant/display-priority", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -67,7 +69,7 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
     if (!response.ok) {
       toast({
         title: "Error",
-        description: `Failed to update persona order - ${await response.text()}`,
+        description: `Failed to update assistant order - ${await response.text()}`,
         variant: "destructive",
       });
       router.refresh();
@@ -86,46 +88,51 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
         <CardContent className="p-0">
           <DraggableTable
             headers={["Name", "Description", "Type", "Is Visible", "Delete"]}
-            rows={finalPersonaValues.map((persona) => {
+            rows={finalAssistantValues.map((assistant) => {
               return {
-                id: persona.id.toString(),
+                id: assistant.id.toString(),
                 cells: [
                   <div key="name" className="flex gap-2 items-center">
-                    {!persona.default_persona && (
+                    {!assistant.default_assistant && (
                       <Button variant="ghost" size="icon">
                         <Pencil
                           size={16}
                           onClick={() =>
                             router.push(
-                              `/admin/assistants/${persona.id}?u=${Date.now()}`
+                              `/admin/assistants/${
+                                assistant.id
+                              }?u=${Date.now()}`
                             )
                           }
                         />
                       </Button>
                     )}
                     <p className="text font-medium whitespace-normal break-none">
-                      {persona.name}
+                      {assistant.name}
                     </p>
                   </div>,
                   <p
                     key="description"
                     className="whitespace-normal break-all max-w-2xl"
                   >
-                    {persona.description}
+                    {assistant.description}
                   </p>,
-                  <PersonaTypeDisplay key={persona.id} persona={persona} />,
+                  <AssistantTypeDisplay
+                    key={assistant.id}
+                    assistant={assistant}
+                  />,
                   <Badge
                     key="is_visible"
                     onClick={async () => {
                       const response = await fetch(
-                        `/api/admin/persona/${persona.id}/visible`,
+                        `/api/admin/assistant/${assistant.id}/visible`,
                         {
                           method: "PATCH",
                           headers: {
                             "Content-Type": "application/json",
                           },
                           body: JSON.stringify({
-                            is_visible: !persona.is_visible,
+                            is_visible: !assistant.is_visible,
                           }),
                         }
                       );
@@ -134,35 +141,37 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                       } else {
                         toast({
                           title: "Error",
-                          description: `Failed to update persona - ${await response.text()}`,
+                          description: `Failed to update assistant - ${await response.text()}`,
                           variant: "destructive",
                         });
                       }
                     }}
                     variant="outline"
-                    className="py-1.5 px-3 w-[84px]"
+                    className="py-1.5 px-3 w-[84px] cursor-pointer hover:opacity-80"
                   >
-                    {!persona.is_visible ? (
+                    {!assistant.is_visible ? (
                       <div className="text-error">Hidden</div>
                     ) : (
                       "Visible"
                     )}
 
-                    <Checkbox checked={persona.is_visible} />
+                    <Checkbox checked={assistant.is_visible} />
                   </Badge>,
                   <div key="edit" className="flex">
                     <div className="mx-auto my-auto">
-                      {!persona.default_persona ? (
+                      {!assistant.default_assistant ? (
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={async () => {
-                            const response = await deletePersona(persona.id);
+                            const response = await deleteAssistant(
+                              assistant.id
+                            );
                             if (response.ok) {
                               router.refresh();
                             } else {
                               alert(
-                                `Failed to delete persona - ${await response.text()}`
+                                `Failed to delete assistant - ${await response.text()}`
                               );
                             }
                           }}
@@ -180,7 +189,7 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                 ],
               };
             })}
-            setRows={updatePersonaOrder}
+            setRows={updateAssistantOrder}
           />
         </CardContent>
       </Card>

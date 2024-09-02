@@ -11,7 +11,6 @@ import {
   useUsers,
 } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Divider } from "@tremor/react";
 import { Button } from "@/components/ui/button";
 
 const Main = () => {

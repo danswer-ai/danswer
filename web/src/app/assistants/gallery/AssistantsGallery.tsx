@@ -1,6 +1,6 @@
 "use client";
 
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { User } from "@/lib/types";
 import { Button } from "@tremor/react";
@@ -21,10 +21,13 @@ export function AssistantsGallery({
   assistants,
   user,
 }: {
-  assistants: Persona[];
+  assistants: Assistant[];
   user: User | null;
 }) {
-  function filterAssistants(assistants: Persona[], query: string): Persona[] {
+  function filterAssistants(
+    assistants: Assistant[],
+    query: string
+  ): Assistant[] {
     return assistants.filter(
       (assistant) =>
         assistant.name.toLowerCase().includes(query.toLowerCase()) ||

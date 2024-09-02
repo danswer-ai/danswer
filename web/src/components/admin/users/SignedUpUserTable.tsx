@@ -162,14 +162,12 @@ const SignedUpUserTable = ({
                   <TableRow key={user.id}>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {user.role === "admin" ? "Admin" : "User"}
-                      </Badge>
+                      <span>{user.role === "admin" ? "Admin" : "User"}</span>
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant={
-                          user.status === "live" ? "default" : "secondary"
+                          user.status === "live" ? "success" : "secondary"
                         }
                       >
                         {user.status === "live" ? "Active" : "Inactive"}

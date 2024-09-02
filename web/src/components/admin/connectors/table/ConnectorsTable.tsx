@@ -35,14 +35,23 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
   let shouldDisplayDisabledToggle = !hasCredentialsIssue;
   let statusDisplay;
   let statusClass = "";
+  let badgeVariant:
+    | "default"
+    | "secondary"
+    | "warning"
+    | "destructive"
+    | "outline"
+    | "success" = "default";
+
   switch (connectorIndexingStatus.last_status) {
     case "failed":
-      statusDisplay = <div className="text-error">Failed</div>;
+      statusDisplay = <div>Failed</div>;
       statusClass = "text-error";
+      badgeVariant = "destructive";
       break;
     default:
-      statusDisplay = <div className="text-success flex">Enabled!</div>;
-      statusClass = "text-success";
+      statusDisplay = <div className="flex">Enabled!</div>;
+      badgeVariant = "success";
   }
 
   if (connector.disabled) {
@@ -50,18 +59,21 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
     if (!deletionAttempt || deletionAttempt.status === "FAILURE") {
       statusDisplay = <div className="text-black">Paused</div>;
       statusClass = "text-black";
+      badgeVariant = "secondary";
     } else {
-      statusDisplay = <div className="text-error">Deleting...</div>;
+      statusDisplay = <div>Deleting...</div>;
       shouldDisplayDisabledToggle = false;
+      badgeVariant = "destructive";
     }
   }
 
   return (
     <CustomTooltip
       trigger={
-        <div
+        <Badge
           onClick={() => disableConnector(connector, onUpdate)}
           className="flex items-center gap-1"
+          variant={badgeVariant}
         >
           {statusDisplay}
           {connector.disabled ? (
@@ -75,7 +87,7 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
               size={14}
             />
           )}
-        </div>
+        </Badge>
       }
     >
       {connector.disabled ? "Enable!" : "Pause!"}

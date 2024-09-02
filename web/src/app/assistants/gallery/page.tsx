@@ -27,7 +27,7 @@ export default async function GalleryPage({
     chatSessions,
     availableSources,
     documentSets,
-    personas,
+    assistants,
     tags,
     llmProviders,
     folders,
@@ -47,7 +47,7 @@ export default async function GalleryPage({
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availablePersonas: personas,
+          availableAssistants: assistants,
           availableTags: tags,
           llmProviders,
           folders,
@@ -74,7 +74,7 @@ export default async function GalleryPage({
             </div>
 
             <div className="mt-4">
-              <AssistantsGallery assistants={personas} user={user} />
+              <AssistantsGallery assistants={assistants} user={user} />
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 
 export interface UserPreferences {
   chosen_assistants: number[] | null;
@@ -427,7 +427,7 @@ export interface UserGroup {
   users: User[];
   cc_pairs: CCPairDescriptor<any, any>[];
   document_sets: DocumentSet[];
-  personas: Persona[];
+  assistants: Assistant[];
   is_up_to_date: boolean;
   is_up_for_deletion: boolean;
 }

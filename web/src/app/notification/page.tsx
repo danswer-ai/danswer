@@ -17,7 +17,7 @@ export default async function ProfilePage() {
     getCurrentUserSS(),
     fetchSS("/manage/indexing-status"),
     fetchSS("/manage/document-set"),
-    fetchSS("/persona"),
+    fetchSS("/assistant"),
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
   ];
