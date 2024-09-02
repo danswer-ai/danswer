@@ -209,7 +209,9 @@ class SearchPipeline:
                 if inference_section is not None:
                     expanded_inference_sections.append(inference_section)
                 else:
-                    logger.warning("Skipped creation of section, no chunks found")
+                    logger.warning(
+                        "Skipped creation of section for full docs, no chunks found"
+                    )
 
             self._retrieved_sections = expanded_inference_sections
             return expanded_inference_sections
