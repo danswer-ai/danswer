@@ -228,32 +228,11 @@ class Answer:
                     self.tools, self.force_use_tool
                 )
             ]
-            for message in self.llm.stream(
+            yield from self._process_llm_stream(
                 prompt=prompt,
                 tools=final_tool_definitions if final_tool_definitions else None,
                 tool_choice="required" if self.force_use_tool.force_use else None,
-            ):
-                if isinstance(message, AIMessageChunk) and (
-                    message.tool_call_chunks or message.tool_calls
-                ):
-                    if tool_call_chunk is None:
-                        tool_call_chunk = message
-                    else:
-                        tool_call_chunk += message  # type: ignore
-                else:
-                    if message.content:
-                        if self.is_cancelled:
-                            return StreamStopInfo(
-                                stop_reason=StreamStopReason.CANCELLED
-                            )
-                        yield cast(str, message.content)
-                    if (
-                        message.additional_kwargs.get("usage_metadata", {}).get("stop")
-                        == "length"
-                    ):
-                        yield StreamStopInfo(
-                            stop_reason=StreamStopReason.CONTEXT_LENGTH
-                        )
+            )
 
             if not tool_call_chunk:
                 return  # no tool call needed
@@ -318,16 +297,16 @@ class Answer:
 
             return
 
-    def _process_llm_stream(self, prompt, tools):
+    # This method processes the LLM stream and yields the content or stop information
+    def _process_llm_stream(
+        self, prompt, tools: list[str] | None = None, tool_choice: str | None = None
+    ):
         for message in self.llm.stream(
-            prompt=prompt,
-            tools=tools,
+            prompt=prompt, tools=tools, tool_choice=tool_choice
         ):
-            print(message)
             if isinstance(message, AIMessageChunk):
                 if message.content:
                     if self.is_cancelled:
-                        print("CANCELLD")
                         return StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
                     yield cast(str, message.content)
 
@@ -418,6 +397,7 @@ class Answer:
                 prompt=prompt,
                 tools=None,
             )
+            return
 
         tool, tool_args = chosen_tool_and_args
         tool_runner = ToolRunner(tool, tool_args)
@@ -487,7 +467,6 @@ class Answer:
             and not self.skip_explicit_tool_calling
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
-        print(output_generator)
 
         def _process_stream(
             stream: Iterator[ToolCallKickoff | ToolResponse | str | StreamStopInfo],

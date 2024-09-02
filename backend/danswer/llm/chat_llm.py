@@ -301,7 +301,6 @@ class DefaultMultiLLM(LLM):
                 # streaming choice
                 stream=stream,
                 # model params
-                max_tokens=3,
                 temperature=self._temperature,
                 timeout=self._timeout,
                 # For now, we don't support parallel tool calls
@@ -337,7 +336,6 @@ class DefaultMultiLLM(LLM):
         response = cast(
             litellm.ModelResponse, self._completion(prompt, tools, tool_choice, False)
         )
-        print("getting a rseponse on this side")
         choice = response.choices[0]
         if hasattr(choice, "message"):
             return _convert_litellm_message_to_langchain_message(choice.message)
@@ -364,25 +362,17 @@ class DefaultMultiLLM(LLM):
         )
         try:
             for part in response:
-                print(part)
-                if len(part["choices"]) == 0:
+                if not part["choices"]:
                     continue
 
-                choices = part["choices"][0]
-
-                finish_reason = choices["finish_reason"]
-                delta = choices["delta"]
-
+                choice = part["choices"][0]
                 message_chunk = _convert_delta_to_message_chunk(
-                    delta,
+                    choice["delta"],
                     output,
-                    stop_reason=finish_reason,
+                    stop_reason=choice["finish_reason"],
                 )
 
-                if output is None:
-                    output = message_chunk
-                else:
-                    output += message_chunk
+                output = message_chunk if output is None else output + message_chunk
 
                 yield message_chunk
 
