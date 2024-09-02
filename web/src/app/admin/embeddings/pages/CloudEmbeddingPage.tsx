@@ -308,9 +308,12 @@ export function CloudModelCard({
         </a>
       </div>
       <p className="text-sm text-gray-600 mb-2">{model.description}</p>
-      <div className="text-xs text-gray-500 mb-2">
-        ${model.pricePerMillion}/M tokens
-      </div>
+      {model?.provider_type?.toLowerCase() !=
+        EmbeddingProvider.LITELLM.toLowerCase() && (
+        <div className="text-xs text-gray-500 mb-2">
+          ${model.pricePerMillion}/M tokens
+        </div>
+      )}
       <div className="mt-3">
         <button
           className={`w-full p-2 rounded-lg text-sm ${
