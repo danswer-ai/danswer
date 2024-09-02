@@ -12,8 +12,8 @@ from sqlalchemy.sql import table, column
 
 revision = "a3795dce87be"
 down_revision = "1f60f60c3401"
-branch_labels = None
-depends_on = None
+branch_labels: None = None
+depends_on: None = None
 
 
 def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, str, bool]:

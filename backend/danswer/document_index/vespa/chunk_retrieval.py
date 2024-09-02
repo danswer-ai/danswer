@@ -30,6 +30,7 @@ from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa_constants import HIDDEN
 from danswer.document_index.vespa_constants import LARGE_CHUNK_REFERENCE_IDS
 from danswer.document_index.vespa_constants import MAX_ID_SEARCH_QUERY_SIZE
+from danswer.document_index.vespa_constants import MAX_OR_CONDITIONS
 from danswer.document_index.vespa_constants import METADATA
 from danswer.document_index.vespa_constants import METADATA_SUFFIX
 from danswer.document_index.vespa_constants import PRIMARY_OWNERS
@@ -384,7 +385,7 @@ def batch_search_api_retrieval(
     capped_requests: list[VespaChunkRequest] = []
     uncapped_requests: list[VespaChunkRequest] = []
     chunk_count = 0
-    for request in chunk_requests:
+    for req_ind, request in enumerate(chunk_requests):
         # All requests without a chunk range are uncapped
         # Uncapped requests are retrieved using the Visit API
         range = request.range
@@ -392,9 +393,12 @@ def batch_search_api_retrieval(
             uncapped_requests.append(request)
             continue
 
-        # If adding the range to the chunk count is greater than the
-        # max query size, we need to perform a retrieval to avoid hitting the limit
-        if chunk_count + range > MAX_ID_SEARCH_QUERY_SIZE:
+        # Suspected that adding too many or conditions will cause Vespa to timeout and return
+        # an empty list of hits (with no error status and coverage: 0 and degraded)
+        if (
+            chunk_count + range > MAX_ID_SEARCH_QUERY_SIZE
+            or req_ind % MAX_OR_CONDITIONS == 0
+        ):
             retrieved_chunks.extend(
                 _get_chunks_via_batch_search(
                     index_name=index_name,
