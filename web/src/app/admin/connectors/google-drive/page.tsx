@@ -6,7 +6,6 @@ import useSWR, { useSWRConfig } from "swr";
 import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { LoadingAnimation } from "@/components/Loading";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
   ConnectorIndexingStatus,
@@ -28,6 +27,7 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { Divider, Text, Title } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
 
 interface GoogleDriveConnectorManagementProps {
   googleDrivePublicCredential?: Credential<GoogleDriveCredentialJson>;
@@ -41,7 +41,6 @@ interface GoogleDriveConnectorManagementProps {
     GoogleDriveCredentialJson
   >[];
   credentialIsLinked: boolean;
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 const GoogleDriveConnectorManagement = ({
@@ -50,7 +49,6 @@ const GoogleDriveConnectorManagement = ({
   googleDriveConnectorIndexingStatus,
   googleDriveConnectorIndexingStatuses,
   credentialIsLinked,
-  setPopup,
 }: GoogleDriveConnectorManagementProps) => {
   const { mutate } = useSWRConfig();
 
@@ -181,7 +179,6 @@ const GoogleDriveConnectorManagement = ({
             googleDriveConnectorIndexingStatuses={
               googleDriveConnectorIndexingStatuses
             }
-            setPopup={setPopup}
           />
           <Divider />
         </>
@@ -294,8 +291,6 @@ const Main = () => {
     refreshCredentials,
   } = usePublicCredentials();
 
-  const { popup, setPopup } = usePopup();
-
   const appCredentialSuccessfullyFetched =
     appCredentialData ||
     (isAppCredentialError && isAppCredentialError.status === 404);
@@ -368,12 +363,10 @@ const Main = () => {
 
   return (
     <>
-      {popup}
       <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
       </Title>
       <DriveJsonUploadSection
-        setPopup={setPopup}
         appCredentialData={appCredentialData}
         serviceAccountCredentialData={serviceAccountKeyData}
       />
@@ -382,7 +375,6 @@ const Main = () => {
         Step 2: Authenticate with enMedD AI
       </Title>
       <DriveOAuthSection
-        setPopup={setPopup}
         refreshCredentials={refreshCredentials}
         googleDrivePublicCredential={googleDrivePublicCredential}
         googleDriveServiceAccountCredential={
@@ -406,7 +398,6 @@ const Main = () => {
           googleDriveConnectorIndexingStatuses
         }
         credentialIsLinked={credentialIsLinked}
-        setPopup={setPopup}
       />
     </>
   );

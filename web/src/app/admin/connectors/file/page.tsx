@@ -10,7 +10,6 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, FileConfig } from "@/lib/types";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { useState } from "react";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { Spinner } from "@/components/Spinner";
 import { SingleUseConnectorsTable } from "@/components/admin/connectors/table/SingleUseConnectorsTable";
@@ -29,11 +28,12 @@ import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidE
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
 
 const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [filesAreUploading, setFilesAreUploading] = useState<boolean>(false);
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
@@ -59,7 +59,6 @@ const Main = () => {
 
   return (
     <div>
-      {popup}
       {filesAreUploading && <Spinner />}
       <Text className="mb-2">
         Specify files below, click the <b>Upload</b> button, and the contents of
@@ -122,9 +121,10 @@ const Main = () => {
                     );
                     const responseJson = await response.json();
                     if (!response.ok) {
-                      setPopup({
-                        message: `Unable to upload files - ${responseJson.detail}`,
-                        type: "error",
+                      toast({
+                        title: "Error",
+                        description: `Unable to upload files - ${responseJson.detail}`,
+                        variant: "destructive",
                       });
                       return;
                     }
@@ -143,9 +143,10 @@ const Main = () => {
                         disabled: false,
                       });
                     if (connectorErrorMsg || !connector) {
-                      setPopup({
-                        message: `Unable to create connector - ${connectorErrorMsg}`,
-                        type: "error",
+                      toast({
+                        title: "Error",
+                        description: `Unable to create connector - ${connectorErrorMsg}`,
+                        variant: "destructive",
                       });
                       return;
                     }
@@ -160,9 +161,10 @@ const Main = () => {
                     });
                     if (!createCredentialResponse.ok) {
                       const errorMsg = await createCredentialResponse.text();
-                      setPopup({
-                        message: `Error creating credential for CC Pair - ${errorMsg}`,
-                        type: "error",
+                      toast({
+                        title: "Error",
+                        description: `Error creating credential for CC Pair - ${errorMsg}`,
+                        variant: "destructive",
                       });
                       formikHelpers.setSubmitting(false);
                       return;
@@ -179,9 +181,10 @@ const Main = () => {
                     if (!credentialResponse.ok) {
                       const credentialResponseJson =
                         await credentialResponse.json();
-                      setPopup({
-                        message: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
-                        type: "error",
+                      toast({
+                        title: "Error",
+                        description: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
+                        variant: "destructive",
                       });
                       return;
                     }
@@ -191,9 +194,10 @@ const Main = () => {
                       [0]
                     );
                     if (runConnectorErrorMsg) {
-                      setPopup({
-                        message: `Unable to run connector - ${runConnectorErrorMsg}`,
-                        type: "error",
+                      toast({
+                        title: "Error",
+                        description: `Unable to run connector - ${runConnectorErrorMsg}`,
+                        variant: "destructive",
                       });
                       return;
                     }
@@ -201,9 +205,10 @@ const Main = () => {
                     mutate("/api/manage/admin/connector/indexing-status");
                     setSelectedFiles([]);
                     formikHelpers.resetForm();
-                    setPopup({
-                      type: "success",
-                      message: "Successfully uploaded files!",
+                    toast({
+                      title: "Success",
+                      description: "Successfully uploaded files!",
+                      variant: "success",
                     });
                   };
 

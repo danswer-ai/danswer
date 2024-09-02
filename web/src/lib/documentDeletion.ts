@@ -1,5 +1,6 @@
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { DeletionAttemptSnapshot } from "./types";
+import { toast } from "@/hooks/use-toast";
 
 export async function scheduleDeletionJobForConnector(
   connectorId: number,
@@ -27,7 +28,6 @@ export async function scheduleDeletionJobForConnector(
 export async function deleteCCPair(
   connectorId: number,
   credentialId: number,
-  setPopup: (popupSpec: PopupSpec | null) => void,
   onCompletion: () => void
 ) {
   const deletionScheduleError = await scheduleDeletionJobForConnector(
@@ -35,15 +35,17 @@ export async function deleteCCPair(
     credentialId
   );
   if (deletionScheduleError) {
-    setPopup({
-      message:
+    toast({
+      title: "Error",
+      description:
         "Failed to schedule deletion of connector - " + deletionScheduleError,
-      type: "error",
+      variant: "destructive",
     });
   } else {
-    setPopup({
-      message: "Scheduled deletion of connector!",
-      type: "success",
+    toast({
+      title: "Success",
+      description: "Scheduled deletion of connector!",
+      variant: "success",
     });
   }
   onCompletion();

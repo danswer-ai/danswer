@@ -1,3 +1,4 @@
+import { useToast } from "@/hooks/use-toast";
 import { PopupSpec } from "../admin/connectors/Popup";
 import { ChevronsDownIcon, ChevronsUpIcon } from "../icons/icons";
 
@@ -31,7 +32,6 @@ interface DocumentFeedbackIconProps {
   documentId: string;
   messageId: number;
   documentRank: number;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   feedbackType: DocumentFeedbackType;
 }
 
@@ -39,9 +39,9 @@ const DocumentFeedback = ({
   documentId,
   messageId,
   documentRank,
-  setPopup,
   feedbackType,
 }: DocumentFeedbackIconProps) => {
+  const { toast } = useToast();
   let icon = null;
   const size = 20;
   if (feedbackType === "endorse") {
@@ -75,14 +75,16 @@ const DocumentFeedback = ({
           feedbackType
         );
         if (!errorMsg) {
-          setPopup({
-            message: "Thanks for your feedback!",
-            type: "success",
+          toast({
+            title: "Success",
+            description: "Thanks for your feedback!",
+            variant: "success",
           });
         } else {
-          setPopup({
-            message: `Error giving feedback - ${errorMsg}`,
-            type: "error",
+          toast({
+            title: "Error",
+            description: `Error giving feedback - ${errorMsg}`,
+            variant: "destructive",
           });
         }
       }}
@@ -97,14 +99,12 @@ interface DocumentFeedbackBlockProps {
   documentId: string;
   messageId: number;
   documentRank: number;
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const DocumentFeedbackBlock = ({
   documentId,
   messageId,
   documentRank,
-  setPopup,
 }: DocumentFeedbackBlockProps) => {
   return (
     <div className="flex">
@@ -112,7 +112,6 @@ export const DocumentFeedbackBlock = ({
         documentId={documentId}
         messageId={messageId}
         documentRank={documentRank}
-        setPopup={setPopup}
         feedbackType="endorse"
       />
       <div className="ml-2">
@@ -120,7 +119,6 @@ export const DocumentFeedbackBlock = ({
           documentId={documentId}
           messageId={messageId}
           documentRank={documentRank}
-          setPopup={setPopup}
           feedbackType="reject"
         />
       </div>

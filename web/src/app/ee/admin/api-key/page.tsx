@@ -7,7 +7,6 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR, { mutate } from "swr";
 import { Divider } from "@tremor/react";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { DeleteButton } from "@/components/DeleteButton";
 import { FiCopy, FiEdit2, FiRefreshCw, FiX } from "react-icons/fi";
@@ -24,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EnmeddApiKeyForm } from "./EnmeddApiKeyForm";
+import { useToast } from "@/hooks/use-toast";
 
 const API_KEY_TEXT = `
 API Keys allow you to access enMedD AI APIs programmatically. Click the button below to generate a new API Key.
@@ -80,8 +80,6 @@ function NewApiKeyModal({
 }
 
 function Main() {
-  const { popup, setPopup } = usePopup();
-
   const {
     data: apiKeys,
     isLoading,
@@ -92,6 +90,7 @@ function Main() {
   const [keyIsGenerating, setKeyIsGenerating] = useState(false);
   const [showCreateUpdateForm, setShowCreateUpdateForm] = useState(false);
   const [selectedApiKey, setSelectedApiKey] = useState<APIKey | undefined>();
+  const { toast } = useToast();
 
   const handleEdit = (apiKey: APIKey) => {
     setSelectedApiKey(apiKey);
@@ -120,7 +119,6 @@ function Main() {
   if (apiKeys.length === 0) {
     return (
       <div>
-        {popup}
         <p className="pb-5">{API_KEY_TEXT}</p>
         {newApiKeyButton}
 
@@ -134,7 +132,6 @@ function Main() {
               setSelectedApiKey(undefined);
               mutate("/api/admin/api-key");
             }}
-            setPopup={setPopup}
             apiKey={selectedApiKey}
           />
         )}
@@ -144,8 +141,6 @@ function Main() {
 
   return (
     <div>
-      {popup}
-
       {fullApiKey && (
         <NewApiKeyModal
           apiKey={fullApiKey}
@@ -212,9 +207,10 @@ function Main() {
                     setKeyIsGenerating(false);
                     if (!response.ok) {
                       const errorMsg = await response.text();
-                      setPopup({
-                        type: "error",
-                        message: `Failed to regenerate API Key: ${errorMsg}`,
+                      toast({
+                        title: "Error",
+                        description: `Failed to regenerate API Key: ${errorMsg}`,
+                        variant: "destructive",
                       });
                       return;
                     }
@@ -233,9 +229,10 @@ function Main() {
                     const response = await deleteApiKey(apiKey.api_key_id);
                     if (!response.ok) {
                       const errorMsg = await response.text();
-                      setPopup({
-                        type: "error",
-                        message: `Failed to delete API Key: ${errorMsg}`,
+                      toast({
+                        title: "Error",
+                        description: `Failed to delete API Key: ${errorMsg}`,
+                        variant: "destructive",
                       });
                       return;
                     }
@@ -258,7 +255,6 @@ function Main() {
             setSelectedApiKey(undefined);
             mutate("/api/admin/api-key");
           }}
-          setPopup={setPopup}
           apiKey={selectedApiKey}
         />
       )}

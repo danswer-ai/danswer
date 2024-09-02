@@ -1,7 +1,6 @@
 "use client";
 
 import { CCPairFullInfo } from "./types";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { disableConnector } from "@/lib/connector";
 import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
@@ -18,18 +17,15 @@ export function ModifyStatusButtonCluster({
 }: {
   ccPair: CCPairFullInfo;
 }) {
-  const { popup, setPopup } = usePopup();
-
   return (
     <>
-      {popup}
       {ccPair.connector.disabled ? (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 onClick={() =>
-                  disableConnector(ccPair.connector, setPopup, () =>
+                  disableConnector(ccPair.connector, () =>
                     mutate(buildCCPairInfoUrl(ccPair.id))
                   )
                 }
@@ -48,7 +44,7 @@ export function ModifyStatusButtonCluster({
             <TooltipTrigger asChild>
               <Button
                 onClick={() =>
-                  disableConnector(ccPair.connector, setPopup, () =>
+                  disableConnector(ccPair.connector, () =>
                     mutate(buildCCPairInfoUrl(ccPair.id))
                   )
                 }

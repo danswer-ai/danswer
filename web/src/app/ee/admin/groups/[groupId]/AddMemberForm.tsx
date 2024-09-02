@@ -1,24 +1,23 @@
 import { Modal } from "@/components/Modal";
 import { updateUserGroup } from "./lib";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { User, UserGroup } from "@/lib/types";
 import { UserEditor } from "../UserEditor";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddMemberFormProps {
   users: User[];
   userGroup: UserGroup;
   onClose: () => void;
-  setPopup: (popupSpec: PopupSpec) => void;
 }
 
 export const AddMemberForm: React.FC<AddMemberFormProps> = ({
   users,
   userGroup,
   onClose,
-  setPopup,
 }) => {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const { toast } = useToast();
 
   return (
     <Modal title="Add New User" onOutsideClick={() => onClose()}>
@@ -43,17 +42,19 @@ export const AddMemberForm: React.FC<AddMemberFormProps> = ({
               cc_pair_ids: userGroup.cc_pairs.map((ccPair) => ccPair.id),
             });
             if (response.ok) {
-              setPopup({
-                message: "Successfully added users to group",
-                type: "success",
+              toast({
+                title: "Success",
+                description: "Successfully added users to group",
+                variant: "success",
               });
               onClose();
             } else {
               const responseJson = await response.json();
               const errorMsg = responseJson.detail || responseJson.message;
-              setPopup({
-                message: `Failed to add users to group - ${errorMsg}`,
-                type: "error",
+              toast({
+                title: "Error",
+                description: `Failed to add users to group - ${errorMsg}`,
+                variant: "destructive",
               });
               onClose();
             }

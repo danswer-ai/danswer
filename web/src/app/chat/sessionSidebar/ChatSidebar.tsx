@@ -22,7 +22,6 @@ import {
 import { ChatTab } from "./ChatTab";
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import EnmeddLogo from "../../../../public/logo-brand.png";
@@ -31,6 +30,7 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/Logo";
+import { useToast } from "@/hooks/use-toast";
 
 export const ChatSidebar = ({
   existingChats,
@@ -49,7 +49,7 @@ export const ChatSidebar = ({
 }) => {
   let { user } = useChatContext();
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const currentChatId = currentChatSession?.id;
 
@@ -68,7 +68,6 @@ export const ChatSidebar = ({
 
   return (
     <>
-      {popup}
       <div
         className={`
             flex-col 
@@ -192,9 +191,10 @@ export const ChatSidebar = ({
                   })
                   .catch((error) => {
                     console.error("Failed to create folder:", error);
-                    setPopup({
-                      message: `Failed to create folder: ${error.message}`,
-                      type: "error",
+                    toast({
+                      title: "Error",
+                      description: `Failed to create folder: ${error.message}`,
+                      variant: "destructive",
                     });
                   })
               }

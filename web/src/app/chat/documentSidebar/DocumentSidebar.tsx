@@ -1,7 +1,5 @@
 import { EnmeddDocument } from "@/lib/search/interfaces";
-import { Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { Message, RetrievalType } from "../interfaces";
 import { ForwardedRef, forwardRef } from "react";
@@ -67,8 +65,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
-    const { popup, setPopup } = usePopup();
-
     const selectedMessageRetrievalType = selectedMessage?.retrievalType || null;
 
     const selectedDocumentIds =
@@ -90,8 +86,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         className={`sidebar absolute right-0 h-screen border-l border-l-border w-full`}
       >
         <div className="flex flex-col flex-initial w-full h-screen overflow-y-hidden">
-          {popup}
-
           <div
             className={`flex flex-col h-full ${
               showDocSidebar
@@ -123,7 +117,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                       >
                         <ChatDocumentDisplay
                           document={document}
-                          setPopup={setPopup}
                           queryEventId={null}
                           isAIPick={false}
                           isSelected={selectedDocumentIds.includes(

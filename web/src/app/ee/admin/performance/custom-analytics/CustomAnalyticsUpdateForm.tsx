@@ -1,8 +1,8 @@
 "use client";
 
 import { Label, SubLabel } from "@/components/admin/connectors/Field";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { useToast } from "@/hooks/use-toast";
 import { Button, Callout, Text } from "@tremor/react";
 import { useContext, useState } from "react";
 
@@ -14,7 +14,7 @@ export function CustomAnalyticsUpdateForm() {
     useState<string>(customAnalyticsScript || "");
   const [secretKey, setSecretKey] = useState<string>("");
 
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   if (!settings) {
     return <Callout color="red" title="Failed to fetch settings"></Callout>;
@@ -22,7 +22,6 @@ export function CustomAnalyticsUpdateForm() {
 
   return (
     <div>
-      {popup}
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -41,15 +40,17 @@ export function CustomAnalyticsUpdateForm() {
             }
           );
           if (response.ok) {
-            setPopup({
-              type: "success",
-              message: "Custom analytics script updated successfully!",
+            toast({
+              title: "Success",
+              description: "Custom analytics script updated successfully!",
+              variant: "success",
             });
           } else {
             const errorMsg = (await response.json()).detail;
-            setPopup({
-              type: "error",
-              message: `Failed to update custom analytics script: "${errorMsg}"`,
+            toast({
+              title: "Error",
+              description: `Failed to update custom analytics script: "${errorMsg}"`,
+              variant: "destructive",
             });
           }
           setSecretKey("");

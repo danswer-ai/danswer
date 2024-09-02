@@ -65,12 +65,10 @@ interface TableProps {
     GoogleDriveConfig,
     GoogleDriveCredentialJson
   >[];
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const GoogleDriveConnectorsTable = ({
   googleDriveConnectorIndexingStatuses,
-  setPopup,
 }: TableProps) => {
   const { mutate } = useSWRConfig();
 
@@ -162,7 +160,6 @@ export const GoogleDriveConnectorsTable = ({
                         connectorIndexingStatus.connector.credential_ids
                           .length === 0
                       }
-                      setPopup={setPopup}
                       onUpdate={() => {
                         mutate("/api/manage/admin/connector/indexing-status");
                       }}
@@ -171,7 +168,6 @@ export const GoogleDriveConnectorsTable = ({
                   <TableCell>
                     <DeleteColumn
                       connectorIndexingStatus={connectorIndexingStatus}
-                      setPopup={setPopup}
                       onUpdate={() =>
                         mutate("/api/manage/admin/connector/indexing-status")
                       }
@@ -184,117 +180,5 @@ export const GoogleDriveConnectorsTable = ({
         </TableBody>
       </Table>
     </div>
-  );
-
-  return (
-    <BasicTable
-      columns={[
-        {
-          header: "",
-          key: "edit",
-          width: 4,
-        },
-        {
-          header: "Folder Paths",
-          key: "folder_paths",
-        },
-        {
-          header: "Include Shared",
-          key: "include_shared",
-        },
-        {
-          header: "Follow Shortcuts",
-          key: "follow_shortcuts",
-        },
-        {
-          header: "Only Org Public",
-          key: "only_org_public",
-        },
-        {
-          header: "Status",
-          key: "status",
-        },
-        {
-          header: "Delete",
-          key: "delete",
-        },
-      ]}
-      data={sortedGoogleDriveConnectorIndexingStatuses.map(
-        (connectorIndexingStatus) => ({
-          edit: (
-            <EditableColumn connectorIndexingStatus={connectorIndexingStatus} />
-          ),
-          folder_paths:
-            (
-              connectorIndexingStatus.connector.connector_specific_config
-                .folder_paths || []
-            ).length > 0 ? (
-              <div key={connectorIndexingStatus.connector.id}>
-                {(
-                  connectorIndexingStatus.connector.connector_specific_config
-                    .folder_paths || []
-                ).map((path) => (
-                  <div key={path}>
-                    <i> - {path}</i>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <i>All Folders</i>
-            ),
-          include_shared: (
-            <div>
-              {connectorIndexingStatus.connector.connector_specific_config
-                .include_shared ? (
-                <i>Yes</i>
-              ) : (
-                <i>No</i>
-              )}
-            </div>
-          ),
-          follow_shortcuts: (
-            <div>
-              {connectorIndexingStatus.connector.connector_specific_config
-                .follow_shortcuts ? (
-                <i>Yes</i>
-              ) : (
-                <i>No</i>
-              )}
-            </div>
-          ),
-          only_org_public: (
-            <div>
-              {connectorIndexingStatus.connector.connector_specific_config
-                .only_org_public ? (
-                <i>Yes</i>
-              ) : (
-                <i>No</i>
-              )}
-            </div>
-          ),
-          status: (
-            <StatusRow
-              connectorIndexingStatus={connectorIndexingStatus}
-              hasCredentialsIssue={
-                connectorIndexingStatus.connector.credential_ids.length === 0
-              }
-              setPopup={setPopup}
-              onUpdate={() => {
-                mutate("/api/manage/admin/connector/indexing-status");
-              }}
-            />
-          ),
-          delete: (
-            <DeleteColumn
-              connectorIndexingStatus={connectorIndexingStatus}
-              setPopup={setPopup}
-              onUpdate={() =>
-                mutate("/api/manage/admin/connector/indexing-status")
-              }
-            />
-          ),
-        })
-      )}
-    />
   );
 };

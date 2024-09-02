@@ -14,7 +14,6 @@ import {
 import * as Yup from "yup";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 import { useRouter } from "next/navigation";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { Persona, StarterMessage } from "./interfaces";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -45,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -84,7 +84,7 @@ export function AssistantEditor({
   shouldAddAssistantToUserPreferences?: boolean;
 }) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
@@ -201,7 +201,6 @@ export function AssistantEditor({
 
   return (
     <div>
-      {popup}
       <Formik
         enableReinitialize={true}
         initialValues={initialValues}
@@ -252,9 +251,10 @@ export function AssistantEditor({
           )}
         onSubmit={async (values, formikHelpers) => {
           if (finalPromptError) {
-            setPopup({
-              type: "error",
-              message: "Cannot submit while there are errors in the form!",
+            toast({
+              title: "Error",
+              description: "Cannot submit while there are errors in the form!",
+              variant: "destructive",
             });
             return;
           }
@@ -263,10 +263,11 @@ export function AssistantEditor({
             values.llm_model_provider_override &&
             !values.llm_model_version_override
           ) {
-            setPopup({
-              type: "error",
-              message:
+            toast({
+              title: "Error",
+              description:
                 "Must select a model if a non-default LLM provider is chosen.",
+              variant: "destructive",
             });
             return;
           }
@@ -342,9 +343,10 @@ export function AssistantEditor({
           }
 
           if (error || !personaResponse) {
-            setPopup({
-              type: "error",
-              message: `Failed to create Assistant - ${error}`,
+            toast({
+              title: "Error",
+              description: `Failed to create Assistant - ${error}`,
+              variant: "destructive",
             });
             formikHelpers.setSubmitting(false);
           } else {
@@ -359,15 +361,18 @@ export function AssistantEditor({
                 user.preferences.chosen_assistants
               );
               if (success) {
-                setPopup({
-                  message: `"${assistant.name}" has been added to your list.`,
-                  type: "success",
+                toast({
+                  title: "Success",
+                  description: `"${assistant.name}" has been added to your list.`,
+                  variant: "success",
                 });
+
                 router.refresh();
               } else {
-                setPopup({
-                  message: `"${assistant.name}" could not be added to your list.`,
-                  type: "error",
+                toast({
+                  title: "Error",
+                  description: `"${assistant.name}" could not be added to your list.`,
+                  variant: "destructive",
                 });
               }
             }
@@ -811,14 +816,14 @@ export function AssistantEditor({
                                         />
                                       </div>
                                     </div>
-                                    <div className="my-auto">
-                                      <X
-                                        className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                                        onClick={() =>
-                                          arrayHelpers.remove(index)
-                                        }
-                                      />
-                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="my-auto"
+                                      onClick={() => arrayHelpers.remove(index)}
+                                    >
+                                      <X />
+                                    </Button>
                                   </div>
                                 </div>
                               );

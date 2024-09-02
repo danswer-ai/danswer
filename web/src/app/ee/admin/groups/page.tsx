@@ -3,7 +3,6 @@
 import { GroupsIcon } from "@/components/icons/icons";
 import { UserGroupsTable } from "./UserGroupsTable";
 import { UserGroupCreationForm } from "./UserGroupCreationForm";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { ThreeDotsLoader } from "@/components/Loading";
 import {
@@ -16,7 +15,6 @@ import { Divider } from "@tremor/react";
 import { Button } from "@/components/ui/button";
 
 const Main = () => {
-  const { popup, setPopup } = usePopup();
   const [showForm, setShowForm] = useState(false);
 
   const { data, isLoading, error, refreshUserGroups } = useUserGroups();
@@ -51,15 +49,10 @@ const Main = () => {
 
   return (
     <>
-      {popup}
       <Button onClick={() => setShowForm(true)}>Create New User Group</Button>
       {data.length > 0 && (
         <div className="pt-5">
-          <UserGroupsTable
-            userGroups={data}
-            setPopup={setPopup}
-            refresh={refreshUserGroups}
-          />
+          <UserGroupsTable userGroups={data} refresh={refreshUserGroups} />
         </div>
       )}
       {showForm && (
@@ -68,7 +61,6 @@ const Main = () => {
             refreshUserGroups();
             setShowForm(false);
           }}
-          setPopup={setPopup}
           users={users.accepted}
           ccPairs={ccPairs}
         />

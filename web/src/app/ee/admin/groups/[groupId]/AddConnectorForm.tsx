@@ -8,21 +8,21 @@ import { updateUserGroup } from "./lib";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Connector, ConnectorIndexingStatus, UserGroup } from "@/lib/types";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddConnectorFormProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
   userGroup: UserGroup;
   onClose: () => void;
-  setPopup: (popupSpec: PopupSpec) => void;
 }
 
 export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
   ccPairs,
   userGroup,
   onClose,
-  setPopup,
 }) => {
   const [selectedCCPairIds, setSelectedCCPairIds] = useState<number[]>([]);
+  const { toast } = useToast();
 
   const selectedCCPairs = ccPairs.filter((ccPair) =>
     selectedCCPairIds.includes(ccPair.cc_pair_id)
@@ -131,17 +131,19 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
                 cc_pair_ids: newCCPairIds,
               });
               if (response.ok) {
-                setPopup({
-                  message: "Successfully added users to group",
-                  type: "success",
+                toast({
+                  title: "Success",
+                  description: "Successfully added users to group",
+                  variant: "success",
                 });
                 onClose();
               } else {
                 const responseJson = await response.json();
                 const errorMsg = responseJson.detail || responseJson.message;
-                setPopup({
-                  message: `Failed to add users to group - ${errorMsg}`,
-                  type: "error",
+                toast({
+                  title: "Error",
+                  description: `Failed to add users to group - ${errorMsg}`,
+                  variant: "destructive",
                 });
                 onClose();
               }

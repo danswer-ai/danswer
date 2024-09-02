@@ -59,7 +59,7 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
             <User size={25} className="mx-auto" />
           </div>
         </PopoverTrigger>
-        <PopoverContent className={`w-[250px] !z-[999] mb-2 ml-4 text-sm`}>
+        <PopoverContent className={`w-[250px] !z-modal mb-2 ml-4 text-sm`}>
           <div className="w-full">
             <>
               <Link

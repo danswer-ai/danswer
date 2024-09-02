@@ -1,6 +1,5 @@
 "use client";
 
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { AddMemberForm } from "./AddMemberForm";
@@ -24,6 +23,7 @@ import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
 import { AddTokenRateLimitForm } from "./AddTokenRateLimitForm";
 import { GenericTokenRateLimitTable } from "@/app/admin/token-rate-limits/TokenRateLimitTables";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface GroupDisplayProps {
   users: User[];
@@ -38,14 +38,12 @@ export const GroupDisplay = ({
   userGroup,
   refreshUserGroup,
 }: GroupDisplayProps) => {
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
   const [addMemberFormVisible, setAddMemberFormVisible] = useState(false);
   const [addConnectorFormVisible, setAddConnectorFormVisible] = useState(false);
 
   return (
     <div>
-      {popup}
-
       <div className="text-sm mb-3 flex">
         <Text className="mr-1">Status:</Text>{" "}
         {userGroup.is_up_to_date ? (
@@ -102,18 +100,20 @@ export const GroupDisplay = ({
                                   }
                                 );
                                 if (response.ok) {
-                                  setPopup({
-                                    message:
+                                  toast({
+                                    title: "Success",
+                                    description:
                                       "Successfully removed user from group",
-                                    type: "success",
+                                    variant: "success",
                                   });
                                 } else {
                                   const responseJson = await response.json();
                                   const errorMsg =
                                     responseJson.detail || responseJson.message;
-                                  setPopup({
-                                    message: `Error removing user from group - ${errorMsg}`,
-                                    type: "error",
+                                  toast({
+                                    title: "Error",
+                                    description: `Error removing user from group - ${errorMsg}`,
+                                    variant: "destructive",
                                   });
                                 }
                                 refreshUserGroup();
@@ -149,7 +149,6 @@ export const GroupDisplay = ({
             setAddMemberFormVisible(false);
             refreshUserGroup();
           }}
-          setPopup={setPopup}
         />
       )}
 
@@ -199,18 +198,20 @@ export const GroupDisplay = ({
                                   }
                                 );
                                 if (response.ok) {
-                                  setPopup({
-                                    message:
+                                  toast({
+                                    title: "Success",
+                                    description:
                                       "Successfully removed connector from group",
-                                    type: "success",
+                                    variant: "success",
                                   });
                                 } else {
                                   const responseJson = await response.json();
                                   const errorMsg =
                                     responseJson.detail || responseJson.message;
-                                  setPopup({
-                                    message: `Error removing connector from group - ${errorMsg}`,
-                                    type: "error",
+                                  toast({
+                                    title: "Error",
+                                    description: `Error removing connector from group - ${errorMsg}`,
+                                    variant: "destructive",
                                   });
                                 }
                                 refreshUserGroup();
@@ -246,7 +247,6 @@ export const GroupDisplay = ({
             setAddConnectorFormVisible(false);
             refreshUserGroup();
           }}
-          setPopup={setPopup}
         />
       )}
 
@@ -309,7 +309,7 @@ export const GroupDisplay = ({
         hideHeading
       />
 
-      <AddTokenRateLimitForm setPopup={setPopup} userGroupId={userGroup.id} />
+      <AddTokenRateLimitForm userGroupId={userGroup.id} />
     </div>
   );
 };

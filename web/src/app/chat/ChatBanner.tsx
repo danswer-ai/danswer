@@ -14,7 +14,7 @@ export function ChatBanner() {
   return (
     <div
       className={`
-      z-[39] 
+      z-masked 
       h-[30px]
       bg-background-custom-header
       shadow-sm

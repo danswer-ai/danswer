@@ -12,9 +12,9 @@ import {
   updateCustomTool,
   validateToolDefinition,
 } from "@/lib/tools/edit";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import debounce from "lodash/debounce";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 function parseJsonWithTrailingCommas(jsonString: string) {
   // Regular expression to remove trailing commas before } or ]
@@ -184,7 +184,7 @@ const ToolSchema = Yup.object().shape({
 
 export function ToolEditor({ tool }: { tool?: ToolSnapshot }) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
   const [definitionError, setDefinitionError] = useState<string | null>(null);
   const [methodSpecs, setMethodSpecs] = useState<MethodSpec[] | null>(null);
 
@@ -193,58 +193,56 @@ export function ToolEditor({ tool }: { tool?: ToolSnapshot }) {
     : "";
 
   return (
-    <div>
-      {popup}
-      <Formik
-        initialValues={{
-          definition: prettifiedDefinition,
-        }}
-        validationSchema={ToolSchema}
-        onSubmit={async (values: ToolFormValues) => {
-          let definition: any;
-          try {
-            definition = parseJsonWithTrailingCommas(values.definition);
-          } catch (error) {
-            setDefinitionError("Invalid JSON in tool definition");
-            return;
-          }
+    <Formik
+      initialValues={{
+        definition: prettifiedDefinition,
+      }}
+      validationSchema={ToolSchema}
+      onSubmit={async (values: ToolFormValues) => {
+        let definition: any;
+        try {
+          definition = parseJsonWithTrailingCommas(values.definition);
+        } catch (error) {
+          setDefinitionError("Invalid JSON in tool definition");
+          return;
+        }
 
-          const name = definition?.info?.title;
-          const description = definition?.info?.description;
-          const toolData = {
-            name: name,
-            description: description || "",
-            definition: definition,
-          };
-          let response;
-          if (tool) {
-            response = await updateCustomTool(tool.id, toolData);
-          } else {
-            response = await createCustomTool(toolData);
-          }
-          if (response.error) {
-            setPopup({
-              message: "Failed to create tool - " + response.error,
-              type: "error",
-            });
-            return;
-          }
-          router.push(`/admin/tools?u=${Date.now()}`);
-        }}
-      >
-        {({ isSubmitting, values, setFieldValue }) => {
-          return (
-            <ToolForm
-              existingTool={tool}
-              values={values}
-              setFieldValue={setFieldValue}
-              isSubmitting={isSubmitting}
-              definitionErrorState={[definitionError, setDefinitionError]}
-              methodSpecsState={[methodSpecs, setMethodSpecs]}
-            />
-          );
-        }}
-      </Formik>
-    </div>
+        const name = definition?.info?.title;
+        const description = definition?.info?.description;
+        const toolData = {
+          name: name,
+          description: description || "",
+          definition: definition,
+        };
+        let response;
+        if (tool) {
+          response = await updateCustomTool(tool.id, toolData);
+        } else {
+          response = await createCustomTool(toolData);
+        }
+        if (response.error) {
+          toast({
+            title: "Error",
+            description: "Failed to create tool - " + response.error,
+            variant: "destructive",
+          });
+          return;
+        }
+        router.push(`/admin/tools?u=${Date.now()}`);
+      }}
+    >
+      {({ isSubmitting, values, setFieldValue }) => {
+        return (
+          <ToolForm
+            existingTool={tool}
+            values={values}
+            setFieldValue={setFieldValue}
+            isSubmitting={isSubmitting}
+            definitionErrorState={[definitionError, setDefinitionError]}
+            methodSpecsState={[methodSpecs, setMethodSpecs]}
+          />
+        );
+      }}
+    </Formik>
   );
 }

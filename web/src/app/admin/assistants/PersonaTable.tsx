@@ -2,8 +2,6 @@
 
 import { Persona } from "./interfaces";
 import { useRouter } from "next/navigation";
-import { CustomCheckbox } from "@/components/CustomCheckbox";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
@@ -13,6 +11,8 @@ import { Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 function PersonaTypeDisplay({ persona }: { persona: Persona }) {
   if (persona.default_persona) {
@@ -28,7 +28,7 @@ function PersonaTypeDisplay({ persona }: { persona: Persona }) {
 
 export function PersonasTable({ personas }: { personas: Persona[] }) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const availablePersonaIds = new Set(
     personas.map((persona) => persona.id.toString())
@@ -65,9 +65,10 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
       }),
     });
     if (!response.ok) {
-      setPopup({
-        type: "error",
-        message: `Failed to update persona order - ${await response.text()}`,
+      toast({
+        title: "Error",
+        description: `Failed to update persona order - ${await response.text()}`,
+        variant: "destructive",
       });
       router.refresh();
     }
@@ -75,8 +76,6 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
 
   return (
     <div>
-      {popup}
-
       <p className="pb-6">
         Assistants will be displayed as options on the Chat / Search interfaces
         in the order they are displayed below. Assistants marked as hidden will
@@ -91,17 +90,18 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
               return {
                 id: persona.id.toString(),
                 cells: [
-                  <div key="name" className="flex">
+                  <div key="name" className="flex gap-2 items-center">
                     {!persona.default_persona && (
-                      <Pencil
-                        size={16}
-                        className="mr-1 my-auto cursor-pointer"
-                        onClick={() =>
-                          router.push(
-                            `/admin/assistants/${persona.id}?u=${Date.now()}`
-                          )
-                        }
-                      />
+                      <Button variant="ghost" size="icon">
+                        <Pencil
+                          size={16}
+                          onClick={() =>
+                            router.push(
+                              `/admin/assistants/${persona.id}?u=${Date.now()}`
+                            )
+                          }
+                        />
+                      </Button>
                     )}
                     <p className="text font-medium whitespace-normal break-none">
                       {persona.name}
@@ -132,9 +132,10 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                       if (response.ok) {
                         router.refresh();
                       } else {
-                        setPopup({
-                          type: "error",
-                          message: `Failed to update persona - ${await response.text()}`,
+                        toast({
+                          title: "Error",
+                          description: `Failed to update persona - ${await response.text()}`,
+                          variant: "destructive",
                         });
                       }
                     }}
@@ -152,8 +153,9 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                   <div key="edit" className="flex">
                     <div className="mx-auto my-auto">
                       {!persona.default_persona ? (
-                        <div
-                          className="hover:bg-hover rounded p-1 cursor-pointer"
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={async () => {
                             const response = await deletePersona(persona.id);
                             if (response.ok) {
@@ -166,7 +168,7 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                           }}
                         >
                           <TrashIcon />
-                        </div>
+                        </Button>
                       ) : (
                         "-"
                       )}

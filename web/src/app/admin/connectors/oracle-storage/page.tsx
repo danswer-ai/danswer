@@ -7,7 +7,6 @@ import { LoadingAnimation } from "@/components/Loading";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { errorHandlingFetcher } from "@/lib/fetcher";
@@ -26,9 +25,10 @@ import * as Yup from "yup";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
 
 const OCIMain = () => {
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const { mutate } = useSWRConfig();
   const {
@@ -84,7 +84,6 @@ const OCIMain = () => {
 
   return (
     <>
-      {popup}
       <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your access info
       </Title>
@@ -105,10 +104,11 @@ const OCIMain = () => {
               className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (ociConnectorIndexingStatuses.length > 0) {
-                  setPopup({
-                    type: "error",
-                    message:
+                  toast({
+                    title: "Error",
+                    description:
                       "Must delete all connectors before deleting credentials",
+                    variant: "destructive",
                   });
                   return;
                 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { Label, SubLabel } from "@/components/admin/connectors/Field";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { Title } from "@tremor/react";
 import { Settings } from "./interfaces";
 import { useRouter } from "next/navigation";
@@ -21,6 +20,7 @@ import {
 import { Label as ShadcnLabel } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 function CheckboxComponent({
   label,
@@ -129,7 +129,7 @@ export function SettingsForm() {
   const router = useRouter();
   const combinedSettings = useContext(SettingsContext);
   const [chatRetention, setChatRetention] = useState("");
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
   const isEnterpriseEnabled = usePaidEnterpriseFeaturesEnabled();
 
   useEffect(() => {
@@ -179,18 +179,20 @@ export function SettingsForm() {
       { fieldName: "maximum_chat_retention_days", newValue: newValue },
     ])
       .then(() => {
-        setPopup({
-          message: "Chat retention settings updated successfully!",
-          type: "success",
+        toast({
+          title: "Success",
+          description: "Chat retention settings updated successfully!",
+          variant: "success",
         });
       })
       .catch((error) => {
         console.error("Error updating settings:", error);
         const errorMessage =
           error.response?.data?.message || error.message || "Unknown error";
-        setPopup({
-          message: `Failed to update settings: ${errorMessage}`,
-          type: "error",
+        toast({
+          title: "Error",
+          description: `Failed to update settings: ${errorMessage}`,
+          variant: "destructive",
         });
       });
   }
@@ -200,16 +202,16 @@ export function SettingsForm() {
     updateSettingField([
       { fieldName: "maximum_chat_retention_days", newValue: null },
     ]).then(() => {
-      setPopup({
-        message: "Chat retention cleared successfully!",
-        type: "success",
+      toast({
+        title: "Success",
+        description: "Chat retention cleared successfully!",
+        variant: "success",
       });
     });
   }
 
   return (
     <div>
-      {popup}
       <Title className="mb-4">Page Visibility</Title>
 
       <CheckboxComponent

@@ -2,7 +2,6 @@
 
 import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { createDocumentSet, updateDocumentSet } from "./lib";
 import { ConnectorIndexingStatus, DocumentSet, UserGroup } from "@/lib/types";
 import {
@@ -15,12 +14,12 @@ import { FiUsers } from "react-icons/fi";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
   userGroups: UserGroup[] | undefined;
   onClose: () => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   existingDocumentSet?: DocumentSet;
 }
 
@@ -28,9 +27,10 @@ export const DocumentSetCreationForm = ({
   ccPairs,
   userGroups,
   onClose,
-  setPopup,
   existingDocumentSet,
 }: SetCreationPopupProps) => {
+  const { toast } = useToast();
+
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   const isUpdate = existingDocumentSet !== undefined;
@@ -82,20 +82,22 @@ export const DocumentSetCreationForm = ({
           }
           formikHelpers.setSubmitting(false);
           if (response.ok) {
-            setPopup({
-              message: isUpdate
+            toast({
+              title: isUpdate ? "Update Successful" : "Creation Successful",
+              description: isUpdate
                 ? "Successfully updated document set!"
                 : "Successfully created document set!",
-              type: "success",
+              variant: "success",
             });
             onClose();
           } else {
             const errorMsg = await response.text();
-            setPopup({
-              message: isUpdate
+            toast({
+              title: "Error",
+              description: isUpdate
                 ? `Error updating document set - ${errorMsg}`
                 : `Error creating document set - ${errorMsg}`,
-              type: "error",
+              variant: "destructive",
             });
           }
         }}

@@ -1,9 +1,8 @@
 "use client";
 
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { runConnector } from "@/lib/connector";
 import { Divider, Text } from "@tremor/react";
-import { useRouter } from "next/navigation";
 import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
 import { useState } from "react";
@@ -15,20 +14,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 function ReIndexPopup({
   connectorId,
   credentialId,
   ccPairId,
-  setPopup,
   hide,
 }: {
   connectorId: number;
   credentialId: number;
   ccPairId: number;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   hide: () => void;
 }) {
+  const { toast } = useToast();
   async function triggerIndexing(fromBeginning: boolean) {
     const errorMsg = await runConnector(
       connectorId,
@@ -36,14 +35,16 @@ function ReIndexPopup({
       fromBeginning
     );
     if (errorMsg) {
-      setPopup({
-        message: errorMsg,
-        type: "error",
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
       });
     } else {
-      setPopup({
-        message: "Triggered connector run",
-        type: "success",
+      toast({
+        title: "Success",
+        description: "Triggered connector run",
+        variant: "success",
       });
     }
     mutate(buildCCPairInfoUrl(ccPairId));
@@ -104,7 +105,6 @@ export function ReIndexButton({
   credentialId: number;
   isDisabled: boolean;
 }) {
-  const { popup, setPopup } = usePopup();
   const [reIndexPopupVisible, setReIndexPopupVisible] = useState(false);
 
   return (
@@ -114,11 +114,9 @@ export function ReIndexButton({
           connectorId={connectorId}
           credentialId={credentialId}
           ccPairId={ccPairId}
-          setPopup={setPopup}
           hide={() => setReIndexPopupVisible(false)}
         />
       )}
-      {popup}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

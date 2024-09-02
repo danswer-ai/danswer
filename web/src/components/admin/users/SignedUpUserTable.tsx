@@ -15,10 +15,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   users: Array<User>;
-  setPopup: (spec: PopupSpec) => void;
   mutate: () => void;
 }
 
@@ -53,14 +53,13 @@ const PromoterButton = ({
 const DeactivaterButton = ({
   user,
   deactivate,
-  setPopup,
   mutate,
 }: {
   user: User;
   deactivate: boolean;
-  setPopup: (spec: PopupSpec) => void;
   mutate: () => void;
 }) => {
+  const { toast } = useToast();
   const { trigger, isMutating } = useSWRMutation(
     deactivate
       ? "/api/manage/admin/deactivate-user"
@@ -69,12 +68,18 @@ const DeactivaterButton = ({
     {
       onSuccess: () => {
         mutate();
-        setPopup({
-          message: `User ${deactivate ? "deactivated" : "activated"}!`,
-          type: "success",
+        toast({
+          title: "Success",
+          description: `User ${deactivate ? "deactivated" : "activated"}!`,
+          variant: "success",
         });
       },
-      onError: (errorMsg) => setPopup({ message: errorMsg, type: "error" }),
+      onError: (errorMsg) =>
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive",
+        }),
     }
   );
   return (
@@ -90,25 +95,27 @@ const DeactivaterButton = ({
 
 const SignedUpUserTable = ({
   users,
-  setPopup,
   currentPage,
   totalPages,
   onPageChange,
   mutate,
 }: Props & PageSelectorProps) => {
+  const { toast } = useToast();
   if (!users.length) return null;
 
   const onSuccess = (message: string) => {
     mutate();
-    setPopup({
-      message,
-      type: "success",
+    toast({
+      title: "success",
+      description: message,
+      variant: "success",
     });
   };
   const onError = (message: string) => {
-    setPopup({
-      message,
-      type: "error",
+    toast({
+      title: "Error",
+      description: message,
+      variant: "destructive",
     });
   };
   const onPromotionSuccess = () => {
@@ -170,7 +177,6 @@ const SignedUpUserTable = ({
                         <DeactivaterButton
                           user={user}
                           deactivate={user.status === UserStatus.live}
-                          setPopup={setPopup}
                           mutate={mutate}
                         />
                       </div>

@@ -12,7 +12,6 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, GoogleSitesConfig } from "@/lib/types";
 import { Form, Formik } from "formik";
 import { useState } from "react";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { linkCredential } from "@/lib/credential";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
@@ -22,12 +21,13 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { Button, Text, Title } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
 
 export default function GoogleSites() {
   const { mutate } = useSWRConfig();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [filesAreUploading, setFilesAreUploading] = useState<boolean>(false);
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const {
     data: connectorIndexingStatuses,
@@ -49,7 +49,6 @@ export default function GoogleSites() {
 
   return (
     <>
-      {popup}
       {filesAreUploading && <Spinner />}
       <div className="mx-auto container">
         <div>
@@ -100,9 +99,10 @@ export default function GoogleSites() {
                       );
                       const responseJson = await response.json();
                       if (!response.ok) {
-                        setPopup({
-                          message: `Unable to upload files - ${responseJson.detail}`,
-                          type: "error",
+                        toast({
+                          title: "Error",
+                          description: `Unable to upload files - ${responseJson.detail}`,
+                          variant: "destructive",
                         });
                         return;
                       }
@@ -122,9 +122,10 @@ export default function GoogleSites() {
                           disabled: false,
                         });
                       if (connectorErrorMsg || !connector) {
-                        setPopup({
-                          message: `Unable to create connector - ${connectorErrorMsg}`,
-                          type: "error",
+                        toast({
+                          title: "Error",
+                          description: `Unable to create connector - ${connectorErrorMsg}`,
+                          variant: "destructive",
                         });
                         return;
                       }
@@ -137,9 +138,10 @@ export default function GoogleSites() {
                       if (!credentialResponse.ok) {
                         const credentialResponseJson =
                           await credentialResponse.json();
-                        setPopup({
-                          message: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
-                          type: "error",
+                        toast({
+                          title: "Error",
+                          description: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
+                          variant: "destructive",
                         });
                         return;
                       }
@@ -149,9 +151,10 @@ export default function GoogleSites() {
                         [0]
                       );
                       if (runConnectorErrorMsg) {
-                        setPopup({
-                          message: `Unable to run connector - ${runConnectorErrorMsg}`,
-                          type: "error",
+                        toast({
+                          title: "Error",
+                          description: `Unable to run connector - ${runConnectorErrorMsg}`,
+                          variant: "destructive",
                         });
                         return;
                       }
@@ -159,9 +162,10 @@ export default function GoogleSites() {
                       mutate("/api/manage/admin/connector/indexing-status");
                       setSelectedFiles([]);
                       formikHelpers.resetForm();
-                      setPopup({
-                        type: "success",
-                        message: "Successfully uploaded files!",
+                      toast({
+                        title: "Success",
+                        description: "Successfully uploaded files!",
+                        variant: "success",
                       });
                     };
 

@@ -1,24 +1,23 @@
 import { Form, Formik } from "formik";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { createApiKey, updateApiKey } from "./lib";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface ApiKeyFormProps {
   onClose: () => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   onCreateApiKey: (apiKey: APIKey) => void;
   apiKey?: APIKey;
 }
 
 export const EnmeddApiKeyForm = ({
   onClose,
-  setPopup,
   onCreateApiKey,
   apiKey,
 }: ApiKeyFormProps) => {
   const isUpdate = apiKey !== undefined;
+  const { toast } = useToast();
 
   return (
     <Modal onOutsideClick={onClose} width="w-2/6">
@@ -41,11 +40,12 @@ export const EnmeddApiKeyForm = ({
             }
             formikHelpers.setSubmitting(false);
             if (response.ok) {
-              setPopup({
-                message: isUpdate
+              toast({
+                title: "Success",
+                description: isUpdate
                   ? "Successfully updated API key!"
                   : "Successfully created API key!",
-                type: "success",
+                variant: "success",
               });
               if (!isUpdate) {
                 onCreateApiKey(await response.json());
@@ -54,11 +54,12 @@ export const EnmeddApiKeyForm = ({
             } else {
               const responseJson = await response.json();
               const errorMsg = responseJson.detail || responseJson.message;
-              setPopup({
-                message: isUpdate
+              toast({
+                title: "Error",
+                description: isUpdate
                   ? `Error updating API key - ${errorMsg}`
                   : `Error creating API key - ${errorMsg}`,
-                type: "error",
+                variant: "destructive",
               });
             }
           }}

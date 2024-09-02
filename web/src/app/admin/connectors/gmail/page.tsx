@@ -6,7 +6,6 @@ import useSWR, { useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { LoadingAnimation } from "@/components/Loading";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
   ConnectorIndexingStatus,
@@ -24,6 +23,7 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { Divider, Text, Title } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
 
 interface GmailConnectorManagementProps {
   gmailPublicCredential?: Credential<GmailCredentialJson>;
@@ -37,14 +37,12 @@ interface GmailConnectorManagementProps {
     GmailCredentialJson
   >[];
   credentialIsLinked: boolean;
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 const GmailConnectorManagement = ({
   gmailPublicCredential: gmailPublicCredential,
   gmailServiceAccountCredential: gmailServiceAccountCredential,
   gmailConnectorIndexingStatuses: gmailConnectorIndexingStatuses,
-  setPopup,
 }: GmailConnectorManagementProps) => {
   const { mutate } = useSWRConfig();
 
@@ -84,7 +82,6 @@ const GmailConnectorManagement = ({
           <div className="text-sm mb-2 font-bold">Existing Connectors:</div>
           <GmailConnectorsTable
             gmailConnectorIndexingStatuses={gmailConnectorIndexingStatuses}
-            setPopup={setPopup}
           />
           <Divider />
         </>
@@ -143,7 +140,7 @@ const Main = () => {
     refreshCredentials,
   } = usePublicCredentials();
 
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const appCredentialSuccessfullyFetched =
     appCredentialData ||
@@ -227,12 +224,10 @@ const Main = () => {
 
   return (
     <>
-      {popup}
       <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
       </Title>
       <GmailJsonUploadSection
-        setPopup={setPopup}
         appCredentialData={appCredentialData}
         serviceAccountCredentialData={serviceAccountKeyData}
       />
@@ -241,7 +236,6 @@ const Main = () => {
         Step 2: Authenticate with enMedD AI
       </Title>
       <GmailOAuthSection
-        setPopup={setPopup}
         refreshCredentials={refreshCredentials}
         gmailPublicCredential={gmailPublicCredential}
         gmailServiceAccountCredential={gmailServiceAccountCredential}
@@ -259,7 +253,6 @@ const Main = () => {
         gmailConnectorIndexingStatus={gmailConnectorIndexingStatus}
         gmailConnectorIndexingStatuses={gmailConnectorIndexingStatuses}
         credentialIsLinked={credentialIsLinked}
-        setPopup={setPopup}
       />
     </>
   );

@@ -16,14 +16,12 @@ import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 type GoogleDriveCredentialJsonTypes = "authorized_user" | "service_account";
 
-const DriveJsonUpload = ({
-  setPopup,
-}: {
-  setPopup: (popupSpec: PopupSpec | null) => void;
-}) => {
+const DriveJsonUpload = () => {
+  const { toast } = useToast();
   const { mutate } = useSWRConfig();
   const [credentialJsonStr, setCredentialJsonStr] = useState<
     string | undefined
@@ -75,9 +73,10 @@ const DriveJsonUpload = ({
               );
             }
           } catch (e) {
-            setPopup({
-              message: `Invalid file provided - ${e}`,
-              type: "error",
+            toast({
+              title: "Error",
+              description: `Invalid file provided - ${e}`,
+              variant: "destructive",
             });
             return;
           }
@@ -94,15 +93,17 @@ const DriveJsonUpload = ({
               }
             );
             if (response.ok) {
-              setPopup({
-                message: "Successfully uploaded app credentials",
-                type: "success",
+              toast({
+                title: "Success",
+                description: "Successfully uploaded app credentials",
+                variant: "success",
               });
             } else {
               const errorMsg = await response.text();
-              setPopup({
-                message: `Failed to upload app credentials - ${errorMsg}`,
-                type: "error",
+              toast({
+                title: "Error",
+                description: `Failed to upload app credentials - ${errorMsg}`,
+                variant: "destructive",
               });
             }
             mutate("/api/manage/admin/connector/google-drive/app-credential");
@@ -120,15 +121,17 @@ const DriveJsonUpload = ({
               }
             );
             if (response.ok) {
-              setPopup({
-                message: "Successfully uploaded app credentials",
-                type: "success",
+              toast({
+                title: "Success",
+                description: "Successfully uploaded app credentials",
+                variant: "success",
               });
             } else {
               const errorMsg = await response.text();
-              setPopup({
-                message: `Failed to upload app credentials - ${errorMsg}`,
-                type: "error",
+              toast({
+                title: "Error",
+                description: `Failed to upload app credentials - ${errorMsg}`,
+                variant: "destructive",
               });
             }
             mutate(
@@ -144,17 +147,16 @@ const DriveJsonUpload = ({
 };
 
 interface DriveJsonUploadSectionProps {
-  setPopup: (popupSpec: PopupSpec | null) => void;
   appCredentialData?: { client_id: string };
   serviceAccountCredentialData?: { service_account_email: string };
 }
 
 export const DriveJsonUploadSection = ({
-  setPopup,
   appCredentialData,
   serviceAccountCredentialData,
 }: DriveJsonUploadSectionProps) => {
   const { mutate } = useSWRConfig();
+  const { toast } = useToast();
 
   if (serviceAccountCredentialData?.service_account_email) {
     return (
@@ -182,15 +184,17 @@ export const DriveJsonUploadSection = ({
               mutate(
                 "/api/manage/admin/connector/google-drive/service-account-key"
               );
-              setPopup({
-                message: "Successfully deleted service account key",
-                type: "success",
+              toast({
+                title: "Success",
+                description: "Successfully deleted service account key",
+                variant: "success",
               });
             } else {
               const errorMsg = await response.text();
-              setPopup({
-                message: `Failed to delete service account key - ${errorMsg}`,
-                type: "error",
+              toast({
+                title: "Error",
+                description: `Failed to delete service account key - ${errorMsg}`,
+                variant: "destructive",
               });
             }
           }}
@@ -223,15 +227,17 @@ export const DriveJsonUploadSection = ({
             );
             if (response.ok) {
               mutate("/api/manage/admin/connector/google-drive/app-credential");
-              setPopup({
-                message: "Successfully deleted service account key",
-                type: "success",
+              toast({
+                title: "Success",
+                description: "Successfully deleted service account key",
+                variant: "success",
               });
             } else {
               const errorMsg = await response.text();
-              setPopup({
-                message: `Failed to delete app credential - ${errorMsg}`,
-                type: "error",
+              toast({
+                title: "Error",
+                description: `Failed to delete app credential - ${errorMsg}`,
+                variant: "destructive",
               });
             }
           }}
@@ -260,7 +266,7 @@ export const DriveJsonUploadSection = ({
         Download the credentials JSON if choosing option (1) or the Service
         Account key JSON if chooosing option (2), and upload it here.
       </p>
-      <DriveJsonUpload setPopup={setPopup} />
+      <DriveJsonUpload />
     </div>
   );
 };
@@ -270,7 +276,6 @@ interface DriveCredentialSectionProps {
   googleDriveServiceAccountCredential?: Credential<GoogleDriveServiceAccountCredentialJson>;
   serviceAccountKeyData?: { service_account_email: string };
   appCredentialData?: { client_id: string };
-  setPopup: (popupSpec: PopupSpec | null) => void;
   refreshCredentials: () => void;
   connectorExists: boolean;
 }
@@ -280,11 +285,11 @@ export const DriveOAuthSection = ({
   googleDriveServiceAccountCredential,
   serviceAccountKeyData,
   appCredentialData,
-  setPopup,
   refreshCredentials,
   connectorExists,
 }: DriveCredentialSectionProps) => {
   const router = useRouter();
+  const { toast } = useToast();
 
   const existingCredential =
     googleDrivePublicCredential || googleDriveServiceAccountCredential;
@@ -297,17 +302,19 @@ export const DriveOAuthSection = ({
         <Button
           onClick={async () => {
             if (connectorExists) {
-              setPopup({
-                message:
+              toast({
+                title: "Error",
+                description:
                   "Cannot revoke access to Google Drive while any connector is still setup. Please delete all connectors, then try again.",
-                type: "error",
+                variant: "destructive",
               });
               return;
             }
             await adminDeleteCredential(existingCredential.id);
-            setPopup({
-              message: "Successfully revoked access to Google Drive!",
-              type: "success",
+            toast({
+              title: "Success",
+              description: "Successfully revoked access to Google Drive!",
+              variant: "success",
             });
             refreshCredentials();
           }}
@@ -360,15 +367,18 @@ export const DriveOAuthSection = ({
                 );
 
                 if (response.ok) {
-                  setPopup({
-                    message: "Successfully created service account credential",
-                    type: "success",
+                  toast({
+                    title: "Success",
+                    description:
+                      "Successfully created service account credential",
+                    variant: "success",
                   });
                 } else {
                   const errorMsg = await response.text();
-                  setPopup({
-                    message: `Failed to create service account credential - ${errorMsg}`,
-                    type: "error",
+                  toast({
+                    title: "Error",
+                    description: `Failed to create service account credential - ${errorMsg}`,
+                    variant: "destructive",
                   });
                 }
                 refreshCredentials();
@@ -424,9 +434,10 @@ export const DriveOAuthSection = ({
               return;
             }
 
-            setPopup({
-              message: errorMsg,
-              type: "error",
+            toast({
+              title: "Error",
+              description: errorMsg,
+              variant: "destructive",
             });
           }}
         >

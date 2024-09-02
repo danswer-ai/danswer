@@ -38,7 +38,6 @@ import {
   useScrollonStream,
 } from "./lib";
 import { useContext, useEffect, useRef, useState } from "react";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
 import { useFilters, useLlmOverride } from "@/lib/hooks";
@@ -81,6 +80,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import TopBar from "@/components/TopBar";
+import { useToast } from "@/hooks/use-toast";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -136,7 +136,7 @@ export function ChatPage({
   // are run twice on initial load during development
   const submitOnLoadPerformed = useRef<boolean>(false);
 
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   // fetch messages for the chat session
   const [isFetchingChatMessages, setIsFetchingChatMessages] = useState(
@@ -684,10 +684,11 @@ export function ChatPage({
       ? messageHistory.indexOf(messageToResend)
       : null;
     if (!messageToResend && messageIdToResend !== undefined) {
-      setPopup({
-        message:
+      toast({
+        title: "Error",
+        description:
           "Failed to re-send message - please refresh the page and try again.",
-        type: "error",
+        variant: "destructive",
       });
       return;
     }
@@ -968,16 +969,18 @@ export function ChatPage({
     );
 
     if (response.ok) {
-      setPopup({
-        message: "Thanks for your feedback!",
-        type: "success",
+      toast({
+        title: "Success",
+        description: "Thanks for your feedback!",
+        variant: "success",
       });
     } else {
       const responseJson = await response.json();
       const errorMsg = responseJson.detail || responseJson.message;
-      setPopup({
-        message: `Failed to submit feedback - ${errorMsg}`,
-        type: "error",
+      toast({
+        title: "Error",
+        description: `Failed to submit feedback - ${errorMsg}`,
+        variant: "destructive",
       });
     }
   };
@@ -1000,10 +1003,11 @@ export function ChatPage({
       file.type.startsWith("image/")
     );
     if (imageFiles.length > 0 && !llmAcceptsImages) {
-      setPopup({
-        type: "error",
-        message:
+      toast({
+        title: "Error",
+        description:
           "The current Assistant does not support image input. Please select an assistant with Vision support.",
+        variant: "destructive",
       });
       return;
     }
@@ -1031,9 +1035,10 @@ export function ChatPage({
     uploadFilesForChat(acceptedFiles).then(([files, error]) => {
       if (error) {
         setCurrentMessageFiles((prev) => removeTempFiles(prev));
-        setPopup({
-          type: "error",
-          message: error,
+        toast({
+          title: "Error",
+          description: error,
+          variant: "destructive",
         });
       } else {
         setCurrentMessageFiles((prev) => [...removeTempFiles(prev), ...files]);
@@ -1169,7 +1174,6 @@ export function ChatPage({
         </DynamicSidebar>
 
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
-          {popup}
           {currentFeedback && (
             <FeedbackModal
               feedbackType={currentFeedback[0]}
@@ -1389,10 +1393,11 @@ export function ChatPage({
                                     !isStreaming
                                       ? (newQuery) => {
                                           if (!previousMessage) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
+                                            toast({
+                                              title: "Error",
+                                              description:
                                                 "Cannot edit query of first message - please refresh the page and try again.",
+                                              variant: "destructive",
                                             });
                                             return;
                                           }
@@ -1400,10 +1405,11 @@ export function ChatPage({
                                           if (
                                             previousMessage.messageId === null
                                           ) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
+                                            toast({
+                                              title: "Error",
+                                              description:
                                                 "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                              variant: "destructive",
                                             });
                                             return;
                                           }
@@ -1446,10 +1452,11 @@ export function ChatPage({
                                           currentAlternativeAssistant,
                                       });
                                     } else {
-                                      setPopup({
-                                        type: "error",
-                                        message:
+                                      toast({
+                                        title: "Error",
+                                        description:
                                           "Failed to force search - please refresh the page and try again.",
+                                        variant: "destructive",
                                       });
                                     }
                                   }}

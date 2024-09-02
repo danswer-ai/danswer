@@ -8,7 +8,6 @@ import {
   useUserGroups,
 } from "@/lib/hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { useRouter } from "next/navigation";
@@ -18,7 +17,6 @@ import { Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 function Main() {
-  const { popup, setPopup } = usePopup();
   const router = useRouter();
 
   const {
@@ -45,8 +43,6 @@ function Main() {
 
   return (
     <>
-      {popup}
-
       <Card>
         <CardContent>
           <DocumentSetCreationForm
@@ -56,7 +52,6 @@ function Main() {
               refreshDocumentSets();
               router.push("/admin/documents/sets");
             }}
-            setPopup={setPopup}
           />
         </CardContent>
       </Card>

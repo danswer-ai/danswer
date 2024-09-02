@@ -3,15 +3,10 @@
 import * as Yup from "yup";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { Modal } from "@/components/Modal";
 import { Form, Formik } from "formik";
-import {
-  SelectorFormField,
-  TextFormField,
-} from "@/components/admin/connectors/Field";
+import { SelectorFormField } from "@/components/admin/connectors/Field";
 import { UserGroup } from "@/lib/types";
 import { Scope } from "./types";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateRateLimitModalProps {
   onSubmit: (
@@ -31,14 +27,12 @@ interface CreateRateLimitModalProps {
     token_budget: number,
     group_id: number
   ) => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   forSpecificScope?: Scope;
   forSpecificUserGroup?: number;
 }
 
 export const CreateRateLimitModal = ({
   onSubmit,
-  setPopup,
   forSpecificScope,
   forSpecificUserGroup,
 }: CreateRateLimitModalProps) => {
@@ -46,6 +40,7 @@ export const CreateRateLimitModal = ({
   const [shouldFetchUserGroups, setShouldFetchUserGroups] = useState(
     forSpecificScope === Scope.USER_GROUP
   );
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,9 +55,10 @@ export const CreateRateLimitModal = ({
         setModalUserGroups(options);
         setShouldFetchUserGroups(false);
       } catch (error) {
-        setPopup({
-          type: "error",
-          message: `Failed to fetch user groups: ${error}`,
+        toast({
+          title: "Error",
+          description: `Failed to fetch user groups: ${error}`,
+          variant: "destructive",
         });
       }
     };
@@ -70,7 +66,7 @@ export const CreateRateLimitModal = ({
     if (shouldFetchUserGroups) {
       fetchData();
     }
-  }, [shouldFetchUserGroups, setPopup]);
+  }, [shouldFetchUserGroups]);
 
   return (
     <div className="mt-3">

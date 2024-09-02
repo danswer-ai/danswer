@@ -182,6 +182,8 @@ const config = {
         popout: "800",
         toast: "900",
         modal: "1000",
+        notification: "1100",
+        loading: "1200",
       },
       screens: {
         "2xl": "1420px",

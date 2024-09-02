@@ -12,13 +12,11 @@ import { BookmarkIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
 import { DocumentSetCreationForm } from "../DocumentSetCreationForm";
 import { useRouter } from "next/navigation";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 function Main({ documentSetId }: { documentSetId: number }) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
 
   const {
     data: documentSets,
@@ -71,8 +69,6 @@ function Main({ documentSetId }: { documentSetId: number }) {
 
   return (
     <div>
-      {popup}
-
       <AdminPageTitle icon={<Bookmark size={32} />} title={documentSet.name} />
 
       <Card>
@@ -84,7 +80,6 @@ function Main({ documentSetId }: { documentSetId: number }) {
               refreshDocumentSets();
               router.push("/admin/documents/sets");
             }}
-            setPopup={setPopup}
             existingDocumentSet={documentSet}
           />
         </CardContent>

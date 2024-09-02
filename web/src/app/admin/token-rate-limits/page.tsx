@@ -10,11 +10,11 @@ import {
 import { Scope, TokenRateLimit } from "./types";
 import { GenericTokenRateLimitTable } from "./TokenRateLimitTables";
 import { mutate } from "swr";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { CreateRateLimitModal } from "./CreateRateLimitModal";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, Shield, User, Users } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const BASE_URL = "/api/admin/token-rate-limits";
 const GLOBAL_TOKEN_FETCH_URL = `${BASE_URL}/global`;
@@ -58,7 +58,7 @@ const handleCreateTokenRateLimit = async (
 
 function Main() {
   const [tabIndex, setTabIndex] = useState(0);
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
@@ -88,18 +88,24 @@ function Main() {
       group_id
     )
       .then(() => {
-        setPopup({ type: "success", message: "Token rate limit created!" });
+        toast({
+          title: "Success",
+          description: "Token rate limit created!",
+          variant: "success",
+        });
         updateTable(target_scope);
       })
       .catch((error) => {
-        setPopup({ type: "error", message: error.message });
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
       });
   };
 
   return (
     <div>
-      {popup}
-
       <p className="mb-2">
         Token rate limits enable you control how many tokens can be spent in a
         given time period. With token rate limits, you can:
@@ -126,7 +132,6 @@ function Main() {
       </ul>
 
       <CreateRateLimitModal
-        setPopup={setPopup}
         onSubmit={handleSubmit}
         forSpecificScope={
           isPaidEnterpriseFeaturesEnabled ? undefined : Scope.GLOBAL

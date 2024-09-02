@@ -30,7 +30,7 @@ export function FullImageModal({
             items-center 
             justify-center
             p-4 
-            z-[100] 
+            z-masked
             max-w-screen-lg 
             h-fit 
             top-1/2 

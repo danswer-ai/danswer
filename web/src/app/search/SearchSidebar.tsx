@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Search,
   MessageCircleMore,
   Headset,
   PanelLeftClose,
 } from "lucide-react";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePopup } from "@/components/admin/connectors/Popup";
 
 import EnmeddLogo from "../../../public/logo-brand.png";
 import { HeaderTitle } from "@/components/header/Header";
@@ -29,8 +28,6 @@ export const SearchSidebar = ({
   openSidebar?: boolean;
   toggleSideBar?: () => void;
 }) => {
-  const { popup, setPopup } = usePopup();
-
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -40,7 +37,6 @@ export const SearchSidebar = ({
 
   return (
     <>
-      {popup}
       <div
         className={`
             flex-col 

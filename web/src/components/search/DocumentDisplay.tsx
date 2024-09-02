@@ -1,8 +1,6 @@
 import { EnmeddDocument } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { useState } from "react";
-import { PopupSpec } from "../admin/connectors/Popup";
-import { HoverPopup } from "@/components/HoverPopup";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { FiInfo, FiRadio, FiTag } from "react-icons/fi";
 import { SourceIcon } from "../SourceIcon";
@@ -148,7 +146,6 @@ interface DocumentDisplayProps {
   messageId: number | null;
   documentRank: number;
   isSelected: boolean;
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const DocumentDisplay = ({
@@ -156,7 +153,6 @@ export const DocumentDisplay = ({
   messageId,
   documentRank,
   isSelected,
-  setPopup,
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
 

@@ -3,9 +3,9 @@ import { CreateRateLimitModal } from "../../../../admin/token-rate-limits/Create
 import { Scope } from "../../../../admin/token-rate-limits/types";
 import { insertGroupTokenRateLimit } from "../../../../admin/token-rate-limits/lib";
 import { mutate } from "swr";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddMemberFormProps {
-  setPopup: (popupSpec: PopupSpec | null) => void;
   userGroupId: number;
 }
 
@@ -23,9 +23,10 @@ const handleCreateGroupTokenRateLimit = async (
 };
 
 export const AddTokenRateLimitForm: React.FC<AddMemberFormProps> = ({
-  setPopup,
   userGroupId,
 }) => {
+  const { toast } = useToast();
+
   const handleSubmit = (
     _: Scope,
     period_hours: number,
@@ -34,18 +35,25 @@ export const AddTokenRateLimitForm: React.FC<AddMemberFormProps> = ({
   ) => {
     handleCreateGroupTokenRateLimit(period_hours, token_budget, group_id)
       .then(() => {
-        setPopup({ type: "success", message: "Token rate limit created!" });
+        toast({
+          title: "Success",
+          description: "Token rate limit created!",
+          variant: "success",
+        });
         mutate(`/api/admin/token-rate-limits/user-group/${userGroupId}`);
       })
       .catch((error) => {
-        setPopup({ type: "error", message: error.message });
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
       });
   };
 
   return (
     <CreateRateLimitModal
       onSubmit={handleSubmit}
-      setPopup={setPopup}
       forSpecificScope={Scope.USER_GROUP}
       forSpecificUserGroup={userGroupId}
     />

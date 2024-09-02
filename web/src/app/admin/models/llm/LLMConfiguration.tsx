@@ -7,7 +7,6 @@ import useSWR from "swr";
 import { Callout } from "@tremor/react";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { LLMProviderUpdateForm } from "./LLMProviderUpdateForm";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import { CustomLLMProviderUpdateForm } from "./CustomLLMProviderUpdateForm";
@@ -20,13 +19,11 @@ function LLMProviderUpdateModal({
   onClose,
   existingLlmProvider,
   shouldMarkAsDefault,
-  setPopup,
 }: {
   llmProviderDescriptor: WellKnownLLMProviderDescriptor | null;
   onClose: () => void;
   existingLlmProvider?: FullLLMProvider;
   shouldMarkAsDefault?: boolean;
-  setPopup?: (popup: PopupSpec) => void;
 }) {
   const providerName =
     llmProviderDescriptor?.display_name ||
@@ -42,14 +39,12 @@ function LLMProviderUpdateModal({
           onClose={onClose}
           existingLlmProvider={existingLlmProvider}
           shouldMarkAsDefault={shouldMarkAsDefault}
-          setPopup={setPopup}
         />
       ) : (
         <CustomLLMProviderUpdateForm
           onClose={onClose}
           existingLlmProvider={existingLlmProvider}
           shouldMarkAsDefault={shouldMarkAsDefault}
-          setPopup={setPopup}
         />
       )}
     </div>
@@ -64,7 +59,6 @@ function DefaultLLMProviderDisplay({
   shouldMarkAsDefault?: boolean;
 }) {
   const [formIsVisible, setFormIsVisible] = useState(false);
-  const { popup, setPopup } = usePopup();
 
   const providerName =
     llmProviderDescriptor?.display_name || llmProviderDescriptor?.name;
@@ -74,29 +68,25 @@ function DefaultLLMProviderDisplay({
   };
 
   return (
-    <div>
-      {popup}
-      <div className="flex p-3 border rounded shadow-sm border-border md:w-96">
-        <div className="my-auto">
-          <div className="font-bold">{providerName} </div>
-        </div>
+    <div className="flex p-3 border rounded shadow-sm border-border md:w-96">
+      <div className="my-auto">
+        <div className="font-bold">{providerName} </div>
+      </div>
 
-        <div className="ml-auto">
-          <CustomModal
-            trigger={
-              <Button onClick={() => setFormIsVisible(true)}>Set up</Button>
-            }
-            open={formIsVisible}
+      <div className="ml-auto">
+        <CustomModal
+          trigger={
+            <Button onClick={() => setFormIsVisible(true)}>Set up</Button>
+          }
+          open={formIsVisible}
+          onClose={handleClose}
+        >
+          <LLMProviderUpdateModal
+            llmProviderDescriptor={llmProviderDescriptor}
             onClose={handleClose}
-          >
-            <LLMProviderUpdateModal
-              llmProviderDescriptor={llmProviderDescriptor}
-              onClose={handleClose}
-              shouldMarkAsDefault={shouldMarkAsDefault}
-              setPopup={setPopup}
-            />
-          </CustomModal>
-        </div>
+            shouldMarkAsDefault={shouldMarkAsDefault}
+          />
+        </CustomModal>
       </div>
     </div>
   );

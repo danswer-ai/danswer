@@ -8,10 +8,10 @@ import { UserEditor } from "./UserEditor";
 import { ConnectorEditor } from "./ConnectorEditor";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserGroupCreationFormProps {
   onClose: () => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   users: User[];
   ccPairs: ConnectorIndexingStatus<any, any>[];
   existingUserGroup?: UserGroup;
@@ -19,12 +19,12 @@ interface UserGroupCreationFormProps {
 
 export const UserGroupCreationForm = ({
   onClose,
-  setPopup,
   users,
   ccPairs,
   existingUserGroup,
 }: UserGroupCreationFormProps) => {
   const isUpdate = existingUserGroup !== undefined;
+  const { toast } = useToast();
 
   return (
     <Modal onOutsideClick={onClose}>
@@ -50,21 +50,23 @@ export const UserGroupCreationForm = ({
             response = await createUserGroup(values);
             formikHelpers.setSubmitting(false);
             if (response.ok) {
-              setPopup({
-                message: isUpdate
+              toast({
+                title: "Success",
+                description: isUpdate
                   ? "Successfully updated user group!"
                   : "Successfully created user group!",
-                type: "success",
+                variant: "success",
               });
               onClose();
             } else {
               const responseJson = await response.json();
               const errorMsg = responseJson.detail || responseJson.message;
-              setPopup({
-                message: isUpdate
+              toast({
+                title: "Error",
+                description: isUpdate
                   ? `Error updating user group - ${errorMsg}`
                   : `Error creating user group - ${errorMsg}`,
-                type: "error",
+                variant: "destructive",
               });
             }
           }}
