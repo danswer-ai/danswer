@@ -272,6 +272,11 @@ class SearchPipeline:
             (chunk.document_id, chunk.chunk_id): chunk for chunk in inference_chunks
         }
 
+        # In case of failed parallel calls to Vespa, at least we should have the initial retrieved chunks
+        doc_chunk_ind_to_chunk.update(
+            {(chunk.document_id, chunk.chunk_id): chunk for chunk in retrieved_chunks}
+        )
+
         # Build the surroundings for all of the initial retrieved chunks
         for chunk in retrieved_chunks:
             start_ind = max(0, chunk.chunk_id - above)
