@@ -385,7 +385,7 @@ def batch_search_api_retrieval(
     capped_requests: list[VespaChunkRequest] = []
     uncapped_requests: list[VespaChunkRequest] = []
     chunk_count = 0
-    for req_ind, request in enumerate(chunk_requests):
+    for req_ind, request in enumerate(chunk_requests, start=1):
         # All requests without a chunk range are uncapped
         # Uncapped requests are retrieved using the Visit API
         range = request.range
