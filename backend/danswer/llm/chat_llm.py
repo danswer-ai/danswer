@@ -372,9 +372,10 @@ class DefaultMultiLLM(LLM):
                     stop_reason=choice["finish_reason"],
                 )
 
-                output = (
-                    message_chunk if output is None else output.combine(message_chunk)
-                )
+                if output is None:
+                    output = message_chunk
+                else:
+                    output += message_chunk
 
                 yield message_chunk
 
