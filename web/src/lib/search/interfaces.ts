@@ -17,12 +17,15 @@ export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
 export interface AnswerPiecePacket {
   answer_piece: string;
-  stop_reason: StopReason | null;
 }
 
-export enum StopReason {
-  LENGTH_LIMIT = "length",
-  CANCELLED = "cancelled",
+export enum StreamStopReason {
+  CONTEXT_LENGTH = "CONTEXT_LENGTH",
+  CANCELLED = "CANCELLED",
+}
+
+export interface StreamStopInfo {
+  stop_reason: StreamStopReason;
 }
 
 export interface ErrorMessagePacket {

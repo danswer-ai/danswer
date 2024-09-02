@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from datetime import datetime
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
@@ -44,9 +45,18 @@ class QADocsResponse(RetrievalDocs):
         return initial_dict
 
 
-class MessageChunkWithStopReason(BaseModel):
-    content: str
-    stop_reason: str | None = None
+class StreamStopReason(Enum):
+    CONTEXT_LENGTH = "context_length"
+    CANCELLED = "cancelled"
+
+
+class StreamStopInfo(BaseModel):
+    stop_reason: StreamStopReason
+
+    def model_dump(self, *args, **kwargs):
+        data = super().model_dump(*args, **kwargs)
+        data["stop_reason"] = self.stop_reason.name
+        return data
 
 
 class LLMRelevanceFilterResponse(BaseModel):
@@ -74,9 +84,6 @@ class DocumentRelevance(BaseModel):
 class DanswerAnswerPiece(BaseModel):
     # A small piece of a complete answer. Used for streaming back answers.
     answer_piece: str | None  # if None, specifies the end of an Answer
-    stop_reason: str | None = (
-        None  # Reason for stopping the answer generation, if applicable
-    )
 
 
 # An intermediate representation of citations, later translated into

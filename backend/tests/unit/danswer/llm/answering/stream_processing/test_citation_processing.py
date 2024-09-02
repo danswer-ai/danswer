@@ -5,12 +5,12 @@ import pytest
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
-from danswer.chat.models import MessageChunkWithStopReason
 from danswer.configs.constants import DocumentSource
 from danswer.llm.answering.stream_processing.citation_processing import (
     extract_citations_from_stream,
 )
 from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
+
 
 """
 This module contains tests for the citation extraction functionality in Danswer.
@@ -66,8 +66,7 @@ def mock_data() -> tuple[list[LlmDoc], dict[str, int]]:
 
 
 def process_text(
-    tokens: list[MessageChunkWithStopReason],
-    mock_data: tuple[list[LlmDoc], dict[str, int]],
+    tokens: list[str], mock_data: tuple[list[LlmDoc], dict[str, int]]
 ) -> tuple[str, list[CitationInfo]]:
     mock_docs, mock_doc_id_to_rank_map = mock_data
     mapping = DocumentIdOrderMapping(order_mapping=mock_doc_id_to_rank_map)
@@ -296,9 +295,7 @@ def test_citation_extraction(
     expected_text: str,
     expected_citations: list[str],
 ) -> None:
-    # Turn string into MessageChunkWithStopReason
-    input_chunks = [MessageChunkWithStopReason(content=token) for token in input_tokens]
-    final_answer_text, citations = process_text(input_chunks, mock_data)
+    final_answer_text, citations = process_text(input_tokens, mock_data)
     assert (
         final_answer_text.strip() == expected_text.strip()
     ), f"Test '{test_name}' failed: Final answer text does not match expected output."

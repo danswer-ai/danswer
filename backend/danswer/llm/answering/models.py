@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from collections.abc import Iterator
-from enum import Enum
 from typing import TYPE_CHECKING
 
 from langchain.schema.messages import AIMessage
@@ -13,7 +12,6 @@ from pydantic import Field
 from pydantic import model_validator
 
 from danswer.chat.models import AnswerQuestionStreamReturn
-from danswer.chat.models import MessageChunkWithStopReason
 from danswer.configs.constants import MessageType
 from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.override_models import PromptOverride
@@ -25,9 +23,7 @@ if TYPE_CHECKING:
     from danswer.db.models import Prompt
 
 
-StreamProcessor = Callable[
-    [Iterator[MessageChunkWithStopReason]], AnswerQuestionStreamReturn
-]
+StreamProcessor = Callable[[Iterator[str]], AnswerQuestionStreamReturn]
 
 
 class PreviousMessage(BaseModel):
@@ -162,8 +158,3 @@ class PromptConfig(BaseModel):
         )
 
     model_config = ConfigDict(frozen=True)
-
-
-class StopReason(Enum):
-    LENGTH_LIMIT = "length_limit"
-    CANCELLED = "cancelled"

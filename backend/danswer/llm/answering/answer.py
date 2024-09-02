@@ -12,7 +12,8 @@ from danswer.chat.models import AnswerQuestionPossibleReturn
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
-from danswer.chat.models import MessageChunkWithStopReason
+from danswer.chat.models import StreamStopInfo
+from danswer.chat.models import StreamStopReason
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
 from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.models import AnswerStyleConfig
@@ -192,10 +193,7 @@ class Answer:
     def _raw_output_for_explicit_tool_calling_llms(
         self,
     ) -> Iterator[
-        MessageChunkWithStopReason
-        | ToolCallKickoff
-        | ToolResponse
-        | ToolCallFinalResult
+        str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallFinalResult
     ]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
 
@@ -244,19 +242,18 @@ class Answer:
                     else:
                         tool_call_chunk += message  # type: ignore
                 else:
-                    if "content" in message.__dict__:
-                        stop_reason = None
-
-                        keyword_arguments = message.additional_kwargs
-
-                        if (
-                            "usage_metadata" in keyword_arguments
-                            and "stop" in keyword_arguments["usage_metadata"]
-                        ):
-                            stop_reason = keyword_arguments["usage_metadata"]["stop"]
-
-                        yield MessageChunkWithStopReason(
-                            content=cast(str, message.content), stop_reason=stop_reason
+                    if message.content:
+                        if self.is_cancelled:
+                            return StreamStopInfo(
+                                stop_reason=StreamStopReason.CANCELLED
+                            )
+                        yield cast(str, message.content)
+                    if (
+                        message.additional_kwargs.get("usage_metadata", {}).get("stop")
+                        == "length"
+                    ):
+                        yield StreamStopInfo(
+                            stop_reason=StreamStopReason.CONTEXT_LENGTH
                         )
 
             if not tool_call_chunk:
@@ -321,9 +318,9 @@ class Answer:
                 )
             ):
                 if self.is_cancelled:
-                    return
+                    return StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
 
-                yield MessageChunkWithStopReason(content=token)
+                yield cast(str, token)
 
             return
 
@@ -408,7 +405,7 @@ class Answer:
                 self.llm.stream(prompt=prompt)
             ):
                 if self.is_cancelled:
-                    return
+                    return StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
                 yield token
 
             return
@@ -487,9 +484,7 @@ class Answer:
         )
 
         def _process_stream(
-            stream: Iterator[
-                ToolCallKickoff | ToolResponse | str | MessageChunkWithStopReason
-            ],
+            stream: Iterator[ToolCallKickoff | ToolResponse | str | StreamStopInfo],
         ) -> AnswerStream:
             message = None
 
@@ -548,6 +543,11 @@ class Answer:
                         yield cast(str, message)
                     yield from cast(Iterator[str], stream)
 
+                # for token in _stream():
+                #     if isinstance(token, StreamStopInfo):
+                #         yield token
+                #     else:
+                #         yield process_answer_stream_fn(token)
                 yield from process_answer_stream_fn(_stream())
 
         processed_stream = []

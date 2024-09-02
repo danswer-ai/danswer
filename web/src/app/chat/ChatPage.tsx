@@ -68,7 +68,8 @@ import { StarterMessage } from "./StarterMessage";
 import {
   AnswerPiecePacket,
   DanswerDocument,
-  StopReason,
+  StreamStopInfo,
+  StreamStopReason,
 } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
@@ -98,6 +99,7 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
+import { Stop } from "@phosphor-icons/react";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1010,7 +1012,7 @@ export function ChatPage({
 
     let answer = "";
 
-    let stopReason: StopReason | null = null;
+    let stopReason: StreamStopReason | null = null;
     let query: string | null = null;
     let retrievalType: RetrievalType =
       selectedDocuments.length > 0
@@ -1163,10 +1165,6 @@ export function ChatPage({
 
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
-              stopReason = (packet as AnswerPiecePacket).stop_reason;
-              if (stopReason === StopReason.LENGTH_LIMIT) {
-                updateCanContinue(true, frozenSessionId);
-              }
             } else if (Object.hasOwn(packet, "top_documents")) {
               documents = (packet as DocumentsResponse).top_documents;
               retrievalType = RetrievalType.Search;
@@ -1211,6 +1209,15 @@ export function ChatPage({
               stackTrace = (packet as StreamingError).stack_trace;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
+            } else if (Object.hasOwn(packet, "stop_reason")) {
+              const stop_reason = (packet as StreamStopInfo).stop_reason;
+              if (stop_reason === StreamStopReason.CONTEXT_LENGTH) {
+                stopReason = StreamStopReason.CONTEXT_LENGTH;
+                updateCanContinue(true, frozenSessionId);
+                console.log("UPDATING CAN CONTINUE go");
+              } else if (stop_reason === StreamStopReason.CANCELLED) {
+                stopReason = StreamStopReason.CANCELLED;
+              }
             }
 
             // on initial message send, we insert a dummy system message
