@@ -55,7 +55,7 @@ export function UserDropdown({
               className="flex cursor-pointer"
             >
               <div className="my-auto bg-user hover:bg-user-hover rounded-lg px-2 text-base font-normal">
-                {user && user.email ? user.email[0].toUpperCase() : "A"}
+                {user && user.email ? user.email : "A"}
               </div>
             </div>
           </BasicSelectable>

@@ -2,75 +2,73 @@ import json
 from collections.abc import Generator
 from typing import Any
 from typing import cast
+
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from danswer.dynamic_configs.interface import JSON_ro
+from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.answering.prompts.build import AnswerPromptBuilder, default_build_system_message, \
     default_build_user_message
-from danswer.llm.utils import message_to_string, message_generator_to_string_generator
+from danswer.llm.utils import message_to_string
+from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
-from danswer.db.models import Persona
+from danswer.db.models import Persona, ChatMessage
 from danswer.db.models import User
 from danswer.llm.answering.models import PromptConfig, PreviousMessage
 from danswer.llm.interfaces import LLMConfig, LLM
-from danswer.tools.email.send_email import EmailService
 
 logger = setup_logger()
 
-COMPOSE_EMAIL_RESPONSE_ID = "compose_email_response"
+EXCEL_ANALYZER_RESPONSE_ID = "excel_analyzer_response"
 
-Compose_email_tool_description = """
-Runs query on LLM to compose email. 
-HINT: if input question as about composing or drafting an email, then use this tool.
+EXCEL_ANALYZER_TOOL_DESCRIPTION = """
+Runs query on LLM to get Excel. 
+HINT: if input question as about Excel generation use this tool.
 """
 
-Compose_Email_TEMPLATE = f"""
-provide email subject always in this format, **Subject**
+SUMMARIZATION_PROMPT_FOR_TABULAR_DATA = """Your Knowledge expert acting as data analyst, your responsible for generating short summary in 100 words based on give tabular data.
+Give tabular data is out of this query {}
+Tabular data is {}
 
-example:
+analyze above tabular data and user query, try to identify domain data and provide title and summary in paragraphs and bullet points, DONT USE YOUR EXISTING KNOWLEDGE.
 
-**Subject**: Sick Leave
-Dear Hr,
-I am on sick leave for 2 days starting from today,
-
-Regards,
-Name
-""".strip()
-
-COMPOSE_EMAIL_PROMPT = """You are a professional email writing assistant that always uses a polite enthusiastic tone, 
-emphasizes action items, and leaves blanks for the human to fill in when you have unknowns.
-
-QUERY: <USER_QUERY>
-RESPONSE:"""
+"""
 
 
-class ComposeEmailResponse(BaseModel):
-    Summary: str | None = None
+class ExcelAnalyzerResponse(BaseModel):
+    db_response: str | None = None
 
 
-class ComposeEmailTool(Tool):
-    _NAME = "run_compose_email"
-    _DESCRIPTION = Compose_email_tool_description
-    _DISPLAY_NAME = "Compose Email Tool"
+class ExcelAnalyzerTool(Tool):
+    _NAME = "Tabular_Analyzer"
+    _DESCRIPTION = EXCEL_ANALYZER_TOOL_DESCRIPTION
+    _DISPLAY_NAME = "Tabular Analyzer Tool"
 
     def __init__(
             self,
+            history: list[PreviousMessage],
+            db_session: Session,
             user: User | None,
             persona: Persona,
             prompt_config: PromptConfig,
             llm_config: LLMConfig,
-            llm: LLM | None
+            llm: LLM | None,
+            files: list[InMemoryChatFile] | None,
+            metadata: dict | None
+
     ) -> None:
-        self.history = None
+        self.history = history
+        self.db_session = db_session
         self.user = user
         self.persona = persona
         self.prompt_config = prompt_config
         self.llm_config = llm_config
         self.llm = llm
-
-        logger.info(f"Logged in user details: {'not logged in' if self.user is None else self.user.email}")
+        self.files = files
+        self.metadata = metadata
 
     @property
     def name(self) -> str:
@@ -97,7 +95,7 @@ class ComposeEmailTool(Tool):
                     "properties": {
                         "prompt": {
                             "type": "string",
-                            "description": "Prompt used to Compose the Email",
+                            "description": "Prompt used to analyze the excel table data",
                         },
                     },
                     "required": ["prompt"],
@@ -112,63 +110,58 @@ class ComposeEmailTool(Tool):
             llm: LLM,
             force_run: bool = False,
     ) -> dict[str, Any] | None:
-        args = {"query": query}
-        self.history = history
-        return args
+        if not force_run:
+            return None
+
+        rephrased_query = history_based_query_rephrase(
+            query=query, history=history, llm=llm
+        )
+        return {"query": rephrased_query}
 
     def build_tool_message_content(
             self, *args: ToolResponse
     ) -> str | list[str | dict[str, Any]]:
-        compose_email_response = args[0]
-        compose_email_text = cast(
-            list[ComposeEmailResponse], compose_email_response.response
+        generation_response = args[0]
+        tool_text_generations = cast(
+            list[ExcelAnalyzerResponse], generation_response.response
         )
         return json.dumps(
             {
                 "search_results": [
                     {
-                        Compose_email.Summary
+                        tool_generation.db_response
                     }
-                    for Compose_email in compose_email_text
+                    for tool_generation in tool_text_generations
                 ]
             }
         )
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
-
-        logger.info(f"Email plugin - mail composing started")
-
         query = cast(str, kwargs["query"])
 
         prompt_builder = AnswerPromptBuilder(self.history, self.llm_config)
-
         prompt_builder.update_system_prompt(
             default_build_system_message(self.prompt_config)
         )
-
         prompt_builder.update_user_prompt(
             default_build_user_message(
-                user_query=query, prompt_config=self.prompt_config, files=[]
+                user_query=query, prompt_config=self.prompt_config, files=self.files
             )
         )
         prompt = prompt_builder.build()
-
-        mail_response = message_to_string(
-            self.llm.invoke(prompt=prompt)
+        tool_output = message_to_string(
+            self.llm.invoke(prompt=prompt, metadata=self.metadata)
         )
-
-        logger.info(f"Email plugin - mail composing completed")
-
         yield ToolResponse(
-            id=COMPOSE_EMAIL_RESPONSE_ID,
-            response=mail_response
+            id=EXCEL_ANALYZER_RESPONSE_ID,
+            response=tool_output
         )
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
-        composed_email_response = cast(
+        tool_generation_response = cast(
             list[ToolResponse], args[0].response
         )
         # NOTE: need to do this json.loads(doc.json()) stuff because there are some
         # subfields that are not serializable by default (datetime)
         # this forces pydantic to make them JSON serializable for us
-        return composed_email_response
+        return tool_generation_response

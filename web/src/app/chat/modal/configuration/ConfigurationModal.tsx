@@ -98,24 +98,24 @@ export function ConfigurationModal({
         <div className="mb-4">
           <div className="flex border-b border-border bg-background-emphasis">
             <div className="flex px-6 gap-x-2">
-              <TabButton
-                label="Assistants"
-                icon={FaBrain}
-                isActive={activeTab === "assistants"}
-                onClick={() => setActiveTab("assistants")}
-              />
+              {/*<TabButton*/}
+              {/*  label="Assistants"*/}
+              {/*  icon={FaBrain}*/}
+              {/*  isActive={activeTab === "assistants"}*/}
+              {/*  onClick={() => setActiveTab("assistants")}*/}
+              {/*/>*/}
               <TabButton
                 label="Models"
                 icon={FiCpu}
                 isActive={activeTab === "llms"}
                 onClick={() => setActiveTab("llms")}
               />
-              <TabButton
-                label="Filters"
-                icon={FiFilter}
-                isActive={activeTab === "filters"}
-                onClick={() => setActiveTab("filters")}
-              />
+              {/*<TabButton*/}
+              {/*  label="Filters"*/}
+              {/*  icon={FiFilter}*/}
+              {/*  isActive={activeTab === "filters"}*/}
+              {/*  onClick={() => setActiveTab("filters")}*/}
+              {/*/>*/}
             </div>
             <button
               className="

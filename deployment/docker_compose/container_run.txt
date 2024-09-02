@@ -1,0 +1,13 @@
+To make spectra containers up
+=============================
+(cpu)docker compose -f docker-compose.dev.new.yml -p docudive-stack up -d
+(gpu)docker compose -f docker-compose.dev.new.gpu.yml -p docudive-stack up -d
+
+check all container status
+=========================
+docker container ls
+
+To down spectra containers 
+=============================
+(cpu)docker compose -f docker-compose.dev.new.yml -p docudive-stack down
+(gpu)docker compose -f docker-compose.dev.new.gpu.yml -p docudive-stack down

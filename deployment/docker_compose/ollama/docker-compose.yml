@@ -1,0 +1,23 @@
+version: '3.8'  # Update version if necessary; '3.8' is commonly used
+
+services:
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    environment:
+      - OLLAMA_NUM_PARALLEL=4
+      - OLLAMA_MAX_LOADED_MODELS=4
+      - OLLAMA_FLASH_ATTENTION=True
+      - OLLAMA_MAX_QUEUE=50
+    ports:
+      - "11434:11434"
+    volumes:
+      - /mnt/USB/models/ollama:/root/.ollama
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]

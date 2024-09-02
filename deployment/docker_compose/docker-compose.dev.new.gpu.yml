@@ -20,7 +20,6 @@ services:
       - index
       - inference_model_server
     restart: always
-
     ports:
       - "8080:8080"
     environment:
@@ -105,13 +104,13 @@ services:
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - LANGFUSE_HOST=${LANGFUSE_HOST:-}      
       # Image server config
-      - IMAGE_SERVER=${IMAGE_SERVER:-host.docker.internal}
+      - IMAGE_SERVER=${IMAGE_SERVER:-192.168.1.74}
       - IMAGE_SERVER_PROTOCAL=${IMAGE_SERVER_PROTOCAL:-http}
       - IMAGE_SERVER_PORT=${IMAGE_SERVER_PORT:-9123}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ../../backend:/code    
+      - ../../backend:/code
       - /data/spectra_data/imageserver/web/images:/images
     logging:
       driver: json-file
@@ -374,6 +373,19 @@ services:
     volumes:
       - /data/spectra_data/db_volume:/var/lib/postgresql/data
 
+  pgadmin:
+    #container_name: pgadmin_container
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@v.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+       - /data/spectra_data/pgadmin:/var/lib/pgadmin
+
+    ports:
+      - "6432:80"
 
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
@@ -431,9 +443,29 @@ services:
       - "9123:80"
     volumes:
       - /data/spectra_data/imageserver/web/images:/usr/share/nginx/html/images:ro
+      - ../../web/public:/usr/share/nginx/html/icons:ro
       - ./imageserver_nginx.conf:/etc/nginx/nginx.conf:ro
       - /data/spectra_data/imageserver/logs:/var/log/nginx:rw
+
     restart: unless-stopped
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    ports:
+      - "3457:9000"
+    command: -H unix:///var/run/docker.sock
+    environment:
+      # Set default admin username and password
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=yourpassword123
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /data/spectra_data/portainer_data:/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true  # Security best practice
+
 
   langfuse:
     #image: ghcr.io/langfuse/langfuse:latest
@@ -443,7 +475,7 @@ services:
       - "3456:3456"
     environment:
       - DATABASE_URL=postgresql://postgres:password@relational_db:5432/langfuse
-      - NEXTAUTH_URL=http://host.docker.internal:3456
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://host.docker.internal:3456}
       - NEXTAUTH_SECRET=mysecret
       - SALT=mysalt
       - PORT=3456

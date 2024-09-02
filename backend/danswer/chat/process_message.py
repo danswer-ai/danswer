@@ -68,6 +68,7 @@ from danswer.tools.built_in_tools import get_built_in_tool_by_id
 from danswer.tools.custom.custom_tool import build_custom_tools_from_openapi_schema
 from danswer.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
 from danswer.tools.custom.custom_tool import CustomToolCallSummary
+from danswer.tools.excel.excel_analyzer_tool import ExcelAnalyzerTool, EXCEL_ANALYZER_RESPONSE_ID
 from danswer.tools.force import ForceUseTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
@@ -236,6 +237,26 @@ ChatPacket = (
 ChatPacketStream = Iterator[ChatPacket]
 
 
+def set_metadata(chat_session_id, parent_id, reference_doc_ids, retrieval_options, prompt_id, user_id):
+   return {
+        "generation_name": "docudive",  # set langfuse Generation Name
+        "generation_id": chat_session_id,  # set langfuse Generation ID
+        "parent_observation_id": parent_id,  # set langfuse Parent Observation ID
+        "version": "test-generation-version",  # set langfuse Generation Version
+        "trace_user_id": user_id,  # set langfuse Trace User ID
+        "session_id": chat_session_id,  # set langfuse Session ID
+        "tags": [prompt_id, "tag2"],  # set langfuse Tags
+        "trace_name": "new-trace-name",  # set langfuse Trace Name
+        "trace_id": "trace-id22",  # set langfuse Trace ID
+        #"trace_metadata": {"key": "value"},  # set langfuse Trace Metadata
+        #"trace_version": "test-trace-version",
+        # set langfuse Trace Version (if not set, defaults to Generation Version)
+        #"trace_release": "test-trace-release",  # set langfuse Trace Release
+        "existing_trace_id": parent_id,
+        "trace_metadata": {"key": "updated_trace_value"},
+    }
+
+
 def stream_chat_message_objects(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
@@ -273,6 +294,9 @@ def stream_chat_message_objects(
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
         alternate_assistant_id = new_msg_req.alternate_assistant_id
+
+        #set metadata
+        metadata = set_metadata(chat_session_id, parent_id, reference_doc_ids, retrieval_options, new_msg_req.prompt_id, user_id)
 
         # use alternate persona if alternative assistant id is passed in
         if alternate_assistant_id is not None:
@@ -489,7 +513,8 @@ def stream_chat_message_objects(
                         prompt_config=prompt_config,
                         llm_config=llm.config,
                         llm=llm,
-                        files=latest_query_files
+                        files=latest_query_files,
+                        metadata =metadata
                     )
                     tool_dict[db_tool_model.id] = [sql_generation_tool]
                 elif tool_cls.__name__ == SummaryGenerationTool.__name__:
@@ -511,6 +536,19 @@ def stream_chat_message_objects(
                         llm=llm
                     )
                     tool_dict[db_tool_model.id] = [email_compose_tool]
+                elif tool_cls.__name__ == ExcelAnalyzerTool.__name__:
+                    excel_analyzer_tool = ExcelAnalyzerTool(
+                        history=[PreviousMessage.from_chat_message(msg, files) for msg in history_msgs],
+                        db_session=db_session,
+                        user=user,
+                        persona=persona,
+                        prompt_config=prompt_config,
+                        llm_config=llm.config,
+                        llm=llm,
+                        files = latest_query_files,
+                        metadata =metadata
+                    )
+                    tool_dict[db_tool_model.id] = [excel_analyzer_tool]
                 elif tool_cls.__name__ == ImageGenerationTool.__name__:
                     img_generation_llm_config: LLMConfig | None = None
                     if (
@@ -680,6 +718,8 @@ def stream_chat_message_objects(
                 elif packet.id == SUMMARY_GENERATION_RESPONSE_ID:
                     yield cast(ChatPacket, packet)
                 elif packet.id == COMPOSE_EMAIL_RESPONSE_ID:
+                    yield cast(ChatPacket, packet)
+                elif packet.id == EXCEL_ANALYZER_RESPONSE_ID:
                     yield cast(ChatPacket, packet)
                 elif packet.id == CUSTOM_TOOL_RESPONSE_ID:
                     custom_tool_response = cast(CustomToolCallSummary, packet.response)

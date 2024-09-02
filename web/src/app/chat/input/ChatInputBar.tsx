@@ -373,17 +373,18 @@ export function ChatInputBar({
             {/*    onClick={() => setConfigModalActiveTab("assistants")}*/}
             {/*  />*/}
 
-            {/*  <ChatInputOption*/}
-            {/*    flexPriority="second"*/}
-            {/*    name={*/}
-            {/*      llmOverrideManager.llmOverride.modelName ||*/}
-            {/*      (selectedAssistant*/}
-            {/*        ? selectedAssistant.llm_model_version_override || llmName*/}
-            {/*        : llmName)*/}
-            {/*    }*/}
-            {/*    icon={FiCpu}*/}
-            {/*    onClick={() => setConfigModalActiveTab("llms")}*/}
-            {/*  />*/}
+              <ChatInputOption
+                  flexPriority="second"
+                  name={
+                      llmOverrideManager.llmOverride.modelName||(llmName)
+                    // ||
+                    // (selectedAssistant
+                    //     ? selectedAssistant.llm_model_version_override || llmName
+                    //     : llmName)
+                  }
+                  icon={FiCpu}
+                  onClick={() => setConfigModalActiveTab("llms")}
+                  selectedTool={selectedAssistant?.tools[0]?.name}/>
 
             {/*  {!retrievalDisabled && (*/}
             {/*    <ChatInputOption*/}

@@ -27,6 +27,9 @@ export function ToolsDisplay({ tools }: { tools: ToolSnapshot[] }) {
         } else if (tool.name === "ComposeEmailTool") {
           toolName = "Compose Email";
           toolIcon = <FiGlobe className="mr-1 my-auto" />;
+        }else if (tool.name === "ExcelAnalyzerTool") {
+          toolName = "Excel Analyzer";
+          toolIcon = <FiGlobe className="mr-1 my-auto" />;
         }
 
         return (

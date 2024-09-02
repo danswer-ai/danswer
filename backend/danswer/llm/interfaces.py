@@ -51,6 +51,7 @@ class LLM(abc.ABC):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
+            metadata : dict | None = None
     ) -> BaseMessage:
         raise NotImplementedError
 

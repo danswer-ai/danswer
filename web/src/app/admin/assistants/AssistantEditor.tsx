@@ -64,6 +64,9 @@ function findInternetSearchTool(tools: ToolSnapshot[]) {
 function findComposeEmailTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "ComposeEmailTool");
 }
+function findExcelAnalyzerTool(tools: ToolSnapshot[]) {
+    return tools.find((tool) => tool.in_code_tool_id === "ExcelAnalyzerTool");
+}
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
   return <div className="text-sm text-subtle mb-2">{children}</div>;
@@ -166,6 +169,7 @@ export function AssistantEditor({
   const summaryGenerationTool =  findSummaryGenerationTool(tools);
   const internetSearchTool = findInternetSearchTool(tools);
   const composeEmailTool =  findComposeEmailTool(tools);
+  const excelAnalyzerTool =  findExcelAnalyzerTool(tools);
 
   const customTools = tools.filter(
     (tool) =>
@@ -174,7 +178,8 @@ export function AssistantEditor({
       tool.in_code_tool_id !== internetSearchTool?.in_code_tool_id &&
       tool.in_code_tool_id !== sqlGenerationTool?.in_code_tool_id &&
       tool.in_code_tool_id !== summaryGenerationTool?.in_code_tool_id &&
-      tool.in_code_tool_id !== composeEmailTool?.in_code_tool_id
+      tool.in_code_tool_id !== composeEmailTool?.in_code_tool_id &&
+      tool.in_code_tool_id !== excelAnalyzerTool?.in_code_tool_id
   );
 
   const availableTools = [
@@ -185,6 +190,7 @@ export function AssistantEditor({
     ...(sqlGenerationTool ? [sqlGenerationTool] : []),
     ...(summaryGenerationTool ? [summaryGenerationTool] : []),
     ...(composeEmailTool ? [composeEmailTool] : []),
+    ...(excelAnalyzerTool ? [excelAnalyzerTool] : []),
   ];
   const enabledToolsMap: { [key: number]: boolean } = {};
   availableTools.forEach((tool) => {
@@ -312,6 +318,9 @@ export function AssistantEditor({
                 : false;
           const composeEmailToolEnabled = composeEmailTool
                 ? enabledTools.includes(composeEmailTool.id)
+                : false;
+          const excelAnalyzerToolEnabled = excelAnalyzerTool
+                ? enabledTools.includes(excelAnalyzerTool.id)
                 : false;
           if (imageGenerationToolEnabled) {
             if (
@@ -590,6 +599,17 @@ export function AssistantEditor({
                               subtext={composeEmailTool.description}
                               onChange={() => {
                                   toggleToolInValues(composeEmailTool.id);
+                              }}
+                          />
+                      )}
+                      {excelAnalyzerTool && (
+                          <BooleanFormField
+                              noPadding
+                              name={`enabled_tools_map.${excelAnalyzerTool.id}`}
+                              label={excelAnalyzerTool.display_name}
+                              subtext={excelAnalyzerTool.description}
+                              onChange={() => {
+                                  toggleToolInValues(excelAnalyzerTool.id);
                               }}
                           />
                       )}

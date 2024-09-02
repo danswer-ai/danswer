@@ -37,6 +37,7 @@ from danswer.llm.utils import message_generator_to_string_generator
 from danswer.tools.custom.custom_tool_prompt_builder import (
     build_user_message_for_custom_tool_for_non_tool_calling_llm,
 )
+from danswer.tools.excel.excel_analyzer_tool import ExcelAnalyzerTool, EXCEL_ANALYZER_RESPONSE_ID
 from danswer.tools.force import filter_tools_for_force_tool_use
 from danswer.tools.force import ForceUseTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
@@ -273,6 +274,11 @@ class Answer:
                     if response.id == COMPOSE_EMAIL_RESPONSE_ID:
                         res1 = yield response.response
                         return [DanswerAnswerPiece(answer_piece=res1)]
+            elif tool.name == ExcelAnalyzerTool._NAME:
+                for response in tool_runner.tool_responses():
+                    if response.id == EXCEL_ANALYZER_RESPONSE_ID:
+                        res1 = yield response.response
+                        return [DanswerAnswerPiece(answer_piece=res1)]
             elif tool.name == ImageGenerationTool._NAME:
                 prompt_builder.update_user_prompt(
                     build_image_generation_user_prompt(
@@ -422,6 +428,11 @@ class Answer:
         elif tool.name == ComposeEmailTool._NAME:
             for response in tool_runner.tool_responses():
                 if response.id == COMPOSE_EMAIL_RESPONSE_ID:
+                    res1 = yield response.response
+                    return [DanswerAnswerPiece(answer_piece=res1)]
+        elif tool.name == ExcelAnalyzerTool._NAME:
+            for response in tool_runner.tool_responses():
+                if response.id == EXCEL_ANALYZER_RESPONSE_ID:
                     res1 = yield response.response
                     return [DanswerAnswerPiece(answer_piece=res1)]
         else:
