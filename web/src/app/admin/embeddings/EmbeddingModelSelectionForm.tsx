@@ -81,22 +81,21 @@ export function EmbeddingModelSelection({
 
   const [showDeleteCredentialsModal, setShowDeleteCredentialsModal] =
     useState<boolean>(false);
+
   const [showAddConnectorPopup, setShowAddConnectorPopup] =
     useState<boolean>(false);
 
   const { data: embeddingModelDetails } = useSWR<CloudEmbeddingModel[]>(
     EMBEDDING_MODELS_ADMIN_URL,
-    errorHandlingFetcher
+    errorHandlingFetcher,
+    { refreshInterval: 5000 } // 5 seconds
   );
-
-  console.log(embeddingModelDetails);
 
   const { data: embeddingProviderDetails } = useSWR<EmbeddingDetails[]>(
     EMBEDDING_PROVIDERS_ADMIN_URL,
-    errorHandlingFetcher
+    errorHandlingFetcher,
+    { refreshInterval: 5000 } // 5 seconds
   );
-
-  console.log(embeddingProviderDetails);
 
   const { data: connectors } = useSWR<Connector<any>[]>(
     "/api/manage/connector",

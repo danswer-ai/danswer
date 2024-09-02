@@ -35,7 +35,6 @@ def test_embedding_configuration(
     test_llm_request: TestEmbeddingRequest,
     _: User | None = Depends(current_admin_user),
 ) -> None:
-    print(test_llm_request)
     try:
         test_model = EmbeddingModel(
             server_host=MODEL_SERVER_HOST,
@@ -61,8 +60,8 @@ def test_embedding_configuration(
         raise HTTPException(status_code=400, detail=error_msg)
 
 
-@admin_router.get("/search-settings", response_model=list[EmbeddingModelDetail])
-def list_search_settings(
+@admin_router.get("", response_model=list[EmbeddingModelDetail])
+def list_embedding_models(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[EmbeddingModelDetail]:

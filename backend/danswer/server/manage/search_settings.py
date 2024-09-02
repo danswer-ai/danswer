@@ -133,7 +133,7 @@ def cancel_new_embedding(
 
 
 @router.get("/get-current-search-settings")
-def get_curr_search_settings(
+def get_current_search_settings_endpoint(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> SavedSearchSettings:
@@ -142,7 +142,7 @@ def get_curr_search_settings(
 
 
 @router.get("/get-secondary-search-settings")
-def get_sec_search_settings(
+def get_secondary_search_settings_endpoint(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> SavedSearchSettings | None:

@@ -14,7 +14,7 @@ import {
 import { EmbeddingDetails } from "../EmbeddingModelSelectionForm";
 import { FiExternalLink, FiInfo } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { LiteLLMModelForm } from "@/components/embedding/LiteLLMModelForm";
 
 export default function CloudEmbeddingPage({
@@ -66,13 +66,17 @@ export default function CloudEmbeddingPage({
             ))!),
     })
   );
-  const liteLLMProvider = embeddingProviderDetails?.find(
-    (provider) =>
-      provider.provider_type === EmbeddingProvider.LITELLM.toLowerCase()
-  );
-  console.log("embeddingProviderDetails");
-  console.log(embeddingProviderDetails);
-  console.log(liteLLMProvider);
+  const [liteLLMProvider, setLiteLLMProvider] = useState<
+    EmbeddingDetails | undefined
+  >(undefined);
+
+  useEffect(() => {
+    const foundProvider = embeddingProviderDetails?.find(
+      (provider) =>
+        provider.provider_type === EmbeddingProvider.LITELLM.toLowerCase()
+    );
+    setLiteLLMProvider(foundProvider);
+  }, [embeddingProviderDetails]);
 
   return (
     <div>
@@ -198,14 +202,14 @@ export default function CloudEmbeddingPage({
                   </Text>
                   <Text className="text-sm text-gray-600 mb-4">
                     Before you can add models, you need to provide an API URL
-                    for your LiteLLM proxy. Click the "Provide API URL" button
-                    above to set up your LiteLLM configuration.
+                    for your LiteLLM proxy. Click the &quot;Provide API
+                    URL&quot; button above to set up your LiteLLM configuration.
                   </Text>
                   <div className="flex items-center">
                     <FiInfo className="text-blue-500 mr-2" size={18} />
                     <Text className="text-sm text-blue-500">
-                      Once configured, you'll be able to add and manage your
-                      LiteLLM models here.
+                      Once configured, you&apos;ll be able to add and manage
+                      your LiteLLM models here.
                     </Text>
                   </div>
                 </div>
