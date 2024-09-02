@@ -102,6 +102,13 @@ services:
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
       - API_KEY_HASH_ROUNDS=${API_KEY_HASH_ROUNDS:-}
       # Seeding configuration
+
+      # Multimodal-Settings
+      - MULTIMODAL_ANSWERING_WITH_SUMMARY_IMAGE=${MULTIMODAL_ANSWERING_WITH_SUMMARY_IMAGE:-}
+      # (optional) Custom Prompt for Image Summarization
+      - SYSTEM_PROMPT=${SYSTEM_PROMPT:-}
+      - USER_PROMPT=${USER_PROMPT:-}
+
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:

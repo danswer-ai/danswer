@@ -1,26 +1,49 @@
+import asyncio
+import base64
 import io
 from datetime import datetime
 from datetime import timezone
 from typing import Any
+from typing import Dict
+from typing import List
 from urllib.parse import quote
 
-import bs4
+import bs4  # type: ignore
+import requests  # type: ignore
+from atlassian import Confluence  # type:ignore
+from attr import dataclass  # type: ignore
+from bs4 import SoupStrainer  # type: ignore
 
 from danswer.configs.app_configs import (
     CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD,
 )
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD
+from danswer.configs.app_configs import (
+    CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING,
+)
+from danswer.configs.chat_configs import CONFLUENCE_IMAGE_SUMMARIZATION_SYSTEM_PROMPT
+from danswer.configs.chat_configs import CONFLUENCE_IMAGE_SUMMARIZATION_USER_PROMPT
 from danswer.connectors.confluence.onyx_confluence import (
     OnyxConfluence,
 )
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_processing.html_utils import format_document_soup
+from danswer.file_processing.image_summarization import summarize_image_pipeline
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
 
 _USER_EMAIL_CACHE: dict[str, str | None] = {}
+
+
+@dataclass
+class ImageSummarization:
+    url: str
+    title: str
+    base64_encoded: str
+    media_type: str
+    summary: str | None
 
 
 def get_user_email_from_username__server(
@@ -176,17 +199,37 @@ def extract_text_from_confluence_html(
 def attachment_to_content(
     confluence_client: OnyxConfluence,
     attachment: dict[str, Any],
+    page_context: str,
 ) -> str | None:
     """If it returns None, assume that we should skip this attachment."""
-    if attachment["metadata"]["mediaType"] in [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/svg+xml",
-        "video/mp4",
-        "video/quicktime",
-    ]:
-        return None
+    if (
+        attachment["metadata"]["mediaType"]
+        in [
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/svg+xml",
+            "video/mp4",
+            "video/quicktime",
+        ]
+        or "GLIFFY" in attachment["history"]["lastUpdated"]["message"]
+    ):
+        page_images = None
+
+        if CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING:
+            # get images from page
+            page_images = asyncio.run(
+                _summarize_page_images(
+                    attachment,
+                    confluence_client,
+                    CONFLUENCE_IMAGE_SUMMARIZATION_USER_PROMPT,
+                    page_context,
+                )
+            )
+            return page_images
+
+        else:
+            return None
 
     download_link = confluence_client.url + attachment["_links"]["download"]
 
@@ -269,3 +312,102 @@ def datetime_from_string(datetime_string: str) -> datetime:
         datetime_object = datetime_object.astimezone(timezone.utc)
 
     return datetime_object
+
+
+def _attachment_to_download_link(
+    confluence_client: Confluence, attachment: dict[str, Any]
+) -> str:
+    """Extracts the download link to images."""
+    return confluence_client.url + attachment["_links"]["download"]
+
+
+async def _summarize_page_images(
+    page: Dict[str, Any],
+    confluence_client: Confluence,
+    USER_PROMPT: str,
+    page_context: str,
+) -> List[ImageSummarization]:
+    """Create LLM summaries of all embedded (used) image attachments on the given page"""
+
+    attachments = _get_embedded_image_attachments(page, page_context)
+
+    async def summarize_attachment(attachment, USER_PROMPT):
+        title = attachment["title"]
+        download_link = _attachment_to_download_link(confluence_client, attachment)
+
+        try:
+            # get image from url
+            image_data = confluence_client.get(
+                download_link, absolute=True, not_json_response=True
+            )
+        except requests.exceptions.RequestException as e:
+            logger.error(
+                "Failed to fetch image for summarization. url=%s",
+                download_link,
+                exc_info=e,
+            )
+            return None
+
+        # get image summary
+        # format user prompt: add page title and XML content of page to provide a better summarization
+        USER_PROMPT = CONFLUENCE_IMAGE_SUMMARIZATION_USER_PROMPT.format(
+            title=title, page_title=page["title"], confluence_xml=page_context
+        )
+        summary = summarize_image_pipeline(
+            image_data, USER_PROMPT, CONFLUENCE_IMAGE_SUMMARIZATION_SYSTEM_PROMPT
+        )
+
+        base64_image = base64.b64encode(image_data).decode("utf-8")
+
+        return ImageSummarization(
+            url=download_link,
+            title=title,
+            base64_encoded=base64_image,
+            media_type=attachment["metadata"]["mediaType"],
+            summary=summary,
+        )
+
+    results = await asyncio.gather(
+        *[summarize_attachment(attachment, USER_PROMPT) for attachment in attachments]
+    )
+
+    return [result for result in results if result is not None]
+
+
+def _get_embedded_image_attachments(
+    attachment: Dict[str, Any],
+    page_context: str,
+) -> List[Dict[str, Any]]:
+    """Extracts all images in the attachment of the given page."""
+    relevant_tags = SoupStrainer(["ac:image", "ac:structured-macro"])
+    soup = bs4.BeautifulSoup(page_context, "html.parser", parse_only=relevant_tags)
+
+    image_attachment_tags = soup.find_all(
+        lambda tag: tag.name == "ri:attachment"
+        and tag.parent is not None
+        and tag.parent.name == "ac:image"
+    )
+    image_attachments = []
+    attachment_filenames = [tag["ri:filename"] for tag in image_attachment_tags]
+    if attachment["title"] in attachment_filenames and attachment["metadata"][
+        "mediaType"
+    ].startswith("image/"):
+        image_attachments.append(attachment)
+
+    gliffy_macro_tags = soup.find_all(
+        "ac:structured-macro", attrs={"ac:name": "gliffy"}
+    )
+    gliffy_attachments = []
+    if attachment["id"] in [
+        tag.find(attrs={"ac:name": "imageAttachmentId"}).string
+        for tag in gliffy_macro_tags
+        if tag.find(attrs={"ac:name": "imageAttachmentId"}) is not None
+    ]:
+        gliffy_attachments.append(attachment)
+
+    # Combine and ensure uniqueness
+    combined_attachments = {
+        att["id"]: att for att in image_attachments + gliffy_attachments
+    }.values()
+
+    return list(combined_attachments)
