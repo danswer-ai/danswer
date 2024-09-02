@@ -538,16 +538,11 @@ class Answer:
                     answer_style_configs=self.answer_style_config,
                 )
 
-                def _stream() -> Iterator[str]:
+                def _stream() -> Iterator[str | StreamStopInfo]:
                     if message:
                         yield cast(str, message)
                     yield from cast(Iterator[str], stream)
 
-                # for token in _stream():
-                #     if isinstance(token, StreamStopInfo):
-                #         yield token
-                #     else:
-                #         yield process_answer_stream_fn(token)
                 yield from process_answer_stream_fn(_stream())
 
         processed_stream = []

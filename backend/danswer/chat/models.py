@@ -159,6 +159,7 @@ AnswerQuestionPossibleReturn = (
     | ImageGenerationDisplay
     | CustomToolResponse
     | StreamingError
+    | StreamStopInfo
 )
 
 

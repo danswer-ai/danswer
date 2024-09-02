@@ -209,7 +209,7 @@ def process_model_tokens(
     tokens: Iterator[str | StreamStopInfo],
     context_docs: list[LlmDoc],
     is_json_prompt: bool = True,
-) -> Generator[DanswerAnswerPiece | DanswerQuotes, None, None]:
+) -> Generator[DanswerAnswerPiece | StreamStopInfo | DanswerQuotes, None, None]:
     """Used in the streaming case to process the model output
     into an Answer and Quotes
 
@@ -289,7 +289,9 @@ def process_model_tokens(
 def build_quotes_processor(
     context_docs: list[LlmDoc], is_json_prompt: bool
 ) -> Callable[[Iterator[str]], AnswerQuestionStreamReturn]:
-    def stream_processor(tokens: Iterator[str]) -> AnswerQuestionStreamReturn:
+    def stream_processor(
+        tokens: Iterator[str | StreamStopInfo],
+    ) -> AnswerQuestionStreamReturn:
         yield from process_model_tokens(
             tokens=tokens,
             context_docs=context_docs,
