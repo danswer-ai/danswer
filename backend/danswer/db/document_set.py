@@ -524,11 +524,6 @@ def fetch_document_sets_for_documents(
     db_session: Session,
 ) -> Sequence[tuple[str, list[str]]]:
     """Gives back a list of (document_id, list[document_set_names]) tuples"""
-    """Gives back a list of (document_id, list[document_set_names]) tuples"""
-    DocByCC = aliased(DocumentByConnectorCredentialPair)
-    CCPair = aliased(ConnectorCredentialPair)
-    DS__CCPair = aliased(DocumentSet__ConnectorCredentialPair)
-
     stmt = select(
         Document.id,
         func.coalesce(
@@ -542,36 +537,7 @@ def fetch_document_sets_for_documents(
     DocumentSet__ConnectorCredentialPair -> DocumentSet
     """
     stmt = (
-        stmt.outerjoin(DS__CCPair, DS__CCPair.document_set_id == DocumentSetDBModel.id)
-        .outerjoin(CCPair, CCPair.id == DS__CCPair.connector_credential_pair_id)
-        .outerjoin(
-            DocByCC,
-            and_(
-                DocumentByConnectorCredentialPair.connector_id
-                == ConnectorCredentialPair.connector_id,
-                DocumentByConnectorCredentialPair.credential_id
-                == ConnectorCredentialPair.credential_id,
-            ),
-        )
-        .outerjoin(Document)
-    )
-    stmt = stmt.where(Document.id.in_(document_ids))
-
-    # don't include CC pairs that are being deleted
-    # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
-    # as we can assume their document sets are no longer relevant
-    stmt = stmt.where(
-        ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING,
-    )
-    return db_session.execute(stmt).all()  # type: ignore
-    stmt = (
-        select(
-            Document.id,
-            func.coalesce(
-                func.array_remove(func.array_agg(DocumentSetDBModel.name), None), []
-            ).label("document_set_names"),
-        )
-        .outerjoin(
+        stmt.outerjoin(
             DocumentByConnectorCredentialPair,
             Document.id == DocumentByConnectorCredentialPair.id,
         )
@@ -594,17 +560,18 @@ def fetch_document_sets_for_documents(
             DocumentSetDBModel.id
             == DocumentSet__ConnectorCredentialPair.document_set_id,
         )
-        .where(Document.id.in_(document_ids))
+    )
+
+    stmt = (
+        stmt.where(Document.id.in_(document_ids))
         # don't include CC pairs that are being deleted
         # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
         # as we can assume their document sets are no longer relevant
         .where(
             ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING,
-        )
-        .where(
+        ).where(
             DocumentSet__ConnectorCredentialPair.is_current == True,  # noqa: E712
         )
-        .group_by(Document.id)
     )
     return db_session.execute(stmt).all()  # type: ignore
 
