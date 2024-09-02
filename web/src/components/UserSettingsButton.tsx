@@ -103,14 +103,7 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
                 size={24}
                 strokeWidth={1.5}
               />
-              Chat
-            </Link>
-            <Link
-              href="/search"
-              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
-            >
-              <Search className="my-auto mr-3" size={24} strokeWidth={1.5} />
-              Search
+              Chat & Search
             </Link>
             {showAdminPanel && (
               <>

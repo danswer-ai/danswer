@@ -132,9 +132,9 @@ export function WhitelabelingForm() {
                 </SubLabel>
               </div>
             ) : (
-              <SubLabel>
+              <p className="pb-3 text-sm text-subtle">
                 Specify your own logo to replace the standard enMedD AI logo.
-              </SubLabel>
+              </p>
             )}
 
             <ImageUpload

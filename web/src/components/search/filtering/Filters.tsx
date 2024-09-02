@@ -24,7 +24,7 @@ import { SortSearch } from "../SortSearch";
 import { DateRangeSearchSelector } from "../DateRangeSearchSelector";
 
 const SectionTitle = ({ children }: { children: string }) => (
-  <div className="flex p-2 text-sm font-bold">{children}</div>
+  <div className="flex px-2 py-3 text-sm font-bold">{children}</div>
 );
 
 export interface SourceSelectorProps {
@@ -91,7 +91,7 @@ export function SourceSelector({
       </div>
 
       {existingSources.length > 0 && (
-        <div className="lg:border rounded-[8px] w-full p-2.5">
+        <div className="lg:border rounded-[8px] w-full px-2.5">
           <SectionTitle>Sources</SectionTitle>
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:gap-0">
             {listSourceMetadata()
@@ -99,7 +99,7 @@ export function SourceSelector({
               .map((source, index, array) => (
                 <div
                   key={source.internalName}
-                  className={`w-full flex items-center justify-between cursor-pointer p-2 gap-2 ${
+                  className={`w-full flex items-center justify-between cursor-pointer px-2 py-3 gap-2 ${
                     index === 0 ? "lg:border-t" : ""
                   } ${index !== array.length - 1 ? "lg:border-b" : ""}`}
                   onClick={() => handleSelect(source)}
@@ -122,13 +122,13 @@ export function SourceSelector({
       )}
 
       {availableDocumentSets.length > 0 && (
-        <div className="lg:border rounded-[8px] w-full p-2.5">
+        <div className="lg:border rounded-[8px] w-full px-2.5">
           <SectionTitle>Knowledge Sets</SectionTitle>
           <div>
             {availableDocumentSets.map((documentSet) => (
               <div
                 key={documentSet.name}
-                className={`w-full flex items-center justify-between cursor-pointer p-2 gap-2`}
+                className={`w-full flex items-center justify-between cursor-pointer px-2 py-3 gap-2`}
               >
                 <label
                   htmlFor={documentSet.name}

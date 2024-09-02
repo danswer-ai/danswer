@@ -1,6 +1,5 @@
 import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "./icons/icons";
-import { FiCheck, FiChevronDown } from "react-icons/fi";
 import { Popover } from "./popover/Popover";
 import {
   Select,
@@ -11,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { Check, ChevronDown } from "lucide-react";
 
 export interface Option<T> {
   name: string;
@@ -285,7 +285,7 @@ export function DefaultDropdownElement({
       </div>
       {isSelected && (
         <div className="ml-auto mr-1 my-auto">
-          <FiCheck />
+          <Check size={16} />
         </div>
       )}
     </div>
@@ -327,7 +327,7 @@ export function DefaultDropdown({
         {selectedOption?.name ||
           (includeDefault ? "Default" : "Select an option...")}
       </p>
-      <FiChevronDown className="my-auto ml-auto" />
+      <ChevronDown className="my-auto ml-auto" size={16} />
     </div>
   );
 

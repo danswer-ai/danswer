@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { Popup } from "./Popup";
 import {
   Connector,
   ConnectorBase,
@@ -231,7 +230,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
 
           mutate("/api/manage/admin/connector/indexing-status");
           toast({
-            title: isSuccess ? "success" : "error",
+            title: isSuccess ? "Success" : "Error",
             description: message,
             variant: isSuccess ? "success" : "destructive",
           });

@@ -32,7 +32,7 @@ export function NoSourcesModal() {
             Without any connected knowledge sources, there isn&apos;t anything
             to search over.
           </Text>
-          <Link href="/admin/add-connector">
+          <Link href="/admin/data-sources">
             <Button className="mt-3">
               <Share2 size={16} /> Connect a Source!
             </Button>

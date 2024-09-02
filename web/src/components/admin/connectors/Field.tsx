@@ -374,7 +374,7 @@ export function SelectorFormField({
   );
 
   return (
-    <div className="pb-4">
+    <div className="grid gap-2 pb-4">
       {label && (
         <ShadcnLabel
           htmlFor={label}
@@ -385,7 +385,7 @@ export function SelectorFormField({
       )}
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
-      <div className="mt-2">
+      <div>
         <Select
           onValueChange={
             onSelect || ((selected) => setFieldValue(name, selected))

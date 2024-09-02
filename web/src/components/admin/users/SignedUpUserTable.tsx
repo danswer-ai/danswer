@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   users: Array<User>;
@@ -161,10 +162,18 @@ const SignedUpUserTable = ({
                   <TableRow key={user.id}>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
-                      <i>{user.role === "admin" ? "Admin" : "User"}</i>
+                      <Badge variant="outline">
+                        {user.role === "admin" ? "Admin" : "User"}
+                      </Badge>
                     </TableCell>
                     <TableCell>
-                      <i>{user.status === "live" ? "Active" : "Inactive"}</i>
+                      <Badge
+                        variant={
+                          user.status === "live" ? "default" : "secondary"
+                        }
+                      >
+                        {user.status === "live" ? "Active" : "Inactive"}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-row items-center justify-end gap-2">

@@ -110,10 +110,7 @@ export default function Page() {
 
   return (
     <div className="mx-auto container">
-      <AdminPageTitle
-        icon={<CloudUpload size={24} />}
-        title="Add Data Source"
-      />
+      <AdminPageTitle icon={<CloudUpload size={24} />} title="Data Sources" />
 
       <p className="p-2.5 pt-0">
         Connect enMedD AI to your organization&apos;s knowledge sources.

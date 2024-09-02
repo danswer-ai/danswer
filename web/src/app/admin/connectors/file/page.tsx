@@ -231,7 +231,7 @@ const Main = () => {
                       autoCompleteDisabled={true}
                     />
 
-                    <p className="mb-1 font-medium ">Files:</p>
+                    <p className="pb-1.5 text-sm">Files:</p>
                     <FileUpload
                       selectedFiles={selectedFiles}
                       setSelectedFiles={setSelectedFiles}

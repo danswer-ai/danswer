@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { FC, useState } from "react";
 import React from "react";
 import Dropzone from "react-dropzone";
@@ -29,13 +30,12 @@ export const FileUpload: FC<FileUploadProps> = ({
           <section>
             <div
               {...getRootProps()}
-              className={
-                "flex flex-col items-center w-full px-4 py-12 rounded " +
-                "shadow-lg tracking-wide border border-border cursor-pointer" +
-                (dragActive ? " border-accent" : "")
-              }
+              className={`bg-background p-4 flex items-center gap-4 border w-fit rounded-regular shadow-sm ${
+                dragActive ? " border-accent" : ""
+              }`}
             >
               <input {...getInputProps()} />
+              <Button>Upload</Button>
               <b className="">
                 {message ||
                   "Drag and drop some files here, or click to select files"}

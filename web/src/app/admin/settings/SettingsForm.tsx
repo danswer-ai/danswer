@@ -49,7 +49,7 @@ function CheckboxComponent({
   );
 }
 
-function Selector({
+export function Selector({
   label,
   subtext,
   options,
@@ -68,18 +68,13 @@ function Selector({
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <div className="mt-2 w-full max-w-96">
-        <Select
-          onValueChange={(value) => {
-            if (value) onSelect(value);
-          }}
-        >
-          <SelectTrigger className="w-full mt-1">
+        <Select value={selected} onValueChange={onSelect}>
+          <SelectTrigger className="flex text-sm bg-background px-3 py-1.5 rounded-regular border border-border cursor-pointer">
             <SelectValue
-              placeholder="Select an option"
-              defaultValue={selected}
+              placeholder={selected ? undefined : "Select an option..."}
             />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="border rounded-regular flex flex-col bg-background max-h-96 overflow-y-auto overscroll-contain">
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.name}

@@ -36,7 +36,7 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                 name: (
                   <div className="flex items-center gap-2">
                     <NotebookIcon size={20} />
-                    <div>Existing Connectors</div>
+                    <div>Existing Data Sources</div>
                   </div>
                 ),
                 link: "/admin/indexing/status",
@@ -45,10 +45,10 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                 name: (
                   <div className="flex items-center gap-2">
                     <ConnectorIcon size={20} />
-                    <div>Add Connector</div>
+                    <div>Data Sources</div>
                   </div>
                 ),
-                link: "/admin/add-connector",
+                link: "/admin/data-sources",
               },
             ],
           },

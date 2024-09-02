@@ -24,6 +24,13 @@ export const WorkSpaceSidebar = ({
   if (!settings?.enterpriseSettings!.application_name) {
     return null;
   } */
+  /*   const combinedSettings = useContext(SettingsContext);
+  if (!combinedSettings) {
+    return null;
+  }
+  const settings = combinedSettings.settings;
+
+  console.log(settings); */
 
   return (
     <div className={`bg-background h-full p-4 border-r border-border`}>
@@ -55,18 +62,6 @@ export const WorkSpaceSidebar = ({
                 ? settings!.enterpriseSettings!.application_name
                 : ""} */}
               Jollibee
-            </CustomTooltip>
-
-            <CustomTooltip
-              trigger={
-                <div className="h-10 w-10 hover:bg-light hover:text-accent-foreground flex items-center justify-center rounded-regular">
-                  <Ellipsis size={16} strokeWidth={2.5} />
-                </div>
-              }
-              side="right"
-              delayDuration={0}
-            >
-              More
             </CustomTooltip>
           </div>
         </div>
