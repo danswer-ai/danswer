@@ -24,6 +24,7 @@ import { Text, Title, Button } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -218,6 +219,7 @@ export default function Page() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
       <AdminPageTitle icon={<DropboxIcon size={32} />} title="Dropbox" />
       <Main />
     </div>

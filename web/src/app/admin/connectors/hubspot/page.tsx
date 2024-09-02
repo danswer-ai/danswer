@@ -23,6 +23,7 @@ import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Text, Title, Button } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -228,6 +229,7 @@ export default function Page() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
 
       <AdminPageTitle icon={<HubSpotIcon size={32} />} title="HubSpot" />
 

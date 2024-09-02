@@ -179,7 +179,7 @@ def delete_connector_credential_pair(
 
     # Clean up document sets / access information from Postgres
     # and sync these updates to Vespa
-    # TODO: add user group cleanup with `fetch_versioned_implementation`
+    # TODO: add teamspace cleanup with `fetch_versioned_implementation`
     cleanup_synced_entities(cc_pair, db_session)
 
     # clean up the rest of the related Postgres entities

@@ -16,7 +16,7 @@ import { ChatSession } from "../interfaces";
 
 import {
   NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED,
-  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
+  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT,
 } from "@/lib/constants";
 
 import { ChatTab } from "./ChatTab";
@@ -80,7 +80,6 @@ export const ChatSidebar = ({
         id="chat-sidebar"
       >
         <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
-          {/* <Image src={EnmeddLogo} alt="enmedd-logo" height={40} /> */}
           <div className="flex">
             {enterpriseSettings && enterpriseSettings.application_name ? (
               <div className="flex items-center gap-3">
@@ -102,11 +101,14 @@ export const ChatSidebar = ({
             )}
           </div>
 
-          <div className="lg:hidden">
-            <Button variant="ghost" size="icon" onClick={toggleSideBar}>
-              <PanelLeftClose size={24} />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSideBar}
+            className="lg:hidden"
+          >
+            <PanelLeftClose size={24} />
+          </Button>
         </div>
 
         <div className="h-full overflow-auto">
@@ -165,9 +167,9 @@ export const ChatSidebar = ({
           <Link
             href={
               "/chat" +
-              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT &&
               currentChatSession
-                ? `?assistantId=${currentChatSession.persona_id}`
+                ? `?assistantId=${currentChatSession.assistant_id}`
                 : "")
             }
             className=" w-full"

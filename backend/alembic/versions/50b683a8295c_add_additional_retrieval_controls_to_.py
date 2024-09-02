@@ -1,4 +1,4 @@
-"""Add additional retrieval controls to Persona
+"""Add additional retrieval controls to Assistant
 
 Revision ID: 50b683a8295c
 Revises: 7da0ae5ad583
@@ -16,13 +16,13 @@ depends_on: None = None
 
 
 def upgrade() -> None:
-    op.add_column("persona", sa.Column("num_chunks", sa.Integer(), nullable=True))
+    op.add_column("assistant", sa.Column("num_chunks", sa.Integer(), nullable=True))
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("apply_llm_relevance_filter", sa.Boolean(), nullable=True),
     )
 
 
 def downgrade() -> None:
-    op.drop_column("persona", "apply_llm_relevance_filter")
-    op.drop_column("persona", "num_chunks")
+    op.drop_column("assistant", "apply_llm_relevance_filter")
+    op.drop_column("assistant", "num_chunks")

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { MinimalUserSnapshot, User } from "@/lib/types";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import { Divider, Text } from "@tremor/react";
 import {
   FiArrowDown,
@@ -45,7 +45,7 @@ function AssistantListItem({
   isVisible,
   setPopup,
 }: {
-  assistant: Persona;
+  assistant: Assistant;
   user: User | null;
   allUsers: MinimalUserSnapshot[];
   allAssistantIds: number[];
@@ -255,7 +255,7 @@ function AssistantListItem({
 
 interface AssistantsListProps {
   user: User | null;
-  assistants: Persona[];
+  assistants: Assistant[];
 }
 
 export function AssistantsList({ user, assistants }: AssistantsListProps) {
@@ -278,7 +278,7 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
   return (
     <>
       {popup}
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
+      <div className="mx-auto w-full md:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>My Assistants</AssistantsPageTitle>
 
         <div className="grid grid-cols-2 gap-4 mt-3">

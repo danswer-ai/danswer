@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
@@ -27,7 +27,7 @@ import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
-  personas,
+  assistants,
   message,
   setMessage,
   onSubmit,
@@ -46,8 +46,8 @@ export function ChatInputBar({
   alternativeAssistant,
   activeTab,
 }: {
-  onSetSelectedAssistant: (alternativeAssistant: Persona | null) => void;
-  personas: Persona[];
+  onSetSelectedAssistant: (alternativeAssistant: Assistant | null) => void;
+  assistants: Assistant[];
   message: string;
   setMessage: (message: string) => void;
   onSubmit: () => void;
@@ -56,8 +56,8 @@ export function ChatInputBar({
   retrievalDisabled: boolean;
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
-  selectedAssistant: Persona;
-  alternativeAssistant: Persona | null;
+  selectedAssistant: Assistant;
+  alternativeAssistant: Assistant | null;
   files: FileDescriptor[];
   setFiles: (files: FileDescriptor[]) => void;
   handleFileUpload: (files: File[]) => void;
@@ -119,9 +119,11 @@ export function ChatInputBar({
     setAssistantIconIndex(0);
   };
 
-  // Update selected persona
-  const updateCurrentPersona = (persona: Persona) => {
-    onSetSelectedAssistant(persona.id == selectedAssistant.id ? null : persona);
+  // Update selected assistant
+  const updateCurrentAssistant = (assistant: Assistant) => {
+    onSetSelectedAssistant(
+      assistant.id == selectedAssistant.id ? null : assistant
+    );
     hideSuggestions();
     setMessage("");
   };
@@ -163,8 +165,8 @@ export function ChatInputBar({
     }
   };
 
-  const filteredPersonas = personas.filter((persona) =>
-    persona.name.toLowerCase().startsWith(
+  const filteredAssistants = assistants.filter((assistant) =>
+    assistant.name.toLowerCase().startsWith(
       message
         .slice(message.lastIndexOf("@") + 1)
         .split(/\s/)[0]
@@ -177,23 +179,23 @@ export function ChatInputBar({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (
       showSuggestions &&
-      filteredPersonas.length > 0 &&
+      filteredAssistants.length > 0 &&
       (e.key === "Tab" || e.key == "Enter")
     ) {
       e.preventDefault();
-      if (assistantIconIndex == filteredPersonas.length) {
+      if (assistantIconIndex == filteredAssistants.length) {
         window.open("/assistants/new", "_blank");
         hideSuggestions();
         setMessage("");
       } else {
         const option =
-          filteredPersonas[assistantIconIndex >= 0 ? assistantIconIndex : 0];
-        updateCurrentPersona(option);
+          filteredAssistants[assistantIconIndex >= 0 ? assistantIconIndex : 0];
+        updateCurrentAssistant(option);
       }
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setAssistantIconIndex((assistantIconIndex) =>
-        Math.min(assistantIconIndex + 1, filteredPersonas.length)
+        Math.min(assistantIconIndex + 1, filteredAssistants.length)
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -225,7 +227,7 @@ export function ChatInputBar({
 
   return (
     <div>
-      <div className="flex justify-center items-center max-w-full mx-auto mb-2 px-5 2xl:px-0">
+      <div className="flex justify-center items-center max-w-full mx-auto px-5 2xl:px-0">
         <div
           ref={divRef}
           className={`flex md:hidden items-center trasition-all ease-in-out duration-500 ${
@@ -270,35 +272,36 @@ export function ChatInputBar({
           />
         </div>
         <div className="relative w-full mx-auto shrink 2xl:w-searchbar 3xl:px-0">
-          {showSuggestions && filteredPersonas.length > 0 && (
+          {showSuggestions && filteredAssistants.length > 0 && (
             <div
               ref={suggestionsRef}
               className="absolute inset-x-0 top-0 w-full text-sm transform -translate-y-full"
             >
               <div className="py-1.5 bg-background border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
-                {filteredPersonas.map((currentPersona, index) => (
+                {filteredAssistants.map((currentAssistant, index) => (
                   <button
                     key={index}
                     className={`px-2 ${
                       assistantIconIndex == index && "bg-hover"
                     } rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
                     onClick={() => {
-                      updateCurrentPersona(currentPersona);
+                      updateCurrentAssistant(currentAssistant);
                     }}
                   >
-                    <p className="font-bold ">{currentPersona.name}</p>
+                    <p className="font-bold ">{currentAssistant.name}</p>
                     <p className="line-clamp-1">
-                      {currentPersona.id == selectedAssistant.id &&
+                      {currentAssistant.id == selectedAssistant.id &&
                         "(default) "}
-                      {currentPersona.description}
+                      {currentAssistant.description}
                     </p>
                   </button>
                 ))}
                 <a
-                  key={filteredPersonas.length}
+                  key={filteredAssistants.length}
                   target="_blank"
                   className={`${
-                    assistantIconIndex == filteredPersonas.length && "bg-hover"
+                    assistantIconIndex == filteredAssistants.length &&
+                    "bg-hover"
                   } px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-light cursor-pointer"`}
                   href="/assistants/new"
                 >

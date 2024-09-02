@@ -3,12 +3,12 @@ from datetime import timedelta
 from sqlalchemy.orm import Session
 
 from ee.enmedd.background.celery_utils import should_perform_chat_ttl_check
-from ee.enmedd.background.celery_utils import should_sync_user_groups
+from ee.enmedd.background.celery_utils import should_sync_teamspaces
 from ee.enmedd.background.task_name_builders import name_chat_ttl_task
-from ee.enmedd.background.task_name_builders import name_user_group_sync_task
-from ee.enmedd.db.user_group import fetch_user_groups
+from ee.enmedd.background.task_name_builders import name_teamspace_sync_task
+from ee.enmedd.db.teamspace import fetch_teamspaces
 from ee.enmedd.server.reporting.usage_export_generation import create_new_usage_report
-from ee.enmedd.user_groups.sync import sync_user_groups
+from ee.enmedd.teamspaces.sync import sync_teamspaces
 from enmedd.background.celery.celery_app import celery_app
 from enmedd.background.task_utils import build_celery_task_wrapper
 from enmedd.configs.app_configs import JOB_TIMEOUT
@@ -24,15 +24,15 @@ logger = setup_logger()
 global_version.set_ee()
 
 
-@build_celery_task_wrapper(name_user_group_sync_task)
+@build_celery_task_wrapper(name_teamspace_sync_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def sync_user_group_task(user_group_id: int) -> None:
+def sync_teamspace_task(teamspace_id: int) -> None:
     with Session(get_sqlalchemy_engine()) as db_session:
         # actual sync logic
         try:
-            sync_user_groups(user_group_id=user_group_id, db_session=db_session)
+            sync_teamspaces(teamspace_id=teamspace_id, db_session=db_session)
         except Exception as e:
-            logger.exception(f"Failed to sync user group - {e}")
+            logger.exception(f"Failed to sync teamspace - {e}")
 
 
 @build_celery_task_wrapper(name_chat_ttl_task)
@@ -64,20 +64,20 @@ def check_ttl_management_task() -> None:
 
 
 @celery_app.task(
-    name="check_for_user_groups_sync_task",
+    name="check_for_teamspaces_sync_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_user_groups_sync_task() -> None:
-    """Runs periodically to check if any user groups are out of sync
-    Creates a task to sync the user group if needed"""
+def check_for_teamspaces_sync_task() -> None:
+    """Runs periodically to check if any teamspaces are out of sync
+    Creates a task to sync the teamspace if needed"""
     with Session(get_sqlalchemy_engine()) as db_session:
         # check if any document sets are not synced
-        user_groups = fetch_user_groups(db_session=db_session, only_current=False)
-        for user_group in user_groups:
-            if should_sync_user_groups(user_group, db_session):
-                logger.info(f"User Group {user_group.id} is not synced. Syncing now!")
-                sync_user_group_task.apply_async(
-                    kwargs=dict(user_group_id=user_group.id),
+        teamspaces = fetch_teamspaces(db_session=db_session, only_current=False)
+        for teamspace in teamspaces:
+            if should_sync_teamspaces(teamspace, db_session):
+                logger.info(f"Teamspace {teamspace.id} is not synced. Syncing now!")
+                sync_teamspace_task.apply_async(
+                    kwargs=dict(teamspace_id=teamspace.id),
                 )
 
 
@@ -99,8 +99,8 @@ def autogenerate_usage_report_task() -> None:
 # Celery Beat (Periodic Tasks) Settings
 #####
 celery_app.conf.beat_schedule = {
-    "check-for-user-group-sync": {
-        "task": "check_for_user_groups_sync_task",
+    "check-for-teamspace-sync": {
+        "task": "check_for_teamspaces_sync_task",
         "schedule": timedelta(seconds=5),
     },
     "autogenerate_usage_report": {

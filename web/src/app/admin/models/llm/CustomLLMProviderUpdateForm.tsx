@@ -8,7 +8,7 @@ import {
   Form,
   Formik,
 } from "formik";
-import { FiPlus, FiTrash, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import {
   Label,
@@ -23,6 +23,7 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 function customConfigProcessing(customConfigsList: [string, string][]) {
   const customConfig: { [key: string]: string } = {};
@@ -335,7 +336,7 @@ export function CustomLLMProviderUpdateForm({
                   className="mt-3"
                   type="button"
                 >
-                  <FiPlus className="mr-1.5" /> Add New
+                  <Plus size={16} /> Add New
                 </Button>
               </div>
             )}
@@ -411,7 +412,7 @@ export function CustomLLMProviderUpdateForm({
                     onClose();
                   }}
                 >
-                  <FiPlus className="mr-1.5" /> Delete
+                  <Plus size={16} /> Delete
                 </Button>
               )}
             </div>

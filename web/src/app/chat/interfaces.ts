@@ -49,7 +49,7 @@ export interface ToolCallFinalResult {
 export interface ChatSession {
   id: number;
   name: string;
-  persona_id: number;
+  assistant_id: number;
   time_created: string;
   shared_status: ChatSessionSharedStatus;
   folder_id: number | null;
@@ -76,8 +76,8 @@ export interface Message {
 export interface BackendChatSession {
   chat_session_id: number;
   description: string;
-  persona_id: number;
-  persona_name: string;
+  assistant_id: number;
+  assistant_name: string;
   messages: BackendMessage[];
   time_created: string;
   shared_status: ChatSessionSharedStatus;

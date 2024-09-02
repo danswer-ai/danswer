@@ -1,7 +1,7 @@
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
 import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
-import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
-import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
+import { SuccessfulAssistantUpdateRedirectType } from "@/app/admin/assistants/enums";
+import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchAssistantEditorInfoSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { LargeBackButton } from "../LargeBackButton";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +26,7 @@ export default async function Page() {
                 <AssistantEditor
                   {...values}
                   defaultPublic={false}
-                  redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
+                  redirectType={SuccessfulAssistantUpdateRedirectType.CHAT}
                   shouldAddAssistantToUserPreferences={true}
                 />
               </CardContent>

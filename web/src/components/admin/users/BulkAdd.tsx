@@ -40,7 +40,7 @@ const AddUserFormRenderer = ({
   isSubmitting,
 }: FormikProps<FormValues>) => (
   <Form>
-    <div className="flex flex-col gap-y-4">
+    <div className="flex flex-col gap-y-2">
       <Field name="emails">
         {({ field }: FieldProps) => (
           <Textarea
@@ -54,7 +54,7 @@ const AddUserFormRenderer = ({
       {touched.emails && errors.emails && (
         <div className="text-error text-sm">{errors.emails}</div>
       )}
-      <Button className="mx-auto" type="submit" disabled={isSubmitting}>
+      <Button className="mx-auto mt-4" type="submit" disabled={isSubmitting}>
         Add
       </Button>
     </div>

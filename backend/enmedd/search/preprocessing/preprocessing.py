@@ -45,17 +45,17 @@ def retrieval_preprocessing(
     """Logic is as follows:
     Any global disables apply first
     Then any filters or settings as part of the query are used
-    Then defaults to Persona settings if not specified by the query
+    Then defaults to Assistant settings if not specified by the query
     """
     query = search_request.query
     limit = search_request.limit
     offset = search_request.offset
-    persona = search_request.persona
+    assistant = search_request.assistant
 
     preset_filters = search_request.human_selected_filters or BaseFilters()
-    if persona and persona.document_sets and preset_filters.document_set is None:
+    if assistant and assistant.document_sets and preset_filters.document_set is None:
         preset_filters.document_set = [
-            document_set.name for document_set in persona.document_sets
+            document_set.name for document_set in assistant.document_sets
         ]
 
     time_filter = preset_filters.time_cutoff
@@ -70,15 +70,15 @@ def retrieval_preprocessing(
         logger.debug("Retrieval details disables auto detect filters")
         auto_detect_time_filter = False
         auto_detect_source_filter = False
-    elif persona and persona.llm_filter_extraction is False:
-        logger.debug("Persona disables auto detect filters")
+    elif assistant and assistant.llm_filter_extraction is False:
+        logger.debug("Assistant disables auto detect filters")
         auto_detect_time_filter = False
         auto_detect_source_filter = False
 
     if (
         time_filter is not None
-        and persona
-        and persona.recency_bias != RecencyBiasSetting.AUTO
+        and assistant
+        and assistant.recency_bias != RecencyBiasSetting.AUTO
     ):
         auto_detect_time_filter = False
         logger.debug("Not extract time filter - already provided")
@@ -146,8 +146,8 @@ def retrieval_preprocessing(
     llm_chunk_filter = False
     if search_request.skip_llm_chunk_filter is not None:
         llm_chunk_filter = not search_request.skip_llm_chunk_filter
-    elif persona:
-        llm_chunk_filter = persona.llm_relevance_filter
+    elif assistant:
+        llm_chunk_filter = assistant.llm_relevance_filter
 
     if disable_llm_chunk_filter:
         if llm_chunk_filter:
@@ -161,11 +161,11 @@ def retrieval_preprocessing(
         skip_rerank = not ENABLE_RERANKING_REAL_TIME_FLOW
 
     # Decays at 1 / (1 + (multiplier * num years))
-    if persona and persona.recency_bias == RecencyBiasSetting.NO_DECAY:
+    if assistant and assistant.recency_bias == RecencyBiasSetting.NO_DECAY:
         recency_bias_multiplier = 0.0
-    elif persona and persona.recency_bias == RecencyBiasSetting.BASE_DECAY:
+    elif assistant and assistant.recency_bias == RecencyBiasSetting.BASE_DECAY:
         recency_bias_multiplier = base_recency_decay
-    elif persona and persona.recency_bias == RecencyBiasSetting.FAVOR_RECENT:
+    elif assistant and assistant.recency_bias == RecencyBiasSetting.FAVOR_RECENT:
         recency_bias_multiplier = base_recency_decay * favor_recent_decay_multiplier
     else:
         if predicted_favor_recent:
@@ -176,7 +176,7 @@ def retrieval_preprocessing(
     return (
         SearchQuery(
             query=query,
-            search_type=persona.search_type if persona else SearchType.HYBRID,
+            search_type=assistant.search_type if assistant else SearchType.HYBRID,
             filters=final_filters,
             recency_bias_multiplier=recency_bias_multiplier,
             num_hits=limit if limit is not None else NUM_RETURNED_HITS,

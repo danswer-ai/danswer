@@ -6,7 +6,7 @@ load_dotenv()
 
 
 PROMPTS_YAML = "./enmedd/chat/prompts.yaml"
-PERSONAS_YAML = "./enmedd/chat/personas.yaml"
+ASSISTANTS_YAML = "./enmedd/chat/assistants.yaml"
 
 NUM_RETURNED_HITS = 50
 NUM_RERANKED_RESULTS = 15

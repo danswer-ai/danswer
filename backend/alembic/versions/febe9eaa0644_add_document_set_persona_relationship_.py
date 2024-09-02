@@ -1,4 +1,4 @@
-"""Add document_set / persona relationship table
+"""Add document_set / assistant relationship table
 
 Revision ID: febe9eaa0644
 Revises: 57b53544726e
@@ -18,20 +18,20 @@ depends_on: None = None
 
 def upgrade() -> None:
     op.create_table(
-        "persona__document_set",
-        sa.Column("persona_id", sa.Integer(), nullable=False),
+        "assistant__document_set",
+        sa.Column("assistant_id", sa.Integer(), nullable=False),
         sa.Column("document_set_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["document_set_id"],
             ["document_set.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["persona_id"],
-            ["persona.id"],
+            ["assistant_id"],
+            ["assistant.id"],
         ),
-        sa.PrimaryKeyConstraint("persona_id", "document_set_id"),
+        sa.PrimaryKeyConstraint("assistant_id", "document_set_id"),
     )
 
 
 def downgrade() -> None:
-    op.drop_table("persona__document_set")
+    op.drop_table("assistant__document_set")

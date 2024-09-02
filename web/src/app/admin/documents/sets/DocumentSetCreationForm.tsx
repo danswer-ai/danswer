@@ -4,7 +4,7 @@ import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { createDocumentSet, updateDocumentSet } from "./lib";
-import { ConnectorIndexingStatus, DocumentSet, UserGroup } from "@/lib/types";
+import { ConnectorIndexingStatus, DocumentSet, Teamspace } from "@/lib/types";
 import {
   BooleanFormField,
   TextFormField,
@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
-  userGroups: UserGroup[] | undefined;
+  teamspaces: Teamspace[] | undefined;
   onClose: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
   existingDocumentSet?: DocumentSet;
@@ -26,7 +26,7 @@ interface SetCreationPopupProps {
 
 export const DocumentSetCreationForm = ({
   ccPairs,
-  userGroups,
+  teamspaces,
   onClose,
   setPopup,
   existingDocumentSet,
@@ -116,10 +116,8 @@ export const DocumentSetCreationForm = ({
               autoCompleteDisabled={true}
             />
 
-            <Divider />
-
-            <h2 className="mb-1 font-medium">Pick your connectors:</h2>
-            <p className="mb-3 text-xs text-subtle">
+            <h2 className="pt-6 pb-1 font-medium">Pick your connectors:</h2>
+            <p className="pb-3 text-xs text-subtle">
               All documents indexed by the selected connectors will be a part of
               this document set.
             </p>
@@ -141,7 +139,7 @@ export const DocumentSetCreationForm = ({
                           }
                         }}
                         variant={isSelected ? "default" : "outline"}
-                        className={`cursor-pointer px-3 py-1.5 text-sm ${
+                        className={`cursor-pointer py-1.5  ${
                           isSelected ? "text-white" : ""
                         }`}
                       >
@@ -162,8 +160,8 @@ export const DocumentSetCreationForm = ({
             />
 
             {isPaidEnterpriseFeaturesEnabled &&
-              userGroups &&
-              userGroups.length > 0 && (
+              teamspaces &&
+              teamspaces.length > 0 && (
                 <div>
                   <Divider />
 
@@ -174,33 +172,33 @@ export const DocumentSetCreationForm = ({
                       <>
                         If the document set is public, then it will be visible
                         to <b>all users</b>. If it is not public, then only
-                        users in the specified groups will be able to see it.
+                        users in the specified teams will be able to see it.
                       </>
                     }
                   />
 
                   <Divider />
                   <h2 className="mb-1 font-medium text-base">
-                    Groups with Access
+                    Teams with Access
                   </h2>
                   {!values.is_public ? (
                     <>
                       <Text className="mb-3">
-                        If any groups are specified, then this Document Set will
+                        If any teams are specified, then this Document Set will
                         only be visible to the specified groups. If no groups
                         are specified, then the Document Set will be visible to
                         all users.
                       </Text>
                       <FieldArray
-                        name="groups"
+                        name="teams"
                         render={(arrayHelpers: ArrayHelpers) => (
                           <div className="flex gap-2 flex-wrap">
-                            {userGroups.map((userGroup) => {
-                              const ind = values.groups.indexOf(userGroup.id);
+                            {teamspaces.map((teamspace) => {
+                              const ind = values.groups.indexOf(teamspace.id);
                               let isSelected = ind !== -1;
                               return (
                                 <div
-                                  key={userGroup.id}
+                                  key={teamspace.id}
                                   className={
                                     `
                               px-3 
@@ -219,13 +217,13 @@ export const DocumentSetCreationForm = ({
                                     if (isSelected) {
                                       arrayHelpers.remove(ind);
                                     } else {
-                                      arrayHelpers.push(userGroup.id);
+                                      arrayHelpers.push(teamspace.id);
                                     }
                                   }}
                                 >
                                   <div className="my-auto flex">
                                     <FiUsers className="my-auto mr-2" />{" "}
-                                    {userGroup.name}
+                                    {teamspace.name}
                                   </div>
                                 </div>
                               );
@@ -237,7 +235,7 @@ export const DocumentSetCreationForm = ({
                   ) : (
                     <Text>
                       This Document Set is public, so this does not apply. If
-                      you want to control which user groups see this Document
+                      you want to control which teamspaces see this Document
                       Set, mark it as non-public!
                     </Text>
                   )}

@@ -246,9 +246,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             {formBodyBuilder && formBodyBuilder(values)}
             {showNonPublicOption && (
               <>
-                <Divider />
                 <IsPublicField />
-                <Divider />
               </>
             )}
             <div className="flex">

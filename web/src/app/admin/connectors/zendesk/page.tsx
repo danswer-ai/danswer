@@ -23,6 +23,7 @@ import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Divider, Text, Title, Button } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -123,8 +124,8 @@ const Main = () => {
             Proceed to the &quot;Apps and Integrations&quot; section and
             &quot;Zendesk API&quot; page. Add a new API token and provide it
             with a name. You will also need to provide the e-mail address of a
-            user that the system will impersonate. This is of little consequence
-            as we are only performing read actions.
+            user that the system will imassistantte. This is of little
+            consequence as we are only performing read actions.
           </Text>
           <Card className="mt-4 mb-4">
             <CardContent>
@@ -251,6 +252,7 @@ export default function Page() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
 
       <AdminPageTitle icon={<ZendeskIcon size={32} />} title="Zendesk" />
 

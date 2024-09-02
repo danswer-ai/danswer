@@ -9,6 +9,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { AssistantsList } from "./AssistantsList";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
+import { AssistantsBars } from "./AssistantsBars";
 
 export default async function GalleryPage({
   searchParams,
@@ -28,7 +29,7 @@ export default async function GalleryPage({
     chatSessions,
     availableSources,
     documentSets,
-    personas,
+    assistants,
     tags,
     llmProviders,
     folders,
@@ -48,7 +49,7 @@ export default async function GalleryPage({
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availablePersonas: personas,
+          availableAssistants: assistants,
           availableTags: tags,
           llmProviders,
           folders,
@@ -56,7 +57,7 @@ export default async function GalleryPage({
         }}
       >
         <div className="relative flex h-screen overflow-x-hidden bg-background">
-          <DynamicSidebar user={user}>
+          <AssistantsBars user={user}>
             <ChatSidebar
               existingChats={chatSessions}
               currentChatSession={null}
@@ -64,20 +65,12 @@ export default async function GalleryPage({
               openedFolders={openedFolders}
               isAssistant
             />
-          </DynamicSidebar>
+          </AssistantsBars>
 
           <div
-            className={`w-full h-screen flex flex-col overflow-y-auto overflow-x-hidden relative`}
+            className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative pt-24 px-4 2xl:pt-10`}
           >
-            <div className="sticky top-0 z-10 flex w-full left-80 bg-background h-fit">
-              <div className="my-auto mt-4 ml-auto mr-8">
-                <UserDropdown user={user} />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <AssistantsList user={user} assistants={personas} />
-            </div>
+            <AssistantsList user={user} assistants={assistants} />
           </div>
         </div>
       </ChatProvider>

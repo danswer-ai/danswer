@@ -24,6 +24,7 @@ import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const S3Main = () => {
   const { popup, setPopup } = usePopup();
@@ -256,6 +257,8 @@ export default function Page() {
       <div>
         <HealthCheckBanner />
       </div>
+      <BackButton />
+
       <AdminPageTitle icon={<S3Icon size={32} />} title="S3 Storage" />
 
       <S3Main key={1} />

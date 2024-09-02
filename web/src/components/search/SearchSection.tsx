@@ -20,8 +20,8 @@ import { SearchHelper } from "./SearchHelper";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 import { useFilters, useObjectState } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
-import { Persona } from "@/app/admin/assistants/interfaces";
-import { PersonaSelector } from "./PersonaSelector";
+import { Assistant } from "@/app/admin/assistants/interfaces";
+import { AssistantSelector } from "./AssistantSelector";
 import { computeAvailableFilters } from "@/lib/filters";
 import { useRouter } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
@@ -45,7 +45,7 @@ const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
 interface SearchSectionProps {
   ccPairs: CCPairBasicInfo[];
   documentSets: DocumentSet[];
-  personas: Persona[];
+  assistants: Assistant[];
   tags: Tag[];
   defaultSearchType: SearchType;
 }
@@ -53,7 +53,7 @@ interface SearchSectionProps {
 export const SearchSection = ({
   ccPairs,
   documentSets,
-  personas,
+  assistants,
   tags,
   defaultSearchType,
 }: SearchSectionProps) => {
@@ -73,8 +73,8 @@ export const SearchSection = ({
   const [selectedSearchType, setSelectedSearchType] =
     useState<SearchType>(defaultSearchType);
 
-  const [selectedPersona, setSelectedPersona] = useState<number>(
-    personas[0]?.id || 0
+  const [selectedAssistant, setSelectedAssistant] = useState<number>(
+    assistants[0]?.id || 0
   );
 
   // Filters
@@ -82,8 +82,8 @@ export const SearchSection = ({
   const availableSources = ccPairs.map((ccPair) => ccPair.source);
   const [finalAvailableSources, finalAvailableDocumentSets] =
     computeAvailableFilters({
-      selectedPersona: personas.find(
-        (persona) => persona.id === selectedPersona
+      selectedAssistant: assistants.find(
+        (assistant) => assistant.id === selectedAssistant
       ),
       availableSources: availableSources,
       availableDocumentSets: documentSets,
@@ -166,9 +166,9 @@ export const SearchSection = ({
       documentSets: filterManager.selectedDocumentSets,
       timeRange: filterManager.timeRange,
       tags: filterManager.selectedTags,
-      persona: personas.find(
-        (persona) => persona.id === selectedPersona
-      ) as Persona,
+      assistant: assistants.find(
+        (assistant) => assistant.id === selectedAssistant
+      ) as Assistant,
       updateCurrentAnswer: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateCurrentAnswer,
@@ -284,9 +284,9 @@ export const SearchSection = ({
             validQuestionResponse={validQuestionResponse}
             isFetching={isFetching}
             defaultOverrides={defaultOverrides}
-            personaName={
-              selectedPersona
-                ? personas.find((p) => p.id === selectedPersona)?.name
+            assistantName={
+              selectedAssistant
+                ? assistants.find((p) => p.id === selectedAssistant)?.name
                 : null
             }
           />

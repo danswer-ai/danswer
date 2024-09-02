@@ -27,12 +27,12 @@ export default async function Page({
     ccPairs,
     availableSources,
     documentSets,
-    personas,
+    assistants,
     tags,
     llmProviders,
     folders,
     openedFolders,
-    defaultPersonaId,
+    defaultAssistantId,
     finalDocumentSidebarInitialWidth,
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,
@@ -55,7 +55,7 @@ export default async function Page({
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availablePersonas: personas,
+          availableAssistants: assistants,
           availableTags: tags,
           llmProviders,
           folders,
@@ -64,7 +64,7 @@ export default async function Page({
       >
         <div className="h-full overflow-hidden">
           <ChatPage
-            defaultSelectedPersonaId={defaultPersonaId}
+            defaultSelectedAssistantsId={defaultAssistantId}
             documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
           />
         </div>
