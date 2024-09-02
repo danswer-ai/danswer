@@ -108,13 +108,6 @@ export function CodeBlock({
     if (!codeText) {
       return;
     }
-    console.log(codeText);
-    console.log(
-      content.slice(
-        props.node.position.start.offset,
-        props.node.position.end.offset
-      )
-    );
 
     navigator.clipboard.writeText(codeText).then(() => {
       setCopied(true);
