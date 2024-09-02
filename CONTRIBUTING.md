@@ -58,11 +58,24 @@ development purposes but also feel free to just use the containers and update wi
 
 
 ### Local Set Up
-It is recommended to use Python version 3.11
+It is recommended to use Python version 3.11.
 
 If using a lower version, modifications will have to be made to the code.
 If using a higher version, the version of Tensorflow we use may not be available for your platform.
 
+On macOS, ensure Homebrew is already set up. (https://brew.sh/)
+
+Then install python 3.11.
+```bash
+brew install python@3.11
+```
+
+Add python 3.11 to your path: add the following line to ~/.zshrc
+```
+export PATH="$(brew --prefix)/opt/python@3.11/libexec/bin:$PATH"
+```
+
+You will need to open a new terminal for the path change above to take effect.
 
 #### Installing Requirements
 Currently, we use pip and recommend creating a virtual environment.
@@ -92,6 +105,11 @@ pip install -r danswer/backend/requirements/dev.txt
 pip install -r danswer/backend/requirements/model_server.txt
 ```
 
+If developing Enterprise Edition features, also install those requirements.
+```bash
+pip install -r danswer/backend/requirements/ee.txt
+```
+
 Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
 Once the above is done, navigate to `danswer/web` run:
 ```bash
@@ -110,6 +128,11 @@ playwright install
 
 
 #### Dependent Docker Containers
+You will need Docker installed to run these containers.
+
+On macOS, you will need to install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and 
+ensure it is running before continuing with the following docker commands.
+
 First navigate to `danswer/deployment/docker_compose`, then start up Vespa and Postgres with:
 ```bash
 docker compose -f docker-compose.dev.yml -p danswer-stack up -d index relational_db
@@ -169,9 +192,20 @@ Note: if you need finer logging, add the additional environment variable `LOG_LE
 For the backend, you'll need to setup pre-commit hooks (black / reorder-python-imports).
 First, install pre-commit (if you don't have it already) following the instructions
 [here](https://pre-commit.com/#installation).
+
+On macOS, from the danswer directory you can simply install pre-commit with the following command.
+```bash
+pip install pre-commit
+```
+
 Then, from the `danswer/backend` directory, run:
 ```bash
 pre-commit install
+```
+
+macOS will likely require you to remove some quarantine attributes on some of the hooks for them to execute properly.
+```
+sudo xattr -r -d com.apple.quarantine ~/.cache/pre-commit
 ```
 
 Additionally, we use `mypy` for static type checking.
