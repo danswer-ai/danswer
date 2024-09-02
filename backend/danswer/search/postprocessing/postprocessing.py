@@ -253,8 +253,8 @@ def search_postprocessing(
 
     if not retrieved_sections:
         # Avoids trying to rerank an empty list which throws an error
-        yield []
-        yield []
+        yield cast(list[InferenceSection], [])
+        yield cast(list[SectionRelevancePiece], [])
         return
 
     rerank_task_id = None
