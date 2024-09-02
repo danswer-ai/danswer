@@ -70,6 +70,9 @@ export function AssistantsTab({
                   } else if (tool.name === "ComposeEmailTool") {
                       toolName = "Compose Email";
                       toolIcon = <FiImage className="mr-1 my-auto" />;
+                  } else if (tool.name === "ExcelAnalyzerTool") {
+                      toolName = "Excel Analyzer";
+                      toolIcon = <FiImage className="mr-1 my-auto" />;
                   }
 
                   return (

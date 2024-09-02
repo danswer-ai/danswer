@@ -68,6 +68,7 @@ from danswer.tools.built_in_tools import get_built_in_tool_by_id
 from danswer.tools.custom.custom_tool import build_custom_tools_from_openapi_schema
 from danswer.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
 from danswer.tools.custom.custom_tool import CustomToolCallSummary
+from danswer.tools.excel.excel_analyzer_tool import ExcelAnalyzerTool, EXCEL_ANALYZER_RESPONSE_ID
 from danswer.tools.force import ForceUseTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
@@ -535,6 +536,19 @@ def stream_chat_message_objects(
                         llm=llm
                     )
                     tool_dict[db_tool_model.id] = [email_compose_tool]
+                elif tool_cls.__name__ == ExcelAnalyzerTool.__name__:
+                    excel_analyzer_tool = ExcelAnalyzerTool(
+                        history=[PreviousMessage.from_chat_message(msg, files) for msg in history_msgs],
+                        db_session=db_session,
+                        user=user,
+                        persona=persona,
+                        prompt_config=prompt_config,
+                        llm_config=llm.config,
+                        llm=llm,
+                        files = latest_query_files,
+                        metadata =metadata
+                    )
+                    tool_dict[db_tool_model.id] = [excel_analyzer_tool]
                 elif tool_cls.__name__ == ImageGenerationTool.__name__:
                     img_generation_llm_config: LLMConfig | None = None
                     if (
@@ -704,6 +718,8 @@ def stream_chat_message_objects(
                 elif packet.id == SUMMARY_GENERATION_RESPONSE_ID:
                     yield cast(ChatPacket, packet)
                 elif packet.id == COMPOSE_EMAIL_RESPONSE_ID:
+                    yield cast(ChatPacket, packet)
+                elif packet.id == EXCEL_ANALYZER_RESPONSE_ID:
                     yield cast(ChatPacket, packet)
                 elif packet.id == CUSTOM_TOOL_RESPONSE_ID:
                     custom_tool_response = cast(CustomToolCallSummary, packet.response)

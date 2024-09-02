@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from danswer.db.models import Persona
 from danswer.db.models import Tool as ToolDBModel
+from danswer.tools.excel.excel_analyzer_tool import ExcelAnalyzerTool
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
 from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
 from danswer.tools.search.search_tool import SearchTool
@@ -68,6 +69,14 @@ BUILT_IN_TOOLS: list[InCodeToolInfo] = [
         ),
         in_code_tool_id=ComposeEmailTool.__name__,
         display_name=ComposeEmailTool._DISPLAY_NAME,
+    ),
+    InCodeToolInfo(
+        cls=ExcelAnalyzerTool,
+        description=(
+            "The Excel Analyzer Tool allows the assistant to use user prompt to analyze the excel data."
+        ),
+        in_code_tool_id=ExcelAnalyzerTool.__name__,
+        display_name= ExcelAnalyzerTool._DISPLAY_NAME,
     ),
     # don't show the InternetSearchTool as an option if BING_API_KEY is not available
     *(
