@@ -3,7 +3,7 @@ import { Modal } from "@/components/Modal";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { Button, Text, Title } from "@tremor/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR, { mutate } from "swr";
 import { ReindexingProgressTable } from "../../../../components/embedding/ReindexingProgressTable";
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -48,6 +48,12 @@ export default function UpgradingPage({
     }
     setIsCancelling(false);
   };
+
+  const sortedReindexingProgress = useMemo(() => {
+    return [...(ongoingReIndexingStatus || [])].sort((a, b) =>
+      a.cc_pair_id.toString().localeCompare(b.cc_pair_id.toString())
+    );
+  }, [ongoingReIndexingStatus]);
 
   return (
     <>
@@ -101,9 +107,9 @@ export default function UpgradingPage({
 
             {isLoadingOngoingReIndexingStatus ? (
               <ThreeDotsLoader />
-            ) : ongoingReIndexingStatus ? (
+            ) : sortedReindexingProgress ? (
               <ReindexingProgressTable
-                reindexingProgress={ongoingReIndexingStatus}
+                reindexingProgress={sortedReindexingProgress}
               />
             ) : (
               <ErrorCallout errorTitle="Failed to fetch re-indexing progress" />
