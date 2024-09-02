@@ -102,7 +102,7 @@ def delete_connector_credential_pair_batch(
                 UpdateRequest(
                     document_ids=[document_id],
                     access=access,
-                    document_sets=new_doc_sets_for_documents.get(document_id, set()),
+                    document_sets=new_doc_sets_for_documents[document_id],
                 )
                 for document_id, access in access_for_documents.items()
             ]

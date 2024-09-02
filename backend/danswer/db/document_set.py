@@ -524,56 +524,69 @@ def fetch_document_sets_for_documents(
     db_session: Session,
 ) -> Sequence[tuple[str, list[str]]]:
     """Gives back a list of (document_id, list[document_set_names]) tuples"""
-    stmt = select(
-        Document.id,
-        func.coalesce(
-            func.array_remove(func.array_agg(DocumentSetDBModel.name), None), []
-        ).label("document_set_names"),
-    ).group_by(Document.id)
 
-    """
-    Here we select document sets by relation:
-    Document -> DocumentByConnectorCredentialPair -> ConnectorCredentialPair ->
-    DocumentSet__ConnectorCredentialPair -> DocumentSet
-    """
+    """Building subqueries"""
+    # NOTE: have to build these subqueries first in order to guarantee that we get one
+    # returned row for each specified document_id. Basically, we want to do the filters first,
+    # then the outer joins.
+
+    # don't include CC pairs that are being deleted
+    # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
+    # as we can assume their document sets are no longer relevant
+    valid_cc_pairs_subquery = aliased(
+        ConnectorCredentialPair,
+        select(ConnectorCredentialPair)
+        .where(
+            ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING
+        )  # noqa: E712
+        .subquery(),
+    )
+
+    valid_document_set__cc_pairs_subquery = aliased(
+        DocumentSet__ConnectorCredentialPair,
+        select(DocumentSet__ConnectorCredentialPair)
+        .where(DocumentSet__ConnectorCredentialPair.is_current == True)  # noqa: E712
+        .subquery(),
+    )
+    """End building subqueries"""
+
     stmt = (
-        stmt.outerjoin(
+        select(
+            Document.id,
+            func.coalesce(
+                func.array_remove(func.array_agg(DocumentSetDBModel.name), None), []
+            ).label("document_set_names"),
+        )
+        # Here we select document sets by relation:
+        # Document -> DocumentByConnectorCredentialPair -> ConnectorCredentialPair ->
+        # DocumentSet__ConnectorCredentialPair -> DocumentSet
+        .outerjoin(
             DocumentByConnectorCredentialPair,
             Document.id == DocumentByConnectorCredentialPair.id,
         )
         .outerjoin(
-            ConnectorCredentialPair,
+            valid_cc_pairs_subquery,
             and_(
                 DocumentByConnectorCredentialPair.connector_id
-                == ConnectorCredentialPair.connector_id,
+                == valid_cc_pairs_subquery.connector_id,
                 DocumentByConnectorCredentialPair.credential_id
-                == ConnectorCredentialPair.credential_id,
+                == valid_cc_pairs_subquery.credential_id,
             ),
         )
         .outerjoin(
-            DocumentSet__ConnectorCredentialPair,
-            ConnectorCredentialPair.id
-            == DocumentSet__ConnectorCredentialPair.connector_credential_pair_id,
+            valid_document_set__cc_pairs_subquery,
+            valid_cc_pairs_subquery.id
+            == valid_document_set__cc_pairs_subquery.connector_credential_pair_id,
         )
         .outerjoin(
             DocumentSetDBModel,
             DocumentSetDBModel.id
-            == DocumentSet__ConnectorCredentialPair.document_set_id,
+            == valid_document_set__cc_pairs_subquery.document_set_id,
         )
+        .where(Document.id.in_(document_ids))
+        .group_by(Document.id)
     )
-
-    stmt = (
-        stmt.where(Document.id.in_(document_ids))
-        # don't include CC pairs that are being deleted
-        # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
-        # as we can assume their document sets are no longer relevant
-        .where(
-            ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING,
-        ).where(
-            DocumentSet__ConnectorCredentialPair.is_current == True,  # noqa: E712
-        )
-    )
-    return db_session.execute(stmt).all()  # type: ignore
+    return db_session.execute(stmt).all()
 
 
 def get_or_create_document_set_by_name(
