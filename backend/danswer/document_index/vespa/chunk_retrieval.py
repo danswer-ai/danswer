@@ -319,7 +319,9 @@ def query_vespa(
     hits = response_json["root"].get("children", [])
 
     if not hits:
-        logger.warning(f"No hits found for YQL Query: {query_params.get('yql')}")
+        logger.warning(
+            f"No hits found for YQL Query: {query_params.get('yql', 'No YQL Query')}"
+        )
         logger.debug(f"Vespa Response: {response.text}")
 
     for hit in hits:
