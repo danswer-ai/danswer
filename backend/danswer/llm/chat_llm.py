@@ -25,9 +25,6 @@ from langchain_core.messages.tool import ToolMessage
 from danswer.configs.app_configs import LOG_ALL_MODEL_INTERACTIONS
 from danswer.configs.app_configs import LOG_DANSWER_MODEL_INTERACTIONS
 from danswer.configs.model_configs import DISABLE_LITELLM_STREAMING
-from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
-from danswer.configs.model_configs import GEN_AI_API_VERSION
-from danswer.configs.model_configs import GEN_AI_LLM_PROVIDER_TYPE
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import LLMConfig
@@ -192,10 +189,10 @@ class DefaultMultiLLM(LLM):
         timeout: int,
         model_provider: str,
         model_name: str,
+        api_base: str | None = None,
+        api_version: str | None = None,
         max_output_tokens: int | None = None,
-        api_base: str | None = GEN_AI_API_ENDPOINT,
-        api_version: str | None = GEN_AI_API_VERSION,
-        custom_llm_provider: str | None = GEN_AI_LLM_PROVIDER_TYPE,
+        custom_llm_provider: str | None = None,
         temperature: float = GEN_AI_TEMPERATURE,
         custom_config: dict[str, str] | None = None,
         extra_headers: dict[str, str] | None = None,

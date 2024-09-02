@@ -62,7 +62,6 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.models import IndexingSetting
-from danswer.llm.llm_initialization import load_llm_providers
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
@@ -181,9 +180,6 @@ def setup_postgres(db_session: Session) -> None:
 
     logger.notice("Verifying default standard answer category exists.")
     create_initial_default_standard_answer_category(db_session)
-
-    logger.notice("Loading LLM providers from env variables")
-    load_llm_providers(db_session)
 
     logger.notice("Loading default Prompts and Personas")
     delete_old_default_personas(db_session)
