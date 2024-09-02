@@ -30,8 +30,9 @@ from danswer.search.utils import drop_llm_indices
 from danswer.search.utils import relevant_sections_to_indices
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.query_and_chat.models import DocumentSearchRequest
-from ee.danswer.server.query_and_chat.utils import create_temporary_personafrom ee.danswer.server.query_and_chat.models import StandardAnswerRequest
+from ee.danswer.server.query_and_chat.models import StandardAnswerRequest
 from ee.danswer.server.query_and_chat.models import StandardAnswerResponse
+from ee.danswer.server.query_and_chat.utils import create_temporary_persona
 
 
 logger = setup_logger()
