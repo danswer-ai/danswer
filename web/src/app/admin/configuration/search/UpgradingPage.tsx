@@ -74,9 +74,6 @@ export default function UpgradingPage({
 
   return (
     <>
-      <button onClick={() => console.log(sortedReindexingProgress)}>
-        click me please
-      </button>
       {isCancelling && (
         <Modal
           onOutsideClick={() => setIsCancelling(false)}

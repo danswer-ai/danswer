@@ -295,7 +295,7 @@ export function EmbeddingModelSelection({
           embeddingModelDetails={embeddingModelDetails}
           setShowModelInQueue={setShowModelInQueue}
           setShowTentativeModel={setShowTentativeModel}
-          currentModel={selectedProvider}
+          currentModel={selectedProvider || currentEmbeddingModel}
           setAlreadySelectedModel={setAlreadySelectedModel}
           embeddingProviderDetails={embeddingProviderDetails}
           newEnabledProviders={newEnabledProviders}
