@@ -6,6 +6,7 @@ from typing import cast
 from celery import Celery  # type: ignore
 from celery.contrib.abortable import AbortableTask  # type: ignore
 from celery.exceptions import TaskRevokedError
+from sqlalchemy import inspect
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -366,6 +367,12 @@ def kombu_message_cleanup_task_helper(ctx: dict, db_session: Session) -> bool:
     Returns:
         bool: Returns True if there are more rows to process, False if not.
     """
+
+    # With the move to redis as celery's broker and backend, kombu tables may not even exist.
+    inspector = inspect(db_session.bind)
+    if not inspector.has_table("kombu_message"):
+        print("kombu_message table does not exist.")
+        return False
 
     query = text(
         """
