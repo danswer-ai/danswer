@@ -64,6 +64,8 @@ If using a lower version, modifications will have to be made to the code.
 If using a higher version, the version of Tensorflow we use may not be available for your platform.
 
 On macOS, ensure Homebrew is already set up. (https://brew.sh/)
+
+Then install python 3.11.
 ```bash
 brew install python@3.11
 ```
@@ -133,6 +135,11 @@ playwright install
 
 
 #### Dependent Docker Containers
+You will need Docker installed to run these containers.
+
+On macOS, you will need to install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and 
+ensure it is running before continuing with the following docker commands.
+
 First navigate to `danswer/deployment/docker_compose`, then start up Vespa and Postgres with:
 ```bash
 docker compose -f docker-compose.dev.yml -p danswer-stack up -d index relational_db
