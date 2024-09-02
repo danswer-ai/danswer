@@ -1,11 +1,13 @@
 "use client";
 
-import { Button, Divider, Text } from "@tremor/react";
+import { Divider, Text } from "@tremor/react";
 import { Modal } from "../../Modal";
 import Link from "next/link";
 import { FiMessageSquare, FiShare2 } from "react-icons/fi";
 import { useContext, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Share2 } from "lucide-react";
 
 export function NoSourcesModal() {
   const settings = useContext(SettingsContext);
@@ -31,8 +33,8 @@ export function NoSourcesModal() {
             to search over.
           </Text>
           <Link href="/admin/add-connector">
-            <Button className="mt-3" size="xs" icon={FiShare2}>
-              Connect a Source!
+            <Button className="mt-3">
+              <Share2 size={16} /> Connect a Source!
             </Button>
           </Link>
           <Divider />
@@ -44,8 +46,8 @@ export function NoSourcesModal() {
               away!
             </Text>
             <Link href="/chat">
-              <Button className="mt-3" size="xs" icon={FiMessageSquare}>
-                Start Chatting!
+              <Button className="mt-3">
+                <MessageSquare size={16} /> Start Chatting!
               </Button>
             </Link>
           </div>
