@@ -586,7 +586,7 @@ def fetch_document_sets_for_documents(
         .where(Document.id.in_(document_ids))
         .group_by(Document.id)
     )
-    return db_session.execute(stmt).all()
+    return db_session.execute(stmt).all()  # type: ignore
 
 
 def get_or_create_document_set_by_name(
