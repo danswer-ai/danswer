@@ -26,6 +26,7 @@ import {
   IsPublicGroupSelectorFormType,
   IsPublicGroupSelector,
 } from "@/components/IsPublicGroupSelector";
+import { useUser } from "@/components/user/UserProvider";
 
 const CreateButton = ({
   onClick,
@@ -92,27 +93,12 @@ export default function CreateCredential({
   refresh?: () => void;
 }) {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-        } else {
-          console.error("Failed to fetch current user");
-        }
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
+  const { isLoadingUser, isAdmin } = useUser();
+  if (isLoadingUser) {
+    return <></>;
+  }
 
   const handleSubmit = async (
     values: formType,
@@ -184,7 +170,6 @@ export default function CreateCredential({
     return <GDriveMain />;
   }
 
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
   const credentialTemplate: dictionaryType = credentialTemplates[sourceType];
   const validationSchema = createValidationSchema(credentialTemplate);
 
@@ -216,7 +201,7 @@ export default function CreateCredential({
               for information on setting up this connector.
             </p>
           )}
-          <Card className="!border-0 mt-4">
+          <Card className="!border-0 mt-4 flex flex-col gap-y-6">
             <TextFormField
               name="name"
               placeholder="(Optional) credential name.."
@@ -236,7 +221,7 @@ export default function CreateCredential({
                 }
               />
             ))}
-            {!swapConnector && !isLoading && (
+            {!swapConnector && (
               <div className="mt-4 flex flex-col sm:flex-row justify-between items-end">
                 <div className="w-full sm:w-3/4 mb-4 sm:mb-0">
                   {isPaidEnterpriseFeaturesEnabled && (
@@ -251,6 +236,7 @@ export default function CreateCredential({
                         <IsPublicGroupSelector
                           formikProps={formikProps}
                           objectName="credential"
+                          publicToWhom="Curators"
                         />
                       )}
                     </div>

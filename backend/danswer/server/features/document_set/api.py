@@ -4,27 +4,21 @@ from fastapi import HTTPException
 from fastapi import Query
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
-from danswer.auth.users import validate_curator_request
 from danswer.db.document_set import check_document_sets_are_public
 from danswer.db.document_set import fetch_all_document_sets_for_user
-from danswer.db.document_set import fetch_user_document_sets
 from danswer.db.document_set import insert_document_set
 from danswer.db.document_set import mark_document_set_as_to_be_deleted
 from danswer.db.document_set import update_document_set
 from danswer.db.engine import get_session
 from danswer.db.models import User
-from danswer.db.models import UserRole
-from danswer.server.documents.models import ConnectorCredentialPairDescriptor
-from danswer.server.documents.models import ConnectorSnapshot
-from danswer.server.documents.models import CredentialSnapshot
 from danswer.server.features.document_set.models import CheckDocSetPublicRequest
 from danswer.server.features.document_set.models import CheckDocSetPublicResponse
 from danswer.server.features.document_set.models import DocumentSet
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from danswer.server.features.document_set.models import DocumentSetUpdateRequest
+from ee.danswer.db.user_group import validate_user_creation_permissions
 
 
 router = APIRouter(prefix="/manage")
@@ -36,11 +30,12 @@ def create_document_set(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> int:
-    if user and user.role != UserRole.ADMIN:
-        validate_curator_request(
-            groups=document_set_creation_request.groups,
-            is_public=document_set_creation_request.is_public,
-        )
+    validate_user_creation_permissions(
+        db_session=db_session,
+        user=user,
+        target_group_ids=document_set_creation_request.groups,
+        object_is_public=document_set_creation_request.is_public,
+    )
     try:
         document_set_db_model, _ = insert_document_set(
             document_set_creation_request=document_set_creation_request,
@@ -55,13 +50,20 @@ def create_document_set(
 @router.patch("/admin/document-set")
 def patch_document_set(
     document_set_update_request: DocumentSetUpdateRequest,
-    _: User = Depends(current_admin_user),
+    user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    validate_user_creation_permissions(
+        db_session=db_session,
+        user=user,
+        target_group_ids=document_set_update_request.groups,
+        object_is_public=document_set_update_request.is_public,
+    )
     try:
         update_document_set(
             document_set_update_request=document_set_update_request,
             db_session=db_session,
+            user=user,
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -70,20 +72,25 @@ def patch_document_set(
 @router.delete("/admin/document-set/{document_set_id}")
 def delete_document_set(
     document_set_id: int,
-    _: User = Depends(current_admin_user),
+    user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
         mark_document_set_as_to_be_deleted(
-            document_set_id=document_set_id, db_session=db_session
+            db_session=db_session,
+            document_set_id=document_set_id,
+            user=user,
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/admin/document-set")
-def list_document_sets_admin(
-    user: User | None = Depends(current_curator_or_admin_user),
+"""Endpoints for non-admins"""
+
+
+@router.get("/document-set")
+def list_document_sets_for_user(
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
     get_editable: bool = Query(
         False, description="If true, return editable document sets"
@@ -94,45 +101,6 @@ def list_document_sets_admin(
         for ds in fetch_all_document_sets_for_user(
             db_session=db_session, user=user, get_editable=get_editable
         )
-    ]
-
-
-"""Endpoints for non-admins"""
-
-
-@router.get("/document-set")
-def list_document_sets(
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> list[DocumentSet]:
-    document_set_info = fetch_user_document_sets(
-        user_id=user.id if user else None, db_session=db_session
-    )
-    return [
-        DocumentSet(
-            id=document_set_db_model.id,
-            name=document_set_db_model.name,
-            description=document_set_db_model.description,
-            contains_non_public=any([not cc_pair.is_public for cc_pair in cc_pairs]),
-            cc_pair_descriptors=[
-                ConnectorCredentialPairDescriptor(
-                    id=cc_pair.id,
-                    name=cc_pair.name,
-                    connector=ConnectorSnapshot.from_connector_db_model(
-                        cc_pair.connector
-                    ),
-                    credential=CredentialSnapshot.from_credential_db_model(
-                        cc_pair.credential
-                    ),
-                )
-                for cc_pair in cc_pairs
-            ],
-            is_up_to_date=document_set_db_model.is_up_to_date,
-            is_public=document_set_db_model.is_public,
-            users=[user.id for user in document_set_db_model.users],
-            groups=[group.id for group in document_set_db_model.groups],
-        )
-        for document_set_db_model, cc_pairs in document_set_info
     ]
 
 

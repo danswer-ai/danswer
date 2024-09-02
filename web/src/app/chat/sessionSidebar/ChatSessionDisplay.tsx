@@ -32,7 +32,6 @@ export function ChatSessionDisplay({
   isSelected,
   skipGradient,
   closeSidebar,
-  stopGenerating = () => null,
   showShareModal,
   showDeleteModal,
 }: {
@@ -43,7 +42,6 @@ export function ChatSessionDisplay({
   // if not set, the gradient will still be applied and cause weirdness
   skipGradient?: boolean;
   closeSidebar?: () => void;
-  stopGenerating?: () => void;
   showShareModal?: (chatSession: ChatSession) => void;
   showDeleteModal?: (chatSession: ChatSession) => void;
 }) {
@@ -100,7 +98,6 @@ export function ChatSessionDisplay({
         className="flex my-1 group relative"
         key={chatSession.id}
         onClick={() => {
-          stopGenerating();
           if (settings?.isMobile && closeSidebar) {
             closeSidebar();
           }

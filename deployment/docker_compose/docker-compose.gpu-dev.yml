@@ -1,7 +1,7 @@
 version: '3'
 services:
   api_server:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -33,13 +33,6 @@ services:
       - EMAIL_FROM=${EMAIL_FROM:-}
       - TRACK_EXTERNAL_IDP_EXPIRY=${TRACK_EXTERNAL_IDP_EXPIRY:-}
       # Gen AI Settings
-      - GEN_AI_MODEL_PROVIDER=${GEN_AI_MODEL_PROVIDER:-}
-      - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-}
-      - FAST_GEN_AI_MODEL_VERSION=${FAST_GEN_AI_MODEL_VERSION:-}
-      - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
-      - GEN_AI_API_ENDPOINT=${GEN_AI_API_ENDPOINT:-}
-      - GEN_AI_API_VERSION=${GEN_AI_API_VERSION:-}
-      - GEN_AI_LLM_PROVIDER_TYPE=${GEN_AI_LLM_PROVIDER_TYPE:-}
       - GEN_AI_MAX_TOKENS=${GEN_AI_MAX_TOKENS:-}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
       - MAX_CHUNKS_FED_TO_CHAT=${MAX_CHUNKS_FED_TO_CHAT:-}
@@ -99,7 +92,7 @@ services:
 
 
   background:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -114,13 +107,6 @@ services:
     environment:
       - ENCRYPTION_KEY_SECRET=${ENCRYPTION_KEY_SECRET:-}
       # Gen AI Settings (Needed by DanswerBot)
-      - GEN_AI_MODEL_PROVIDER=${GEN_AI_MODEL_PROVIDER:-}
-      - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-}
-      - FAST_GEN_AI_MODEL_VERSION=${FAST_GEN_AI_MODEL_VERSION:-}
-      - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
-      - GEN_AI_API_ENDPOINT=${GEN_AI_API_ENDPOINT:-}
-      - GEN_AI_API_VERSION=${GEN_AI_API_VERSION:-}
-      - GEN_AI_LLM_PROVIDER_TYPE=${GEN_AI_LLM_PROVIDER_TYPE:-}
       - GEN_AI_MAX_TOKENS=${GEN_AI_MAX_TOKENS:-}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
       - MAX_CHUNKS_FED_TO_CHAT=${MAX_CHUNKS_FED_TO_CHAT:-}
@@ -203,7 +189,7 @@ services:
 
 
   web_server:
-    image: danswer/danswer-web-server:latest
+    image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -228,7 +214,7 @@ services:
 
 
   inference_model_server:
-    image: danswer/danswer-model-server:latest
+    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
     # for GPU support, please read installation guidelines in the README.md
     # bare minimum to get this working is to install nvidia-container-toolkit
     deploy:
@@ -264,7 +250,7 @@ services:
 
 
   indexing_model_server:
-    image: danswer/danswer-model-server:latest
+    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server

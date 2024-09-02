@@ -41,8 +41,8 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import docx_to_text
-from danswer.file_processing.extract_file_text import pdf_to_text
 from danswer.file_processing.extract_file_text import pptx_to_text
+from danswer.file_processing.extract_file_text import read_pdf_file
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
@@ -334,7 +334,8 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         return docx_to_text(file=io.BytesIO(response))
     elif mime_type == GDriveMimeType.PDF.value:
         response = service.files().get_media(fileId=file["id"]).execute()
-        return pdf_to_text(file=io.BytesIO(response))
+        text, _ = read_pdf_file(file=io.BytesIO(response))
+        return text
     elif mime_type == GDriveMimeType.POWERPOINT.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return pptx_to_text(file=io.BytesIO(response))

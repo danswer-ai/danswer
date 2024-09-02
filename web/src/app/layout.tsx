@@ -15,11 +15,10 @@ import { buildClientUrl } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 import { EnterpriseSettings } from "./admin/settings/interfaces";
-import { redirect } from "next/navigation";
-import { Button, Card } from "@tremor/react";
-import LogoType from "@/components/header/LogoType";
+import { Card } from "@tremor/react";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Logo } from "@/components/Logo";
+import { UserProvider } from "@/components/user/UserProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -111,9 +110,11 @@ export default async function RootLayout({
             process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
           }`}
         >
-          <SettingsProvider settings={combinedSettings}>
-            {children}
-          </SettingsProvider>
+          <UserProvider>
+            <SettingsProvider settings={combinedSettings}>
+              {children}
+            </SettingsProvider>
+          </UserProvider>
         </div>
       </body>
     </html>

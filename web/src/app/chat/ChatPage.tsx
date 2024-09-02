@@ -43,13 +43,20 @@ import {
   uploadFilesForChat,
   useScrollonStream,
 } from "./lib";
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
 import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
-import { ChatState, FeedbackType } from "./types";
+import { ChatState, FeedbackType, RegenerationState } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
@@ -81,10 +88,12 @@ import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
-import { DeleteChatModal } from "./modal/DeleteChatModal";
+import { DeleteEntityModal } from "../../components/modals/DeleteEntityModal";
 import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
+
 import { SEARCH_TOOL_NAME } from "./tools/constants";
+import { useUser } from "@/components/user/UserProvider";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -105,7 +114,6 @@ export function ChatPage({
   const searchParams = useSearchParams();
 
   let {
-    user,
     chatSessions,
     availableSources,
     availableDocumentSets,
@@ -115,6 +123,8 @@ export function ChatPage({
     openedFolders,
     userInputPrompts,
   } = useChatContext();
+
+  const { user, refreshUser } = useUser();
 
   // chat session
   const existingChatIdRaw = searchParams.get("chatId");
@@ -210,10 +220,18 @@ export function ChatPage({
     }
   }, [liveAssistant]);
 
-  const stopGeneration = () => {
-    if (abortController) {
-      abortController.abort();
+  const stopGenerating = () => {
+    const currentSession = currentSessionId();
+    const controller = abortControllers.get(currentSession);
+    if (controller) {
+      controller.abort();
+      setAbortControllers((prev) => {
+        const newControllers = new Map(prev);
+        newControllers.delete(currentSession);
+        return newControllers;
+      });
     }
+
     const lastMessage = messageHistory[messageHistory.length - 1];
     if (
       lastMessage &&
@@ -221,14 +239,15 @@ export function ChatPage({
       lastMessage.toolCalls[0] &&
       lastMessage.toolCalls[0].tool_result === undefined
     ) {
-      const newCompleteMessageMap = new Map(completeMessageDetail.messageMap);
+      const newCompleteMessageMap = new Map(
+        currentMessageMap(completeMessageDetail)
+      );
       const updatedMessage = { ...lastMessage, toolCalls: [] };
       newCompleteMessageMap.set(lastMessage.messageId, updatedMessage);
-      setCompleteMessageDetail({
-        sessionId: completeMessageDetail.sessionId,
-        messageMap: newCompleteMessageMap,
-      });
+      updateCompleteMessageDetail(currentSession, newCompleteMessageMap);
     }
+
+    updateChatState("input", currentSession);
   };
 
   // this is for "@"ing assistants
@@ -306,10 +325,7 @@ export function ChatPage({
         } else {
           setSelectedAssistant(undefined);
         }
-        setCompleteMessageDetail({
-          sessionId: null,
-          messageMap: new Map(),
-        });
+        updateCompleteMessageDetail(null, new Map());
         setChatSessionSharedStatus(ChatSessionSharedStatus.Private);
 
         // if we're supposed to submit on initial load, then do that here
@@ -339,13 +355,11 @@ export function ChatPage({
       // This corresponds to a "renaming" of chat, which occurs after first message
       // stream
       if (
-        messageHistory[messageHistory.length - 1]?.type !== "error" ||
-        loadedSessionId != null
+        (messageHistory[messageHistory.length - 1]?.type !== "error" ||
+          loadedSessionId != null) &&
+        !currentChatAnswering()
       ) {
-        setCompleteMessageDetail({
-          sessionId: chatSession.chat_session_id,
-          messageMap: newMessageMap,
-        });
+        updateCompleteMessageDetail(chatSession.chat_session_id, newMessageMap);
 
         const latestMessageId =
           newMessageHistory[newMessageHistory.length - 1]?.messageId;
@@ -392,10 +406,31 @@ export function ChatPage({
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
 
-  const [completeMessageDetail, setCompleteMessageDetail] = useState<{
-    sessionId: number | null;
-    messageMap: Map<number, Message>;
-  }>({ sessionId: null, messageMap: new Map() });
+  const [completeMessageDetail, setCompleteMessageDetail] = useState<
+    Map<number | null, Map<number, Message>>
+  >(new Map());
+
+  const updateCompleteMessageDetail = (
+    sessionId: number | null,
+    messageMap: Map<number, Message>
+  ) => {
+    setCompleteMessageDetail((prevState) => {
+      const newState = new Map(prevState);
+      newState.set(sessionId, messageMap);
+      return newState;
+    });
+  };
+
+  const currentMessageMap = (
+    messageDetail: Map<number | null, Map<number, Message>>
+  ) => {
+    return (
+      messageDetail.get(chatSessionIdRef.current) || new Map<number, Message>()
+    );
+  };
+  const currentSessionId = (): number => {
+    return chatSessionIdRef.current!;
+  };
 
   const upsertToCompleteMessageMap = ({
     messages,
@@ -414,7 +449,7 @@ export function ChatPage({
   }) => {
     // deep copy
     const frozenCompleteMessageMap =
-      completeMessageMapOverride || completeMessageDetail.messageMap;
+      completeMessageMapOverride || currentMessageMap(completeMessageDetail);
     const newCompleteMessageMap = structuredClone(frozenCompleteMessageMap);
 
     if (newCompleteMessageMap.size === 0) {
@@ -464,30 +499,134 @@ export function ChatPage({
         )!.latestChildMessageId = messages[0].messageId;
       }
     }
+
     const newCompleteMessageDetail = {
-      sessionId: chatSessionId || completeMessageDetail.sessionId,
+      sessionId: chatSessionId || currentSessionId(),
       messageMap: newCompleteMessageMap,
     };
-    setCompleteMessageDetail(newCompleteMessageDetail);
+
+    updateCompleteMessageDetail(
+      chatSessionId || currentSessionId(),
+      newCompleteMessageMap
+    );
     return newCompleteMessageDetail;
   };
 
   const messageHistory = buildLatestMessageChain(
-    completeMessageDetail.messageMap
+    currentMessageMap(completeMessageDetail)
   );
 
   const [submittedMessage, setSubmittedMessage] = useState("");
-  const [chatState, setChatState] = useState<ChatState>("input");
-  interface RegenerationState {
-    regenerating: boolean;
-    finalMessageIndex: number;
-  }
 
-  const [regenerationState, setRegenerationState] =
-    useState<RegenerationState | null>(null);
+  const [chatState, setChatState] = useState<Map<number | null, ChatState>>(
+    new Map([[chatSessionIdRef.current, "input"]])
+  );
 
-  const [abortController, setAbortController] =
-    useState<AbortController | null>(null);
+  const [scrollHeight, setScrollHeight] = useState<Map<number | null, number>>(
+    new Map([[chatSessionIdRef.current, 0]])
+  );
+  const currentScrollHeight = () => {
+    return scrollHeight.get(currentSessionId());
+  };
+
+  const retrieveCurrentScrollHeight = (): number | null => {
+    return scrollHeight.get(currentSessionId()) || null;
+  };
+
+  const [regenerationState, setRegenerationState] = useState<
+    Map<number | null, RegenerationState | null>
+  >(new Map([[null, null]]));
+
+  const [abortControllers, setAbortControllers] = useState<
+    Map<number | null, AbortController>
+  >(new Map());
+
+  // Updates "null" session values to new session id for
+  // regeneration, chat, and abort controller state, messagehistory
+  const updateStatesWithNewSessionId = (newSessionId: number) => {
+    const updateState = (
+      setState: Dispatch<SetStateAction<Map<number | null, any>>>,
+      defaultValue?: any
+    ) => {
+      setState((prevState) => {
+        const newState = new Map(prevState);
+        const existingState = newState.get(null);
+        if (existingState !== undefined) {
+          newState.set(newSessionId, existingState);
+          newState.delete(null);
+        } else if (defaultValue !== undefined) {
+          newState.set(newSessionId, defaultValue);
+        }
+        return newState;
+      });
+    };
+
+    updateState(setRegenerationState);
+    updateState(setChatState);
+    updateState(setAbortControllers);
+
+    // Update completeMessageDetail
+    setCompleteMessageDetail((prevState) => {
+      const newState = new Map(prevState);
+      const existingMessages = newState.get(null);
+      if (existingMessages) {
+        newState.set(newSessionId, existingMessages);
+        newState.delete(null);
+      }
+      return newState;
+    });
+
+    // Update chatSessionIdRef
+    chatSessionIdRef.current = newSessionId;
+  };
+
+  const updateChatState = (newState: ChatState, sessionId?: number | null) => {
+    setChatState((prevState) => {
+      const newChatState = new Map(prevState);
+      newChatState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
+      return newChatState;
+    });
+  };
+
+  const currentChatState = (): ChatState => {
+    return chatState.get(currentSessionId()) || "input";
+  };
+
+  const currentChatAnswering = () => {
+    return (
+      currentChatState() == "toolBuilding" ||
+      currentChatState() == "streaming" ||
+      currentChatState() == "loading"
+    );
+  };
+
+  const updateRegenerationState = (
+    newState: RegenerationState | null,
+    sessionId?: number | null
+  ) => {
+    setRegenerationState((prevState) => {
+      const newRegenerationState = new Map(prevState);
+      newRegenerationState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
+      return newRegenerationState;
+    });
+  };
+
+  const resetRegenerationState = (sessionId?: number | null) => {
+    updateRegenerationState(null, sessionId);
+  };
+
+  const currentRegenerationState = (): RegenerationState | null => {
+    return regenerationState.get(currentSessionId()) || null;
+  };
+
+  const currentSessionChatState = currentChatState();
+  const currentSessionRegenerationState = currentRegenerationState();
 
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
@@ -744,7 +883,9 @@ export function ChatPage({
     modelOverRide?: LlmOverride;
     regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
-    if (chatState != "input") {
+    let frozenSessionId = currentSessionId();
+
+    if (currentChatState() != "input") {
       setPopup({
         message: "Please wait for the response to complete",
         type: "error",
@@ -752,16 +893,13 @@ export function ChatPage({
 
       return;
     }
-    setRegenerationState(
+    updateRegenerationState(
       regenerationRequest
         ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
         : null
     );
 
-    setChatState("loading");
-
-    const controller = new AbortController();
-    setAbortController(controller);
+    updateChatState("loading");
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
@@ -778,13 +916,21 @@ export function ChatPage({
     } else {
       currChatSessionId = chatSessionIdRef.current as number;
     }
-    chatSessionIdRef.current = currChatSessionId;
+    frozenSessionId = currChatSessionId;
+
+    updateStatesWithNewSessionId(currChatSessionId);
+
+    const controller = new AbortController();
+
+    setAbortControllers((prev) =>
+      new Map(prev).set(currChatSessionId, controller)
+    );
 
     const messageToResend = messageHistory.find(
       (message) => message.messageId === messageIdToResend
     );
 
-    const messageMap = completeMessageDetail.messageMap;
+    const messageMap = currentMessageMap(completeMessageDetail);
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
       messageToResend?.parentMessageId !== undefined
@@ -800,8 +946,8 @@ export function ChatPage({
           "Failed to re-send message - please refresh the page and try again.",
         type: "error",
       });
-      setRegenerationState(null);
-      setChatState("input");
+      resetRegenerationState(currentSessionId());
+      updateChatState("input", frozenSessionId);
       return;
     }
     let currMessage = messageToResend ? messageToResend.message : message;
@@ -849,11 +995,12 @@ export function ChatPage({
       user_message_id: number;
       assistant_message_id: number;
       frozenMessageMap: Map<number, Message>;
-      frozenSessionId: number | null;
     } = null;
 
     try {
-      const mapKeys = Array.from(completeMessageDetail.messageMap.keys());
+      const mapKeys = Array.from(
+        currentMessageMap(completeMessageDetail).keys()
+      );
       const systemMessage = Math.min(...mapKeys);
 
       const lastSuccessfulMessageId =
@@ -954,32 +1101,31 @@ export function ChatPage({
               });
             }
 
-            const {
-              messageMap: currentFrozenMessageMap,
-              sessionId: currentFrozenSessionId,
-            } = upsertToCompleteMessageMap({
-              messages: messageUpdates,
-              chatSessionId: currChatSessionId,
-            });
+            const { messageMap: currentFrozenMessageMap } =
+              upsertToCompleteMessageMap({
+                messages: messageUpdates,
+                chatSessionId: currChatSessionId,
+              });
 
             const frozenMessageMap = currentFrozenMessageMap;
-            const frozenSessionId = currentFrozenSessionId;
             initialFetchDetails = {
               frozenMessageMap,
-              frozenSessionId,
               assistant_message_id,
               user_message_id,
             };
 
-            setRegenerationState(null);
+            resetRegenerationState();
           } else {
-            const { user_message_id, frozenMessageMap, frozenSessionId } =
-              initialFetchDetails;
-            setChatState((chatState) => {
-              if (chatState == "loading") {
-                return "streaming";
+            const { user_message_id, frozenMessageMap } = initialFetchDetails;
+
+            setChatState((prevState) => {
+              if (prevState.get(chatSessionIdRef.current!) === "loading") {
+                return new Map(prevState).set(
+                  chatSessionIdRef.current!,
+                  "streaming"
+                );
               }
-              return chatState;
+              return prevState;
             });
 
             if (Object.hasOwn(packet, "answer_piece")) {
@@ -1004,9 +1150,9 @@ export function ChatPage({
                 !toolCalls[0].tool_result ||
                 toolCalls[0].tool_result == undefined
               ) {
-                setChatState("toolBuilding");
+                updateChatState("toolBuilding", frozenSessionId);
               } else {
-                setChatState("streaming");
+                updateChatState("streaming", frozenSessionId);
               }
 
               // This will be consolidated in upcoming tool calls udpate,
@@ -1121,11 +1267,12 @@ export function ChatPage({
               initialFetchDetails?.user_message_id || TEMP_USER_MESSAGE_ID,
           },
         ],
-        completeMessageMapOverride: completeMessageDetail.messageMap,
+        completeMessageMapOverride: currentMessageMap(completeMessageDetail),
       });
     }
-    setRegenerationState(null);
-    setChatState("input");
+    resetRegenerationState(currentSessionId());
+
+    updateChatState("input");
     if (isNewSession) {
       if (finalMessage) {
         setSelectedMessageForDocDisplay(finalMessage.message_id);
@@ -1192,8 +1339,8 @@ export function ChatPage({
   const onAssistantChange = (assistant: Persona | null) => {
     if (assistant && assistant.id !== liveAssistant.id) {
       // Abort the ongoing stream if it exists
-      if (chatState != "input") {
-        stopGeneration();
+      if (currentSessionChatState != "input") {
+        stopGenerating();
         resetInputBar();
       }
 
@@ -1306,7 +1453,7 @@ export function ChatPage({
   });
 
   useScrollonStream({
-    chatState,
+    chatState: currentSessionChatState,
     scrollableDivRef,
     scrollDist,
     endDivRef,
@@ -1418,13 +1565,16 @@ export function ChatPage({
         <SetDefaultModelModal
           setLlmOverride={llmOverrideManager.setGlobalDefault}
           defaultModel={user?.preferences.default_model!}
+          refreshUser={refreshUser}
           llmProviders={llmProviders}
           onClose={() => setSettingsToggled(false)}
         />
       )}
 
       {deletingChatSession && (
-        <DeleteChatModal
+        <DeleteEntityModal
+          entityType="chat"
+          entityName={deletingChatSession.name.slice(0, 30)}
           onClose={() => setDeletingChatSession(null)}
           onSubmit={async () => {
             const response = await deleteChatSession(deletingChatSession.id);
@@ -1436,7 +1586,6 @@ export function ChatPage({
               alert("Failed to delete chat session");
             }
           }}
-          chatSessionName={deletingChatSession.name}
         />
       )}
 
@@ -1493,7 +1642,7 @@ export function ChatPage({
               <div className="w-full relative">
                 <HistorySidebar
                   explicitlyUntoggle={explicitlyUntoggle}
-                  stopGenerating={stopGeneration}
+                  stopGenerating={stopGenerating}
                   reset={() => setMessage("")}
                   page="chat"
                   ref={innerSidebarElementRef}
@@ -1559,7 +1708,7 @@ export function ChatPage({
                       >
                         {/* <input {...getInputProps()} /> */}
                         <div
-                          className={`w-full h-full flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
+                          className={`w-full h-full  flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -1567,7 +1716,7 @@ export function ChatPage({
 
                           {messageHistory.length === 0 &&
                             !isFetchingChatMessages &&
-                            chatState == "input" && (
+                            currentSessionChatState == "input" && (
                               <ChatIntro
                                 availableSources={finalAvailableSources}
                                 selectedPersona={liveAssistant}
@@ -1575,23 +1724,27 @@ export function ChatPage({
                             )}
                           <div
                             className={
-                              "mt-4 -ml-4  w-full mx-auto " +
-                              "absolute mobile:top-0 desktop:top-12 left-0" +
+                              "-ml-4 w-full mx-auto " +
+                              "absolute mobile:top-0 desktop:top-12 left-0 " +
+                              (settings?.enterpriseSettings
+                                ?.two_lines_for_chat_header
+                                ? "mt-20 "
+                                : "mt-8") +
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }
                           >
                             {messageHistory.map((message, i) => {
-                              const messageMap =
-                                completeMessageDetail.messageMap;
-                              const messageReactComponentKey = `${i}-${completeMessageDetail.sessionId}`;
+                              const messageMap = currentMessageMap(
+                                completeMessageDetail
+                              );
+                              const messageReactComponentKey = `${i}-${currentSessionId()}`;
                               const parentMessage = message.parentMessageId
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
                               if (
-                                regenerationState &&
-                                regenerationState.regenerating &&
-                                message.messageId >
-                                  regenerationState.finalMessageIndex
+                                currentSessionRegenerationState?.regenerating &&
+                                message.messageId >=
+                                  currentSessionRegenerationState?.finalMessageIndex!
                               ) {
                                 return <></>;
                               }
@@ -1600,7 +1753,7 @@ export function ChatPage({
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <HumanMessage
-                                      stopGenerating={stopGeneration}
+                                      stopGenerating={stopGenerating}
                                       content={message.message}
                                       files={message.files}
                                       messageId={message.messageId}
@@ -1633,11 +1786,10 @@ export function ChatPage({
                                         newCompleteMessageMap.get(
                                           message.parentMessageId!
                                         )!.latestChildMessageId = messageId;
-                                        setCompleteMessageDetail({
-                                          sessionId:
-                                            completeMessageDetail.sessionId,
-                                          messageMap: newCompleteMessageMap,
-                                        });
+                                        updateCompleteMessageDetail(
+                                          currentSessionId(),
+                                          newCompleteMessageMap
+                                        );
                                         setSelectedMessageForDocDisplay(
                                           messageId
                                         );
@@ -1667,11 +1819,9 @@ export function ChatPage({
                                     : null;
 
                                 if (
-                                  regenerationState &&
-                                  regenerationState.regenerating &&
-                                  // chatState == "loading" &&
-                                  message.messageId >
-                                    regenerationState.finalMessageIndex - 1
+                                  currentSessionRegenerationState?.regenerating &&
+                                  currentSessionChatState == "loading" &&
+                                  message.messageId == messageHistory.length - 1
                                 ) {
                                   return <></>;
                                 }
@@ -1700,11 +1850,12 @@ export function ChatPage({
                                         newCompleteMessageMap.get(
                                           message.parentMessageId!
                                         )!.latestChildMessageId = messageId;
-                                        setCompleteMessageDetail({
-                                          sessionId:
-                                            completeMessageDetail.sessionId,
-                                          messageMap: newCompleteMessageMap,
-                                        });
+
+                                        updateCompleteMessageDetail(
+                                          currentSessionId(),
+                                          newCompleteMessageMap
+                                        );
+
                                         setSelectedMessageForDocDisplay(
                                           messageId
                                         );
@@ -1739,7 +1890,10 @@ export function ChatPage({
                                       }
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
-                                        chatState == "input"
+                                        (currentSessionChatState !=
+                                          "streaming" &&
+                                          currentSessionChatState !=
+                                            "toolBuilding")
                                       }
                                       hasDocs={
                                         (message.documents &&
@@ -1747,7 +1901,7 @@ export function ChatPage({
                                       }
                                       handleFeedback={
                                         i === messageHistory.length - 1 &&
-                                        chatState != "input"
+                                        currentSessionChatState != "input"
                                           ? undefined
                                           : (feedbackType) =>
                                               setCurrentFeedback([
@@ -1757,7 +1911,7 @@ export function ChatPage({
                                       }
                                       handleSearchQueryEdit={
                                         i === messageHistory.length - 1 &&
-                                        chatState == "input"
+                                        currentSessionChatState == "input"
                                           ? (newQuery) => {
                                               if (!previousMessage) {
                                                 setPopup({
@@ -1767,7 +1921,6 @@ export function ChatPage({
                                                 });
                                                 return;
                                               }
-
                                               if (
                                                 previousMessage.messageId ===
                                                 null
@@ -1864,21 +2017,24 @@ export function ChatPage({
                                 );
                               }
                             })}
-                            {chatState == "loading" &&
-                              !regenerationState?.regenerating &&
+
+                            {currentSessionChatState == "loading" &&
+                              !currentSessionRegenerationState?.regenerating &&
                               messageHistory[messageHistory.length - 1]?.type !=
                                 "user" && (
                                 <HumanMessage
+                                  key={-2}
                                   messageId={-1}
                                   content={submittedMessage}
                                 />
                               )}
 
-                            {chatState == "loading" && (
+                            {currentSessionChatState == "loading" && (
                               <div
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                               >
                                 <AIMessage
+                                  key={-3}
                                   currentPersona={liveAssistant}
                                   alternativeAssistant={
                                     alternativeGeneratingAssistant ??
@@ -1907,6 +2063,7 @@ export function ChatPage({
                               messageHistory.length === 0 &&
                               !isFetchingChatMessages && (
                                 <div
+                                  key={-4}
                                   className={`
                                       mx-auto 
                                       px-4 
@@ -1938,6 +2095,7 @@ export function ChatPage({
                                   )}
                                 </div>
                               )}
+
                             {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                             <div ref={endPaddingRef} className="h-[95px]" />
                             <div ref={endDivRef} />
@@ -1958,10 +2116,9 @@ export function ChatPage({
                                 </button>
                               </div>
                             )}
-
                             <ChatInputBar
-                              chatState={chatState}
-                              stopGenerating={stopGeneration}
+                              chatState={currentSessionChatState}
+                              stopGenerating={stopGenerating}
                               openModelSettings={() => setSettingsToggled(true)}
                               inputPrompts={userInputPrompts}
                               showDocs={() => setDocumentSelection(true)}
@@ -2003,10 +2160,7 @@ export function ChatPage({
                               enterpriseSettings.use_custom_logotype && (
                                 <div className="hidden lg:block absolute right-0 bottom-0">
                                   <img
-                                    src={
-                                      "/api/enterprise-settings/logotype?u=" +
-                                      Date.now()
-                                    }
+                                    src="/api/enterprise-settings/logotype"
                                     alt="logotype"
                                     style={{ objectFit: "contain" }}
                                     className="w-fit h-8"

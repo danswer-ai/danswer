@@ -155,7 +155,8 @@ def fetch_credential_by_id(
     db_session: Session,
     assume_admin: bool = False,
 ) -> Credential | None:
-    stmt = select(Credential).where(Credential.id == credential_id)
+    stmt = select(Credential).distinct()
+    stmt = stmt.where(Credential.id == credential_id)
     stmt = _add_user_filters(stmt, user, assume_admin=assume_admin)
     result = db_session.execute(stmt)
     credential = result.scalar_one_or_none()

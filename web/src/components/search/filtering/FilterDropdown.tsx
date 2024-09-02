@@ -1,4 +1,4 @@
-import { FiCheck, FiChevronDown } from "react-icons/fi";
+import { FiCheck, FiChevronDown, FiX, FiXCircle } from "react-icons/fi";
 import { CustomDropdown } from "../../Dropdown";
 
 interface Option {
@@ -15,6 +15,7 @@ export function FilterDropdown({
   width = "w-64",
   dropdownWidth,
   optionClassName,
+  resetValues,
 }: {
   options: Option[];
   selected: string[];
@@ -24,6 +25,7 @@ export function FilterDropdown({
   width?: string;
   dropdownWidth?: string;
   optionClassName?: string;
+  resetValues?: () => void;
 }) {
   return (
     <div>
@@ -57,6 +59,7 @@ export function FilterDropdown({
                     cursor-pointer
                     w-fit
                     text-emphasis
+                    gap-x-1
                     hover:bg-hover-light
                     ${
                       ind === options.length - 1 ? "" : "border-b border-border"
@@ -70,7 +73,7 @@ export function FilterDropdown({
                 >
                   {option.display}
                   {isSelected && (
-                    <div className="ml-auto mr-1">
+                    <div className="ml-auto my-auto mr-1">
                       <FiCheck />
                     </div>
                   )}
@@ -95,12 +98,24 @@ export function FilterDropdown({
             hover:bg-hover-light`}
         >
           <div className="flex-none my-auto">{icon}</div>
-          {selected.length === 0 ? (
+          {selected.length === 0 || resetValues ? (
             defaultDisplay
           ) : (
             <p className="line-clamp-1">{selected.join(", ")}</p>
           )}
-          <FiChevronDown className="my-auto ml-auto" />
+          {resetValues && selected.length !== 0 ? (
+            <div
+              className="my-auto ml-auto p-0.5 rounded-full w-fit"
+              onClick={(e) => {
+                resetValues();
+                e.stopPropagation();
+              }}
+            >
+              <FiXCircle />
+            </div>
+          ) : (
+            <FiChevronDown className="my-auto ml-auto" />
+          )}
         </div>
       </CustomDropdown>
     </div>

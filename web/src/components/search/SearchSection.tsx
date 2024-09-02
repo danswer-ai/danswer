@@ -579,6 +579,14 @@ export const SearchSection = ({
 
   const { popup, setPopup } = usePopup();
 
+  const shouldUseAgenticDisplay =
+    agenticResults &&
+    (searchResponse.documents || []).some(
+      (document) =>
+        searchResponse.additional_relevance &&
+        searchResponse.additional_relevance[document.document_id] !== undefined
+    );
+
   return (
     <>
       <div className="flex relative pr-[8px] h-full text-default">
@@ -659,7 +667,7 @@ export const SearchSection = ({
               <div
                 className={`desktop:px-24 w-full ${chatBannerPresent && "mt-10"} pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto`}
               >
-                <div className="absolute z-10 mobile:px-4 mobile:max-w-searchbar-max mobile:w-[90%] top-12 desktop:left-0 hidden 2xl:block mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 desktop:w-52 3xl:w-64">
+                <div className="absolute z-10 mobile:px-4 mobile:max-w-searchbar-max mobile:w-[90%] top-12 desktop:left-4 hidden 2xl:block mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 desktop:w-52 3xl:w-64">
                   {!settings?.isMobile &&
                     (ccPairs.length > 0 || documentSets.length > 0) && (
                       <SourceSelector
@@ -756,7 +764,9 @@ export const SearchSection = ({
                           contentEnriched={contentEnriched}
                           comments={comments}
                           sweep={sweep}
-                          agenticResults={agenticResults && !disabledAgentic}
+                          agenticResults={
+                            shouldUseAgenticDisplay && !disabledAgentic
+                          }
                           performSweep={performSweep}
                           searchResponse={searchResponse}
                           isFetching={isFetching}

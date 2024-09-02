@@ -8,6 +8,7 @@ from collections.abc import Iterator
 from email.parser import Parser as EmailParser
 from pathlib import Path
 from typing import Any
+from typing import Dict
 from typing import IO
 
 import chardet
@@ -178,6 +179,17 @@ def read_text_file(
 
 
 def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
+    """Extract text from a PDF file."""
+    # Return only the extracted text from read_pdf_file
+    text, _ = read_pdf_file(file, pdf_pass)
+    return text
+
+
+def read_pdf_file(
+    file: IO[Any],
+    pdf_pass: str | None = None,
+) -> tuple[str, dict]:
+    metadata: Dict[str, Any] = {}
     try:
         pdf_reader = PdfReader(file)
 
@@ -195,10 +207,21 @@ def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
             if not decrypt_success:
                 # By user request, keep files that are unreadable just so they
                 # can be discoverable by title.
-                return ""
+                return "", metadata
 
-        return TEXT_SECTION_SEPARATOR.join(
-            page.extract_text() for page in pdf_reader.pages
+        # Extract metadata from the PDF, removing leading '/' from keys if present
+        # This standardizes the metadata keys for consistency
+        metadata = {}
+        if pdf_reader.metadata is not None:
+            metadata = {
+                k[1:] if k.startswith("/") else k: v
+                for k, v in pdf_reader.metadata.items()
+            }
+        return (
+            TEXT_SECTION_SEPARATOR.join(
+                page.extract_text() for page in pdf_reader.pages
+            ),
+            metadata,
         )
     except PdfStreamError:
         logger.exception("PDF file is not a valid PDF")
@@ -207,7 +230,7 @@ def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
 
     # File is still discoverable by title
     # but the contents are not included as they cannot be parsed
-    return ""
+    return "", metadata
 
 
 def docx_to_text(file: IO[Any]) -> str:

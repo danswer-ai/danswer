@@ -1,4 +1,5 @@
 import time
+import traceback
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -8,6 +9,7 @@ import uvicorn
 from fastapi import APIRouter
 from fastapi import FastAPI
 from fastapi import Request
+from fastapi import status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -27,16 +29,14 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
-from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.app_configs import LOG_ENDPOINT_LATENCY
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
-from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
-from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import KV_REINDEX_KEY
+from danswer.configs.constants import KV_SEARCH_SETTINGS
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
 from danswer.db.connector import check_connectors_exist
 from danswer.db.connector import create_initial_default_connector
@@ -45,28 +45,28 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.credentials import create_initial_public_credential
 from danswer.db.document import check_docs_exist
-from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
-from danswer.db.models import EmbeddingModel
 from danswer.db.persona import delete_old_default_personas
+from danswer.db.search_settings import get_current_search_settings
+from danswer.db.search_settings import get_secondary_search_settings
+from danswer.db.search_settings import update_current_search_settings
+from danswer.db.search_settings import update_secondary_search_settings
 from danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.llm.llm_initialization import load_llm_providers
+from danswer.indexing.models import IndexingSetting
+from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
 from danswer.search.models import SavedSearchSettings
 from danswer.search.retrieval.search_runner import download_nltk_data
-from danswer.search.search_settings import get_search_settings
-from danswer.search.search_settings import update_search_settings
 from danswer.server.auth_check import check_router_auth
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
@@ -110,19 +110,15 @@ from danswer.server.token_rate_limits.api import (
 from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
 from danswer.tools.built_in_tools import load_builtin_tools
 from danswer.tools.built_in_tools import refresh_built_in_tools_cache
+from danswer.utils.gpu_utils import gpu_status_request
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
-from shared_configs.configs import DEFAULT_CROSS_ENCODER_API_KEY
-from shared_configs.configs import DEFAULT_CROSS_ENCODER_MODEL_NAME
-from shared_configs.configs import DEFAULT_CROSS_ENCODER_PROVIDER_TYPE
-from shared_configs.configs import DISABLE_RERANK_FOR_STREAMING
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-from shared_configs.enums import RerankerProvider
 
 
 logger = setup_logger()
@@ -185,9 +181,6 @@ def setup_postgres(db_session: Session) -> None:
     logger.notice("Verifying default standard answer category exists.")
     create_initial_default_standard_answer_category(db_session)
 
-    logger.notice("Loading LLM providers from env variables")
-    load_llm_providers(db_session)
-
     logger.notice("Loading default Prompts and Personas")
     delete_old_default_personas(db_session)
     load_chat_yamls()
@@ -196,6 +189,77 @@ def setup_postgres(db_session: Session) -> None:
     load_builtin_tools(db_session)
     refresh_built_in_tools_cache(db_session)
     auto_add_search_tool_to_personas(db_session)
+
+
+def update_default_multipass_indexing(db_session: Session) -> None:
+    docs_exist = check_docs_exist(db_session)
+    connectors_exist = check_connectors_exist(db_session)
+    logger.debug(f"Docs exist: {docs_exist}, Connectors exist: {connectors_exist}")
+
+    if not docs_exist and not connectors_exist:
+        logger.info(
+            "No existing docs or connectors found. Checking GPU availability for multipass indexing."
+        )
+        gpu_available = gpu_status_request()
+        logger.info(f"GPU availability: {gpu_available}")
+
+        current_settings = get_current_search_settings(db_session)
+
+        logger.notice(f"Updating multipass indexing setting to: {gpu_available}")
+        updated_settings = SavedSearchSettings.from_db_model(current_settings)
+        # Enable multipass indexing if GPU is available or if using a cloud provider
+        updated_settings.multipass_indexing = (
+            gpu_available or current_settings.cloud_provider is not None
+        )
+        update_current_search_settings(db_session, updated_settings)
+
+    else:
+        logger.debug(
+            "Existing docs or connectors found. Skipping multipass indexing update."
+        )
+
+
+def translate_saved_search_settings(db_session: Session) -> None:
+    kv_store = get_dynamic_config_store()
+
+    try:
+        search_settings_dict = kv_store.load(KV_SEARCH_SETTINGS)
+        if isinstance(search_settings_dict, dict):
+            # Update current search settings
+            current_settings = get_current_search_settings(db_session)
+
+            # Update non-preserved fields
+            if current_settings:
+                current_settings_dict = SavedSearchSettings.from_db_model(
+                    current_settings
+                ).dict()
+
+                new_current_settings = SavedSearchSettings(
+                    **{**current_settings_dict, **search_settings_dict}
+                )
+                update_current_search_settings(db_session, new_current_settings)
+
+            # Update secondary search settings
+            secondary_settings = get_secondary_search_settings(db_session)
+            if secondary_settings:
+                secondary_settings_dict = SavedSearchSettings.from_db_model(
+                    secondary_settings
+                ).dict()
+
+                new_secondary_settings = SavedSearchSettings(
+                    **{**secondary_settings_dict, **search_settings_dict}
+                )
+                update_secondary_search_settings(
+                    db_session,
+                    new_secondary_settings,
+                )
+            # Delete the KV store entry after successful update
+            kv_store.delete(KV_SEARCH_SETTINGS)
+            logger.notice("Search settings updated and KV store entry deleted.")
+        else:
+            logger.notice("KV store search settings is empty.")
+    except ConfigNotFoundError:
+        logger.notice("No search config found in KV store.")
 
 
 def mark_reindex_flag(db_session: Session) -> None:
@@ -221,17 +285,17 @@ def mark_reindex_flag(db_session: Session) -> None:
 
 def setup_vespa(
     document_index: DocumentIndex,
-    db_embedding_model: EmbeddingModel,
-    secondary_db_embedding_model: EmbeddingModel | None,
+    index_setting: IndexingSetting,
+    secondary_index_setting: IndexingSetting | None,
 ) -> None:
     # Vespa startup is a bit slow, so give it a few seconds
     wait_time = 5
     for _ in range(5):
         try:
             document_index.ensure_indices_exist(
-                index_embedding_dim=db_embedding_model.model_dim,
-                secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
-                if secondary_db_embedding_model
+                index_embedding_dim=index_setting.model_dim,
+                secondary_index_embedding_dim=secondary_index_setting.model_dim
+                if secondary_index_setting
                 else None,
             )
             break
@@ -262,13 +326,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     with Session(engine) as db_session:
         check_index_swap(db_session=db_session)
-        db_embedding_model = get_current_db_embedding_model(db_session)
-        secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
+        search_settings = get_current_search_settings(db_session)
+        secondary_search_settings = get_secondary_search_settings(db_session)
 
         # Break bad state for thrashing indexes
-        if secondary_db_embedding_model and DISABLE_INDEX_UPDATE_ON_SWAP:
+        if secondary_search_settings and DISABLE_INDEX_UPDATE_ON_SWAP:
             expire_index_attempts(
-                embedding_model_id=db_embedding_model.id, db_session=db_session
+                search_settings_id=search_settings.id, db_session=db_session
             )
 
             for cc_pair in get_connector_credential_pairs(db_session):
@@ -277,16 +341,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # Expire all old embedding models indexing attempts, technically redundant
         cancel_indexing_attempts_past_model(db_session)
 
-        logger.notice(f'Using Embedding model: "{db_embedding_model.model_name}"')
-        if db_embedding_model.query_prefix or db_embedding_model.passage_prefix:
+        logger.notice(f'Using Embedding model: "{search_settings.model_name}"')
+        if search_settings.query_prefix or search_settings.passage_prefix:
+            logger.notice(f'Query embedding prefix: "{search_settings.query_prefix}"')
             logger.notice(
-                f'Query embedding prefix: "{db_embedding_model.query_prefix}"'
-            )
-            logger.notice(
-                f'Passage embedding prefix: "{db_embedding_model.passage_prefix}"'
+                f'Passage embedding prefix: "{search_settings.passage_prefix}"'
             )
 
-        search_settings = get_search_settings()
         if search_settings:
             if not search_settings.disable_rerank_for_streaming:
                 logger.notice("Reranking is enabled.")
@@ -295,29 +356,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 logger.notice(
                     f"Multilingual query expansion is enabled with {search_settings.multilingual_expansion}."
                 )
-        else:
-            if DEFAULT_CROSS_ENCODER_MODEL_NAME:
-                logger.notice("Reranking is enabled.")
-                if not DEFAULT_CROSS_ENCODER_MODEL_NAME:
-                    raise ValueError("No reranking model specified.")
-            search_settings = SavedSearchSettings(
-                rerank_model_name=DEFAULT_CROSS_ENCODER_MODEL_NAME,
-                provider_type=RerankerProvider(DEFAULT_CROSS_ENCODER_PROVIDER_TYPE)
-                if DEFAULT_CROSS_ENCODER_PROVIDER_TYPE
-                else None,
-                api_key=DEFAULT_CROSS_ENCODER_API_KEY,
-                disable_rerank_for_streaming=DISABLE_RERANK_FOR_STREAMING,
-                num_rerank=NUM_POSTPROCESSED_RESULTS,
-                multilingual_expansion=[
-                    s.strip()
-                    for s in MULTILINGUAL_QUERY_EXPANSION.split(",")
-                    if s.strip()
-                ]
-                if MULTILINGUAL_QUERY_EXPANSION
-                else [],
-                multipass_indexing=ENABLE_MULTIPASS_INDEXING,
-            )
-            update_search_settings(search_settings)
 
         if search_settings.rerank_model_name and not search_settings.provider_type:
             warm_up_cross_encoder(search_settings.rerank_model_name)
@@ -328,6 +366,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # setup Postgres with default credential, llm providers, etc.
         setup_postgres(db_session)
 
+        translate_saved_search_settings(db_session)
+
         # Does the user need to trigger a reindexing to bring the document index
         # into a good state, marked in the kv store
         mark_reindex_flag(db_session)
@@ -335,28 +375,60 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # ensure Vespa is setup correctly
         logger.notice("Verifying Document Index(s) is/are available.")
         document_index = get_default_document_index(
-            primary_index_name=db_embedding_model.index_name,
-            secondary_index_name=secondary_db_embedding_model.index_name
-            if secondary_db_embedding_model
+            primary_index_name=search_settings.index_name,
+            secondary_index_name=secondary_search_settings.index_name
+            if secondary_search_settings
             else None,
         )
-        setup_vespa(document_index, db_embedding_model, secondary_db_embedding_model)
+        setup_vespa(
+            document_index,
+            IndexingSetting.from_db_model(search_settings),
+            IndexingSetting.from_db_model(secondary_search_settings)
+            if secondary_search_settings
+            else None,
+        )
 
         logger.notice(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
-        if db_embedding_model.provider_type is None:
+        if search_settings.provider_type is None:
             warm_up_bi_encoder(
-                embedding_model=db_embedding_model,
-                model_server_host=MODEL_SERVER_HOST,
-                model_server_port=MODEL_SERVER_PORT,
+                embedding_model=EmbeddingModel.from_db_model(
+                    search_settings=search_settings,
+                    server_host=MODEL_SERVER_HOST,
+                    server_port=MODEL_SERVER_PORT,
+                ),
             )
+
+        # update multipass indexing setting based on GPU availability
+        update_default_multipass_indexing(db_session)
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield
 
 
+def log_http_error(_: Request, exc: Exception) -> JSONResponse:
+    status_code = getattr(exc, "status_code", 500)
+    if status_code >= 400:
+        error_msg = f"{str(exc)}\n"
+        error_msg += "".join(traceback.format_tb(exc.__traceback__))
+        logger.error(error_msg)
+    return JSONResponse(
+        status_code=status_code,
+        content={"detail": str(exc)},
+    )
+
+
 def get_application() -> FastAPI:
     application = FastAPI(
         title="Danswer Backend", version=__version__, lifespan=lifespan
+    )
+
+    # Add the custom exception handler
+    application.add_exception_handler(status.HTTP_400_BAD_REQUEST, log_http_error)
+    application.add_exception_handler(status.HTTP_401_UNAUTHORIZED, log_http_error)
+    application.add_exception_handler(status.HTTP_403_FORBIDDEN, log_http_error)
+    application.add_exception_handler(status.HTTP_404_NOT_FOUND, log_http_error)
+    application.add_exception_handler(
+        status.HTTP_500_INTERNAL_SERVER_ERROR, log_http_error
     )
 
     include_router_with_global_prefix_prepended(application, chat_router)

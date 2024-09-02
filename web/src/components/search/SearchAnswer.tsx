@@ -74,7 +74,7 @@ export default function SearchAnswer({
     >
       <div>
         <div className="flex gap-x-2">
-          <h2 className="text-emphasis font-bold my-auto mb-1 ">AI Answer</h2>
+          <h2 className="text-emphasis font-bold my-auto mb-1">AI Answer</h2>
 
           {searchState == "generating" && (
             <div key={"generating"} className="relative inline-block">

@@ -16,6 +16,33 @@ import {
 } from "./icons/icons";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 
+interface DropdownOptionProps {
+  href?: string;
+  onClick?: () => void;
+  icon: React.ReactNode;
+  label: string;
+}
+
+const DropdownOption: React.FC<DropdownOptionProps> = ({
+  href,
+  onClick,
+  icon,
+  label,
+}) => {
+  const content = (
+    <div className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light">
+      {icon}
+      {label}
+    </div>
+  );
+
+  return href ? (
+    <Link href={href}>{content}</Link>
+  ) : (
+    <div onClick={onClick}>{content}</div>
+  );
+};
+
 export function UserDropdown({
   user,
   page,
@@ -31,7 +58,6 @@ export function UserDropdown({
   if (!combinedSettings) {
     return null;
   }
-  const settings = combinedSettings.settings;
 
   const handleLogout = () => {
     logout().then((isSuccess) => {
@@ -100,44 +126,32 @@ export function UserDropdown({
                 overscroll-contain
               `}
           >
-            {showAdminPanel && (
-              <>
-                <Link
+            {showAdminPanel ? (
+              <DropdownOption
+                href="/admin/indexing/status"
+                icon={<LightSettingsIcon className="h-5 w-5 my-auto mr-2" />}
+                label="Admin Panel"
+              />
+            ) : (
+              showCuratorPanel && (
+                <DropdownOption
                   href="/admin/indexing/status"
-                  className="flex py-3 px-4 cursor-pointer !
-                   rounded hover:bg-hover-light"
-                >
-                  <LightSettingsIcon className="h-5 w-5 my-auto mr-2" />
-                  Admin Panel
-                </Link>
-              </>
+                  icon={<LightSettingsIcon className="h-5 w-5 my-auto mr-2" />}
+                  label="Curator Panel"
+                />
+              )
             )}
-            {showCuratorPanel && (
-              <>
-                <Link
-                  href="/admin/indexing/status"
-                  className="flex py-3 px-4 cursor-pointer !
-                   rounded hover:bg-hover-light"
-                >
-                  <LightSettingsIcon className="h-5 w-5 my-auto mr-2" />
-                  Curator Panel
-                </Link>
-              </>
+
+            {showLogout && (showCuratorPanel || showAdminPanel) && (
+              <div className="border-t border-border my-1" />
             )}
 
             {showLogout && (
-              <>
-                {(!(page == "search" || page == "chat") || showAdminPanel) && (
-                  <div className="border-t border-border my-1" />
-                )}
-                <div
-                  onClick={handleLogout}
-                  className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-hover-light"
-                >
-                  <FiLogOut className="my-auto mr-2 text-lg" />
-                  Log out
-                </div>
-              </>
+              <DropdownOption
+                onClick={handleLogout}
+                icon={<FiLogOut className="my-auto mr-2 text-lg" />}
+                label="Log out"
+              />
             )}
           </div>
         }

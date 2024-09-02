@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
 from danswer.db.models import LLMProvider as LLMProviderModel
 from danswer.db.models import LLMProvider__UserGroup
+from danswer.db.models import SearchSettings
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.server.manage.embedding.models import CloudEmbeddingProvider
@@ -46,10 +47,11 @@ def upsert_cloud_embedding_provider(
         .first()
     )
     if existing_provider:
-        for key, value in provider.dict().items():
+        for key, value in provider.model_dump().items():
             setattr(existing_provider, key, value)
     else:
-        new_provider = CloudEmbeddingProviderModel(**provider.dict())
+        new_provider = CloudEmbeddingProviderModel(**provider.model_dump())
+
         db_session.add(new_provider)
         existing_provider = new_provider
     db_session.commit()
@@ -158,10 +160,17 @@ def remove_embedding_provider(
     db_session: Session, provider_type: EmbeddingProvider
 ) -> None:
     db_session.execute(
+        delete(SearchSettings).where(SearchSettings.provider_type == provider_type)
+    )
+
+    # Delete the embedding provider
+    db_session.execute(
         delete(CloudEmbeddingProviderModel).where(
             CloudEmbeddingProviderModel.provider_type == provider_type
         )
     )
+
+    db_session.commit()
 
 
 def remove_llm_provider(db_session: Session, provider_id: int) -> None:
