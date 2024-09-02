@@ -323,9 +323,11 @@ class Answer:
             prompt=prompt,
             tools=tools,
         ):
+            print(message)
             if isinstance(message, AIMessageChunk):
                 if message.content:
                     if self.is_cancelled:
+                        print("CANCELLD")
                         return StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
                     yield cast(str, message.content)
 
@@ -469,7 +471,7 @@ class Answer:
 
         prompt = prompt_builder.build()
 
-        yield from self._process_llm_stream(self, prompt=prompt)
+        yield from self._process_llm_stream(prompt=prompt, tools=None)
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -485,6 +487,7 @@ class Answer:
             and not self.skip_explicit_tool_calling
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
+        print(output_generator)
 
         def _process_stream(
             stream: Iterator[ToolCallKickoff | ToolResponse | str | StreamStopInfo],
@@ -542,17 +545,15 @@ class Answer:
                 )
 
                 def _stream() -> Iterator[str | StreamStopInfo]:
-                    yield from (
-                        cast(str | StreamStopInfo, message)
-                        if message
-                        else (cast(str | StreamStopInfo, item) for item in stream)
-                    )
+                    yield cast(str | StreamStopInfo, message)
+                    yield from (cast(str | StreamStopInfo, item) for item in stream)
 
                 for item in _stream():
                     if isinstance(item, StreamStopInfo):
                         yield item
                     else:
                         yield from process_answer_stream_fn(iter([item]))
+                # yield from process_answer_stream_fn(_stream())
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):

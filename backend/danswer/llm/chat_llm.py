@@ -301,6 +301,7 @@ class DefaultMultiLLM(LLM):
                 # streaming choice
                 stream=stream,
                 # model params
+                max_tokens=3,
                 temperature=self._temperature,
                 timeout=self._timeout,
                 # For now, we don't support parallel tool calls
@@ -336,6 +337,7 @@ class DefaultMultiLLM(LLM):
         response = cast(
             litellm.ModelResponse, self._completion(prompt, tools, tool_choice, False)
         )
+        print("getting a rseponse on this side")
         choice = response.choices[0]
         if hasattr(choice, "message"):
             return _convert_litellm_message_to_langchain_message(choice.message)
@@ -362,6 +364,7 @@ class DefaultMultiLLM(LLM):
         )
         try:
             for part in response:
+                print(part)
                 if len(part["choices"]) == 0:
                     continue
 
