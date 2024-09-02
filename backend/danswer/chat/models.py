@@ -53,7 +53,7 @@ class StreamStopReason(Enum):
 class StreamStopInfo(BaseModel):
     stop_reason: StreamStopReason
 
-    def model_dump(self, *args, **kwargs):
+    def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:
         data = super().model_dump(*args, **kwargs)
         data["stop_reason"] = self.stop_reason.name
         return data
