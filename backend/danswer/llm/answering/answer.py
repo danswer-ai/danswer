@@ -37,7 +37,6 @@ from danswer.llm.answering.stream_processing.quotes_processing import (
 from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.llm.interfaces import LLM
-from danswer.llm.utils import message_generator_to_string_generator
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.tools.custom.custom_tool_prompt_builder import (
     build_user_message_for_custom_tool_for_non_tool_calling_llm,
@@ -311,18 +310,30 @@ class Answer:
             yield tool_runner.tool_final_result()
 
             prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
-            for token in message_generator_to_string_generator(
-                self.llm.stream(
-                    prompt=prompt,
-                    tools=[tool.tool_definition() for tool in self.tools],
-                )
-            ):
-                if self.is_cancelled:
-                    return StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
 
-                yield cast(str, token)
+            yield from self._process_llm_stream(
+                prompt=prompt,
+                tools=[tool.tool_definition() for tool in self.tools],
+            )
 
             return
+
+    def _process_llm_stream(self, prompt, tools):
+        for message in self.llm.stream(
+            prompt=prompt,
+            tools=tools,
+        ):
+            if isinstance(message, AIMessageChunk):
+                if message.content:
+                    if self.is_cancelled:
+                        return StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
+                    yield cast(str, message.content)
+
+            if (
+                message.additional_kwargs.get("usage_metadata", {}).get("stop")
+                == "length"
+            ):
+                yield StreamStopInfo(stop_reason=StreamStopReason.CONTEXT_LENGTH)
 
     def _raw_output_for_non_explicit_tool_calling_llms(
         self,
@@ -401,14 +412,10 @@ class Answer:
                 )
             )
             prompt = prompt_builder.build()
-            for token in message_generator_to_string_generator(
-                self.llm.stream(prompt=prompt)
-            ):
-                if self.is_cancelled:
-                    return StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
-                yield token
-
-            return
+            yield from self._process_llm_stream(
+                prompt=prompt,
+                tools=None,
+            )
 
         tool, tool_args = chosen_tool_and_args
         tool_runner = ToolRunner(tool, tool_args)
@@ -461,12 +468,8 @@ class Answer:
         yield final
 
         prompt = prompt_builder.build()
-        for token in message_generator_to_string_generator(
-            self.llm.stream(prompt=prompt)
-        ):
-            if self.is_cancelled:
-                return
-            yield token
+
+        yield from self._process_llm_stream(self, prompt=prompt)
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -539,11 +542,17 @@ class Answer:
                 )
 
                 def _stream() -> Iterator[str | StreamStopInfo]:
-                    if message:
-                        yield cast(str, message)
-                    yield from cast(Iterator[str], stream)
+                    yield from (
+                        cast(str | StreamStopInfo, message)
+                        if message
+                        else (cast(str | StreamStopInfo, item) for item in stream)
+                    )
 
-                yield from process_answer_stream_fn(_stream())
+                for item in _stream():
+                    if isinstance(item, StreamStopInfo):
+                        yield item
+                    else:
+                        yield from process_answer_stream_fn(iter([item]))
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
