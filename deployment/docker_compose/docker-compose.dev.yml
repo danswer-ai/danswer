@@ -12,6 +12,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
       - inference_model_server
     restart: always
     ports:
@@ -114,6 +115,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
       - inference_model_server
       - indexing_model_server
     restart: always
