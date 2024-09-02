@@ -90,6 +90,7 @@ class EmbeddingModel:
         query_prefix: str | None,
         passage_prefix: str | None,
         api_key: str | None,
+        api_url: str | None,
         provider_type: EmbeddingProvider | None,
         retrim_content: bool = False,
     ) -> None:
@@ -100,6 +101,7 @@ class EmbeddingModel:
         self.normalize = normalize
         self.model_name = model_name
         self.retrim_content = retrim_content
+        self.api_url = api_url
         self.tokenizer = get_tokenizer(
             model_name=model_name, provider_type=provider_type
         )
@@ -157,6 +159,7 @@ class EmbeddingModel:
                 text_type=text_type,
                 manual_query_prefix=self.query_prefix,
                 manual_passage_prefix=self.passage_prefix,
+                api_url=self.api_url,
             )
 
             response = self._make_model_server_request(embed_request)
@@ -226,6 +229,7 @@ class EmbeddingModel:
             passage_prefix=search_settings.passage_prefix,
             api_key=search_settings.api_key,
             provider_type=search_settings.provider_type,
+            api_url=search_settings.api_url,
             retrim_content=retrim_content,
         )
 

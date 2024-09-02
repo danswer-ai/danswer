@@ -608,6 +608,10 @@ class SearchSettings(Base):
           cloud_provider='{self.cloud_provider.provider_type if self.cloud_provider else 'None'}')>"
 
     @property
+    def api_url(self) -> str | None:
+        return self.cloud_provider.api_url if self.cloud_provider is not None else None
+
+    @property
     def api_key(self) -> str | None:
         return self.cloud_provider.api_key if self.cloud_provider is not None else None
 
@@ -1085,6 +1089,7 @@ class CloudEmbeddingProvider(Base):
     provider_type: Mapped[EmbeddingProvider] = mapped_column(
         Enum(EmbeddingProvider), primary_key=True
     )
+    api_url: Mapped[str | None] = mapped_column(String, nullable=True)
     api_key: Mapped[str | None] = mapped_column(EncryptedString())
     search_settings: Mapped[list["SearchSettings"]] = relationship(
         "SearchSettings",

@@ -48,6 +48,7 @@ import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
 import openAISVG from "../../../public/Openai.svg";
 import openSourceIcon from "../../../public/OpenSource.png";
+import litellmIcon from "../../../public/LiteLLM.jpg";
 
 import awsWEBP from "../../../public/Amazon.webp";
 import azureIcon from "../../../public/Azure.png";
@@ -263,6 +264,20 @@ export const ColorSlackIcon = ({
       className={`w-[${size}px] h-[${size}px] ` + className}
     >
       <Image src={slackIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const LiteLLMIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={litellmIcon} alt="Logo" width="96" height="96" />
     </div>
   );
 };

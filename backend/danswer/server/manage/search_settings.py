@@ -45,7 +45,7 @@ def set_new_search_settings(
     if search_settings_new.index_name:
         logger.warning("Index name was specified by request, this is not suggested")
 
-    # Validate cloud provider exists
+    # Validate cloud provider exists or create new LiteLLM provider
     if search_settings_new.provider_type is not None:
         cloud_provider = get_embedding_provider_from_provider_type(
             db_session, provider_type=search_settings_new.provider_type
@@ -133,7 +133,7 @@ def cancel_new_embedding(
 
 
 @router.get("/get-current-search-settings")
-def get_curr_search_settings(
+def get_current_search_settings_endpoint(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> SavedSearchSettings:
@@ -142,7 +142,7 @@ def get_curr_search_settings(
 
 
 @router.get("/get-secondary-search-settings")
-def get_sec_search_settings(
+def get_secondary_search_settings_endpoint(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> SavedSearchSettings | None:
