@@ -13,13 +13,13 @@ export function ProviderCreationModal({
   onConfirm,
   onCancel,
   existingProvider,
-  proxyModel,
+  isProxy,
 }: {
   selectedProvider: CloudEmbeddingProvider;
   onConfirm: () => void;
   onCancel: () => void;
   existingProvider?: CloudEmbeddingProvider;
-  proxyModel?: boolean;
+  isProxy?: boolean;
 }) {
   const useFileUpload = selectedProvider.provider_type == "Google";
 
@@ -40,12 +40,12 @@ export function ProviderCreationModal({
 
   const validationSchema = Yup.object({
     provider_type: Yup.string().required("Provider type is required"),
-    api_key: proxyModel
+    api_key: isProxy
       ? Yup.string()
       : useFileUpload
         ? Yup.string()
         : Yup.string().required("API Key is required"),
-    api_url: proxyModel
+    api_url: isProxy
       ? Yup.string().required("API URL is required")
       : Yup.string(),
     custom_config: Yup.array().of(Yup.array().of(Yup.string()).length(2)),
@@ -178,12 +178,12 @@ export function ProviderCreationModal({
                   target="_blank"
                   href={selectedProvider.apiLink}
                 >
-                  {proxyModel ? "API URL" : "API KEY"}
+                  {isProxy ? "API URL" : "API KEY"}
                 </a>
               </Text>
 
               <div className="flex w-full flex-col gap-y-2">
-                {proxyModel ? (
+                {isProxy ? (
                   <TextFormField
                     name="api_url"
                     label="API URL"

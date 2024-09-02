@@ -187,7 +187,7 @@ export function EmbeddingModelSelection({
 
       {showTentativeProvider && (
         <ProviderCreationModal
-          proxyModel={showTentativeProvider.provider_type == "LiteLLM"}
+          isProxy={showTentativeProvider.provider_type == "LiteLLM"}
           selectedProvider={showTentativeProvider}
           onConfirm={() => {
             setShowTentativeProvider(showUnconfiguredProvider);
