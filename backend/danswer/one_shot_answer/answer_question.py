@@ -26,6 +26,7 @@ from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.chat import update_search_docs_table_with_relevance
 from danswer.db.engine import get_session_context_manager
+from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.db.persona import get_prompt_by_id
 from danswer.llm.answering.answer import Answer
@@ -60,7 +61,7 @@ from danswer.tools.tool import ToolResponse
 from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
-
+from ee.danswer.server.query_and_chat.utils import create_temporary_persona
 
 logger = setup_logger()
 
@@ -97,6 +98,7 @@ def stream_answer_objects(
     retrieval_metrics_callback: (
         Callable[[RetrievalMetricsContainer], None] | None
     ) = None,
+    temporary_persona: Persona | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> AnswerObjectIterator:
     """Streams in order:
@@ -114,11 +116,14 @@ def stream_answer_objects(
         db_session=db_session,
         description="",  # One shot queries don't need naming as it's never displayed
         user_id=user_id,
+        # TODO fix this - should not store? Or add a new default value (-3) for custom?
         persona_id=query_req.persona_id,
         one_shot=True,
         danswerbot_flow=danswerbot_flow,
     )
-    llm, fast_llm = get_llms_for_persona(persona=chat_session.persona)
+
+    persona = temporary_persona if temporary_persona else chat_session.persona
+    llm, fast_llm = get_llms_for_persona(persona=persona)
 
     llm_tokenizer = get_tokenizer(
         model_name=llm.config.model_name,
@@ -153,11 +158,11 @@ def stream_answer_objects(
             prompt_id=query_req.prompt_id, user=None, db_session=db_session
         )
     if prompt is None:
-        if not chat_session.persona.prompts:
+        if not persona.prompts:
             raise RuntimeError(
                 "Persona does not have any prompts - this should never happen"
             )
-        prompt = chat_session.persona.prompts[0]
+        prompt = persona.prompts[0]
 
     # Create the first User query message
     new_user_message = create_new_chat_message(
@@ -174,12 +179,15 @@ def stream_answer_objects(
     prompt_config = PromptConfig.from_model(prompt)
     document_pruning_config = DocumentPruningConfig(
         max_chunks=int(
-            chat_session.persona.num_chunks
-            if chat_session.persona.num_chunks is not None
-            else default_num_chunks
+            persona.num_chunks if persona.num_chunks is not None else default_num_chunks
         ),
         max_tokens=max_document_tokens,
     )
+
+    if temporary_persona:
+        for tool in temporary_persona.tools:
+            if tool.in_code_tool_id == "SearchTool":
+                pass
 
     search_tool = SearchTool(
         db_session=db_session,
@@ -187,16 +195,16 @@ def stream_answer_objects(
         evaluation_type=LLMEvaluationType.SKIP
         if DISABLE_LLM_DOC_RELEVANCE
         else query_req.evaluation_type,
-        persona=chat_session.persona,
+        persona=persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,
         llm=llm,
         fast_llm=fast_llm,
         pruning_config=document_pruning_config,
+        bypass_acl=bypass_acl,
         chunks_above=query_req.chunks_above,
         chunks_below=query_req.chunks_below,
         full_doc=query_req.full_doc,
-        bypass_acl=bypass_acl,
     )
 
     answer_config = AnswerStyleConfig(
@@ -209,13 +217,15 @@ def stream_answer_objects(
         question=query_msg.message,
         answer_style_config=answer_config,
         prompt_config=PromptConfig.from_model(prompt),
-        llm=get_main_llm_from_tuple(get_llms_for_persona(persona=chat_session.persona)),
+        llm=get_main_llm_from_tuple(get_llms_for_persona(persona=persona)),
         single_message_history=history_str,
-        tools=[search_tool],
-        force_use_tool=ForceUseTool(
-            force_use=True,
-            tool_name=search_tool.name,
-            args={"query": rephrased_query},
+        tools=[search_tool] if search_tool else [],
+        force_use_tool=(
+            ForceUseTool(
+                tool_name=search_tool.name,
+                args={"query": rephrased_query},
+                force_use=True,
+            )
         ),
         # for now, don't use tool calling for this flow, as we haven't
         # tested quotes with tool calling too much yet
@@ -223,10 +233,9 @@ def stream_answer_objects(
         return_contexts=query_req.return_contexts,
         skip_gen_ai_answer_generation=query_req.skip_gen_ai_answer_generation,
     )
-
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
-
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
+        print(packet)
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):
             # (likely fine that it comes after the initial creation of the search docs)
@@ -261,6 +270,7 @@ def stream_answer_objects(
                     applied_time_cutoff=search_response_summary.final_filters.time_cutoff,
                     recency_bias_multiplier=search_response_summary.recency_bias_multiplier,
                 )
+
                 yield initial_response
 
             elif packet.id == SEARCH_DOC_CONTENT_ID:
@@ -348,7 +358,15 @@ def get_search_answer(
     """Collects the streamed one shot answer responses into a single object"""
     qa_response = OneShotQAResponse()
 
+    temporary_persona: Persona | None = None
+    if query_req.persona_config is not None:
+        new_persona = create_temporary_persona(
+            db_session=db_session, persona_config=query_req.persona_config
+        )
+        temporary_persona = new_persona
+
     results = stream_answer_objects(
+        temporary_persona=temporary_persona,
         query_req=query_req,
         user=user,
         max_document_tokens=max_document_tokens,
