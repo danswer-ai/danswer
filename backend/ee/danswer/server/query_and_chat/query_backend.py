@@ -139,8 +139,6 @@ def get_answer_with_quote(
             db_session=db_session, persona_config=query_request.persona_config
         )
         persona = new_persona
-        print("Created a new persona!")
-        print(persona.__dict__)
 
     elif query_request.persona_id is not None:
         persona = get_persona_by_id(

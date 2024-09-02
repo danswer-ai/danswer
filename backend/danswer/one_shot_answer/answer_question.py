@@ -123,6 +123,7 @@ def stream_answer_objects(
     )
 
     persona = temporary_persona if temporary_persona else chat_session.persona
+    llm, fast_llm = get_llms_for_persona(persona=persona)
 
     llm_tokenizer = get_tokenizer(
         model_name=llm.config.model_name,
@@ -175,7 +176,6 @@ def stream_answer_objects(
         commit=True,
     )
 
-    llm, fast_llm = get_llms_for_persona(persona=persona)
     prompt_config = PromptConfig.from_model(prompt)
     document_pruning_config = DocumentPruningConfig(
         max_chunks=int(
@@ -183,13 +183,6 @@ def stream_answer_objects(
         ),
         max_tokens=max_document_tokens,
     )
-
-    print(f"PERSONA's indices {persona.document_sets}")
-    print(f"DOCUMENT PRUNING {document_pruning_config}")
-    print(f"Retrievval options {query_req.retrieval_options}")
-
-    # retrieval_options = query_req.retrieval_options
-    # retrieval_options.filters.document_set =
 
     contains_tool = True
     if temporary_persona:
@@ -202,10 +195,9 @@ def stream_answer_objects(
         SearchTool(
             db_session=db_session,
             user=user,
-                    evaluation_type=LLMEvaluationType.SKIP
-        if DISABLE_LLM_DOC_RELEVANCE
-        else query_req.evaluation_type,
-
+            evaluation_type=LLMEvaluationType.SKIP
+            if DISABLE_LLM_DOC_RELEVANCE
+            else query_req.evaluation_type,
             persona=persona,
             retrieval_options=query_req.retrieval_options,
             prompt_config=prompt_config,
@@ -213,10 +205,9 @@ def stream_answer_objects(
             fast_llm=fast_llm,
             pruning_config=document_pruning_config,
             bypass_acl=bypass_acl,
-                    chunks_above=query_req.chunks_above,
-        chunks_below=query_req.chunks_below,
-        full_doc=query_req.full_doc,
-
+            chunks_above=query_req.chunks_above,
+            chunks_below=query_req.chunks_below,
+            full_doc=query_req.full_doc,
         )
         if contains_tool
         else None
