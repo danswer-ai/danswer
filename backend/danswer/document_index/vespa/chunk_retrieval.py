@@ -320,6 +320,7 @@ def query_vespa(
 
     if not hits:
         logger.warning(f"No hits found for YQL Query: {query_params.get('yql')}")
+        logger.debug(f"Vespa Response: {response.text}")
 
     for hit in hits:
         if hit["fields"].get(CONTENT) is None:
