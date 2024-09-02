@@ -48,7 +48,7 @@ import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
 import openAISVG from "../../../public/Openai.svg";
 import openSourceIcon from "../../../public/OpenSource.png";
-import litellmIcon from "../../../public/litellm.jpg";
+import litellmIcon from "../../../public/LiteLLM.jpg";
 
 import awsWEBP from "../../../public/Amazon.webp";
 import azureIcon from "../../../public/Azure.png";
