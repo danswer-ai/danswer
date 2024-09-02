@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Text, Button, Callout } from "@tremor/react";
-import { Formik, Form, Field } from "formik";
+import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { Label, TextFormField } from "@/components/admin/connectors/Field";
 import { LoadingAnimation } from "@/components/Loading";
