@@ -292,12 +292,11 @@ def query_vespa(
         if LOG_VESPA_TIMING_INFORMATION
         else {},
     )
-
-    response = requests.post(
-        SEARCH_ENDPOINT,
-        json=params,
-    )
     try:
+        response = requests.post(
+            SEARCH_ENDPOINT,
+            json=params,
+        )
         response.raise_for_status()
     except requests.HTTPError as e:
         request_info = f"Headers: {response.request.headers}\nPayload: {params}"
@@ -318,6 +317,9 @@ def query_vespa(
     if LOG_VESPA_TIMING_INFORMATION:
         logger.debug("Vespa timing info: %s", response_json.get("timing"))
     hits = response_json["root"].get("children", [])
+
+    if not hits:
+        logger.warning(f"No hits found for YQL Query: {query_params.get('yql')}")
 
     for hit in hits:
         if hit["fields"].get(CONTENT) is None:
