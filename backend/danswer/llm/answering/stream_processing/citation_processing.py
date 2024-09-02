@@ -6,7 +6,6 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import STOP_STREAM_PAT
-from danswer.llm.answering.answer import StreamStopInfo
 from danswer.llm.answering.models import StreamProcessor
 from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 from danswer.prompts.constants import TRIPLE_BACKTICK
@@ -21,11 +20,11 @@ def in_code_block(llm_text: str) -> bool:
 
 
 def extract_citations_from_stream(
-    tokens: Iterator[str | StreamStopInfo],
+    tokens: Iterator[str],
     context_docs: list[LlmDoc],
     doc_id_to_rank_map: DocumentIdOrderMapping,
     stop_stream: str | None = STOP_STREAM_PAT,
-) -> Iterator[DanswerAnswerPiece | CitationInfo | StreamStopInfo]:
+) -> Iterator[DanswerAnswerPiece | CitationInfo]:
     """
     Key aspects:
 
@@ -70,10 +69,6 @@ def extract_citations_from_stream(
     current_citations: list[int] = []
     past_cite_count = 0
     for raw_token in tokens:
-        if isinstance(raw_token, StreamStopInfo):
-            yield raw_token
-            continue
-
         raw_out += raw_token
         if stop_stream:
             next_hold = hold + raw_token
@@ -209,7 +204,7 @@ def build_citation_processor(
     context_docs: list[LlmDoc], doc_id_to_rank_map: DocumentIdOrderMapping
 ) -> StreamProcessor:
     def stream_processor(
-        tokens: Iterator[str | StreamStopInfo],
+        tokens: Iterator[str],
     ) -> AnswerQuestionStreamReturn:
         yield from extract_citations_from_stream(
             tokens=tokens,
