@@ -234,7 +234,6 @@ def stream_answer_objects(
         skip_gen_ai_answer_generation=query_req.skip_gen_ai_answer_generation,
     )
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
-    dropped_inds: list[int] = []
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         print(packet)
         # for one-shot flow, don't currently do anything with these
