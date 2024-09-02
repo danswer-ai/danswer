@@ -105,18 +105,6 @@ pip install -r danswer/backend/requirements/dev.txt
 pip install -r danswer/backend/requirements/model_server.txt
 ```
 
-Now ensure the current directory is the top level of the checked out danswer repository.
-Next, install pre-commit hooks to follow the quality checks run on all Pull Requests.
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-macOS will likely require you to remove some quarantine attributes on some of the hooks for them to execute properly.
-```
-sudo xattr -r -d com.apple.quarantine ~/.cache/pre-commit
-```
-
 Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
 Once the above is done, navigate to `danswer/web` run:
 ```bash
@@ -199,9 +187,20 @@ Note: if you need finer logging, add the additional environment variable `LOG_LE
 For the backend, you'll need to setup pre-commit hooks (black / reorder-python-imports).
 First, install pre-commit (if you don't have it already) following the instructions
 [here](https://pre-commit.com/#installation).
+
+On macOS, from the danswer directory you can simply install pre-commit with the following command.
+```bash
+pip install pre-commit
+```
+
 Then, from the `danswer/backend` directory, run:
 ```bash
 pre-commit install
+```
+
+macOS will likely require you to remove some quarantine attributes on some of the hooks for them to execute properly.
+```
+sudo xattr -r -d com.apple.quarantine ~/.cache/pre-commit
 ```
 
 Additionally, we use `mypy` for static type checking.
