@@ -233,7 +233,6 @@ const RerankingDetailsForm = forwardRef<
                       />
                       <div className="flex w-full justify-end mt-4">
                         <Button
-                          className=""
                           onClick={() => setIsApiKeyModalOpen(false)}
                           color="blue"
                           size="xs"
