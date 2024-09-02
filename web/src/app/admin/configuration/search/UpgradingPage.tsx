@@ -1,7 +1,7 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { Modal } from "@/components/Modal";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { ConnectorIndexingStatus } from "@/lib/types";
+import { ConnectorIndexingStatus, ValidStatuses } from "@/lib/types";
 import { Button, Text, Title } from "@tremor/react";
 import { useMemo, useState } from "react";
 import useSWR, { mutate } from "swr";
@@ -48,15 +48,28 @@ export default function UpgradingPage({
     }
     setIsCancelling(false);
   };
+  const statusOrder: Record<ValidStatuses, number> = {
+    failed: 0,
+    completed_with_errors: 1,
+    not_started: 2,
+    in_progress: 3,
+    success: 4,
+  };
 
   const sortedReindexingProgress = useMemo(() => {
-    return [...(ongoingReIndexingStatus || [])].sort((a, b) =>
-      a.cc_pair_id.toString().localeCompare(b.cc_pair_id.toString())
-    );
+    return [...(ongoingReIndexingStatus || [])].sort((a, b) => {
+      return (
+        statusOrder[a.latest_index_attempt?.status || "not_started"] -
+        statusOrder[b.latest_index_attempt?.status || "not_started"]
+      );
+    });
   }, [ongoingReIndexingStatus]);
 
   return (
     <>
+      <button onClick={() => console.log(sortedReindexingProgress)}>
+        click me please
+      </button>
       {isCancelling && (
         <Modal
           onOutsideClick={() => setIsCancelling(false)}
