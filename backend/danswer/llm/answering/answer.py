@@ -323,7 +323,9 @@ class Answer:
 
     def _raw_output_for_non_explicit_tool_calling_llms(
         self,
-    ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
+    ) -> Iterator[
+        str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallFinalResult
+    ]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
         chosen_tool_and_args: tuple[Tool, dict] | None = None
 

@@ -15,7 +15,6 @@ from danswer.chat.models import DanswerQuote
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import QUOTE_ALLOWED_ERROR_PERCENT
-from danswer.llm.answering.answer import StreamStopInfo
 from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import QUOTE_PAT
 from danswer.search.models import InferenceChunk
@@ -206,10 +205,10 @@ def _extract_quotes_from_completed_token_stream(
 
 
 def process_model_tokens(
-    tokens: Iterator[str | StreamStopInfo],
+    tokens: Iterator[str],
     context_docs: list[LlmDoc],
     is_json_prompt: bool = True,
-) -> Generator[DanswerAnswerPiece | StreamStopInfo | DanswerQuotes, None, None]:
+) -> Generator[DanswerAnswerPiece | DanswerQuotes, None, None]:
     """Used in the streaming case to process the model output
     into an Answer and Quotes
 
@@ -227,9 +226,6 @@ def process_model_tokens(
     hold_quote = ""
 
     for token in tokens:
-        if isinstance(token, StreamStopInfo):
-            yield token
-            continue
         model_previous = model_output
         model_output += token
 
@@ -290,7 +286,7 @@ def build_quotes_processor(
     context_docs: list[LlmDoc], is_json_prompt: bool
 ) -> Callable[[Iterator[str]], AnswerQuestionStreamReturn]:
     def stream_processor(
-        tokens: Iterator[str | StreamStopInfo],
+        tokens: Iterator[str],
     ) -> AnswerQuestionStreamReturn:
         yield from process_model_tokens(
             tokens=tokens,
