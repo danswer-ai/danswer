@@ -14,6 +14,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -22,6 +23,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 const NUM_IN_PAGE = 20;
+
+function getOverallTotalDocs(
+  ccPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[]
+): number | void {
+  let totalDocs = 0;
+  ccPairsIndexingStatuses.forEach(
+    (ccPair: ConnectorIndexingStatus<any, any>) => {
+      totalDocs += ccPair.docs_indexed || 0;
+    }
+  );
+  return totalDocs;
+}
 
 function CCPairIndexingStatusDisplay({
   ccPairsIndexingStatus,
@@ -108,85 +121,90 @@ export function CCPairIndexingStatusTable({
   );
 
   return (
-    <div>
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Connector</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Is Public</TableHead>
-                <TableHead>Last Indexed</TableHead>
-                <TableHead>Docs Indexed</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ccPairsIndexingStatusesForPage.map((ccPairsIndexingStatus) => {
-                return (
-                  <TableRow key={ccPairsIndexingStatus.cc_pair_id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2 my-auto">
-                        <a
-                          href={`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`}
-                        >
-                          <Button variant="ghost" size="icon">
-                            <Pencil size={16} />
-                          </Button>
-                        </a>
-
-                        <div className="whitespace-normal break-all max-w-3xl">
-                          <ConnectorTitle
-                            connector={ccPairsIndexingStatus.connector}
-                            ccPairId={ccPairsIndexingStatus.cc_pair_id}
-                            ccPairName={ccPairsIndexingStatus.name}
-                          />
-                        </div>
+    <Card>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Connector</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Is Public</TableHead>
+              <TableHead>Last Indexed</TableHead>
+              <TableHead>Docs Indexed</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {ccPairsIndexingStatusesForPage.map((ccPairsIndexingStatus) => {
+              return (
+                <ClickableTableRow
+                  key={ccPairsIndexingStatus.cc_pair_id}
+                  url={`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`}
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-2 my-auto">
+                      {/* dictates the padding of the whole row */}
+                      <div className="p-4">
+                        <Pencil size={16} />
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <CCPairIndexingStatusDisplay
-                        ccPairsIndexingStatus={ccPairsIndexingStatus}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {ccPairsIndexingStatus.public_doc ? (
-                        <Check className="my-auto text-emerald-600" size="16" />
-                      ) : (
-                        <CircleX className="my-auto text-red-600" size="16" />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
-                    </TableCell>
-                    <TableCell>{ccPairsIndexingStatus.docs_indexed}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-      {ccPairsIndexingStatuses.length > NUM_IN_PAGE && (
-        <div className="pt-6 flex">
-          <div className="mx-auto">
-            <PageSelector
-              totalPages={Math.ceil(
-                ccPairsIndexingStatuses.length / NUM_IN_PAGE
-              )}
-              currentPage={page}
-              onPageChange={(newPage) => {
-                setPage(newPage);
-                window.scrollTo({
-                  top: 0,
-                  left: 0,
-                  behavior: "smooth",
-                });
-              }}
-            />
+                      <div className="whitespace-normal break-all max-w-3xl">
+                        <ConnectorTitle
+                          connector={ccPairsIndexingStatus.connector}
+                          ccPairId={ccPairsIndexingStatus.cc_pair_id}
+                          ccPairName={ccPairsIndexingStatus.name}
+                        />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <CCPairIndexingStatusDisplay
+                      ccPairsIndexingStatus={ccPairsIndexingStatus}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {ccPairsIndexingStatus.public_doc ? (
+                      <Check className="my-auto text-emerald-600" size="16" />
+                    ) : (
+                      <CircleX className="my-auto text-red-600" size="16" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
+                  </TableCell>
+                  <TableCell>{ccPairsIndexingStatus.docs_indexed}</TableCell>
+                </ClickableTableRow>
+              );
+            })}
+            <TableRow>
+              <TableCell>
+                <div>
+                  Total document indexed:{" "}
+                  {getOverallTotalDocs(ccPairsIndexingStatusesForPage) || 0}
+                </div>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+        {ccPairsIndexingStatuses.length > NUM_IN_PAGE && (
+          <div className="mt-3 flex">
+            <div className="mx-auto">
+              <PageSelector
+                totalPages={Math.ceil(
+                  ccPairsIndexingStatuses.length / NUM_IN_PAGE
+                )}
+                currentPage={page}
+                onPageChange={(newPage) => {
+                  setPage(newPage);
+                  window.scrollTo({
+                    top: 0,
+                    left: 0,
+                    behavior: "smooth",
+                  });
+                }}
+              />
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

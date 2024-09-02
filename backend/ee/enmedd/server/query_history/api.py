@@ -88,7 +88,7 @@ class ChatSessionMinimal(BaseModel):
     name: str | None
     first_user_message: str
     first_ai_message: str
-    persona_name: str
+    assistant_name: str
     time_created: datetime
     feedback_type: QAFeedbackType | Literal["mixed"] | None
 
@@ -98,7 +98,7 @@ class ChatSessionSnapshot(BaseModel):
     user_email: str
     name: str | None
     messages: list[MessageSnapshot]
-    persona_name: str
+    assistant_name: str
     time_created: datetime
 
 
@@ -108,7 +108,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
     retrieved_documents: list[AbridgedSearchDoc]
     feedback_type: QAFeedbackType | None
     feedback_text: str | None
-    persona_name: str
+    assistant_name: str
     user_email: str
     time_created: datetime
 
@@ -133,7 +133,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
                 retrieved_documents=ai_message.documents,
                 feedback_type=ai_message.feedback_type,
                 feedback_text=ai_message.feedback_text,
-                persona_name=chat_session_snapshot.persona_name,
+                assistant_name=chat_session_snapshot.assistant_name,
                 user_email=get_display_email(chat_session_snapshot.user_email),
                 time_created=user_message.time_created,
             )
@@ -152,7 +152,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
             ),
             "feedback_type": self.feedback_type.value if self.feedback_type else "",
             "feedback_text": self.feedback_text or "",
-            "persona_name": self.persona_name,
+            "assistant_name": self.assistant_name,
             "user_email": self.user_email,
             "time_created": str(self.time_created),
         }
@@ -228,7 +228,7 @@ def fetch_and_process_chat_session_history_minimal(
                 name=chat_session.description,
                 first_user_message=first_user_message,
                 first_ai_message=first_ai_message,
-                persona_name=chat_session.persona.name,
+                assistant_name=chat_session.assistant.name,
                 time_created=chat_session.time_created,
                 feedback_type=feedback_type,
             )
@@ -293,7 +293,7 @@ def snapshot_from_chat_session(
             for message in messages
             if message.message_type != MessageType.SYSTEM
         ],
-        persona_name=chat_session.persona.name,
+        assistant_name=chat_session.assistant.name,
         time_created=chat_session.time_created,
     )
 

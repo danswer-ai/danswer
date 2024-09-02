@@ -1,4 +1,4 @@
-"""Add is_visible to Persona
+"""Add is_visible to Assistant
 
 Revision ID: 891cd83c87a8
 Revises: 76b60d407dfb
@@ -17,18 +17,18 @@ depends_on: None = None
 
 def upgrade() -> None:
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("is_visible", sa.Boolean(), nullable=True),
     )
-    op.execute("UPDATE persona SET is_visible = true")
-    op.alter_column("persona", "is_visible", nullable=False)
+    op.execute("UPDATE assistant SET is_visible = true")
+    op.alter_column("assistant", "is_visible", nullable=False)
 
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("display_priority", sa.Integer(), nullable=True),
     )
 
 
 def downgrade() -> None:
-    op.drop_column("persona", "is_visible")
-    op.drop_column("persona", "display_priority")
+    op.drop_column("assistant", "is_visible")
+    op.drop_column("assistant", "display_priority")

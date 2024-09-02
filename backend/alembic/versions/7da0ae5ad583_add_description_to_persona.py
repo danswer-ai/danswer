@@ -1,4 +1,4 @@
-"""Add description to persona
+"""Add description to assistant
 
 Revision ID: 7da0ae5ad583
 Revises: e86866a9c78a
@@ -16,8 +16,8 @@ depends_on: None = None
 
 
 def upgrade() -> None:
-    op.add_column("persona", sa.Column("description", sa.String(), nullable=True))
+    op.add_column("assistant", sa.Column("description", sa.String(), nullable=True))
 
 
 def downgrade() -> None:
-    op.drop_column("persona", "description")
+    op.drop_column("assistant", "description")

@@ -140,14 +140,14 @@ def create_chat_session(
     db_session: Session,
     description: str,
     user_id: UUID | None,
-    persona_id: int | None = None,
+    assistant_id: int | None = None,
     llm_override: LLMOverride | None = None,
     prompt_override: PromptOverride | None = None,
     one_shot: bool = False,
 ) -> ChatSession:
     chat_session = ChatSession(
         user_id=user_id,
-        persona_id=persona_id,
+        assistant_id=assistant_id,
         description=description,
         llm_override=llm_override,
         prompt_override=prompt_override,

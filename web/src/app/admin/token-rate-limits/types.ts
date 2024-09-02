@@ -1,6 +1,6 @@
 export enum Scope {
   USER = "user",
-  USER_GROUP = "user_group",
+  TEAMSPACE = "teamspace",
   GLOBAL = "global",
 }
 

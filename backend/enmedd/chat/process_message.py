@@ -18,6 +18,7 @@ from enmedd.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
 from enmedd.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
 from enmedd.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from enmedd.configs.constants import MessageType
+from enmedd.db.assistant import get_assistant_by_id
 from enmedd.db.chat import attach_files_to_chat_message
 from enmedd.db.chat import create_db_search_doc
 from enmedd.db.chat import create_new_chat_message
@@ -34,7 +35,6 @@ from enmedd.db.llm import fetch_existing_llm_providers
 from enmedd.db.models import SearchDoc as DbSearchDoc
 from enmedd.db.models import ToolCall
 from enmedd.db.models import User
-from enmedd.db.persona import get_persona_by_id
 from enmedd.document_index.factory import get_default_document_index
 from enmedd.file_store.models import ChatFileType
 from enmedd.file_store.models import FileDescriptor
@@ -47,7 +47,7 @@ from enmedd.llm.answering.models import DocumentPruningConfig
 from enmedd.llm.answering.models import PreviousMessage
 from enmedd.llm.answering.models import PromptConfig
 from enmedd.llm.exceptions import GenAIDisabledException
-from enmedd.llm.factory import get_llms_for_persona
+from enmedd.llm.factory import get_llms_for_assistant
 from enmedd.llm.factory import get_main_llm_from_tuple
 from enmedd.llm.utils import get_default_llm_tokenizer
 from enmedd.search.enums import OptionalSearchSetting
@@ -193,7 +193,7 @@ def stream_chat_message_objects(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
     db_session: Session,
-    # Needed to translate persona num_chunks to tokens to the LLM
+    # Needed to translate assistant num_chunks to tokens to the LLM
     default_num_chunks: float = MAX_CHUNKS_FED_TO_CHAT,
     # For flow with search, don't include as many chunks as possible since we need to leave space
     # for the chat history, for smaller models, we likely won't get MAX_CHUNKS_FED_TO_CHAT chunks
@@ -227,17 +227,17 @@ def stream_chat_message_objects(
         retrieval_options = new_msg_req.retrieval_options
         alternate_assistant_id = new_msg_req.alternate_assistant_id
 
-        # use alternate persona if alternative assistant id is passed in
+        # use alternate assistant if alternative assistant id is passed in
         if alternate_assistant_id is not None:
-            persona = get_persona_by_id(
+            assistant = get_assistant_by_id(
                 alternate_assistant_id, user=user, db_session=db_session
             )
         else:
-            persona = chat_session.persona
+            assistant = chat_session.assistant
 
         prompt_id = new_msg_req.prompt_id
-        if prompt_id is None and persona.prompts:
-            prompt_id = sorted(persona.prompts, key=lambda x: x.id)[-1].id
+        if prompt_id is None and assistant.prompts:
+            prompt_id = sorted(assistant.prompts, key=lambda x: x.id)[-1].id
 
         if reference_doc_ids is None and retrieval_options is None:
             raise RuntimeError(
@@ -245,8 +245,8 @@ def stream_chat_message_objects(
             )
 
         try:
-            llm, fast_llm = get_llms_for_persona(
-                persona=persona,
+            llm, fast_llm = get_llms_for_assistant(
+                assistant=assistant,
                 llm_override=new_msg_req.llm_override or chat_session.llm_override,
                 additional_headers=litellm_additional_headers,
             )
@@ -371,8 +371,8 @@ def stream_chat_message_objects(
         else:
             document_pruning_config = DocumentPruningConfig(
                 max_chunks=int(
-                    persona.num_chunks
-                    if persona.num_chunks is not None
+                    assistant.num_chunks
+                    if assistant.num_chunks is not None
                     else default_num_chunks
                 ),
                 max_window_percentage=max_document_percentage,
@@ -407,14 +407,14 @@ def stream_chat_message_objects(
                     new_msg_req.prompt_override or chat_session.prompt_override
                 ),
             )
-            if not persona
-            else PromptConfig.from_model(persona.prompts[0])
+            if not assistant
+            else PromptConfig.from_model(assistant.prompts[0])
         )
 
         # find out what tools to use
         search_tool: SearchTool | None = None
         tool_dict: dict[int, list[Tool]] = {}  # tool_id to tool
-        for db_tool_model in persona.tools:
+        for db_tool_model in assistant.tools:
             # handle in-code tools specially
             if db_tool_model.in_code_tool_id:
                 tool_cls = get_built_in_tool_by_id(db_tool_model.id, db_session)
@@ -422,7 +422,7 @@ def stream_chat_message_objects(
                     search_tool = SearchTool(
                         db_session=db_session,
                         user=user,
-                        persona=persona,
+                        assistant=assistant,
                         retrieval_options=retrieval_options,
                         prompt_config=prompt_config,
                         llm=llm,
@@ -501,8 +501,8 @@ def stream_chat_message_objects(
             llm=(
                 llm
                 or get_main_llm_from_tuple(
-                    get_llms_for_persona(
-                        persona=persona,
+                    get_llms_for_assistant(
+                        assistant=assistant,
                         llm_override=(
                             new_msg_req.llm_override or chat_session.llm_override
                         ),

@@ -43,7 +43,12 @@ export const basicLogin = async (
   return response;
 };
 
-export const basicSignup = async (email: string, password: string) => {
+export const basicSignup = async (
+  full_name: string,
+  company_name: string,
+  email: string,
+  password: string
+) => {
   const response = await fetch("/api/auth/register", {
     method: "POST",
     credentials: "include",
@@ -51,8 +56,9 @@ export const basicSignup = async (email: string, password: string) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      full_name,
+      company_name,
       email,
-      username: email,
       password,
     }),
   });

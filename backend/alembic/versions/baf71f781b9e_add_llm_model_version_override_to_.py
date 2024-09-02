@@ -1,4 +1,4 @@
-"""Add llm_model_version_override to Persona
+"""Add llm_model_version_override to Assistant
 
 Revision ID: baf71f781b9e
 Revises: 50b683a8295c
@@ -17,10 +17,10 @@ depends_on: None = None
 
 def upgrade() -> None:
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("llm_model_version_override", sa.String(), nullable=True),
     )
 
 
 def downgrade() -> None:
-    op.drop_column("persona", "llm_model_version_override")
+    op.drop_column("assistant", "llm_model_version_override")

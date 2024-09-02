@@ -1,4 +1,4 @@
-export enum SuccessfulPersonaUpdateRedirectType {
+export enum SuccessfulAssistantUpdateRedirectType {
   ADMIN = "ADMIN",
   CHAT = "CHAT",
 }

@@ -9,7 +9,7 @@ from enmedd.configs.chat_configs import HYBRID_ALPHA
 from enmedd.configs.chat_configs import NUM_RERANKED_RESULTS
 from enmedd.configs.chat_configs import NUM_RETURNED_HITS
 from enmedd.configs.constants import DocumentSource
-from enmedd.db.models import Persona
+from enmedd.db.models import Assistant
 from enmedd.indexing.models import BaseChunk
 from enmedd.search.enums import OptionalSearchSetting
 from enmedd.search.enums import SearchType
@@ -66,7 +66,7 @@ class SearchRequest(ChunkContext):
 
     human_selected_filters: BaseFilters | None = None
     enable_auto_detect_filters: bool | None = None
-    persona: Persona | None = None
+    assistant: Assistant | None = None
 
     # if None, no offset / limit
     offset: int | None = None
@@ -102,14 +102,14 @@ class SearchQuery(ChunkContext):
 
 class RetrievalDetails(ChunkContext):
     # Use LLM to determine whether to do a retrieval or only rely on existing history
-    # If the Persona is configured to not run search (0 chunks), this is bypassed
+    # If the Assistant is configured to not run search (0 chunks), this is bypassed
     # If no Prompt is configured, the only search results are shown, this is bypassed
     run_search: OptionalSearchSetting = OptionalSearchSetting.ALWAYS
     # Is this a real-time/streaming call or a question where enMedD AI can take more time?
     # Used to determine reranking flow
     real_time: bool = True
-    # The following have defaults in the Persona settings which can be overridden via
-    # the query, if None, then use Persona settings
+    # The following have defaults in the Assistant settings which can be overridden via
+    # the query, if None, then use Assistant settings
     filters: BaseFilters | None = None
     enable_auto_detect_filters: bool | None = None
     # if None, no offset / limit
