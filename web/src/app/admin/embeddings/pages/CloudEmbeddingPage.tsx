@@ -283,8 +283,6 @@ export function CloudModelCard({
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
 }) {
-  console.log(model);
-  console.log(currentModel);
   const enabled =
     model.model_name === currentModel.model_name &&
     model.provider_type?.toLowerCase() ==
