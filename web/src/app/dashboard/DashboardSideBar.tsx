@@ -16,7 +16,7 @@ export default function DashboardSideBar() {
                 border-border 
                 flex 
                 flex-col 
-                h-screen
+                h-lvh
                 transition-transform">
             {/* Logo Section */}
             <div className="mx-4 my-6">

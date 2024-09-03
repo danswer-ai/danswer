@@ -134,11 +134,11 @@ export function ChatPersonaSelector({
         </div>
       }
     >
-      <div className="select-none text-xl text-strong font-bold flex px-2 rounded cursor-pointer hover:bg-hover-light">
+      <div className="select-none text-lg text-strong items-center font-bold flex px-2 rounded cursor-pointer hover:bg-hover-light">
         <div className="mt-auto">
           <div className="flex">
             <img className="mr-2" src={getAssistantIcon(currentlySelectedPersona?.id||0)} width={25} alt="" />
-            <div className="text">
+            <div className="text items-center">
               {currentlySelectedPersona?.name || "Default"}
             </div>
           </div>

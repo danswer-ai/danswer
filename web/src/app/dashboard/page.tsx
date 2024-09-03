@@ -45,12 +45,12 @@ export default async function Dashboard() {
         <>
             <div className="flex">
                 <DashboardSideBar />
-                <div className="flex-1 p-5">
+                <div className="flex-1 p-5 h-screen overflow-auto">
                     <div className="flex justify-end">
                         <UserDropdown user={user} />
                     </div>
                     {/* Main content goes here */}
-                    <div className="flex flex-col items-center  min-h-screen p-4">
+                    <div className="flex flex-col items-center min-h-screen p-4">
                         <div className="text-center mb-8">
                             <h1 className="text-4xl font-bold text-gray-800">Welcome</h1>
                             <p className="text-lg text-gray-600">Please select the plugin you would like to use</p>

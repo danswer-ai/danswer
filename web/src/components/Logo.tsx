@@ -26,12 +26,8 @@ export function Logo({
     !settings.enterpriseSettings.use_custom_logo
   ) {
     return (
-      isFullSize ? 
-      <div style={{width}} className={className}>
-        <img src="/logo.svg" alt="Logo" width={width} />
-      </div> :
-      <div style={{ height, width }} className={className}>
-        <Image src="/logo.png" alt="Logo" width={width} height={height} />
+      <div style={{ width }} className={className}>
+        <img src={isFullSize ? "/logo.svg":"/logo-icon.svg"} alt="Logo" width={width} />
       </div>
     );
   }
