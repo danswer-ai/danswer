@@ -4,6 +4,9 @@ from danswer.db.models import EmbeddingProvider
 from danswer.server.manage.embedding.models import TestEmbeddingRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
+from tests.integration.common_utils.managers.search_settings import (
+    SearchSettingsManager,
+)
 from tests.integration.common_utils.test_models import TestCloudEmbeddingProvider
 from tests.integration.common_utils.test_models import TestUser
 
@@ -112,17 +115,23 @@ class EmbeddingProviderManager:
         embedding_provider: TestCloudEmbeddingProvider,
         user_performing_action: TestUser | None = None,
     ) -> None:
-        all_providers = EmbeddingProviderManager.get_all(user_performing_action)
-        for provider in all_providers:
-            if provider.provider_type == embedding_provider.provider_type:
-                if provider.model_dump() != embedding_provider.model_dump():
-                    raise ValueError(
-                        "Current embedding provider does not match expected settings"
-                    )
-                return
-        raise ValueError(
-            f"Embedding provider {embedding_provider.provider_type} not found"
-        )
+        current_settings = SearchSettingsManager.get_current(user_performing_action)
+        current_provider_type = current_settings.provider_type
+
+        if current_provider_type is None:
+            raise ValueError("No current embedding provider found")
+
+        if current_provider_type != embedding_provider.provider_type:
+            raise ValueError(
+                f"Current embedding provider {current_provider_type} does not match expected {embedding_provider.provider_type}"
+            )
+
+        # Additional checks for API key and URL can be added here if needed
+        # Note: The actual API key might not be accessible for security reasons
+        if current_settings.api_url != embedding_provider.api_url:
+            raise ValueError(
+                "Current embedding provider API URL does not match expected settings"
+            )
 
     @staticmethod
     def test_embedding(

@@ -35,6 +35,7 @@ def test_embedding_configuration(
     test_llm_request: TestEmbeddingRequest,
     _: User | None = Depends(current_admin_user),
 ) -> None:
+    print("I AM TESTING")
     try:
         test_model = EmbeddingModel(
             server_host=MODEL_SERVER_HOST,
@@ -55,6 +56,7 @@ def test_embedding_configuration(
         raise ValueError(error_msg)
 
     except Exception as e:
+        print("TESTING CAUSED AN ERROR")
         error_msg = "An error occurred while testing your embedding model. Please check your configuration."
         logger.error(f"{error_msg} Error message: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=error_msg)
