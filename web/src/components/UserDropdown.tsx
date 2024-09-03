@@ -166,9 +166,12 @@ export function UserDropdown({
               )
             )}
 
-            {showLogout && (showCuratorPanel || showAdminPanel) && (
-              <div className="border-t border-border my-1" />
-            )}
+            {showLogout &&
+              (showCuratorPanel ||
+                showAdminPanel ||
+                customNavItems.length > 0) && (
+                <div className="border-t border-border my-1" />
+              )}
 
             {showLogout && (
               <DropdownOption
