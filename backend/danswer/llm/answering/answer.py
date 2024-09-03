@@ -554,11 +554,7 @@ class Answer:
                     yield cast(str | StreamStopInfo, message)
                     yield from (cast(str | StreamStopInfo, item) for item in stream)
 
-                for item in _stream():
-                    if isinstance(item, StreamStopInfo):
-                        yield item
-                    else:
-                        yield from process_answer_stream_fn(iter([item]))
+                yield from process_answer_stream_fn(_stream())
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):

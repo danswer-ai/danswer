@@ -12,6 +12,7 @@ from pydantic import Field
 from pydantic import model_validator
 
 from danswer.chat.models import AnswerQuestionStreamReturn
+from danswer.chat.models import StreamStopInfo
 from danswer.configs.constants import MessageType
 from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.override_models import PromptOverride
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
     from danswer.db.models import Prompt
 
 
-StreamProcessor = Callable[[Iterator[str]], AnswerQuestionStreamReturn]
+StreamProcessor = Callable[[Iterator[str | StreamStopInfo]], AnswerQuestionStreamReturn]
 
 
 class PreviousMessage(BaseModel):

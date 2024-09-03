@@ -14,6 +14,7 @@ from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import DanswerQuote
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import LlmDoc
+from danswer.chat.models import StreamStopInfo
 from danswer.configs.chat_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import QUOTE_PAT
@@ -23,7 +24,6 @@ from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import clean_up_code_blocks
 from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.text_processing import shared_precompare_cleanup
-
 
 logger = setup_logger()
 answer_pattern = re.compile(r'{\s*"answer"\s*:\s*"', re.IGNORECASE)
@@ -205,10 +205,10 @@ def _extract_quotes_from_completed_token_stream(
 
 
 def process_model_tokens(
-    tokens: Iterator[str],
+    tokens: Iterator[str | StreamStopInfo],
     context_docs: list[LlmDoc],
     is_json_prompt: bool = True,
-) -> Generator[DanswerAnswerPiece | DanswerQuotes, None, None]:
+) -> Generator[DanswerAnswerPiece | DanswerQuotes | StreamStopInfo, None, None]:
     """Used in the streaming case to process the model output
     into an Answer and Quotes
 
@@ -226,6 +226,10 @@ def process_model_tokens(
     hold_quote = ""
 
     for token in tokens:
+        if isinstance(token, StreamStopInfo):
+            yield token
+            continue
+
         model_previous = model_output
         model_output += token
 
@@ -284,9 +288,9 @@ def process_model_tokens(
 
 def build_quotes_processor(
     context_docs: list[LlmDoc], is_json_prompt: bool
-) -> Callable[[Iterator[str]], AnswerQuestionStreamReturn]:
+) -> Callable[[Iterator[str | StreamStopInfo]], AnswerQuestionStreamReturn]:
     def stream_processor(
-        tokens: Iterator[str],
+        tokens: Iterator[str | StreamStopInfo],
     ) -> AnswerQuestionStreamReturn:
         yield from process_model_tokens(
             tokens=tokens,
