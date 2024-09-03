@@ -230,3 +230,10 @@ form {
   gap: 1.2rem;
   align-items: start;
 }
+
+ol > li > p,
+ul > li > p {
+  margin-top: 0;
+  margin-bottom: 0;
+  display: inline; /* Make paragraphs inline to reduce vertical space */
+}

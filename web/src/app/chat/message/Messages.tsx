@@ -364,10 +364,10 @@ export const AIMessage = ({
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <div className="overflow-x-visible w-full pr-2">
+                          <div className="overflow-x-visible bg-black max-w-message-max pr-2">
                             <ReactMarkdown
                               key={messageId}
-                              className="prose max-w-full text-base"
+                              className="prose  max-w-full text-base"
                               components={{
                                 a: (props) => {
                                   const { node, ...rest } = props;

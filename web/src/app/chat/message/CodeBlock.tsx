@@ -116,7 +116,7 @@ export function CodeBlock({
   };
 
   return (
-    <div className="overflow-x-hidden">
+    <div className="overflow-x-auto max-w-full">
       <div className="flex mx-3 py-2 text-xs">
         {language}
         {codeText && (
