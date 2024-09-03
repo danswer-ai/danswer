@@ -19,7 +19,7 @@ from danswer.db.connector_credential_pair import (
 )
 from danswer.db.document import delete_document_by_connector_credential_pair__no_commit
 from danswer.db.document import delete_documents_complete__no_commit
-from danswer.db.document import get_document_connector_cnts
+from danswer.db.document import get_document_connector_counts
 from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document_set import delete_document_set_cc_pair_relationship__no_commit
@@ -57,13 +57,15 @@ def delete_connector_credential_pair_batch(
         with prepare_to_modify_documents(
             db_session=db_session, document_ids=document_ids
         ):
-            document_connector_cnts = get_document_connector_cnts(
+            document_connector_counts = get_document_connector_counts(
                 db_session=db_session, document_ids=document_ids
             )
 
             # figure out which docs need to be completely deleted
             document_ids_to_delete = [
-                document_id for document_id, cnt in document_connector_cnts if cnt == 1
+                document_id
+                for document_id, cnt in document_connector_counts
+                if cnt == 1
             ]
             logger.debug(f"Deleting documents: {document_ids_to_delete}")
 
@@ -76,7 +78,7 @@ def delete_connector_credential_pair_batch(
 
             # figure out which docs need to be updated
             document_ids_to_update = [
-                document_id for document_id, cnt in document_connector_cnts if cnt > 1
+                document_id for document_id, cnt in document_connector_counts if cnt > 1
             ]
 
             # maps document id to list of document set names

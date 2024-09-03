@@ -126,7 +126,18 @@ def get_documents_by_ids(
     return list(documents)
 
 
-def get_document_connector_cnts(
+def get_document_connector_count(
+    db_session: Session,
+    document_id: str,
+) -> int:
+    results = get_document_connector_counts(db_session, [document_id])
+    if not results or len(results) == 0:
+        return 0
+
+    return results[0][1]
+
+
+def get_document_connector_counts(
     db_session: Session,
     document_ids: list[str],
 ) -> Sequence[tuple[str, int]]:
@@ -141,7 +152,7 @@ def get_document_connector_cnts(
     return db_session.execute(stmt).all()  # type: ignore
 
 
-def get_document_cnts_for_cc_pairs(
+def get_document_counts_for_cc_pairs(
     db_session: Session, cc_pair_identifiers: list[ConnectorCredentialPairIdentifier]
 ) -> Sequence[tuple[int, int, int]]:
     stmt = (

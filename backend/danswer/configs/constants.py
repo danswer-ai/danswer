@@ -60,7 +60,7 @@ KV_CUSTOMER_UUID_KEY = "customer_uuid"
 KV_ENTERPRISE_SETTINGS_KEY = "danswer_enterprise_settings"
 KV_CUSTOM_ANALYTICS_SCRIPT_KEY = "__custom_analytics_script__"
 
-CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT = 600
+CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT = 60
 
 
 class DocumentSource(str, Enum):
@@ -180,6 +180,8 @@ class DanswerCeleryQueues:
 class DanswerRedisLocks:
     CHECK_VESPA_SYNC_BEAT_LOCK = "da_lock:check_vespa_sync_beat"
     MONITOR_VESPA_SYNC_BEAT_LOCK = "da_lock:monitor_vespa_sync_beat"
+    CHECK_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:check_connector_deletion_beat"
+    MONITOR_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:monitor_connector_deletion_beat"
 
 
 class DanswerCeleryPriority(int, Enum):
