@@ -237,6 +237,7 @@ const validSources = [
   "google_cloud_storage",
   "oci_storage",
   "not_applicable",
-];
+  "ingestion_api",
+] as const;
 
 export type ValidSources = (typeof validSources)[number];

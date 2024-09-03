@@ -307,8 +307,12 @@ export function getSourceMetadata(sourceType: ValidSources): SourceMetadata {
 }
 
 export function listSourceMetadata(): SourceMetadata[] {
+  /* This gives back all the viewable / common sources, primarily for 
+  display in the Add Connector page */
   const entries = Object.entries(SOURCE_METADATA_MAP)
-    .filter(([source, _]) => source !== "not_applicable")
+    .filter(
+      ([source, _]) => source !== "not_applicable" && source != "ingestion_api"
+    )
     .map(([source, metadata]) => {
       return fillSourceMetadata(metadata, source as ValidSources);
     });
