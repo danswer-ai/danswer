@@ -70,7 +70,7 @@ const Page = async ({
       </div>
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div>
-          <Logo height={64} width={64} className="mx-auto w-fit" />
+          <Logo width={80} className="mx-auto w-fit" />
           {authUrl && authTypeMetadata && (
             <>
               <h2 className="text-center text-xl text-strong font-bold mt-6">

@@ -44,7 +44,7 @@ export default async function Page({ params }: { params: { id: string } }) {
     <div>
       <BackButton />
 
-      <AdminPageTitle title="Edit Assistant" icon={<RobotIcon size={32} />} />
+      <AdminPageTitle title="Edit Plugin" icon={<RobotIcon size={32} />} />
 
       {body}
     </div>

@@ -12,6 +12,6 @@ export const LoginText = () => {
   }
 
   return (
-    <>Log In to {settings?.enterpriseSettings?.application_name || "Spectra"}</>
+    <>Log In to {settings?.enterpriseSettings?.application_name || "ALYAH"}</>
   );
 };

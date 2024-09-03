@@ -20,7 +20,7 @@ export default function SideBarHeader() {
             className="py-3"
             href='/dashboard'
             >
-            <Logo isFullSize={true} width={150}/>
+            <Logo isFullSize={true} width={170}/>
         </Link>
     );
 }

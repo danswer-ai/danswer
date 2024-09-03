@@ -236,7 +236,7 @@ export function ChatInputBar({
                   href="/assistants/new"
                 >
                   <FiPlus size={17} />
-                  <p>Create a new assistant</p>
+                  <p>Create a new plugin</p>
                 </a>
               </div>
             </div>

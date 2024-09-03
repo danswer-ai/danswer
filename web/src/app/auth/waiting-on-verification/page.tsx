@@ -43,7 +43,7 @@ export default async function Page() {
       </div>
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div>
-          <Logo height={64} width={64} className="mx-auto w-fit" />
+          <Logo width={80}  className="mx-auto w-fit" />
 
           <div className="flex">
             <Text className="text-center font-medium text-lg mt-6 w-108">
