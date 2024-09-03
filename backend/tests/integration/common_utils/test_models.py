@@ -133,3 +133,13 @@ class TestChatMessage(BaseModel):
     parent_message_id: str | None
     message: str
     response: str
+
+
+class StreamedResponse(BaseModel):
+    full_message: str = ""
+    rephrased_query: str | None = None
+    tool_name: str | None = None
+    top_documents: list[dict[str, Any]] | None = None
+    relevance_summaries: list[dict[str, Any]] | None = None
+    tool_result: Any | None = None
+    user: str | None = None

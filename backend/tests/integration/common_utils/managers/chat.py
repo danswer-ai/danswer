@@ -8,12 +8,14 @@ from danswer.server.query_and_chat.models import ChatSessionCreationRequest
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
+from tests.integration.common_utils.test_models import StreamedResponse
 from tests.integration.common_utils.test_models import TestChatMessage
 from tests.integration.common_utils.test_models import TestChatSession
 from tests.integration.common_utils.test_models import TestUser
+from tests.integration.tests.streaming_endpoints.utils import analyze_response
 
 
-class ChatMessageManager:
+class ChatSessionManager:
     @staticmethod
     def create_chat_session(
         persona_id: int = -1,
@@ -38,25 +40,35 @@ class ChatMessageManager:
 
     @staticmethod
     def send_message(
-        chat_session: TestChatSession,
+        chat_session_id: id,
         message: str,
         parent_message_id: str | None = None,
         user_performing_action: TestUser | None = None,
-    ) -> TestChatMessage:
+        file_descriptors: list = None,
+        prompt_id: int = 0,
+        search_doc_ids: list = None,
+        retrieval_options: dict = None,
+        query_override: str = None,
+        regenerate: bool = None,
+        llm_override: str = None,
+        prompt_override: str = None,
+        alternate_assistant_id: int = None,
+        use_existing_user_message: bool = False,
+    ) -> StreamedResponse:
         chat_message_req = CreateChatMessageRequest(
-            chat_session_id=chat_session.id,
+            chat_session_id=chat_session_id,
             parent_message_id=parent_message_id,
             message=message,
-            file_descriptors=[],
-            prompt_id=0,
-            search_doc_ids=[],
-            retrieval_options=None,
-            query_override=None,
-            regenerate=None,
-            llm_override=None,
-            prompt_override=None,
-            alternate_assistant_id=None,
-            use_existing_user_message=False,
+            file_descriptors=file_descriptors or [],
+            prompt_id=prompt_id,
+            search_doc_ids=search_doc_ids or [],
+            retrieval_options=retrieval_options,
+            query_override=query_override,
+            regenerate=regenerate,
+            llm_override=llm_override,
+            prompt_override=prompt_override,
+            alternate_assistant_id=alternate_assistant_id,
+            use_existing_user_message=use_existing_user_message,
         )
 
         response = requests.post(
@@ -70,30 +82,25 @@ class ChatMessageManager:
         response.raise_for_status()
 
         # Process the streamed response
-        full_message = ""
+        response_data = []
+
         for line in response.iter_lines():
             if line:
                 data = json.loads(line.decode("utf-8"))
-                if "answer_piece" in data:
-                    full_message += data["answer_piece"]
+                response_data.append(data)
 
-        return TestChatMessage(
-            chat_session_id=chat_session.id,
-            parent_message_id=parent_message_id,
-            message=message,
-            response=full_message,
-        )
+        return analyze_response(response_data)
 
     @staticmethod
     def get_answer_with_quote(
-        chat_session: TestChatSession,
-        messages: str,
+        persona_id: int,
+        message: str,
         user_performing_action: TestUser | None = None,
-    ) -> TestChatMessage:
+    ) -> StreamedResponse:
         direct_qa_request = DirectQARequest(
-            messages=[ThreadMessage(message=message) for message in messages],
+            messages=[ThreadMessage(message=message)],
             prompt_id=None,
-            persona_id=chat_session.persona_id,
+            persona_id=persona_id,
         )
 
         response = requests.post(
@@ -107,19 +114,14 @@ class ChatMessageManager:
         response.raise_for_status()
 
         # Process the streamed response
-        full_message = ""
+        response_data = []
+
         for line in response.iter_lines():
             if line:
                 data = json.loads(line.decode("utf-8"))
-                if "answer_piece" in data and data["answer_piece"] is not None:
-                    full_message += data["answer_piece"]
-
-        return TestChatMessage(
-            chat_session_id=chat_session.id,
-            parent_message_id=None,
-            message=messages[-1],
-            response=full_message,
-        )
+                response_data.append(data)
+        print(response_data)
+        return analyze_response(response_data)
 
     @staticmethod
     def get_chat_history(
