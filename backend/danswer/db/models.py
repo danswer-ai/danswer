@@ -675,7 +675,11 @@ class IndexAttempt(Base):
         "SearchSettings", back_populates="index_attempts"
     )
 
-    error_rows = relationship("IndexAttemptError", back_populates="index_attempt")
+    error_rows = relationship(
+        "IndexAttemptError",
+        back_populates="index_attempt",
+        cascade="all, delete-orphan",
+    )
 
     __table_args__ = (
         Index(
