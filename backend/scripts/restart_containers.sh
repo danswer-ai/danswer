@@ -14,9 +14,9 @@ docker rm danswer_postgres danswer_vespa
 # Start the PostgreSQL container with optional volume
 echo "Starting PostgreSQL container..."
 if [[ -n "$POSTGRES_VOLUME" ]]; then
-    docker run -p 5432:5432--name danswer_postgres -e POSTGRES_PASSWORD=password -d -v $POSTGRES_VOLUME:/var/lib/postgresql/data postgres
+    docker run -p 5432:5432 --name danswer_postgres -e POSTGRES_PASSWORD=password -d -v $POSTGRES_VOLUME:/var/lib/postgresql/data postgres
 else
-    docker run -p 5432:5432--name danswer_postgres -e POSTGRES_PASSWORD=password -d postgres
+    docker run -p 5432:5432 --name danswer_postgres -e POSTGRES_PASSWORD=password -d postgres
 fi
 
 # Start the Vespa container with optional volume
