@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useContext } from "react";
+import { useState, useRef, useContext, useEffect } from "react";
 import { FiLogOut } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,8 @@ import {
   UsersIcon,
 } from "./icons/icons";
 import { pageType } from "@/app/chat/sessionSidebar/types";
+import { NavigationItem } from "@/app/admin/settings/interfaces";
+import DynamicFaIcon, { preloadIcons } from "./icons/DynamicFaIcon";
 
 interface DropdownOptionProps {
   href?: string;
@@ -55,6 +57,14 @@ export function UserDropdown({
   const router = useRouter();
 
   const combinedSettings = useContext(SettingsContext);
+  const customNavItems: NavigationItem[] =
+    combinedSettings?.enterpriseSettings?.custom_nav_items || [];
+
+  useEffect(() => {
+    const iconNames = customNavItems.map((item) => item.icon);
+    preloadIcons(iconNames);
+  }, [customNavItems]);
+
   if (!combinedSettings) {
     return null;
   }
@@ -126,6 +136,20 @@ export function UserDropdown({
                 overscroll-contain
               `}
           >
+            {customNavItems.map((item, i) => (
+              <DropdownOption
+                key={i}
+                href={item.link}
+                icon={
+                  <DynamicFaIcon
+                    name={item.icon}
+                    className="h-4 w-4 my-auto mr-2"
+                  />
+                }
+                label={item.title}
+              />
+            ))}
+
             {showAdminPanel ? (
               <DropdownOption
                 href="/admin/indexing/status"
@@ -142,9 +166,12 @@ export function UserDropdown({
               )
             )}
 
-            {showLogout && (showCuratorPanel || showAdminPanel) && (
-              <div className="border-t border-border my-1" />
-            )}
+            {showLogout &&
+              (showCuratorPanel ||
+                showAdminPanel ||
+                customNavItems.length > 0) && (
+                <div className="border-t border-border my-1" />
+              )}
 
             {showLogout && (
               <DropdownOption
