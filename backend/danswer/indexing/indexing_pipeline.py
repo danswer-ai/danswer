@@ -7,6 +7,7 @@ from pydantic import ConfigDict
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
+from danswer.access.models import DocumentAccess
 from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.app_configs import INDEXING_EXCEPTION_LIMIT
 from danswer.configs.constants import DEFAULT_BOOST
@@ -263,6 +264,8 @@ def index_doc_batch(
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
 
+    no_access = DocumentAccess.build([], [], False)
+
     ctx = index_doc_batch_prepare(
         document_batch=document_batch,
         index_attempt_metadata=index_attempt_metadata,
@@ -307,7 +310,9 @@ def index_doc_batch(
         access_aware_chunks = [
             DocMetadataAwareIndexChunk.from_index_chunk(
                 index_chunk=chunk,
-                access=document_id_to_access_info[chunk.source_document.id],
+                access=document_id_to_access_info.get(
+                    chunk.source_document.id, no_access
+                ),
                 document_sets=set(
                     document_id_to_document_set.get(chunk.source_document.id, [])
                 ),
