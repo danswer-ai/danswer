@@ -144,12 +144,6 @@ class TestCloudEmbeddingProvider(BaseModel):
     provider_type: str  # Assuming EmbeddingProvider is converted to string
     api_key: str | None
     api_url: str | None
-    model_name: str | None
-    dimensions: int | None
-    query_prefix: str | None
-    passage_prefix: str | None
-    batch_size: int | None
-    api_version: str | None
 
 
 class TestFullModelVersionResponse(BaseModel):
