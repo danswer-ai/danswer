@@ -153,34 +153,22 @@ export function ChangeCredentialsModal({
       title={`Modify your ${provider.provider_type} ${isProxy ? "URL" : "key"}`}
       onOutsideClick={onCancel}
     >
-      <div className="mb-4">
-        <Subtitle className="font-bold text-lg">
-          Want to swap out your {isProxy ? "URL" : "key"}?
-        </Subtitle>
-        <a
-          href={provider.apiLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline cursor-pointer mt-2 mb-4"
-        >
-          Visit API
-        </a>
+      <>
+        {isProxy && (
+          <div className="mb-4">
+            <Subtitle className="font-bold text-lg">
+              Want to swap out your URL?
+            </Subtitle>
+            <a
+              href={provider.apiLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline cursor-pointer mt-2 mb-4"
+            >
+              Visit API
+            </a>
 
-        <div className="flex flex-col mt-4 gap-y-2">
-          {useFileUpload ? (
-            <>
-              <Label>Upload JSON File</Label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleFileUpload}
-                className="text-lg w-full p-1"
-              />
-              {fileName && <p>Uploaded file: {fileName}</p>}
-            </>
-          ) : (
-            <>
+            <div className="flex flex-col mt-4 gap-y-2">
               <input
                 className={`
                     border 
@@ -193,46 +181,116 @@ export function ChangeCredentialsModal({
                 `}
                 value={apiKeyOrUrl}
                 onChange={(e: any) => setApiKeyOrUrl(e.target.value)}
-                placeholder={`Paste your ${isProxy ? "API URL" : "API key"} here`}
+                placeholder="Paste your API URL here"
               />
-            </>
+            </div>
+
+            {testError && (
+              <Callout title="Error" color="red" className="mt-4">
+                {testError}
+              </Callout>
+            )}
+
+            <div className="flex mt-4 justify-between">
+              <Button
+                color="blue"
+                onClick={() => handleSubmit()}
+                disabled={!apiKeyOrUrl}
+              >
+                Swap URL
+              </Button>
+            </div>
+
+            {deletionError && (
+              <Callout title="Error" color="red" className="mt-4">
+                {deletionError}
+              </Callout>
+            )}
+            <Divider />
+          </div>
+        )}
+
+        <div className="mb-4">
+          <Subtitle className="font-bold text-lg">
+            Want to swap out your key?
+          </Subtitle>
+          <a
+            href={provider.apiLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline cursor-pointer mt-2 mb-4"
+          >
+            Visit API
+          </a>
+
+          <div className="flex flex-col mt-4 gap-y-2">
+            {useFileUpload ? (
+              <>
+                <Label>Upload JSON File</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileUpload}
+                  className="text-lg w-full p-1"
+                />
+                {fileName && <p>Uploaded file: {fileName}</p>}
+              </>
+            ) : (
+              <>
+                <input
+                  className={`
+                    border 
+                    border-border 
+                    rounded 
+                    w-full 
+                    py-2 
+                    px-3 
+                    bg-background-emphasis
+                `}
+                  value={apiKeyOrUrl}
+                  onChange={(e: any) => setApiKeyOrUrl(e.target.value)}
+                  placeholder="Paste your API key here"
+                />
+              </>
+            )}
+          </div>
+
+          {testError && (
+            <Callout title="Error" color="red" className="mt-4">
+              {testError}
+            </Callout>
+          )}
+
+          <div className="flex mt-4 justify-between">
+            <Button
+              color="blue"
+              onClick={() => handleSubmit()}
+              disabled={!apiKeyOrUrl}
+            >
+              Swap Key
+            </Button>
+          </div>
+          <Divider />
+
+          <Subtitle className="mt-4 font-bold text-lg mb-2">
+            You can also delete your configuration.
+          </Subtitle>
+          <Text className="mb-2">
+            This is only possible if you have already switched to a different
+            embedding type!
+          </Text>
+
+          <Button onClick={handleDelete} color="red">
+            Delete Configuration
+          </Button>
+          {deletionError && (
+            <Callout title="Error" color="red" className="mt-4">
+              {deletionError}
+            </Callout>
           )}
         </div>
-
-        {testError && (
-          <Callout title="Error" color="red" className="mt-4">
-            {testError}
-          </Callout>
-        )}
-
-        <div className="flex mt-4 justify-between">
-          <Button
-            color="blue"
-            onClick={() => handleSubmit()}
-            disabled={!apiKeyOrUrl}
-          >
-            Swap {isProxy ? "URL" : "Key"}
-          </Button>
-        </div>
-        <Divider />
-
-        <Subtitle className="mt-4 font-bold text-lg mb-2">
-          You can also delete your {isProxy ? "URL" : "key"}.
-        </Subtitle>
-        <Text className="mb-2">
-          This is only possible if you have already switched to a different
-          embedding type!
-        </Text>
-
-        <Button onClick={handleDelete} color="red">
-          Delete {isProxy ? "URL" : "key"}
-        </Button>
-        {deletionError && (
-          <Callout title="Error" color="red" className="mt-4">
-            {deletionError}
-          </Callout>
-        )}
-      </div>
+      </>
     </Modal>
   );
 }

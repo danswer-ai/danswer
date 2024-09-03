@@ -182,15 +182,17 @@ export function ProviderCreationModal({
                 </a>
               </Text>
 
-              <div className="flex w-full flex-col gap-y-2">
-                {isProxy ? (
+              <div className="flex w-full flex-col gap-y-6">
+                {isProxy && (
                   <TextFormField
                     name="api_url"
                     label="API URL"
                     placeholder="API URL"
                     type="text"
                   />
-                ) : useFileUpload ? (
+                )}
+
+                {useFileUpload ? (
                   <>
                     <Label>Upload JSON File</Label>
                     <input
@@ -205,8 +207,8 @@ export function ProviderCreationModal({
                 ) : (
                   <TextFormField
                     name="api_key"
-                    label="API Key"
-                    placeholder="API Key"
+                    label={`API Key ${isProxy && "(Optional)"}`}
+                    placeholder={`API Key `}
                     type="password"
                   />
                 )}

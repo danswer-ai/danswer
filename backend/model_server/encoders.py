@@ -237,15 +237,18 @@ def get_local_reranking_model(
 
 
 def embed_with_litellm_proxy(
-    texts: list[str], api_url: str, model: str
+    texts: list[str], api_url: str, model_name: str, api_key: str | None
 ) -> list[Embedding]:
+    headers = {} if not api_key else {"Authorization": f"Bearer {api_key}"}
+
     with httpx.Client() as client:
         response = client.post(
             api_url,
             json={
-                "model": model,
+                "model": model_name,
                 "input": texts,
             },
+            headers=headers,
         )
         response.raise_for_status()
         result = response.json()
@@ -280,7 +283,12 @@ def embed_text(
             logger.error("API URL not provided for LiteLLM proxy")
             raise ValueError("API URL is required for LiteLLM proxy embedding.")
         try:
-            return embed_with_litellm_proxy(texts, api_url, model_name or "")
+            return embed_with_litellm_proxy(
+                texts=texts,
+                api_url=api_url,
+                model_name=model_name or "",
+                api_key=api_key,
+            )
         except Exception as e:
             logger.exception(f"Error during LiteLLM proxy embedding: {str(e)}")
             raise

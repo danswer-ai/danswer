@@ -181,7 +181,7 @@ export default function CloudEmbeddingPage({
                 onClick={() => setShowTentativeProvider(LITELLM_CLOUD_PROVIDER)}
                 className="mb-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm cursor-pointer"
               >
-                Provide API URL
+                Set API Configuration
               </button>
             ) : (
               <button
@@ -190,7 +190,7 @@ export default function CloudEmbeddingPage({
                 }
                 className="mb-2 hover:underline text-sm cursor-pointer"
               >
-                Modify API URL
+                Modify API Configuration
               </button>
             )}
 
