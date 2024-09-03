@@ -1,4 +1,13 @@
+from typing import List
+
 from pydantic import BaseModel
+from pydantic import Field
+
+
+class NavigationItem(BaseModel):
+    link: str
+    icon: str
+    title: str
 
 
 class EnterpriseSettings(BaseModel):
@@ -10,6 +19,9 @@ class EnterpriseSettings(BaseModel):
     use_custom_logo: bool = False
     use_custom_logotype: bool = False
 
+    # custom navigation
+    custom_nav_items: List[NavigationItem] = []
+
     # custom Chat components
     two_lines_for_chat_header: bool | None = None
     custom_lower_disclaimer_content: str | None = None
@@ -19,6 +31,16 @@ class EnterpriseSettings(BaseModel):
 
     def check_validity(self) -> None:
         return
+
+
+class EnterpriseSettingsModification(EnterpriseSettings):
+    """
+    This class extends EnterpriseSettings to allow for modifications.
+    It inherits all fields from EnterpriseSettings but excludes custom_nav_items
+    from being modified directly through this class.
+    """
+
+    custom_nav_items: List[NavigationItem] = Field(default=[], exclude=True)
 
 
 class AnalyticsScriptUpload(BaseModel):
