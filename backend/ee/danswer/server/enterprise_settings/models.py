@@ -1,7 +1,6 @@
 from typing import List
 
 from pydantic import BaseModel
-from pydantic import Field
 
 
 class NavigationItem(BaseModel):
@@ -31,16 +30,6 @@ class EnterpriseSettings(BaseModel):
 
     def check_validity(self) -> None:
         return
-
-
-class EnterpriseSettingsModification(EnterpriseSettings):
-    """
-    This class extends EnterpriseSettings to allow for modifications.
-    It inherits all fields from EnterpriseSettings but excludes custom_nav_items
-    from being modified directly through this class.
-    """
-
-    custom_nav_items: List[NavigationItem] = Field(default=[], exclude=True)
 
 
 class AnalyticsScriptUpload(BaseModel):

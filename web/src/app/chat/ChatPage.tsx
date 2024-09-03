@@ -99,8 +99,6 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
-import { Stop } from "@phosphor-icons/react";
-import DynamicFaIcon from "@/components/icons/DynamicFaIcon";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1602,7 +1600,6 @@ export function ChatPage({
           }}
         />
       )}
-      <DynamicFaIcon name="FaQuestion" />
 
       {settingsToggled && (
         <SetDefaultModelModal

@@ -64,10 +64,7 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
-import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
-import { EmphasizedClickable } from "@/components/BasicClickable";
 import { ContinueGenerating } from "./ContinueMessage";
-import DynamicFaIcon from "@/components/icons/DynamicFaIcon";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -743,7 +740,6 @@ export const HumanMessage = ({
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
-            <DynamicFaIcon name="Dog" />
 
             <div className="flex justify-end">
               <div className="w-full ml-8 flex w-full w-[800px] break-words">
