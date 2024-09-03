@@ -97,7 +97,7 @@ class ChatMessageManager:
         )
 
         response = requests.post(
-            f"{API_SERVER_URL}/stream-answer-with-quote",
+            f"{API_SERVER_URL}/query/stream-answer-with-quote",
             json=direct_qa_request.model_dump(),
             headers=user_performing_action.headers
             if user_performing_action
@@ -111,7 +111,7 @@ class ChatMessageManager:
         for line in response.iter_lines():
             if line:
                 data = json.loads(line.decode("utf-8"))
-                if "answer_piece" in data:
+                if "answer_piece" in data and data["answer_piece"] is not None:
                     full_message += data["answer_piece"]
 
         return TestChatMessage(
