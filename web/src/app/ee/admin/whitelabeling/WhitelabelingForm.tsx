@@ -64,6 +64,7 @@ export function WhitelabelingForm() {
           custom_popup_content: enterpriseSettings?.custom_popup_content || "",
           custom_lower_disclaimer_content:
             enterpriseSettings?.custom_lower_disclaimer_content || "",
+          custom_nav_items: enterpriseSettings?.custom_nav_items || [],
         }}
         validationSchema={Yup.object().shape({
           application_name: Yup.string().nullable(),
