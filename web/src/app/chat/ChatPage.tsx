@@ -99,7 +99,6 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
-import { Stop } from "@phosphor-icons/react";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
