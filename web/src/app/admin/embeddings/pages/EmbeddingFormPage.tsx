@@ -18,7 +18,6 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import AdvancedEmbeddingFormPage from "./AdvancedEmbeddingFormPage";
 import {
   AdvancedSearchConfiguration,
-  RerankerProvider,
   RerankingDetails,
   SavedSearchSettings,
 } from "../interfaces";
