@@ -81,13 +81,9 @@ class ChatSessionManager:
         )
         response.raise_for_status()
 
-        # Process the streamed response
-        response_data = []
-
-        for line in response.iter_lines():
-            if line:
-                data = json.loads(line.decode("utf-8"))
-                response_data.append(data)
+        response_data = [
+            json.loads(line.decode("utf-8")) for line in response.iter_lines() if line
+        ]
 
         return analyze_response(response_data)
 
@@ -113,14 +109,10 @@ class ChatSessionManager:
         )
         response.raise_for_status()
 
-        # Process the streamed response
-        response_data = []
+        response_data = [
+            json.loads(line.decode("utf-8")) for line in response.iter_lines() if line
+        ]
 
-        for line in response.iter_lines():
-            if line:
-                data = json.loads(line.decode("utf-8"))
-                response_data.append(data)
-        print(response_data)
         return analyze_response(response_data)
 
     @staticmethod
