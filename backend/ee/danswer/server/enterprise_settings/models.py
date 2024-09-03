@@ -1,6 +1,7 @@
 from typing import List
 
 from pydantic import BaseModel
+from pydantic import Field
 
 
 class NavigationItem(BaseModel):
@@ -19,7 +20,7 @@ class EnterpriseSettings(BaseModel):
     use_custom_logotype: bool = False
 
     # custom navigation
-    custom_nav_items: List[NavigationItem] = []
+    custom_nav_items: List[NavigationItem] = Field(default_factory=list)
 
     # custom Chat components
     two_lines_for_chat_header: bool | None = None

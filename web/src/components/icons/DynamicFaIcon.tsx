@@ -10,9 +10,9 @@ interface DynamicIconProps extends IconBaseProps {
 const DynamicFaIcon: React.FC<DynamicIconProps> = ({ name, ...props }) => {
   const IconComponent = getPreloadedIcon(name);
   return IconComponent ? (
-    <IconComponent className="h-5 w-5" {...props} />
+    <IconComponent className="h-4 w-4" {...props} />
   ) : (
-    <FaQuestion className="h-5 w-5" {...props} />
+    <FaQuestion className="h-4 w-4" {...props} />
   );
 };
 

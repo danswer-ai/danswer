@@ -143,7 +143,7 @@ export function UserDropdown({
                 icon={
                   <DynamicFaIcon
                     name={item.icon}
-                    className="h-5 w-5 my-auto mr-2"
+                    className="h-4 w-4 my-auto mr-2"
                   />
                 }
                 label={item.title}
