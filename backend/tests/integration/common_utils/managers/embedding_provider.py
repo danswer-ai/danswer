@@ -1,6 +1,7 @@
 import requests
 
 from danswer.db.models import EmbeddingProvider
+from danswer.server.manage.embedding.models import TestEmbeddingRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.test_models import TestCloudEmbeddingProvider
@@ -9,6 +10,24 @@ from tests.integration.common_utils.test_models import TestUser
 
 class EmbeddingProviderManager:
     @staticmethod
+    def test(
+        user_performing_action: TestUser, embedding_provider: TestCloudEmbeddingProvider
+    ) -> None:
+        test_embedding_request = TestEmbeddingRequest(
+            provider_type=embedding_provider.provider_type,
+            api_key=embedding_provider.api_key,
+            api_url=embedding_provider.api_url,
+        )
+
+        response = requests.post(
+            url=f"{API_SERVER_URL}/admin/embedding/test-embedding",
+            json=test_embedding_request.model_dump(),
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        return response.json()
+
     def create(
         provider_type: EmbeddingProvider,
         api_url: str | None = None,

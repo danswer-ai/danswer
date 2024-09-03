@@ -35,7 +35,7 @@ def test_creating_and_upgrading_search_settings(reset: None) -> None:
 
     # Create initial search settings
     initial_settings: TestSearchSettings = SearchSettingsManager.create(
-        model_name="text-embedding-ada-002",
+        model_name="text-embedding-3-small",
         model_dim=1536,
         provider_type=EmbeddingProvider.OPENAI,
         user_performing_action=admin_user,
