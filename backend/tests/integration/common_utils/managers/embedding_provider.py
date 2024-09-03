@@ -21,7 +21,6 @@ class EmbeddingProviderManager:
             api_key=embedding_provider.api_key,
             api_url=embedding_provider.api_url,
         )
-
         response = requests.post(
             url=f"{API_SERVER_URL}/admin/embedding/test-embedding",
             json=test_embedding_request.model_dump(),
@@ -29,7 +28,8 @@ class EmbeddingProviderManager:
             if user_performing_action
             else GENERAL_HEADERS,
         )
-        return response.json()
+        if response.status_code != 200:
+            raise ValueError(f"Failed to test embedding provider: {response.json()}")
 
     def create(
         provider_type: EmbeddingProvider,
@@ -109,6 +109,39 @@ class EmbeddingProviderManager:
             else GENERAL_HEADERS,
         )
         response.raise_for_status()
+
+    @staticmethod
+    def verify_providers(
+        embedding_providers: list[TestCloudEmbeddingProvider],
+        user_performing_action: TestUser | None = None,
+    ) -> None:
+        current_providers = EmbeddingProviderManager.get_all(user_performing_action)
+
+        for expected_provider in embedding_providers:
+            matching_provider = next(
+                (
+                    p
+                    for p in current_providers
+                    if p.provider_type == expected_provider.provider_type
+                ),
+                None,
+            )
+
+            if matching_provider is None:
+                raise ValueError(
+                    f"Embedding provider {expected_provider.provider_type} not found in current providers"
+                )
+
+            # Validate all settings match
+            if matching_provider.api_url != expected_provider.api_url:
+                raise ValueError(
+                    f"API URL mismatch for provider {expected_provider.provider_type}"
+                )
+
+            if matching_provider.api_key != expected_provider.api_key:
+                raise ValueError(
+                    f"API Key mismatch for provider {expected_provider.provider_type}"
+                )
 
     @staticmethod
     def verify(

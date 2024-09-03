@@ -266,6 +266,11 @@ def embed_text(
     prefix: str | None,
     api_url: str | None,
 ) -> list[Embedding]:
+    print("I AM EMBEDDING")
+    print(provider_type)
+    print(api_key)
+    print(api_url)
+    print(model_name)
     logger.info(f"Embedding {len(texts)} texts with provider: {provider_type}")
 
     if not all(texts):
