@@ -1,6 +1,6 @@
 "use client";
 
-import { DisplayedSources, ValidSources } from "@/lib/types";
+import { ConfigurableSources, ValidSources } from "@/lib/types";
 import AddConnector from "./AddConnectorPage";
 import { FormProvider } from "@/components/context/FormContext";
 import Sidebar from "./Sidebar";
@@ -11,7 +11,7 @@ import { isValidSource } from "@/lib/sources";
 export default function ConnectorWrapper({
   connector,
 }: {
-  connector: DisplayedSources;
+  connector: ConfigurableSources;
 }) {
   return (
     <FormProvider connector={connector}>

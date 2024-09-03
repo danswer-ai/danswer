@@ -22,7 +22,7 @@ import AdvancedFormPage from "./pages/Advanced";
 import DynamicConnectionForm from "./pages/DynamicConnectorCreationForm";
 import CreateCredential from "@/components/credentials/actions/CreateCredential";
 import ModifyCredential from "@/components/credentials/actions/ModifyCredential";
-import { DisplayedSources, ValidSources } from "@/lib/types";
+import { ConfigurableSources, ValidSources } from "@/lib/types";
 import { Credential, credentialTemplates } from "@/lib/connectors/credentials";
 import {
   ConnectionConfiguration,
@@ -54,7 +54,7 @@ export type AdvancedConfigFinal = {
 export default function AddConnector({
   connector,
 }: {
-  connector: DisplayedSources;
+  connector: ConfigurableSources;
 }) {
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);

@@ -1,4 +1,4 @@
-import { DisplayedSources, ValidInputTypes, ValidSources } from "../types";
+import { ConfigurableSources, ValidInputTypes, ValidSources } from "../types";
 
 export type InputType =
   | "list"
@@ -77,7 +77,7 @@ export interface ConnectionConfiguration {
 }
 
 export const connectorConfigs: Record<
-  DisplayedSources,
+  ConfigurableSources,
   ConnectionConfiguration
 > = {
   web: {
