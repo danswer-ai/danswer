@@ -364,7 +364,7 @@ export const AIMessage = ({
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <div className="overflow-x-visible w-full pr-2">
+                          <div className="overflow-x-visible max-w-content-max">
                             <ReactMarkdown
                               key={messageId}
                               className="prose max-w-full text-base"

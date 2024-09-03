@@ -248,6 +248,13 @@ class Answer:
                         if self.is_cancelled:
                             return
                         yield cast(str, message.content)
+                    if (
+                        message.additional_kwargs.get("usage_metadata", {}).get("stop")
+                        == "length"
+                    ):
+                        yield StreamStopInfo(
+                            stop_reason=StreamStopReason.CONTEXT_LENGTH
+                        )
 
             if not tool_call_chunk:
                 return  # no tool call needed
