@@ -550,15 +550,21 @@ class Answer:
                     answer_style_configs=self.answer_style_config,
                 )
 
-                def _stream() -> Iterator[str | StreamStopInfo]:
-                    yield cast(str | StreamStopInfo, message)
-                    yield from (cast(str | StreamStopInfo, item) for item in stream)
+                stream_stop_info = None
 
-                for item in _stream():
-                    if isinstance(item, StreamStopInfo):
-                        yield item
-                    else:
-                        yield from process_answer_stream_fn(iter([item]))
+                def _stream() -> Iterator[str]:
+                    nonlocal stream_stop_info
+                    yield cast(str, message)
+                    for item in stream:
+                        if isinstance(item, StreamStopInfo):
+                            stream_stop_info = item
+                            return
+                        yield cast(str, item)
+
+                yield from process_answer_stream_fn(_stream())
+
+                if stream_stop_info:
+                    yield stream_stop_info
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
