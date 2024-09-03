@@ -13,7 +13,10 @@ export function StaticRow({ row }: { row: Row }) {
           row.staticModifiers &&
           row.staticModifiers.find((mod) => mod[0] === ind);
         return (
-          <TableCell key={ind} className={rowModifier && rowModifier[1]}>
+          <TableCell
+            key={ind}
+            className={`bg-red-500 ${rowModifier && rowModifier[1]}`}
+          >
             {column}
           </TableCell>
         );

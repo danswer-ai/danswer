@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Star } from "lucide-react";
 
 export function ModelOption({
   model,
@@ -22,8 +23,10 @@ export function ModelOption({
   return (
     <Card className="flex flex-col">
       <CardHeader className="pb-0">
-        <CardTitle className="flex">
-          {model.isDefault && <FiStar className="my-auto mr-1 text-accent" />}
+        <CardTitle className="flex whitespace-normal">
+          {model.isDefault && (
+            <Star size={16} className="my-auto mr-1 text-accent" />
+          )}
           {model.model_name}
         </CardTitle>
       </CardHeader>
@@ -64,7 +67,7 @@ export function ModelSelector({
 }) {
   return (
     <div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
         {modelOptions.map((modelOption) => (
           <ModelOption
             key={modelOption.model_name}

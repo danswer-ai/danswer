@@ -20,7 +20,7 @@ export default async function Page() {
     body = (
       <div className="w-full my-16">
         <div className="px-32">
-          <div className="container mx-auto">
+          <div className="container mx-auto py-24 md:py-32 lg:pt-16">
             <Card>
               <CardContent>
                 <AssistantEditor

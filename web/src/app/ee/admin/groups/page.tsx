@@ -70,7 +70,7 @@ const Main = () => {
 
 const Page = () => {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
       <AdminPageTitle
         title="Manage Users Groups"
         icon={<GroupsIcon size={32} />}

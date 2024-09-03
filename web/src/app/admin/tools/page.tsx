@@ -23,7 +23,7 @@ export default async function Page() {
   const tools = (await toolResponse.json()) as ToolSnapshot[];
 
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
       <AdminPageTitle
         icon={<Wrench size={32} className="my-auto" />}
         title="Tools"

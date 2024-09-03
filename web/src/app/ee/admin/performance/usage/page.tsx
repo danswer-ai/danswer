@@ -14,14 +14,14 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useTimeRange();
 
   return (
-    <main className="pt-4 mx-auto container">
+    <main className="container mx-auto py-24 md:py-32 lg:pt-16">
       {/* TODO: remove this `dark` once we have a mode selector */}
       <AdminPageTitle
         title="Usage Statistics"
         icon={<FiActivity size={32} />}
       />
 
-      <div className="mb-12 space-y-8">
+      <div className="mb-24 space-y-8">
         <div>
           <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
         </div>

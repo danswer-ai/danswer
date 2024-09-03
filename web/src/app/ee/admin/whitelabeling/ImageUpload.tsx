@@ -53,7 +53,7 @@ export function ImageUpload({
           >
             <input {...getInputProps()} />
             <Button>Upload</Button>
-            <b className="text-emphasis">
+            <b className="text-emphasis text-sm md:text-base">
               Drag and drop a .png or .jpg file, or click to select a file!
             </b>
           </div>

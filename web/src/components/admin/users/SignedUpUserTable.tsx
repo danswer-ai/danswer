@@ -160,7 +160,9 @@ const SignedUpUserTable = ({
               <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell>{user.email}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {user.email}
+                    </TableCell>
                     <TableCell>
                       <span>{user.role === "admin" ? "Admin" : "User"}</span>
                     </TableCell>

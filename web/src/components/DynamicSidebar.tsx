@@ -77,7 +77,7 @@ export function DynamicSidebar({
 
       <div
         className={`fixed flex-none h-full z-overlay top-0 left-0 transition-[width] ease-in-out duration-500 overflow-hidden lg:overflow-visible lg:!w-auto ${
-          openSidebar ? "w-[85vw]" : "w-0"
+          openSidebar ? "w-[90vw] md:w-[75vw]" : "w-0"
         } ${isSearch ? "xl:relative" : "lg:relative"}`}
       >
         <div
@@ -107,7 +107,7 @@ export function DynamicSidebar({
           >
             <button
               onClick={toggleWidth}
-              className="border rounded-r py-2 border-l-0"
+              className="border rounded-r py-2 border-l-0 bg-background"
             >
               {isExpanded ? (
                 <ChevronLeft size={16} />

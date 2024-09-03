@@ -107,7 +107,7 @@ export const DocumentFeedbackTable = ({
                 .map((document) => {
                   return (
                     <TableRow key={document.document_id}>
-                      <TableCell className="whitespace-normal break-all">
+                      <TableCell className="whitespace-normal min-w-56">
                         <a
                           className="text-blue-600"
                           href={document.link}

@@ -52,7 +52,10 @@ const DocumentDisplay = ({
         </a>
       </div>
       <div className="flex items-center flex-wrap pt-2 text-xs gap-x-2">
-        <Badge variant="outline" className="px-3 gap-1.5 max-h-[30px]">
+        <Badge
+          variant="outline"
+          className="px-3 gap-1.5 max-h-[30px] cursor-pointer hover:opacity-80"
+        >
           <p className="my-auto mr-1">Boost:</p>
           <ScoreSection
             documentId={document.document_id}

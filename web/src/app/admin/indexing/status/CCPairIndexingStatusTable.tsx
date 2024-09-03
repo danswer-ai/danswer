@@ -135,7 +135,7 @@ export function CCPairIndexingStatusTable({
                           </Button>
                         </a>
 
-                        <div className="whitespace-normal break-all max-w-3xl">
+                        <div className="whitespace-nowrap">
                           <ConnectorTitle
                             connector={ccPairsIndexingStatus.connector}
                             ccPairId={ccPairsIndexingStatus.cc_pair_id}
@@ -156,7 +156,7 @@ export function CCPairIndexingStatusTable({
                         <CircleX className="my-auto text-red-600" size="16" />
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
                       {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
                     </TableCell>
                     <TableCell>{ccPairsIndexingStatus.docs_indexed}</TableCell>

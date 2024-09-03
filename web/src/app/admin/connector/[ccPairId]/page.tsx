@@ -130,7 +130,7 @@ export default function Page({ params }: { params: { ccPairId: string } }) {
   const ccPairId = parseInt(params.ccPairId);
 
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
       <div>
         <HealthCheckBanner />
       </div>

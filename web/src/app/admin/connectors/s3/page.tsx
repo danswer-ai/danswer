@@ -253,7 +253,7 @@ export default function Page() {
   const [selectedStorage, setSelectedStorage] = useState<string>("s3");
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
       <div>
         <HealthCheckBanner />
       </div>

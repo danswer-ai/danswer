@@ -6,7 +6,7 @@ import { LLMConfiguration } from "./LLMConfiguration";
 
 const Page = () => {
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
       <AdminPageTitle
         title="LLM Setup"
         icon={<FiCpu size={32} className="my-auto" />}

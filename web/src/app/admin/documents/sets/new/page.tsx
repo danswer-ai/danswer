@@ -61,7 +61,7 @@ function Main() {
 
 const Page = () => {
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
       <BackButton />
 
       <AdminPageTitle icon={<Bookmark size={32} />} title="New Document Set" />

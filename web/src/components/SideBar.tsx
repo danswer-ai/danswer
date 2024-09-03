@@ -26,7 +26,7 @@ interface SideBarProps {}
 
 export const SideBar: React.FC<SideBarProps> = ({}) => {
   return (
-    <div className="w-sidebar h-full border-r px-4 overflow-y-auto bg-background">
+    <div className="w-full h-full px-4 overflow-y-auto bg-background">
       <AdminSidebar
         collections={[
           {

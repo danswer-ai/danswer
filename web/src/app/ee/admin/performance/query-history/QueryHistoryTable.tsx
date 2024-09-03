@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Frown, Minus, Smile } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 const NUM_IN_PAGE = 20;
 
@@ -116,25 +116,23 @@ export function QueryHistoryTable() {
   return (
     <>
       {chatSessionData ? (
-        <div>
+        <div className="space-y-12">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="gap-y-3 flex flex-col">
+              <SelectFeedbackType
+                value={selectedFeedbackType || "all"}
+                onValueChange={setSelectedFeedbackType}
+              />
+
+              <DateRangeSelector
+                value={timeRange}
+                onValueChange={setTimeRange}
+              />
+            </div>
+
+            <DownloadAsCSV />
+          </div>
           <Card>
-            <CardHeader className="border-b">
-              <div className="flex">
-                <div className="gap-y-3 flex flex-col">
-                  <SelectFeedbackType
-                    value={selectedFeedbackType || "all"}
-                    onValueChange={setSelectedFeedbackType}
-                  />
-
-                  <DateRangeSelector
-                    value={timeRange}
-                    onValueChange={setTimeRange}
-                  />
-                </div>
-
-                <DownloadAsCSV />
-              </div>
-            </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>

@@ -24,7 +24,7 @@ export default async function Page() {
   const assistants = (await assistantResponse.json()) as Assistant[];
 
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
       <AdminPageTitle icon={<RobotIcon size={32} />} title="Assistants" />
 
       <Text className="mb-2">
