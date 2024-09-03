@@ -137,8 +137,9 @@ export function UserDropdown({
                 overscroll-contain
               `}
           >
-            {customNavItems.map((item) => (
+            {customNavItems.map((item, i) => (
               <DropdownOption
+                key={i}
                 href={item.link}
                 icon={
                   <DynamicFaIcon
