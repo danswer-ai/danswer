@@ -113,7 +113,7 @@ def set_new_search_settings(
         for cc_pair in get_connector_credential_pairs(db_session):
             resync_cc_pair(cc_pair, db_session=db_session)
 
-    return IdReturn(id=new_search_settings.id, index_name=index_name)
+    return IdReturn(search_settings_id=new_search_settings.id, index_name=index_name)
 
 
 @router.post("/cancel-new-embedding")
