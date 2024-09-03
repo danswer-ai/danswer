@@ -1,11 +1,19 @@
 """
-This file tests search settings creation and upgrades.
+This file tests search settings creation, upgrades, and embedding provider management.
 """
+import os
+
+from danswer.db.models import EmbeddingProvider
 from danswer.db.models import IndexModelStatus
+from tests.integration.common_utils.managers.embedding_provider import (
+    EmbeddingProviderManager,
+)
 from tests.integration.common_utils.managers.search_settings import (
     SearchSettingsManager,
 )
 from tests.integration.common_utils.managers.user import UserManager
+from tests.integration.common_utils.test_models import TestCloudEmbeddingProvider
+from tests.integration.common_utils.test_models import TestSearchSettings
 from tests.integration.common_utils.test_models import TestUser
 
 
@@ -13,10 +21,23 @@ def test_creating_and_upgrading_search_settings(reset: None) -> None:
     # Create an admin user
     admin_user: TestUser = UserManager.create(name="admin_user")
 
+    # Get OpenAI API key from environment variable
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
+    if not openai_api_key:
+        raise ValueError("OPENAI_API_KEY environment variable is not set")
+
+    # Create an embedding provider using OpenAI
+    embedding_provider: TestCloudEmbeddingProvider = EmbeddingProviderManager.create(
+        provider_type=EmbeddingProvider.OPENAI,
+        api_key=openai_api_key,
+        user_performing_action=admin_user,
+    )
+
     # Create initial search settings
-    initial_settings = SearchSettingsManager.create(
-        model_name="test-model-1",
-        model_dim=768,
+    initial_settings: TestSearchSettings = SearchSettingsManager.create(
+        model_name="text-embedding-ada-002",
+        model_dim=1536,
+        provider_type=EmbeddingProvider.OPENAI,
         user_performing_action=admin_user,
     )
 
@@ -27,9 +48,10 @@ def test_creating_and_upgrading_search_settings(reset: None) -> None:
     SearchSettingsManager.verify(initial_settings, user_performing_action=admin_user)
 
     # Create new search settings (upgrade)
-    new_settings = SearchSettingsManager.create(
-        model_name="test-model-2",
-        model_dim=1024,
+    new_settings: TestSearchSettings = SearchSettingsManager.create(
+        model_name="text-embedding-3-small",
+        model_dim=1536,
+        provider_type=EmbeddingProvider.OPENAI,
         user_performing_action=admin_user,
     )
 
@@ -40,13 +62,49 @@ def test_creating_and_upgrading_search_settings(reset: None) -> None:
     SearchSettingsManager.verify(new_settings, user_performing_action=admin_user)
 
     # Ensure the old settings are no longer current
-    current_settings = SearchSettingsManager.get_current(
+    current_settings: TestSearchSettings = SearchSettingsManager.get_current(
         user_performing_action=admin_user
     )
     assert current_settings.id != initial_settings.id
     assert current_settings.id == new_settings.id
 
     # Verify all search settings are present
-    all_settings = SearchSettingsManager.get_all(user_performing_action=admin_user)
+    all_settings: list[TestSearchSettings] = SearchSettingsManager.get_all(
+        user_performing_action=admin_user
+    )
     assert len(all_settings) == 2
     assert all(setting.status == IndexModelStatus.PRESENT for setting in all_settings)
+
+    # Verify the embedding provider
+    EmbeddingProviderManager.verify(
+        embedding_provider, user_performing_action=admin_user
+    )
+
+    # Test the embedding
+    EmbeddingProviderManager.test_embedding(
+        provider_type=EmbeddingProvider.OPENAI,
+        api_key=openai_api_key,
+        user_performing_action=admin_user,
+    )
+
+    # Update the embedding provider with a new API key (for demonstration purposes)
+    new_api_key = "sk-new-openai-api-key-example"
+    updated_embedding_provider: TestCloudEmbeddingProvider = TestCloudEmbeddingProvider(
+        provider_type=EmbeddingProvider.OPENAI,
+        api_key=new_api_key,
+        model_name="text-embedding-3-small",
+        dimensions=1536,
+        query_prefix=None,
+        passage_prefix=None,
+        batch_size=None,
+        api_version=None,
+        api_url=None,
+    )
+    EmbeddingProviderManager.edit(
+        updated_embedding_provider, user_performing_action=admin_user
+    )
+
+    # Verify the updated embedding provider
+    EmbeddingProviderManager.verify(
+        updated_embedding_provider, user_performing_action=admin_user
+    )

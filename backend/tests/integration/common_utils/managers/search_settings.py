@@ -6,6 +6,7 @@ from danswer.db.models import IndexModelStatus
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
+from tests.integration.common_utils.test_models import TestFullModelVersionResponse
 from tests.integration.common_utils.test_models import TestSearchSettings
 from tests.integration.common_utils.test_models import TestUser
 
@@ -16,8 +17,8 @@ class SearchSettingsManager:
         model_name: str = "test-model",
         model_dim: int = 768,
         normalize: bool = True,
-        query_prefix: str | None = None,
-        passage_prefix: str | None = None,
+        query_prefix: str | None = "",
+        passage_prefix: str | None = "",
         index_name: str | None = None,
         provider_type: str | None = None,
         multipass_indexing: bool = False,
@@ -56,12 +57,20 @@ class SearchSettingsManager:
         response.raise_for_status()
 
         response_data = response.json()
-        return TestSearchSettings(**response_data)
+
+        # Merge the response data with the original request data
+        merged_data = {**search_settings_request, **response_data}
+
+        # Add a default status if it's not present in the response
+        if "status" not in merged_data:
+            merged_data["status"] = IndexModelStatus.PRESENT
+
+        return TestSearchSettings(**merged_data)
 
     @classmethod
-    def get_all(
+    def get_current(
         cls, user_performing_action: TestUser | None = None
-    ) -> list[TestSearchSettings]:
+    ) -> dict[str, TestSearchSettings | None]:
         response = requests.get(
             url=f"{API_SERVER_URL}/search-settings/get-all-search-settings",
             headers=user_performing_action.headers
@@ -70,9 +79,32 @@ class SearchSettingsManager:
         )
 
         response.raise_for_status()
-        return [
-            TestSearchSettings(**search_settings) for search_settings in response.json()
-        ]
+        data = response.json()
+
+        result = {"current_settings": None, "secondary_settings": None}
+
+        if isinstance(data, dict):
+            if "current_settings" in data:
+                result["current_settings"] = TestSearchSettings(
+                    **data["current_settings"]
+                )
+            if "secondary_settings" in data and data["secondary_settings"]:
+                result["secondary_settings"] = TestSearchSettings(
+                    **data["secondary_settings"]
+                )
+
+        return result
+
+    @classmethod
+    def get_all(
+        cls, user_performing_action: TestUser | None = None
+    ) -> list[TestSearchSettings]:
+        from danswer.db.search_settings import get_all_search_settings
+        from danswer.db.engine import get_session_context_manager
+
+        with get_session_context_manager() as db_session:
+            all_settings = list(get_all_search_settings(db_session))
+        return [TestSearchSettings(**item.dict()) for item in all_settings]
 
     @staticmethod
     def wait_for_sync(
@@ -117,7 +149,7 @@ class SearchSettingsManager:
         response.raise_for_status()
 
     @staticmethod
-    def get_current(
+    def get_primary(
         user_performing_action: TestUser | None = None,
     ) -> TestSearchSettings:
         response = requests.get(
@@ -128,6 +160,39 @@ class SearchSettingsManager:
         )
         response.raise_for_status()
         return TestSearchSettings(**response.json())
+
+    @staticmethod
+    def get_secondary(
+        user_performing_action: TestUser | None = None,
+    ) -> TestSearchSettings | None:
+        response = requests.get(
+            url=f"{API_SERVER_URL}/search-settings/get-secondary-search-settings",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return TestSearchSettings(**data) if data else None
+
+    @staticmethod
+    def get_all_current(
+        user_performing_action: TestUser | None = None,
+    ) -> TestFullModelVersionResponse:
+        response = requests.get(
+            url=f"{API_SERVER_URL}/search-settings/get-all-search-settings",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return TestFullModelVersionResponse(
+            current_settings=TestSearchSettings(**data["current_settings"]),
+            secondary_settings=TestSearchSettings(**data["secondary_settings"])
+            if data["secondary_settings"]
+            else None,
+        )
 
     @staticmethod
     def verify(
