@@ -31,7 +31,6 @@ const DropdownOption: React.FC<DropdownOptionProps> = ({
   icon,
   label,
 }) => {
-  console.log(href);
   const content = (
     <div className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light">
       {icon}
