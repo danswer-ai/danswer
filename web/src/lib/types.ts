@@ -241,3 +241,8 @@ const validSources = [
 ] as const;
 
 export type ValidSources = (typeof validSources)[number];
+// The valid sources that are actually valid to select in the UI
+export type DisplayedSources = Exclude<
+  ValidSources,
+  "not_applicable" | "ingestion_api"
+>;

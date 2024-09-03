@@ -1,3 +1,4 @@
+import { DisplayedSources } from "@/lib/types";
 import ConnectorWrapper from "./ConnectorWrapper";
 
 export default async function Page({
@@ -5,5 +6,9 @@ export default async function Page({
 }: {
   params: { connector: string };
 }) {
-  return <ConnectorWrapper connector={params.connector.replace("-", "_")} />;
+  return (
+    <ConnectorWrapper
+      connector={params.connector.replace("-", "_") as DisplayedSources}
+    />
+  );
 }
