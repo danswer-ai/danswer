@@ -303,15 +303,35 @@ def verify_user_logged_in(
             status_code=status.HTTP_403_FORBIDDEN, detail="User Not Authenticated"
         )
 
-    if user.oidc_expiry and user.oidc_expiry < datetime.now(timezone.utc):
+    updated_user = (
+        db_session.execute(select(User).where(User.id == user.id).distinct())
+        .unique()
+        .scalar_one_or_none()
+    )
+
+    #  log user name and date of expiry in legible format
+    print(updated_user.email)
+    print(updated_user.oidc_expiry)
+    #  more legible oid cexpiry
+    print(updated_user.oidc_expiry.strftime("%Y-%m-%d %H:%M:%S"))
+
+    if updated_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in the database",
+        )
+
+    if updated_user.oidc_expiry and updated_user.oidc_expiry < datetime.now(
+        timezone.utc
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. User's OIDC token has expired.",
         )
 
-    token_created_at = get_current_token_creation(user, db_session)
+    token_created_at = get_current_token_creation(updated_user, db_session)
     user_info = UserInfo.from_model(
-        user,
+        updated_user,
         current_token_created_at=token_created_at,
         expiry_length=SESSION_EXPIRE_TIME_SECONDS,
     )

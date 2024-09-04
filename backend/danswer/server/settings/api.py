@@ -57,8 +57,8 @@ class MeechumResponse(BaseModel):
 def mocked_refresh_token():
     mock_exp = int((datetime.now() + timedelta(hours=1)).timestamp() * 1000)
     data = {
-        "access_token": "Mock access token",
-        "refresh_token": "Mock refresh token",
+        "access_token": "asdf Mock access token",
+        "refresh_token": "asdf Mock refresh token",
         "session": {"exp": mock_exp},
         "userinfo": {
             "sub": "Mock email",
@@ -66,7 +66,7 @@ def mocked_refresh_token():
             "givenName": "Mock name",
             "fullName": "Mock name",
             "userId": "Mock User ID",
-            "email": "Mock email",
+            "email": "pablosfsanchez@gmail.com",
         },
     }
     return data
@@ -77,14 +77,6 @@ async def refresh_access_token(
     user: User = Depends(current_user),
     user_manager: UserManager = Depends(get_user_manager),
 ):
-    if user is None:
-        logger.error("User is not authenticated")
-        raise HTTPException(
-            status_code=401,
-            detail="User is not authenticated",
-        )
-    logger.info(f"Attempting to refresh token for user {user.id}")
-
     if CUSTOM_REFRESH_URL is None:
         logger.error(
             "Custom refresh URL is not set and client is attempting to custom refresh"
@@ -97,6 +89,8 @@ async def refresh_access_token(
     try:
         async with httpx.AsyncClient() as client:
             logger.debug(f"Sending request to custom refresh URL for user {user.id}")
+            user.oauth_accounts[0].access_token
+
             response = await client.get(
                 CUSTOM_REFRESH_URL,
                 params={"info": "json", "access_token_refresh_interval": 3600},
@@ -104,18 +98,18 @@ async def refresh_access_token(
             )
             response.raise_for_status()
             data = response.json()
+            # data = mocked_refresh_token()
 
         logger.debug(f"Received response from Meechum auth URL for user {user.id}")
 
         # Extract new tokens
         new_access_token = data["access_token"]
         new_refresh_token = data["refresh_token"]
+
         new_expiry = datetime.fromtimestamp(
             data["session"]["exp"] / 1000, tz=timezone.utc
         )
-        if user.access_token == new_access_token:
-            logger.info(f"Access token has not been refreshed for user {user.id}")
-            return MeechumResponse(**data)
+        expires_at_timestamp = int(new_expiry.timestamp())
 
         logger.debug(f"Access token has been refreshed for user {user.id}")
 
@@ -124,20 +118,9 @@ async def refresh_access_token(
             access_token=new_access_token,
             account_id=data["userinfo"]["userId"],
             account_email=data["userinfo"]["email"],
-            expires_at=int(data["session"]["exp"] / 1000),
+            expires_at=expires_at_timestamp,
             refresh_token=new_refresh_token,
             associate_by_email=True,
-        )
-
-        # Update user in database
-        logger.debug(f"Updating tokens in database for user {user.id}")
-        await user_manager.user_db.update(
-            user,
-            {
-                "access_token": new_access_token,
-                "refresh_token": new_refresh_token,
-                "oidc_expiry": new_expiry,
-            },
         )
 
         logger.notice(f"Successfully refreshed tokens for user {user.id}")
