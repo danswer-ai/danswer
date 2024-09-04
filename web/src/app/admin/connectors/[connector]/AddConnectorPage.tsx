@@ -91,7 +91,7 @@ export default function AddConnector({
   >({
     name: "",
     groups: [],
-    is_public: false,
+    is_public: true,
     ...configuration.values.reduce(
       (acc, field) => {
         if (field.type === "list") {

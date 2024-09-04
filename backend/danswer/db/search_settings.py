@@ -115,13 +115,6 @@ def get_secondary_search_settings(db_session: Session) -> SearchSettings | None:
     return latest_settings
 
 
-def get_all_search_settings(db_session: Session) -> list[SearchSettings]:
-    query = select(SearchSettings).order_by(SearchSettings.id.desc())
-    result = db_session.execute(query)
-    all_settings = result.scalars().all()
-    return list(all_settings)
-
-
 def get_multilingual_expansion(db_session: Session | None = None) -> list[str]:
     if db_session is None:
         with Session(get_sqlalchemy_engine()) as db_session:
@@ -241,7 +234,6 @@ def get_old_default_embedding_model() -> IndexingSetting:
         passage_prefix=(ASYM_PASSAGE_PREFIX if is_overridden else ""),
         index_name="danswer_chunk",
         multipass_indexing=False,
-        api_url=None,
     )
 
 
@@ -254,5 +246,4 @@ def get_new_default_embedding_model() -> IndexingSetting:
         passage_prefix=ASYM_PASSAGE_PREFIX,
         index_name=f"danswer_chunk_{clean_model_name(DOCUMENT_ENCODER_MODEL)}",
         multipass_indexing=False,
-        api_url=None,
     )
