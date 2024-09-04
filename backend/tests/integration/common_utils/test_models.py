@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from danswer.auth.schemas import UserRole
-from danswer.db.models import IndexModelStatus
 from danswer.search.enums import RecencyBiasSetting
 from danswer.server.documents.models import DocumentSource
 from danswer.server.documents.models import InputType
@@ -123,13 +122,11 @@ class TestPersona(BaseModel):
 
 
 class TestSearchSettings(BaseModel):
-    id: int
     model_name: str
     model_dim: int
     normalize: bool
     query_prefix: str | None
     passage_prefix: str | None
-    status: IndexModelStatus
     index_name: str
     provider_type: str | None
     multipass_indexing: bool
@@ -139,6 +136,11 @@ class TestSearchSettings(BaseModel):
     rerank_provider_type: str | None
     rerank_api_key: str | None = None
     num_rerank: int
+
+    def __eq__(self, other):
+        if not isinstance(other, TestSearchSettings):
+            return False
+        return self.dict() == other.dict()
 
 
 class TestCloudEmbeddingProvider(BaseModel):
