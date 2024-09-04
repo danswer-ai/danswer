@@ -6,6 +6,8 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from sqlalchemy.orm import Session
 
+from danswer.access.access import get_access_for_documents
+from danswer.access.models import DocumentAccess
 from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.app_configs import INDEXING_EXCEPTION_LIMIT
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
@@ -18,6 +20,7 @@ from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document import update_docs_last_modified__no_commit
 from danswer.db.document import update_docs_updated_at__no_commit
 from danswer.db.document import upsert_documents_complete
+from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.index_attempt import create_index_attempt_error
 from danswer.db.models import Document as DBDocument
 from danswer.db.search_settings import get_current_search_settings
@@ -261,6 +264,8 @@ def index_doc_batch(
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
 
+    no_access = DocumentAccess.build([], [], False)
+
     ctx = index_doc_batch_prepare(
         document_batch=document_batch,
         index_attempt_metadata=index_attempt_metadata,
@@ -290,10 +295,26 @@ def index_doc_batch(
     # NOTE: don't need to acquire till here, since this is when the actual race condition
     # with Vespa can occur.
     with prepare_to_modify_documents(db_session=db_session, document_ids=updatable_ids):
+        document_id_to_access_info = get_access_for_documents(
+            document_ids=updatable_ids, db_session=db_session
+        )
+        document_id_to_document_set = {
+            document_id: document_sets
+            for document_id, document_sets in fetch_document_sets_for_documents(
+                document_ids=updatable_ids, db_session=db_session
+            )
+        }
+
         # doc aware metadata is sent via the metadata sync queue now
         access_aware_chunks = [
             DocMetadataAwareIndexChunk.from_index_chunk(
                 index_chunk=chunk,
+                access=document_id_to_access_info.get(
+                    chunk.source_document.id, no_access
+                ),
+                document_sets=set(
+                    document_id_to_document_set.get(chunk.source_document.id, [])
+                ),
             )
             for chunk in chunks_with_embeddings
         ]

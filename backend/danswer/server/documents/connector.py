@@ -387,7 +387,12 @@ def get_connector_indexing_status(
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
-    # TODO: make this one query
+    # NOTE: If the connector is deleting behind the scenes,
+    # accessing cc_pairs can be inconsistent and members like
+    # connector or credential may be None.
+    # Additional checks are done to make sure the connector and credential still exists.
+    # TODO: make this one query ... possibly eager load or wrap in a read transaction
+    # to avoid the complexity of trying to error check throughout the function
     cc_pairs = get_connector_credential_pairs(
         db_session=db_session,
         user=user,
@@ -440,6 +445,10 @@ def get_connector_indexing_status(
 
         connector = cc_pair.connector
         credential = cc_pair.credential
+        if not connector or not credential:
+            # This may happen if background deletion is happening
+            continue
+
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(
             (connector.id, credential.id)
         )

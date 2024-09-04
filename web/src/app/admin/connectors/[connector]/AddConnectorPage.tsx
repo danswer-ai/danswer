@@ -22,7 +22,7 @@ import AdvancedFormPage from "./pages/Advanced";
 import DynamicConnectionForm from "./pages/DynamicConnectorCreationForm";
 import CreateCredential from "@/components/credentials/actions/CreateCredential";
 import ModifyCredential from "@/components/credentials/actions/ModifyCredential";
-import { ValidSources } from "@/lib/types";
+import { ConfigurableSources, ValidSources } from "@/lib/types";
 import { Credential, credentialTemplates } from "@/lib/connectors/credentials";
 import {
   ConnectionConfiguration,
@@ -54,7 +54,7 @@ export type AdvancedConfigFinal = {
 export default function AddConnector({
   connector,
 }: {
-  connector: ValidSources;
+  connector: ConfigurableSources;
 }) {
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
@@ -195,7 +195,7 @@ export default function AddConnector({
     };
 
     // google sites-specific handling
-    if (connector == "google_site") {
+    if (connector == "google_sites") {
       const response = await submitGoogleSite(
         selectedFiles,
         formValues?.base_url,
@@ -443,26 +443,29 @@ export default function AddConnector({
                 </button>
               )}
 
-              {!(connector == "google_drive") && createConnectorToggle && (
-                <Modal
-                  className="max-w-3xl rounded-lg"
-                  onOutsideClick={() => setCreateConnectorToggle(false)}
-                >
-                  <>
-                    <Title className="mb-2 text-lg">
-                      Create a {getSourceDisplayName(connector)} credential
-                    </Title>
-                    <CreateCredential
-                      close
-                      refresh={refresh}
-                      sourceType={connector}
-                      setPopup={setPopup}
-                      onSwitch={onSwap}
-                      onClose={() => setCreateConnectorToggle(false)}
-                    />
-                  </>
-                </Modal>
-              )}
+              {/* NOTE: connector will never be google_drive, since the ternary above will 
+              prevent that, but still keeping this here for safety in case the above changes. */}
+              {(connector as ValidSources) !== "google_drive" &&
+                createConnectorToggle && (
+                  <Modal
+                    className="max-w-3xl rounded-lg"
+                    onOutsideClick={() => setCreateConnectorToggle(false)}
+                  >
+                    <>
+                      <Title className="mb-2 text-lg">
+                        Create a {getSourceDisplayName(connector)} credential
+                      </Title>
+                      <CreateCredential
+                        close
+                        refresh={refresh}
+                        sourceType={connector}
+                        setPopup={setPopup}
+                        onSwitch={onSwap}
+                        onClose={() => setCreateConnectorToggle(false)}
+                      />
+                    </>
+                  </Modal>
+                )}
             </Card>
             <div className="mt-4 flex w-full justify-end">
               <button

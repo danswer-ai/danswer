@@ -55,6 +55,7 @@ export const LlmList: React.FC<LlmListProps> = ({
     >
       {userDefault && (
         <button
+          type="button"
           key={-1}
           className={`w-full py-1.5 px-2 text-sm ${
             currentLlm == null
@@ -68,6 +69,7 @@ export const LlmList: React.FC<LlmListProps> = ({
       )}
       {llmOptions.map(({ name, value }, index) => (
         <button
+          type="button"
           key={index}
           className={`w-full py-1.5 px-2 text-sm ${
             currentLlm == name

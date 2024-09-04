@@ -690,7 +690,11 @@ class IndexAttempt(Base):
         "SearchSettings", back_populates="index_attempts"
     )
 
-    error_rows = relationship("IndexAttemptError", back_populates="index_attempt")
+    error_rows = relationship(
+        "IndexAttemptError",
+        back_populates="index_attempt",
+        cascade="all, delete-orphan",
+    )
 
     __table_args__ = (
         Index(
@@ -1420,7 +1424,7 @@ class TaskQueueState(Base):
     __tablename__ = "task_queue_jobs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # Celery task id
+    # Celery task id. currently only for readability/diagnostics
     task_id: Mapped[str] = mapped_column(String)
     # For any job type, this would be the same
     task_name: Mapped[str] = mapped_column(String)

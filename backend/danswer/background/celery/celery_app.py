@@ -287,11 +287,14 @@ def try_generate_document_set_sync_tasks(
 
     # Add all documents that need to be updated into the queue
     tasks_generated = rds.generate_tasks(celery_app, db_session, r, lock_beat)
-    if not tasks_generated:
+    if tasks_generated is None:
         return 0
 
-    if tasks_generated == 0:
-        return 0
+    # Currently we are allowing the sync to proceed with 0 tasks.
+    # It's possible for sets/groups to be generated initially with no entries
+    # and they still need to be marked as up to date.
+    # if tasks_generated == 0:
+    #     return 0
 
     task_logger.info(
         f"RedisDocumentSet.generate_tasks finished. "
@@ -323,11 +326,14 @@ def try_generate_user_group_sync_tasks(
     # Add all documents that need to be updated into the queue
     task_logger.info(f"generate_tasks starting. usergroup_id={usergroup.id}")
     tasks_generated = rug.generate_tasks(celery_app, db_session, r, lock_beat)
-    if not tasks_generated:
+    if tasks_generated is None:
         return 0
 
-    if tasks_generated == 0:
-        return 0
+    # Currently we are allowing the sync to proceed with 0 tasks.
+    # It's possible for sets/groups to be generated initially with no entries
+    # and they still need to be marked as up to date.
+    # if tasks_generated == 0:
+    #     return 0
 
     task_logger.info(
         f"generate_tasks finished. "

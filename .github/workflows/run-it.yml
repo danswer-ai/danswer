@@ -94,6 +94,7 @@ jobs:
           ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=true \
           AUTH_TYPE=basic \
           REQUIRE_EMAIL_VERIFICATION=false \
+          DISABLE_TELEMETRY=true \
           IMAGE_TAG=it \
           docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build
         id: start_docker
@@ -139,6 +140,7 @@ jobs:
             -e POSTGRES_PASSWORD=password \
             -e POSTGRES_DB=postgres \
             -e VESPA_HOST=index \
+            -e REDIS_HOST=cache \
             -e API_SERVER_HOST=api_server \
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
             danswer/integration-test-runner:it
