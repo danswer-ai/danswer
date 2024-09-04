@@ -9,6 +9,7 @@ from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import QADocsResponse
 from danswer.configs.constants import MessageType
+from danswer.db.models import Persona
 from danswer.db.models import StarterMessage
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import RecencyBiasSetting
@@ -69,7 +70,7 @@ class PersonaConfig(BaseModel):
 
 class DirectQARequest(ChunkContext):
     persona_config: PersonaConfig | None = None
-    persona_id: int
+    persona_id: int | None = None
 
     messages: list[ThreadMessage]
     prompt_id: int | None
@@ -86,8 +87,16 @@ class DirectQARequest(ChunkContext):
     # will also disable Thread-based Rewording if specified
     query_override: str | None = None
 
+    temporary_persona: Persona | None = (None,)
+
     # If True, skips generative an AI response to the search query
     skip_gen_ai_answer_generation: bool = False
+
+    @model_validator(mode="after")
+    def check_persona_fields(self) -> "DirectQARequest":
+        if (self.persona_config is None) == (self.persona_id is None):
+            raise ValueError("Exactly one of persona_config or persona_id must be set")
+        return self
 
     @model_validator(mode="after")
     def check_chain_of_thought_and_prompt_id(self) -> "DirectQARequest":

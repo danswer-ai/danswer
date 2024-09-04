@@ -98,7 +98,6 @@ def stream_answer_objects(
     retrieval_metrics_callback: (
         Callable[[RetrievalMetricsContainer], None] | None
     ) = None,
-    temporary_persona: Persona | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> AnswerObjectIterator:
     """Streams in order:
@@ -111,6 +110,13 @@ def stream_answer_objects(
     user_id = user.id if user is not None else None
     query_msg = query_req.messages[-1]
     history = query_req.messages[:-1]
+
+    temporary_persona: Persona | None = None
+    if query_req.persona_config is not None:
+        new_persona = create_temporary_persona(
+            db_session=db_session, persona_config=query_req.persona_config
+        )
+        temporary_persona = new_persona
 
     chat_session = create_chat_session(
         db_session=db_session,
@@ -357,15 +363,7 @@ def get_search_answer(
     """Collects the streamed one shot answer responses into a single object"""
     qa_response = OneShotQAResponse()
 
-    temporary_persona: Persona | None = None
-    if query_req.persona_config is not None:
-        new_persona = create_temporary_persona(
-            db_session=db_session, persona_config=query_req.persona_config
-        )
-        temporary_persona = new_persona
-
     results = stream_answer_objects(
-        temporary_persona=temporary_persona,
         query_req=query_req,
         user=user,
         max_document_tokens=max_document_tokens,
