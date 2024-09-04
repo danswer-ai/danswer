@@ -1,12 +1,9 @@
-"use client";
-
+import { useState } from "react";
 import { IndexAttemptStatus } from "@/components/Status";
 import { CCPairFullInfo } from "./types";
-import { useState } from "react";
 import { PageSelector } from "@/components/PageSelector";
 import { localizeAndPrettify } from "@/lib/time";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
-import { Modal } from "@/components/Modal";
 import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
 import {
   Table,
@@ -17,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { CustomModal } from "@/components/CustomModal";
 
 const NUM_IN_PAGE = 8;
 
@@ -25,49 +23,20 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   const [indexAttemptTracePopupId, setIndexAttemptTracePopupId] = useState<
     number | null
   >(null);
+  const [copyClicked, setCopyClicked] = useState(false);
+  const [modalIsVisible, setModalIsVisible] = useState(false);
+
   const indexAttemptToDisplayTraceFor = ccPair.index_attempts.find(
     (indexAttempt) => indexAttempt.id === indexAttemptTracePopupId
   );
-  const [copyClicked, setCopyClicked] = useState(false);
+
+  const handleClose = () => {
+    setIndexAttemptTracePopupId(null);
+    setModalIsVisible(false);
+  };
 
   return (
     <>
-      {indexAttemptToDisplayTraceFor &&
-        indexAttemptToDisplayTraceFor.full_exception_trace && (
-          <Modal
-            width="w-4/6"
-            className="h-5/6 overflow-y-hidden flex flex-col"
-            title="Full Exception Trace"
-            onOutsideClick={() => setIndexAttemptTracePopupId(null)}
-          >
-            <div className="overflow-y-auto mb-6">
-              <div className="mb-6">
-                {!copyClicked ? (
-                  <Button
-                    onClick={() => {
-                      navigator.clipboard.writeText(
-                        indexAttemptToDisplayTraceFor.full_exception_trace!
-                      );
-                      setCopyClicked(true);
-                      setTimeout(() => setCopyClicked(false), 2000);
-                    }}
-                  >
-                    Copy full trace
-                    <CopyIcon />
-                  </Button>
-                ) : (
-                  <Button>
-                    Copied to clipboard
-                    <CheckmarkIcon size={16} />
-                  </Button>
-                )}
-              </div>
-              <div className="whitespace-pre-wrap">
-                {indexAttemptToDisplayTraceFor.full_exception_trace}
-              </div>
-            </div>
-          </Modal>
-        )}
       <Table>
         <TableHeader>
           <TableRow>
@@ -122,14 +91,50 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                         {indexAttempt.error_msg || "-"}
                       </p>
                       {indexAttempt.full_exception_trace && (
-                        <div
-                          onClick={() => {
-                            setIndexAttemptTracePopupId(indexAttempt.id);
-                          }}
-                          className="mt-2 text-link cursor-pointer select-none"
+                        <CustomModal
+                          trigger={
+                            <div
+                              onClick={() => {
+                                setIndexAttemptTracePopupId(indexAttempt.id);
+                                setModalIsVisible(true);
+                              }}
+                              className="mt-2 text-link cursor-pointer select-none"
+                            >
+                              View Full Trace
+                            </div>
+                          }
+                          onClose={handleClose}
+                          open={modalIsVisible}
                         >
-                          View Full Trace
-                        </div>
+                          <div className="font-bold">Full Exception Trace</div>
+                          <div className="mb-6">
+                            {!copyClicked ? (
+                              <Button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    indexAttemptToDisplayTraceFor?.full_exception_trace ||
+                                      ""
+                                  );
+                                  setCopyClicked(true);
+                                  setTimeout(() => setCopyClicked(false), 2000);
+                                }}
+                              >
+                                Copy full trace
+                                <CopyIcon />
+                              </Button>
+                            ) : (
+                              <Button>
+                                Copied to clipboard
+                                <CheckmarkIcon size={16} />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="whitespace-pre-wrap">
+                            {
+                              indexAttemptToDisplayTraceFor?.full_exception_trace
+                            }
+                          </div>
+                        </CustomModal>
                       )}
                     </div>
                   </TableCell>

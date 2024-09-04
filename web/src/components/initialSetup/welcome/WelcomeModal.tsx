@@ -123,11 +123,11 @@ export function _WelcomeModal({ user }: { user: User | null }) {
 
               <div className="flex mt-3">
                 <Link
-                  href="/admin/add-connector"
+                  href="/admin/data-sources"
                   onClick={(e) => {
                     e.preventDefault();
                     setWelcomeFlowComplete();
-                    router.push("/admin/add-connector");
+                    router.push("/admin/data-sources");
                   }}
                   className="mx-auto w-fit"
                 >
@@ -182,11 +182,11 @@ export function _WelcomeModal({ user }: { user: User | null }) {
               your organization&apos;s knowledge, you can always do that in the{" "}
               <Link
                 className="text-link"
-                href="/admin/add-connector"
+                href="/admin/data-sources"
                 onClick={(e) => {
                   e.preventDefault();
                   setWelcomeFlowComplete();
-                  router.push("/admin/add-connector");
+                  router.push("/admin/data-sources");
                 }}
               >
                 Admin Panel

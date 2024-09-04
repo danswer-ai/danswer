@@ -5,10 +5,10 @@ import { removeChatFromFolder } from "../folders/FolderManagement";
 import { FolderList } from "../folders/FolderList";
 import { Folder } from "../folders/interfaces";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 
 export function ChatTab({
   existingChats,
@@ -24,9 +24,9 @@ export function ChatTab({
   toggleSideBar?: () => void;
 }) {
   const groupedChatSessions = groupSessionsByDateRange(existingChats);
-  const { setPopup } = usePopup();
   const router = useRouter();
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
+  const { toast } = useToast();
 
   const handleDropToRemoveFromFolder = async (
     event: React.DragEvent<HTMLDivElement>
@@ -44,9 +44,10 @@ export function ChatTab({
         await removeChatFromFolder(parseInt(folderId, 10), chatSessionId);
         router.refresh(); // Refresh the page to reflect the changes
       } catch (error) {
-        setPopup({
-          message: "Failed to remove chat from folder",
-          type: "error",
+        toast({
+          title: "Error",
+          description: "Failed to remove chat from folder",
+          variant: "destructive",
         });
       }
     }

@@ -48,9 +48,11 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="h-full overflow-x-hidden flex relative flex-row">
-      <WorkSpaceSidebar user={user} />
-      <div className="pt-20 lg:pt-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 h-screen overflow-hidden w-4/5 mx-auto">
+    <div className="h-full flex relative flex-row">
+      <div className="hidden md:flex">
+        <WorkSpaceSidebar user={user} />
+      </div>
+      <div className="h-full px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 container overflow-y-auto">
         <Profile user={user} />
       </div>
     </div>

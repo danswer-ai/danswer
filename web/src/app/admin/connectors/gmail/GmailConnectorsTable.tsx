@@ -17,20 +17,20 @@ import {
   TableBody,
   TableCell,
 } from "@tremor/react";
+import { useToast } from "@/hooks/use-toast";
 
 interface TableProps {
   gmailConnectorIndexingStatuses: ConnectorIndexingStatus<
     GmailConfig,
     GmailCredentialJson
   >[];
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const GmailConnectorsTable = ({
   gmailConnectorIndexingStatuses: gmailConnectorIndexingStatuses,
-  setPopup,
 }: TableProps) => {
   const { mutate } = useSWRConfig();
+  const { toast } = useToast();
 
   // Sorting to maintain a consistent ordering
   const sortedGmailConnectorIndexingStatuses = [
@@ -61,7 +61,6 @@ export const GmailConnectorsTable = ({
                         connectorIndexingStatus.connector.credential_ids
                           .length === 0
                       }
-                      setPopup={setPopup}
                       onUpdate={() => {
                         mutate("/api/manage/admin/connector/indexing-status");
                       }}
@@ -70,7 +69,6 @@ export const GmailConnectorsTable = ({
                   <TableCell>
                     <DeleteColumn
                       connectorIndexingStatus={connectorIndexingStatus}
-                      setPopup={setPopup}
                       onUpdate={() =>
                         mutate("/api/manage/admin/connector/indexing-status")
                       }
@@ -83,45 +81,5 @@ export const GmailConnectorsTable = ({
         </TableBody>
       </Table>
     </div>
-  );
-
-  return (
-    <BasicTable
-      columns={[
-        {
-          header: "Status",
-          key: "status",
-        },
-        {
-          header: "Delete",
-          key: "delete",
-        },
-      ]}
-      data={sortedGmailConnectorIndexingStatuses.map(
-        (connectorIndexingStatus) => ({
-          status: (
-            <StatusRow
-              connectorIndexingStatus={connectorIndexingStatus}
-              hasCredentialsIssue={
-                connectorIndexingStatus.connector.credential_ids.length === 0
-              }
-              setPopup={setPopup}
-              onUpdate={() => {
-                mutate("/api/manage/admin/connector/indexing-status");
-              }}
-            />
-          ),
-          delete: (
-            <DeleteColumn
-              connectorIndexingStatus={connectorIndexingStatus}
-              setPopup={setPopup}
-              onUpdate={() =>
-                mutate("/api/manage/admin/connector/indexing-status")
-              }
-            />
-          ),
-        })
-      )}
-    />
   );
 };

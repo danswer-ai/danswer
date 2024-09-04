@@ -49,7 +49,7 @@ export default function Web() {
     ) ?? [];
 
   return (
-    <div className="mx-auto container">
+    <div className="py-24 md:py-32 lg:pt-16">
       <div>
         <HealthCheckBanner />
       </div>

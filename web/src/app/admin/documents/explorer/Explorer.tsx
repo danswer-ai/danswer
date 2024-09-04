@@ -7,7 +7,6 @@ import { EnmeddDocument } from "@/lib/search/interfaces";
 import { buildDocumentSummaryDisplay } from "@/components/search/DocumentDisplay";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { updateHiddenStatus } from "../lib";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { getErrorMsg } from "@/lib/fetchUtils";
 import { ScoreSection } from "../ScoreEditor";
 import { useRouter } from "next/navigation";
@@ -20,16 +19,17 @@ import { SourceIcon } from "@/components/SourceIcon";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 const DocumentDisplay = ({
   document,
   refresh,
-  setPopup,
 }: {
   document: EnmeddDocument;
   refresh: () => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }) => {
+  const { toast } = useToast();
+
   return (
     <div
       key={document.document_id}
@@ -52,12 +52,14 @@ const DocumentDisplay = ({
         </a>
       </div>
       <div className="flex items-center flex-wrap pt-2 text-xs gap-x-2">
-        <Badge variant="outline" className="px-3 gap-1.5 max-h-[30px]">
+        <Badge
+          variant="outline"
+          className="px-3 gap-1.5 max-h-[30px] cursor-pointer hover:opacity-80"
+        >
           <p className="my-auto mr-1">Boost:</p>
           <ScoreSection
             documentId={document.document_id}
             initialScore={document.boost}
-            setPopup={setPopup}
             refresh={refresh}
             consistentWidth={false}
           />
@@ -71,16 +73,17 @@ const DocumentDisplay = ({
             if (response.ok) {
               refresh();
             } else {
-              setPopup({
-                type: "error",
-                message: `Failed to update document - ${getErrorMsg(
+              toast({
+                title: "Error",
+                description: `Failed to update document - ${getErrorMsg(
                   response
                 )}}`,
+                variant: "destructive",
               });
             }
           }}
           variant="outline"
-          className="py-1.5 px-3 gap-1.5"
+          className="py-1.5 px-3 gap-1.5 cursor-pointer hover:opacity-80"
         >
           <div className="my-auto">
             {document.hidden ? (
@@ -114,7 +117,6 @@ export function Explorer({
   documentSets: DocumentSet[];
 }) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
 
   const [query, setQuery] = useState(initialSearchValue || "");
   const [timeoutId, setTimeoutId] = useState<number | null>(null);
@@ -160,7 +162,6 @@ export function Explorer({
 
   return (
     <div>
-      {popup}
       <div className="justify-center">
         <div className="relative">
           <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2" />
@@ -200,7 +201,6 @@ export function Explorer({
                 key={document.document_id}
                 document={document}
                 refresh={() => onSearch(query)}
-                setPopup={setPopup}
               />
             );
           })}

@@ -109,11 +109,8 @@ export default function Page() {
   };
 
   return (
-    <div className="mx-auto container">
-      <AdminPageTitle
-        icon={<CloudUpload size={24} />}
-        title="Add Data Source"
-      />
+    <div className="py-24 md:py-32 lg:pt-16">
+      <AdminPageTitle icon={<CloudUpload size={24} />} title="Data Sources" />
 
       <p className="p-2.5 pt-0">
         Connect enMedD AI to your organization&apos;s knowledge sources.
@@ -139,12 +136,12 @@ export default function Page() {
       {Object.entries(categorizedSources)
         .filter(([_, sources]) => sources.length > 0)
         .map(([category, sources], categoryInd) => (
-          <div key={category} className="border rounded-lg p-6 mt-6">
+          <div key={category} className="border rounded-lg p-4 md:p-6 mt-6">
             <span className="font-bold pb-2 block text-lg md:text-2xl text-strong">
               {category}
             </span>
-            <div className="flex items-center flex-wrap gap-4 pt-6">
-              {sources.map((source, sourceInd) => (
+            <div className="flex items-center flex-wrap gap-3 md:gap-4 pt-6">
+              {sources.map((source) => (
                 <SourceTile
                   key={source.internalName}
                   sourceMetadata={source}

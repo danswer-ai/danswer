@@ -6,7 +6,7 @@ import { DatabaseIcon } from "@/components/icons/icons";
 
 export default function QueryHistoryPage() {
   return (
-    <main className="pt-4 mx-auto container">
+    <main className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle title="Query History" icon={<DatabaseIcon size={32} />} />
 
       <QueryHistoryTable />

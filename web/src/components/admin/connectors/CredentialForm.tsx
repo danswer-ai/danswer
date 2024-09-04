@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { Popup } from "./Popup";
 import { CredentialBase } from "@/lib/types";
 import { createCredential } from "@/lib/credential";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export async function submitCredential<T>(
   credential: CredentialBase<T>
@@ -37,47 +37,42 @@ export function CredentialForm<T extends Yup.AnyObject>({
   initialValues,
   onSubmit,
 }: Props<T>): JSX.Element {
-  const [popup, setPopup] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+  const { toast } = useToast();
 
   return (
-    <>
-      {popup && <Popup message={popup.message} type={popup.type} />}
-      <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={(values, formikHelpers) => {
-          formikHelpers.setSubmitting(true);
-          submitCredential<T>({
-            credential_json: values,
-            admin_public: true,
-          }).then(({ message, isSuccess }) => {
-            setPopup({ message, type: isSuccess ? "success" : "error" });
-            formikHelpers.setSubmitting(false);
-            setTimeout(() => {
-              setPopup(null);
-            }, 4000);
-            onSubmit(isSuccess);
+    <Formik
+      initialValues={initialValues}
+      validationSchema={validationSchema}
+      onSubmit={(values, formikHelpers) => {
+        formikHelpers.setSubmitting(true);
+        submitCredential<T>({
+          credential_json: values,
+          admin_public: true,
+        }).then(({ message, isSuccess }) => {
+          toast({
+            title: isSuccess ? "Success" : "Error",
+            description: message,
+            variant: isSuccess ? "success" : "destructive",
           });
-        }}
-      >
-        {({ isSubmitting }) => (
-          <Form>
-            {formBody}
-            <div className="flex">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-64 mx-auto"
-              >
-                Update
-              </Button>
-            </div>
-          </Form>
-        )}
-      </Formik>
-    </>
+          formikHelpers.setSubmitting(false);
+          onSubmit(isSuccess);
+        });
+      }}
+    >
+      {({ isSubmitting }) => (
+        <Form>
+          {formBody}
+          <div className="flex">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-64 mx-auto"
+            >
+              Update
+            </Button>
+          </div>
+        </Form>
+      )}
+    </Formik>
   );
 }

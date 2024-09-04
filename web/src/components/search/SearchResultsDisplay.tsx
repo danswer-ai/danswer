@@ -14,7 +14,6 @@ import { DocumentDisplay } from "./DocumentDisplay";
 import { QuotesSection } from "./results/QuotesSection";
 import { AnswerSection } from "./results/AnswerSection";
 import { ThreeDots } from "react-loader-spinner";
-import { usePopup } from "../admin/connectors/Popup";
 import { AlertIcon } from "../icons/icons";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
@@ -55,8 +54,6 @@ export const SearchResultsDisplay = ({
     errorHandlingFetcher,
     { refreshInterval: 10000 } // 10 seconds
   );
-
-  const { popup, setPopup } = usePopup();
 
   if (!searchResponse) {
     return null;
@@ -130,7 +127,6 @@ export const SearchResultsDisplay = ({
 
   return (
     <>
-      {popup}
       {shouldDisplayQA && (
         <Card className="p-4 relative">
           <CardHeader className="border-b p-0 pb-4">
@@ -161,10 +157,7 @@ export const SearchResultsDisplay = ({
 
               {searchResponse.messageId !== null && (
                 <div className="absolute right-4 bottom-4">
-                  <QAFeedbackBlock
-                    messageId={searchResponse.messageId}
-                    setPopup={setPopup}
-                  />
+                  <QAFeedbackBlock messageId={searchResponse.messageId} />
                 </div>
               )}
             </CardFooter>
@@ -192,7 +185,6 @@ export const SearchResultsDisplay = ({
                   documentRank={ind + 1}
                   messageId={messageId}
                   isSelected={selectedDocumentIds.has(document.document_id)}
-                  setPopup={setPopup}
                 />
               </div>
             ))}

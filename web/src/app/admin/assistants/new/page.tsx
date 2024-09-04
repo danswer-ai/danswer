@@ -30,7 +30,7 @@ export default async function Page() {
   }
 
   return (
-    <div>
+    <div className="py-24 md:py-32 lg:pt-16">
       <BackButton />
 
       <AdminPageTitle

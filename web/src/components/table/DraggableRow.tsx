@@ -40,7 +40,9 @@ export function DraggableRow({
         />
       </TableCell>
       {row.cells.map((column, ind) => (
-        <TableCell key={ind}>{column}</TableCell>
+        <TableCell key={ind} className={ind === 1 ? "min-w-72 md:min-w-0" : ""}>
+          {column}
+        </TableCell>
       ))}
     </TableRow>
   );

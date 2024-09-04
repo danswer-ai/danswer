@@ -18,16 +18,15 @@ import { LoadingAnimation } from "@/components/Loading";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Divider, Text, Title, Button } from "@tremor/react";
+import { Text, Title, Button } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
 
 const Main = () => {
-  const { popup, setPopup } = usePopup();
-
+  const { toast } = useToast();
   const { mutate } = useSWRConfig();
   const {
     data: connectorIndexingStatuses,
@@ -83,7 +82,6 @@ const Main = () => {
 
   return (
     <>
-      {popup}
       <Title className="mt-6 mb-2 ml-auto mr-auto">
         Provide your API details
       </Title>
@@ -99,10 +97,11 @@ const Main = () => {
               className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (zendeskConnectorIndexingStatuses.length > 0) {
-                  setPopup({
-                    type: "error",
-                    message:
+                  toast({
+                    title: "Error",
+                    description:
                       "Must delete all connectors before deleting credentials",
+                    variant: "destructive",
                   });
                   return;
                 }
@@ -248,7 +247,7 @@ const Main = () => {
 
 export default function Page() {
   return (
-    <div className="container mx-auto">
+    <div className="py-24 md:py-32 lg:pt-16">
       <div>
         <HealthCheckBanner />
       </div>

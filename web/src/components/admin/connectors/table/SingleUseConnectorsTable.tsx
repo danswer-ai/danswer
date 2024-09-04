@@ -1,5 +1,4 @@
 import { DeletionAttemptSnapshot, ValidStatuses } from "@/lib/types";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { updateConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
 import { scheduleDeletionJobForConnector } from "@/lib/documentDeletion";
@@ -13,6 +12,7 @@ import {
   TableCell,
 } from "@tremor/react";
 import { DeleteButton } from "@/components/DeleteButton";
+import { useToast } from "@/hooks/use-toast";
 
 const SingleUseConnectorStatus = ({
   indexingStatus,
@@ -56,15 +56,13 @@ export function SingleUseConnectorsTable<
   onCredentialLink,
   includeName = false,
 }: ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType>) {
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const connectorIncludesCredential =
     getCredential !== undefined && onCredentialLink !== undefined;
 
   return (
     <div>
-      {popup}
-
       <Table className="overflow-visible">
         <TableHead>
           <TableRow>
@@ -141,21 +139,20 @@ export function SingleUseConnectorsTable<
                           connectorIndexingStatus.credential.id
                         );
                       if (deletionScheduleError) {
-                        setPopup({
-                          message:
+                        toast({
+                          title: "Error",
+                          description:
                             "Failed to schedule deletion of connector - " +
                             deletionScheduleError,
-                          type: "error",
+                          variant: "destructive",
                         });
                       } else {
-                        setPopup({
-                          message: "Scheduled deletion of connector!",
-                          type: "success",
+                        toast({
+                          title: "Success",
+                          description: "Scheduled deletion of connector!",
+                          variant: "success",
                         });
                       }
-                      setTimeout(() => {
-                        setPopup(null);
-                      }, 4000);
                       onUpdate();
                     }}
                   >

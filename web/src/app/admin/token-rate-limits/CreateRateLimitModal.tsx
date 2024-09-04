@@ -3,15 +3,10 @@
 import * as Yup from "yup";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { Modal } from "@/components/Modal";
 import { Form, Formik } from "formik";
-import {
-  SelectorFormField,
-  TextFormField,
-} from "@/components/admin/connectors/Field";
-import { Teamspace } from "@/lib/types";
+import { SelectorFormField } from "@/components/admin/connectors/Field";
+import { UserGroup } from "@/lib/types";
 import { Scope } from "./types";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,54 +18,55 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateRateLimitModalProps {
   onSubmit: (
     target_scope: Scope,
     period_hours: number,
     token_budget: number,
-    team_id: number
+    group_id: number
   ) => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   forSpecificScope?: Scope;
-  forSpecificTeamspace?: number;
+  forSpecificUserGroup?: number;
 }
 
 export const CreateRateLimitModal = ({
   onSubmit,
-  setPopup,
   forSpecificScope,
-  forSpecificTeamspace,
+  forSpecificUserGroup,
 }: CreateRateLimitModalProps) => {
-  const [modalTeamspaces, setModalTeamspaces] = useState([]);
-  const [shouldFetchTeamspaces, setShouldFetchTeamspaces] = useState(
-    forSpecificScope === Scope.TEAMSPACE
+  const [modalUserGroups, setModalUserGroups] = useState([]);
+  const [shouldFetchUserGroups, setShouldFetchUserGroups] = useState(
+    forSpecificScope === Scope.USER_GROUP
   );
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/manage/admin/teamspace");
+        const response = await fetch("/api/manage/admin/user-group");
         const data = await response.json();
-        const options = data.map((teamspace: Teamspace) => ({
-          name: teamspace.name,
-          value: teamspace.id,
+        const options = data.map((userGroup: UserGroup) => ({
+          name: userGroup.name,
+          value: userGroup.id,
         }));
 
-        setModalTeamspaces(options);
-        setShouldFetchTeamspaces(false);
+        setModalUserGroups(options);
+        setShouldFetchUserGroups(false);
       } catch (error) {
-        setPopup({
-          type: "error",
-          message: `Failed to fetch teamspaces: ${error}`,
+        toast({
+          title: "Error",
+          description: `Failed to fetch user groups: ${error}`,
+          variant: "destructive",
         });
       }
     };
 
-    if (shouldFetchTeamspaces) {
+    if (shouldFetchUserGroups) {
       fetchData();
     }
-  }, [shouldFetchTeamspaces, setPopup]);
+  }, [shouldFetchUserGroups]);
 
   return (
     <div className="mt-3">
@@ -88,7 +84,7 @@ export const CreateRateLimitModal = ({
               period_hours: "",
               token_budget: "",
               target_scope: forSpecificScope || Scope.GLOBAL,
-              teamspace_id: forSpecificTeamspace,
+              user_group_id: forSpecificUserGroup,
             }}
             validationSchema={Yup.object().shape({
               period_hours: Yup.number()
@@ -100,13 +96,13 @@ export const CreateRateLimitModal = ({
               target_scope: Yup.string().required(
                 "Target Scope is a required field"
               ),
-              teamspace_id: Yup.string().test(
-                "teamspace_id",
-                "Teamspace is a required field",
+              user_group_id: Yup.string().test(
+                "user_group_id",
+                "User Group is a required field",
                 (value, context) => {
                   return (
-                    context.parent.target_scope !== "teamspace" ||
-                    (context.parent.target_scope === "teamspace" &&
+                    context.parent.target_scope !== "user_group" ||
+                    (context.parent.target_scope === "user_group" &&
                       value !== undefined)
                   );
                 }
@@ -118,7 +114,7 @@ export const CreateRateLimitModal = ({
                 values.target_scope,
                 Number(values.period_hours),
                 Number(values.token_budget),
-                Number(values.teamspace_id)
+                Number(values.user_group_id)
               );
               return formikHelpers.setSubmitting(false);
             }}
@@ -132,23 +128,23 @@ export const CreateRateLimitModal = ({
                     options={[
                       { name: "Global", value: Scope.GLOBAL },
                       { name: "User", value: Scope.USER },
-                      { name: "Teamspace", value: Scope.TEAMSPACE },
+                      { name: "User Group", value: Scope.USER_GROUP },
                     ]}
                     includeDefault={false}
                     onSelect={(selected) => {
                       setFieldValue("target_scope", selected);
-                      if (selected === Scope.TEAMSPACE) {
-                        setShouldFetchTeamspaces(true);
+                      if (selected === Scope.USER_GROUP) {
+                        setShouldFetchUserGroups(true);
                       }
                     }}
                   />
                 )}
-                {forSpecificTeamspace === undefined &&
-                  values.target_scope === Scope.TEAMSPACE && (
+                {forSpecificUserGroup === undefined &&
+                  values.target_scope === Scope.USER_GROUP && (
                     <SelectorFormField
-                      name="teamspace_id"
-                      label="Teamspace"
-                      options={modalTeamspaces}
+                      name="user_group_id"
+                      label="User Group"
+                      options={modalUserGroups}
                       includeDefault={false}
                     />
                   )}

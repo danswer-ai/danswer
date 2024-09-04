@@ -2,8 +2,6 @@
 
 import { Assistant } from "./interfaces";
 import { useRouter } from "next/navigation";
-import { CustomCheckbox } from "@/components/CustomCheckbox";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
@@ -13,6 +11,8 @@ import { Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
   if (assistant.default_assistant) {
@@ -23,12 +23,12 @@ function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
     return <p>Global</p>;
   }
 
-  return <p>Personal {assistant.owner && <>({assistant.owner.email})</>}</p>;
+  return <p>Assistantl {assistant.owner && <>({assistant.owner.email})</>}</p>;
 }
 
 export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const availableAssistantIds = new Set(
     assistants.map((assistant) => assistant.id.toString())
@@ -67,9 +67,10 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
       }),
     });
     if (!response.ok) {
-      setPopup({
-        type: "error",
-        message: `Failed to update assistant order - ${await response.text()}`,
+      toast({
+        title: "Error",
+        description: `Failed to update assistant order - ${await response.text()}`,
+        variant: "destructive",
       });
       router.refresh();
     }
@@ -77,8 +78,6 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
 
   return (
     <div>
-      {popup}
-
       <p className="pb-6">
         Assistants will be displayed as options on the Chat / Search interfaces
         in the order they are displayed below. Assistants marked as hidden will
@@ -93,17 +92,20 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
               return {
                 id: assistant.id.toString(),
                 cells: [
-                  <div key="name" className="flex">
+                  <div key="name" className="flex gap-2 items-center">
                     {!assistant.default_assistant && (
-                      <Pencil
-                        size={16}
-                        className="mr-1 my-auto cursor-pointer"
-                        onClick={() =>
-                          router.push(
-                            `/admin/assistants/${assistant.id}?u=${Date.now()}`
-                          )
-                        }
-                      />
+                      <Button variant="ghost" size="icon">
+                        <Pencil
+                          size={16}
+                          onClick={() =>
+                            router.push(
+                              `/admin/assistants/${
+                                assistant.id
+                              }?u=${Date.now()}`
+                            )
+                          }
+                        />
+                      </Button>
                     )}
                     <p className="text font-medium whitespace-normal break-none">
                       {assistant.name}
@@ -137,29 +139,30 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                       if (response.ok) {
                         router.refresh();
                       } else {
-                        setPopup({
-                          type: "error",
-                          message: `Failed to update assistant - ${await response.text()}`,
+                        toast({
+                          title: "Error",
+                          description: `Failed to update assistant - ${await response.text()}`,
+                          variant: "destructive",
                         });
                       }
                     }}
                     variant="outline"
-                    className="py-1.5 px-3 w-[84px]"
+                    className="py-1.5 px-3 w-[84px] cursor-pointer hover:opacity-80 gap-1.5"
                   >
-                    <div className="my-auto w-12">
-                      {!assistant.is_visible ? (
-                        <div className="text-error">Hidden</div>
-                      ) : (
-                        "Visible"
-                      )}
-                    </div>
+                    {!assistant.is_visible ? (
+                      <div className="text-error">Hidden</div>
+                    ) : (
+                      "Visible"
+                    )}
+
                     <Checkbox checked={assistant.is_visible} />
                   </Badge>,
                   <div key="edit" className="flex">
                     <div className="mx-auto my-auto">
                       {!assistant.default_assistant ? (
-                        <div
-                          className="hover:bg-hover rounded p-1 cursor-pointer"
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={async () => {
                             const response = await deleteAssistant(
                               assistant.id
@@ -174,7 +177,7 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                           }}
                         >
                           <TrashIcon />
-                        </div>
+                        </Button>
                       ) : (
                         "-"
                       )}

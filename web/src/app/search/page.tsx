@@ -24,6 +24,7 @@ import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal"
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
 import { SearchBars } from "./SearchBars";
+import { CustomModal } from "@/components/CustomModal";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / assistant info

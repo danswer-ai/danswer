@@ -3,22 +3,22 @@
 import { GroupsIcon } from "@/components/icons/icons";
 import { GroupDisplay } from "./GroupDisplay";
 import { FiAlertCircle, FiChevronLeft } from "react-icons/fi";
-import { useSpecificTeamspace } from "./hook";
+import { useSpecificUserGroup } from "./hook";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { useConnectorCredentialIndexingStatus, useUsers } from "@/lib/hooks";
 import { useRouter } from "next/navigation";
 import { BackButton } from "@/components/BackButton";
 import { AdminPageTitle } from "@/components/admin/Title";
 
-const Page = ({ params }: { params: { teamId: string } }) => {
+const Page = ({ params }: { params: { groupId: string } }) => {
   const router = useRouter();
 
   const {
-    teamspace,
-    isLoading: teamspaceIsLoading,
-    error: teamspaceError,
-    refreshTeamspace,
-  } = useSpecificTeamspace(params.teamId);
+    userGroup,
+    isLoading: userGroupIsLoading,
+    error: userGroupError,
+    refreshUserGroup,
+  } = useSpecificUserGroup(params.groupId);
   const {
     data: users,
     isLoading: userIsLoading,
@@ -30,7 +30,7 @@ const Page = ({ params }: { params: { teamId: string } }) => {
     error: ccPairsError,
   } = useConnectorCredentialIndexingStatus();
 
-  if (teamspaceIsLoading || userIsLoading || isCCPairsLoading) {
+  if (userGroupIsLoading || userIsLoading || isCCPairsLoading) {
     return (
       <div className="h-full">
         <div className="my-auto">
@@ -40,8 +40,8 @@ const Page = ({ params }: { params: { teamId: string } }) => {
     );
   }
 
-  if (!teamspace || teamspaceError) {
-    return <div>Error loading teamspace</div>;
+  if (!userGroup || userGroupError) {
+    return <div>Error loading user group</div>;
   }
   if (!users || usersError) {
     return <div>Error loading users</div>;
@@ -51,23 +51,23 @@ const Page = ({ params }: { params: { teamId: string } }) => {
   }
 
   return (
-    <div className="mx-auto container">
+    <div className="py-24 md:py-32 lg:pt-16">
       <BackButton />
 
       <AdminPageTitle
-        title={teamspace.name || "Unknown"}
+        title={userGroup.name || "Unknown"}
         icon={<GroupsIcon size={32} />}
       />
 
-      {teamspace ? (
+      {userGroup ? (
         <GroupDisplay
           users={users.accepted}
           ccPairs={ccPairs}
-          teamspace={teamspace}
-          refreshTeamspace={refreshTeamspace}
+          userGroup={userGroup}
+          refreshUserGroup={refreshUserGroup}
         />
       ) : (
-        <div>Unable to fetch Teamspace :(</div>
+        <div>Unable to fetch User Group :(</div>
       )}
     </div>
   );

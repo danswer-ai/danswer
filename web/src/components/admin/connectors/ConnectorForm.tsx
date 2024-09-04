@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { Popup, usePopup } from "./Popup";
 import {
   Connector,
   ConnectorBase,
@@ -19,6 +18,7 @@ import { Divider } from "@tremor/react";
 import IsPublicField from "./IsPublicField";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -100,7 +100,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   shouldCreateEmptyCredentialForConnector,
 }: ConnectorFormProps<T>): JSX.Element {
   const { mutate } = useSWRConfig();
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   // only show this option for EE, since groups are not supported in CE
   const showNonPublicOption = usePaidEnterpriseFeaturesEnabled();
@@ -129,7 +129,6 @@ export function ConnectorForm<T extends Yup.AnyObject>({
 
   return (
     <>
-      {popup}
       <Formik
         initialValues={{
           ...publicOptionInitialValue,
@@ -155,9 +154,10 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             name: connectorName,
           });
           if (errorMsg) {
-            setPopup({
-              message: `Unable to delete existing connector - ${errorMsg}`,
-              type: "error",
+            toast({
+              title: "Error",
+              description: `Unable to delete existing connector - ${errorMsg}`,
+              variant: "destructive",
             });
             return;
           }
@@ -172,7 +172,11 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           });
 
           if (!isSuccess || !response) {
-            setPopup({ message, type: "error" });
+            toast({
+              title: "Error",
+              description: message,
+              variant: "destructive",
+            });
             formikHelpers.setSubmitting(false);
             return;
           }
@@ -189,9 +193,10 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             });
             if (!createCredentialResponse.ok) {
               const errorMsg = await createCredentialResponse.text();
-              setPopup({
-                message: `Error creating credential for CC Pair - ${errorMsg}`,
-                type: "error",
+              toast({
+                title: "Error",
+                description: `Error creating credential for CC Pair - ${errorMsg}`,
+                variant: "destructive",
               });
               formikHelpers.setSubmitting(false);
               return;
@@ -212,9 +217,11 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             if (!linkCredentialResponse.ok) {
               const linkCredentialErrorMsg =
                 await linkCredentialResponse.text();
-              setPopup({
-                message: `Error linking credential - ${linkCredentialErrorMsg}`,
-                type: "error",
+
+              toast({
+                title: "Error",
+                description: `Error linking credential - ${linkCredentialErrorMsg}`,
+                variant: "destructive",
               });
               formikHelpers.setSubmitting(false);
               return;
@@ -222,7 +229,12 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           }
 
           mutate("/api/manage/admin/connector/indexing-status");
-          setPopup({ message, type: isSuccess ? "success" : "error" });
+          toast({
+            title: isSuccess ? "Success" : "Error",
+            description: message,
+            variant: isSuccess ? "success" : "destructive",
+          });
+
           formikHelpers.setSubmitting(false);
           if (isSuccess) {
             formikHelpers.resetForm();
@@ -288,14 +300,10 @@ export function UpdateConnectorForm<T extends Yup.AnyObject>({
   validationSchema,
   onSubmit,
 }: UpdateConnectorFormProps<T>): JSX.Element {
-  const [popup, setPopup] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+  const { toast } = useToast();
 
   return (
     <>
-      {popup && <Popup message={popup.message} type={popup.type} />}
       <Formik
         initialValues={existingConnector.connector_specific_config}
         validationSchema={validationSchema}
@@ -314,15 +322,17 @@ export function UpdateConnectorForm<T extends Yup.AnyObject>({
             },
             existingConnector.id
           );
+          toast({
+            title: isSuccess ? "Success" : "Error",
+            description: message,
+            variant: isSuccess ? "success" : "destructive",
+          });
 
-          setPopup({ message, type: isSuccess ? "success" : "error" });
           formikHelpers.setSubmitting(false);
           if (isSuccess) {
             formikHelpers.resetForm();
           }
-          setTimeout(() => {
-            setPopup(null);
-          }, 4000);
+
           if (onSubmit) {
             onSubmit(isSuccess, response);
           }

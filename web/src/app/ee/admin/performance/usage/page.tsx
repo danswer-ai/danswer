@@ -14,22 +14,20 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useTimeRange();
 
   return (
-    <main className="pt-4 mx-auto container">
+    <main className="py-24 md:py-32 lg:pt-16">
       {/* TODO: remove this `dark` once we have a mode selector */}
       <AdminPageTitle
         title="Usage Statistics"
         icon={<FiActivity size={32} />}
       />
 
-      <Card className="mb-12">
-        <CardHeader className="">
+      <div className="mb-24 space-y-8">
+        <div>
           <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
-        </CardHeader>
-        <CardContent>
-          <QueryPerformanceChart timeRange={timeRange} />
-          <FeedbackChart timeRange={timeRange} />
-        </CardContent>
-      </Card>
+        </div>
+        <QueryPerformanceChart timeRange={timeRange} />
+        <FeedbackChart timeRange={timeRange} />
+      </div>
       <UsageReports />
     </main>
   );

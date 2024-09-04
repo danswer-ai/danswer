@@ -25,7 +25,7 @@ export const ConnectorEditor = ({
             <Badge
               key={`${ccPair.connector.id}-${ccPair.credential.id}`}
               className="cursor-pointer"
-              variant="outline"
+              variant={isSelected ? "default" : "outline"}
               onClick={() => {
                 if (isSelected) {
                   setSetCCPairIds(

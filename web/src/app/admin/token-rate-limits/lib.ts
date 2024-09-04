@@ -28,12 +28,12 @@ export const insertUserTokenRateLimit = async (
   });
 };
 
-// Teamspace Token Limits (EE Only)
+// User Group Token Limits (EE Only)
 export const insertGroupTokenRateLimit = async (
   tokenRateLimit: TokenRateLimitArgs,
-  team_id: number
+  group_id: number
 ) => {
-  return await fetch(`${API_PREFIX}/teamspace/${team_id}`, {
+  return await fetch(`${API_PREFIX}/user-group/${group_id}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

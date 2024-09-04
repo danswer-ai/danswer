@@ -1,4 +1,3 @@
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import CenteredPageSelector from "./CenteredPageSelector";
@@ -15,10 +14,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   users: Array<User>;
-  setPopup: (spec: PopupSpec) => void;
   mutate: () => void;
 }
 
@@ -48,25 +47,27 @@ const RemoveUserButton = ({
 
 const InvitedUserTable = ({
   users,
-  setPopup,
   currentPage,
   totalPages,
   onPageChange,
   mutate,
 }: Props & PageSelectorProps) => {
+  const { toast } = useToast();
   if (!users.length) return null;
 
   const onRemovalSuccess = () => {
     mutate();
-    setPopup({
-      message: "User uninvited!",
-      type: "success",
+    toast({
+      title: "Success",
+      description: "User uninvited!",
+      variant: "success",
     });
   };
   const onRemovalError = (errorMsg: string) => {
-    setPopup({
-      message: `Unable to uninvite user - ${errorMsg}`,
-      type: "error",
+    toast({
+      title: "Error",
+      description: `Unable to uninvite user - ${errorMsg}`,
+      variant: "destructive",
     });
   };
 

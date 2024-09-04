@@ -1,25 +1,22 @@
 "use client";
 
 import { GroupsIcon } from "@/components/icons/icons";
-import { TeamspacesTable } from "./TeamspacesTable";
-import { TeamspaceCreationForm } from "./TeamspaceCreationForm";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { UserGroupsTable } from "./UserGroupsTable";
+import { UserGroupCreationForm } from "./UserGroupCreationForm";
 import { useState } from "react";
 import { ThreeDotsLoader } from "@/components/Loading";
 import {
   useConnectorCredentialIndexingStatus,
-  useTeamspaces,
+  useUserGroups,
   useUsers,
 } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Divider } from "@tremor/react";
 import { Button } from "@/components/ui/button";
 
 const Main = () => {
-  const { popup, setPopup } = usePopup();
   const [showForm, setShowForm] = useState(false);
 
-  const { data, isLoading, error, refreshTeamspaces } = useTeamspaces();
+  const { data, isLoading, error, refreshUserGroups } = useUserGroups();
 
   const {
     data: ccPairs,
@@ -51,24 +48,18 @@ const Main = () => {
 
   return (
     <>
-      {popup}
-      <Button onClick={() => setShowForm(true)}>Create New Teamspace</Button>
+      <Button onClick={() => setShowForm(true)}>Create New User Group</Button>
       {data.length > 0 && (
         <div className="pt-5">
-          <TeamspacesTable
-            teamspaces={data}
-            setPopup={setPopup}
-            refresh={refreshTeamspaces}
-          />
+          <UserGroupsTable userGroups={data} refresh={refreshUserGroups} />
         </div>
       )}
       {showForm && (
-        <TeamspaceCreationForm
+        <UserGroupCreationForm
           onClose={() => {
-            refreshTeamspaces();
+            refreshUserGroups();
             setShowForm(false);
           }}
-          setPopup={setPopup}
           users={users.accepted}
           ccPairs={ccPairs}
         />
@@ -79,9 +70,9 @@ const Main = () => {
 
 const Page = () => {
   return (
-    <div className="mx-auto container">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle
-        title="Manage Teamspaces"
+        title="Manage Users Groups"
         icon={<GroupsIcon size={32} />}
       />
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { CCPairBasicInfo, DocumentSet, User, Teamspace } from "@/lib/types";
+import { CCPairBasicInfo, DocumentSet, User, UserGroup } from "@/lib/types";
 import { Divider, Italic, Text } from "@tremor/react";
 import {
   ArrayHelpers,
@@ -14,7 +14,6 @@ import {
 import * as Yup from "yup";
 import { buildFinalPrompt, createAssistant, updateAssistant } from "./lib";
 import { useRouter } from "next/navigation";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { Assistant, StarterMessage } from "./interfaces";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -24,7 +23,7 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { HidableSection } from "./HidableSection";
-import { useTeamspaces } from "@/lib/hooks";
+import { useUserGroups } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
 import { SuccessfulAssistantUpdateRedirectType } from "./enums";
@@ -45,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -84,12 +84,12 @@ export function AssistantEditor({
   shouldAddAssistantToUserPreferences?: boolean;
 }) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   // EE only
-  const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
+  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
 
   const [finalPrompt, setFinalPrompt] = useState<string | null>("");
   const [finalPromptError, setFinalPromptError] = useState<string>("");
@@ -202,7 +202,6 @@ export function AssistantEditor({
 
   return (
     <div>
-      {popup}
       <Formik
         enableReinitialize={true}
         initialValues={initialValues}
@@ -253,9 +252,10 @@ export function AssistantEditor({
           )}
         onSubmit={async (values, formikHelpers) => {
           if (finalPromptError) {
-            setPopup({
-              type: "error",
-              message: "Cannot submit while there are errors in the form!",
+            toast({
+              title: "Error",
+              description: "Cannot submit while there are errors in the form!",
+              variant: "destructive",
             });
             return;
           }
@@ -264,10 +264,11 @@ export function AssistantEditor({
             values.llm_model_provider_override &&
             !values.llm_model_version_override
           ) {
-            setPopup({
-              type: "error",
-              message:
+            toast({
+              title: "Error",
+              description:
                 "Must select a model if a non-default LLM provider is chosen.",
+              variant: "destructive",
             });
             return;
           }
@@ -343,9 +344,10 @@ export function AssistantEditor({
           }
 
           if (error || !assistantResponse) {
-            setPopup({
-              type: "error",
-              message: `Failed to create Assistant - ${error}`,
+            toast({
+              title: "Error",
+              description: `Failed to create Assistant - ${error}`,
+              variant: "destructive",
             });
             formikHelpers.setSubmitting(false);
           } else {
@@ -360,15 +362,18 @@ export function AssistantEditor({
                 user.preferences.chosen_assistants
               );
               if (success) {
-                setPopup({
-                  message: `"${assistant.name}" has been added to your list.`,
-                  type: "success",
+                toast({
+                  title: "Success",
+                  description: `"${assistant.name}" has been added to your list.`,
+                  variant: "success",
                 });
+
                 router.refresh();
               } else {
-                setPopup({
-                  message: `"${assistant.name}" could not be added to your list.`,
-                  type: "error",
+                toast({
+                  title: "Error",
+                  description: `"${assistant.name}" could not be added to your list.`,
+                  variant: "destructive",
                 });
               }
             }
@@ -812,14 +817,14 @@ export function AssistantEditor({
                                         />
                                       </div>
                                     </div>
-                                    <div className="my-auto">
-                                      <X
-                                        className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                                        onClick={() =>
-                                          arrayHelpers.remove(index)
-                                        }
-                                      />
-                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="my-auto"
+                                      onClick={() => arrayHelpers.remove(index)}
+                                    >
+                                      <X />
+                                    </Button>
                                   </div>
                                 </div>
                               );
@@ -847,7 +852,7 @@ export function AssistantEditor({
                 <Divider />
 
                 {isPaidEnterpriseFeaturesEnabled &&
-                  teamspaces &&
+                  userGroups &&
                   (!user || user.role === "admin") && (
                     <>
                       <HidableSection sectionTitle="Access">
@@ -855,38 +860,38 @@ export function AssistantEditor({
                           <BooleanFormField
                             name="is_public"
                             label="Is Public?"
-                            subtext="If set, this Assistant will be available to all users. If not, only the specified Teamspaces will be able to access it."
+                            subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
                           />
 
-                          {teamspaces &&
-                            teamspaces.length > 0 &&
+                          {userGroups &&
+                            userGroups.length > 0 &&
                             !values.is_public && (
                               <div>
                                 <Text>
-                                  Select which Teamspaces should have access to
+                                  Select which User Groups should have access to
                                   this Assistant.
                                 </Text>
                                 <div className="flex flex-wrap gap-2 mt-2">
-                                  {teamspaces.map((teamspace) => {
+                                  {userGroups.map((userGroup) => {
                                     const isSelected = values.groups.includes(
-                                      teamspace.id
+                                      userGroup.id
                                     );
                                     return (
                                       <Bubble
-                                        key={teamspace.id}
+                                        key={userGroup.id}
                                         isSelected={isSelected}
                                         onClick={() => {
                                           if (isSelected) {
                                             setFieldValue(
                                               "groups",
                                               values.groups.filter(
-                                                (id) => id !== teamspace.id
+                                                (id) => id !== userGroup.id
                                               )
                                             );
                                           } else {
                                             setFieldValue("groups", [
                                               ...values.groups,
-                                              teamspace.id,
+                                              userGroup.id,
                                             ]);
                                           }
                                         }}
@@ -894,7 +899,7 @@ export function AssistantEditor({
                                         <div className="flex">
                                           <GroupsIcon />
                                           <div className="ml-1">
-                                            {teamspace.name}
+                                            {userGroup.name}
                                           </div>
                                         </div>
                                       </Bubble>

@@ -15,7 +15,7 @@ export default function Navbar() {
   };
 
   return (
-    <div className="fixed top-0 -translate-x-1/2 w-full left-1/2 bg-[rgba(255,_255,_255,_0.5)] z-[9999] flex items-center justify-center backdrop-blur-md">
+    <div className="fixed top-0 -translate-x-1/2 w-full left-1/2 bg-[rgba(255,_255,_255,_0.5)] z-notification flex items-center justify-center backdrop-blur-md">
       <Wrapper>
         <div className="relative flex items-center justify-between w-full py-4">
           <Link href="/">
@@ -44,7 +44,7 @@ export default function Navbar() {
           </div>
 
           <div
-            className="flex flex-col justify-center h-10 gap-1.5 md:gap-2 xl:hidden z-[9999]"
+            className="flex flex-col justify-center h-10 gap-1.5 md:gap-2 xl:hidden z-notification"
             onClick={toggleMenu}
           >
             <div

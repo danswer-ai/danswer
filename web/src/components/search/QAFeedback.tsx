@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
 import { ThumbsDownIcon, ThumbsUpIcon } from "../icons/icons";
+import { useToast } from "@/hooks/use-toast";
 
 type Feedback = "like" | "dislike";
 
@@ -23,16 +24,12 @@ const giveFeedback = async (
 
 interface QAFeedbackIconProps {
   messageId: number;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   feedbackType: Feedback;
 }
 
-const QAFeedback = ({
-  messageId,
-  setPopup,
-  feedbackType,
-}: QAFeedbackIconProps) => {
+const QAFeedback = ({ messageId, feedbackType }: QAFeedbackIconProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { toast } = useToast();
 
   const size = isHovered ? 22 : 20;
   const paddingY = isHovered ? "" : "py-0.5 ";
@@ -42,9 +39,10 @@ const QAFeedback = ({
       onClick={async () => {
         const isSuccessful = await giveFeedback(messageId, feedbackType);
         if (isSuccessful) {
-          setPopup({
-            message: "Thanks for your feedback!",
-            type: "success",
+          toast({
+            title: "Success",
+            description: "Thanks for your feedback!",
+            variant: "success",
           });
         }
       }}
@@ -71,26 +69,14 @@ const QAFeedback = ({
 
 interface QAFeedbackBlockProps {
   messageId: number;
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
-export const QAFeedbackBlock = ({
-  messageId,
-  setPopup,
-}: QAFeedbackBlockProps) => {
+export const QAFeedbackBlock = ({ messageId }: QAFeedbackBlockProps) => {
   return (
     <div className="flex">
-      <QAFeedback
-        messageId={messageId}
-        setPopup={setPopup}
-        feedbackType="like"
-      />
+      <QAFeedback messageId={messageId} feedbackType="like" />
       <div className="ml-2">
-        <QAFeedback
-          messageId={messageId}
-          setPopup={setPopup}
-          feedbackType="dislike"
-        />
+        <QAFeedback messageId={messageId} feedbackType="dislike" />
       </div>
     </div>
   );

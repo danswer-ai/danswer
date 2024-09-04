@@ -7,7 +7,6 @@ import { LoadingAnimation } from "@/components/Loading";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { TrashIcon } from "@/components/icons/icons";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
@@ -25,9 +24,10 @@ import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
 
 const Main = () => {
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const { mutate } = useSWRConfig();
   const {
@@ -84,7 +84,6 @@ const Main = () => {
 
   return (
     <>
-      {popup}
       <Title className="mt-6 mb-2 ml-auto mr-auto">
         Provide your API details
       </Title>
@@ -100,10 +99,11 @@ const Main = () => {
               className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (dropboxConnectorIndexingStatuses.length > 0) {
-                  setPopup({
-                    type: "error",
-                    message:
+                  toast({
+                    title: "Error",
+                    description:
                       "Must delete all connectors before deleting credentials",
+                    variant: "destructive",
                   });
                   return;
                 }
@@ -120,7 +120,10 @@ const Main = () => {
         <>
           <Text>
             See the Dropbox connector{" "}
-            <a className="text-blue-500" href="#">
+            <a
+              className="text-blue-500"
+              href="https://docs.danswer.dev/connectors/dropbox/overview"
+            >
               setup guide
             </a>{" "}
             on the enMedD AI docs to obtain a Dropbox token.
@@ -215,7 +218,7 @@ const Main = () => {
 
 export default function Page() {
   return (
-    <div className="container mx-auto">
+    <div className="py-24 md:py-32 lg:pt-16">
       <div>
         <HealthCheckBanner />
       </div>

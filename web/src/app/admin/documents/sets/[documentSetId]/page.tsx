@@ -4,7 +4,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { refreshDocumentSets, useDocumentSets } from "../hooks";
 import {
   useConnectorCredentialIndexingStatus,
-  useTeamspaces,
+  useUserGroups,
 } from "@/lib/hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
@@ -12,13 +12,11 @@ import { BookmarkIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
 import { DocumentSetCreationForm } from "../DocumentSetCreationForm";
 import { useRouter } from "next/navigation";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 function Main({ documentSetId }: { documentSetId: number }) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
 
   const {
     data: documentSets,
@@ -33,9 +31,9 @@ function Main({ documentSetId }: { documentSetId: number }) {
   } = useConnectorCredentialIndexingStatus();
 
   // EE only
-  const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
+  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
 
-  if (isDocumentSetsLoading || isCCPairsLoading || teamspacesIsLoading) {
+  if (isDocumentSetsLoading || isCCPairsLoading || userGroupsIsLoading) {
     return <ThreeDotsLoader />;
   }
 
@@ -71,20 +69,17 @@ function Main({ documentSetId }: { documentSetId: number }) {
 
   return (
     <div>
-      {popup}
-
       <AdminPageTitle icon={<Bookmark size={32} />} title={documentSet.name} />
 
       <Card>
         <CardContent>
           <DocumentSetCreationForm
             ccPairs={ccPairs}
-            teamspaces={teamspaces}
+            userGroups={userGroups}
             onClose={() => {
               refreshDocumentSets();
               router.push("/admin/documents/sets");
             }}
-            setPopup={setPopup}
             existingDocumentSet={documentSet}
           />
         </CardContent>

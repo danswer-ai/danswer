@@ -72,26 +72,21 @@ function Main({ ccPairId }: { ccPairId: number }) {
           <ModifyStatusButtonCluster ccPair={ccPair} />
         </div>
       </div>
-
       <CCPairStatus
         status={lastIndexAttempt?.status || "not_started"}
         disabled={ccPair.connector.disabled}
         isDeleting={isDeleting}
       />
-
       <div className="text-sm pt-5">
         Total Documents Indexed: <b className="">{totalDocsIndexed}</b>
       </div>
-
       <Divider />
-
       <ConfigDisplay
         connectorSpecificConfig={ccPair.connector.connector_specific_config}
         sourceType={ccPair.connector.source}
       />
       {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
         to render these conditionally.*/}
-
       <Card className="mt-6">
         <CardHeader className="border-b pb-10">
           <div className="flex items-center">
@@ -113,9 +108,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
           <IndexingAttemptsTable ccPair={ccPair} />
         </CardContent>
       </Card>
-
       <Divider />
-
       <div className="mt-4">
         <Title>Delete Connector</Title>
         <Text>
@@ -128,7 +121,6 @@ function Main({ ccPairId }: { ccPairId: number }) {
           </div>
         </div>
       </div>
-
       {/* TODO: add document search*/}
     </>
   );
@@ -138,7 +130,7 @@ export default function Page({ params }: { params: { ccPairId: string } }) {
   const ccPairId = parseInt(params.ccPairId);
 
   return (
-    <div className="mx-auto container">
+    <div className="py-24 md:py-32 lg:pt-16">
       <div>
         <HealthCheckBanner />
       </div>

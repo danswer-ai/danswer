@@ -39,8 +39,8 @@ function Main() {
     return (
       <Text>
         It looks like you don&apos;t have any connectors setup yet. Visit the{" "}
-        <Link className="text-link" href="/admin/add-connector">
-          Add Connector
+        <Link className="text-link" href="/admin/data-sources">
+          Add Data Sources
         </Link>{" "}
         page to get started!
       </Text>
@@ -65,13 +65,13 @@ function Main() {
 
 export default function Status() {
   return (
-    <div className="container mx-auto">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle
         icon={<NotebookIcon size={32} />}
-        title="Existing Connectors"
+        title="Existing Data Sources"
         farRightElement={
-          <Link href="/admin/add-connector">
-            <Button>Add Connector</Button>
+          <Link href="/admin/data-sources">
+            <Button>Add Data Sources</Button>
           </Link>
         }
       />

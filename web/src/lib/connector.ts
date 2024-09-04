@@ -1,5 +1,6 @@
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Connector, ConnectorBase, ValidSources } from "./types";
+import { toast, useToast } from "@/hooks/use-toast";
 
 async function handleResponse(
   response: Response
@@ -39,20 +40,19 @@ export async function updateConnector<T>(
 
 export async function disableConnector(
   connector: Connector<any>,
-  setPopup: (popupSpec: PopupSpec | null) => void,
   onUpdate: () => void
 ) {
   updateConnector({
     ...connector,
     disabled: !connector.disabled,
   }).then(() => {
-    setPopup({
-      message: connector.disabled ? "Enabled connector!" : "Paused connector!",
-      type: "success",
+    toast({
+      title: "Success",
+      description: connector.disabled
+        ? "Enabled connector!"
+        : "Paused connector!",
+      variant: "success",
     });
-    setTimeout(() => {
-      setPopup(null);
-    }, 4000);
     onUpdate && onUpdate();
   });
 }

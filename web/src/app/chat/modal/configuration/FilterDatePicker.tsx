@@ -110,7 +110,7 @@ export function FilterDatePicker({
             )}
           </div>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 !z-[1001]" align="start">
+        <PopoverContent className="w-auto p-0 !z-notification" align="start">
           <Calendar
             initialFocus
             mode="range"
@@ -126,7 +126,7 @@ export function FilterDatePicker({
         <SelectTrigger className="md:w-[150px] rounded-l-none !rounded-r-regular">
           <SelectValue placeholder="Select Range" />
         </SelectTrigger>
-        <SelectContent className="z-[1001]">
+        <SelectContent className="z-notification">
           <SelectItem value="Last 30 days">Last 30 Days</SelectItem>
           <SelectItem value="Last 7 days">Last 7 Days</SelectItem>
           <SelectItem value="Today">Today</SelectItem>

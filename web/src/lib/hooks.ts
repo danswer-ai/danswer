@@ -3,8 +3,7 @@ import {
   Credential,
   DocumentBoostStatus,
   Tag,
-  User,
-  Teamspace,
+  UserGroup,
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
@@ -14,7 +13,6 @@ import { destructureValue } from "./llm/utils";
 import { ChatSession } from "@/app/chat/interfaces";
 import { UsersResponse } from "./users/interfaces";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
-import { DateRange } from "react-day-picker";
 import { DateRangePickerValue } from "@tremor/react";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
@@ -81,21 +79,7 @@ export const useConnectorCredentialIndexingStatus = (
     refreshIndexingStatus: () => mutate(INDEXING_STATUS_URL),
   };
 };
-/* 
-export const useTimeRange = (initialValue?: DateRange) => {
-  return useState<DateRange | null>(initialValue ?? null);
-};
 
-export interface FilterManager {
-  timeRange: DateRange | null;
-  setTimeRange: React.Dispatch<React.SetStateAction<DateRange | null>>;
-  selectedSources: SourceMetadata[];
-  setSelectedSources: React.Dispatch<React.SetStateAction<SourceMetadata[]>>;
-  selectedDocumentSets: string[];
-  setSelectedDocumentSets: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedTags: Tag[];
-  setSelectedTags: React.Dispatch<React.SetStateAction<Tag[]>>;
-} */
 export const useTimeRange = (initialValue?: DateRangePickerValue) => {
   return useState<DateRangePickerValue | null>(null);
 };
@@ -198,15 +182,15 @@ export function useLlmOverride(
 EE Only APIs
 */
 
-const TEAMSPACE_URL = "/api/manage/admin/teamspace";
+const USER_GROUP_URL = "/api/manage/admin/user-group";
 
-export const useTeamspaces = (): {
-  data: Teamspace[] | undefined;
+export const useUserGroups = (): {
+  data: UserGroup[] | undefined;
   isLoading: boolean;
   error: string;
-  refreshTeamspaces: () => void;
+  refreshUserGroups: () => void;
 } => {
-  const swrResponse = useSWR<Teamspace[]>(TEAMSPACE_URL, errorHandlingFetcher);
+  const swrResponse = useSWR<UserGroup[]>(USER_GROUP_URL, errorHandlingFetcher);
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   if (!isPaidEnterpriseFeaturesEnabled) {
@@ -216,12 +200,12 @@ export const useTeamspaces = (): {
         isLoading: false,
         error: "",
       },
-      refreshTeamspaces: () => {},
+      refreshUserGroups: () => {},
     };
   }
 
   return {
     ...swrResponse,
-    refreshTeamspaces: () => mutate(TEAMSPACE_URL),
+    refreshUserGroups: () => mutate(USER_GROUP_URL),
   };
 };

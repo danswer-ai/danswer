@@ -10,7 +10,6 @@ import { useState } from "react";
 import { useDocumentSets } from "./hooks";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { deleteDocumentSet } from "./lib";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { DeleteButton } from "@/components/DeleteButton";
 import Link from "next/link";
@@ -34,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 const numToDisplay = 50;
 
@@ -73,15 +73,14 @@ interface DocumentFeedbackTableProps {
   documentSets: DocumentSet[];
   ccPairs: ConnectorIndexingStatus<any, any>[];
   refresh: () => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 const DocumentSetTable = ({
   documentSets,
   refresh,
-  setPopup,
 }: DocumentFeedbackTableProps) => {
   const [page, setPage] = useState(1);
+  const { toast } = useToast();
 
   // sort by name for consistent ordering
   documentSets.sort((a, b) => {
@@ -167,15 +166,17 @@ const DocumentSetTable = ({
                               documentSet.id
                             );
                             if (response.ok) {
-                              setPopup({
-                                message: `Document set "${documentSet.name}" scheduled for deletion`,
-                                type: "success",
+                              toast({
+                                title: "Success",
+                                description: `Document set "${documentSet.name}" scheduled for deletion`,
+                                variant: "success",
                               });
                             } else {
                               const errorMsg = (await response.json()).detail;
-                              setPopup({
-                                message: `Failed to schedule document set for deletion - ${errorMsg}`,
-                                type: "error",
+                              toast({
+                                title: "Error",
+                                description: `Failed to schedule document set for deletion - ${errorMsg}`,
+                                variant: "destructive",
                               });
                             }
                             refresh();
@@ -204,7 +205,6 @@ const DocumentSetTable = ({
 };
 
 const Main = () => {
-  const { popup, setPopup } = usePopup();
   const {
     data: documentSets,
     isLoading: isDocumentSetsLoading,
@@ -232,7 +232,6 @@ const Main = () => {
 
   return (
     <div>
-      {popup}
       <p className="pb-6">
         <b>Document Sets</b> allow you to group logically connected documents
         into a single bundle. These can then be used as filter when performing
@@ -253,7 +252,6 @@ const Main = () => {
             documentSets={documentSets}
             ccPairs={ccPairs}
             refresh={refreshDocumentSets}
-            setPopup={setPopup}
           />
         </>
       )}
@@ -263,7 +261,7 @@ const Main = () => {
 
 const Page = () => {
   return (
-    <div className="container mx-auto">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle icon={<Bookmark size={32} />} title="Document Sets" />
 
       <Main />

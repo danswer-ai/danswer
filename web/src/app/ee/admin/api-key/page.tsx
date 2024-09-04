@@ -7,7 +7,6 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR, { mutate } from "swr";
 import { Divider } from "@tremor/react";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { DeleteButton } from "@/components/DeleteButton";
 import { FiCopy, FiEdit2, FiRefreshCw, FiX } from "react-icons/fi";
@@ -24,6 +23,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EnmeddApiKeyForm } from "./EnmeddApiKeyForm";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
+import { Edit2, RefreshCw } from "lucide-react";
+import { CustomModal } from "@/components/CustomModal";
 
 const API_KEY_TEXT = `
 API Keys allow you to access enMedD AI APIs programmatically. Click the button below to generate a new API Key.
@@ -39,49 +42,42 @@ function NewApiKeyModal({
   const [copyClicked, setCopyClicked] = useState(false);
 
   return (
-    <Modal onOutsideClick={onClose}>
-      <div className="px-8 py-8">
-        <div className="flex w-full border-b border-border mb-4 pb-4">
-          <h3 className="font-semibold">New API Key</h3>
-          <div onClick={onClose} className="ml-auto p-1 rounded hover:bg-hover">
-            <FiX size={18} />
-          </div>
-        </div>
-        <div className="h-32">
-          <p className="pb-4">
-            Make sure you copy your new API key. You won’t be able to see this
-            key again.
-          </p>
-
-          <div className="flex mt-2">
-            <b className="my-auto break-all">{apiKey}</b>
-            <div
-              className="ml-2 my-auto p-2 hover:bg-hover rounded cursor-pointer"
-              onClick={() => {
-                setCopyClicked(true);
-                navigator.clipboard.writeText(apiKey);
-                setTimeout(() => {
-                  setCopyClicked(false);
-                }, 10000);
-              }}
-            >
-              <FiCopy size="16" className="my-auto" />
-            </div>
-          </div>
-          {copyClicked && (
-            <p className="text-success text-xs font-medium pt-1">
-              API Key copied!
-            </p>
-          )}
-        </div>
+    <div>
+      <div className="flex w-full border-b border-border mb-4 pb-4">
+        <h3 className="font-semibold">New API Key</h3>
       </div>
-    </Modal>
+      <div className="h-32">
+        <p className="pb-4">
+          Make sure you copy your new API key. You won’t be able to see this key
+          again.
+        </p>
+
+        <div className="flex pt-2 pb-10">
+          <b className="my-auto break-all">{apiKey}</b>
+          <div
+            className="ml-2 my-auto p-2 hover:bg-hover rounded cursor-pointer"
+            onClick={() => {
+              setCopyClicked(true);
+              navigator.clipboard.writeText(apiKey);
+              setTimeout(() => {
+                setCopyClicked(false);
+              }, 10000);
+            }}
+          >
+            <FiCopy size="16" className="my-auto" />
+          </div>
+        </div>
+        {copyClicked && (
+          <p className="text-success text-xs font-medium pt-1">
+            API Key copied!
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 
 function Main() {
-  const { popup, setPopup } = usePopup();
-
   const {
     data: apiKeys,
     isLoading,
@@ -92,6 +88,7 @@ function Main() {
   const [keyIsGenerating, setKeyIsGenerating] = useState(false);
   const [showCreateUpdateForm, setShowCreateUpdateForm] = useState(false);
   const [selectedApiKey, setSelectedApiKey] = useState<APIKey | undefined>();
+  const { toast } = useToast();
 
   const handleEdit = (apiKey: APIKey) => {
     setSelectedApiKey(apiKey);
@@ -120,155 +117,143 @@ function Main() {
   if (apiKeys.length === 0) {
     return (
       <div>
-        {popup}
         <p className="pb-5">{API_KEY_TEXT}</p>
-        {newApiKeyButton}
 
-        {showCreateUpdateForm && (
+        <CustomModal
+          trigger={newApiKeyButton}
+          onClose={() => setShowCreateUpdateForm(false)}
+          open={showCreateUpdateForm}
+        >
           <EnmeddApiKeyForm
-            onCreateApiKey={(apiKey) => {
-              setFullApiKey(apiKey.api_key);
-            }}
+            onCreateApiKey={(apiKey) => setFullApiKey(apiKey.api_key)}
             onClose={() => {
               setShowCreateUpdateForm(false);
               setSelectedApiKey(undefined);
               mutate("/api/admin/api-key");
             }}
-            setPopup={setPopup}
             apiKey={selectedApiKey}
           />
-        )}
+        </CustomModal>
       </div>
     );
   }
 
   return (
     <div>
-      {popup}
-
       {fullApiKey && (
-        <NewApiKeyModal
-          apiKey={fullApiKey}
+        <CustomModal
+          trigger={null}
           onClose={() => setFullApiKey(null)}
-        />
+          open={Boolean(fullApiKey)}
+        >
+          <NewApiKeyModal
+            apiKey={fullApiKey}
+            onClose={() => setFullApiKey(null)}
+          />
+        </CustomModal>
       )}
 
       {keyIsGenerating && <Spinner />}
 
       <p className="pb-5">{API_KEY_TEXT}</p>
-      {newApiKeyButton}
 
-      <Divider />
-
-      <h3 className="font-semibold pt-5">Existing API Keys</h3>
-      <Table className="overflow-visible">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>API Key</TableHead>
-            <TableHead>Regenerate</TableHead>
-            <TableHead>Delete</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {apiKeys.map((apiKey) => (
-            <TableRow key={apiKey.api_key_id}>
-              <TableCell>
-                <div
-                  className={`
-                  my-auto 
-                  flex 
-                  mb-1 
-                  w-fit 
-                  hover:bg-hover cursor-pointer
-                  p-2 
-                  rounded-regular
-                  border-border
-                  text-sm`}
-                  onClick={() => handleEdit(apiKey)}
-                >
-                  <FiEdit2 className="my-auto mr-2" />
-                  {apiKey.api_key_name || <i>null</i>}
-                </div>
-              </TableCell>
-              <TableCell className="max-w-64">
-                {apiKey.api_key_display}
-              </TableCell>
-              <TableCell>
-                <div
-                  className={`
-                  my-auto 
-                  flex 
-                  mb-1 
-                  w-fit 
-                  hover:bg-hover cursor-pointer
-                  p-2 
-                  rounded-regular
-                  border-border
-                  text-sm`}
-                  onClick={async () => {
-                    setKeyIsGenerating(true);
-                    const response = await regenerateApiKey(apiKey);
-                    setKeyIsGenerating(false);
-                    if (!response.ok) {
-                      const errorMsg = await response.text();
-                      setPopup({
-                        type: "error",
-                        message: `Failed to regenerate API Key: ${errorMsg}`,
-                      });
-                      return;
-                    }
-                    const newKey = (await response.json()) as APIKey;
-                    setFullApiKey(newKey.api_key);
-                    mutate("/api/admin/api-key");
-                  }}
-                >
-                  <FiRefreshCw className="mr-1 my-auto" />
-                  Refresh
-                </div>
-              </TableCell>
-              <TableCell>
-                <DeleteButton
-                  onClick={async () => {
-                    const response = await deleteApiKey(apiKey.api_key_id);
-                    if (!response.ok) {
-                      const errorMsg = await response.text();
-                      setPopup({
-                        type: "error",
-                        message: `Failed to delete API Key: ${errorMsg}`,
-                      });
-                      return;
-                    }
-                    mutate("/api/admin/api-key");
-                  }}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      {showCreateUpdateForm && (
+      <CustomModal
+        trigger={newApiKeyButton}
+        onClose={() => setShowCreateUpdateForm(false)}
+        open={showCreateUpdateForm}
+      >
         <EnmeddApiKeyForm
-          onCreateApiKey={(apiKey) => {
-            setFullApiKey(apiKey.api_key);
-          }}
+          onCreateApiKey={(apiKey) => setFullApiKey(apiKey.api_key)}
           onClose={() => {
             setShowCreateUpdateForm(false);
             setSelectedApiKey(undefined);
             mutate("/api/admin/api-key");
           }}
-          setPopup={setPopup}
           apiKey={selectedApiKey}
         />
-      )}
+      </CustomModal>
+
+      <Divider />
+
+      <h3 className="font-semibold pb-4">Existing API Keys</h3>
+      <Card>
+        <CardContent className="p-0">
+          <Table className="overflow-visible">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>API Key</TableHead>
+                <TableHead>Regenerate</TableHead>
+                <TableHead>Delete</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {apiKeys.map((apiKey) => (
+                <TableRow key={apiKey.api_key_id}>
+                  <TableCell>
+                    <Button variant="ghost" onClick={() => handleEdit(apiKey)}>
+                      <Edit2 size={14} />
+                      {apiKey.api_key_name || <i>null</i>}
+                    </Button>
+                  </TableCell>
+                  <TableCell className="max-w-64">
+                    {apiKey.api_key_display}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      onClick={async () => {
+                        setKeyIsGenerating(true);
+                        const response = await regenerateApiKey(apiKey);
+                        setKeyIsGenerating(false);
+                        if (!response.ok) {
+                          const errorMsg = await response.text();
+                          toast({
+                            title: "Error",
+                            description: `Failed to regenerate API Key: ${errorMsg}`,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        const newKey = (await response.json()) as APIKey;
+                        setFullApiKey(newKey.api_key);
+                        mutate("/api/admin/api-key");
+                      }}
+                      variant="ghost"
+                    >
+                      <RefreshCw size={16} />
+                      Refresh
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <DeleteButton
+                      onClick={async () => {
+                        const response = await deleteApiKey(apiKey.api_key_id);
+                        if (!response.ok) {
+                          const errorMsg = await response.text();
+                          toast({
+                            title: "Error",
+                            description: `Failed to delete API Key: ${errorMsg}`,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        mutate("/api/admin/api-key");
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle title="API Keys" icon={<KeyIcon size={32} />} />
 
       <Main />

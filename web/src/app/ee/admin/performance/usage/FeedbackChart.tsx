@@ -143,7 +143,7 @@ export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
   }
 
   return (
-    <Card className="mt-8">
+    <Card>
       <CardHeader className="border-b">
         <div className="flex flex-col">
           <h3 className="font-semibold">Feedback</h3>

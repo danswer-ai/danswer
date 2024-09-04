@@ -5,6 +5,7 @@ import { CUSTOM_ANALYTICS_ENABLED } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
 import { buildClientUrl } from "@/lib/utilsSS";
+import { Toaster } from "@/components/ui/toaster";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -21,9 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: dynamicSettings.enterpriseSettings?.application_name ?? "enMedD AI",
-    description:
-      dynamicSettings.enterpriseSettings?.application_description ??
-      "enMedD: Empowering Health Devices of Tomorrow",
+    description: "enMedD Conversational Health Platform",
     icons: {
       icon: logoLocation,
     },
@@ -58,6 +57,7 @@ export default async function RootLayout({
       >
         <SettingsProvider settings={combinedSettings}>
           {children}
+          <Toaster />
         </SettingsProvider>
       </body>
     </html>

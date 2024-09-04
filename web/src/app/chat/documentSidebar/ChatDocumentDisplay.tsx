@@ -1,6 +1,4 @@
-import { HoverPopup } from "@/components/HoverPopup";
 import { SourceIcon } from "@/components/SourceIcon";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { EnmeddDocument } from "@/lib/search/interfaces";
 import {
   DocumentMetadataBlock,
@@ -16,7 +14,6 @@ interface DocumentDisplayProps {
   isAIPick: boolean;
   isSelected: boolean;
   handleSelect: (documentId: string) => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   tokenLimitReached: boolean;
 }
 
@@ -26,7 +23,6 @@ export function ChatDocumentDisplay({
   isAIPick,
   isSelected,
   handleSelect,
-  setPopup,
   tokenLimitReached,
 }: DocumentDisplayProps) {
   // Consider reintroducing null scored docs in the future

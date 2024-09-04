@@ -151,7 +151,7 @@ function Main() {
               you can search all through all of them in one place.
             </div>
             <div className="flex">
-              <Link className="mx-auto mt-2 w-fit" href="/admin/add-connector">
+              <Link className="mx-auto mt-2 w-fit" href="/admin/data-sources">
                 <Button className="mx-auto mt-3">Add Connector</Button>
               </Link>
             </div>
@@ -188,7 +188,9 @@ function Main() {
 
       {currentModel ? (
         <>
-          <Title className="mt-8 mb-2">Current Embedding Model</Title>
+          <h3 className="mt-8 font-semibold text-xl pb-4">
+            Current Embedding Model
+          </h3>
 
           <Text>
             <ModelOption model={currentModel} />
@@ -198,7 +200,9 @@ function Main() {
         newModelSelection &&
         (!connectors || !connectors.length) && (
           <>
-            <Title className="mt-8 mb-2">Current Embedding Model</Title>
+            <h3 className="mt-8 font-semibold text-xl pb-4">
+              Current Embedding Model
+            </h3>
 
             <Text>
               <ModelOption model={newModelSelection} />
@@ -212,9 +216,11 @@ function Main() {
           <div>
             {currentModel ? (
               <>
-                <Title className="mt-8">Switch your Embedding Model</Title>
+                <h3 className="mt-8 font-semibold text-xl pb-4">
+                  Switch your Embedding Model
+                </h3>
 
-                <Text className="mb-4">
+                <Text className="pb-4">
                   If the current model is not working for you, you can update
                   your model choice below. Note that this will require a
                   complete re-indexing of all your documents across every
@@ -226,7 +232,9 @@ function Main() {
               </>
             ) : (
               <>
-                <Title className="mt-8 mb-4">Choose your Embedding Model</Title>
+                <h3 className="mt-8 font-semibold text-xl pb-4">
+                  Choose your Embedding Model
+                </h3>
               </>
             )}
 
@@ -332,7 +340,7 @@ function Main() {
 
 function Page() {
   return (
-    <div className="container mx-auto">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle
         title="Embedding"
         icon={<FiPackage size={32} className="my-auto" />}

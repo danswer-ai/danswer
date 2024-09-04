@@ -9,7 +9,6 @@ import {
   deleteFolder,
   updateFolderName,
 } from "./FolderManagement";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { CHAT_SESSION_ID_KEY } from "@/lib/drag/constants";
 import Cookies from "js-cookie";
@@ -22,6 +21,7 @@ import {
   Check,
   X,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const FolderItem = ({
   folder,
@@ -39,7 +39,7 @@ const FolderItem = ({
   );
   const [isHovering, setIsHovering] = useState<boolean>(false);
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
-  const { setPopup } = usePopup();
+  const { toast } = useToast();
   const router = useRouter();
 
   const toggleFolderExpansion = () => {
@@ -83,7 +83,11 @@ const FolderItem = ({
       setIsEditing(false);
       router.refresh(); // Refresh values to update the sidebar
     } catch (error) {
-      setPopup({ message: "Failed to save folder name", type: "error" });
+      toast({
+        title: "Error",
+        description: "Failed to save folder name",
+        variant: "destructive",
+      });
     }
   };
 
@@ -95,7 +99,11 @@ const FolderItem = ({
       await deleteFolder(folder.folder_id);
       router.refresh(); // Refresh values to update the sidebar
     } catch (error) {
-      setPopup({ message: "Failed to delete folder", type: "error" });
+      toast({
+        title: "Error",
+        description: "Failed to delete folder",
+        variant: "destructive",
+      });
     }
   };
 
@@ -110,9 +118,10 @@ const FolderItem = ({
       await addChatToFolder(folder.folder_id, chatSessionId);
       router.refresh(); // Refresh to show the updated folder contents
     } catch (error) {
-      setPopup({
-        message: "Failed to add chat session to folder",
-        type: "error",
+      toast({
+        title: "Error",
+        description: "Failed to add chat session to folder",
+        variant: "destructive",
       });
     }
   };

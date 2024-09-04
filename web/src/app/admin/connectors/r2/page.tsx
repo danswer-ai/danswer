@@ -2,12 +2,11 @@
 
 import { AdminPageTitle } from "@/components/admin/Title";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { R2Icon, S3Icon, TrashIcon } from "@/components/icons/icons";
+import { R2Icon, TrashIcon } from "@/components/icons/icons";
 import { LoadingAnimation } from "@/components/Loading";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { errorHandlingFetcher } from "@/lib/fetcher";
@@ -19,15 +18,16 @@ import {
   R2Config,
   R2CredentialJson,
 } from "@/lib/types";
-import { Select, SelectItem, Text, Title, Button } from "@tremor/react";
+import { Text, Title, Button } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
 
 const R2Main = () => {
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const { mutate } = useSWRConfig();
   const {
@@ -85,7 +85,6 @@ const R2Main = () => {
 
   return (
     <>
-      {popup}
       <Title className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your access info
       </Title>
@@ -106,10 +105,11 @@ const R2Main = () => {
               className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (r2ConnectorIndexingStatuses.length > 0) {
-                  setPopup({
-                    type: "error",
-                    message:
+                  toast({
+                    title: "Error",
+                    description:
                       "Must delete all connectors before deleting credentials",
+                    variant: "destructive",
                   });
                   return;
                 }
@@ -261,7 +261,7 @@ export default function Page() {
   const [selectedStorage, setSelectedStorage] = useState<string>("s3");
 
   return (
-    <div className="container mx-auto">
+    <div className="py-24 md:py-32 lg:pt-16">
       <div>
         <HealthCheckBanner />
       </div>

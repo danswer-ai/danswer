@@ -10,7 +10,6 @@ import {
 import { useContext, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePopup } from "@/components/admin/connectors/Popup";
 
 import Logo from "../../../public/logo-brand.png";
 import { HeaderTitle } from "@/components/header/Header";
@@ -28,8 +27,6 @@ export const SearchSidebar = ({
   openSidebar?: boolean;
   toggleSideBar?: () => void;
 }) => {
-  const { popup, setPopup } = usePopup();
-
   const [isLgScreen, setIsLgScreen] = useState(false);
 
   useEffect(() => {
@@ -67,7 +64,6 @@ export const SearchSidebar = ({
 
   return (
     <>
-      {popup}
       <div
         className={`py-6
             bg-background

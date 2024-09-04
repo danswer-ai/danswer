@@ -17,7 +17,13 @@ import {
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 
-export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
+export function UserSettingsButton({
+  user,
+  defaultPage,
+}: {
+  user?: UserTypes | null;
+  defaultPage?: string;
+}) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -51,10 +57,15 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
             className="flex items-center justify-center bg-background rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 ault py-2"
             onClick={() => setUserInfoVisible(!userInfoVisible)}
           >
+            {/* {user && user.email ? (
+              user.email[0].toUpperCase()
+            ) : (
+              <User size={25} className="mx-auto" />
+            )} */}
             <User size={25} className="mx-auto" />
           </div>
         </PopoverTrigger>
-        <PopoverContent className={`w-[250px] !z-[999] mb-2 ml-4 text-sm`}>
+        <PopoverContent className={`w-[250px] !z-modal mb-2 ml-4 text-sm`}>
           <div className="w-full">
             <>
               <Link
@@ -73,10 +84,10 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
                 </div>
                 <div className="flex flex-col w-[160px]">
                   <span className="truncate group-hover:text-inverted">
-                    {user!.full_name || "Unknown"}
+                    Johny Doe
                   </span>
                   <span className="text-dark-500 truncate group-hover:text-inverted">
-                    {user!.email || "unknown@email.com"}
+                    {user!.email}
                   </span>
                 </div>
               </Link>
@@ -90,7 +101,7 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
               Profile Settings
             </Link>
             <Link
-              href="/chat"
+              href={`/${defaultPage}`}
               className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
             >
               <MessageCircleMore
@@ -98,14 +109,7 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
                 size={24}
                 strokeWidth={1.5}
               />
-              Chat
-            </Link>
-            <Link
-              href="/search"
-              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
-            >
-              <Search className="my-auto mr-3" size={24} strokeWidth={1.5} />
-              Search
+              Chat & Search
             </Link>
             {showAdminPanel && (
               <>

@@ -7,7 +7,6 @@ import { FiPlusSquare } from "react-icons/fi";
 
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { usePopup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { UsersIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
@@ -24,6 +23,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   if (!validDomains.length) {
@@ -58,13 +58,7 @@ const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   );
 };
 
-const UsersTables = ({
-  q,
-  setPopup,
-}: {
-  q: string;
-  setPopup: (spec: PopupSpec) => void;
-}) => {
+const UsersTables = ({ q }: { q: string }) => {
   const [invitedPage, setInvitedPage] = useState(1);
   const [acceptedPage, setAcceptedPage] = useState(1);
   const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
@@ -115,7 +109,6 @@ const UsersTables = ({
           finalInvited.length > 0 ? (
             <InvitedUserTable
               users={finalInvited}
-              setPopup={setPopup}
               currentPage={invitedPage}
               onPageChange={setInvitedPage}
               totalPages={invited_pages}
@@ -133,7 +126,6 @@ const UsersTables = ({
       </HidableSection>
       <SignedUpUserTable
         users={accepted}
-        setPopup={setPopup}
         currentPage={acceptedPage}
         onPageChange={setAcceptedPage}
         totalPages={accepted_pages}
@@ -144,17 +136,15 @@ const UsersTables = ({
 };
 
 const SearchableTables = () => {
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [q, setQ] = useState("");
 
   return (
     <div>
-      {popup}
-
       <div className="flex flex-col gap-y-4">
         <div className="flex flex-col gap-4 md:flex-row">
-          <AddUserButton setPopup={setPopup} />
+          <AddUserButton />
           <div className="flex-grow">
             <SearchBar
               query={query}
@@ -163,33 +153,32 @@ const SearchableTables = () => {
             />
           </div>
         </div>
-        <UsersTables q={q} setPopup={setPopup} />
+        <UsersTables q={q} />
       </div>
     </div>
   );
 };
 
-const AddUserButton = ({
-  setPopup,
-}: {
-  setPopup: (spec: PopupSpec) => void;
-}) => {
+const AddUserButton = () => {
   const [modal, setModal] = useState(false);
+  const { toast } = useToast();
   const onSuccess = () => {
     mutate(
       (key) => typeof key === "string" && key.startsWith("/api/manage/users")
     );
     setModal(false);
-    setPopup({
-      message: "Users invited!",
-      type: "success",
+    toast({
+      title: "Success",
+      description: "Users invited!",
+      variant: "success",
     });
   };
   const onFailure = async (res: Response) => {
     const error = (await res.json()).detail;
-    setPopup({
-      message: `Failed to invite users - ${error}`,
-      type: "error",
+    toast({
+      title: "Error",
+      description: `Failed to invite users - ${error}`,
+      variant: "destructive",
     });
   };
   return (
@@ -217,7 +206,7 @@ const AddUserButton = ({
 
 const Page = () => {
   return (
-    <div className="container mx-auto">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
       <SearchableTables />
     </div>

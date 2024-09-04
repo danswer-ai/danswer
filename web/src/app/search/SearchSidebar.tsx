@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Search,
   MessageCircleMore,
   Headset,
   PanelLeftClose,
 } from "lucide-react";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePopup } from "@/components/admin/connectors/Popup";
 
 import EnmeddLogo from "../../../public/logo-brand.png";
 import { HeaderTitle } from "@/components/header/Header";
@@ -29,8 +28,6 @@ export const SearchSidebar = ({
   openSidebar?: boolean;
   toggleSideBar?: () => void;
 }) => {
-  const { popup, setPopup } = usePopup();
-
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -40,7 +37,6 @@ export const SearchSidebar = ({
 
   return (
     <>
-      {popup}
       <div
         className={`
             flex-col 
@@ -84,6 +80,21 @@ export const SearchSidebar = ({
         </div>
 
         <div className="h-full overflow-auto">
+          {/* <div className="flex px-4">
+            {enterpriseSettings && enterpriseSettings.application_name ? (
+              <div>
+                <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
+
+                {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
+                  <p className="text-xs text-subtle -mt-1.5">
+                    Powered by enMedD CHP
+                  </p>
+                )}
+              </div>
+            ) : (
+              <></>
+            )}
+          </div> */}
           <div className="px-4 text-sm  font-medium flex flex-col gap-1">
             {settings.search_page_enabled && (
               <>

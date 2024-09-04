@@ -10,25 +10,25 @@ import {
 import { Scope, TokenRateLimit } from "./types";
 import { GenericTokenRateLimitTable } from "./TokenRateLimitTables";
 import { mutate } from "swr";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { CreateRateLimitModal } from "./CreateRateLimitModal";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, Shield, User, Users } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const BASE_URL = "/api/admin/token-rate-limits";
 const GLOBAL_TOKEN_FETCH_URL = `${BASE_URL}/global`;
 const USER_TOKEN_FETCH_URL = `${BASE_URL}/users`;
-const TEAMSPACE_FETCH_URL = `${BASE_URL}/teamspaces`;
+const USER_GROUP_FETCH_URL = `${BASE_URL}/user-groups`;
 
 const GLOBAL_DESCRIPTION =
-  "Global rate limits apply to all users, teamspaces, and API keys. When the global \
+  "Global rate limits apply to all users, user groups, and API keys. When the global \
   rate limit is reached, no more tokens can be spent.";
 const USER_DESCRIPTION =
   "User rate limits apply to individual users. When a user reaches a limit, they will \
   be temporarily blocked from spending tokens.";
-const TEAMSPACE_DESCRIPTION =
-  "Teamspace rate limits apply to all users in a group. When a group reaches a limit, \
+const USER_GROUP_DESCRIPTION =
+  "User group rate limits apply to all users in a group. When a group reaches a limit, \
   all users in the group will be temporarily blocked from spending tokens, regardless \
   of their individual limits. If a user is in multiple groups, the most lenient limit \
   will apply.";
@@ -37,7 +37,7 @@ const handleCreateTokenRateLimit = async (
   target_scope: Scope,
   period_hours: number,
   token_budget: number,
-  team_id: number = -1
+  group_id: number = -1
 ) => {
   const tokenRateLimitArgs = {
     enabled: true,
@@ -49,8 +49,8 @@ const handleCreateTokenRateLimit = async (
     return await insertGlobalTokenRateLimit(tokenRateLimitArgs);
   } else if (target_scope === Scope.USER) {
     return await insertUserTokenRateLimit(tokenRateLimitArgs);
-  } else if (target_scope === Scope.TEAMSPACE) {
-    return await insertGroupTokenRateLimit(tokenRateLimitArgs, team_id);
+  } else if (target_scope === Scope.USER_GROUP) {
+    return await insertGroupTokenRateLimit(tokenRateLimitArgs, group_id);
   } else {
     throw new Error(`Invalid target_scope: ${target_scope}`);
   }
@@ -58,7 +58,7 @@ const handleCreateTokenRateLimit = async (
 
 function Main() {
   const [tabIndex, setTabIndex] = useState(0);
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
@@ -69,8 +69,8 @@ function Main() {
     } else if (target_scope === Scope.USER) {
       mutate(USER_TOKEN_FETCH_URL);
       setTabIndex(1);
-    } else if (target_scope === Scope.TEAMSPACE) {
-      mutate(TEAMSPACE_FETCH_URL);
+    } else if (target_scope === Scope.USER_GROUP) {
+      mutate(USER_GROUP_FETCH_URL);
       setTabIndex(2);
     }
   };
@@ -79,27 +79,33 @@ function Main() {
     target_scope: Scope,
     period_hours: number,
     token_budget: number,
-    team_id: number = -1
+    group_id: number = -1
   ) => {
     handleCreateTokenRateLimit(
       target_scope,
       period_hours,
       token_budget,
-      team_id
+      group_id
     )
       .then(() => {
-        setPopup({ type: "success", message: "Token rate limit created!" });
+        toast({
+          title: "Success",
+          description: "Token rate limit created!",
+          variant: "success",
+        });
         updateTable(target_scope);
       })
       .catch((error) => {
-        setPopup({ type: "error", message: error.message });
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
       });
   };
 
   return (
     <div>
-      {popup}
-
       <p className="mb-2">
         Token rate limits enable you control how many tokens can be spent in a
         given time period. With token rate limits, you can:
@@ -117,7 +123,7 @@ function Main() {
               too many tokens.
             </li>
             <li>
-              Set rate limits for teamspaces to control token spend for your
+              Set rate limits for user groups to control token spend for your
               teams.
             </li>
           </>
@@ -126,7 +132,6 @@ function Main() {
       </ul>
 
       <CreateRateLimitModal
-        setPopup={setPopup}
         onSubmit={handleSubmit}
         forSpecificScope={
           isPaidEnterpriseFeaturesEnabled ? undefined : Scope.GLOBAL
@@ -150,7 +155,7 @@ function Main() {
             </TabsTrigger>
             <TabsTrigger value="2">
               <Users size={16} className="mr-2" />
-              Teamspaces
+              User Groups
             </TabsTrigger>
           </TabsList>
           <TabsContent value="0" className="mt-6">
@@ -169,9 +174,9 @@ function Main() {
           </TabsContent>
           <TabsContent value="2" className="mt-6">
             <GenericTokenRateLimitTable
-              fetchUrl={TEAMSPACE_FETCH_URL}
-              title={"Teamspace Token Rate Limits"}
-              description={TEAMSPACE_DESCRIPTION}
+              fetchUrl={USER_GROUP_FETCH_URL}
+              title={"User Group Token Rate Limits"}
+              description={USER_GROUP_DESCRIPTION}
               responseMapper={(data: Record<string, TokenRateLimit[]>) =>
                 Object.entries(data).flatMap(([group_name, elements]) =>
                   elements.map((element) => ({
@@ -200,7 +205,7 @@ function Main() {
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle title="Token Rate Limits" icon={<Shield size={32} />} />
 
       <Main />

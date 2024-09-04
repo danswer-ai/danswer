@@ -421,7 +421,7 @@ export interface Workspace {
 }
 
 /* EE Only Types */
-export interface Teamspace {
+export interface UserGroup {
   id: number;
   name: string;
   users: User[];

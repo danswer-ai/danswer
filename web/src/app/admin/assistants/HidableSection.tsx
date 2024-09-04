@@ -15,7 +15,9 @@ export function SectionHeader({
 }) {
   return (
     <div
-      className={"font-bold text-xl my-auto" + (includeMargin ? " mb-4" : "")}
+      className={
+        "font-bold text:lg md:text-xl my-auto" + (includeMargin ? " mb-4" : "")
+      }
     >
       {children}
     </div>

@@ -4,25 +4,25 @@ import { Modal } from "@/components/Modal";
 import { UsersIcon } from "@/components/icons/icons";
 import { useState } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
-import { updateTeamspace } from "./lib";
+import { updateUserGroup } from "./lib";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { Connector, ConnectorIndexingStatus, Teamspace } from "@/lib/types";
+import { Connector, ConnectorIndexingStatus, UserGroup } from "@/lib/types";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddConnectorFormProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
-  teamspace: Teamspace;
+  userGroup: UserGroup;
   onClose: () => void;
-  setPopup: (popupSpec: PopupSpec) => void;
 }
 
 export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
   ccPairs,
-  teamspace,
+  userGroup,
   onClose,
-  setPopup,
 }) => {
   const [selectedCCPairIds, setSelectedCCPairIds] = useState<number[]>([]);
+  const { toast } = useToast();
 
   const selectedCCPairs = ccPairs.filter((ccPair) =>
     selectedCCPairIds.includes(ccPair.cc_pair_id)
@@ -71,8 +71,8 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
               .filter(
                 (ccPair) =>
                   !selectedCCPairIds.includes(ccPair.cc_pair_id) &&
-                  !teamspace.cc_pairs
-                    .map((teamspaceCCPair) => teamspaceCCPair.id)
+                  !userGroup.cc_pairs
+                    .map((userGroupCCPair) => userGroupCCPair.id)
                     .includes(ccPair.cc_pair_id)
               )
               // remove public docs, since they don't make sense as part of a group
@@ -120,28 +120,30 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
               const newCCPairIds = [
                 ...Array.from(
                   new Set(
-                    teamspace.cc_pairs
+                    userGroup.cc_pairs
                       .map((ccPair) => ccPair.id)
                       .concat(selectedCCPairIds)
                   )
                 ),
               ];
-              const response = await updateTeamspace(teamspace.id, {
-                user_ids: teamspace.users.map((user) => user.id),
+              const response = await updateUserGroup(userGroup.id, {
+                user_ids: userGroup.users.map((user) => user.id),
                 cc_pair_ids: newCCPairIds,
               });
               if (response.ok) {
-                setPopup({
-                  message: "Successfully added users to group",
-                  type: "success",
+                toast({
+                  title: "Success",
+                  description: "Successfully added users to group",
+                  variant: "success",
                 });
                 onClose();
               } else {
                 const responseJson = await response.json();
                 const errorMsg = responseJson.detail || responseJson.message;
-                setPopup({
-                  message: `Failed to add users to group - ${errorMsg}`,
-                  type: "error",
+                toast({
+                  title: "Error",
+                  description: `Failed to add users to group - ${errorMsg}`,
+                  variant: "destructive",
                 });
                 onClose();
               }

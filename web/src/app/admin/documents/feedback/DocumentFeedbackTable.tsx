@@ -1,4 +1,3 @@
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { PageSelector } from "@/components/PageSelector";
 import { DocumentBoostStatus } from "@/lib/types";
@@ -19,6 +18,7 @@ import { CustomTooltip } from "@/components/CustomTooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 const IsVisibleSection = ({
   document,
@@ -40,7 +40,7 @@ const IsVisibleSection = ({
               onUpdate(response);
             }}
             variant="outline"
-            className="py-1.5 px-3 gap-1.5 text-error"
+            className="py-1.5 px-3 gap-1.5 text-error cursor-pointer hover:opacity-80"
           >
             Hidden
             <Checkbox checked={false} />
@@ -55,7 +55,7 @@ const IsVisibleSection = ({
               onUpdate(response);
             }}
             variant="outline"
-            className="p-1.5 px-3 gap-1.5"
+            className="p-1.5 px-3 gap-1.5 cursor-pointer hover:opacity-80"
           >
             Visible
             <Checkbox checked={true} />
@@ -87,7 +87,7 @@ export const DocumentFeedbackTable = ({
   refresh: () => void;
 }) => {
   const [page, setPage] = useState(1);
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   return (
     <div>
@@ -107,7 +107,7 @@ export const DocumentFeedbackTable = ({
                 .map((document) => {
                   return (
                     <TableRow key={document.document_id}>
-                      <TableCell className="whitespace-normal break-all">
+                      <TableCell className="whitespace-normal min-w-56">
                         <a
                           className="text-blue-600"
                           href={document.link}
@@ -124,11 +124,12 @@ export const DocumentFeedbackTable = ({
                             if (response.ok) {
                               refresh();
                             } else {
-                              setPopup({
-                                message: `Error updating hidden status - ${getErrorMsg(
+                              toast({
+                                title: "Error",
+                                description: `Error updating hidden status - ${getErrorMsg(
                                   response
                                 )}`,
-                                type: "error",
+                                variant: "destructive",
                               });
                             }
                           }}
@@ -140,7 +141,6 @@ export const DocumentFeedbackTable = ({
                             documentId={document.document_id}
                             initialScore={document.boost}
                             refresh={refresh}
-                            setPopup={setPopup}
                           />
                         </div>
                       </TableCell>
