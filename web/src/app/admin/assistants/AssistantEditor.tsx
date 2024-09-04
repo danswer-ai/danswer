@@ -928,9 +928,9 @@ export function AssistantEditor({
                                   <TextFormField
                                     small={true}
                                     name="num_chunks"
-                                    label="Number of Chunks"
-                                    tooltip="How many chunks to feed the LLM"
-                                    placeholder="Defaults to 10 chunks."
+                                    label="Number of context documents"
+                                    tooltip="How many of the top matching document sections to feed the LLM"
+                                    placeholder="10"
                                     onChange={(e) => {
                                       const value = e.target.value;
                                       if (
