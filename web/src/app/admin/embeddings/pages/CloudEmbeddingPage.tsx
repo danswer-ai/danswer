@@ -12,10 +12,13 @@ import {
   LITELLM_CLOUD_PROVIDER,
 } from "../../../../components/embedding/interfaces";
 import { EmbeddingDetails } from "../EmbeddingModelSelectionForm";
-import { FiExternalLink, FiInfo } from "react-icons/fi";
+import { FiExternalLink, FiInfo, FiTrash } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { LiteLLMModelForm } from "@/components/embedding/LiteLLMModelForm";
+import { deleteSearchSettings } from "./utils";
+import { usePopup } from "@/components/admin/connectors/Popup";
+import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 
 export default function CloudEmbeddingPage({
   currentModel,
@@ -283,10 +286,24 @@ export function CloudModelCard({
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
 }) {
+  const { popup, setPopup } = usePopup();
+  const [showDeleteModel, setShowDeleteModel] = useState(false);
   const enabled =
     model.model_name === currentModel.model_name &&
     model.provider_type?.toLowerCase() ==
       currentModel.provider_type?.toLowerCase();
+
+  const deleteModel = async () => {
+    const response = await deleteSearchSettings(
+      model.provider_type as EmbeddingProvider | null,
+      model.model_name
+    );
+    if (response.ok) {
+      setPopup({ message: "Model deleted successfully", type: "success" });
+    } else {
+      setPopup({ message: "Failed to delete model", type: "error" });
+    }
+  };
 
   return (
     <div
@@ -296,17 +313,37 @@ export function CloudModelCard({
           : "border-gray-300 hover:border-blue-300 hover:shadow-sm"
       } ${!provider.configured && "opacity-80 hover:opacity-100"}`}
     >
+      {showDeleteModel && (
+        <DeleteEntityModal
+          entityName={model.model_name}
+          entityType="embedding model configuration"
+          onSubmit={() => deleteModel()}
+          onClose={() => setShowDeleteModel(false)}
+        />
+      )}
+
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-lg">{model.model_name}</h3>
-        <a
-          href={provider.website}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
-        >
-          <FiExternalLink size={18} />
-        </a>
+        <div className="flex gap-x-2">
+          {model.provider_type == EmbeddingProvider.LITELLM.toLowerCase() && (
+            <button
+              onClickCapture={() => setShowDeleteModel(true)}
+              onClick={(e) => e.stopPropagation()}
+              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+            >
+              <FiTrash size={18} />
+            </button>
+          )}
+          <a
+            href={provider.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+          >
+            <FiExternalLink size={18} />
+          </a>
+        </div>
       </div>
       <p className="text-sm text-gray-600 mb-2">{model.description}</p>
       {model?.provider_type?.toLowerCase() !=

@@ -1,3 +1,5 @@
+from sqlalchemy import and_
+from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -13,6 +15,7 @@ from danswer.configs.model_configs import OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.llm import fetch_embedding_provider
 from danswer.db.models import CloudEmbeddingProvider
+from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexModelStatus
 from danswer.db.models import SearchSettings
 from danswer.indexing.models import IndexingSetting
@@ -28,11 +31,44 @@ from shared_configs.enums import EmbeddingProvider
 logger = setup_logger()
 
 
-def create_search_settings(
+def create_or_fetch_search_settings(
     search_settings: SavedSearchSettings,
     db_session: Session,
     status: IndexModelStatus = IndexModelStatus.FUTURE,
 ) -> SearchSettings:
+    # Check if a SearchSettings instance with the same model_name and provider_type already exists
+    existing_settings = (
+        db_session.query(SearchSettings)
+        .filter(
+            SearchSettings.model_name == search_settings.model_name,
+            SearchSettings.provider_type == search_settings.provider_type,
+        )
+        .first()
+    )
+
+    if existing_settings:
+        # Update all values of the existing settings manually
+        existing_settings.model_dim = search_settings.model_dim
+        existing_settings.normalize = search_settings.normalize
+        existing_settings.query_prefix = search_settings.query_prefix
+        existing_settings.passage_prefix = search_settings.passage_prefix
+        existing_settings.status = status
+        existing_settings.index_name = search_settings.index_name
+        existing_settings.multipass_indexing = search_settings.multipass_indexing
+        existing_settings.multilingual_expansion = (
+            search_settings.multilingual_expansion
+        )
+        existing_settings.disable_rerank_for_streaming = (
+            search_settings.disable_rerank_for_streaming
+        )
+        existing_settings.rerank_model_name = search_settings.rerank_model_name
+        existing_settings.rerank_provider_type = search_settings.rerank_provider_type
+        existing_settings.rerank_api_key = search_settings.rerank_api_key
+        existing_settings.num_rerank = search_settings.num_rerank
+
+        db_session.commit()
+        return existing_settings
+
     embedding_model = SearchSettings(
         model_name=search_settings.model_name,
         model_dim=search_settings.model_dim,
@@ -87,6 +123,47 @@ def get_current_db_embedding_provider(
     )
 
     return current_embedding_provider
+
+
+def delete_search_settings(
+    db_session: Session, provider_type: EmbeddingProvider | None, model_name: str
+) -> None:
+    current_settings = get_current_search_settings(db_session)
+
+    if (
+        current_settings.provider_type == provider_type
+        and current_settings.model_name == model_name
+    ):
+        raise ValueError("Cannot delete currently active search settings")
+
+    # First, delete associated index attempts
+    index_attempts_query = delete(IndexAttempt).where(
+        IndexAttempt.search_settings_id.in_(
+            select(SearchSettings.id).where(
+                and_(
+                    SearchSettings.provider_type == provider_type,
+                    SearchSettings.model_name == model_name,
+                    SearchSettings.status != IndexModelStatus.PRESENT,
+                )
+            )
+        )
+    )
+    db_session.execute(index_attempts_query)
+
+    # Then, delete the search settings
+    search_settings_query = delete(SearchSettings).where(
+        and_(
+            SearchSettings.provider_type == provider_type,
+            SearchSettings.model_name == model_name,
+            SearchSettings.status != IndexModelStatus.PRESENT,
+        )
+    )
+
+    result = db_session.execute(search_settings_query)
+    db_session.commit()
+
+    if result.rowcount == 0:
+        raise ValueError("No matching search settings found to delete")
 
 
 def get_current_search_settings(db_session: Session) -> SearchSettings:
