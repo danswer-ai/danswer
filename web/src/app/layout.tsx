@@ -54,10 +54,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  if (CUSTOM_REFRESH_URL) {
-    await fetchSS("/settings/refresh-token");
-  }
-
   const combinedSettings = await fetchSettingsSS();
   if (!combinedSettings) {
     // Just display a simple full page error if fetching fails.
