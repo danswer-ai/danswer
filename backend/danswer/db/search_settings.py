@@ -31,44 +31,11 @@ from shared_configs.enums import EmbeddingProvider
 logger = setup_logger()
 
 
-def create_or_fetch_search_settings(
+def create_search_settings(
     search_settings: SavedSearchSettings,
     db_session: Session,
     status: IndexModelStatus = IndexModelStatus.FUTURE,
 ) -> SearchSettings:
-    # Check if a SearchSettings instance with the same model_name and provider_type already exists
-    existing_settings = (
-        db_session.query(SearchSettings)
-        .filter(
-            SearchSettings.model_name == search_settings.model_name,
-            SearchSettings.provider_type == search_settings.provider_type,
-        )
-        .first()
-    )
-
-    if existing_settings:
-        # Update all values of the existing settings manually
-        existing_settings.model_dim = search_settings.model_dim
-        existing_settings.normalize = search_settings.normalize
-        existing_settings.query_prefix = search_settings.query_prefix
-        existing_settings.passage_prefix = search_settings.passage_prefix
-        existing_settings.status = status
-        existing_settings.index_name = search_settings.index_name
-        existing_settings.multipass_indexing = search_settings.multipass_indexing
-        existing_settings.multilingual_expansion = (
-            search_settings.multilingual_expansion
-        )
-        existing_settings.disable_rerank_for_streaming = (
-            search_settings.disable_rerank_for_streaming
-        )
-        existing_settings.rerank_model_name = search_settings.rerank_model_name
-        existing_settings.rerank_provider_type = search_settings.rerank_provider_type
-        existing_settings.rerank_api_key = search_settings.rerank_api_key
-        existing_settings.num_rerank = search_settings.num_rerank
-
-        db_session.commit()
-        return existing_settings
-
     embedding_model = SearchSettings(
         model_name=search_settings.model_name,
         model_dim=search_settings.model_dim,

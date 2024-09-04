@@ -13,7 +13,7 @@ from danswer.db.engine import get_session
 from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
-from danswer.db.search_settings import create_or_fetch_search_settings
+from danswer.db.search_settings import create_search_settings
 from danswer.db.search_settings import delete_search_settings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_embedding_provider_from_provider_type
@@ -90,7 +90,7 @@ def set_new_search_settings(
             db_session=db_session,
         )
 
-    new_search_settings = create_or_fetch_search_settings(
+    new_search_settings = create_search_settings(
         search_settings=new_search_settings_request, db_session=db_session
     )
 
