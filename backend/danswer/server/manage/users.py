@@ -30,11 +30,13 @@ from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
 from danswer.server.manage.models import UserRoleResponse
+from danswer.server.manage.models import UserResetPasswordRequest
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
+from fastapi_users.password import PasswordHelper
 
 logger = setup_logger()
 
@@ -80,6 +82,24 @@ async def demote_admin(
 
     user_to_demote.role = UserRole.BASIC
     db_session.add(user_to_demote)
+    db_session.commit()
+
+
+@router.patch("/manage/reset-password")
+def reset_password(
+    user_reset_pwd: UserResetPasswordRequest,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    user = get_user_by_email(
+        email=user_reset_pwd.user_email, db_session=db_session
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    fastapi_users_pw_helper = PasswordHelper()
+    user.hashed_password = fastapi_users_pw_helper.hash(user_reset_pwd.new_password)
+    db_session.add(user)
     db_session.commit()
 
 

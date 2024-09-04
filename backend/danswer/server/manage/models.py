@@ -64,6 +64,11 @@ class UserByEmail(BaseModel):
     user_email: str
 
 
+class UserResetPasswordRequest(BaseModel):
+    user_email: str
+    new_password: str
+
+
 class UserRoleResponse(BaseModel):
     role: str
 
