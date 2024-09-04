@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -9,7 +8,6 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import status
-from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -39,7 +37,6 @@ from danswer.utils.logger import setup_logger
 from shared_configs.configs import CUSTOM_REFRESH_URL
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 logger = setup_logger()
 
 
@@ -47,14 +44,13 @@ admin_router = APIRouter(prefix="/admin/settings")
 basic_router = APIRouter(prefix="/settings")
 
 
-class MeechumResponse(BaseModel):
-    access_token: str
-    refresh_token: str
-    session: dict
-    userinfo: dict
-
-
-def mocked_refresh_token():
+def mocked_refresh_token() -> dict:
+    """
+    This function mocks the response from a token refresh endpoint.
+    It generates a mock access token, refresh token, and user information
+    with an expiration time set to 1 hour from now.
+    This is useful for testing or development when the actual refresh endpoint is not available.
+    """
     mock_exp = int((datetime.now() + timedelta(hours=1)).timestamp() * 1000)
     data = {
         "access_token": "asdf Mock access token",
@@ -66,17 +62,17 @@ def mocked_refresh_token():
             "givenName": "Mock name",
             "fullName": "Mock name",
             "userId": "Mock User ID",
-            "email": "pablosfsanchez@gmail.com",
+            "email": "email@gmail.com",
         },
     }
     return data
 
 
-@basic_router.get("/refresh-token", response_model=MeechumResponse)
+@basic_router.get("/refresh-token")
 async def refresh_access_token(
     user: User = Depends(current_user),
     user_manager: UserManager = Depends(get_user_manager),
-):
+) -> None:
     if CUSTOM_REFRESH_URL is None:
         logger.error(
             "Custom refresh URL is not set and client is attempting to custom refresh"
@@ -89,15 +85,17 @@ async def refresh_access_token(
     try:
         async with httpx.AsyncClient() as client:
             logger.debug(f"Sending request to custom refresh URL for user {user.id}")
-            user.oauth_accounts[0].access_token
+            access_token = user.oauth_accounts[0].access_token
 
             response = await client.get(
                 CUSTOM_REFRESH_URL,
                 params={"info": "json", "access_token_refresh_interval": 3600},
-                headers={"Authorization": f"Bearer {user.access_token}"},
+                headers={"Authorization": f"Bearer {access_token}"},
             )
             response.raise_for_status()
             data = response.json()
+
+            # NOTE: Here is where we can mock the response
             # data = mocked_refresh_token()
 
         logger.debug(f"Received response from Meechum auth URL for user {user.id}")
@@ -123,8 +121,7 @@ async def refresh_access_token(
             associate_by_email=True,
         )
 
-        logger.notice(f"Successfully refreshed tokens for user {user.id}")
-        return MeechumResponse(**data)
+        logger.info(f"Successfully refreshed tokens for user {user.id}")
 
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 401:
