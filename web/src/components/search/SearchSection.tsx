@@ -34,8 +34,9 @@ import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 import { usePopup } from "../admin/connectors/Popup";
 import { FeedbackType } from "@/app/chat/types";
 import { FeedbackModal } from "@/app/chat/modal/FeedbackModal";
-import { handleChatFeedback } from "@/app/chat/lib";
+import { deleteChatSession, handleChatFeedback } from "@/app/chat/lib";
 import SearchAnswer from "./SearchAnswer";
+import { DeleteEntityModal } from "../modals/DeleteEntityModal";
 
 export type searchState =
   | "input"
@@ -511,7 +512,12 @@ export const SearchSection = ({
   };
   const [firstSearch, setFirstSearch] = useState(true);
   const [searchState, setSearchState] = useState<searchState>("input");
+  const [deletingChatSession, setDeletingChatSession] =
+    useState<ChatSession | null>();
 
+  const showDeleteModal = (chatSession: ChatSession) => {
+    setDeletingChatSession(chatSession);
+  };
   // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
   const [untoggled, setUntoggled] = useState(false);
 
@@ -591,6 +597,24 @@ export const SearchSection = ({
     <>
       <div className="flex relative pr-[8px] h-full text-default">
         {popup}
+
+        {deletingChatSession && (
+          <DeleteEntityModal
+            entityType="search"
+            entityName={deletingChatSession.name.slice(0, 30)}
+            onClose={() => setDeletingChatSession(null)}
+            onSubmit={async () => {
+              const response = await deleteChatSession(deletingChatSession.id);
+              if (response.ok) {
+                setDeletingChatSession(null);
+                // go back to the main page
+                router.push("/chat");
+              } else {
+                alert("Failed to delete chat session");
+              }
+            }}
+          />
+        )}
         {currentFeedback && (
           <FeedbackModal
             feedbackType={currentFeedback[0]}
@@ -628,6 +652,7 @@ export const SearchSection = ({
         >
           <div className="w-full relative">
             <HistorySidebar
+              showDeleteModal={showDeleteModal}
               explicitlyUntoggle={explicitlyUntoggle}
               reset={() => setQuery("")}
               page="search"

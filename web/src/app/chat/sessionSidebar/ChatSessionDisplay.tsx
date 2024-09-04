@@ -145,7 +145,7 @@ export function ChatSessionDisplay({
                 </p>
               )}
 
-              {isSelected &&
+              {(isSelected || search) &&
                 (isRenamingChat ? (
                   <div className="ml-auto my-auto items-center flex">
                     <div
@@ -184,47 +184,49 @@ export function ChatSessionDisplay({
                       </CustomTooltip>
                     )}
 
-                    <div>
-                      <div
-                        onClick={() => {
-                          setIsMoreOptionsDropdownOpen(
-                            !isMoreOptionsDropdownOpen
-                          );
-                        }}
-                        className={"-my-1"}
-                      >
-                        <Popover
-                          open={isMoreOptionsDropdownOpen}
-                          onOpenChange={(open: boolean) =>
-                            setIsMoreOptionsDropdownOpen(open)
-                          }
-                          content={
-                            <div className="hover:bg-black/10 p-1 rounded">
-                              <FiMoreHorizontal size={16} />
-                            </div>
-                          }
-                          popover={
-                            <div className="border border-border rounded-lg bg-background z-50 w-32">
-                              {showShareModal && (
+                    {!search && (
+                      <div>
+                        <div
+                          onClick={() => {
+                            setIsMoreOptionsDropdownOpen(
+                              !isMoreOptionsDropdownOpen
+                            );
+                          }}
+                          className={"-my-1"}
+                        >
+                          <Popover
+                            open={isMoreOptionsDropdownOpen}
+                            onOpenChange={(open: boolean) =>
+                              setIsMoreOptionsDropdownOpen(open)
+                            }
+                            content={
+                              <div className="hover:bg-black/10 p-1 rounded">
+                                <FiMoreHorizontal size={16} />
+                              </div>
+                            }
+                            popover={
+                              <div className="border border-border rounded-lg bg-background z-50 w-32">
+                                {showShareModal && (
+                                  <DefaultDropdownElement
+                                    name="Share"
+                                    icon={FiShare2}
+                                    onSelect={() => showShareModal(chatSession)}
+                                  />
+                                )}
                                 <DefaultDropdownElement
-                                  name="Share"
-                                  icon={FiShare2}
-                                  onSelect={() => showShareModal(chatSession)}
+                                  name="Rename"
+                                  icon={FiEdit2}
+                                  onSelect={() => setIsRenamingChat(true)}
                                 />
-                              )}
-                              <DefaultDropdownElement
-                                name="Rename"
-                                icon={FiEdit2}
-                                onSelect={() => setIsRenamingChat(true)}
-                              />
-                            </div>
-                          }
-                          requiresContentPadding
-                          sideOffset={6}
-                          triggerMaxWidth
-                        />
+                              </div>
+                            }
+                            requiresContentPadding
+                            sideOffset={6}
+                            triggerMaxWidth
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
                     {showDeleteModal && (
                       <div
                         onClick={() => showDeleteModal(chatSession)}
