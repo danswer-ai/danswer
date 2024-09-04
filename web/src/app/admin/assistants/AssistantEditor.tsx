@@ -929,7 +929,7 @@ export function AssistantEditor({
                                     small={true}
                                     name="num_chunks"
                                     label="Number of Context Documents"
-                                    tooltip="How many of the top matching document sections to feed the LLM"
+                                    tooltip="How many of the top matching document sections to feed the LLM for context when generating a response"
                                     placeholder="Defaults to 10"
                                     onChange={(e) => {
                                       const value = e.target.value;
