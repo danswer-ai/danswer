@@ -185,32 +185,27 @@ def get_latest_index_attempts(
     secondary_index: bool,
     db_session: Session,
 ) -> Sequence[IndexAttempt]:
-    subquery = (
-        select(
-            func.max(IndexAttempt.id).label("max_id"),
-            IndexAttempt.connector_credential_pair_id,
-        )
-        .group_by(IndexAttempt.connector_credential_pair_id)
-        .subquery()
-    )
+    ids_stmt = select(
+        IndexAttempt.connector_credential_pair_id,
+        func.max(IndexAttempt.id).label("max_id"),
+    ).join(SearchSettings, IndexAttempt.search_settings_id == SearchSettings.id)
+
+    if secondary_index:
+        ids_stmt = ids_stmt.where(SearchSettings.status == IndexModelStatus.FUTURE)
+    else:
+        ids_stmt = ids_stmt.where(SearchSettings.status == IndexModelStatus.PRESENT)
+
+    ids_stmt = ids_stmt.group_by(IndexAttempt.connector_credential_pair_id)
+    ids_subquery = ids_stmt.subquery()
 
     stmt = (
         select(IndexAttempt)
         .join(
-            subquery,
-            and_(
-                IndexAttempt.id == subquery.c.max_id,
-                IndexAttempt.connector_credential_pair_id
-                == subquery.c.connector_credential_pair_id,
-            ),
+            ids_subquery,
+            IndexAttempt.connector_credential_pair_id
+            == ids_subquery.c.connector_credential_pair_id,
         )
-        .join(SearchSettings, IndexAttempt.search_settings_id == SearchSettings.id)
-        .where(
-            SearchSettings.status
-            == (
-                IndexModelStatus.FUTURE if secondary_index else IndexModelStatus.PRESENT
-            )
-        )
+        .where(IndexAttempt.id == ids_subquery.c.max_id)
     )
 
     return db_session.execute(stmt).scalars().all()
