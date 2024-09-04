@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback, useRef } from "react";
+import debounce from "lodash/debounce";
 import {
   Table,
   TableHead,
@@ -27,6 +28,7 @@ import { PaginatedIndexAttempts } from "./types";
 import { useRouter } from "next/navigation";
 
 const NUM_IN_PAGE = 8;
+const PAGES_TO_PREFETCH = 20;
 
 export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   const router = useRouter();
@@ -48,47 +50,80 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     [key: number]: PaginatedIndexAttempts;
   }>({});
 
+  const cachedPagesRef = useRef(cachedPages);
+  cachedPagesRef.current = cachedPages;
+
+  // This is used to update the current page data when the page number is clicked
+  const updateCurrentPageData = useCallback((pageNum: number) => {
+    if (cachedPagesRef.current[pageNum]) {
+      setCurrentPageData(cachedPagesRef.current[pageNum]);
+      setIsCurrentPageLoading(false);
+    }
+  }, []);
+
   const urlBuilder = (pageNum: number) =>
     `${buildCCPairInfoUrl(ccPair.id)}/index-attempts?page=${pageNum}&page_size=${NUM_IN_PAGE}`;
 
-  useEffect(() => {
-    const fetchCurrentPageData = async () => {
-      setIsCurrentPageLoading(true);
-      try {
-        const response = await fetch(urlBuilder(page));
-        if (!response.ok) {
-          throw new Error("Failed to fetch data");
-        }
-        const data = await response.json();
-        setCurrentPageData(data);
-      } catch (error) {
-        setCurrentPageError(
-          error instanceof Error ? error : new Error("An error occurred")
-        );
-      } finally {
-        setIsCurrentPageLoading(false);
-      }
-    };
-    if (!cachedPages[page]) {
-      fetchCurrentPageData();
-    } else {
-      setCurrentPageData(cachedPages[page]);
-    }
-    const totalPages =
-      currentPageData?.total_pages ||
-      Math.ceil(ccPair.number_of_index_attempts / NUM_IN_PAGE);
-    const pagesToPrefetch = [-2, -1, 1, 2, 3, 4]
-      .map((offset) => page + offset)
-      .filter((p) => p > 0 && p <= totalPages);
-
-    pagesToPrefetch.forEach((pageNum) => {
-      if (!cachedPages[pageNum]) {
-        void errorHandlingFetcher(urlBuilder(pageNum)).then((data) => {
+  // This is to prevent the same page from being fetched multiple times
+  const debouncedFetch = useCallback(
+    debounce((pageNum: number) => {
+      const fetchCurrentPageData = async () => {
+        setIsCurrentPageLoading(true);
+        try {
+          const response = await fetch(urlBuilder(pageNum));
+          if (!response.ok) {
+            throw new Error("Failed to fetch data");
+          }
+          const data = await response.json();
+          setCurrentPageData(data);
           setCachedPages((prev) => ({ ...prev, [pageNum]: data }));
+        } catch (error) {
+          setCurrentPageError(
+            error instanceof Error ? error : new Error("An error occurred")
+          );
+        } finally {
+          setIsCurrentPageLoading(false);
+          router.refresh();
+        }
+      };
+
+      if (!cachedPagesRef.current[pageNum]) {
+        fetchCurrentPageData();
+      } else {
+        updateCurrentPageData(pageNum);
+      }
+
+      // Prefetch logic
+      const totalPages = Math.ceil(
+        ccPair.number_of_index_attempts / NUM_IN_PAGE
+      );
+      const pagesToPrefetch = Array.from(
+        { length: PAGES_TO_PREFETCH * 2 },
+        (_, i) => i - PAGES_TO_PREFETCH + 1
+      )
+        .filter((offset) => offset !== 0)
+        .map((offset) => pageNum + offset)
+        .filter((p) => p > 0 && p <= totalPages && !cachedPagesRef.current[p]);
+
+      if (pagesToPrefetch.length > 0) {
+        Promise.all(
+          pagesToPrefetch.map((p) => errorHandlingFetcher(urlBuilder(p)))
+        ).then((results) => {
+          const newCachedPages = results.reduce((acc, data, index) => {
+            acc[pagesToPrefetch[index]] = data;
+            return acc;
+          }, {});
+          setCachedPages((prev) => ({ ...prev, ...newCachedPages }));
         });
       }
-    });
-  }, [ccPair.id, page]);
+    }, 200),
+    [ccPair.id, ccPair.number_of_index_attempts, updateCurrentPageData]
+  );
+
+  useEffect(() => {
+    updateCurrentPageData(page);
+    debouncedFetch(page);
+  }, [page, debouncedFetch, updateCurrentPageData]);
 
   const indexAttemptToDisplayTraceFor = currentPageData?.index_attempts?.find(
     (indexAttempt) => indexAttempt.id === indexAttemptTracePopupId
@@ -105,10 +140,6 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
       behavior: "smooth",
     });
   };
-
-  if (isCurrentPageLoading) {
-    return <ThreeDotsLoader />;
-  }
 
   if (currentPageError) {
     return (
