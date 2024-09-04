@@ -12,7 +12,7 @@ const Page = async ({
   const { connectors, documentSets } = await fetchValidFilterInfo();
 
   return (
-    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle icon={<ZoomIn size={32} />} title="Document Explorer" />
 
       <Explorer

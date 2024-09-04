@@ -294,7 +294,7 @@ const Main = () => {
 
 export default function File() {
   return (
-    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
+    <div className="py-24 md:py-32 lg:pt-16">
       <div>
         <HealthCheckBanner />
       </div>

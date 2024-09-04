@@ -261,7 +261,7 @@ const Main = () => {
 
 const Page = () => {
   return (
-    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle icon={<Bookmark size={32} />} title="Document Sets" />
 
       <Main />

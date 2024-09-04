@@ -234,6 +234,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             description: message,
             variant: isSuccess ? "success" : "destructive",
           });
+
           formikHelpers.setSubmitting(false);
           if (isSuccess) {
             formikHelpers.resetForm();
@@ -326,6 +327,7 @@ export function UpdateConnectorForm<T extends Yup.AnyObject>({
             description: message,
             variant: isSuccess ? "success" : "destructive",
           });
+
           formikHelpers.setSubmitting(false);
           if (isSuccess) {
             formikHelpers.resetForm();

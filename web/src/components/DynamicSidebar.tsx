@@ -21,7 +21,6 @@ export function DynamicSidebar({
   toggleLeftSideBar,
   children,
 }: SidebarProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
 
   const toggleWidth = () => {
@@ -80,11 +79,7 @@ export function DynamicSidebar({
           openSidebar ? "w-[90vw] md:w-[75vw]" : "w-0"
         } ${isSearch ? "xl:relative" : "lg:relative"}`}
       >
-        <div
-          className="h-full relative flex w-full"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
+        <div className="h-full relative flex w-full">
           <WorkSpaceSidebar openSidebar={openSidebar} user={user} />
           <div
             className={`py-4 bg-background h-full ease-in-out transition-[width] duration-500 w-full overflow-hidden lg:overflow-visible
@@ -100,11 +95,7 @@ export function DynamicSidebar({
               {children}
             </div>
           </div>
-          <div
-            className={`h-full flex items-center justify-center transition-opacity ease-in-out duration-200 ${
-              isHovered ? "opacity-100" : "opacity-0"
-            }`}
-          >
+          <div className="h-full flex items-center justify-center">
             <button
               onClick={toggleWidth}
               className="border rounded-r py-2 border-l-0 bg-background"

@@ -5,7 +5,7 @@ import { Text } from "@tremor/react";
 
 export default async function Page() {
   return (
-    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle
         title="Workspace Settings"
         icon={<FiSettings size={32} className="my-auto" />}

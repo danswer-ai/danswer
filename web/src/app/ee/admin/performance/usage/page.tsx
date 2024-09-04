@@ -14,7 +14,7 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useTimeRange();
 
   return (
-    <main className="container mx-auto py-24 md:py-32 lg:pt-16">
+    <main className="py-24 md:py-32 lg:pt-16">
       {/* TODO: remove this `dark` once we have a mode selector */}
       <AdminPageTitle
         title="Usage Statistics"

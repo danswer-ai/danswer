@@ -51,7 +51,7 @@ const Page = ({ params }: { params: { groupId: string } }) => {
   }
 
   return (
-    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
+    <div className="py-24 md:py-32 lg:pt-16">
       <BackButton />
 
       <AdminPageTitle

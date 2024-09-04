@@ -4,16 +4,6 @@ import { useState } from "react";
 import { MinimalUserSnapshot, User } from "@/lib/types";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { Divider, Text } from "@tremor/react";
-import {
-  FiArrowDown,
-  FiArrowUp,
-  FiEdit2,
-  FiMoreHorizontal,
-  FiPlus,
-  FiSearch,
-  FiX,
-  FiShare2,
-} from "react-icons/fi";
 import Link from "next/link";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import {
@@ -34,6 +24,23 @@ import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ToolsDisplay } from "../ToolsDisplay";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ArrowDown,
+  ArrowUp,
+  Ellipsis,
+  Pen,
+  Plus,
+  Search,
+  Share2,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 function AssistantListItem({
   assistant,
@@ -105,92 +112,78 @@ function AssistantListItem({
                 className="mr-4 rounded p-2 cursor-pointer hover:bg-hover"
                 onClick={() => setShowSharingModal(true)}
               >
-                <FiShare2 size={16} />
+                <Share2 size={16} />
               </div>
             )}
             <Link
               href={`/assistants/edit/${assistant.id}`}
               className="mr-4 rounded p-2 cursor-pointer hover:bg-hover"
             >
-              <FiEdit2 size={16} />
+              <Pen size={16} />
             </Link>
           </div>
         )}
-        <DefaultPopover
-          content={
-            <div className="hover:bg-hover rounded p-2 cursor-pointer">
-              <FiMoreHorizontal size={16} />
-            </div>
-          }
-          side="bottom"
-          align="start"
-          sideOffset={5}
-        >
-          {[
-            ...(!isFirst
-              ? [
-                  <div
-                    key="move-up"
-                    className="flex items-center gap-x-2"
-                    onClick={async () => {
-                      const success = await moveAssistantUp(
-                        assistant.id,
-                        currentChosenAssistants || allAssistantIds
-                      );
-                      if (success) {
-                        toast({
-                          title: "Success",
-                          description: `"${assistant.name}" has been moved up.`,
-                          variant: "success",
-                        });
-                        router.refresh();
-                      } else {
-                        toast({
-                          title: "Error",
-                          description: `"${assistant.name}" could not be moved up.`,
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                  >
-                    <FiArrowUp /> Move Up
-                  </div>,
-                ]
-              : []),
-            ...(!isLast
-              ? [
-                  <div
-                    key="move-down"
-                    className="flex items-center gap-x-2"
-                    onClick={async () => {
-                      const success = await moveAssistantDown(
-                        assistant.id,
-                        currentChosenAssistants || allAssistantIds
-                      );
-                      if (success) {
-                        toast({
-                          title: "Success",
-                          description: `"${assistant.name}" has been moved down.`,
-                          variant: "success",
-                        });
-                        router.refresh();
-                      } else {
-                        toast({
-                          title: "Error",
-                          description: `"${assistant.name}" could not be moved down.`,
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                  >
-                    <FiArrowDown /> Move Down
-                  </div>,
-                ]
-              : []),
-            isVisible ? (
-              <div
-                key="remove"
-                className="flex items-center gap-x-2"
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" variant="ghost">
+              <Ellipsis size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="bottom" align="start" sideOffset={5}>
+            {!isFirst && (
+              <DropdownMenuItem
+                onClick={async () => {
+                  const success = await moveAssistantUp(
+                    assistant.id,
+                    currentChosenAssistants || allAssistantIds
+                  );
+                  if (success) {
+                    toast({
+                      title: "Success",
+                      description: `"${assistant.name}" has been moved up.`,
+                      variant: "success",
+                    });
+                    router.refresh();
+                  } else {
+                    toast({
+                      title: "Error",
+                      description: `"${assistant.name}" could not be moved up.`,
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                <ArrowUp size={16} /> Move Up
+              </DropdownMenuItem>
+            )}
+            {!isLast && (
+              <DropdownMenuItem
+                onClick={async () => {
+                  const success = await moveAssistantDown(
+                    assistant.id,
+                    currentChosenAssistants || allAssistantIds
+                  );
+                  if (success) {
+                    toast({
+                      title: "Success",
+                      description: `"${assistant.name}" has been moved down.`,
+                      variant: "success",
+                    });
+                    router.refresh();
+                  } else {
+                    toast({
+                      title: "Error",
+                      description: `"${assistant.name}" could not be moved down.`,
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                <ArrowDown size={16} /> Move Down
+              </DropdownMenuItem>
+            )}
+            {isVisible ? (
+              <DropdownMenuItem
                 onClick={async () => {
                   if (
                     currentChosenAssistants &&
@@ -224,12 +217,10 @@ function AssistantListItem({
                   }
                 }}
               >
-                <FiX /> {isOwnedByUser ? "Hide" : "Remove"}
-              </div>
+                <X size={16} /> {isOwnedByUser ? "Hide" : "Remove"}
+              </DropdownMenuItem>
             ) : (
-              <div
-                key="add"
-                className="flex items-center gap-x-2"
+              <DropdownMenuItem
                 onClick={async () => {
                   const success = await addAssistantToList(
                     assistant.id,
@@ -251,11 +242,11 @@ function AssistantListItem({
                   }
                 }}
               >
-                <FiPlus /> Add
-              </div>
-            ),
-          ]}
-        </DefaultPopover>
+                <Plus size={16} /> Add
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </>
   );
@@ -289,7 +280,7 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
         <Link href="/assistants/new">
           <NavigationButton>
             <div className="flex justify-center">
-              <FiPlus className="mr-2 my-auto" size={20} />
+              <Plus className="mr-2 my-auto" size={20} />
               Create New Assistant
             </div>
           </NavigationButton>
@@ -298,7 +289,7 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
         <Link href="/assistants/gallery">
           <NavigationButton>
             <div className="flex justify-center">
-              <FiSearch className="mr-2 my-auto" size={20} />
+              <Search className="mr-2 my-auto" size={20} />
               View Available Assistants
             </div>
           </NavigationButton>

@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 
 export function SectionHeader({
   children,
@@ -139,9 +139,9 @@ export const BooleanFormField = ({
   subtext,
   onChange,
 }: BooleanFormFieldProps) => {
-  const [field, meta, helpers] = useField({ name, type: "checkbox" });
+  const [field, meta, helpers] = useField(name);
 
-  const handleCheckedChange = (checked: boolean) => {
+  const handleChange = (checked: boolean) => {
     helpers.setValue(checked);
     if (onChange) {
       onChange(checked);
@@ -149,19 +149,9 @@ export const BooleanFormField = ({
   };
 
   return (
-    <div className="pb-4 pt-2">
-      <div className="flex text-sm pb-4 gap-3">
-        <Field name={name}>
-          {({ field }: FieldProps) => (
-            <Checkbox
-              {...field}
-              name={name}
-              id={label}
-              onCheckedChange={handleCheckedChange}
-              checked={field.checked}
-            />
-          )}
-        </Field>
+    <div className="mb-4">
+      <label className="flex text-sm space-x-2">
+        <Checkbox checked={field.value} onCheckedChange={handleChange} />
 
         <div className="grid gap-1.5 leading-none">
           <ShadcnLabel htmlFor={label}>{label}</ShadcnLabel>
@@ -169,7 +159,7 @@ export const BooleanFormField = ({
             <p className="text-sm text-muted-foreground">{subtext}</p>
           )}
         </div>
-      </div>
+      </label>
 
       <ErrorMessage
         name={name}
@@ -197,7 +187,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
 }: TextArrayFieldProps<T>) {
   return (
     <div className="pb-4">
-      <Label>{label}</Label>
+      <ShadcnLabel>{label}</ShadcnLabel>
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <FieldArray
@@ -209,29 +199,20 @@ export function TextArrayField<T extends Yup.AnyObject>({
               (values[name] as string[]).map((_, index) => (
                 <div key={index} className="mt-2">
                   <div className="flex">
-                    <Field
-                      type={type}
-                      name={`${name}.${index}`}
-                      id={name}
-                      className={`
-                      border 
-                      border-border 
-                      bg-background 
-                      rounded 
-                      w-full 
-                      py-2 
-                      px-3 
-                      mr-4
-                      `}
-                      // Disable autocomplete since the browser doesn't know how to handle an array of text fields
-                      autoComplete="off"
-                    />
-                    <div className="my-auto">
-                      <FiX
-                        className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                        onClick={() => arrayHelpers.remove(index)}
-                      />
-                    </div>
+                    <Field name={`${name}.${index}`}>
+                      {({ field }: FieldProps) => (
+                        <Input
+                          {...field}
+                          id={`${name}.${index}`}
+                          name={`${name}.${index}`}
+                          autoComplete="off"
+                        />
+                      )}
+                    </Field>
+
+                    <Button variant="ghost" size="icon">
+                      <X size={16} onClick={() => arrayHelpers.remove(index)} />
+                    </Button>
                   </div>
                   <ErrorMessage
                     name={`${name}.${index}`}
@@ -277,159 +258,13 @@ interface SelectorFormFieldProps {
   name: string;
   label?: string;
   options: StringOrNumberOption[];
-  subtext?: string | JSX.Element;
+  subtext?: string;
   includeDefault?: boolean;
-  side?: "top" | "right" | "bottom" | "left";
+  side?: "top" | "bottom" | "left" | "right";
   maxHeight?: string;
-  onSelect?: (selected: string | number | null) => void;
+  onSelect?: (selected: string) => void;
 }
 
-/* export function SelectorFormField({
-  name,
-  label,
-  options,
-  subtext,
-  includeDefault = false,
-  side = "bottom",
-  maxHeight,
-  onSelect,
-}: SelectorFormFieldProps) {
-  const [field] = useField<string>(name);
-  const { setFieldValue } = useFormikContext();
-
-  const selectedOption = options.find(
-    (option) => String(option.value) === field.value
-  );
-
-  return (
-    <div className="pb-4">
-      {label && (
-        <ShadcnLabel
-          htmlFor={label}
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed"
-        >
-          {label}
-        </ShadcnLabel>
-      )}
-      {subtext && <SubLabel>{subtext}</SubLabel>}
-
-      <div className="mt-2">
-        <Select
-          onValueChange={
-            onSelect || ((selected) => setFieldValue(name, selected))
-          }
-          defaultValue={includeDefault ? "" : field.value}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select an option">
-              {selectedOption ? selectedOption.name : "Select an option"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {includeDefault && <SelectItem value="">Default Option</SelectItem>}
-            {options.map((option) => (
-              <SelectItem
-                key={String(option.value)}
-                value={String(option.value)}
-              >
-                {option.description ? (
-                  <div>
-                    <p>{option.name}</p>
-                    <p className="text-xs text-subtle group-hover:text-inverted group-focus:text-inverted">
-                      {option.description}
-                    </p>
-                  </div>
-                ) : (
-                  <>{option.name}</>
-                )}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <ErrorMessage
-        name={name}
-        component="div"
-        className="text-red-500 text-sm mt-1"
-      />
-    </div>
-  );
-} */
-/* export function SelectorFormField({
-  name,
-  label,
-  options,
-  subtext,
-  includeDefault = false,
-  side = "bottom",
-  maxHeight,
-  onSelect,
-}: SelectorFormFieldProps) {
-  const [field] = useField<string>(name);
-  const { setFieldValue } = useFormikContext();
-
-  const selectedOption = options.find(
-    (option) => String(option.value) === field.value
-  );
-
-  return (
-    <div className="grid gap-2 pb-4">
-      {label && (
-        <ShadcnLabel
-          htmlFor={label}
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed"
-        >
-          {label}
-        </ShadcnLabel>
-      )}
-      {subtext && <SubLabel>{subtext}</SubLabel>}
-
-      <div>
-        <Select
-          onValueChange={
-            onSelect || ((selected) => setFieldValue(name, selected))
-          }
-          value={field.value || (includeDefault ? "" : undefined)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select an option">
-              {selectedOption ? selectedOption.name : "Select an option"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {includeDefault && (
-              <SelectItem value="default">Default Option</SelectItem>
-            )}
-            {options.map((option) => (
-              <SelectItem
-                key={String(option.value)}
-                value={String(option.value)}
-              >
-                {option.description ? (
-                  <div>
-                    <p>{option.name}</p>
-                    <p className="text-xs text-subtle group-hover:text-inverted group-focus:text-inverted">
-                      {option.description}
-                    </p>
-                  </div>
-                ) : (
-                  <>{option.name}</>
-                )}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <ErrorMessage
-        name={name}
-        component="div"
-        className="text-red-500 text-sm mt-1"
-      />
-    </div>
-  );
-} */
 export function SelectorFormField({
   name,
   label,
@@ -440,8 +275,18 @@ export function SelectorFormField({
   maxHeight,
   onSelect,
 }: SelectorFormFieldProps) {
-  const [field] = useField<string>(name);
-  const { setFieldValue } = useFormikContext();
+  const [field, , { setValue }] = useField<string>(name);
+  const { setFieldValue, resetForm } = useFormikContext();
+
+  // Ensure field value is reset correctly
+  const handleSelectChange = (selected: string) => {
+    setFieldValue(name, selected);
+    if (onSelect) onSelect(selected);
+  };
+
+  const selectedOption = options.find(
+    (option) => String(option.value) === field.value
+  );
 
   return (
     <div className="mb-4">
@@ -449,14 +294,36 @@ export function SelectorFormField({
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <div className="mt-2">
-        <DefaultDropdown
-          options={options}
-          selected={field.value}
-          onSelect={onSelect || ((selected) => setFieldValue(name, selected))}
-          includeDefault={includeDefault}
-          side={side}
-          maxHeight={maxHeight}
-        />
+        <Select
+          value={field.value || ""} // Ensure field.value is reset correctly
+          onValueChange={handleSelectChange}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select an option">
+              {selectedOption ? selectedOption.name : "Select an option"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {includeDefault && <SelectItem value="default">Default</SelectItem>}
+            {options.map((option) => (
+              <SelectItem
+                key={String(option.value)}
+                value={String(option.value)}
+              >
+                {option.description ? (
+                  <div>
+                    <p>{option.name}</p>
+                    <p className="text-xs text-subtle group-hover:text-inverted group-focus:text-inverted">
+                      {option.description}
+                    </p>
+                  </div>
+                ) : (
+                  <>{option.name}</>
+                )}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <ErrorMessage

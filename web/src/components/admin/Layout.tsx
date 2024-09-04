@@ -105,13 +105,18 @@ export async function Layout({ children }: { children: React.ReactNode }) {
     </div>
   ); */
   return (
-    <div className="h-full">
+    <div className="h-full overflow-y-auto">
       <div className="flex h-full">
         <AdminBars user={user}>
           <SideBar />
         </AdminBars>
-        <div className="flex-1 h-full px-6 lg:pl-32 lg:pr-14 xl:px-10 2xl:px-24 overflow-y-auto">
-          <div className="h-full">{children}</div>
+        {/*  <div className="flex-1 h-full px-6 lg:pl-32 lg:pr-14 xl:px-10 2xl:px-24 overflow-y-auto">
+          <div className="h-full container mx-auto">{children}</div>
+        </div> */}
+        <div className="h-full overflow-y-auto w-full">
+          <div className="h-full px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 container">
+            <div className="h-full container mx-auto">{children}</div>
+          </div>
         </div>
       </div>
     </div>

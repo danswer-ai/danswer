@@ -5,13 +5,13 @@ import {
   ErrorMessage,
   Field,
   FieldArray,
+  FieldProps,
   Form,
   Formik,
 } from "formik";
 import { FiX } from "react-icons/fi";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import {
-  Label,
   SubLabel,
   TextArrayField,
   TextFormField,
@@ -23,8 +23,10 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 function customConfigProcessing(customConfigsList: [string, string][]) {
   const customConfig: { [key: string]: string } = {};
@@ -235,7 +237,7 @@ export function CustomLLMProviderUpdateForm({
             placeholder="API Version"
           />
 
-          <Label>[Optional] Custom Configs</Label>
+          <Label className="pb-1">[Optional] Custom Configs</Label>
           <SubLabel>
             <>
               <div>
@@ -260,22 +262,19 @@ export function CustomLLMProviderUpdateForm({
                     <div key={index} className={index === 0 ? "mt-2" : "mt-6"}>
                       <div className="flex">
                         <div className="w-full mr-6 border border-border p-3 rounded">
-                          <div>
+                          <div className="space-y-2">
                             <Label>Key</Label>
-                            <Field
-                              name={`custom_config_list[${index}][0]`}
-                              className={`
-                                  border 
-                                  border-border 
-                                  bg-background 
-                                  rounded 
-                                  w-full 
-                                  py-2 
-                                  px-3 
-                                  mr-4
-                                `}
-                              autoComplete="off"
-                            />
+                            <Field name={`custom_config_list[${index}][0]`}>
+                              {({ field }: FieldProps) => (
+                                <Input
+                                  {...field}
+                                  id={`custom_config_list[${index}][0]`}
+                                  name={`custom_config_list[${index}][0]`}
+                                  autoComplete="off"
+                                />
+                              )}
+                            </Field>
+
                             <ErrorMessage
                               name={`custom_config_list[${index}][0]`}
                               component="div"
@@ -283,22 +282,18 @@ export function CustomLLMProviderUpdateForm({
                             />
                           </div>
 
-                          <div className="mt-3">
+                          <div className="mt-3 space-y-2">
                             <Label>Value</Label>
-                            <Field
-                              name={`custom_config_list[${index}][1]`}
-                              className={`
-                                  border 
-                                  border-border 
-                                  bg-background 
-                                  rounded 
-                                  w-full 
-                                  py-2 
-                                  px-3 
-                                  mr-4
-                                `}
-                              autoComplete="off"
-                            />
+                            <Field name={`custom_config_list[${index}][1]`}>
+                              {({ field }: FieldProps) => (
+                                <Input
+                                  {...field}
+                                  id={`custom_config_list[${index}][1]`}
+                                  name={`custom_config_list[${index}][1]`}
+                                  autoComplete="off"
+                                />
+                              )}
+                            </Field>
                             <ErrorMessage
                               name={`custom_config_list[${index}][1]`}
                               component="div"
@@ -306,12 +301,12 @@ export function CustomLLMProviderUpdateForm({
                             />
                           </div>
                         </div>
-                        <div className="my-auto">
-                          <FiX
-                            className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                        <Button variant="ghost" size="icon" className="my-auto">
+                          <X
+                            size={16}
                             onClick={() => arrayHelpers.remove(index)}
                           />
-                        </div>
+                        </Button>
                       </div>
                     </div>
                   );

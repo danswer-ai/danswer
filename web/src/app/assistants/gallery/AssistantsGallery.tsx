@@ -3,7 +3,6 @@
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { User } from "@/lib/types";
-import { Button } from "@tremor/react";
 import Link from "next/link";
 import { useState } from "react";
 import { FiMinus, FiPlus } from "react-icons/fi";
@@ -16,6 +15,8 @@ import {
 import { useRouter } from "next/navigation";
 import { ToolsDisplay } from "../ToolsDisplay";
 import { useToast } from "@/hooks/use-toast";
+import { Minus, Plus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function AssistantsGallery({
   assistants,
@@ -115,11 +116,6 @@ export function AssistantsGallery({
                     assistant.id
                   ) ? (
                     <Button
-                      className="
-                          mr-2
-                          my-auto
-                        "
-                      icon={FiMinus}
                       onClick={async () => {
                         if (
                           user.preferences?.chosen_assistants &&
@@ -152,18 +148,13 @@ export function AssistantsGallery({
                           });
                         }
                       }}
-                      size="xs"
-                      color="red"
+                      size="icon"
+                      variant="ghost"
                     >
-                      Remove
+                      <Minus size={16} />
                     </Button>
                   ) : (
                     <Button
-                      className="
-                      mr-2
-                      my-auto
-                    "
-                      icon={FiPlus}
                       onClick={async () => {
                         const success = await addAssistantToList(
                           assistant.id,
@@ -184,10 +175,10 @@ export function AssistantsGallery({
                           });
                         }
                       }}
-                      size="xs"
-                      color="green"
+                      size="icon"
+                      variant="ghost"
                     >
-                      Add
+                      <Plus size={16} />
                     </Button>
                   )}
                 </div>

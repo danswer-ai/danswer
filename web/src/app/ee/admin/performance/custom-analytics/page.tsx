@@ -34,7 +34,7 @@ function Main() {
 
 export default function Page() {
   return (
-    <main className="container mx-auto py-24 md:py-32 lg:pt-16">
+    <main className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle
         title="Custom Analytics"
         icon={<FiBarChart2 size={32} />}

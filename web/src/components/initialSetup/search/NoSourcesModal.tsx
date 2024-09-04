@@ -1,13 +1,12 @@
 "use client";
 
 import { Divider, Text } from "@tremor/react";
-import { Modal } from "../../Modal";
 import Link from "next/link";
-import { FiMessageSquare, FiShare2 } from "react-icons/fi";
 import { useContext, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Share2 } from "lucide-react";
+import { CustomModal } from "@/components/CustomModal";
 
 export function NoSourcesModal() {
   const settings = useContext(SettingsContext);
@@ -20,12 +19,13 @@ export function NoSourcesModal() {
   }
 
   return (
-    <Modal
-      className="max-w-4xl"
-      title="🧐 No sources connected"
-      onOutsideClick={() => setIsHidden(true)}
+    <CustomModal
+      open={!isHidden}
+      onClose={() => setIsHidden(true)}
+      trigger={null}
     >
       <div className="text-base">
+        <h2 className="text-2xl font-semibold pb-6">🧐 No sources connected</h2>
         <div>
           <Text>
             Before using Search you&apos;ll need to connect at least one source.
@@ -53,6 +53,6 @@ export function NoSourcesModal() {
           </div>
         </div>
       </div>
-    </Modal>
+    </CustomModal>
   );
 }

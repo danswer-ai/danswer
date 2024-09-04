@@ -46,7 +46,7 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
   switch (connectorIndexingStatus.last_status) {
     case "failed":
       statusDisplay = <div>Failed</div>;
-      statusClass = "text-error";
+      statusClass = "";
       badgeVariant = "destructive";
       break;
     default:

@@ -147,7 +147,7 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                       }
                     }}
                     variant="outline"
-                    className="py-1.5 px-3 w-[84px] cursor-pointer hover:opacity-80"
+                    className="py-1.5 px-3 w-[84px] cursor-pointer hover:opacity-80 gap-1.5"
                   >
                     {!assistant.is_visible ? (
                       <div className="text-error">Hidden</div>

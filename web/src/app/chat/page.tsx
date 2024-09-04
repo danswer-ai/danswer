@@ -64,7 +64,7 @@ export default async function Page({
       >
         <div className="h-full overflow-hidden">
           <ChatPage
-            defaultSelectedAssistantId={defaultAssistantId}
+            defaultSelectedAssistantsId={defaultAssistantId}
             documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
           />
         </div>

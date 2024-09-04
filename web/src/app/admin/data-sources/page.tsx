@@ -109,7 +109,7 @@ export default function Page() {
   };
 
   return (
-    <div className="container mx-auto py-24 md:py-32 lg:pt-16">
+    <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle icon={<CloudUpload size={24} />} title="Data Sources" />
 
       <p className="p-2.5 pt-0">
