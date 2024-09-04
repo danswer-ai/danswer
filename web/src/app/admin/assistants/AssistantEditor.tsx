@@ -1,6 +1,6 @@
 "use client";
 
-import { CCPairBasicInfo, DocumentSet, User, UserGroup } from "@/lib/types";
+import { CCPairBasicInfo, DocumentSet, User, Teamspace } from "@/lib/types";
 import { Divider, Italic, Text } from "@tremor/react";
 import {
   ArrayHelpers,
@@ -23,7 +23,7 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { HidableSection } from "./HidableSection";
-import { useUserGroups } from "@/lib/hooks";
+import { useTeamspaces } from "@/lib/hooks";
 import { Bubble } from "@/components/Bubble";
 import { GroupsIcon } from "@/components/icons/icons";
 import { SuccessfulAssistantUpdateRedirectType } from "./enums";
@@ -89,7 +89,7 @@ export function AssistantEditor({
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   // EE only
-  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
+  const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
 
   const [finalPrompt, setFinalPrompt] = useState<string | null>("");
   const [finalPromptError, setFinalPromptError] = useState<string>("");
@@ -852,7 +852,7 @@ export function AssistantEditor({
                 <Divider />
 
                 {isPaidEnterpriseFeaturesEnabled &&
-                  userGroups &&
+                  teamspaces &&
                   (!user || user.role === "admin") && (
                     <>
                       <HidableSection sectionTitle="Access">
@@ -860,38 +860,38 @@ export function AssistantEditor({
                           <BooleanFormField
                             name="is_public"
                             label="Is Public?"
-                            subtext="If set, this Assistant will be available to all users. If not, only the specified User Groups will be able to access it."
+                            subtext="If set, this Assistant will be available to all users. If not, only the specified Teamspaces will be able to access it."
                           />
 
-                          {userGroups &&
-                            userGroups.length > 0 &&
+                          {teamspaces &&
+                            teamspaces.length > 0 &&
                             !values.is_public && (
                               <div>
                                 <Text>
-                                  Select which User Groups should have access to
+                                  Select which Teamspaces should have access to
                                   this Assistant.
                                 </Text>
                                 <div className="flex flex-wrap gap-2 mt-2">
-                                  {userGroups.map((userGroup) => {
+                                  {teamspaces.map((teamspace) => {
                                     const isSelected = values.groups.includes(
-                                      userGroup.id
+                                      teamspace.id
                                     );
                                     return (
                                       <Bubble
-                                        key={userGroup.id}
+                                        key={teamspace.id}
                                         isSelected={isSelected}
                                         onClick={() => {
                                           if (isSelected) {
                                             setFieldValue(
                                               "groups",
                                               values.groups.filter(
-                                                (id) => id !== userGroup.id
+                                                (id) => id !== teamspace.id
                                               )
                                             );
                                           } else {
                                             setFieldValue("groups", [
                                               ...values.groups,
-                                              userGroup.id,
+                                              teamspace.id,
                                             ]);
                                           }
                                         }}
@@ -899,7 +899,7 @@ export function AssistantEditor({
                                         <div className="flex">
                                           <GroupsIcon />
                                           <div className="ml-1">
-                                            {userGroup.name}
+                                            {teamspace.name}
                                           </div>
                                         </div>
                                       </Bubble>

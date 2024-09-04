@@ -12,8 +12,8 @@ export const NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED =
   process.env.NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED?.toLowerCase() ===
   "true";
 
-export const NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA =
-  process.env.NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA?.toLowerCase() ===
+export const NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT =
+  process.env.NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT?.toLowerCase() ===
   "true";
 
 export const GMAIL_AUTH_IS_ADMIN_COOKIE_NAME = "gmail_auth_is_admin";

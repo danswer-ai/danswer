@@ -57,7 +57,7 @@ export function AssistantsTab({
   const globalAssistants = assistants.filter(
     (assistant) => assistant.is_public
   );
-  const assistantlAssistants = assistants.filter(
+  const personalAssistants = assistants.filter(
     (assistant) =>
       (!user || assistant.users.some((u) => u.id === user.id)) &&
       !assistant.is_public
@@ -88,12 +88,12 @@ export function AssistantsTab({
           </>
         )}
 
-        {assistantlAssistants.length > 0 && (
+        {personalAssistants.length > 0 && (
           <>
             <div className="text-xs text-subtle flex pb-0.5 ml-1 mb-1.5 mt-5 font-bold">
               Assistantl
             </div>
-            {assistantlAssistants.map((assistant) => {
+            {personalAssistants.map((assistant) => {
               return (
                 <AssistantDisplay
                   key={assistant.id}

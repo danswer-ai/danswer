@@ -3,22 +3,22 @@
 import { GroupsIcon } from "@/components/icons/icons";
 import { GroupDisplay } from "./GroupDisplay";
 import { FiAlertCircle, FiChevronLeft } from "react-icons/fi";
-import { useSpecificUserGroup } from "./hook";
+import { useSpecificTeamspace } from "./hook";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { useConnectorCredentialIndexingStatus, useUsers } from "@/lib/hooks";
 import { useRouter } from "next/navigation";
 import { BackButton } from "@/components/BackButton";
 import { AdminPageTitle } from "@/components/admin/Title";
 
-const Page = ({ params }: { params: { groupId: string } }) => {
+const Page = ({ params }: { params: { teamId: string } }) => {
   const router = useRouter();
 
   const {
-    userGroup,
-    isLoading: userGroupIsLoading,
-    error: userGroupError,
-    refreshUserGroup,
-  } = useSpecificUserGroup(params.groupId);
+    teamspace,
+    isLoading: teamspaceIsLoading,
+    error: teamspaceError,
+    refreshTeamspace,
+  } = useSpecificTeamspace(params.teamId);
   const {
     data: users,
     isLoading: userIsLoading,
@@ -30,7 +30,7 @@ const Page = ({ params }: { params: { groupId: string } }) => {
     error: ccPairsError,
   } = useConnectorCredentialIndexingStatus();
 
-  if (userGroupIsLoading || userIsLoading || isCCPairsLoading) {
+  if (teamspaceIsLoading || userIsLoading || isCCPairsLoading) {
     return (
       <div className="h-full">
         <div className="my-auto">
@@ -40,8 +40,8 @@ const Page = ({ params }: { params: { groupId: string } }) => {
     );
   }
 
-  if (!userGroup || userGroupError) {
-    return <div>Error loading user group</div>;
+  if (!teamspace || teamspaceError) {
+    return <div>Error loading teamspace</div>;
   }
   if (!users || usersError) {
     return <div>Error loading users</div>;
@@ -55,19 +55,19 @@ const Page = ({ params }: { params: { groupId: string } }) => {
       <BackButton />
 
       <AdminPageTitle
-        title={userGroup.name || "Unknown"}
+        title={teamspace.name || "Unknown"}
         icon={<GroupsIcon size={32} />}
       />
 
-      {userGroup ? (
+      {teamspace ? (
         <GroupDisplay
           users={users.accepted}
           ccPairs={ccPairs}
-          userGroup={userGroup}
-          refreshUserGroup={refreshUserGroup}
+          teamspace={teamspace}
+          refreshTeamspace={refreshTeamspace}
         />
       ) : (
-        <div>Unable to fetch User Group :(</div>
+        <div>Unable to fetch Teamspace :(</div>
       )}
     </div>
   );

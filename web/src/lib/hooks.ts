@@ -3,7 +3,7 @@ import {
   Credential,
   DocumentBoostStatus,
   Tag,
-  UserGroup,
+  Teamspace,
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
@@ -182,15 +182,15 @@ export function useLlmOverride(
 EE Only APIs
 */
 
-const USER_GROUP_URL = "/api/manage/admin/user-group";
+const TEAMSPACE_URL = "/api/manage/admin/teamspace";
 
-export const useUserGroups = (): {
-  data: UserGroup[] | undefined;
+export const useTeamspaces = (): {
+  data: Teamspace[] | undefined;
   isLoading: boolean;
   error: string;
-  refreshUserGroups: () => void;
+  refreshTeamspaces: () => void;
 } => {
-  const swrResponse = useSWR<UserGroup[]>(USER_GROUP_URL, errorHandlingFetcher);
+  const swrResponse = useSWR<Teamspace[]>(TEAMSPACE_URL, errorHandlingFetcher);
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   if (!isPaidEnterpriseFeaturesEnabled) {
@@ -200,12 +200,12 @@ export const useUserGroups = (): {
         isLoading: false,
         error: "",
       },
-      refreshUserGroups: () => {},
+      refreshTeamspaces: () => {},
     };
   }
 
   return {
     ...swrResponse,
-    refreshUserGroups: () => mutate(USER_GROUP_URL),
+    refreshTeamspaces: () => mutate(TEAMSPACE_URL),
   };
 };

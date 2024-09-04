@@ -1,13 +1,13 @@
 "use client";
 
 import { GroupsIcon } from "@/components/icons/icons";
-import { UserGroupsTable } from "./UserGroupsTable";
-import { UserGroupCreationForm } from "./UserGroupCreationForm";
+import { TeamspacesTable } from "./TeamspacesTable";
+import { TeamspaceCreationForm } from "./TeamspaceCreationForm";
 import { useState } from "react";
 import { ThreeDotsLoader } from "@/components/Loading";
 import {
   useConnectorCredentialIndexingStatus,
-  useUserGroups,
+  useTeamspaces,
   useUsers,
 } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 const Main = () => {
   const [showForm, setShowForm] = useState(false);
 
-  const { data, isLoading, error, refreshUserGroups } = useUserGroups();
+  const { data, isLoading, error, refreshTeamspaces } = useTeamspaces();
 
   const {
     data: ccPairs,
@@ -51,13 +51,13 @@ const Main = () => {
       <Button onClick={() => setShowForm(true)}>Create New User Group</Button>
       {data.length > 0 && (
         <div className="pt-5">
-          <UserGroupsTable userGroups={data} refresh={refreshUserGroups} />
+          <TeamspacesTable teamspaces={data} refresh={refreshTeamspaces} />
         </div>
       )}
       {showForm && (
-        <UserGroupCreationForm
+        <TeamspaceCreationForm
           onClose={() => {
-            refreshUserGroups();
+            refreshTeamspaces();
             setShowForm(false);
           }}
           users={users.accepted}
@@ -72,7 +72,7 @@ const Page = () => {
   return (
     <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle
-        title="Manage Users Groups"
+        title="Manage Teamspaces"
         icon={<GroupsIcon size={32} />}
       />
 

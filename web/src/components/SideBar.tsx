@@ -148,10 +148,10 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                       name: (
                         <div className="flex items-center gap-2">
                           <GroupsIcon size={20} />
-                          <div>Groups</div>
+                          <div>Teamspaces</div>
                         </div>
                       ),
-                      link: "/admin/groups",
+                      link: "/admin/teams",
                     },
                     {
                       name: (

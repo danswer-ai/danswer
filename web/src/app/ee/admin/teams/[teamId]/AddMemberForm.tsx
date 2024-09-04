@@ -1,19 +1,19 @@
 import { Modal } from "@/components/Modal";
-import { updateUserGroup } from "./lib";
-import { User, UserGroup } from "@/lib/types";
+import { updateTeamspace } from "./lib";
+import { User, Teamspace } from "@/lib/types";
 import { UserEditor } from "../UserEditor";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AddMemberFormProps {
   users: User[];
-  userGroup: UserGroup;
+  teamspace: Teamspace;
   onClose: () => void;
 }
 
 export const AddMemberForm: React.FC<AddMemberFormProps> = ({
   users,
-  userGroup,
+  teamspace,
   onClose,
 }) => {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -26,20 +26,20 @@ export const AddMemberForm: React.FC<AddMemberFormProps> = ({
           selectedUserIds={selectedUserIds}
           setSelectedUserIds={setSelectedUserIds}
           allUsers={users}
-          existingUsers={userGroup.users}
+          existingUsers={teamspace.users}
           onSubmit={async (selectedUsers) => {
             const newUserIds = [
               ...Array.from(
                 new Set(
-                  userGroup.users
+                  teamspace.users
                     .map((user) => user.id)
                     .concat(selectedUsers.map((user) => user.id))
                 )
               ),
             ];
-            const response = await updateUserGroup(userGroup.id, {
+            const response = await updateTeamspace(teamspace.id, {
               user_ids: newUserIds,
-              cc_pair_ids: userGroup.cc_pairs.map((ccPair) => ccPair.id),
+              cc_pair_ids: teamspace.cc_pairs.map((ccPair) => ccPair.id),
             });
             if (response.ok) {
               toast({
