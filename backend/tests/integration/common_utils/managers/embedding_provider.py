@@ -55,7 +55,7 @@ class EmbeddingProviderManager:
         response.raise_for_status()
 
         response_data = response.json()
-        print(response_data)
+
         return TestCloudEmbeddingProvider(
             provider_type=response_data["provider_type"],
             api_key=response_data.get("api_key"),
