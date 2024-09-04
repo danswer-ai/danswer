@@ -601,7 +601,7 @@ export const SearchSection = ({
         {deletingChatSession && (
           <DeleteEntityModal
             entityType="search"
-            entityName={deletingChatSession.name.slice(0, 30)}
+            entityName={deletingChatSession.name}
             onClose={() => setDeletingChatSession(null)}
             onSubmit={async () => {
               const response = await deleteChatSession(deletingChatSession.id);

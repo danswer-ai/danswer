@@ -46,6 +46,7 @@ export function ChatSessionDisplay({
   showDeleteModal?: (chatSession: ChatSession) => void;
 }) {
   const router = useRouter();
+  const [isHovering, setIsHovering] = useState(false);
   const [isRenamingChat, setIsRenamingChat] = useState(false);
   const [isMoreOptionsDropdownOpen, setIsMoreOptionsDropdownOpen] =
     useState(false);
@@ -83,7 +84,6 @@ export function ChatSessionDisplay({
     chatSession,
     settings?.settings
   );
-  const [isHovering, setIsHovering] = useState(false);
 
   return (
     <>
@@ -192,7 +192,7 @@ export function ChatSessionDisplay({
                         showDeleteModal && (
                           <div
                             onClick={() => showDeleteModal(chatSession)}
-                            className={`hover:bg-black/10 p-1 -m-1 rounded ml-1`}
+                            className={`p-1 -m-1 rounded ml-1`}
                           >
                             <FiTrash size={16} />
                           </div>
@@ -212,7 +212,7 @@ export function ChatSessionDisplay({
                               setIsMoreOptionsDropdownOpen(open)
                             }
                             content={
-                              <div className="hover:bg-black/10 p-1 rounded">
+                              <div className="p-1 rounded">
                                 <FiMoreHorizontal size={16} />
                               </div>
                             }
