@@ -95,6 +95,7 @@ class DocMetadataAwareIndexChunk(IndexChunk):
 
 
 class EmbeddingModelDetail(BaseModel):
+    id: int | None = None
     model_name: str
     normalize: bool
     query_prefix: str | None
@@ -112,6 +113,7 @@ class EmbeddingModelDetail(BaseModel):
         search_settings: "SearchSettings",
     ) -> "EmbeddingModelDetail":
         return cls(
+            id=search_settings.id,
             model_name=search_settings.model_name,
             normalize=search_settings.normalize,
             query_prefix=search_settings.query_prefix,

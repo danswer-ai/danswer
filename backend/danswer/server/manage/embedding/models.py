@@ -8,10 +8,15 @@ if TYPE_CHECKING:
     from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
 
 
+class SearchSettingsDeleteRequest(BaseModel):
+    search_settings_id: int
+
+
 class TestEmbeddingRequest(BaseModel):
     provider_type: EmbeddingProvider
     api_key: str | None = None
     api_url: str | None = None
+    model_name: str | None = None
 
 
 class CloudEmbeddingProvider(BaseModel):

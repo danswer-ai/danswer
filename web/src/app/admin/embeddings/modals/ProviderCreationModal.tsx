@@ -36,6 +36,7 @@ export function ProviderCreationModal({
       ? Object.entries(existingProvider.custom_config)
       : [],
     model_id: 0,
+    model_name: null,
   };
 
   const validationSchema = Yup.object({
@@ -45,6 +46,9 @@ export function ProviderCreationModal({
       : useFileUpload
         ? Yup.string()
         : Yup.string().required("API Key is required"),
+    model_name: isProxy
+      ? Yup.string().required("Model name is required")
+      : Yup.string().nullable(),
     api_url: isProxy
       ? Yup.string().required("API URL is required")
       : Yup.string(),
@@ -96,6 +100,7 @@ export function ProviderCreationModal({
             provider_type: values.provider_type.toLowerCase().split(" ")[0],
             api_key: values.api_key,
             api_url: values.api_url,
+            model_name: values.model_name,
           }),
         }
       );
@@ -182,15 +187,25 @@ export function ProviderCreationModal({
                 </a>
               </Text>
 
-              <div className="flex w-full flex-col gap-y-2">
-                {isProxy ? (
-                  <TextFormField
-                    name="api_url"
-                    label="API URL"
-                    placeholder="API URL"
-                    type="text"
-                  />
-                ) : useFileUpload ? (
+              <div className="flex w-full flex-col gap-y-6">
+                {isProxy && (
+                  <>
+                    <TextFormField
+                      name="api_url"
+                      label="API URL"
+                      placeholder="API URL"
+                      type="text"
+                    />
+                    <TextFormField
+                      name="model_name"
+                      label="Model Name (for testing)"
+                      placeholder="Model Name"
+                      type="text"
+                    />
+                  </>
+                )}
+
+                {useFileUpload ? (
                   <>
                     <Label>Upload JSON File</Label>
                     <input
@@ -205,7 +220,7 @@ export function ProviderCreationModal({
                 ) : (
                   <TextFormField
                     name="api_key"
-                    label="API Key"
+                    label={`API Key ${isProxy && "(for non-local deployments)"}`}
                     placeholder="API Key"
                     type="password"
                   />

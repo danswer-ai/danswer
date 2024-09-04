@@ -39,6 +39,7 @@ export interface CloudEmbeddingProvider {
 
 // Embedding Models
 export interface EmbeddingModelDescriptor {
+  id?: number;
   model_name: string;
   model_dim: number;
   normalize: boolean;
