@@ -9,6 +9,7 @@ from danswer.db.models import IndexModelStatus
 from danswer.search.enums import RecencyBiasSetting
 from danswer.server.documents.models import DocumentSource
 from danswer.server.documents.models import InputType
+from shared_configs.enums import EmbeddingProvider
 
 """
 These data models are used to represent the data on the testing side of things.
@@ -134,20 +135,20 @@ class TestSearchSettings(BaseModel):
     multipass_indexing: bool
     multilingual_expansion: list[str]
     disable_rerank_for_streaming: bool
-    rerank_model_name: str | None = None
-    rerank_provider_type: str | None = None
+    rerank_model_name: str | None
+    rerank_provider_type: str | None
     rerank_api_key: str | None = None
     num_rerank: int
 
 
 class TestCloudEmbeddingProvider(BaseModel):
-    provider_type: str  # Assuming EmbeddingProvider is converted to string
+    provider_type: EmbeddingProvider | None
     api_key: str | None
     api_url: str | None
 
 
 class TestFullModelVersionResponse(BaseModel):
-    current_settings: TestSearchSettings
+    current_settings: TestSearchSettings | None
     secondary_settings: TestSearchSettings | None
 
 
