@@ -294,14 +294,22 @@ export function CloudModelCard({
       currentModel.provider_type?.toLowerCase();
 
   const deleteModel = async () => {
-    const response = await deleteSearchSettings(
-      model.provider_type as EmbeddingProvider | null,
-      model.model_name
-    );
+    if (!model.id) {
+      setPopup({ message: "Model cannot be deleted", type: "error" });
+      return;
+    }
+
+    const response = await deleteSearchSettings(model.id);
+
     if (response.ok) {
       setPopup({ message: "Model deleted successfully", type: "success" });
+      setShowDeleteModel(false);
     } else {
-      setPopup({ message: "Failed to delete model", type: "error" });
+      setPopup({
+        message:
+          "Failed to delete model. Ensure you are not attempting to delete a curently active model.",
+        type: "error",
+      });
     }
   };
 
@@ -313,6 +321,7 @@ export function CloudModelCard({
           : "border-gray-300 hover:border-blue-300 hover:shadow-sm"
       } ${!provider.configured && "opacity-80 hover:opacity-100"}`}
     >
+      {popup}
       {showDeleteModel && (
         <DeleteEntityModal
           entityName={model.model_name}

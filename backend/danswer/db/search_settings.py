@@ -125,42 +125,31 @@ def get_current_db_embedding_provider(
     return current_embedding_provider
 
 
-def delete_search_settings(
-    db_session: Session, provider_type: EmbeddingProvider | None, model_name: str
-) -> None:
+def delete_search_settings(db_session: Session, search_settings_id: int) -> None:
     current_settings = get_current_search_settings(db_session)
 
-    if (
-        current_settings.provider_type == provider_type
-        and current_settings.model_name == model_name
-    ):
+    if current_settings.id == search_settings_id:
         raise ValueError("Cannot delete currently active search settings")
 
     # First, delete associated index attempts
     index_attempts_query = delete(IndexAttempt).where(
-        IndexAttempt.search_settings_id.in_(
-            select(SearchSettings.id).where(
-                and_(
-                    SearchSettings.provider_type == provider_type,
-                    SearchSettings.model_name == model_name,
-                    SearchSettings.status != IndexModelStatus.PRESENT,
-                )
-            )
-        )
+        IndexAttempt.search_settings_id == search_settings_id
     )
     db_session.execute(index_attempts_query)
 
     # Then, delete the search settings
     search_settings_query = delete(SearchSettings).where(
         and_(
-            SearchSettings.provider_type == provider_type,
-            SearchSettings.model_name == model_name,
+            SearchSettings.id == search_settings_id,
             SearchSettings.status != IndexModelStatus.PRESENT,
         )
     )
 
     result = db_session.execute(search_settings_query)
     db_session.commit()
+
+    if result.rowcount == 0:
+        raise ValueError("No matching search settings found to delete")
 
     if result.rowcount == 0:
         raise ValueError("No matching search settings found to delete")

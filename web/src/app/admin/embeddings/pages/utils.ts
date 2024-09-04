@@ -18,20 +18,13 @@ import { EmbeddingProvider } from "@/components/embedding/interfaces";
 //     except ValueError as e:
 //         raise HTTPException(status_code=400, detail=str(e))
 
-export const deleteSearchSettings = async (
-  provider_type: EmbeddingProvider | null,
-  model_name: string
-) => {
-  const res = await fetch(`/api/search-settings/delete-search-settings`, {
+export const deleteSearchSettings = async (search_settings_id: number) => {
+  const response = await fetch(`/api/search-settings/delete-search-settings`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ provider_type, model_name }),
+    body: JSON.stringify({ search_settings_id }),
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to delete search settings");
-  }
-  return res;
+  return response;
 };

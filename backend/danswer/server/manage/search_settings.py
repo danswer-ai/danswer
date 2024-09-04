@@ -141,15 +141,13 @@ def delete_search_settings_endpoint(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    print(deletion_request)
     try:
         delete_search_settings(
             db_session=db_session,
-            provider_type=deletion_request.provider_type,
-            model_name=deletion_request.model_name,
+            search_settings_id=deletion_request.search_settings_id,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/get-current-search-settings")
