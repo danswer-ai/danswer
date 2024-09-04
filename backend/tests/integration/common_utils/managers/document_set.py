@@ -136,7 +136,6 @@ class DocumentSetManager:
             for doc_set in doc_sets:
                 if not doc_set.is_up_to_date:
                     all_up_to_date = False
-                    print(f"Document set {doc_set.id} is not up to date")
 
             if all_up_to_date:
                 break
