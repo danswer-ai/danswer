@@ -42,6 +42,7 @@ def test_creating_voyage_embedding_provider(reset: None) -> None:
 
 def test_creating_google_embedding_provider(reset: None) -> None:
     google_api_key = os.getenv("GOOGLE_API_KEY")
+
     test_embedding_provider = TestCloudEmbeddingProvider(
         provider_type=EmbeddingProvider.GOOGLE,
         api_url=None,
