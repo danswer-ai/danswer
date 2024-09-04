@@ -89,7 +89,7 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT") or "587")
 SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
-IMAGE_SERVER_PROTOCOL = os.getenv("IMAGE_SERVER_PROTOCAL")
+IMAGE_SERVER_PROTOCOL = os.getenv("IMAGE_SERVER_PROTOCOL")
 IMAGE_SERVER_HOST = os.getenv("IMAGE_SERVER")
 IMAGE_SERVER_PORT = os.getenv("IMAGE_SERVER_PORT")
 

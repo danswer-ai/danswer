@@ -389,7 +389,7 @@ app = fetch_versioned_implementation(module="danswer.main", attribute="get_appli
 
 if __name__ == "__main__":
     logger.info(
-        f"Starting Danswer Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
+        f"Starting Docudive Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
     )
 
     if global_version.get_is_ee_version():
