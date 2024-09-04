@@ -325,7 +325,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # fill up Postgres connection pools
     await warm_up_connections()
 
-    # Generate a UUID for the instance so we can track usage
+    # We cache this at the beginning so there is no delay in the first telemtry
     get_or_generate_uuid()
 
     with Session(engine) as db_session:
