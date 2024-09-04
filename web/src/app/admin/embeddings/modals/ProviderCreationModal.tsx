@@ -221,7 +221,7 @@ export function ProviderCreationModal({
                   <TextFormField
                     name="api_key"
                     label={`API Key ${isProxy && "(for non-local deployments)"}`}
-                    placeholder={`API Key `}
+                    placeholder="API Key"
                     type="password"
                   />
                 )}
