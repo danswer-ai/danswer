@@ -83,6 +83,7 @@ export function ChatSessionDisplay({
     chatSession,
     settings?.settings
   );
+  const [isHovering, setIsHovering] = useState(false);
 
   return (
     <>
@@ -97,6 +98,8 @@ export function ChatSessionDisplay({
       <Link
         className="flex my-1 group relative"
         key={chatSession.id}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
         onClick={() => {
           if (settings?.isMobile && closeSidebar) {
             closeSidebar();
@@ -145,7 +148,7 @@ export function ChatSessionDisplay({
                 </p>
               )}
 
-              {(isSelected || search) &&
+              {isHovering &&
                 (isRenamingChat ? (
                   <div className="ml-auto my-auto items-center flex">
                     <div
@@ -184,15 +187,24 @@ export function ChatSessionDisplay({
                       </CustomTooltip>
                     )}
 
-                    {!search && (
-                      <div>
+                    <div>
+                      {search ? (
+                        showDeleteModal && (
+                          <div
+                            onClick={() => showDeleteModal(chatSession)}
+                            className={`hover:bg-black/10 p-1 -m-1 rounded ml-1`}
+                          >
+                            <FiTrash size={16} />
+                          </div>
+                        )
+                      ) : (
                         <div
                           onClick={() => {
                             setIsMoreOptionsDropdownOpen(
                               !isMoreOptionsDropdownOpen
                             );
                           }}
-                          className={"-my-1"}
+                          className="-my-1"
                         >
                           <Popover
                             open={isMoreOptionsDropdownOpen}
@@ -213,11 +225,22 @@ export function ChatSessionDisplay({
                                     onSelect={() => showShareModal(chatSession)}
                                   />
                                 )}
-                                <DefaultDropdownElement
-                                  name="Rename"
-                                  icon={FiEdit2}
-                                  onSelect={() => setIsRenamingChat(true)}
-                                />
+                                {!search && (
+                                  <DefaultDropdownElement
+                                    name="Rename"
+                                    icon={FiEdit2}
+                                    onSelect={() => setIsRenamingChat(true)}
+                                  />
+                                )}
+                                {showDeleteModal && (
+                                  <DefaultDropdownElement
+                                    name="Delete"
+                                    icon={FiTrash}
+                                    onSelect={() =>
+                                      showDeleteModal(chatSession)
+                                    }
+                                  />
+                                )}
                               </div>
                             }
                             requiresContentPadding
@@ -225,16 +248,8 @@ export function ChatSessionDisplay({
                             triggerMaxWidth
                           />
                         </div>
-                      </div>
-                    )}
-                    {showDeleteModal && (
-                      <div
-                        onClick={() => showDeleteModal(chatSession)}
-                        className={`hover:bg-black/10 p-1 -m-1 rounded ml-1`}
-                      >
-                        <FiTrash size={16} />
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 ))}
             </div>

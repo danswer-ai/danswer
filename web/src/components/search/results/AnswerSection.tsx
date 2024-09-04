@@ -40,7 +40,12 @@ export const AnswerSection = (props: AnswerSectionProps) => {
     status = "success";
     header = <></>;
 
-    body = <MinimalMarkdown content={replaceNewlines(props.answer || "")} />;
+    body = (
+      <MinimalMarkdown
+        useCodeBlock
+        content={replaceNewlines(props.answer || "")}
+      />
+    );
 
     // error while building answer (NOTE: if error occurs during quote generation
     // the above if statement will hit and the error will not be displayed)
@@ -56,7 +61,9 @@ export const AnswerSection = (props: AnswerSectionProps) => {
   } else if (props.answer) {
     status = "success";
     header = <></>;
-    body = <MinimalMarkdown content={replaceNewlines(props.answer)} />;
+    body = (
+      <MinimalMarkdown useCodeBlock content={replaceNewlines(props.answer)} />
+    );
   }
 
   return (
