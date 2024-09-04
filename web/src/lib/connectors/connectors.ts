@@ -1,4 +1,4 @@
-import { ValidInputTypes, ValidSources } from "../types";
+import { ConfigurableSources, ValidInputTypes, ValidSources } from "../types";
 
 export type InputType =
   | "list"
@@ -76,7 +76,10 @@ export interface ConnectionConfiguration {
   overrideDefaultFreq?: number;
 }
 
-export const connectorConfigs: Record<ValidSources, ConnectionConfiguration> = {
+export const connectorConfigs: Record<
+  ConfigurableSources,
+  ConnectionConfiguration
+> = {
   web: {
     description: "Configure Web connector",
     values: [

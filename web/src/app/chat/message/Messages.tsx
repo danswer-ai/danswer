@@ -64,7 +64,7 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
-import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
+import { ContinueGenerating } from "./ContinueMessage";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -123,6 +123,7 @@ function FileDisplay({
 export const AIMessage = ({
   regenerate,
   overriddenModel,
+  continueGenerating,
   shared,
   isActive,
   toggleDocumentSelection,
@@ -150,6 +151,7 @@ export const AIMessage = ({
 }: {
   shared?: boolean;
   isActive?: boolean;
+  continueGenerating?: () => void;
   otherMessagesCanSwitchTo?: number[];
   onMessageSelection?: (messageId: number) => void;
   selectedDocuments?: DanswerDocument[] | null;
@@ -283,11 +285,12 @@ export const AIMessage = ({
               size="small"
               assistant={alternativeAssistant || currentPersona}
             />
+
             <div className="w-full">
               <div className="max-w-message-max break-words">
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
-                    {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
+                    {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
                       <>
                         {query !== undefined &&
                           handleShowRetrieved !== undefined &&
@@ -315,7 +318,8 @@ export const AIMessage = ({
                             </div>
                           )}
                       </>
-                    )}
+                    ) : null}
+
                     {toolCall &&
                       !TOOLS_WITH_CUSTOM_HANDLING.includes(
                         toolCall.tool_name
@@ -358,7 +362,7 @@ export const AIMessage = ({
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <div className="overflow-x-visible w-full pr-2">
+                          <div className="overflow-x-visible max-w-content-max">
                             <ReactMarkdown
                               key={messageId}
                               className="prose max-w-full text-base"
@@ -633,6 +637,11 @@ export const AIMessage = ({
             </div>
           </div>
         </div>
+        {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+          !query &&
+          continueGenerating && (
+            <ContinueGenerating handleContinueGenerating={continueGenerating} />
+          )}
       </div>
     </div>
   );
@@ -731,6 +740,7 @@ export const HumanMessage = ({
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
+
             <div className="flex justify-end">
               <div className="w-full ml-8 flex w-full w-[800px] break-words">
                 {isEditing ? (
