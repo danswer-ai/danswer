@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 from pydantic import Field
 
+from danswer.access.models import DocumentAccess
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
 from shared_configs.enums import EmbeddingProvider
@@ -74,23 +75,23 @@ class DocMetadataAwareIndexChunk(IndexChunk):
            negative -> ranked lower.
     """
 
-    # access: "DocumentAccess"
-    # document_sets: set[str]
+    access: "DocumentAccess"
+    document_sets: set[str]
     # boost: int
 
     @classmethod
     def from_index_chunk(
         cls,
         index_chunk: IndexChunk,
-        # access: "DocumentAccess",
-        # document_sets: set[str],
+        access: "DocumentAccess",
+        document_sets: set[str],
         # boost: int,
     ) -> "DocMetadataAwareIndexChunk":
         index_chunk_data = index_chunk.model_dump()
         return cls(
             **index_chunk_data,
-            # access=access,
-            # document_sets=document_sets,
+            access=access,
+            document_sets=document_sets,
             # boost=boost,
         )
 
