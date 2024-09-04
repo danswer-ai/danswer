@@ -240,6 +240,9 @@ def embed_with_litellm_proxy(
     texts: list[str], api_url: str, model_name: str, api_key: str | None
 ) -> list[Embedding]:
     headers = {} if not api_key else {"Authorization": f"Bearer {api_key}"}
+    print(
+        f"Embedding {len(texts)} texts with provider and api {api_url} api key {api_key}"
+    )
 
     with httpx.Client() as client:
         response = client.post(

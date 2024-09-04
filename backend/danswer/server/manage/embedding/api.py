@@ -42,10 +42,10 @@ def test_embedding_configuration(
             api_key=test_llm_request.api_key,
             api_url=test_llm_request.api_url,
             provider_type=test_llm_request.provider_type,
+            model_name=test_llm_request.model_name,
             normalize=False,
             query_prefix=None,
             passage_prefix=None,
-            model_name=None,
         )
         test_model.encode(["Testing Embedding"], text_type=EmbedTextType.QUERY)
 
@@ -58,6 +58,8 @@ def test_embedding_configuration(
         error_msg = "An error occurred while testing your embedding model. Please check your configuration."
         logger.error(f"{error_msg} Error message: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=error_msg)
+
+    # raise ValueError("error_msg")
 
 
 @admin_router.get("", response_model=list[EmbeddingModelDetail])
