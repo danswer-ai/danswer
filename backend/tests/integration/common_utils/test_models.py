@@ -137,14 +137,14 @@ class TestSearchSettings(BaseModel):
     rerank_api_key: str | None = None
     num_rerank: int
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, TestSearchSettings):
             return False
         return self.dict() == other.dict()
 
 
 class TestCloudEmbeddingProvider(BaseModel):
-    provider_type: EmbeddingProvider | None
+    provider_type: EmbeddingProvider
     api_key: str | None
     api_url: str | None
 
