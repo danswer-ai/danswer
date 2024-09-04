@@ -21,6 +21,7 @@ class EmbeddingProviderManager:
             api_key=embedding_provider.api_key,
             api_url=embedding_provider.api_url,
         )
+
         response = requests.post(
             url=f"{API_SERVER_URL}/admin/embedding/test-embedding",
             json=test_embedding_request.model_dump(),
@@ -31,8 +32,9 @@ class EmbeddingProviderManager:
         if response.status_code != 200:
             raise ValueError(f"Failed to test embedding provider: {response.json()}")
 
+    @staticmethod
     def create(
-        provider_type: EmbeddingProvider,
+        provider_type: EmbeddingProvider | None,
         api_url: str | None = None,
         api_key: str | None = None,
         user_performing_action: TestUser | None = None,
@@ -58,12 +60,6 @@ class EmbeddingProviderManager:
             provider_type=response_data["provider_type"],
             api_key=response_data.get("api_key"),
             api_url=response_data.get("api_url"),
-            model_name=None,
-            dimensions=None,
-            query_prefix=None,
-            passage_prefix=None,
-            batch_size=None,
-            api_version=None,
         )
 
     @staticmethod
@@ -148,7 +144,10 @@ class EmbeddingProviderManager:
         embedding_provider: TestCloudEmbeddingProvider,
         user_performing_action: TestUser | None = None,
     ) -> None:
-        current_settings = SearchSettingsManager.get_current(user_performing_action)
+        current_settings = SearchSettingsManager.get_primary(user_performing_action)
+        if current_settings is None:
+            raise ValueError("No current embedding provider found")
+
         current_provider_type = current_settings.provider_type
 
         if current_provider_type is None:
@@ -158,31 +157,3 @@ class EmbeddingProviderManager:
             raise ValueError(
                 f"Current embedding provider {current_provider_type} does not match expected {embedding_provider.provider_type}"
             )
-
-        # Additional checks for API key and URL can be added here if needed
-        # Note: The actual API key might not be accessible for security reasons
-        if current_settings.api_url != embedding_provider.api_url:
-            raise ValueError(
-                "Current embedding provider API URL does not match expected settings"
-            )
-
-    @staticmethod
-    def test_embedding(
-        provider_type: EmbeddingProvider,
-        api_url: str | None = None,
-        api_key: str | None = None,
-        user_performing_action: TestUser | None = None,
-    ) -> None:
-        test_request = {
-            "provider_type": provider_type,
-            "api_url": api_url,
-            "api_key": api_key,
-        }
-        response = requests.post(
-            url=f"{API_SERVER_URL}/admin/embedding/test-embedding",
-            json=test_request,
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
-        )
-        response.raise_for_status()

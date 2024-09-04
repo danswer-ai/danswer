@@ -67,62 +67,20 @@ class SearchSettingsManager:
 
         return TestSearchSettings(**merged_data)
 
-    @classmethod
-    def get_current(
-        cls, user_performing_action: TestUser | None = None
-    ) -> dict[str, TestSearchSettings | None]:
-        response = requests.get(
-            url=f"{API_SERVER_URL}/search-settings/get-all-search-settings",
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
-        )
-
-        response.raise_for_status()
-        data = response.json()
-
-        result = {"current_settings": None, "secondary_settings": None}
-
-        if isinstance(data, dict):
-            if "current_settings" in data:
-                result["current_settings"] = TestSearchSettings(
-                    **data["current_settings"]
-                )
-            if "secondary_settings" in data and data["secondary_settings"]:
-                result["secondary_settings"] = TestSearchSettings(
-                    **data["secondary_settings"]
-                )
-
-        return result
-
-    @classmethod
-    def get_all(
-        cls, user_performing_action: TestUser | None = None
-    ) -> list[TestSearchSettings]:
-        from danswer.db.search_settings import get_all_search_settings
-        from danswer.db.engine import get_session_context_manager
-
-        with get_session_context_manager() as db_session:
-            all_settings = list(get_all_search_settings(db_session))
-        return [TestSearchSettings(**item.dict()) for item in all_settings]
-
     @staticmethod
     def wait_for_sync(
+        new_primary_settings: TestSearchSettings,
         user_performing_action: TestUser | None = None,
     ) -> None:
-        # wait for search settings to swap over
         start = time.time()
         while True:
-            search_settings = SearchSettingsManager.get_all(user_performing_action)
-            all_up_to_date = True
-            for search_settings_instance in search_settings:
-                if not search_settings_instance.status == IndexModelStatus.PRESENT:
-                    all_up_to_date = False
-                    print(
-                        f"Search settings {search_settings_instance.id} is not up to date"
-                    )
-
-            if all_up_to_date:
+            current_primary_settings = SearchSettingsManager.get_primary(
+                user_performing_action
+            )
+            if (
+                current_primary_settings.model_dump()
+                == new_primary_settings.model_dump()
+            ):
                 break
 
             if time.time() - start > MAX_DELAY:
@@ -173,7 +131,7 @@ class SearchSettingsManager:
         )
         response.raise_for_status()
         data = response.json()
-        return TestSearchSettings(**data) if data else None
+        return TestSearchSettings(**data.json()) if data else None
 
     @staticmethod
     def get_all_current(
@@ -199,6 +157,6 @@ class SearchSettingsManager:
         search_settings: TestSearchSettings,
         user_performing_action: TestUser | None = None,
     ) -> None:
-        current_settings = SearchSettingsManager.get_current(user_performing_action)
+        current_settings = SearchSettingsManager.get_primary(user_performing_action)
         if current_settings.model_dump() != search_settings.model_dump():
             raise ValueError("Current search settings do not match expected settings")
