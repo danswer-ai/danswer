@@ -65,7 +65,12 @@ import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { StarterMessage } from "./StarterMessage";
-import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
+import {
+  AnswerPiecePacket,
+  DanswerDocument,
+  StreamStopInfo,
+  StreamStopReason,
+} from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
@@ -338,6 +343,7 @@ export function ChatPage({
         }
         return;
       }
+
       clearSelectedDocuments();
       setIsFetchingChatMessages(true);
       const response = await fetch(
@@ -624,6 +630,24 @@ export function ChatPage({
   const currentRegenerationState = (): RegenerationState | null => {
     return regenerationState.get(currentSessionId()) || null;
   };
+  const [canContinue, setCanContinue] = useState<Map<number | null, boolean>>(
+    new Map([[null, false]])
+  );
+
+  const updateCanContinue = (newState: boolean, sessionId?: number | null) => {
+    setCanContinue((prevState) => {
+      const newCanContinueState = new Map(prevState);
+      newCanContinueState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
+      return newCanContinueState;
+    });
+  };
+
+  const currentCanContinue = (): boolean => {
+    return canContinue.get(currentSessionId()) || false;
+  };
 
   const currentSessionChatState = currentChatState();
   const currentSessionRegenerationState = currentRegenerationState();
@@ -864,6 +888,13 @@ export function ChatPage({
     }
   };
 
+  const continueGenerating = () => {
+    onSubmit({
+      messageOverride:
+        "Continue Generating (pick up exactly where you left off)",
+    });
+  };
+
   const onSubmit = async ({
     messageIdToResend,
     messageOverride,
@@ -884,6 +915,7 @@ export function ChatPage({
     regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
     let frozenSessionId = currentSessionId();
+    updateCanContinue(false, frozenSessionId);
 
     if (currentChatState() != "input") {
       setPopup({
@@ -978,6 +1010,8 @@ export function ChatPage({
     let messageUpdates: Message[] | null = null;
 
     let answer = "";
+
+    let stopReason: StreamStopReason | null = null;
     let query: string | null = null;
     let retrievalType: RetrievalType =
       selectedDocuments.length > 0
@@ -1174,6 +1208,11 @@ export function ChatPage({
               stackTrace = (packet as StreamingError).stack_trace;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
+            } else if (Object.hasOwn(packet, "stop_reason")) {
+              const stop_reason = (packet as StreamStopInfo).stop_reason;
+              if (stop_reason === StreamStopReason.CONTEXT_LENGTH) {
+                updateCanContinue(true, frozenSessionId);
+              }
             }
 
             // on initial message send, we insert a dummy system message
@@ -1237,6 +1276,7 @@ export function ChatPage({
                 alternateAssistantID: alternativeAssistant?.id,
                 stackTrace: stackTrace,
                 overridden_model: finalMessage?.overridden_model,
+                stopReason: stopReason,
               },
             ]);
           }
@@ -1835,6 +1875,12 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      continueGenerating={
+                                        i == messageHistory.length - 1 &&
+                                        currentCanContinue()
+                                          ? continueGenerating
+                                          : undefined
+                                      }
                                       overriddenModel={message.overridden_model}
                                       regenerate={createRegenerator({
                                         messageId: message.messageId,
@@ -2147,7 +2193,6 @@ export function ChatPage({
                                 <div className="mobile:hidden mt-4 flex items-center justify-center relative w-[95%] mx-auto">
                                   <div className="text-sm text-text-500 max-w-searchbar-max px-4 text-center">
                                     <MinimalMarkdown
-                                      className=""
                                       content={
                                         enterpriseSettings.custom_lower_disclaimer_content
                                       }

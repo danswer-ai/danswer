@@ -465,7 +465,10 @@ export function CCPairIndexingStatusTable({
             </Button>
           </div>
           {sortedSources
-            .filter((source) => source != "not_applicable")
+            .filter(
+              (source) =>
+                source != "not_applicable" && source != "ingestion_api"
+            )
             .map((source, ind) => {
               const sourceMatches = source
                 .toLowerCase()

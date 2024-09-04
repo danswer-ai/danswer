@@ -65,6 +65,7 @@ module.exports = {
       maxWidth: {
         "document-sidebar": "1000px",
         "message-max": "850px",
+        "content-max": "725px",
         "searchbar-max": "800px",
       },
       colors: {

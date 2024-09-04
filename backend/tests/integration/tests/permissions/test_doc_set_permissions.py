@@ -122,6 +122,10 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         user_performing_action=curator,
     )
 
+    DocumentSetManager.wait_for_sync(
+        document_sets_to_check=[valid_doc_set], user_performing_action=admin_user
+    )
+
     # Verify that the valid document set was created
     DocumentSetManager.verify(
         document_set=valid_doc_set,
