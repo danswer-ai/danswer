@@ -8,7 +8,7 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { SignInButton } from "./SignInButton";
-import { EmailPasswordForm } from "./EmailPasswordForm";
+import { LogInForms } from "./LoginForms";
 import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
@@ -85,7 +85,7 @@ const Page = async ({
             <div className="lg:w-96">
               <LoginText />
               <div className="my-6">
-                <EmailPasswordForm />
+                <LogInForms />
               </div>
               <div className="flex">
                 <Text className="mt-4">
