@@ -151,7 +151,11 @@ export const BooleanFormField = ({
   return (
     <div className="mb-4">
       <label className="flex text-sm space-x-2">
-        <Checkbox checked={field.value} onCheckedChange={handleChange} />
+        <Checkbox
+          id={label}
+          checked={field.value}
+          onCheckedChange={handleChange}
+        />
 
         <div className="grid gap-1.5 leading-none">
           <ShadcnLabel htmlFor={label}>{label}</ShadcnLabel>

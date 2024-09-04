@@ -24,33 +24,30 @@ export function NoSourcesModal() {
       onClose={() => setIsHidden(true)}
       trigger={null}
     >
-      <div className="text-base">
-        <h2 className="text-2xl font-semibold pb-6">🧐 No sources connected</h2>
+      <h2 className="text-2xl font-semibold pb-6">🧐 No sources connected</h2>
+      <div>
+        <Text>
+          Before using Search you&apos;ll need to connect at least one source.
+          Without any connected knowledge sources, there isn&apos;t anything to
+          search over.
+        </Text>
+        <Link href="/admin/data-sources">
+          <Button className="mt-3">
+            <Share2 size={16} /> Connect a Source!
+          </Button>
+        </Link>
+        <Divider />
         <div>
           <Text>
-            Before using Search you&apos;ll need to connect at least one source.
-            Without any connected knowledge sources, there isn&apos;t anything
-            to search over.
+            Or, if you&apos;re looking for a pure ChatGPT-like experience
+            without any organization specific knowledge, then you can head over
+            to the Chat page and start chatting with enMedD AI right away!
           </Text>
-          <Link href="/admin/data-sources">
+          <Link href="/chat">
             <Button className="mt-3">
-              <Share2 size={16} /> Connect a Source!
+              <MessageSquare size={16} /> Start Chatting!
             </Button>
           </Link>
-          <Divider />
-          <div>
-            <Text>
-              Or, if you&apos;re looking for a pure ChatGPT-like experience
-              without any organization specific knowledge, then you can head
-              over to the Chat page and start chatting with enMedD AI right
-              away!
-            </Text>
-            <Link href="/chat">
-              <Button className="mt-3">
-                <MessageSquare size={16} /> Start Chatting!
-              </Button>
-            </Link>
-          </div>
         </div>
       </div>
     </CustomModal>
