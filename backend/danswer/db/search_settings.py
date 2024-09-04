@@ -112,14 +112,8 @@ def delete_search_settings(db_session: Session, search_settings_id: int) -> None
         )
     )
 
-    result = db_session.execute(search_settings_query)
+    db_session.execute(search_settings_query)
     db_session.commit()
-
-    if result.rowcount == 0:
-        raise ValueError("No matching search settings found to delete")
-
-    if result.rowcount == 0:
-        raise ValueError("No matching search settings found to delete")
 
 
 def get_current_search_settings(db_session: Session) -> SearchSettings:
