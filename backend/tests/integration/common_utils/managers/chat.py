@@ -2,8 +2,12 @@ import json
 
 import requests
 
+from danswer.file_store.models import FileDescriptor
+from danswer.llm.override_models import LLMOverride
+from danswer.llm.override_models import PromptOverride
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import ThreadMessage
+from danswer.search.models import RetrievalDetails
 from danswer.server.query_and_chat.models import ChatSessionCreationRequest
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
@@ -40,19 +44,19 @@ class ChatSessionManager:
 
     @staticmethod
     def send_message(
-        chat_session_id: id,
+        chat_session_id: int,
         message: str,
-        parent_message_id: str | None = None,
+        parent_message_id: int | None = None,
         user_performing_action: TestUser | None = None,
-        file_descriptors: list = None,
-        prompt_id: int = 0,
-        search_doc_ids: list = None,
-        retrieval_options: dict = None,
-        query_override: str = None,
-        regenerate: bool = None,
-        llm_override: str = None,
-        prompt_override: str = None,
-        alternate_assistant_id: int = None,
+        file_descriptors: list[FileDescriptor] = [],
+        prompt_id: int | None = None,
+        search_doc_ids: list[int] | None = None,
+        retrieval_options: RetrievalDetails | None = None,
+        query_override: str | None = None,
+        regenerate: bool | None = None,
+        llm_override: LLMOverride | None = None,
+        prompt_override: PromptOverride | None = None,
+        alternate_assistant_id: int | None = None,
         use_existing_user_message: bool = False,
     ) -> StreamedResponse:
         chat_message_req = CreateChatMessageRequest(
