@@ -285,7 +285,8 @@ export function CloudModelCard({
 }) {
   const enabled =
     model.model_name === currentModel.model_name &&
-    model.provider_type == currentModel.provider_type;
+    model.provider_type?.toLowerCase() ==
+      currentModel.provider_type?.toLowerCase();
 
   return (
     <div
