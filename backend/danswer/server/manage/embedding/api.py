@@ -59,8 +59,6 @@ def test_embedding_configuration(
         logger.error(f"{error_msg} Error message: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=error_msg)
 
-    # raise ValueError("error_msg")
-
 
 @admin_router.get("", response_model=list[EmbeddingModelDetail])
 def list_embedding_models(
