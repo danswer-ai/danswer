@@ -112,6 +112,7 @@ from danswer.tools.built_in_tools import load_builtin_tools
 from danswer.tools.built_in_tools import refresh_built_in_tools_cache
 from danswer.utils.gpu_utils import gpu_status_request
 from danswer.utils.logger import setup_logger
+from danswer.utils.telemetry import get_or_generate_uuid
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
@@ -323,6 +324,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # fill up Postgres connection pools
     await warm_up_connections()
+
+    get_or_generate_uuid()
 
     with Session(engine) as db_session:
         check_index_swap(db_session=db_session)

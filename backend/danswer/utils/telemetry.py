@@ -28,7 +28,7 @@ class RecordType(str, Enum):
     FAILURE = "failure"
 
 
-def _get_or_generate_uuid() -> str:
+def get_or_generate_uuid() -> str:
     global _CACHED_UUID
 
     if _CACHED_UUID is not None:
@@ -77,7 +77,7 @@ def optional_telemetry(
 
         def telemetry_logic() -> None:
             try:
-                customer_uuid = _get_or_generate_uuid()
+                customer_uuid = get_or_generate_uuid()
                 payload = {
                     "data": data,
                     "record": record_type,
