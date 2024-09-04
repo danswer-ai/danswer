@@ -2193,7 +2193,6 @@ export function ChatPage({
                                 <div className="mobile:hidden mt-4 flex items-center justify-center relative w-[95%] mx-auto">
                                   <div className="text-sm text-text-500 max-w-searchbar-max px-4 text-center">
                                     <MinimalMarkdown
-                                      className=""
                                       content={
                                         enterpriseSettings.custom_lower_disclaimer_content
                                       }
