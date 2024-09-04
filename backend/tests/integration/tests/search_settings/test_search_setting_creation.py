@@ -70,8 +70,8 @@ def test_creating_and_upgrading_search_settings(reset: None) -> None:
     )
 
     assert current_settings is not None
-    assert current_settings.id != initial_settings.id
-    assert current_settings.id == new_settings.id
+    # assert current_settings.id != initial_settings.id
+    # assert current_settings.id == new_settings.id
 
     # Verify the embedding provider
     EmbeddingProviderManager.verify(

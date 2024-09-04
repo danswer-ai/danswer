@@ -2,7 +2,6 @@ import time
 
 import requests
 
-from danswer.db.models import IndexModelStatus
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
@@ -60,10 +59,6 @@ class SearchSettingsManager:
 
         # Merge the response data with the original request data
         merged_data = {**search_settings_request, **response_data}
-
-        # Add a default status if it's not present in the response
-        if "status" not in merged_data:
-            merged_data["status"] = IndexModelStatus.PRESENT
 
         return TestSearchSettings(**merged_data)
 
