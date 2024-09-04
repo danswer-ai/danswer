@@ -1409,7 +1409,7 @@ class TaskQueueState(Base):
     __tablename__ = "task_queue_jobs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # Celery task id
+    # Celery task id. currently only for readability/diagnostics
     task_id: Mapped[str] = mapped_column(String)
     # For any job type, this would be the same
     task_name: Mapped[str] = mapped_column(String)
