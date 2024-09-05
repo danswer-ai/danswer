@@ -85,7 +85,7 @@ export function TextFormField({
 
   return (
     <div className="grid gap-2 pb-4">
-      <div className="grid gap-0.5 leading-none">
+      <div className="grid leading-none">
         <ShadcnLabel
           htmlFor={label}
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed"
@@ -294,10 +294,10 @@ export function SelectorFormField({
 
   return (
     <div className="mb-4">
-      {label && <Label>{label}</Label>}
+      {label && <ShadcnLabel>{label}</ShadcnLabel>}
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
-      <div className="mt-2">
+      <div>
         <Select
           value={field.value || ""} // Ensure field.value is reset correctly
           onValueChange={handleSelectChange}

@@ -15,6 +15,8 @@ import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidE
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, Shield, User, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { CustomModal } from "@/components/CustomModal";
+import { Button } from "@/components/ui/button";
 
 const BASE_URL = "/api/admin/token-rate-limits";
 const GLOBAL_TOKEN_FETCH_URL = `${BASE_URL}/global`;
@@ -58,6 +60,7 @@ const handleCreateTokenRateLimit = async (
 
 function Main() {
   const [tabIndex, setTabIndex] = useState(0);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
   const { toast } = useToast();
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
@@ -88,6 +91,7 @@ function Main() {
       team_id
     )
       .then(() => {
+        setModalIsOpen(false);
         toast({
           title: "Success",
           description: "Token rate limit created!",
@@ -123,7 +127,7 @@ function Main() {
               too many tokens.
             </li>
             <li>
-              Set rate limits for teamspaces to control token spend for your
+              Set rate limits for user groups to control token spend for your
               teams.
             </li>
           </>
@@ -131,12 +135,24 @@ function Main() {
         <li>Enable and disable rate limits on the fly.</li>
       </ul>
 
-      <CreateRateLimitModal
-        onSubmit={handleSubmit}
-        forSpecificScope={
-          isPaidEnterpriseFeaturesEnabled ? undefined : Scope.GLOBAL
+      <CustomModal
+        trigger={
+          <Button className="mt-3" onClick={() => setModalIsOpen(true)}>
+            Create a Token Rate Limit
+          </Button>
         }
-      />
+        onClose={() => setModalIsOpen(false)}
+        open={modalIsOpen}
+      >
+        <CreateRateLimitModal
+          isOpen={modalIsOpen}
+          setIsOpen={setModalIsOpen}
+          onSubmit={handleSubmit}
+          forSpecificScope={
+            isPaidEnterpriseFeaturesEnabled ? undefined : Scope.GLOBAL
+          }
+        />
+      </CustomModal>
 
       {isPaidEnterpriseFeaturesEnabled && (
         <Tabs

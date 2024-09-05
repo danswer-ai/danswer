@@ -56,7 +56,7 @@ export default async function GalleryPage({
           openedFolders,
         }}
       >
-        <div className="relative flex h-screen overflow-x-hidden bg-background">
+        <div className="relative flex h-full overflow-x-hidden bg-background">
           <AssistantsBars user={user}>
             <ChatSidebar
               existingChats={chatSessions}

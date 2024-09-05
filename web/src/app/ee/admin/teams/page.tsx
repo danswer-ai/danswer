@@ -12,6 +12,7 @@ import {
 } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Button } from "@/components/ui/button";
+import { CustomModal } from "@/components/CustomModal";
 
 const Main = () => {
   const [showForm, setShowForm] = useState(false);
@@ -48,13 +49,15 @@ const Main = () => {
 
   return (
     <>
-      <Button onClick={() => setShowForm(true)}>Create New User Group</Button>
-      {data.length > 0 && (
-        <div className="pt-5">
-          <TeamspacesTable teamspaces={data} refresh={refreshTeamspaces} />
-        </div>
-      )}
-      {showForm && (
+      <CustomModal
+        trigger={
+          <Button onClick={() => setShowForm(true)}>
+            Create New User Group
+          </Button>
+        }
+        onClose={() => setShowForm(false)}
+        open={showForm}
+      >
         <TeamspaceCreationForm
           onClose={() => {
             refreshTeamspaces();
@@ -63,6 +66,12 @@ const Main = () => {
           users={users.accepted}
           ccPairs={ccPairs}
         />
+      </CustomModal>
+
+      {data.length > 0 && (
+        <div className="pt-5">
+          <TeamspacesTable teamspaces={data} refresh={refreshTeamspaces} />
+        </div>
       )}
     </>
   );

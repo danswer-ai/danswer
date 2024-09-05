@@ -128,7 +128,7 @@ export function SourceSelector({
             {availableDocumentSets.map((documentSet) => (
               <div
                 key={documentSet.name}
-                className={`w-full flex items-center justify-between cursor-pointer px-2 py-3 gap-2`}
+                className={`w-full flex items-center justify-between cursor-pointer px-2 py-3 gap-2 border-t`}
               >
                 <label
                   htmlFor={documentSet.name}

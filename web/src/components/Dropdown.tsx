@@ -11,6 +11,13 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Check, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Input } from "./ui/input";
 
 export interface Option<T> {
   name: string;
@@ -64,7 +71,7 @@ export function SearchMultiSelectDropdown({
   const handleSelect = (option: StringOrNumberOption) => {
     onSelect(option);
     setIsOpen(false);
-    setSearchTerm(""); // Clear search term after selection
+    setSearchTerm("");
   };
 
   const filteredOptions = options.filter((option) =>
@@ -88,105 +95,66 @@ export function SearchMultiSelectDropdown({
   }, []);
 
   return (
-    <div className="relative inline-block text-left w-full" ref={dropdownRef}>
-      <div>
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            if (!searchTerm) {
-              setIsOpen(true);
-            }
-            if (!e.target.value) {
-              setIsOpen(false);
-            }
-            setSearchTerm(e.target.value);
-          }}
-          onFocus={() => setIsOpen(true)}
-          className={`inline-flex 
-          justify-between 
-          w-full 
-          px-4 
-          py-2 
-          text-sm 
-          bg-background
-          border
-          border-border
-          rounded-xs 
-          shadow-sm 
-          `}
-          onClick={(e) => e.stopPropagation()}
-        />
-        <button
-          type="button"
-          className={`absolute top-0 right-0 
-            text-sm 
-            h-full px-2 border-l border-border`}
-          aria-expanded="true"
-          aria-haspopup="true"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <ChevronDownIcon className="my-auto" />
-        </button>
-      </div>
-
-      {isOpen && (
-        <div
-          className={`origin-top-right
-            absolute
-            left-0
-            mt-3
-            w-full
-            rounded-xs
-            shadow-lg
-            bg-background
-            border
-            border-border
-            max-h-80
-            overflow-y-auto
-            overscroll-contain`}
-        >
-          <div
-            role="menu"
-            aria-orientation="vertical"
-            aria-labelledby="options-menu"
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        <div ref={dropdownRef} className="relative w-full">
+          <Input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              if (!searchTerm) {
+                setIsOpen(true);
+              }
+              if (!e.target.value) {
+                setIsOpen(false);
+              }
+              setSearchTerm(e.target.value);
+            }}
+            onFocus={() => setIsOpen(true)}
+            className="w-full"
+          />
+          <button
+            type="button"
+            className="absolute top-0 right-0 text-sm h-full px-2 border-border"
+            onClick={() => setIsOpen(!isOpen)}
           >
-            {filteredOptions.length ? (
-              filteredOptions.map((option, index) =>
-                itemComponent ? (
-                  <div
-                    key={option.name}
-                    onClick={() => {
-                      setIsOpen(false);
-                      handleSelect(option);
-                    }}
-                  >
-                    {itemComponent({ option })}
-                  </div>
-                ) : (
-                  <StandardDropdownOption
-                    key={index}
-                    option={option}
-                    index={index}
-                    handleSelect={handleSelect}
-                  />
-                )
-              )
-            ) : (
-              <button
-                key={0}
-                className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-hover`}
-                role="menuitem"
-                onClick={() => setIsOpen(false)}
-              >
-                No matches found...
-              </button>
-            )}
-          </div>
+            <ChevronDownIcon className="my-auto" />
+          </button>
         </div>
-      )}
-    </div>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        align="start"
+        className="w-full max-h-80 overflow-y-auto overscroll-contain"
+        style={{ minWidth: dropdownRef.current?.offsetWidth }}
+      >
+        {filteredOptions.length ? (
+          filteredOptions.map((option, index) =>
+            itemComponent ? (
+              <DropdownMenuItem
+                key={option.name}
+                onClick={() => {
+                  setIsOpen(false);
+                  handleSelect(option);
+                }}
+              >
+                {itemComponent({ option })}
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                key={index}
+                onClick={() => handleSelect(option)}
+              >
+                {option.name}
+              </DropdownMenuItem>
+            )
+          )
+        ) : (
+          <DropdownMenuItem disabled>No matches found...</DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

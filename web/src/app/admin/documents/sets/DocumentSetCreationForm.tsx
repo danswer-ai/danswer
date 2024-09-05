@@ -13,8 +13,8 @@ import { Divider, Text } from "@tremor/react";
 import { FiUsers } from "react-icons/fi";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -30,7 +30,6 @@ export const DocumentSetCreationForm = ({
   existingDocumentSet,
 }: SetCreationPopupProps) => {
   const { toast } = useToast();
-
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   const isUpdate = existingDocumentSet !== undefined;
@@ -118,8 +117,12 @@ export const DocumentSetCreationForm = ({
               autoCompleteDisabled={true}
             />
 
-            <h2 className="pt-6 pb-1 font-medium">Pick your connectors:</h2>
-            <p className="pb-3 text-xs text-subtle">
+            <Divider />
+
+            <h2 className="mb-1 font-medium text-base">
+              Pick your connectors:
+            </h2>
+            <p className="mb-3 text-xs text-subtle">
               All documents indexed by the selected connectors will be a part of
               this document set.
             </p>
@@ -133,6 +136,8 @@ export const DocumentSetCreationForm = ({
                     return (
                       <Badge
                         key={`${ccPair.connector.id}-${ccPair.credential.id}`}
+                        variant={isSelected ? "default" : "outline"}
+                        className="cursor-pointer hover:opacity-75"
                         onClick={() => {
                           if (isSelected) {
                             arrayHelpers.remove(ind);
@@ -140,10 +145,6 @@ export const DocumentSetCreationForm = ({
                             arrayHelpers.push(ccPair.cc_pair_id);
                           }
                         }}
-                        variant={isSelected ? "default" : "outline"}
-                        className={`cursor-pointer py-1.5 hover:opacity-80 ${
-                          isSelected ? "text-white" : ""
-                        }`}
                       >
                         <div className="my-auto">
                           <ConnectorTitle
@@ -174,60 +175,48 @@ export const DocumentSetCreationForm = ({
                       <>
                         If the document set is public, then it will be visible
                         to <b>all users</b>. If it is not public, then only
-                        users in the specified teams will be able to see it.
+                        users in the specified groups will be able to see it.
                       </>
                     }
                   />
 
                   <Divider />
                   <h2 className="mb-1 font-medium text-base">
-                    Teams with Access
+                    Groups with Access
                   </h2>
                   {!values.is_public ? (
                     <>
-                      <Text className="mb-3">
-                        If any teams are specified, then this Document Set will
+                      <p className="mb-3 text-subtle text-xs ">
+                        If any groups are specified, then this Document Set will
                         only be visible to the specified groups. If no groups
                         are specified, then the Document Set will be visible to
                         all users.
-                      </Text>
+                      </p>
                       <FieldArray
-                        name="teams"
+                        name="groups"
                         render={(arrayHelpers: ArrayHelpers) => (
                           <div className="flex gap-2 flex-wrap">
-                            {teamspaces.map((teamspace) => {
-                              const ind = values.groups.indexOf(teamspace.id);
+                            {teamspaces.map((userGroup) => {
+                              const ind = values.groups.indexOf(userGroup.id);
                               let isSelected = ind !== -1;
                               return (
-                                <div
-                                  key={teamspace.id}
-                                  className={
-                                    `
-                              px-3 
-                              py-1
-                              rounded-regular 
-                              border
-                              border-border 
-                              w-fit 
-                              flex 
-                              cursor-pointer ` +
-                                    (isSelected
-                                      ? " bg-background-strong"
-                                      : " hover:bg-hover")
-                                  }
+                                <Badge
+                                  key={userGroup.id}
+                                  variant={isSelected ? "default" : "outline"}
+                                  className="cursor-pointer hover:opacity-75"
                                   onClick={() => {
                                     if (isSelected) {
                                       arrayHelpers.remove(ind);
                                     } else {
-                                      arrayHelpers.push(teamspace.id);
+                                      arrayHelpers.push(userGroup.id);
                                     }
                                   }}
                                 >
                                   <div className="my-auto flex">
                                     <FiUsers className="my-auto mr-2" />{" "}
-                                    {teamspace.name}
+                                    {userGroup.name}
                                   </div>
-                                </div>
+                                </Badge>
                               );
                             })}
                           </div>
@@ -237,7 +226,7 @@ export const DocumentSetCreationForm = ({
                   ) : (
                     <Text>
                       This Document Set is public, so this does not apply. If
-                      you want to control which teamspaces see this Document
+                      you want to control which user groups see this Document
                       Set, mark it as non-public!
                     </Text>
                   )}

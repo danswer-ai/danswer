@@ -53,6 +53,7 @@ export function WhitelabelingForm() {
         }}
         validationSchema={Yup.object().shape({
           application_name: Yup.string().nullable(),
+          application_description: Yup.string().nullable(),
           use_custom_logo: Yup.boolean().required(),
           custom_popup_header: Yup.string().nullable(),
           custom_popup_content: Yup.string().nullable(),
@@ -80,14 +81,13 @@ export function WhitelabelingForm() {
               return;
             }
           }
-
-          formikHelpers.setValues(values);
-          await updateEnterpriseSettings(values);
-        }}
-      >
-        {({ isSubmitting, values, setValues }) => (
-          <Form>
-            <TextFormField
+        formikHelpers.setValues(values);
+        await updateEnterpriseSettings(values);
+      }}
+    >
+      {({ isSubmitting, values, setValues }) => (
+        <Form>
+          <TextFormField
               label="Workspace Name"
               name="application_name"
               subtext={`The custom name you are giving for your workspace. This will replace 'enMedD AI' everywhere in the UI.`}
@@ -102,63 +102,65 @@ export function WhitelabelingForm() {
               placeholder="Custom description for your Workspace"
               disabled={isSubmitting}
             />
-            {values.use_custom_logo ? (
-              <div className="pt-3 flex flex-col items-start gap-3 pb-4">
-                <div>
-                  <h3 className="font-semibold">Custom Logo</h3>
-                  <SubLabel>Current Custom Logo: </SubLabel>
-                </div>
-                <Image
-                  src={"/api/enterprise-settings/logo?u=" + Date.now()}
-                  alt="logo"
-                  style={{ objectFit: "contain" }}
-                  className="w-32 h-32"
-                  width={128}
-                  height={128}
-                />
 
-                <Button
-                  variant="destructive"
-                  type="button"
-                  onClick={async () => {
-                    const valuesWithoutLogo = {
-                      ...values,
-                      use_custom_logo: false,
-                    };
-                    await updateEnterpriseSettings(valuesWithoutLogo);
-                    setValues(valuesWithoutLogo);
-                  }}
-                >
-                  Delete
-                </Button>
-
-                <SubLabel>
-                  Override the current custom logo by uploading a new image
-                  below and clicking the Update button.
-                </SubLabel>
+          {values.use_custom_logo ? (
+            <div className="pt-3 flex flex-col items-start gap-3">
+              <div>
+                <h3 className="font-semibold">Custom Logo</h3>
+                <SubLabel>Current Custom Logo: </SubLabel>
               </div>
-            ) : (
-              <SubLabel>
-                Specify your own logo to replace the standard enMedD AI logo.
-              </SubLabel>
-            )}
-
-            <ImageUpload
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
-            />
-            <div className="pt-8">
-              <TextFormField
-                label="Custom Popup Header"
-                name="custom_popup_header"
-                subtext={`The title for the popup that will be displayed for each user on their initial visit 
-                to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${
-                  values.application_name || "enMedD AI"
-                }!".`}
-                placeholder="Initial Popup Header"
-                disabled={isSubmitting}
+              <Image
+                src={"/api/enterprise-settings/logo?u=" + Date.now()}
+                alt="Logo"
+                style={{ objectFit: "contain" }}
+                className="w-32 h-32"
+                width={128}
+                height={128}
               />
+
+              <Button
+                variant="destructive"
+                type="button"
+                onClick={async () => {
+                  const valuesWithoutLogo = {
+                    ...values,
+                    use_custom_logo: false,
+                  };
+                  await updateEnterpriseSettings(valuesWithoutLogo);
+                  setValues(valuesWithoutLogo);
+                }}
+              >
+                Delete
+              </Button>
+
+              <p className="text-sm text-subtle pt-4 pb-2">
+                Override the current custom logo by uploading a new image below
+                and clicking the Update button.
+              </p>
             </div>
+          ) : (
+            <p className="pb-3 text-sm text-subtle">
+              Specify your own logo to replace the standard enMedD AI logo.
+            </p>
+          )}
+
+          <ImageUpload
+            selectedFile={selectedFile}
+            setSelectedFile={setSelectedFile}
+          />
+
+          <div className="pt-8">
+            <TextFormField
+              label="Custom Popup Header"
+              name="custom_popup_header"
+              subtext={`The title for the popup that will be displayed for each user on their initial visit 
+              to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${
+                values.application_name || "enMedD AI"
+              }!".`}
+              placeholder="Initial Popup Header"
+              disabled={isSubmitting}
+            />
+          </div>
 
             <div>
               <TextFormField

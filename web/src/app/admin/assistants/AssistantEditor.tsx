@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -54,9 +55,9 @@ function findImageGenerationTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "ImageGenerationTool");
 }
 
-function Label({ children }: { children: string | JSX.Element }) {
+/* function Label({ children }: { children: string | JSX.Element }) {
   return <div className="block font-medium text-base ">{children}</div>;
-}
+} */
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
   return <span className="text-sm text-subtle mb-2">{children}</span>;
@@ -677,7 +678,7 @@ export function AssistantEditor({
 
                         <div className="flex mt-6">
                           <div className="w-96">
-                            <SubLabel>LLM Provider</SubLabel>
+                            <Label>LLM Provider</Label>
 
                             <Select
                               onValueChange={(selected) => {
@@ -718,7 +719,7 @@ export function AssistantEditor({
 
                           {values.llm_model_provider_override && (
                             <div className="w-96 ml-4">
-                              <SubLabel>Model</SubLabel>
+                              <Label>Model</Label>
                               <SelectorFormField
                                 name="llm_model_version_override"
                                 options={
@@ -867,10 +868,10 @@ export function AssistantEditor({
                             teamspaces.length > 0 &&
                             !values.is_public && (
                               <div>
-                                <Text>
+                                <p className="text-subtle text-sm">
                                   Select which Teamspaces should have access to
                                   this Assistant.
-                                </Text>
+                                </p>
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {teamspaces.map((teamspace) => {
                                     const isSelected = values.groups.includes(

@@ -108,18 +108,18 @@ function AssistantListItem({
         {isOwnedByUser && (
           <div className="ml-auto flex items-center">
             {!assistant.is_public && (
-              <div
-                className="mr-4 rounded p-2 cursor-pointer hover:bg-hover"
+              <Button
+                size="icon"
+                variant="ghost"
                 onClick={() => setShowSharingModal(true)}
               >
                 <Share2 size={16} />
-              </div>
+              </Button>
             )}
-            <Link
-              href={`/assistants/edit/${assistant.id}`}
-              className="mr-4 rounded p-2 cursor-pointer hover:bg-hover"
-            >
-              <Pen size={16} />
+            <Link href={`/assistants/edit/${assistant.id}`}>
+              <Button size="icon" variant="ghost">
+                <Pen size={16} />
+              </Button>
             </Link>
           </div>
         )}
@@ -276,8 +276,8 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
     <div className="mx-auto w-full md:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
       <AssistantsPageTitle>My Assistants</AssistantsPageTitle>
 
-      <div className="grid grid-cols-2 gap-4 mt-3">
-        <Link href="/assistants/new">
+      <div className="flex gap-4 items-center justify-center mt-3">
+        <Link href="/assistants/new" className="w-full">
           <NavigationButton>
             <div className="flex justify-center">
               <Plus className="mr-2 my-auto" size={20} />
@@ -286,7 +286,7 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
           </NavigationButton>
         </Link>
 
-        <Link href="/assistants/gallery">
+        <Link href="/assistants/gallery" className="w-full">
           <NavigationButton>
             <div className="flex justify-center">
               <Search className="mr-2 my-auto" size={20} />
@@ -312,7 +312,7 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
         assistant when you start a new chat.
       </Text>
 
-      <div className="w-full p-4 mt-3">
+      <div className="w-full py-4 mt-3">
         {filteredAssistants.map((assistant, index) => (
           <AssistantListItem
             key={assistant.id}

@@ -148,8 +148,8 @@ export function AssistantsGallery({
                           });
                         }
                       }}
-                      size="icon"
-                      variant="ghost"
+                      size="smallIcon"
+                      variant="destructive"
                     >
                       <Minus size={16} />
                     </Button>

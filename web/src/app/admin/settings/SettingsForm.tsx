@@ -36,7 +36,7 @@ function CheckboxComponent({
   return (
     <div className="flex text-sm mb-4 gap-3">
       <Checkbox checked={checked} onCheckedChange={onChange} id={label} />
-      <div className="grid gap-1.5 leading-none">
+      <div className="grid leading-none">
         <ShadcnLabel
           htmlFor={label}
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"

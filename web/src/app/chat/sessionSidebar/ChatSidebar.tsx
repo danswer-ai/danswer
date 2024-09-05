@@ -14,10 +14,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
 
-import {
-  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED,
-  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT,
-} from "@/lib/constants";
+import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT } from "@/lib/constants";
 
 import { ChatTab } from "./ChatTab";
 import { Folder } from "../folders/interfaces";
@@ -25,7 +22,6 @@ import { createFolder } from "../folders/FolderManagement";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import EnmeddLogo from "../../../../public/logo-brand.png";
-import { HeaderTitle } from "@/components/header/Header";
 import { useChatContext } from "@/components/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -74,27 +70,14 @@ export const ChatSidebar = ({
             h-full
             flex
             z-overlay
-            w-full 
+            w-full py-4
             `}
         id="chat-sidebar"
       >
-        <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
+        <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-6">
           <div className="flex">
             {enterpriseSettings && enterpriseSettings.application_name ? (
-              <div className="flex items-center gap-3">
-                <Logo />
-                <div>
-                  <HeaderTitle>
-                    {enterpriseSettings.application_name}
-                  </HeaderTitle>
-
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED && (
-                    <p className="text-xs text-subtle -mt-1.5">
-                      Powered by enMedD AI
-                    </p>
-                  )}
-                </div>
-              </div>
+              <Image src={EnmeddLogo} alt="LogoBrand" height={40} />
             ) : (
               <Image src={EnmeddLogo} alt="enmedd-logo" height={40} />
             )}

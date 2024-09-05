@@ -7,16 +7,7 @@ import { updateTeamspace } from "./lib";
 import { LoadingAnimation } from "@/components/Loading";
 import { ConnectorIndexingStatus, User, Teamspace } from "@/lib/types";
 import { AddConnectorForm } from "./AddConnectorForm";
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-  Divider,
-  Text,
-} from "@tremor/react";
+import { Divider, Text } from "@tremor/react";
 import { DeleteButton } from "@/components/DeleteButton";
 import { Bubble } from "@/components/Bubble";
 import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
@@ -24,6 +15,17 @@ import { AddTokenRateLimitForm } from "./AddTokenRateLimitForm";
 import { GenericTokenRateLimitTable } from "@/app/admin/token-rate-limits/TokenRateLimitTables";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
+import { CustomModal } from "@/components/CustomModal";
 
 interface GroupDisplayProps {
   users: User[];
@@ -41,17 +43,18 @@ export const GroupDisplay = ({
   const { toast } = useToast();
   const [addMemberFormVisible, setAddMemberFormVisible] = useState(false);
   const [addConnectorFormVisible, setAddConnectorFormVisible] = useState(false);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
 
   return (
     <div>
       <div className="text-sm mb-3 flex">
         <Text className="mr-1">Status:</Text>{" "}
         {teamspace.is_up_to_date ? (
-          <div className="text-success font-bold">Up to date</div>
+          <Badge variant="success">Up to date!</Badge>
         ) : (
-          <div className="text-accent font-bold">
+          <Badge variant="outline" className="w-20">
             <LoadingAnimation text="Syncing" />
-          </div>
+          </Badge>
         )}
       </div>
 
@@ -63,26 +66,26 @@ export const GroupDisplay = ({
 
       <div className="mt-2">
         {teamspace.users.length > 0 ? (
-          <>
-            <Table className="overflow-visible">
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Email</TableHeaderCell>
-                  <TableHeaderCell className="flex w-full">
-                    <div className="ml-auto">Remove User</div>
-                  </TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {teamspace.users.map((user) => {
-                  return (
-                    <TableRow key={user.id}>
-                      <TableCell className="whitespace-normal break-all">
-                        {user.email}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex w-full">
-                          <div className="ml-auto m-2">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead className="ml-auto flex">
+                      <span className="m-auto mr-0">Remove User</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {teamspace.users.map((user) => {
+                    return (
+                      <TableRow key={user.id}>
+                        <TableCell className="whitespace-normal break-all">
+                          {user.email}
+                        </TableCell>
+                        <TableCell className="ml-auto flex">
+                          <span className="m-auto mr-0">
                             <DeleteButton
                               onClick={async () => {
                                 const response = await updateTeamspace(
@@ -119,29 +122,33 @@ export const GroupDisplay = ({
                                 refreshTeamspace();
                               }}
                             />
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </>
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         ) : (
           <div className="text-sm">No users in this group...</div>
         )}
       </div>
 
-      <Button
-        className="mt-3"
-        onClick={() => setAddMemberFormVisible(true)}
-        disabled={!teamspace.is_up_to_date}
+      <CustomModal
+        trigger={
+          <Button
+            className="mt-3"
+            onClick={() => setAddMemberFormVisible(true)}
+            disabled={!teamspace.is_up_to_date}
+          >
+            Add Users
+          </Button>
+        }
+        onClose={() => setAddMemberFormVisible(false)}
+        open={addMemberFormVisible}
       >
-        Add Users
-      </Button>
-
-      {addMemberFormVisible && (
         <AddMemberForm
           users={users}
           teamspace={teamspace}
@@ -150,37 +157,37 @@ export const GroupDisplay = ({
             refreshTeamspace();
           }}
         />
-      )}
+      </CustomModal>
 
       <Divider />
 
       <h2 className="text-xl font-bold mt-8">Connectors</h2>
       <div className="mt-2">
         {teamspace.cc_pairs.length > 0 ? (
-          <>
-            <Table className="overflow-visible">
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Connector</TableHeaderCell>
-                  <TableHeaderCell className="flex w-full">
-                    <div className="ml-auto">Remove Connector</div>
-                  </TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {teamspace.cc_pairs.map((ccPair) => {
-                  return (
-                    <TableRow key={ccPair.id}>
-                      <TableCell className="whitespace-normal break-all">
-                        <ConnectorTitle
-                          connector={ccPair.connector}
-                          ccPairId={ccPair.id}
-                          ccPairName={ccPair.name}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex w-full">
-                          <div className="ml-auto m-2">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Connector</TableHead>
+                    <TableHead className="ml-auto flex">
+                      <span className="m-auto mr-0">Remove Connector</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {teamspace.cc_pairs.map((ccPair) => {
+                    return (
+                      <TableRow key={ccPair.id}>
+                        <TableCell className="whitespace-normal break-all">
+                          <ConnectorTitle
+                            connector={ccPair.connector}
+                            ccPairId={ccPair.id}
+                            ccPairName={ccPair.name}
+                          />
+                        </TableCell>
+                        <TableCell className="ml-auto flex">
+                          <span className="m-auto mr-0">
                             <DeleteButton
                               onClick={async () => {
                                 const response = await updateTeamspace(
@@ -217,29 +224,33 @@ export const GroupDisplay = ({
                                 refreshTeamspace();
                               }}
                             />
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </>
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         ) : (
           <div className="text-sm">No connectors in this group...</div>
         )}
       </div>
 
-      <Button
-        className="mt-3"
-        onClick={() => setAddConnectorFormVisible(true)}
-        disabled={!teamspace.is_up_to_date}
+      <CustomModal
+        trigger={
+          <Button
+            className="mt-3"
+            onClick={() => setAddConnectorFormVisible(true)}
+            disabled={!teamspace.is_up_to_date}
+          >
+            Add Connectors
+          </Button>
+        }
+        onClose={() => setAddConnectorFormVisible(false)}
+        open={addConnectorFormVisible}
       >
-        Add Connectors
-      </Button>
-
-      {addConnectorFormVisible && (
         <AddConnectorForm
           ccPairs={ccPairs}
           teamspace={teamspace}
@@ -248,7 +259,7 @@ export const GroupDisplay = ({
             refreshTeamspace();
           }}
         />
-      )}
+      </CustomModal>
 
       <Divider />
 
