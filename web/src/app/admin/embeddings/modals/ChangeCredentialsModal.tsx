@@ -108,14 +108,6 @@ export function ChangeCredentialsModal({
       .toLowerCase()
       .split(" ")[0];
     try {
-      console.log(provider);
-      console.log({
-        provider_type: provider.provider_type.toLowerCase().split(" ")[0],
-        api_key: apiKey,
-        api_url: apiUrl,
-        model_name: modelName,
-      });
-
       const testResponse = await fetch("/api/admin/embedding/test-embedding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
