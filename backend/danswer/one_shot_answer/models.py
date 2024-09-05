@@ -9,7 +9,6 @@ from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import QADocsResponse
 from danswer.configs.constants import MessageType
-from danswer.db.models import StarterMessage
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import RecencyBiasSetting
 from danswer.search.enums import SearchType
@@ -55,16 +54,14 @@ class PersonaConfig(BaseModel):
     recency_bias: RecencyBiasSetting = RecencyBiasSetting.AUTO
     llm_model_provider_override: str | None = None
     llm_model_version_override: str | None = None
-    starter_messages: list[StarterMessage] | None = None
-    default_persona: bool = False
-    is_visible: bool = True
-    display_priority: int | None = None
-    deleted: bool = False
-    is_public: bool = True
-    prompts: list[PromptConfig] = []
-    document_sets: list[DocumentSetConfig] = []
-    tools: list[ToolConfig] = []
-    custom_tools_openapi: list[dict[str, Any]] | None = None
+
+    prompts: list[PromptConfig] = Field(default_factory=list)
+    prompt_ids: list[int] = Field(default_factory=list)
+
+    document_set_ids: list[int] = Field(default_factory=list)
+    tools: list[ToolConfig] = Field(default_factory=list)
+    tool_ids: list[int] = Field(default_factory=list)
+    custom_tools_openapi: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class DirectQARequest(ChunkContext):

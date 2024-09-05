@@ -136,7 +136,9 @@ def get_answer_with_quote(
 
     if query_request.persona_config is not None:
         new_persona = create_temporary_persona(
-            db_session=db_session, persona_config=query_request.persona_config
+            db_session=db_session,
+            persona_config=query_request.persona_config,
+            user=user,
         )
         persona = new_persona
 

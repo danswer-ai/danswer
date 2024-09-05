@@ -5,6 +5,7 @@ from typing import cast
 from typing import Optional
 from typing import TypeVar
 
+from fastapi import HTTPException
 from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.models.blocks import DividerBlock
@@ -53,7 +54,6 @@ from danswer.search.models import BaseFilters
 from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
 from danswer.utils.logger import DanswerLoggingAdapter
-from ee.danswer.server.query_and_chat.utils import create_temporary_persona
 
 
 srl = SlackRateLimiter()
@@ -155,9 +155,9 @@ def handle_regular_answer(
         with Session(get_sqlalchemy_engine()) as db_session:
             if len(new_message_request.messages) > 1:
                 if new_message_request.persona_config:
-                    persona = create_temporary_persona(
-                        db_session=db_session,
-                        persona_config=new_message_request.persona_config,
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Slack bot does not support persona config",
                     )
 
                 elif new_message_request.persona_id:
