@@ -18,7 +18,6 @@ def create_temporary_persona(
     persona = Persona(
         name=persona_config.name,
         description=persona_config.description,
-        search_type=persona_config.search_type,
         num_chunks=persona_config.num_chunks,
         llm_relevance_filter=persona_config.llm_relevance_filter,
         llm_filter_extraction=persona_config.llm_filter_extraction,

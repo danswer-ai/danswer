@@ -9,7 +9,6 @@ from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import QADocsResponse
 from danswer.configs.constants import MessageType
-from danswer.db.models import Persona
 from danswer.db.models import StarterMessage
 from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import RecencyBiasSetting
@@ -73,7 +72,7 @@ class DirectQARequest(ChunkContext):
     persona_id: int | None = None
 
     messages: list[ThreadMessage]
-    prompt_id: int | None
+    prompt_id: int | None = None
     multilingual_query_expansion: list[str] | None = None
     retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
     rerank_settings: RerankingDetails | None = None
@@ -86,8 +85,6 @@ class DirectQARequest(ChunkContext):
     # can be used if the message sent to the LLM / query should not be the same
     # will also disable Thread-based Rewording if specified
     query_override: str | None = None
-
-    temporary_persona: Persona | None = (None,)
 
     # If True, skips generative an AI response to the search query
     skip_gen_ai_answer_generation: bool = False

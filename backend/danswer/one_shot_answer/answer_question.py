@@ -302,6 +302,7 @@ def stream_answer_objects(
                         relevance_summary=evaluation_response,
                     )
                 yield evaluation_response
+
         else:
             yield packet
 
