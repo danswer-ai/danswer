@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from "react";
-import debounce from "lodash/debounce";
+import { useEffect, useRef } from "react";
 import {
   Table,
   TableHead,
@@ -19,7 +18,6 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import { buildCCPairInfoUrl } from "./lib";
 import { localizeAndPrettify } from "@/lib/time";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
-import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { SearchIcon } from "@/components/icons/icons";
 import Link from "next/link";
@@ -27,10 +25,18 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { PaginatedIndexAttempts } from "./types";
 import { useRouter } from "next/navigation";
 
+// This is the number of index attempts to display per page
 const NUM_IN_PAGE = 8;
-const PAGES_TO_PREFETCH = 20;
+// This is the number of pages to fetch at a time
+const CHUNK_SIZE = 8;
 
 export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
+  const [indexAttemptTracePopupId, setIndexAttemptTracePopupId] = useState<
+    number | null
+  >(null);
+
+  const totalPages = Math.ceil(ccPair.number_of_index_attempts / NUM_IN_PAGE);
+
   const router = useRouter();
   const [page, setPage] = useState(() => {
     if (typeof window !== "undefined") {
@@ -39,96 +45,109 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     }
     return 1;
   });
-  const [indexAttemptTracePopupId, setIndexAttemptTracePopupId] = useState<
-    number | null
-  >(null);
+
   const [currentPageData, setCurrentPageData] =
     useState<PaginatedIndexAttempts | null>(null);
   const [currentPageError, setCurrentPageError] = useState<Error | null>(null);
   const [isCurrentPageLoading, setIsCurrentPageLoading] = useState(false);
-  const [cachedPages, setCachedPages] = useState<{
-    [key: number]: PaginatedIndexAttempts;
+
+  // This is a cache of the data for each "chunk" which is a set of pages
+  const [cachedChunks, setCachedChunks] = useState<{
+    [key: number]: {
+      [key: number]: PaginatedIndexAttempts;
+    };
   }>({});
 
-  const cachedPagesRef = useRef(cachedPages);
-  cachedPagesRef.current = cachedPages;
+  // This is a set of the chunks that are currently being fetched
+  // we use it to avoid duplicate requests
+  const ongoingRequestsRef = useRef<Set<number>>(new Set());
 
-  // This is used to update the current page data when the page number is clicked
-  const updateCurrentPageData = useCallback((pageNum: number) => {
-    if (cachedPagesRef.current[pageNum]) {
-      setCurrentPageData(cachedPagesRef.current[pageNum]);
+  const urlBuilder = (chunkNum: number) =>
+    `${buildCCPairInfoUrl(ccPair.id)}/index-attempts?page=${chunkNum}&page_size=${CHUNK_SIZE * NUM_IN_PAGE}`;
+
+  // This fetches and caches the data for a given chunk number
+  const fetchChunkData = async (chunkNum: number) => {
+    if (ongoingRequestsRef.current.has(chunkNum)) return;
+    ongoingRequestsRef.current.add(chunkNum);
+
+    try {
+      const response = await fetch(urlBuilder(chunkNum + 1));
+      if (!response.ok) {
+        throw new Error("Failed to fetch data");
+      }
+      const data = await response.json();
+
+      const newChunkData: { [key: number]: PaginatedIndexAttempts } = {};
+      for (let i = 0; i < CHUNK_SIZE; i++) {
+        const startIndex = i * NUM_IN_PAGE;
+        const endIndex = startIndex + NUM_IN_PAGE;
+        const pageIndexAttempts = data.index_attempts.slice(
+          startIndex,
+          endIndex
+        );
+        newChunkData[i] = {
+          ...data,
+          index_attempts: pageIndexAttempts,
+        };
+      }
+
+      setCachedChunks((prev) => ({
+        ...prev,
+        [chunkNum]: newChunkData,
+      }));
+    } catch (error) {
+      setCurrentPageError(
+        error instanceof Error ? error : new Error("An error occurred")
+      );
+    } finally {
+      ongoingRequestsRef.current.delete(chunkNum);
+    }
+  };
+
+  // This fetches and caches the data for the current chunk and the next and previous chunks
+  useEffect(() => {
+    const chunkNum = Math.floor((page - 1) / CHUNK_SIZE);
+
+    if (!cachedChunks[chunkNum]) {
+      setIsCurrentPageLoading(true);
+      fetchChunkData(chunkNum);
+    } else {
       setIsCurrentPageLoading(false);
     }
-  }, []);
 
-  const urlBuilder = (pageNum: number) =>
-    `${buildCCPairInfoUrl(ccPair.id)}/index-attempts?page=${pageNum}&page_size=${NUM_IN_PAGE}`;
+    const nextChunkNum = Math.min(
+      chunkNum + 1,
+      Math.ceil(totalPages / CHUNK_SIZE)
+    );
+    if (!cachedChunks[nextChunkNum]) {
+      fetchChunkData(nextChunkNum);
+    }
 
-  // This is to prevent the same page from being fetched multiple times
-  const debouncedFetch = useCallback(
-    debounce((pageNum: number) => {
-      const fetchCurrentPageData = async () => {
-        setIsCurrentPageLoading(true);
-        try {
-          const response = await fetch(urlBuilder(pageNum));
-          if (!response.ok) {
-            throw new Error("Failed to fetch data");
-          }
-          const data = await response.json();
-          setCurrentPageData(data);
-          setCachedPages((prev) => ({ ...prev, [pageNum]: data }));
-        } catch (error) {
-          setCurrentPageError(
-            error instanceof Error ? error : new Error("An error occurred")
-          );
-        } finally {
-          setIsCurrentPageLoading(false);
-          router.refresh();
-        }
-      };
+    const prevChunkNum = Math.max(chunkNum - 1, 0);
+    if (!cachedChunks[prevChunkNum]) {
+      fetchChunkData(prevChunkNum);
+    }
 
-      if (!cachedPagesRef.current[pageNum]) {
-        fetchCurrentPageData();
-      } else {
-        updateCurrentPageData(pageNum);
-      }
+    // Always fetch the first chunk if it's not cached
+    if (!cachedChunks[0]) {
+      fetchChunkData(0);
+    }
+  }, [ccPair.id, page, cachedChunks, totalPages]);
 
-      // Prefetch logic
-      const totalPages = Math.ceil(
-        ccPair.number_of_index_attempts / NUM_IN_PAGE
-      );
-      const pagesToPrefetch = Array.from(
-        { length: PAGES_TO_PREFETCH * 2 },
-        (_, i) => i - PAGES_TO_PREFETCH + 1
-      )
-        .filter((offset) => offset !== 0)
-        .map((offset) => pageNum + offset)
-        .filter((p) => p > 0 && p <= totalPages && !cachedPagesRef.current[p]);
-
-      if (pagesToPrefetch.length > 0) {
-        Promise.all(
-          pagesToPrefetch.map((p) => errorHandlingFetcher(urlBuilder(p)))
-        ).then((results) => {
-          const newCachedPages = results.reduce((acc, data, index) => {
-            acc[pagesToPrefetch[index]] = data;
-            return acc;
-          }, {});
-          setCachedPages((prev) => ({ ...prev, ...newCachedPages }));
-        });
-      }
-    }, 200),
-    [ccPair.id, ccPair.number_of_index_attempts, updateCurrentPageData]
-  );
-
+  // This updates the data on the current page
   useEffect(() => {
-    updateCurrentPageData(page);
-    debouncedFetch(page);
-  }, [page, debouncedFetch, updateCurrentPageData]);
+    const chunkNum = Math.floor((page - 1) / CHUNK_SIZE);
+    const chunkPageNum = (page - 1) % CHUNK_SIZE;
 
-  const indexAttemptToDisplayTraceFor = currentPageData?.index_attempts?.find(
-    (indexAttempt) => indexAttempt.id === indexAttemptTracePopupId
-  );
+    if (cachedChunks[chunkNum] && cachedChunks[chunkNum][chunkPageNum]) {
+      setCurrentPageData(cachedChunks[chunkNum][chunkPageNum]);
+      setIsCurrentPageLoading(false);
+    } else {
+      setIsCurrentPageLoading(true);
+    }
+  }, [page, cachedChunks]);
 
+  // This updates the page number and manages the URL
   const updatePage = (newPage: number) => {
     setPage(newPage);
     router.push(`/admin/connector/${ccPair.id}?page=${newPage}`, {
@@ -141,6 +160,10 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     });
   };
 
+  if (isCurrentPageLoading || !currentPageData) {
+    return <ThreeDotsLoader />;
+  }
+
   if (currentPageError) {
     return (
       <ErrorCallout
@@ -150,9 +173,10 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     );
   }
 
-  if (!currentPageData) {
-    return <ThreeDotsLoader />;
-  }
+  // This is the index attempt that the user wants to view the trace for
+  const indexAttemptToDisplayTraceFor = currentPageData?.index_attempts?.find(
+    (indexAttempt) => indexAttempt.id === indexAttemptTracePopupId
+  );
 
   return (
     <>
@@ -175,7 +199,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {currentPageData?.index_attempts?.map((indexAttempt) => {
+          {currentPageData.index_attempts.map((indexAttempt) => {
             const docsPerMinute =
               getDocsProcessedPerMinute(indexAttempt)?.toFixed(2);
             return (
@@ -254,11 +278,11 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
           })}
         </TableBody>
       </Table>
-      {currentPageData && currentPageData.total_pages > 1 && (
+      {totalPages > 1 && (
         <div className="mt-3 flex">
           <div className="mx-auto">
             <PageSelector
-              totalPages={currentPageData.total_pages}
+              totalPages={totalPages}
               currentPage={page}
               onPageChange={updatePage}
             />
