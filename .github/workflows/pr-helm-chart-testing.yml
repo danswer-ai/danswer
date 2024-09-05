@@ -9,10 +9,13 @@ jobs:
   lint-test:
     runs-on: ubuntu-latest
 
+    # fetch-depth 0 is required for helm/chart-testing-action
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-
+      with:
+        fetch-depth: 0
+        
     - name: Set up Helm
       uses: azure/setup-helm@v4.2.0
       with:
