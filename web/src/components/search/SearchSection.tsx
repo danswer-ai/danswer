@@ -607,8 +607,10 @@ export const SearchSection = ({
                 // go back to the main page
                 router.push("/search");
               } else {
-                alert("Failed to delete chat session");
+                const responseJson = await response.json();
+                setPopup({ message: responseJson.detail, type: "error" });
               }
+              router.refresh();
             }}
           />
         )}

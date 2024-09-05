@@ -1621,10 +1621,14 @@ export function ChatPage({
             if (response.ok) {
               setDeletingChatSession(null);
               // go back to the main page
-              router.push("/chat");
+              if (deletingChatSession.id === chatSessionIdRef.current) {
+                router.push("/chat");
+              }
             } else {
-              alert("Failed to delete chat session");
+              const responseJson = await response.json();
+              setPopup({ message: responseJson.detail, type: "error" });
             }
+            router.refresh();
           }}
         />
       )}
