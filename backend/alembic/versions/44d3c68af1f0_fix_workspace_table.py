@@ -42,7 +42,7 @@ def downgrade() -> None:
         "teamspace",
         "workspace",
         ["workspace_id"],
-        ["workspace_id"],
+        ["id"],
     )
     op.add_column(
         "user",
@@ -53,7 +53,7 @@ def downgrade() -> None:
         "user",
         "workspace",
         ["workspace_id"],
-        ["workspace_id"],
+        ["id"],
     )
     op.create_unique_constraint("chat_message_id_key", "chat_message", ["id"])
     op.create_table(

@@ -29,7 +29,7 @@ def upgrade() -> None:
     )
     op.add_column("user", sa.Column("vat", sa.String(), nullable=True))
     op.create_foreign_key(
-        "user_workspace_id_fk", "user", "workspace", ["workspace_id"], ["workspace_id"]
+        "user_workspace_id_fk", "user", "workspace", ["workspace_id"], ["id"]
     )
     # ### end Alembic commands ###
 
