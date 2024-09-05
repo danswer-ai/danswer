@@ -49,16 +49,16 @@ jobs:
       working-directory: ./deployment/helm
 
     - name: Run chart-testing (lint)
-      if: steps.list-changed.outputs.changed == 'true'
+#       if: steps.list-changed.outputs.changed == 'true'
       run: ct lint --target-branch ${{ github.event.repository.default_branch }}
       working-directory: ./deployment/helm
 
     - name: Create kind cluster
-      if: steps.list-changed.outputs.changed == 'true'
+#       if: steps.list-changed.outputs.changed == 'true'
       uses: helm/kind-action@v1.10.0
 
     - name: Run chart-testing (install)
-      if: steps.list-changed.outputs.changed == 'true'
+#       if: steps.list-changed.outputs.changed == 'true'
       run: ct install --target-branch ${{ github.event.repository.default_branch }}
       working-directory: ./deployment/helm
       
