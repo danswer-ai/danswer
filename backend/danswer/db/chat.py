@@ -226,7 +226,7 @@ def create_chat_session(
     db_session: Session,
     description: str,
     user_id: UUID | None,
-    persona_id: int,
+    persona_id: int | None,  # Can be none if temporary persona is used
     llm_override: LLMOverride | None = None,
     prompt_override: PromptOverride | None = None,
     one_shot: bool = False,

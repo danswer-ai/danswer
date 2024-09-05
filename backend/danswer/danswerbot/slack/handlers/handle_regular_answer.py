@@ -53,6 +53,7 @@ from danswer.search.models import BaseFilters
 from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
 from danswer.utils.logger import DanswerLoggingAdapter
+from ee.danswer.server.query_and_chat.utils import create_temporary_persona
 
 
 srl = SlackRateLimiter()
@@ -153,15 +154,23 @@ def handle_regular_answer(
 
         with Session(get_sqlalchemy_engine()) as db_session:
             if len(new_message_request.messages) > 1:
-                persona = cast(
-                    Persona,
-                    fetch_persona_by_id(
-                        db_session,
-                        new_message_request.persona_id,
-                        user=None,
-                        get_editable=False,
-                    ),
-                )
+                if new_message_request.persona_config:
+                    persona = create_temporary_persona(
+                        db_session=db_session,
+                        persona_config=new_message_request.persona_config,
+                    )
+
+                elif new_message_request.persona_id:
+                    persona = cast(
+                        Persona,
+                        fetch_persona_by_id(
+                            db_session,
+                            new_message_request.persona_id,
+                            user=None,
+                            get_editable=False,
+                        ),
+                    )
+
                 llm, _ = get_llms_for_persona(persona)
 
                 # In cases of threads, split the available tokens between docs and thread context
