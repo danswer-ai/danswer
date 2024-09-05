@@ -135,9 +135,9 @@ ensure it is running before continuing with the following docker commands.
 
 First navigate to `danswer/deployment/docker_compose`, then start up Vespa and Postgres with:
 ```bash
-docker compose -f docker-compose.dev.yml -p danswer-stack up -d index relational_db
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d index relational_db cache
 ```
-(index refers to Vespa and relational_db refers to Postgres)
+(index refers to Vespa, relational_db refers to Postgres, and cache refers to Redis)
 
 #### Running Danswer
 To start the frontend, navigate to `danswer/web` and run:
