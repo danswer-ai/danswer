@@ -42,10 +42,10 @@ def test_embedding_configuration(
             api_key=test_llm_request.api_key,
             api_url=test_llm_request.api_url,
             provider_type=test_llm_request.provider_type,
+            model_name=test_llm_request.model_name,
             normalize=False,
             query_prefix=None,
             passage_prefix=None,
-            model_name=None,
         )
         test_model.encode(["Testing Embedding"], text_type=EmbedTextType.QUERY)
 
