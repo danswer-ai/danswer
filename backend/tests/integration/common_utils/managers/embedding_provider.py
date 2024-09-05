@@ -14,13 +14,15 @@ from tests.integration.common_utils.test_models import TestUser
 class EmbeddingProviderManager:
     @staticmethod
     def test(
-        user_performing_action: TestUser, embedding_provider: TestCloudEmbeddingProvider
+        user_performing_action: TestUser,
+        embedding_provider: TestCloudEmbeddingProvider,
+        model_name: str | None,
     ) -> None:
-        print(embedding_provider.__dict__)
         test_embedding_request = TestEmbeddingRequest(
             provider_type=embedding_provider.provider_type,
             api_key=embedding_provider.api_key,
             api_url=embedding_provider.api_url,
+            model_name=model_name,
         )
 
         response = requests.post(
@@ -35,15 +37,13 @@ class EmbeddingProviderManager:
 
     @staticmethod
     def create(
-        provider_type: EmbeddingProvider | None,
-        api_url: str | None = None,
-        api_key: str | None = None,
+        test_embedding_provider: TestCloudEmbeddingProvider,
         user_performing_action: TestUser | None = None,
     ) -> TestCloudEmbeddingProvider:
         embedding_provider_request = {
-            "provider_type": provider_type,
-            "api_url": api_url,
-            "api_key": api_key,
+            "provider_type": test_embedding_provider.provider_type,
+            "api_url": test_embedding_provider.api_url,
+            "api_key": test_embedding_provider.api_key,
         }
 
         response = requests.put(
