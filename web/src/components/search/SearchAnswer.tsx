@@ -78,13 +78,13 @@ export default function SearchAnswer({
 
           {searchState == "generating" && (
             <div key={"generating"} className="relative inline-block">
-              <span className="loading-text">Generating response...</span>
+              <span className="loading-text">Generating Response...</span>
             </div>
           )}
 
           {searchState == "citing" && (
             <div key={"citing"} className="relative inline-block">
-              <span className="loading-text">Creating citations...</span>
+              <span className="loading-text">Extracting Quotes...</span>
             </div>
           )}
 

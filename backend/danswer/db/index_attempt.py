@@ -242,7 +242,7 @@ def get_latest_finished_index_attempt_for_cc_pair(
     secondary_index: bool,
     db_session: Session,
 ) -> IndexAttempt | None:
-    stmt = select(IndexAttempt).distinct()
+    stmt = select(IndexAttempt)
     stmt = stmt.where(
         IndexAttempt.connector_credential_pair_id == connector_credential_pair_id,
         IndexAttempt.status.not_in(

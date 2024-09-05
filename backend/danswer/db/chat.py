@@ -3,7 +3,6 @@ from datetime import datetime
 from datetime import timedelta
 from uuid import UUID
 
-from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import func
@@ -87,29 +86,57 @@ def get_chat_sessions_by_slack_thread_id(
     return db_session.scalars(stmt).all()
 
 
-def get_first_messages_for_chat_sessions(
-    chat_session_ids: list[int], db_session: Session
+def get_valid_messages_from_query_sessions(
+    chat_session_ids: list[int],
+    db_session: Session,
 ) -> dict[int, str]:
-    subquery = (
-        select(ChatMessage.chat_session_id, func.min(ChatMessage.id).label("min_id"))
+    user_message_subquery = (
+        select(
+            ChatMessage.chat_session_id, func.min(ChatMessage.id).label("user_msg_id")
+        )
         .where(
-            and_(
-                ChatMessage.chat_session_id.in_(chat_session_ids),
-                ChatMessage.message_type == MessageType.USER,  # Select USER messages
-            )
+            ChatMessage.chat_session_id.in_(chat_session_ids),
+            ChatMessage.message_type == MessageType.USER,
         )
         .group_by(ChatMessage.chat_session_id)
         .subquery()
     )
 
-    query = select(ChatMessage.chat_session_id, ChatMessage.message).join(
-        subquery,
-        (ChatMessage.chat_session_id == subquery.c.chat_session_id)
-        & (ChatMessage.id == subquery.c.min_id),
+    assistant_message_subquery = (
+        select(
+            ChatMessage.chat_session_id,
+            func.min(ChatMessage.id).label("assistant_msg_id"),
+        )
+        .where(
+            ChatMessage.chat_session_id.in_(chat_session_ids),
+            ChatMessage.message_type == MessageType.ASSISTANT,
+        )
+        .group_by(ChatMessage.chat_session_id)
+        .subquery()
+    )
+
+    query = (
+        select(ChatMessage.chat_session_id, ChatMessage.message)
+        .join(
+            user_message_subquery,
+            ChatMessage.chat_session_id == user_message_subquery.c.chat_session_id,
+        )
+        .join(
+            assistant_message_subquery,
+            ChatMessage.chat_session_id == assistant_message_subquery.c.chat_session_id,
+        )
+        .join(
+            ChatMessage__SearchDoc,
+            ChatMessage__SearchDoc.chat_message_id
+            == assistant_message_subquery.c.assistant_msg_id,
+        )
+        .where(ChatMessage.id == user_message_subquery.c.user_msg_id)
     )
 
     first_messages = db_session.execute(query).all()
-    return dict([(row.chat_session_id, row.message) for row in first_messages])
+    logger.info(f"Retrieved {len(first_messages)} first messages with documents")
+
+    return {row.chat_session_id: row.message for row in first_messages}
 
 
 def get_chat_sessions_by_user(

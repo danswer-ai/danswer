@@ -482,7 +482,7 @@ export function CCPairIndexingStatusTable({
               if (sourceMatches || matchingConnectors.length > 0) {
                 return (
                   <React.Fragment key={ind}>
-                    <div className="mt-4" />
+                    <br className="mt-4" />
 
                     <SummaryRow
                       source={source}

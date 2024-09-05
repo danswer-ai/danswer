@@ -91,10 +91,12 @@ export default function AddConnector({
   >({
     name: "",
     groups: [],
-    is_public: false,
+    is_public: true,
     ...configuration.values.reduce(
       (acc, field) => {
-        if (field.type === "list") {
+        if (field.type === "select") {
+          acc[field.name] = field.default || "";
+        } else if (field.type === "list") {
           acc[field.name] = field.default || [];
         } else if (field.type === "checkbox") {
           acc[field.name] = field.default || false;
@@ -491,7 +493,6 @@ export default function AddConnector({
               }}
             >
               {(formikProps) => {
-                console.log(formikProps.values);
                 setFormValues(formikProps.values);
                 handleFormStatusChange(
                   formikProps.isValid && isFormSubmittable(formikProps.values)

@@ -1,3 +1,5 @@
+from sqlalchemy import and_
+from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -13,6 +15,7 @@ from danswer.configs.model_configs import OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.llm import fetch_embedding_provider
 from danswer.db.models import CloudEmbeddingProvider
+from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexModelStatus
 from danswer.db.models import SearchSettings
 from danswer.indexing.models import IndexingSetting
@@ -87,6 +90,30 @@ def get_current_db_embedding_provider(
     )
 
     return current_embedding_provider
+
+
+def delete_search_settings(db_session: Session, search_settings_id: int) -> None:
+    current_settings = get_current_search_settings(db_session)
+
+    if current_settings.id == search_settings_id:
+        raise ValueError("Cannot delete currently active search settings")
+
+    # First, delete associated index attempts
+    index_attempts_query = delete(IndexAttempt).where(
+        IndexAttempt.search_settings_id == search_settings_id
+    )
+    db_session.execute(index_attempts_query)
+
+    # Then, delete the search settings
+    search_settings_query = delete(SearchSettings).where(
+        and_(
+            SearchSettings.id == search_settings_id,
+            SearchSettings.status != IndexModelStatus.PRESENT,
+        )
+    )
+
+    db_session.execute(search_settings_query)
+    db_session.commit()
 
 
 def get_current_search_settings(db_session: Session) -> SearchSettings:
