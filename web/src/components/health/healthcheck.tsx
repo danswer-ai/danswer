@@ -64,11 +64,7 @@ export const HealthCheckBanner = () => {
 
       const scheduleRefreshAndExpire = () => {
         if (secondsUntilExpiration !== null) {
-          console.log("SCHEDULING REFRESH AND EXPIRE");
-          console.log(secondsUntilExpiration);
           if (secondsUntilExpiration > 30) {
-            console.log(`Refreshing in ${secondsUntilExpiration - 30} seconds`);
-
             const timeUntilRefresh = (secondsUntilExpiration - 30) * 1000;
             refreshTimeoutId = setTimeout(refreshToken, timeUntilRefresh);
           }
