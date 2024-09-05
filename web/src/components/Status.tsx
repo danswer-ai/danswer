@@ -89,7 +89,7 @@ export function CCPairStatus({
   } else {
     badge = (
       <Badge variant="success">
-        <CircleCheckBig /> Active
+        <CircleCheckBig size={14} /> Active
       </Badge>
     );
   }

@@ -67,7 +67,7 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
         </div>
       </div>
 
-      <div className="flex py-8 border-b">
+      {/* <div className="flex py-8 border-b">
         <div className="w-[500px] text-sm">
           <span className="font-semibold text-inverted-inverted">
             Teamspaces Joined
@@ -98,7 +98,7 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
             <Button variant="outline">Manage Team</Button>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div className="flex py-8 justify-end">
         <div className="flex gap-3">

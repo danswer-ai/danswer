@@ -19,8 +19,8 @@ export default function Profile({ user }: { user: UserTypes | null }) {
           <TabsTrigger value="security">
             <Lock size={16} className="mr-2" /> Security
           </TabsTrigger>
-          <TabsTrigger value="billings">
-            <CreditCard size={16} className="mr-2" /> Billings
+          <TabsTrigger value="billing">
+            <CreditCard size={16} className="mr-2" /> Billing
           </TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
@@ -29,7 +29,7 @@ export default function Profile({ user }: { user: UserTypes | null }) {
         <TabsContent value="security">
           <SecurityTab user={user} />
         </TabsContent>
-        <TabsContent value="billings">
+        <TabsContent value="billing">
           <SecurityTab user={user} />
         </TabsContent>
       </Tabs>

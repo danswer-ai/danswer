@@ -42,7 +42,7 @@ export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
             disabled={!ccPair.connector.disabled || isDeleting}
             variant="destructive"
           >
-            <Trash size={16} /> Re-Enable
+            <Trash size={16} /> Delete
           </Button>
         </TooltipTrigger>
         <TooltipContent>

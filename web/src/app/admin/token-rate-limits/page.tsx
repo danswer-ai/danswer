@@ -127,7 +127,7 @@ function Main() {
               too many tokens.
             </li>
             <li>
-              Set rate limits for teamspaces to control token spend for your
+              Set rate limits for user groups to control token spend for your
               teams.
             </li>
           </>
@@ -135,14 +135,24 @@ function Main() {
         <li>Enable and disable rate limits on the fly.</li>
       </ul>
 
-      <CreateRateLimitModal
-        onSubmit={handleSubmit}
-        forSpecificScope={
-          isPaidEnterpriseFeaturesEnabled ? undefined : Scope.GLOBAL
+      <CustomModal
+        trigger={
+          <Button className="mt-3" onClick={() => setModalIsOpen(true)}>
+            Create a Token Rate Limit
+          </Button>
         }
-        isOpen={modalIsOpen}
-        setIsOpen={setModalIsOpen}
-      />
+        onClose={() => setModalIsOpen(false)}
+        open={modalIsOpen}
+      >
+        <CreateRateLimitModal
+          isOpen={modalIsOpen}
+          setIsOpen={setModalIsOpen}
+          onSubmit={handleSubmit}
+          forSpecificScope={
+            isPaidEnterpriseFeaturesEnabled ? undefined : Scope.GLOBAL
+          }
+        />
+      </CustomModal>
 
       {isPaidEnterpriseFeaturesEnabled && (
         <Tabs

@@ -320,11 +320,7 @@ export const GroupDisplay = ({
         hideHeading
       />
 
-      <AddTokenRateLimitForm
-        teamspaceId={teamspace.id}
-        isOpen={modalIsOpen}
-        setIsOpen={setModalIsOpen}
-      />
+      <AddTokenRateLimitForm teamspaceId={teamspace.id} />
     </div>
   );
 };
