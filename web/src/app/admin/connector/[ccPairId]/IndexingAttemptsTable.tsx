@@ -28,7 +28,7 @@ import { useRouter } from "next/navigation";
 // This is the number of index attempts to display per page
 const NUM_IN_PAGE = 8;
 // This is the number of pages to fetch at a time
-const CHUNK_SIZE = 8;
+const BATCH_SIZE = 8;
 
 export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   const [indexAttemptTracePopupId, setIndexAttemptTracePopupId] = useState<
@@ -51,99 +51,99 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   const [currentPageError, setCurrentPageError] = useState<Error | null>(null);
   const [isCurrentPageLoading, setIsCurrentPageLoading] = useState(false);
 
-  // This is a cache of the data for each "chunk" which is a set of pages
-  const [cachedChunks, setCachedChunks] = useState<{
+  // This is a cache of the data for each "batch" which is a set of pages
+  const [cachedBatches, setCachedBatches] = useState<{
     [key: number]: PaginatedIndexAttempts[];
   }>({});
 
-  // This is a set of the chunks that are currently being fetched
+  // This is a set of the batches that are currently being fetched
   // we use it to avoid duplicate requests
   const ongoingRequestsRef = useRef<Set<number>>(new Set());
 
-  const urlBuilder = (chunkNum: number) =>
-    `${buildCCPairInfoUrl(ccPair.id)}/index-attempts?page=${chunkNum}&page_size=${CHUNK_SIZE * NUM_IN_PAGE}`;
+  const urlBuilder = (batchNum: number) =>
+    `${buildCCPairInfoUrl(ccPair.id)}/index-attempts?page=${batchNum}&page_size=${BATCH_SIZE * NUM_IN_PAGE}`;
 
-  // This fetches and caches the data for a given chunk number
-  const fetchChunkData = async (chunkNum: number) => {
-    if (ongoingRequestsRef.current.has(chunkNum)) return;
-    ongoingRequestsRef.current.add(chunkNum);
+  // This fetches and caches the data for a given batch number
+  const fetchBatchData = async (batchNum: number) => {
+    if (ongoingRequestsRef.current.has(batchNum)) return;
+    ongoingRequestsRef.current.add(batchNum);
 
     try {
-      const response = await fetch(urlBuilder(chunkNum + 1));
+      const response = await fetch(urlBuilder(batchNum + 1));
       if (!response.ok) {
         throw new Error("Failed to fetch data");
       }
       const data = await response.json();
 
-      const newChunkData: PaginatedIndexAttempts[] = [];
-      for (let i = 0; i < CHUNK_SIZE; i++) {
+      const newBatchData: PaginatedIndexAttempts[] = [];
+      for (let i = 0; i < BATCH_SIZE; i++) {
         const startIndex = i * NUM_IN_PAGE;
         const endIndex = startIndex + NUM_IN_PAGE;
         const pageIndexAttempts = data.index_attempts.slice(
           startIndex,
           endIndex
         );
-        newChunkData.push({
+        newBatchData.push({
           ...data,
           index_attempts: pageIndexAttempts,
         });
       }
 
-      setCachedChunks((prev) => ({
+      setCachedBatches((prev) => ({
         ...prev,
-        [chunkNum]: newChunkData,
+        [batchNum]: newBatchData,
       }));
     } catch (error) {
       setCurrentPageError(
         error instanceof Error ? error : new Error("An error occurred")
       );
     } finally {
-      ongoingRequestsRef.current.delete(chunkNum);
+      ongoingRequestsRef.current.delete(batchNum);
     }
   };
 
-  // This fetches and caches the data for the current chunk and the next and previous chunks
+  // This fetches and caches the data for the current batch and the next and previous batches
   useEffect(() => {
-    const chunkNum = Math.floor((page - 1) / CHUNK_SIZE);
+    const batchNum = Math.floor((page - 1) / BATCH_SIZE);
 
-    if (!cachedChunks[chunkNum]) {
+    if (!cachedBatches[batchNum]) {
       setIsCurrentPageLoading(true);
-      fetchChunkData(chunkNum);
+      fetchBatchData(batchNum);
     } else {
       setIsCurrentPageLoading(false);
     }
 
-    const nextChunkNum = Math.min(
-      chunkNum + 1,
-      Math.ceil(totalPages / CHUNK_SIZE) - 1
+    const nextBatchNum = Math.min(
+      batchNum + 1,
+      Math.ceil(totalPages / BATCH_SIZE) - 1
     );
-    if (!cachedChunks[nextChunkNum]) {
-      fetchChunkData(nextChunkNum);
+    if (!cachedBatches[nextBatchNum]) {
+      fetchBatchData(nextBatchNum);
     }
 
-    const prevChunkNum = Math.max(chunkNum - 1, 0);
-    if (!cachedChunks[prevChunkNum]) {
-      fetchChunkData(prevChunkNum);
+    const prevBatchNum = Math.max(batchNum - 1, 0);
+    if (!cachedBatches[prevBatchNum]) {
+      fetchBatchData(prevBatchNum);
     }
 
-    // Always fetch the first chunk if it's not cached
-    if (!cachedChunks[0]) {
-      fetchChunkData(0);
+    // Always fetch the first batch if it's not cached
+    if (!cachedBatches[0]) {
+      fetchBatchData(0);
     }
-  }, [ccPair.id, page, cachedChunks, totalPages]);
+  }, [ccPair.id, page, cachedBatches, totalPages]);
 
   // This updates the data on the current page
   useEffect(() => {
-    const chunkNum = Math.floor((page - 1) / CHUNK_SIZE);
-    const chunkPageNum = (page - 1) % CHUNK_SIZE;
+    const batchNum = Math.floor((page - 1) / BATCH_SIZE);
+    const batchPageNum = (page - 1) % BATCH_SIZE;
 
-    if (cachedChunks[chunkNum] && cachedChunks[chunkNum][chunkPageNum]) {
-      setCurrentPageData(cachedChunks[chunkNum][chunkPageNum]);
+    if (cachedBatches[batchNum] && cachedBatches[batchNum][batchPageNum]) {
+      setCurrentPageData(cachedBatches[batchNum][batchPageNum]);
       setIsCurrentPageLoading(false);
     } else {
       setIsCurrentPageLoading(true);
     }
-  }, [page, cachedChunks]);
+  }, [page, cachedBatches]);
 
   // This updates the page number and manages the URL
   const updatePage = (newPage: number) => {
