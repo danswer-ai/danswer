@@ -212,7 +212,7 @@ class RedisUserGroup(RedisObjectHelper):
 
 
 class RedisConnector(RedisObjectHelper):
-    PREFIX = "connector"
+    PREFIX = "connectorsync"
     FENCE_PREFIX = PREFIX + "_fence"
     TASKSET_PREFIX = PREFIX + "_taskset"
 
@@ -264,7 +264,7 @@ class RedisConnector(RedisObjectHelper):
 
             # add to the tracking taskset in redis BEFORE creating the celery task.
             # note that for the moment we are using a single taskset key, not differentiated by cc_pair id
-            redis_client.sadd(RedisConnectorDeletion.get_taskset_key(), custom_task_id)
+            redis_client.sadd(self.taskset_key, custom_task_id)
 
             # Priority on sync's triggered by new indexing should be medium
             result = celery_app.send_task(
