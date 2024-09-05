@@ -1,7 +1,10 @@
 import React from "react";
 import { getDisplayNameForModel } from "@/lib/hooks";
 import { structureValue } from "@/lib/llm/utils";
-import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
+import {
+  getProviderIcon,
+  LLMProviderDescriptor,
+} from "@/app/admin/configuration/llm/interfaces";
 
 interface LlmListProps {
   llmProviders: LLMProviderDescriptor[];
@@ -9,6 +12,7 @@ interface LlmListProps {
   onSelect: (value: string | null) => void;
   userDefault?: string | null;
   scrollable?: boolean;
+  hideProviderIcon?: boolean;
 }
 
 export const LlmList: React.FC<LlmListProps> = ({
@@ -19,7 +23,11 @@ export const LlmList: React.FC<LlmListProps> = ({
   scrollable,
 }) => {
   const llmOptionsByProvider: {
-    [provider: string]: { name: string; value: string }[];
+    [provider: string]: {
+      name: string;
+      value: string;
+      icon: React.FC<{ size?: number; className?: string }>;
+    }[];
   } = {};
   const uniqueModelNames = new Set<string>();
 
@@ -39,6 +47,7 @@ export const LlmList: React.FC<LlmListProps> = ({
               llmProvider.provider,
               modelName
             ),
+            icon: getProviderIcon(llmProvider.provider),
           });
         }
       }
@@ -67,17 +76,18 @@ export const LlmList: React.FC<LlmListProps> = ({
           User Default (currently {getDisplayNameForModel(userDefault)})
         </button>
       )}
-      {llmOptions.map(({ name, value }, index) => (
+      {llmOptions.map(({ name, icon, value }, index) => (
         <button
           type="button"
           key={index}
-          className={`w-full py-1.5 px-2 text-sm ${
+          className={`w-full py-1.5 flex  gap-x-2 px-2 text-sm ${
             currentLlm == name
               ? "bg-background-200"
               : "bg-background hover:bg-background-100"
           } text-left rounded`}
           onClick={() => onSelect(value)}
         >
+          {icon({ size: 16 })}
           {getDisplayNameForModel(name)}
         </button>
       ))}
