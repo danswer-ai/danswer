@@ -697,7 +697,7 @@ export const SearchSection = ({
                     (ccPairs.length > 0 || documentSets.length > 0) && (
                       <SourceSelector
                         {...filterManager}
-                        showDocSidebar={showDocSidebar || toggledSidebar}
+                        showDocSidebar={toggledSidebar}
                         availableDocumentSets={finalAvailableDocumentSets}
                         existingSources={finalAvailableSources}
                         availableTags={tags}
@@ -752,7 +752,7 @@ export const SearchSection = ({
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic
                       }
-                      showingSidebar={showDocSidebar || toggledSidebar}
+                      showingSidebar={toggledSidebar}
                       agentic={agentic}
                       query={query}
                       setQuery={setQuery}
