@@ -84,7 +84,7 @@ class CloudEmbedding:
         self.client = _initialize_client(api_key, self.provider, model)
 
     def _embed_openai(self, texts: list[str], model: str | None) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_OPENAI_MODEL
 
         # OpenAI does not seem to provide truncation option, however
@@ -111,7 +111,7 @@ class CloudEmbedding:
     def _embed_cohere(
         self, texts: list[str], model: str | None, embedding_type: str
     ) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_COHERE_MODEL
 
         final_embeddings: list[Embedding] = []
@@ -130,7 +130,7 @@ class CloudEmbedding:
     def _embed_voyage(
         self, texts: list[str], model: str | None, embedding_type: str
     ) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_VOYAGE_MODEL
 
         # Similar to Cohere, the API server will do approximate size chunking
@@ -146,7 +146,7 @@ class CloudEmbedding:
     def _embed_vertex(
         self, texts: list[str], model: str | None, embedding_type: str
     ) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_VERTEX_MODEL
 
         embeddings = self.client.get_embeddings(
@@ -172,7 +172,6 @@ class CloudEmbedding:
         try:
             if self.provider == EmbeddingProvider.OPENAI:
                 return self._embed_openai(texts, model_name)
-
             embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
             if self.provider == EmbeddingProvider.COHERE:
                 return self._embed_cohere(texts, model_name, embedding_type)
