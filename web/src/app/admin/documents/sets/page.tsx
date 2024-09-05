@@ -98,7 +98,7 @@ const DocumentSetTable = ({
       <h3 className="font-semibold pb-5">Existing Document Sets</h3>
       <Card>
         <CardContent className="p-0">
-          <Table className="mt-2 overflow-visible">
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-8">Name</TableHead>

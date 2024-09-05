@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Pen } from "lucide-react";
 
 const MAX_USERS_TO_DISPLAY = 6;
 
@@ -56,129 +59,131 @@ export const TeamspacesTable = ({
   });
 
   return (
-    <div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Connectors</TableHead>
-            <TableHead>Users</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Delete</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {teamspaces
-            .filter((teamspace) => !teamspace.is_up_for_deletion)
-            .map((teamspace) => {
-              return (
-                <TableRow key={teamspace.id}>
-                  <TableCell>
-                    <Link
-                      className="whitespace-normal break-all flex cursor-pointer p-2 rounded hover:bg-hover w-fit"
-                      href={`/admin/teams/${teamspace.id}`}
-                    >
-                      <FiEdit2 className="my-auto mr-2" />
-                      <p className="text font-medium">{teamspace.name}</p>
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    {teamspace.cc_pairs.length > 0 ? (
-                      <div>
-                        {teamspace.cc_pairs.map((ccPairDescriptor, ind) => {
-                          return (
-                            <Badge
-                              className={
-                                ind !== teamspace.cc_pairs.length - 1
-                                  ? "mb-3"
-                                  : ""
-                              }
-                              variant="outline"
-                              key={ccPairDescriptor.id}
-                            >
-                              <ConnectorTitle
-                                connector={ccPairDescriptor.connector}
-                                ccPairId={ccPairDescriptor.id}
-                                ccPairName={ccPairDescriptor.name}
-                                showMetadata={false}
-                              />
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {teamspace.users.length > 0 ? (
-                      <div>
-                        {teamspace.users.length <= MAX_USERS_TO_DISPLAY ? (
-                          teamspace.users.map((user) => {
+    <Card>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Connectors</TableHead>
+              <TableHead>Users</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Delete</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {teamspaces
+              .filter((teamspace) => !teamspace.is_up_for_deletion)
+              .map((teamspace) => {
+                return (
+                  <TableRow key={teamspace.id}>
+                    <TableCell>
+                      <Link href={`/admin/teams/${teamspace.id}`}>
+                        <Button variant="ghost">
+                          <Pen size={16} />
+                          <p className="text font-medium">{teamspace.name}</p>
+                        </Button>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      {teamspace.cc_pairs.length > 0 ? (
+                        <div>
+                          {teamspace.cc_pairs.map((ccPairDescriptor, ind) => {
                             return (
-                              <SimpleUserDisplay key={user.id} user={user} />
+                              <Badge
+                                className={
+                                  ind !== teamspace.cc_pairs.length - 1
+                                    ? "mb-3"
+                                    : ""
+                                }
+                                variant="outline"
+                                key={ccPairDescriptor.id}
+                              >
+                                <ConnectorTitle
+                                  connector={ccPairDescriptor.connector}
+                                  ccPairId={ccPairDescriptor.id}
+                                  ccPairName={ccPairDescriptor.name}
+                                  showMetadata={false}
+                                />
+                              </Badge>
                             );
-                          })
-                        ) : (
-                          <div>
-                            {teamspace.users
-                              .slice(0, MAX_USERS_TO_DISPLAY)
-                              .map((user) => {
-                                return (
-                                  <SimpleUserDisplay
-                                    key={user.id}
-                                    user={user}
-                                  />
-                                );
-                              })}
+                          })}
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {teamspace.users.length > 0 ? (
+                        <div>
+                          {teamspace.users.length <= MAX_USERS_TO_DISPLAY ? (
+                            teamspace.users.map((user) => {
+                              return (
+                                <SimpleUserDisplay key={user.id} user={user} />
+                              );
+                            })
+                          ) : (
                             <div>
-                              + {teamspace.users.length - MAX_USERS_TO_DISPLAY}{" "}
-                              more
+                              {teamspace.users
+                                .slice(0, MAX_USERS_TO_DISPLAY)
+                                .map((user) => {
+                                  return (
+                                    <SimpleUserDisplay
+                                      key={user.id}
+                                      user={user}
+                                    />
+                                  );
+                                })}
+                              <div>
+                                +{" "}
+                                {teamspace.users.length - MAX_USERS_TO_DISPLAY}{" "}
+                                more
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {teamspace.is_up_to_date ? (
-                      <div className="text-success">Up to date!</div>
-                    ) : (
-                      <div className="w-10">
-                        <LoadingAnimation text="Syncing" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <DeleteButton
-                      onClick={async (event) => {
-                        event.stopPropagation();
-                        const response = await deleteTeamspace(teamspace.id);
-                        if (response.ok) {
-                          toast({
-                            title: "Success",
-                            description: `Teamspace "${teamspace.name}" deleted`,
-                            variant: "success",
-                          });
-                        } else {
-                          const errorMsg = (await response.json()).detail;
-                          toast({
-                            title: "Error",
-                            description: `Failed to delete Teamspace - ${errorMsg}`,
-                            variant: "destructive",
-                          });
-                        }
-                        refresh();
-                      }}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-        </TableBody>
-      </Table>
-    </div>
+                          )}
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {!teamspace.is_up_to_date ? (
+                        <Badge variant="success">Up to date!</Badge>
+                      ) : (
+                        <Badge variant="outline" className="w-20">
+                          <LoadingAnimation text="Syncing" />
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <DeleteButton
+                        onClick={async (event) => {
+                          event.stopPropagation();
+                          const response = await deleteTeamspace(teamspace.id);
+                          if (response.ok) {
+                            toast({
+                              title: "Success",
+                              description: `Teamspace "${teamspace.name}" deleted`,
+                              variant: "success",
+                            });
+                          } else {
+                            const errorMsg = (await response.json()).detail;
+                            toast({
+                              title: "Error",
+                              description: `Failed to delete Teamspace - ${errorMsg}`,
+                              variant: "destructive",
+                            });
+                          }
+                          refresh();
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 };

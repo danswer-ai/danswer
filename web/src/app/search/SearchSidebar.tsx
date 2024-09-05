@@ -43,7 +43,7 @@ export const SearchSidebar = ({
             h-full
             flex
             z-overlay
-            w-full 
+            w-full py-4
             `}
         id="chat-sidebar"
       >

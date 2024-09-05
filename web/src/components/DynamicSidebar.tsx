@@ -82,7 +82,7 @@ export function DynamicSidebar({
         <div className="h-full relative flex w-full">
           <WorkSpaceSidebar openSidebar={openSidebar} user={user} />
           <div
-            className={`py-4 bg-background h-full ease-in-out transition-[width] duration-500 w-full overflow-hidden lg:overflow-visible
+            className={`bg-background h-full ease-in-out transition-[width] duration-500 w-full overflow-hidden lg:overflow-visible
             ${
               isExpanded
                 ? "lg:w-sidebar border-r border-border"

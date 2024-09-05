@@ -38,6 +38,7 @@ export const UserEditor = ({
                 );
               }}
               variant="outline"
+              className="hover:opacity-75 cursor-pointer"
             >
               {selectedUser.email}{" "}
               <X className="ml-1 my-auto cursor-pointer" size={14} />
@@ -67,7 +68,7 @@ export const UserEditor = ({
             ]);
           }}
           itemComponent={({ option }) => (
-            <div className="flex">
+            <div className="flex w-full">
               <UsersIcon className="mr-2 my-auto" />
               {option.name}
               <div className="ml-auto my-auto">
