@@ -7,14 +7,11 @@ import remarkGfm from "remark-gfm";
 
 export function ChatBanner() {
   const settings = useContext(SettingsContext);
-  if (!settings?.enterpriseSettings?.custom_header_content) {
-    return null;
-  }
 
   return (
     <div
       className={`
-      z-masked 
+      z-[39] 
       h-[30px]
       bg-background-custom-header
       shadow-sm
@@ -41,7 +38,8 @@ export function ChatBanner() {
             }}
             remarkPlugins={[remarkGfm]}
           >
-            {settings.enterpriseSettings.custom_header_content}
+            {/* TODO: replace with other things such as notifications, etc. */}
+            Under construction
           </ReactMarkdown>
         </div>
       </div>

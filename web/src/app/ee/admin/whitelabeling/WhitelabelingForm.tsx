@@ -41,42 +41,46 @@ export function WhitelabelingForm() {
   }
 
   return (
-    <Formik
-      initialValues={{
-        application_name: enterpriseSettings?.application_name || null,
-        use_custom_logo: enterpriseSettings?.use_custom_logo || false,
-        custom_header_content: enterpriseSettings?.custom_header_content || "",
-        custom_popup_header: enterpriseSettings?.custom_popup_header || "",
-        custom_popup_content: enterpriseSettings?.custom_popup_content || "",
-      }}
-      validationSchema={Yup.object().shape({
-        application_name: Yup.string().nullable(),
-        use_custom_logo: Yup.boolean().required(),
-        custom_header_content: Yup.string().nullable(),
-        custom_popup_header: Yup.string().nullable(),
-        custom_popup_content: Yup.string().nullable(),
-      })}
-      onSubmit={async (values, formikHelpers) => {
-        formikHelpers.setSubmitting(true);
+    <div>
+      <Formik
+        initialValues={{
+          application_name: enterpriseSettings?.application_name || null,
+          application_description:
+            enterpriseSettings?.application_description || null,
+          use_custom_logo: enterpriseSettings?.use_custom_logo || false,
+          custom_popup_header: enterpriseSettings?.custom_popup_header || "",
+          custom_popup_content: enterpriseSettings?.custom_popup_content || "",
+        }}
+        validationSchema={Yup.object().shape({
+          application_name: Yup.string().nullable(),
+          application_description: Yup.string().nullable(),
+          use_custom_logo: Yup.boolean().required(),
+          custom_popup_header: Yup.string().nullable(),
+          custom_popup_content: Yup.string().nullable(),
+        })}
+        onSubmit={async (values, formikHelpers) => {
+          formikHelpers.setSubmitting(true);
 
-        if (selectedFile) {
-          values.use_custom_logo = true;
+          if (selectedFile) {
+            values.use_custom_logo = true;
 
-          const formData = new FormData();
-          formData.append("file", selectedFile);
-          setSelectedFile(null);
-          const response = await fetch("/api/admin/enterprise-settings/logo", {
-            method: "PUT",
-            body: formData,
-          });
-          if (!response.ok) {
-            const errorMsg = (await response.json()).detail;
-            alert(`Failed to upload logo. ${errorMsg}`);
-            formikHelpers.setSubmitting(false);
-            return;
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            setSelectedFile(null);
+            const response = await fetch(
+              "/api/admin/enterprise-settings/logo",
+              {
+                method: "PUT",
+                body: formData,
+              }
+            );
+            if (!response.ok) {
+              const errorMsg = (await response.json()).detail;
+              alert(`Failed to upload logo. ${errorMsg}`);
+              formikHelpers.setSubmitting(false);
+              return;
+            }
           }
-        }
-
         formikHelpers.setValues(values);
         await updateEnterpriseSettings(values);
       }}
@@ -84,12 +88,20 @@ export function WhitelabelingForm() {
       {({ isSubmitting, values, setValues }) => (
         <Form>
           <TextFormField
-            label="Application Name"
-            name="application_name"
-            subtext={`The custom name you are giving enMedD AI for your organization. This will replace 'enMedD AI' everywhere in the UI.`}
-            placeholder="Custom name which will replace 'enMedD AI'"
-            disabled={isSubmitting}
-          />
+              label="Workspace Name"
+              name="application_name"
+              subtext={`The custom name you are giving for your workspace. This will replace 'enMedD AI' everywhere in the UI.`}
+              placeholder="Custom name which will replace 'enMedD AI'"
+              disabled={isSubmitting}
+            />
+            <TextFormField
+              label="Description"
+              name="application_description"
+              subtext={`The custom description metadata you are giving ${values.application_name || "enMedD AI"} for your workspace.\
+                This will be seen when sharing the link or searching through the browser.`}
+              placeholder="Custom description for your Workspace"
+              disabled={isSubmitting}
+            />
 
           {values.use_custom_logo ? (
             <div className="pt-3 flex flex-col items-start gap-3">
@@ -150,20 +162,21 @@ export function WhitelabelingForm() {
             />
           </div>
 
-          <div>
-            <TextFormField
-              label="Custom Popup Content"
-              name="custom_popup_content"
-              subtext={`Custom Markdown content that will be displayed as a popup on initial visit to the application.`}
-              placeholder="Your popup content..."
-              isTextArea
-              disabled={isSubmitting}
-            />
-          </div>
+            <div>
+              <TextFormField
+                label="Custom Popup Content"
+                name="custom_popup_content"
+                subtext={`Custom Markdown content that will be displayed as a popup on initial visit to the application.`}
+                placeholder="Your popup content..."
+                isTextArea
+                disabled={isSubmitting}
+              />
+            </div>
 
-          <Button type="submit">Update</Button>
-        </Form>
-      )}
-    </Formik>
+            <Button type="submit">Update</Button>
+          </Form>
+        )}
+      </Formik>
+    </div>
   );
 }

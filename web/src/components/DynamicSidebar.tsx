@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { WorkSpaceSidebar } from "@/app/chat/sessionSidebar/WorkSpaceSidebar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { User } from "@/lib/types";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { SettingsContext } from "./settings/SettingsProvider";
 
 interface SidebarProps {
   user?: User | null;
@@ -22,12 +23,13 @@ export function DynamicSidebar({
   children,
 }: SidebarProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isLgScreen, setIsLgScreen] = useState(false);
+
+  const settings = useContext(SettingsContext);
 
   const toggleWidth = () => {
     setIsExpanded((prevState) => !prevState);
   };
-
-  const [isLgScreen, setIsLgScreen] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");

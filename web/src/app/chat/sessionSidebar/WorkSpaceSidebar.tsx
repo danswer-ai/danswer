@@ -57,7 +57,7 @@ export const WorkSpaceSidebar = ({
             >
               {enterpriseSettings!.application_name
                 ? enterpriseSettings!.application_name
-                : ""}
+                : "enMedD AI"}
             </CustomTooltip>
           </div>
         </div>

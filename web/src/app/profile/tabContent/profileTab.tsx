@@ -38,8 +38,21 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
             <span className="font-semibold text-inverted-inverted">
-              John Luis Jokic
+              {user?.full_name || "Unknown User"}
             </span>{" "}
+            <Button variant="outline">Edit</Button>
+          </div>
+        </div>
+        <div className="flex items-center">
+          <div className="w-[500px] text-sm">
+            <span className="font-semibold text-inverted-inverted">
+              Company
+            </span>
+          </div>
+          <div className="w-[500px] h-10 flex items-center justify-between">
+            <span className="font-semibold text-inverted-inverted">
+              {user?.company_name || "No Company"}
+            </span>
             <Button variant="outline">Edit</Button>
           </div>
         </div>
@@ -49,19 +62,8 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
             <span className="font-semibold text-inverted-inverted">
-              John Luis Jokic
+              {user?.email || "anonymous@gmail.com"}
             </span>{" "}
-            <Button variant="outline">Edit</Button>
-          </div>
-        </div>
-        <div className="flex items-center">
-          <div className="w-[500px] text-sm">
-            <span className="font-semibold text-inverted-inverted">Phone</span>
-          </div>
-          <div className="w-[500px] h-10 flex items-center justify-between">
-            <span className="font-semibold text-inverted-inverted">
-              John Luis Jokic
-            </span>
             <Button variant="outline">Edit</Button>
           </div>
         </div>
