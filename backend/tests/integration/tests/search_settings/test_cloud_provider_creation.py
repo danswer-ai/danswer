@@ -55,7 +55,7 @@ def test_creating_litellm_embedding_provider(reset: None) -> None:
     litellm_api_key = os.getenv("LITEL_API_KEY")
     litellm_api_url = os.getenv("LITEL_API_URL")
     test_embedding_provider = TestCloudEmbeddingProvider(
-        provider_type=EmbeddingProvider.LITEL,
+        provider_type=EmbeddingProvider.LITELLM,
         api_key=litellm_api_key,
         api_url=litellm_api_url,
     )
