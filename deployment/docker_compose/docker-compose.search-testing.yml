@@ -211,11 +211,11 @@ services:
       - '6379:6379'
     command: redis-server
     volumes: 
-      - cache:/data
+      - cache_volume:/data
 
 
 volumes:
-  cache:
+  cache_volume:
   db_volume:
     driver: local
     driver_opts:
