@@ -42,9 +42,9 @@ export const WorkSpaceSidebar = ({
             alt="ArnoldAi Logo"
             width={40}
             height={40}
-            className="rounded-regular min-w-10 min-h-10 pb-6"
+            className="rounded-regular min-w-10 min-h-10"
           />
-          <Separator />
+          <Separator className="mt-6" />
           <div className="flex flex-col items-center gap-4 pt-4">
             <CustomTooltip
               trigger={

@@ -46,21 +46,23 @@ export function AssistantsTab({
                   {assistant.name}
                 </div>
 
-                <div className="text-sm text-dark-900 mb-2">
+                <div className="text-xs text-subtle pb-2">
                   {assistant.description}
                 </div>
                 <div className="mt-2 flex flex-col gap-y-2">
                   {assistant.document_sets.length > 0 && (
-                    <div className="text-xs text-subtle flex flex-wrap gap-2">
+                    <div className="text-xs text-subtle flex flex-col gap-2">
                       <p className="my-auto font-medium">Document Sets:</p>
-                      {assistant.document_sets.map((set) => (
-                        <Bubble key={set.id} isSelected={false}>
-                          <div className="flex flex-row gap-1">
-                            <Bookmark size={16} className="mr-1 my-auto" />
-                            {set.name}
-                          </div>
-                        </Bubble>
-                      ))}
+                      <div className="flex flex-wrap gap-2">
+                        {assistant.document_sets.map((set) => (
+                          <Bubble key={set.id} isSelected={false}>
+                            <div className="flex flex-row gap-1">
+                              <Bookmark size={16} className="mr-1 my-auto" />
+                              {set.name}
+                            </div>
+                          </Bubble>
+                        ))}
+                      </div>
                     </div>
                   )}
                   <div className="text-xs text-subtle">

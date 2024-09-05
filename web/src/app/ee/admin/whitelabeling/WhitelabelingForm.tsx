@@ -92,7 +92,7 @@ export function WhitelabelingForm() {
           />
 
           {values.use_custom_logo ? (
-            <div className="pt-3 flex flex-col items-start gap-3 pb-4">
+            <div className="pt-3 flex flex-col items-start gap-3">
               <div>
                 <h3 className="font-semibold">Custom Logo</h3>
                 <SubLabel>Current Custom Logo: </SubLabel>
@@ -121,10 +121,10 @@ export function WhitelabelingForm() {
                 Delete
               </Button>
 
-              <SubLabel>
+              <p className="text-sm text-subtle pt-4 pb-2">
                 Override the current custom logo by uploading a new image below
                 and clicking the Update button.
-              </SubLabel>
+              </p>
             </div>
           ) : (
             <p className="pb-3 text-sm text-subtle">
@@ -136,16 +136,6 @@ export function WhitelabelingForm() {
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
           />
-
-          {/*  <div className="pt-4">
-              <TextFormField
-                label="Custom Chat Header Content"
-                name="custom_header_content"
-                subtext={`Custom Markdown content that will be displayed as a banner at the top of the Chat page.`}
-                placeholder="Your header content..."
-                disabled={isSubmitting}
-              />
-            </div> */}
 
           <div className="pt-8">
             <TextFormField

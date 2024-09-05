@@ -100,7 +100,7 @@ export function DynamicSidebar({
               <div className="h-full flex items-center justify-center">
                 <button
                   onClick={toggleWidth}
-                  className="border rounded-r py-2 border-l-0 bg-background"
+                  className="border rounded-r py-2 border-l-0 bg-background hidden lg:flex"
                 >
                   {isExpanded ? (
                     <ChevronLeft size={16} />
