@@ -608,7 +608,7 @@ export const SearchSection = ({
               if (response.ok) {
                 setDeletingChatSession(null);
                 // go back to the main page
-                router.push("/chat");
+                router.push("/search");
               } else {
                 alert("Failed to delete chat session");
               }
