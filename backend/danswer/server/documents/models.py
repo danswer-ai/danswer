@@ -238,8 +238,12 @@ class CCPairFullInfo(BaseModel):
         if (
             last_indexing_status == IndexingStatus.SUCCESS
             and number_of_index_attempts == 1
+            and last_index_attempt
+            and last_index_attempt.new_docs_indexed
         ):
-            num_docs_indexed = last_index_attempt.new_docs_indexed
+            num_docs_indexed = (
+                last_index_attempt.new_docs_indexed if last_index_attempt else 0
+            )
 
         return cls(
             id=cc_pair_model.id,
