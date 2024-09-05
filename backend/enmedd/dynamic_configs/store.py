@@ -73,11 +73,17 @@ class PostgresBackedDynamicConfigStore(DynamicConfigStore):
         with self.get_session() as session:
             obj = session.query(KVStore).filter_by(key=key).first()
             if obj:
+                # TODO: replace workspace_id value with the actual workspace data
                 obj.value = plain_val
                 obj.encrypted_value = encrypted_val
+                obj.workspace_id = 0
             else:
+                # replace workspace_id value with the actual workspace data
                 obj = KVStore(
-                    key=key, value=plain_val, encrypted_value=encrypted_val
+                    key=key,
+                    value=plain_val,
+                    encrypted_value=encrypted_val,
+                    workspace_id=0,
                 )  # type: ignore
                 session.query(KVStore).filter_by(key=key).delete()  # just in case
                 session.add(obj)

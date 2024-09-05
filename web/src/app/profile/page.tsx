@@ -14,7 +14,6 @@ import TopBar from "@/components/TopBar";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { ProfileBars } from "./ProfileBars";
 
-
 export default async function ProfilePage() {
   const tasks = [
     getAuthTypeMetadataSS(),
@@ -43,8 +42,6 @@ export default async function ProfilePage() {
   const authTypeMetadata = results[0] as AuthTypeMetadata | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
-
-  const settings = await getCombinedSettings({ forceRetrieval: true });
 
   if (!authDisabled && !user) {
     return redirect("/auth/login");
