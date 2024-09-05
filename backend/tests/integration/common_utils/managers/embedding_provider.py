@@ -128,7 +128,6 @@ class EmbeddingProviderManager:
                     f"Embedding provider {expected_provider.provider_type} not found in current providers"
                 )
 
-            # Validate all settings match
             if matching_provider.api_url != expected_provider.api_url:
                 raise ValueError(
                     f"API URL mismatch for provider {expected_provider.provider_type}"
