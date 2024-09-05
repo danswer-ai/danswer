@@ -37,7 +37,7 @@ def upgrade() -> None:
         sa.Column(
             "owner_id",
             fastapi_users_db_sqlalchemy.generics.GUID(),
-            nullable=False,
+            nullable=True,
         ),
         sa.ForeignKeyConstraint(
             ["owner_id"],
