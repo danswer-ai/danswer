@@ -8,9 +8,7 @@ def test_send_message_simple_with_history(reset: None) -> None:
     admin_user: TestUser = UserManager.create(name="admin_user")
     LLMProviderManager.create(user_performing_action=admin_user)
 
-    test_chat_session = ChatSessionManager.create_chat_session(
-        user_performing_action=admin_user
-    )
+    test_chat_session = ChatSessionManager.create(user_performing_action=admin_user)
 
     response = ChatSessionManager.get_answer_with_quote(
         persona_id=test_chat_session.persona_id,

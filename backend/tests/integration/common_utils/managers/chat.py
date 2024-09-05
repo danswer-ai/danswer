@@ -1,6 +1,7 @@
 import json
 
 import requests
+from requests.models import Response
 
 from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
@@ -16,12 +17,11 @@ from tests.integration.common_utils.test_models import StreamedResponse
 from tests.integration.common_utils.test_models import TestChatMessage
 from tests.integration.common_utils.test_models import TestChatSession
 from tests.integration.common_utils.test_models import TestUser
-from tests.integration.tests.streaming_endpoints.utils import analyze_response
 
 
 class ChatSessionManager:
     @staticmethod
-    def create_chat_session(
+    def create(
         persona_id: int = -1,
         description: str = "Test chat session",
         user_performing_action: TestUser | None = None,
@@ -83,13 +83,8 @@ class ChatSessionManager:
             else GENERAL_HEADERS,
             stream=True,
         )
-        response.raise_for_status()
 
-        response_data = [
-            json.loads(line.decode("utf-8")) for line in response.iter_lines() if line
-        ]
-
-        return analyze_response(response_data)
+        return ChatSessionManager.analyze_response(response)
 
     @staticmethod
     def get_answer_with_quote(
@@ -113,11 +108,32 @@ class ChatSessionManager:
         )
         response.raise_for_status()
 
+        return ChatSessionManager.analyze_response(response)
+
+    @staticmethod
+    def analyze_response(response: Response) -> StreamedResponse:
         response_data = [
             json.loads(line.decode("utf-8")) for line in response.iter_lines() if line
         ]
 
-        return analyze_response(response_data)
+        analyzed = StreamedResponse()
+
+        for data in response_data:
+            if "rephrased_query" in data:
+                analyzed.rephrased_query = data["rephrased_query"]
+            elif "tool_name" in data:
+                analyzed.tool_name = data["tool_name"]
+                analyzed.tool_result = (
+                    data.get("tool_result")
+                    if analyzed.tool_name == "run_search"
+                    else None
+                )
+            elif "relevance_summaries" in data:
+                analyzed.relevance_summaries = data["relevance_summaries"]
+            elif "answer_piece" in data and data["answer_piece"]:
+                analyzed.full_message += data["answer_piece"]
+
+        return analyzed
 
     @staticmethod
     def get_chat_history(
