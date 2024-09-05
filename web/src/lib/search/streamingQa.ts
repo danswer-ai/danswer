@@ -98,6 +98,7 @@ export const searchRequestStreamed = async ({
       }
       previousPartialChunk = partialChunk as string | null;
       completedChunks.forEach((chunk) => {
+        console.log("chunk", chunk);
         // check for answer piece / end of answer
 
         if (Object.hasOwn(chunk, "relevance_summaries")) {
