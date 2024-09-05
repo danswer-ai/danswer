@@ -197,7 +197,7 @@ class ChatSessionDetailResponse(BaseModel):
     chat_session_id: int
     description: str
     persona_id: int | None = None
-    persona_name: str | None
+    persona_name: str
     messages: list[ChatMessageDetail]
     time_created: datetime
     shared_status: ChatSessionSharedStatus

@@ -197,11 +197,6 @@ def stream_answer_objects(
         max_tokens=max_document_tokens,
     )
 
-    if temporary_persona:
-        for tool in temporary_persona.tools:
-            if tool.in_code_tool_id == "SearchTool":
-                pass
-
     search_tool = SearchTool(
         db_session=db_session,
         user=user,

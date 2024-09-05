@@ -90,6 +90,8 @@ class DirectQARequest(ChunkContext):
     def check_persona_fields(self) -> "DirectQARequest":
         if (self.persona_config is None) == (self.persona_id is None):
             raise ValueError("Exactly one of persona_config or persona_id must be set")
+        if (self.prompt_id is None) == (self.persona_config is None):
+            raise ValueError("Exactly one of prompt_id or persona_config must be set")
         return self
 
     @model_validator(mode="after")
