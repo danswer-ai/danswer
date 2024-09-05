@@ -43,7 +43,7 @@ router = APIRouter(prefix="/manage")
 def get_cc_pair_index_attempts(
     cc_pair_id: int,
     page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=1000),
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> PaginatedIndexAttempts:
