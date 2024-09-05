@@ -388,7 +388,6 @@ def litellm_rerank(
 async def process_embed_request(
     embed_request: EmbedRequest,
 ) -> EmbedResponse:
-    print(embed_request.__dict__)
     if not embed_request.texts:
         raise HTTPException(status_code=400, detail="No texts to be embedded")
     elif not all(embed_request.texts):

@@ -11,17 +11,18 @@ from tests.integration.common_utils.test_models import TestUser
 
 def create_and_test_embedding_provider(
     test_embedding_provider: TestCloudEmbeddingProvider,
+    model_name: str | None = None,
 ) -> None:
     admin_user: TestUser = UserManager.create(name="admin_user")
 
     EmbeddingProviderManager.test(
         user_performing_action=admin_user,
         embedding_provider=test_embedding_provider,
+        model_name=model_name,
     )
 
     EmbeddingProviderManager.create(
-        provider_type=test_embedding_provider.provider_type,
-        api_key=test_embedding_provider.api_key,
+        test_embedding_provider=test_embedding_provider,
         user_performing_action=admin_user,
     )
 
