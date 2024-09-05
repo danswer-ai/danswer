@@ -234,8 +234,8 @@ export function ChangeCredentialsModal({
               <div>
                 <Label className="mt-2">Test Model</Label>
                 <p>
-                  Since you are using a liteLLM proxy, we'll need a model name
-                  to test the connection with.
+                  Since you are using a liteLLM proxy, we&apos;ll need a model
+                  name to test the connection with.
                 </p>
               </div>
               <input
