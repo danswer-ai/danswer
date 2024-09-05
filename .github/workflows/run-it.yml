@@ -13,8 +13,8 @@ env:
   COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
   VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
   GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-  LITEL_API_KEY: ${{ secrets.LITEL_API_KEY }}
-  LITEL_API_URL: ${{ secrets.LITEL_API_URL }}
+  LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+  LITELLM_API_URL: ${{ secrets.LITELLM_API_URL }}
 
 jobs:
   integration-tests:
