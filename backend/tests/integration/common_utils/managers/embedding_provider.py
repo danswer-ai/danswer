@@ -16,6 +16,7 @@ class EmbeddingProviderManager:
     def test(
         user_performing_action: TestUser, embedding_provider: TestCloudEmbeddingProvider
     ) -> None:
+        print(embedding_provider.__dict__)
         test_embedding_request = TestEmbeddingRequest(
             provider_type=embedding_provider.provider_type,
             api_key=embedding_provider.api_key,
