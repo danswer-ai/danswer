@@ -68,7 +68,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { redirect } from "next/navigation";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { ChatProvider } from "@/components/context/ChatContext";
+import { ChatProvider } from "@/context/ChatContext";
 import { AssistantsBars } from "../../mine/AssistantsBars";
 import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
 

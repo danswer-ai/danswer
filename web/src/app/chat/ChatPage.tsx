@@ -59,7 +59,7 @@ import Dropzone from "react-dropzone";
 import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";

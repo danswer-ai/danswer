@@ -1,4 +1,4 @@
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { LlmOverride, LlmOverrideManager } from "@/lib/hooks";
 import React, { useCallback, useRef, useState } from "react";
 import { debounce } from "lodash";
