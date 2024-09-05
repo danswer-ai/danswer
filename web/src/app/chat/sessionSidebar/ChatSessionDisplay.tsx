@@ -99,7 +99,10 @@ export function ChatSessionDisplay({
         className="flex my-1 group relative"
         key={chatSession.id}
         onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
+        onMouseLeave={() => {
+          setIsMoreOptionsDropdownOpen(false);
+          setIsHovering(false);
+        }}
         onClick={() => {
           if (settings?.isMobile && closeSidebar) {
             closeSidebar();
