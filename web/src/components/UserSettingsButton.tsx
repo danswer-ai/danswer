@@ -17,7 +17,13 @@ import {
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 
-export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
+export function UserSettingsButton({
+  user,
+  defaultPage,
+}: {
+  user?: UserTypes | null;
+  defaultPage?: string;
+}) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -90,7 +96,7 @@ export function UserSettingsButton({ user }: { user?: UserTypes | null }) {
             </Link>
             <Link
               // redirect to default page
-              href="/"
+              href={`/${defaultPage}`}
               className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
             >
               <MessageCircleMore

@@ -7,7 +7,7 @@ import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { AssistantsGallery } from "./AssistantsGallery";
-import { DynamicSidebar } from "@/components/DynamicSidebar";
+import { AssistantsBars } from "../mine/AssistantsBars";
 
 export default async function GalleryPage({
   searchParams,
@@ -55,24 +55,19 @@ export default async function GalleryPage({
         }}
       >
         <div className="relative flex h-screen overflow-x-hidden bg-background">
-          <DynamicSidebar user={user}>
+          <AssistantsBars user={user}>
             <ChatSidebar
               existingChats={chatSessions}
               currentChatSession={null}
               folders={folders}
               openedFolders={openedFolders}
+              isAssistant
             />
-          </DynamicSidebar>
+          </AssistantsBars>
 
           <div
             className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
           >
-            <div className="sticky top-0 z-10 flex w-full left-80 bg-background h-fit">
-              <div className="my-auto mt-4 ml-auto mr-8">
-                <UserDropdown user={user} />
-              </div>
-            </div>
-
             <div className="mt-4">
               <AssistantsGallery assistants={assistants} user={user} />
             </div>
