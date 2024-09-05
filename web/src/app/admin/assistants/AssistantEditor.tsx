@@ -868,10 +868,10 @@ export function AssistantEditor({
                             teamspaces.length > 0 &&
                             !values.is_public && (
                               <div>
-                                <Text>
+                                <p className="text-subtle text-sm">
                                   Select which Teamspaces should have access to
                                   this Assistant.
-                                </Text>
+                                </p>
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {teamspaces.map((teamspace) => {
                                     const isSelected = values.groups.includes(
