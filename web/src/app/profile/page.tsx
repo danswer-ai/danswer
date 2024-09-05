@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
 import Profile from "./profile";
 import { WorkSpaceSidebar } from "../chat/sessionSidebar/WorkSpaceSidebar";
+import { getCombinedSettings } from "@/components/settings/lib";
 
 export default async function ProfilePage() {
   const tasks = [
@@ -39,6 +40,8 @@ export default async function ProfilePage() {
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
 
+  const settings = await getCombinedSettings({ forceRetrieval: true });
+
   if (!authDisabled && !user) {
     return redirect("/auth/login");
   }
@@ -50,7 +53,7 @@ export default async function ProfilePage() {
   return (
     <div className="h-full flex relative flex-row">
       <div className="hidden md:flex">
-        <WorkSpaceSidebar user={user} />
+        <WorkSpaceSidebar user={user} combinedSettings={settings} />
       </div>
       <div className="h-full px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 container overflow-y-auto">
         <Profile user={user} />
