@@ -207,17 +207,17 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
 
 def try_generate_stale_document_sync_tasks(
     db_session: Session, r: Redis, lock_beat: redis.lock.Lock
-) -> int:
+) -> int | None:
     # the fence is up, do nothing
     if r.exists(RedisConnector.get_fence_key()):
-        return 0
+        return None
 
     r.delete(RedisConnector.get_taskset_key())  # delete the taskset
 
     # add tasks to celery and build up the task set to monitor in redis
     stale_doc_count = count_documents_by_needs_sync(db_session)
     if stale_doc_count == 0:
-        return 0
+        return None
 
     task_logger.info(
         f"Stale documents found (at least {stale_doc_count}). Generating sync tasks by cc pair."
@@ -231,7 +231,7 @@ def try_generate_stale_document_sync_tasks(
         rc = RedisConnector(cc_pair.id)
         tasks_generated = rc.generate_tasks(celery_app, db_session, r, lock_beat)
 
-        if not tasks_generated:
+        if tasks_generated is None:
             continue
 
         if tasks_generated == 0:
@@ -254,18 +254,18 @@ def try_generate_stale_document_sync_tasks(
 
 def try_generate_document_set_sync_tasks(
     document_set: DocumentSet, db_session: Session, r: Redis, lock_beat: redis.lock.Lock
-) -> int:
+) -> int | None:
     lock_beat.reacquire()
 
     rds = RedisDocumentSet(document_set.id)
 
     # don't generate document set sync tasks if tasks are still pending
     if r.exists(rds.fence_key):
-        return 0
+        return None
 
     # don't generate sync tasks if we're up to date
     if document_set.is_up_to_date:
-        return 0
+        return None
 
     # add tasks to celery and build up the task set to monitor in redis
     r.delete(rds.taskset_key)
@@ -277,7 +277,7 @@ def try_generate_document_set_sync_tasks(
     # Add all documents that need to be updated into the queue
     tasks_generated = rds.generate_tasks(celery_app, db_session, r, lock_beat)
     if tasks_generated is None:
-        return 0
+        return None
 
     # Currently we are allowing the sync to proceed with 0 tasks.
     # It's possible for sets/groups to be generated initially with no entries
@@ -297,17 +297,17 @@ def try_generate_document_set_sync_tasks(
 
 def try_generate_user_group_sync_tasks(
     usergroup: UserGroup, db_session: Session, r: Redis, lock_beat: redis.lock.Lock
-) -> int:
+) -> int | None:
     lock_beat.reacquire()
 
     rug = RedisUserGroup(usergroup.id)
 
     # don't generate sync tasks if tasks are still pending
     if r.exists(rug.fence_key):
-        return 0
+        return None
 
     if usergroup.is_up_to_date:
-        return 0
+        return None
 
     # add tasks to celery and build up the task set to monitor in redis
     r.delete(rug.taskset_key)
@@ -316,7 +316,7 @@ def try_generate_user_group_sync_tasks(
     task_logger.info(f"generate_tasks starting. usergroup_id={usergroup.id}")
     tasks_generated = rug.generate_tasks(celery_app, db_session, r, lock_beat)
     if tasks_generated is None:
-        return 0
+        return None
 
     # Currently we are allowing the sync to proceed with 0 tasks.
     # It's possible for sets/groups to be generated initially with no entries
@@ -594,10 +594,8 @@ def vespa_metadata_sync_task(self: Task, document_id: str) -> bool:
                 return False
 
             # document set sync
-            update_doc_sets: set[str] | None = None
             doc_sets = fetch_document_set_for_document(document_id, db_session)
-            if doc_sets:
-                update_doc_sets = set(doc_sets)
+            update_doc_sets: set[str] = set(doc_sets)
 
             # User group sync
             doc_access = get_access_for_document(
@@ -675,7 +673,7 @@ def celery_task_postrun(
         return
 
 
-def monitor_connector_taskset(r: Redis, db_session: Session) -> None:
+def monitor_connector_taskset(r: Redis) -> None:
     fence_value = r.get(RedisConnector.get_fence_key())
     if fence_value is None:
         return
@@ -824,7 +822,7 @@ def monitor_vespa_sync() -> None:
 
         with Session(get_sqlalchemy_engine()) as db_session:
             if r.exists(RedisConnector.get_fence_key()):
-                monitor_connector_taskset(r, db_session)
+                monitor_connector_taskset(r)
 
             for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
                 monitor_document_set_taskset(key_bytes, r, db_session)

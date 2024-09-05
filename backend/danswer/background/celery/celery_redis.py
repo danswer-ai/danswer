@@ -211,7 +211,7 @@ class RedisUserGroup(RedisObjectHelper):
 
 
 class RedisConnector(RedisObjectHelper):
-    PREFIX = "connector"
+    PREFIX = "connectorsync"
     FENCE_PREFIX = PREFIX + "_fence"
     TASKSET_PREFIX = PREFIX + "_taskset"
 

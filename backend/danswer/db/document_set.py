@@ -572,7 +572,7 @@ def select_documents_by_docset(
 def fetch_document_set_for_document(
     document_id: str,
     db_session: Session,
-) -> list[str] | None:
+) -> list[str]:
     """
     Fetches the document set names for a single document ID.
 
@@ -582,7 +582,7 @@ def fetch_document_set_for_document(
     """
     result = fetch_document_sets_for_documents([document_id], db_session)
     if not result:
-        return None
+        return []
 
     return result[0][1]
 

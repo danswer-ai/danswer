@@ -1,5 +1,3 @@
-from typing import Optional
-
 from sqlalchemy.orm import Session
 
 from danswer.access.models import DocumentAccess
@@ -14,14 +12,14 @@ from danswer.utils.variable_functionality import fetch_versioned_implementation
 def _get_access_for_document(
     document_id: str,
     db_session: Session,
-) -> Optional[DocumentAccess]:
+) -> DocumentAccess:
     info = get_access_info_for_document(
         db_session=db_session,
         document_id=document_id,
     )
 
     if not info:
-        return None
+        return DocumentAccess.build([], [], False)
 
     return DocumentAccess.build(info[1], [], info[2])
 
@@ -29,7 +27,7 @@ def _get_access_for_document(
 def get_access_for_document(
     document_id: str,
     db_session: Session,
-) -> Optional[DocumentAccess]:
+) -> DocumentAccess:
     versioned_get_access_for_document_fn = fetch_versioned_implementation(
         "danswer.access.access", "_get_access_for_document"
     )
