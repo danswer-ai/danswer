@@ -81,32 +81,36 @@ export function DynamicSidebar({
       >
         <div className="h-full relative flex w-full">
           <WorkSpaceSidebar openSidebar={openSidebar} user={user} />
-          <div
-            className={`bg-background h-full ease-in-out transition-[width] duration-500 w-full overflow-hidden lg:overflow-visible
-            ${
-              isExpanded
-                ? "lg:w-sidebar border-r border-border"
-                : "lg:w-0 border-none"
-            }`}
-          >
-            <div
-              className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${opacityClass}`}
-            >
-              {children}
-            </div>
-          </div>
-          <div className="h-full flex items-center justify-center">
-            <button
-              onClick={toggleWidth}
-              className="border rounded-r py-2 border-l-0 bg-background"
-            >
-              {isExpanded ? (
-                <ChevronLeft size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-          </div>
+          {children && (
+            <>
+              <div
+                className={`bg-background h-full ease-in-out transition-[width] duration-500 w-full overflow-hidden lg:overflow-visible
+          ${
+            isExpanded
+              ? "lg:w-sidebar border-r border-border"
+              : "lg:w-0 border-none"
+          }`}
+              >
+                <div
+                  className={`h-full overflow-hidden flex flex-col transition-opacity duration-300 ease-in-out ${opacityClass}`}
+                >
+                  {children}
+                </div>
+              </div>
+              <div className="h-full flex items-center justify-center">
+                <button
+                  onClick={toggleWidth}
+                  className="border rounded-r py-2 border-l-0 bg-background"
+                >
+                  {isExpanded ? (
+                    <ChevronLeft size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>
