@@ -5,11 +5,9 @@ import { Field } from "formik";
 export default function SelectInput({
   field,
   value,
-  onChange,
 }: {
   field: SelectOption;
   value: any;
-  onChange?: (e: Event) => void;
 }) {
   return (
     <>
@@ -27,7 +25,6 @@ export default function SelectInput({
       )}
 
       <Field
-        onChange={onChange}
         as="select"
         value={value}
         name={field.name}

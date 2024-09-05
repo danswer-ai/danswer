@@ -268,7 +268,7 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       quotes,
     }));
-    setSearchState((searchState) => "input");
+    setSearchState((searchState) => "citing");
   };
 
   const updateDocs = (documents: SearchDanswerDocument[]) => {
@@ -295,7 +295,7 @@ export const SearchSection = ({
     }));
     if (disabledAgentic) {
       setIsFetching(false);
-      setSearchState("input");
+      setSearchState((searchState) => "citing");
     }
     if (documents.length == 0) {
       setSearchState("input");
@@ -333,11 +333,8 @@ export const SearchSection = ({
       messageId,
     }));
     router.refresh();
-    // setSearchState("input");
     setIsFetching(false);
     setSearchState((searchState) => "input");
-
-    // router.replace(`/search?searchId=${chat_session_id}`);
   };
 
   const updateDocumentRelevance = (relevance: Relevance) => {
