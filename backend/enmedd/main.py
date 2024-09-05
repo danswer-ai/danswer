@@ -34,6 +34,8 @@ from enmedd.configs.app_configs import USER_AUTH_SECRET
 from enmedd.configs.app_configs import WEB_DOMAIN
 from enmedd.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from enmedd.configs.constants import AuthType
+from enmedd.configs.load_default_values import load_default_instance_from_yaml
+from enmedd.configs.load_default_values import load_workspace_from_yaml
 from enmedd.db.assistant import delete_old_default_assistants
 from enmedd.db.connector import create_initial_default_connector
 from enmedd.db.connector_credential_pair import associate_default_cc_pair
@@ -199,6 +201,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         if ENABLE_RERANKING_REAL_TIME_FLOW:
             logger.info("Reranking step of search flow is enabled.")
+
+        logger.info("Loading default instances")
+        load_default_instance_from_yaml(db_session=db_session)
+
+        logger.info("Loading default workspaces")
+        load_workspace_from_yaml(db_session=db_session)
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         download_nltk_data()

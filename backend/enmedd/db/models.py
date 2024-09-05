@@ -40,12 +40,10 @@ from enmedd.configs.constants import SearchFeedbackType
 from enmedd.configs.constants import TokenRateLimitScope
 from enmedd.connectors.models import InputType
 from enmedd.db.enums import ChatSessionSharedStatus
-from enmedd.db.enums import DefaultPage
 from enmedd.db.enums import IndexingStatus
 from enmedd.db.enums import IndexModelStatus
 from enmedd.db.enums import InstanceSubscriptionPlan
 from enmedd.db.enums import TaskStatus
-from enmedd.db.enums import WorkspaceSubscriptionPlan
 from enmedd.db.pydantic_type import PydanticType
 from enmedd.dynamic_configs.interface import JSON_ro
 from enmedd.file_store.models import FileDescriptor
@@ -279,7 +277,7 @@ class Workspace__Users(Base):
     __tablename__ = "workspace__users"
 
     workspace_id: Mapped[int] = mapped_column(
-        ForeignKey("workspace.workspace_id"), primary_key=True
+        ForeignKey("workspace.id"), primary_key=True
     )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
 
@@ -288,7 +286,7 @@ class Workspace__Teamspace(Base):
     __tablename__ = "workspace__teamspace"
 
     workspace_id: Mapped[int] = mapped_column(
-        ForeignKey("workspace.workspace_id"), primary_key=True
+        ForeignKey("workspace.id"), primary_key=True
     )
     teamspace_id: Mapped[int] = mapped_column(
         ForeignKey("teamspace.id"), primary_key=True
@@ -1139,7 +1137,9 @@ class TaskQueueState(Base):
 
 class KVStore(Base):
     __tablename__ = "key_value_store"
-
+    workspace_id: Mapped[int | None] = mapped_column(
+        ForeignKey("workspace.id"), primary_key=True
+    )
     key: Mapped[str] = mapped_column(String, primary_key=True)
     value: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=True)
     encrypted_value: Mapped[JSON_ro] = mapped_column(EncryptedJson(), nullable=True)
@@ -1427,13 +1427,13 @@ Workspace Tables
 class Workspace(Base):
     __tablename__ = "workspace"
 
-    workspace_id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     instance_id: Mapped[int | None] = mapped_column(
-        ForeignKey("instance.instance_id"), nullable=True
+        ForeignKey("instance.id"), nullable=True
     )
     workspace_name: Mapped[str] = mapped_column(Text)
-    custom_logo: Mapped[str] = mapped_column(Text)
-    custom_header_logo: Mapped[str] = mapped_column(Text)
+    custom_logo: Mapped[str | None] = mapped_column(Text, nullable=True)
+    custom_header_logo: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     users: Mapped[list[User]] = relationship(
         "User", secondary=Workspace__Users.__table__, back_populates="workspace"
@@ -1445,40 +1445,20 @@ class Workspace(Base):
         back_populates="workspace",
     )
 
-    workspace_settings: Mapped["WorkspaceSettings"] = relationship(
-        "WorkspaceSettings", back_populates="workspace"
-    )
-
-
-class WorkspaceSettings(Base):
-    __tablename__ = "workspace_settings"
-
-    workspace_id: Mapped[int] = mapped_column(
-        ForeignKey("workspace.workspace_id"), primary_key=True
-    )
-    chat_page_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    search_page_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
-    default_page: Mapped[DefaultPage] = mapped_column(
-        Enum(DefaultPage, native_enum=False)
-    )
-    maximum_chat_retention_days: Mapped[int] = mapped_column(Integer)
-    subscription_plan: Mapped[WorkspaceSubscriptionPlan] = mapped_column(
-        Enum(WorkspaceSubscriptionPlan, native_enum=False)
-    )
-    number_of_users: Mapped[int] = mapped_column(Integer)
-    storage_limit: Mapped[int] = mapped_column(Integer)
-
-    workspace: Mapped[Workspace] = relationship(
-        "Workspace", back_populates="workspace_settings"
-    )
+    instance: Mapped["Instance"] = relationship("Instance", back_populates="workspaces")
 
 
 class Instance(Base):
     __tablename__ = "instance"
 
-    instance_id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     instance_name: Mapped[str] = mapped_column(Text)
-    subscription_plan: Mapped[InstanceSubscriptionPlan] = mapped_column(
-        Enum(InstanceSubscriptionPlan, native_enum=False)
+    subscription_plan: Mapped[InstanceSubscriptionPlan | None] = mapped_column(
+        Enum(InstanceSubscriptionPlan, native_enum=False),
+        default=InstanceSubscriptionPlan.PARTNER,
     )
-    owner_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    owner_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+
+    workspaces: Mapped[list[Workspace] | None] = relationship(
+        "Workspace", back_populates="instance"
+    )

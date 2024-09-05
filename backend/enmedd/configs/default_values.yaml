@@ -1,0 +1,16 @@
+instances: 
+  - id: 0
+    instance_name: "Arnold AI"
+    subscription_plan: null
+    owner_id: null
+
+workspaces:
+  - id: 0 
+    instance_id: 0
+    workspace_name: "enMedD AI"
+    custom_logo: null
+    custom_header_logo: null
+
+teamspaces:
+  - id: 0
+    name: "Global"
