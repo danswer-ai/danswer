@@ -70,7 +70,6 @@ export const WorkSpaceSidebar = ({
 }; */
 
 import { UserSettingsButton } from "@/components/UserSettingsButton";
-import { Ellipsis } from "lucide-react";
 import Image from "next/image";
 
 import ArnoldAi from "../../../../public/arnold_ai.png";
@@ -78,19 +77,19 @@ import { Separator } from "@/components/ui/separator";
 import { User } from "@/lib/types";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { Logo } from "@/components/Logo";
-import { useContext } from "react";
-import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { fetchSettingsSS } from "@/components/settings/lib";
 import Link from "next/link";
+import { CombinedSettings } from "@/app/admin/settings/interfaces";
 
 interface WorkSpaceSidebarProps {
   openSidebar?: boolean;
   user?: User | null;
+  combinedSettings?: CombinedSettings | null;
 }
 
 export const WorkSpaceSidebar = ({
   openSidebar,
   user,
+  combinedSettings,
 }: WorkSpaceSidebarProps) => {
   return (
     <div className={`bg-background h-full p-4 border-r border-border`}>
@@ -118,12 +117,13 @@ export const WorkSpaceSidebar = ({
               side="right"
               delayDuration={0}
             >
-              enterpriseSettings
+              {combinedSettings?.enterpriseSettings?.application_name ||
+                "enMedD AI"}
             </CustomTooltip>
           </div>
         </div>
         <div className="flex flex-col items-center gap-4">
-          <UserSettingsButton user={user} defaultPage="/" />
+          <UserSettingsButton user={user} />
         </div>
       </div>
     </div>
