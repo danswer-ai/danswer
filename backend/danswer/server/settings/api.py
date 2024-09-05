@@ -62,7 +62,7 @@ def mocked_refresh_token() -> dict:
             "givenName": "Mock name",
             "fullName": "Mock name",
             "userId": "Mock User ID",
-            "email": "email@gmail.com",
+            "email": "chris@danswer.ai",
         },
     }
     return data

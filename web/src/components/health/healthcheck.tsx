@@ -4,15 +4,13 @@ import { errorHandlingFetcher, RedirectError } from "@/lib/fetcher";
 import useSWR from "swr";
 import { Modal } from "../Modal";
 import { useEffect, useState } from "react";
-import { CUSTOM_REFRESH_URL, HOST_URL } from "@/lib/constants";
-import { buildClientUrl, buildUrl, fetchSS } from "@/lib/utilsSS";
+import { NEXT_PUBLIC_CUSTOM_REFRESH } from "@/lib/constants";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { User } from "@/lib/types";
 
 export const HealthCheckBanner = () => {
   const { error } = useSWR("/api/health", errorHandlingFetcher);
   const [expired, setExpired] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [secondsUntilExpiration, setSecondsUntilExpiration] = useState<
     number | null
   >(null);
@@ -27,7 +25,7 @@ export const HealthCheckBanner = () => {
     if (updatedUser) {
       const seconds = getSecondsUntilExpiration(updatedUser);
       setSecondsUntilExpiration(seconds);
-      console.debug(`Updated seconds until expiration: ${seconds}`);
+      console.debug(`Updated seconds until expiration:! ${seconds}`);
     }
   };
 
@@ -36,7 +34,7 @@ export const HealthCheckBanner = () => {
   }, [user]);
 
   useEffect(() => {
-    if (CUSTOM_REFRESH_URL) {
+    if (NEXT_PUBLIC_CUSTOM_REFRESH) {
       let refreshTimeoutId: NodeJS.Timeout;
       let expireTimeoutId: NodeJS.Timeout;
 
@@ -44,7 +42,6 @@ export const HealthCheckBanner = () => {
         console.debug(
           `Attempting to refresh token. Current seconds until expiration: ${secondsUntilExpiration}`
         );
-        setIsRefreshing(true);
         try {
           const response = await fetch("/api/settings/refresh-token", {
             method: "GET",
@@ -62,14 +59,16 @@ export const HealthCheckBanner = () => {
           updateExpirationTime();
         } catch (error) {
           console.error("Error refreshing token:", error);
-        } finally {
-          setIsRefreshing(false);
         }
       };
 
       const scheduleRefreshAndExpire = () => {
         if (secondsUntilExpiration !== null) {
+          console.log("SCHEDULING REFRESH AND EXPIRE");
+          console.log(secondsUntilExpiration);
           if (secondsUntilExpiration > 30) {
+            console.log(`Refreshing in ${secondsUntilExpiration - 30} seconds`);
+
             const timeUntilRefresh = (secondsUntilExpiration - 30) * 1000;
             refreshTimeoutId = setTimeout(refreshToken, timeUntilRefresh);
           }
