@@ -194,7 +194,10 @@ export function ChatSessionDisplay({
                       {search ? (
                         showDeleteModal && (
                           <div
-                            onClick={() => showDeleteModal(chatSession)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              showDeleteModal(chatSession);
+                            }}
                             className={`p-1 -m-1 rounded ml-1`}
                           >
                             <FiTrash size={16} />
@@ -202,7 +205,9 @@ export function ChatSessionDisplay({
                         )
                       ) : (
                         <div
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
+                            // e.stopPropagation();
                             setIsMoreOptionsDropdownOpen(
                               !isMoreOptionsDropdownOpen
                             );
