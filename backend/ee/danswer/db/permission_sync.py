@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy import update
@@ -7,6 +8,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DocumentSource
+from danswer.db.models import PermissionSyncJobType
 from danswer.db.models import PermissionSyncRun
 from danswer.db.models import PermissionSyncStatus
 from danswer.utils.logger import setup_logger
@@ -44,7 +46,7 @@ def expire_perm_sync_timed_out(
         update(PermissionSyncRun)
         .where(
             PermissionSyncRun.status == PermissionSyncStatus.IN_PROGRESS,
-            PermissionSyncRun.updated_at < cutoff_time,
+            PermissionSyncRun.start_time < cutoff_time,
         )
         .values(status=PermissionSyncStatus.FAILED, error_msg="timed out")
     )
@@ -55,18 +57,34 @@ def expire_perm_sync_timed_out(
 
 def create_perm_sync(
     source_type: DocumentSource,
-    group_update: bool,
-    cc_pair_id: int | None,
+    sync_type: PermissionSyncJobType,
     db_session: Session,
 ) -> PermissionSyncRun:
     new_run = PermissionSyncRun(
         source_type=source_type,
+        update_type=sync_type,
         status=PermissionSyncStatus.IN_PROGRESS,
-        group_update=group_update,
-        cc_pair_id=cc_pair_id,
     )
 
     db_session.add(new_run)
     db_session.commit()
 
     return new_run
+
+
+def get_last_sync_attempt(
+    source_type: DocumentSource,
+    job_type: PermissionSyncJobType,
+    db_session: Session,
+    success_only: bool = False,
+) -> PermissionSyncRun | None:
+    stmt = select(PermissionSyncRun).where(
+        PermissionSyncRun.source_type == source_type,
+        PermissionSyncRun.update_type == job_type,
+    )
+    if success_only:
+        stmt = stmt.where(PermissionSyncRun.status == PermissionSyncStatus.SUCCESS)
+
+    stmt = stmt.order_by(desc(PermissionSyncRun.start_time))
+
+    return db_session.execute(stmt).scalars().first()

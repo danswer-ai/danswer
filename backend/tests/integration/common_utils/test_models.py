@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from danswer.auth.schemas import UserRole
+from danswer.db.enums import AccessType
 from danswer.search.enums import RecencyBiasSetting
 from danswer.server.documents.models import DocumentSource
 from danswer.server.documents.models import InputType
@@ -67,7 +68,7 @@ class TestCCPair(BaseModel):
     name: str
     connector_id: int
     credential_id: int
-    is_public: bool
+    access_type: AccessType
     groups: list[int]
     documents: list[SimpleTestDocument] = Field(default_factory=list)
 

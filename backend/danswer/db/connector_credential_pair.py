@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from danswer.configs.constants import DocumentSource
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.credentials import fetch_credential_by_id
+from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexAttempt
@@ -74,7 +75,7 @@ def _add_user_filters(
             .correlate(ConnectorCredentialPair)
         )
     else:
-        where_clause |= ConnectorCredentialPair.is_public == True  # noqa: E712
+        where_clause |= ConnectorCredentialPair.access_type == AccessType.PUBLIC
 
     return stmt.where(where_clause)
 
@@ -94,8 +95,7 @@ def get_connector_credential_pairs(
         )  # noqa
     if ids:
         stmt = stmt.where(ConnectorCredentialPair.id.in_(ids))
-    results = db_session.scalars(stmt)
-    return list(results.all())
+    return list(db_session.scalars(stmt).all())
 
 
 def get_cc_pair_groups_for_ids(
@@ -297,9 +297,9 @@ def associate_default_cc_pair(db_session: Session) -> None:
     association = ConnectorCredentialPair(
         connector_id=0,
         credential_id=0,
+        access_type=AccessType.PUBLIC,
         name="DefaultCCPair",
         status=ConnectorCredentialPairStatus.ACTIVE,
-        is_public=True,
     )
     db_session.add(association)
     db_session.commit()
@@ -324,8 +324,9 @@ def add_credential_to_connector(
     connector_id: int,
     credential_id: int,
     cc_pair_name: str | None,
-    is_public: bool,
+    access_type: AccessType,
     groups: list[int] | None,
+    auto_sync_options: dict | None = None,
 ) -> StatusResponse:
     connector = fetch_connector_by_id(connector_id, db_session)
     credential = fetch_credential_by_id(credential_id, user, db_session)
@@ -363,7 +364,8 @@ def add_credential_to_connector(
         credential_id=credential_id,
         name=cc_pair_name,
         status=ConnectorCredentialPairStatus.ACTIVE,
-        is_public=is_public,
+        access_type=access_type,
+        auto_sync_options=auto_sync_options,
     )
     db_session.add(association)
     db_session.flush()  # make sure the association has an id

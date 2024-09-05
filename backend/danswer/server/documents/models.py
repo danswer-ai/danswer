@@ -9,6 +9,7 @@ from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import DocumentErrorSummary
 from danswer.connectors.models import InputType
+from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
@@ -194,7 +195,7 @@ class CCPairFullInfo(BaseModel):
     credential: CredentialSnapshot
     index_attempts: list[IndexAttemptSnapshot]
     latest_deletion_attempt: DeletionAttemptSnapshot | None
-    is_public: bool
+    access_type: AccessType
     is_editable_for_current_user: bool
 
     @classmethod
@@ -222,7 +223,7 @@ class CCPairFullInfo(BaseModel):
                 for index_attempt_model in index_attempt_models
             ],
             latest_deletion_attempt=latest_deletion_attempt,
-            is_public=cc_pair_model.is_public,
+            access_type=cc_pair_model.access_type,
             is_editable_for_current_user=is_editable_for_current_user,
         )
 
@@ -237,7 +238,7 @@ class ConnectorIndexingStatus(BaseModel):
     credential: CredentialSnapshot
     owner: str
     groups: list[int]
-    public_doc: bool
+    access_type: AccessType
     last_finished_status: IndexingStatus | None
     last_status: IndexingStatus | None
     last_success: datetime | None
@@ -255,7 +256,8 @@ class ConnectorCredentialPairIdentifier(BaseModel):
 
 class ConnectorCredentialPairMetadata(BaseModel):
     name: str | None = None
-    is_public: bool | None = None
+    access_type: AccessType
+    auto_sync_options: dict[str, Any] | None = None
     groups: list[int] = Field(default_factory=list)
 
 

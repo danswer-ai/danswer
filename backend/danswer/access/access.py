@@ -3,23 +3,49 @@ from sqlalchemy.orm import Session
 from danswer.access.models import DocumentAccess
 from danswer.access.utils import prefix_user
 from danswer.configs.constants import PUBLIC_DOC_PAT
-from danswer.db.document import get_acccess_info_for_documents
+from danswer.db.document import get_access_info_for_documents
 from danswer.db.models import User
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+
+
+def get_null_document_access() -> DocumentAccess:
+    return DocumentAccess(
+        user_emails=set(),
+        user_groups=set(),
+        external_user_emails=set(),
+        external_user_groups=set(),
+        is_public=False,
+    )
 
 
 def _get_access_for_documents(
     document_ids: list[str],
     db_session: Session,
 ) -> dict[str, DocumentAccess]:
-    document_access_info = get_acccess_info_for_documents(
+    document_access_info = get_access_info_for_documents(
         db_session=db_session,
         document_ids=document_ids,
     )
-    return {
-        document_id: DocumentAccess.build(user_ids, [], is_public)
-        for document_id, user_ids, is_public in document_access_info
+    doc_access = {
+        document_id: DocumentAccess(
+            user_emails=set([email for email in user_emails if email]),
+            # MIT version will wipe all groups and external groups on update
+            user_groups=set(),
+            external_user_emails=set(),
+            external_user_groups=set(),
+            is_public=is_public,
+        )
+        for document_id, user_emails, is_public in document_access_info
     }
+
+    # Sometimes the document has not be indexed by the indexing job yet, in those cases
+    # the document does not exist and so we use least permissive. Specifically the EE version
+    # checks the MIT version permissions and creates a superset. This ensures that this flow
+    # does not fail even if the Document has not yet been indexed.
+    for doc_id in document_ids:
+        if doc_id not in doc_access:
+            doc_access[doc_id] = get_null_document_access()
+    return doc_access
 
 
 def get_access_for_documents(
@@ -42,7 +68,7 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
     matches one entry in the returned set.
     """
     if user:
-        return {prefix_user(str(user.id)), PUBLIC_DOC_PAT}
+        return {prefix_user(user.email), PUBLIC_DOC_PAT}
     return {PUBLIC_DOC_PAT}
 
 

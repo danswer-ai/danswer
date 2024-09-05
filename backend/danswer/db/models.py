@@ -39,6 +39,7 @@ from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
+from danswer.db.enums import AccessType
 from danswer.configs.constants import NotificationType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.constants import TokenRateLimitScope
@@ -379,10 +380,13 @@ class ConnectorCredentialPair(Base):
     # controls whether the documents indexed by this CC pair are visible to all
     # or if they are only visible to those with that are given explicit access
     # (e.g. via owning the credential or being a part of a group that is given access)
-    is_public: Mapped[bool] = mapped_column(
-        Boolean,
-        default=True,
-        nullable=False,
+    access_type: Mapped[AccessType] = mapped_column(
+        Enum(AccessType, native_enum=False), nullable=False
+    )
+    # special info needed for the auto-sync feature. The exact structure depends on the
+    # source type (defined in the connector's `source` field)
+    auto_sync_options: Mapped[dict[str, Any] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
     )
     # Time finished, not used for calculating backend jobs which uses time started (created)
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
@@ -442,6 +446,17 @@ class Document(Base):
         postgresql.ARRAY(String), nullable=True
     )
     # TODO if more sensitive data is added here for display, make sure to add user/group permission
+    # Permission sync columns
+    external_user_emails: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+    external_user_groups: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+    public: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_time_perm_sync: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     retrieval_feedbacks: Mapped[list["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback", back_populates="document"
@@ -1637,7 +1652,9 @@ class PermissionSyncStatus(str, PyEnum):
 
 
 class PermissionSyncJobType(str, PyEnum):
+    # Sync-ing document level access at a user by user level
     USER_LEVEL = "user_level"
+    # Sync-ing external groups to the users the groups contain via emails
     GROUP_LEVEL = "group_level"
 
 
@@ -1654,18 +1671,15 @@ class PermissionSyncRun(Base):
     )
     # Currently all sync jobs are handled as a group permission sync or a user permission sync
     update_type: Mapped[PermissionSyncJobType] = mapped_column(
-        Enum(PermissionSyncJobType)
+        Enum(PermissionSyncJobType, native_enum=False)
     )
-    cc_pair_id: Mapped[int | None] = mapped_column(
-        ForeignKey("connector_credential_pair.id"), nullable=True
+    status: Mapped[PermissionSyncStatus] = mapped_column(
+        Enum(PermissionSyncStatus, native_enum=False)
     )
-    status: Mapped[PermissionSyncStatus] = mapped_column(Enum(PermissionSyncStatus))
     error_msg: Mapped[str | None] = mapped_column(Text, default=None)
-    updated_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    start_time: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
     )
-
-    cc_pair: Mapped[ConnectorCredentialPair] = relationship("ConnectorCredentialPair")
 
 
 class ExternalPermission(Base):
@@ -1677,15 +1691,13 @@ class ExternalPermission(Base):
     __tablename__ = "external_permission"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     # Email is needed because we want to keep track of users not in Danswer to simplify process
     # when the user joins
     user_email: Mapped[str] = mapped_column(String)
+    external_permission_group: Mapped[str] = mapped_column(String)
     source_type: Mapped[DocumentSource] = mapped_column(
         Enum(DocumentSource, native_enum=False)
     )
-    external_permission_group: Mapped[str] = mapped_column(String)
-    user = relationship("User")
 
 
 class EmailToExternalUserCache(Base):
@@ -1700,21 +1712,18 @@ class EmailToExternalUserCache(Base):
 
     Ie. User Chris is part of groups alpha, beta, and we can update this if Chris is no longer
     part of alpha in some external tool.
+
+    NOTE: THE CURRENT APPROACH DOES NOT HANDLE EMAIL UPDATES
     """
 
     __tablename__ = "email_to_external_user_cache"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     external_user_id: Mapped[str] = mapped_column(String)
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    # Email is needed because we want to keep track of users not in Danswer to simplify process
-    # when the user joins
     user_email: Mapped[str] = mapped_column(String)
     source_type: Mapped[DocumentSource] = mapped_column(
         Enum(DocumentSource, native_enum=False)
     )
-
-    user = relationship("User")
 
 
 class UsageReport(Base):

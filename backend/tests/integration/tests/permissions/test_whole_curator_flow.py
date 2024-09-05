@@ -1,6 +1,7 @@
 """
 This test tests the happy path for curator permissions
 """
+from danswer.db.enums import AccessType
 from danswer.db.models import UserRole
 from danswer.server.documents.models import DocumentSource
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
@@ -64,8 +65,8 @@ def test_whole_curator_flow(reset: None) -> None:
         connector_id=test_connector.id,
         credential_id=test_credential.id,
         name="curator_test_cc_pair",
+        access_type=AccessType.PRIVATE,
         groups=[user_group_1.id],
-        is_public=False,
         user_performing_action=curator,
     )
 

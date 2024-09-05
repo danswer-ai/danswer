@@ -39,10 +39,10 @@ def _build_frontend_google_drive_redirect() -> str:
 
 
 def get_google_drive_creds_for_authorized_user(
-    token_json_str: str,
+    token_json_str: str, scopes: list[str] = SCOPES
 ) -> OAuthCredentials | None:
     creds_json = json.loads(token_json_str)
-    creds = OAuthCredentials.from_authorized_user_info(creds_json, SCOPES)
+    creds = OAuthCredentials.from_authorized_user_info(creds_json, scopes)
     if creds.valid:
         return creds
 
@@ -60,15 +60,56 @@ def get_google_drive_creds_for_authorized_user(
 
 
 def get_google_drive_creds_for_service_account(
-    service_account_key_json_str: str,
+    service_account_key_json_str: str, scopes: list[str] = SCOPES
 ) -> ServiceAccountCredentials | None:
     service_account_key = json.loads(service_account_key_json_str)
     creds = ServiceAccountCredentials.from_service_account_info(
-        service_account_key, scopes=SCOPES
+        service_account_key, scopes=scopes
     )
     if not creds.valid or not creds.expired:
         creds.refresh(Request())
     return creds if creds.valid else None
+
+
+def get_google_drive_creds(
+    credentials: dict[str, str], scopes: list[str] = SCOPES
+) -> tuple[ServiceAccountCredentials | OAuthCredentials, dict[str, str] | None]:
+    creds = None
+    new_creds_dict = None
+    if DB_CREDENTIALS_DICT_TOKEN_KEY in credentials:
+        access_token_json_str = cast(str, credentials[DB_CREDENTIALS_DICT_TOKEN_KEY])
+        creds = get_google_drive_creds_for_authorized_user(
+            token_json_str=access_token_json_str, scopes=scopes
+        )
+
+        # tell caller to update token stored in DB if it has changed
+        # (e.g. the token has been refreshed)
+        new_creds_json_str = creds.to_json() if creds else ""
+        if new_creds_json_str != access_token_json_str:
+            new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
+
+    if DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY in credentials:
+        service_account_key_json_str = credentials[
+            DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
+        ]
+        creds = get_google_drive_creds_for_service_account(
+            service_account_key_json_str=service_account_key_json_str,
+            scopes=scopes,
+        )
+
+        # "Impersonate" a user if one is specified
+        delegated_user_email = cast(
+            str | None, credentials.get(DB_CREDENTIALS_DICT_DELEGATED_USER_KEY)
+        )
+        if delegated_user_email:
+            creds = creds.with_subject(delegated_user_email) if creds else None
+
+    if creds is None:
+        raise PermissionError(
+            "Unable to access Google Drive - unknown credential structure."
+        )
+
+    return creds, new_creds_dict
 
 
 def verify_csrf(credential_id: int, state: str) -> None:

@@ -3,6 +3,7 @@ from uuid import uuid4
 import requests
 
 from danswer.configs.constants import DocumentSource
+from danswer.db.enums import AccessType
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import NUM_DOCS
@@ -22,7 +23,7 @@ def _verify_document_permissions(
 ) -> None:
     acl_keys = set(retrieved_doc["access_control_list"].keys())
     print(f"ACL keys: {acl_keys}")
-    if cc_pair.is_public:
+    if cc_pair.access_type == AccessType.PUBLIC:
         if "PUBLIC" not in acl_keys:
             raise ValueError(
                 f"Document {retrieved_doc['document_id']} is public but"

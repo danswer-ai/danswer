@@ -5,6 +5,7 @@ from uuid import uuid4
 import requests
 
 from danswer.connectors.models import InputType
+from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
@@ -22,7 +23,7 @@ def _cc_pair_creator(
     connector_id: int,
     credential_id: int,
     name: str | None = None,
-    is_public: bool = True,
+    access_type: AccessType = AccessType.PUBLIC,
     groups: list[int] | None = None,
     user_performing_action: TestUser | None = None,
 ) -> TestCCPair:
@@ -30,7 +31,7 @@ def _cc_pair_creator(
 
     request = {
         "name": name,
-        "is_public": is_public,
+        "access_type": access_type,
         "groups": groups or [],
     }
 
@@ -47,7 +48,7 @@ def _cc_pair_creator(
         name=name,
         connector_id=connector_id,
         credential_id=credential_id,
-        is_public=is_public,
+        access_type=access_type,
         groups=groups or [],
     )
 
@@ -56,7 +57,7 @@ class CCPairManager:
     @staticmethod
     def create_from_scratch(
         name: str | None = None,
-        is_public: bool = True,
+        access_type: AccessType = AccessType.PUBLIC,
         groups: list[int] | None = None,
         source: DocumentSource = DocumentSource.FILE,
         input_type: InputType = InputType.LOAD_STATE,
@@ -69,7 +70,7 @@ class CCPairManager:
             source=source,
             input_type=input_type,
             connector_specific_config=connector_specific_config,
-            is_public=is_public,
+            is_public=(access_type == AccessType.PUBLIC),
             groups=groups,
             user_performing_action=user_performing_action,
         )
@@ -77,7 +78,7 @@ class CCPairManager:
             credential_json=credential_json,
             name=name,
             source=source,
-            curator_public=is_public,
+            curator_public=(access_type == AccessType.PUBLIC),
             groups=groups,
             user_performing_action=user_performing_action,
         )
@@ -85,7 +86,7 @@ class CCPairManager:
             connector_id=connector.id,
             credential_id=credential.id,
             name=name,
-            is_public=is_public,
+            access_type=access_type,
             groups=groups,
             user_performing_action=user_performing_action,
         )
@@ -95,7 +96,7 @@ class CCPairManager:
         connector_id: int,
         credential_id: int,
         name: str | None = None,
-        is_public: bool = True,
+        access_type: AccessType = AccessType.PUBLIC,
         groups: list[int] | None = None,
         user_performing_action: TestUser | None = None,
     ) -> TestCCPair:
@@ -103,7 +104,7 @@ class CCPairManager:
             connector_id=connector_id,
             credential_id=credential_id,
             name=name,
-            is_public=is_public,
+            access_type=access_type,
             groups=groups,
             user_performing_action=user_performing_action,
         )
@@ -172,7 +173,7 @@ class CCPairManager:
                     retrieved_cc_pair.name == cc_pair.name
                     and retrieved_cc_pair.connector.id == cc_pair.connector_id
                     and retrieved_cc_pair.credential.id == cc_pair.credential_id
-                    and retrieved_cc_pair.public_doc == cc_pair.is_public
+                    and retrieved_cc_pair.access_type == cc_pair.access_type
                     and set(retrieved_cc_pair.groups) == set(cc_pair.groups)
                 ):
                     return

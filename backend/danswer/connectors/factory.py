@@ -124,11 +124,11 @@ def identify_connector_class(
 
 
 def instantiate_connector(
+    db_session: Session,
     source: DocumentSource,
     input_type: InputType,
     connector_specific_config: dict[str, Any],
     credential: Credential,
-    db_session: Session,
 ) -> BaseConnector:
     connector_class = identify_connector_class(source, input_type)
     connector = connector_class(**connector_specific_config)

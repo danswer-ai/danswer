@@ -3,7 +3,6 @@ import time
 from collections.abc import Generator
 from collections.abc import Sequence
 from datetime import datetime
-from uuid import UUID
 
 from sqlalchemy import and_
 from sqlalchemy import delete
@@ -15,14 +14,17 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine.util import TransactionalContext
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import null
 
 from danswer.configs.constants import DEFAULT_BOOST
+from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.feedback import delete_document_feedback_for_documents__no_commit
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentByConnectorCredentialPair
+from danswer.db.models import User
 from danswer.db.tag import delete_document_tags_for_documents__no_commit
 from danswer.db.utils import model_to_dict
 from danswer.document_index.interfaces import DocumentMetadata
@@ -108,25 +110,34 @@ def get_document_cnts_for_cc_pairs(
     return db_session.execute(stmt).all()  # type: ignore
 
 
-def get_acccess_info_for_documents(
+def get_access_info_for_documents(
     db_session: Session,
     document_ids: list[str],
-) -> Sequence[tuple[str, list[UUID | None], bool]]:
+) -> Sequence[tuple[str, list[str | None], bool]]:
     """Gets back all relevant access info for the given documents. This includes
     the user_ids for cc pairs that the document is associated with + whether any
     of the associated cc pairs are intending to make the document globally public.
+    Returns the list where each element contains:
+    - Document ID (which is also the ID of the DocumentByConnectorCredentialPair)
+    - List of emails of Danswer users with direct access to the doc (includes a "None" element if
+      the connector was set up by an admin when auth was off
+    - bool for whether the document is public (the document later can also be marked public by
+      automatic permission sync step)
     """
+    stmt = select(
+        DocumentByConnectorCredentialPair.id,
+        func.array_agg(func.coalesce(User.email, null())).label("user_emails"),
+        func.bool_or(ConnectorCredentialPair.access_type == AccessType.PUBLIC).label(
+            "public_doc"
+        ),
+    ).where(DocumentByConnectorCredentialPair.id.in_(document_ids))
+
     stmt = (
-        select(
-            DocumentByConnectorCredentialPair.id,
-            func.array_agg(Credential.user_id).label("user_ids"),
-            func.bool_or(ConnectorCredentialPair.is_public).label("public_doc"),
-        )
-        .where(DocumentByConnectorCredentialPair.id.in_(document_ids))
-        .join(
+        stmt.join(
             Credential,
             DocumentByConnectorCredentialPair.credential_id == Credential.id,
         )
+        .outerjoin(User, Credential.user_id == User.id)
         .join(
             ConnectorCredentialPair,
             and_(
@@ -182,7 +193,19 @@ def upsert_documents(
     )
     # for now, there are no columns to update. If more metadata is added, then this
     # needs to change to an `on_conflict_do_update`
-    on_conflict_stmt = insert_stmt.on_conflict_do_nothing()
+
+    on_conflict_stmt = insert_stmt.on_conflict_do_update(
+        index_elements=["id"],  # Conflict target
+        set_={
+            "from_ingestion_api": insert_stmt.excluded.from_ingestion_api,
+            "boost": insert_stmt.excluded.boost,
+            "hidden": insert_stmt.excluded.hidden,
+            "semantic_id": insert_stmt.excluded.semantic_id,
+            "link": insert_stmt.excluded.link,
+            "primary_owners": insert_stmt.excluded.primary_owners,
+            "secondary_owners": insert_stmt.excluded.secondary_owners,
+        },
+    )
     db_session.execute(on_conflict_stmt)
     db_session.commit()
 
