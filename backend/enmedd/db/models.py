@@ -1457,7 +1457,7 @@ class Instance(Base):
         Enum(InstanceSubscriptionPlan, native_enum=False),
         default=InstanceSubscriptionPlan.PARTNER,
     )
-    owner_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"))
+    owner_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
 
     workspaces: Mapped[list[Workspace] | None] = relationship(
         "Workspace", back_populates="instance"
