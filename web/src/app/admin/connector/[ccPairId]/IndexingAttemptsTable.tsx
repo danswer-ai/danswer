@@ -53,9 +53,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
 
   // This is a cache of the data for each "chunk" which is a set of pages
   const [cachedChunks, setCachedChunks] = useState<{
-    [key: number]: {
-      [key: number]: PaginatedIndexAttempts;
-    };
+    [key: number]: PaginatedIndexAttempts[];
   }>({});
 
   // This is a set of the chunks that are currently being fetched
@@ -77,7 +75,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
       }
       const data = await response.json();
 
-      const newChunkData: { [key: number]: PaginatedIndexAttempts } = {};
+      const newChunkData: PaginatedIndexAttempts[] = [];
       for (let i = 0; i < CHUNK_SIZE; i++) {
         const startIndex = i * NUM_IN_PAGE;
         const endIndex = startIndex + NUM_IN_PAGE;
@@ -85,10 +83,10 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
           startIndex,
           endIndex
         );
-        newChunkData[i] = {
+        newChunkData.push({
           ...data,
           index_attempts: pageIndexAttempts,
-        };
+        });
       }
 
       setCachedChunks((prev) => ({
@@ -117,7 +115,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
 
     const nextChunkNum = Math.min(
       chunkNum + 1,
-      Math.ceil(totalPages / CHUNK_SIZE)
+      Math.ceil(totalPages / CHUNK_SIZE) - 1
     );
     if (!cachedChunks[nextChunkNum]) {
       fetchChunkData(nextChunkNum);
