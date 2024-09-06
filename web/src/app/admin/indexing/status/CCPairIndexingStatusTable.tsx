@@ -34,16 +34,6 @@ import { TOGGLED_CONNECTORS_COOKIE_NAME } from "@/lib/constants";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { ConnectorCredentialPairStatus } from "../../connector/[ccPairId]/types";
 
-const columnWidths = {
-  name: "40%",
-  docsIndexed: "10%",
-  activity: "10%",
-  visibility: "10%",
-  time: "10%",
-  lastStatus: "15%",
-  settings: "5%",
-};
-
 function SummaryRow({
   source,
   summary,
@@ -126,7 +116,7 @@ function SummaryRow({
         </div>
       </TableCell>
 
-      <TableCell className={`w-[${columnWidths.settings}]`}></TableCell>
+      <TableCell />
     </TableRow>
   );
 }

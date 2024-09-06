@@ -118,30 +118,3 @@ class TestPersona(BaseModel):
     llm_model_version_override: str | None
     users: list[str]
     groups: list[int]
-
-
-class TestChatSession(BaseModel):
-    id: int
-    persona_id: int
-    description: str
-
-
-class TestChatMessage(BaseModel):
-    chat_session_id: int
-    parent_message_id: str | None = None
-    message: str
-    response: str
-
-
-# class TestQARequest(BaseModel):
-#     messages: list[ThreadMessage]
-#     prompt_id: int | None
-#     persona_id: int
-#     multilingual_query_expansion: list[str] | None = None
-#     retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
-#     rerank_settings: RerankingDetails | None = None
-#     evaluation_type: LLMEvaluationType = LLMEvaluationType.UNSPECIFIED
-#     chain_of_thought: bool = False
-#     return_contexts: bool = False
-#     query_override: str | None = None
-#     skip_gen_ai_answer_generation: bool = False
