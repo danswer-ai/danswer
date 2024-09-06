@@ -60,7 +60,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   // we use it to avoid duplicate requests
   const ongoingRequestsRef = useRef<Set<number>>(new Set());
 
-  const urlBuilder = (batchNum: number) =>
+  const batchRetrievalUrlBuilder = (batchNum: number) =>
     `${buildCCPairInfoUrl(ccPair.id)}/index-attempts?page=${batchNum}&page_size=${BATCH_SIZE * NUM_IN_PAGE}`;
 
   // This fetches and caches the data for a given batch number
@@ -69,7 +69,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     ongoingRequestsRef.current.add(batchNum);
 
     try {
-      const response = await fetch(urlBuilder(batchNum + 1));
+      const response = await fetch(batchRetrievalUrlBuilder(batchNum + 1));
       if (!response.ok) {
         throw new Error("Failed to fetch data");
       }
