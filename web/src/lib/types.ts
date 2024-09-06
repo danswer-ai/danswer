@@ -238,6 +238,12 @@ const validSources = [
   "oci_storage",
   "not_applicable",
   "highspot",
-];
+  "ingestion_api",
+] as const;
 
 export type ValidSources = (typeof validSources)[number];
+// The valid sources that are actually valid to select in the UI
+export type ConfigurableSources = Exclude<
+  ValidSources,
+  "not_applicable" | "ingestion_api"
+>;

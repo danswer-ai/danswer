@@ -34,8 +34,9 @@ import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
 import { usePopup } from "../admin/connectors/Popup";
 import { FeedbackType } from "@/app/chat/types";
 import { FeedbackModal } from "@/app/chat/modal/FeedbackModal";
-import { handleChatFeedback } from "@/app/chat/lib";
+import { deleteChatSession, handleChatFeedback } from "@/app/chat/lib";
 import SearchAnswer from "./SearchAnswer";
+import { DeleteEntityModal } from "../modals/DeleteEntityModal";
 
 export type searchState =
   | "input"
@@ -267,7 +268,7 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       quotes,
     }));
-    setSearchState((searchState) => "input");
+    setSearchState((searchState) => "citing");
   };
 
   const updateDocs = (documents: SearchDanswerDocument[]) => {
@@ -294,7 +295,7 @@ export const SearchSection = ({
     }));
     if (disabledAgentic) {
       setIsFetching(false);
-      setSearchState("input");
+      setSearchState((searchState) => "citing");
     }
     if (documents.length == 0) {
       setSearchState("input");
@@ -332,11 +333,8 @@ export const SearchSection = ({
       messageId,
     }));
     router.refresh();
-    // setSearchState("input");
     setIsFetching(false);
     setSearchState((searchState) => "input");
-
-    // router.replace(`/search?searchId=${chat_session_id}`);
   };
 
   const updateDocumentRelevance = (relevance: Relevance) => {
@@ -511,7 +509,12 @@ export const SearchSection = ({
   };
   const [firstSearch, setFirstSearch] = useState(true);
   const [searchState, setSearchState] = useState<searchState>("input");
+  const [deletingChatSession, setDeletingChatSession] =
+    useState<ChatSession | null>();
 
+  const showDeleteModal = (chatSession: ChatSession) => {
+    setDeletingChatSession(chatSession);
+  };
   // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
   const [untoggled, setUntoggled] = useState(false);
 
@@ -579,10 +582,38 @@ export const SearchSection = ({
 
   const { popup, setPopup } = usePopup();
 
+  const shouldUseAgenticDisplay =
+    agenticResults &&
+    (searchResponse.documents || []).some(
+      (document) =>
+        searchResponse.additional_relevance &&
+        searchResponse.additional_relevance[document.document_id] !== undefined
+    );
+
   return (
     <>
       <div className="flex relative pr-[8px] h-full text-default">
         {popup}
+
+        {deletingChatSession && (
+          <DeleteEntityModal
+            entityType="search"
+            entityName={deletingChatSession.name}
+            onClose={() => setDeletingChatSession(null)}
+            onSubmit={async () => {
+              const response = await deleteChatSession(deletingChatSession.id);
+              if (response.ok) {
+                setDeletingChatSession(null);
+                // go back to the main page
+                router.push("/search");
+              } else {
+                const responseJson = await response.json();
+                setPopup({ message: responseJson.detail, type: "error" });
+              }
+              router.refresh();
+            }}
+          />
+        )}
         {currentFeedback && (
           <FeedbackModal
             feedbackType={currentFeedback[0]}
@@ -620,6 +651,7 @@ export const SearchSection = ({
         >
           <div className="w-full relative">
             <HistorySidebar
+              showDeleteModal={showDeleteModal}
               explicitlyUntoggle={explicitlyUntoggle}
               reset={() => setQuery("")}
               page="search"
@@ -664,7 +696,7 @@ export const SearchSection = ({
                     (ccPairs.length > 0 || documentSets.length > 0) && (
                       <SourceSelector
                         {...filterManager}
-                        showDocSidebar={showDocSidebar || toggledSidebar}
+                        showDocSidebar={toggledSidebar}
                         availableDocumentSets={finalAvailableDocumentSets}
                         existingSources={finalAvailableSources}
                         availableTags={tags}
@@ -719,7 +751,7 @@ export const SearchSection = ({
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic
                       }
-                      showingSidebar={showDocSidebar || toggledSidebar}
+                      showingSidebar={toggledSidebar}
                       agentic={agentic}
                       query={query}
                       setQuery={setQuery}
@@ -756,7 +788,9 @@ export const SearchSection = ({
                           contentEnriched={contentEnriched}
                           comments={comments}
                           sweep={sweep}
-                          agenticResults={agenticResults && !disabledAgentic}
+                          agenticResults={
+                            shouldUseAgenticDisplay && !disabledAgentic
+                          }
                           performSweep={performSweep}
                           searchResponse={searchResponse}
                           isFetching={isFetching}

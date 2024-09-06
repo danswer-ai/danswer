@@ -200,8 +200,8 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
 ]
 
 # Avoid to get archived pages
-CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
-    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
+CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES = (
+    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES", "").lower() == "true"
 )
 
 # Save pages labels as Danswer metadata tags
@@ -212,7 +212,12 @@ CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
 
 # Attachments exceeding this size will not be retrieved (in bytes)
 CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD = int(
-    os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD", 50 * 1024 * 1024)
+    os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD", 10 * 1024 * 1024)
+)
+# Attachments with more chars than this will not be indexed. This is to prevent extremely
+# large files from freezing indexing. 200,000 is ~100 google doc pages.
+CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD = int(
+    os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD", 200_000)
 )
 
 JIRA_CONNECTOR_LABELS_TO_SKIP = [

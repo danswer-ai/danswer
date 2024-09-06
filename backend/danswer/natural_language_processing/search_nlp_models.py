@@ -15,7 +15,7 @@ from danswer.configs.model_configs import (
     BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
 )
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.db.models import EmbeddingModel as DBEmbeddingModel
+from danswer.db.models import SearchSettings
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.natural_language_processing.utils import tokenizer_trim_content
 from danswer.utils.logger import setup_logger
@@ -90,6 +90,7 @@ class EmbeddingModel:
         query_prefix: str | None,
         passage_prefix: str | None,
         api_key: str | None,
+        api_url: str | None,
         provider_type: EmbeddingProvider | None,
         retrim_content: bool = False,
     ) -> None:
@@ -100,6 +101,7 @@ class EmbeddingModel:
         self.normalize = normalize
         self.model_name = model_name
         self.retrim_content = retrim_content
+        self.api_url = api_url
         self.tokenizer = get_tokenizer(
             model_name=model_name, provider_type=provider_type
         )
@@ -110,7 +112,7 @@ class EmbeddingModel:
     def _make_model_server_request(self, embed_request: EmbedRequest) -> EmbedResponse:
         def _make_request() -> EmbedResponse:
             response = requests.post(
-                self.embed_server_endpoint, json=embed_request.dict()
+                self.embed_server_endpoint, json=embed_request.model_dump()
             )
             try:
                 response.raise_for_status()
@@ -157,6 +159,7 @@ class EmbeddingModel:
                 text_type=text_type,
                 manual_query_prefix=self.query_prefix,
                 manual_passage_prefix=self.passage_prefix,
+                api_url=self.api_url,
             )
 
             response = self._make_model_server_request(embed_request)
@@ -209,6 +212,27 @@ class EmbeddingModel:
             max_seq_length=max_seq_length,
         )
 
+    @classmethod
+    def from_db_model(
+        cls,
+        search_settings: SearchSettings,
+        server_host: str,  # Changes depending on indexing or inference
+        server_port: int,
+        retrim_content: bool = False,
+    ) -> "EmbeddingModel":
+        return cls(
+            server_host=server_host,
+            server_port=server_port,
+            model_name=search_settings.model_name,
+            normalize=search_settings.normalize,
+            query_prefix=search_settings.query_prefix,
+            passage_prefix=search_settings.passage_prefix,
+            api_key=search_settings.api_key,
+            provider_type=search_settings.provider_type,
+            api_url=search_settings.api_url,
+            retrim_content=retrim_content,
+        )
+
 
 class RerankingModel:
     def __init__(
@@ -235,7 +259,7 @@ class RerankingModel:
         )
 
         response = requests.post(
-            self.rerank_server_endpoint, json=rerank_request.dict()
+            self.rerank_server_endpoint, json=rerank_request.model_dump()
         )
         response.raise_for_status()
 
@@ -268,7 +292,7 @@ class QueryAnalysisModel:
         )
 
         response = requests.post(
-            self.intent_server_endpoint, json=intent_request.dict()
+            self.intent_server_endpoint, json=intent_request.model_dump()
         )
         response.raise_for_status()
 
@@ -302,47 +326,35 @@ def warm_up_retry(
 
 
 def warm_up_bi_encoder(
-    embedding_model: DBEmbeddingModel,
-    model_server_host: str = MODEL_SERVER_HOST,
-    model_server_port: int = MODEL_SERVER_PORT,
+    embedding_model: EmbeddingModel,
     non_blocking: bool = False,
 ) -> None:
-    model_name = embedding_model.model_name
-    normalize = embedding_model.normalize
-    provider_type = embedding_model.provider_type
     warm_up_str = " ".join(WARM_UP_STRINGS)
 
-    logger.debug(f"Warming up encoder model: {model_name}")
-    get_tokenizer(model_name=model_name, provider_type=provider_type).encode(
-        warm_up_str
-    )
-
-    embed_model = EmbeddingModel(
-        model_name=model_name,
-        normalize=normalize,
-        provider_type=provider_type,
-        # Not a big deal if prefix is incorrect
-        query_prefix=None,
-        passage_prefix=None,
-        server_host=model_server_host,
-        server_port=model_server_port,
-        api_key=None,
-    )
+    logger.debug(f"Warming up encoder model: {embedding_model.model_name}")
+    get_tokenizer(
+        model_name=embedding_model.model_name,
+        provider_type=embedding_model.provider_type,
+    ).encode(warm_up_str)
 
     def _warm_up() -> None:
         try:
-            embed_model.encode(texts=[warm_up_str], text_type=EmbedTextType.QUERY)
-            logger.debug(f"Warm-up complete for encoder model: {model_name}")
+            embedding_model.encode(texts=[warm_up_str], text_type=EmbedTextType.QUERY)
+            logger.debug(
+                f"Warm-up complete for encoder model: {embedding_model.model_name}"
+            )
         except Exception as e:
             logger.warning(
-                f"Warm-up request failed for encoder model {model_name}: {e}"
+                f"Warm-up request failed for encoder model {embedding_model.model_name}: {e}"
             )
 
     if non_blocking:
         threading.Thread(target=_warm_up, daemon=True).start()
-        logger.debug(f"Started non-blocking warm-up for encoder model: {model_name}")
+        logger.debug(
+            f"Started non-blocking warm-up for encoder model: {embedding_model.model_name}"
+        )
     else:
-        retry_encode = warm_up_retry(embed_model.encode)
+        retry_encode = warm_up_retry(embedding_model.encode)
         retry_encode(texts=[warm_up_str], text_type=EmbedTextType.QUERY)
 
 

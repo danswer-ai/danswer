@@ -21,11 +21,11 @@ export default function FixedLogo() {
         }
         className="fixed cursor-pointer flex z-40 left-2.5 top-2"
       >
-        <div className="max-w-[200px] mobile:hidden flex items-center gap-x-1 my-auto">
+        <div className="max-w-[175px] mobile:hidden flex items-center gap-x-1 my-auto">
           <div className="flex-none my-auto">
             <Logo height={24} width={24} />
           </div>
-          <div className="">
+          <div className="w-full">
             {enterpriseSettings && enterpriseSettings.application_name ? (
               <div>
                 <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>

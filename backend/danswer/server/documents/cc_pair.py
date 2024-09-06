@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
-from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -21,12 +20,13 @@ from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import get_index_attempts_for_connector
 from danswer.db.models import User
-from danswer.db.models import UserRole
 from danswer.server.documents.models import CCPairFullInfo
+from danswer.server.documents.models import CCStatusUpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
+from ee.danswer.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
 
@@ -82,10 +82,6 @@ def get_cc_pair_full_info(
         num_docs_indexed=documents_indexed,
         is_editable_for_current_user=is_editable_for_current_user,
     )
-
-
-class CCStatusUpdateRequest(BaseModel):
-    status: ConnectorCredentialPairStatus
 
 
 @router.put("/admin/cc-pair/{cc_pair_id}/status")
@@ -157,11 +153,12 @@ def associate_credential_to_connector(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    if user and user.role != UserRole.ADMIN and metadata.is_public:
-        raise HTTPException(
-            status_code=400,
-            detail="Public connections cannot be created by non-admin users",
-        )
+    validate_user_creation_permissions(
+        db_session=db_session,
+        user=user,
+        target_group_ids=metadata.groups,
+        object_is_public=metadata.is_public,
+    )
 
     try:
         response = add_credential_to_connector(
@@ -170,7 +167,7 @@ def associate_credential_to_connector(
             connector_id=connector_id,
             credential_id=credential_id,
             cc_pair_name=metadata.name,
-            is_public=metadata.is_public,
+            is_public=True if metadata.is_public is None else metadata.is_public,
             groups=metadata.groups,
         )
 
