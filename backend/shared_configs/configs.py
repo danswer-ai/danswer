@@ -70,3 +70,5 @@ PRESERVED_SEARCH_FIELDS = [
     "passage_prefix",
     "query_prefix",
 ]
+
+CUSTOM_REFRESH_URL = os.environ.get("CUSTOM_REFRESH_URL") or "/settings/refresh-token"

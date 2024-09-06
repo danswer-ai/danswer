@@ -3,7 +3,6 @@ import {
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
-import { getSecondsUntilExpiration } from "@/lib/time";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
@@ -179,11 +178,10 @@ export default async function Home() {
   const agenticSearchEnabled = agenticSearchToggle
     ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || false
     : false;
-  const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   return (
     <>
-      <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
+      <HealthCheckBanner />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
       <InstantSSRAutoRefresh />
 
