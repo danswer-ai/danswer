@@ -168,7 +168,7 @@ def _index_vespa_chunk(
         SECONDARY_OWNERS: get_experts_stores_representations(document.secondary_owners),
         # the only `set` vespa has is `weightedset`, so we have to give each
         # element an arbitrary weight
-        # rkuo: acl, docset and boost metadata are now only updated through the metadata sync queue
+        # rkuo: acl, docset and boost metadata are also updated through the metadata sync queue
         # which only calls VespaIndex.update
         ACCESS_CONTROL_LIST: {acl_entry: 1 for acl_entry in chunk.access.to_acl()},
         DOCUMENT_SETS: {document_set: 1 for document_set in chunk.document_sets},

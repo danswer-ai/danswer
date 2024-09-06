@@ -42,8 +42,8 @@ def check_docs_exist(db_session: Session) -> bool:
 
 def count_documents_by_needs_sync(session: Session) -> int:
     """Get the count of all documents where:
-    1. last_updated is not null
-    2. last updated is newer than last_synced or last_synced is null.
+    1. last_modified is newer than last_synced
+    2. last_synced is null (meaning we've never synced)
 
     This function executes the query and returns the count of
     documents matching the criteria."""
@@ -79,8 +79,8 @@ def select_documents_for_connector_credential_pair_by_needs_sync(
             DbDocument.id.in_(initial_doc_ids_stmt),
             or_(
                 DbDocument.last_modified
-                > DbDocument.last_synced,  # if last_modified is newer
-                DbDocument.last_synced.is_(None),  # or last_synced is NULL
+                > DbDocument.last_synced,  # last_modified is newer than last_synced
+                DbDocument.last_synced.is_(None),  # never synced
             ),
         )
         .distinct()

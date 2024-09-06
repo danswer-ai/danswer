@@ -61,8 +61,8 @@ class IndexChunk(DocAwareChunk):
     title_embedding: Embedding | None
 
 
-# TODO(rkuo): we are no longer setting metadata on initial indexing
-# it is updated through the metadata queue.
+# TODO(rkuo): currently, this extra metadata sent during indexing is just for speed,
+# but full consistency happens on background sync
 class DocMetadataAwareIndexChunk(IndexChunk):
     """An `IndexChunk` that contains all necessary metadata to be indexed. This includes
     the following:

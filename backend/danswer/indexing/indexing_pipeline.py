@@ -305,7 +305,11 @@ def index_doc_batch(
             )
         }
 
-        # doc aware metadata is sent via the metadata sync queue now
+        # we're concerned about race conditions where multiple simultaneous indexings might result
+        # in one set of metadata overwriting another one in vespa.
+        # we still write data here for immediate and most likely correct sync, but
+        # to resolve this, an update of the last modified field at the end of this loop
+        # always triggers a final metadata sync
         access_aware_chunks = [
             DocMetadataAwareIndexChunk.from_index_chunk(
                 index_chunk=chunk,
@@ -332,11 +336,11 @@ def index_doc_batch(
             doc for doc in ctx.updatable_docs if doc.id in successful_doc_ids
         ]
 
-        # Update the time of latest version of the doc successfully indexed
         last_modified_ids = []
         ids_to_new_updated_at = {}
         for doc in successful_docs:
             last_modified_ids.append(doc.id)
+            # doc_updated_at is the connector source's idea of when the doc was last modified
             if doc.doc_updated_at is None:
                 continue
             ids_to_new_updated_at[doc.id] = doc.doc_updated_at

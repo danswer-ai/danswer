@@ -529,7 +529,7 @@ def select_documents_by_docset(
 ) -> Select:
     """This returns a statement that should be executed using
     .yield_per() to minimize overhead. The primary consumers of this function
-    are the cleanup tasks."""
+    are background processing task generators."""
 
     stmt = (
         select(Document)
