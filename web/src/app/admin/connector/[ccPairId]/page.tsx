@@ -111,9 +111,9 @@ function Main({ ccPairId }: { ccPairId: number }) {
       <Divider />
       <div className="mt-4">
         <Title>Delete Connector</Title>
-        <Text>
+        <p className="text-sm text-subtle">
           Deleting the connector will also delete all associated documents.
-        </Text>
+        </p>
 
         <div className="flex mt-16">
           <div className="mx-auto">

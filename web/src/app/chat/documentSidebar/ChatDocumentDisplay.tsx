@@ -42,7 +42,7 @@ export function ChatDocumentDisplay({
       <div className="pt-0.5">
         <SourceIcon sourceType={document.source_type} iconSize={18} />
       </div>
-      <div className="text-sm w-full truncate">
+      <div className="text-sm w-full truncate flex flex-col">
         <div>
           <div className="flex items-center">
             <a
@@ -78,18 +78,12 @@ export function ChatDocumentDisplay({
               </div>
             )}
           </div>
-          {document.updated_at && (
-            <Badge variant="secondary" className="my-1.5 inline-flex">
-              {document.updated_at}
-            </Badge>
-          )}
         </div>
-        <div>
-          <div className="mt-1">
-            <DocumentMetadataBlock document={document} />
-          </div>
-        </div>
-        <p className="break-words whitespace-normal">
+        {(document.updated_at || document.metadata) && (
+          <DocumentMetadataBlock document={document} />
+        )}
+
+        <p className="break-words whitespace-normal pt-2">
           {buildDocumentSummaryDisplay(
             document.match_highlights,
             document.blurb
