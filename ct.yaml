@@ -1,4 +1,9 @@
+# helm chart testing configuration file
+
 chart-dirs:
   - deployment/helm/charts
 
+chart-repos:
+  - vespa=https://unoplat.github.io/vespa-helm-charts
+  
 validate-maintainers: false
