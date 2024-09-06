@@ -13,7 +13,7 @@ env:
 
 jobs:
   integration-tests:
-    runs-on: Amd64
+    runs-on: Large-Amd64  # ensure that the below docker builds target the same platform
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,7 +32,7 @@ jobs:
         with:
           context: ./web
           file: ./web/Dockerfile
-          platforms: linux/arm64
+          platforms: linux/amd64
           pull: true
           push: true
           load: true
@@ -47,7 +47,7 @@ jobs:
         with:
           context: ./backend
           file: ./backend/Dockerfile
-          platforms: linux/arm64
+          platforms: linux/amd64
           pull: true
           push: true
           load: true
@@ -62,7 +62,7 @@ jobs:
         with:
           context: ./backend
           file: ./backend/Dockerfile.model_server
-          platforms: linux/arm64
+          platforms: linux/amd64
           pull: true
           push: true
           load: true
@@ -77,7 +77,7 @@ jobs:
         with:
           context: ./backend
           file: ./backend/tests/integration/Dockerfile
-          platforms: linux/arm64
+          platforms: linux/amd64
           pull: true
           push: true
           load: true
