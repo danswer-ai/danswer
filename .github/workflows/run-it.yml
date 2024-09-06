@@ -13,8 +13,7 @@ env:
 
 jobs:
   integration-tests:
-    runs-on: 
-      group: 'arm64-image-builders'
+    runs-on: Amd64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
