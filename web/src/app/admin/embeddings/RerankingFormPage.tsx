@@ -42,7 +42,6 @@ const RerankingDetailsForm = forwardRef<
     const [showLiteLLMConfigurationModal, setShowLiteLLMConfigurationModal] =
       useState(false);
 
-    console.log(currentRerankingDetails);
     return (
       <Formik
         innerRef={ref}
@@ -179,8 +178,6 @@ const RerankingDetailsForm = forwardRef<
                           }
 
                           if (!isSelected) {
-                            console.log("RESETIGN TEH VLAUE");
-
                             setRerankingDetails({
                               ...values,
                               rerank_provider_type: card.rerank_provider_type!,

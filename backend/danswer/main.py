@@ -360,7 +360,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 logger.notice(
                     f"Multilingual query expansion is enabled with {search_settings.multilingual_expansion}."
                 )
-        print(search_settings.__dict__)
         if (
             search_settings.rerank_model_name
             and not search_settings.provider_type
