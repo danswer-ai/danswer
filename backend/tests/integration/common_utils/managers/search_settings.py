@@ -12,7 +12,7 @@ from tests.integration.common_utils.test_models import TestUser
 
 class SearchSettingsManager:
     @staticmethod
-    def create(
+    def create_and_set(
         model_name: str = "test-model",
         model_dim: int = 768,
         normalize: bool = True,
