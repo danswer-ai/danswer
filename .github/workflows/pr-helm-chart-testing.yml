@@ -7,7 +7,7 @@ on:
 
 jobs:
   lint-test:
-    runs-on: ubuntu-latest
+    runs-on: Amd64
 
     # fetch-depth 0 is required for helm/chart-testing-action
     steps:
