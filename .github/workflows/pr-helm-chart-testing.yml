@@ -46,12 +46,10 @@ jobs:
         if [[ -n "$changed" ]]; then
           echo "changed=true" >> "$GITHUB_OUTPUT"
         fi
-      working-directory: ./deployment/helm
 
     - name: Run chart-testing (lint)
 #       if: steps.list-changed.outputs.changed == 'true'
-      run: ct lint --target-branch ${{ github.event.repository.default_branch }}
-      working-directory: ./deployment/helm
+      run: ct lint --all --target-branch ${{ github.event.repository.default_branch }}
 
     - name: Create kind cluster
 #       if: steps.list-changed.outputs.changed == 'true'
@@ -59,6 +57,6 @@ jobs:
 
     - name: Run chart-testing (install)
 #       if: steps.list-changed.outputs.changed == 'true'
-      run: ct install --target-branch ${{ github.event.repository.default_branch }}
-      working-directory: ./deployment/helm
+      run: ct install --all
+#       run: ct install --target-branch ${{ github.event.repository.default_branch }}
       
