@@ -244,6 +244,8 @@ async def delete_user(
         db_session.delete(user_to_delete)
         db_session.commit()
 
+        # NOTE: edge case may exist with race conditions
+        # with this `invited user` scheme generally.
         user_emails = get_invited_users()
         remaining_users = [
             user for user in user_emails if user != user_email.user_email
