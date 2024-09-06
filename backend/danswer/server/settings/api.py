@@ -29,7 +29,6 @@ from danswer.server.settings.store import store_settings
 from danswer.utils.logger import setup_logger
 
 
-router = APIRouter()
 logger = setup_logger()
 
 
