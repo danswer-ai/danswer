@@ -1,3 +1,8 @@
+# This workflow is intentionally disabled while we're still working on it
+# It's close to ready, but a race condition needs to be fixed with
+# API server and Vespa startup, and it needs to have a way to build/test against
+# local containers
+
 name: Helm - Lint and Test Charts
 
 on:
