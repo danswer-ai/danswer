@@ -108,8 +108,6 @@ export default function AddConnector({
       {} as { [record: string]: any }
     ),
   });
-  console.log(formValues);
-  console.log(configuration.values);
 
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
