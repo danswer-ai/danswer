@@ -17,7 +17,6 @@ import openpyxl  # type: ignore
 import pptx  # type: ignore
 from pypdf import PdfReader
 from pypdf.errors import PdfStreamError
-from pypdf.generic import IndirectObject
 
 from danswer.configs.constants import DANSWER_METADATA_FILENAME
 from danswer.file_processing.html_utils import parse_html_page_basic
@@ -217,10 +216,10 @@ def read_pdf_file(
             metadata = {}
 
             for k, v in pdf_reader.metadata.items():
-                if isinstance(v, IndirectObject):
+                if not isinstance(str, v):
                     continue
 
-                metadata[k[1:] if k.startswith("/") else k] = v
+                metadata[k[1:] if k.startswith("/") else k] = str(v)
 
         return (
             TEXT_SECTION_SEPARATOR.join(
