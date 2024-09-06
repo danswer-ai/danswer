@@ -84,7 +84,7 @@ postgresql:
   auth:
     existingSecret: danswer-secrets
     secretKeys:
-      adminPasswordKey: postgres_password # overwriting as postgres typically expects 'postgres-password'
+      adminPasswordKey: postgres_password  # overwriting as postgres typically expects 'postgres-password'
 
 nginx:
   containerPorts:
@@ -330,7 +330,7 @@ vespa:
   affinity: {}
 
 
-#ingress:
+# ingress:
 #  enabled: false
 #  className: ""
 #  annotations: {}
@@ -358,7 +358,7 @@ persistence:
 auth:
   # for storing smtp, oauth, slack, and other secrets
   # keys are lowercased version of env vars (e.g. SMTP_USER -> smtp_user)
-  existingSecret: "" # danswer-secrets
+  existingSecret: ""  # danswer-secrets
   # optionally override the secret keys to reference in the secret
   # this is used to populate the env vars in individual deployments
   # that are read from secrets.yaml
@@ -391,8 +391,8 @@ configMap:
   AUTH_TYPE: "disabled"  # Change this for production uses unless Danswer is only accessible behind VPN
   SESSION_EXPIRE_TIME_SECONDS: "86400"  # 1 Day Default
   VALID_EMAIL_DOMAINS: ""  # Can be something like danswer.ai, as an extra double-check
-  SMTP_SERVER: "" # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
-  SMTP_PORT: "" # For sending verification emails, if unspecified then defaults to '587'
+  SMTP_SERVER: ""  # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
+  SMTP_PORT: ""  # For sending verification emails, if unspecified then defaults to '587'
   SMTP_USER: ""  # 'your-email@company.com'
   # SMTP_PASS: ""  # 'your-gmail-password'
   EMAIL_FROM: ""  # 'your-email@company.com' SMTP_USER missing used instead

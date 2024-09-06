@@ -1,0 +1,4 @@
+chart-dirs:
+  - deployment/helm/charts
+
+validate-maintainers: false
