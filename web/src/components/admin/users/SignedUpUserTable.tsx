@@ -225,7 +225,6 @@ const SignedUpUserTable = ({
     if (type === "success") mutate();
     setPopup({ message, type });
   };
-  const [showDeleteUser, setShowDeleteUser] = useState<null | User>(null);
 
   const onRoleChangeSuccess = () =>
     handlePopup("User role updated successfully!", "success");
