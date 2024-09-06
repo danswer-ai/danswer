@@ -42,6 +42,7 @@ const RerankingDetailsForm = forwardRef<
     const [showLiteLLMConfigurationModal, setShowLiteLLMConfigurationModal] =
       useState(false);
 
+    console.log(currentRerankingDetails);
     return (
       <Formik
         innerRef={ref}
@@ -141,14 +142,22 @@ const RerankingDetailsForm = forwardRef<
                       )
                     : rerankingModels.filter(
                         (modelCard) =>
-                          modelCard.modelName ==
-                          originalRerankingDetails.rerank_model_name
+                          (modelCard.modelName ==
+                            originalRerankingDetails.rerank_model_name &&
+                            modelCard.rerank_provider_type ==
+                              originalRerankingDetails.rerank_provider_type) ||
+                          (modelCard.rerank_provider_type ==
+                            RerankerProvider.LITELLM &&
+                            originalRerankingDetails.rerank_provider_type ==
+                              RerankerProvider.LITELLM)
                       )
                   ).map((card) => {
                     const isSelected =
                       values.rerank_provider_type ===
                         card.rerank_provider_type &&
-                      values.rerank_model_name === card.modelName;
+                      (card.modelName == null ||
+                        values.rerank_model_name === card.modelName);
+
                     return (
                       <div
                         key={`${card.rerank_provider_type}-${card.modelName}`}
@@ -158,26 +167,41 @@ const RerankingDetailsForm = forwardRef<
                             : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
                         }`}
                         onClick={() => {
-                          if (card.rerank_provider_type) {
+                          if (
+                            card.rerank_provider_type == RerankerProvider.COHERE
+                          ) {
                             setIsApiKeyModalOpen(true);
+                          } else if (
+                            card.rerank_provider_type ==
+                            RerankerProvider.LITELLM
+                          ) {
+                            setShowLiteLLMConfigurationModal(true);
                           }
-                          setRerankingDetails({
-                            ...values,
-                            rerank_provider_type: card.rerank_provider_type!,
-                            rerank_model_name: card.modelName,
-                            rerank_api_key: null,
-                          });
-                          setFieldValue(
-                            "rerank_provider_type",
-                            card.rerank_provider_type
-                          );
-                          setFieldValue("rerank_model_name", card.modelName);
+
+                          if (!isSelected) {
+                            console.log("RESETIGN TEH VLAUE");
+
+                            setRerankingDetails({
+                              ...values,
+                              rerank_provider_type: card.rerank_provider_type!,
+                              rerank_model_name: card.modelName || null,
+                              rerank_api_key: null,
+                              rerank_api_url: null,
+                            });
+                            setFieldValue(
+                              "rerank_provider_type",
+                              card.rerank_provider_type
+                            );
+                            setFieldValue("rerank_model_name", card.modelName);
+                          }
                         }}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center">
                             {card.rerank_provider_type ===
-                            RerankerProvider.COHERE ? (
+                            RerankerProvider.LITELLM ? (
+                              <LiteLLMIcon size={24} className="mr-2" />
+                            ) : RerankerProvider.COHERE ? (
                               <CohereIcon size={24} className="mr-2" />
                             ) : (
                               <MixedBreadIcon size={24} className="mr-2" />
@@ -207,38 +231,6 @@ const RerankingDetailsForm = forwardRef<
                       </div>
                     );
                   })}
-                  <div
-                    className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                      values.rerank_provider_type === RerankerProvider.LITELLM
-                        ? "border-blue-500 bg-blue-50 shadow-md"
-                        : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
-                    }`}
-                    onClick={() => {
-                      setShowLiteLLMConfigurationModal(true);
-                      setRerankingDetails({
-                        ...values,
-                        rerank_provider_type: RerankerProvider.LITELLM,
-                        rerank_model_name: "litellm",
-                      });
-                      setFieldValue(
-                        "rerank_provider_type",
-                        RerankerProvider.LITELLM
-                      );
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center">
-                        <LiteLLMIcon size={24} className="mr-2" />
-                        <h3 className="font-bold text-lg">LiteLLM</h3>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Configure custom LiteLLM reranking model
-                    </p>
-                    <div className="text-xs text-gray-500">
-                      Self-hosted / Cloud-based
-                    </div>
-                  </div>
                 </div>
 
                 {showLiteLLMConfigurationModal && (
