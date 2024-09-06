@@ -361,7 +361,7 @@ auth:
   existingSecret: ""  # danswer-secrets
   # optionally override the secret keys to reference in the secret
   # this is used to populate the env vars in individual deployments
-  # that are read from secrets.yaml
+  # the values here reference the keys in secrets below
   secretKeys:
     postgres_password: "postgres_password"
     smtp_pass: ""
@@ -371,7 +371,7 @@ auth:
     gen_ai_api_key: ""
     danswer_bot_slack_app_token: ""
     danswer_bot_slack_bot_token: ""
-    redis_password: "password"
+    redis_password: "redis_password"
   # will be overridden by the existingSecret if set
   secretName: "danswer-secrets"
   # set values as strings, they will be base64 encoded
