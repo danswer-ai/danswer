@@ -220,6 +220,8 @@ class RecursiveIndexer:
 
         # Initial fetch of first level children
         index = start_ind
+        print("\n\n\nthis is my page id")
+        print(page_id)
         while batch := self._fetch_single_depth_child_pages(
             index, self.batch_size, page_id
         ):

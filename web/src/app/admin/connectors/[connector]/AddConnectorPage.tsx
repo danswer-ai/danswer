@@ -514,6 +514,7 @@ export default function AddConnector({
                     {isPaidEnterpriseFeaturesEnabled && (
                       <>
                         <IsPublicGroupSelector
+                          removeIndent
                           formikProps={formikProps}
                           objectName="Connector"
                         />
