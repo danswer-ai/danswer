@@ -1,6 +1,9 @@
+import math
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -18,12 +21,15 @@ from danswer.db.engine import get_session
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
-from danswer.db.index_attempt import get_index_attempts_for_connector
+from danswer.db.index_attempt import count_index_attempts_for_connector
+from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
+from danswer.db.index_attempt import get_paginated_index_attempts_for_cc_pair_id
 from danswer.db.models import User
 from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import CCStatusUpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
+from danswer.server.documents.models import PaginatedIndexAttempts
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.user_group import validate_user_creation_permissions
@@ -31,6 +37,38 @@ from ee.danswer.db.user_group import validate_user_creation_permissions
 logger = setup_logger()
 
 router = APIRouter(prefix="/manage")
+
+
+@router.get("/admin/cc-pair/{cc_pair_id}/index-attempts")
+def get_cc_pair_index_attempts(
+    cc_pair_id: int,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=1000),
+    user: User | None = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> PaginatedIndexAttempts:
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id, db_session, user, get_editable=False
+    )
+    if not cc_pair:
+        raise HTTPException(
+            status_code=400, detail="CC Pair not found for current user permissions"
+        )
+    total_count = count_index_attempts_for_connector(
+        db_session=db_session,
+        connector_id=cc_pair.connector_id,
+    )
+    index_attempts = get_paginated_index_attempts_for_cc_pair_id(
+        db_session=db_session,
+        connector_id=cc_pair.connector_id,
+        page=page,
+        page_size=page_size,
+    )
+    return PaginatedIndexAttempts.from_models(
+        index_attempt_models=index_attempts,
+        page=page,
+        total_pages=math.ceil(total_count / page_size),
+    )
 
 
 @router.get("/admin/cc-pair/{cc_pair_id}")
@@ -56,11 +94,6 @@ def get_cc_pair_full_info(
         credential_id=cc_pair.credential_id,
     )
 
-    index_attempts = get_index_attempts_for_connector(
-        db_session,
-        cc_pair.connector_id,
-    )
-
     document_count_info_list = list(
         get_document_cnts_for_cc_pairs(
             db_session=db_session,
@@ -71,9 +104,20 @@ def get_cc_pair_full_info(
         document_count_info_list[0][-1] if document_count_info_list else 0
     )
 
+    latest_attempt = get_latest_index_attempt_for_cc_pair_id(
+        db_session=db_session,
+        connector_credential_pair_id=cc_pair.id,
+        secondary_index=False,
+        only_finished=False,
+    )
+
     return CCPairFullInfo.from_models(
         cc_pair_model=cc_pair,
-        index_attempt_models=list(index_attempts),
+        number_of_index_attempts=count_index_attempts_for_connector(
+            db_session=db_session,
+            connector_id=cc_pair.connector_id,
+        ),
+        last_index_attempt=latest_attempt,
         latest_deletion_attempt=get_deletion_attempt_snapshot(
             connector_id=cc_pair.connector_id,
             credential_id=cc_pair.credential_id,
