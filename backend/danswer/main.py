@@ -360,8 +360,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 logger.notice(
                     f"Multilingual query expansion is enabled with {search_settings.multilingual_expansion}."
                 )
-
-        if search_settings.rerank_model_name and not search_settings.provider_type:
+        print(search_settings.__dict__)
+        if (
+            search_settings.rerank_model_name
+            and not search_settings.provider_type
+            and not search_settings.rerank_provider_type
+        ):
             warm_up_cross_encoder(search_settings.rerank_model_name)
 
         logger.notice("Verifying query preprocessing (NLTK) data is downloaded")

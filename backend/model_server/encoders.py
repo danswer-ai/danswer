@@ -254,27 +254,6 @@ def embed_with_litellm_proxy(
         return [embedding["embedding"] for embedding in result["data"]]
 
 
-def rerank_with_litellm_proxy(
-    query: str, docs: list[str], api_url: str, model_name: str, api_key: str | None
-) -> list[float]:
-    headers = {} if not api_key else {"Authorization": f"Bearer {api_key}"}
-
-    with httpx.Client() as client:
-        response = client.post(
-            api_url,
-            json={
-                "model": model_name,
-                "query": query,
-                "documents": docs,
-            },
-            headers=headers,
-        )
-        response.raise_for_status()
-        result = response.json()
-        # Assuming the response contains a list of documents with scores
-        return [doc["score"] for doc in result["documents"]]
-
-
 @simple_log_function_time()
 def embed_text(
     texts: list[str],
@@ -383,6 +362,28 @@ def cohere_rerank(
     return [result.relevance_score for result in sorted_results]
 
 
+def litellm_rerank(
+    query: str, docs: list[str], api_url: str, model_name: str, api_key: str | None
+) -> list[float]:
+    headers = {} if not api_key else {"Authorization": f"Bearer {api_key}"}
+    with httpx.Client() as client:
+        response = client.post(
+            api_url,
+            json={
+                "model": model_name,
+                "query": query,
+                "documents": docs,
+            },
+            headers=headers,
+        )
+        response.raise_for_status()
+        result = response.json()
+        return [
+            item["relevance_score"]
+            for item in sorted(result["results"], key=lambda x: x["index"])
+        ]
+
+
 @router.post("/bi-encoder-embed")
 async def process_embed_request(
     embed_request: EmbedRequest,
@@ -443,7 +444,7 @@ async def process_rerank_request(rerank_request: RerankRequest) -> RerankRespons
             if rerank_request.api_url is None:
                 raise ValueError("API URL is required for LiteLLM reranking.")
 
-            sim_scores = rerank_with_litellm_proxy(
+            sim_scores = litellm_rerank(
                 query=rerank_request.query,
                 docs=rerank_request.documents,
                 api_url=rerank_request.api_url,
@@ -461,7 +462,6 @@ async def process_rerank_request(rerank_request: RerankRequest) -> RerankRespons
                 docs=rerank_request.documents,
                 model_name=rerank_request.model_name,
                 api_key=rerank_request.api_key,
-                api_url=rerank_request.api_url,
             )
             return RerankResponse(scores=sim_scores)
         else:

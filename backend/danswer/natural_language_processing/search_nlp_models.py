@@ -370,6 +370,7 @@ def warm_up_cross_encoder(
     reranking_model = RerankingModel(
         model_name=rerank_model_name,
         provider_type=None,
+        api_url=None,
         api_key=None,
     )
 

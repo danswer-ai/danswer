@@ -10,7 +10,7 @@ import {
   CloudEmbeddingModel,
   EmbeddingProvider,
   HostedEmbeddingModel,
-} from "../../../../components/embedding/interfaces";
+} from "@/components/embedding/interfaces";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR, { mutate } from "swr";
@@ -18,7 +18,6 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import AdvancedEmbeddingFormPage from "./AdvancedEmbeddingFormPage";
 import {
   AdvancedSearchConfiguration,
-  RerankerProvider,
   RerankingDetails,
   SavedSearchSettings,
 } from "../interfaces";
@@ -49,6 +48,7 @@ export default function EmbeddingForm() {
     num_rerank: 0,
     rerank_provider_type: null,
     rerank_model_name: "",
+    rerank_api_url: null,
   });
 
   const updateAdvancedEmbeddingDetails = (
@@ -124,6 +124,7 @@ export default function EmbeddingForm() {
         num_rerank: searchSettings.num_rerank,
         rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
+        rerank_api_url: searchSettings.rerank_api_url,
       });
     }
   }, [searchSettings]);
@@ -134,12 +135,14 @@ export default function EmbeddingForm() {
         num_rerank: searchSettings.num_rerank,
         rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
+        rerank_api_url: searchSettings.rerank_api_url,
       }
     : {
         rerank_api_key: "",
         num_rerank: 0,
         rerank_provider_type: null,
         rerank_model_name: "",
+        rerank_api_url: null,
       };
 
   useEffect(() => {
