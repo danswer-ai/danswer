@@ -112,7 +112,6 @@ async def refresh_access_token(
         logger.debug(f"Access token has been refreshed for user {user.id}")
 
         await user_manager.oauth_callback(
-            oauth_name="google",
             access_token=new_access_token,
             account_id=data["userinfo"]["userId"],
             account_email=data["userinfo"]["email"],

@@ -134,8 +134,6 @@ export function getSecondsUntilExpiration(
     return null;
   }
 
-  console.log(oidc_expiry);
-
   return Math.max(
     0,
     Math.min(
