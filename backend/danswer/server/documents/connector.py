@@ -66,7 +66,7 @@ from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
-from danswer.db.index_attempt import get_latest_finished_index_attempt_for_cc_pair
+from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
 from danswer.db.models import UserRole
@@ -453,10 +453,11 @@ def get_connector_indexing_status(
             (connector.id, credential.id)
         )
 
-        latest_finished_attempt = get_latest_finished_index_attempt_for_cc_pair(
+        latest_finished_attempt = get_latest_index_attempt_for_cc_pair_id(
+            db_session=db_session,
             connector_credential_pair_id=cc_pair.id,
             secondary_index=secondary_index,
-            db_session=db_session,
+            only_finished=True,
         )
 
         indexing_statuses.append(

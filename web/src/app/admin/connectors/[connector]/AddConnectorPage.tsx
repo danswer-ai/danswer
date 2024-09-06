@@ -95,7 +95,7 @@ export default function AddConnector({
     ...configuration.values.reduce(
       (acc, field) => {
         if (field.type === "select") {
-          acc[field.name] = field.default || "";
+          acc[field.name] = field.options ? field.options[field.default!]! : "";
         } else if (field.type === "list") {
           acc[field.name] = field.default || [];
         } else if (field.type === "checkbox") {
@@ -339,11 +339,13 @@ export default function AddConnector({
     ...configuration.values.reduce(
       (acc, field) => {
         let schema: any =
-          field.type === "list"
-            ? Yup.array().of(Yup.string())
-            : field.type === "checkbox"
-              ? Yup.boolean()
-              : Yup.string();
+          field.type === "select"
+            ? Yup.string()
+            : field.type === "list"
+              ? Yup.array().of(Yup.string())
+              : field.type === "checkbox"
+                ? Yup.boolean()
+                : Yup.string();
 
         if (!field.optional) {
           schema = schema.required(`${field.label} is required`);
