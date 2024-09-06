@@ -215,8 +215,9 @@ def read_pdf_file(
         if pdf_reader.metadata is not None:
             for key, value in pdf_reader.metadata.items():
                 clean_key = key.lstrip("/")
-                if isinstance(value, str):
+                if isinstance(value, str) and value.strip():
                     metadata[clean_key] = value
+
                 elif isinstance(value, list) and all(
                     isinstance(item, str) for item in value
                 ):
