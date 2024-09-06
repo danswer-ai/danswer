@@ -49,6 +49,7 @@ export type ValidStatuses =
   | "not_started";
 export type TaskStatus = "PENDING" | "STARTED" | "SUCCESS" | "FAILURE";
 export type Feedback = "like" | "dislike";
+export type AccessType = "public" | "private" | "sync";
 
 export interface DocumentBoostStatus {
   document_id: string;
@@ -80,7 +81,7 @@ export interface ConnectorIndexingStatus<
   cc_pair_status: ConnectorCredentialPairStatus;
   connector: Connector<ConnectorConfigType>;
   credential: Credential<ConnectorCredentialType>;
-  public_doc: boolean;
+  access_type: AccessType;
   owner: string;
   groups: number[];
   last_finished_status: ValidStatuses | null;
