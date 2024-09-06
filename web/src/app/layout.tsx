@@ -3,11 +3,9 @@ import "./globals.css";
 import {
   fetchEnterpriseSettingsSS,
   fetchSettingsSS,
-  SettingsError,
 } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
-  CUSTOM_REFRESH_URL,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
 } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";

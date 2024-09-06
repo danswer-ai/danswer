@@ -4,7 +4,6 @@ import { errorHandlingFetcher, RedirectError } from "@/lib/fetcher";
 import useSWR from "swr";
 import { Modal } from "../Modal";
 import { useEffect, useState } from "react";
-import { NEXT_PUBLIC_CUSTOM_REFRESH } from "@/lib/constants";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { User } from "@/lib/types";
 
@@ -34,27 +33,28 @@ export const HealthCheckBanner = () => {
   }, [user]);
 
   useEffect(() => {
-    if (NEXT_PUBLIC_CUSTOM_REFRESH) {
+    if (true) {
       let refreshTimeoutId: NodeJS.Timeout;
       let expireTimeoutId: NodeJS.Timeout;
 
       const refreshToken = async () => {
-        console.debug(
-          `Attempting to refresh token. Current seconds until expiration: ${secondsUntilExpiration}`
-        );
         try {
-          const response = await fetch("/api/settings/refresh-token", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
+          const response = await fetch(
+            "/api/enterprise-settings/refresh-token",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
           console.debug("Token refresh successful");
           // Force revalidation of user data
+
           await mutateUser(undefined, { revalidate: true });
           updateExpirationTime();
         } catch (error) {
@@ -64,20 +64,14 @@ export const HealthCheckBanner = () => {
 
       const scheduleRefreshAndExpire = () => {
         if (secondsUntilExpiration !== null) {
-          if (secondsUntilExpiration > 30) {
-            const timeUntilRefresh = (secondsUntilExpiration - 30) * 1000;
-            refreshTimeoutId = setTimeout(refreshToken, timeUntilRefresh);
-          }
+          const timeUntilRefresh = (secondsUntilExpiration + 0.5) * 1000;
+          refreshTimeoutId = setTimeout(refreshToken, timeUntilRefresh);
 
-          if (secondsUntilExpiration > 5) {
-            const timeUntilExpire = (secondsUntilExpiration - 5) * 1000;
-            expireTimeoutId = setTimeout(() => {
-              console.debug("Session expired. Setting expired state to true.");
-              setExpired(true);
-            }, timeUntilExpire);
-          } else {
+          const timeUntilExpire = (secondsUntilExpiration + 10) * 1000;
+          expireTimeoutId = setTimeout(() => {
+            console.debug("Session expired. Setting expired state to true.");
             setExpired(true);
-          }
+          }, timeUntilExpire);
         }
       };
 
