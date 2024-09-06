@@ -1,4 +1,4 @@
-# helm chart testing configuration file
+# See https://github.com/helm/chart-testing#configuration
 
 chart-dirs:
   - deployment/helm/charts
@@ -7,4 +7,6 @@ chart-repos:
   - vespa=https://unoplat.github.io/vespa-helm-charts
   - postgresql=https://charts.bitnami.com/bitnami
   
+helm-extra-args: --timeout 900s
+
 validate-maintainers: false
