@@ -214,12 +214,10 @@ def read_pdf_file(
         metadata = {}
         if pdf_reader.metadata is not None:
             metadata = {}
-
-            for k, v in pdf_reader.metadata.items():
-                if not isinstance(str, v):
-                    continue
-
-                metadata[k[1:] if k.startswith("/") else k] = str(v)
+            for key, value in pdf_reader.metadata.items():
+                if isinstance(value, str):
+                    clean_key = key.lstrip("/")
+                    metadata[clean_key] = value
 
         return (
             TEXT_SECTION_SEPARATOR.join(
