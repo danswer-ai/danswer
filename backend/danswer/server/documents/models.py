@@ -185,6 +185,28 @@ class IndexAttemptError(BaseModel):
         )
 
 
+class PaginatedIndexAttempts(BaseModel):
+    index_attempts: list[IndexAttemptSnapshot]
+    page: int
+    total_pages: int
+
+    @classmethod
+    def from_models(
+        cls,
+        index_attempt_models: list[IndexAttempt],
+        page: int,
+        total_pages: int,
+    ) -> "PaginatedIndexAttempts":
+        return cls(
+            index_attempts=[
+                IndexAttemptSnapshot.from_index_attempt_db_model(index_attempt_model)
+                for index_attempt_model in index_attempt_models
+            ],
+            page=page,
+            total_pages=total_pages,
+        )
+
+
 class CCPairFullInfo(BaseModel):
     id: int
     name: str
@@ -192,7 +214,8 @@ class CCPairFullInfo(BaseModel):
     num_docs_indexed: int
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
-    index_attempts: list[IndexAttemptSnapshot]
+    number_of_index_attempts: int
+    last_index_attempt_status: IndexingStatus | None
     latest_deletion_attempt: DeletionAttemptSnapshot | None
     is_public: bool
     is_editable_for_current_user: bool
@@ -201,11 +224,27 @@ class CCPairFullInfo(BaseModel):
     def from_models(
         cls,
         cc_pair_model: ConnectorCredentialPair,
-        index_attempt_models: list[IndexAttempt],
         latest_deletion_attempt: DeletionAttemptSnapshot | None,
+        number_of_index_attempts: int,
+        last_index_attempt: IndexAttempt | None,
         num_docs_indexed: int,  # not ideal, but this must be computed separately
         is_editable_for_current_user: bool,
     ) -> "CCPairFullInfo":
+        # figure out if we need to artificially deflate the number of docs indexed.
+        # This is required since the total number of docs indexed by a CC Pair is
+        # updated before the new docs for an indexing attempt. If we don't do this,
+        # there is a mismatch between these two numbers which may confuse users.
+        last_indexing_status = last_index_attempt.status if last_index_attempt else None
+        if (
+            last_indexing_status == IndexingStatus.SUCCESS
+            and number_of_index_attempts == 1
+            and last_index_attempt
+            and last_index_attempt.new_docs_indexed
+        ):
+            num_docs_indexed = (
+                last_index_attempt.new_docs_indexed if last_index_attempt else 0
+            )
+
         return cls(
             id=cc_pair_model.id,
             name=cc_pair_model.name,
@@ -217,10 +256,8 @@ class CCPairFullInfo(BaseModel):
             credential=CredentialSnapshot.from_credential_db_model(
                 cc_pair_model.credential
             ),
-            index_attempts=[
-                IndexAttemptSnapshot.from_index_attempt_db_model(index_attempt_model)
-                for index_attempt_model in index_attempt_models
-            ],
+            number_of_index_attempts=number_of_index_attempts,
+            last_index_attempt_status=last_indexing_status,
             latest_deletion_attempt=latest_deletion_attempt,
             is_public=cc_pair_model.is_public,
             is_editable_for_current_user=is_editable_for_current_user,

@@ -96,7 +96,7 @@ export const connectorConfigs: Record<
         query: "Select the web connector type:",
         label: "Scrape Method",
         name: "web_connector_type",
-        optional: true,
+        default: 0,
         options: [
           { name: "recursive", value: "recursive" },
           { name: "single", value: "single" },

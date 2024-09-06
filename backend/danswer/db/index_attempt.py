@@ -211,12 +211,41 @@ def get_latest_index_attempts(
     return db_session.execute(stmt).scalars().all()
 
 
-def get_index_attempts_for_connector(
+def count_index_attempts_for_connector(
     db_session: Session,
     connector_id: int,
     only_current: bool = True,
     disinclude_finished: bool = False,
-) -> Sequence[IndexAttempt]:
+) -> int:
+    stmt = (
+        select(IndexAttempt)
+        .join(ConnectorCredentialPair)
+        .where(ConnectorCredentialPair.connector_id == connector_id)
+    )
+    if disinclude_finished:
+        stmt = stmt.where(
+            IndexAttempt.status.in_(
+                [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]
+            )
+        )
+    if only_current:
+        stmt = stmt.join(SearchSettings).where(
+            SearchSettings.status == IndexModelStatus.PRESENT
+        )
+    # Count total items for pagination
+    count_stmt = stmt.with_only_columns(func.count()).order_by(None)
+    total_count = db_session.execute(count_stmt).scalar_one()
+    return total_count
+
+
+def get_paginated_index_attempts_for_cc_pair_id(
+    db_session: Session,
+    connector_id: int,
+    page: int,
+    page_size: int,
+    only_current: bool = True,
+    disinclude_finished: bool = False,
+) -> list[IndexAttempt]:
     stmt = (
         select(IndexAttempt)
         .join(ConnectorCredentialPair)
@@ -233,22 +262,30 @@ def get_index_attempts_for_connector(
             SearchSettings.status == IndexModelStatus.PRESENT
         )
 
-    stmt = stmt.order_by(IndexAttempt.time_created.desc())
-    return db_session.execute(stmt).scalars().all()
+    stmt = stmt.order_by(IndexAttempt.time_started.desc())
+
+    # Apply pagination
+    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+
+    return list(db_session.execute(stmt).scalars().all())
 
 
-def get_latest_finished_index_attempt_for_cc_pair(
+def get_latest_index_attempt_for_cc_pair_id(
+    db_session: Session,
     connector_credential_pair_id: int,
     secondary_index: bool,
-    db_session: Session,
+    only_finished: bool = True,
 ) -> IndexAttempt | None:
     stmt = select(IndexAttempt)
     stmt = stmt.where(
         IndexAttempt.connector_credential_pair_id == connector_credential_pair_id,
-        IndexAttempt.status.not_in(
-            [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]
-        ),
     )
+    if only_finished:
+        stmt = stmt.where(
+            IndexAttempt.status.not_in(
+                [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]
+            ),
+        )
     if secondary_index:
         stmt = stmt.join(SearchSettings).where(
             SearchSettings.status == IndexModelStatus.FUTURE

@@ -280,6 +280,13 @@ def delete_chat_session(
     db_session: Session,
     hard_delete: bool = HARD_DELETE_CHATS,
 ) -> None:
+    chat_session = get_chat_session_by_id(
+        chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
+    )
+
+    if chat_session.deleted:
+        raise ValueError("Cannot delete an already deleted chat session")
+
     if hard_delete:
         delete_messages_and_files_from_chat_session(chat_session_id, db_session)
         db_session.execute(delete(ChatSession).where(ChatSession.id == chat_session_id))
