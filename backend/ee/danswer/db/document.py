@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
 from danswer.access.utils import prefix_group_w_source
+from danswer.access.utils import prefix_user_email
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Document as DbDocument
 
@@ -29,38 +30,42 @@ def upsert_document_external_perms(
     doc_id: str,
     external_access: ExternalAccess,
     source_type: DocumentSource,
-) -> tuple[bool, DbDocument]:
-    """Note that this will replace the external access, it will not do a union"""
+) -> None:
+    """
+    This sets the permissions for a document in postgres.
+    NOTE: this will replace any existing external access, it will not do a union
+    """
     document = db_session.scalars(
         select(DbDocument).where(DbDocument.id == doc_id)
     ).first()
 
-    ext_groups = [
+    prefixed_external_groups = [
         prefix_group_w_source(
-            ext_group_name=group_name,
+            ext_group_name=group_id,
             source=source_type,
         )
-        for group_name in external_access.external_user_groups
+        for group_id in external_access.external_user_group_ids
+    ]
+
+    prefixed_external_user_emails = [
+        prefix_user_email(user_email=user_email)
+        for user_email in external_access.external_user_emails
     ]
 
     if not document:
+        # If the document does not exist, still store the external access
+        # So that if the document is added later, the external access is already stored
         document = DbDocument(
             id=doc_id,
             semantic_id="",
-            external_user_emails=external_access.external_user_emails,
-            external_user_groups=ext_groups,
-            public=external_access.is_public,
+            external_user_emails=prefixed_external_user_emails,
+            external_user_groups=prefixed_external_groups,
+            public=external_access.is_externally_public,
             last_time_perm_sync=func.now(),
         )
         db_session.add(document)
-        db_session.commit()
-        return False, document
 
-    document.external_user_emails = list(external_access.external_user_emails)
-    document.external_user_groups = ext_groups
-    document.public = external_access.is_public
+    document.external_user_emails = prefixed_external_user_emails
+    document.external_user_groups = prefixed_external_groups
+    document.is_externally_public = external_access.is_externally_public
     document.last_time_perm_sync = func.now()  # type: ignore
-
-    db_session.commit()
-
-    return True, document

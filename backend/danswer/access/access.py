@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from danswer.access.models import DocumentAccess
-from danswer.access.utils import prefix_user
+from danswer.access.utils import prefix_user_email
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.db.document import get_access_info_for_documents
 from danswer.db.models import User
@@ -13,8 +13,8 @@ def get_null_document_access() -> DocumentAccess:
         user_emails=set(),
         user_groups=set(),
         external_user_emails=set(),
-        external_user_groups=set(),
-        is_public=False,
+        external_user_group_ids=set(),
+        is_externally_public=False,
     )
 
 
@@ -32,8 +32,8 @@ def _get_access_for_documents(
             # MIT version will wipe all groups and external groups on update
             user_groups=set(),
             external_user_emails=set(),
-            external_user_groups=set(),
-            is_public=is_public,
+            external_user_group_ids=set(),
+            is_externally_public=is_public,
         )
         for document_id, user_emails, is_public in document_access_info
     }
@@ -68,7 +68,7 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
     matches one entry in the returned set.
     """
     if user:
-        return {prefix_user(user.email), PUBLIC_DOC_PAT}
+        return {prefix_user_email(user.email), PUBLIC_DOC_PAT}
     return {PUBLIC_DOC_PAT}
 
 

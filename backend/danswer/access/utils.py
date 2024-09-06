@@ -1,11 +1,11 @@
 from danswer.configs.constants import DocumentSource
 
 
-def prefix_user(user_id: str) -> str:
+def prefix_user_email(user_email: str) -> str:
     """Prefixes a user email to eliminate collision with group names.
     This applies to both a Danswer user and an External user, this is to make the query time
     more efficient"""
-    return f"user_email:{user_id}"
+    return f"user_email:{user_email}"
 
 
 def prefix_user_group(user_group_name: str) -> str:

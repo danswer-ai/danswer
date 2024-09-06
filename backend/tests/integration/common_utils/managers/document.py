@@ -31,10 +31,10 @@ def _verify_document_permissions(
             )
 
     if doc_creating_user is not None:
-        if f"user_id:{doc_creating_user.id}" not in acl_keys:
+        if f"user_email:{doc_creating_user.email}" not in acl_keys:
             raise ValueError(
                 f"Document {retrieved_doc['document_id']} was created by user"
-                f" {doc_creating_user.id} but does not have the user_id:{doc_creating_user.id} ACL key"
+                f" {doc_creating_user.email} but does not have the user_email:{doc_creating_user.email} ACL key"
             )
 
     if group_names is not None:

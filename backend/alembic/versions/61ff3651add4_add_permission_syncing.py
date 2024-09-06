@@ -56,11 +56,17 @@ def upgrade() -> None:
     )
     op.add_column(
         "document",
-        sa.Column("public", sa.Boolean(), nullable=True),
+        sa.Column("is_externally_public", sa.Boolean(), nullable=True),
     )
     op.add_column(
         "document",
         sa.Column("last_time_perm_sync", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.add_column(
+        "user",
+        sa.Column(
+            "external_user_group_ids", postgresql.ARRAY(sa.String()), nullable=True
+        ),
     )
 
     op.add_column(
@@ -71,11 +77,25 @@ def upgrade() -> None:
             nullable=False,
         ),
     )
-    op.alter_column("permission_sync_run", "updated_at", new_column_name="start_time")
+    op.create_table(
+        "external_user_email__external_user_group_id",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("user_email", sa.String(), nullable=False),
+        sa.Column("external_user_group_id", sa.String(), nullable=False),
+        sa.Column(
+            "source_type",
+            sa.String(),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
 
     op.drop_column("external_permission", "user_id")
     op.drop_column("email_to_external_user_cache", "user_id")
     op.drop_column("permission_sync_run", "cc_pair_id")
+    op.drop_table("permission_sync_run")
+    op.drop_table("external_permission")
+    op.drop_table("email_to_external_user_cache")
 
 
 def downgrade() -> None:
@@ -95,6 +115,7 @@ def downgrade() -> None:
     op.drop_column("document", "public")
     op.drop_column("document", "last_time_perm_sync")
     op.drop_column("email_to_external_user_cache", "source_type")
+    op.drop_column("user", "external_user_group_ids")
     op.add_column(
         "external_permission",
         sa.Column("user_id", sa.UUID(), nullable=True),
@@ -111,3 +132,60 @@ def downgrade() -> None:
 
     # Drop the enum type at the end of the downgrade
     op.execute("DROP TYPE accesstype")
+    op.create_table(
+        "permission_sync_run",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column(
+            "source_type",
+            sa.String(),
+            nullable=False,
+        ),
+        sa.Column("update_type", sa.String(), nullable=False),
+        sa.Column("cc_pair_id", sa.Integer(), nullable=True),
+        sa.Column(
+            "status",
+            sa.String(),
+            nullable=False,
+        ),
+        sa.Column("error_msg", sa.Text(), nullable=True),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            ["cc_pair_id"],
+            ["connector_credential_pair.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "external_permission",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("user_id", sa.UUID(), nullable=True),
+        sa.Column("user_email", sa.String(), nullable=False),
+        sa.Column(
+            "source_type",
+            sa.String(),
+            nullable=False,
+        ),
+        sa.Column("external_permission_group", sa.String(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["user.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "email_to_external_user_cache",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("external_user_id", sa.String(), nullable=False),
+        sa.Column("user_id", sa.UUID(), nullable=True),
+        sa.Column("user_email", sa.String(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["user.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )

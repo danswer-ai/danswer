@@ -50,18 +50,13 @@ def get_cc_pairs_by_source(
     return cc_pairs
 
 
-def get_all_source_types_with_auto_sync(
+def get_all_auto_sync_cc_pairs(
     db_session: Session,
-) -> list[DocumentSource]:
-    results = (
-        db_session.query(Connector.source.distinct())
-        .join(
-            ConnectorCredentialPair,
-            Connector.id == ConnectorCredentialPair.connector_id,
+) -> list[ConnectorCredentialPair]:
+    return (
+        db_session.query(ConnectorCredentialPair)
+        .where(
+            ConnectorCredentialPair.access_type == AccessType.SYNC,
         )
-        .filter(ConnectorCredentialPair.access_type == AccessType.SYNC)
         .all()
     )
-
-    sources = [result[0] for result in results]
-    return sources

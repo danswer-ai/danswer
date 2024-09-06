@@ -5,64 +5,41 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DocumentSource
-from danswer.db.models import EmailToExternalUserCache
-from danswer.db.models import ExternalPermission
-from ee.danswer.background.models import ExternalUserDefinition
-from ee.danswer.background.models import GroupDefinition
+from danswer.db.models import ExternalUserEmail__ExternalUserGroupId
 
 
-def fetch_external_user_cache(
-    source_type: DocumentSource, db_session: Session
-) -> Sequence[EmailToExternalUserCache]:
-    return db_session.scalars(
-        select(EmailToExternalUserCache).where(
-            EmailToExternalUserCache.source_type == source_type
-        )
-    ).all()
-
-
-def clear_external_permission_for_source__no_commit(
-    db_session: Session, source_type: DocumentSource
+def replace_external_user__group_relations__no_commit(
+    db_session: Session,
+    cc_pair_id: int,
+    group_defs: dict[str, list[str]],
+    source: DocumentSource,
 ) -> None:
-    delete_statement = delete(ExternalPermission).where(
-        ExternalPermission.source_type == source_type
+    """
+    This function clears all existing external user group relations for a given cc_pair_id
+    and replaces them with the new group definitions.
+    """
+    delete_statement = delete(ExternalUserEmail__ExternalUserGroupId).where(
+        ExternalUserEmail__ExternalUserGroupId.cc_pair_id == cc_pair_id
     )
     db_session.execute(delete_statement)
 
-
-def create_external_permissions__no_commit(
-    db_session: Session, group_defs: list[GroupDefinition]
-) -> None:
-    for group_def in group_defs:
-        for email in group_def.user_emails:
-            new_external_permission = ExternalPermission(
+    for external_group_id, emails in group_defs.items():
+        for email in emails:
+            new_external_permission = ExternalUserEmail__ExternalUserGroupId(
                 user_email=email,
-                external_permission_group=group_def.external_id,
-                source_type=group_def.source,
+                external_user_group_id=external_group_id,
+                cc_pair_id=cc_pair_id,
+                source_type=source,
             )
             db_session.add(new_external_permission)
-
-
-def upsert_external_user_cache(
-    db_session: Session,
-    user_caches: list[ExternalUserDefinition],
-) -> None:
-    # Does not handle updating if email changes
-    for user_cache in user_caches:
-        new_user_cache = EmailToExternalUserCache(
-            external_user_id=user_cache.external_id,
-            user_email=user_cache.user_email,
-            source_type=user_cache.source,
-        )
-        db_session.add(new_user_cache)
-
-    db_session.commit()
 
 
 def fetch_ext_groups_for_user(
     db_session: Session,
     user_email: str,
-) -> Sequence[ExternalPermission]:
+) -> Sequence[ExternalUserEmail__ExternalUserGroupId]:
     return db_session.scalars(
-        select(ExternalPermission).where(ExternalPermission.user_email == user_email)
+        select(ExternalUserEmail__ExternalUserGroupId).where(
+            ExternalUserEmail__ExternalUserGroupId.user_email == user_email
+        )
     ).all()

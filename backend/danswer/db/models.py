@@ -159,6 +159,10 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         "Notification", back_populates="user"
     )
 
+    external_user_group_ids: Mapped[list[str]] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+
 
 class InputPrompt(Base):
     __tablename__ = "inputprompt"
@@ -417,6 +421,7 @@ class ConnectorCredentialPair(Base):
 
 class Document(Base):
     __tablename__ = "document"
+    # NOTE: if more sensitive data is added here for display, make sure to add user/group permission
 
     # this should correspond to the ID of the document
     # (as is passed around in Danswer)
@@ -445,7 +450,6 @@ class Document(Base):
     secondary_owners: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
-    # TODO if more sensitive data is added here for display, make sure to add user/group permission
     # Permission sync columns
     external_user_emails: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
@@ -453,7 +457,7 @@ class Document(Base):
     external_user_groups: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
-    public: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_externally_public: Mapped[bool] = mapped_column(Boolean, default=False)
     last_time_perm_sync: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -1645,85 +1649,23 @@ class TokenRateLimit__UserGroup(Base):
 """Tables related to Permission Sync"""
 
 
-class PermissionSyncStatus(str, PyEnum):
-    IN_PROGRESS = "in_progress"
-    SUCCESS = "success"
-    FAILED = "failed"
-
-
-class PermissionSyncJobType(str, PyEnum):
-    # Sync-ing document level access at a user by user level
-    USER_LEVEL = "user_level"
-    # Sync-ing external groups to the users the groups contain via emails
-    GROUP_LEVEL = "group_level"
-
-
-class PermissionSyncRun(Base):
-    """Represents one run of a permission sync job. For some given cc_pair, it is either sync-ing
-    the users or it is sync-ing the groups"""
-
-    __tablename__ = "permission_sync_run"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    # Not strictly needed but makes it easy to use without fetching from cc_pair
-    source_type: Mapped[DocumentSource] = mapped_column(
-        Enum(DocumentSource, native_enum=False)
-    )
-    # Currently all sync jobs are handled as a group permission sync or a user permission sync
-    update_type: Mapped[PermissionSyncJobType] = mapped_column(
-        Enum(PermissionSyncJobType, native_enum=False)
-    )
-    status: Mapped[PermissionSyncStatus] = mapped_column(
-        Enum(PermissionSyncStatus, native_enum=False)
-    )
-    error_msg: Mapped[str | None] = mapped_column(Text, default=None)
-    start_time: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-
-
-class ExternalPermission(Base):
+class ExternalUserEmail__ExternalUserGroupId(Base):
     """Maps user info both internal and external to the name of the external group
     This maps the user to all of their external groups so that the external group name can be
     attached to the ACL list matching during query time. User level permissions can be handled by
     directly adding the Danswer user to the doc ACL list"""
 
-    __tablename__ = "external_permission"
+    __tablename__ = "external_user_email__external_user_group_id"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     # Email is needed because we want to keep track of users not in Danswer to simplify process
     # when the user joins
     user_email: Mapped[str] = mapped_column(String)
-    external_permission_group: Mapped[str] = mapped_column(String)
+    external_user_group_id: Mapped[str] = mapped_column(String)
     source_type: Mapped[DocumentSource] = mapped_column(
         Enum(DocumentSource, native_enum=False)
     )
-
-
-class EmailToExternalUserCache(Base):
-    """A way to map users IDs in the external tool to a user in Danswer or at least an email for
-    when the user joins. Used as a cache for when fetching external groups which have their own
-    user ids, this can easily be mapped back to users already known in Danswer without needing
-    to call external APIs to get the user emails.
-
-    This way when groups are updated in the external tool and we need to update the mapping of
-    internal users to the groups, we can sync the internal users to the external groups they are
-    part of using this.
-
-    Ie. User Chris is part of groups alpha, beta, and we can update this if Chris is no longer
-    part of alpha in some external tool.
-
-    NOTE: THE CURRENT APPROACH DOES NOT HANDLE EMAIL UPDATES
-    """
-
-    __tablename__ = "email_to_external_user_cache"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    external_user_id: Mapped[str] = mapped_column(String)
-    user_email: Mapped[str] = mapped_column(String)
-    source_type: Mapped[DocumentSource] = mapped_column(
-        Enum(DocumentSource, native_enum=False)
-    )
+    cc_pair_id: Mapped[int] = mapped_column(ForeignKey("connector_credential_pair.id"))
 
 
 class UsageReport(Base):

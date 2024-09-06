@@ -53,8 +53,8 @@ def _get_access_for_documents(
             user_emails=non_ee_access.user_emails,
             user_groups=set(user_group_info.get(document_id, [])),
             external_user_emails=ext_u_emails,
-            external_user_groups=ext_u_groups,
-            is_public=non_ee_access.is_public,
+            external_user_group_ids=ext_u_groups,
+            is_externally_public=non_ee_access.is_externally_public,
         )
     return access_map
 
@@ -71,7 +71,7 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
     db_ext_groups = fetch_ext_groups_for_user(db_session, user.email) if user else []
     ext_groups = [
         prefix_group_w_source(
-            db_ext_group.external_permission_group, db_ext_group.source_type
+            db_ext_group.external_user_group_id, db_ext_group.source_type
         )
         for db_ext_group in db_ext_groups
     ]
