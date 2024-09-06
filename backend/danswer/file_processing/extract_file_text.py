@@ -213,11 +213,14 @@ def read_pdf_file(
         # This standardizes the metadata keys for consistency
         metadata = {}
         if pdf_reader.metadata is not None:
-            metadata = {}
             for key, value in pdf_reader.metadata.items():
+                clean_key = key.lstrip("/")
                 if isinstance(value, str):
-                    clean_key = key.lstrip("/")
                     metadata[clean_key] = value
+                elif isinstance(value, list) and all(
+                    isinstance(item, str) for item in value
+                ):
+                    metadata[clean_key] = ", ".join(value)
 
         return (
             TEXT_SECTION_SEPARATOR.join(
