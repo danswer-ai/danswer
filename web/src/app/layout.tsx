@@ -104,7 +104,7 @@ export default async function RootLayout({
 
       <body className={`relative ${inter.variable} font-sans`}>
         <div
-          className={`text-default bg-background ${
+          className={`text-default min-h-screen bg-background ${
             // TODO: remove this once proper dark mode exists
             process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
           }`}

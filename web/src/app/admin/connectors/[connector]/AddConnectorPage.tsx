@@ -95,7 +95,7 @@ export default function AddConnector({
     ...configuration.values.reduce(
       (acc, field) => {
         if (field.type === "select") {
-          acc[field.name] = field.options ? field.options[field.default!]! : "";
+          acc[field.name] = null;
         } else if (field.type === "list") {
           acc[field.name] = field.default || [];
         } else if (field.type === "checkbox") {

@@ -26,7 +26,6 @@ export interface Option {
 
 export interface SelectOption extends Option {
   type: "select";
-  default?: number;
   options?: StringWithDescription[];
 }
 
@@ -96,7 +95,6 @@ export const connectorConfigs: Record<
         query: "Select the web connector type:",
         label: "Scrape Method",
         name: "web_connector_type",
-        default: 0,
         options: [
           { name: "recursive", value: "recursive" },
           { name: "single", value: "single" },

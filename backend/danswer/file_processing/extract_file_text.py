@@ -201,22 +201,28 @@ def read_pdf_file(
                     decrypt_success = pdf_reader.decrypt(pdf_pass) != 0
                 except Exception:
                     logger.error("Unable to decrypt pdf")
-            else:
-                logger.warning("No Password available to to decrypt pdf")
 
             if not decrypt_success:
                 # By user request, keep files that are unreadable just so they
                 # can be discoverable by title.
                 return "", metadata
+        else:
+            logger.warning("No Password available to to decrypt pdf")
 
         # Extract metadata from the PDF, removing leading '/' from keys if present
         # This standardizes the metadata keys for consistency
         metadata = {}
         if pdf_reader.metadata is not None:
-            metadata = {
-                k[1:] if k.startswith("/") else k: v
-                for k, v in pdf_reader.metadata.items()
-            }
+            for key, value in pdf_reader.metadata.items():
+                clean_key = key.lstrip("/")
+                if isinstance(value, str) and value.strip():
+                    metadata[clean_key] = value
+
+                elif isinstance(value, list) and all(
+                    isinstance(item, str) for item in value
+                ):
+                    metadata[clean_key] = ", ".join(value)
+
         return (
             TEXT_SECTION_SEPARATOR.join(
                 page.extract_text() for page in pdf_reader.pages
