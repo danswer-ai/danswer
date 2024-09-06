@@ -1785,7 +1785,7 @@ export function ChatPage({
                                 : null;
                               if (
                                 currentSessionRegenerationState?.regenerating &&
-                                message.messageId >=
+                                message.messageId >
                                   currentSessionRegenerationState?.finalMessageIndex!
                               ) {
                                 return <></>;
