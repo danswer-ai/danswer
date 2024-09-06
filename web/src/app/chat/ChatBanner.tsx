@@ -57,6 +57,7 @@ export function ChatBanner() {
             className={`${settings.enterpriseSettings.two_lines_for_chat_header ? "line-clamp-2" : "line-clamp-1"} text-center w-full overflow-hidden pr-8`}
           >
             <MinimalMarkdown
+              className="prose text-sm max-w-full"
               content={settings.enterpriseSettings.custom_header_content}
             />
           </div>
@@ -65,6 +66,7 @@ export function ChatBanner() {
             className="absolute top-0 left-0 invisible w-full"
           >
             <MinimalMarkdown
+              className="prose text-sm max-w-full"
               content={settings.enterpriseSettings.custom_header_content}
             />
           </div>

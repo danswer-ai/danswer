@@ -338,10 +338,10 @@ export function ChatInputBar({
                       updateInputPrompt(currentPrompt);
                     }}
                   >
-                    <p className="font-bold">{currentPrompt.prompt}</p>
-                    <p className="line-clamp-1">
+                    <p className="font-bold">{currentPrompt.prompt}:</p>
+                    <p className="text-left flex-grow mr-auto line-clamp-1">
                       {currentPrompt.id == selectedAssistant.id && "(default) "}
-                      {currentPrompt.content}
+                      {currentPrompt.content?.trim()}
                     </p>
                   </button>
                 ))}

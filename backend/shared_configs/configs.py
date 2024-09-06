@@ -58,6 +58,7 @@ LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")
 
 # Fields which should only be set on new search setting
 PRESERVED_SEARCH_FIELDS = [
+    "id",
     "provider_type",
     "api_key",
     "model_name",
@@ -69,3 +70,5 @@ PRESERVED_SEARCH_FIELDS = [
     "passage_prefix",
     "query_prefix",
 ]
+
+CUSTOM_REFRESH_URL = os.environ.get("CUSTOM_REFRESH_URL") or "/settings/refresh-token"

@@ -91,10 +91,12 @@ export default function AddConnector({
   >({
     name: "",
     groups: [],
-    is_public: false,
+    is_public: true,
     ...configuration.values.reduce(
       (acc, field) => {
-        if (field.type === "list") {
+        if (field.type === "select") {
+          acc[field.name] = field.options ? field.options[field.default!]! : "";
+        } else if (field.type === "list") {
           acc[field.name] = field.default || [];
         } else if (field.type === "checkbox") {
           acc[field.name] = field.default || false;
@@ -337,11 +339,13 @@ export default function AddConnector({
     ...configuration.values.reduce(
       (acc, field) => {
         let schema: any =
-          field.type === "list"
-            ? Yup.array().of(Yup.string())
-            : field.type === "checkbox"
-              ? Yup.boolean()
-              : Yup.string();
+          field.type === "select"
+            ? Yup.string()
+            : field.type === "list"
+              ? Yup.array().of(Yup.string())
+              : field.type === "checkbox"
+                ? Yup.boolean()
+                : Yup.string();
 
         if (!field.optional) {
           schema = schema.required(`${field.label} is required`);
@@ -491,7 +495,6 @@ export default function AddConnector({
               }}
             >
               {(formikProps) => {
-                console.log(formikProps.values);
                 setFormValues(formikProps.values);
                 handleFormStatusChange(
                   formikProps.isValid && isFormSubmittable(formikProps.values)

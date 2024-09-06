@@ -84,7 +84,7 @@ class CloudEmbedding:
         self.client = _initialize_client(api_key, self.provider, model)
 
     def _embed_openai(self, texts: list[str], model: str | None) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_OPENAI_MODEL
 
         # OpenAI does not seem to provide truncation option, however
@@ -111,7 +111,7 @@ class CloudEmbedding:
     def _embed_cohere(
         self, texts: list[str], model: str | None, embedding_type: str
     ) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_COHERE_MODEL
 
         final_embeddings: list[Embedding] = []
@@ -130,7 +130,7 @@ class CloudEmbedding:
     def _embed_voyage(
         self, texts: list[str], model: str | None, embedding_type: str
     ) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_VOYAGE_MODEL
 
         # Similar to Cohere, the API server will do approximate size chunking
@@ -146,7 +146,7 @@ class CloudEmbedding:
     def _embed_vertex(
         self, texts: list[str], model: str | None, embedding_type: str
     ) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_VERTEX_MODEL
 
         embeddings = self.client.get_embeddings(
@@ -172,7 +172,6 @@ class CloudEmbedding:
         try:
             if self.provider == EmbeddingProvider.OPENAI:
                 return self._embed_openai(texts, model_name)
-
             embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
             if self.provider == EmbeddingProvider.COHERE:
                 return self._embed_cohere(texts, model_name, embedding_type)
@@ -237,15 +236,18 @@ def get_local_reranking_model(
 
 
 def embed_with_litellm_proxy(
-    texts: list[str], api_url: str, model: str
+    texts: list[str], api_url: str, model_name: str, api_key: str | None
 ) -> list[Embedding]:
+    headers = {} if not api_key else {"Authorization": f"Bearer {api_key}"}
+
     with httpx.Client() as client:
         response = client.post(
             api_url,
             json={
-                "model": model,
+                "model": model_name,
                 "input": texts,
             },
+            headers=headers,
         )
         response.raise_for_status()
         result = response.json()
@@ -280,7 +282,12 @@ def embed_text(
             logger.error("API URL not provided for LiteLLM proxy")
             raise ValueError("API URL is required for LiteLLM proxy embedding.")
         try:
-            return embed_with_litellm_proxy(texts, api_url, model_name or "")
+            return embed_with_litellm_proxy(
+                texts=texts,
+                api_url=api_url,
+                model_name=model_name or "",
+                api_key=api_key,
+            )
         except Exception as e:
             logger.exception(f"Error during LiteLLM proxy embedding: {str(e)}")
             raise

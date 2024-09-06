@@ -232,7 +232,7 @@ function ConnectorRow({
       }}
     >
       <TableCell className={`!pr-0 w-[${columnWidths.first}]`}>
-        <p className="w-[200px] inline-block ellipsis truncate">
+        <p className="w-[100px] xl:w-[200px] inline-block ellipsis truncate">
           {ccPairsIndexingStatus.name}
         </p>
       </TableCell>
@@ -482,7 +482,7 @@ export function CCPairIndexingStatusTable({
               if (sourceMatches || matchingConnectors.length > 0) {
                 return (
                   <React.Fragment key={ind}>
-                    <div className="mt-4" />
+                    <br className="mt-4" />
 
                     <SummaryRow
                       source={source}
