@@ -140,6 +140,7 @@ jobs:
             -e POSTGRES_PASSWORD=password \
             -e POSTGRES_DB=postgres \
             -e VESPA_HOST=index \
+            -e REDIS_HOST=cache \
             -e API_SERVER_HOST=api_server \
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
             danswer/integration-test-runner:it

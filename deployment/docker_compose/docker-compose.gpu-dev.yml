@@ -12,6 +12,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
       - inference_model_server
     restart: always
     ports:
@@ -58,6 +59,7 @@ services:
       # Other services
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
+      - REDIS_HOST=cache      
       - WEB_DOMAIN=${WEB_DOMAIN:-}  # For frontend redirect auth purpose
       # Don't change the NLP model configs unless you know what you're doing
       - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
@@ -99,6 +101,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
       - inference_model_server
       - indexing_model_server
     restart: always
@@ -129,6 +132,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
       - POSTGRES_DB=${POSTGRES_DB:-}
       - VESPA_HOST=index
+      - REDIS_HOST=cache
       - WEB_DOMAIN=${WEB_DOMAIN:-}  # For frontend redirect auth purpose for OAuth2 connectors
       # Don't change the NLP model configs unless you know what you're doing
       - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
@@ -341,9 +345,20 @@ services:
     command: > 
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
-        
+
+
+  cache:
+    image: redis:7.4-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server
+    volumes: 
+      - cache_volume:/data
+
 
 volumes:
+  cache_volume:
   db_volume:
   vespa_volume:
   # Created by the container itself

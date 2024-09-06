@@ -22,14 +22,11 @@ dependencies:
     version: 14.3.1
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
-  - name: vespa 
+  - name: vespa
     version: 0.2.3
     repository: https://unoplat.github.io/vespa-helm-charts
     condition: vespa.enabled
   - name: nginx
     version: 15.14.0
     repository: oci://registry-1.docker.io/bitnamicharts
-    condition: nginx.enabled  
-    
-
-    
+    condition: nginx.enabled
