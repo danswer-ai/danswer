@@ -1,19 +1,14 @@
 import io
 import mimetypes
 import concurrent.futures
-
-from datetime import datetime
-from datetime import timezone
-from typing import Any
-from typing import Optional
+from datetime import datetime, timezone
+from typing import Any, Optional, List
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import BasicExpertInfo
+from danswer.connectors.interfaces import PollConnector, SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -23,8 +18,7 @@ from danswer.connectors.highspot.lib.highspot import HighSpot
 from danswer.connectors.highspot.lib.models.simple import JsonObject
 from danswer.connectors.highspot.lib.models.enums import ContentTypes
 
-
-logger = setup_logger()
+logger = setup_logger("HighSpot")
 
 TEXT_FILETYPES = {
     "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
@@ -39,18 +33,18 @@ class HighSpotConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
-        requested_objects: list[str] = [],
+        requested_objects: List[str] = [],
         continue_on_failure: bool = True,
         highspot_subdomain: str = "",
         highspot_api_url: str = "",
     ) -> None:
         self.batch_size = batch_size
-        self.highspot_client: HighSpot
         self.continue_on_failure = continue_on_failure
         self.highspot_subdomain = highspot_subdomain
         self.highspot_api_url = highspot_api_url
+        self.highspot_client: Optional[HighSpot] = None
 
-    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+    def load_credentials(self, credentials: dict[str, Any]) -> None:
         try:
             self.highspot_client = HighSpot(
                 key=credentials["highspot_api_key"],
@@ -60,139 +54,129 @@ class HighSpotConnector(LoadConnector, PollConnector):
         except KeyError as e:
             raise ConnectorMissingCredentialError(f"Missing required credential: {e}")
 
-        return None
-
     def load_from_state(self) -> GenerateDocumentsOutput:
         yield from self._fetch_docs()
 
     def poll_source(
         self,
-        start: SecondsSinceUnixEpoch | None = None,
-        end: SecondsSinceUnixEpoch | None = None,
+        start: Optional[SecondsSinceUnixEpoch] = None,
+        end: Optional[SecondsSinceUnixEpoch] = None,
     ) -> GenerateDocumentsOutput:
         yield from self._fetch_docs(start, end)
 
-    # Internal functions
-
     def _fetch_docs(
         self,
-        start: SecondsSinceUnixEpoch | None = None,
-        end: SecondsSinceUnixEpoch | None = None,
+        start: Optional[SecondsSinceUnixEpoch] = None,
+        end: Optional[SecondsSinceUnixEpoch] = None,
     ) -> GenerateDocumentsOutput:
-        doc_batch: list[Document] = []
+        if not self.highspot_client:
+            raise ValueError("HighSpot client not initialized. Call load_credentials first.")
 
         spots = self.highspot_client.list_spots()
+        if not spots.collection:
+            logger.warning("No spots found in HighSpot.")
+            return
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = []
-            for spot in spots.collection:
-                logger.info(f"Fetching items for spot: {spot.title} with ID: {spot.id}")
-                items = self.highspot_client.list_items(spot.id)
-
-                for item in items.collection:
-                    logger.info(f"Fetching item: {item.title} with ID: {item.id}")
-                    futures.append(executor.submit(self._get_document_for_item, item))
-
+            futures = [executor.submit(self._process_spot, spot) for spot in spots.collection]
             for future in concurrent.futures.as_completed(futures):
-                doc_batch.append(future.result())
+                yield from self._process_future_results(future)
 
-                if len(doc_batch) >= 15:
-                    logger.debug(f"Yielding batch of size {len(doc_batch)}")
-                    yield doc_batch
-                    doc_batch = []
+    def _process_spot(self, spot: JsonObject) -> List[Document]:
+        logger.debug(f"Fetching items for spot: {spot.title} with ID: {spot.id}")
+        items = self.highspot_client.list_items(spot.id)
+        return [self._get_document_for_item(item) for item in items.collection]
 
-        if doc_batch:
-            logger.debug(f"Yielding batch of size {len(doc_batch)}")
-            yield doc_batch
+    def _process_future_results(self, future: concurrent.futures.Future) -> GenerateDocumentsOutput:
+        try:
+            documents = future.result()
+            for batch in self._batch_documents(documents):
+                yield batch
+        except Exception as e:
+            if not self.continue_on_failure:
+                raise
+            logger.error(f"Error processing spot: {e}")
+
+    def _batch_documents(self, documents: List[Document]) -> GenerateDocumentsOutput:
+        for i in range(0, len(documents), self.batch_size):
+            batch = documents[i : i + self.batch_size]
+            logger.debug(f"Yielding batch of size {len(batch)}")
+            yield batch
+
+    def _get_document_for_item(self, item: JsonObject) -> Document:
+        link = f"https://{self.highspot_subdomain}.highspot.com/items/{item.id}"
+        text = self._get_item_text(item, link)
+
+        # Not useful
+        if hasattr(item, 'content_owners'):
+            del item.content_owners
+
+        try:
+            return Document(
+                id=item.id,
+                source=DocumentSource.HIGHSPOT,
+                semantic_identifier=item.title,
+                doc_updated_at=datetime.fromisoformat(item.date_updated).astimezone(timezone.utc),
+                metadata=self._clean_metadata(item.__dict__),
+                sections=[Section(link=link, text=text)],
+            )
+        except Exception as e:
+            logger.error(f"Error creating document: {e}")
+            logger.debug("Creating document with empty metadata.")
+            return Document(
+                id=item.id,
+                source=DocumentSource.HIGHSPOT,
+                semantic_identifier=item.title,
+                doc_updated_at=datetime.fromisoformat(item.date_updated).astimezone(timezone.utc),
+                metadata={},
+                sections=[Section(link=link, text=text)],
+            )
+
+    def _get_item_text(self, item: JsonObject, link: str) -> str:
+        if item.can_download and item.content_type not in (ContentTypes.VIDEO, ContentTypes.IMAGE):
+            try:
+                file_ext = self._get_file_extension(item)
+                filename = f"{item.get('content_name', item.title)}{file_ext}"
+                return extract_file_text(file_name=filename, file=self._get_downloadable_as_io(item))
+            except Exception as e:
+                logger.error(f"Error extracting text from file: {e}")
+                return f"Error extracting text: {str(e)}"
+        else:
+            return (
+                f"Type: {item.get('content_type', 'Unknown')}\n"
+                f"Title: {item.get('title', 'Untitled')}\n"
+                f"Description: {item.get('description', 'No description')}\n"
+                f"URL: {item.get('url') or link}"
+            )
 
     def _get_downloadable_as_io(self, item: JsonObject) -> io.BytesIO:
+        if not self.highspot_client:
+            raise ValueError("HighSpot client not initialized. Call load_credentials first.")
         resp = self.highspot_client.get_item_content(item.id)
         return io.BytesIO(resp.content)
 
-    def _get_document_for_item(self, item: JsonObject) -> Document:
-        link: str = f"https://{self.highspot_subdomain}.highspot.com/items/{item.id}"
-        text: str
-        filename: str
-
-        if item.can_download and item.content_type not in (ContentTypes.VIDEO, ContentTypes.IMAGE):
-            file_ext = self._get_file_extension(item)
-            filename = item.get("content_name", item.title)
-
-            if file_ext and not filename.lower().endswith(file_ext):
-                filename += file_ext
-
-            text = extract_file_text(file_name=filename, file=self._get_downloadable_as_io(item))
-
-        else:
-            text = (
-                f"Type: {item.content_type}"
-                + f"Title: {item.title}"
-                + f"{item.content_type} Description: {item.description}"
-                + f"{item.content_type} URL: {item.get('url') or link}"
-            )
-
-        return Document(
-            id=item.id,
-            source=DocumentSource.HIGHSPOT,
-            semantic_identifier=item.title,
-            doc_updated_at=datetime.fromisoformat(item.date_updated).astimezone(timezone.utc),
-            metadata=self._clean_metadata(item.__dict__),
-            sections=[
-                Section(
-                    link=link,
-                    text=text,
-                )
-            ],
-        )
-
     def _get_file_extension(self, item: JsonObject) -> str:
-        file_ext = mimetypes.guess_extension(item.get("mime_type", " "))
+        file_ext = mimetypes.guess_extension(item.get("mime_type", ""))
         if not file_ext:
-            for key in TEXT_FILETYPES.keys():
-                if item.mime_type.startswith(key):
-                    file_ext = TEXT_FILETYPES[key]
-                    break
+            file_ext = next((ext for key, ext in TEXT_FILETYPES.items() if item.get("mime_type", "").startswith(key)), "")
+        return file_ext
 
-        return file_ext or ""
-
-    def _get_text_from_io(self, io_obj: io.BytesIO, item: JsonObject) -> Optional[str]:
-        file_ext = mimetypes.guess_extension(item.get("mime_type", " "))
-        if not file_ext:
-            for key in TEXT_FILETYPES.keys():
-                if item.mime_type.startswith(key):
-                    file_ext = TEXT_FILETYPES[key]
-                    break
-
-        if not file_ext:
-            logger.warning(f"Could not determine file extension for item: {item.title} with ID: {item.id}")
+    def _clean_metadata(self, metadata: Any) -> Any:
+        if isinstance(metadata, dict):
+            cleaned = {}
+            for k, v in metadata.items():
+                if isinstance(k, str):
+                    cleaned_v = self._clean_metadata(v)
+                    if cleaned_v not in (None, {}, []):
+                        cleaned[k] = cleaned_v
+            return cleaned or None
+        elif isinstance(metadata, list):
+            cleaned = [
+                item for item in (self._clean_metadata(v) for v in metadata)
+                if item not in (None, {}, [])
+            ]
+            return cleaned or None
+        elif metadata not in (None, "", {}, []):
+            return metadata
+        else:
             return None
-
-        filename = item.content_name
-        if file_ext and not filename.lower().endswith(file_ext):
-            filename += file_ext
-
-        try:
-            return extract_file_text(file=io_obj, file_name=filename)
-        except Exception as e:
-            if not self.continue_on_failure:
-                logger.exception("Ran into exception when pulling a file from HighSpot")
-                raise e
-            else:
-                logger.warning(f"Ran into exception while extracting text from file. Error: {e}")
-                return None
-
-    def _clean_metadata(self, metadata: dict[str, Any]) -> dict[str, Any]:
-        def is_valid(value):
-            if isinstance(value, str):
-                return True
-            elif isinstance(value, list):
-                return all(is_valid(item) for item in value)
-            return False
-
-        if not isinstance(metadata, dict):
-            raise ValueError("Input must be a dictionary")
-
-        return {
-            k: self._clean_metadata(v) if isinstance(v, dict) else v
-            for k, v in metadata.items()
-            if isinstance(k, str) and is_valid(v)
-        }
