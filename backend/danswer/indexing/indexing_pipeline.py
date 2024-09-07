@@ -10,6 +10,7 @@ from danswer.access.access import get_access_for_documents
 from danswer.access.models import DocumentAccess
 from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.app_configs import INDEXING_EXCEPTION_LIMIT
+from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
 )
@@ -264,7 +265,7 @@ def index_doc_batch(
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
 
-    no_access = DocumentAccess.build([], [], False)
+    no_access = DocumentAccess.build(user_ids=[], user_groups=[], is_public=False)
 
     ctx = index_doc_batch_prepare(
         document_batch=document_batch,
@@ -318,6 +319,11 @@ def index_doc_batch(
                 ),
                 document_sets=set(
                     document_id_to_document_set.get(chunk.source_document.id, [])
+                ),
+                boost=(
+                    ctx.id_to_db_doc_map[chunk.source_document.id].boost
+                    if chunk.source_document.id in ctx.id_to_db_doc_map
+                    else DEFAULT_BOOST
                 ),
             )
             for chunk in chunks_with_embeddings

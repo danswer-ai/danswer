@@ -20,7 +20,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_document
-from danswer.background.celery.celery_redis import RedisConnector
+from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
@@ -209,10 +209,10 @@ def try_generate_stale_document_sync_tasks(
     db_session: Session, r: Redis, lock_beat: redis.lock.Lock
 ) -> int | None:
     # the fence is up, do nothing
-    if r.exists(RedisConnector.get_fence_key()):
+    if r.exists(RedisConnectorCredentialPair.get_fence_key()):
         return None
 
-    r.delete(RedisConnector.get_taskset_key())  # delete the taskset
+    r.delete(RedisConnectorCredentialPair.get_taskset_key())  # delete the taskset
 
     # add tasks to celery and build up the task set to monitor in redis
     stale_doc_count = count_documents_by_needs_sync(db_session)
@@ -228,7 +228,7 @@ def try_generate_stale_document_sync_tasks(
     total_tasks_generated = 0
     cc_pairs = get_connector_credential_pairs(db_session)
     for cc_pair in cc_pairs:
-        rc = RedisConnector(cc_pair.id)
+        rc = RedisConnectorCredentialPair(cc_pair.id)
         tasks_generated = rc.generate_tasks(celery_app, db_session, r, lock_beat)
 
         if tasks_generated is None:
@@ -248,7 +248,7 @@ def try_generate_stale_document_sync_tasks(
         f"All per connector generate_tasks finished. total_tasks_generated={total_tasks_generated}"
     )
 
-    r.set(RedisConnector.get_fence_key(), total_tasks_generated)
+    r.set(RedisConnectorCredentialPair.get_fence_key(), total_tasks_generated)
     return total_tasks_generated
 
 
@@ -638,10 +638,17 @@ def celery_task_postrun(
     state: str | None = None,
     **kwds: Any,
 ) -> None:
+    """We handle this signal in order to remove completed tasks
+    from their respective tasksets. This allows us to track the progress of document set
+    and user group syncs.
+
+    This function runs after any task completes (both success and failure)
+    Note that this signal does not fire on a task that failed to complete and is going
+    to be retried.
+    """
     if not task:
         return
 
-    # This function runs after any task completes (both success and failure)
     task_logger.debug(f"Task {task.name} (ID: {task_id}) completed with state: {state}")
     # logger.debug(f"Result: {retval}")
 
@@ -651,9 +658,9 @@ def celery_task_postrun(
     if not task_id:
         return
 
-    if task_id.startswith(RedisConnector.PREFIX):
+    if task_id.startswith(RedisConnectorCredentialPair.PREFIX):
         r = redis_pool.get_client()
-        r.srem(RedisConnector.get_taskset_key(), task_id)
+        r.srem(RedisConnectorCredentialPair.get_taskset_key(), task_id)
         return
 
     if task_id.startswith(RedisDocumentSet.PREFIX):
@@ -674,7 +681,7 @@ def celery_task_postrun(
 
 
 def monitor_connector_taskset(r: Redis) -> None:
-    fence_value = r.get(RedisConnector.get_fence_key())
+    fence_value = r.get(RedisConnectorCredentialPair.get_fence_key())
     if fence_value is None:
         return
 
@@ -684,11 +691,11 @@ def monitor_connector_taskset(r: Redis) -> None:
         task_logger.error("The value is not an integer.")
         return
 
-    count = r.scard(RedisConnector.get_taskset_key())
+    count = r.scard(RedisConnectorCredentialPair.get_taskset_key())
     task_logger.info(f"Stale documents: remaining={count} initial={initial_count}")
     if count == 0:
-        r.delete(RedisConnector.get_taskset_key())
-        r.delete(RedisConnector.get_fence_key())
+        r.delete(RedisConnectorCredentialPair.get_taskset_key())
+        r.delete(RedisConnectorCredentialPair.get_fence_key())
         task_logger.info(f"Successfully synced stale documents. count={initial_count}")
 
 
@@ -821,7 +828,7 @@ def monitor_vespa_sync() -> None:
             return
 
         with Session(get_sqlalchemy_engine()) as db_session:
-            if r.exists(RedisConnector.get_fence_key()):
+            if r.exists(RedisConnectorCredentialPair.get_fence_key()):
                 monitor_connector_taskset(r)
 
             for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
@@ -859,8 +866,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     r.delete(DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK)
     r.delete(DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK)
 
-    r.delete(RedisConnector.get_taskset_key())
-    r.delete(RedisConnector.get_fence_key())
+    r.delete(RedisConnectorCredentialPair.get_taskset_key())
+    r.delete(RedisConnectorCredentialPair.get_fence_key())
 
     for key in r.scan_iter(RedisDocumentSet.TASKSET_PREFIX + "*"):
         r.delete(key)

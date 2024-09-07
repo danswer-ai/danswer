@@ -19,9 +19,9 @@ def _get_access_for_document(
     )
 
     if not info:
-        return DocumentAccess.build([], [], False)
+        return DocumentAccess.build(user_ids=[], user_groups=[], is_public=False)
 
-    return DocumentAccess.build(info[1], [], info[2])
+    return DocumentAccess.build(user_ids=info[1], user_groups=[], is_public=info[2])
 
 
 def get_access_for_document(
@@ -43,7 +43,9 @@ def _get_access_for_documents(
         document_ids=document_ids,
     )
     return {
-        document_id: DocumentAccess.build(user_ids, [], is_public)
+        document_id: DocumentAccess.build(
+            user_ids=user_ids, user_groups=[], is_public=is_public
+        )
         for document_id, user_ids, is_public in document_access_info
     }
 

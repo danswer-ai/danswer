@@ -6,7 +6,6 @@ from datetime import timezone
 import httpx
 from retry import retry
 
-from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
 )
@@ -172,7 +171,7 @@ def _index_vespa_chunk(
         # which only calls VespaIndex.update
         ACCESS_CONTROL_LIST: {acl_entry: 1 for acl_entry in chunk.access.to_acl()},
         DOCUMENT_SETS: {document_set: 1 for document_set in chunk.document_sets},
-        BOOST: DEFAULT_BOOST,
+        BOOST: chunk.boost,
     }
 
     vespa_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{vespa_chunk_id}"

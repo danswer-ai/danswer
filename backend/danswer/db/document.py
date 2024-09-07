@@ -63,7 +63,7 @@ def count_documents_by_needs_sync(session: Session) -> int:
     return count
 
 
-def select_documents_for_connector_credential_pair_by_needs_sync(
+def construct_document_select_for_connector_credential_pair_by_needs_sync(
     connector_id: int, credential_id: int
 ) -> Select:
     initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
@@ -89,7 +89,7 @@ def select_documents_for_connector_credential_pair_by_needs_sync(
     return stmt
 
 
-def select_documents_for_connector_credential_pair(
+def construct_document_select_for_connector_credential_pair(
     connector_id: int, credential_id: int | None = None
 ) -> Select:
     initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
