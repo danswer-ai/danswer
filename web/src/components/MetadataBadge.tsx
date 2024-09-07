@@ -1,3 +1,5 @@
+import { Badge } from "./ui/badge";
+
 export function MetadataBadge({
   icon,
   value,
@@ -6,22 +8,9 @@ export function MetadataBadge({
   value: string | JSX.Element;
 }) {
   return (
-    <div
-      className={`
-      text-xs 
-      text-strong
-      flex
-      bg-hover 
-      rounded-full 
-      px-1
-      py-0.5 
-      w-fit 
-      my-auto 
-      select-none 
-      `}
-    >
+    <Badge variant="secondary" className="pt-2">
       {icon && icon({ size: 12, className: "mr-0.5 my-auto" })}
       <div className="my-auto flex">{value}</div>
-    </div>
+    </Badge>
   );
 }

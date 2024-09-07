@@ -1,4 +1,4 @@
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { FilterManager } from "@/lib/hooks";
 import { listSourceMetadata } from "@/lib/sources";
 import { useRef, useState } from "react";

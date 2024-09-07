@@ -6,7 +6,7 @@ import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { ChatPage } from "./ChatPage";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
-import { ChatProvider } from "@/components/context/ChatContext";
+import { ChatProvider } from "@/context/ChatContext";
 
 export default async function Page({
   searchParams,
@@ -42,6 +42,7 @@ export default async function Page({
     <>
       <InstantSSRAutoRefresh />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
+
       {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
         <ApiKeyModal user={user} />
       )}
