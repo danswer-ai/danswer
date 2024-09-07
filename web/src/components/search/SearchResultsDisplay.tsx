@@ -126,7 +126,7 @@ export const SearchResultsDisplay = ({
   console.log(indexAttemptData);
 
   return (
-    <>
+    <div className="px-2">
       {shouldDisplayQA && (
         <Card className="p-4 relative">
           <CardHeader className="border-b p-0 pb-4">
@@ -191,6 +191,6 @@ export const SearchResultsDisplay = ({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
