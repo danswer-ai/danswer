@@ -128,7 +128,7 @@ export function ChatPage({
     userInputPrompts,
   } = useChatContext();
 
-  const { user, refreshUser } = useUser();
+  const { user, refreshUser, isLoadingUser } = useUser();
 
   // chat session
   const existingChatIdRaw = searchParams.get("chatId");
@@ -137,6 +137,7 @@ export function ChatPage({
   const existingChatSessionId = existingChatIdRaw
     ? parseInt(existingChatIdRaw)
     : null;
+
   const selectedChatSession = chatSessions.find(
     (chatSession) => chatSession.id === existingChatSessionId
   );
@@ -205,6 +206,7 @@ export function ChatPage({
     selectedAssistant ||
     filteredAssistants[0] ||
     availableAssistants[0];
+
   useEffect(() => {
     if (!loadedIdSessionRef.current && !currentPersonaId) {
       return;
@@ -278,6 +280,7 @@ export function ChatPage({
   );
 
   const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
     Prism.highlightAll();
     setIsReady(true);
@@ -775,11 +778,16 @@ export function ChatPage({
 
   const clientScrollToBottom = (fast?: boolean) => {
     setTimeout(() => {
-      if (fast) {
-        endDivRef.current?.scrollIntoView();
-      } else {
-        endDivRef.current?.scrollIntoView({ behavior: "smooth" });
+      if (!endDivRef.current) {
+        return;
       }
+
+      const rect = endDivRef.current.getBoundingClientRect();
+      const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+
+      if (isVisible) return;
+
+      endDivRef.current.scrollIntoView({ behavior: fast ? "auto" : "smooth" });
       setHasPerformedInitialScroll(true);
     }, 50);
   };
@@ -1725,7 +1733,9 @@ export function ChatPage({
                 />
               )}
 
-              {documentSidebarInitialWidth !== undefined && isReady ? (
+              {documentSidebarInitialWidth !== undefined &&
+              isReady &&
+              !isLoadingUser ? (
                 <Dropzone onDrop={handleImageUpload} noClick>
                   {({ getRootProps }) => (
                     <div className="flex h-full w-full">
