@@ -223,19 +223,19 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                 ),
                 link: "/admin/settings",
               },
-              ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
-                ? [
-                    {
-                      name: (
-                        <div className="flex items-center gap-2">
-                          <ImageIcon size={20} />
-                          <div>Whitelabeling</div>
-                        </div>
-                      ),
-                      link: "/admin/whitelabeling",
-                    },
-                  ]
-                : []),
+              // ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
+              //   ? [
+              //       {
+              //         name: (
+              //           <div className="flex items-center gap-2">
+              //             <ImageIcon size={20} />
+              //             <div>Whitelabeling</div>
+              //           </div>
+              //         ),
+              //         link: "/admin/whitelabeling",
+              //       },
+              //     ]
+              //   : []),
             ],
           },
         ]}
