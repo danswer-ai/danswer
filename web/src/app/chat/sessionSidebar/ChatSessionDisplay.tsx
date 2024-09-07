@@ -137,7 +137,7 @@ export function ChatSessionDisplay({
                           </PopoverTrigger>
                           <PopoverContent>
                             <div className="flex flex-col w-full">
-                              <ShareChatSessionModal
+                              {/* <ShareChatSessionModal
                                 chatSessionId={chatSession.id}
                                 existingSharedStatus={chatSession.shared_status}
                               >
@@ -148,7 +148,7 @@ export function ChatSessionDisplay({
                                   <Share2 className="mr-2" size={16} />
                                   Share
                                 </Button>
-                              </ShareChatSessionModal>
+                              </ShareChatSessionModal> */}
                               <Button
                                 variant="ghost"
                                 onClick={() => setIsRenamingChat(true)}
