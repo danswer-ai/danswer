@@ -38,6 +38,9 @@ from danswer.configs.constants import AuthType
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import KV_SEARCH_SETTINGS
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
+from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
+from danswer.configs.model_configs import GEN_AI_API_KEY
+from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.connector import check_connectors_exist
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
@@ -50,6 +53,9 @@ from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
+from danswer.db.llm import fetch_default_provider
+from danswer.db.llm import update_default_provider
+from danswer.db.llm import upsert_llm_provider
 from danswer.db.persona import delete_old_default_personas
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
@@ -92,6 +98,7 @@ from danswer.server.manage.embedding.api import basic_router as embedding_router
 from danswer.server.manage.get_state import router as state_router
 from danswer.server.manage.llm.api import admin_router as llm_admin_router
 from danswer.server.manage.llm.api import basic_router as llm_router
+from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.manage.search_settings import router as search_settings_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
 from danswer.server.manage.standard_answer import router as standard_answer_router
@@ -191,6 +198,30 @@ def setup_postgres(db_session: Session) -> None:
     refresh_built_in_tools_cache(db_session)
     auto_add_search_tool_to_personas(db_session)
 
+    if GEN_AI_API_KEY and fetch_default_provider(db_session) is None:
+        # Only for dev flows
+        logger.notice("Setting up default OpenAI LLM for dev.")
+        llm_model = GEN_AI_MODEL_VERSION or "gpt-4o-mini"
+        fast_model = FAST_GEN_AI_MODEL_VERSION or "gpt-4o-mini"
+        model_req = LLMProviderUpsertRequest(
+            name="DevEnvPresetOpenAI",
+            provider="openai",
+            api_key=GEN_AI_API_KEY,
+            api_base=None,
+            api_version=None,
+            custom_config=None,
+            default_model_name=llm_model,
+            fast_default_model_name=fast_model,
+            is_public=True,
+            groups=[],
+            display_model_names=[llm_model, fast_model],
+            model_names=[llm_model, fast_model],
+        )
+        new_llm_provider = upsert_llm_provider(
+            llm_provider=model_req, db_session=db_session
+        )
+        update_default_provider(provider_id=new_llm_provider.id, db_session=db_session)
+
 
 def update_default_multipass_indexing(db_session: Session) -> None:
     docs_exist = check_docs_exist(db_session)
@@ -202,7 +233,7 @@ def update_default_multipass_indexing(db_session: Session) -> None:
             "No existing docs or connectors found. Checking GPU availability for multipass indexing."
         )
         gpu_available = gpu_status_request()
-        logger.info(f"GPU availability: {gpu_available}")
+        logger.info(f"GPU available: {gpu_available}")
 
         current_settings = get_current_search_settings(db_session)
 
