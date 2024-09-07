@@ -22,7 +22,7 @@ import { createFolder } from "../folders/FolderManagement";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import EnmeddLogo from "../../../../public/logo-brand.png";
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/Logo";
