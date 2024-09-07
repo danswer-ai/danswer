@@ -5,6 +5,7 @@ import {
 import {
   AnswerPiecePacket,
   DanswerDocument,
+  DelimiterPiece,
   DocumentInfoPacket,
   ErrorMessagePacket,
   Quote,
@@ -91,6 +92,7 @@ export const searchRequestStreamed = async ({
         | DocumentInfoPacket
         | LLMRelevanceFilterPacket
         | BackendMessage
+        | DelimiterPiece
         | RelevanceChunk
       >(decoder.decode(value, { stream: true }), previousPartialChunk);
       if (!completedChunks.length && !partialChunk) {

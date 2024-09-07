@@ -3,12 +3,12 @@ import { Divider, Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
-import { Message, RetrievalType } from "../interfaces";
+import { Message } from "../interfaces";
 import { ForwardedRef, forwardRef } from "react";
 
 interface DocumentSidebarProps {
   closeSidebar: () => void;
-  selectedMessage: Message | null;
+  currentDocuments: DanswerDocument[] | null;
   selectedDocuments: DanswerDocument[] | null;
   toggleDocumentSelection: (document: DanswerDocument) => void;
   clearSelectedDocuments: () => void;
@@ -23,7 +23,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
   (
     {
       closeSidebar,
-      selectedMessage,
+      currentDocuments,
       selectedDocuments,
       toggleDocumentSelection,
       clearSelectedDocuments,
@@ -40,7 +40,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     const selectedDocumentIds =
       selectedDocuments?.map((document) => document.document_id) || [];
 
-    const currentDocuments = selectedMessage?.documents || null;
     const dedupedDocuments = removeDuplicateDocs(currentDocuments || []);
 
     // NOTE: do not allow selection if less than 75 tokens are left
@@ -73,14 +72,8 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             {popup}
             <div className="pl-3 mx-2 pr-6 mt-3 flex text-text-800 flex-col text-2xl text-emphasis flex font-semibold">
               {dedupedDocuments.length} Documents
-              <p className="text-sm font-semibold flex flex-wrap gap-x-2 text-text-600 mt-1">
+              <p className="text-sm  flex flex-wrap gap-x-2 font-normal text-text-700 mt-1">
                 Select to add to continuous context
-                <a
-                  href="https://docs.danswer.dev/introduction"
-                  className="underline cursor-pointer hover:text-strong"
-                >
-                  Learn more
-                </a>
               </p>
             </div>
 
@@ -138,14 +131,14 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
           <div className="absolute left-0 bottom-0 w-full bg-gradient-to-b from-neutral-100/0 via-neutral-100/40 backdrop-blur-xs to-neutral-100 h-[100px]" />
           <div className="sticky bottom-4 w-full left-0 justify-center flex gap-x-4">
             <button
-              className="bg-[#84e49e] text-xs p-2 rounded text-text-800"
+              className="bg-background-800 px-3 hover:bg-background-600 transition-background duration-300 py-2.5 scale-[.95] rounded text-text-200"
               onClick={() => closeSidebar()}
             >
               Save Changes
             </button>
 
             <button
-              className="bg-error text-xs p-2 rounded text-text-200"
+              className="bg-background-125 hover:bg-background-150 transition-background duration-300 ring ring-1 ring-border scale-[.95] px-3  py-2.5 rounded text-text-900"
               onClick={() => {
                 clearSelectedDocuments();
 

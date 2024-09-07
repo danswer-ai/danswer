@@ -1,11 +1,17 @@
 import abc
+from collections.abc import Callable
 from collections.abc import Generator
 from typing import Any
+from typing import cast
+from typing import Dict
+from typing import Type
 
 from danswer.dynamic_configs.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
 from danswer.tools.models import ToolResponse
+
+# from danswer.llm.answering.models import ChatMessage
 
 
 class Tool(abc.ABC):
@@ -22,6 +28,11 @@ class Tool(abc.ABC):
     @property
     @abc.abstractmethod
     def display_name(self) -> str:
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def create_prompt(self, message: PreviousMessage) -> str:
         raise NotImplementedError
 
     """For LLMs which support explicit tool calling"""
@@ -61,3 +72,29 @@ class Tool(abc.ABC):
         It is the result that will be stored in the database.
         """
         raise NotImplementedError
+
+
+class ToolRegistry:
+    _registry: Dict[str, Type[Tool]] = {}
+
+    @classmethod
+    def register(cls, tool_id: str) -> Callable[[type[Tool]], type[Tool]]:
+        def decorator(tool_class: Type[Tool]) -> type[Tool]:
+            cls._registry[tool_id] = tool_class
+            return tool_class
+
+        return decorator
+
+    @classmethod
+    def get_tool(cls, tool_id: str) -> Type[Tool]:
+        if tool_id not in cls._registry:
+            raise ValueError(f"No tool registered with id: {tool_id}")
+        return cls._registry[tool_id]
+
+    @classmethod
+    def get_prompt(cls, tool_id: str, message: PreviousMessage) -> str:
+        if tool_id not in cls._registry:
+            raise ValueError(f"No tool registered with id: {tool_id}")
+        tool = cls._registry[tool_id]
+        new_prompt = tool.create_prompt(message=cast(PreviousMessage, message))
+        return new_prompt

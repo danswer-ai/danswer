@@ -8,14 +8,15 @@ from langchain.schema.messages import BaseMessage
 from langchain_core.messages import AIMessageChunk
 from langchain_core.messages import HumanMessage
 
-from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import AnswerQuestionPossibleReturn
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import Delimiter
 from danswer.chat.models import LlmDoc
 from danswer.chat.models import StreamStopInfo
 from danswer.chat.models import StreamStopReason
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
+from danswer.configs.constants import MessageType
 from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import PreviousMessage
@@ -39,6 +40,7 @@ from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import ToolChoiceOptions
+from danswer.llm.utils import message_generator_to_string_generator
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.tools.custom.custom_tool_prompt_builder import (
     build_user_message_for_custom_tool_for_non_tool_calling_llm,
@@ -55,19 +57,20 @@ from danswer.tools.message import ToolCallSummary
 from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS
 from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
-from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.tools.tool_runner import (
     check_which_tools_should_run_for_non_tool_calling_llm,
 )
-from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.tools.tool_runner import ToolCallKickoff
+from danswer.tools.tool_runner import ToolCallMetadata
 from danswer.tools.tool_runner import ToolRunner
 from danswer.tools.tool_selection import select_single_tool_for_non_tool_calling_llm
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
+
+# DanswerQuotes | CitationInfo | DanswerContexts | ImageGenerationDisplay | CustomToolResponse | StreamingError
 
 
 logger = setup_logger()
@@ -120,6 +123,7 @@ class Answer:
         return_contexts: bool = False,
         skip_gen_ai_answer_generation: bool = False,
         is_connected: Callable[[], bool] | None = None,
+        tool_uses: dict | None = None,
     ) -> None:
         if single_message_history and message_history:
             raise ValueError(
@@ -138,11 +142,16 @@ class Answer:
         self.skip_explicit_tool_calling = skip_explicit_tool_calling
 
         self.message_history = message_history or []
+        self.tool_uses = tool_uses or {}
         # used for QA flow where we only want to send a single message
         self.single_message_history = single_message_history
 
         self.answer_style_config = answer_style_config
         self.prompt_config = prompt_config
+
+        self.current_streamed_output: list = []
+        self.processing_stream: list = []
+        self.final_context_docs: list = []
 
         self.llm = llm
         self.llm_tokenizer = get_tokenizer(
@@ -181,6 +190,7 @@ class Answer:
                     ),
                 )
             )
+
         elif self.answer_style_config.quotes_config:
             prompt_builder.update_user_prompt(
                 build_quotes_user_message(
@@ -191,13 +201,214 @@ class Answer:
                 )
             )
 
+    def _raw_output_for_explicit_tool_calling_llms_loop(
+        self,
+    ) -> Iterator[
+        str | ToolCallKickoff | ToolResponse | ToolCallMetadata | Delimiter | Any
+    ]:
+        count = 1
+        maximum_count = 4
+        while count <= maximum_count:
+            prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
+
+            count += 1
+            print(f"COUNT IS {count}")
+            tool_call_chunk: AIMessageChunk | None = None
+
+            if self.force_use_tool.force_use and self.force_use_tool.args is not None:
+                tool_call_chunk = AIMessageChunk(content="")
+                tool_call_chunk.tool_calls = [
+                    {
+                        "name": self.force_use_tool.tool_name,
+                        "args": self.force_use_tool.args,
+                        "id": str(uuid4()),
+                    }
+                ]
+            else:
+                prompt_builder.update_system_prompt(
+                    default_build_system_message(self.prompt_config)
+                )
+                prompt_builder.update_user_prompt(
+                    default_build_user_message(
+                        self.question, self.prompt_config, self.latest_query_files
+                    )
+                )
+                prompt = prompt_builder.build()
+                print(f"-----------------------\nThe current prompt is: {prompt}")
+
+                final_tool_definitions = [
+                    tool.tool_definition()
+                    for tool in filter_tools_for_force_tool_use(
+                        self.tools, self.force_use_tool
+                    )
+                ]
+
+                for message in self.llm.stream(
+                    prompt=prompt,
+                    tools=final_tool_definitions if final_tool_definitions else None,
+                    tool_choice="required" if self.force_use_tool.force_use else None,
+                ):
+                    if isinstance(message, AIMessageChunk) and (
+                        message.tool_call_chunks or message.tool_calls
+                    ):
+                        if tool_call_chunk is None:
+                            tool_call_chunk = message
+                        else:
+                            tool_call_chunk += message  # type: ignore
+                    else:
+                        if tool_call_chunk is None and count != 2:
+                            print("Skipping the tool call + message compeltely")
+                            return
+                        elif message.content:
+                            yield cast(str, message.content)
+
+                if not tool_call_chunk:
+                    print(
+                        "Skipping the tool call but generated message due to lack of existing tool call messages"
+                    )
+                    return
+
+            tool_call_requests = tool_call_chunk.tool_calls
+
+            logger.critical(
+                f"-------------------TOOL CALL REQUESTS ({len(tool_call_requests)})-------------------"
+            )
+
+            for tool_call_request in tool_call_requests:
+                known_tools_by_name = [
+                    tool
+                    for tool in self.tools
+                    if tool.name == tool_call_request["name"]
+                ]
+
+                if not known_tools_by_name:
+                    logger.error(
+                        "Tool call requested with unknown name field. \n"
+                        f"self.tools: {self.tools}"
+                        f"tool_call_request: {tool_call_request}"
+                    )
+                    if self.tools:
+                        tool = self.tools[0]
+                    else:
+                        continue
+                else:
+                    tool = known_tools_by_name[0]
+
+                tool_args = (
+                    self.force_use_tool.args
+                    if self.force_use_tool.tool_name == tool.name
+                    and self.force_use_tool.args
+                    else tool_call_request["args"]
+                )
+                print("my tool call request is htis")
+                print(tool_args)
+
+                tool_runner = ToolRunner(tool, tool_args)
+                yield tool_runner.kickoff()
+
+                tool_responses = list(tool_runner.tool_responses())
+                yield from tool_responses
+
+                tool_call_summary = ToolCallSummary(
+                    tool_call_request=tool_call_chunk,
+                    tool_call_result=build_tool_message(
+                        tool_call_request, tool_runner.tool_message_content()
+                    ),
+                )
+
+                if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
+                    self._update_prompt_builder_for_search_tool(prompt_builder, [])
+                elif tool.name == ImageGenerationTool._NAME:
+                    img_urls = [
+                        img_generation_result["url"]
+                        for img_generation_result in tool_runner.tool_final_result().tool_result
+                    ]
+                    prompt_builder.update_user_prompt(
+                        build_image_generation_user_prompt(
+                            query=self.question, img_urls=img_urls
+                        )
+                    )
+
+                yield tool_runner.tool_final_result()
+
+                # Update message history with tool call and response
+                self.message_history.append(
+                    PreviousMessage(
+                        message=str(tool_call_request),
+                        message_type=MessageType.ASSISTANT,
+                        token_count=10,  # You may want to implement a token counting method
+                        tool_call=None,
+                        files=[],
+                    )
+                )
+                self.message_history.append(
+                    PreviousMessage(
+                        message="\n".join(str(response) for response in tool_responses),
+                        message_type=MessageType.SYSTEM,
+                        token_count=10,
+                        tool_call=None,
+                        files=[],
+                    )
+                )
+
+                # Generate response based on updated message history
+                prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
+                print("-------------")
+
+                print("NEW PROMPT")
+                print(prompt)
+                print("\n\n\n\n\n\n-------\n\n------")
+
+                process_answer_stream_fn = _get_answer_stream_processor(
+                    context_docs=self.final_context_docs or [],
+                    doc_id_to_rank_map=map_document_id_order(
+                        self.final_context_docs or []
+                    ),
+                    answer_style_configs=self.answer_style_config,
+                )
+
+                response_stream = process_answer_stream_fn(
+                    message_generator_to_string_generator(
+                        self.llm.stream(prompt=prompt)
+                    )
+                )
+
+                response_content = ""
+                for chunk in response_stream:
+                    response_content += (
+                        chunk.answer_piece
+                        if hasattr(chunk, "answer_piece")
+                        and chunk.answer_piece is not None
+                        else str(chunk)
+                    )
+                    yield chunk
+
+                yield "FINAL TOKEN"
+
+                # Update message history with LLM response
+                self.message_history.append(
+                    PreviousMessage(
+                        message=response_content,
+                        message_type=MessageType.ASSISTANT,
+                        token_count=10,
+                        tool_call=None,
+                        files=[],  # You may want to implement a token counting method
+                    )
+                )
+
     def _raw_output_for_explicit_tool_calling_llms(
         self,
     ) -> Iterator[
-        str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallFinalResult
+        str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallMetadata
     ]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
-
+        # special things we need to keep track of for the SearchTool
+        # search_results: list[
+        #     LlmDoc
+        # ] | None = None  # raw results that will be displayed to the user
+        # final_context_docs: list[
+        #     LlmDoc
+        # ] | None = None  # processed docs to feed into the LLM
         tool_call_chunk: AIMessageChunk | None = None
         if self.force_use_tool.force_use and self.force_use_tool.args is not None:
             # if we are forcing a tool WITH args specified, we don't need to check which tools to run
@@ -309,7 +520,7 @@ class Answer:
                     )
                 )
             yield tool_runner.tool_final_result()
-
+            # Streaming response
             prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
 
             yield from self._process_llm_stream(
@@ -318,6 +529,40 @@ class Answer:
             )
 
             return
+            # ADD BACK IN
+            # process_answer_stream_fn = _get_answe r_stream_processor(
+            #     context_docs=[],
+            #     # if doc selection is enabled, then search_results will be None,
+            #     # so we need to use the final_context_docs
+            #     doc_id_to_rank_map=map_document_id_order([]),
+            #     answer_style_configs=self.answer_style_config,
+            # )
+
+            # yield from process_answer_stream_fn(
+            #     message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+            # )
+
+    # This method processes the LLM stream and yields the content or stop information
+    def _process_llm_stream(
+        self,
+        prompt: Any,
+        tools: list[dict] | None = None,
+        tool_choice: ToolChoiceOptions | None = None,
+    ) -> Iterator[str | StreamStopInfo]:
+        for message in self.llm.stream(
+            prompt=prompt, tools=tools, tool_choice=tool_choice
+        ):
+            if isinstance(message, AIMessageChunk):
+                if message.content:
+                    if self.is_cancelled:
+                        return StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
+                    yield cast(str, message.content)
+
+            if (
+                message.additional_kwargs.get("usage_metadata", {}).get("stop")
+                == "length"
+            ):
+                yield StreamStopInfo(stop_reason=StreamStopReason.CONTEXT_LENGTH)
 
     # This method processes the LLM stream and yields the content or stop information
     def _process_llm_stream(
@@ -344,7 +589,7 @@ class Answer:
     def _raw_output_for_non_explicit_tool_calling_llms(
         self,
     ) -> Iterator[
-        str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallFinalResult
+        str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallMetadata
     ]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
         chosen_tool_and_args: tuple[Tool, dict] | None = None
@@ -473,12 +718,24 @@ class Answer:
                 )
             )
         final = tool_runner.tool_final_result()
-
         yield final
 
+        # Streaming response
         prompt = prompt_builder.build()
 
         yield from self._process_llm_stream(prompt=prompt, tools=None)
+        # Add this back in
+        # process_answer_stream_fn = _get_answer_stream_processor(
+        #     context_docs=final_context_documents or [],
+        #     # if doc selection is enabled, then search_results will be None,
+        #     # so we need to use the final_context_docs
+        #     doc_id_to_rank_map=map_document_id_order(final_context_documents or []),
+        #     answer_style_configs=self.answer_style_config,
+        # )
+
+        # yield from process_answer_stream_fn(
+        #     message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+        # )
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -487,53 +744,50 @@ class Answer:
             return
 
         output_generator = (
-            self._raw_output_for_explicit_tool_calling_llms()
+            self._raw_output_for_explicit_tool_calling_llms_loop()
             if explicit_tool_calling_supported(
                 self.llm.config.model_provider, self.llm.config.model_name
             )
             and not self.skip_explicit_tool_calling
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
+        print(f" output generator {output_generator} ")
+
+        self.processing_stream = []
 
         def _process_stream(
             stream: Iterator[ToolCallKickoff | ToolResponse | str | StreamStopInfo],
         ) -> AnswerStream:
             message = None
 
-            # special things we need to keep track of for the SearchTool
-            search_results: list[
-                LlmDoc
-            ] | None = None  # raw results that will be displayed to the user
-            final_context_docs: list[
-                LlmDoc
-            ] | None = None  # processed docs to feed into the LLM
-
             for message in stream:
                 if isinstance(message, ToolCallKickoff) or isinstance(
-                    message, ToolCallFinalResult
+                    message, ToolCallMetadata
                 ):
                     yield message
                 elif isinstance(message, ToolResponse):
                     if message.id == SEARCH_RESPONSE_SUMMARY_ID:
+                        pass
                         # We don't need to run section merging in this flow, this variable is only used
                         # below to specify the ordering of the documents for the purpose of matching
                         # citations to the right search documents. The deduplication logic is more lightweight
                         # there and we don't need to do it twice
-                        search_results = [
-                            llm_doc_from_inference_section(section)
-                            for section in cast(
-                                SearchResponseSummary, message.response
-                            ).top_sections
-                        ]
+                        # search_results = [
+                        #     llm_doc_from_inference_section(section)
+                        #     for section in cast(
+                        #         SearchResponseSummary, message.response
+                        #     ).top_sections
+                        # ]
+
                     elif message.id == FINAL_CONTEXT_DOCUMENTS:
                         final_context_docs = cast(list[LlmDoc], message.response)
+                        self.final_context_docs = final_context_docs
 
                     elif (
                         message.id == SEARCH_DOC_CONTENT_ID
                         and not self._return_contexts
                     ):
                         continue
-
                     yield message
                 else:
                     # assumes all tool responses will come first, then the final answer
@@ -545,7 +799,9 @@ class Answer:
                     # if doc selection is enabled, then search_results will be None,
                     # so we need to use the final_context_docs
                     doc_id_to_rank_map=map_document_id_order(
-                        search_results or final_context_docs or []
+                        # search_results or
+                        final_context_docs
+                        or []
                     ),
                     answer_style_configs=self.answer_style_config,
                 )
@@ -566,26 +822,27 @@ class Answer:
                 if stream_stop_info:
                     yield stream_stop_info
 
-        processed_stream = []
+        # processed_stream = []
         for processed_packet in _process_stream(output_generator):
-            processed_stream.append(processed_packet)
+            self.processing_stream.append(processed_packet)
             yield processed_packet
 
-        self._processed_stream = processed_stream
+        self._processed_stream = self.processing_stream
 
     @property
     def llm_answer(self) -> str:
         answer = ""
-        for packet in self.processed_streamed_output:
+        if not self._processed_stream and not self.current_streamed_output:
+            return ""
+        for packet in self.current_streamed_output or self._processed_stream or []:
             if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
                 answer += packet.answer_piece
-
         return answer
 
     @property
     def citations(self) -> list[CitationInfo]:
         citations: list[CitationInfo] = []
-        for packet in self.processed_streamed_output:
+        for packet in self.current_streamed_output:
             if isinstance(packet, CitationInfo):
                 citations.append(packet)
 

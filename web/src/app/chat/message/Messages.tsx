@@ -17,6 +17,7 @@ import {
   useState,
 } from "react";
 import ReactMarkdown from "react-markdown";
+import Prism from "prismjs";
 import {
   DanswerDocument,
   FilteredDanswerDocument,
@@ -44,27 +45,31 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
-import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
 import {
   ThumbsUpIcon,
   ThumbsDownIcon,
   LikeFeedback,
   DislikeFeedback,
+  ToolCallIcon,
 } from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
 } from "@/components/tooltip/CustomTooltip";
-import { ValidSources } from "@/lib/types";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import DualPromptDisplay from "../tools/ImagePromptCitation";
+import { Popover } from "@/components/popover/Popover";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
+import { ValidSources } from "@/lib/types";
+import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -127,6 +132,8 @@ export const AIMessage = ({
   shared,
   isActive,
   toggleDocumentSelection,
+  hasParentAI,
+  hasChildAI,
   alternativeAssistant,
   docs,
   messageId,
@@ -138,6 +145,7 @@ export const AIMessage = ({
   citedDocuments,
   toolCall,
   isComplete,
+  generatingTool,
   hasDocs,
   handleFeedback,
   isCurrentlyShowingRetrieved,
@@ -148,8 +156,11 @@ export const AIMessage = ({
   currentPersona,
   otherMessagesCanSwitchTo,
   onMessageSelection,
+  setPopup,
 }: {
   shared?: boolean;
+  hasChildAI?: boolean;
+  hasParentAI?: boolean;
   isActive?: boolean;
   continueGenerating?: () => void;
   otherMessagesCanSwitchTo?: number[];
@@ -167,6 +178,7 @@ export const AIMessage = ({
   citedDocuments?: [string, DanswerDocument][] | null;
   toolCall?: ToolCallMetadata;
   isComplete?: boolean;
+  generatingTool?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;
   isCurrentlyShowingRetrieved?: boolean;
@@ -176,9 +188,11 @@ export const AIMessage = ({
   retrievalDisabled?: boolean;
   overriddenModel?: string;
   regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
-  const processContent = (content: string | JSX.Element) => {
+
+  const buildFinalContentDisplay = (content: string | JSX.Element) => {
     if (typeof content !== "string") {
       return content;
     }
@@ -200,9 +214,39 @@ export const AIMessage = ({
       }
     }
 
-    return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
+    const indicator = !isComplete && !toolCallGenerating ? " [*]()" : "";
+    const tool_citation =
+      isComplete && toolCall?.tool_result ? ` [[${toolCall.tool_name}]]()` : "";
+
+    return content + indicator + tool_citation;
   };
-  const finalContent = processContent(content as string);
+
+  const finalContent = buildFinalContentDisplay(content as string);
+  const citationRef = useRef<HTMLDivElement | null>(null);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        citationRef.current &&
+        !citationRef.current.contains(event.target as Node)
+      ) {
+        // setIsPopoverOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    Prism.highlightAll();
+    setIsReady(true);
+  }, []);
+  // const finalContent = processContent(content as string);
 
   const [isRegenerateHovered, setIsRegenerateHovered] = useState(false);
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
@@ -297,6 +341,8 @@ export const AIMessage = ({
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary
+                                docs={docs}
+                                filteredDocs={filteredDocs}
                                 query={query}
                                 finished={toolCall?.tool_result != undefined}
                                 hasDocs={hasDocs || false}
@@ -307,6 +353,7 @@ export const AIMessage = ({
                             </div>
                           )}
                         {handleForceSearch &&
+                          !hasChildAI &&
                           content &&
                           query === undefined &&
                           !hasDocs &&
@@ -360,7 +407,6 @@ export const AIMessage = ({
                     {content || files ? (
                       <>
                         <FileDisplay files={files || []} />
-
                         {typeof content === "string" ? (
                           <div className="overflow-x-visible max-w-content-max">
                             <ReactMarkdown
@@ -371,7 +417,49 @@ export const AIMessage = ({
                                   const { node, ...rest } = props;
                                   const value = rest.children;
 
-                                  if (value?.toString().startsWith("*")) {
+                                  if (
+                                    value?.toString() == `[${SEARCH_TOOL_NAME}]`
+                                  ) {
+                                    return <></>;
+                                  } else if (
+                                    value?.toString() ==
+                                    `[${IMAGE_GENERATION_TOOL_NAME}]`
+                                  ) {
+                                    return (
+                                      <Popover
+                                        open={isPopoverOpen}
+                                        onOpenChange={() => null} // only allow closing from the icon
+                                        content={
+                                          <button
+                                            onMouseDown={() => {
+                                              setIsPopoverOpen(!isPopoverOpen);
+                                            }}
+                                          >
+                                            <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
+                                          </button>
+                                        }
+                                        popover={
+                                          <DualPromptDisplay
+                                            arg="Prompt"
+                                            // ref={citationRef}
+                                            setPopup={setPopup}
+                                            prompt1={
+                                              toolCall?.tool_result?.[0]
+                                                ?.revised_prompt
+                                            }
+                                            prompt2={
+                                              toolCall?.tool_result?.[1]
+                                                ?.revised_prompt
+                                            }
+                                          />
+                                        }
+                                        side="top"
+                                        align="center"
+                                      />
+                                    );
+                                  } else if (
+                                    value?.toString().startsWith("*")
+                                  ) {
                                     return (
                                       <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
                                     );
@@ -394,7 +482,7 @@ export const AIMessage = ({
                                     return (
                                       <a
                                         key={node?.position?.start?.offset}
-                                        onMouseDown={() =>
+                                        onClick={() =>
                                           rest.href
                                             ? window.open(rest.href, "_blank")
                                             : undefined
@@ -408,7 +496,6 @@ export const AIMessage = ({
                                 },
                                 code: (props) => (
                                   <CodeBlock
-                                    className="w-full"
                                     {...props}
                                     content={content as string}
                                   />

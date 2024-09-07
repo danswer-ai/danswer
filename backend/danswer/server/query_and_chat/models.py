@@ -17,7 +17,7 @@ from danswer.search.models import ChunkContext
 from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchDoc
 from danswer.search.models import Tag
-from danswer.tools.models import ToolCallFinalResult
+from danswer.tools.models import ToolCallMetadata
 
 
 class SourceTag(Tag):
@@ -178,7 +178,7 @@ class ChatMessageDetail(BaseModel):
     chat_session_id: int | None = None
     citations: dict[int, int] | None = None
     files: list[FileDescriptor]
-    tool_calls: list[ToolCallFinalResult]
+    tool_call: ToolCallMetadata | None
 
     def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().model_dump(mode="json", *args, **kwargs)  # type: ignore

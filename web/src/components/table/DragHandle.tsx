@@ -4,9 +4,9 @@ import { MdDragIndicator } from "react-icons/md";
 export const DragHandle = (props: any) => {
   return (
     <div
-      className={
-        props.isDragging ? "hover:cursor-grabbing" : "hover:cursor-grab"
-      }
+      className={`mobile:hidden
+        ${props.isDragging ? "hover:cursor-grabbing" : "hover:cursor-grab"}
+      `}
       {...props}
     >
       <MdDragIndicator />

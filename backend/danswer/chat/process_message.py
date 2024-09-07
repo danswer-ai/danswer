@@ -10,6 +10,7 @@ from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import Delimiter
 from danswer.chat.models import ImageGenerationDisplay
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import MessageResponseIDInfo
@@ -91,7 +92,7 @@ from danswer.tools.search.search_tool import SearchTool
 from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
-from danswer.tools.tool_runner import ToolCallFinalResult
+from danswer.tools.tool_runner import ToolCallMetadata
 from danswer.tools.utils import compute_all_tool_tokens
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
@@ -245,6 +246,7 @@ ChatPacket = (
     | ImageGenerationDisplay
     | CustomToolResponse
     | MessageResponseIDInfo
+    | Delimiter
 )
 ChatPacketStream = Iterator[ChatPacket]
 
@@ -613,6 +615,7 @@ def stream_chat_message_objects(
         document_pruning_config.using_tool_message = explicit_tool_calling_supported(
             llm_provider, llm_model_name
         )
+        tool_has_been_called = False  # TODO remove
 
         # LLM prompt building, response capturing, etc.
         answer = Answer(
@@ -653,6 +656,8 @@ def stream_chat_message_objects(
 
         for packet in answer.processed_streamed_output:
             if isinstance(packet, ToolResponse):
+                tool_has_been_called = True
+
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                     (
                         qa_docs_response,
@@ -723,10 +728,76 @@ def stream_chat_message_objects(
                     )
 
             else:
-                if isinstance(packet, ToolCallFinalResult):
-                    tool_result = packet
-                yield cast(ChatPacket, packet)
+                if isinstance(packet, Delimiter):
+                    db_citations = None
+
+                    if reference_db_search_docs:
+                        db_citations = translate_citations(
+                            citations_list=answer.citations,
+                            db_docs=reference_db_search_docs,
+                        )
+
+                    # Saving Gen AI answer and responding with message info
+                    tool_name_to_tool_id: dict[str, int] = {}
+                    for tool_id, tool_list in tool_dict.items():
+                        for tool in tool_list:
+                            tool_name_to_tool_id[tool.name] = tool_id
+
+                    if tool_result is None:
+                        tool_call = None
+                    else:
+                        tool_call = ToolCall(
+                            tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                            tool_name=tool_result.tool_name,
+                            tool_arguments=tool_result.tool_args,
+                            tool_result=tool_result.tool_result,
+                        )
+
+                    gen_ai_response_message = partial_response(
+                        message=answer.llm_answer,
+                        rephrased_query=(
+                            qa_docs_response.rephrased_query
+                            if qa_docs_response
+                            else None
+                        ),
+                        reference_docs=reference_db_search_docs,
+                        files=ai_message_files,
+                        token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
+                        citations=db_citations,
+                        error=None,
+                        tool_call=tool_call,
+                    )
+
+                    db_session.commit()  # actually save user / assistant message
+
+                    msg_detail_response = translate_db_message_to_chat_message_detail(
+                        gen_ai_response_message
+                    )
+
+                    yield msg_detail_response
+                    yield Delimiter(delimiter=True)
+                    partial_response = partial(
+                        create_new_chat_message,
+                        chat_session_id=chat_session_id,
+                        parent_message=gen_ai_response_message,
+                        prompt_id=prompt_id,
+                        # message=,
+                        # rephrased_query=,
+                        # token_count=,
+                        message_type=MessageType.ASSISTANT,
+                        alternate_assistant_id=new_msg_req.alternate_assistant_id,
+                        # error=,
+                        # reference_docs=,
+                        db_session=db_session,
+                        commit=False,
+                    )
+
+                else:
+                    if isinstance(packet, ToolCallMetadata):
+                        tool_result = packet
+                    yield cast(ChatPacket, packet)
         logger.debug("Reached end of stream")
+
     except Exception as e:
         error_msg = str(e)
         logger.exception(f"Failed to process chat message: {error_msg}")
@@ -741,58 +812,56 @@ def stream_chat_message_objects(
         db_session.rollback()
         return
 
-    # Post-LLM answer processing
-    try:
-        db_citations = None
-        if reference_db_search_docs:
-            db_citations = translate_citations(
-                citations_list=answer.citations,
-                db_docs=reference_db_search_docs,
-            )
+    if not tool_has_been_called:
+        try:
+            db_citations = None
+            if reference_db_search_docs:
+                db_citations = translate_citations(
+                    citations_list=answer.citations,
+                    db_docs=reference_db_search_docs,
+                )
 
-        # Saving Gen AI answer and responding with message info
-        tool_name_to_tool_id: dict[str, int] = {}
-        for tool_id, tool_list in tool_dict.items():
-            for tool in tool_list:
-                tool_name_to_tool_id[tool.name] = tool_id
+            # Saving Gen AI answer and responding with message info
+            tool_name_to_tool_id = {}
+            for tool_id, tool_list in tool_dict.items():
+                for tool in tool_list:
+                    tool_name_to_tool_id[tool.name] = tool_id
 
-        gen_ai_response_message = partial_response(
-            reserved_message_id=reserved_message_id,
-            message=answer.llm_answer,
-            rephrased_query=(
-                qa_docs_response.rephrased_query if qa_docs_response else None
-            ),
-            reference_docs=reference_db_search_docs,
-            files=ai_message_files,
-            token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-            citations=db_citations,
-            error=None,
-            tool_calls=[
-                ToolCall(
+            gen_ai_response_message = partial_response(
+                reserved_message_id=reserved_message_id,
+                message=answer.llm_answer,
+                rephrased_query=(
+                    qa_docs_response.rephrased_query if qa_docs_response else None
+                ),
+                reference_docs=reference_db_search_docs,
+                files=ai_message_files,
+                token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
+                citations=db_citations,
+                error=None,
+                tool_call=ToolCall(
                     tool_id=tool_name_to_tool_id[tool_result.tool_name],
                     tool_name=tool_result.tool_name,
                     tool_arguments=tool_result.tool_args,
                     tool_result=tool_result.tool_result,
                 )
-            ]
-            if tool_result
-            else [],
-        )
+                if tool_result
+                else None,
+            )
 
-        logger.debug("Committing messages")
-        db_session.commit()  # actually save user / assistant message
+            logger.debug("Committing messages")
+            db_session.commit()  # actually save user / assistant message
 
-        msg_detail_response = translate_db_message_to_chat_message_detail(
-            gen_ai_response_message
-        )
+            msg_detail_response = translate_db_message_to_chat_message_detail(
+                gen_ai_response_message
+            )
 
-        yield msg_detail_response
-    except Exception as e:
-        error_msg = str(e)
-        logger.exception(error_msg)
+            yield msg_detail_response
+        except Exception as e:
+            error_msg = str(e)
+            logger.exception(error_msg)
 
-        # Frontend will erase whatever answer and show this instead
-        yield StreamingError(error="Failed to parse LLM output")
+            # Frontend will erase whatever answer and show this instead
+            yield StreamingError(error="Failed to parse LLM output")
 
 
 @log_generator_function_time()

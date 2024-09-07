@@ -4,8 +4,8 @@ from typing import Any
 
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
-from danswer.tools.models import ToolCallFinalResult
 from danswer.tools.models import ToolCallKickoff
+from danswer.tools.models import ToolCallMetadata
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
@@ -37,8 +37,8 @@ class ToolRunner:
         tool_responses = list(self.tool_responses())
         return self.tool.build_tool_message_content(*tool_responses)
 
-    def tool_final_result(self) -> ToolCallFinalResult:
-        return ToolCallFinalResult(
+    def tool_final_result(self) -> ToolCallMetadata:
+        return ToolCallMetadata(
             tool_name=self.tool.name,
             tool_args=self.args,
             tool_result=self.tool.final_result(*self.tool_responses()),

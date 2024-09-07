@@ -18,6 +18,9 @@ export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 export interface AnswerPiecePacket {
   answer_piece: string;
 }
+export interface DelimiterPiece {
+  delimiter: boolean;
+}
 
 export enum StreamStopReason {
   CONTEXT_LENGTH = "CONTEXT_LENGTH",

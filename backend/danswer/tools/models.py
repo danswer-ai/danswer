@@ -33,7 +33,7 @@ class ToolRunnerResponse(BaseModel):
         return self
 
 
-class ToolCallFinalResult(ToolCallKickoff):
+class ToolCallMetadata(ToolCallKickoff):
     tool_result: Any = (
         None  # we would like to use JSON_ro, but can't due to its recursive nature
     )

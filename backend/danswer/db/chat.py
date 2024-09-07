@@ -35,7 +35,7 @@ from danswer.search.models import RetrievalDocs
 from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchDoc as ServerSearchDoc
 from danswer.server.query_and_chat.models import ChatMessageDetail
-from danswer.tools.tool_runner import ToolCallFinalResult
+from danswer.tools.tool_runner import ToolCallMetadata
 from danswer.utils.logger import setup_logger
 
 
@@ -178,8 +178,14 @@ def delete_search_doc_message_relationship(
 
 
 def delete_tool_call_for_message_id(message_id: int, db_session: Session) -> None:
-    stmt = delete(ToolCall).where(ToolCall.message_id == message_id)
-    db_session.execute(stmt)
+    chat_message = (
+        db_session.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+    )
+    if chat_message and chat_message.tool_call_id:
+        stmt = delete(ToolCall).where(ToolCall.id == chat_message.tool_call_id)
+        db_session.execute(stmt)
+        chat_message.tool_call_id = None
+
     db_session.commit()
 
 
@@ -388,7 +394,7 @@ def get_chat_messages_by_session(
     )
 
     if prefetch_tool_calls:
-        stmt = stmt.options(joinedload(ChatMessage.tool_calls))
+        stmt = stmt.options(joinedload(ChatMessage.tool_call))
         result = db_session.scalars(stmt).unique().all()
     else:
         result = db_session.scalars(stmt).all()
@@ -474,7 +480,7 @@ def create_new_chat_message(
     alternate_assistant_id: int | None = None,
     # Maps the citation number [n] to the DB SearchDoc
     citations: dict[int, int] | None = None,
-    tool_calls: list[ToolCall] | None = None,
+    tool_call: ToolCall | None = None,
     commit: bool = True,
     reserved_message_id: int | None = None,
     overridden_model: str | None = None,
@@ -494,7 +500,7 @@ def create_new_chat_message(
         existing_message.message_type = message_type
         existing_message.citations = citations
         existing_message.files = files
-        existing_message.tool_calls = tool_calls if tool_calls else []
+        existing_message.tool_call = tool_call
         existing_message.error = error
         existing_message.alternate_assistant_id = alternate_assistant_id
         existing_message.overridden_model = overridden_model
@@ -513,7 +519,7 @@ def create_new_chat_message(
             message_type=message_type,
             citations=citations,
             files=files,
-            tool_calls=tool_calls if tool_calls else [],
+            tool_call=tool_call,
             error=error,
             alternate_assistant_id=alternate_assistant_id,
             overridden_model=overridden_model,
@@ -530,7 +536,6 @@ def create_new_chat_message(
     parent_message.latest_child_message = new_chat_message.id
     if commit:
         db_session.commit()
-
     return new_chat_message
 
 
@@ -747,14 +752,13 @@ def translate_db_message_to_chat_message_detail(
         time_sent=chat_message.time_sent,
         citations=chat_message.citations,
         files=chat_message.files or [],
-        tool_calls=[
-            ToolCallFinalResult(
-                tool_name=tool_call.tool_name,
-                tool_args=tool_call.tool_arguments,
-                tool_result=tool_call.tool_result,
-            )
-            for tool_call in chat_message.tool_calls
-        ],
+        tool_call=ToolCallMetadata(
+            tool_name=chat_message.tool_call.tool_name,
+            tool_args=chat_message.tool_call.tool_arguments,
+            tool_result=chat_message.tool_call.tool_result,
+        )
+        if chat_message.tool_call
+        else None,
         alternate_assistant_id=chat_message.alternate_assistant_id,
         overridden_model=chat_message.overridden_model,
     )

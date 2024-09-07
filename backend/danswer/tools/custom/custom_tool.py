@@ -61,6 +61,12 @@ class CustomTool(Tool):
 
     """For LLMs which support explicit tool calling"""
 
+    @classmethod
+    def create_prompt(cls, message: PreviousMessage) -> str:
+        # TODO improve / iterate
+
+        return f'I searched for some things! """thigns that I searched for!: {message.message}"""'
+
     def tool_definition(self) -> dict:
         return self._tool_definition
 

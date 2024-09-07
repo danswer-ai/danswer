@@ -13,6 +13,10 @@ ID_SEPARATOR = ":;:"
 DEFAULT_BOOST = 0
 SESSION_KEY = "session"
 
+
+# For tool calling
+MAXIMUM_TOOL_CALL_SEQUENCE = 5
+
 # For chunking/processing chunks
 RETURN_SEPARATOR = "\n\r\n"
 SECTION_SEPARATOR = "\n\n"
