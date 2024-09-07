@@ -114,7 +114,7 @@ export function DocumentMetadataBlock({
   const MAXIMUM_TAG_LENGTH = 40;
 
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-col">
       {document.updated_at && (
         <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
       )}

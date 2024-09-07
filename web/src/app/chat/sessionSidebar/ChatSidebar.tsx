@@ -22,7 +22,7 @@ import { createFolder } from "../folders/FolderManagement";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import EnmeddLogo from "../../../../public/logo-brand.png";
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/Logo";
@@ -94,10 +94,10 @@ export const ChatSidebar = ({
         </div>
 
         <div className="h-full overflow-auto">
-          <div className="px-4 text-sm flex flex-col">
+          <div className="px-4 text-sm font-medium flex flex-col">
             {settings.search_page_enabled && (
               <>
-                <Separator className="mb-2" />
+                <Separator className="mb-3" />
                 <Link
                   href="/search"
                   className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
@@ -120,7 +120,7 @@ export const ChatSidebar = ({
                   <MessageCircleMore size={16} className="min-w-4 min-h-4" />
                   Chat
                 </Link>
-                <Link
+                {/*  <Link
                   href="/assistants/mine"
                   className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
                     isAssistant
@@ -130,10 +130,10 @@ export const ChatSidebar = ({
                 >
                   <Headset size={16} />
                   <span className="truncate">Explore Assistants</span>
-                </Link>
+                </Link> */}
               </>
             )}
-            <Separator className="mt-3" />
+            <Separator className="mt-4" />
           </div>
 
           <ChatTab

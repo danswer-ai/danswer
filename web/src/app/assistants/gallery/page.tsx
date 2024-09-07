@@ -1,7 +1,7 @@
 import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { UserDropdown } from "@/components/UserDropdown";
-import { ChatProvider } from "@/components/context/ChatContext";
+import { ChatProvider } from "@/context/ChatContext";
 import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { unstable_noStore as noStore } from "next/cache";
@@ -66,11 +66,9 @@ export default async function GalleryPage({
           </AssistantsBars>
 
           <div
-            className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
+            className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative pt-24 px-4 2xl:pt-10`}
           >
-            <div className="mt-4">
-              <AssistantsGallery assistants={assistants} user={user} />
-            </div>
+            <AssistantsGallery assistants={assistants} user={user} />
           </div>
         </div>
       </ChatProvider>

@@ -59,7 +59,7 @@ import Dropzone from "react-dropzone";
 import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
@@ -1234,7 +1234,6 @@ export function ChatPage({
                             {currentAssistant &&
                               currentAssistant.starter_messages &&
                               currentAssistant.starter_messages.length > 0 &&
-                              selectedAssistants &&
                               messageHistory.length === 0 &&
                               !isFetchingChatMessages && (
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 md:pt-8">

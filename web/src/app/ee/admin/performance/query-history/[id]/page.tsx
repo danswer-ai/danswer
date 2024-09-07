@@ -26,7 +26,11 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
           <div className="flex gap-2 flex-wrap">
             {message.documents.slice(0, 5).map((document) => {
               return (
-                <Badge variant="outline" key={document.document_id}>
+                <Badge
+                  variant="outline"
+                  key={document.document_id}
+                  className="cursor-pointer hover:opacity-75"
+                >
                   <Book
                     size={12}
                     className={"" + (document.link ? " text-link" : " ")}
