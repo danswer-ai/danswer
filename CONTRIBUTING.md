@@ -108,8 +108,8 @@ npm i
 Install Playwright (headless browser required by the Web Connector)
 
 > **Note:**
-> If you have just done the pip install, open a new terminal and source the python virtual-env again.
-> This will update the path to include playwright
+> If you have just run the pip install, open a new terminal and source the python virtual-env again.
+> This will pull the updated PATH to include playwright
 
 Then install Playwright by running:
 ```bash
@@ -141,9 +141,7 @@ uvicorn model_server.main:app --reload --port 9000
 
 _For Windows (for compatibility with both PowerShell and Command Prompt):_
 ```bash
-powershell -Command "
-    uvicorn model_server.main:app --reload --port 9000
-"
+powershell -Command "uvicorn model_server.main:app --reload --port 9000"
 ```
 
 The first time running Danswer, you will need to run the DB migrations for Postgres.
