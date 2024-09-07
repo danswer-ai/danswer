@@ -38,23 +38,22 @@ export const ApiKeyModal = ({ user }: { user: User | null }) => {
 
   return (
     <Modal
-      title="LLM Key Setup"
+      title="Welcome to Danswer!"
       className="max-w-4xl"
       onOutsideClick={() => setForceHidden(true)}
     >
       <div className="max-h-[75vh] overflow-y-auto flex flex-col px-4">
         <div>
           <div className="mb-5 text-sm">
-            Please setup an LLM below in order to start using Danswer Search or
-            Danswer Chat. Don&apos;t worry, you can always change this later in
-            the Admin Panel.
+            Please provide an API Key below in order to start using Danswer. You
+            can always change this later!
             <br />
-            <br />
-            Or if you&apos;d rather look around first,{" "}
+            Or if you&apos;d rather look around first, you can
             <strong
               onClick={() => setForceHidden(true)}
               className="text-link cursor-pointer"
             >
+              {" "}
               skip this step
             </strong>
             .

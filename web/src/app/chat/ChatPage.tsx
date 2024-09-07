@@ -1111,6 +1111,12 @@ export function ChatPage({
               console.error(
                 "First packet should contain message response info "
               );
+              if (Object.hasOwn(packet, "error")) {
+                const error = (packet as StreamingError).error;
+                setLoadingError(error);
+                updateChatState("input");
+                return;
+              }
               continue;
             }
 
@@ -1215,6 +1221,8 @@ export function ChatPage({
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
               stackTrace = (packet as StreamingError).stack_trace;
+              console.log("error", error);
+              console.log("stackTrace", stackTrace);
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
             } else if (Object.hasOwn(packet, "stop_reason")) {
@@ -1465,6 +1473,7 @@ export function ChatPage({
 
   // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
   const [untoggled, setUntoggled] = useState(false);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   const explicitlyUntoggle = () => {
     setShowDocSidebar(false);
@@ -1770,7 +1779,8 @@ export function ChatPage({
 
                           {messageHistory.length === 0 &&
                             !isFetchingChatMessages &&
-                            currentSessionChatState == "input" && (
+                            currentSessionChatState == "input" &&
+                            !loadingError && (
                               <ChatIntro
                                 availableSources={finalAvailableSources}
                                 selectedPersona={liveAssistant}
@@ -2078,16 +2088,17 @@ export function ChatPage({
                               }
                             })}
 
-                            {currentSessionChatState == "loading" &&
-                              !currentSessionRegenerationState?.regenerating &&
-                              messageHistory[messageHistory.length - 1]?.type !=
-                                "user" && (
-                                <HumanMessage
-                                  key={-2}
-                                  messageId={-1}
-                                  content={submittedMessage}
-                                />
-                              )}
+                            {currentSessionChatState == "loading" ||
+                              (loadingError &&
+                                !currentSessionRegenerationState?.regenerating &&
+                                messageHistory[messageHistory.length - 1]
+                                  ?.type != "user" && (
+                                  <HumanMessage
+                                    key={-2}
+                                    messageId={-1}
+                                    content={submittedMessage}
+                                  />
+                                ))}
 
                             {currentSessionChatState == "loading" && (
                               <div
@@ -2116,6 +2127,20 @@ export function ChatPage({
                               </div>
                             )}
 
+                            {loadingError && (
+                              <div key={-1}>
+                                <AIMessage
+                                  currentPersona={liveAssistant}
+                                  messageId={-1}
+                                  personaName={liveAssistant.name}
+                                  content={
+                                    <p className="text-red-700 text-sm my-auto">
+                                      {loadingError}
+                                    </p>
+                                  }
+                                />
+                              </div>
+                            )}
                             {currentPersona &&
                               currentPersona.starter_messages &&
                               currentPersona.starter_messages.length > 0 &&

@@ -31,11 +31,13 @@ export function LLMProviderUpdateForm({
   existingLlmProvider,
   shouldMarkAsDefault,
   setPopup,
+  hideAdvanced,
 }: {
   llmProviderDescriptor: WellKnownLLMProviderDescriptor;
   onClose: () => void;
   existingLlmProvider?: FullLLMProvider;
   shouldMarkAsDefault?: boolean;
+  hideAdvanced?: boolean;
   setPopup?: (popup: PopupSpec) => void;
 }) {
   const { mutate } = useSWRConfig();
@@ -52,7 +54,7 @@ export function LLMProviderUpdateForm({
 
   // Define the initial values based on the provider's requirements
   const initialValues = {
-    name: existingLlmProvider?.name ?? "",
+    name: existingLlmProvider?.name ?? hideAdvanced ? "Default" : "",
     api_key: existingLlmProvider?.api_key ?? "",
     api_base: existingLlmProvider?.api_base ?? "",
     api_version: existingLlmProvider?.api_version ?? "",
@@ -218,14 +220,16 @@ export function LLMProviderUpdateForm({
       }}
     >
       {({ values, setFieldValue }) => (
-        <Form className="gap-y-6 items-stretch mt-8">
-          <TextFormField
-            name="name"
-            label="Display Name"
-            subtext="A name which you can use to identify this provider when selecting it in the UI."
-            placeholder="Display Name"
-            disabled={existingLlmProvider ? true : false}
-          />
+        <Form className="gap-y-6 mt-8">
+          {!hideAdvanced && (
+            <TextFormField
+              name="name"
+              label="Display Name"
+              subtext="A name which you can use to identify this provider when selecting it in the UI."
+              placeholder="Display Name"
+              disabled={existingLlmProvider ? true : false}
+            />
+          )}
 
           {llmProviderDescriptor.api_key_required && (
             <TextFormField
@@ -266,133 +270,143 @@ export function LLMProviderUpdateForm({
             </div>
           ))}
 
-          <Divider />
-
-          {llmProviderDescriptor.llm_names.length > 0 ? (
-            <SelectorFormField
-              name="default_model_name"
-              subtext="The model to use by default for this provider unless otherwise specified."
-              label="Default Model"
-              options={llmProviderDescriptor.llm_names.map((name) => ({
-                name: getDisplayNameForModel(name),
-                value: name,
-              }))}
-              maxHeight="max-h-56"
-            />
-          ) : (
-            <TextFormField
-              name="default_model_name"
-              subtext="The model to use by default for this provider unless otherwise specified."
-              label="Default Model"
-              placeholder="E.g. gpt-4"
-            />
-          )}
-
-          {llmProviderDescriptor.llm_names.length > 0 ? (
-            <SelectorFormField
-              name="fast_default_model_name"
-              subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
-                for this provider. If \`Default\` is specified, will use 
-                the Default Model configured above.`}
-              label="[Optional] Fast Model"
-              options={llmProviderDescriptor.llm_names.map((name) => ({
-                name: getDisplayNameForModel(name),
-                value: name,
-              }))}
-              includeDefault
-              maxHeight="max-h-56"
-            />
-          ) : (
-            <TextFormField
-              name="fast_default_model_name"
-              subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
-                for this provider. If \`Default\` is specified, will use 
-                the Default Model configured above.`}
-              label="[Optional] Fast Model"
-              placeholder="E.g. gpt-4"
-            />
-          )}
-
-          <Divider />
-
-          {llmProviderDescriptor.name != "azure" && (
-            <AdvancedOptionsToggle
-              showAdvancedOptions={showAdvancedOptions}
-              setShowAdvancedOptions={setShowAdvancedOptions}
-            />
-          )}
-
-          {showAdvancedOptions && (
+          {!hideAdvanced && (
             <>
-              {llmProviderDescriptor.llm_names.length > 0 && (
-                <div className="w-full">
-                  <MultiSelectField
-                    selectedInitially={values.display_model_names}
-                    name="display_model_names"
-                    label="Display Models"
-                    subtext="Select the models to make available to users. Unselected models will not be available."
-                    options={llmProviderDescriptor.llm_names.map((name) => ({
-                      value: name,
-                      label: getDisplayNameForModel(name),
-                    }))}
-                    onChange={(selected) =>
-                      setFieldValue("display_model_names", selected)
-                    }
-                  />
-                </div>
+              <Divider />
+
+              {llmProviderDescriptor.llm_names.length > 0 ? (
+                <SelectorFormField
+                  name="default_model_name"
+                  subtext="The model to use by default for this provider unless otherwise specified."
+                  label="Default Model"
+                  options={llmProviderDescriptor.llm_names.map((name) => ({
+                    name: getDisplayNameForModel(name),
+                    value: name,
+                  }))}
+                  maxHeight="max-h-56"
+                />
+              ) : (
+                <TextFormField
+                  name="default_model_name"
+                  subtext="The model to use by default for this provider unless otherwise specified."
+                  label="Default Model"
+                  placeholder="E.g. gpt-4"
+                />
               )}
 
-              {isPaidEnterpriseFeaturesEnabled && userGroups && (
-                <>
-                  <BooleanFormField
-                    small
-                    removeIndent
-                    alignTop
-                    name="is_public"
-                    label="Is Public?"
-                    subtext="If set, this LLM Provider will be available to all users. If not, only the specified User Groups will be able to use it."
-                  />
+              {llmProviderDescriptor.llm_names.length > 0 ? (
+                <SelectorFormField
+                  name="fast_default_model_name"
+                  subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
+                for this provider. If \`Default\` is specified, will use 
+                the Default Model configured above.`}
+                  label="[Optional] Fast Model"
+                  options={llmProviderDescriptor.llm_names.map((name) => ({
+                    name: getDisplayNameForModel(name),
+                    value: name,
+                  }))}
+                  includeDefault
+                  maxHeight="max-h-56"
+                />
+              ) : (
+                <TextFormField
+                  name="fast_default_model_name"
+                  subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
+                for this provider. If \`Default\` is specified, will use 
+                the Default Model configured above.`}
+                  label="[Optional] Fast Model"
+                  placeholder="E.g. gpt-4"
+                />
+              )}
 
-                  {userGroups && userGroups.length > 0 && !values.is_public && (
-                    <div>
-                      <Text>
-                        Select which User Groups should have access to this LLM
-                        Provider.
-                      </Text>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {userGroups.map((userGroup) => {
-                          const isSelected = values.groups.includes(
-                            userGroup.id
-                          );
-                          return (
-                            <Bubble
-                              key={userGroup.id}
-                              isSelected={isSelected}
-                              onClick={() => {
-                                if (isSelected) {
-                                  setFieldValue(
-                                    "groups",
-                                    values.groups.filter(
-                                      (id) => id !== userGroup.id
-                                    )
-                                  );
-                                } else {
-                                  setFieldValue("groups", [
-                                    ...values.groups,
-                                    userGroup.id,
-                                  ]);
-                                }
-                              }}
-                            >
-                              <div className="flex">
-                                <GroupsIcon />
-                                <div className="ml-1">{userGroup.name}</div>
-                              </div>
-                            </Bubble>
-                          );
-                        })}
-                      </div>
+              <Divider />
+
+              {llmProviderDescriptor.name != "azure" && (
+                <AdvancedOptionsToggle
+                  showAdvancedOptions={showAdvancedOptions}
+                  setShowAdvancedOptions={setShowAdvancedOptions}
+                />
+              )}
+
+              {showAdvancedOptions && (
+                <>
+                  {llmProviderDescriptor.llm_names.length > 0 && (
+                    <div className="w-full">
+                      <MultiSelectField
+                        selectedInitially={values.display_model_names}
+                        name="display_model_names"
+                        label="Display Models"
+                        subtext="Select the models to make available to users. Unselected models will not be available."
+                        options={llmProviderDescriptor.llm_names.map(
+                          (name) => ({
+                            value: name,
+                            label: getDisplayNameForModel(name),
+                          })
+                        )}
+                        onChange={(selected) =>
+                          setFieldValue("display_model_names", selected)
+                        }
+                      />
                     </div>
+                  )}
+
+                  {isPaidEnterpriseFeaturesEnabled && userGroups && (
+                    <>
+                      <BooleanFormField
+                        small
+                        removeIndent
+                        alignTop
+                        name="is_public"
+                        label="Is Public?"
+                        subtext="If set, this LLM Provider will be available to all users. If not, only the specified User Groups will be able to use it."
+                      />
+
+                      {userGroups &&
+                        userGroups.length > 0 &&
+                        !values.is_public && (
+                          <div>
+                            <Text>
+                              Select which User Groups should have access to
+                              this LLM Provider.
+                            </Text>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {userGroups.map((userGroup) => {
+                                const isSelected = values.groups.includes(
+                                  userGroup.id
+                                );
+                                return (
+                                  <Bubble
+                                    key={userGroup.id}
+                                    isSelected={isSelected}
+                                    onClick={() => {
+                                      if (isSelected) {
+                                        setFieldValue(
+                                          "groups",
+                                          values.groups.filter(
+                                            (id) => id !== userGroup.id
+                                          )
+                                        );
+                                      } else {
+                                        setFieldValue("groups", [
+                                          ...values.groups,
+                                          userGroup.id,
+                                        ]);
+                                      }
+                                    }}
+                                  >
+                                    <div className="flex">
+                                      <GroupsIcon />
+                                      <div className="ml-1">
+                                        {userGroup.name}
+                                      </div>
+                                    </div>
+                                  </Bubble>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                    </>
                   )}
                 </>
               )}
