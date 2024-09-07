@@ -17,7 +17,7 @@ inputs:
   push:
     description: 'Push the image to registry'
     required: false
-    default: 'false'
+    default: 'true'
   load:
     description: 'Load the image into Docker daemon'
     required: false

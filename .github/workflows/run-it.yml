@@ -44,9 +44,9 @@ jobs:
           platforms: linux/arm64
           tags: danswer/danswer-backend:it
           cache-from: type=registry,ref=danswer/danswer-backend:it
-          # cache-to: |
-          #   type=registry,ref=danswer/danswer-backend:it,mode=max
-          #   type=inline
+          cache-to: |
+            type=registry,ref=danswer/danswer-backend:it,mode=max
+            type=inline
 
       - name: Build Model Server Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -56,9 +56,9 @@ jobs:
           platforms: linux/arm64
           tags: danswer/danswer-model-server:it
           cache-from: type=registry,ref=danswer/danswer-model-server:it
-          # cache-to: |
-          #   type=registry,ref=danswer/danswer-model-server:it,mode=max
-          #   type=inline
+          cache-to: |
+            type=registry,ref=danswer/danswer-model-server:it,mode=max
+            type=inline
 
       - name: Build integration test Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -68,9 +68,9 @@ jobs:
           platforms: linux/arm64
           tags: danswer/integration-test-runner:it
           cache-from: type=registry,ref=danswer/integration-test-runner:it
-          # cache-to: |
-          #   type=registry,ref=danswer/integration-test-runner:it,mode=max
-          #   type=inline
+          cache-to: |
+            type=registry,ref=danswer/integration-test-runner:it,mode=max
+            type=inline
 
       - name: Start Docker containers
         run: |
