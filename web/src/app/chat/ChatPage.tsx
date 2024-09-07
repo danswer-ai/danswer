@@ -779,7 +779,6 @@ export function ChatPage({
   const clientScrollToBottom = (fast?: boolean) => {
     setTimeout(() => {
       if (!endDivRef.current) {
-        console.log("End div ref not found");
         return;
       }
 
