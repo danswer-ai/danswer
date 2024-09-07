@@ -52,7 +52,7 @@ Danswer being a fully functional app, relies on some external software, specific
 - [Postgres](https://www.postgresql.org/) (Relational DB)
 - [Vespa](https://vespa.ai/) (Vector DB/Search Engine)
 - [Redis](https://redis.io/) (Cache)
-- [Nginx](https://redis.io/) (Not needed for development flows generally)
+- [Nginx](https://nginx.org/) (Not needed for development flows generally)
 
 
 > **Note:**
