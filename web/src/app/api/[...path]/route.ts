@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/* NextJS is annoying and makes use use a separate function for 
+each request type >:( */
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { path: string[] } }
@@ -21,6 +24,13 @@ export async function PUT(
   return handleRequest(request, params.path);
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { path: string[] } }
+) {
+  return handleRequest(request, params.path);
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { path: string[] } }
@@ -29,6 +39,13 @@ export async function DELETE(
 }
 
 export async function HEAD(
+  request: NextRequest,
+  { params }: { params: { path: string[] } }
+) {
+  return handleRequest(request, params.path);
+}
+
+export async function OPTIONS(
   request: NextRequest,
   { params }: { params: { path: string[] } }
 ) {
