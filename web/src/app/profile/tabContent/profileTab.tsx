@@ -7,7 +7,7 @@ import Logo from "../../../../public/logo.png";
 export default function ProfileTab({ user }: { user: UserTypes | null }) {
   return (
     <>
-      <div className="flex py-8 border-b">
+      {/* <div className="flex py-8 border-b">
         <div className="w-[500px] text-sm">
           <span className="font-semibold text-inverted-inverted">
             Your Photo
@@ -29,7 +29,7 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
             Update
           </Button>
         </div>
-      </div>
+      </div> */}
 
       <div className="py-8 border-b flex flex-col gap-5">
         <div className="flex items-center">
@@ -40,7 +40,7 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
             <span className="font-semibold text-inverted-inverted">
               {user?.full_name || "Unknown User"}
             </span>{" "}
-            <Button variant="outline">Edit</Button>
+            {/* <Button variant="outline">Edit</Button> */}
           </div>
         </div>
         <div className="flex items-center">
@@ -53,7 +53,7 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
             <span className="font-semibold text-inverted-inverted">
               {user?.company_name || "No Company"}
             </span>
-            <Button variant="outline">Edit</Button>
+            {/* <Button variant="outline">Edit</Button> */}
           </div>
         </div>
         <div className="flex items-center">
@@ -64,7 +64,7 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
             <span className="font-semibold text-inverted-inverted">
               {user?.email || "anonymous@gmail.com"}
             </span>{" "}
-            <Button variant="outline">Edit</Button>
+            {/* <Button variant="outline">Edit</Button> */}
           </div>
         </div>
       </div>
