@@ -76,6 +76,8 @@
     "@tailwindcss/typography": "^0.5.10",
     "eslint": "^8.48.0",
     "eslint-config-next": "^14.1.0",
-    "prettier": "2.8.8"
+    "prettier": "^3.3.3",
+    "prettier-plugin-organize-imports": "^4.0.0",
+    "prettier-plugin-tailwindcss": "^0.6.6"
   }
 }
