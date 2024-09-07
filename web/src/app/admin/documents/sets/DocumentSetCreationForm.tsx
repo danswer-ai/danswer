@@ -224,11 +224,11 @@ export const DocumentSetCreationForm = ({
                       />
                     </>
                   ) : (
-                    <Text>
+                    <p className="text-sm text-subtle">
                       This Document Set is public, so this does not apply. If
                       you want to control which user groups see this Document
                       Set, mark it as non-public!
-                    </Text>
+                    </p>
                   )}
                 </div>
               )}

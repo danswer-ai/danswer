@@ -107,7 +107,7 @@ const SignedUpUserTable = ({
   const onSuccess = (message: string) => {
     mutate();
     toast({
-      title: "success",
+      title: "Success",
       description: message,
       variant: "success",
     });

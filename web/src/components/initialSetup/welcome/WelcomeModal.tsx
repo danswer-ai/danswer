@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Divider, Text } from "@tremor/react";
+import { Divider, Text } from "@tremor/react";
 import { Modal } from "../../Modal";
 import Link from "next/link";
 import Cookies from "js-cookie";
@@ -13,6 +13,9 @@ import { ApiKeyForm } from "@/components/llm/ApiKeyForm";
 import { WellKnownLLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
 import { checkLlmProvider } from "./lib";
 import { User } from "@/lib/types";
+import { CustomModal } from "@/components/CustomModal";
+import { Button } from "@/components/ui/button";
+import { Share2 } from "lucide-react";
 
 function setWelcomeFlowComplete() {
   Cookies.set(COMPLETED_WELCOME_FLOW_COOKIE, "true", { expires: 365 });
@@ -40,16 +43,14 @@ function UsageTypeSection({
     <div>
       <Text className="font-bold">{title}</Text>
       <div className="mt-1 mb-3 text-base">{description}</div>
-      <div
+      <Button
         onClick={(e) => {
           e.preventDefault();
           onClick();
         }}
       >
-        <div className="font-medium cursor-pointer select-none text-link">
-          {callToAction}
-        </div>
-      </div>
+        {callToAction}
+      </Button>
     </div>
   );
 }
@@ -131,8 +132,8 @@ export function _WelcomeModal({ user }: { user: User | null }) {
                   }}
                   className="mx-auto w-fit"
                 >
-                  <Button size="xs" icon={FiShare2} disabled={!apiKeyVerified}>
-                    Setup your first connector!
+                  <Button disabled={!apiKeyVerified}>
+                    <Share2 size={16} /> Setup your first connector!
                   </Button>
                 </Link>
               </div>
@@ -205,8 +206,8 @@ export function _WelcomeModal({ user }: { user: User | null }) {
                 }}
                 className="mx-auto w-fit"
               >
-                <Button size="xs" icon={FiShare2} disabled={!apiKeyVerified}>
-                  Start chatting!
+                <Button disabled={!apiKeyVerified}>
+                  <Share2 size={16} /> Start chatting!
                 </Button>
               </Link>
             </div>
@@ -255,7 +256,16 @@ export function _WelcomeModal({ user }: { user: User | null }) {
 
   return (
     <Modal title={title} className="w-full max-w-4xl mx-6 md:w-auto md:mx-0">
-      <div className="text-base">{body}</div>
+      <CustomModal
+        open={!isHidden}
+        onClose={() => setIsHidden(true)}
+        trigger={null}
+      >
+        <div>
+          <h2 className="text-2xl font-semibold pb-6">{title}</h2>
+          {body}
+        </div>
+      </CustomModal>
     </Modal>
   );
 }

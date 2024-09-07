@@ -42,7 +42,7 @@ function NewApiKeyModal({
   const [copyClicked, setCopyClicked] = useState(false);
 
   return (
-    <div>
+    <div className="h-full">
       <div className="flex w-full border-b border-border mb-4 pb-4">
         <h3 className="font-semibold">New API Key</h3>
       </div>

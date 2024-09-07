@@ -16,9 +16,9 @@ export function hasCompletedWelcomeFlowSS() {
 
 export function WelcomeModal({ user }: { user: User | null }) {
   const hasCompletedWelcomeFlow = hasCompletedWelcomeFlowSS();
-  if (hasCompletedWelcomeFlow) {
+  /*   if (hasCompletedWelcomeFlow) {
     return <_CompletedWelcomeFlowDummyComponent />;
-  }
+  } */
 
   return <_WelcomeModal user={user} />;
 }

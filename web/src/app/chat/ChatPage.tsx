@@ -1236,7 +1236,6 @@ export function ChatPage({
                             {currentAssistant &&
                               currentAssistant.starter_messages &&
                               currentAssistant.starter_messages.length > 0 &&
-                              selectedAssistants &&
                               messageHistory.length === 0 &&
                               !isFetchingChatMessages && (
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 md:pt-8">
