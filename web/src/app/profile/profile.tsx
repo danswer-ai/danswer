@@ -16,10 +16,10 @@ export default function Profile({ user }: { user: UserTypes | null }) {
           <TabsTrigger value="profile">
             <User size={16} className="mr-2" /> Profile
           </TabsTrigger>
-          <TabsTrigger value="security">
+          <TabsTrigger value="security" disabled>
             <Lock size={16} className="mr-2" /> Security
           </TabsTrigger>
-          <TabsTrigger value="billing">
+          <TabsTrigger value="billing" disabled>
             <CreditCard size={16} className="mr-2" /> Billing
           </TabsTrigger>
         </TabsList>

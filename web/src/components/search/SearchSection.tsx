@@ -229,8 +229,8 @@ export const SearchSection = ({
   }
 
   return (
-    <div className="relative flex gap-16 lg:gap-14 xl:gap-10 2xl:gap-20 h-full lg:pl-8 xl:pl-0 ml-auto">
-      <div className="w-full flex flex-col gap-5">
+    <div className="relative flex gap-16 lg:gap-14 xl:gap-10 2xl:gap-20 h-full max-w-full lg:pl-8 xl:pl-0 ml-auto">
+      <div className="w-full max-w-[70%] flex flex-col gap-5">
         <div className="flex items-center gap-2 relative">
           <SearchBar
             query={query}

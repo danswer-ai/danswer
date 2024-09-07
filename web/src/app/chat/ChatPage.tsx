@@ -73,8 +73,6 @@ import {
   PanelRightClose,
   Share,
 } from "lucide-react";
-import Image from "next/image";
-import Logo from "../../../public/logo-brand.png";
 import { Button } from "@/components/ui/button";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
@@ -653,7 +651,6 @@ export function ChatPage({
     alternativeAssistant?: Assistant | null;
   } = {}) => {
     setAlternativeGeneratingAssistant(alternativeAssistant);
-
     clientScrollToBottom();
     let currChatSessionId: number;
     let isNewSession = chatSessionIdRef.current === null;
@@ -661,6 +658,7 @@ export function ChatPage({
       searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
 
     if (isNewSession) {
+      toggleSidebar();
       currChatSessionId = await createChatSession(
         liveAssistant?.id || 0,
         searchParamBasedChatSessionName

@@ -11,7 +11,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
 
   return (
     <div
-      className="relative"
+      className="relative max-w-full"
       onMouseEnter={() => {
         setDetailIsOpen(true);
       }}
@@ -47,15 +47,16 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
           </div>
         </div>
       )}
-      <div className="text-sm flex w-fit">
+      <div className="text-sm flex">
         <a
           href={quoteInfo.link || undefined}
           target="_blank"
           rel="noopener noreferrer"
+          className="max-w-full"
         >
-          <Button variant="outline">
+          <Button variant="outline" className="max-w-full">
             <SourceIcon sourceType={quoteInfo.source_type} iconSize={18} />
-            <p className="truncate break-all ml-2 mr-2">
+            <p className="truncate max-w-full break-all ml-2 mr-2">
               {quoteInfo.semantic_identifier || quoteInfo.document_id}
             </p>
           </Button>

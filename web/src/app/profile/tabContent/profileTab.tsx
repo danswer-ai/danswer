@@ -22,10 +22,10 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
               <User size={25} className="mx-auto" />
             )}
           </div>
-          <Button variant="link" className="text-error px-2">
+          <Button disabled variant="link" className="text-error px-2">
             Delete
           </Button>
-          <Button variant="link" className="px-2">
+          <Button disabled variant="link" className="px-2">
             Update
           </Button>
         </div>
