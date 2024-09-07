@@ -53,6 +53,7 @@ from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
+from danswer.db.llm import fetch_default_provider
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.persona import delete_old_default_personas
@@ -197,7 +198,7 @@ def setup_postgres(db_session: Session) -> None:
     refresh_built_in_tools_cache(db_session)
     auto_add_search_tool_to_personas(db_session)
 
-    if GEN_AI_API_KEY:
+    if GEN_AI_API_KEY and fetch_default_provider(db_session) is None:
         # Only for dev flows
         logger.notice("Setting up default OpenAI LLM for dev.")
         llm_model = GEN_AI_MODEL_VERSION or "gpt-4o-mini"
