@@ -187,7 +187,7 @@ def remove_llm_provider(db_session: Session, provider_id: int) -> None:
     db_session.commit()
 
 
-def update_default_provider(db_session: Session, provider_id: int) -> None:
+def update_default_provider(provider_id: int, db_session: Session) -> None:
     new_default = db_session.scalar(
         select(LLMProviderModel).where(LLMProviderModel.id == provider_id)
     )

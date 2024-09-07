@@ -53,6 +53,7 @@ from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
+from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.persona import delete_old_default_personas
 from danswer.db.search_settings import get_current_search_settings
@@ -198,7 +199,7 @@ def setup_postgres(db_session: Session) -> None:
 
     if GEN_AI_API_KEY:
         # Only for dev flows
-        logger.notice("Setting up default OpenAI models for dev setup.")
+        logger.notice("Setting up default OpenAI LLM for dev.")
         llm_model = GEN_AI_MODEL_VERSION or "gpt-4o-mini"
         fast_model = FAST_GEN_AI_MODEL_VERSION or "gpt-4o-mini"
         model_req = LLMProviderUpsertRequest(
@@ -215,7 +216,10 @@ def setup_postgres(db_session: Session) -> None:
             display_model_names=[llm_model, fast_model],
             model_names=[llm_model, fast_model],
         )
-        upsert_llm_provider(llm_provider=model_req, db_session=db_session)
+        new_llm_provider = upsert_llm_provider(
+            llm_provider=model_req, db_session=db_session
+        )
+        update_default_provider(provider_id=new_llm_provider.id, db_session=db_session)
 
 
 def update_default_multipass_indexing(db_session: Session) -> None:
