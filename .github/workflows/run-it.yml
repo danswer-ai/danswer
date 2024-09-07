@@ -28,17 +28,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build Web Docker image
-        uses: ./.github/actions/custom-build-and-push
-        with:
-          context: ./web
-          file: ./web/Dockerfile
-          platforms: linux/arm64
-          tags: danswer/danswer-web-server:it
-          cache-from: type=registry,ref=danswer/danswer-web-server:it
-          cache-to: |
-            type=registry,ref=danswer/danswer-web-server:it,mode=max
-            type=inline
+      # NOTE: we don't need to build the Web Docker image since it's not used
+      # during the IT for now. We have a separate action to verify it builds 
+      # succesfully
+      - name: Pull Web Docker image
+        run: |
+          docker pull danswer/danswer-web-server:latest
+          docker tag danswer/danswer-web-server:latest danswer/danswer-web-server:it
 
       - name: Build Backend Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -83,7 +79,7 @@ jobs:
           AUTH_TYPE=basic \
           REQUIRE_EMAIL_VERIFICATION=false \
           IMAGE_TAG=it \
-          docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build
+          docker compose -f docker-compose.dev.yml -p danswer-stack up -d
         id: start_docker
 
       - name: Wait for service to be ready
