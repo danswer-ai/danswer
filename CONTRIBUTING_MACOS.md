@@ -2,7 +2,7 @@
 The base instructions to set up the development environment are located in [CONTRIBUTING.md](https://github.com/danswer-ai/danswer/blob/main/CONTRIBUTING.md).
 
 ### Setting up Python
-Ensure Homebrew is already set up. (https://brew.sh/)
+Ensure [Homebrew](https://brew.sh/) is already set up.
 
 Then install python 3.11.
 ```bash
