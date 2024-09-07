@@ -48,7 +48,7 @@
                 "--reload",
                 "--port",
                 "9000"
-            ],
+            ]
         },
         {
             "name": "API Server",
@@ -68,7 +68,7 @@
                 "--reload",
                 "--port",
                 "8080"
-            ],
+            ]
         },
         {
             "name": "Indexing",
@@ -83,7 +83,7 @@
                 "LOG_LEVEL": "DEBUG",
                 "PYTHONUNBUFFERED": "1",
                 "PYTHONPATH": "."
-            },
+            }
         },
         // Celery and all async jobs, usually would include indexing as well but this is handled separately above for dev
         {
@@ -102,7 +102,7 @@
             },
             "args": [
                 "--no-indexing"
-            ],
+            ]
         },
         // For the listner to access the Slack API,
         // DANSWER_BOT_SLACK_APP_TOKEN & DANSWER_BOT_SLACK_BOT_TOKEN need to be set in .env file located in the root of the project
@@ -138,6 +138,16 @@
                 // Specify a sepcific module/test to run or provide nothing to run all tests
                 //"tests/unit/danswer/llm/answering/test_prune_and_merge.py"
             ]
+        },
+        {
+            "name": "Clear and Restart External Volumes and Containers",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "bash",
+            "runtimeArgs": ["${workspaceFolder}/backend/scripts/restart_containers.sh"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "stopOnEntry": true
         }
-    ],
+    ]
 }
