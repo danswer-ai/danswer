@@ -218,7 +218,7 @@ export function LLMProviderUpdateForm({
       }}
     >
       {({ values, setFieldValue }) => (
-        <Form className="gap-y-6 mt-8">
+        <Form className="gap-y-6 items-stretch mt-8">
           <TextFormField
             name="name"
             label="Display Name"
