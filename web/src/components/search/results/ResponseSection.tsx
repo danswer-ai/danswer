@@ -84,7 +84,9 @@ export const ResponseSection = ({
         }}
       >
         <div className="my-auto">{icon}</div>
-        <div className="my-auto text-sm text-gray-200 italic max-w-full truncate">{header}</div>
+        <div className="my-auto text-sm text-gray-200 italic max-w-full truncate">
+          {header}
+        </div>
 
         {!isNotControllable && (
           <div className="ml-auto">

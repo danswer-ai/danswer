@@ -41,7 +41,7 @@ repos:
         types_or: [html, css, javascript, ts, tsx]
         additional_dependencies:
           - prettier
-
+           
   # We would like to have a mypy pre-commit hook, but due to the fact that
   # pre-commit runs in it's own isolated environment, we would need to install
   # and keep in sync all dependencies so mypy has access to the appropriate type

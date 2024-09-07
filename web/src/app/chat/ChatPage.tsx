@@ -658,7 +658,7 @@ export function ChatPage({
       searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
 
     if (isNewSession) {
-      toggleSidebar()
+      toggleSidebar();
       currChatSessionId = await createChatSession(
         liveAssistant?.id || 0,
         searchParamBasedChatSessionName
