@@ -1118,7 +1118,7 @@ export function ChatPage({
       {liveAssistant && (
         <TopBar toggleLeftSideBar={toggleLeftSideBar}>
           <div className="flex ml-auto gap-2 items-center">
-            {chatSessionIdRef.current !== null && (
+            {/* {chatSessionIdRef.current !== null && (
               <ShareChatSessionModal
                 chatSessionId={chatSessionIdRef.current}
                 existingSharedStatus={chatSessionSharedStatus}
@@ -1137,7 +1137,7 @@ export function ChatPage({
                   <Share size={20} />
                 </div>
               </ShareChatSessionModal>
-            )}
+            )} */}
 
             {retrievalEnabled && showDocSidebar && (
               <Button onClick={toggleSidebar} variant="ghost" size="icon">
