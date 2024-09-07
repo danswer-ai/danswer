@@ -101,12 +101,12 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
           </div>
         </div>
       </div> */}
-
+      {/* 
       <div className="flex py-8 justify-end">
         <div className="flex gap-3">
           <Button>Save Changes</Button>
         </div>
-      </div>
+      </div> */}
     </>
   );
 }
