@@ -1,4 +1,5 @@
-# Fill in the <REPLACE THIS> values as needed, recommended to 
+# Copy this file to .env in the .vscode folder
+# Fill in the <REPLACE THIS> values as needed, it is recommended to set the GEN_AI_API_KEY value to avoid having to set up an LLM in the UI
 # Also check out danswer/backend/scripts/restart_containers.sh for a script to restart the containers which Danswer relies on outside of VSCode/Cursor processes
 
 # For local dev, often user Authentication is not needed
