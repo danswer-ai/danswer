@@ -60,10 +60,14 @@ def test_creating_and_upgrading_search_settings(reset: None) -> None:
         current_embedding_provider, user_performing_action=admin_user
     )
 
-    new_api_key = "sk-new-openai-api-key-example"
+    new_api_key = "new-openai-api-key-example"
 
-    new_settings.api_key = new_api_key
+    current_embedding_provider.api_key = new_api_key
 
-    EmbeddingProviderManager.edit(new_settings, user_performing_action=admin_user)
+    EmbeddingProviderManager.edit(
+        current_embedding_provider, user_performing_action=admin_user
+    )
 
-    EmbeddingProviderManager.verify(new_settings, user_performing_action=admin_user)
+    EmbeddingProviderManager.verify(
+        current_embedding_provider, user_performing_action=admin_user
+    )
