@@ -84,6 +84,7 @@ def _get_comment_strs(
 
             if (
                 hasattr(comment, "author")
+                and hasattr(comment.author, "emailAddress")
                 and comment.author.emailAddress in comment_email_blacklist
             ):
                 continue  # Skip adding comment if author's email is in blacklist
