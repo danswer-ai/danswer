@@ -103,8 +103,10 @@ def handle_regular_answer(
     is_bot_msg = message_info.is_bot_msg
     user = None
     if message_info.is_bot_dm:
-        slack_user_info = expert_info_from_slack_id(message_info.sender, client, {})
-        if slack_user_info.email:
+        slack_user_info = expert_info_from_slack_id(
+            message_info.sender, client, user_cache={}
+        )
+        if slack_user_info and slack_user_info.email:
             engine = get_sqlalchemy_engine()
             with Session(engine) as db_session:
                 user = get_user_by_email(slack_user_info.email, db_session)
