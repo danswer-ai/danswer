@@ -255,9 +255,10 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
       {
         type: "checkbox",
         query: "Should index pages recursively?",
-        label:
-          "Index Recursively (if this is set and the Wiki Page URL leads to a page, we will index the page and all of its children instead of just the page)",
+        label: "Index Recursively",
         name: "index_recursively",
+        description:
+          "If this is set and the Wiki Page URL leads to a page, we will index the page and all of its children instead of just the page. This is set by default for Confluence connectors without a page ID specified.",
         optional: false,
       },
       {
