@@ -1,11 +1,16 @@
+import asyncio
+import contextlib
 import datetime
 
+from fastapi_users import exceptions
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from sqlalchemy.orm import Session
 
+from danswer.auth.users import get_user_manager
 from danswer.configs.danswerbot_configs import DANSWER_BOT_FEEDBACK_REMINDER
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
+from danswer.connectors.slack.utils import expert_info_from_slack_id
 from danswer.danswerbot.slack.blocks import get_feedback_reminder_blocks
 from danswer.danswerbot.slack.handlers.handle_regular_answer import (
     handle_regular_answer,
@@ -19,8 +24,11 @@ from danswer.danswerbot.slack.utils import fetch_user_ids_from_groups
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import slack_usage_report
 from danswer.danswerbot.slack.utils import update_emote_react
+from danswer.db.auth import get_user_db
+from danswer.db.engine import get_async_session
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
+from danswer.db.models import User
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import SLACK_CHANNEL_ID
 
@@ -45,6 +53,30 @@ def send_msg_ack_to_user(details: SlackMessageInfo, client: WebClient) -> None:
         remove=False,
         client=client,
     )
+
+
+def add_user_if_not_exists(sender: str, client: WebClient) -> User | None:
+    slack_user_info = expert_info_from_slack_id(sender, client, user_cache={})
+    if slack_user_info and slack_user_info.email:
+        return asyncio.run(add_user_in_db_if_not_exists(slack_user_info.email))
+    return None
+
+
+async def add_user_in_db_if_not_exists(email: str) -> User | None:
+    get_async_session_context = contextlib.asynccontextmanager(
+        get_async_session
+    )  # type:ignore
+    get_user_db_context = contextlib.asynccontextmanager(get_user_db)
+    get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
+
+    async with get_async_session_context() as session:
+        async with get_user_db_context(session) as user_db:
+            async with get_user_manager_context(user_db) as user_manager:
+                try:
+                    return await user_manager.create_non_web_user(email)
+                except exceptions.UserAlreadyExists:
+                    pass
+    return None
 
 
 def schedule_feedback_reminder(
@@ -207,6 +239,8 @@ def handle_message(
         send_msg_ack_to_user(message_info, client)
     except SlackApiError as e:
         logger.error(f"Was not able to react to user message due to: {e}")
+
+    add_user_if_not_exists(message_info.sender, client)
 
     with Session(get_sqlalchemy_engine()) as db_session:
         # first check if we need to respond with a standard answer
