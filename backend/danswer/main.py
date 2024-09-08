@@ -8,6 +8,7 @@ from typing import cast
 import uvicorn
 from fastapi import APIRouter
 from fastapi import FastAPI
+from fastapi import HTTPException
 from fastapi import Request
 from fastapi import status
 from fastapi.exceptions import RequestValidationError
@@ -446,9 +447,11 @@ def log_http_error(_: Request, exc: Exception) -> JSONResponse:
         error_msg = f"{str(exc)}\n"
         error_msg += "".join(traceback.format_tb(exc.__traceback__))
         logger.error(error_msg)
+
+    detail = exc.detail if isinstance(exc, HTTPException) else str(exc)
     return JSONResponse(
         status_code=status_code,
-        content={"detail": str(exc)},
+        content={"detail": detail},
     )
 
 
