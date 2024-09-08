@@ -181,16 +181,19 @@ export const SlackBotCreationForm = ({
                   name="channel_names"
                   label="Channel Names"
                   values={values}
-                  tooltip="The names of the Slack channels you want this configuration to apply to. 
+                  subtext="The names of the Slack channels you want this configuration to apply to. 
                   For example, #ask-danswer."
                   minFields={1}
-                  placeholder="Enter channel name"
+                  placeholder="Enter channel name..."
                 />
 
-                <div className="mt-4">
-                  <LabelWithTooltip tooltip="The sources of knowledge that DanswerBot should search through when answering.">
-                    Knowledge Sources
-                  </LabelWithTooltip>
+                <div className="mt-6">
+                  <Label>Knowledge Sources</Label>
+
+                  <SubLabel>
+                    Controls which information DanswerBot will pull from when
+                    answering questions.
+                  </SubLabel>
 
                   <div className="flex mt-4">
                     <button
@@ -221,12 +224,10 @@ export const SlackBotCreationForm = ({
                   </div>
 
                   <div className="mt-4">
+                    {/* TODO: make this look nicer */}
                     {usingPersonas ? (
                       <SelectorFormField
                         name="persona_id"
-                        subtext={`
-                            The assistant to use when responding to queries.
-                          `}
                         options={personas.map((persona) => {
                           return {
                             name: persona.name,
@@ -239,12 +240,6 @@ export const SlackBotCreationForm = ({
                         name="document_sets"
                         render={(arrayHelpers: ArrayHelpers) => (
                           <div>
-                            <div>
-                              <SubLabel>
-                                If left blank, DanswerBot will search through
-                                all documents.
-                              </SubLabel>
-                            </div>
                             <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
                               {documentSets.map((documentSet) => {
                                 const ind = values.document_sets.indexOf(
@@ -267,6 +262,12 @@ export const SlackBotCreationForm = ({
                                   />
                                 );
                               })}
+                            </div>
+                            <div>
+                              <SubLabel>
+                                Note: If left blank, DanswerBot will search
+                                through all connected documents.
+                              </SubLabel>
                             </div>
                           </div>
                         )}
