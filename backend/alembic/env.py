@@ -83,10 +83,10 @@ def do_run_migrations(connection: Connection) -> None:
     schema = target_metadata[0].schema
     context.configure(
         connection=connection,
-        target_metadata=target_metadata,
+        target_metadata=target_metadata,  # type: ignore
         include_object=include_object,
         version_table_schema=schema,
-    )  # type: ignore
+    )
 
     with context.begin_transaction():
         if schema is not None and schema != "public":
