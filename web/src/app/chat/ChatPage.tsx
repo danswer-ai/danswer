@@ -996,9 +996,6 @@ export function ChatPage({
 
     setSubmittedMessage(currMessage);
 
-    console.log("regenerate state");
-    console.log(regenerationRequest ? "treu" : "false");
-
     updateChatState("loading");
 
     const currMessageHistory =

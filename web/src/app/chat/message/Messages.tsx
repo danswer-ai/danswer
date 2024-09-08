@@ -782,7 +782,7 @@ export const HumanMessage = ({
                         overflow-y-auto
                         pr-12 
                         py-4`}
-                        aria-multilineb
+                        aria-multiline
                         role="textarea"
                         value={editedContent}
                         style={{ scrollbarWidth: "thin" }}
