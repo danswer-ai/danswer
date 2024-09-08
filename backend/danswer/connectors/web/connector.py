@@ -207,7 +207,9 @@ def _read_urls_file(location: str) -> list[str]:
 
 def _get_datetime_from_last_modified_header(last_modified: str) -> datetime | None:
     try:
-        return datetime.strptime(last_modified, "%a, %d %b %Y %H:%M:%S %Z").replace(tzinfo=timezone.utc)
+        return datetime.strptime(last_modified, "%a, %d %b %Y %H:%M:%S %Z").replace(
+            tzinfo=timezone.utc
+        )
     except (ValueError, TypeError):
         return None
 
@@ -306,14 +308,22 @@ class WebConnector(LoadConnector):
                             source=DocumentSource.WEB,
                             semantic_identifier=current_url.split("/")[-1],
                             metadata=metadata,
-                            doc_updated_at=_get_datetime_from_last_modified_header(last_modified) if last_modified else None,
+                            doc_updated_at=_get_datetime_from_last_modified_header(
+                                last_modified
+                            )
+                            if last_modified
+                            else None,
                         )
                     )
                     continue
 
                 page = context.new_page()
                 page_response = page.goto(current_url)
-                last_modified = page_response.header_value("Last-Modified") if page_response else None
+                last_modified = (
+                    page_response.header_value("Last-Modified")
+                    if page_response
+                    else None
+                )
                 final_page = page.url
                 if final_page != current_url:
                     logger.info(f"Redirected to {final_page}")
@@ -349,7 +359,11 @@ class WebConnector(LoadConnector):
                         source=DocumentSource.WEB,
                         semantic_identifier=parsed_html.title or current_url,
                         metadata={},
-                        doc_updated_at=_get_datetime_from_last_modified_header(last_modified) if last_modified else None,
+                        doc_updated_at=_get_datetime_from_last_modified_header(
+                            last_modified
+                        )
+                        if last_modified
+                        else None,
                     )
                 )
 
