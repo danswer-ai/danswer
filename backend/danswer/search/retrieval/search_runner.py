@@ -39,7 +39,7 @@ logger = setup_logger()
 def download_nltk_data() -> None:
     resources = {
         "stopwords": "corpora/stopwords",
-        # "wordnet": "corpora/wordnet",  # No in use
+        # "wordnet": "corpora/wordnet",  # Not in use
         "punkt": "tokenizers/punkt",
     }
 
@@ -57,8 +57,7 @@ def download_nltk_data() -> None:
 
 
 def lemmatize_text(keywords: list[str]) -> list[str]:
-    # Lemmatization is not in use
-    raise NotImplementedError("Lemmatization not used currently")
+    raise NotImplementedError("Lemmatization should not be used currently")
     # try:
     #     query = " ".join(keywords)
     #     lemmatizer = WordNetLemmatizer()
