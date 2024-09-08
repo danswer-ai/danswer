@@ -964,6 +964,11 @@ export function ChatPage({
       (message) => message.messageId === messageIdToResend
     );
 
+    updateRegenerationState(
+      regenerationRequest
+        ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
+        : null
+    );
     const messageMap = currentMessageMap(completeMessageDetail);
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
@@ -991,11 +996,8 @@ export function ChatPage({
 
     setSubmittedMessage(currMessage);
 
-    updateRegenerationState(
-      regenerationRequest
-        ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
-        : null
-    );
+    console.log("regenerate state");
+    console.log(regenerationRequest ? "treu" : "false");
 
     updateChatState("loading");
 
@@ -1811,9 +1813,14 @@ export function ChatPage({
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
                               if (
-                                currentSessionRegenerationState?.regenerating &&
-                                message.messageId >
-                                  currentSessionRegenerationState?.finalMessageIndex!
+                                (currentSessionRegenerationState?.regenerating &&
+                                  message.messageId >
+                                    currentSessionRegenerationState?.finalMessageIndex!) ||
+                                (currentSessionChatState == "loading" &&
+                                  ((i >= messageHistory.length - 2 &&
+                                    message.type == "user") ||
+                                    (i >= messageHistory.length - 1 &&
+                                      !currentSessionRegenerationState?.regenerating)))
                               ) {
                                 return <></>;
                               }
@@ -1890,7 +1897,8 @@ export function ChatPage({
                                 if (
                                   currentSessionRegenerationState?.regenerating &&
                                   currentSessionChatState == "loading" &&
-                                  message.messageId == messageHistory.length - 1
+                                  (i == messageHistory.length - 1 ||
+                                    currentSessionRegenerationState?.regenerating)
                                 ) {
                                   return <></>;
                                 }
@@ -2093,17 +2101,17 @@ export function ChatPage({
                               }
                             })}
 
-                            {currentSessionChatState == "loading" ||
+                            {(currentSessionChatState == "loading" ||
                               (loadingError &&
                                 !currentSessionRegenerationState?.regenerating &&
                                 messageHistory[messageHistory.length - 1]
-                                  ?.type != "user" && (
-                                  <HumanMessage
-                                    key={-2}
-                                    messageId={-1}
-                                    content={submittedMessage}
-                                  />
-                                ))}
+                                  ?.type != "user")) && (
+                              <HumanMessage
+                                key={-2}
+                                messageId={-1}
+                                content={submittedMessage}
+                              />
+                            )}
 
                             {currentSessionChatState == "loading" && (
                               <div
