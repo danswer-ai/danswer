@@ -77,8 +77,11 @@ def _get_comment_strs(
     comment_strs = []
     for comment in jira.fields.comment.comments:
         try:
-            body_text = (comment.body if JIRA_API_VERSION == "2"
-                         else extract_text_from_adf(comment.raw["body"]))
+            body_text = (
+                comment.body
+                if JIRA_API_VERSION == "2"
+                else extract_text_from_adf(comment.raw["body"])
+            )
 
             if (
                 hasattr(comment, "author")
@@ -125,8 +128,11 @@ def fetch_jira_issues_batch(
             )
             continue
 
-        description = (jira.fields.description if JIRA_API_VERSION == "2"
-                       else extract_text_from_adf(jira.raw["fields"]["description"]))
+        description = (
+            jira.fields.description
+            if JIRA_API_VERSION == "2"
+            else extract_text_from_adf(jira.raw["fields"]["description"])
+        )
         comments = _get_comment_strs(jira, comment_email_blacklist)
         semantic_rep = f"{description}\n" + "\n".join(
             [f"Comment: {comment}" for comment in comments if comment]
