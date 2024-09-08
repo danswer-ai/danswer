@@ -351,7 +351,7 @@ class GoogleServiceAccountCredentialRequest(BaseModel):
     gmail_delegated_user: str | None = None  # email of user to impersonate
 
     @model_validator(mode="after")
-    def check_persona_fields(self) -> "GoogleServiceAccountCredentialRequest":
+    def check_user_delegation(self) -> "GoogleServiceAccountCredentialRequest":
         if (self.google_drive_delegated_user is None) == (
             self.gmail_delegated_user is None
         ):
