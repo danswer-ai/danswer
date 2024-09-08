@@ -136,6 +136,7 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
+POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA") or "public"
 
 # defaults to False
 POSTGRES_POOL_PRE_PING = os.environ.get("POSTGRES_POOL_PRE_PING", "").lower() == "true"
@@ -376,6 +377,3 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 ENTERPRISE_EDITION_ENABLED = (
     os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )
-
-
-POSTGRES_SCHEMA = os.getenv("POSTGRES_SCHEMA", "public")
