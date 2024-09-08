@@ -241,7 +241,8 @@ class NotionConnector(LoadConnector, PollConnector):
                     logger.warning(
                         f"Skipping 'external_object_instance_page' ('{result_block_id}') for base block '{base_block_id}': "
                         f"Notion API does not currently support reading external blocks (as of 24/07/03) "
-                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1761)")
+                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1761)"
+                    )
                     continue
 
                 cur_result_text_arr = []
