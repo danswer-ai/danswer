@@ -18,6 +18,9 @@ interface ChatContextProps {
   folders: Folder[];
   openedFolders: Record<string, boolean>;
   userInputPrompts: InputPrompt[];
+  shouldShowWelcomeModal?: boolean;
+  shouldDisplaySourcesIncompleteModal?: boolean;
+  defaultAssistantId?: number;
 }
 
 const ChatContext = createContext<ChatContextProps | undefined>(undefined);

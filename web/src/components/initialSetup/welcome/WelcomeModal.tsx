@@ -27,13 +27,11 @@ function UsageTypeSection({
   title,
   description,
   callToAction,
-  icon,
   onClick,
 }: {
   title: string;
   description: string | JSX.Element;
   callToAction: string;
-  icon?: React.ElementType;
   onClick: () => void;
 }) {
   return (

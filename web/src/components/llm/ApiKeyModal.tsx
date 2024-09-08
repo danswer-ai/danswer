@@ -8,10 +8,15 @@ import { checkLlmProvider } from "../initialSetup/welcome/lib";
 import { User } from "@/lib/types";
 import { useRouter } from "next/navigation";
 
-export const ApiKeyModal = ({ user }: { user: User | null }) => {
+export const ApiKeyModal = ({
+  user,
+  hide,
+}: {
+  user: User | null;
+  hide: () => void;
+}) => {
   const router = useRouter();
 
-  const [forceHidden, setForceHidden] = useState<boolean>(false);
   const [validProviderExists, setValidProviderExists] = useState<boolean>(true);
   const [providerOptions, setProviderOptions] = useState<
     WellKnownLLMProviderDescriptor[]
@@ -32,15 +37,15 @@ export const ApiKeyModal = ({ user }: { user: User | null }) => {
   //  (1) a valid provider has been setup or
   //  (2) there are no provider options (e.g. user isn't an admin)
   //  (3) user explicitly hides the modal
-  if (validProviderExists || !providerOptions.length || forceHidden) {
+  if (validProviderExists || !providerOptions.length) {
     return null;
   }
 
   return (
     <Modal
       title="Welcome to Danswer!"
-      className="max-w-4xl"
-      onOutsideClick={() => setForceHidden(true)}
+      className="max-w-3xl"
+      onOutsideClick={() => hide()}
     >
       <div className="max-h-[75vh] overflow-y-auto flex flex-col px-4">
         <div>
@@ -49,10 +54,7 @@ export const ApiKeyModal = ({ user }: { user: User | null }) => {
             can always change this later!
             <br />
             Or if you&apos;d rather look around first, you can
-            <strong
-              onClick={() => setForceHidden(true)}
-              className="text-link cursor-pointer"
-            >
+            <strong onClick={() => hide()} className="text-link cursor-pointer">
               {" "}
               skip this step
             </strong>
@@ -62,7 +64,7 @@ export const ApiKeyModal = ({ user }: { user: User | null }) => {
           <ApiKeyForm
             onSuccess={() => {
               router.refresh();
-              setForceHidden(true);
+              hide();
             }}
             providerOptions={providerOptions}
           />

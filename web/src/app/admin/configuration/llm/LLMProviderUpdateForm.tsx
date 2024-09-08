@@ -220,7 +220,7 @@ export function LLMProviderUpdateForm({
       }}
     >
       {({ values, setFieldValue }) => (
-        <Form className="gap-y-6 mt-8">
+        <Form className="gap-y-4 items-stretch mt-6">
           {!hideAdvanced && (
             <TextFormField
               name="name"
@@ -233,6 +233,7 @@ export function LLMProviderUpdateForm({
 
           {llmProviderDescriptor.api_key_required && (
             <TextFormField
+              small={hideAdvanced}
               name="api_key"
               label="API Key"
               placeholder="API Key"
@@ -242,6 +243,7 @@ export function LLMProviderUpdateForm({
 
           {llmProviderDescriptor.api_base_required && (
             <TextFormField
+              small={hideAdvanced}
               name="api_base"
               label="API Base"
               placeholder="API Base"
@@ -250,6 +252,7 @@ export function LLMProviderUpdateForm({
 
           {llmProviderDescriptor.api_version_required && (
             <TextFormField
+              small={hideAdvanced}
               name="api_version"
               label="API Version"
               placeholder="API Version"
@@ -259,6 +262,7 @@ export function LLMProviderUpdateForm({
           {llmProviderDescriptor.custom_config_keys?.map((customConfigKey) => (
             <div key={customConfigKey.name}>
               <TextFormField
+                small={hideAdvanced}
                 name={`custom_config.${customConfigKey.name}`}
                 label={
                   customConfigKey.is_required
@@ -444,6 +448,27 @@ export function LLMProviderUpdateForm({
                       const errorMsg = (await response.json()).detail;
                       alert(`Failed to delete provider: ${errorMsg}`);
                       return;
+                    }
+
+                    // If the deleted provider was the default, set the first remaining provider as default
+                    const remainingProvidersResponse = await fetch(
+                      LLM_PROVIDERS_ADMIN_URL
+                    );
+                    if (remainingProvidersResponse.ok) {
+                      const remainingProviders =
+                        await remainingProvidersResponse.json();
+
+                      if (remainingProviders.length > 0) {
+                        const setDefaultResponse = await fetch(
+                          `${LLM_PROVIDERS_ADMIN_URL}/${remainingProviders[0].id}/default`,
+                          {
+                            method: "POST",
+                          }
+                        );
+                        if (!setDefaultResponse.ok) {
+                          console.error("Failed to set new default provider");
+                        }
+                      }
                     }
 
                     mutate(LLM_PROVIDERS_ADMIN_URL);

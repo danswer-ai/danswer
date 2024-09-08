@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
-import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { ChatProvider } from "@/components/context/ChatContext";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import WrappedChat from "./WrappedChat";
@@ -33,7 +32,6 @@ export default async function Page({
     toggleSidebar,
     openedFolders,
     defaultAssistantId,
-    finalDocumentSidebarInitialWidth,
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,
     userInputPrompts,
@@ -43,9 +41,7 @@ export default async function Page({
     <>
       <InstantSSRAutoRefresh />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-      {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
-        <ApiKeyModal user={user} />
-      )}
+
       <ChatProvider
         value={{
           chatSessions,
@@ -57,12 +53,12 @@ export default async function Page({
           folders,
           openedFolders,
           userInputPrompts,
+          shouldShowWelcomeModal,
+          shouldDisplaySourcesIncompleteModal,
+          defaultAssistantId,
         }}
       >
-        <WrappedChat
-          defaultAssistantId={defaultAssistantId}
-          initiallyToggled={toggleSidebar}
-        />
+        <WrappedChat initiallyToggled={toggleSidebar} />
       </ChatProvider>
     </>
   );

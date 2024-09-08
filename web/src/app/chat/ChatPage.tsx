@@ -98,6 +98,7 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
+import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -106,12 +107,10 @@ const SYSTEM_MESSAGE_ID = -3;
 export function ChatPage({
   toggle,
   documentSidebarInitialWidth,
-  defaultSelectedAssistantId,
   toggledSidebar,
 }: {
   toggle: (toggled?: boolean) => void;
   documentSidebarInitialWidth?: number;
-  defaultSelectedAssistantId?: number;
   toggledSidebar: boolean;
 }) {
   const router = useRouter();
@@ -126,7 +125,11 @@ export function ChatPage({
     folders,
     openedFolders,
     userInputPrompts,
+    shouldShowWelcomeModal,
+    shouldDisplaySourcesIncompleteModal,
+    defaultAssistantId,
   } = useChatContext();
+  const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
   const { user, refreshUser, isLoadingUser } = useUser();
 
@@ -162,9 +165,9 @@ export function ChatPage({
       ? availableAssistants.find(
           (assistant) => assistant.id === existingChatSessionAssistantId
         )
-      : defaultSelectedAssistantId !== undefined
+      : defaultAssistantId !== undefined
         ? availableAssistants.find(
-            (assistant) => assistant.id === defaultSelectedAssistantId
+            (assistant) => assistant.id === defaultAssistantId
           )
         : undefined
   );
@@ -327,8 +330,8 @@ export function ChatPage({
     async function initialSessionFetch() {
       if (existingChatSessionId === null) {
         setIsFetchingChatMessages(false);
-        if (defaultSelectedAssistantId !== undefined) {
-          setSelectedAssistantFromId(defaultSelectedAssistantId);
+        if (defaultAssistantId !== undefined) {
+          setSelectedAssistantFromId(defaultAssistantId);
         } else {
           setSelectedAssistant(undefined);
         }
@@ -676,12 +679,10 @@ export function ChatPage({
   useEffect(() => {
     if (messageHistory.length === 0 && chatSessionIdRef.current === null) {
       setSelectedAssistant(
-        filteredAssistants.find(
-          (persona) => persona.id === defaultSelectedAssistantId
-        )
+        filteredAssistants.find((persona) => persona.id === defaultAssistantId)
       );
     }
-  }, [defaultSelectedAssistantId]);
+  }, [defaultAssistantId]);
 
   const [
     selectedDocuments,
@@ -1597,6 +1598,19 @@ export function ChatPage({
   return (
     <>
       <HealthCheckBanner />
+
+      {!shouldShowWelcomeModal &&
+        !shouldDisplaySourcesIncompleteModal &&
+        showApiKeyModal && (
+          <ApiKeyModal hide={() => setShowApiKeyModal(false)} user={user} />
+        )}
+      {shouldShowWelcomeModal
+        ? "should show welcome modal"
+        : "should not show welcome modal"}
+      {shouldDisplaySourcesIncompleteModal
+        ? "should show sources incomplete modal"
+        : "should not show sources incomplete modal"}
+
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       {popup}
@@ -2202,6 +2216,9 @@ export function ChatPage({
                               </div>
                             )}
                             <ChatInputBar
+                              showConfigureAPIKey={() =>
+                                setShowApiKeyModal(true)
+                              }
                               chatState={currentSessionChatState}
                               stopGenerating={stopGenerating}
                               openModelSettings={() => setSettingsToggled(true)}

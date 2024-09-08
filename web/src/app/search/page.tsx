@@ -34,6 +34,8 @@ import {
   DISABLE_LLM_DOC_RELEVANCE,
 } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
+import { ChatProvider } from "@/components/context/ChatContext";
+import { SearchProvider } from "@/components/context/SearchContext";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -110,16 +112,16 @@ export default async function Home() {
     console.log(`Failed to fetch chat sessions - ${queryResponse?.text()}`);
   }
 
-  let assistants: Persona[] = initialAssistantsList;
+  let personas: Persona[] = initialAssistantsList;
   if (assistantsFetchError) {
     console.log(`Failed to fetch assistants - ${assistantsFetchError}`);
   } else {
     // remove those marked as hidden by an admin
-    assistants = assistants.filter((assistant) => assistant.is_visible);
+    personas = personas.filter((persona) => persona.is_visible);
     // hide personas with no retrieval
-    assistants = assistants.filter((assistant) => assistant.num_chunks !== 0);
+    personas = personas.filter((persona) => persona.num_chunks !== 0);
     // sort them in priority order
-    assistants.sort(personaComparator);
+    personas.sort(personaComparator);
   }
 
   let tags: Tag[] = [];
@@ -199,18 +201,26 @@ export default async function Home() {
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <WrappedSearch
-        disabledAgentic={DISABLE_LLM_DOC_RELEVANCE}
-        initiallyToggled={toggleSidebar}
-        querySessions={querySessions}
-        user={user}
-        ccPairs={ccPairs}
-        documentSets={documentSets}
-        personas={assistants}
-        tags={tags}
-        searchTypeDefault={searchTypeDefault}
-        agenticSearchEnabled={agenticSearchEnabled}
-      />
+      <SearchProvider
+        value={{
+          querySessions,
+          ccPairs,
+          documentSets,
+          personas,
+          tags,
+          agenticSearchEnabled,
+          disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
+          initiallyToggled: toggleSidebar,
+          shouldShowWelcomeModal,
+          shouldDisplayNoSources: shouldDisplayNoSourcesModal,
+          shouldDisplaySourcesIncomplete: shouldDisplaySourcesIncompleteModal,
+        }}
+      >
+        <WrappedSearch
+          initiallyToggled={toggleSidebar}
+          searchTypeDefault={searchTypeDefault}
+        />
+      </SearchProvider>
     </>
   );
 }

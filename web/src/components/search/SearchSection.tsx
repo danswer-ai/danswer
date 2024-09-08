@@ -37,6 +37,9 @@ import { FeedbackModal } from "@/app/chat/modal/FeedbackModal";
 import { deleteChatSession, handleChatFeedback } from "@/app/chat/lib";
 import SearchAnswer from "./SearchAnswer";
 import { DeleteEntityModal } from "../modals/DeleteEntityModal";
+import { ApiKeyModal } from "../llm/ApiKeyModal";
+import { useSearchContext } from "../context/SearchContext";
+import { useUser } from "../user/UserProvider";
 
 export type searchState =
   | "input"
@@ -58,33 +61,29 @@ const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
 };
 
 interface SearchSectionProps {
-  disabledAgentic: boolean;
-  ccPairs: CCPairBasicInfo[];
-  documentSets: DocumentSet[];
-  personas: Persona[];
-  tags: Tag[];
   toggle: () => void;
-  querySessions: ChatSession[];
   defaultSearchType: SearchType;
-  user: User | null;
   toggledSidebar: boolean;
-  agenticSearchEnabled: boolean;
 }
 
 export const SearchSection = ({
-  ccPairs,
   toggle,
-  disabledAgentic,
-  documentSets,
-  agenticSearchEnabled,
-  personas,
-  user,
-  tags,
-  querySessions,
   toggledSidebar,
   defaultSearchType,
 }: SearchSectionProps) => {
-  // Search Bar
+  const {
+    querySessions,
+    ccPairs,
+    documentSets,
+    personas,
+    tags,
+    agenticSearchEnabled,
+    disabledAgentic,
+    shouldShowWelcomeModal,
+    shouldDisplayNoSources,
+    shouldDisplaySourcesIncomplete,
+  } = useSearchContext();
+
   const [query, setQuery] = useState<string>("");
   const [comments, setComments] = useState<any>(null);
   const [contentEnriched, setContentEnriched] = useState(false);
@@ -99,6 +98,8 @@ export const SearchSection = ({
     error: null,
     messageId: null,
   });
+
+  const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
   const [agentic, setAgentic] = useState(agenticSearchEnabled);
 
@@ -362,6 +363,7 @@ export const SearchSection = ({
       setSearchState("input");
     }
   };
+  const { user } = useUser();
   const [searchAnswerExpanded, setSearchAnswerExpanded] = useState(false);
 
   const resetInput = (finalized?: boolean) => {
@@ -595,6 +597,13 @@ export const SearchSection = ({
       <div className="flex relative pr-[8px] h-full text-default">
         {popup}
 
+        {!shouldShowWelcomeModal &&
+          !shouldDisplayNoSources &&
+          !shouldDisplaySourcesIncomplete &&
+          showApiKeyModal && (
+            <ApiKeyModal hide={() => setShowApiKeyModal(false)} user={user} />
+          )}
+
         {deletingChatSession && (
           <DeleteEntityModal
             entityType="search"
@@ -747,6 +756,9 @@ export const SearchSection = ({
                         </div>
                       </div>
                     </div>
+
+                    {/* <NoCredentialText showConfigureAPIKey={showConfigureAPIKey} /> */}
+
                     <FullSearchBar
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic

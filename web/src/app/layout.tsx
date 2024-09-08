@@ -6,6 +6,7 @@ import {
 } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
+  EE_ENABLED,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
 } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
@@ -53,6 +54,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const combinedSettings = await fetchSettingsSS();
+
   if (!combinedSettings) {
     // Just display a simple full page error if fetching fails.
 
@@ -70,11 +72,30 @@ export default async function RootLayout({
 
             <Card className="p-8 max-w-md">
               <h1 className="text-2xl font-bold mb-4 text-error">Error</h1>
-              <p className="text-text-500">
-                Your Danswer instance was not configured properly and your
-                settings could not be loaded. Please contact your admin to fix
-                this error.
-              </p>
+              {EE_ENABLED ? (
+                <p className="text-text-500">
+                  Your Danswer instance was not configured properly and your
+                  settings could not be loaded. Please contact your admin to fix
+                  this error.
+                </p>
+              ) : (
+                <p>
+                  It seems that you have not configured Danswer properly. Please
+                  feel free to send us a quick email to{" "}
+                  <a className="text-link" href="mailto:team@danswer.ai">
+                    team@danswer.ai
+                  </a>{" "}
+                  and we will help you out. Or checkout our{" "}
+                  <a
+                    className="text-link"
+                    href="https://docs.danswer.ai/getting-started/installation/docker-compose"
+                    target="_blank"
+                  >
+                    troubleshooting guide
+                  </a>{" "}
+                  to help you get started.
+                </p>
+              )}
             </Card>
           </div>
         </body>
