@@ -284,11 +284,9 @@ export const SlackBotCreationForm = ({
                 {showAdvancedOptions && (
                   <div className="mt-4">
                     <div className="w-64 mb-4">
-                      <SectionHeader>Response Behavior</SectionHeader>
-
                       <SelectorFormField
                         name="response_type"
-                        label="Response Format"
+                        label="Answer Type"
                         tooltip="Controls the format of DanswerBot's responses."
                         options={[
                           { name: "Standard", value: "citations" },
@@ -297,7 +295,34 @@ export const SlackBotCreationForm = ({
                       />
                     </div>
 
-                    <div className="flex flex-col space-y-2 mt-2">
+                    <div className="flex flex-col space-y-3 mt-2">
+                      <BooleanFormField
+                        name="still_need_help_enabled"
+                        removeIndent
+                        label={'Give a "Still need help?" button'}
+                        tooltip={`DanswerBot's response will include a button at the bottom 
+                      of the response that asks the user if they still need help.`}
+                      />
+                      {values.still_need_help_enabled && (
+                        <CollapsibleSection prompt="Configure Still Need Help Button">
+                          <TextArrayField
+                            name="follow_up_tags"
+                            label="(Optional) Users / Groups to Tag"
+                            values={values}
+                            subtext={
+                              <div>
+                                The Slack users / groups we should tag if the
+                                user clicks the &quot;Still need help?&quot;
+                                button. If no emails are provided, we will not
+                                tag anyone and will just react with a 🆘 emoji
+                                to the original message.
+                              </div>
+                            }
+                            placeholder="User email or user group name..."
+                          />
+                        </CollapsibleSection>
+                      )}
+
                       <BooleanFormField
                         name="answer_validity_check_enabled"
                         removeIndent
@@ -329,36 +354,6 @@ export const SlackBotCreationForm = ({
                         tooltip="If set, the LLM will generate source and time filters based on the user's query"
                       />
 
-                      <BooleanFormField
-                        name="still_need_help_enabled"
-                        removeIndent
-                        label={'Give a "Still need help?" button'}
-                        tooltip={`DanswerBot's response will include a button at the bottom 
-                      of the response that asks the user if they still need help.`}
-                      />
-                      {values.still_need_help_enabled && (
-                        <CollapsibleSection prompt="Configure Still Need Help Button">
-                          <TextArrayField
-                            name="follow_up_tags"
-                            label="(Optional) Users / Groups to Tag"
-                            values={values}
-                            subtext={
-                              <div>
-                                The Slack users / groups we should tag if the
-                                user clicks the &quot;Still need help?&quot;
-                                button.
-                                <br />
-                                <br />
-                                If no emails are provided, we will not tag
-                                anyone and will just react with a 🆘 emoji to
-                                the original message.
-                              </div>
-                            }
-                            placeholder="User email or user group name..."
-                          />
-                        </CollapsibleSection>
-                      )}
-
                       <div className="mt-12">
                         <TextArrayField
                           name="respond_member_group_list"
@@ -373,9 +368,7 @@ export const SlackBotCreationForm = ({
                       </div>
                     </div>
 
-                    <Divider />
-
-                    <SectionHeader>Standard Answer Categories</SectionHeader>
+                    <Label>Standard Answer Categories</Label>
                     <div className="w-4/12">
                       <MultiSelectDropdown
                         name="standard_answer_categories"
