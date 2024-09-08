@@ -13,8 +13,6 @@ export default function DynamicReactRenderer({
 
   useEffect(() => {
     try {
-      console.log("Received code:", code);
-
       // Transpile the code
       const transpiledCode = Babel.transform(code, {
         presets: ["react"],
@@ -29,6 +27,7 @@ export default function DynamicReactRenderer({
               <meta charset="utf-8">
               <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
               <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+              <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
             </head>
             <body>
               <div id="root"></div>

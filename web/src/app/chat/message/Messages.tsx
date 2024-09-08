@@ -404,7 +404,24 @@ export const AIMessage = ({
                                   }
                                 },
                                 code: (props) => {
+                                  if (
+                                    props.className?.startsWith("language-jsx")
+                                  ) {
+                                    return (
+                                      <DynamicReactRenderer
+                                        code={content.slice(
+                                          props?.node?.position?.start
+                                            ?.offset! + 6,
+                                          props?.node?.position?.end?.offset! -
+                                            3
+                                        )}
+                                      />
+                                    );
+                                  }
                                   return (
+                                    // <p className="bg-white">
+                                    //   {props.children as string}
+                                    // </p>
                                     <CodeBlock
                                       className="w-full"
                                       {...props}
@@ -507,7 +524,7 @@ export const AIMessage = ({
                       </div>
                     )}
                   </div>
-                  <div className="w-full ">
+                  {/* <div className="w-full ">
                     <DynamicReactRenderer
                       code={`
                       function Component() {
@@ -570,7 +587,7 @@ export const AIMessage = ({
                       }
                     `}
                     />
-                  </div>
+                  </div> */}
 
                   {handleFeedback &&
                     (isActive ? (
