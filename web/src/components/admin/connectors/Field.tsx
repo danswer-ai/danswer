@@ -42,9 +42,26 @@ export function Label({
 }) {
   return (
     <div
-      className={`block font-medium base ${className} ${small ? "text-sm" : "text-base"}`}
+      className={`block font-medium base ${className} ${
+        small ? "text-sm" : "text-base"
+      }`}
     >
       {children}
+    </div>
+  );
+}
+
+export function LabelWithTooltip({
+  children,
+  tooltip,
+}: {
+  children: string | JSX.Element;
+  tooltip: string;
+}) {
+  return (
+    <div className="flex items-center gap-x-2">
+      <Label>{children}</Label>
+      <ToolTipDetails>{tooltip}</ToolTipDetails>
     </div>
   );
 }
@@ -392,6 +409,7 @@ interface BooleanFormFieldProps {
   disabled?: boolean;
   checked?: boolean;
   optional?: boolean;
+  tooltip?: string;
 }
 
 export const BooleanFormField = ({
@@ -406,6 +424,7 @@ export const BooleanFormField = ({
   disabled,
   alignTop,
   checked,
+  tooltip,
 }: BooleanFormFieldProps) => {
   const [field, meta, helpers] = useField<boolean>(name);
   const { setValue } = helpers;
@@ -431,13 +450,17 @@ export const BooleanFormField = ({
         />
         {!noLabel && (
           <div>
-            <Label
-              small={small}
-            >{`${label}${optional ? " (Optional)" : ""}`}</Label>
+            <div className="flex items-center gap-x-2">
+              <Label small={small}>{`${label}${
+                optional ? " (Optional)" : ""
+              }`}</Label>
+              {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
+            </div>
             {subtext && <SubLabel>{subtext}</SubLabel>}
           </div>
         )}
       </label>
+
       <ErrorMessage
         name={name}
         component="div"
@@ -454,6 +477,8 @@ interface TextArrayFieldProps<T extends Yup.AnyObject> {
   subtext?: string | JSX.Element;
   type?: string;
   tooltip?: string;
+  minFields?: number;
+  placeholder?: string;
 }
 
 export function TextArrayField<T extends Yup.AnyObject>({
@@ -463,6 +488,8 @@ export function TextArrayField<T extends Yup.AnyObject>({
   subtext,
   type,
   tooltip,
+  minFields = 0,
+  placeholder = "",
 }: TextArrayFieldProps<T>) {
   return (
     <div className="mb-4">
@@ -497,12 +524,17 @@ export function TextArrayField<T extends Yup.AnyObject>({
                       `}
                       // Disable autocomplete since the browser doesn't know how to handle an array of text fields
                       autoComplete="off"
+                      placeholder={placeholder}
                     />
                     <div className="my-auto">
-                      <FiX
-                        className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                        onClick={() => arrayHelpers.remove(index)}
-                      />
+                      {index >= minFields ? (
+                        <FiX
+                          className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                          onClick={() => arrayHelpers.remove(index)}
+                        />
+                      ) : (
+                        <div className="w-10 h-10" />
+                      )}
                     </div>
                   </div>
                   <ErrorMessage
@@ -559,6 +591,7 @@ interface SelectorFormFieldProps {
   maxHeight?: string;
   onSelect?: (selected: string | number | null) => void;
   defaultValue?: string;
+  tooltip?: string;
 }
 
 export function SelectorFormField({
@@ -571,13 +604,19 @@ export function SelectorFormField({
   maxHeight,
   onSelect,
   defaultValue,
+  tooltip,
 }: SelectorFormFieldProps) {
   const [field] = useField<string>(name);
   const { setFieldValue } = useFormikContext();
 
   return (
     <div>
-      {label && <Label>{label}</Label>}
+      {label && (
+        <div className="flex gap-x-2 items-center">
+          <Label>{label}</Label>
+          {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
+        </div>
+      )}
       {subtext && <SubLabel>{subtext}</SubLabel>}
       <div className="mt-2">
         <DefaultDropdown
