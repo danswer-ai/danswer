@@ -65,6 +65,7 @@ import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
+import DynamicReactRenderer from "./Artifact";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -402,13 +403,16 @@ export const AIMessage = ({
                                     );
                                   }
                                 },
-                                code: (props) => (
-                                  <CodeBlock
-                                    className="w-full"
-                                    {...props}
-                                    content={content as string}
-                                  />
-                                ),
+                                code: (props) => {
+                                  return (
+                                    <CodeBlock
+                                      className="w-full"
+                                      {...props}
+                                      content={content as string}
+                                    />
+                                  );
+                                },
+
                                 p: ({ node, ...props }) => (
                                   <p {...props} className="text-default" />
                                 ),
@@ -469,6 +473,7 @@ export const AIMessage = ({
                                   </div>
                                 </div>
                               ))}
+
                             <div
                               onClick={() => {
                                 if (toggleDocumentSelection) {
@@ -501,6 +506,70 @@ export const AIMessage = ({
                         </div>
                       </div>
                     )}
+                  </div>
+                  <div className="w-full ">
+                    <DynamicReactRenderer
+                      code={`
+                      function Component() {
+                        const [count, setCount] = React.useState(0);
+                        const [hue, setHue] = React.useState(0);
+                        
+                        React.useEffect(() => {
+                          const interval = setInterval(() => {
+                            setHue((prevHue) => (prevHue + 1) % 360);
+                          }, 50);
+                          return () => clearInterval(interval);
+                        }, []);
+
+                        const handleClick = () => {
+                          setCount((prevCount) => prevCount + 1);
+                        };
+
+                        return (
+                          <div style={{
+                            padding: '20px',
+                            borderRadius: '10px',
+                            background: 'linear-gradient(45deg, #f3ec78, #af4261)',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                            textAlign: 'center',
+                            fontFamily: 'Arial, sans-serif'
+                          }}>
+                            <h2 style={{
+                              color: 'white',
+                              textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+                            }}>
+                              Fun Counter!
+                            </h2>
+                            <p style={{
+                              fontSize: '48px',
+                              fontWeight: 'bold',
+                              color: \`hsl(\${hue}, 100%, 50%)\`,
+                              transition: 'color 0.3s ease'
+                            }}>
+                              {count}
+                            </p>
+                            <button
+                              onClick={handleClick}
+                              style={{
+                                padding: '10px 20px',
+                                fontSize: '18px',
+                                borderRadius: '25px',
+                                border: 'none',
+                                background: 'rgba(255,255,255,0.7)',
+                                cursor: 'pointer',
+                                transition: 'transform 0.1s ease'
+                              }}
+                              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                              Click me!
+                            </button>
+                          </div>
+                        );
+                      }
+                    `}
+                    />
                   </div>
 
                   {handleFeedback &&
