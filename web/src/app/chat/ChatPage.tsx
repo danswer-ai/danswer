@@ -126,6 +126,7 @@ export function ChatPage({
     openedFolders,
     userInputPrompts,
     defaultAssistantId,
+    shouldShowWelcomeModal,
     refreshChatSessions,
   } = useChatContext();
 
@@ -1598,7 +1599,7 @@ export function ChatPage({
     <>
       <HealthCheckBanner />
 
-      {showApiKeyModal && (
+      {showApiKeyModal && !shouldShowWelcomeModal && (
         <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
       )}
 

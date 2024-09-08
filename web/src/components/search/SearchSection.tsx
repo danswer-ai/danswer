@@ -78,6 +78,7 @@ export const SearchSection = ({
     documentSets,
     personas,
     tags,
+    shouldShowWelcomeModal,
     agenticSearchEnabled,
     disabledAgentic,
     shouldDisplayNoSources,
@@ -596,9 +597,11 @@ export const SearchSection = ({
       <div className="flex relative pr-[8px] h-full text-default">
         {popup}
 
-        {!shouldDisplayNoSources && showApiKeyModal && (
-          <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
-        )}
+        {!shouldDisplayNoSources &&
+          showApiKeyModal &&
+          !shouldShowWelcomeModal && (
+            <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
+          )}
 
         {deletingChatSession && (
           <DeleteEntityModal
