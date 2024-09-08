@@ -76,7 +76,7 @@ export const SearchSection = ({
     querySessions,
     ccPairs,
     documentSets,
-    personas,
+    assistants,
     tags,
     shouldShowWelcomeModal,
     agenticSearchEnabled,
@@ -148,7 +148,7 @@ export const SearchSection = ({
     useState<SearchType>(defaultSearchType);
 
   const [selectedPersona, setSelectedPersona] = useState<number>(
-    personas[0]?.id || 0
+    assistants[0]?.id || 0
   );
 
   // Used for search state display
@@ -159,8 +159,8 @@ export const SearchSection = ({
   const availableSources = ccPairs.map((ccPair) => ccPair.source);
   const [finalAvailableSources, finalAvailableDocumentSets] =
     computeAvailableFilters({
-      selectedPersona: personas.find(
-        (persona) => persona.id === selectedPersona
+      selectedPersona: assistants.find(
+        (assistant) => assistant.id === selectedPersona
       ),
       availableSources: availableSources,
       availableDocumentSets: documentSets,
@@ -405,8 +405,8 @@ export const SearchSection = ({
       documentSets: filterManager.selectedDocumentSets,
       timeRange: filterManager.timeRange,
       tags: filterManager.selectedTags,
-      persona: personas.find(
-        (persona) => persona.id === selectedPersona
+      persona: assistants.find(
+        (assistant) => assistant.id === selectedPersona
       ) as Persona,
       updateCurrentAnswer: cancellable({
         cancellationToken: lastSearchCancellationToken.current,

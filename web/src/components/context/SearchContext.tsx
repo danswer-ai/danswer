@@ -6,10 +6,10 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { ChatSession } from "@/app/chat/interfaces";
 
 interface SearchContextProps {
-  querySessions: ChatSession[]; // Replace 'any' with the correct type
+  querySessions: ChatSession[];
   ccPairs: CCPairBasicInfo[];
   documentSets: DocumentSet[];
-  personas: Persona[];
+  assistants: Persona[];
   tags: Tag[];
   agenticSearchEnabled: boolean;
   disabledAgentic: boolean;
