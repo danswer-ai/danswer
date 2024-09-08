@@ -54,7 +54,7 @@ export function LLMProviderUpdateForm({
 
   // Define the initial values based on the provider's requirements
   const initialValues = {
-    name: existingLlmProvider?.name ?? hideAdvanced ? "Default" : "",
+    name: existingLlmProvider?.name || (hideAdvanced ? "Default" : ""),
     api_key: existingLlmProvider?.api_key ?? "",
     api_base: existingLlmProvider?.api_base ?? "",
     api_version: existingLlmProvider?.api_version ?? "",
