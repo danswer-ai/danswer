@@ -20,7 +20,8 @@ def create_temporary_persona(
 ) -> Persona:
     if not is_user_admin(user):
         raise HTTPException(
-            status_code=403, detail="User is not authorized to create a persona"
+            status_code=403,
+            detail="User is not authorized to create a persona in one shot queries",
         )
 
     """Create a temporary Persona object from the provided configuration."""

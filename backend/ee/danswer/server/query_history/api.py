@@ -87,7 +87,7 @@ class ChatSessionMinimal(BaseModel):
     name: str | None
     first_user_message: str
     first_ai_message: str
-    persona_name: str
+    persona_name: str | None
     time_created: datetime
     feedback_type: QAFeedbackType | Literal["mixed"] | None
 
@@ -97,7 +97,7 @@ class ChatSessionSnapshot(BaseModel):
     user_email: str
     name: str | None
     messages: list[MessageSnapshot]
-    persona_name: str
+    persona_name: str | None
     time_created: datetime
 
 
@@ -111,7 +111,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
     retrieved_documents: list[AbridgedSearchDoc]
     feedback_type: QAFeedbackType | None
     feedback_text: str | None
-    persona_name: str
+    persona_name: str | None
     user_email: str
     time_created: datetime
 
@@ -145,7 +145,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
             for ind, (user_message, ai_message) in enumerate(message_pairs)
         ]
 
-    def to_json(self) -> dict[str, str]:
+    def to_json(self) -> dict[str, str | None]:
         return {
             "chat_session_id": str(self.chat_session_id),
             "message_pair_num": str(self.message_pair_num),
@@ -235,7 +235,9 @@ def fetch_and_process_chat_session_history_minimal(
                 name=chat_session.description,
                 first_user_message=first_user_message,
                 first_ai_message=first_ai_message,
-                persona_name=chat_session.persona.name,
+                persona_name=chat_session.persona.name
+                if chat_session.persona
+                else None,
                 time_created=chat_session.time_created,
                 feedback_type=feedback_type,
             )
@@ -300,7 +302,7 @@ def snapshot_from_chat_session(
             for message in messages
             if message.message_type != MessageType.SYSTEM
         ],
-        persona_name=chat_session.persona.name,
+        persona_name=chat_session.persona.name if chat_session.persona else None,
         time_created=chat_session.time_created,
     )
 

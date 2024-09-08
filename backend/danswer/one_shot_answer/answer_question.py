@@ -2,10 +2,8 @@ from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import is_user_admin
 from danswer.chat.chat_utils import reorganize_citations
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
@@ -113,18 +111,6 @@ def stream_answer_objects(
     query_msg = query_req.messages[-1]
     history = query_req.messages[:-1]
 
-    temporary_persona: Persona | None = None
-    if query_req.persona_config is not None:
-        if not is_user_admin(user):
-            raise HTTPException(
-                status_code=403, detail="User is not authorized to create a persona"
-            )
-
-        new_persona = create_temporary_persona(
-            db_session=db_session, persona_config=query_req.persona_config, user=user
-        )
-        temporary_persona = new_persona
-
     chat_session = create_chat_session(
         db_session=db_session,
         description="",  # One shot queries don't need naming as it's never displayed
@@ -135,7 +121,15 @@ def stream_answer_objects(
         danswerbot_flow=danswerbot_flow,
     )
 
+    temporary_persona: Persona | None = None
+    if query_req.persona_config is not None:
+        new_persona = create_temporary_persona(
+            db_session=db_session, persona_config=query_req.persona_config, user=user
+        )
+        temporary_persona = new_persona
+
     persona = temporary_persona if temporary_persona else chat_session.persona
+
     llm, fast_llm = get_llms_for_persona(persona=persona)
 
     llm_tokenizer = get_tokenizer(
