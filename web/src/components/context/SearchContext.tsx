@@ -3,9 +3,10 @@
 import React, { createContext, useContext } from "react";
 import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { ChatSession } from "@/app/chat/interfaces";
 
 interface SearchContextProps {
-  querySessions: any[]; // Replace 'any' with the correct type
+  querySessions: ChatSession[]; // Replace 'any' with the correct type
   ccPairs: CCPairBasicInfo[];
   documentSets: DocumentSet[];
   personas: Persona[];

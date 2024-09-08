@@ -33,7 +33,7 @@ import { Tooltip } from "@/components/tooltip/Tooltip";
 import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { ChatState } from "../types";
-import NoCredentialText from "@/components/chat_search/NoCredentialText";
+import UnconfiguredProviderText from "@/components/chat_search/UnconfiguredProviderText";
 import { useSearchContext } from "@/components/context/SearchContext";
 
 const MAX_INPUT_HEIGHT = 200;
@@ -370,7 +370,7 @@ export function ChatInputBar({
             <SelectedFilterDisplay filterManager={filterManager} />
           </div>
 
-          <NoCredentialText showConfigureAPIKey={showConfigureAPIKey} />
+          <UnconfiguredProviderText showConfigureAPIKey={showConfigureAPIKey} />
 
           <div
             className="

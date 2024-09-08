@@ -33,7 +33,6 @@ import {
   DISABLE_LLM_DOC_RELEVANCE,
 } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
-import { ChatProvider } from "@/components/context/ChatContext";
 import { SearchProvider } from "@/components/context/SearchContext";
 import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
 
@@ -112,16 +111,16 @@ export default async function Home() {
     console.log(`Failed to fetch chat sessions - ${queryResponse?.text()}`);
   }
 
-  let personas: Persona[] = initialAssistantsList;
+  let assistants: Persona[] = initialAssistantsList;
   if (assistantsFetchError) {
     console.log(`Failed to fetch assistants - ${assistantsFetchError}`);
   } else {
     // remove those marked as hidden by an admin
-    personas = personas.filter((persona) => persona.is_visible);
+    assistants = assistants.filter((assistant) => assistant.is_visible);
     // hide personas with no retrieval
-    personas = personas.filter((persona) => persona.num_chunks !== 0);
+    assistants = assistants.filter((assistant) => assistant.num_chunks !== 0);
     // sort them in priority order
-    personas.sort(personaComparator);
+    assistants.sort(personaComparator);
   }
 
   let tags: Tag[] = [];
@@ -202,7 +201,7 @@ export default async function Home() {
           querySessions,
           ccPairs,
           documentSets,
-          personas,
+          personas: assistants,
           tags,
           agenticSearchEnabled,
           disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,

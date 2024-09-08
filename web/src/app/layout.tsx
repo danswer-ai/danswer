@@ -72,37 +72,37 @@ export default async function RootLayout({
 
             <Card className="p-8 max-w-md">
               <h1 className="text-2xl font-bold mb-4 text-error">Error</h1>
-              {EE_ENABLED ? (
-                <p className="text-text-500">
-                  Your Danswer instance was not configured properly and your
-                  settings could not be loaded. Please contact your admin to fix
-                  this error.
-                </p>
-              ) : (
-                <p>
-                  It seems that you have not configured Danswer properly. Please
-                  check{" "}
-                  <a
-                    className="text-link"
-                    href="https://docs.danswer.dev/introduction?utm_source=app&utm_medium=error_page&utm_campaign=config_error"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    our docs
-                  </a>{" "}
-                  to see how to configure Danswer or reach out to our community
-                  on{" "}
-                  <a
-                    className="text-link"
-                    href="https://danswer.ai?utm_source=app&utm_medium=error_page&utm_campaign=config_error"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Slack
-                  </a>{" "}
-                  for support and guidance.
-                </p>
-              )}
+              <p className="text-text-500">
+                Your Danswer instance was not configured properly and your
+                settings could not be loaded. This could be due to an admin
+                configuration issue or an incomplete setup.
+              </p>
+              <p className="mt-4">
+                If you&apos;re an admin, please check{" "}
+                <a
+                  className="text-link"
+                  href="https://docs.danswer.dev/introduction?utm_source=app&utm_medium=error_page&utm_campaign=config_error"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  our docs
+                </a>{" "}
+                to see how to configure Danswer properly. If you&apos;re a user,
+                please contact your admin to fix this error.
+              </p>
+              <p className="mt-4">
+                For additional support and guidance, you can reach out to our
+                community on{" "}
+                <a
+                  className="text-link"
+                  href="https://danswer.ai?utm_source=app&utm_medium=error_page&utm_campaign=config_error"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Slack
+                </a>
+                .
+              </p>
             </Card>
           </div>
         </body>

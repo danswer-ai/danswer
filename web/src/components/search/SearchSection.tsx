@@ -40,7 +40,7 @@ import { DeleteEntityModal } from "../modals/DeleteEntityModal";
 import { ApiKeyModal } from "../llm/ApiKeyModal";
 import { useSearchContext } from "../context/SearchContext";
 import { useUser } from "../user/UserProvider";
-import NoCredentialText from "../chat_search/NoCredentialText";
+import UnconfiguredProviderText from "../chat_search/UnconfiguredProviderText";
 
 export type searchState =
   | "input"
@@ -756,7 +756,7 @@ export const SearchSection = ({
                       </div>
                     </div>
 
-                    <NoCredentialText
+                    <UnconfiguredProviderText
                       showConfigureAPIKey={() => setShowApiKeyModal(true)}
                     />
 

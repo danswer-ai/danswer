@@ -1,5 +1,6 @@
 import { useProviderStatus } from "./ProviderContext";
-export default function NoCredentialText({
+
+export default function CredentialNotConfigured({
   showConfigureAPIKey,
 }: {
   showConfigureAPIKey: () => void;
