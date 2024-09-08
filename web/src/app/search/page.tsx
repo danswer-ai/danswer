@@ -201,7 +201,7 @@ export default async function Home() {
           querySessions,
           ccPairs,
           documentSets,
-          personas: assistants,
+          assistants,
           tags,
           agenticSearchEnabled,
           disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
