@@ -226,10 +226,7 @@ def delete_google_service_gmail_account_key(
 def check_google_service_account_key_exist(
     _: User = Depends(current_curator_or_admin_user),
 ) -> dict[str, str]:
-    print("GETITNG SERIVCE ACCOUNT KEY")
     try:
-        service_account_key = get_service_account_key().client_email
-        print(service_account_key)
         return {"service_account_email": get_service_account_key().client_email}
     except ConfigNotFoundError:
         raise HTTPException(
@@ -271,7 +268,6 @@ def upsert_service_account_credential(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
-    print("I AM CREAINT G SERVICE CREDENTIAL")
     """Special API which allows the creation of a credential for a service account.
     Combines the input with the saved service account key to create an entry in the
     `Credential` table."""
