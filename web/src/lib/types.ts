@@ -1,4 +1,25 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { Credential } from "./connectors/credentials";
+import { Connector } from "./connectors/connectors";
+import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/types";
+
+export interface UserPreferences {
+  chosen_assistants: number[] | null;
+  default_model: string | null;
+}
+
+export enum UserStatus {
+  live = "live",
+  invited = "invited",
+  deactivated = "deactivated",
+}
+
+export enum UserRole {
+  BASIC = "basic",
+  ADMIN = "admin",
+  CURATOR = "curator",
+  GLOBAL_CURATOR = "global_curator",
+}
 
 export interface User {
   id: string;
@@ -6,7 +27,12 @@ export interface User {
   is_active: string;
   is_superuser: string;
   is_verified: string;
-  role: "basic" | "admin";
+  role: UserRole;
+  preferences: UserPreferences;
+  status: UserStatus;
+  current_token_created_at?: Date;
+  current_token_expiry_length?: number;
+  oidc_expiry?: Date;
 }
 
 export interface MinimalUserSnapshot {
@@ -14,37 +40,10 @@ export interface MinimalUserSnapshot {
   email: string;
 }
 
-export type ValidSources =
-  | "web"
-  | "github"
-  | "gitlab"
-  | "slack"
-  | "google_drive"
-  | "gmail"
-  | "bookstack"
-  | "confluence"
-  | "jira"
-  | "productboard"
-  | "slab"
-  | "notion"
-  | "guru"
-  | "gong"
-  | "zulip"
-  | "linear"
-  | "hubspot"
-  | "document360"
-  | "requesttracker"
-  | "file"
-  | "google_sites"
-  | "loopio"
-  | "sharepoint"
-  | "zendesk"
-  | "discourse"
-  | "axero";
-
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
+  | "completed_with_errors"
   | "failed"
   | "in_progress"
   | "not_started";
@@ -59,126 +58,6 @@ export interface DocumentBoostStatus {
   hidden: boolean;
 }
 
-// CONNECTORS
-export interface ConnectorBase<T> {
-  name: string;
-  input_type: ValidInputTypes;
-  source: ValidSources;
-  connector_specific_config: T;
-  refresh_freq: number | null;
-  disabled: boolean;
-}
-
-export interface Connector<T> extends ConnectorBase<T> {
-  id: number;
-  credential_ids: number[];
-  time_created: string;
-  time_updated: string;
-}
-
-export interface WebConfig {
-  base_url: string;
-  web_connector_type?: "recursive" | "single" | "sitemap";
-}
-
-export interface GithubConfig {
-  repo_owner: string;
-  repo_name: string;
-  include_prs: boolean;
-  include_issues: boolean;
-}
-
-export interface GitlabConfig {
-  project_owner: string;
-  project_name: string;
-  include_mrs: boolean;
-  include_issues: boolean;
-}
-
-export interface GoogleDriveConfig {
-  folder_paths?: string[];
-  include_shared?: boolean;
-  follow_shortcuts?: boolean;
-  only_org_public?: boolean;
-}
-
-export interface GmailConfig {}
-
-export interface BookstackConfig {}
-
-export interface ConfluenceConfig {
-  wiki_page_url: string;
-}
-
-export interface JiraConfig {
-  jira_project_url: string;
-  comment_email_blacklist?: string[];
-}
-
-export interface SharepointConfig {
-  sites?: string[];
-}
-
-export interface DiscourseConfig {
-  base_url: string;
-  categories?: string[];
-}
-
-export interface AxeroConfig {
-  spaces?: string[];
-}
-
-export interface ProductboardConfig {}
-
-export interface SlackConfig {
-  workspace: string;
-  channels?: string[];
-  channel_regex_enabled?: boolean;
-}
-
-export interface SlabConfig {
-  base_url: string;
-}
-
-export interface GuruConfig {}
-
-export interface GongConfig {
-  workspaces?: string[];
-}
-
-export interface LoopioConfig {
-  loopio_stack_name?: string;
-}
-
-export interface FileConfig {
-  file_locations: string[];
-}
-
-export interface ZulipConfig {
-  realm_name: string;
-  realm_url: string;
-}
-
-export interface NotionConfig {
-  root_page_id?: string;
-}
-
-export interface HubSpotConfig {}
-
-export interface RequestTrackerConfig {}
-
-export interface Document360Config {
-  workspace: string;
-  categories?: string[];
-}
-
-export interface GoogleSitesConfig {
-  zip_path: string;
-  base_url: string;
-}
-
-export interface ZendeskConfig {}
-
 export interface IndexAttemptSnapshot {
   id: number;
   status: ValidStatuses | null;
@@ -186,6 +65,7 @@ export interface IndexAttemptSnapshot {
   docs_removed_from_index: number;
   total_docs_indexed: number;
   error_msg: string | null;
+  error_count: number;
   full_exception_trace: string | null;
   time_started: string | null;
   time_updated: string;
@@ -197,10 +77,13 @@ export interface ConnectorIndexingStatus<
 > {
   cc_pair_id: number;
   name: string | null;
+  cc_pair_status: ConnectorCredentialPairStatus;
   connector: Connector<ConnectorConfigType>;
   credential: Credential<ConnectorCredentialType>;
   public_doc: boolean;
   owner: string;
+  groups: number[];
+  last_finished_status: ValidStatuses | null;
   last_status: ValidStatuses | null;
   last_success: string | null;
   docs_indexed: number;
@@ -216,142 +99,15 @@ export interface CCPairBasicInfo {
   source: ValidSources;
 }
 
-// CREDENTIALS
-export interface CredentialBase<T> {
-  credential_json: T;
-  admin_public: boolean;
-}
+export type ConnectorSummary = {
+  count: number;
+  active: number;
+  public: number;
+  totalDocsIndexed: number;
+  errors: number; // New field for error count
+};
 
-export interface Credential<T> extends CredentialBase<T> {
-  id: number;
-  user_id: string | null;
-  time_created: string;
-  time_updated: string;
-}
-
-export interface GithubCredentialJson {
-  github_access_token: string;
-}
-
-export interface GitlabCredentialJson {
-  gitlab_url: string;
-  gitlab_access_token: string;
-}
-
-export interface BookstackCredentialJson {
-  bookstack_base_url: string;
-  bookstack_api_token_id: string;
-  bookstack_api_token_secret: string;
-}
-
-export interface ConfluenceCredentialJson {
-  confluence_username: string;
-  confluence_access_token: string;
-}
-
-export interface JiraCredentialJson {
-  jira_user_email: string;
-  jira_api_token: string;
-}
-
-export interface JiraServerCredentialJson {
-  jira_api_token: string;
-}
-
-export interface ProductboardCredentialJson {
-  productboard_access_token: string;
-}
-
-export interface SlackCredentialJson {
-  slack_bot_token: string;
-}
-
-export interface GmailCredentialJson {
-  gmail_tokens: string;
-}
-
-export interface GoogleDriveCredentialJson {
-  google_drive_tokens: string;
-}
-
-export interface GmailServiceAccountCredentialJson {
-  gmail_service_account_key: string;
-  gmail_delegated_user: string;
-}
-
-export interface GoogleDriveServiceAccountCredentialJson {
-  google_drive_service_account_key: string;
-  google_drive_delegated_user: string;
-}
-
-export interface SlabCredentialJson {
-  slab_bot_token: string;
-}
-
-export interface NotionCredentialJson {
-  notion_integration_token: string;
-}
-
-export interface ZulipCredentialJson {
-  zuliprc_content: string;
-}
-
-export interface GuruCredentialJson {
-  guru_user: string;
-  guru_user_token: string;
-}
-
-export interface GongCredentialJson {
-  gong_access_key: string;
-  gong_access_key_secret: string;
-}
-
-export interface LoopioCredentialJson {
-  loopio_subdomain: string;
-  loopio_client_id: string;
-  loopio_client_token: string;
-}
-
-export interface LinearCredentialJson {
-  linear_api_key: string;
-}
-
-export interface HubSpotCredentialJson {
-  hubspot_access_token: string;
-}
-
-export interface RequestTrackerCredentialJson {
-  requesttracker_username: string;
-  requesttracker_password: string;
-  requesttracker_base_url: string;
-}
-
-export interface Document360CredentialJson {
-  portal_id: string;
-  document360_api_token: string;
-}
-
-export interface ZendeskCredentialJson {
-  zendesk_subdomain: string;
-  zendesk_email: string;
-  zendesk_token: string;
-}
-
-export interface SharepointCredentialJson {
-  aad_client_id: string;
-  aad_client_secret: string;
-  aad_directory_id: string;
-}
-
-export interface DiscourseCredentialJson {
-  discourse_api_key: string;
-  discourse_api_username: string;
-}
-
-export interface AxeroCredentialJson {
-  base_url: string;
-  axero_api_token: string;
-}
+export type GroupedConnectorSummaries = Record<ValidSources, ConnectorSummary>;
 
 // DELETION
 
@@ -386,6 +142,19 @@ export interface Tag {
   source: ValidSources;
 }
 
+// STANDARD ANSWERS
+export interface StandardAnswerCategory {
+  id: number;
+  name: string;
+}
+
+export interface StandardAnswer {
+  id: number;
+  keyword: string;
+  answer: string;
+  categories: StandardAnswerCategory[];
+}
+
 // SLACK BOT CONFIGS
 
 export type AnswerFilterOption =
@@ -396,7 +165,7 @@ export interface ChannelConfig {
   channel_names: string[];
   respond_tag_only?: boolean;
   respond_to_bots?: boolean;
-  respond_team_member_list?: string[];
+  respond_member_group_list?: string[];
   answer_filters?: AnswerFilterOption[];
   follow_up_tags?: string[];
 }
@@ -408,6 +177,8 @@ export interface SlackBotConfig {
   persona: Persona | null;
   channel_config: ChannelConfig;
   response_type: SlackBotResponseType;
+  standard_answer_categories: StandardAnswerCategory[];
+  enable_auto_filters: boolean;
 }
 
 export interface SlackBotTokens {
@@ -420,9 +191,58 @@ export interface UserGroup {
   id: number;
   name: string;
   users: User[];
+  curator_ids: string[];
   cc_pairs: CCPairDescriptor<any, any>[];
   document_sets: DocumentSet[];
   personas: Persona[];
   is_up_to_date: boolean;
   is_up_for_deletion: boolean;
 }
+
+const validSources = [
+  "web",
+  "github",
+  "gitlab",
+  "slack",
+  "google_drive",
+  "gmail",
+  "bookstack",
+  "confluence",
+  "jira",
+  "productboard",
+  "slab",
+  "notion",
+  "guru",
+  "gong",
+  "zulip",
+  "linear",
+  "hubspot",
+  "document360",
+  "requesttracker",
+  "file",
+  "google_sites",
+  "loopio",
+  "dropbox",
+  "salesforce",
+  "sharepoint",
+  "teams",
+  "zendesk",
+  "discourse",
+  "axero",
+  "clickup",
+  "wikipedia",
+  "mediawiki",
+  "s3",
+  "r2",
+  "google_cloud_storage",
+  "oci_storage",
+  "not_applicable",
+  "ingestion_api",
+] as const;
+
+export type ValidSources = (typeof validSources)[number];
+// The valid sources that are actually valid to select in the UI
+export type ConfigurableSources = Exclude<
+  ValidSources,
+  "not_applicable" | "ingestion_api"
+>;

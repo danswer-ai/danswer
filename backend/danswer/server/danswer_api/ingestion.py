@@ -1,8 +1,5 @@
-import secrets
-
 from fastapi import APIRouter
 from fastapi import Depends
-from fastapi import Header
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -12,65 +9,30 @@ from danswer.connectors.models import IndexAttemptMetadata
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.document import get_documents_by_cc_pair
 from danswer.db.document import get_ingestion_documents
-from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_session
+from danswer.db.models import User
+from danswer.db.search_settings import get_current_search_settings
+from danswer.db.search_settings import get_secondary_search_settings
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.embedder import DefaultIndexingEmbedder
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.server.danswer_api.models import DocMinimalInfo
 from danswer.server.danswer_api.models import IngestionDocument
 from danswer.server.danswer_api.models import IngestionResult
 from danswer.utils.logger import setup_logger
+from ee.danswer.auth.users import api_key_dep
 
 logger = setup_logger()
 
 # not using /api to avoid confusion with nginx api path routing
 router = APIRouter(prefix="/danswer-api")
 
-# Assumes this gives admin privileges, basic users should not be allowed to call any Danswer apis
-_DANSWER_API_KEY = "danswer_api_key"
-
-
-def get_danswer_api_key(key_len: int = 30, dont_regenerate: bool = False) -> str | None:
-    kv_store = get_dynamic_config_store()
-    try:
-        return str(kv_store.load(_DANSWER_API_KEY))
-    except ConfigNotFoundError:
-        if dont_regenerate:
-            return None
-
-    logger.info("Generating Danswer API Key")
-
-    api_key = "dn_" + secrets.token_urlsafe(key_len)
-    kv_store.store(_DANSWER_API_KEY, api_key, encrypt=True)
-
-    return api_key
-
-
-def delete_danswer_api_key() -> None:
-    kv_store = get_dynamic_config_store()
-    try:
-        kv_store.delete(_DANSWER_API_KEY)
-    except ConfigNotFoundError:
-        pass
-
-
-def api_key_dep(authorization: str = Header(...)) -> str:
-    saved_key = get_danswer_api_key(dont_regenerate=True)
-    token = authorization.removeprefix("Bearer ").strip()
-    if token != saved_key or not saved_key:
-        raise HTTPException(status_code=401, detail="Invalid API key")
-    return token
-
 
 @router.get("/connector-docs/{cc_pair_id}")
 def get_docs_by_connector_credential_pair(
     cc_pair_id: int,
-    _: str = Depends(api_key_dep),
+    _: User | None = Depends(api_key_dep),
     db_session: Session = Depends(get_session),
 ) -> list[DocMinimalInfo]:
     db_docs = get_documents_by_cc_pair(cc_pair_id=cc_pair_id, db_session=db_session)
@@ -86,7 +48,7 @@ def get_docs_by_connector_credential_pair(
 
 @router.get("/ingestion")
 def get_ingestion_docs(
-    _: str = Depends(api_key_dep),
+    _: User | None = Depends(api_key_dep),
     db_session: Session = Depends(get_session),
 ) -> list[DocMinimalInfo]:
     db_docs = get_ingestion_documents(db_session)
@@ -103,7 +65,7 @@ def get_ingestion_docs(
 @router.post("/ingestion")
 def upsert_ingestion_doc(
     doc_info: IngestionDocument,
-    _: str = Depends(api_key_dep),
+    _: User | None = Depends(api_key_dep),
     db_session: Session = Depends(get_session),
 ) -> IngestionResult:
     doc_info.document.from_ingestion_api = True
@@ -128,13 +90,10 @@ def upsert_ingestion_doc(
         primary_index_name=curr_ind_name, secondary_index_name=None
     )
 
-    db_embedding_model = get_current_db_embedding_model(db_session)
+    search_settings = get_current_search_settings(db_session)
 
-    index_embedding_model = DefaultIndexingEmbedder(
-        model_name=db_embedding_model.model_name,
-        normalize=db_embedding_model.normalize,
-        query_prefix=db_embedding_model.query_prefix,
-        passage_prefix=db_embedding_model.passage_prefix,
+    index_embedding_model = DefaultIndexingEmbedder.from_db_search_settings(
+        search_settings=search_settings
     )
 
     indexing_pipeline = build_indexing_pipeline(
@@ -144,8 +103,8 @@ def upsert_ingestion_doc(
         db_session=db_session,
     )
 
-    new_doc, chunks = indexing_pipeline(
-        documents=[document],
+    new_doc, __chunk_count = indexing_pipeline(
+        document_batch=[document],
         index_attempt_metadata=IndexAttemptMetadata(
             connector_id=cc_pair.connector_id,
             credential_id=cc_pair.credential_id,
@@ -158,19 +117,16 @@ def upsert_ingestion_doc(
             primary_index_name=curr_ind_name, secondary_index_name=None
         )
 
-        sec_db_embedding_model = get_secondary_db_embedding_model(db_session)
+        sec_search_settings = get_secondary_search_settings(db_session)
 
-        if sec_db_embedding_model is None:
+        if sec_search_settings is None:
             # Should not ever happen
             raise RuntimeError(
-                "Secondary index exists but no embedding model configured"
+                "Secondary index exists but no search settings configured"
             )
 
-        new_index_embedding_model = DefaultIndexingEmbedder(
-            model_name=sec_db_embedding_model.model_name,
-            normalize=sec_db_embedding_model.normalize,
-            query_prefix=sec_db_embedding_model.query_prefix,
-            passage_prefix=sec_db_embedding_model.passage_prefix,
+        new_index_embedding_model = DefaultIndexingEmbedder.from_db_search_settings(
+            search_settings=sec_search_settings
         )
 
         sec_ind_pipeline = build_indexing_pipeline(
@@ -181,7 +137,7 @@ def upsert_ingestion_doc(
         )
 
         sec_ind_pipeline(
-            documents=[document],
+            document_batch=[document],
             index_attempt_metadata=IndexAttemptMetadata(
                 connector_id=cc_pair.connector_id,
                 credential_id=cc_pair.credential_id,

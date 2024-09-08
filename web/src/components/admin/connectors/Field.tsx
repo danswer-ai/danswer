@@ -10,7 +10,18 @@ import {
 import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
 import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
-import { FiPlus, FiX } from "react-icons/fi";
+import { FiInfo, FiPlus, FiX } from "react-icons/fi";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
+import ReactMarkdown from "react-markdown";
+import { FaMarkdown } from "react-icons/fa";
+import { useState } from "react";
+import remarkGfm from "remark-gfm";
+import { EditIcon } from "@/components/icons/icons";
 
 export function SectionHeader({
   children,
@@ -20,8 +31,22 @@ export function SectionHeader({
   return <div className="mb-4 font-bold text-lg">{children}</div>;
 }
 
-export function Label({ children }: { children: string | JSX.Element }) {
-  return <div className="block font-medium text-base">{children}</div>;
+export function Label({
+  children,
+  small,
+  className,
+}: {
+  children: string | JSX.Element;
+  small?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`block font-medium base ${className} ${small ? "text-sm" : "text-base"}`}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function SubLabel({ children }: { children: string | JSX.Element }) {
@@ -29,7 +54,48 @@ export function SubLabel({ children }: { children: string | JSX.Element }) {
 }
 
 export function ManualErrorMessage({ children }: { children: string }) {
-  return <div className="text-error text-sm mt-1">{children}</div>;
+  return <div className="text-error text-sm">{children}</div>;
+}
+
+export function ExplanationText({
+  text,
+  link,
+}: {
+  text: string;
+  link?: string;
+}) {
+  return link ? (
+    <a
+      className="underline text-text-500 cursor-pointer text-sm font-medium"
+      target="_blank"
+      href={link}
+    >
+      {text}
+    </a>
+  ) : (
+    <div className="text-sm font-semibold">{text}</div>
+  );
+}
+
+export function ToolTipDetails({
+  children,
+}: {
+  children: string | JSX.Element;
+}) {
+  return (
+    <TooltipProvider delayDuration={50}>
+      <Tooltip>
+        <TooltipTrigger>
+          <FiInfo size={12} />
+        </TooltipTrigger>
+        <TooltipContent side="top" align="center">
+          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-inverted">
+            {children}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 export function TextFormField({
@@ -37,50 +103,270 @@ export function TextFormField({
   label,
   subtext,
   placeholder,
+  value,
   onChange,
   type = "text",
+  optional,
+  includeRevert,
   isTextArea = false,
   disabled = false,
   autoCompleteDisabled = true,
   error,
+  defaultHeight,
+  isCode = false,
+  fontSize,
+  hideError,
+  tooltip,
+  explanationText,
+  explanationLink,
+  small,
+  removeLabel,
 }: {
+  value?: string;
   name: string;
+  removeLabel?: boolean;
   label: string;
   subtext?: string | JSX.Element;
   placeholder?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  includeRevert?: boolean;
+  optional?: boolean;
   type?: string;
   isTextArea?: boolean;
   disabled?: boolean;
   autoCompleteDisabled?: boolean;
   error?: string;
+  defaultHeight?: string;
+  isCode?: boolean;
+  fontSize?: "text-sm" | "text-base" | "text-lg";
+  hideError?: boolean;
+  tooltip?: string;
+  explanationText?: string;
+  explanationLink?: string;
+  small?: boolean;
 }) {
+  let heightString = defaultHeight || "";
+  if (isTextArea && !heightString) {
+    heightString = "h-28";
+  }
+  const [field, , helpers] = useField(name);
+  const { setValue } = helpers;
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setValue(e.target.value);
+    if (onChange) {
+      onChange(e as React.ChangeEvent<HTMLInputElement>);
+    }
+  };
+
   return (
-    <div className="mb-4">
-      <Label>{label}</Label>
+    <div className="w-full">
+      <div className="flex gap-x-2 items-center">
+        {!removeLabel && (
+          <Label className="text-text-950" small={small}>
+            {label}
+          </Label>
+        )}
+        {optional ? <span>(optional) </span> : ""}
+        {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
+        {error ? (
+          <ManualErrorMessage>{error}</ManualErrorMessage>
+        ) : (
+          !hideError && (
+            <ErrorMessage
+              name={name}
+              component="div"
+              className="text-error my-auto text-sm"
+            />
+          )
+        )}
+      </div>
       {subtext && <SubLabel>{subtext}</SubLabel>}
-      <Field
-        as={isTextArea ? "textarea" : "input"}
-        type={type}
-        name={name}
-        id={name}
-        className={
-          `
-        border 
-        border-border 
-        rounded 
-        w-full 
-        py-2 
-        px-3 
-        mt-1
-        ${isTextArea ? " h-28" : ""}
-      ` + (disabled ? " bg-background-strong" : " bg-background-emphasis")
-        }
-        disabled={disabled}
-        placeholder={placeholder}
-        autoComplete={autoCompleteDisabled ? "off" : undefined}
-        {...(onChange ? { onChange } : {})}
-      />
+      <div className={`w-full flex ${includeRevert && "gap-x-2"}`}>
+        <Field
+          as={isTextArea ? "textarea" : "input"}
+          type={type}
+          defaultValue={value}
+          name={name}
+          id={name}
+          className={`
+          ${small && "text-sm"}
+          border 
+          border-border 
+          rounded-lg
+          w-full 
+          py-2 
+          px-3 
+          mt-1
+          placeholder:font-description 
+          placeholder:text-base 
+          placeholder:text-text-400
+          ${heightString}
+          ${fontSize}
+          ${disabled ? " bg-background-strong" : " bg-white"}
+          ${isCode ? " font-mono" : ""}
+        `}
+          disabled={disabled}
+          placeholder={placeholder}
+          autoComplete={autoCompleteDisabled ? "off" : undefined}
+          onChange={handleChange}
+        />
+        {includeRevert && (
+          <div className="flex-none mt-auto">
+            <button
+              className="text-xs h-[35px] my-auto p-1.5 rounded bg-background-900 border-border-dark text-text-300 flex gap-x-1"
+              onClick={(e) => {
+                if (onChange) {
+                  onChange({
+                    target: { value: "" },
+                  } as React.ChangeEvent<HTMLInputElement>);
+                }
+                e.preventDefault();
+              }}
+            >
+              <EditIcon className="text-netural-300 my-auto" />
+              <p className="my-auto">Revert</p>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {explanationText && (
+        <ExplanationText link={explanationLink} text={explanationText} />
+      )}
+    </div>
+  );
+}
+
+export function MultiSelectField({
+  name,
+  label,
+  subtext,
+  options,
+  onChange,
+  error,
+  hideError,
+  small,
+  selectedInitially,
+}: {
+  selectedInitially: string[];
+  name: string;
+  label: string;
+  subtext?: string | JSX.Element;
+  options: { value: string; label: string }[];
+  onChange?: (selected: string[]) => void;
+  error?: string;
+  hideError?: boolean;
+  small?: boolean;
+}) {
+  const [selectedOptions, setSelectedOptions] =
+    useState<string[]>(selectedInitially);
+
+  const handleCheckboxChange = (value: string) => {
+    const newSelectedOptions = selectedOptions.includes(value)
+      ? selectedOptions.filter((option) => option !== value)
+      : [...selectedOptions, value];
+
+    setSelectedOptions(newSelectedOptions);
+    if (onChange) {
+      onChange(newSelectedOptions);
+    }
+  };
+
+  return (
+    <div className="mb-6">
+      <div className="flex gap-x-2 items-center">
+        <Label small={small}>{label}</Label>
+        {error ? (
+          <ManualErrorMessage>{error}</ManualErrorMessage>
+        ) : (
+          !hideError && (
+            <ErrorMessage
+              name={name}
+              component="div"
+              className="text-error my-auto text-sm"
+            />
+          )
+        )}
+      </div>
+
+      {subtext && <SubLabel>{subtext}</SubLabel>}
+      <div className="mt-2">
+        {options.map((option) => (
+          <label key={option.value} className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              name={name}
+              value={option.value}
+              checked={selectedOptions.includes(option.value)}
+              onChange={() => handleCheckboxChange(option.value)}
+              className="mr-2"
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+interface MarkdownPreviewProps {
+  name: string;
+  label: string;
+  placeholder?: string;
+  error?: string;
+}
+
+export const MarkdownFormField = ({
+  name,
+  label,
+  error,
+  placeholder = "Enter your markdown here...",
+}: MarkdownPreviewProps) => {
+  const [field, _] = useField(name);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const togglePreview = () => {
+    setIsPreviewOpen(!isPreviewOpen);
+  };
+
+  return (
+    <div className="flex flex-col space-y-4 mb-4">
+      <Label>{label}</Label>
+      <div className="border border-gray-300 rounded-md">
+        <div className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-t-md">
+          <div className="flex items-center space-x-2">
+            <FaMarkdown className="text-gray-500" />
+            <span className="text-sm font-semibold text-gray-600">
+              Markdown
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={togglePreview}
+            className="text-sm font-semibold text-gray-600 hover:text-gray-800 focus:outline-none"
+          >
+            {isPreviewOpen ? "Write" : "Preview"}
+          </button>
+        </div>
+        {isPreviewOpen ? (
+          <div className="p-4 border-t border-gray-300">
+            <ReactMarkdown className="prose" remarkPlugins={[remarkGfm]}>
+              {field.value}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <div className="pt-2 px-2">
+            <textarea
+              {...field}
+              rows={2}
+              placeholder={placeholder}
+              className={`w-full p-2 border border-border rounded-md border-gray-300`}
+            />
+          </div>
+        )}
+      </div>
       {error ? (
         <ManualErrorMessage>{error}</ManualErrorMessage>
       ) : (
@@ -92,13 +378,20 @@ export function TextFormField({
       )}
     </div>
   );
-}
+};
 
 interface BooleanFormFieldProps {
   name: string;
   label: string;
   subtext?: string | JSX.Element;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  removeIndent?: boolean;
+  small?: boolean;
+  alignTop?: boolean;
+  noLabel?: boolean;
+  disabled?: boolean;
+  checked?: boolean;
+  optional?: boolean;
 }
 
 export const BooleanFormField = ({
@@ -106,26 +399,49 @@ export const BooleanFormField = ({
   label,
   subtext,
   onChange,
+  removeIndent,
+  noLabel,
+  optional,
+  small,
+  disabled,
+  alignTop,
+  checked,
 }: BooleanFormFieldProps) => {
+  const [field, meta, helpers] = useField<boolean>(name);
+  const { setValue } = helpers;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.checked);
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
   return (
-    <div className="mb-4">
+    <div>
       <label className="flex text-sm">
         <Field
-          name={name}
           type="checkbox"
-          className="mx-3 px-5 w-3.5 h-3.5 my-auto"
-          {...(onChange ? { onChange } : {})}
+          {...field}
+          checked={checked !== undefined ? checked : field.value}
+          disabled={disabled}
+          onChange={handleChange}
+          className={`${removeIndent ? "mr-2" : "mx-3"}     
+              px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
         />
-        <div>
-          <Label>{label}</Label>
-          {subtext && <SubLabel>{subtext}</SubLabel>}
-        </div>
+        {!noLabel && (
+          <div>
+            <Label
+              small={small}
+            >{`${label}${optional ? " (Optional)" : ""}`}</Label>
+            {subtext && <SubLabel>{subtext}</SubLabel>}
+          </div>
+        )}
       </label>
-
       <ErrorMessage
         name={name}
         component="div"
-        className="text-red-500 text-sm mt-1"
+        className="text-error text-sm mt-1"
       />
     </div>
   );
@@ -214,7 +530,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
 interface TextArrayFieldBuilderProps<T extends Yup.AnyObject> {
   name: string;
   label: string;
-  subtext?: string;
+  subtext?: string | JSX.Element;
   type?: string;
 }
 
@@ -236,6 +552,7 @@ interface SelectorFormFieldProps {
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
   onSelect?: (selected: string | number | null) => void;
+  defaultValue?: string;
 }
 
 export function SelectorFormField({
@@ -247,15 +564,15 @@ export function SelectorFormField({
   side = "bottom",
   maxHeight,
   onSelect,
+  defaultValue,
 }: SelectorFormFieldProps) {
   const [field] = useField<string>(name);
   const { setFieldValue } = useFormikContext();
 
   return (
-    <div className="mb-4">
+    <div>
       {label && <Label>{label}</Label>}
       {subtext && <SubLabel>{subtext}</SubLabel>}
-
       <div className="mt-2">
         <DefaultDropdown
           options={options}
@@ -264,13 +581,14 @@ export function SelectorFormField({
           includeDefault={includeDefault}
           side={side}
           maxHeight={maxHeight}
+          defaultValue={defaultValue}
         />
       </div>
 
       <ErrorMessage
         name={name}
         component="div"
-        className="text-red-500 text-sm mt-1"
+        className="text-error text-sm mt-1"
       />
     </div>
   );

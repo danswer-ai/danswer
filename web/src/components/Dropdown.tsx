@@ -1,4 +1,11 @@
-import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  FC,
+  forwardRef,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ChevronDownIcon } from "./icons/icons";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 import { Popover } from "./popover/Popover";
@@ -8,6 +15,7 @@ export interface Option<T> {
   value: T;
   description?: string;
   metadata?: { [key: string]: any };
+  icon?: React.FC<{ size?: number; className?: string }>;
 }
 
 export type StringOrNumberOption = Option<string | number>;
@@ -101,22 +109,24 @@ export function SearchMultiSelectDropdown({
           px-4 
           py-2 
           text-sm 
-          bg-gray-700 
+          bg-background
+          border
+          border-border
           rounded-md 
           shadow-sm 
-          focus:ring focus:ring-offset-0 focus:ring-1 focus:ring-offset-gray-800 focus:ring-blue-800`}
+          `}
           onClick={(e) => e.stopPropagation()}
         />
         <button
           type="button"
           className={`absolute top-0 right-0 
             text-sm 
-            h-full px-2 border-l border-gray-800`}
+            h-full px-2 border-l border-border`}
           aria-expanded="true"
           aria-haspopup="true"
           onClick={() => setIsOpen(!isOpen)}
         >
-          <ChevronDownIcon className="text-gray-400 my-auto" />
+          <ChevronDownIcon className="my-auto" />
         </button>
       </div>
 
@@ -129,9 +139,9 @@ export function SearchMultiSelectDropdown({
             w-full
             rounded-md
             shadow-lg
-            bg-gray-700
-            border-2
-            border-gray-600
+            bg-background
+            border
+            border-border
             max-h-80
             overflow-y-auto
             overscroll-contain`}
@@ -165,7 +175,7 @@ export function SearchMultiSelectDropdown({
             ) : (
               <button
                 key={0}
-                className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800`}
+                className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-hover`}
                 role="menuitem"
                 onClick={() => setIsOpen(false)}
               >
@@ -215,7 +225,7 @@ export const CustomDropdown = ({
         <div
           onClick={() => setIsOpen(!isOpen)}
           className={`absolute ${
-            direction === "up" ? "bottom-full pb-2" : "pt-2 "
+            direction === "up" ? "bottom-full pb-2" : "pt-2"
           } w-full z-30 box-shadow`}
         >
           {dropdown}
@@ -267,7 +277,7 @@ export function DefaultDropdownElement({
               onChange={() => null}
             />
           )}
-          {icon && icon({ size: 16, className: "mr-2 my-auto" })}
+          {icon && icon({ size: 16, className: "mr-2 h-4 w-4 my-auto" })}
           {name}
         </div>
         {description && <div className="text-xs">{description}</div>}
@@ -281,48 +291,59 @@ export function DefaultDropdownElement({
   );
 }
 
-export function DefaultDropdown({
-  options,
-  selected,
-  onSelect,
-  includeDefault = false,
-  side,
-  maxHeight,
-}: {
+type DefaultDropdownProps = {
   options: StringOrNumberOption[];
   selected: string | null;
   onSelect: (value: string | number | null) => void;
   includeDefault?: boolean;
+  defaultValue?: string;
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
-}) {
-  const selectedOption = options.find((option) => option.value === selected);
-  const [isOpen, setIsOpen] = useState(false);
+};
 
-  const Content = (
-    <div
-      className={`
-      flex 
-      text-sm 
-      bg-background 
-      px-3
-      py-1.5 
-      rounded-lg 
-      border 
-      border-border 
-      cursor-pointer`}
-    >
-      <p className="line-clamp-1">
-        {selectedOption?.name ||
-          (includeDefault ? "Default" : "Select an option...")}
-      </p>
-      <FiChevronDown className="my-auto ml-auto" />
-    </div>
-  );
+export const DefaultDropdown = forwardRef<HTMLDivElement, DefaultDropdownProps>(
+  (
+    {
+      options,
+      selected,
+      onSelect,
+      includeDefault,
+      defaultValue,
+      side,
+      maxHeight,
+    },
+    ref
+  ) => {
+    const selectedOption = options.find((option) => option.value === selected);
+    const [isOpen, setIsOpen] = useState(false);
 
-  const Dropdown = (
-    <div
-      className={`
+    const Content = (
+      <div
+        className={`
+          flex 
+          text-sm 
+          bg-background 
+          px-3
+          py-1.5 
+          rounded-lg 
+          border 
+          border-border 
+          cursor-pointer`}
+      >
+        <p className="line-clamp-1">
+          {selectedOption?.name ||
+            (includeDefault
+              ? defaultValue || "Default"
+              : "Select an option...")}
+        </p>
+        <FiChevronDown className="my-auto ml-auto" />
+      </div>
+    );
+
+    const Dropdown = (
+      <div
+        ref={ref}
+        className={`
         border 
         border 
         rounded-lg 
@@ -332,47 +353,50 @@ export function DefaultDropdown({
         ${maxHeight || "max-h-96"}
         overflow-y-auto 
         overscroll-contain`}
-    >
-      {includeDefault && (
-        <DefaultDropdownElement
-          key={-1}
-          name="Default"
-          onSelect={() => {
-            onSelect(null);
-          }}
-          isSelected={selected === null}
-        />
-      )}
-      {options.map((option, ind) => {
-        const isSelected = option.value === selected;
-        return (
+      >
+        {includeDefault && (
           <DefaultDropdownElement
-            key={option.value}
-            name={option.name}
-            description={option.description}
-            onSelect={() => onSelect(option.value)}
-            isSelected={isSelected}
+            key={-1}
+            name="Default"
+            onSelect={() => {
+              onSelect(null);
+            }}
+            isSelected={selected === null}
           />
-        );
-      })}
-    </div>
-  );
+        )}
+        {options.map((option, ind) => {
+          const isSelected = option.value === selected;
+          return (
+            <DefaultDropdownElement
+              key={option.value}
+              name={option.name}
+              description={option.description}
+              onSelect={() => onSelect(option.value)}
+              isSelected={isSelected}
+              icon={option.icon}
+            />
+          );
+        })}
+      </div>
+    );
 
-  return (
-    <div onClick={() => setIsOpen(!isOpen)}>
-      <Popover
-        open={isOpen}
-        onOpenChange={(open) => setIsOpen(open)}
-        content={Content}
-        popover={Dropdown}
-        align="start"
-        side={side}
-        sideOffset={5}
-        matchWidth
-      />
-    </div>
-  );
-}
+    return (
+      <div onClick={() => setIsOpen(!isOpen)}>
+        <Popover
+          open={isOpen}
+          onOpenChange={(open) => setIsOpen(open)}
+          content={Content}
+          popover={Dropdown}
+          align="start"
+          side={side}
+          sideOffset={5}
+          matchWidth
+          triggerMaxWidth
+        />
+      </div>
+    );
+  }
+);
 
 export function ControlledPopup({
   children,
@@ -427,3 +451,4 @@ export function ControlledPopup({
     </div>
   );
 }
+DefaultDropdown.displayName = "DefaultDropdown";

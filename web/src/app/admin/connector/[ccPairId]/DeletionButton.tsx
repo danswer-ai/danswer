@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@tremor/react";
-import { CCPairFullInfo } from "./types";
+import { CCPairFullInfo, ConnectorCredentialPairStatus } from "./types";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { FiTrash } from "react-icons/fi";
 import { deleteCCPair } from "@/lib/documentDeletion";
@@ -16,7 +16,7 @@ export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
     ccPair?.latest_deletion_attempt?.status === "STARTED";
 
   let tooltip: string;
-  if (ccPair.connector.disabled) {
+  if (ccPair.status !== ConnectorCredentialPairStatus.ACTIVE) {
     if (isDeleting) {
       tooltip = "This connector is currently being deleted";
     } else {
@@ -41,10 +41,12 @@ export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
           )
         }
         icon={FiTrash}
-        disabled={!ccPair.connector.disabled || isDeleting}
+        disabled={
+          ccPair.status === ConnectorCredentialPairStatus.ACTIVE || isDeleting
+        }
         tooltip={tooltip}
       >
-        Schedule for Deletion
+        Delete
       </Button>
     </div>
   );

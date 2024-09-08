@@ -1,8 +1,10 @@
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
+from pydantic import Field
 
-from danswer.llm.options import fetch_models_for_provider
+from danswer.llm.llm_provider_options import fetch_models_for_provider
+
 
 if TYPE_CHECKING:
     from danswer.db.models import LLMProvider as LLMProviderModel
@@ -18,7 +20,7 @@ class TestLLMRequest(BaseModel):
 
     # model level
     default_model_name: str
-    default_fast_model_name: str | None = None
+    fast_default_model_name: str | None = None
 
 
 class LLMProviderDescriptor(BaseModel):
@@ -31,6 +33,7 @@ class LLMProviderDescriptor(BaseModel):
     default_model_name: str
     fast_default_model_name: str | None
     is_default_provider: bool | None
+    display_model_names: list[str] | None
 
     @classmethod
     def from_model(
@@ -47,29 +50,33 @@ class LLMProviderDescriptor(BaseModel):
                 or fetch_models_for_provider(llm_provider_model.provider)
                 or [llm_provider_model.default_model_name]
             ),
+            display_model_names=llm_provider_model.display_model_names,
         )
 
 
 class LLMProvider(BaseModel):
     name: str
     provider: str
-    api_key: str | None
-    api_base: str | None
-    api_version: str | None
-    custom_config: dict[str, str] | None
+    api_key: str | None = None
+    api_base: str | None = None
+    api_version: str | None = None
+    custom_config: dict[str, str] | None = None
     default_model_name: str
-    fast_default_model_name: str | None
+    fast_default_model_name: str | None = None
+    is_public: bool = True
+    groups: list[int] = Field(default_factory=list)
+    display_model_names: list[str] | None = None
 
 
 class LLMProviderUpsertRequest(LLMProvider):
     # should only be used for a "custom" provider
     # for default providers, the built-in model names are used
-    model_names: list[str] | None
+    model_names: list[str] | None = None
 
 
 class FullLLMProvider(LLMProvider):
     id: int
-    is_default_provider: bool | None
+    is_default_provider: bool | None = None
     model_names: list[str]
 
     @classmethod
@@ -85,9 +92,12 @@ class FullLLMProvider(LLMProvider):
             default_model_name=llm_provider_model.default_model_name,
             fast_default_model_name=llm_provider_model.fast_default_model_name,
             is_default_provider=llm_provider_model.is_default_provider,
+            display_model_names=llm_provider_model.display_model_names,
             model_names=(
                 llm_provider_model.model_names
                 or fetch_models_for_provider(llm_provider_model.provider)
                 or [llm_provider_model.default_model_name]
             ),
+            is_public=llm_provider_model.is_public,
+            groups=[group.id for group in llm_provider_model.groups],
         )

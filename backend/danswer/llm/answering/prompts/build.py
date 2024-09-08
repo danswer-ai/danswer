@@ -12,12 +12,11 @@ from danswer.llm.answering.prompts.citations_prompt import compute_max_llm_input
 from danswer.llm.interfaces import LLMConfig
 from danswer.llm.utils import build_content_with_imgs
 from danswer.llm.utils import check_message_tokens
-from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import translate_history_to_basemessages
-from danswer.prompts.chat_prompts import ADDITIONAL_INFO
+from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
+from danswer.prompts.prompt_utils import add_date_time_to_prompt
 from danswer.prompts.prompt_utils import drop_messages_history_overflow
-from danswer.prompts.prompt_utils import get_current_llm_day_time
 from danswer.tools.message import ToolCallSummary
 
 
@@ -26,12 +25,7 @@ def default_build_system_message(
 ) -> SystemMessage | None:
     system_prompt = prompt_config.system_prompt.strip()
     if prompt_config.datetime_aware:
-        if system_prompt:
-            system_prompt += ADDITIONAL_INFO.format(
-                datetime_info=get_current_llm_day_time()
-            )
-        else:
-            system_prompt = get_current_llm_day_time()
+        system_prompt = add_date_time_to_prompt(prompt_str=system_prompt)
 
     if not system_prompt:
         return None
@@ -72,7 +66,10 @@ class AnswerPromptBuilder:
         self.system_message_and_token_cnt: tuple[SystemMessage, int] | None = None
         self.user_message_and_token_cnt: tuple[HumanMessage, int] | None = None
 
-        llm_tokenizer = get_default_llm_tokenizer()
+        llm_tokenizer = get_tokenizer(
+            provider_type=llm_config.model_provider,
+            model_name=llm_config.model_name,
+        )
         self.llm_tokenizer_encode_func = cast(
             Callable[[str], list[int]], llm_tokenizer.encode
         )
@@ -117,8 +114,24 @@ class AnswerPromptBuilder:
         final_messages_with_tokens.append(self.user_message_and_token_cnt)
 
         if tool_call_summary:
-            final_messages_with_tokens.append((tool_call_summary.tool_call_request, 0))
-            final_messages_with_tokens.append((tool_call_summary.tool_call_result, 0))
+            final_messages_with_tokens.append(
+                (
+                    tool_call_summary.tool_call_request,
+                    check_message_tokens(
+                        tool_call_summary.tool_call_request,
+                        self.llm_tokenizer_encode_func,
+                    ),
+                )
+            )
+            final_messages_with_tokens.append(
+                (
+                    tool_call_summary.tool_call_result,
+                    check_message_tokens(
+                        tool_call_summary.tool_call_result,
+                        self.llm_tokenizer_encode_func,
+                    ),
+                )
+            )
 
         return drop_messages_history_overflow(
             final_messages_with_tokens, self.max_tokens

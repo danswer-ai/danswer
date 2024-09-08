@@ -23,7 +23,7 @@ from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_processing.extract_file_text import get_file_ext
 from danswer.file_processing.extract_file_text import is_text_file_extension
 from danswer.file_processing.extract_file_text import load_files_from_zip
-from danswer.file_processing.extract_file_text import pdf_to_text
+from danswer.file_processing.extract_file_text import read_pdf_file
 from danswer.file_processing.extract_file_text import read_text_file
 from danswer.file_store.file_store import get_default_file_store
 from danswer.utils.logger import setup_logger
@@ -69,11 +69,13 @@ def _process_file(
 
     if is_text_file_extension(file_name):
         encoding = detect_encoding(file)
-        file_content_raw, file_metadata = read_text_file(file, encoding=encoding)
+        file_content_raw, file_metadata = read_text_file(
+            file, encoding=encoding, ignore_danswer_metadata=False
+        )
 
     # Using the PDF reader function directly to pass in password cleanly
     elif extension == ".pdf":
-        file_content_raw = pdf_to_text(file=file, pdf_pass=pdf_pass)
+        file_content_raw, file_metadata = read_pdf_file(file=file, pdf_pass=pdf_pass)
 
     else:
         file_content_raw = extract_file_text(
@@ -83,8 +85,18 @@ def _process_file(
 
     all_metadata = {**metadata, **file_metadata} if metadata else file_metadata
 
+    # add a prefix to avoid conflicts with other connectors
+    doc_id = f"FILE_CONNECTOR__{file_name}"
+    if metadata:
+        doc_id = metadata.get("document_id") or doc_id
+
     # If this is set, we will show this in the UI as the "name" of the file
-    file_display_name_override = all_metadata.get("file_display_name")
+    file_display_name = all_metadata.get("file_display_name") or os.path.basename(
+        file_name
+    )
+    title = (
+        all_metadata["title"] or "" if "title" in all_metadata else file_display_name
+    )
 
     time_updated = all_metadata.get("time_updated", datetime.now(timezone.utc))
     if isinstance(time_updated, str):
@@ -99,6 +111,7 @@ def _process_file(
         for k, v in all_metadata.items()
         if k
         not in [
+            "document_id",
             "time_updated",
             "doc_updated_at",
             "link",
@@ -106,6 +119,7 @@ def _process_file(
             "secondary_owners",
             "filename",
             "file_display_name",
+            "title",
         ]
     }
 
@@ -124,13 +138,13 @@ def _process_file(
 
     return [
         Document(
-            id=f"FILE_CONNECTOR__{file_name}",  # add a prefix to avoid conflicts with other connectors
+            id=doc_id,
             sections=[
                 Section(link=all_metadata.get("link"), text=file_content_raw.strip())
             ],
             source=DocumentSource.FILE,
-            semantic_identifier=file_display_name_override
-            or os.path.basename(file_name),
+            semantic_identifier=file_display_name,
+            title=title,
             doc_updated_at=final_time_updated,
             primary_owners=p_owners,
             secondary_owners=s_owners,

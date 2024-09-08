@@ -1,5 +1,13 @@
+import { Lightbulb } from "@phosphor-icons/react/dist/ssr";
 import { PopupSpec } from "../admin/connectors/Popup";
-import { ChevronsDownIcon, ChevronsUpIcon } from "../icons/icons";
+import {
+  BookmarkIcon,
+  ChevronsDownIcon,
+  ChevronsUpIcon,
+  LightBulbIcon,
+  LightSettingsIcon,
+} from "../icons/icons";
+import { CustomTooltip } from "../tooltip/CustomTooltip";
 
 type DocumentFeedbackType = "endorse" | "reject" | "hide" | "unhide";
 
@@ -107,15 +115,17 @@ export const DocumentFeedbackBlock = ({
   setPopup,
 }: DocumentFeedbackBlockProps) => {
   return (
-    <div className="flex">
-      <DocumentFeedback
-        documentId={documentId}
-        messageId={messageId}
-        documentRank={documentRank}
-        setPopup={setPopup}
-        feedbackType="endorse"
-      />
-      <div className="ml-2">
+    <div className="flex items-center gap-x-2">
+      <CustomTooltip showTick line content="Good response">
+        <DocumentFeedback
+          documentId={documentId}
+          messageId={messageId}
+          documentRank={documentRank}
+          setPopup={setPopup}
+          feedbackType="endorse"
+        />
+      </CustomTooltip>
+      <CustomTooltip showTick line content="Bad response">
         <DocumentFeedback
           documentId={documentId}
           messageId={messageId}
@@ -123,7 +133,7 @@ export const DocumentFeedbackBlock = ({
           setPopup={setPopup}
           feedbackType="reject"
         />
-      </div>
+      </CustomTooltip>
     </div>
   );
 };

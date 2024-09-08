@@ -48,7 +48,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
       )}
       <button className="text-sm flex w-fit">
         <a
-          className="flex max-w-[300px] shrink box-border p-2 border border-border rounded-lg hover:bg-hover-light"
+          className="flex max-w-[250px] shrink box-border p-2 border border-border rounded-lg hover:bg-hover-light"
           href={quoteInfo.link || undefined}
           target="_blank"
           rel="noopener noreferrer"
@@ -58,15 +58,6 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
             {quoteInfo.semantic_identifier || quoteInfo.document_id}
           </p>
         </a>
-
-        {/* <div
-          className="cursor-pointer h-full pt-2 pb-2 px-1 border-t border-b border-r border-gray-800 rounded-r-lg hover:bg-gray-800"
-          onClick={() => setDetailIsOpen(!detailIsOpen)}
-        >
-          <div className="pt-0.5 mx-auto h-[20px]">
-            <ZoomInIcon className="text-gray-500" size={14} />
-          </div>
-        </div> */}
       </button>
     </div>
   );
@@ -74,17 +65,12 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
 
 interface QuotesSectionProps {
   quotes: Quote[] | null;
-  isAnswerable: boolean | null;
   isFetching: boolean;
 }
 
 const QuotesHeader = ({ quotes, isFetching }: QuotesSectionProps) => {
   if ((!quotes || quotes.length === 0) && isFetching) {
     return <>Extracting quotes...</>;
-  }
-
-  if (!quotes || quotes.length === 0) {
-    return <>No quotes found</>;
   }
 
   return <>Quotes</>;
@@ -94,16 +80,6 @@ const QuotesBody = ({ quotes, isFetching }: QuotesSectionProps) => {
   if (!quotes && isFetching) {
     // height of quotes section to avoid extra "jumps" from the quotes loading
     return <div className="h-[42px]"></div>;
-  }
-
-  if (!isFetching && (!quotes || !quotes.length)) {
-    return (
-      <div className="flex">
-        <div className="text-error text-sm my-auto">
-          Did not find any exact quotes to support the above answer.
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -119,11 +95,7 @@ export const QuotesSection = (props: QuotesSectionProps) => {
   let status: StatusOptions = "in-progress";
   if (!props.isFetching) {
     if (props.quotes && props.quotes.length > 0) {
-      if (props.isAnswerable === false) {
-        status = "warning";
-      } else {
-        status = "success";
-      }
+      status = "success";
     } else {
       status = "failed";
     }
@@ -133,7 +105,9 @@ export const QuotesSection = (props: QuotesSectionProps) => {
     <ResponseSection
       status={status}
       header={
-        <div className="ml-2 text-emphasis">{<QuotesHeader {...props} />}</div>
+        <div className="ml-2 text-emphasis font-bold">
+          {<QuotesHeader {...props} />}
+        </div>
       }
       body={<QuotesBody {...props} />}
       desiredOpenStatus={true}

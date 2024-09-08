@@ -3,23 +3,21 @@ from abc import abstractmethod
 
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import ENABLE_MINI_CHUNK
-from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.embedding_model import get_secondary_db_embedding_model
-from danswer.db.models import EmbeddingModel as DbEmbeddingModel
 from danswer.db.models import IndexModelStatus
-from danswer.indexing.chunker import split_chunk_text_into_mini_chunks
+from danswer.db.models import SearchSettings
+from danswer.db.search_settings import get_current_search_settings
+from danswer.db.search_settings import get_secondary_search_settings
 from danswer.indexing.models import ChunkEmbedding
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
-from danswer.search.enums import EmbedTextType
-from danswer.search.search_nlp_models import EmbeddingModel
-from danswer.utils.batching import batch_list
+from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.utils.logger import setup_logger
+from danswer.utils.timing import log_function_time
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
-from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
+from shared_configs.enums import EmbeddingProvider
+from shared_configs.enums import EmbedTextType
+from shared_configs.model_server_models import Embedding
 
 
 logger = setup_logger()
@@ -32,14 +30,37 @@ class IndexingEmbedder(ABC):
         normalize: bool,
         query_prefix: str | None,
         passage_prefix: str | None,
+        provider_type: EmbeddingProvider | None,
+        api_key: str | None,
+        api_url: str | None,
     ):
         self.model_name = model_name
         self.normalize = normalize
         self.query_prefix = query_prefix
         self.passage_prefix = passage_prefix
+        self.provider_type = provider_type
+        self.api_key = api_key
+        self.api_url = api_url
+
+        self.embedding_model = EmbeddingModel(
+            model_name=model_name,
+            query_prefix=query_prefix,
+            passage_prefix=passage_prefix,
+            normalize=normalize,
+            api_key=api_key,
+            provider_type=provider_type,
+            api_url=api_url,
+            # The below are globally set, this flow always uses the indexing one
+            server_host=INDEXING_MODEL_SERVER_HOST,
+            server_port=INDEXING_MODEL_SERVER_PORT,
+            retrim_content=True,
+        )
 
     @abstractmethod
-    def embed_chunks(self, chunks: list[DocAwareChunk]) -> list[IndexChunk]:
+    def embed_chunks(
+        self,
+        chunks: list[DocAwareChunk],
+    ) -> list[IndexChunk]:
         raise NotImplementedError
 
 
@@ -50,84 +71,80 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         normalize: bool,
         query_prefix: str | None,
         passage_prefix: str | None,
+        provider_type: EmbeddingProvider | None = None,
+        api_key: str | None = None,
+        api_url: str | None = None,
     ):
-        super().__init__(model_name, normalize, query_prefix, passage_prefix)
-        self.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE  # Currently not customizable
-
-        self.embedding_model = EmbeddingModel(
-            model_name=model_name,
-            query_prefix=query_prefix,
-            passage_prefix=passage_prefix,
-            normalize=normalize,
-            # The below are globally set, this flow always uses the indexing one
-            server_host=INDEXING_MODEL_SERVER_HOST,
-            server_port=MODEL_SERVER_PORT,
+        super().__init__(
+            model_name,
+            normalize,
+            query_prefix,
+            passage_prefix,
+            provider_type,
+            api_key,
+            api_url,
         )
 
+    @log_function_time()
     def embed_chunks(
         self,
         chunks: list[DocAwareChunk],
-        batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
-        enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
     ) -> list[IndexChunk]:
-        # Cache the Title embeddings to only have to do it once
-        title_embed_dict: dict[str, list[float]] = {}
-        embedded_chunks: list[IndexChunk] = []
+        # All chunks at this point must have some non-empty content
+        flat_chunk_texts: list[str] = []
+        large_chunks_present = False
+        for chunk in chunks:
+            if chunk.large_chunk_reference_ids:
+                large_chunks_present = True
+            chunk_text = (
+                f"{chunk.title_prefix}{chunk.content}{chunk.metadata_suffix_semantic}"
+            ) or chunk.source_document.get_title_for_document_index()
 
-        # Create Mini Chunks for more precise matching of details
-        # Off by default with unedited settings
-        chunk_texts = []
-        chunk_mini_chunks_count = {}
-        for chunk_ind, chunk in enumerate(chunks):
-            chunk_texts.append(chunk.content)
-            mini_chunk_texts = (
-                split_chunk_text_into_mini_chunks(chunk.content)
-                if enable_mini_chunk
-                else []
-            )
-            chunk_texts.extend(mini_chunk_texts)
-            chunk_mini_chunks_count[chunk_ind] = 1 + len(mini_chunk_texts)
+            if not chunk_text:
+                # This should never happen, the document would have been dropped
+                # before getting to this point
+                raise ValueError(f"Chunk has no content: {chunk.to_short_descriptor()}")
 
-        # Batching for embedding
-        text_batches = batch_list(chunk_texts, batch_size)
+            flat_chunk_texts.append(chunk_text)
 
-        embeddings: list[list[float]] = []
-        len_text_batches = len(text_batches)
-        for idx, text_batch in enumerate(text_batches, start=1):
-            logger.debug(f"Embedding Content Texts batch {idx} of {len_text_batches}")
-            # Normalize embeddings is only configured via model_configs.py, be sure to use right
-            # value for the set loss
-            embeddings.extend(
-                self.embedding_model.encode(text_batch, text_type=EmbedTextType.PASSAGE)
-            )
+            if chunk.mini_chunk_texts:
+                flat_chunk_texts.extend(chunk.mini_chunk_texts)
 
-            # Replace line above with the line below for easy debugging of indexing flow
-            # skipping the actual model
-            # embeddings.extend([[0.0] * 384 for _ in range(len(text_batch))])
+        embeddings = self.embedding_model.encode(
+            texts=flat_chunk_texts,
+            text_type=EmbedTextType.PASSAGE,
+            large_chunks_present=large_chunks_present,
+        )
 
         chunk_titles = {
             chunk.source_document.get_title_for_document_index() for chunk in chunks
         }
 
         # Drop any None or empty strings
+        # If there is no title or the title is empty, the title embedding field will be null
+        # which is ok, it just won't contribute at all to the scoring.
         chunk_titles_list = [title for title in chunk_titles if title]
 
-        # Embed Titles in batches
-        title_batches = batch_list(chunk_titles_list, batch_size)
-        len_title_batches = len(title_batches)
-        for ind_batch, title_batch in enumerate(title_batches, start=1):
-            logger.debug(f"Embedding Titles batch {ind_batch} of {len_title_batches}")
+        # Cache the Title embeddings to only have to do it once
+        title_embed_dict: dict[str, Embedding] = {}
+        if chunk_titles_list:
             title_embeddings = self.embedding_model.encode(
-                title_batch, text_type=EmbedTextType.PASSAGE
+                chunk_titles_list, text_type=EmbedTextType.PASSAGE
             )
             title_embed_dict.update(
-                {title: vector for title, vector in zip(title_batch, title_embeddings)}
+                {
+                    title: vector
+                    for title, vector in zip(chunk_titles_list, title_embeddings)
+                }
             )
 
         # Mapping embeddings to chunks
+        embedded_chunks: list[IndexChunk] = []
         embedding_ind_start = 0
-        for chunk_ind, chunk in enumerate(chunks):
-            num_embeddings = chunk_mini_chunks_count[chunk_ind]
+        for chunk in chunks:
+            num_embeddings = 1 + (
+                len(chunk.mini_chunk_texts) if chunk.mini_chunk_texts else 0
+            )
             chunk_embeddings = embeddings[
                 embedding_ind_start : embedding_ind_start + num_embeddings
             ]
@@ -161,23 +178,40 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
 
         return embedded_chunks
 
+    @classmethod
+    def from_db_search_settings(
+        cls, search_settings: SearchSettings
+    ) -> "DefaultIndexingEmbedder":
+        return cls(
+            model_name=search_settings.model_name,
+            normalize=search_settings.normalize,
+            query_prefix=search_settings.query_prefix,
+            passage_prefix=search_settings.passage_prefix,
+            provider_type=search_settings.provider_type,
+            api_key=search_settings.api_key,
+            api_url=search_settings.api_url,
+        )
 
-def get_embedding_model_from_db_embedding_model(
+
+def get_embedding_model_from_search_settings(
     db_session: Session, index_model_status: IndexModelStatus = IndexModelStatus.PRESENT
 ) -> IndexingEmbedder:
-    db_embedding_model: DbEmbeddingModel | None
+    search_settings: SearchSettings | None
     if index_model_status == IndexModelStatus.PRESENT:
-        db_embedding_model = get_current_db_embedding_model(db_session)
+        search_settings = get_current_search_settings(db_session)
     elif index_model_status == IndexModelStatus.FUTURE:
-        db_embedding_model = get_secondary_db_embedding_model(db_session)
-        if not db_embedding_model:
+        search_settings = get_secondary_search_settings(db_session)
+        if not search_settings:
             raise RuntimeError("No secondary index configured")
     else:
         raise RuntimeError("Not supporting embedding model rollbacks")
 
     return DefaultIndexingEmbedder(
-        model_name=db_embedding_model.model_name,
-        normalize=db_embedding_model.normalize,
-        query_prefix=db_embedding_model.query_prefix,
-        passage_prefix=db_embedding_model.passage_prefix,
+        model_name=search_settings.model_name,
+        normalize=search_settings.normalize,
+        query_prefix=search_settings.query_prefix,
+        passage_prefix=search_settings.passage_prefix,
+        provider_type=search_settings.provider_type,
+        api_key=search_settings.api_key,
+        api_url=search_settings.api_url,
     )

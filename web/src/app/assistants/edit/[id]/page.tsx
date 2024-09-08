@@ -1,12 +1,11 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Card, Text, Title } from "@tremor/react";
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
-import { FiChevronLeft } from "react-icons/fi";
-import Link from "next/link";
 import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
 import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { DeletePersonaButton } from "@/app/admin/assistants/[id]/DeletePersonaButton";
+import { LargeBackButton } from "../../LargeBackButton";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const [values, error] = await fetchAssistantEditorInfoSS(params.id);
@@ -30,7 +29,6 @@ export default async function Page({ params }: { params: { id: string } }) {
                 redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
               />
             </Card>
-
             <Title className="mt-12">Delete Assistant</Title>
             <Text>
               Click the button below to permanently delete this assistant.
@@ -52,19 +50,13 @@ export default async function Page({ params }: { params: { id: string } }) {
       <HeaderWrapper>
         <div className="h-full flex flex-col">
           <div className="flex my-auto">
-            <Link href="/chat">
-              <FiChevronLeft
-                className="mr-1 my-auto p-1 hover:bg-hover rounded cursor-pointer"
-                size={32}
-              />
-            </Link>
+            <LargeBackButton />
             <h1 className="flex text-xl text-strong font-bold my-auto">
               Edit Assistant
             </h1>
           </div>
         </div>
       </HeaderWrapper>
-
       {body}
     </div>
   );

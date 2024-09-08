@@ -1,14 +1,15 @@
 from langchain.schema.messages import HumanMessage
 
 from danswer.chat.models import LlmDoc
-from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
+from danswer.configs.chat_configs import LANGUAGE_HINT
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
+from danswer.db.search_settings import get_multilingual_expansion
 from danswer.llm.answering.models import PromptConfig
 from danswer.prompts.direct_qa_prompts import CONTEXT_BLOCK
 from danswer.prompts.direct_qa_prompts import HISTORY_BLOCK
 from danswer.prompts.direct_qa_prompts import JSON_PROMPT
-from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
+from danswer.prompts.prompt_utils import add_date_time_to_prompt
 from danswer.prompts.prompt_utils import build_complete_context_str
 from danswer.search.models import InferenceChunk
 
@@ -18,7 +19,6 @@ def _build_weak_llm_quotes_prompt(
     context_docs: list[LlmDoc] | list[InferenceChunk],
     history_str: str,
     prompt: PromptConfig,
-    use_language_hint: bool,
 ) -> HumanMessage:
     """Since Danswer supports a variety of LLMs, this less demanding prompt is provided
     as an option to use with weaker LLMs such as small version, low float precision, quantized,
@@ -35,6 +35,10 @@ def _build_weak_llm_quotes_prompt(
         task_prompt=prompt.task_prompt,
         user_query=question,
     )
+
+    if prompt.datetime_aware:
+        prompt_str = add_date_time_to_prompt(prompt_str=prompt_str)
+
     return HumanMessage(content=prompt_str)
 
 
@@ -43,8 +47,9 @@ def _build_strong_llm_quotes_prompt(
     context_docs: list[LlmDoc] | list[InferenceChunk],
     history_str: str,
     prompt: PromptConfig,
-    use_language_hint: bool,
 ) -> HumanMessage:
+    use_language_hint = bool(get_multilingual_expansion())
+
     context_block = ""
     if context_docs:
         context_docs_str = build_complete_context_str(context_docs)
@@ -62,6 +67,10 @@ def _build_strong_llm_quotes_prompt(
         user_query=question,
         language_hint_or_none=LANGUAGE_HINT.strip() if use_language_hint else "",
     ).strip()
+
+    if prompt.datetime_aware:
+        full_prompt = add_date_time_to_prompt(prompt_str=full_prompt)
+
     return HumanMessage(content=full_prompt)
 
 
@@ -70,7 +79,6 @@ def build_quotes_user_message(
     context_docs: list[LlmDoc] | list[InferenceChunk],
     history_str: str,
     prompt: PromptConfig,
-    use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
 ) -> HumanMessage:
     prompt_builder = (
         _build_weak_llm_quotes_prompt
@@ -83,7 +91,6 @@ def build_quotes_user_message(
         context_docs=context_docs,
         history_str=history_str,
         prompt=prompt,
-        use_language_hint=use_language_hint,
     )
 
 
@@ -92,7 +99,6 @@ def build_quotes_prompt(
     context_docs: list[LlmDoc] | list[InferenceChunk],
     history_str: str,
     prompt: PromptConfig,
-    use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
 ) -> HumanMessage:
     prompt_builder = (
         _build_weak_llm_quotes_prompt
@@ -105,5 +111,4 @@ def build_quotes_prompt(
         context_docs=context_docs,
         history_str=history_str,
         prompt=prompt,
-        use_language_hint=use_language_hint,
     )

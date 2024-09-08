@@ -2,9 +2,19 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { CCPairBasicInfo, DocumentSet, User } from "../types";
 import { getCurrentUserSS } from "../userSS";
 import { fetchSS } from "../utilsSS";
-import { FullLLMProvider } from "@/app/admin/models/llm/interfaces";
+import {
+  FullLLMProvider,
+  getProviderIcon,
+} from "@/app/admin/configuration/llm/interfaces";
 import { ToolSnapshot } from "../tools/interfaces";
 import { fetchToolsSS } from "../tools/fetchTools";
+import {
+  OpenAIIcon,
+  AnthropicIcon,
+  AWSIcon,
+  AzureIcon,
+  OpenSourceIcon,
+} from "@/components/icons/icons";
 
 export async function fetchAssistantEditorInfoSS(
   personaId?: number | string
@@ -79,11 +89,17 @@ export async function fetchAssistantEditorInfoSS(
       `Failed to fetch LLM providers - ${await llmProvidersResponse.text()}`,
     ];
   }
+
   const llmProviders = (await llmProvidersResponse.json()) as FullLLMProvider[];
 
   if (personaId && personaResponse && !personaResponse.ok) {
     return [null, `Failed to fetch Persona - ${await personaResponse.text()}`];
   }
+
+  for (const provider of llmProviders) {
+    provider.icon = getProviderIcon(provider.provider);
+  }
+
   const existingPersona = personaResponse
     ? ((await personaResponse.json()) as Persona)
     : null;

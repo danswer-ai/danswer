@@ -3,9 +3,10 @@ import {
   EmphasizedClickable,
 } from "@/components/BasicClickable";
 import { HoverPopup } from "@/components/HoverPopup";
+import { Hoverable } from "@/components/Hoverable";
+import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useEffect, useRef, useState } from "react";
 import { FiCheck, FiEdit2, FiSearch, FiX } from "react-icons/fi";
-import { Hoverable } from "./Messages";
 
 export function ShowHideDocsButton({
   messageId,
@@ -37,15 +38,15 @@ export function ShowHideDocsButton({
 export function SearchSummary({
   query,
   hasDocs,
+  finished,
   messageId,
-  isCurrentlyShowingRetrieved,
   handleShowRetrieved,
   handleSearchQueryEdit,
 }: {
+  finished: boolean;
   query: string;
   hasDocs: boolean;
   messageId: number | null;
-  isCurrentlyShowingRetrieved: boolean;
   handleShowRetrieved: (messageId: number | null) => void;
   handleSearchQueryEdit?: (query: string) => void;
 }) {
@@ -78,11 +79,21 @@ export function SearchSummary({
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    if (!isEditing) {
+      setFinalQuery(query);
+    }
+  }, [query]);
+
   const searchingForDisplay = (
     <div className={`flex p-1 rounded ${isOverflowed && "cursor-default"}`}>
-      <FiSearch className="mr-2 my-auto" size={14} />
-      <div className="line-clamp-1 break-all px-0.5" ref={searchingForRef}>
-        Searching for: <i>{finalQuery}</i>
+      <FiSearch className="flex-none mr-2 my-auto" size={14} />
+      <div
+        className={`${!finished && "loading-text"} 
+        !text-sm !line-clamp-1 !break-all px-0.5`}
+        ref={searchingForRef}
+      >
+        {finished ? "Searched" : "Searching"} for: <i> {finalQuery}</i>
       </div>
     </div>
   );
@@ -113,7 +124,8 @@ export function SearchSummary({
         />
       </div>
       <div className="ml-2 my-auto flex">
-        <div
+        <Hoverable
+          icon={FiCheck}
           onClick={() => {
             if (!finalQuery) {
               setFinalQuery(query);
@@ -122,19 +134,14 @@ export function SearchSummary({
             }
             setIsEditing(false);
           }}
-          className={`hover:bg-black/10 p-1 -m-1 rounded`}
-        >
-          <FiCheck size={14} />
-        </div>
-        <div
+        />
+        <Hoverable
+          icon={FiX}
           onClick={() => {
             setFinalQuery(query);
             setIsEditing(false);
           }}
-          className={`hover:bg-black/10 p-1 -m-1 rounded ml-2`}
-        >
-          <FiX size={14} />
-        </div>
+        />
       </div>
     </div>
   ) : null;
@@ -145,7 +152,7 @@ export function SearchSummary({
         editInput
       ) : (
         <>
-          <div className="text-sm my-2">
+          <div className="text-sm">
             {isOverflowed ? (
               <HoverPopup
                 mainContent={searchingForDisplay}
@@ -162,20 +169,18 @@ export function SearchSummary({
             )}
           </div>
           {handleSearchQueryEdit && (
-            <div className="my-auto">
-              <Hoverable onClick={() => setIsEditing(true)}>
-                <FiEdit2 className="my-auto" size="14" />
-              </Hoverable>
-            </div>
+            <Tooltip delayDuration={1000} content={"Edit Search"}>
+              <button
+                className="my-auto hover:bg-hover p-1.5 rounded"
+                onClick={() => {
+                  setIsEditing(true);
+                }}
+              >
+                <FiEdit2 />
+              </button>
+            </Tooltip>
           )}
         </>
-      )}
-      {hasDocs && (
-        <ShowHideDocsButton
-          messageId={messageId}
-          isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
-          handleShowRetrieved={handleShowRetrieved}
-        />
       )}
     </div>
   );

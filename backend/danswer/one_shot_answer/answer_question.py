@@ -9,9 +9,12 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
+from danswer.chat.models import DocumentRelevance
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
+from danswer.chat.models import RelevanceAnalysis
 from danswer.chat.models import StreamingError
+from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
@@ -19,39 +22,45 @@ from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
-from danswer.db.chat import get_prompt_by_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
+from danswer.db.chat import update_search_docs_table_with_relevance
 from danswer.db.engine import get_session_context_manager
 from danswer.db.models import User
+from danswer.db.persona import get_prompt_by_id
 from danswer.llm.answering.answer import Answer
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import CitationConfig
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.models import QuotesConfig
-from danswer.llm.factory import get_llm_for_persona
-from danswer.llm.utils import get_default_llm_token_encode
+from danswer.llm.factory import get_llms_for_persona
+from danswer.llm.factory import get_main_llm_from_tuple
+from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.one_shot_answer.models import QueryRephrase
 from danswer.one_shot_answer.qa_utils import combine_message_thread
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.utils import chunks_or_sections_to_search_docs
+from danswer.search.utils import dedupe_documents
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.utils import get_json_line
 from danswer.tools.force import ForceUseTool
+from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
 from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
 from danswer.tools.tool import ToolResponse
-from danswer.tools.tool_runner import ToolRunKickoff
+from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
+
 
 logger = setup_logger()
 
@@ -65,7 +74,8 @@ AnswerObjectIterator = Iterator[
     | StreamingError
     | ChatMessageDetail
     | CitationInfo
-    | ToolRunKickoff
+    | ToolCallKickoff
+    | DocumentRelevance
 ]
 
 
@@ -84,8 +94,9 @@ def stream_answer_objects(
     bypass_acl: bool = False,
     use_citations: bool = False,
     danswerbot_flow: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> AnswerObjectIterator:
     """Streams in order:
@@ -107,8 +118,12 @@ def stream_answer_objects(
         one_shot=True,
         danswerbot_flow=danswerbot_flow,
     )
+    llm, fast_llm = get_llms_for_persona(persona=chat_session.persona)
 
-    llm_tokenizer = get_default_llm_token_encode()
+    llm_tokenizer = get_tokenizer(
+        model_name=llm.config.model_name,
+        provider_type=llm.config.model_provider,
+    )
 
     # Create a chat session which will just store the root message, the query, and the AI response
     root_message = get_or_create_root_message(
@@ -116,21 +131,26 @@ def stream_answer_objects(
     )
 
     history_str = combine_message_thread(
-        messages=history, max_tokens=max_history_tokens
+        messages=history,
+        max_tokens=max_history_tokens,
+        llm_tokenizer=llm_tokenizer,
     )
 
-    rephrased_query = thread_based_query_rephrase(
+    rephrased_query = query_req.query_override or thread_based_query_rephrase(
         user_query=query_msg.message,
         history_str=history_str,
     )
+
     # Given back ahead of the documents for latency reasons
     # In chat flow it's given back along with the documents
     yield QueryRephrase(rephrased_query=rephrased_query)
 
     prompt = None
     if query_req.prompt_id is not None:
+        # NOTE: let the user access any prompt as long as the Persona is shared
+        # with them
         prompt = get_prompt_by_id(
-            prompt_id=query_req.prompt_id, user=user, db_session=db_session
+            prompt_id=query_req.prompt_id, user=None, db_session=db_session
         )
     if prompt is None:
         if not chat_session.persona.prompts:
@@ -145,13 +165,12 @@ def stream_answer_objects(
         parent_message=root_message,
         prompt_id=query_req.prompt_id,
         message=query_msg.message,
-        token_count=len(llm_tokenizer(query_msg.message)),
+        token_count=len(llm_tokenizer.encode(query_msg.message)),
         message_type=MessageType.USER,
         db_session=db_session,
         commit=True,
     )
 
-    llm = get_llm_for_persona(persona=chat_session.persona)
     prompt_config = PromptConfig.from_model(prompt)
     document_pruning_config = DocumentPruningConfig(
         max_chunks=int(
@@ -160,16 +179,24 @@ def stream_answer_objects(
             else default_num_chunks
         ),
         max_tokens=max_document_tokens,
-        use_sections=query_req.chunks_above > 0 or query_req.chunks_below > 0,
     )
+
     search_tool = SearchTool(
         db_session=db_session,
         user=user,
+        evaluation_type=LLMEvaluationType.SKIP
+        if DISABLE_LLM_DOC_RELEVANCE
+        else query_req.evaluation_type,
         persona=chat_session.persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,
-        llm_config=llm.config,
+        llm=llm,
+        fast_llm=fast_llm,
         pruning_config=document_pruning_config,
+        chunks_above=query_req.chunks_above,
+        chunks_below=query_req.chunks_below,
+        full_doc=query_req.full_doc,
+        bypass_acl=bypass_acl,
     )
 
     answer_config = AnswerStyleConfig(
@@ -177,25 +204,32 @@ def stream_answer_objects(
         quotes_config=QuotesConfig() if not use_citations else None,
         document_pruning_config=document_pruning_config,
     )
+
     answer = Answer(
         question=query_msg.message,
         answer_style_config=answer_config,
         prompt_config=PromptConfig.from_model(prompt),
-        llm=get_llm_for_persona(persona=chat_session.persona),
+        llm=get_main_llm_from_tuple(get_llms_for_persona(persona=chat_session.persona)),
         single_message_history=history_str,
         tools=[search_tool],
         force_use_tool=ForceUseTool(
-            tool_name=search_tool.name(),
+            force_use=True,
+            tool_name=search_tool.name,
             args={"query": rephrased_query},
         ),
         # for now, don't use tool calling for this flow, as we haven't
         # tested quotes with tool calling too much yet
         skip_explicit_tool_calling=True,
+        return_contexts=query_req.return_contexts,
+        skip_gen_ai_answer_generation=query_req.skip_gen_ai_answer_generation,
     )
+
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
+
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):
+            # (likely fine that it comes after the initial creation of the search docs)
             if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                 search_response_summary = cast(SearchResponseSummary, packet.response)
 
@@ -203,11 +237,14 @@ def stream_answer_objects(
                     search_response_summary.top_sections
                 )
 
+                # Deduping happens at the last step to avoid harming quality by dropping content early on
+                deduped_docs = top_docs
+                if query_req.retrieval_options.dedupe_docs:
+                    deduped_docs, dropped_inds = dedupe_documents(top_docs)
+
                 reference_db_search_docs = [
-                    create_db_search_doc(
-                        server_search_doc=top_doc, db_session=db_session
-                    )
-                    for top_doc in top_docs
+                    create_db_search_doc(server_search_doc=doc, db_session=db_session)
+                    for doc in deduped_docs
                 ]
 
                 response_docs = [
@@ -225,8 +262,31 @@ def stream_answer_objects(
                     recency_bias_multiplier=search_response_summary.recency_bias_multiplier,
                 )
                 yield initial_response
+
+            elif packet.id == SEARCH_DOC_CONTENT_ID:
+                yield packet.response
+
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
-                yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
+                document_based_response = {}
+
+                if packet.response is not None:
+                    for evaluation in packet.response:
+                        document_based_response[
+                            evaluation.document_id
+                        ] = RelevanceAnalysis(
+                            relevant=evaluation.relevant, content=evaluation.content
+                        )
+
+                evaluation_response = DocumentRelevance(
+                    relevance_summaries=document_based_response
+                )
+                if reference_db_search_docs is not None:
+                    update_search_docs_table_with_relevance(
+                        db_session=db_session,
+                        reference_db_search_docs=reference_db_search_docs,
+                        relevance_summary=evaluation_response,
+                    )
+                yield evaluation_response
         else:
             yield packet
 
@@ -236,7 +296,7 @@ def stream_answer_objects(
         parent_message=new_user_message,
         prompt_id=query_req.prompt_id,
         message=answer.llm_answer,
-        token_count=len(llm_tokenizer(answer.llm_answer)),
+        token_count=len(llm_tokenizer.encode(answer.llm_answer)),
         message_type=MessageType.ASSISTANT,
         error=None,
         reference_docs=reference_db_search_docs,
@@ -247,7 +307,6 @@ def stream_answer_objects(
     msg_detail_response = translate_db_message_to_chat_message_detail(
         gen_ai_response_message
     )
-
     yield msg_detail_response
 
 
@@ -267,7 +326,7 @@ def stream_search_answer(
             db_session=session,
         )
         for obj in objects:
-            yield get_json_line(obj.dict())
+            yield get_json_line(obj.model_dump())
 
 
 def get_search_answer(
@@ -281,8 +340,9 @@ def get_search_answer(
     bypass_acl: bool = False,
     use_citations: bool = False,
     danswerbot_flow: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> OneShotQAResponse:
     """Collects the streamed one shot answer responses into a single object"""

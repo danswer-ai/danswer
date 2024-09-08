@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.db.models import Persona
 from danswer.db.models import StarterMessage
@@ -9,6 +10,10 @@ from danswer.server.features.document_set.models import DocumentSet
 from danswer.server.features.prompt.models import PromptSnapshot
 from danswer.server.features.tool.api import ToolSnapshot
 from danswer.server.models import MinimalUserSnapshot
+from danswer.utils.logger import setup_logger
+
+
+logger = setup_logger()
 
 
 class CreatePersonaRequest(BaseModel):
@@ -27,8 +32,12 @@ class CreatePersonaRequest(BaseModel):
     llm_model_version_override: str | None = None
     starter_messages: list[StarterMessage] | None = None
     # For Private Personas, who should be able to access these
-    users: list[UUID] | None = None
-    groups: list[int] | None = None
+    users: list[UUID] = Field(default_factory=list)
+    groups: list[int] = Field(default_factory=list)
+    icon_color: str | None = None
+    icon_shape: int | None = None
+    uploaded_image_id: str | None = None  # New field for uploaded image
+    remove_image: bool | None = None
 
 
 class PersonaSnapshot(BaseModel):
@@ -49,13 +58,22 @@ class PersonaSnapshot(BaseModel):
     prompts: list[PromptSnapshot]
     tools: list[ToolSnapshot]
     document_sets: list[DocumentSet]
-    users: list[UUID]
+    users: list[MinimalUserSnapshot]
     groups: list[int]
+    icon_color: str | None
+    icon_shape: int | None
+    uploaded_image_id: str | None = None
 
     @classmethod
-    def from_model(cls, persona: Persona) -> "PersonaSnapshot":
+    def from_model(
+        cls, persona: Persona, allow_deleted: bool = False
+    ) -> "PersonaSnapshot":
         if persona.deleted:
-            raise ValueError("Persona has been deleted")
+            error_msg = f"Persona with ID {persona.id} has been deleted"
+            if not allow_deleted:
+                raise ValueError(error_msg)
+            else:
+                logger.warning(error_msg)
 
         return PersonaSnapshot(
             id=persona.id,
@@ -82,8 +100,14 @@ class PersonaSnapshot(BaseModel):
                 DocumentSet.from_model(document_set_model)
                 for document_set_model in persona.document_sets
             ],
-            users=[user.id for user in persona.users],
+            users=[
+                MinimalUserSnapshot(id=user.id, email=user.email)
+                for user in persona.users
+            ],
             groups=[user_group.id for user_group in persona.groups],
+            icon_color=persona.icon_color,
+            icon_shape=persona.icon_shape,
+            uploaded_image_id=persona.uploaded_image_id,
         )
 
 

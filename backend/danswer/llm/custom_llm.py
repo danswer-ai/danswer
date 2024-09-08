@@ -7,8 +7,7 @@ from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from requests import Timeout
 
-from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
-from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
+from danswer.configs.model_configs import GEN_AI_NUM_RESERVED_OUTPUT_TOKENS
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.llm.utils import convert_lm_input_to_basic_string
@@ -37,8 +36,8 @@ class CustomModelServer(LLM):
         # Not used here but you probably want a model server that isn't completely open
         api_key: str | None,
         timeout: int,
-        endpoint: str | None = GEN_AI_API_ENDPOINT,
-        max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
+        endpoint: str,
+        max_output_tokens: int = GEN_AI_NUM_RESERVED_OUTPUT_TOKENS,
     ):
         if not endpoint:
             raise ValueError(
@@ -76,7 +75,7 @@ class CustomModelServer(LLM):
     def log_model_configs(self) -> None:
         logger.debug(f"Custom model at: {self._endpoint}")
 
-    def invoke(
+    def _invoke_implementation(
         self,
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
@@ -84,7 +83,7 @@ class CustomModelServer(LLM):
     ) -> BaseMessage:
         return self._execute(prompt)
 
-    def stream(
+    def _stream_implementation(
         self,
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,

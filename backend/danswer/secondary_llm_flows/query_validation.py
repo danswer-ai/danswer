@@ -5,7 +5,7 @@ from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import DISABLE_LLM_QUERY_ANSWERABILITY
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import message_generator_to_string_generator
 from danswer.llm.utils import message_to_string
@@ -52,7 +52,7 @@ def get_query_answerability(
         return "Query Answerability Evaluation feature is turned off", True
 
     try:
-        llm = get_default_llm()
+        llm, _ = get_default_llms()
     except GenAIDisabledException:
         return "Generative AI is turned off - skipping check", True
 
@@ -74,18 +74,18 @@ def stream_query_answerability(
             QueryValidationResponse(
                 reasoning="Query Answerability Evaluation feature is turned off",
                 answerable=True,
-            ).dict()
+            ).model_dump()
         )
         return
 
     try:
-        llm = get_default_llm()
+        llm, _ = get_default_llms()
     except GenAIDisabledException:
         yield get_json_line(
             QueryValidationResponse(
                 reasoning="Generative AI is turned off - skipping check",
                 answerable=True,
-            ).dict()
+            ).model_dump()
         )
         return
     messages = get_query_validation_messages(user_query)
@@ -107,7 +107,7 @@ def stream_query_answerability(
                 remaining = model_output[reason_ind + len(THOUGHT_PAT.upper()) :]
                 if remaining:
                     yield get_json_line(
-                        DanswerAnswerPiece(answer_piece=remaining).dict()
+                        DanswerAnswerPiece(answer_piece=remaining).model_dump()
                     )
                 continue
 
@@ -116,7 +116,7 @@ def stream_query_answerability(
                 if hold_answerable == ANSWERABLE_PAT.upper()[: len(hold_answerable)]:
                     continue
                 yield get_json_line(
-                    DanswerAnswerPiece(answer_piece=hold_answerable).dict()
+                    DanswerAnswerPiece(answer_piece=hold_answerable).model_dump()
                 )
                 hold_answerable = ""
 
@@ -124,11 +124,13 @@ def stream_query_answerability(
         answerable = extract_answerability_bool(model_output)
 
         yield get_json_line(
-            QueryValidationResponse(reasoning=reasoning, answerable=answerable).dict()
+            QueryValidationResponse(
+                reasoning=reasoning, answerable=answerable
+            ).model_dump()
         )
     except Exception as e:
         # exception is logged in the answer_question method, no need to re-log
         error = StreamingError(error=str(e))
-        yield get_json_line(error.dict())
+        yield get_json_line(error.model_dump())
         logger.exception("Failed to validate Query")
     return

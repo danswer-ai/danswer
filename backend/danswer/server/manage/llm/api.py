@@ -13,10 +13,10 @@ from danswer.db.llm import remove_llm_provider
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import User
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.llm.factory import get_llm
-from danswer.llm.options import fetch_available_well_known_llms
-from danswer.llm.options import WellKnownLLMProviderDescriptor
+from danswer.llm.llm_provider_options import fetch_available_well_known_llms
+from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
 from danswer.llm.utils import test_llm
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderDescriptor
@@ -55,13 +55,13 @@ def test_llm_configuration(
     functions_with_args: list[tuple[Callable, tuple]] = [(test_llm, (llm,))]
 
     if (
-        test_llm_request.default_fast_model_name
-        and test_llm_request.default_fast_model_name
+        test_llm_request.fast_default_model_name
+        and test_llm_request.fast_default_model_name
         != test_llm_request.default_model_name
     ):
         fast_llm = get_llm(
             provider=test_llm_request.provider,
-            model=test_llm_request.default_fast_model_name,
+            model=test_llm_request.fast_default_model_name,
             api_key=test_llm_request.api_key,
             api_base=test_llm_request.api_base,
             api_version=test_llm_request.api_version,
@@ -85,8 +85,7 @@ def test_default_provider(
     _: User | None = Depends(current_admin_user),
 ) -> None:
     try:
-        llm = get_default_llm()
-        fast_llm = get_default_llm(use_fast_llm=True)
+        llm, fast_llm = get_default_llms()
     except ValueError:
         logger.exception("Failed to fetch default LLM Provider")
         raise HTTPException(status_code=400, detail="No LLM Provider setup")
@@ -122,7 +121,7 @@ def put_llm_provider(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> FullLLMProvider:
-    return upsert_llm_provider(db_session, llm_provider)
+    return upsert_llm_provider(llm_provider=llm_provider, db_session=db_session)
 
 
 @admin_router.delete("/provider/{provider_id}")
@@ -140,7 +139,7 @@ def set_provider_as_default(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    update_default_provider(db_session, provider_id)
+    update_default_provider(provider_id=provider_id, db_session=db_session)
 
 
 """Endpoints for all"""
@@ -148,10 +147,10 @@ def set_provider_as_default(
 
 @basic_router.get("/provider")
 def list_llm_provider_basics(
-    _: User | None = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> list[LLMProviderDescriptor]:
     return [
         LLMProviderDescriptor.from_model(llm_provider_model)
-        for llm_provider_model in fetch_existing_llm_providers(db_session)
+        for llm_provider_model in fetch_existing_llm_providers(db_session, user)
     ]

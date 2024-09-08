@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { ModalWrapper } from "./ModalWrapper";
+import { ModalWrapper } from "@/components/modals/ModalWrapper";
 import { Button, Callout, Divider, Text } from "@tremor/react";
 import { Spinner } from "@/components/Spinner";
 import { ChatSessionSharedStatus } from "../interfaces";
 import { FiCopy, FiX } from "react-icons/fi";
-import { Hoverable } from "../message/Messages";
 import { CopyButton } from "@/components/CopyButton";
 
 function buildShareLink(chatSessionId: number) {
@@ -64,13 +63,6 @@ export function ShareChatSessionModal({
           <h2 className="text-2xl text-emphasis font-bold flex my-auto">
             Share link to Chat
           </h2>
-
-          <div
-            onClick={onClose}
-            className="my-auto ml-auto p-2 hover:bg-hover rounded cursor-pointer"
-          >
-            <FiX size={20} />
-          </div>
         </div>
 
         {linkGenerating && <Spinner />}
@@ -135,13 +127,19 @@ export function ShareChatSessionModal({
                 onClick={async () => {
                   setLinkGenerating(true);
 
-                  const shareLink = await generateShareLink(chatSessionId);
-                  if (!shareLink) {
-                    alert("Failed to generate share link");
-                  } else {
-                    setShareLink(shareLink);
-                    navigator.clipboard.writeText(shareLink);
-                    onShare && onShare(true);
+                  // NOTE: for "inescure" non-https setup, the `navigator.clipboard.writeText` may fail
+                  // as the browser may not allow the clipboard to be accessed.
+                  try {
+                    const shareLink = await generateShareLink(chatSessionId);
+                    if (!shareLink) {
+                      alert("Failed to generate share link");
+                    } else {
+                      setShareLink(shareLink);
+                      onShare && onShare(true);
+                      navigator.clipboard.writeText(shareLink);
+                    }
+                  } catch (e) {
+                    console.error(e);
                   }
 
                   setLinkGenerating(false);

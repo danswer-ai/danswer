@@ -1,5 +1,3 @@
-import { SearchSection } from "@/components/search/SearchSection";
-import { Header } from "@/components/header/Header";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,
@@ -20,9 +18,22 @@ import {
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { personaComparator } from "../admin/assistants/lib";
-import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
+import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
+import { ChatPopup } from "../chat/ChatPopup";
+import {
+  FetchAssistantsResponse,
+  fetchAssistantsSS,
+} from "@/lib/assistants/fetchAssistantsSS";
+import { ChatSession } from "../chat/interfaces";
+import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
+import {
+  AGENTIC_SEARCH_TYPE_COOKIE_NAME,
+  NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN,
+  DISABLE_LLM_DOC_RELEVANCE,
+} from "@/lib/constants";
+import WrappedSearch from "./WrappedSearch";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -35,9 +46,10 @@ export default async function Home() {
     getCurrentUserSS(),
     fetchSS("/manage/indexing-status"),
     fetchSS("/manage/document-set"),
-    fetchSS("/persona"),
+    fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
-    fetchSS("/secondary-index/get-embedding-models"),
+    fetchSS("/search-settings/get-all-search-settings"),
+    fetchSS("/query/user-searches"),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -48,6 +60,7 @@ export default async function Home() {
     | Response
     | AuthTypeMetadata
     | FullEmbeddingModelResponse
+    | FetchAssistantsResponse
     | null
   )[] = [null, null, null, null, null, null];
   try {
@@ -59,9 +72,11 @@ export default async function Home() {
   const user = results[1] as User | null;
   const ccPairsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
-  const personaResponse = results[4] as Response | null;
+  const [initialAssistantsList, assistantsFetchError] =
+    results[4] as FetchAssistantsResponse;
   const tagsResponse = results[5] as Response | null;
   const embeddingModelResponse = results[6] as Response | null;
+  const queryResponse = results[7] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -88,18 +103,24 @@ export default async function Home() {
     );
   }
 
-  let personas: Persona[] = [];
-  if (personaResponse?.ok) {
-    personas = await personaResponse.json();
+  let querySessions: ChatSession[] = [];
+  if (queryResponse?.ok) {
+    querySessions = (await queryResponse.json()).sessions;
   } else {
-    console.log(`Failed to fetch personas - ${personaResponse?.status}`);
+    console.log(`Failed to fetch chat sessions - ${queryResponse?.text()}`);
   }
-  // remove those marked as hidden by an admin
-  personas = personas.filter((persona) => persona.is_visible);
-  // hide personas with no retrieval
-  personas = personas.filter((persona) => persona.num_chunks !== 0);
-  // sort them in priority order
-  personas.sort(personaComparator);
+
+  let assistants: Persona[] = initialAssistantsList;
+  if (assistantsFetchError) {
+    console.log(`Failed to fetch assistants - ${assistantsFetchError}`);
+  } else {
+    // remove those marked as hidden by an admin
+    assistants = assistants.filter((assistant) => assistant.is_visible);
+    // hide personas with no retrieval
+    assistants = assistants.filter((assistant) => assistant.num_chunks !== 0);
+    // sort them in priority order
+    assistants.sort(personaComparator);
+  }
 
   let tags: Tag[] = [];
   if (tagsResponse?.ok) {
@@ -112,6 +133,7 @@ export default async function Home() {
     embeddingModelResponse && embeddingModelResponse.ok
       ? ((await embeddingModelResponse.json()) as FullEmbeddingModelResponse)
       : null;
+
   const currentEmbeddingModelName =
     embeddingModelVersionInfo?.current_model_name;
   const nextEmbeddingModelName =
@@ -132,43 +154,63 @@ export default async function Home() {
     !hasCompletedWelcomeFlowSS() &&
     !hasAnyConnectors &&
     (!user || user.role === "admin");
+
   const shouldDisplayNoSourcesModal =
-    ccPairs.length === 0 && !shouldShowWelcomeModal;
+    (!user || user.role === "admin") &&
+    ccPairs.length === 0 &&
+    !shouldShowWelcomeModal;
+
   const shouldDisplaySourcesIncompleteModal =
     !ccPairs.some(
       (ccPair) => ccPair.has_successful_run && ccPair.docs_indexed > 0
     ) &&
     !shouldDisplayNoSourcesModal &&
-    !shouldShowWelcomeModal;
+    !shouldShowWelcomeModal &&
+    (!user || user.role == "admin");
+
+  const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
+  const agenticSearchToggle = cookies().get(AGENTIC_SEARCH_TYPE_COOKIE_NAME);
+
+  const toggleSidebar = sidebarToggled
+    ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
+    : NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN;
+
+  const agenticSearchEnabled = agenticSearchToggle
+    ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || false
+    : false;
 
   return (
     <>
-      <Header user={user} />
-      <div className="m-3">
-        <HealthCheckBanner />
-      </div>
+      <HealthCheckBanner />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
+      <InstantSSRAutoRefresh />
+
       {!shouldShowWelcomeModal &&
         !shouldDisplayNoSourcesModal &&
         !shouldDisplaySourcesIncompleteModal && <ApiKeyModal user={user} />}
+
       {shouldDisplayNoSourcesModal && <NoSourcesModal />}
+
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
 
-      <InstantSSRAutoRefresh />
+      {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
+      Only used in the EE version of the app. */}
+      <ChatPopup />
 
-      <div className="px-24 pt-10 flex flex-col items-center min-h-screen">
-        <div className="w-full">
-          <SearchSection
-            ccPairs={ccPairs}
-            documentSets={documentSets}
-            personas={personas}
-            tags={tags}
-            defaultSearchType={searchTypeDefault}
-          />
-        </div>
-      </div>
+      <WrappedSearch
+        disabledAgentic={DISABLE_LLM_DOC_RELEVANCE}
+        initiallyToggled={toggleSidebar}
+        querySessions={querySessions}
+        user={user}
+        ccPairs={ccPairs}
+        documentSets={documentSets}
+        personas={assistants}
+        tags={tags}
+        searchTypeDefault={searchTypeDefault}
+        agenticSearchEnabled={agenticSearchEnabled}
+      />
     </>
   );
 }

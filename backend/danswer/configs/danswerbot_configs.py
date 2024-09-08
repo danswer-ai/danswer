@@ -47,10 +47,6 @@ DANSWER_BOT_DISPLAY_ERROR_MSGS = os.environ.get(
 DANSWER_BOT_RESPOND_EVERY_CHANNEL = (
     os.environ.get("DANSWER_BOT_RESPOND_EVERY_CHANNEL", "").lower() == "true"
 )
-# Auto detect query options like time cutoff or heavily favor recently updated docs
-DISABLE_DANSWER_BOT_FILTER_DETECT = (
-    os.environ.get("DISABLE_DANSWER_BOT_FILTER_DETECT", "").lower() == "true"
-)
 # Add a second LLM call post Answer to verify if the Answer is valid
 # Throws out answers that don't directly or fully answer the user query
 # This is the default for all DanswerBot channels unless the channel is configured individually
@@ -72,4 +68,20 @@ DANSWER_BOT_MAX_WAIT_TIME = int(os.environ.get("DANSWER_BOT_MAX_WAIT_TIME") or 1
 # Set to 0 to disable it (default)
 DANSWER_BOT_FEEDBACK_REMINDER = int(
     os.environ.get("DANSWER_BOT_FEEDBACK_REMINDER") or 0
+)
+# Set to True to rephrase the Slack users messages
+DANSWER_BOT_REPHRASE_MESSAGE = (
+    os.environ.get("DANSWER_BOT_REPHRASE_MESSAGE", "").lower() == "true"
+)
+
+# DANSWER_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD is the number of
+# responses DanswerBot can send in a given time period.
+# Set to 0 to disable the limit.
+DANSWER_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD = int(
+    os.environ.get("DANSWER_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD", "5000")
+)
+# DANSWER_BOT_RESPONSE_LIMIT_TIME_PERIOD_SECONDS is the number
+# of seconds until the response limit is reset.
+DANSWER_BOT_RESPONSE_LIMIT_TIME_PERIOD_SECONDS = int(
+    os.environ.get("DANSWER_BOT_RESPONSE_LIMIT_TIME_PERIOD_SECONDS", "86400")
 )

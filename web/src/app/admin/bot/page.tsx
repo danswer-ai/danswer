@@ -34,6 +34,7 @@ import {
 } from "react-icons/fi";
 import Link from "next/link";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
+import { ErrorCallout } from "@/components/ErrorCallout";
 
 const numToDisplay = 50;
 
@@ -65,7 +66,7 @@ const SlackBotConfigsTable = ({
         <TableHead>
           <TableRow>
             <TableHeaderCell>Channels</TableHeaderCell>
-            <TableHeaderCell>Persona</TableHeaderCell>
+            <TableHeaderCell>Assistant</TableHeaderCell>
             <TableHeaderCell>Document Sets</TableHeaderCell>
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
@@ -178,8 +179,16 @@ const Main = () => {
     return <ThreeDotsLoader />;
   }
 
-  if (slackBotConfigsError || !slackBotConfigs) {
-    return <div>Error: {slackBotConfigsError}</div>;
+  if (slackBotConfigsError || !slackBotConfigs || !slackBotConfigs) {
+    return (
+      <ErrorCallout
+        errorTitle="Error loading slack bot configs"
+        errorMsg={
+          slackBotConfigsError.info?.message ||
+          slackBotConfigsError.info?.detail
+        }
+      />
+    );
   }
 
   return (
@@ -267,7 +276,7 @@ const Main = () => {
 
           <div className="mb-2"></div>
 
-          <Link className="flex mb-3" href="/admin/bot/new">
+          <Link className="flex mb-3 w-fit" href="/admin/bot/new">
             <Button className="my-auto" color="green" size="xs">
               New Slack Bot Configuration
             </Button>
@@ -292,7 +301,7 @@ const Page = () => {
   return (
     <div className="container mx-auto">
       <AdminPageTitle
-        icon={<FiSlack size={32} />}
+        icon={<SlackIcon size={32} />}
         title="Slack Bot Configuration"
       />
       <InstantSSRAutoRefresh />

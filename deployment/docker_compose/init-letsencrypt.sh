@@ -21,7 +21,13 @@ docker_compose_cmd() {
 # Assign appropriate Docker Compose command
 COMPOSE_CMD=$(docker_compose_cmd)
 
-domains=("$DOMAIN" "www.$DOMAIN")
+# Only add www to domain list if domain wasn't explicitly set as a subdomain
+if [[ ! $DOMAIN == www.* ]]; then
+    domains=("$DOMAIN" "www.$DOMAIN")
+else
+    domains=("$DOMAIN")
+fi
+
 rsa_key_size=4096
 data_path="../data/certbot"
 email="$EMAIL" # Adding a valid address is strongly recommended
@@ -105,6 +111,15 @@ $COMPOSE_CMD -f docker-compose.prod.yml run --name danswer-stack --rm --entrypoi
     --agree-tos \
     --force-renewal" certbot
 echo
+
+echo "### Renaming certificate directory if needed ..."
+$COMPOSE_CMD -f docker-compose.prod.yml run --name danswer-stack --rm --entrypoint "\
+  sh -c 'for domain in $domains; do \
+    numbered_dir=\$(find /etc/letsencrypt/live -maxdepth 1 -type d -name \"\$domain-00*\" | sort -r | head -n1); \
+    if [ -n \"\$numbered_dir\" ]; then \
+      mv \"\$numbered_dir\" /etc/letsencrypt/live/\$domain; \
+    fi; \
+  done'" certbot
 
 echo "### Reloading nginx ..."
 $COMPOSE_CMD -f docker-compose.prod.yml -p danswer-stack up --force-recreate -d

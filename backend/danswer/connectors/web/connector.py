@@ -15,6 +15,7 @@ from playwright.sync_api import BrowserContext
 from playwright.sync_api import Playwright
 from playwright.sync_api import sync_playwright
 from requests_oauthlib import OAuth2Session  # type:ignore
+from urllib3.exceptions import MaxRetryError
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
@@ -26,9 +27,10 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.file_processing.extract_file_text import pdf_to_text
+from danswer.file_processing.extract_file_text import read_pdf_file
 from danswer.file_processing.html_utils import web_html_cleanup
 from danswer.utils.logger import setup_logger
+from danswer.utils.sitemap import list_pages_for_site
 
 logger = setup_logger()
 
@@ -82,8 +84,29 @@ def check_internet_connection(url: str) -> None:
     try:
         response = requests.get(url, timeout=3)
         response.raise_for_status()
-    except (requests.RequestException, ValueError):
-        raise Exception(f"Unable to reach {url} - check your internet connection")
+    except requests.exceptions.HTTPError as e:
+        # Extract status code from the response, defaulting to -1 if response is None
+        status_code = e.response.status_code if e.response is not None else -1
+        error_msg = {
+            400: "Bad Request",
+            401: "Unauthorized",
+            403: "Forbidden",
+            404: "Not Found",
+            500: "Internal Server Error",
+            502: "Bad Gateway",
+            503: "Service Unavailable",
+            504: "Gateway Timeout",
+        }.get(status_code, "HTTP Error")
+        raise Exception(f"{error_msg} ({status_code}) for {url} - {e}")
+    except requests.exceptions.SSLError as e:
+        cause = (
+            e.args[0].reason
+            if isinstance(e.args, tuple) and isinstance(e.args[0], MaxRetryError)
+            else e.args
+        )
+        raise Exception(f"SSL error {str(cause)}")
+    except (requests.RequestException, ValueError) as e:
+        raise Exception(f"Unable to reach {url} - check your internet connection: {e}")
 
 
 def is_valid_url(url: str) -> bool:
@@ -145,10 +168,21 @@ def extract_urls_from_sitemap(sitemap_url: str) -> list[str]:
     response.raise_for_status()
 
     soup = BeautifulSoup(response.content, "html.parser")
-    return [
+    urls = [
         _ensure_absolute_url(sitemap_url, loc_tag.text)
         for loc_tag in soup.find_all("loc")
     ]
+
+    if len(urls) == 0 and len(soup.find_all("urlset")) == 0:
+        # the given url doesn't look like a sitemap, let's try to find one
+        urls = list_pages_for_site(sitemap_url)
+
+    if len(urls) == 0:
+        raise ValueError(
+            f"No URLs found in sitemap {sitemap_url}. Try using the 'single' or 'recursive' scraping options instead."
+        )
+
+    return urls
 
 
 def _ensure_absolute_url(source_url: str, maybe_relative_url: str) -> str:
@@ -214,6 +248,10 @@ class WebConnector(LoadConnector):
         and converts them into documents"""
         visited_links: set[str] = set()
         to_visit: list[str] = self.to_visit_list
+
+        if not to_visit:
+            raise ValueError("No URLs to visit")
+
         base_url = to_visit[0]  # For the recursive case
         doc_batch: list[Document] = []
 
@@ -247,15 +285,17 @@ class WebConnector(LoadConnector):
                 if current_url.split(".")[-1] == "pdf":
                     # PDF files are not checked for links
                     response = requests.get(current_url)
-                    page_text = pdf_to_text(file=io.BytesIO(response.content))
+                    page_text, metadata = read_pdf_file(
+                        file=io.BytesIO(response.content)
+                    )
 
                     doc_batch.append(
                         Document(
                             id=current_url,
                             sections=[Section(link=current_url, text=page_text)],
                             source=DocumentSource.WEB,
-                            semantic_identifier=current_url.split(".")[-1],
-                            metadata={},
+                            semantic_identifier=current_url.split("/")[-1],
+                            metadata=metadata,
                         )
                     )
                     continue

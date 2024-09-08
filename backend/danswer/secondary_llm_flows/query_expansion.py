@@ -6,7 +6,7 @@ from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.db.models import ChatMessage
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_default_llms
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import message_to_string
@@ -33,7 +33,7 @@ def llm_multilingual_query_expansion(query: str, language: str) -> str:
         return messages
 
     try:
-        llm = get_default_llm(use_fast_llm=True, timeout=5)
+        _, fast_llm = get_default_llms(timeout=5)
     except GenAIDisabledException:
         logger.warning(
             "Unable to perform multilingual query expansion, Gen AI disabled"
@@ -42,7 +42,7 @@ def llm_multilingual_query_expansion(query: str, language: str) -> str:
 
     messages = _get_rephrase_messages()
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
-    model_output = message_to_string(llm.invoke(filled_llm_prompt))
+    model_output = message_to_string(fast_llm.invoke(filled_llm_prompt))
     logger.debug(model_output)
 
     return model_output
@@ -50,11 +50,10 @@ def llm_multilingual_query_expansion(query: str, language: str) -> str:
 
 def multilingual_query_expansion(
     query: str,
-    expansion_languages: str,
+    expansion_languages: list[str],
     use_threads: bool = True,
 ) -> list[str]:
-    languages = expansion_languages.split(",")
-    languages = [language.strip() for language in languages]
+    languages = [language.strip() for language in expansion_languages]
     if use_threads:
         functions_with_args: list[tuple[Callable, tuple]] = [
             (llm_multilingual_query_expansion, (query, language))
@@ -74,11 +73,12 @@ def multilingual_query_expansion(
 def get_contextual_rephrase_messages(
     question: str,
     history_str: str,
+    prompt_template: str = HISTORY_QUERY_REPHRASE,
 ) -> list[dict[str, str]]:
     messages = [
         {
             "role": "user",
-            "content": HISTORY_QUERY_REPHRASE.format(
+            "content": prompt_template.format(
                 question=question, chat_history=history_str
             ),
         },
@@ -93,7 +93,8 @@ def history_based_query_rephrase(
     llm: LLM,
     size_heuristic: int = 200,
     punctuation_heuristic: int = 10,
-    skip_first_rephrase: bool = False,
+    skip_first_rephrase: bool = True,
+    prompt_template: str = HISTORY_QUERY_REPHRASE,
 ) -> str:
     # Globally disabled, just use the exact user query
     if DISABLE_LLM_QUERY_REPHRASE:
@@ -119,7 +120,7 @@ def history_based_query_rephrase(
     )
 
     prompt_msgs = get_contextual_rephrase_messages(
-        question=query, history_str=history_str
+        question=query, history_str=history_str, prompt_template=prompt_template
     )
 
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(prompt_msgs)
@@ -148,7 +149,7 @@ def thread_based_query_rephrase(
 
     if llm is None:
         try:
-            llm = get_default_llm()
+            llm, _ = get_default_llms()
         except GenAIDisabledException:
             # If Generative AI is turned off, just return the original query
             return user_query

@@ -4,100 +4,136 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
   BackendMessage,
+  ChatFileType,
   ChatSession,
   ChatSessionSharedStatus,
   DocumentsResponse,
   FileDescriptor,
   ImageGenerationDisplay,
   Message,
+  MessageResponseIDInfo,
   RetrievalType,
   StreamingError,
-  ToolRunKickoff,
+  ToolCallMetadata,
 } from "./interfaces";
-import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
-import { DocumentSet, Tag, User, ValidSources } from "@/lib/types";
+
+import Prism from "prismjs";
+import Cookies from "js-cookie";
+import { HistorySidebar } from "./sessionSidebar/HistorySidebar";
 import { Persona } from "../admin/assistants/interfaces";
-import { Header } from "@/components/header/Header";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { Settings } from "../admin/settings/interfaces";
 import {
   buildChatUrl,
+  buildLatestMessageChain,
+  checkAnyAssistantHasSearch,
   createChatSession,
+  deleteChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
   getLastSuccessfulMessageId,
-  handleAutoScroll,
   handleChatFeedback,
   nameChatSession,
+  PacketType,
   personaIncludesRetrieval,
   processRawChatHistory,
+  removeMessage,
   sendMessage,
+  setMessageAsLatest,
+  updateParentChildren,
   uploadFilesForChat,
+  useScrollonStream,
 } from "./lib";
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
-import { useFilters } from "@/lib/hooks";
+import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
-import { FeedbackType } from "./types";
-import ResizableSection from "@/components/resizable/ResizableSection";
+import { ChatState, FeedbackType, RegenerationState } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
-import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { HEADER_PADDING } from "@/lib/constants";
-import { FiSend, FiShare2, FiStopCircle } from "react-icons/fi";
+import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
-import { ThreeDots } from "react-loader-spinner";
 import { StarterMessage } from "./StarterMessage";
-import { SelectedDocuments } from "./modifiers/SelectedDocuments";
-import { ChatFilters } from "./modifiers/ChatFilters";
-import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
+import {
+  AnswerPiecePacket,
+  DanswerDocument,
+  StreamStopInfo,
+  StreamStopReason,
+} from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
-import { Tabs } from "./sessionSidebar/constants";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
-import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
-import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
-import { InputBarPreviewImage } from "./images/InputBarPreviewImage";
-import { Folder } from "./folders/interfaces";
+import {
+  checkLLMSupportsImageInput,
+  getFinalLLM,
+  destructureValue,
+  getLLMProviderOverrideForPersona,
+} from "@/lib/llm/utils";
 
-const MAX_INPUT_HEIGHT = 200;
+import { ChatInputBar } from "./input/ChatInputBar";
+import { useChatContext } from "@/components/context/ChatContext";
+import { v4 as uuidv4 } from "uuid";
+import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
+import { ChatPopup } from "./ChatPopup";
+
+import FunctionalHeader from "@/components/chat_search/Header";
+import { useSidebarVisibility } from "@/components/chat_search/hooks";
+import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
+import FixedLogo from "./shared_chat_search/FixedLogo";
+import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
+import { DeleteEntityModal } from "../../components/modals/DeleteEntityModal";
+import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
+import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
+
+import { SEARCH_TOOL_NAME } from "./tools/constants";
+import { useUser } from "@/components/user/UserProvider";
+
+const TEMP_USER_MESSAGE_ID = -1;
+const TEMP_ASSISTANT_MESSAGE_ID = -2;
+const SYSTEM_MESSAGE_ID = -3;
 
 export function ChatPage({
-  user,
-  chatSessions,
-  availableSources,
-  availableDocumentSets,
-  availablePersonas,
-  availableTags,
-  llmProviders,
-  defaultSelectedPersonaId,
+  toggle,
   documentSidebarInitialWidth,
-  defaultSidebarTab,
-  folders,
-  openedFolders,
+  defaultSelectedAssistantId,
+  toggledSidebar,
 }: {
-  user: User | null;
-  chatSessions: ChatSession[];
-  availableSources: ValidSources[];
-  availableDocumentSets: DocumentSet[];
-  availablePersonas: Persona[];
-  availableTags: Tag[];
-  llmProviders: LLMProviderDescriptor[];
-  defaultSelectedPersonaId?: number; // what persona to default to
+  toggle: (toggled?: boolean) => void;
   documentSidebarInitialWidth?: number;
-  defaultSidebarTab?: Tabs;
-  folders: Folder[];
-  openedFolders: { [key: number]: boolean };
+  defaultSelectedAssistantId?: number;
+  toggledSidebar: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  let {
+    chatSessions,
+    availableSources,
+    availableDocumentSets,
+    availableAssistants,
+    llmProviders,
+    folders,
+    openedFolders,
+    userInputPrompts,
+  } = useChatContext();
+
+  const { user, refreshUser, isLoadingUser } = useUser();
+
+  // chat session
   const existingChatIdRaw = searchParams.get("chatId");
+  const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
+
   const existingChatSessionId = existingChatIdRaw
     ? parseInt(existingChatIdRaw)
     : null;
@@ -105,7 +141,130 @@ export function ChatPage({
   const selectedChatSession = chatSessions.find(
     (chatSession) => chatSession.id === existingChatSessionId
   );
-  const existingChatSessionPersonaId = selectedChatSession?.persona_id;
+
+  const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
+
+  // Only updates on session load (ie. rename / switching chat session)
+  // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
+  const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
+
+  // Assistants
+  const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
+
+  const existingChatSessionAssistantId = selectedChatSession?.persona_id;
+  const [selectedAssistant, setSelectedAssistant] = useState<
+    Persona | undefined
+  >(
+    // NOTE: look through available assistants here, so that even if the user
+    // has hidden this assistant it still shows the correct assistant when
+    // going back to an old chat session
+    existingChatSessionAssistantId !== undefined
+      ? availableAssistants.find(
+          (assistant) => assistant.id === existingChatSessionAssistantId
+        )
+      : defaultSelectedAssistantId !== undefined
+        ? availableAssistants.find(
+            (assistant) => assistant.id === defaultSelectedAssistantId
+          )
+        : undefined
+  );
+
+  // Gather default temperature settings
+  const search_param_temperature = searchParams.get(
+    SEARCH_PARAM_NAMES.TEMPERATURE
+  );
+  const defaultTemperature = search_param_temperature
+    ? parseFloat(search_param_temperature)
+    : selectedAssistant?.tools.some(
+          (tool) =>
+            tool.in_code_tool_id === "SearchTool" ||
+            tool.in_code_tool_id === "InternetSearchTool"
+        )
+      ? 0
+      : 0.7;
+
+  const setSelectedAssistantFromId = (assistantId: number) => {
+    // NOTE: also intentionally look through available assistants here, so that
+    // even if the user has hidden an assistant they can still go back to it
+    // for old chats
+    setSelectedAssistant(
+      availableAssistants.find((assistant) => assistant.id === assistantId)
+    );
+  };
+
+  const llmOverrideManager = useLlmOverride(
+    user?.preferences.default_model,
+    selectedChatSession,
+    defaultTemperature
+  );
+
+  const [alternativeAssistant, setAlternativeAssistant] =
+    useState<Persona | null>(null);
+
+  const liveAssistant =
+    alternativeAssistant ||
+    selectedAssistant ||
+    filteredAssistants[0] ||
+    availableAssistants[0];
+
+  useEffect(() => {
+    if (!loadedIdSessionRef.current && !currentPersonaId) {
+      return;
+    }
+
+    const personaDefault = getLLMProviderOverrideForPersona(
+      liveAssistant,
+      llmProviders
+    );
+
+    if (personaDefault) {
+      llmOverrideManager.setLlmOverride(personaDefault);
+    } else if (user?.preferences.default_model) {
+      llmOverrideManager.setLlmOverride(
+        destructureValue(user?.preferences.default_model)
+      );
+    }
+  }, [liveAssistant]);
+
+  const stopGenerating = () => {
+    const currentSession = currentSessionId();
+    const controller = abortControllers.get(currentSession);
+    if (controller) {
+      controller.abort();
+      setAbortControllers((prev) => {
+        const newControllers = new Map(prev);
+        newControllers.delete(currentSession);
+        return newControllers;
+      });
+    }
+
+    const lastMessage = messageHistory[messageHistory.length - 1];
+    if (
+      lastMessage &&
+      lastMessage.type === "assistant" &&
+      lastMessage.toolCalls[0] &&
+      lastMessage.toolCalls[0].tool_result === undefined
+    ) {
+      const newCompleteMessageMap = new Map(
+        currentMessageMap(completeMessageDetail)
+      );
+      const updatedMessage = { ...lastMessage, toolCalls: [] };
+      newCompleteMessageMap.set(lastMessage.messageId, updatedMessage);
+      updateCompleteMessageDetail(currentSession, newCompleteMessageMap);
+    }
+
+    updateChatState("input", currentSession);
+  };
+
+  // this is for "@"ing assistants
+
+  // this is used to track which assistant is being used to generate the current message
+  // for example, this would come into play when:
+  // 1. default assistant is `Danswer`
+  // 2. we "@"ed the `GPT` assistant and sent a message
+  // 3. while the `GPT` assistant message is generating, we "@" the `Paraphrase` assistant
+  const [alternativeGeneratingAssistant, setAlternativeGeneratingAssistant] =
+    useState<Persona | null>(null);
 
   // used to track whether or not the initial "submit on load" has been performed
   // this only applies if `?submit-on-load=true` or `?submit-on-load=1` is in the URL
@@ -120,47 +279,60 @@ export function ChatPage({
     existingChatSessionId !== null
   );
 
-  // needed so closures (e.g. onSubmit) can access the current value
-  const urlChatSessionId = useRef<number | null>();
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    Prism.highlightAll();
+    setIsReady(true);
+  }, []);
+
   // this is triggered every time the user switches which chat
   // session they are using
   useEffect(() => {
-    urlChatSessionId.current = existingChatSessionId;
+    const priorChatSessionId = chatSessionIdRef.current;
+    const loadedSessionId = loadedIdSessionRef.current;
+    chatSessionIdRef.current = existingChatSessionId;
+    loadedIdSessionRef.current = existingChatSessionId;
 
-    textareaRef.current?.focus();
+    textAreaRef.current?.focus();
 
     // only clear things if we're going from one chat session to another
-    if (chatSessionId !== null && existingChatSessionId !== chatSessionId) {
+    const isChatSessionSwitch =
+      chatSessionIdRef.current !== null &&
+      existingChatSessionId !== priorChatSessionId;
+    if (isChatSessionSwitch) {
       // de-select documents
       clearSelectedDocuments();
+
       // reset all filters
       filterManager.setSelectedDocumentSets([]);
       filterManager.setSelectedSources([]);
       filterManager.setSelectedTags([]);
       filterManager.setTimeRange(null);
-      // remove uploaded files
-      setCurrentMessageFileIds([]);
 
-      if (isStreaming) {
-        setIsCancelled(true);
+      // reset LLM overrides (based on chat session!)
+      llmOverrideManager.updateModelOverrideForChatSession(selectedChatSession);
+      llmOverrideManager.setTemperature(null);
+
+      // remove uploaded files
+      setCurrentMessageFiles([]);
+
+      // if switching from one chat to another, then need to scroll again
+      // if we're creating a brand new chat, then don't need to scroll
+      if (chatSessionIdRef.current !== null) {
+        setHasPerformedInitialScroll(false);
       }
     }
-
-    setChatSessionId(existingChatSessionId);
 
     async function initialSessionFetch() {
       if (existingChatSessionId === null) {
         setIsFetchingChatMessages(false);
-        if (defaultSelectedPersonaId !== undefined) {
-          setSelectedPersona(
-            availablePersonas.find(
-              (persona) => persona.id === defaultSelectedPersonaId
-            )
-          );
+        if (defaultSelectedAssistantId !== undefined) {
+          setSelectedAssistantFromId(defaultSelectedAssistantId);
         } else {
-          setSelectedPersona(undefined);
+          setSelectedAssistant(undefined);
         }
-        setMessageHistory([]);
+        updateCompleteMessageDetail(null, new Map());
         setChatSessionSharedStatus(ChatSessionSharedStatus.Private);
 
         // if we're supposed to submit on initial load, then do that here
@@ -171,25 +343,31 @@ export function ChatPage({
           submitOnLoadPerformed.current = true;
           await onSubmit();
         }
-
         return;
       }
 
+      clearSelectedDocuments();
       setIsFetchingChatMessages(true);
       const response = await fetch(
         `/api/chat/get-chat-session/${existingChatSessionId}`
       );
-      const chatSession = (await response.json()) as BackendChatSession;
-      setSelectedPersona(
-        availablePersonas.find(
-          (persona) => persona.id === chatSession.persona_id
-        )
-      );
 
-      const newMessageHistory = processRawChatHistory(chatSession.messages);
-      // if the last message is an error, don't overwrite it
-      if (messageHistory[messageHistory.length - 1]?.type !== "error") {
-        setMessageHistory(newMessageHistory);
+      const chatSession = (await response.json()) as BackendChatSession;
+      setSelectedAssistantFromId(chatSession.persona_id);
+
+      const newMessageMap = processRawChatHistory(chatSession.messages);
+      const newMessageHistory = buildLatestMessageChain(newMessageMap);
+
+      // Update message history except for edge where where
+      // last message is an error and we're on a new chat.
+      // This corresponds to a "renaming" of chat, which occurs after first message
+      // stream
+      if (
+        (messageHistory[messageHistory.length - 1]?.type !== "error" ||
+          loadedSessionId != null) &&
+        !currentChatAnswering()
+      ) {
+        updateCompleteMessageDetail(chatSession.chat_session_id, newMessageMap);
 
         const latestMessageId =
           newMessageHistory[newMessageHistory.length - 1]?.messageId;
@@ -200,6 +378,13 @@ export function ChatPage({
 
       setChatSessionSharedStatus(chatSession.shared_status);
 
+      // go to bottom. If initial load, then do a scroll,
+      // otherwise just appear at the bottom
+      if (!hasPerformedInitialScroll) {
+        clientScrollToBottom();
+      } else if (isChatSessionSwitch) {
+        clientScrollToBottom(true);
+      }
       setIsFetchingChatMessages(false);
 
       // if this is a seeded chat, then kick off the AI message generation
@@ -225,20 +410,254 @@ export function ChatPage({
     initialSessionFetch();
   }, [existingChatSessionId]);
 
-  const [chatSessionId, setChatSessionId] = useState<number | null>(
-    existingChatSessionId
-  );
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
-  const [messageHistory, setMessageHistory] = useState<Message[]>([]);
-  const [currentTool, setCurrentTool] = useState<string | null>(null);
-  const [isStreaming, setIsStreaming] = useState(false);
+
+  const [completeMessageDetail, setCompleteMessageDetail] = useState<
+    Map<number | null, Map<number, Message>>
+  >(new Map());
+
+  const updateCompleteMessageDetail = (
+    sessionId: number | null,
+    messageMap: Map<number, Message>
+  ) => {
+    setCompleteMessageDetail((prevState) => {
+      const newState = new Map(prevState);
+      newState.set(sessionId, messageMap);
+      return newState;
+    });
+  };
+
+  const currentMessageMap = (
+    messageDetail: Map<number | null, Map<number, Message>>
+  ) => {
+    return (
+      messageDetail.get(chatSessionIdRef.current) || new Map<number, Message>()
+    );
+  };
+  const currentSessionId = (): number => {
+    return chatSessionIdRef.current!;
+  };
+
+  const upsertToCompleteMessageMap = ({
+    messages,
+    completeMessageMapOverride,
+    chatSessionId,
+    replacementsMap = null,
+    makeLatestChildMessage = false,
+  }: {
+    messages: Message[];
+    // if calling this function repeatedly with short delay, stay may not update in time
+    // and result in weird behavipr
+    completeMessageMapOverride?: Map<number, Message> | null;
+    chatSessionId?: number;
+    replacementsMap?: Map<number, number> | null;
+    makeLatestChildMessage?: boolean;
+  }) => {
+    // deep copy
+    const frozenCompleteMessageMap =
+      completeMessageMapOverride || currentMessageMap(completeMessageDetail);
+    const newCompleteMessageMap = structuredClone(frozenCompleteMessageMap);
+
+    if (newCompleteMessageMap.size === 0) {
+      const systemMessageId = messages[0].parentMessageId || SYSTEM_MESSAGE_ID;
+      const firstMessageId = messages[0].messageId;
+      const dummySystemMessage: Message = {
+        messageId: systemMessageId,
+        message: "",
+        type: "system",
+        files: [],
+        toolCalls: [],
+        parentMessageId: null,
+        childrenMessageIds: [firstMessageId],
+        latestChildMessageId: firstMessageId,
+      };
+      newCompleteMessageMap.set(
+        dummySystemMessage.messageId,
+        dummySystemMessage
+      );
+      messages[0].parentMessageId = systemMessageId;
+    }
+
+    messages.forEach((message) => {
+      const idToReplace = replacementsMap?.get(message.messageId);
+      if (idToReplace) {
+        removeMessage(idToReplace, newCompleteMessageMap);
+      }
+
+      // update childrenMessageIds for the parent
+      if (
+        !newCompleteMessageMap.has(message.messageId) &&
+        message.parentMessageId !== null
+      ) {
+        updateParentChildren(message, newCompleteMessageMap, true);
+      }
+      newCompleteMessageMap.set(message.messageId, message);
+    });
+    // if specified, make these new message the latest of the current message chain
+    if (makeLatestChildMessage) {
+      const currentMessageChain = buildLatestMessageChain(
+        frozenCompleteMessageMap
+      );
+      const latestMessage = currentMessageChain[currentMessageChain.length - 1];
+      if (latestMessage) {
+        newCompleteMessageMap.get(
+          latestMessage.messageId
+        )!.latestChildMessageId = messages[0].messageId;
+      }
+    }
+
+    const newCompleteMessageDetail = {
+      sessionId: chatSessionId || currentSessionId(),
+      messageMap: newCompleteMessageMap,
+    };
+
+    updateCompleteMessageDetail(
+      chatSessionId || currentSessionId(),
+      newCompleteMessageMap
+    );
+    return newCompleteMessageDetail;
+  };
+
+  const messageHistory = buildLatestMessageChain(
+    currentMessageMap(completeMessageDetail)
+  );
+
+  const [submittedMessage, setSubmittedMessage] = useState("");
+
+  const [chatState, setChatState] = useState<Map<number | null, ChatState>>(
+    new Map([[chatSessionIdRef.current, "input"]])
+  );
+
+  const [scrollHeight, setScrollHeight] = useState<Map<number | null, number>>(
+    new Map([[chatSessionIdRef.current, 0]])
+  );
+  const currentScrollHeight = () => {
+    return scrollHeight.get(currentSessionId());
+  };
+
+  const retrieveCurrentScrollHeight = (): number | null => {
+    return scrollHeight.get(currentSessionId()) || null;
+  };
+
+  const [regenerationState, setRegenerationState] = useState<
+    Map<number | null, RegenerationState | null>
+  >(new Map([[null, null]]));
+
+  const [abortControllers, setAbortControllers] = useState<
+    Map<number | null, AbortController>
+  >(new Map());
+
+  // Updates "null" session values to new session id for
+  // regeneration, chat, and abort controller state, messagehistory
+  const updateStatesWithNewSessionId = (newSessionId: number) => {
+    const updateState = (
+      setState: Dispatch<SetStateAction<Map<number | null, any>>>,
+      defaultValue?: any
+    ) => {
+      setState((prevState) => {
+        const newState = new Map(prevState);
+        const existingState = newState.get(null);
+        if (existingState !== undefined) {
+          newState.set(newSessionId, existingState);
+          newState.delete(null);
+        } else if (defaultValue !== undefined) {
+          newState.set(newSessionId, defaultValue);
+        }
+        return newState;
+      });
+    };
+
+    updateState(setRegenerationState);
+    updateState(setChatState);
+    updateState(setAbortControllers);
+
+    // Update completeMessageDetail
+    setCompleteMessageDetail((prevState) => {
+      const newState = new Map(prevState);
+      const existingMessages = newState.get(null);
+      if (existingMessages) {
+        newState.set(newSessionId, existingMessages);
+        newState.delete(null);
+      }
+      return newState;
+    });
+
+    // Update chatSessionIdRef
+    chatSessionIdRef.current = newSessionId;
+  };
+
+  const updateChatState = (newState: ChatState, sessionId?: number | null) => {
+    setChatState((prevState) => {
+      const newChatState = new Map(prevState);
+      newChatState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
+      return newChatState;
+    });
+  };
+
+  const currentChatState = (): ChatState => {
+    return chatState.get(currentSessionId()) || "input";
+  };
+
+  const currentChatAnswering = () => {
+    return (
+      currentChatState() == "toolBuilding" ||
+      currentChatState() == "streaming" ||
+      currentChatState() == "loading"
+    );
+  };
+
+  const updateRegenerationState = (
+    newState: RegenerationState | null,
+    sessionId?: number | null
+  ) => {
+    setRegenerationState((prevState) => {
+      const newRegenerationState = new Map(prevState);
+      newRegenerationState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
+      return newRegenerationState;
+    });
+  };
+
+  const resetRegenerationState = (sessionId?: number | null) => {
+    updateRegenerationState(null, sessionId);
+  };
+
+  const currentRegenerationState = (): RegenerationState | null => {
+    return regenerationState.get(currentSessionId()) || null;
+  };
+  const [canContinue, setCanContinue] = useState<Map<number | null, boolean>>(
+    new Map([[null, false]])
+  );
+
+  const updateCanContinue = (newState: boolean, sessionId?: number | null) => {
+    setCanContinue((prevState) => {
+      const newCanContinueState = new Map(prevState);
+      newCanContinueState.set(
+        sessionId !== undefined ? sessionId : currentSessionId(),
+        newState
+      );
+      return newCanContinueState;
+    });
+  };
+
+  const currentCanContinue = (): boolean => {
+    return canContinue.get(currentSessionId()) || false;
+  };
+
+  const currentSessionChatState = currentChatState();
+  const currentSessionRegenerationState = currentRegenerationState();
 
   // uploaded files
-  const [currentMessageFileIds, setCurrentMessageFileIds] = useState<string[]>(
-    []
-  );
+  const [currentMessageFiles, setCurrentMessageFiles] = useState<
+    FileDescriptor[]
+  >([]);
 
   // for document display
   // NOTE: -1 is a special designation that means the latest AI message
@@ -251,31 +670,18 @@ export function ChatPage({
       )
     : { aiMessage: null };
 
-  const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
-    existingChatSessionPersonaId !== undefined
-      ? availablePersonas.find(
-          (persona) => persona.id === existingChatSessionPersonaId
-        )
-      : defaultSelectedPersonaId !== undefined
-        ? availablePersonas.find(
-            (persona) => persona.id === defaultSelectedPersonaId
-          )
-        : undefined
-  );
-  const livePersona = selectedPersona || availablePersonas[0];
-
   const [chatSessionSharedStatus, setChatSessionSharedStatus] =
     useState<ChatSessionSharedStatus>(ChatSessionSharedStatus.Private);
 
   useEffect(() => {
-    if (messageHistory.length === 0 && chatSessionId === null) {
-      setSelectedPersona(
-        availablePersonas.find(
-          (persona) => persona.id === defaultSelectedPersonaId
+    if (messageHistory.length === 0 && chatSessionIdRef.current === null) {
+      setSelectedAssistant(
+        filteredAssistants.find(
+          (persona) => persona.id === defaultSelectedAssistantId
         )
       );
     }
-  }, [defaultSelectedPersonaId]);
+  }, [defaultSelectedAssistantId]);
 
   const [
     selectedDocuments,
@@ -286,11 +692,12 @@ export function ChatPage({
   // just choose a conservative default, this will be updated in the
   // background on initial load / on persona change
   const [maxTokens, setMaxTokens] = useState<number>(4096);
+
   // fetch # of allowed document tokens for the selected Persona
   useEffect(() => {
     async function fetchMaxTokens() {
       const response = await fetch(
-        `/api/chat/max-selected-document-tokens?persona_id=${livePersona.id}`
+        `/api/chat/max-selected-document-tokens?persona_id=${liveAssistant.id}`
       );
       if (response.ok) {
         const maxTokens = (await response.json()).max_tokens as number;
@@ -299,58 +706,109 @@ export function ChatPage({
     }
 
     fetchMaxTokens();
-  }, [livePersona]);
+  }, [liveAssistant]);
 
   const filterManager = useFilters();
   const [finalAvailableSources, finalAvailableDocumentSets] =
     computeAvailableFilters({
-      selectedPersona,
+      selectedPersona: selectedAssistant,
       availableSources,
       availableDocumentSets,
     });
 
-  // state for cancelling streaming
-  const [isCancelled, setIsCancelled] = useState(false);
-  const isCancelledRef = useRef(isCancelled);
-  useEffect(() => {
-    isCancelledRef.current = isCancelled;
-  }, [isCancelled]);
-
   const [currentFeedback, setCurrentFeedback] = useState<
     [FeedbackType, number] | null
   >(null);
+
   const [sharingModalVisible, setSharingModalVisible] =
     useState<boolean>(false);
 
-  // auto scroll as message comes out
-  const scrollableDivRef = useRef<HTMLDivElement>(null);
-  const endDivRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (isStreaming || !message) {
-      handleAutoScroll(endDivRef, scrollableDivRef);
-    }
-  });
+  const [aboveHorizon, setAboveHorizon] = useState(false);
 
-  // scroll to bottom initially
-  const [hasPerformedInitialScroll, setHasPerformedInitialScroll] =
-    useState(false);
-  useEffect(() => {
-    endDivRef.current?.scrollIntoView();
-    setHasPerformedInitialScroll(true);
-  }, [isFetchingChatMessages]);
+  const scrollableDivRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLDivElement>(null);
+  const endDivRef = useRef<HTMLDivElement>(null);
+  const endPaddingRef = useRef<HTMLDivElement>(null);
+
+  const previousHeight = useRef<number>(
+    inputRef.current?.getBoundingClientRect().height!
+  );
+  const scrollDist = useRef<number>(0);
+
+  const updateScrollTracking = () => {
+    const scrollDistance =
+      endDivRef?.current?.getBoundingClientRect()?.top! -
+      inputRef?.current?.getBoundingClientRect()?.top!;
+    scrollDist.current = scrollDistance;
+    setAboveHorizon(scrollDist.current > 500);
+  };
+
+  scrollableDivRef?.current?.addEventListener("scroll", updateScrollTracking);
+
+  const handleInputResize = () => {
+    setTimeout(() => {
+      if (inputRef.current && lastMessageRef.current) {
+        let newHeight: number =
+          inputRef.current?.getBoundingClientRect().height!;
+        const heightDifference = newHeight - previousHeight.current;
+        if (
+          previousHeight.current &&
+          heightDifference != 0 &&
+          endPaddingRef.current &&
+          scrollableDivRef &&
+          scrollableDivRef.current
+        ) {
+          endPaddingRef.current.style.transition = "height 0.3s ease-out";
+          endPaddingRef.current.style.height = `${Math.max(
+            newHeight - 50,
+            0
+          )}px`;
+
+          scrollableDivRef?.current.scrollBy({
+            left: 0,
+            top: Math.max(heightDifference, 0),
+            behavior: "smooth",
+          });
+        }
+        previousHeight.current = newHeight;
+      }
+    }, 100);
+  };
+
+  const clientScrollToBottom = (fast?: boolean) => {
+    setTimeout(() => {
+      if (!endDivRef.current) {
+        return;
+      }
+
+      const rect = endDivRef.current.getBoundingClientRect();
+      const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+
+      if (isVisible) return;
+
+      endDivRef.current.scrollIntoView({ behavior: fast ? "auto" : "smooth" });
+      setHasPerformedInitialScroll(true);
+    }, 50);
+  };
+
+  const distance = 500; // distance that should "engage" the scroll
+  const debounce = 100; // time for debouncing
+
+  const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
+    existingChatSessionId === null
+  );
 
   // handle re-sizing of the text area
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "0px";
-      textarea.style.height = `${Math.min(
-        textarea.scrollHeight,
-        MAX_INPUT_HEIGHT
-      )}px`;
-    }
+    handleInputResize();
   }, [message]);
+
+  // tracks scrolling
+  useEffect(() => {
+    updateScrollTracking();
+  }, [messageHistory]);
 
   // used for resizing of the document sidebar
   const masterFlexboxRef = useRef<HTMLDivElement>(null);
@@ -371,6 +829,7 @@ export function ChatPage({
       }
     }
   };
+
   useEffect(() => {
     adjustDocumentSidebarWidth(); // Adjust the width on initial render
     window.addEventListener("resize", adjustDocumentSidebarWidth); // Add resize event listener
@@ -384,75 +843,184 @@ export function ChatPage({
     documentSidebarInitialWidth = Math.min(700, maxDocumentSidebarWidth);
   }
 
+  class CurrentMessageFIFO {
+    private stack: PacketType[] = [];
+    isComplete: boolean = false;
+    error: string | null = null;
+
+    push(packetBunch: PacketType) {
+      this.stack.push(packetBunch);
+    }
+
+    nextPacket(): PacketType | undefined {
+      return this.stack.shift();
+    }
+
+    isEmpty(): boolean {
+      return this.stack.length === 0;
+    }
+  }
+
+  async function updateCurrentMessageFIFO(
+    stack: CurrentMessageFIFO,
+    params: any
+  ) {
+    try {
+      for await (const packet of sendMessage(params)) {
+        if (params.signal?.aborted) {
+          throw new Error("AbortError");
+        }
+        stack.push(packet);
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          console.debug("Stream aborted");
+        } else {
+          stack.error = error.message;
+        }
+      } else {
+        stack.error = String(error);
+      }
+    } finally {
+      stack.isComplete = true;
+    }
+  }
+
+  const resetInputBar = () => {
+    setMessage("");
+    setCurrentMessageFiles([]);
+    if (endPaddingRef.current) {
+      endPaddingRef.current.style.height = `95px`;
+    }
+  };
+
+  const continueGenerating = () => {
+    onSubmit({
+      messageOverride:
+        "Continue Generating (pick up exactly where you left off)",
+    });
+  };
+
   const onSubmit = async ({
     messageIdToResend,
     messageOverride,
     queryOverride,
     forceSearch,
     isSeededChat,
+    alternativeAssistantOverride = null,
+    modelOverRide,
+    regenerationRequest,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
     queryOverride?: string;
     forceSearch?: boolean;
     isSeededChat?: boolean;
+    alternativeAssistantOverride?: Persona | null;
+    modelOverRide?: LlmOverride;
+    regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
+    let frozenSessionId = currentSessionId();
+    updateCanContinue(false, frozenSessionId);
+
+    if (currentChatState() != "input") {
+      setPopup({
+        message: "Please wait for the response to complete",
+        type: "error",
+      });
+
+      return;
+    }
+
+    setAlternativeGeneratingAssistant(alternativeAssistantOverride);
+    clientScrollToBottom();
     let currChatSessionId: number;
-    let isNewSession = chatSessionId === null;
+    let isNewSession = chatSessionIdRef.current === null;
     const searchParamBasedChatSessionName =
       searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
 
     if (isNewSession) {
       currChatSessionId = await createChatSession(
-        livePersona?.id || 0,
+        liveAssistant?.id || 0,
         searchParamBasedChatSessionName
       );
     } else {
-      currChatSessionId = chatSessionId as number;
+      currChatSessionId = chatSessionIdRef.current as number;
     }
-    setChatSessionId(currChatSessionId);
+    frozenSessionId = currChatSessionId;
+
+    updateStatesWithNewSessionId(currChatSessionId);
+
+    const controller = new AbortController();
+
+    setAbortControllers((prev) =>
+      new Map(prev).set(currChatSessionId, controller)
+    );
 
     const messageToResend = messageHistory.find(
       (message) => message.messageId === messageIdToResend
     );
+
+    const messageMap = currentMessageMap(completeMessageDetail);
+    const messageToResendParent =
+      messageToResend?.parentMessageId !== null &&
+      messageToResend?.parentMessageId !== undefined
+        ? messageMap.get(messageToResend.parentMessageId)
+        : null;
     const messageToResendIndex = messageToResend
       ? messageHistory.indexOf(messageToResend)
       : null;
+
     if (!messageToResend && messageIdToResend !== undefined) {
       setPopup({
         message:
           "Failed to re-send message - please refresh the page and try again.",
         type: "error",
       });
+      resetRegenerationState(currentSessionId());
+      updateChatState("input", frozenSessionId);
       return;
     }
-
     let currMessage = messageToResend ? messageToResend.message : message;
     if (messageOverride) {
       currMessage = messageOverride;
     }
+
+    setSubmittedMessage(currMessage);
+
+    updateRegenerationState(
+      regenerationRequest
+        ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
+        : null
+    );
+
+    updateChatState("loading");
+
     const currMessageHistory =
       messageToResendIndex !== null
         ? messageHistory.slice(0, messageToResendIndex)
         : messageHistory;
-    const currFiles = currentMessageFileIds.map((id) => ({
-      id,
-      type: "image",
-    })) as FileDescriptor[];
-    setMessageHistory([
-      ...currMessageHistory,
-      {
-        messageId: 0,
-        message: currMessage,
-        type: "user",
-        files: currFiles,
-      },
-    ]);
-    setMessage("");
-    setCurrentMessageFileIds([]);
 
-    setIsStreaming(true);
+    let parentMessage =
+      messageToResendParent ||
+      (currMessageHistory.length > 0
+        ? currMessageHistory[currMessageHistory.length - 1]
+        : null) ||
+      (messageMap.size === 1 ? Array.from(messageMap.values())[0] : null);
+
+    const currentAssistantId = alternativeAssistantOverride
+      ? alternativeAssistantOverride.id
+      : alternativeAssistant
+        ? alternativeAssistant.id
+        : liveAssistant.id;
+
+    resetInputBar();
+    let messageUpdates: Message[] | null = null;
+
     let answer = "";
+
+    let stopReason: StreamStopReason | null = null;
     let query: string | null = null;
     let retrievalType: RetrievalType =
       selectedDocuments.length > 0
@@ -461,16 +1029,37 @@ export function ChatPage({
     let documents: DanswerDocument[] = selectedDocuments;
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
+    let stackTrace: string | null = null;
+
     let finalMessage: BackendMessage | null = null;
+    let toolCalls: ToolCallMetadata[] = [];
+
+    let initialFetchDetails: null | {
+      user_message_id: number;
+      assistant_message_id: number;
+      frozenMessageMap: Map<number, Message>;
+    } = null;
+
     try {
+      const mapKeys = Array.from(
+        currentMessageMap(completeMessageDetail).keys()
+      );
+      const systemMessage = Math.min(...mapKeys);
+
       const lastSuccessfulMessageId =
-        getLastSuccessfulMessageId(currMessageHistory);
-      for await (const packetBunch of sendMessage({
+        getLastSuccessfulMessageId(currMessageHistory) || systemMessage;
+
+      const stack = new CurrentMessageFIFO();
+      updateCurrentMessageFIFO(stack, {
+        signal: controller.signal, // Add this line
         message: currMessage,
-        fileIds: currentMessageFileIds,
-        parentMessageId: lastSuccessfulMessageId,
+        alternateAssistantId: currentAssistantId,
+        fileDescriptors: currentMessageFiles,
+        parentMessageId:
+          regenerationRequest?.parentMessage.messageId ||
+          lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
-        promptId: livePersona?.prompts[0]?.id || 0,
+        promptId: liveAssistant?.prompts[0]?.id || 0,
         filters: buildFilters(
           filterManager.selectedSources,
           filterManager.selectedDocumentSets,
@@ -485,103 +1074,273 @@ export function ChatPage({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
-        modelVersion:
-          searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) || undefined,
-        temperature:
-          parseFloat(searchParams.get(SEARCH_PARAM_NAMES.TEMPERATURE) || "") ||
+        regenerate: regenerationRequest !== undefined,
+        modelProvider:
+          modelOverRide?.name ||
+          llmOverrideManager.llmOverride.name ||
+          llmOverrideManager.globalDefault.name ||
           undefined,
+        modelVersion:
+          modelOverRide?.modelName ||
+          llmOverrideManager.llmOverride.modelName ||
+          searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+          llmOverrideManager.globalDefault.modelName ||
+          undefined,
+        temperature: llmOverrideManager.temperature || undefined,
         systemPromptOverride:
           searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
         useExistingUserMessage: isSeededChat,
-      })) {
-        for (const packet of packetBunch) {
-          if (Object.hasOwn(packet, "answer_piece")) {
-            answer += (packet as AnswerPiecePacket).answer_piece;
-          } else if (Object.hasOwn(packet, "top_documents")) {
-            documents = (packet as DocumentsResponse).top_documents;
-            query = (packet as DocumentsResponse).rephrased_query;
-            retrievalType = RetrievalType.Search;
-            if (documents && documents.length > 0) {
-              // point to the latest message (we don't know the messageId yet, which is why
-              // we have to use -1)
-              setSelectedMessageForDocDisplay(-1);
-            }
-          } else if (Object.hasOwn(packet, "file_ids")) {
-            aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
-              (fileId) => {
-                return {
-                  id: fileId,
-                  type: "image",
-                };
-              }
-            );
-          } else if (Object.hasOwn(packet, "tool_name")) {
-            setCurrentTool((packet as ToolRunKickoff).tool_name);
-          } else if (Object.hasOwn(packet, "error")) {
-            error = (packet as StreamingError).error;
-          } else if (Object.hasOwn(packet, "message_id")) {
-            finalMessage = packet as BackendMessage;
+      });
+
+      const delay = (ms: number) => {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      };
+
+      await delay(50);
+      while (!stack.isComplete || !stack.isEmpty()) {
+        await delay(2);
+
+        if (!stack.isEmpty()) {
+          const packet = stack.nextPacket();
+          if (!packet) {
+            continue;
           }
-        }
-        setMessageHistory([
-          ...currMessageHistory,
-          {
-            messageId: finalMessage?.parent_message || null,
-            message: currMessage,
-            type: "user",
-            files: currFiles,
-          },
-          {
-            messageId: finalMessage?.message_id || null,
-            message: error || answer,
-            type: error ? "error" : "assistant",
-            retrievalType,
-            query: finalMessage?.rephrased_query || query,
-            documents: finalMessage?.context_docs?.top_documents || documents,
-            citations: finalMessage?.citations || {},
-            files: finalMessage?.files || aiMessageImages || [],
-          },
-        ]);
-        if (isCancelledRef.current) {
-          setIsCancelled(false);
-          break;
+
+          if (!initialFetchDetails) {
+            if (!Object.hasOwn(packet, "user_message_id")) {
+              console.error(
+                "First packet should contain message response info "
+              );
+              continue;
+            }
+
+            const messageResponseIDInfo = packet as MessageResponseIDInfo;
+
+            const user_message_id = messageResponseIDInfo.user_message_id!;
+            const assistant_message_id =
+              messageResponseIDInfo.reserved_assistant_message_id;
+
+            // we will use tempMessages until the regenerated message is complete
+            messageUpdates = [
+              {
+                messageId: regenerationRequest
+                  ? regenerationRequest?.parentMessage?.messageId!
+                  : user_message_id,
+                message: currMessage,
+                type: "user",
+                files: currentMessageFiles,
+                toolCalls: [],
+                parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
+              },
+            ];
+
+            if (parentMessage && !regenerationRequest) {
+              messageUpdates.push({
+                ...parentMessage,
+                childrenMessageIds: (
+                  parentMessage.childrenMessageIds || []
+                ).concat([user_message_id]),
+                latestChildMessageId: user_message_id,
+              });
+            }
+
+            const { messageMap: currentFrozenMessageMap } =
+              upsertToCompleteMessageMap({
+                messages: messageUpdates,
+                chatSessionId: currChatSessionId,
+              });
+
+            const frozenMessageMap = currentFrozenMessageMap;
+            initialFetchDetails = {
+              frozenMessageMap,
+              assistant_message_id,
+              user_message_id,
+            };
+
+            resetRegenerationState();
+          } else {
+            const { user_message_id, frozenMessageMap } = initialFetchDetails;
+
+            setChatState((prevState) => {
+              if (prevState.get(chatSessionIdRef.current!) === "loading") {
+                return new Map(prevState).set(
+                  chatSessionIdRef.current!,
+                  "streaming"
+                );
+              }
+              return prevState;
+            });
+
+            if (Object.hasOwn(packet, "answer_piece")) {
+              answer += (packet as AnswerPiecePacket).answer_piece;
+            } else if (Object.hasOwn(packet, "top_documents")) {
+              documents = (packet as DocumentsResponse).top_documents;
+              retrievalType = RetrievalType.Search;
+              if (documents && documents.length > 0) {
+                // point to the latest message (we don't know the messageId yet, which is why
+                // we have to use -1)
+                setSelectedMessageForDocDisplay(user_message_id);
+              }
+            } else if (Object.hasOwn(packet, "tool_name")) {
+              toolCalls = [
+                {
+                  tool_name: (packet as ToolCallMetadata).tool_name,
+                  tool_args: (packet as ToolCallMetadata).tool_args,
+                  tool_result: (packet as ToolCallMetadata).tool_result,
+                },
+              ];
+              if (
+                !toolCalls[0].tool_result ||
+                toolCalls[0].tool_result == undefined
+              ) {
+                updateChatState("toolBuilding", frozenSessionId);
+              } else {
+                updateChatState("streaming", frozenSessionId);
+              }
+
+              // This will be consolidated in upcoming tool calls udpate,
+              // but for now, we need to set query as early as possible
+              if (toolCalls[0].tool_name == SEARCH_TOOL_NAME) {
+                query = toolCalls[0].tool_args["query"];
+              }
+            } else if (Object.hasOwn(packet, "file_ids")) {
+              aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
+                (fileId) => {
+                  return {
+                    id: fileId,
+                    type: ChatFileType.IMAGE,
+                  };
+                }
+              );
+            } else if (Object.hasOwn(packet, "error")) {
+              error = (packet as StreamingError).error;
+              stackTrace = (packet as StreamingError).stack_trace;
+            } else if (Object.hasOwn(packet, "message_id")) {
+              finalMessage = packet as BackendMessage;
+            } else if (Object.hasOwn(packet, "stop_reason")) {
+              const stop_reason = (packet as StreamStopInfo).stop_reason;
+              if (stop_reason === StreamStopReason.CONTEXT_LENGTH) {
+                updateCanContinue(true, frozenSessionId);
+              }
+            }
+
+            // on initial message send, we insert a dummy system message
+            // set this as the parent here if no parent is set
+            parentMessage =
+              parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
+
+            const updateFn = (messages: Message[]) => {
+              const replacementsMap = regenerationRequest
+                ? new Map([
+                    [
+                      regenerationRequest?.parentMessage?.messageId,
+                      regenerationRequest?.parentMessage?.messageId,
+                    ],
+                    [
+                      regenerationRequest?.messageId,
+                      initialFetchDetails?.assistant_message_id,
+                    ],
+                  ] as [number, number][])
+                : null;
+
+              return upsertToCompleteMessageMap({
+                messages: messages,
+                replacementsMap: replacementsMap,
+                completeMessageMapOverride: frozenMessageMap,
+                chatSessionId: frozenSessionId!,
+              });
+            };
+
+            updateFn([
+              {
+                messageId: regenerationRequest
+                  ? regenerationRequest?.parentMessage?.messageId!
+                  : initialFetchDetails.user_message_id!,
+                message: currMessage,
+                type: "user",
+                files: currentMessageFiles,
+                toolCalls: [],
+                parentMessageId: error ? null : lastSuccessfulMessageId,
+                childrenMessageIds: [
+                  ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
+                    []),
+                  initialFetchDetails.assistant_message_id!,
+                ],
+                latestChildMessageId: initialFetchDetails.assistant_message_id,
+              },
+              {
+                messageId: initialFetchDetails.assistant_message_id!,
+                message: error || answer,
+                type: error ? "error" : "assistant",
+                retrievalType,
+                query: finalMessage?.rephrased_query || query,
+                documents:
+                  finalMessage?.context_docs?.top_documents || documents,
+                citations: finalMessage?.citations || {},
+                files: finalMessage?.files || aiMessageImages || [],
+                toolCalls: finalMessage?.tool_calls || toolCalls,
+                parentMessageId: regenerationRequest
+                  ? regenerationRequest?.parentMessage?.messageId!
+                  : initialFetchDetails.user_message_id,
+                alternateAssistantID: alternativeAssistant?.id,
+                stackTrace: stackTrace,
+                overridden_model: finalMessage?.overridden_model,
+                stopReason: stopReason,
+              },
+            ]);
+          }
         }
       }
     } catch (e: any) {
       const errorMsg = e.message;
-      setMessageHistory([
-        ...currMessageHistory,
-        {
-          messageId: null,
-          message: currMessage,
-          type: "user",
-          files: currFiles,
-        },
-        {
-          messageId: null,
-          message: errorMsg,
-          type: "error",
-          files: aiMessageImages || [],
-        },
-      ]);
+      upsertToCompleteMessageMap({
+        messages: [
+          {
+            messageId:
+              initialFetchDetails?.user_message_id || TEMP_USER_MESSAGE_ID,
+            message: currMessage,
+            type: "user",
+            files: currentMessageFiles,
+            toolCalls: [],
+            parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
+          },
+          {
+            messageId:
+              initialFetchDetails?.assistant_message_id ||
+              TEMP_ASSISTANT_MESSAGE_ID,
+            message: errorMsg,
+            type: "error",
+            files: aiMessageImages || [],
+            toolCalls: [],
+            parentMessageId:
+              initialFetchDetails?.user_message_id || TEMP_USER_MESSAGE_ID,
+          },
+        ],
+        completeMessageMapOverride: currentMessageMap(completeMessageDetail),
+      });
     }
-    setIsStreaming(false);
+    resetRegenerationState(currentSessionId());
+
+    updateChatState("input");
     if (isNewSession) {
       if (finalMessage) {
         setSelectedMessageForDocDisplay(finalMessage.message_id);
       }
+
       if (!searchParamBasedChatSessionName) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
         await nameChatSession(currChatSessionId, currMessage);
       }
 
       // NOTE: don't switch pages if the user has navigated away from the chat
       if (
-        currChatSessionId === urlChatSessionId.current ||
-        urlChatSessionId.current === null
+        currChatSessionId === chatSessionIdRef.current ||
+        chatSessionIdRef.current === null
       ) {
-        router.push(buildChatUrl(searchParams, currChatSessionId, null), {
-          scroll: false,
-        });
+        const newUrl = buildChatUrl(searchParams, currChatSessionId, null);
+        // newUrl is like /chat?chatId=10
+        // current page is like /chat
+        router.push(newUrl, { scroll: false });
       }
     }
     if (
@@ -591,6 +1350,7 @@ export function ChatPage({
     ) {
       setSelectedMessageForDocDisplay(finalMessage.message_id);
     }
+    setAlternativeGeneratingAssistant(null);
   };
 
   const onFeedback = async (
@@ -599,7 +1359,7 @@ export function ChatPage({
     feedbackDetails: string,
     predefinedFeedback: string | undefined
   ) => {
-    if (chatSessionId === null) {
+    if (chatSessionIdRef.current === null) {
       return;
     }
 
@@ -625,15 +1385,70 @@ export function ChatPage({
     }
   };
 
-  const onPersonaChange = (persona: Persona | null) => {
-    if (persona && persona.id !== livePersona.id) {
-      // remove uploaded files
-      setCurrentMessageFileIds([]);
+  const onAssistantChange = (assistant: Persona | null) => {
+    if (assistant && assistant.id !== liveAssistant.id) {
+      // Abort the ongoing stream if it exists
+      if (currentSessionChatState != "input") {
+        stopGenerating();
+        resetInputBar();
+      }
 
-      setSelectedPersona(persona);
-      textareaRef.current?.focus();
-      router.push(buildChatUrl(searchParams, null, persona.id));
+      textAreaRef.current?.focus();
+      router.push(buildChatUrl(searchParams, null, assistant.id));
     }
+  };
+
+  const handleImageUpload = (acceptedFiles: File[]) => {
+    const llmAcceptsImages = checkLLMSupportsImageInput(
+      ...getFinalLLM(
+        llmProviders,
+        liveAssistant,
+        llmOverrideManager.llmOverride
+      )
+    );
+    const imageFiles = acceptedFiles.filter((file) =>
+      file.type.startsWith("image/")
+    );
+    if (imageFiles.length > 0 && !llmAcceptsImages) {
+      setPopup({
+        type: "error",
+        message:
+          "The current Assistant does not support image input. Please select an assistant with Vision support.",
+      });
+      return;
+    }
+
+    const tempFileDescriptors = acceptedFiles.map((file) => ({
+      id: uuidv4(),
+      type: file.type.startsWith("image/")
+        ? ChatFileType.IMAGE
+        : ChatFileType.DOCUMENT,
+      isUploading: true,
+    }));
+
+    // only show loading spinner for reasonably large files
+    const totalSize = acceptedFiles.reduce((sum, file) => sum + file.size, 0);
+    if (totalSize > 50 * 1024) {
+      setCurrentMessageFiles((prev) => [...prev, ...tempFileDescriptors]);
+    }
+
+    const removeTempFiles = (prev: FileDescriptor[]) => {
+      return prev.filter(
+        (file) => !tempFileDescriptors.some((newFile) => newFile.id === file.id)
+      );
+    };
+
+    uploadFilesForChat(acceptedFiles).then(([files, error]) => {
+      if (error) {
+        setCurrentMessageFiles((prev) => removeTempFiles(prev));
+        setPopup({
+          type: "error",
+          message: error,
+        });
+      } else {
+        setCurrentMessageFiles((prev) => [...removeTempFiles(prev), ...files]);
+      }
+    });
   };
 
   // handle redirect if chat page is disabled
@@ -641,530 +1456,812 @@ export function ChatPage({
   // settings are passed in via Context and therefore aren't
   // available in server-side components
   const settings = useContext(SettingsContext);
+  const enterpriseSettings = settings?.enterpriseSettings;
   if (settings?.settings?.chat_page_enabled === false) {
     router.push("/search");
   }
 
-  const retrievalDisabled = !personaIncludesRetrieval(livePersona);
+  const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
+
+  // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
+  const [untoggled, setUntoggled] = useState(false);
+
+  const explicitlyUntoggle = () => {
+    setShowDocSidebar(false);
+
+    setUntoggled(true);
+    setTimeout(() => {
+      setUntoggled(false);
+    }, 200);
+  };
+  const toggleSidebar = () => {
+    Cookies.set(
+      SIDEBAR_TOGGLED_COOKIE_NAME,
+      String(!toggledSidebar).toLocaleLowerCase()
+    ),
+      {
+        path: "/",
+      };
+
+    toggle();
+  };
+  const removeToggle = () => {
+    setShowDocSidebar(false);
+    toggle(false);
+  };
+
+  const sidebarElementRef = useRef<HTMLDivElement>(null);
+
+  useSidebarVisibility({
+    toggledSidebar,
+    sidebarElementRef,
+    showDocSidebar,
+    setShowDocSidebar,
+    setToggled: removeToggle,
+    mobile: settings?.isMobile,
+  });
+
+  useScrollonStream({
+    chatState: currentSessionChatState,
+    scrollableDivRef,
+    scrollDist,
+    endDivRef,
+    distance,
+    debounce,
+  });
+
+  useEffect(() => {
+    const includes = checkAnyAssistantHasSearch(
+      messageHistory,
+      availableAssistants,
+      liveAssistant
+    );
+    setRetrievalEnabled(includes);
+  }, [messageHistory, availableAssistants, liveAssistant]);
+
+  const [retrievalEnabled, setRetrievalEnabled] = useState(() => {
+    return checkAnyAssistantHasSearch(
+      messageHistory,
+      availableAssistants,
+      liveAssistant
+    );
+  });
+  const [stackTraceModalContent, setStackTraceModalContent] = useState<
+    string | null
+  >(null);
+
+  const innerSidebarElementRef = useRef<HTMLDivElement>(null);
+  const [settingsToggled, setSettingsToggled] = useState(false);
+
+  const currentPersona = alternativeAssistant || liveAssistant;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+          case "e":
+            event.preventDefault();
+            toggleSidebar();
+            break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [router]);
+  const [sharedChatSession, setSharedChatSession] =
+    useState<ChatSession | null>();
+  const [deletingChatSession, setDeletingChatSession] =
+    useState<ChatSession | null>();
+
+  const showDeleteModal = (chatSession: ChatSession) => {
+    setDeletingChatSession(chatSession);
+  };
+  const showShareModal = (chatSession: ChatSession) => {
+    setSharedChatSession(chatSession);
+  };
+  const [documentSelection, setDocumentSelection] = useState(false);
+  const toggleDocumentSelectionAspects = () => {
+    setDocumentSelection((documentSelection) => !documentSelection);
+    setShowDocSidebar(false);
+  };
+
+  interface RegenerationRequest {
+    messageId: number;
+    parentMessage: Message;
+  }
+
+  function createRegenerator(regenerationRequest: RegenerationRequest) {
+    // Returns new function that only needs `modelOverRide` to be specified when called
+    return async function (modelOverRide: LlmOverride) {
+      return await onSubmit({
+        modelOverRide,
+        messageIdToResend: regenerationRequest.parentMessage.messageId,
+        regenerationRequest,
+      });
+    };
+  }
+
   return (
     <>
-      <div className="absolute top-0 z-40 w-full">
-        <Header user={user} />
-      </div>
       <HealthCheckBanner />
-      <InstantSSRAutoRefresh />
+      {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
+      Only used in the EE version of the app. */}
+      {popup}
 
-      <div className="flex relative bg-background text-default overflow-x-hidden">
-        <ChatSidebar
-          existingChats={chatSessions}
-          currentChatSession={selectedChatSession}
-          personas={availablePersonas}
-          onPersonaChange={onPersonaChange}
-          user={user}
-          defaultTab={defaultSidebarTab}
-          folders={folders}
-          openedFolders={openedFolders}
+      <ChatPopup />
+      {currentFeedback && (
+        <FeedbackModal
+          feedbackType={currentFeedback[0]}
+          onClose={() => setCurrentFeedback(null)}
+          onSubmit={({ message, predefinedFeedback }) => {
+            onFeedback(
+              currentFeedback[1],
+              currentFeedback[0],
+              message,
+              predefinedFeedback
+            );
+            setCurrentFeedback(null);
+          }}
         />
+      )}
 
-        <div className="flex w-full overflow-x-hidden" ref={masterFlexboxRef}>
-          {popup}
-          {currentFeedback && (
-            <FeedbackModal
-              feedbackType={currentFeedback[0]}
-              onClose={() => setCurrentFeedback(null)}
-              onSubmit={({ message, predefinedFeedback }) => {
-                onFeedback(
-                  currentFeedback[1],
-                  currentFeedback[0],
-                  message,
-                  predefinedFeedback
-                );
-                setCurrentFeedback(null);
-              }}
-            />
-          )}
+      {settingsToggled && (
+        <SetDefaultModelModal
+          setLlmOverride={llmOverrideManager.setGlobalDefault}
+          defaultModel={user?.preferences.default_model!}
+          refreshUser={refreshUser}
+          llmProviders={llmProviders}
+          onClose={() => setSettingsToggled(false)}
+        />
+      )}
 
-          {sharingModalVisible && chatSessionId !== null && (
-            <ShareChatSessionModal
-              chatSessionId={chatSessionId}
-              existingSharedStatus={chatSessionSharedStatus}
-              onClose={() => setSharingModalVisible(false)}
-              onShare={(shared) =>
-                setChatSessionSharedStatus(
-                  shared
-                    ? ChatSessionSharedStatus.Public
-                    : ChatSessionSharedStatus.Private
-                )
+      {deletingChatSession && (
+        <DeleteEntityModal
+          entityType="chat"
+          entityName={deletingChatSession.name.slice(0, 30)}
+          onClose={() => setDeletingChatSession(null)}
+          onSubmit={async () => {
+            const response = await deleteChatSession(deletingChatSession.id);
+            if (response.ok) {
+              setDeletingChatSession(null);
+              // go back to the main page
+              if (deletingChatSession.id === chatSessionIdRef.current) {
+                router.push("/chat");
               }
-            />
-          )}
+            } else {
+              const responseJson = await response.json();
+              setPopup({ message: responseJson.detail, type: "error" });
+            }
+            router.refresh();
+          }}
+        />
+      )}
 
-          {documentSidebarInitialWidth !== undefined ? (
-            <Dropzone
-              onDrop={(acceptedFiles) => {
-                const llmAcceptsImages = checkLLMSupportsImageInput(
-                  ...getFinalLLM(llmProviders, livePersona)
-                );
-                if (!llmAcceptsImages) {
-                  setPopup({
-                    type: "error",
-                    message:
-                      "The current Assistant does not support image input. Please select an assistant with Vision support.",
-                  });
-                  return;
-                }
+      {stackTraceModalContent && (
+        <ExceptionTraceModal
+          onOutsideClick={() => setStackTraceModalContent(null)}
+          exceptionTrace={stackTraceModalContent}
+        />
+      )}
 
-                uploadFilesForChat(acceptedFiles).then(([fileIds, error]) => {
-                  if (error) {
-                    setPopup({
-                      type: "error",
-                      message: error,
-                    });
-                  } else {
-                    const newFileIds = [...currentMessageFileIds, ...fileIds];
-                    setCurrentMessageFileIds(newFileIds);
-                  }
-                });
-              }}
-              noClick
+      {sharedChatSession && (
+        <ShareChatSessionModal
+          chatSessionId={sharedChatSession.id}
+          existingSharedStatus={sharedChatSession.shared_status}
+          onClose={() => setSharedChatSession(null)}
+          onShare={(shared) =>
+            setChatSessionSharedStatus(
+              shared
+                ? ChatSessionSharedStatus.Public
+                : ChatSessionSharedStatus.Private
+            )
+          }
+        />
+      )}
+      {sharingModalVisible && chatSessionIdRef.current !== null && (
+        <ShareChatSessionModal
+          chatSessionId={chatSessionIdRef.current}
+          existingSharedStatus={chatSessionSharedStatus}
+          onClose={() => setSharingModalVisible(false)}
+        />
+      )}
+      <div className="fixed inset-0 flex flex-col text-default">
+        <div className="h-[100dvh] overflow-y-hidden">
+          <div className="w-full">
+            <div
+              ref={sidebarElementRef}
+              className={`
+                flex-none
+                fixed
+                left-0
+                z-30
+                bg-background-100
+                h-screen
+                transition-all
+                bg-opacity-80
+                duration-300
+                ease-in-out
+                ${
+                  !untoggled && (showDocSidebar || toggledSidebar)
+                    ? "opacity-100 w-[250px] translate-x-0"
+                    : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
+                }`}
             >
-              {({ getRootProps }) => (
-                <>
-                  <div
-                    className={`w-full sm:relative h-screen ${
-                      retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
-                    }`}
-                    {...getRootProps()}
-                  >
-                    {/* <input {...getInputProps()} /> */}
-                    <div
-                      className={`w-full h-full ${HEADER_PADDING} flex flex-col overflow-y-auto overflow-x-hidden relative`}
-                      ref={scrollableDivRef}
-                    >
-                      {livePersona && (
-                        <div className="sticky top-0 left-80 z-10 w-full bg-background/90 flex">
-                          <div className="ml-2 p-1 rounded mt-2 w-fit">
-                            <ChatPersonaSelector
-                              personas={availablePersonas}
-                              selectedPersonaId={livePersona.id}
-                              onPersonaChange={onPersonaChange}
-                            />
-                          </div>
+              <div className="w-full relative">
+                <HistorySidebar
+                  explicitlyUntoggle={explicitlyUntoggle}
+                  stopGenerating={stopGenerating}
+                  reset={() => setMessage("")}
+                  page="chat"
+                  ref={innerSidebarElementRef}
+                  toggleSidebar={toggleSidebar}
+                  toggled={toggledSidebar && !settings?.isMobile}
+                  existingChats={chatSessions}
+                  currentChatSession={selectedChatSession}
+                  folders={folders}
+                  openedFolders={openedFolders}
+                  removeToggle={removeToggle}
+                  showShareModal={showShareModal}
+                  showDeleteModal={showDeleteModal}
+                />
+              </div>
+            </div>
+          </div>
 
-                          {chatSessionId !== null && (
-                            <div
-                              onClick={() => setSharingModalVisible(true)}
-                              className="ml-auto mr-6 my-auto border-border border p-2 rounded cursor-pointer hover:bg-hover-light"
-                            >
-                              <FiShare2 />
-                            </div>
-                          )}
-                        </div>
+          <div
+            ref={masterFlexboxRef}
+            className="flex h-full w-full overflow-x-hidden"
+          >
+            <div className="flex h-full flex-col w-full">
+              {liveAssistant && (
+                <FunctionalHeader
+                  sidebarToggled={toggledSidebar}
+                  reset={() => setMessage("")}
+                  page="chat"
+                  setSharingModalVisible={
+                    chatSessionIdRef.current !== null
+                      ? setSharingModalVisible
+                      : undefined
+                  }
+                  toggleSidebar={toggleSidebar}
+                  user={user}
+                  currentChatSession={selectedChatSession}
+                />
+              )}
+
+              {documentSidebarInitialWidth !== undefined &&
+              isReady &&
+              !isLoadingUser ? (
+                <Dropzone onDrop={handleImageUpload} noClick>
+                  {({ getRootProps }) => (
+                    <div className="flex h-full w-full">
+                      {!settings?.isMobile && (
+                        <div
+                          style={{ transition: "width 0.30s ease-out" }}
+                          className={`
+                          flex-none 
+                          overflow-y-hidden 
+                          bg-background-100 
+                          transition-all 
+                          bg-opacity-80
+                          duration-300 
+                          ease-in-out
+                          h-full
+                          ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
+                      `}
+                        ></div>
                       )}
 
-                      {messageHistory.length === 0 &&
-                        !isFetchingChatMessages &&
-                        !isStreaming && (
-                          <ChatIntro
-                            availableSources={finalAvailableSources}
-                            availablePersonas={availablePersonas}
-                            selectedPersona={selectedPersona}
-                            handlePersonaSelect={(persona) => {
-                              setSelectedPersona(persona);
-                              textareaRef.current?.focus();
-                              router.push(
-                                buildChatUrl(searchParams, null, persona.id)
-                              );
-                            }}
-                          />
-                        )}
-
                       <div
-                        className={
-                          "mt-4 pt-12 sm:pt-0 mx-8" +
-                          (hasPerformedInitialScroll ? "" : " invisible")
-                        }
+                        className={`h-full w-full relative flex-auto transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[100px]`}
+                        {...getRootProps()}
                       >
-                        {messageHistory.map((message, i) => {
-                          if (message.type === "user") {
-                            return (
-                              <div key={i}>
-                                <HumanMessage
-                                  content={message.message}
-                                  files={message.files}
-                                />
-                              </div>
-                            );
-                          } else if (message.type === "assistant") {
-                            const isShowingRetrieved =
-                              (selectedMessageForDocDisplay !== null &&
-                                selectedMessageForDocDisplay ===
-                                  message.messageId) ||
-                              (selectedMessageForDocDisplay === -1 &&
-                                i === messageHistory.length - 1);
-                            const previousMessage =
-                              i !== 0 ? messageHistory[i - 1] : null;
-                            return (
-                              <div key={i}>
-                                <AIMessage
-                                  messageId={message.messageId}
-                                  content={message.message}
-                                  files={message.files}
-                                  query={messageHistory[i]?.query || undefined}
-                                  personaName={livePersona.name}
-                                  citedDocuments={getCitedDocumentsFromMessage(
-                                    message
-                                  )}
-                                  currentTool={currentTool}
-                                  isComplete={
-                                    i !== messageHistory.length - 1 ||
-                                    !isStreaming
-                                  }
-                                  hasDocs={
-                                    (message.documents &&
-                                      message.documents.length > 0) === true
-                                  }
-                                  handleFeedback={
-                                    i === messageHistory.length - 1 &&
-                                    isStreaming
-                                      ? undefined
-                                      : (feedbackType) =>
-                                          setCurrentFeedback([
-                                            feedbackType,
-                                            message.messageId as number,
-                                          ])
-                                  }
-                                  handleSearchQueryEdit={
-                                    i === messageHistory.length - 1 &&
-                                    !isStreaming
-                                      ? (newQuery) => {
-                                          if (!previousMessage) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
-                                                "Cannot edit query of first message - please refresh the page and try again.",
-                                            });
-                                            return;
-                                          }
+                        {/* <input {...getInputProps()} /> */}
+                        <div
+                          className={`w-full h-full  flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
+                          ref={scrollableDivRef}
+                        >
+                          {/* ChatBanner is a custom banner that displays a admin-specified message at 
+                      the top of the chat page. Oly used in the EE version of the app. */}
 
-                                          if (
-                                            previousMessage.messageId === null
-                                          ) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
-                                                "Cannot edit query of a pending message - please wait a few seconds and try again.",
-                                            });
-                                            return;
+                          {messageHistory.length === 0 &&
+                            !isFetchingChatMessages &&
+                            currentSessionChatState == "input" && (
+                              <ChatIntro
+                                availableSources={finalAvailableSources}
+                                selectedPersona={liveAssistant}
+                              />
+                            )}
+                          <div
+                            className={
+                              "-ml-4 w-full mx-auto " +
+                              "absolute mobile:top-0 desktop:top-12 left-0 " +
+                              (settings?.enterpriseSettings
+                                ?.two_lines_for_chat_header
+                                ? "mt-20 "
+                                : "mt-8") +
+                              (hasPerformedInitialScroll ? "" : "invisible")
+                            }
+                          >
+                            {messageHistory.map((message, i) => {
+                              const messageMap = currentMessageMap(
+                                completeMessageDetail
+                              );
+                              const messageReactComponentKey = `${i}-${currentSessionId()}`;
+                              const parentMessage = message.parentMessageId
+                                ? messageMap.get(message.parentMessageId)
+                                : null;
+                              if (
+                                currentSessionRegenerationState?.regenerating &&
+                                message.messageId >
+                                  currentSessionRegenerationState?.finalMessageIndex!
+                              ) {
+                                return <></>;
+                              }
+
+                              if (message.type === "user") {
+                                return (
+                                  <div key={messageReactComponentKey}>
+                                    <HumanMessage
+                                      stopGenerating={stopGenerating}
+                                      content={message.message}
+                                      files={message.files}
+                                      messageId={message.messageId}
+                                      onEdit={(editedContent) => {
+                                        const parentMessageId =
+                                          message.parentMessageId!;
+                                        const parentMessage =
+                                          messageMap.get(parentMessageId)!;
+                                        upsertToCompleteMessageMap({
+                                          messages: [
+                                            {
+                                              ...parentMessage,
+                                              latestChildMessageId: null,
+                                            },
+                                          ],
+                                        });
+                                        onSubmit({
+                                          messageIdToResend:
+                                            message.messageId || undefined,
+                                          messageOverride: editedContent,
+                                        });
+                                      }}
+                                      otherMessagesCanSwitchTo={
+                                        parentMessage?.childrenMessageIds || []
+                                      }
+                                      onMessageSelection={(messageId) => {
+                                        const newCompleteMessageMap = new Map(
+                                          messageMap
+                                        );
+                                        newCompleteMessageMap.get(
+                                          message.parentMessageId!
+                                        )!.latestChildMessageId = messageId;
+                                        updateCompleteMessageDetail(
+                                          currentSessionId(),
+                                          newCompleteMessageMap
+                                        );
+                                        setSelectedMessageForDocDisplay(
+                                          messageId
+                                        );
+                                        // set message as latest so we can edit this message
+                                        // and so it sticks around on page reload
+                                        setMessageAsLatest(messageId);
+                                      }}
+                                    />
+                                  </div>
+                                );
+                              } else if (message.type === "assistant") {
+                                const isShowingRetrieved =
+                                  (selectedMessageForDocDisplay !== null &&
+                                    selectedMessageForDocDisplay ===
+                                      message.messageId) ||
+                                  i === messageHistory.length - 1;
+                                const previousMessage =
+                                  i !== 0 ? messageHistory[i - 1] : null;
+
+                                const currentAlternativeAssistant =
+                                  message.alternateAssistantID != null
+                                    ? availableAssistants.find(
+                                        (persona) =>
+                                          persona.id ==
+                                          message.alternateAssistantID
+                                      )
+                                    : null;
+
+                                if (
+                                  currentSessionRegenerationState?.regenerating &&
+                                  currentSessionChatState == "loading" &&
+                                  message.messageId == messageHistory.length - 1
+                                ) {
+                                  return <></>;
+                                }
+                                return (
+                                  <div
+                                    key={messageReactComponentKey}
+                                    ref={
+                                      i == messageHistory.length - 1
+                                        ? lastMessageRef
+                                        : null
+                                    }
+                                  >
+                                    <AIMessage
+                                      continueGenerating={
+                                        i == messageHistory.length - 1 &&
+                                        currentCanContinue()
+                                          ? continueGenerating
+                                          : undefined
+                                      }
+                                      overriddenModel={message.overridden_model}
+                                      regenerate={createRegenerator({
+                                        messageId: message.messageId,
+                                        parentMessage: parentMessage!,
+                                      })}
+                                      otherMessagesCanSwitchTo={
+                                        parentMessage?.childrenMessageIds || []
+                                      }
+                                      onMessageSelection={(messageId) => {
+                                        const newCompleteMessageMap = new Map(
+                                          messageMap
+                                        );
+                                        newCompleteMessageMap.get(
+                                          message.parentMessageId!
+                                        )!.latestChildMessageId = messageId;
+
+                                        updateCompleteMessageDetail(
+                                          currentSessionId(),
+                                          newCompleteMessageMap
+                                        );
+
+                                        setSelectedMessageForDocDisplay(
+                                          messageId
+                                        );
+                                        // set message as latest so we can edit this message
+                                        // and so it sticks around on page reload
+                                        setMessageAsLatest(messageId);
+                                      }}
+                                      isActive={messageHistory.length - 1 == i}
+                                      selectedDocuments={selectedDocuments}
+                                      toggleDocumentSelection={
+                                        toggleDocumentSelectionAspects
+                                      }
+                                      docs={message.documents}
+                                      currentPersona={liveAssistant}
+                                      alternativeAssistant={
+                                        currentAlternativeAssistant
+                                      }
+                                      messageId={message.messageId}
+                                      content={message.message}
+                                      // content={message.message}
+                                      files={message.files}
+                                      query={
+                                        messageHistory[i]?.query || undefined
+                                      }
+                                      personaName={liveAssistant.name}
+                                      citedDocuments={getCitedDocumentsFromMessage(
+                                        message
+                                      )}
+                                      toolCall={
+                                        message.toolCalls &&
+                                        message.toolCalls[0]
+                                      }
+                                      isComplete={
+                                        i !== messageHistory.length - 1 ||
+                                        (currentSessionChatState !=
+                                          "streaming" &&
+                                          currentSessionChatState !=
+                                            "toolBuilding")
+                                      }
+                                      hasDocs={
+                                        (message.documents &&
+                                          message.documents.length > 0) === true
+                                      }
+                                      handleFeedback={
+                                        i === messageHistory.length - 1 &&
+                                        currentSessionChatState != "input"
+                                          ? undefined
+                                          : (feedbackType) =>
+                                              setCurrentFeedback([
+                                                feedbackType,
+                                                message.messageId as number,
+                                              ])
+                                      }
+                                      handleSearchQueryEdit={
+                                        i === messageHistory.length - 1 &&
+                                        currentSessionChatState == "input"
+                                          ? (newQuery) => {
+                                              if (!previousMessage) {
+                                                setPopup({
+                                                  type: "error",
+                                                  message:
+                                                    "Cannot edit query of first message - please refresh the page and try again.",
+                                                });
+                                                return;
+                                              }
+                                              if (
+                                                previousMessage.messageId ===
+                                                null
+                                              ) {
+                                                setPopup({
+                                                  type: "error",
+                                                  message:
+                                                    "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                                });
+                                                return;
+                                              }
+                                              onSubmit({
+                                                messageIdToResend:
+                                                  previousMessage.messageId,
+                                                queryOverride: newQuery,
+                                                alternativeAssistantOverride:
+                                                  currentAlternativeAssistant,
+                                              });
+                                            }
+                                          : undefined
+                                      }
+                                      isCurrentlyShowingRetrieved={
+                                        isShowingRetrieved
+                                      }
+                                      handleShowRetrieved={(messageNumber) => {
+                                        if (isShowingRetrieved) {
+                                          setSelectedMessageForDocDisplay(null);
+                                        } else {
+                                          if (messageNumber !== null) {
+                                            setSelectedMessageForDocDisplay(
+                                              messageNumber
+                                            );
+                                          } else {
+                                            setSelectedMessageForDocDisplay(-1);
                                           }
+                                        }
+                                      }}
+                                      handleForceSearch={() => {
+                                        if (
+                                          previousMessage &&
+                                          previousMessage.messageId
+                                        ) {
                                           onSubmit({
                                             messageIdToResend:
                                               previousMessage.messageId,
-                                            queryOverride: newQuery,
+                                            forceSearch: true,
+                                            alternativeAssistantOverride:
+                                              currentAlternativeAssistant,
+                                          });
+                                        } else {
+                                          setPopup({
+                                            type: "error",
+                                            message:
+                                              "Failed to force search - please refresh the page and try again.",
                                           });
                                         }
-                                      : undefined
-                                  }
-                                  isCurrentlyShowingRetrieved={
-                                    isShowingRetrieved
-                                  }
-                                  handleShowRetrieved={(messageNumber) => {
-                                    if (isShowingRetrieved) {
-                                      setSelectedMessageForDocDisplay(null);
-                                    } else {
-                                      if (messageNumber !== null) {
-                                        setSelectedMessageForDocDisplay(
-                                          messageNumber
-                                        );
-                                      } else {
-                                        setSelectedMessageForDocDisplay(-1);
-                                      }
-                                    }
-                                  }}
-                                  handleForceSearch={() => {
-                                    if (
-                                      previousMessage &&
-                                      previousMessage.messageId
-                                    ) {
-                                      onSubmit({
-                                        messageIdToResend:
-                                          previousMessage.messageId,
-                                        forceSearch: true,
-                                      });
-                                    } else {
-                                      setPopup({
-                                        type: "error",
-                                        message:
-                                          "Failed to force search - please refresh the page and try again.",
-                                      });
-                                    }
-                                  }}
-                                  retrievalDisabled={retrievalDisabled}
-                                />
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <div key={i}>
-                                <AIMessage
-                                  messageId={message.messageId}
-                                  personaName={livePersona.name}
-                                  content={
-                                    <p className="text-red-700 text-sm my-auto">
-                                      {message.message}
-                                    </p>
-                                  }
-                                />
-                              </div>
-                            );
-                          }
-                        })}
-
-                        {isStreaming &&
-                          messageHistory.length &&
-                          messageHistory[messageHistory.length - 1].type ===
-                            "user" && (
-                            <div key={messageHistory.length}>
-                              <AIMessage
-                                messageId={null}
-                                personaName={livePersona.name}
-                                content={
-                                  <div className="text-sm my-auto">
-                                    <ThreeDots
-                                      height="30"
-                                      width="50"
-                                      color="#3b82f6"
-                                      ariaLabel="grid-loading"
-                                      radius="12.5"
-                                      wrapperStyle={{}}
-                                      wrapperClass=""
-                                      visible={true}
-                                    />
-                                  </div>
-                                }
-                              />
-                            </div>
-                          )}
-
-                        {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                        <div className={`min-h-[30px] w-full`}></div>
-
-                        {livePersona &&
-                          livePersona.starter_messages &&
-                          livePersona.starter_messages.length > 0 &&
-                          selectedPersona &&
-                          messageHistory.length === 0 &&
-                          !isFetchingChatMessages && (
-                            <div
-                              className={`
-                            mx-auto 
-                            px-4 
-                            w-searchbar-xs 
-                            2xl:w-searchbar-sm 
-                            3xl:w-searchbar 
-                            grid 
-                            gap-4 
-                            grid-cols-1 
-                            grid-rows-1 
-                            mt-4 
-                            md:grid-cols-2 
-                            mb-6`}
-                            >
-                              {livePersona.starter_messages.map(
-                                (starterMessage, i) => (
-                                  <div key={i} className="w-full">
-                                    <StarterMessage
-                                      starterMessage={starterMessage}
-                                      onClick={() =>
-                                        onSubmit({
-                                          messageOverride:
-                                            starterMessage.message,
-                                        })
-                                      }
-                                    />
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          )}
-
-                        <div ref={endDivRef} />
-                      </div>
-                    </div>
-
-                    <div className="absolute bottom-0 z-10 w-full bg-background border-t border-border">
-                      <div className="w-full pb-4 pt-2">
-                        {!retrievalDisabled && (
-                          <div className="flex">
-                            <div className="w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar mx-auto px-4 pt-1 flex">
-                              {selectedDocuments.length > 0 ? (
-                                <SelectedDocuments
-                                  selectedDocuments={selectedDocuments}
-                                />
-                              ) : (
-                                <ChatFilters
-                                  {...filterManager}
-                                  existingSources={finalAvailableSources}
-                                  availableDocumentSets={
-                                    finalAvailableDocumentSets
-                                  }
-                                  availableTags={availableTags}
-                                />
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="flex justify-center py-2 max-w-screen-lg mx-auto mb-2">
-                          <div className="w-full shrink relative px-4 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar mx-auto">
-                            <div
-                              className={`
-                              opacity-100
-                              w-full
-                              h-fit
-                              flex
-                              flex-col
-                              border 
-                              border-border 
-                              rounded-lg 
-                              [&:has(textarea:focus)]::ring-1
-                              [&:has(textarea:focus)]::ring-black
-                            `}
-                            >
-                              {currentMessageFileIds.length > 0 && (
-                                <div className="flex flex-wrap gap-y-2 px-1">
-                                  {currentMessageFileIds.map((fileId) => (
-                                    <div key={fileId} className="py-1">
-                                      <InputBarPreviewImage
-                                        fileId={fileId}
-                                        onDelete={() => {
-                                          setCurrentMessageFileIds(
-                                            currentMessageFileIds.filter(
-                                              (id) => id !== fileId
+                                      }}
+                                      retrievalDisabled={
+                                        currentAlternativeAssistant
+                                          ? !personaIncludesRetrieval(
+                                              currentAlternativeAssistant!
                                             )
-                                          );
-                                        }}
-                                      />
+                                          : !retrievalEnabled
+                                      }
+                                    />
+                                  </div>
+                                );
+                              } else {
+                                return (
+                                  <div key={messageReactComponentKey}>
+                                    <AIMessage
+                                      currentPersona={liveAssistant}
+                                      messageId={message.messageId}
+                                      personaName={liveAssistant.name}
+                                      content={
+                                        <p className="text-red-700 text-sm my-auto">
+                                          {message.message}
+                                          {message.stackTrace && (
+                                            <span
+                                              onClick={() =>
+                                                setStackTraceModalContent(
+                                                  message.stackTrace!
+                                                )
+                                              }
+                                              className="ml-2 cursor-pointer underline"
+                                            >
+                                              Show stack trace.
+                                            </span>
+                                          )}
+                                        </p>
+                                      }
+                                    />
+                                  </div>
+                                );
+                              }
+                            })}
+
+                            {currentSessionChatState == "loading" &&
+                              !currentSessionRegenerationState?.regenerating &&
+                              messageHistory[messageHistory.length - 1]?.type !=
+                                "user" && (
+                                <HumanMessage
+                                  key={-2}
+                                  messageId={-1}
+                                  content={submittedMessage}
+                                />
+                              )}
+
+                            {currentSessionChatState == "loading" && (
+                              <div
+                                key={`${messageHistory.length}-${chatSessionIdRef.current}`}
+                              >
+                                <AIMessage
+                                  key={-3}
+                                  currentPersona={liveAssistant}
+                                  alternativeAssistant={
+                                    alternativeGeneratingAssistant ??
+                                    alternativeAssistant
+                                  }
+                                  messageId={null}
+                                  personaName={liveAssistant.name}
+                                  content={
+                                    <div
+                                      key={"Generating"}
+                                      className="mr-auto relative inline-block"
+                                    >
+                                      <span className="text-sm loading-text">
+                                        Thinking...
+                                      </span>
                                     </div>
-                                  ))}
+                                  }
+                                />
+                              </div>
+                            )}
+
+                            {currentPersona &&
+                              currentPersona.starter_messages &&
+                              currentPersona.starter_messages.length > 0 &&
+                              selectedAssistant &&
+                              messageHistory.length === 0 &&
+                              !isFetchingChatMessages && (
+                                <div
+                                  key={-4}
+                                  className={`
+                                      mx-auto 
+                                      px-4 
+                                      w-searchbar-xs 
+                                      2xl:w-searchbar-sm 
+                                      3xl:w-searchbar 
+                                      grid 
+                                      gap-4 
+                                      grid-cols-1 
+                                      grid-rows-1 
+                                      mt-4 
+                                      md:grid-cols-2 
+                                      mb-6`}
+                                >
+                                  {currentPersona.starter_messages.map(
+                                    (starterMessage, i) => (
+                                      <div key={i} className="w-full">
+                                        <StarterMessage
+                                          starterMessage={starterMessage}
+                                          onClick={() =>
+                                            onSubmit({
+                                              messageOverride:
+                                                starterMessage.message,
+                                            })
+                                          }
+                                        />
+                                      </div>
+                                    )
+                                  )}
                                 </div>
                               )}
-                              <textarea
-                                ref={textareaRef}
-                                className={`
-                                  m-0 
-                                  w-full 
-                                  shrink
-                                  resize-none 
-                                  border-0 
-                                  bg-transparent 
-                                  ${
-                                    (textareaRef?.current?.scrollHeight || 0) >
-                                    MAX_INPUT_HEIGHT
-                                      ? "overflow-y-auto"
-                                      : ""
-                                  } 
-                                  whitespace-normal 
-                                  break-word
-                                  overscroll-contain
-                                  outline-none 
-                                  placeholder-gray-400 
-                                  overflow-hidden
-                                  resize-none
-                                  pl-4
-                                  pr-12 
-                                  py-4 
-                                  h-14`}
-                                autoFocus
-                                style={{ scrollbarWidth: "thin" }}
-                                role="textarea"
-                                aria-multiline
-                                placeholder="Ask me anything..."
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                onKeyDown={(event) => {
-                                  if (
-                                    event.key === "Enter" &&
-                                    !event.shiftKey &&
-                                    message &&
-                                    !isStreaming
-                                  ) {
-                                    onSubmit();
-                                    event.preventDefault();
-                                  }
-                                }}
-                                suppressContentEditableWarning={true}
-                              />
-                            </div>
-                            <div className="absolute bottom-2.5 right-10">
-                              <div
-                                className={"cursor-pointer"}
-                                onClick={() => {
-                                  if (!isStreaming) {
-                                    if (message) {
-                                      onSubmit();
-                                    }
-                                  } else {
-                                    setIsCancelled(true);
-                                  }
-                                }}
-                              >
-                                {isStreaming ? (
-                                  <FiStopCircle
-                                    size={18}
-                                    className={
-                                      "text-emphasis w-9 h-9 p-2 rounded-lg hover:bg-hover"
-                                    }
-                                  />
-                                ) : (
-                                  <FiSend
-                                    size={18}
-                                    className={
-                                      "text-emphasis w-9 h-9 p-2 rounded-lg " +
-                                      (message ? "bg-blue-200" : "")
-                                    }
-                                  />
-                                )}
+
+                            {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
+                            <div ref={endPaddingRef} className="h-[95px]" />
+                            <div ref={endDivRef} />
+                          </div>
+                        </div>
+                        <div
+                          ref={inputRef}
+                          className="absolute bottom-0 z-10 w-full"
+                        >
+                          <div className="w-[95%] mx-auto relative mb-8">
+                            {aboveHorizon && (
+                              <div className="pointer-events-none w-full bg-transparent flex sticky justify-center">
+                                <button
+                                  onClick={() => clientScrollToBottom()}
+                                  className="p-1 pointer-events-auto rounded-2xl bg-background-strong border border-border mb-2 mx-auto "
+                                >
+                                  <FiArrowDown size={18} />
+                                </button>
                               </div>
-                            </div>
+                            )}
+                            <ChatInputBar
+                              chatState={currentSessionChatState}
+                              stopGenerating={stopGenerating}
+                              openModelSettings={() => setSettingsToggled(true)}
+                              inputPrompts={userInputPrompts}
+                              showDocs={() => setDocumentSelection(true)}
+                              selectedDocuments={selectedDocuments}
+                              // assistant stuff
+                              assistantOptions={filteredAssistants}
+                              selectedAssistant={liveAssistant}
+                              setSelectedAssistant={onAssistantChange}
+                              setAlternativeAssistant={setAlternativeAssistant}
+                              alternativeAssistant={alternativeAssistant}
+                              // end assistant stuff
+                              message={message}
+                              setMessage={setMessage}
+                              onSubmit={onSubmit}
+                              filterManager={filterManager}
+                              llmOverrideManager={llmOverrideManager}
+                              files={currentMessageFiles}
+                              setFiles={setCurrentMessageFiles}
+                              handleFileUpload={handleImageUpload}
+                              textAreaRef={textAreaRef}
+                              chatSessionId={chatSessionIdRef.current!}
+                            />
+
+                            {enterpriseSettings &&
+                              enterpriseSettings.custom_lower_disclaimer_content && (
+                                <div className="mobile:hidden mt-4 flex items-center justify-center relative w-[95%] mx-auto">
+                                  <div className="text-sm text-text-500 max-w-searchbar-max px-4 text-center">
+                                    <MinimalMarkdown
+                                      content={
+                                        enterpriseSettings.custom_lower_disclaimer_content
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                            {enterpriseSettings &&
+                              enterpriseSettings.use_custom_logotype && (
+                                <div className="hidden lg:block absolute right-0 bottom-0">
+                                  <img
+                                    src="/api/enterprise-settings/logotype"
+                                    alt="logotype"
+                                    style={{ objectFit: "contain" }}
+                                    className="w-fit h-8"
+                                  />
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>
                     </div>
+                  )}
+                </Dropzone>
+              ) : (
+                <div className="mx-auto h-full flex">
+                  <div
+                    style={{ transition: "width 0.30s ease-out" }}
+                    className={`flex-none bg-transparent transition-all bg-opacity-80 duration-300 epase-in-out h-full
+                        ${toggledSidebar ? "w-[250px] " : "w-[0px]"}`}
+                  />
+                  <div className="my-auto">
+                    <DanswerInitializingLoader />
                   </div>
-
-                  {!retrievalDisabled ? (
-                    <ResizableSection
-                      intialWidth={documentSidebarInitialWidth as number}
-                      minWidth={400}
-                      maxWidth={maxDocumentSidebarWidth || undefined}
-                    >
-                      <DocumentSidebar
-                        selectedMessage={aiMessage}
-                        selectedDocuments={selectedDocuments}
-                        toggleDocumentSelection={toggleDocumentSelection}
-                        clearSelectedDocuments={clearSelectedDocuments}
-                        selectedDocumentTokens={selectedDocumentTokens}
-                        maxTokens={maxTokens}
-                        isLoading={isFetchingChatMessages}
-                      />
-                    </ResizableSection>
-                  ) : // Another option is to use a div with the width set to the initial width, so that the
-                  // chat section appears in the same place as before
-                  // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
-                  null}
-                </>
+                </div>
               )}
-            </Dropzone>
-          ) : (
-            <div className="mx-auto h-full flex flex-col">
-              <div className="my-auto">
-                <DanswerInitializingLoader />
-              </div>
             </div>
-          )}
+          </div>
+          <FixedLogo />
         </div>
       </div>
+      <DocumentSidebar
+        initialWidth={350}
+        ref={innerSidebarElementRef}
+        closeSidebar={() => setDocumentSelection(false)}
+        selectedMessage={aiMessage}
+        selectedDocuments={selectedDocuments}
+        toggleDocumentSelection={toggleDocumentSelection}
+        clearSelectedDocuments={clearSelectedDocuments}
+        selectedDocumentTokens={selectedDocumentTokens}
+        maxTokens={maxTokens}
+        isLoading={isFetchingChatMessages}
+        isOpen={documentSelection}
+      />
     </>
   );
 }

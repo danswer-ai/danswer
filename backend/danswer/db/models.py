@@ -5,12 +5,13 @@ from typing import Any
 from typing import Literal
 from typing import NotRequired
 from typing import Optional
-from typing import TypedDict
+from typing_extensions import TypedDict  # noreorder
 from uuid import UUID
 
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
+from fastapi_users_db_sqlalchemy.generics import TIMESTAMPAware
 from sqlalchemy import Boolean
 from sqlalchemy import DateTime
 from sqlalchemy import Enum
@@ -33,13 +34,17 @@ from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
+from danswer.configs.constants import NotificationType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.constants import TokenRateLimitScope
 from danswer.connectors.models import InputType
 from danswer.db.enums import ChatSessionSharedStatus
+from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.enums import IndexingStatus
 from danswer.db.enums import IndexModelStatus
 from danswer.db.enums import TaskStatus
@@ -49,9 +54,10 @@ from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
-from danswer.search.enums import SearchType
 from danswer.utils.encryption import decrypt_bytes_to_string
 from danswer.utils.encryption import encrypt_string_to_bytes
+from shared_configs.enums import EmbeddingProvider
+from shared_configs.enums import RerankerProvider
 
 
 class Base(DeclarativeBase):
@@ -107,6 +113,27 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, native_enum=False, default=UserRole.BASIC)
     )
+
+    """
+    Preferences probably should be in a separate table at some point, but for now
+    putting here for simpicity
+    """
+
+    # if specified, controls the assistants that are shown to the user + their order
+    # if not specified, all assistants are shown
+    chosen_assistants: Mapped[list[int]] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
+
+    oidc_expiry: Mapped[datetime.datetime] = mapped_column(
+        TIMESTAMPAware(timezone=True), nullable=True
+    )
+
+    default_model: Mapped[str] = mapped_column(Text, nullable=True)
+    # organized in typical structured fashion
+    # formatted as `displayName__provider__modelName`
+
+    # relationships
     credentials: Mapped[list["Credential"]] = relationship(
         "Credential", back_populates="user", lazy="joined"
     )
@@ -116,9 +143,43 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     chat_folders: Mapped[list["ChatFolder"]] = relationship(
         "ChatFolder", back_populates="user"
     )
+
     prompts: Mapped[list["Prompt"]] = relationship("Prompt", back_populates="user")
+    input_prompts: Mapped[list["InputPrompt"]] = relationship(
+        "InputPrompt", back_populates="user"
+    )
+
     # Personas owned by this user
     personas: Mapped[list["Persona"]] = relationship("Persona", back_populates="user")
+    # Custom tools created by this user
+    custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
+    # Notifications for the UI
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification", back_populates="user"
+    )
+
+
+class InputPrompt(Base):
+    __tablename__ = "inputprompt"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    prompt: Mapped[str] = mapped_column(String)
+    content: Mapped[str] = mapped_column(String)
+    active: Mapped[bool] = mapped_column(Boolean)
+    user: Mapped[User | None] = relationship("User", back_populates="input_prompts")
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+
+
+class InputPrompt__User(Base):
+    __tablename__ = "inputprompt__user"
+
+    input_prompt_id: Mapped[int] = mapped_column(
+        ForeignKey("inputprompt.id"), primary_key=True
+    )
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("inputprompt.id"), primary_key=True
+    )
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
@@ -139,6 +200,24 @@ class ApiKey(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+    # Add this relationship to access the User object via user_id
+    user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
+
+
+class Notification(Base):
+    __tablename__ = "notification"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    notif_type: Mapped[NotificationType] = mapped_column(
+        Enum(NotificationType, native_enum=False)
+    )
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    dismissed: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_shown: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+    first_shown: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
+
+    user: Mapped[User] = relationship("User", back_populates="notifications")
 
 
 """
@@ -167,7 +246,9 @@ class Persona__User(Base):
     __tablename__ = "persona__user"
 
     persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"), primary_key=True)
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id"), primary_key=True, nullable=True
+    )
 
 
 class DocumentSet__User(Base):
@@ -176,7 +257,9 @@ class DocumentSet__User(Base):
     document_set_id: Mapped[int] = mapped_column(
         ForeignKey("document_set.id"), primary_key=True
     )
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id"), primary_key=True, nullable=True
+    )
 
 
 class DocumentSet__ConnectorCredentialPair(Base):
@@ -230,6 +313,39 @@ class Persona__Tool(Base):
     tool_id: Mapped[int] = mapped_column(ForeignKey("tool.id"), primary_key=True)
 
 
+class StandardAnswer__StandardAnswerCategory(Base):
+    __tablename__ = "standard_answer__standard_answer_category"
+
+    standard_answer_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer.id"), primary_key=True
+    )
+    standard_answer_category_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer_category.id"), primary_key=True
+    )
+
+
+class SlackBotConfig__StandardAnswerCategory(Base):
+    __tablename__ = "slack_bot_config__standard_answer_category"
+
+    slack_bot_config_id: Mapped[int] = mapped_column(
+        ForeignKey("slack_bot_config.id"), primary_key=True
+    )
+    standard_answer_category_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer_category.id"), primary_key=True
+    )
+
+
+class ChatMessage__StandardAnswer(Base):
+    __tablename__ = "chat_message__standard_answer"
+
+    chat_message_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_message.id"), primary_key=True
+    )
+    standard_answer_id: Mapped[int] = mapped_column(
+        ForeignKey("standard_answer.id"), primary_key=True
+    )
+
+
 """
 Documents/Indexing Tables
 """
@@ -251,6 +367,9 @@ class ConnectorCredentialPair(Base):
         nullable=False,
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[ConnectorCredentialPairStatus] = mapped_column(
+        Enum(ConnectorCredentialPairStatus, native_enum=False), nullable=False
+    )
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
@@ -269,9 +388,6 @@ class ConnectorCredentialPair(Base):
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
     )
-    last_attempt_status: Mapped[IndexingStatus | None] = mapped_column(
-        Enum(IndexingStatus, native_enum=False)
-    )
     total_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
 
     connector: Mapped["Connector"] = relationship(
@@ -289,6 +405,9 @@ class ConnectorCredentialPair(Base):
         ),
         back_populates="connector_credential_pairs",
         overlaps="document_set",
+    )
+    index_attempts: Mapped[list["IndexAttempt"]] = relationship(
+        "IndexAttempt", back_populates="connector_credential_pair"
     )
 
 
@@ -319,7 +438,6 @@ class Document(Base):
     primary_owners: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
-    # Something like assignee or space owner
     secondary_owners: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
@@ -370,14 +488,17 @@ class Connector(Base):
     connector_specific_config: Mapped[dict[str, Any]] = mapped_column(
         postgresql.JSONB()
     )
+    indexing_start: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
     refresh_freq: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    prune_freq: Mapped[int | None] = mapped_column(Integer, nullable=True)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    disabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     credentials: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
@@ -387,13 +508,16 @@ class Connector(Base):
     documents_by_connector: Mapped[
         list["DocumentByConnectorCredentialPair"]
     ] = relationship("DocumentByConnectorCredentialPair", back_populates="connector")
-    index_attempts: Mapped[list["IndexAttempt"]] = relationship(
-        "IndexAttempt", back_populates="connector"
-    )
 
 
 class Credential(Base):
     __tablename__ = "credential"
+
+    name: Mapped[str] = mapped_column(String, nullable=True)
+
+    source: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     credential_json: Mapped[dict[str, Any]] = mapped_column(EncryptedJson())
@@ -407,6 +531,8 @@ class Credential(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    curator_public: Mapped[bool] = mapped_column(Boolean, default=False)
+
     connectors: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
         back_populates="credential",
@@ -415,28 +541,51 @@ class Credential(Base):
     documents_by_credential: Mapped[
         list["DocumentByConnectorCredentialPair"]
     ] = relationship("DocumentByConnectorCredentialPair", back_populates="credential")
-    index_attempts: Mapped[list["IndexAttempt"]] = relationship(
-        "IndexAttempt", back_populates="credential"
-    )
+
     user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
 
-class EmbeddingModel(Base):
-    __tablename__ = "embedding_model"
-    # ID is used also to indicate the order that the models are configured by the admin
+class SearchSettings(Base):
+    __tablename__ = "search_settings"
+
     id: Mapped[int] = mapped_column(primary_key=True)
     model_name: Mapped[str] = mapped_column(String)
     model_dim: Mapped[int] = mapped_column(Integer)
     normalize: Mapped[bool] = mapped_column(Boolean)
-    query_prefix: Mapped[str] = mapped_column(String)
-    passage_prefix: Mapped[str] = mapped_column(String)
+    query_prefix: Mapped[str | None] = mapped_column(String, nullable=True)
+    passage_prefix: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[IndexModelStatus] = mapped_column(
         Enum(IndexModelStatus, native_enum=False)
     )
     index_name: Mapped[str] = mapped_column(String)
+    provider_type: Mapped[EmbeddingProvider | None] = mapped_column(
+        ForeignKey("embedding_provider.provider_type"), nullable=True
+    )
+
+    # Mini and Large Chunks (large chunk also checks for model max context)
+    multipass_indexing: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    multilingual_expansion: Mapped[list[str]] = mapped_column(
+        postgresql.ARRAY(String), default=[]
+    )
+
+    # Reranking settings
+    disable_rerank_for_streaming: Mapped[bool] = mapped_column(Boolean, default=False)
+    rerank_model_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    rerank_provider_type: Mapped[RerankerProvider | None] = mapped_column(
+        Enum(RerankerProvider, native_enum=False), nullable=True
+    )
+    rerank_api_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    num_rerank: Mapped[int] = mapped_column(Integer, default=NUM_POSTPROCESSED_RESULTS)
+
+    cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(
+        "CloudEmbeddingProvider",
+        back_populates="search_settings",
+        foreign_keys=[provider_type],
+    )
 
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
-        "IndexAttempt", back_populates="embedding_model"
+        "IndexAttempt", back_populates="search_settings"
     )
 
     __table_args__ = (
@@ -454,6 +603,18 @@ class EmbeddingModel(Base):
         ),
     )
 
+    def __repr__(self) -> str:
+        return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}',\
+          cloud_provider='{self.cloud_provider.provider_type if self.cloud_provider else 'None'}')>"
+
+    @property
+    def api_url(self) -> str | None:
+        return self.cloud_provider.api_url if self.cloud_provider is not None else None
+
+    @property
+    def api_key(self) -> str | None:
+        return self.cloud_provider.api_key if self.cloud_provider is not None else None
+
 
 class IndexAttempt(Base):
     """
@@ -465,14 +626,12 @@ class IndexAttempt(Base):
     __tablename__ = "index_attempt"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    connector_id: Mapped[int | None] = mapped_column(
-        ForeignKey("connector.id"),
-        nullable=True,
+
+    connector_credential_pair_id: Mapped[int] = mapped_column(
+        ForeignKey("connector_credential_pair.id"),
+        nullable=False,
     )
-    credential_id: Mapped[int | None] = mapped_column(
-        ForeignKey("credential.id"),
-        nullable=True,
-    )
+
     # Some index attempts that run from beginning will still have this as False
     # This is only for attempts that are explicitly marked as from the start via
     # the run once API
@@ -489,8 +648,8 @@ class IndexAttempt(Base):
     # only filled if status = "failed" AND an unhandled exception caused the failure
     full_exception_trace: Mapped[str | None] = mapped_column(Text, default=None)
     # Nullable because in the past, we didn't allow swapping out embedding models live
-    embedding_model_id: Mapped[int] = mapped_column(
-        ForeignKey("embedding_model.id"),
+    search_settings_id: Mapped[int] = mapped_column(
+        ForeignKey("search_settings.id"),
         nullable=False,
     )
     time_created: Mapped[datetime.datetime] = mapped_column(
@@ -508,21 +667,24 @@ class IndexAttempt(Base):
         onupdate=func.now(),
     )
 
-    connector: Mapped[Connector] = relationship(
-        "Connector", back_populates="index_attempts"
+    connector_credential_pair: Mapped[ConnectorCredentialPair] = relationship(
+        "ConnectorCredentialPair", back_populates="index_attempts"
     )
-    credential: Mapped[Credential] = relationship(
-        "Credential", back_populates="index_attempts"
+
+    search_settings: Mapped[SearchSettings] = relationship(
+        "SearchSettings", back_populates="index_attempts"
     )
-    embedding_model: Mapped[EmbeddingModel] = relationship(
-        "EmbeddingModel", back_populates="index_attempts"
+
+    error_rows = relationship(
+        "IndexAttemptError",
+        back_populates="index_attempt",
+        cascade="all, delete-orphan",
     )
 
     __table_args__ = (
         Index(
             "ix_index_attempt_latest_for_connector_credential_pair",
-            "connector_id",
-            "credential_id",
+            "connector_credential_pair_id",
             "time_created",
         ),
     )
@@ -530,11 +692,57 @@ class IndexAttempt(Base):
     def __repr__(self) -> str:
         return (
             f"<IndexAttempt(id={self.id!r}, "
-            f"connector_id={self.connector_id!r}, "
             f"status={self.status!r}, "
             f"error_msg={self.error_msg!r})>"
             f"time_created={self.time_created!r}, "
             f"time_updated={self.time_updated!r}, "
+        )
+
+    def is_finished(self) -> bool:
+        return self.status.is_terminal()
+
+
+class IndexAttemptError(Base):
+    """
+    Represents an error that was encountered during an IndexAttempt.
+    """
+
+    __tablename__ = "index_attempt_errors"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    index_attempt_id: Mapped[int] = mapped_column(
+        ForeignKey("index_attempt.id"),
+        nullable=True,
+    )
+
+    # The index of the batch where the error occurred (if looping thru batches)
+    # Just informational.
+    batch: Mapped[int | None] = mapped_column(Integer, default=None)
+    doc_summaries: Mapped[list[Any]] = mapped_column(postgresql.JSONB())
+    error_msg: Mapped[str | None] = mapped_column(Text, default=None)
+    traceback: Mapped[str | None] = mapped_column(Text, default=None)
+    time_created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    # This is the reverse side of the relationship
+    index_attempt = relationship("IndexAttempt", back_populates="error_rows")
+
+    __table_args__ = (
+        Index(
+            "index_attempt_id",
+            "time_created",
+        ),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<IndexAttempt(id={self.id!r}, "
+            f"index_attempt_id={self.index_attempt_id!r}, "
+            f"error_msg={self.error_msg!r})>"
+            f"time_created={self.time_created!r}, "
         )
 
 
@@ -599,11 +807,35 @@ class SearchDoc(Base):
     secondary_owners: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
+    is_internet: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
+
+    is_relevant: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    relevance_explanation: Mapped[str | None] = mapped_column(String, nullable=True)
 
     chat_messages = relationship(
         "ChatMessage",
         secondary="chat_message__search_doc",
         back_populates="search_docs",
+    )
+
+
+class ToolCall(Base):
+    """Represents a single tool call"""
+
+    __tablename__ = "tool_call"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # not a FK because we want to be able to delete the tool without deleting
+    # this entry
+    tool_id: Mapped[int] = mapped_column(Integer())
+    tool_name: Mapped[str] = mapped_column(String())
+    tool_arguments: Mapped[dict[str, JSON_ro]] = mapped_column(postgresql.JSONB())
+    tool_result: Mapped[JSON_ro] = mapped_column(postgresql.JSONB())
+
+    message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
+
+    message: Mapped["ChatMessage"] = relationship(
+        "ChatMessage", back_populates="tool_calls"
     )
 
 
@@ -626,6 +858,12 @@ class ChatSession(Base):
     )
     folder_id: Mapped[int | None] = mapped_column(
         ForeignKey("chat_folder.id"), nullable=True
+    )
+
+    current_alternate_model: Mapped[str | None] = mapped_column(String, default=None)
+
+    slack_thread_id: Mapped[str | None] = mapped_column(
+        String, nullable=True, default=None
     )
 
     # the latest "overrides" specified by the user. These take precedence over
@@ -655,7 +893,7 @@ class ChatSession(Base):
         "ChatFolder", back_populates="chat_sessions"
     )
     messages: Mapped[list["ChatMessage"]] = relationship(
-        "ChatMessage", back_populates="chat_session", cascade="delete"
+        "ChatMessage", back_populates="chat_session"
     )
     persona: Mapped["Persona"] = relationship("Persona")
 
@@ -673,6 +911,12 @@ class ChatMessage(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_session_id: Mapped[int] = mapped_column(ForeignKey("chat_session.id"))
+
+    alternate_assistant_id = mapped_column(
+        Integer, ForeignKey("persona.id"), nullable=True
+    )
+
+    overridden_model: Mapped[str | None] = mapped_column(String, nullable=True)
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
@@ -701,15 +945,30 @@ class ChatMessage(Base):
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
+
     chat_message_feedbacks: Mapped[list["ChatMessageFeedback"]] = relationship(
-        "ChatMessageFeedback", back_populates="chat_message"
+        "ChatMessageFeedback",
+        back_populates="chat_message",
     )
+
     document_feedbacks: Mapped[list["DocumentRetrievalFeedback"]] = relationship(
-        "DocumentRetrievalFeedback", back_populates="chat_message"
+        "DocumentRetrievalFeedback",
+        back_populates="chat_message",
     )
     search_docs: Mapped[list["SearchDoc"]] = relationship(
         "SearchDoc",
         secondary="chat_message__search_doc",
+        back_populates="chat_messages",
+    )
+    # NOTE: Should always be attached to the `assistant` message.
+    # represents the tool calls used to generate this message
+    tool_calls: Mapped[list["ToolCall"]] = relationship(
+        "ToolCall",
+        back_populates="message",
+    )
+    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
+        "StandardAnswer",
+        secondary=ChatMessage__StandardAnswer.__table__,
         back_populates="chat_messages",
     )
 
@@ -748,7 +1007,9 @@ class DocumentRetrievalFeedback(Base):
     __tablename__ = "document_retrieval_feedback"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
+    chat_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_message.id", ondelete="SET NULL"), nullable=True
+    )
     document_id: Mapped[str] = mapped_column(ForeignKey("document.id"))
     # How high up this document is in the results, 1 for first
     document_rank: Mapped[int] = mapped_column(Integer)
@@ -758,7 +1019,9 @@ class DocumentRetrievalFeedback(Base):
     )
 
     chat_message: Mapped[ChatMessage] = relationship(
-        "ChatMessage", back_populates="document_feedbacks"
+        "ChatMessage",
+        back_populates="document_feedbacks",
+        foreign_keys=[chat_message_id],
     )
     document: Mapped[Document] = relationship(
         "Document", back_populates="retrieval_feedbacks"
@@ -769,20 +1032,19 @@ class ChatMessageFeedback(Base):
     __tablename__ = "chat_feedback"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
+    chat_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_message.id", ondelete="SET NULL"), nullable=True
+    )
     is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     required_followup: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     predefined_feedback: Mapped[str | None] = mapped_column(String, nullable=True)
 
     chat_message: Mapped[ChatMessage] = relationship(
-        "ChatMessage", back_populates="chat_message_feedbacks"
+        "ChatMessage",
+        back_populates="chat_message_feedbacks",
+        foreign_keys=[chat_message_id],
     )
-
-
-"""
-Structures, Organizational, Configurations Tables
-"""
 
 
 class LLMProvider(Base):
@@ -802,6 +1064,11 @@ class LLMProvider(Base):
     default_model_name: Mapped[str] = mapped_column(String)
     fast_default_model_name: Mapped[str | None] = mapped_column(String, nullable=True)
 
+    # Models to actually disp;aly to users
+    # If nulled out, we assume in the application logic we should present all
+    display_model_names: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
     # The LLMs that are available for this provider. Only required if not a default provider.
     # If a default provider, then the LLM options are pulled from the `options.py` file.
     # If needed, can be pulled out as a separate table in the future.
@@ -811,6 +1078,31 @@ class LLMProvider(Base):
 
     # should only be set for a single provider
     is_default_provider: Mapped[bool | None] = mapped_column(Boolean, unique=True)
+    # EE only
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    groups: Mapped[list["UserGroup"]] = relationship(
+        "UserGroup",
+        secondary="llm_provider__user_group",
+        viewonly=True,
+    )
+
+
+class CloudEmbeddingProvider(Base):
+    __tablename__ = "embedding_provider"
+
+    provider_type: Mapped[EmbeddingProvider] = mapped_column(
+        Enum(EmbeddingProvider), primary_key=True
+    )
+    api_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    api_key: Mapped[str | None] = mapped_column(EncryptedString())
+    search_settings: Mapped[list["SearchSettings"]] = relationship(
+        "SearchSettings",
+        back_populates="cloud_provider",
+        foreign_keys="SearchSettings.provider_type",
+    )
+
+    def __repr__(self) -> str:
+        return f"<EmbeddingProvider(type='{self.provider_type}')>"
 
 
 class DocumentSet(Base):
@@ -890,9 +1182,19 @@ class Tool(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
     # ID of the tool in the codebase, only applies for in-code tools.
-    # tools defiend via the UI will have this as None
+    # tools defined via the UI will have this as None
     in_code_tool_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    display_name: Mapped[str] = mapped_column(String, nullable=True)
 
+    # OpenAPI scheme for the tool. Only applies to tools defined via the UI.
+    openapi_schema: Mapped[dict[str, Any] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
+
+    # user who created / owns the tool. Will be None for built-in tools.
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+
+    user: Mapped[User | None] = relationship("User", back_populates="custom_tools")
     # Relationship to Persona through the association table
     personas: Mapped[list["Persona"]] = relationship(
         "Persona",
@@ -917,12 +1219,10 @@ class Persona(Base):
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
-    # Currently stored but unused, all flows use hybrid
-    search_type: Mapped[SearchType] = mapped_column(
-        Enum(SearchType, native_enum=False), default=SearchType.HYBRID
-    )
     # Number of chunks to pass to the LLM for generation.
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
+    chunks_above: Mapped[int] = mapped_column(Integer)
+    chunks_below: Mapped[int] = mapped_column(Integer)
     # Pass every chunk through LLM for evaluation, fairly expensive
     # Can be turned off globally by admin, in which case, this setting is ignored
     llm_relevance_filter: Mapped[bool] = mapped_column(Boolean)
@@ -953,9 +1253,14 @@ class Persona(Base):
     # controls the ordering of personas in the UI
     # higher priority personas are displayed first, ties are resolved by the ID,
     # where lower value IDs (e.g. created earlier) are displayed first
-    display_priority: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+    display_priority: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, default=None
+    )
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    uploaded_image_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    icon_color: Mapped[str | None] = mapped_column(String, nullable=True)
+    icon_shape: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # These are only defaults, users can select from all if desired
     prompts: Mapped[list[Prompt]] = relationship(
@@ -983,6 +1288,7 @@ class Persona(Base):
         viewonly=True,
     )
     # EE only
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     groups: Mapped[list["UserGroup"]] = relationship(
         "UserGroup",
         secondary="persona__user_group",
@@ -1012,11 +1318,58 @@ class ChannelConfig(TypedDict):
     channel_names: list[str]
     respond_tag_only: NotRequired[bool]  # defaults to False
     respond_to_bots: NotRequired[bool]  # defaults to False
-    respond_team_member_list: NotRequired[list[str]]
+    respond_member_group_list: NotRequired[list[str]]
     answer_filters: NotRequired[list[AllowedAnswerFilters]]
     # If None then no follow up
     # If empty list, follow up with no tags
     follow_up_tags: NotRequired[list[str]]
+
+
+class StandardAnswerCategory(Base):
+    __tablename__ = "standard_answer_category"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
+        "StandardAnswer",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="categories",
+    )
+    slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
+        "SlackBotConfig",
+        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        back_populates="standard_answer_categories",
+    )
+
+
+class StandardAnswer(Base):
+    __tablename__ = "standard_answer"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    keyword: Mapped[str] = mapped_column(String)
+    answer: Mapped[str] = mapped_column(String)
+    active: Mapped[bool] = mapped_column(Boolean)
+
+    __table_args__ = (
+        Index(
+            "unique_keyword_active",
+            keyword,
+            active,
+            unique=True,
+            postgresql_where=(active == True),  # noqa: E712
+        ),
+    )
+
+    categories: Mapped[list[StandardAnswerCategory]] = relationship(
+        "StandardAnswerCategory",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="standard_answers",
+    )
+    chat_messages: Mapped[list[ChatMessage]] = relationship(
+        "ChatMessage",
+        secondary=ChatMessage__StandardAnswer.__table__,
+        back_populates="standard_answers",
+    )
 
 
 class SlackBotResponseType(str, PyEnum):
@@ -1039,7 +1392,16 @@ class SlackBotConfig(Base):
         Enum(SlackBotResponseType, native_enum=False), nullable=False
     )
 
+    enable_auto_filters: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
+
     persona: Mapped[Persona | None] = relationship("Persona")
+    standard_answer_categories: Mapped[list[StandardAnswerCategory]] = relationship(
+        "StandardAnswerCategory",
+        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        back_populates="slack_bot_configs",
+    )
 
 
 class TaskQueueState(Base):
@@ -1047,7 +1409,7 @@ class TaskQueueState(Base):
     __tablename__ = "task_queue_jobs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # Celery task id
+    # Celery task id. currently only for readability/diagnostics
     task_id: Mapped[str] = mapped_column(String)
     # For any job type, this would be the same
     task_name: Mapped[str] = mapped_column(String)
@@ -1071,8 +1433,13 @@ class KVStore(Base):
 
 class PGFileStore(Base):
     __tablename__ = "file_store"
-    file_name = mapped_column(String, primary_key=True)
-    lobj_oid = mapped_column(Integer, nullable=False)
+
+    file_name: Mapped[str] = mapped_column(String, primary_key=True)
+    display_name: Mapped[str] = mapped_column(String, nullable=True)
+    file_origin: Mapped[FileOrigin] = mapped_column(Enum(FileOrigin, native_enum=False))
+    file_type: Mapped[str] = mapped_column(String, default="text/plain")
+    file_metadata: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=True)
+    lobj_oid: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
 """
@@ -1105,10 +1472,14 @@ class SamlAccount(Base):
 class User__UserGroup(Base):
     __tablename__ = "user__user_group"
 
+    is_curator: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
     user_group_id: Mapped[int] = mapped_column(
         ForeignKey("user_group.id"), primary_key=True
     )
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id"), primary_key=True, nullable=True
+    )
 
 
 class UserGroup__ConnectorCredentialPair(Base):
@@ -1145,11 +1516,33 @@ class Persona__UserGroup(Base):
     )
 
 
+class LLMProvider__UserGroup(Base):
+    __tablename__ = "llm_provider__user_group"
+
+    llm_provider_id: Mapped[int] = mapped_column(
+        ForeignKey("llm_provider.id"), primary_key=True
+    )
+    user_group_id: Mapped[int] = mapped_column(
+        ForeignKey("user_group.id"), primary_key=True
+    )
+
+
 class DocumentSet__UserGroup(Base):
     __tablename__ = "document_set__user_group"
 
     document_set_id: Mapped[int] = mapped_column(
         ForeignKey("document_set.id"), primary_key=True
+    )
+    user_group_id: Mapped[int] = mapped_column(
+        ForeignKey("user_group.id"), primary_key=True
+    )
+
+
+class Credential__UserGroup(Base):
+    __tablename__ = "credential__user_group"
+
+    credential_id: Mapped[int] = mapped_column(
+        ForeignKey("credential.id"), primary_key=True
     )
     user_group_id: Mapped[int] = mapped_column(
         ForeignKey("user_group.id"), primary_key=True
@@ -1172,6 +1565,10 @@ class UserGroup(Base):
         "User",
         secondary=User__UserGroup.__table__,
     )
+    user_group_relationships: Mapped[list[User__UserGroup]] = relationship(
+        "User__UserGroup",
+        viewonly=True,
+    )
     cc_pairs: Mapped[list[ConnectorCredentialPair]] = relationship(
         "ConnectorCredentialPair",
         secondary=UserGroup__ConnectorCredentialPair.__table__,
@@ -1192,6 +1589,10 @@ class UserGroup(Base):
         "DocumentSet",
         secondary=DocumentSet__UserGroup.__table__,
         viewonly=True,
+    )
+    credentials: Mapped[list[Credential]] = relationship(
+        "Credential",
+        secondary=Credential__UserGroup.__table__,
     )
 
 
@@ -1314,3 +1715,30 @@ class EmailToExternalUserCache(Base):
     )
 
     user = relationship("User")
+
+
+class UsageReport(Base):
+    """This stores metadata about usage reports generated by admin including user who generated
+    them as well las the period they cover. The actual zip file of the report is stored as a lo
+    using the PGFileStore
+    """
+
+    __tablename__ = "usage_reports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    report_name: Mapped[str] = mapped_column(ForeignKey("file_store.file_name"))
+
+    # if None, report was auto-generated
+    requestor_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id"), nullable=True
+    )
+    time_created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    period_from: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    period_to: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
+
+    requestor = relationship("User")
+    file = relationship("PGFileStore")
