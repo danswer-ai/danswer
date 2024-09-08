@@ -257,11 +257,11 @@ def docx_to_text(file: IO[Any]) -> str:
         return " ".join(p for p in cell_paragraphs if p) or "N/A"
 
     paragraphs = []
-
     doc = docx.Document(file)
     for item in doc.iter_inner_content():
         if isinstance(item, docx.text.paragraph.Paragraph):
             paragraphs.append(item.text)
+
         elif isinstance(item, docx.table.Table):
             if not item.rows or not is_simple_table(item):
                 continue
