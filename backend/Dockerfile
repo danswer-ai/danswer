@@ -76,7 +76,7 @@ Tokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1')"
 RUN python -c "import nltk; \
 nltk.download('stopwords', quiet=True); \
 nltk.download('punkt', quiet=True);"
-# #nltk.download('wordnet', quiet=True); introduce this back if lemmatization is needed
+# nltk.download('wordnet', quiet=True); introduce this back if lemmatization is needed
 
 # Set up application files
 WORKDIR /app
