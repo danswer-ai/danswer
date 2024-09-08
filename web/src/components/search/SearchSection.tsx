@@ -757,8 +757,6 @@ export const SearchSection = ({
                       </div>
                     </div>
 
-                    {/* <NoCredentialText showConfigureAPIKey={showConfigureAPIKey} /> */}
-
                     <FullSearchBar
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic
