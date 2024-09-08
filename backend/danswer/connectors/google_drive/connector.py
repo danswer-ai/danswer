@@ -327,7 +327,7 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
             export_mime_type = "text/plain"
         elif mime_type in [
             GDriveMimeType.PLAIN_TEXT.value,
-            GDriveMimeType.MARKDOWN.value
+            GDriveMimeType.MARKDOWN.value,
         ]:
             export_mime_type = mime_type
 
