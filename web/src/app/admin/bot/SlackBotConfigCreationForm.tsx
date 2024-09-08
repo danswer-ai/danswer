@@ -199,7 +199,7 @@ export const SlackBotCreationForm = ({
                     <button
                       type="button"
                       onClick={() => setUsingPersonas(false)}
-                      className={`p-2 font-bold text-sm  ${
+                      className={`p-2 font-bold text-xs mr-3 ${
                         !usingPersonas
                           ? "rounded bg-background-900 text-text-100 underline"
                           : "hover:underline bg-background-100"
@@ -208,12 +208,10 @@ export const SlackBotCreationForm = ({
                       Document Sets
                     </button>
 
-                    <div className="mx-3 my-auto">or</div>
-
                     <button
                       type="button"
                       onClick={() => setUsingPersonas(true)}
-                      className={`p-2 font-bold text-sm  ${
+                      className={`p-2 font-bold text-xs  ${
                         usingPersonas
                           ? "rounded bg-background-900 text-text-100 underline"
                           : "hover:underline bg-background-100"
