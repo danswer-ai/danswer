@@ -81,19 +81,26 @@ export default async function RootLayout({
               ) : (
                 <p>
                   It seems that you have not configured Danswer properly. Please
-                  feel free to send us a quick email to{" "}
-                  <a className="text-link" href="mailto:team@danswer.ai">
-                    team@danswer.ai
-                  </a>{" "}
-                  and we will help you out. Or checkout our{" "}
+                  check{" "}
                   <a
                     className="text-link"
-                    href="https://docs.danswer.ai/getting-started/installation/docker-compose"
+                    href="https://docs.danswer.dev/introduction?utm_source=app&utm_medium=error_page&utm_campaign=config_error"
                     target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    troubleshooting guide
+                    our docs
                   </a>{" "}
-                  to help you get started.
+                  to see how to configure Danswer or reach out to our community
+                  on{" "}
+                  <a
+                    className="text-link"
+                    href="https://danswer.ai?utm_source=app&utm_medium=error_page&utm_campaign=config_error"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Slack
+                  </a>{" "}
+                  for support and guidance.
                 </p>
               )}
             </Card>

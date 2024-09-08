@@ -128,7 +128,9 @@ export function ChatPage({
     shouldShowWelcomeModal,
     shouldDisplaySourcesIncompleteModal,
     defaultAssistantId,
+    refreshChatSessions,
   } = useChatContext();
+
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
   const { user, refreshUser, isLoadingUser } = useUser();
@@ -405,7 +407,7 @@ export function ChatPage({
         // force re-name if the chat session doesn't have one
         if (!chatSession.description) {
           await nameChatSession(existingChatSessionId, seededMessage);
-          router.refresh(); // need to refresh to update name on sidebar
+          refreshChatSessions();
         }
       }
     }
@@ -1339,6 +1341,7 @@ export function ChatPage({
       if (!searchParamBasedChatSessionName) {
         await new Promise((resolve) => setTimeout(resolve, 200));
         await nameChatSession(currChatSessionId, currMessage);
+        refreshChatSessions();
       }
 
       // NOTE: don't switch pages if the user has navigated away from the chat
