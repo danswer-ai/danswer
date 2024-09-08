@@ -1,11 +1,6 @@
 "use client";
 
 import {
-  FiCpu,
-  FiImage,
-  FiThumbsDown,
-  FiThumbsUp,
-  FiUser,
   FiEdit2,
   FiChevronRight,
   FiChevronLeft,
@@ -13,7 +8,14 @@ import {
   FiGlobe,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
-import { useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import {
   DanswerDocument,
@@ -37,18 +39,18 @@ import { InMessageImage } from "../files/images/InMessageImage";
 import { CodeBlock } from "./CodeBlock";
 import rehypePrism from "rehype-prism-plus";
 
-// Prism stuff
-import Prism from "prismjs";
-
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
 import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
+
 import {
-  DislikeFeedbackIcon,
-  LikeFeedbackIcon,
+  ThumbsUpIcon,
+  ThumbsDownIcon,
+  LikeFeedback,
+  DislikeFeedback,
 } from "@/components/icons/icons";
 import {
   CustomTooltip,
@@ -58,6 +60,11 @@ import { ValidSources } from "@/lib/types";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
+import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
+import RegenerateOption from "../RegenerateOption";
+import { LlmOverride } from "@/lib/hooks";
+import { ContinueGenerating } from "./ContinueMessage";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -78,7 +85,10 @@ function FileDisplay({
   return (
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
-        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
+        <div
+          id="danswer-file"
+          className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}
+        >
           <div className="flex flex-col gap-2">
             {nonImgFiles.map((file) => {
               return (
@@ -95,7 +105,10 @@ function FileDisplay({
         </div>
       )}
       {imageFiles && imageFiles.length > 0 && (
-        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
+        <div
+          id="danswer-image"
+          className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}
+        >
           <div className="flex flex-col gap-2">
             {imageFiles.map((file) => {
               return <InMessageImage key={file.id} fileId={file.id} />;
@@ -108,6 +121,10 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
+  regenerate,
+  overriddenModel,
+  continueGenerating,
+  shared,
   isActive,
   toggleDocumentSelection,
   alternativeAssistant,
@@ -129,8 +146,14 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
   currentPersona,
+  otherMessagesCanSwitchTo,
+  onMessageSelection,
 }: {
+  shared?: boolean;
   isActive?: boolean;
+  continueGenerating?: () => void;
+  otherMessagesCanSwitchTo?: number[];
+  onMessageSelection?: (messageId: number) => void;
   selectedDocuments?: DanswerDocument[] | null;
   toggleDocumentSelection?: () => void;
   docs?: DanswerDocument[] | null;
@@ -151,21 +174,41 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
+  overriddenModel?: string;
+  regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
 }) => {
-  const finalContent = content + (!isComplete ? "[*](test)" : "");
+  const toolCallGenerating = toolCall && !toolCall.tool_result;
+  const processContent = (content: string | JSX.Element) => {
+    if (typeof content !== "string") {
+      return content;
+    }
 
-  const [isReady, setIsReady] = useState(false);
-  useEffect(() => {
-    Prism.highlightAll();
-    setIsReady(true);
-  }, []);
+    const codeBlockRegex = /```(\w*)\n[\s\S]*?```|```[\s\S]*?$/g;
+    const matches = content.match(codeBlockRegex);
 
+    if (matches) {
+      content = matches.reduce((acc, match) => {
+        if (!match.match(/```\w+/)) {
+          return acc.replace(match, match.replace("```", "```plaintext"));
+        }
+        return acc;
+      }, content);
+
+      const lastMatch = matches[matches.length - 1];
+      if (!lastMatch.endsWith("```")) {
+        return content;
+      }
+    }
+
+    return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
+  };
+  const finalContent = processContent(content as string);
+
+  const [isRegenerateHovered, setIsRegenerateHovered] = useState(false);
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
 
+  const settings = useContext(SettingsContext);
   // this is needed to give Prism a chance to load
-  if (!isReady) {
-    return <div />;
-  }
 
   const selectedDocumentIds =
     selectedDocuments?.map((document) => document.document_id) || [];
@@ -190,13 +233,8 @@ export const AIMessage = ({
       }
       return content;
     };
-
     content = trimIncompleteCodeSection(content);
   }
-
-  const danswerSearchToolEnabledForPersona = currentPersona.tools.some(
-    (tool) => tool.in_code_tool_id === SEARCH_TOOL_NAME
-  );
 
   let filteredDocs: FilteredDanswerDocument[] = [];
 
@@ -219,14 +257,29 @@ export const AIMessage = ({
       });
   }
 
+  const currentMessageInd = messageId
+    ? otherMessagesCanSwitchTo?.indexOf(messageId)
+    : undefined;
   const uniqueSources: ValidSources[] = Array.from(
     new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
 
+  const includeMessageSwitcher =
+    currentMessageInd !== undefined &&
+    onMessageSelection &&
+    otherMessagesCanSwitchTo &&
+    otherMessagesCanSwitchTo.length > 1;
+
   return (
-    <div ref={trackedElementRef} className={"py-5 px-2 lg:px-5 relative flex "}>
-      <div className="mx-auto w-[90%] max-w-message-max">
-        <div className="xl:ml-8">
+    <div
+      id="danswer-ai-message"
+      ref={trackedElementRef}
+      className={"py-5 ml-4 px-5 relative flex "}
+    >
+      <div
+        className={`mx-auto ${shared ? "w-full" : "w-[90%]"}  max-w-message-max`}
+      >
+        <div className={`desktop:mr-12 ${!shared && "mobile:ml-0 md:ml-8"}`}>
           <div className="flex">
             <AssistantIcon
               size="small"
@@ -235,48 +288,12 @@ export const AIMessage = ({
 
             <div className="w-full">
               <div className="max-w-message-max break-words">
-                {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
-                  danswerSearchToolEnabledForPersona && (
-                    <>
-                      {query !== undefined &&
-                        handleShowRetrieved !== undefined &&
-                        isCurrentlyShowingRetrieved !== undefined &&
-                        !retrievalDisabled && (
-                          <div className="my-1">
-                            <SearchSummary
-                              query={query}
-                              hasDocs={hasDocs || false}
-                              messageId={messageId}
-                              finished={toolCall?.tool_result != undefined}
-                              isCurrentlyShowingRetrieved={
-                                isCurrentlyShowingRetrieved
-                              }
-                              handleShowRetrieved={handleShowRetrieved}
-                              handleSearchQueryEdit={handleSearchQueryEdit}
-                            />
-                          </div>
-                        )}
-                      {handleForceSearch &&
-                        content &&
-                        query === undefined &&
-                        !hasDocs &&
-                        !retrievalDisabled && (
-                          <div className="my-1">
-                            <SkippedSearch
-                              handleForceSearch={handleForceSearch}
-                            />
-                          </div>
-                        )}
-                    </>
-                  )}
-
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
-                    {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
+                    {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
                       <>
                         {query !== undefined &&
                           handleShowRetrieved !== undefined &&
-                          isCurrentlyShowingRetrieved !== undefined &&
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary
@@ -284,9 +301,6 @@ export const AIMessage = ({
                                 finished={toolCall?.tool_result != undefined}
                                 hasDocs={hasDocs || false}
                                 messageId={messageId}
-                                isCurrentlyShowingRetrieved={
-                                  isCurrentlyShowingRetrieved
-                                }
                                 handleShowRetrieved={handleShowRetrieved}
                                 handleSearchQueryEdit={handleSearchQueryEdit}
                               />
@@ -304,120 +318,113 @@ export const AIMessage = ({
                             </div>
                           )}
                       </>
-                    )}
+                    ) : null}
+
                     {toolCall &&
                       !TOOLS_WITH_CUSTOM_HANDLING.includes(
                         toolCall.tool_name
                       ) && (
-                        <div className="my-2">
-                          <ToolRunDisplay
-                            toolName={
-                              toolCall.tool_result && content
-                                ? `Used "${toolCall.tool_name}"`
-                                : `Using "${toolCall.tool_name}"`
-                            }
-                            toolLogo={
-                              <FiTool size={15} className="my-auto mr-1" />
-                            }
-                            isRunning={!toolCall.tool_result || !content}
-                          />
-                        </div>
+                        <ToolRunDisplay
+                          toolName={
+                            toolCall.tool_result && content
+                              ? `Used "${toolCall.tool_name}"`
+                              : `Using "${toolCall.tool_name}"`
+                          }
+                          toolLogo={
+                            <FiTool size={15} className="my-auto mr-1" />
+                          }
+                          isRunning={!toolCall.tool_result || !content}
+                        />
                       )}
 
                     {toolCall &&
+                      (!files || files.length == 0) &&
                       toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-                      !toolCall.tool_result && (
-                        <div className="my-2">
-                          <ToolRunDisplay
-                            toolName={`Generating images`}
-                            toolLogo={
-                              <FiImage size={15} className="my-auto mr-1" />
-                            }
-                            isRunning={!toolCall.tool_result}
-                          />
-                        </div>
-                      )}
+                      !toolCall.tool_result && <GeneratingImageDisplay />}
 
                     {toolCall &&
                       toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
-                        <div className="my-2">
-                          <ToolRunDisplay
-                            toolName={
-                              toolCall.tool_result
-                                ? `Searched the internet`
-                                : `Searching the internet`
-                            }
-                            toolLogo={
-                              <FiGlobe size={15} className="my-auto mr-1" />
-                            }
-                            isRunning={!toolCall.tool_result}
-                          />
-                        </div>
+                        <ToolRunDisplay
+                          toolName={
+                            toolCall.tool_result
+                              ? `Searched the internet`
+                              : `Searching the internet`
+                          }
+                          toolLogo={
+                            <FiGlobe size={15} className="my-auto mr-1" />
+                          }
+                          isRunning={!toolCall.tool_result}
+                        />
                       )}
 
-                    {content ? (
+                    {content || files ? (
                       <>
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (
-                          <ReactMarkdown
-                            key={messageId}
-                            className="prose max-w-full"
-                            components={{
-                              a: (props) => {
-                                const { node, ...rest } = props;
-                                const value = rest.children;
+                          <div className="overflow-x-visible max-w-content-max">
+                            <ReactMarkdown
+                              key={messageId}
+                              className="prose max-w-full text-base"
+                              components={{
+                                a: (props) => {
+                                  const { node, ...rest } = props;
+                                  const value = rest.children;
 
-                                if (value?.toString().startsWith("*")) {
-                                  return (
-                                    <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
-                                  );
-                                } else if (value?.toString().startsWith("[")) {
-                                  // for some reason <a> tags cause the onClick to not apply
-                                  // and the links are unclickable
-                                  // TODO: fix the fact that you have to double click to follow link
-                                  // for the first link
-                                  return (
-                                    <Citation
-                                      link={rest?.href}
-                                      key={node?.position?.start?.offset}
-                                    >
-                                      {rest.children}
-                                    </Citation>
-                                  );
-                                } else {
-                                  return (
-                                    <a
-                                      key={node?.position?.start?.offset}
-                                      onClick={() =>
-                                        rest.href
-                                          ? window.open(rest.href, "_blank")
-                                          : undefined
-                                      }
-                                      className="cursor-pointer text-link hover:text-link-hover"
-                                    >
-                                      {rest.children}
-                                    </a>
-                                  );
-                                }
-                              },
-                              code: (props) => (
-                                <CodeBlock
-                                  {...props}
-                                  content={content as string}
-                                />
-                              ),
-                              p: ({ node, ...props }) => (
-                                <p {...props} className="text-default" />
-                              ),
-                            }}
-                            remarkPlugins={[remarkGfm]}
-                            rehypePlugins={[
-                              [rehypePrism, { ignoreMissing: true }],
-                            ]}
-                          >
-                            {finalContent}
-                          </ReactMarkdown>
+                                  if (value?.toString().startsWith("*")) {
+                                    return (
+                                      <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
+                                    );
+                                  } else if (
+                                    value?.toString().startsWith("[")
+                                  ) {
+                                    // for some reason <a> tags cause the onClick to not apply
+                                    // and the links are unclickable
+                                    // TODO: fix the fact that you have to double click to follow link
+                                    // for the first link
+                                    return (
+                                      <Citation
+                                        link={rest?.href}
+                                        key={node?.position?.start?.offset}
+                                      >
+                                        {rest.children}
+                                      </Citation>
+                                    );
+                                  } else {
+                                    return (
+                                      <a
+                                        key={node?.position?.start?.offset}
+                                        onMouseDown={() =>
+                                          rest.href
+                                            ? window.open(rest.href, "_blank")
+                                            : undefined
+                                        }
+                                        className="cursor-pointer text-link hover:text-link-hover"
+                                      >
+                                        {rest.children}
+                                      </a>
+                                    );
+                                  }
+                                },
+                                code: (props) => (
+                                  <CodeBlock
+                                    className="w-full"
+                                    {...props}
+                                    content={content as string}
+                                  />
+                                ),
+                                p: ({ node, ...props }) => (
+                                  <p {...props} className="text-default" />
+                                ),
+                              }}
+                              remarkPlugins={[remarkGfm]}
+                              rehypePlugins={[
+                                [rehypePrism, { ignoreMissing: true }],
+                              ]}
+                            >
+                              {finalContent as string}
+                            </ReactMarkdown>
+                          </div>
                         ) : (
                           content
                         )}
@@ -425,12 +432,12 @@ export const AIMessage = ({
                     ) : isComplete ? null : (
                       <></>
                     )}
-
                     {isComplete && docs && docs.length > 0 && (
                       <div className="mt-2 -mx-8 w-full mb-4 flex relative">
                         <div className="w-full">
                           <div className="px-8 flex gap-x-2">
-                            {filteredDocs.length > 0 &&
+                            {!settings?.isMobile &&
+                              filteredDocs.length > 0 &&
                               filteredDocs.slice(0, 2).map((doc, ind) => (
                                 <div
                                   key={doc.document_id}
@@ -438,12 +445,12 @@ export const AIMessage = ({
                               `}
                                 >
                                   <a
-                                    href={doc.link}
+                                    href={doc.link || undefined}
                                     target="_blank"
                                     className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
                                   >
                                     <Citation link={doc.link} index={ind + 1} />
-                                    <p className="shrink truncate ellipsis break-all ">
+                                    <p className="shrink truncate ellipsis break-all">
                                       {doc.semantic_identifier ||
                                         doc.document_id}
                                     </p>
@@ -499,63 +506,129 @@ export const AIMessage = ({
                       </div>
                     )}
                   </div>
+
                   {handleFeedback &&
                     (isActive ? (
                       <div
                         className={`
-                      flex md:flex-row gap-x-0.5 mt-1
-                      transition-transform duration-300 ease-in-out
-                      transform opacity-100 translate-y-0"
+                        flex md:flex-row gap-x-0.5 mt-1
+                        transition-transform duration-300 ease-in-out
+                        transform opacity-100 translate-y-0"
                   `}
                       >
                         <TooltipGroup>
+                          <div className="flex justify-start w-full gap-x-0.5">
+                            {includeMessageSwitcher && (
+                              <div className="-mx-1 mr-auto">
+                                <MessageSwitcher
+                                  currentPage={currentMessageInd + 1}
+                                  totalPages={otherMessagesCanSwitchTo.length}
+                                  handlePrevious={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd - 1
+                                      ]
+                                    );
+                                  }}
+                                  handleNext={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd + 1
+                                      ]
+                                    );
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
                           <CustomTooltip showTick line content="Copy!">
                             <CopyButton content={content.toString()} />
                           </CustomTooltip>
                           <CustomTooltip showTick line content="Good response!">
                             <HoverableIcon
-                              icon={<LikeFeedbackIcon />}
+                              icon={<LikeFeedback />}
                               onClick={() => handleFeedback("like")}
                             />
                           </CustomTooltip>
                           <CustomTooltip showTick line content="Bad response!">
                             <HoverableIcon
-                              icon={<DislikeFeedbackIcon />}
+                              icon={<DislikeFeedback size={16} />}
                               onClick={() => handleFeedback("dislike")}
                             />
                           </CustomTooltip>
+                          {regenerate && (
+                            <RegenerateOption
+                              onHoverChange={setIsRegenerateHovered}
+                              selectedAssistant={currentPersona!}
+                              regenerate={regenerate}
+                              overriddenModel={overriddenModel}
+                            />
+                          )}
                         </TooltipGroup>
                       </div>
                     ) : (
                       <div
                         ref={hoverElementRef}
                         className={`
-                        absolute -bottom-2
-                        invisible ${isHovering && "!visible"}
-                        opacity-0 ${isHovering && "!opacity-100"}
-                        translate-y-2 ${isHovering && "!translate-y-0"}
+
+                        absolute -bottom-5
+                        invisible ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!visible"}
+                        opacity-0 ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!opacity-100"}
+                        translate-y-2 ${(isHovering || settings?.isMobile) && "!translate-y-0"}
                         transition-transform duration-300 ease-in-out 
-                        flex md:flex-row gap-x-0.5 bg-background-125/40 p-1.5 rounded-lg
+                        flex md:flex-row gap-x-0.5 bg-background-125/40 -mx-1.5 p-1.5 rounded-lg
                         `}
                       >
                         <TooltipGroup>
+                          <div className="flex justify-start w-full gap-x-0.5">
+                            {includeMessageSwitcher && (
+                              <div className="-mx-1 mr-auto">
+                                <MessageSwitcher
+                                  currentPage={currentMessageInd + 1}
+                                  totalPages={otherMessagesCanSwitchTo.length}
+                                  handlePrevious={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd - 1
+                                      ]
+                                    );
+                                  }}
+                                  handleNext={() => {
+                                    onMessageSelection(
+                                      otherMessagesCanSwitchTo[
+                                        currentMessageInd + 1
+                                      ]
+                                    );
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
                           <CustomTooltip showTick line content="Copy!">
                             <CopyButton content={content.toString()} />
                           </CustomTooltip>
 
                           <CustomTooltip showTick line content="Good response!">
                             <HoverableIcon
-                              icon={<LikeFeedbackIcon />}
+                              icon={<LikeFeedback />}
                               onClick={() => handleFeedback("like")}
                             />
                           </CustomTooltip>
 
                           <CustomTooltip showTick line content="Bad response!">
                             <HoverableIcon
-                              icon={<DislikeFeedbackIcon />}
+                              icon={<DislikeFeedback size={16} />}
                               onClick={() => handleFeedback("dislike")}
                             />
                           </CustomTooltip>
+                          {regenerate && (
+                            <RegenerateOption
+                              selectedAssistant={currentPersona!}
+                              regenerate={regenerate}
+                              overriddenModel={overriddenModel}
+                              onHoverChange={setIsRegenerateHovered}
+                            />
+                          )}
                         </TooltipGroup>
                       </div>
                     ))}
@@ -564,6 +637,11 @@ export const AIMessage = ({
             </div>
           </div>
         </div>
+        {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+          !query &&
+          continueGenerating && (
+            <ContinueGenerating handleContinueGenerating={continueGenerating} />
+          )}
       </div>
     </div>
   );
@@ -606,13 +684,17 @@ export const HumanMessage = ({
   otherMessagesCanSwitchTo,
   onEdit,
   onMessageSelection,
+  shared,
+  stopGenerating = () => null,
 }: {
+  shared?: boolean;
   content: string;
   files?: FileDescriptor[];
   messageId?: number | null;
   otherMessagesCanSwitchTo?: number[];
   onEdit?: (editedContent: string) => void;
   onMessageSelection?: (messageId: number) => void;
+  stopGenerating?: () => void;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -649,17 +731,18 @@ export const HumanMessage = ({
 
   return (
     <div
+      id="danswer-human-message"
       className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="mx-auto w-[90%] max-w-searchbar-max">
+      <div className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-[790px]`}>
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
 
             <div className="flex justify-end">
-              <div className="w-full ml-8 flex w-full max-w-message-max break-words">
+              <div className="w-full ml-8 flex w-full w-[800px] break-words">
                 {isEditing ? (
                   <div className="w-full">
                     <div
@@ -680,24 +763,24 @@ export const HumanMessage = ({
                       <textarea
                         ref={textareaRef}
                         className={`
-                      m-0 
-                      w-full 
-                      h-auto
-                      shrink
-                      border-0
-                      rounded-lg 
-                      overflow-y-hidden
-                      bg-background-emphasis 
-                      whitespace-normal 
-                      break-word
-                      overscroll-contain
-                      outline-none 
-                      placeholder-gray-400 
-                      resize-none
-                      pl-4
-                      overflow-y-auto
-                      pr-12 
-                      py-4`}
+                        m-0 
+                        w-full 
+                        h-auto
+                        shrink
+                        border-0
+                        rounded-lg 
+                        overflow-y-hidden
+                        bg-background-emphasis 
+                        whitespace-normal 
+                        break-word
+                        overscroll-contain
+                        outline-none 
+                        placeholder-gray-400 
+                        resize-none
+                        pl-4
+                        overflow-y-auto
+                        pr-12 
+                        py-4`}
                         aria-multiline
                         role="textarea"
                         value={editedContent}
@@ -769,11 +852,11 @@ export const HumanMessage = ({
                   </div>
                 ) : typeof content === "string" ? (
                   <>
-                    {onEdit &&
-                    isHovered &&
-                    !isEditing &&
-                    (!files || files.length === 0) ? (
-                      <div className="ml-auto mr-1 my-auto">
+                    <div className="ml-auto mr-1 my-auto">
+                      {onEdit &&
+                      isHovered &&
+                      !isEditing &&
+                      (!files || files.length === 0) ? (
                         <Tooltip delayDuration={1000} content={"Edit message"}>
                           <button
                             className="hover:bg-hover p-1.5 rounded"
@@ -782,13 +865,13 @@ export const HumanMessage = ({
                               setIsHovered(false);
                             }}
                           >
-                            <FiEdit2 />
+                            <FiEdit2 className="!h-4 !w-4" />
                           </button>
                         </Tooltip>
-                      </div>
-                    ) : (
-                      <div className="h-[27px]" />
-                    )}
+                      ) : (
+                        <div className="w-7" />
+                      )}
+                    </div>
 
                     <div
                       className={`${
@@ -798,11 +881,10 @@ export const HumanMessage = ({
                           !isEditing &&
                           (!files || files.length === 0)
                         ) && "ml-auto"
-                      } relative max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
+                      } relative   flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>
-                    {/* </div> */}
                   </>
                 ) : (
                   <>
@@ -822,7 +904,7 @@ export const HumanMessage = ({
                     ) : (
                       <div className="h-[27px]" />
                     )}
-                    <p className="ml-auto rounded-lg p-1">{content}</p>
+                    <div className="ml-auto rounded-lg p-1">{content}</div>
                   </>
                 )}
               </div>
@@ -838,16 +920,18 @@ export const HumanMessage = ({
                   <MessageSwitcher
                     currentPage={currentMessageInd + 1}
                     totalPages={otherMessagesCanSwitchTo.length}
-                    handlePrevious={() =>
+                    handlePrevious={() => {
+                      stopGenerating();
                       onMessageSelection(
                         otherMessagesCanSwitchTo[currentMessageInd - 1]
-                      )
-                    }
-                    handleNext={() =>
+                      );
+                    }}
+                    handleNext={() => {
+                      stopGenerating();
                       onMessageSelection(
                         otherMessagesCanSwitchTo[currentMessageInd + 1]
-                      )
-                    }
+                      );
+                    }}
                   />
                 </div>
               )}

@@ -2,10 +2,10 @@ from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
 from danswer.chat.models import LlmDoc
-from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
 from danswer.db.models import Persona
 from danswer.db.persona import get_default_prompt__read_only
+from danswer.db.search_settings import get_multilingual_expansion
 from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.factory import get_llms_for_persona
@@ -39,7 +39,7 @@ def get_prompt_tokens(prompt_config: PromptConfig) -> int:
         + CHAT_USER_PROMPT_WITH_CONTEXT_OVERHEAD_TOKEN_CNT
         + CITATION_STATEMENT_TOKEN_CNT
         + CITATION_REMINDER_TOKEN_CNT
-        + (LANGUAGE_HINT_TOKEN_CNT if bool(MULTILINGUAL_QUERY_EXPANSION) else 0)
+        + (LANGUAGE_HINT_TOKEN_CNT if get_multilingual_expansion() else 0)
         + (ADDITIONAL_INFO_TOKEN_CNT if prompt_config.datetime_aware else 0)
     )
 
@@ -135,7 +135,10 @@ def build_citations_user_message(
     all_doc_useful: bool,
     history_message: str = "",
 ) -> HumanMessage:
-    task_prompt_with_reminder = build_task_prompt_reminders(prompt_config)
+    multilingual_expansion = get_multilingual_expansion()
+    task_prompt_with_reminder = build_task_prompt_reminders(
+        prompt=prompt_config, use_language_hint=bool(multilingual_expansion)
+    )
 
     if context_docs:
         context_docs_str = build_complete_context_str(context_docs)

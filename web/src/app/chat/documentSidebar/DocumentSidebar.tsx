@@ -2,43 +2,9 @@ import { DanswerDocument } from "@/lib/search/interfaces";
 import { Divider, Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { FiAlertTriangle, FiFileText } from "react-icons/fi";
-import { SelectedDocumentDisplay } from "./SelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
-import { BasicSelectable } from "@/components/BasicClickable";
 import { Message, RetrievalType } from "../interfaces";
-import { SIDEBAR_WIDTH } from "@/lib/constants";
-import { HoverPopup } from "@/components/HoverPopup";
-import { TbLayoutSidebarLeftExpand } from "react-icons/tb";
 import { ForwardedRef, forwardRef } from "react";
-
-function SectionHeader({
-  name,
-  icon,
-  closeHeader,
-}: {
-  name: string;
-  icon: React.FC<{ className: string }>;
-  closeHeader?: () => void;
-}) {
-  return (
-    <div
-      className={`w-full mt-3 flex text-lg text-emphasis font-medium flex mb-3.5 font-bold flex items-end`}
-    >
-      <div className="flex mt-auto justify-between w-full">
-        <p className="flex">
-          {icon({ className: "my-auto mr-1" })}
-          {name}
-        </p>
-        {closeHeader && (
-          <button onClick={() => closeHeader()}>
-            <TbLayoutSidebarLeftExpand size={24} />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 interface DocumentSidebarProps {
   closeSidebar: () => void;
@@ -71,8 +37,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
   ) => {
     const { popup, setPopup } = usePopup();
 
-    const selectedMessageRetrievalType = selectedMessage?.retrievalType || null;
-
     const selectedDocumentIds =
       selectedDocuments?.map((document) => document.document_id) || [];
 
@@ -88,9 +52,8 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
 
     return (
       <div
-        className={`fixed inset-0 transition-opacity duration-300 z-50 bg-black/80 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        id="danswer-chat-sidebar"
+        className={`fixed inset-0 transition-opacity duration-300 z-50 bg-black/80 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closeSidebar();
@@ -106,7 +69,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             width: initialWidth,
           }}
         >
-          <div className="pb-6 flex-initial overflow-y-hidden flex flex-col h-screen ">
+          <div className="pb-6 flex-initial overflow-y-hidden flex flex-col h-screen">
             {popup}
             <div className="pl-3 mx-2 pr-6 mt-3 flex text-text-800 flex-col text-2xl text-emphasis flex font-semibold">
               {dedupedDocuments.length} Documents
@@ -125,43 +88,40 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
 
             {currentDocuments ? (
               <div className="overflow-y-auto flex-grow dark-scrollbar flex relative flex-col">
-                <div>
-                  {dedupedDocuments.length > 0 ? (
-                    dedupedDocuments.map((document, ind) => (
-                      <div
-                        key={document.document_id}
-                        className={`${
-                          ind === dedupedDocuments.length - 1
-                            ? "mb-5"
-                            : "border-b  border-border-light mb-3"
-                        }`}
-                      >
-                        <ChatDocumentDisplay
-                          document={document}
-                          setPopup={setPopup}
-                          queryEventId={null}
-                          isAIPick={false}
-                          isSelected={selectedDocumentIds.includes(
-                            document.document_id
-                          )}
-                          handleSelect={(documentId) => {
-                            toggleDocumentSelection(
-                              dedupedDocuments.find(
-                                (document) =>
-                                  document.document_id === documentId
-                              )!
-                            );
-                          }}
-                          tokenLimitReached={tokenLimitReached}
-                        />
-                      </div>
-                    ))
-                  ) : (
-                    <div className="mx-3">
-                      <Text>No documents found for the query.</Text>
+                {dedupedDocuments.length > 0 ? (
+                  dedupedDocuments.map((document, ind) => (
+                    <div
+                      key={document.document_id}
+                      className={`${
+                        ind === dedupedDocuments.length - 1
+                          ? "mb-5"
+                          : "border-b border-border-light mb-3"
+                      }`}
+                    >
+                      <ChatDocumentDisplay
+                        document={document}
+                        setPopup={setPopup}
+                        queryEventId={null}
+                        isAIPick={false}
+                        isSelected={selectedDocumentIds.includes(
+                          document.document_id
+                        )}
+                        handleSelect={(documentId) => {
+                          toggleDocumentSelection(
+                            dedupedDocuments.find(
+                              (document) => document.document_id === documentId
+                            )!
+                          );
+                        }}
+                        tokenLimitReached={tokenLimitReached}
+                      />
                     </div>
-                  )}
-                </div>
+                  ))
+                ) : (
+                  <div className="mx-3">
+                    <Text>No documents found for the query.</Text>
+                  </div>
+                )}
               </div>
             ) : (
               !isLoading && (

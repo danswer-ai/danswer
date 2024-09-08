@@ -45,6 +45,8 @@ module.exports = {
         "2xl": "1420px",
         "3xl": "1700px",
         "4xl": "2000px",
+        mobile: { max: "767px" },
+        desktop: "768px",
       },
       fontFamily: {
         sans: ["var(--font-inter)"],
@@ -58,17 +60,33 @@ module.exports = {
         searchbar: "850px",
         "document-sidebar": "800px",
         "document-sidebar-large": "1000px",
+        "searchbar-max": "60px",
       },
       maxWidth: {
         "document-sidebar": "1000px",
-        "message-max": "725px",
-        "searchbar-max": "750px",
+        "message-max": "850px",
+        "content-max": "725px",
+        "searchbar-max": "800px",
       },
       colors: {
-        // background
+        // code styling
+        "code-bg": "black", // black
+        "code-text": "#e0e0e0", // light gray
+        "token-comment": "#608b4e", // green
+        "token-punctuation": "#d4d4d4", // light gray
+        "token-property": "#569cd6", // blue
+        "token-selector": "#e07b53", // more vibrant orange
+        "token-atrule": "#d18ad8", // more vibrant purple
+        "token-function": "#f0e68c", // more vibrant light yellow
+        "token-regex": "#9cdcfe", // light blue
+        "token-attr-name": "#9cdcfe", // light blue
 
+        "non-selectable": "#f8d7da", // red-100
+
+        // background
         "background-search": "#ffffff", // white
-        input: "#f5f5f5",
+
+        input: "#ffffff",
 
         background: "#fafafa", // 50
         "background-100": "#f5f5f5", // neutral-100
@@ -77,6 +95,10 @@ module.exports = {
         "background-200": "#e5e5e5", // neutral-200
         "background-300": "#d4d4d4", // neutral-300
         "background-400": "#a3a3a3", // neutral-400
+        "background-600": "#525252", // neutral-800
+        "background-500": "#737373", // neutral-400
+        "background-600": "#525252", // neutral-400
+        "background-700": "#404040", // neutral-400
         "background-800": "#262626", // neutral-800
         "background-900": "#111827", // gray-900
         "background-inverted": "#000000", // black
@@ -94,7 +116,10 @@ module.exports = {
         "text-600": "#525252", // dark, neutral-600
         "text-700": "#404040", // solid, neutral-700
         "text-800": "#262626", // solidDark, neutral-800
+        "text-900": "#111827", // neutral-900
+        "text-950": "#0a0a0a", // solidDark, neutral-800
 
+        description: "#a3a3a3",
         subtle: "#6b7280", // gray-500
         default: "#4b5563", // gray-600
         emphasis: "#374151", // gray-700
@@ -111,11 +136,12 @@ module.exports = {
         accent: "#6366F1", // indigo-500
 
         // borders
-        border: "#e5e7eb", // gray-200
+        border: "#d1d5db", // gray-200
         "border-light": "#f3f4f6", // gray-100
         "border-medium": "#d1d5db", // gray-300
         "border-strong": "#9ca3af", // gray-400
         "border-dark": "#525252", // neutral-600
+        "non-selectable-border": "#f5c2c7", // red-200
 
         // hover
         "hover-light": "#f3f4f6", // gray-100
@@ -230,10 +256,18 @@ module.exports = {
         "tremor-full": "9999px",
       },
       fontSize: {
+        "code-sm": "small",
         "tremor-label": ["0.75rem"],
         "tremor-default": ["0.875rem", { lineHeight: "1.25rem" }],
         "tremor-title": ["1.125rem", { lineHeight: "1.75rem" }],
         "tremor-metric": ["1.875rem", { lineHeight: "2.25rem" }],
+      },
+      fontWeight: {
+        description: "375",
+        "token-bold": "bold",
+      },
+      fontStyle: {
+        "token-italic": "italic",
       },
     },
   },

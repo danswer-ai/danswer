@@ -47,7 +47,7 @@ export function AssistantTools({
   hovered?: boolean;
 }) {
   return (
-    <div className="relative text-xs flex text-subtle">
+    <div className="relative text-xs overflow-x-hidden flex text-subtle">
       <span
         className={`${assistant.tools.length > 0 && "py-1"}  ${!list ? "font-semibold" : "text-subtle text-sm"}`}
       >
@@ -71,8 +71,7 @@ export function AssistantTools({
                     w-fit 
                     flex
                     items-center
-                    ${hovered ? "bg-background-300" : list ? "bg-background-125" : "bg-background-100"}
-                    cursor-pointer`}
+                    ${list ? "bg-background-125" : "bg-background-100"}`}
                 >
                   <div className="flex gap-x-1">
                     <FiSearch key={ind} className="ml-1 h-3 w-3 my-auto" />
@@ -92,8 +91,7 @@ export function AssistantTools({
                     border-border 
                     w-fit 
                     flex
-                    ${hovered ? "bg-background-300" : list ? "bg-background-125" : "bg-background-100"}
-                    cursor-pointer`}
+                    ${list ? "bg-background-125" : "bg-background-100"}`}
                 >
                   <div className="flex items-center gap-x-1">
                     <FiImage
@@ -117,8 +115,7 @@ export function AssistantTools({
                   w-fit 
                   flex
                   items-center
-                  ${hovered ? "bg-background-300" : list ? "bg-background-125" : "bg-background-100"}
-                  cursor-pointer`}
+                  ${hovered ? "bg-background-300" : list ? "bg-background-125" : "bg-background-100"}`}
                 >
                   <div className="flex gap-x-1">{tool.name}</div>
                 </div>

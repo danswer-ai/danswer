@@ -10,11 +10,11 @@ from danswer.chat.models import (
 )
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import ContextualPruningConfig
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prompts.citations_prompt import compute_max_document_tokens
 from danswer.llm.interfaces import LLMConfig
-from danswer.natural_language_processing.utils import get_default_llm_tokenizer
+from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.natural_language_processing.utils import tokenizer_trim_content
 from danswer.prompts.prompt_utils import build_doc_context_str
 from danswer.search.models import InferenceChunk
@@ -28,6 +28,9 @@ logger = setup_logger()
 T = TypeVar("T", bound=LlmDoc | InferenceChunk | InferenceSection)
 
 _METADATA_TOKEN_ESTIMATE = 75
+# Title and additional tokens as part of the tool message json
+# this is only used to log a warning so we can be more forgiving with the buffer
+_OVERCOUNT_ESTIMATE = 256
 
 
 class PruningError(Exception):
@@ -135,8 +138,12 @@ def _apply_pruning(
     is_manually_selected_docs: bool,
     use_sections: bool,
     using_tool_message: bool,
+    llm_config: LLMConfig,
 ) -> list[InferenceSection]:
-    llm_tokenizer = get_default_llm_tokenizer()
+    llm_tokenizer = get_tokenizer(
+        provider_type=llm_config.model_provider,
+        model_name=llm_config.model_name,
+    )
     sections = deepcopy(sections)  # don't modify in place
 
     # re-order docs with all the "relevant" docs at the front
@@ -165,27 +172,36 @@ def _apply_pruning(
             )
         )
 
-        section_tokens = len(llm_tokenizer.encode(section_str))
+        section_token_count = len(llm_tokenizer.encode(section_str))
         # if not using sections (specifically, using Sections where each section maps exactly to the one center chunk),
         # truncate chunks that are way too long. This can happen if the embedding model tokenizer is different
         # than the LLM tokenizer
         if (
             not is_manually_selected_docs
             and not use_sections
-            and section_tokens > DOC_EMBEDDING_CONTEXT_SIZE + _METADATA_TOKEN_ESTIMATE
+            and section_token_count
+            > DOC_EMBEDDING_CONTEXT_SIZE + _METADATA_TOKEN_ESTIMATE
         ):
-            logger.warning(
-                "Found more tokens in Section than expected, "
-                "likely mismatch between embedding and LLM tokenizers. Trimming content..."
-            )
+            if (
+                section_token_count
+                > DOC_EMBEDDING_CONTEXT_SIZE
+                + _METADATA_TOKEN_ESTIMATE
+                + _OVERCOUNT_ESTIMATE
+            ):
+                # If the section is just a little bit over, it is likely due to the additional tool message tokens
+                # no need to record this, the content will be trimmed just in case
+                logger.warning(
+                    "Found more tokens in Section than expected, "
+                    "likely mismatch between embedding and LLM tokenizers. Trimming content..."
+                )
             section.combined_content = tokenizer_trim_content(
                 content=section.combined_content,
                 desired_length=DOC_EMBEDDING_CONTEXT_SIZE,
                 tokenizer=llm_tokenizer,
             )
-            section_tokens = DOC_EMBEDDING_CONTEXT_SIZE
+            section_token_count = DOC_EMBEDDING_CONTEXT_SIZE
 
-        total_tokens += section_tokens
+        total_tokens += section_token_count
         if total_tokens > token_limit:
             final_section_ind = ind
             break
@@ -250,29 +266,37 @@ def prune_sections(
     prompt_config: PromptConfig,
     llm_config: LLMConfig,
     question: str,
-    document_pruning_config: DocumentPruningConfig,
+    contextual_pruning_config: ContextualPruningConfig,
 ) -> list[InferenceSection]:
     # Assumes the sections are score ordered with highest first
     if section_relevance_list is not None:
         assert len(sections) == len(section_relevance_list)
 
+    actual_num_chunks = (
+        contextual_pruning_config.max_chunks
+        * contextual_pruning_config.num_chunk_multiple
+        if contextual_pruning_config.max_chunks
+        else None
+    )
+
     token_limit = _compute_limit(
         prompt_config=prompt_config,
         llm_config=llm_config,
         question=question,
-        max_chunks=document_pruning_config.max_chunks,
-        max_window_percentage=document_pruning_config.max_window_percentage,
-        max_tokens=document_pruning_config.max_tokens,
-        tool_token_count=document_pruning_config.tool_num_tokens,
+        max_chunks=actual_num_chunks,
+        max_window_percentage=contextual_pruning_config.max_window_percentage,
+        max_tokens=contextual_pruning_config.max_tokens,
+        tool_token_count=contextual_pruning_config.tool_num_tokens,
     )
 
     return _apply_pruning(
         sections=sections,
         section_relevance_list=section_relevance_list,
         token_limit=token_limit,
-        is_manually_selected_docs=document_pruning_config.is_manually_selected_docs,
-        use_sections=document_pruning_config.use_sections,  # Now default True
-        using_tool_message=document_pruning_config.using_tool_message,
+        is_manually_selected_docs=contextual_pruning_config.is_manually_selected_docs,
+        use_sections=contextual_pruning_config.use_sections,  # Now default True
+        using_tool_message=contextual_pruning_config.using_tool_message,
+        llm_config=llm_config,
     )
 
 
@@ -343,7 +367,7 @@ def prune_and_merge_sections(
     prompt_config: PromptConfig,
     llm_config: LLMConfig,
     question: str,
-    document_pruning_config: DocumentPruningConfig,
+    contextual_pruning_config: ContextualPruningConfig,
 ) -> list[InferenceSection]:
     # Assumes the sections are score ordered with highest first
     remaining_sections = prune_sections(
@@ -352,7 +376,7 @@ def prune_and_merge_sections(
         prompt_config=prompt_config,
         llm_config=llm_config,
         question=question,
-        document_pruning_config=document_pruning_config,
+        contextual_pruning_config=contextual_pruning_config,
     )
 
     merged_sections = _merge_sections(sections=remaining_sections)

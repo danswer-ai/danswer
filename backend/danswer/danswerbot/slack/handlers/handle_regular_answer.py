@@ -1,5 +1,4 @@
 import functools
-import logging
 from collections.abc import Callable
 from typing import Any
 from typing import cast
@@ -23,6 +22,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
 from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
+from danswer.connectors.slack.utils import expert_info_from_slack_id
 from danswer.danswerbot.slack.blocks import build_documents_blocks
 from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
@@ -38,6 +38,8 @@ from danswer.db.models import Persona
 from danswer.db.models import SlackBotConfig
 from danswer.db.models import SlackBotResponseType
 from danswer.db.persona import fetch_persona_by_id
+from danswer.db.search_settings import get_current_search_settings
+from danswer.db.users import get_user_by_email
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
@@ -49,8 +51,9 @@ from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.models import BaseFilters
+from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
-from shared_configs.configs import ENABLE_RERANKING_ASYNC_FLOW
+from danswer.utils.logger import DanswerLoggingAdapter
 
 
 srl = SlackRateLimiter()
@@ -83,7 +86,7 @@ def handle_regular_answer(
     receiver_ids: list[str] | None,
     client: WebClient,
     channel: str,
-    logger: logging.Logger,
+    logger: DanswerLoggingAdapter,
     feedback_reminder_id: str | None,
     num_retries: int = DANSWER_BOT_NUM_RETRIES,
     answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
@@ -98,6 +101,15 @@ def handle_regular_answer(
     messages = message_info.thread_messages
     message_ts_to_respond_to = message_info.msg_to_respond
     is_bot_msg = message_info.is_bot_msg
+    user = None
+    if message_info.is_bot_dm:
+        slack_user_info = expert_info_from_slack_id(
+            message_info.sender, client, user_cache={}
+        )
+        if slack_user_info and slack_user_info.email:
+            engine = get_sqlalchemy_engine()
+            with Session(engine) as db_session:
+                user = get_user_by_email(slack_user_info.email, db_session)
 
     document_set_names: list[str] | None = None
     persona = slack_bot_config.persona if slack_bot_config else None
@@ -136,7 +148,6 @@ def handle_regular_answer(
         tries=num_retries,
         delay=0.25,
         backoff=2,
-        logger=logger,
     )
     @rate_limits(client=client, channel=channel, thread_ts=message_ts_to_respond_to)
     def _get_answer(new_message_request: DirectQARequest) -> OneShotQAResponse | None:
@@ -147,7 +158,12 @@ def handle_regular_answer(
             if len(new_message_request.messages) > 1:
                 persona = cast(
                     Persona,
-                    fetch_persona_by_id(db_session, new_message_request.persona_id),
+                    fetch_persona_by_id(
+                        db_session,
+                        new_message_request.persona_id,
+                        user=None,
+                        get_editable=False,
+                    ),
                 )
                 llm, _ = get_llms_for_persona(persona)
 
@@ -180,7 +196,7 @@ def handle_regular_answer(
             # This also handles creating the query event in postgres
             answer = get_search_answer(
                 query_req=new_message_request,
-                user=None,
+                user=user,
                 max_document_tokens=max_document_tokens,
                 max_history_tokens=max_history_tokens,
                 db_session=db_session,
@@ -223,15 +239,24 @@ def handle_regular_answer(
             enable_auto_detect_filters=auto_detect_filters,
         )
 
+        # Always apply reranking settings if it exists, this is the non-streaming flow
+        with Session(get_sqlalchemy_engine()) as db_session:
+            saved_search_settings = get_current_search_settings(db_session)
+
         # This includes throwing out answer via reflexion
         answer = _get_answer(
             DirectQARequest(
                 messages=messages,
+                multilingual_query_expansion=saved_search_settings.multilingual_expansion
+                if saved_search_settings
+                else None,
                 prompt_id=prompt.id if prompt else None,
                 persona_id=persona.id if persona is not None else 0,
                 retrieval_options=retrieval_details,
                 chain_of_thought=not disable_cot,
-                skip_rerank=not ENABLE_RERANKING_ASYNC_FLOW,
+                rerank_settings=RerankingDetails.from_db_model(saved_search_settings)
+                if saved_search_settings
+                else None,
             )
         )
     except Exception as e:
@@ -311,7 +336,7 @@ def handle_regular_answer(
     )
 
     if answer.answer_valid is False:
-        logger.info(
+        logger.notice(
             "Answer was evaluated to be invalid, throwing it away without responding."
         )
         update_emote_react(
@@ -349,7 +374,7 @@ def handle_regular_answer(
         return True
 
     if not answer.answer and disable_docs_only_answer:
-        logger.info(
+        logger.notice(
             "Unable to find answer - not responding since the "
             "`DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER` env variable is set"
         )

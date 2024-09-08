@@ -1,18 +1,18 @@
 "use client";
 
 import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
-
 import { ChatSession } from "@/app/chat/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { User } from "@/lib/types";
 import Cookies from "js-cookie";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useRouter } from "next/navigation";
 import { pageType } from "../chat/sessionSidebar/types";
 import FixedLogo from "../chat/shared_chat_search/FixedLogo";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 interface SidebarWrapperProps<T extends object> {
   chatSessions?: ChatSession[];
@@ -26,6 +26,7 @@ interface SidebarWrapperProps<T extends object> {
   };
   contentProps: T;
   page: pageType;
+  size?: "sm" | "lg";
 }
 
 export default function SidebarWrapper<T extends object>({
@@ -37,10 +38,21 @@ export default function SidebarWrapper<T extends object>({
   headerProps,
   contentProps,
   content,
+  size = "sm",
 }: SidebarWrapperProps<T>) {
   const [toggledSidebar, setToggledSidebar] = useState(initiallyToggled);
-
   const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
+  // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
+  const [untoggled, setUntoggled] = useState(false);
+
+  const explicitlyUntoggle = () => {
+    setShowDocSidebar(false);
+
+    setUntoggled(true);
+    setTimeout(() => {
+      setUntoggled(false);
+    }, 200);
+  };
 
   const toggleSidebar = () => {
     Cookies.set(
@@ -55,11 +67,13 @@ export default function SidebarWrapper<T extends object>({
 
   const sidebarElementRef = useRef<HTMLDivElement>(null);
 
+  const settings = useContext(SettingsContext);
   useSidebarVisibility({
     toggledSidebar,
     sidebarElementRef,
     showDocSidebar,
     setShowDocSidebar,
+    mobile: settings?.isMobile,
   });
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
@@ -90,9 +104,7 @@ export default function SidebarWrapper<T extends object>({
             flex-none
             fixed
             left-0
-            z-20
-            overflow-y-hidden
-            sidebar
+            z-30
             bg-background-100
             h-screen
             transition-all
@@ -100,7 +112,7 @@ export default function SidebarWrapper<T extends object>({
             duration-300
             ease-in-out
             ${
-              showDocSidebar || toggledSidebar
+              !untoggled && (showDocSidebar || toggledSidebar)
                 ? "opacity-100 w-[250px] translate-x-0"
                 : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }`}
@@ -108,6 +120,7 @@ export default function SidebarWrapper<T extends object>({
         <div className="w-full relative">
           <HistorySidebar
             page={page}
+            explicitlyUntoggle={explicitlyUntoggle}
             ref={innerSidebarElementRef}
             toggleSidebar={toggleSidebar}
             toggled={toggledSidebar}
@@ -119,10 +132,11 @@ export default function SidebarWrapper<T extends object>({
         </div>
       </div>
 
-      <div className="absolute left-0 w-full top-0">
+      <div className="absolute h-svh left-0 w-full top-0">
         <FunctionalHeader
+          sidebarToggled={toggledSidebar}
+          toggleSidebar={toggleSidebar}
           page="assistants"
-          showSidebar={showDocSidebar}
           user={headerProps.user}
         />
         <div className="w-full flex">
@@ -138,7 +152,10 @@ export default function SidebarWrapper<T extends object>({
                       ease-in-out
                       ${toggledSidebar ? "w-[250px]" : "w-[0px]"}`}
           />
-          <div className="mt-4 w-full max-w-3xl mx-auto">
+
+          <div
+            className={`mt-4 w-full ${size == "lg" ? "max-w-4xl" : "max-w-3xl"} mx-auto`}
+          >
             {content(contentProps)}
           </div>
         </div>

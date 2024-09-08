@@ -1,11 +1,8 @@
-import { SearchSection } from "@/components/search/SearchSection";
-import { Header } from "@/components/header/Header";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
-import { getSecondsUntilExpiration } from "@/lib/time";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
@@ -21,7 +18,7 @@ import {
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { personaComparator } from "../admin/assistants/lib";
-import { FullEmbeddingModelResponse } from "../admin/models/embedding/components/types";
+import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
@@ -29,14 +26,12 @@ import {
   FetchAssistantsResponse,
   fetchAssistantsSS,
 } from "@/lib/assistants/fetchAssistantsSS";
-import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { ChatSession } from "../chat/interfaces";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
-import ToggleSearch from "./WrappedSearch";
 import {
   AGENTIC_SEARCH_TYPE_COOKIE_NAME,
   NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN,
-  DISABLE_AGENTIC_SEARCH,
+  DISABLE_LLM_DOC_RELEVANCE,
 } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
 
@@ -53,7 +48,7 @@ export default async function Home() {
     fetchSS("/manage/document-set"),
     fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
-    fetchSS("/secondary-index/get-embedding-models"),
+    fetchSS("/search-settings/get-all-search-settings"),
     fetchSS("/query/user-searches"),
   ];
 
@@ -183,13 +178,12 @@ export default async function Home() {
   const agenticSearchEnabled = agenticSearchToggle
     ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || false
     : false;
-  const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   return (
     <>
-      <Header user={user} />
-      <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
+      <HealthCheckBanner />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
+      <InstantSSRAutoRefresh />
 
       {!shouldShowWelcomeModal &&
         !shouldDisplayNoSourcesModal &&
@@ -205,9 +199,8 @@ export default async function Home() {
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <InstantSSRAutoRefresh />
       <WrappedSearch
-        disabledAgentic={DISABLE_AGENTIC_SEARCH}
+        disabledAgentic={DISABLE_LLM_DOC_RELEVANCE}
         initiallyToggled={toggleSidebar}
         querySessions={querySessions}
         user={user}

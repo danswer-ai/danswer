@@ -47,7 +47,8 @@ export function linkCredential(
   connectorId: number,
   credentialId: number,
   name?: string,
-  isPublic?: boolean
+  isPublic?: boolean,
+  groups?: number[]
 ) {
   return fetch(
     `/api/manage/connector/${connectorId}/credential/${credentialId}`,
@@ -59,6 +60,7 @@ export function linkCredential(
       body: JSON.stringify({
         name: name || null,
         is_public: isPublic !== undefined ? isPublic : true,
+        groups: groups || null,
       }),
     }
   );
@@ -71,7 +73,7 @@ export function updateCredential(credentialId: number, newDetails: any) {
       ([key, value]) => key !== "name" && value !== ""
     )
   );
-  return fetch(`/api/manage/admin/credentials/${credentialId}`, {
+  return fetch(`/api/manage/admin/credential/${credentialId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -84,7 +86,7 @@ export function updateCredential(credentialId: number, newDetails: any) {
 }
 
 export function swapCredential(newCredentialId: number, connectorId: number) {
-  return fetch(`/api/manage/admin/credentials/swap`, {
+  return fetch(`/api/manage/admin/credential/swap`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

@@ -1,4 +1,4 @@
-import { ValidInputTypes, ValidSources } from "../types";
+import { ConfigurableSources, ValidInputTypes, ValidSources } from "../types";
 
 export type InputType =
   | "list"
@@ -26,13 +26,13 @@ export interface Option {
 
 export interface SelectOption extends Option {
   type: "select";
-  default?: number;
   options?: StringWithDescription[];
 }
 
 export interface ListOption extends Option {
   type: "list";
   default?: string[];
+  transform?: (values: string[]) => string[];
 }
 
 export interface TextOption extends Option {
@@ -75,7 +75,10 @@ export interface ConnectionConfiguration {
   overrideDefaultFreq?: number;
 }
 
-export const connectorConfigs: Record<ValidSources, ConnectionConfiguration> = {
+export const connectorConfigs: Record<
+  ConfigurableSources,
+  ConnectionConfiguration
+> = {
   web: {
     description: "Configure Web connector",
     values: [
@@ -92,7 +95,6 @@ export const connectorConfigs: Record<ValidSources, ConnectionConfiguration> = {
         query: "Select the web connector type:",
         label: "Scrape Method",
         name: "web_connector_type",
-        optional: true,
         options: [
           { name: "recursive", value: "recursive" },
           { name: "single", value: "single" },
@@ -218,24 +220,56 @@ export const connectorConfigs: Record<ValidSources, ConnectionConfiguration> = {
   },
   confluence: {
     description: "Configure Confluence connector",
-    subtext: `Specify any link to a Confluence page below and click "Index" to Index. Based on the provided link, we will index either the entire page and its subpages OR the entire space. For example, entering https://danswer.atlassian.net/wiki/spaces/Engineering/overview and clicking the Index button will index the whole Engineering Confluence space, but entering https://danswer.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page will index that page's children (and optionally, itself). Use the checkbox below to determine whether or not to index the parent page in addition to its children.
+    subtext: `Specify the base URL of your Confluence instance, the space name, and optionally a specific page ID to index. If no page ID is provided, the entire space will be indexed.
 
-We pull the latest pages and comments from each space listed below every 10 minutes`,
+For example, entering "https://pablosfsanchez.atlassian.net/wiki" as the Wiki Base URL, "KB" as the Space, and "164331" as the Page ID will index the specific page at https://pablosfsanchez.atlassian.net/wiki/spaces/KB/pages/164331/Page. If you leave the Page ID empty, it will index the entire KB space.
+
+Selecting the "Index Recursively" checkbox will index the specified page and all of its children.`,
     values: [
       {
         type: "text",
-        query: "Enter the wiki page URL:",
-        label: "Wiki Page URL",
-        name: "wiki_page_url",
+        query: "Enter the wiki base URL:",
+        label: "Wiki Base URL",
+        name: "wiki_base",
         optional: false,
-        description: "Enter any link to a Confluence space or Page",
+        description:
+          "The base URL of your Confluence instance (e.g., https://your-domain.atlassian.net/wiki)",
+      },
+      {
+        type: "text",
+        query: "Enter the space:",
+        label: "Space",
+        name: "space",
+        optional: false,
+        description: "The Confluence space name to index (e.g. `KB`)",
+      },
+      {
+        type: "text",
+        query: "Enter the page ID (optional):",
+        label: "Page ID",
+        name: "page_id",
+        optional: true,
+        description:
+          "Specific page ID to index  - leave empty to index the entire space (e.g. `131368`)",
       },
       {
         type: "checkbox",
-        query: "(For pages) Index the page itself",
-        label: "(For pages) Index the page itself",
-        name: "index_origin",
-        optional: true,
+        query: "Should index pages recursively?",
+        label: "Index Recursively",
+        name: "index_recursively",
+        description:
+          "If this is set and the Wiki Page URL leads to a page, we will index the page and all of its children instead of just the page. This is set by default for Confluence connectors without a page ID specified.",
+        optional: false,
+      },
+      {
+        type: "checkbox",
+        query: "Is this a Confluence Cloud instance?",
+        label: "Is Cloud",
+        name: "is_cloud",
+        optional: false,
+        default: true,
+        description:
+          "Check if this is a Confluence Cloud instance, uncheck for Confluence Server/Data Center",
       },
     ],
   },
@@ -360,6 +394,8 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
         name: "channels",
         description: `Specify 0 or more channels to index. For example, specifying the channel "support" will cause us to only index all content within the "#support" channel. If no channels are specified, all channels in your workspace will be indexed.`,
         optional: true,
+        // Slack channels can only be lowercase
+        transform: (values) => values.map((value) => value.toLowerCase()),
       },
       {
         type: "checkbox",
@@ -769,7 +805,8 @@ export interface ConnectorBase<T> {
   refresh_freq: number | null;
   prune_freq: number | null;
   indexing_start: Date | null;
-  disabled: boolean;
+  is_public?: boolean;
+  groups?: number[];
 }
 
 export interface Connector<T> extends ConnectorBase<T> {
@@ -810,8 +847,11 @@ export interface GmailConfig {}
 export interface BookstackConfig {}
 
 export interface ConfluenceConfig {
-  wiki_page_url: string;
-  index_origin?: boolean;
+  wiki_base: string;
+  space: string;
+  page_id?: string;
+  is_cloud?: boolean;
+  index_recursively?: boolean;
 }
 
 export interface JiraConfig {

@@ -1,18 +1,49 @@
 "use client";
 
-import { useState, useRef, useContext } from "react";
-import { FiSearch, FiMessageSquare, FiTool, FiLogOut } from "react-icons/fi";
+import { useState, useRef, useContext, useEffect } from "react";
+import { FiLogOut } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User } from "@/lib/types";
+import { User, UserRole } from "@/lib/types";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
-import { BasicSelectable } from "@/components/BasicClickable";
 import { Popover } from "./popover/Popover";
 import { LOGOUT_DISABLED } from "@/lib/constants";
-import { Settings } from "@/app/admin/settings/interfaces";
 import { SettingsContext } from "./settings/SettingsProvider";
-import { LightSettingsIcon } from "./icons/icons";
+import {
+  AssistantsIconSkeleton,
+  LightSettingsIcon,
+  UsersIcon,
+} from "./icons/icons";
 import { pageType } from "@/app/chat/sessionSidebar/types";
+import { NavigationItem } from "@/app/admin/settings/interfaces";
+import DynamicFaIcon, { preloadIcons } from "./icons/DynamicFaIcon";
+
+interface DropdownOptionProps {
+  href?: string;
+  onClick?: () => void;
+  icon: React.ReactNode;
+  label: string;
+}
+
+const DropdownOption: React.FC<DropdownOptionProps> = ({
+  href,
+  onClick,
+  icon,
+  label,
+}) => {
+  const content = (
+    <div className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light">
+      {icon}
+      {label}
+    </div>
+  );
+
+  return href ? (
+    <Link href={href}>{content}</Link>
+  ) : (
+    <div onClick={onClick}>{content}</div>
+  );
+};
 
 export function UserDropdown({
   user,
@@ -26,10 +57,17 @@ export function UserDropdown({
   const router = useRouter();
 
   const combinedSettings = useContext(SettingsContext);
+  const customNavItems: NavigationItem[] =
+    combinedSettings?.enterpriseSettings?.custom_nav_items || [];
+
+  useEffect(() => {
+    const iconNames = customNavItems.map((item) => item.icon);
+    preloadIcons(iconNames);
+  }, [customNavItems]);
+
   if (!combinedSettings) {
     return null;
   }
-  const settings = combinedSettings.settings;
 
   const handleLogout = () => {
     logout().then((isSuccess) => {
@@ -40,7 +78,10 @@ export function UserDropdown({
     });
   };
 
-  const showAdminPanel = !user || user.role === "admin";
+  const showAdminPanel = !user || user.role === UserRole.ADMIN;
+  const showCuratorPanel =
+    user &&
+    (user.role === UserRole.CURATOR || user.role === UserRole.GLOBAL_CURATOR);
   const showLogout =
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
@@ -54,7 +95,22 @@ export function UserDropdown({
             onClick={() => setUserInfoVisible(!userInfoVisible)}
             className="flex cursor-pointer"
           >
-            <div className="my-auto bg-background-strong ring-2 ring-transparent group-hover:ring-background-300/50 transition-ring duration-150 rounded-lg inline-block flex-none px-2 text-base font-normal">
+            <div
+              className="
+                my-auto
+                bg-background-strong
+                ring-2
+                ring-transparent
+                group-hover:ring-background-300/50
+                transition-ring
+                duration-150
+                rounded-lg
+                inline-block
+                flex-none
+                px-2
+                text-base
+              "
+            >
               {user && user.email ? user.email[0].toUpperCase() : "A"}
             </div>
           </div>
@@ -62,8 +118,8 @@ export function UserDropdown({
         popover={
           <div
             className={`
-              p-2
-              min-w-[200px]
+                p-2
+                min-w-[200px]
                 text-strong 
                 text-sm
                 border 
@@ -80,30 +136,49 @@ export function UserDropdown({
                 overscroll-contain
               `}
           >
-            {showAdminPanel && (
-              <>
-                <Link
+            {customNavItems.map((item, i) => (
+              <DropdownOption
+                key={i}
+                href={item.link}
+                icon={
+                  <DynamicFaIcon
+                    name={item.icon}
+                    className="h-4 w-4 my-auto mr-2"
+                  />
+                }
+                label={item.title}
+              />
+            ))}
+
+            {showAdminPanel ? (
+              <DropdownOption
+                href="/admin/indexing/status"
+                icon={<LightSettingsIcon className="h-5 w-5 my-auto mr-2" />}
+                label="Admin Panel"
+              />
+            ) : (
+              showCuratorPanel && (
+                <DropdownOption
                   href="/admin/indexing/status"
-                  className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light"
-                >
-                  <LightSettingsIcon className="h-5 w-5 text-text-200est0 my-auto mr-2" />
-                  Admin Panel
-                </Link>
-              </>
+                  icon={<LightSettingsIcon className="h-5 w-5 my-auto mr-2" />}
+                  label="Curator Panel"
+                />
+              )
             )}
+
+            {showLogout &&
+              (showCuratorPanel ||
+                showAdminPanel ||
+                customNavItems.length > 0) && (
+                <div className="border-t border-border my-1" />
+              )}
+
             {showLogout && (
-              <>
-                {(!(page == "search" || page == "chat") || showAdminPanel) && (
-                  <div className="border-t border-border my-1" />
-                )}
-                <div
-                  onClick={handleLogout}
-                  className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-hover-light"
-                >
-                  <FiLogOut className="my-auto mr-2 text-lg" />
-                  Log out
-                </div>
-              </>
+              <DropdownOption
+                onClick={handleLogout}
+                icon={<FiLogOut className="my-auto mr-2 text-lg" />}
+                label="Log out"
+              />
             )}
           </div>
         }

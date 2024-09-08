@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
-from pydantic import root_validator
+from pydantic import model_validator
 
 from danswer.chat.models import RetrievalDocs
 from danswer.configs.constants import DocumentSource
@@ -44,11 +44,6 @@ class ChatSessionCreationRequest(BaseModel):
     description: str | None = None
 
 
-class HelperResponse(BaseModel):
-    values: dict[str, str]
-    details: list[str] | None = None
-
-
 class CreateChatSessionID(BaseModel):
     chat_session_id: int
 
@@ -59,16 +54,11 @@ class ChatFeedbackRequest(BaseModel):
     feedback_text: str | None = None
     predefined_feedback: str | None = None
 
-    @root_validator
-    def check_is_positive_or_feedback_text(cls: BaseModel, values: dict) -> dict:
-        is_positive, feedback_text = values.get("is_positive"), values.get(
-            "feedback_text"
-        )
-
-        if is_positive is None and feedback_text is None:
+    @model_validator(mode="after")
+    def check_is_positive_or_feedback_text(self) -> "ChatFeedbackRequest":
+        if self.is_positive is None and self.feedback_text is None:
             raise ValueError("Empty feedback received.")
-
-        return values
+        return self
 
 
 """
@@ -103,7 +93,11 @@ class CreateChatMessageRequest(ChunkContext):
     # will disable Query Rewording if specified
     query_override: str | None = None
 
+    # enables additional handling to ensure that we regenerate with a given user message ID
+    regenerate: bool | None = None
+
     # allows the caller to override the Persona / Prompt
+    # these do not persist in the chat thread details
     llm_override: LLMOverride | None = None
     prompt_override: PromptOverride | None = None
 
@@ -113,18 +107,13 @@ class CreateChatMessageRequest(ChunkContext):
     # used for seeded chats to kick off the generation of an AI answer
     use_existing_user_message: bool = False
 
-    @root_validator
-    def check_search_doc_ids_or_retrieval_options(cls: BaseModel, values: dict) -> dict:
-        search_doc_ids, retrieval_options = values.get("search_doc_ids"), values.get(
-            "retrieval_options"
-        )
-
-        if search_doc_ids is None and retrieval_options is None:
+    @model_validator(mode="after")
+    def check_search_doc_ids_or_retrieval_options(self) -> "CreateChatMessageRequest":
+        if self.search_doc_ids is None and self.retrieval_options is None:
             raise ValueError(
                 "Either search_doc_ids or retrieval_options must be provided, but not both or neither."
             )
-
-        return values
+        return self
 
 
 class ChatMessageIdentifier(BaseModel):
@@ -150,7 +139,7 @@ class ChatSessionDetails(BaseModel):
     persona_id: int
     time_created: str
     shared_status: ChatSessionSharedStatus
-    folder_id: int | None
+    folder_id: int | None = None
     current_alternate_model: str | None = None
 
 
@@ -163,35 +152,36 @@ class SearchFeedbackRequest(BaseModel):
     document_id: str
     document_rank: int
     click: bool
-    search_feedback: SearchFeedbackType | None
+    search_feedback: SearchFeedbackType | None = None
 
-    @root_validator
-    def check_click_or_search_feedback(cls: BaseModel, values: dict) -> dict:
-        click, feedback = values.get("click"), values.get("search_feedback")
+    @model_validator(mode="after")
+    def check_click_or_search_feedback(self) -> "SearchFeedbackRequest":
+        click, feedback = self.click, self.search_feedback
 
         if click is False and feedback is None:
             raise ValueError("Empty feedback received.")
-        return values
+        return self
 
 
 class ChatMessageDetail(BaseModel):
     message_id: int
-    parent_message: int | None
-    latest_child_message: int | None
+    parent_message: int | None = None
+    latest_child_message: int | None = None
     message: str
-    rephrased_query: str | None
-    context_docs: RetrievalDocs | None
+    rephrased_query: str | None = None
+    context_docs: RetrievalDocs | None = None
     message_type: MessageType
     time_sent: datetime
-    alternate_assistant_id: str | None
+    overridden_model: str | None
+    alternate_assistant_id: int | None = None
     # Dict mapping citation number to db_doc_id
     chat_session_id: int | None = None
-    citations: dict[int, int] | None
+    citations: dict[int, int] | None = None
     files: list[FileDescriptor]
     tool_calls: list[ToolCallFinalResult]
 
-    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
-        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+    def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().model_dump(mode="json", *args, **kwargs)  # type: ignore
         initial_dict["time_sent"] = self.time_sent.isoformat()
         return initial_dict
 
@@ -226,7 +216,3 @@ class AdminSearchRequest(BaseModel):
 
 class AdminSearchResponse(BaseModel):
     documents: list[SearchDoc]
-
-
-class DanswerAnswer(BaseModel):
-    answer: str | None

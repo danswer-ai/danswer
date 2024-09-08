@@ -2,6 +2,7 @@ import {
   DanswerDocument,
   Filters,
   SearchDanswerDocument,
+  StreamStopReason,
 } from "@/lib/search/interfaces";
 
 export enum RetrievalType {
@@ -87,6 +88,9 @@ export interface Message {
   childrenMessageIds?: number[];
   latestChildMessageId?: number | null;
   alternateAssistantID?: number | null;
+  stackTrace?: string | null;
+  overridden_model?: string;
+  stopReason?: StreamStopReason | null;
 }
 
 export interface BackendChatSession {
@@ -115,6 +119,12 @@ export interface BackendMessage {
   files: FileDescriptor[];
   tool_calls: ToolCallFinalResult[];
   alternate_assistant_id?: number | null;
+  overridden_model?: string;
+}
+
+export interface MessageResponseIDInfo {
+  user_message_id: number | null;
+  reserved_assistant_message_id: number;
 }
 
 export interface DocumentsResponse {
@@ -128,4 +138,5 @@ export interface ImageGenerationDisplay {
 
 export interface StreamingError {
   error: string;
+  stack_trace: string;
 }

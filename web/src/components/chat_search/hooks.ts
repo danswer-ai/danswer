@@ -5,18 +5,22 @@ interface UseSidebarVisibilityProps {
   sidebarElementRef: React.RefObject<HTMLElement>;
   showDocSidebar: boolean;
   setShowDocSidebar: Dispatch<SetStateAction<boolean>>;
+  mobile?: boolean;
+  setToggled?: () => void;
 }
 
 export const useSidebarVisibility = ({
   toggledSidebar,
   sidebarElementRef,
   setShowDocSidebar,
+  setToggled,
   showDocSidebar,
+  mobile,
 }: UseSidebarVisibilityProps) => {
   const xPosition = useRef(0);
 
   useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
+    const handleEvent = (event: MouseEvent) => {
       const currentXPosition = event.clientX;
       xPosition.current = currentXPosition;
 
@@ -28,30 +32,52 @@ export const useSidebarVisibility = ({
           currentXPosition <= sidebarRect.right &&
           event.clientY >= sidebarRect.top &&
           event.clientY <= sidebarRect.bottom;
+
         const sidebarStyle = window.getComputedStyle(sidebarElementRef.current);
         const isVisible = sidebarStyle.opacity !== "0";
         if (isWithinSidebar && isVisible) {
-          setShowDocSidebar(true);
+          if (!mobile) {
+            setShowDocSidebar(true);
+          }
         }
+
+        if (mobile && !isWithinSidebar && setToggled) {
+          setToggled();
+          return;
+        }
+
         if (
           currentXPosition > 100 &&
           showDocSidebar &&
           !isWithinSidebar &&
           !toggledSidebar
         ) {
-          setShowDocSidebar(false);
+          setTimeout(() => {
+            setShowDocSidebar((showDocSidebar) => {
+              // Account for possition as point in time of
+              return !(xPosition.current > sidebarRect.right);
+            });
+          }, 200);
         } else if (currentXPosition < 100 && !showDocSidebar) {
-          setShowDocSidebar(true);
+          if (!mobile) {
+            setShowDocSidebar(true);
+          }
         }
       }
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
+    const handleMouseLeave = () => {
+      setShowDocSidebar(false);
+    };
+
+    document.addEventListener("mousemove", handleEvent);
+    document.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mousemove", handleEvent);
+      document.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [showDocSidebar, toggledSidebar, sidebarElementRef]);
+  }, [showDocSidebar, toggledSidebar, sidebarElementRef, mobile]);
 
   return { showDocSidebar };
 };

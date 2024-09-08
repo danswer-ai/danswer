@@ -1,17 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
-import { IconType } from "react-icons";
-import { DefaultDropdownElement } from "../../../components/Dropdown";
-import { Popover } from "../../../components/popover/Popover";
-import { IconProps } from "@/components/icons/icons";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  IconProps,
+} from "@/components/icons/icons";
 
 interface ChatInputOptionProps {
-  name: string;
+  name?: string;
   Icon: ({ size, className }: IconProps) => JSX.Element;
   onClick?: () => void;
   size?: number;
   tooltipContent?: React.ReactNode;
-  options?: { name: string; value: number; onClick?: () => void }[];
   flexPriority?: "shrink" | "stiff" | "second";
+  toggle?: boolean;
 }
 
 export const ChatInputOption: React.FC<ChatInputOptionProps> = ({
@@ -19,9 +20,9 @@ export const ChatInputOption: React.FC<ChatInputOptionProps> = ({
   Icon,
   // icon: Icon,
   size = 16,
-  options,
   flexPriority,
   tooltipContent,
+  toggle,
   onClick,
 }) => {
   const [isDropupVisible, setDropupVisible] = useState(false);
@@ -61,7 +62,7 @@ export const ChatInputOption: React.FC<ChatInputOptionProps> = ({
         rounded-md
         ${
           flexPriority === "shrink" &&
-          "flex-shrink-[10000] flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap overflow-hidden"
+          "flex-shrink-100 flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap overflow-hidden"
         }
         ${
           flexPriority === "second" &&
@@ -76,7 +77,13 @@ export const ChatInputOption: React.FC<ChatInputOptionProps> = ({
       onClick={onClick}
     >
       <Icon size={size} className="flex-none" />
-      <span className="text-sm break-all line-clamp-1">{name}</span>
+      <div className="flex items-center gap-x-.5">
+        {name && <span className="text-sm break-all line-clamp-1">{name}</span>}
+        {toggle && (
+          <ChevronDownIcon className="flex-none ml-1" size={size - 4} />
+        )}
+      </div>
+
       {isTooltipVisible && tooltipContent && (
         <div
           className="absolute z-10 p-2 text-sm text-white bg-black rounded shadow-lg"

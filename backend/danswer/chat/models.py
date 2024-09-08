@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from datetime import datetime
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
@@ -9,6 +10,7 @@ from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SearchResponse
+from danswer.tools.custom.base_tool_types import ToolResultType
 
 
 class LlmDoc(BaseModel):
@@ -34,27 +36,49 @@ class QADocsResponse(RetrievalDocs):
     applied_time_cutoff: datetime | None
     recency_bias_multiplier: float
 
-    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
-        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+    def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().model_dump(mode="json", *args, **kwargs)  # type: ignore
         initial_dict["applied_time_cutoff"] = (
             self.applied_time_cutoff.isoformat() if self.applied_time_cutoff else None
         )
+
         return initial_dict
+
+
+class StreamStopReason(Enum):
+    CONTEXT_LENGTH = "context_length"
+    CANCELLED = "cancelled"
+
+
+class StreamStopInfo(BaseModel):
+    stop_reason: StreamStopReason
+
+    def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        data = super().model_dump(mode="json", *args, **kwargs)  # type: ignore
+        data["stop_reason"] = self.stop_reason.name
+        return data
 
 
 class LLMRelevanceFilterResponse(BaseModel):
     relevant_chunk_indices: list[int]
 
 
-class RelevanceChunk(BaseModel):
-    # TODO make this document level. Also slight misnomer here as this is actually
-    # done at the section level currently rather than the chunk
-    relevant: bool | None = None
+class RelevanceAnalysis(BaseModel):
+    relevant: bool
     content: str | None = None
 
 
-class LLMRelevanceSummaryResponse(BaseModel):
-    relevance_summaries: dict[str, RelevanceChunk]
+class SectionRelevancePiece(RelevanceAnalysis):
+    """LLM analysis mapped to an Inference Section"""
+
+    document_id: str
+    chunk_id: int  # ID of the center chunk for a given inference section
+
+
+class DocumentRelevance(BaseModel):
+    """Contains all relevance information for a given search"""
+
+    relevance_summaries: dict[str, RelevanceAnalysis]
 
 
 class DanswerAnswerPiece(BaseModel):
@@ -69,8 +93,14 @@ class CitationInfo(BaseModel):
     document_id: str
 
 
+class MessageResponseIDInfo(BaseModel):
+    user_message_id: int | None
+    reserved_assistant_message_id: int
+
+
 class StreamingError(BaseModel):
     error: str
+    stack_trace: str | None = None
 
 
 class DanswerQuote(BaseModel):
@@ -117,7 +147,7 @@ class ImageGenerationDisplay(BaseModel):
 
 
 class CustomToolResponse(BaseModel):
-    response: dict
+    response: ToolResultType
     tool_name: str
 
 
@@ -129,6 +159,7 @@ AnswerQuestionPossibleReturn = (
     | ImageGenerationDisplay
     | CustomToolResponse
     | StreamingError
+    | StreamStopInfo
 )
 
 

@@ -11,8 +11,8 @@ import sqlalchemy as sa
 # revision identifiers, used by Alembic.
 revision = "8a87bd6ec550"
 down_revision = "4ea2c93919c1"
-branch_labels = None
-depends_on = None
+branch_labels: None = None
+depends_on: None = None
 
 
 def upgrade() -> None:
@@ -35,9 +35,22 @@ def upgrade() -> None:
     op.execute(
         """
         UPDATE index_attempt ia
-        SET connector_credential_pair_id = ccp.id
-        FROM connector_credential_pair ccp
-        WHERE ia.connector_id = ccp.connector_id AND ia.credential_id = ccp.credential_id
+        SET connector_credential_pair_id = (
+            SELECT id FROM connector_credential_pair ccp
+            WHERE
+                (ia.connector_id IS NULL OR ccp.connector_id = ia.connector_id)
+                AND (ia.credential_id IS NULL OR ccp.credential_id = ia.credential_id)
+            LIMIT 1
+        )
+        WHERE ia.connector_id IS NOT NULL OR ia.credential_id IS NOT NULL
+        """
+    )
+
+    # For good measure
+    op.execute(
+        """
+        DELETE FROM index_attempt
+        WHERE connector_credential_pair_id IS NULL
         """
     )
 
@@ -87,11 +100,6 @@ def downgrade() -> None:
     )
     op.drop_column("index_attempt", "connector_credential_pair_id")
 
-    # Recreate the old index
-    op.drop_index(
-        "ix_index_attempt_latest_for_connector_credential_pair",
-        table_name="index_attempt",
-    )
     op.create_index(
         "ix_index_attempt_latest_for_connector_credential_pair",
         "index_attempt",

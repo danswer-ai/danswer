@@ -1,3 +1,4 @@
+import json
 from collections.abc import Callable
 from collections.abc import Iterator
 from typing import Any
@@ -15,11 +16,23 @@ from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
+from litellm.exceptions import APIConnectionError  # type: ignore
+from litellm.exceptions import APIError  # type: ignore
+from litellm.exceptions import AuthenticationError  # type: ignore
+from litellm.exceptions import BadRequestError  # type: ignore
+from litellm.exceptions import BudgetExceededError  # type: ignore
+from litellm.exceptions import ContentPolicyViolationError  # type: ignore
+from litellm.exceptions import ContextWindowExceededError  # type: ignore
+from litellm.exceptions import NotFoundError  # type: ignore
+from litellm.exceptions import PermissionDeniedError  # type: ignore
+from litellm.exceptions import RateLimitError  # type: ignore
+from litellm.exceptions import Timeout  # type: ignore
+from litellm.exceptions import UnprocessableEntityError  # type: ignore
 
 from danswer.configs.constants import MessageType
-from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
-from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
+from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
+from danswer.configs.model_configs import GEN_AI_NUM_RESERVED_OUTPUT_TOKENS
 from danswer.db.models import ChatMessage
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import InMemoryChatFile
@@ -34,6 +47,58 @@ if TYPE_CHECKING:
 logger = setup_logger()
 
 
+def litellm_exception_to_error_msg(e: Exception, llm: LLM) -> str:
+    error_msg = str(e)
+
+    if isinstance(e, BadRequestError):
+        error_msg = "Bad request: The server couldn't process your request. Please check your input."
+    elif isinstance(e, AuthenticationError):
+        error_msg = "Authentication failed: Please check your API key and credentials."
+    elif isinstance(e, PermissionDeniedError):
+        error_msg = (
+            "Permission denied: You don't have the necessary permissions for this operation."
+            "Ensure you have access to this model."
+        )
+    elif isinstance(e, NotFoundError):
+        error_msg = "Resource not found: The requested resource doesn't exist."
+    elif isinstance(e, UnprocessableEntityError):
+        error_msg = "Unprocessable entity: The server couldn't process your request due to semantic errors."
+    elif isinstance(e, RateLimitError):
+        error_msg = (
+            "Rate limit exceeded: Please slow down your requests and try again later."
+        )
+    elif isinstance(e, ContextWindowExceededError):
+        error_msg = (
+            "Context window exceeded: Your input is too long for the model to process."
+        )
+        if llm is not None:
+            try:
+                max_context = get_max_input_tokens(
+                    model_name=llm.config.model_name,
+                    model_provider=llm.config.model_provider,
+                )
+                error_msg += f"Your invoked model ({llm.config.model_name}) has a maximum context size of {max_context}"
+            except Exception:
+                logger.warning(
+                    "Unable to get maximum input token for LiteLLM excpetion handling"
+                )
+    elif isinstance(e, ContentPolicyViolationError):
+        error_msg = "Content policy violation: Your request violates the content policy. Please revise your input."
+    elif isinstance(e, APIConnectionError):
+        error_msg = "API connection error: Failed to connect to the API. Please check your internet connection."
+    elif isinstance(e, BudgetExceededError):
+        error_msg = (
+            "Budget exceeded: You've exceeded your allocated budget for API usage."
+        )
+    elif isinstance(e, Timeout):
+        error_msg = "Request timed out: The operation took too long to complete. Please try again."
+    elif isinstance(e, APIError):
+        error_msg = f"API error: An error occurred while communicating with the API. Details: {str(e)}"
+    else:
+        error_msg = "An unexpected error occurred while processing your request. Please try again later."
+    return error_msg
+
+
 def translate_danswer_msg_to_langchain(
     msg: Union[ChatMessage, "PreviousMessage"],
 ) -> BaseMessage:
@@ -42,7 +107,7 @@ def translate_danswer_msg_to_langchain(
     # If the message is a `ChatMessage`, it doesn't have the downloaded files
     # attached. Just ignore them for now. Also, OpenAI doesn't allow files to
     # be attached to AI messages, so we must remove them
-    if isinstance(msg, PreviousMessage) and msg.message_type != MessageType.ASSISTANT:
+    if not isinstance(msg, ChatMessage) and msg.message_type != MessageType.ASSISTANT:
         files = msg.files
     content = build_content_with_imgs(msg.message, files)
 
@@ -224,6 +289,13 @@ def check_message_tokens(
         elif part["type"] == "image_url":
             total_tokens += _IMG_TOKENS
 
+    if isinstance(message, AIMessage) and message.tool_calls:
+        for tool_call in message.tool_calls:
+            total_tokens += check_number_of_tokens(
+                json.dumps(tool_call["args"]), encode_fn
+            )
+            total_tokens += check_number_of_tokens(tool_call["name"], encode_fn)
+
     return total_tokens
 
 
@@ -258,36 +330,85 @@ def test_llm(llm: LLM) -> str | None:
 def get_llm_max_tokens(
     model_map: dict,
     model_name: str,
-    model_provider: str = GEN_AI_MODEL_PROVIDER,
+    model_provider: str,
 ) -> int:
     """Best effort attempt to get the max tokens for the LLM"""
     if GEN_AI_MAX_TOKENS:
         # This is an override, so always return this
+        logger.info(f"Using override GEN_AI_MAX_TOKENS: {GEN_AI_MAX_TOKENS}")
         return GEN_AI_MAX_TOKENS
 
     try:
         model_obj = model_map.get(f"{model_provider}/{model_name}")
         if not model_obj:
             model_obj = model_map[model_name]
+            logger.debug(f"Using model object for {model_name}")
+        else:
+            logger.debug(f"Using model object for {model_provider}/{model_name}")
 
         if "max_input_tokens" in model_obj:
-            return model_obj["max_input_tokens"]
+            max_tokens = model_obj["max_input_tokens"]
+            logger.info(
+                f"Max tokens for {model_name}: {max_tokens} (from max_input_tokens)"
+            )
+            return max_tokens
 
         if "max_tokens" in model_obj:
-            return model_obj["max_tokens"]
+            max_tokens = model_obj["max_tokens"]
+            logger.info(f"Max tokens for {model_name}: {max_tokens} (from max_tokens)")
+            return max_tokens
 
+        logger.error(f"No max tokens found for LLM: {model_name}")
         raise RuntimeError("No max tokens found for LLM")
     except Exception:
         logger.exception(
-            f"Failed to get max tokens for LLM with name {model_name}. Defaulting to 4096."
+            f"Failed to get max tokens for LLM with name {model_name}. Defaulting to {GEN_AI_MODEL_FALLBACK_MAX_TOKENS}."
         )
-        return 4096
+        return GEN_AI_MODEL_FALLBACK_MAX_TOKENS
+
+
+def get_llm_max_output_tokens(
+    model_map: dict,
+    model_name: str,
+    model_provider: str,
+) -> int:
+    """Best effort attempt to get the max output tokens for the LLM"""
+    try:
+        model_obj = model_map.get(f"{model_provider}/{model_name}")
+        if not model_obj:
+            model_obj = model_map[model_name]
+            logger.debug(f"Using model object for {model_name}")
+        else:
+            logger.debug(f"Using model object for {model_provider}/{model_name}")
+
+        if "max_output_tokens" in model_obj:
+            max_output_tokens = model_obj["max_output_tokens"]
+            logger.info(f"Max output tokens for {model_name}: {max_output_tokens}")
+            return max_output_tokens
+
+        # Fallback to a fraction of max_tokens if max_output_tokens is not specified
+        if "max_tokens" in model_obj:
+            max_output_tokens = int(model_obj["max_tokens"] * 0.1)
+            logger.info(
+                f"Fallback max output tokens for {model_name}: {max_output_tokens} (10% of max_tokens)"
+            )
+            return max_output_tokens
+
+        logger.error(f"No max output tokens found for LLM: {model_name}")
+        raise RuntimeError("No max output tokens found for LLM")
+    except Exception:
+        default_output_tokens = int(GEN_AI_MODEL_FALLBACK_MAX_TOKENS)
+        logger.exception(
+            f"Failed to get max output tokens for LLM with name {model_name}. "
+            f"Defaulting to {default_output_tokens} (fallback max tokens)."
+        )
+        return default_output_tokens
 
 
 def get_max_input_tokens(
     model_name: str,
     model_provider: str,
-    output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
+    output_tokens: int = GEN_AI_NUM_RESERVED_OUTPUT_TOKENS,
 ) -> int:
     # NOTE: we previously used `litellm.get_max_tokens()`, but despite the name, this actually
     # returns the max OUTPUT tokens. Under the hood, this uses the `litellm.model_cost` dict,

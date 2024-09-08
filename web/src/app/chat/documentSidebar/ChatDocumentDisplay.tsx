@@ -39,13 +39,14 @@ export function ChatDocumentDisplay({
   return (
     <div
       key={document.semantic_identifier}
-      className={`p-2 w-[350px] justify-start rounded-md ${
+      className={`p-2 w-[325px] justify-start rounded-md ${
         isSelected ? "bg-background-200" : "bg-background-125"
       } text-sm mx-3`}
     >
       <div className="flex relative justify-start overflow-y-visible">
         <a
           href={document.link}
+          target="_blank"
           className={
             "rounded-lg flex font-bold flex-shrink truncate" +
             (document.link ? "" : "pointer-events-none")
@@ -56,7 +57,7 @@ export function ChatDocumentDisplay({
           ) : (
             <SourceIcon sourceType={document.source_type} iconSize={18} />
           )}
-          <p className="overflow-hidden text-left text-ellipsis mx-2 my-auto text-sm ">
+          <p className="overflow-hidden text-left text-ellipsis mx-2 my-auto text-sm">
             {document.semantic_identifier || document.document_id}
           </p>
         </a>

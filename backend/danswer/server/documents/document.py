@@ -5,12 +5,14 @@ from fastapi import Query
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
-from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.db.search_settings import get_current_search_settings
 from danswer.document_index.factory import get_default_document_index
-from danswer.natural_language_processing.utils import get_default_llm_token_encode
+from danswer.document_index.interfaces import VespaChunkRequest
+from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.prompts.prompt_utils import build_doc_context_str
+from danswer.search.models import IndexFilters
 from danswer.search.preprocessing.access_filters import build_access_filters_for_user
 from danswer.server.documents.models import ChunkInfo
 from danswer.server.documents.models import DocumentInfo
@@ -27,18 +29,16 @@ def get_document_info(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> DocumentInfo:
-    embedding_model = get_current_db_embedding_model(db_session)
+    search_settings = get_current_search_settings(db_session)
 
     document_index = get_default_document_index(
-        primary_index_name=embedding_model.index_name, secondary_index_name=None
+        primary_index_name=search_settings.index_name, secondary_index_name=None
     )
 
     user_acl_filters = build_access_filters_for_user(user, db_session)
     inference_chunks = document_index.id_based_retrieval(
-        document_id=document_id,
-        min_chunk_ind=None,
-        max_chunk_ind=None,
-        user_access_control_list=user_acl_filters,
+        chunk_requests=[VespaChunkRequest(document_id=document_id)],
+        filters=IndexFilters(access_control_list=user_acl_filters),
     )
 
     if not inference_chunks:
@@ -50,7 +50,10 @@ def get_document_info(
 
     # get actual document context used for LLM
     first_chunk = inference_chunks[0]
-    tokenizer_encode = get_default_llm_token_encode()
+    tokenizer_encode = get_tokenizer(
+        provider_type=search_settings.provider_type,
+        model_name=search_settings.model_name,
+    ).encode
     full_context_str = build_doc_context_str(
         semantic_identifier=first_chunk.semantic_identifier,
         source_type=first_chunk.source_type,
@@ -73,18 +76,22 @@ def get_chunk_info(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ChunkInfo:
-    embedding_model = get_current_db_embedding_model(db_session)
+    search_settings = get_current_search_settings(db_session)
 
     document_index = get_default_document_index(
-        primary_index_name=embedding_model.index_name, secondary_index_name=None
+        primary_index_name=search_settings.index_name, secondary_index_name=None
     )
 
     user_acl_filters = build_access_filters_for_user(user, db_session)
-    inference_chunks = document_index.id_based_retrieval(
+    chunk_request = VespaChunkRequest(
         document_id=document_id,
         min_chunk_ind=chunk_id,
         max_chunk_ind=chunk_id,
-        user_access_control_list=user_acl_filters,
+    )
+    inference_chunks = document_index.id_based_retrieval(
+        chunk_requests=[chunk_request],
+        filters=IndexFilters(access_control_list=user_acl_filters),
+        batch_retrieval=True,
     )
 
     if not inference_chunks:
@@ -92,7 +99,10 @@ def get_chunk_info(
 
     chunk_content = inference_chunks[0].content
 
-    tokenizer_encode = get_default_llm_token_encode()
+    tokenizer_encode = get_tokenizer(
+        provider_type=search_settings.provider_type,
+        model_name=search_settings.model_name,
+    ).encode
 
     return ChunkInfo(
         content=chunk_content, num_tokens=len(tokenizer_encode(chunk_content))

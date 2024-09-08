@@ -9,10 +9,12 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
+from danswer.chat.models import DocumentRelevance
 from danswer.chat.models import LLMRelevanceFilterResponse
-from danswer.chat.models import LLMRelevanceSummaryResponse
 from danswer.chat.models import QADocsResponse
+from danswer.chat.models import RelevanceAnalysis
 from danswer.chat.models import StreamingError
+from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
@@ -34,23 +36,22 @@ from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.models import QuotesConfig
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
-from danswer.natural_language_processing.utils import get_default_llm_token_encode
+from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.one_shot_answer.models import QueryRephrase
 from danswer.one_shot_answer.qa_utils import combine_message_thread
+from danswer.search.enums import LLMEvaluationType
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
-from danswer.search.utils import drop_llm_indices
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.utils import get_json_line
 from danswer.tools.force import ForceUseTool
 from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
-from danswer.tools.search.search_tool import SEARCH_EVALUATION_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
@@ -74,7 +75,7 @@ AnswerObjectIterator = Iterator[
     | ChatMessageDetail
     | CitationInfo
     | ToolCallKickoff
-    | LLMRelevanceSummaryResponse
+    | DocumentRelevance
 ]
 
 
@@ -117,8 +118,12 @@ def stream_answer_objects(
         one_shot=True,
         danswerbot_flow=danswerbot_flow,
     )
+    llm, fast_llm = get_llms_for_persona(persona=chat_session.persona)
 
-    llm_tokenizer = get_default_llm_token_encode()
+    llm_tokenizer = get_tokenizer(
+        model_name=llm.config.model_name,
+        provider_type=llm.config.model_provider,
+    )
 
     # Create a chat session which will just store the root message, the query, and the AI response
     root_message = get_or_create_root_message(
@@ -126,7 +131,9 @@ def stream_answer_objects(
     )
 
     history_str = combine_message_thread(
-        messages=history, max_tokens=max_history_tokens
+        messages=history,
+        max_tokens=max_history_tokens,
+        llm_tokenizer=llm_tokenizer,
     )
 
     rephrased_query = query_req.query_override or thread_based_query_rephrase(
@@ -158,13 +165,12 @@ def stream_answer_objects(
         parent_message=root_message,
         prompt_id=query_req.prompt_id,
         message=query_msg.message,
-        token_count=len(llm_tokenizer(query_msg.message)),
+        token_count=len(llm_tokenizer.encode(query_msg.message)),
         message_type=MessageType.USER,
         db_session=db_session,
         commit=True,
     )
 
-    llm, fast_llm = get_llms_for_persona(persona=chat_session.persona)
     prompt_config = PromptConfig.from_model(prompt)
     document_pruning_config = DocumentPruningConfig(
         max_chunks=int(
@@ -173,12 +179,14 @@ def stream_answer_objects(
             else default_num_chunks
         ),
         max_tokens=max_document_tokens,
-        use_sections=query_req.chunks_above > 0 or query_req.chunks_below > 0,
     )
 
     search_tool = SearchTool(
         db_session=db_session,
         user=user,
+        evaluation_type=LLMEvaluationType.SKIP
+        if DISABLE_LLM_DOC_RELEVANCE
+        else query_req.evaluation_type,
         persona=chat_session.persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,
@@ -189,7 +197,6 @@ def stream_answer_objects(
         chunks_below=query_req.chunks_below,
         full_doc=query_req.full_doc,
         bypass_acl=bypass_acl,
-        llm_doc_eval=query_req.llm_doc_eval,
     )
 
     answer_config = AnswerStyleConfig(
@@ -218,7 +225,6 @@ def stream_answer_objects(
     )
 
     # won't be any ImageGenerationDisplay responses since that tool is never passed in
-    dropped_inds: list[int] = []
 
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
@@ -261,20 +267,18 @@ def stream_answer_objects(
                 yield packet.response
 
             elif packet.id == SECTION_RELEVANCE_LIST_ID:
-                chunk_indices = packet.response
+                document_based_response = {}
 
-                if reference_db_search_docs is not None and dropped_inds:
-                    chunk_indices = drop_llm_indices(
-                        llm_indices=chunk_indices,
-                        search_docs=reference_db_search_docs,
-                        dropped_indices=dropped_inds,
-                    )
+                if packet.response is not None:
+                    for evaluation in packet.response:
+                        document_based_response[
+                            evaluation.document_id
+                        ] = RelevanceAnalysis(
+                            relevant=evaluation.relevant, content=evaluation.content
+                        )
 
-                yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
-
-            elif packet.id == SEARCH_EVALUATION_ID:
-                evaluation_response = LLMRelevanceSummaryResponse(
-                    relevance_summaries=packet.response
+                evaluation_response = DocumentRelevance(
+                    relevance_summaries=document_based_response
                 )
                 if reference_db_search_docs is not None:
                     update_search_docs_table_with_relevance(
@@ -292,7 +296,7 @@ def stream_answer_objects(
         parent_message=new_user_message,
         prompt_id=query_req.prompt_id,
         message=answer.llm_answer,
-        token_count=len(llm_tokenizer(answer.llm_answer)),
+        token_count=len(llm_tokenizer.encode(answer.llm_answer)),
         message_type=MessageType.ASSISTANT,
         error=None,
         reference_docs=reference_db_search_docs,
@@ -322,7 +326,7 @@ def stream_search_answer(
             db_session=session,
         )
         for obj in objects:
-            yield get_json_line(obj.dict())
+            yield get_json_line(obj.model_dump())
 
 
 def get_search_answer(

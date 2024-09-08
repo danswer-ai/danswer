@@ -41,8 +41,8 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import docx_to_text
-from danswer.file_processing.extract_file_text import pdf_to_text
 from danswer.file_processing.extract_file_text import pptx_to_text
+from danswer.file_processing.extract_file_text import read_pdf_file
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
@@ -62,6 +62,8 @@ class GDriveMimeType(str, Enum):
     POWERPOINT = (
         "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     )
+    PLAIN_TEXT = "text/plain"
+    MARKDOWN = "text/markdown"
 
 
 GoogleDriveFileType = dict[str, Any]
@@ -267,7 +269,7 @@ def get_all_files_batched(
     yield from batch_generator(
         items=found_files,
         batch_size=batch_size,
-        pre_batch_yield=lambda batch_files: logger.info(
+        pre_batch_yield=lambda batch_files: logger.debug(
             f"Parseable Documents in batch: {[file['name'] for file in batch_files]}"
         ),
     )
@@ -306,34 +308,44 @@ def get_all_files_batched(
 
 def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
     mime_type = file["mimeType"]
+
     if mime_type not in set(item.value for item in GDriveMimeType):
         # Unsupported file types can still have a title, finding this way is still useful
         return UNSUPPORTED_FILE_TYPE_CONTENT
 
-    if mime_type == GDriveMimeType.DOC.value:
-        return (
+    if mime_type in [
+        GDriveMimeType.DOC.value,
+        GDriveMimeType.PPT.value,
+        GDriveMimeType.SPREADSHEET.value,
+        GDriveMimeType.PLAIN_TEXT.value,
+        GDriveMimeType.MARKDOWN.value,
+    ]:
+        export_mime_type = "text/plain"
+        if mime_type == GDriveMimeType.SPREADSHEET.value:
+            export_mime_type = "text/csv"
+        elif mime_type == GDriveMimeType.PPT.value:
+            export_mime_type = "text/plain"
+        elif mime_type in [
+            GDriveMimeType.PLAIN_TEXT.value,
+            GDriveMimeType.MARKDOWN.value,
+        ]:
+            export_mime_type = mime_type
+
+        response = (
             service.files()
-            .export(fileId=file["id"], mimeType="text/plain")
+            .export(fileId=file["id"], mimeType=export_mime_type)
             .execute()
-            .decode("utf-8")
         )
-    elif mime_type == GDriveMimeType.SPREADSHEET.value:
-        return (
-            service.files()
-            .export(fileId=file["id"], mimeType="text/csv")
-            .execute()
-            .decode("utf-8")
-        )
+        return response.decode("utf-8")
+
     elif mime_type == GDriveMimeType.WORD_DOC.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return docx_to_text(file=io.BytesIO(response))
     elif mime_type == GDriveMimeType.PDF.value:
         response = service.files().get_media(fileId=file["id"]).execute()
-        return pdf_to_text(file=io.BytesIO(response))
+        text, _ = read_pdf_file(file=io.BytesIO(response))
+        return text
     elif mime_type == GDriveMimeType.POWERPOINT.value:
-        response = service.files().get_media(fileId=file["id"]).execute()
-        return pptx_to_text(file=io.BytesIO(response))
-    elif mime_type == GDriveMimeType.PPT.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return pptx_to_text(file=io.BytesIO(response))
 

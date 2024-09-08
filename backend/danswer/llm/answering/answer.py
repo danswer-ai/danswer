@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from collections.abc import Iterator
+from typing import Any
 from typing import cast
 from uuid import uuid4
 
@@ -11,6 +13,8 @@ from danswer.chat.models import AnswerQuestionPossibleReturn
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
+from danswer.chat.models import StreamStopInfo
+from danswer.chat.models import StreamStopReason
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
 from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.models import AnswerStyleConfig
@@ -34,8 +38,8 @@ from danswer.llm.answering.stream_processing.quotes_processing import (
 from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.llm.interfaces import LLM
-from danswer.llm.utils import message_generator_to_string_generator
-from danswer.natural_language_processing.utils import get_default_llm_tokenizer
+from danswer.llm.interfaces import ToolChoiceOptions
+from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.tools.custom.custom_tool_prompt_builder import (
     build_user_message_for_custom_tool_for_non_tool_calling_llm,
 )
@@ -115,6 +119,7 @@ class Answer:
         # Returns the full document sections text from the search tool
         return_contexts: bool = False,
         skip_gen_ai_answer_generation: bool = False,
+        is_connected: Callable[[], bool] | None = None,
     ) -> None:
         if single_message_history and message_history:
             raise ValueError(
@@ -122,6 +127,7 @@ class Answer:
             )
 
         self.question = question
+        self.is_connected: Callable[[], bool] | None = is_connected
 
         self.latest_query_files = latest_query_files or []
         self.file_id_to_file = {file.file_id: file for file in (files or [])}
@@ -139,7 +145,10 @@ class Answer:
         self.prompt_config = prompt_config
 
         self.llm = llm
-        self.llm_tokenizer = get_default_llm_tokenizer()
+        self.llm_tokenizer = get_tokenizer(
+            provider_type=llm.config.model_provider,
+            model_name=llm.config.model_name,
+        )
 
         self._final_prompt: list[BaseMessage] | None = None
 
@@ -150,6 +159,7 @@ class Answer:
 
         self._return_contexts = return_contexts
         self.skip_gen_ai_answer_generation = skip_gen_ai_answer_generation
+        self._is_cancelled = False
 
     def _update_prompt_builder_for_search_tool(
         self, prompt_builder: AnswerPromptBuilder, final_context_documents: list[LlmDoc]
@@ -183,7 +193,9 @@ class Answer:
 
     def _raw_output_for_explicit_tool_calling_llms(
         self,
-    ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
+    ) -> Iterator[
+        str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallFinalResult
+    ]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
 
         tool_call_chunk: AIMessageChunk | None = None
@@ -218,6 +230,7 @@ class Answer:
                     self.tools, self.force_use_tool
                 )
             ]
+
             for message in self.llm.stream(
                 prompt=prompt,
                 tools=final_tool_definitions if final_tool_definitions else None,
@@ -232,7 +245,16 @@ class Answer:
                         tool_call_chunk += message  # type: ignore
                 else:
                     if message.content:
+                        if self.is_cancelled:
+                            return
                         yield cast(str, message.content)
+                    if (
+                        message.additional_kwargs.get("usage_metadata", {}).get("stop")
+                        == "length"
+                    ):
+                        yield StreamStopInfo(
+                            stop_reason=StreamStopReason.CONTEXT_LENGTH
+                        )
 
             if not tool_call_chunk:
                 return  # no tool call needed
@@ -277,26 +299,53 @@ class Answer:
             if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
                 self._update_prompt_builder_for_search_tool(prompt_builder, [])
             elif tool.name == ImageGenerationTool._NAME:
+                img_urls = [
+                    img_generation_result["url"]
+                    for img_generation_result in tool_runner.tool_final_result().tool_result
+                ]
                 prompt_builder.update_user_prompt(
                     build_image_generation_user_prompt(
-                        query=self.question,
+                        query=self.question, img_urls=img_urls
                     )
                 )
             yield tool_runner.tool_final_result()
 
             prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
-            yield from message_generator_to_string_generator(
-                self.llm.stream(
-                    prompt=prompt,
-                    tools=[tool.tool_definition() for tool in self.tools],
-                )
+
+            yield from self._process_llm_stream(
+                prompt=prompt,
+                tools=[tool.tool_definition() for tool in self.tools],
             )
 
             return
 
+    # This method processes the LLM stream and yields the content or stop information
+    def _process_llm_stream(
+        self,
+        prompt: Any,
+        tools: list[dict] | None = None,
+        tool_choice: ToolChoiceOptions | None = None,
+    ) -> Iterator[str | StreamStopInfo]:
+        for message in self.llm.stream(
+            prompt=prompt, tools=tools, tool_choice=tool_choice
+        ):
+            if isinstance(message, AIMessageChunk):
+                if message.content:
+                    if self.is_cancelled:
+                        return StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
+                    yield cast(str, message.content)
+
+            if (
+                message.additional_kwargs.get("usage_metadata", {}).get("stop")
+                == "length"
+            ):
+                yield StreamStopInfo(stop_reason=StreamStopReason.CONTEXT_LENGTH)
+
     def _raw_output_for_non_explicit_tool_calling_llms(
         self,
-    ) -> Iterator[str | ToolCallKickoff | ToolResponse | ToolCallFinalResult]:
+    ) -> Iterator[
+        str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallFinalResult
+    ]:
         prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
         chosen_tool_and_args: tuple[Tool, dict] | None = None
 
@@ -359,7 +408,7 @@ class Answer:
                 else None
             )
 
-            logger.info(f"Chosen tool: {chosen_tool_and_args}")
+            logger.notice(f"Chosen tool: {chosen_tool_and_args}")
 
         if not chosen_tool_and_args:
             prompt_builder.update_system_prompt(
@@ -371,8 +420,9 @@ class Answer:
                 )
             )
             prompt = prompt_builder.build()
-            yield from message_generator_to_string_generator(
-                self.llm.stream(prompt=prompt)
+            yield from self._process_llm_stream(
+                prompt=prompt,
+                tools=None,
             )
             return
 
@@ -427,7 +477,8 @@ class Answer:
         yield final
 
         prompt = prompt_builder.build()
-        yield from message_generator_to_string_generator(self.llm.stream(prompt=prompt))
+
+        yield from self._process_llm_stream(prompt=prompt, tools=None)
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -445,7 +496,7 @@ class Answer:
         )
 
         def _process_stream(
-            stream: Iterator[ToolCallKickoff | ToolResponse | str],
+            stream: Iterator[ToolCallKickoff | ToolResponse | str | StreamStopInfo],
         ) -> AnswerStream:
             message = None
 
@@ -476,6 +527,7 @@ class Answer:
                         ]
                     elif message.id == FINAL_CONTEXT_DOCUMENTS:
                         final_context_docs = cast(list[LlmDoc], message.response)
+
                     elif (
                         message.id == SEARCH_DOC_CONTENT_ID
                         and not self._return_contexts
@@ -498,12 +550,21 @@ class Answer:
                     answer_style_configs=self.answer_style_config,
                 )
 
+                stream_stop_info = None
+
                 def _stream() -> Iterator[str]:
-                    if message:
-                        yield cast(str, message)
-                    yield from cast(Iterator[str], stream)
+                    nonlocal stream_stop_info
+                    yield cast(str, message)
+                    for item in stream:
+                        if isinstance(item, StreamStopInfo):
+                            stream_stop_info = item
+                            return
+                        yield cast(str, item)
 
                 yield from process_answer_stream_fn(_stream())
+
+                if stream_stop_info:
+                    yield stream_stop_info
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):
@@ -529,3 +590,15 @@ class Answer:
                 citations.append(packet)
 
         return citations
+
+    @property
+    def is_cancelled(self) -> bool:
+        if self._is_cancelled:
+            return True
+
+        if self.is_connected is not None:
+            if not self.is_connected():
+                logger.debug("Answer stream has been cancelled")
+            self._is_cancelled = not self.is_connected()
+
+        return self._is_cancelled

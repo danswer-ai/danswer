@@ -7,7 +7,7 @@ import { Folder } from "../folders/interfaces";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { pageType } from "./types";
 
 export function PagesTab({
@@ -16,12 +16,20 @@ export function PagesTab({
   currentChatId,
   folders,
   openedFolders,
+  closeSidebar,
+  newFolderId,
+  showShareModal,
+  showDeleteModal,
 }: {
   page: pageType;
   existingChats?: ChatSession[];
   currentChatId?: number;
   folders?: Folder[];
   openedFolders?: { [key: number]: boolean };
+  closeSidebar?: () => void;
+  newFolderId: number | null;
+  showShareModal?: (chatSession: ChatSession) => void;
+  showDeleteModal?: (chatSession: ChatSession) => void;
 }) {
   const groupedChatSessions = existingChats
     ? groupSessionsByDateRange(existingChats)
@@ -58,13 +66,14 @@ export function PagesTab({
   const isHistoryEmpty = !existingChats || existingChats.length === 0;
 
   return (
-    <div className="mb-1 ml-3 relative miniscroll overflow-y-auto h-full">
+    <div className="mb-1 ml-3 relative miniscroll mobile:pb-40 overflow-y-auto h-full">
       {folders && folders.length > 0 && (
         <div className="py-2 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-bold">
-            Folders
+            Chat Folders
           </div>
           <FolderList
+            newFolderId={newFolderId}
             folders={folders}
             currentChatId={currentChatId}
             openedFolders={openedFolders}
@@ -115,6 +124,9 @@ export function PagesTab({
                         return (
                           <div key={`${chat.id}-${chat.name}`}>
                             <ChatSessionDisplay
+                              showDeleteModal={showDeleteModal}
+                              showShareModal={showShareModal}
+                              closeSidebar={closeSidebar}
                               search={page == "search"}
                               chatSession={chat}
                               isSelected={isSelected}

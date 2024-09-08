@@ -25,7 +25,7 @@ global_version = DanswerVersion()
 
 def set_is_ee_based_on_env_variable() -> None:
     if ENTERPRISE_EDITION_ENABLED and not global_version.get_is_ee_version():
-        logger.info("Enterprise Edition enabled")
+        logger.notice("Enterprise Edition enabled")
         global_version.set_ee()
 
 
@@ -68,11 +68,9 @@ def fetch_versioned_implementation_with_fallback(
 ) -> T:
     try:
         return fetch_versioned_implementation(module, attribute)
-    except Exception as e:
-        logger.warning(
-            "Failed to fetch versioned implementation for %s.%s: %s",
-            module,
-            attribute,
-            e,
-        )
+    except Exception:
         return fallback
+
+
+def noop_fallback(*args: Any, **kwargs: Any) -> None:
+    pass

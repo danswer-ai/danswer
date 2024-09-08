@@ -1,6 +1,9 @@
+"use client";
 import { Divider } from "@tremor/react";
 import { FiX } from "react-icons/fi";
 import { IconProps } from "./icons/icons";
+import { useRef } from "react";
+import { isEventWithinRef } from "@/lib/contains";
 
 interface ModalProps {
   icon?: ({ size, className }: IconProps) => JSX.Element;
@@ -25,6 +28,18 @@ export function Modal({
   hideDividerForTitle,
   noPadding,
 }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (
+      onOutsideClick &&
+      modalRef.current &&
+      !modalRef.current.contains(e.target as Node) &&
+      !isEventWithinRef(e.nativeEvent, modalRef)
+    ) {
+      onOutsideClick();
+    }
+  };
   return (
     <div>
       <div
@@ -32,9 +47,10 @@ export function Modal({
         fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm
         flex items-center justify-center z-50
       `}
-        onClick={onOutsideClick}
+        onMouseDown={handleMouseDown}
       >
         <div
+          ref={modalRef}
           className={`
           bg-background rounded shadow-lg
           relative ${width ?? "w-1/2"} text-sm 

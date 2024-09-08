@@ -4,7 +4,7 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { ConnectorIcon } from "@/components/icons/icons";
 import { SourceCategory, SourceMetadata } from "@/lib/search/interfaces";
 import { listSourceMetadata } from "@/lib/sources";
-import { Title, Text } from "@tremor/react";
+import { Title, Text, Button } from "@tremor/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -96,6 +96,13 @@ export default function Page() {
       <AdminPageTitle
         icon={<ConnectorIcon size={32} />}
         title="Add Connector"
+        farRightElement={
+          <Link href="/admin/indexing/status">
+            <Button color="green" size="xs">
+              See Connectors
+            </Button>
+          </Link>
+        }
       />
 
       <input
@@ -105,7 +112,7 @@ export default function Page() {
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         onKeyDown={handleKeyPress}
-        className="flex mt-2 max-w-sm h-9 w-full rounded-md border-2 border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        className="ml-1 w-96 h-9 flex-none rounded-md border border-border bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
 
       {Object.entries(categorizedSources)

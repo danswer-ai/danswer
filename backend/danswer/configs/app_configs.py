@@ -93,6 +93,14 @@ SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
 
+# If set, Danswer will listen to the `expires_at` returned by the identity
+# provider (e.g. Okta, Google, etc.) and force the user to re-authenticate
+# after this time has elapsed. Disabled since by default many auth providers
+# have very short expiry times (e.g. 1 hour) which provide a poor user experience
+TRACK_EXTERNAL_IDP_EXPIRY = (
+    os.environ.get("TRACK_EXTERNAL_IDP_EXPIRY", "").lower() == "true"
+)
+
 
 #####
 # DB Configs
@@ -129,6 +137,27 @@ POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
+# defaults to False
+POSTGRES_POOL_PRE_PING = os.environ.get("POSTGRES_POOL_PRE_PING", "").lower() == "true"
+
+# recycle timeout in seconds
+POSTGRES_POOL_RECYCLE_DEFAULT = 60 * 20  # 20 minutes
+try:
+    POSTGRES_POOL_RECYCLE = int(
+        os.environ.get("POSTGRES_POOL_RECYCLE", POSTGRES_POOL_RECYCLE_DEFAULT)
+    )
+except ValueError:
+    POSTGRES_POOL_RECYCLE = POSTGRES_POOL_RECYCLE_DEFAULT
+
+REDIS_HOST = os.environ.get("REDIS_HOST") or "localhost"
+REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD") or ""
+
+# Used for general redis things
+REDIS_DB_NUMBER = int(os.environ.get("REDIS_DB_NUMBER", 0))
+
+# Used by celery as broker and backend
+REDIS_DB_NUMBER_CELERY = int(os.environ.get("REDIS_DB_NUMBER_CELERY", 15))
 
 #####
 # Connector Configs
@@ -181,14 +210,24 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
 ]
 
 # Avoid to get archived pages
-CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
-    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
+CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES = (
+    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES", "").lower() == "true"
 )
 
 # Save pages labels as Danswer metadata tags
 # The reason to skip this would be to reduce the number of calls to Confluence due to rate limit concerns
 CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
     os.environ.get("CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING", "").lower() == "true"
+)
+
+# Attachments exceeding this size will not be retrieved (in bytes)
+CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD = int(
+    os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD", 10 * 1024 * 1024)
+)
+# Attachments with more chars than this will not be indexed. This is to prevent extremely
+# large files from freezing indexing. 200,000 is ~100 google doc pages.
+CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD = int(
+    os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD", 200_000)
 )
 
 JIRA_CONNECTOR_LABELS_TO_SKIP = [
@@ -212,6 +251,7 @@ EXPERIMENTAL_CHECKPOINTING_ENABLED = (
     os.environ.get("EXPERIMENTAL_CHECKPOINTING_ENABLED", "").lower() == "true"
 )
 
+PRUNING_DISABLED = -1
 DEFAULT_PRUNING_FREQ = 60 * 60 * 24  # Once a day
 
 ALLOW_SIMULTANEOUS_PRUNING = (
@@ -252,17 +292,35 @@ NUM_SECONDARY_INDEXING_WORKERS = int(
     os.environ.get("NUM_SECONDARY_INDEXING_WORKERS") or NUM_INDEXING_WORKERS
 )
 # More accurate results at the expense of indexing speed and index size (stores additional 4 MINI_CHUNK vectors)
-ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
+ENABLE_MULTIPASS_INDEXING = (
+    os.environ.get("ENABLE_MULTIPASS_INDEXING", "").lower() == "true"
+)
 # Finer grained chunking for more detail retention
 # Slightly larger since the sentence aware split is a max cutoff so most minichunks will be under MINI_CHUNK_SIZE
 # tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
 MINI_CHUNK_SIZE = 150
+
+# This is the number of regular chunks per large chunk
+LARGE_CHUNK_RATIO = 4
+
 # Include the document level metadata in each chunk. If the metadata is too long, then it is thrown out
 # We don't want the metadata to overwhelm the actual contents of the chunk
 SKIP_METADATA_IN_CHUNK = os.environ.get("SKIP_METADATA_IN_CHUNK", "").lower() == "true"
 # Timeout to wait for job's last update before killing it, in hours
 CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT", 3))
 
+# The indexer will warn in the logs whenver a document exceeds this threshold (in bytes)
+INDEXING_SIZE_WARNING_THRESHOLD = int(
+    os.environ.get("INDEXING_SIZE_WARNING_THRESHOLD", 100 * 1024 * 1024)
+)
+
+# during indexing, will log verbose memory diff stats every x batches and at the end.
+# 0 disables this behavior and is the default.
+INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL", 0))
+
+# During an indexing attempt, specifies the number of batches which are allowed to
+# exception without aborting the attempt.
+INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT", 0))
 
 #####
 # Miscellaneous
@@ -290,6 +348,10 @@ LOG_VESPA_TIMING_INFORMATION = (
     os.environ.get("LOG_VESPA_TIMING_INFORMATION", "").lower() == "true"
 )
 LOG_ENDPOINT_LATENCY = os.environ.get("LOG_ENDPOINT_LATENCY", "").lower() == "true"
+LOG_POSTGRES_LATENCY = os.environ.get("LOG_POSTGRES_LATENCY", "").lower() == "true"
+LOG_POSTGRES_CONN_COUNTS = (
+    os.environ.get("LOG_POSTGRES_CONN_COUNTS", "").lower() == "true"
+)
 # Anonymous usage telemetry
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 

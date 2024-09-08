@@ -22,6 +22,7 @@ export function AssistantsGallery({
   user,
 }: {
   assistants: Persona[];
+
   user: User | null;
 }) {
   function filterAssistants(assistants: Persona[], query: string): Persona[] {
@@ -102,6 +103,7 @@ export function AssistantsGallery({
                   my-auto
                   ml-2
                   text-strong
+                  line-clamp-2
                 "
                 >
                   {assistant.name}
@@ -149,9 +151,9 @@ export function AssistantsGallery({
                           }
                         }}
                         size="xs"
-                        color="red"
+                        color="blue"
                       >
-                        Remove
+                        Deselect
                       </Button>
                     ) : (
                       <Button

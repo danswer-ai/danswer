@@ -1,5 +1,6 @@
 import { useFormContext } from "@/components/context/FormContext";
-import { HeaderTitle } from "@/components/header/Header";
+import { HeaderTitle } from "@/components/header/HeaderTitle";
+
 import { BackIcon, SettingsIcon } from "@/components/icons/icons";
 import { Logo } from "@/components/Logo";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
@@ -24,9 +25,10 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="flex bg-background text-default ">
+    <div className="flex flex-none w-[250px] bg-background text-default">
       <div
-        className={`flex-none
+        className={`
+                  fixed
                   bg-background-100
                   h-screen
                   transition-all
