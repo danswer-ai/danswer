@@ -192,22 +192,22 @@ export function TextFormField({
           name={name}
           id={name}
           className={`
-          ${small && "text-sm"}
-          border 
-          border-border 
-          rounded-lg
-          w-full 
-          py-2 
-          px-3
-          mt-1
-          placeholder:font-description 
-          placeholder:text-base 
-          placeholder:text-text-400
-          ${heightString}
-          ${fontSize}
-          ${disabled ? " bg-background-strong" : " bg-white"}
-          ${isCode ? " font-mono" : ""}
-        `}
+            ${small && "text-sm"}
+            border 
+            border-border 
+            rounded-lg
+            w-full 
+            py-2 
+            px-3 
+            mt-1
+            placeholder:font-description 
+            placeholder:text-base 
+            placeholder:text-text-400
+            ${heightString}
+            ${fontSize}
+            ${disabled ? " bg-background-strong" : " bg-white"}
+            ${isCode ? " font-mono" : ""}
+          `}
           disabled={disabled}
           placeholder={placeholder}
           autoComplete={autoCompleteDisabled ? "off" : undefined}
@@ -453,6 +453,7 @@ interface TextArrayFieldProps<T extends Yup.AnyObject> {
   values: T;
   subtext?: string | JSX.Element;
   type?: string;
+  tooltip?: string;
 }
 
 export function TextArrayField<T extends Yup.AnyObject>({
@@ -461,10 +462,14 @@ export function TextArrayField<T extends Yup.AnyObject>({
   values,
   subtext,
   type,
+  tooltip,
 }: TextArrayFieldProps<T>) {
   return (
     <div className="mb-4">
-      <Label>{label}</Label>
+      <div className="flex gap-x-2 items-center">
+        <Label>{label}</Label>
+        {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
+      </div>
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <FieldArray
@@ -532,6 +537,7 @@ interface TextArrayFieldBuilderProps<T extends Yup.AnyObject> {
   label: string;
   subtext?: string | JSX.Element;
   type?: string;
+  tooltip?: string;
 }
 
 export function TextArrayFieldBuilder<T extends Yup.AnyObject>(
