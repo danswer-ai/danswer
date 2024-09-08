@@ -31,6 +31,7 @@ def _run_migrations(
     # Create an Alembic configuration object
     alembic_cfg = Config("alembic.ini")
     alembic_cfg.set_section_option("logger_alembic", "level", "WARN")
+    alembic_cfg.attributes["configure_logger"] = False
 
     # Set the SQLAlchemy URL in the Alembic configuration
     alembic_cfg.set_main_option("sqlalchemy.url", database_url)
