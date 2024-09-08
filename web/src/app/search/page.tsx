@@ -35,6 +35,7 @@ import {
 import WrappedSearch from "./WrappedSearch";
 import { ChatProvider } from "@/components/context/ChatContext";
 import { SearchProvider } from "@/components/context/SearchContext";
+import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -211,10 +212,12 @@ export default async function Home() {
           shouldDisplaySourcesIncomplete: shouldDisplaySourcesIncompleteModal,
         }}
       >
-        <WrappedSearch
-          initiallyToggled={toggleSidebar}
-          searchTypeDefault={searchTypeDefault}
-        />
+        <ProviderContextProvider>
+          <WrappedSearch
+            initiallyToggled={toggleSidebar}
+            searchTypeDefault={searchTypeDefault}
+          />
+        </ProviderContextProvider>
       </SearchProvider>
     </>
   );

@@ -1,5 +1,4 @@
-import { useProviderStatus } from "./hooks";
-
+import { useProviderStatus } from "./ProviderContext";
 export default function NoCredentialText({
   showConfigureAPIKey,
 }: {

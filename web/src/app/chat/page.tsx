@@ -5,6 +5,7 @@ import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrap
 import { ChatProvider } from "@/components/context/ChatContext";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import WrappedChat from "./WrappedChat";
+import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
 
 export default async function Page({
   searchParams,
@@ -58,7 +59,9 @@ export default async function Page({
           defaultAssistantId,
         }}
       >
-        <WrappedChat initiallyToggled={toggleSidebar} />
+        <ProviderContextProvider>
+          <WrappedChat initiallyToggled={toggleSidebar} />
+        </ProviderContextProvider>
       </ChatProvider>
     </>
   );
