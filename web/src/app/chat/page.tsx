@@ -23,7 +23,6 @@ export default async function Page({
   const {
     user,
     chatSessions,
-    ccPairs,
     availableSources,
     documentSets,
     assistants,
@@ -34,7 +33,6 @@ export default async function Page({
     openedFolders,
     defaultAssistantId,
     shouldShowWelcomeModal,
-    shouldDisplaySourcesIncompleteModal,
     userInputPrompts,
   } = data;
 
@@ -55,7 +53,6 @@ export default async function Page({
           openedFolders,
           userInputPrompts,
           shouldShowWelcomeModal,
-          shouldDisplaySourcesIncompleteModal,
           defaultAssistantId,
         }}
       >

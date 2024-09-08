@@ -15,7 +15,6 @@ interface SearchContextProps {
   initiallyToggled: boolean;
   shouldShowWelcomeModal: boolean;
   shouldDisplayNoSources: boolean;
-  shouldDisplaySourcesIncomplete: boolean;
 }
 
 const SearchContext = createContext<SearchContextProps | undefined>(undefined);

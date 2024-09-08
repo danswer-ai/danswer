@@ -44,7 +44,6 @@ interface FetchChatDataResult {
   toggleSidebar: boolean;
   finalDocumentSidebarInitialWidth?: number;
   shouldShowWelcomeModal: boolean;
-  shouldDisplaySourcesIncompleteModal: boolean;
   userInputPrompts: InputPrompt[];
 }
 
@@ -242,7 +241,6 @@ export async function fetchChatData(searchParams: {
     finalDocumentSidebarInitialWidth,
     toggleSidebar,
     shouldShowWelcomeModal,
-    shouldDisplaySourcesIncompleteModal,
     userInputPrompts,
   };
 }

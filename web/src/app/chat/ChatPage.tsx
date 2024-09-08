@@ -125,8 +125,6 @@ export function ChatPage({
     folders,
     openedFolders,
     userInputPrompts,
-    shouldShowWelcomeModal,
-    shouldDisplaySourcesIncompleteModal,
     defaultAssistantId,
     refreshChatSessions,
   } = useChatContext();
@@ -1600,17 +1598,9 @@ export function ChatPage({
     <>
       <HealthCheckBanner />
 
-      {!shouldShowWelcomeModal &&
-        !shouldDisplaySourcesIncompleteModal &&
-        showApiKeyModal && (
-          <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
-        )}
-      {shouldShowWelcomeModal
-        ? "should show welcome modal"
-        : "should not show welcome modal"}
-      {shouldDisplaySourcesIncompleteModal
-        ? "should show sources incomplete modal"
-        : "should not show sources incomplete modal"}
+      {showApiKeyModal && (
+        <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
+      )}
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}

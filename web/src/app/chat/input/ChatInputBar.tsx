@@ -116,9 +116,6 @@ export function ChatInputBar({
     }
   };
 
-  const { shouldShowWelcomeModal, shouldDisplaySourcesIncompleteModal } =
-    useChatContext();
-
   const settings = useContext(SettingsContext);
 
   const { llmProviders } = useChatContext();
@@ -372,9 +369,9 @@ export function ChatInputBar({
           <div>
             <SelectedFilterDisplay filterManager={filterManager} />
           </div>
-          {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
-            <NoCredentialText showConfigureAPIKey={showConfigureAPIKey} />
-          )}
+
+          <NoCredentialText showConfigureAPIKey={showConfigureAPIKey} />
+
           <div
             className="
               opacity-100

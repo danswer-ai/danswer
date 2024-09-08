@@ -80,9 +80,7 @@ export const SearchSection = ({
     tags,
     agenticSearchEnabled,
     disabledAgentic,
-    shouldShowWelcomeModal,
     shouldDisplayNoSources,
-    shouldDisplaySourcesIncomplete,
   } = useSearchContext();
 
   const [query, setQuery] = useState<string>("");
@@ -598,12 +596,9 @@ export const SearchSection = ({
       <div className="flex relative pr-[8px] h-full text-default">
         {popup}
 
-        {!shouldShowWelcomeModal &&
-          !shouldDisplayNoSources &&
-          !shouldDisplaySourcesIncomplete &&
-          showApiKeyModal && (
-            <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
-          )}
+        {!shouldDisplayNoSources && showApiKeyModal && (
+          <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
+        )}
 
         {deletingChatSession && (
           <DeleteEntityModal

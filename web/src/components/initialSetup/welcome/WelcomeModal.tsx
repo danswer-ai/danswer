@@ -241,7 +241,6 @@ export function _WelcomeModal({ user }: { user: User | null }) {
                 this is the option for you!
               </Text>
             }
-            icon={FiMessageSquare}
             callToAction="Get Started"
             onClick={() => {
               setSelectedFlow("chat");

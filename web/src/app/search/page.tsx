@@ -209,7 +209,6 @@ export default async function Home() {
           initiallyToggled: toggleSidebar,
           shouldShowWelcomeModal,
           shouldDisplayNoSources: shouldDisplayNoSourcesModal,
-          shouldDisplaySourcesIncomplete: shouldDisplaySourcesIncompleteModal,
         }}
       >
         <ProviderContextProvider>
