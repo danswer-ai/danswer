@@ -601,7 +601,7 @@ export const SearchSection = ({
           !shouldDisplayNoSources &&
           !shouldDisplaySourcesIncomplete &&
           showApiKeyModal && (
-            <ApiKeyModal hide={() => setShowApiKeyModal(false)} user={user} />
+            <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
           )}
 
         {deletingChatSession && (

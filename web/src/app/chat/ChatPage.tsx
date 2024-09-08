@@ -1224,8 +1224,6 @@ export function ChatPage({
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
               stackTrace = (packet as StreamingError).stack_trace;
-              console.log("error", error);
-              console.log("stackTrace", stackTrace);
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
             } else if (Object.hasOwn(packet, "stop_reason")) {
@@ -1605,7 +1603,7 @@ export function ChatPage({
       {!shouldShowWelcomeModal &&
         !shouldDisplaySourcesIncompleteModal &&
         showApiKeyModal && (
-          <ApiKeyModal hide={() => setShowApiKeyModal(false)} user={user} />
+          <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
         )}
       {shouldShowWelcomeModal
         ? "should show welcome modal"

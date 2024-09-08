@@ -1,3 +1,8 @@
+import { useUser } from "../user/UserProvider";
+import { useRouter } from "next/navigation";
+import { checkLlmProvider } from "../initialSetup/welcome/lib";
+import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
+
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 
 interface UseSidebarVisibilityProps {
@@ -81,3 +86,32 @@ export const useSidebarVisibility = ({
 
   return { showDocSidebar };
 };
+
+export function useProviderStatus() {
+  const { user } = useUser();
+  const router = useRouter();
+  const [validProviderExists, setValidProviderExists] = useState<boolean>(true);
+  const [providerOptions, setProviderOptions] = useState<
+    WellKnownLLMProviderDescriptor[]
+  >([]);
+
+  useEffect(() => {
+    async function fetchProviderInfo() {
+      const { providers, options, defaultCheckSuccessful } =
+        await checkLlmProvider(user);
+      setValidProviderExists(providers.length > 0 && defaultCheckSuccessful);
+      setProviderOptions(options);
+    }
+
+    fetchProviderInfo();
+  }, [router, user]);
+
+  // don't show if
+  //  (1) a valid provider has been setup or
+  //  (2) there are no provider options (e.g. user isn't an admin)
+  //  (3) (handled elsewhere) user explicitly hides the modal
+  const shouldShowConfigurationNeeded =
+    !validProviderExists && providerOptions.length > 0;
+
+  return { shouldShowConfigurationNeeded, providerOptions };
+}

@@ -1,43 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { ApiKeyForm } from "./ApiKeyForm";
 import { Modal } from "../Modal";
-import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
-import { checkLlmProvider } from "../initialSetup/welcome/lib";
-import { User } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { useProviderStatus } from "../chat_search/hooks";
 
-export const ApiKeyModal = ({
-  user,
-  hide,
-}: {
-  user: User | null;
-  hide: () => void;
-}) => {
+export const ApiKeyModal = ({ hide }: { hide: () => void }) => {
   const router = useRouter();
 
-  const [validProviderExists, setValidProviderExists] = useState<boolean>(true);
-  const [providerOptions, setProviderOptions] = useState<
-    WellKnownLLMProviderDescriptor[]
-  >([]);
+  const { shouldShowConfigurationNeeded, providerOptions } =
+    useProviderStatus();
 
-  useEffect(() => {
-    async function fetchProviderInfo() {
-      const { providers, options, defaultCheckSuccessful } =
-        await checkLlmProvider(user);
-      setValidProviderExists(providers.length > 0 && defaultCheckSuccessful);
-      setProviderOptions(options);
-    }
-
-    fetchProviderInfo();
-  }, []);
-
-  // don't show if
-  //  (1) a valid provider has been setup or
-  //  (2) there are no provider options (e.g. user isn't an admin)
-  //  (3) user explicitly hides the modal
-  if (validProviderExists || !providerOptions.length) {
+  if (!shouldShowConfigurationNeeded) {
     return null;
   }
 
