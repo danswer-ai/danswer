@@ -97,27 +97,10 @@ async function handleRequest(request: NextRequest, path: string[]) {
         headers: response.headers,
       });
     } else {
-      // If it's not a stream, handle it based on content type
-      const contentType =
-        response.headers.get("content-type") || "application/json";
-
-      if (contentType.startsWith("image/")) {
-        // For image types, return the response as-is
-        return new NextResponse(response.body, {
-          status: response.status,
-          headers: response.headers,
-        });
-      } else {
-        // For other types, handle as before
-        const data = await response.text();
-
-        return new NextResponse(data, {
-          status: response.status,
-          headers: {
-            "Content-Type": contentType,
-          },
-        });
-      }
+      return new NextResponse(response.body, {
+        status: response.status,
+        headers: response.headers,
+      });
     }
   } catch (error: unknown) {
     console.error("Proxy error:", error);
