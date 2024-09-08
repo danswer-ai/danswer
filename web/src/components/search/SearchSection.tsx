@@ -37,6 +37,10 @@ import { FeedbackModal } from "@/app/chat/modal/FeedbackModal";
 import { deleteChatSession, handleChatFeedback } from "@/app/chat/lib";
 import SearchAnswer from "./SearchAnswer";
 import { DeleteEntityModal } from "../modals/DeleteEntityModal";
+import { ApiKeyModal } from "../llm/ApiKeyModal";
+import { useSearchContext } from "../context/SearchContext";
+import { useUser } from "../user/UserProvider";
+import UnconfiguredProviderText from "../chat_search/UnconfiguredProviderText";
 
 export type searchState =
   | "input"
@@ -58,33 +62,28 @@ const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
 };
 
 interface SearchSectionProps {
-  disabledAgentic: boolean;
-  ccPairs: CCPairBasicInfo[];
-  documentSets: DocumentSet[];
-  personas: Persona[];
-  tags: Tag[];
   toggle: () => void;
-  querySessions: ChatSession[];
   defaultSearchType: SearchType;
-  user: User | null;
   toggledSidebar: boolean;
-  agenticSearchEnabled: boolean;
 }
 
 export const SearchSection = ({
-  ccPairs,
   toggle,
-  disabledAgentic,
-  documentSets,
-  agenticSearchEnabled,
-  personas,
-  user,
-  tags,
-  querySessions,
   toggledSidebar,
   defaultSearchType,
 }: SearchSectionProps) => {
-  // Search Bar
+  const {
+    querySessions,
+    ccPairs,
+    documentSets,
+    assistants,
+    tags,
+    shouldShowWelcomeModal,
+    agenticSearchEnabled,
+    disabledAgentic,
+    shouldDisplayNoSources,
+  } = useSearchContext();
+
   const [query, setQuery] = useState<string>("");
   const [comments, setComments] = useState<any>(null);
   const [contentEnriched, setContentEnriched] = useState(false);
@@ -99,6 +98,8 @@ export const SearchSection = ({
     error: null,
     messageId: null,
   });
+
+  const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
   const [agentic, setAgentic] = useState(agenticSearchEnabled);
 
@@ -147,7 +148,7 @@ export const SearchSection = ({
     useState<SearchType>(defaultSearchType);
 
   const [selectedPersona, setSelectedPersona] = useState<number>(
-    personas[0]?.id || 0
+    assistants[0]?.id || 0
   );
 
   // Used for search state display
@@ -158,8 +159,8 @@ export const SearchSection = ({
   const availableSources = ccPairs.map((ccPair) => ccPair.source);
   const [finalAvailableSources, finalAvailableDocumentSets] =
     computeAvailableFilters({
-      selectedPersona: personas.find(
-        (persona) => persona.id === selectedPersona
+      selectedPersona: assistants.find(
+        (assistant) => assistant.id === selectedPersona
       ),
       availableSources: availableSources,
       availableDocumentSets: documentSets,
@@ -362,6 +363,7 @@ export const SearchSection = ({
       setSearchState("input");
     }
   };
+  const { user } = useUser();
   const [searchAnswerExpanded, setSearchAnswerExpanded] = useState(false);
 
   const resetInput = (finalized?: boolean) => {
@@ -403,8 +405,8 @@ export const SearchSection = ({
       documentSets: filterManager.selectedDocumentSets,
       timeRange: filterManager.timeRange,
       tags: filterManager.selectedTags,
-      persona: personas.find(
-        (persona) => persona.id === selectedPersona
+      persona: assistants.find(
+        (assistant) => assistant.id === selectedPersona
       ) as Persona,
       updateCurrentAnswer: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
@@ -595,6 +597,12 @@ export const SearchSection = ({
       <div className="flex relative pr-[8px] h-full text-default">
         {popup}
 
+        {!shouldDisplayNoSources &&
+          showApiKeyModal &&
+          !shouldShowWelcomeModal && (
+            <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
+          )}
+
         {deletingChatSession && (
           <DeleteEntityModal
             entityType="search"
@@ -747,6 +755,11 @@ export const SearchSection = ({
                         </div>
                       </div>
                     </div>
+
+                    <UnconfiguredProviderText
+                      showConfigureAPIKey={() => setShowApiKeyModal(true)}
+                    />
+
                     <FullSearchBar
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic
