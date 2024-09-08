@@ -1,3 +1,4 @@
+import { INTERNAL_URL } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 
 /* NextJS is annoying and makes use use a separate function for 
@@ -64,11 +65,7 @@ async function handleRequest(request: NextRequest, path: string[]) {
   }
 
   try {
-    const backendUrl = new URL(`http://localhost:8080/${path.join("/")}`);
-    const requestBody = request.body
-      ? JSON.stringify(await request.json())
-      : null;
-    // console.log(requestBody)
+    const backendUrl = new URL(`${INTERNAL_URL}/${path.join("/")}`);
 
     // Get the URL parameters from the request
     const urlParams = new URLSearchParams(request.url.split("?")[1]);
@@ -81,7 +78,9 @@ async function handleRequest(request: NextRequest, path: string[]) {
     const response = await fetch(backendUrl, {
       method: request.method,
       headers: request.headers,
-      body: requestBody,
+      body: request.body,
+      // @ts-ignore
+      duplex: "half",
     });
 
     // Check if the response is a stream
@@ -98,17 +97,27 @@ async function handleRequest(request: NextRequest, path: string[]) {
         headers: response.headers,
       });
     } else {
-      // If it's not a stream, handle it as before
-      const data = await response.text();
+      // If it's not a stream, handle it based on content type
       const contentType =
         response.headers.get("content-type") || "application/json";
 
-      return new NextResponse(data, {
-        status: response.status,
-        headers: {
-          "Content-Type": contentType,
-        },
-      });
+      if (contentType.startsWith("image/")) {
+        // For image types, return the response as-is
+        return new NextResponse(response.body, {
+          status: response.status,
+          headers: response.headers,
+        });
+      } else {
+        // For other types, handle as before
+        const data = await response.text();
+
+        return new NextResponse(data, {
+          status: response.status,
+          headers: {
+            "Content-Type": contentType,
+          },
+        });
+      }
     }
   } catch (error: unknown) {
     console.error("Proxy error:", error);
