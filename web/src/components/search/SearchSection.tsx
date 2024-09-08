@@ -761,6 +761,8 @@ export const SearchSection = ({
                     />
 
                     <FullSearchBar
+                      setPopup={setPopup}
+                      disabled={searchState !== "input"}
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic
                       }
