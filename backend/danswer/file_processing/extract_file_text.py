@@ -254,7 +254,7 @@ def docx_to_text(file: IO[Any]) -> str:
 
     def extract_cell_text(cell: docx.table._Cell) -> str:
         cell_paragraphs = [para.text.strip() for para in cell.paragraphs]
-        return ' '.join(p for p in cell_paragraphs if p)
+        return " ".join(p for p in cell_paragraphs if p) or "N/A"
 
     paragraphs = []
 
@@ -266,17 +266,17 @@ def docx_to_text(file: IO[Any]) -> str:
             if not item.rows or not is_simple_table(item):
                 continue
 
-            # We assume the first row to be the table heading
-            headings = [extract_cell_text(c).rstrip(":") for c in item.rows[0].cells]
-            for row in item.rows[1:]:
-                row_lines = []
-                for i, cell in enumerate(row.cells):
-                    # Squash cell paragraphs into a single line of text
-                    cell_text = extract_cell_text(cell)
-                    row_lines.append(f"{headings[i]}: {cell_text}" if headings[i] else cell_text)
-                paragraphs.append("\n".join(row_lines))
+            # Every row is a new line, joined with a single newline
+            table_content = "\n".join(
+                [
+                    ",\t".join(extract_cell_text(cell) for cell in row.cells)
+                    for row in item.rows
+                ]
+            )
+            paragraphs.append(table_content)
 
-    return TEXT_SECTION_SEPARATOR.join(paragraphs)
+    # Docx already has good spacing between paragraphs
+    return "\n".join(paragraphs)
 
 
 def pptx_to_text(file: IO[Any]) -> str:
