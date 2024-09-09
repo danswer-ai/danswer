@@ -103,7 +103,7 @@ function ClickableTableRow({
   };
 
   return (
-    <TableRow {...props} onClick={navigate}>
+    <TableRow {...props} onClick={navigate} className="cursor-pointer">
       {children}
     </TableRow>
   );
@@ -175,11 +175,9 @@ export function CCPairIndexingStatusTable({
               );
             })}
             <TableRow>
-              <TableCell>
-                <div>
-                  Total document indexed:{" "}
-                  {getOverallTotalDocs(ccPairsIndexingStatusesForPage) || 0}
-                </div>
+              <TableCell colSpan={5}>
+                Total document indexed:{" "}
+                {getOverallTotalDocs(ccPairsIndexingStatusesForPage) || 0}
               </TableCell>
             </TableRow>
           </TableBody>

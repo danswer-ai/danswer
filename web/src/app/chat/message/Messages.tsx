@@ -470,13 +470,11 @@ export const HumanMessage = ({
         <div className="">
           <div className="flex">
             <div className="flex items-center justify-center bg-background rounded-full min-h-[34px] min-w-[34px] max-h-[34px] max-w-[34px] aspect-square text-base font-normal border-2 border-gray-900 ault py-2 mx-1">
-              {/*  {user && user.email ? (
-                user.email[0].toUpperCase()
+              {user && user.full_name ? (
+                user.full_name.charAt(0)
               ) : (
                 <User size={25} className="mx-auto" />
-              )} */}
-
-              <User size={25} className="mx-auto" />
+              )}
             </div>
 
             <div className="my-auto ml-2 font-bold text-inverted-inverted">
