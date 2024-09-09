@@ -60,7 +60,7 @@ export const ResponseSection = ({
   // `isOpen` state
   const finalIsOpen = isOpen !== null ? isOpen : desiredOpenStatus;
   return (
-    <div>
+    <div className="w-full">
       <div
         className={`
         flex 
@@ -95,7 +95,7 @@ export const ResponseSection = ({
           </div>
         )}
       </div>
-      {finalIsOpen && <div className="pb-1 mx-2 text-sm mb-1">{body}</div>}
+      {finalIsOpen && <div className="mx-2 text-sm pb-10">{body}</div>}
     </div>
   );
 };

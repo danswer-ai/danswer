@@ -12,6 +12,7 @@ export function CustomTooltip({
   side = "top",
   delayDuration = 300,
   style,
+  asChild,
 }: {
   children: React.ReactNode;
   trigger: string | React.ReactNode;
@@ -19,13 +20,12 @@ export function CustomTooltip({
   side?: "right" | "bottom" | "left" | "top";
   delayDuration?: number;
   style?: string;
+  asChild?: boolean;
 }) {
   return (
     <TooltipProvider>
       <Tooltip delayDuration={delayDuration}>
-        <TooltipTrigger className="w-full" asChild>
-          {trigger}
-        </TooltipTrigger>
+        <TooltipTrigger asChild={asChild}>{trigger}</TooltipTrigger>
         <TooltipContent
           align={align}
           side={side}

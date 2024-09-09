@@ -193,6 +193,7 @@ export function ChatSessionDisplay({
         </Link>
       }
       side="right"
+      asChild
     >
       {chatName || `Chat ${chatSession.id}`}
     </CustomTooltip>

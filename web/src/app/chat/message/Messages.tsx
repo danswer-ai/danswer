@@ -113,6 +113,7 @@ export const AIMessage = ({
   handleToggleSideBar?: () => void;
 }) => {
   const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
     Prism.highlightAll();
     setIsReady(true);
@@ -375,7 +376,7 @@ function MessageSwitcher({
   handleNext: () => void;
 }) {
   return (
-    <div className="flex items-center text-sm space-x-0.5">
+    <div className="flex items-center text-sm space-x-2">
       <Button
         variant="ghost"
         size="smallIcon"

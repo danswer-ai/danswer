@@ -4,6 +4,7 @@ import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
 import { useState } from "react";
 import { SourceIcon } from "@/components/SourceIcon";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
   const [detailIsOpen, setDetailIsOpen] = useState(false);
@@ -11,7 +12,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
 
   return (
     <div
-      className="relative"
+      className="relative w-full"
       onMouseEnter={() => {
         setDetailIsOpen(true);
       }}
@@ -47,18 +48,19 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
           </div>
         </div>
       )}
-      <div className="text-sm flex w-fit">
+      <div className="text-sm flex w-full">
         <a
           href={quoteInfo.link || undefined}
           target="_blank"
           rel="noopener noreferrer"
+          className="w-full"
         >
-          <Button variant="outline">
-            <SourceIcon sourceType={quoteInfo.source_type} iconSize={18} />
+          <Badge variant="outline" className="w-full">
+            <SourceIcon sourceType={quoteInfo.source_type} iconSize={16} />
             <p className="truncate break-all ml-2 mr-2">
               {quoteInfo.semantic_identifier || quoteInfo.document_id}
             </p>
-          </Button>
+          </Badge>
         </a>
       </div>
     </div>
