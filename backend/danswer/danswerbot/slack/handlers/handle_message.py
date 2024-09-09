@@ -235,10 +235,11 @@ def handle_message(
     slack_user_info = expert_info_from_slack_id(
         message_info.sender, client, user_cache={}
     )
-    user_email = slack_user_info.email if slack_user_info else None
 
     with Session(get_sqlalchemy_engine()) as db_session:
-        add_user_if_not_exists(user_email, db_session)
+        if slack_user_info and slack_user_info.email:
+            add_user_if_not_exists(slack_user_info.email, db_session)
+
         # first check if we need to respond with a standard answer
         used_standard_answer = handle_standard_answers(
             message_info=message_info,
