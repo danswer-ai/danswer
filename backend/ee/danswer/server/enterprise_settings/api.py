@@ -30,7 +30,6 @@ from ee.danswer.server.enterprise_settings.store import load_settings
 from ee.danswer.server.enterprise_settings.store import store_analytics_script
 from ee.danswer.server.enterprise_settings.store import store_settings
 from ee.danswer.server.enterprise_settings.store import upload_logo
-from shared_configs.configs import CUSTOM_REFRESH_URL
 
 admin_router = APIRouter(prefix="/admin/enterprise-settings")
 basic_router = APIRouter(prefix="/enterprise-settings")
@@ -60,16 +59,6 @@ async def refresh_access_token(
     user: User = Depends(current_user_with_expired_token),
     user_manager: UserManager = Depends(get_user_manager),
 ) -> None:
-    # return
-    if CUSTOM_REFRESH_URL is None:
-        logger.error(
-            "Custom refresh URL is not set and client is attempting to custom refresh"
-        )
-        raise HTTPException(
-            status_code=500,
-            detail="Custom refresh URL is not set",
-        )
-
     try:
         logger.debug(f"Received response from Meechum auth URL for user {user.id}")
 
