@@ -72,13 +72,20 @@ export const useQueryHistory = () => {
   };
 };
 
-export function getDatesList(startDate: Date): string[] {
+export function getDatesList(startDate: Date, endDate: Date): string[] {
   const datesList: string[] = [];
-  const endDate = new Date(); // current date
+  const currentDate = new Date();
 
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
     const dateStr = d.toISOString().split("T")[0]; // convert date object to 'YYYY-MM-DD' format
     datesList.push(dateStr);
+  }
+
+  if (endDate.toDateString() === currentDate.toDateString()) {
+    const todayStr = currentDate.toISOString().split("T")[0];
+    if (!datesList.includes(todayStr)) {
+      datesList.push(todayStr);
+    }
   }
 
   return datesList;

@@ -192,7 +192,8 @@ export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
     );
   } else {
     const initialDate = timeRange.from || new Date(queryAnalyticsData[0].date);
-    const dateRange = getDatesList(initialDate);
+    const endDate = timeRange.to || new Date();
+    const dateRange = getDatesList(initialDate, endDate);
 
     const data = dateRange.map((dateStr) => {
       const queryAnalyticsForDate = queryAnalyticsData.find(
