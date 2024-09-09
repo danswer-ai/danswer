@@ -4,7 +4,6 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { FullSearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
-import { CCPairBasicInfo, DocumentSet, Tag, User } from "@/lib/types";
 import {
   Quote,
   SearchResponse,
