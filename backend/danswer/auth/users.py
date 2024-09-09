@@ -29,7 +29,6 @@ from fastapi_users.authentication import Strategy
 from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
-from fastapi_users.password import PasswordHelper
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy.orm import Session
 
@@ -214,25 +213,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             else:
                 raise exceptions.UserAlreadyExists()
         return user
-
-    async def create_non_web_user(self, email: str) -> User:
-        """
-        Creates a non-web user. Used when a user interacts with Slack bot
-        or other non-web interactions.
-        :raises UserAlreadyExists: A user already exists with the same e-mail.
-        :return: A new user if newly created
-        """
-        fastapi_users_pw_helper = PasswordHelper()
-        password = fastapi_users_pw_helper.generate()
-        hashed_pass = fastapi_users_pw_helper.hash(password)
-        return await self.create(
-            UserCreate(
-                email=email,
-                password=hashed_pass,
-                role=UserRole.BASIC,
-                has_web_login=False,
-            )
-        )
 
     async def oauth_callback(
         self: "BaseUserManager[models.UOAP, models.ID]",
