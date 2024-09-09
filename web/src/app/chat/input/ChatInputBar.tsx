@@ -33,12 +33,15 @@ import { Tooltip } from "@/components/tooltip/Tooltip";
 import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { ChatState } from "../types";
+import UnconfiguredProviderText from "@/components/chat_search/UnconfiguredProviderText";
+import { useSearchContext } from "@/components/context/SearchContext";
 
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
   openModelSettings,
   showDocs,
+  showConfigureAPIKey,
   selectedDocuments,
   message,
   setMessage,
@@ -62,6 +65,7 @@ export function ChatInputBar({
   chatSessionId,
   inputPrompts,
 }: {
+  showConfigureAPIKey: () => void;
   openModelSettings: () => void;
   chatState: ChatState;
   stopGenerating: () => void;
@@ -111,6 +115,7 @@ export function ChatInputBar({
       }
     }
   };
+
   const settings = useContext(SettingsContext);
 
   const { llmProviders } = useChatContext();
@@ -364,6 +369,9 @@ export function ChatInputBar({
           <div>
             <SelectedFilterDisplay filterManager={filterManager} />
           </div>
+
+          <UnconfiguredProviderText showConfigureAPIKey={showConfigureAPIKey} />
+
           <div
             className="
               opacity-100

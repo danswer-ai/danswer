@@ -6,6 +6,7 @@ import {
 } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
+  EE_ENABLED,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
 } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
@@ -53,6 +54,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const combinedSettings = await fetchSettingsSS();
+
   if (!combinedSettings) {
     // Just display a simple full page error if fetching fails.
 
@@ -72,8 +74,34 @@ export default async function RootLayout({
               <h1 className="text-2xl font-bold mb-4 text-error">Error</h1>
               <p className="text-text-500">
                 Your Danswer instance was not configured properly and your
-                settings could not be loaded. Please contact your admin to fix
-                this error.
+                settings could not be loaded. This could be due to an admin
+                configuration issue or an incomplete setup.
+              </p>
+              <p className="mt-4">
+                If you&apos;re an admin, please check{" "}
+                <a
+                  className="text-link"
+                  href="https://docs.danswer.dev/introduction?utm_source=app&utm_medium=error_page&utm_campaign=config_error"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  our docs
+                </a>{" "}
+                to see how to configure Danswer properly. If you&apos;re a user,
+                please contact your admin to fix this error.
+              </p>
+              <p className="mt-4">
+                For additional support and guidance, you can reach out to our
+                community on{" "}
+                <a
+                  className="text-link"
+                  href="https://danswer.ai?utm_source=app&utm_medium=error_page&utm_campaign=config_error"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Slack
+                </a>
+                .
               </p>
             </Card>
           </div>
@@ -104,7 +132,7 @@ export default async function RootLayout({
 
       <body className={`relative ${inter.variable} font-sans`}>
         <div
-          className={`text-default bg-background ${
+          className={`text-default min-h-screen bg-background ${
             // TODO: remove this once proper dark mode exists
             process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
           }`}

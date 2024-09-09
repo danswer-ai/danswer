@@ -198,7 +198,7 @@ export function TextFormField({
           rounded-lg
           w-full 
           py-2 
-          px-3 
+          px-3
           mt-1
           placeholder:font-description 
           placeholder:text-base 

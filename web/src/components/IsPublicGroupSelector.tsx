@@ -16,11 +16,13 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   formikProps,
   objectName,
   publicToWhom = "Users",
+  removeIndent = false,
   enforceGroupSelection = true,
 }: {
   formikProps: FormikProps<T>;
   objectName: string;
   publicToWhom?: string;
+  removeIndent?: boolean;
   enforceGroupSelection?: boolean;
 }) => {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
@@ -74,6 +76,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         <>
           <BooleanFormField
             name="is_public"
+            removeIndent={removeIndent}
             label={
               publicToWhom === "Curators"
                 ? `Make this ${objectName} Curator Accessible?`

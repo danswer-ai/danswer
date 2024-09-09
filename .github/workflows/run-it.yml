@@ -28,30 +28,20 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build Web Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./web
-          file: ./web/Dockerfile
-          platforms: linux/arm64
-          pull: true
-          push: true
-          load: true
-          tags: danswer/danswer-web-server:it
-          cache-from: type=registry,ref=danswer/danswer-web-server:it
-          cache-to: |
-            type=registry,ref=danswer/danswer-web-server:it,mode=max
-            type=inline
+      # NOTE: we don't need to build the Web Docker image since it's not used
+      # during the IT for now. We have a separate action to verify it builds 
+      # succesfully
+      - name: Pull Web Docker image
+        run: |
+          docker pull danswer/danswer-web-server:latest
+          docker tag danswer/danswer-web-server:latest danswer/danswer-web-server:it
 
       - name: Build Backend Docker image
-        uses: docker/build-push-action@v5
+        uses: ./.github/actions/custom-build-and-push
         with:
           context: ./backend
           file: ./backend/Dockerfile
           platforms: linux/arm64
-          pull: true
-          push: true
-          load: true
           tags: danswer/danswer-backend:it
           cache-from: type=registry,ref=danswer/danswer-backend:it
           cache-to: |
@@ -59,14 +49,11 @@ jobs:
             type=inline
 
       - name: Build Model Server Docker image
-        uses: docker/build-push-action@v5
+        uses: ./.github/actions/custom-build-and-push
         with:
           context: ./backend
           file: ./backend/Dockerfile.model_server
           platforms: linux/arm64
-          pull: true
-          push: true
-          load: true
           tags: danswer/danswer-model-server:it
           cache-from: type=registry,ref=danswer/danswer-model-server:it
           cache-to: |
@@ -74,14 +61,11 @@ jobs:
             type=inline
 
       - name: Build integration test Docker image
-        uses: docker/build-push-action@v5
+        uses: ./.github/actions/custom-build-and-push
         with:
           context: ./backend
           file: ./backend/tests/integration/Dockerfile
           platforms: linux/arm64
-          pull: true
-          push: true
-          load: true
           tags: danswer/integration-test-runner:it
           cache-from: type=registry,ref=danswer/integration-test-runner:it
           cache-to: |
@@ -96,7 +80,7 @@ jobs:
           REQUIRE_EMAIL_VERIFICATION=false \
           DISABLE_TELEMETRY=true \
           IMAGE_TAG=it \
-          docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build
+          docker compose -f docker-compose.dev.yml -p danswer-stack up -d
         id: start_docker
 
       - name: Wait for service to be ready
