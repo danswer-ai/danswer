@@ -964,11 +964,13 @@ class ChatMessage(Base):
         secondary=ChatMessage__SearchDoc.__table__,
         back_populates="chat_messages",
     )
+    tool_call_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tool_call.id"), nullable=True
+    )
     # NOTE: Should always be attached to the `assistant` message.
     # represents the tool calls used to generate this message
-    tool_calls: Mapped[list["ToolCall"]] = relationship(
-        "ToolCall",
-        back_populates="message",
+    tool_call: Mapped["ToolCall"] = relationship(
+        "ToolCall", back_populates="message", foreign_keys=[tool_call_id]
     )
     standard_answers: Mapped[list["StandardAnswer"]] = relationship(
         "StandardAnswer",

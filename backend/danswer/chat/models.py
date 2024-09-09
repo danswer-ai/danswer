@@ -48,6 +48,7 @@ class QADocsResponse(RetrievalDocs):
 class StreamStopReason(Enum):
     CONTEXT_LENGTH = "context_length"
     CANCELLED = "cancelled"
+    FINISHED = "finished"
 
 
 class StreamStopInfo(BaseModel):

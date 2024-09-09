@@ -16,6 +16,7 @@ from danswer.chat.models import LlmDoc
 from danswer.chat.models import StreamStopInfo
 from danswer.chat.models import StreamStopReason
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
+from danswer.configs.constants import MessageType
 from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import PreviousMessage
@@ -161,6 +162,10 @@ class Answer:
         self.skip_gen_ai_answer_generation = skip_gen_ai_answer_generation
         self._is_cancelled = False
 
+        # self.current_streamed_output: list = []
+        # self.processing_stream: list = []
+        self.final_context_docs: list = []
+
     def _update_prompt_builder_for_search_tool(
         self, prompt_builder: AnswerPromptBuilder, final_context_documents: list[LlmDoc]
     ) -> None:
@@ -190,6 +195,192 @@ class Answer:
                     prompt=self.prompt_config,
                 )
             )
+
+    def _raw_output_for_explicit_tool_calling_llms_loop(
+        self,
+    ) -> Iterator[
+        str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallFinalResult
+    ]:
+        count = 1
+        maximum_count = 4
+        while count <= maximum_count:
+            prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
+
+            count += 1
+            print(f"COUNT IS {count}")
+            tool_call_chunk: AIMessageChunk | None = None
+
+            if self.force_use_tool.force_use and self.force_use_tool.args is not None:
+                tool_call_chunk = AIMessageChunk(content="")
+                tool_call_chunk.tool_calls = [
+                    {
+                        "name": self.force_use_tool.tool_name,
+                        "args": self.force_use_tool.args,
+                        "id": str(uuid4()),
+                    }
+                ]
+            else:
+                prompt_builder.update_system_prompt(
+                    default_build_system_message(self.prompt_config)
+                )
+                prompt_builder.update_user_prompt(
+                    default_build_user_message(
+                        self.question, self.prompt_config, self.latest_query_files
+                    )
+                )
+                prompt = prompt_builder.build()
+                print(f"-----------------------\nThe current prompt is: {prompt}")
+
+                final_tool_definitions = [
+                    tool.tool_definition()
+                    for tool in filter_tools_for_force_tool_use(
+                        self.tools, self.force_use_tool
+                    )
+                ]
+
+                for message in self.llm.stream(
+                    prompt=prompt,
+                    tools=final_tool_definitions if final_tool_definitions else None,
+                    tool_choice="required" if self.force_use_tool.force_use else None,
+                ):
+                    if isinstance(message, AIMessageChunk) and (
+                        message.tool_call_chunks or message.tool_calls
+                    ):
+                        if tool_call_chunk is None:
+                            tool_call_chunk = message
+                        else:
+                            tool_call_chunk += message  # type: ignore
+                    else:
+                        if tool_call_chunk is None and count != 2:
+                            print("Skipping the tool call + message compeltely")
+                            return
+                        elif message.content:
+                            yield cast(str, message.content)
+
+                if not tool_call_chunk:
+                    print(
+                        "Skipping the tool call but generated message due to lack of existing tool call messages"
+                    )
+                    return
+
+            tool_call_requests = tool_call_chunk.tool_calls
+
+            logger.critical(
+                f"-------------------TOOL CALL REQUESTS ({len(tool_call_requests)})-------------------"
+            )
+
+            for tool_call_request in tool_call_requests:
+                known_tools_by_name = [
+                    tool
+                    for tool in self.tools
+                    if tool.name == tool_call_request["name"]
+                ]
+
+                if not known_tools_by_name:
+                    logger.error(
+                        "Tool call requested with unknown name field. \n"
+                        f"self.tools: {self.tools}"
+                        f"tool_call_request: {tool_call_request}"
+                    )
+                    if self.tools:
+                        tool = self.tools[0]
+                    else:
+                        continue
+                else:
+                    tool = known_tools_by_name[0]
+
+                tool_args = (
+                    self.force_use_tool.args
+                    if self.force_use_tool.tool_name == tool.name
+                    and self.force_use_tool.args
+                    else tool_call_request["args"]
+                )
+                print("my tool call request is htis")
+                print(tool_args)
+
+                tool_runner = ToolRunner(tool, tool_args)
+                yield tool_runner.kickoff()
+
+                tool_responses = list(tool_runner.tool_responses())
+                yield from tool_responses
+
+                tool_call_summary = ToolCallSummary(
+                    tool_call_request=tool_call_chunk,
+                    tool_call_result=build_tool_message(
+                        tool_call_request, tool_runner.tool_message_content()
+                    ),
+                )
+
+                if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
+                    self._update_prompt_builder_for_search_tool(prompt_builder, [])
+                elif tool.name == ImageGenerationTool._NAME:
+                    img_urls = [
+                        img_generation_result["url"]
+                        for img_generation_result in tool_runner.tool_final_result().tool_result
+                    ]
+                    prompt_builder.update_user_prompt(
+                        build_image_generation_user_prompt(
+                            query=self.question, img_urls=img_urls
+                        )
+                    )
+
+                yield tool_runner.tool_final_result()
+
+                # Update message history with tool call and response
+                self.message_history.append(
+                    PreviousMessage(
+                        message=str(tool_call_request),
+                        message_type=MessageType.ASSISTANT,
+                        token_count=10,  # You may want to implement a token counting method
+                        tool_call=None,
+                        files=[],
+                    )
+                )
+                self.message_history.append(
+                    PreviousMessage(
+                        message="\n".join(str(response) for response in tool_responses),
+                        message_type=MessageType.SYSTEM,
+                        token_count=10,
+                        tool_call=None,
+                        files=[],
+                    )
+                )
+
+                # Generate response based on updated message history
+                prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
+                print("-------------")
+
+                print("NEW PROMPT")
+                print(prompt)
+                print("\n\n\n\n\n\n-------\n\n------")
+
+                # process_answer_stream_fn = _get_answer_stream_processor(
+                #     context_docs=self.final_context_docs or [],
+                #     doc_id_to_rank_map=map_document_id_order(
+                #         self.final_context_docs or []
+                #     ),
+                #     answer_style_configs=self.answer_style_config,
+                # )
+
+                response_content = ""
+
+                for token in self._process_llm_stream(prompt=prompt, tools=None):
+                    if isinstance(token, str):
+                        response_content += token
+                    yield token
+
+                yield "FINAL TOKEN"
+
+                # Update message history with LLM response
+                self.message_history.append(
+                    PreviousMessage(
+                        message=response_content,
+                        message_type=MessageType.ASSISTANT,
+                        token_count=10,
+                        tool_call=None,
+                        files=[],  # You may want to implement a token counting method
+                    )
+                )
 
     def _raw_output_for_explicit_tool_calling_llms(
         self,
