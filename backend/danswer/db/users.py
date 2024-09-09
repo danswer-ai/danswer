@@ -34,7 +34,7 @@ def fetch_user_by_id(db_session: Session, user_id: UUID) -> User | None:
     return user
 
 
-def add_user_if_not_exists(email: str, db_session: Session) -> User:
+def add_non_web_user_if_not_exists(email: str, db_session: Session) -> User:
     user = get_user_by_email(email, db_session)
     if user is not None:
         return user

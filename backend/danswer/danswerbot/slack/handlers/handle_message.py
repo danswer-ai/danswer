@@ -21,7 +21,7 @@ from danswer.danswerbot.slack.utils import slack_usage_report
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
-from danswer.db.users import add_user_if_not_exists
+from danswer.db.users import add_non_web_user_if_not_exists
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import SLACK_CHANNEL_ID
 
@@ -211,7 +211,7 @@ def handle_message(
 
     with Session(get_sqlalchemy_engine()) as db_session:
         if message_info.email:
-            add_user_if_not_exists(message_info.email, db_session)
+            add_non_web_user_if_not_exists(message_info.email, db_session)
 
         # first check if we need to respond with a standard answer
         used_standard_answer = handle_standard_answers(
