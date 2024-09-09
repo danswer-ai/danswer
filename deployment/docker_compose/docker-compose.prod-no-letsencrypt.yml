@@ -213,13 +213,10 @@ services:
     restart: always
     ports:
       - '6379:6379'
-    command: redis-server
-    volumes: 
-      - cache_volume:/data
+    command: redis-server --save "" --appendonly no
 
 
 volumes:
-  cache_volume:
   db_volume:
   vespa_volume:
   # Created by the container itself
