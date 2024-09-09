@@ -20,11 +20,11 @@ def handle_standard_answers(
     client: WebClient,
     db_session: Session,
 ) -> bool:
-    versioned_rate_limit_strategy = fetch_versioned_implementation(
+    versioned_handle_standard_answers = fetch_versioned_implementation(
         "danswer.danswerbot.slack.handlers.handle_standard_answers",
         "_handle_standard_answers",
     )
-    return versioned_rate_limit_strategy(
+    return versioned_handle_standard_answers(
         message_info, receiver_ids, slack_bot_config, prompt, logger, client, db_session
     )
 
