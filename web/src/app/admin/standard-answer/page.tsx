@@ -147,7 +147,7 @@ const StandardAnswersTable = ({
   const columns = [
     { name: "", key: "edit" },
     { name: "Categories", key: "category" },
-    { name: "Keyword/Phrase", key: "keyword" },
+    { name: "Keywords/Pattern", key: "keyword" },
     { name: "Answer", key: "answer" },
     { name: "", key: "delete" },
   ];

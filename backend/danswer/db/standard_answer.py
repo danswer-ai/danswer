@@ -1,3 +1,4 @@
+import re
 import string
 from collections.abc import Sequence
 
@@ -181,7 +182,11 @@ def find_matching_standard_answers(
     id_in: list[int],
     query: str,
     db_session: Session,
-) -> list[StandardAnswer]:
+) -> list[(StandardAnswer, bool)]:
+    """
+    Returns a list of tuples, where each tuple contains a StandardAnswer and a boolean
+    indicating if the query is a regex match.
+    """
     stmt = (
         select(StandardAnswer)
         .where(StandardAnswer.active.is_(True))
@@ -205,7 +210,9 @@ def find_matching_standard_answers(
 
         # Check if all of the keyword words are in the query words
         if all(word in query_words for word in keyword_words):
-            matching_standard_answers.append(standard_answer)
+            matching_standard_answers.append((standard_answer, False))
+        elif re.search(standard_answer.keyword, query, re.IGNORECASE):
+            matching_standard_answers.append((standard_answer, True))
 
     return matching_standard_answers
 
