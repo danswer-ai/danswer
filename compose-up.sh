@@ -1,0 +1,1 @@
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d
