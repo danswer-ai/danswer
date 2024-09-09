@@ -182,7 +182,7 @@ def find_matching_standard_answers(
     id_in: list[int],
     query: str,
     db_session: Session,
-) -> list[(StandardAnswer, bool)]:
+) -> list[tuple[StandardAnswer, bool]]:
     """
     Returns a list of tuples, where each tuple contains a StandardAnswer and a boolean
     indicating if the query is a regex match.
@@ -194,7 +194,7 @@ def find_matching_standard_answers(
     )
     possible_standard_answers = db_session.scalars(stmt).all()
 
-    matching_standard_answers: list[StandardAnswer] = []
+    matching_standard_answers: list[tuple[StandardAnswer, bool]] = []
     for standard_answer in possible_standard_answers:
         # Remove punctuation and split the keyword into individual words
         keyword_words = "".join(
