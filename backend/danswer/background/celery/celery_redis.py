@@ -15,10 +15,10 @@ from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
+from danswer.db.document import construct_document_select_for_connector_credential_pair
 from danswer.db.document import (
     construct_document_select_for_connector_credential_pair_by_needs_sync,
 )
-from danswer.db.document import select_documents_for_connector_credential_pair
 from danswer.db.document_set import construct_document_select_by_docset
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
@@ -304,7 +304,7 @@ class RedisConnectorDeletion(RedisObjectHelper):
         if not cc_pair:
             return None
 
-        stmt = select_documents_for_connector_credential_pair(
+        stmt = construct_document_select_for_connector_credential_pair(
             cc_pair.connector_id, cc_pair.credential_id
         )
         for doc in db_session.scalars(stmt).yield_per(1):
