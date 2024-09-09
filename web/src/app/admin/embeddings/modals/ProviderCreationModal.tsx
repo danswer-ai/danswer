@@ -158,14 +158,7 @@ export function ProviderCreationModal({
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({
-            values,
-            errors,
-            touched,
-            isSubmitting,
-            handleSubmit,
-            setFieldValue,
-          }) => (
+          {({ isSubmitting, handleSubmit, setFieldValue }) => (
             <Form onSubmit={handleSubmit} className="space-y-4">
               <Text className="text-lg mb-2">
                 You are setting the credentials for this provider. To access

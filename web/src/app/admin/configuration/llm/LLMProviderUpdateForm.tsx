@@ -24,6 +24,7 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";
+import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 
 export function LLMProviderUpdateForm({
   llmProviderDescriptor,
@@ -96,20 +97,20 @@ export function LLMProviderUpdateForm({
       : Yup.string(),
     ...(llmProviderDescriptor.custom_config_keys
       ? {
-          custom_config: Yup.object(
-            llmProviderDescriptor.custom_config_keys.reduce(
-              (acc, customConfigKey) => {
-                if (customConfigKey.is_required) {
-                  acc[customConfigKey.name] = Yup.string().required(
-                    `${customConfigKey.name} is required`
-                  );
-                }
-                return acc;
-              },
-              {} as { [key: string]: Yup.StringSchema }
-            )
-          ),
-        }
+        custom_config: Yup.object(
+          llmProviderDescriptor.custom_config_keys.reduce(
+            (acc, customConfigKey) => {
+              if (customConfigKey.is_required) {
+                acc[customConfigKey.name] = Yup.string().required(
+                  `${customConfigKey.name} is required`
+                );
+              }
+              return acc;
+            },
+            {} as { [key: string]: Yup.StringSchema }
+          )
+        ),
+      }
       : {}),
     default_model_name: Yup.string().required("Model name is required"),
     fast_default_model_name: Yup.string().nullable(),
@@ -219,8 +220,10 @@ export function LLMProviderUpdateForm({
         setSubmitting(false);
       }}
     >
-      {({ values, setFieldValue }) => (
+      {(formikProps) => (
+
         <Form className="gap-y-4 items-stretch mt-6">
+
           {!hideAdvanced && (
             <TextFormField
               name="name"
@@ -337,81 +340,27 @@ export function LLMProviderUpdateForm({
                   {llmProviderDescriptor.llm_names.length > 0 && (
                     <div className="w-full">
                       <MultiSelectField
-                        selectedInitially={values.display_model_names}
+                        selectedInitially={formikProps.values.display_model_names}
                         name="display_model_names"
                         label="Display Models"
                         subtext="Select the models to make available to users. Unselected models will not be available."
-                        options={llmProviderDescriptor.llm_names.map(
-                          (name) => ({
-                            value: name,
-                            label: getDisplayNameForModel(name),
-                          })
-                        )}
+                        options={llmProviderDescriptor.llm_names.map((name) => ({
+                          value: name,
+                          label: getDisplayNameForModel(name),
+                        }))}
                         onChange={(selected) =>
-                          setFieldValue("display_model_names", selected)
+                          formikProps.setFieldValue("display_model_names", selected)
                         }
                       />
                     </div>
                   )}
 
-                  {isPaidEnterpriseFeaturesEnabled && userGroups && (
-                    <>
-                      <BooleanFormField
-                        small
-                        removeIndent
-                        alignTop
-                        name="is_public"
-                        label="Is Public?"
-                        subtext="If set, this LLM Provider will be available to all users. If not, only the specified User Groups will be able to use it."
-                      />
-
-                      {userGroups &&
-                        userGroups.length > 0 &&
-                        !values.is_public && (
-                          <div>
-                            <Text>
-                              Select which User Groups should have access to
-                              this LLM Provider.
-                            </Text>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {userGroups.map((userGroup) => {
-                                const isSelected = values.groups.includes(
-                                  userGroup.id
-                                );
-                                return (
-                                  <Bubble
-                                    key={userGroup.id}
-                                    isSelected={isSelected}
-                                    onClick={() => {
-                                      if (isSelected) {
-                                        setFieldValue(
-                                          "groups",
-                                          values.groups.filter(
-                                            (id) => id !== userGroup.id
-                                          )
-                                        );
-                                      } else {
-                                        setFieldValue("groups", [
-                                          ...values.groups,
-                                          userGroup.id,
-                                        ]);
-                                      }
-                                    }}
-                                  >
-                                    <div className="flex">
-                                      <GroupsIcon />
-                                      <div className="ml-1">
-                                        {userGroup.name}
-                                      </div>
-                                    </div>
-                                  </Bubble>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                    </>
-                  )}
+                  <IsPublicGroupSelector
+                    formikProps={formikProps}
+                    objectName="LLM Provider"
+                    publicToWhom="all users"
+                    enforceGroupSelection={true}
+                  />
                 </>
               )}
             </>
@@ -482,6 +431,7 @@ export function LLMProviderUpdateForm({
           </div>
         </Form>
       )}
+
     </Formik>
   );
 }
