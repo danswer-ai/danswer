@@ -1237,6 +1237,7 @@ export function ChatPage({
                           <ChatIntro
                             availableSources={finalAvailableSources}
                             liveAssistant={liveAssistant}
+                            user={user}
                           >
                             {currentAssistant &&
                               currentAssistant.starter_messages &&

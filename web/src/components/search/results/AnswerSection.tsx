@@ -84,7 +84,7 @@ export const AnswerSection = (props: AnswerSectionProps) => {
       status={status}
       header={
         <div className="flex">
-          <div className="ml-2 text-strong">{header}</div>
+          <div className="ml-2">{header}</div>
         </div>
       }
       body={
