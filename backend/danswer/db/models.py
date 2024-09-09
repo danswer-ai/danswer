@@ -157,6 +157,8 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification", back_populates="user"
     )
+    # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
+    has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class InputPrompt(Base):
