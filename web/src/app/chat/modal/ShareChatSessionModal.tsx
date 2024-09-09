@@ -11,10 +11,11 @@ import { ChatSessionSharedStatus } from "../interfaces";
 import { CopyButton } from "@/components/CopyButton";
 import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 function buildShareLink(chatSessionId: number) {
   const baseUrl = `${window.location.protocol}//${window.location.host}`;
-  return `${baseUrl}/chat/shared/${chatSessionId}`;
+  return `${baseUrl}/chat?chatId=${chatSessionId}`;
 }
 
 async function generateShareLink(chatSessionId: number) {
@@ -82,18 +83,18 @@ export function ShareChatSessionModal({
 
               <div className="flex my-2">
                 <CopyButton content={shareLink} />
-                <a
+                <Link
                   href={shareLink}
                   target="_blank"
                   className="underline text-link mt-1 ml-1 text-sm my-auto"
                 >
                   {shareLink}
-                </a>
+                </Link>
               </div>
 
-              <Text className="mb-4">
+              <p className="mb-4">
                 Click the button below to make the chat private again.
-              </Text>
+              </p>
 
               <Button
                 onClick={async () => {

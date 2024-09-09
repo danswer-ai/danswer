@@ -40,7 +40,6 @@ export function ChatSessionDisplay({
   toggleSideBar?: () => void;
 }) {
   const router = useRouter();
-  const [isDeletionModalVisible, setIsDeletionModalVisible] = useState(false);
   const [isRenamingChat, setIsRenamingChat] = useState(false);
   const [chatName, setChatName] = useState(chatSession.name);
   const [delayedSkipGradient, setDelayedSkipGradient] = useState(skipGradient);
@@ -173,7 +172,6 @@ export function ChatSessionDisplay({
                             chatSession.id
                           );
                           if (response.ok) {
-                            setIsDeletionModalVisible(false);
                             // go back to the main page
                             router.push("/chat");
                           } else {
