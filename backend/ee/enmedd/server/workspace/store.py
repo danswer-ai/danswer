@@ -9,8 +9,8 @@ from fastapi import HTTPException
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
-from ee.enmedd.server.enterprise_settings.models import AnalyticsScriptUpload
-from ee.enmedd.server.enterprise_settings.models import EnterpriseSettings
+from ee.enmedd.server.workspace.models import AnalyticsScriptUpload
+from ee.enmedd.server.workspace.models import Workspaces
 from enmedd.configs.constants import FileOrigin
 from enmedd.dynamic_configs.factory import get_dynamic_config_store
 from enmedd.dynamic_configs.interface import ConfigNotFoundError
@@ -19,25 +19,25 @@ from enmedd.utils.logger import setup_logger
 
 load_dotenv()
 # TODO : replace the value name
-_ENTERPRISE_SETTINGS_KEY = "enmedd_enterprise_settings"
+_WORKSPACES_KEY = "enmedd_workspaces"
 logger = setup_logger()
 
 
-def load_settings() -> EnterpriseSettings:
+def load_settings() -> Workspaces:
     dynamic_config_store = get_dynamic_config_store()
     try:
-        settings = EnterpriseSettings(
-            **cast(dict, dynamic_config_store.load(_ENTERPRISE_SETTINGS_KEY))
+        settings = Workspaces(
+            **cast(dict, dynamic_config_store.load(_WORKSPACES_KEY))
         )
     except ConfigNotFoundError:
-        settings = EnterpriseSettings()
-        dynamic_config_store.store(_ENTERPRISE_SETTINGS_KEY, settings.dict())
+        settings = Workspaces()
+        dynamic_config_store.store(_WORKSPACES_KEY, settings.dict())
 
     return settings
 
 
-def store_settings(settings: EnterpriseSettings) -> None:
-    get_dynamic_config_store().store(_ENTERPRISE_SETTINGS_KEY, settings.dict())
+def store_settings(settings: Workspaces) -> None:
+    get_dynamic_config_store().store(_WORKSPACES_KEY, settings.dict())
 
 
 _CUSTOM_ANALYTICS_SCRIPT_KEY = "__custom_analytics_script__"

@@ -29,7 +29,7 @@ export function Header({ user }: HeaderProps) {
     return null;
   }
   const settings = combinedSettings.settings;
-  const enterpriseSettings = combinedSettings.enterpriseSettings;
+  const workspaces = combinedSettings.workspaces;
 
   return (
     <HeaderWrapper>
@@ -43,14 +43,14 @@ export function Header({ user }: HeaderProps) {
         >
           <div className="flex my-auto">
             <div className="my-auto mr-1">
-              {/* TODO: Remove Enterprise Settings */}
+              {/* TODO: Remove workspaces */}
               <Image src={Logo} alt="Logo" className="w-28" />
             </div>
             <div className="my-auto">
-              {enterpriseSettings && enterpriseSettings.application_name ? (
+              {workspaces && workspaces.workspace_name ? (
                 <div>
                   <HeaderTitle>
-                    {enterpriseSettings.application_name}
+                    {workspaces.workspace_name}
                   </HeaderTitle>
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED && (
                     <p className="text-xs text-subtle -mt-1.5">

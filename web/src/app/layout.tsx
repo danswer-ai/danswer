@@ -15,15 +15,15 @@ const fontSans = FontSans({
 export async function generateMetadata(): Promise<Metadata> {
   const dynamicSettings = await getCombinedSettings({ forceRetrieval: true });
   const logoLocation =
-    dynamicSettings.enterpriseSettings &&
-    dynamicSettings.enterpriseSettings?.use_custom_logo
-      ? "/api/enterprise-settings/logo"
+    dynamicSettings.workspaces &&
+    dynamicSettings.workspaces?.use_custom_logo
+      ? "/api/workspace/logo"
       : buildClientUrl("/enmedd-chp.ico");
 
   return {
-    title: dynamicSettings.enterpriseSettings?.application_name ?? "enMedD AI",
+    title: dynamicSettings.workspaces?.workspace_name ?? "enMedD AI",
     description:
-      dynamicSettings.enterpriseSettings?.application_description ||
+      dynamicSettings.workspaces?.workspace_description ||
       "enMedD Conversational Health Platform",
     icons: {
       icon: logoLocation,

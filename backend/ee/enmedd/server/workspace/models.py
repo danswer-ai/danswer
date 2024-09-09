@@ -1,0 +1,36 @@
+from pydantic import BaseModel
+
+
+from enmedd.db.models import Workspace as WorkspaceModel
+
+class Workspaces(BaseModel):
+    """General settings that only apply to the Enterprise Edition of enMedD AI
+
+    NOTE: don't put anything sensitive in here, as this is accessible without auth."""
+
+    workspace_name: str | None = None
+    workspace_description: str | None = None
+    use_custom_logo: bool = False
+    custom_logo: str | None = None
+    custom_header_logo: str | None = None
+    custom_header_content: str | None = None
+
+
+    @classmethod
+    def from_model(cls, workspace_model: WorkspaceModel) -> "Workspaces":
+        return cls(
+            workspace_name=workspace_model.workspace_name,
+            workspace_description=workspace_model.workspace_description,
+            use_custom_logo=workspace_model.use_custom_logo,
+            custom_logo=workspace_model.custom_logo,
+            custom_header_logo=workspace_model.custom_header_logo,
+            custom_header_content=workspace_model.custom_header_content,
+        )
+
+    def check_validity(self) -> None:
+        return
+
+
+class AnalyticsScriptUpload(BaseModel):
+    script: str
+    secret_key: str
