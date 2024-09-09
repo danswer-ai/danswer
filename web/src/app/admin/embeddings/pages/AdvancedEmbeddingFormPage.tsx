@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import CredentialSubText from "@/components/credentials/CredentialFields";
 import { TrashIcon } from "@/components/icons/icons";
 import { FaPlus } from "react-icons/fa";
-import { AdvancedSearchConfiguration, RerankingDetails } from "../interfaces";
+import { AdvancedSearchConfiguration } from "../interfaces";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
 import NumberInput from "../../connectors/[connector]/pages/ConnectorInput/NumberInput";
 

@@ -576,6 +576,8 @@ class SearchSettings(Base):
         Enum(RerankerProvider, native_enum=False), nullable=True
     )
     rerank_api_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    rerank_api_url: Mapped[str | None] = mapped_column(String, nullable=True)
+
     num_rerank: Mapped[int] = mapped_column(Integer, default=NUM_POSTPROCESSED_RESULTS)
 
     cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(
