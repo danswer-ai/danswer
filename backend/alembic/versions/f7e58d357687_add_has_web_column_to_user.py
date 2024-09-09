@@ -1,4 +1,4 @@
-"""add has_web column to user
+"""add has_web_login column to user
 
 Revision ID: f7e58d357687
 Revises: bceb1e139447
