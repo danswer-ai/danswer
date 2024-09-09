@@ -44,7 +44,7 @@ export const StandardAnswerCreationForm = ({
           }}
           validationSchema={Yup.object().shape({
             keyword: Yup.string()
-              .required("Keyword or phrase is required")
+              .required("Keywords or pattern is required")
               .max(255)
               .min(1),
             answer: Yup.string().required("Answer is required").min(1),
@@ -88,9 +88,9 @@ export const StandardAnswerCreationForm = ({
             <Form>
               <TextFormField
                 name="keyword"
-                label="Keywords"
-                tooltip="If all specified keywords are in the question, then we will respond with the answer below"
-                placeholder="e.g. Wifi Password"
+                label="Keywords or pattern"
+                tooltip="Triggers if all specified keywords are in the question or if regex pattern exists in the question"
+                placeholder="e.g. Wifi Password or \bwifi\b"
                 autoCompleteDisabled={true}
               />
               <div className="w-full">

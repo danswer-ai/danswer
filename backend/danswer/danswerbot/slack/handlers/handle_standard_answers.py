@@ -149,12 +149,14 @@ def handle_standard_answers(
         )
 
         formatted_answers = []
-        for standard_answer in matching_standard_answers:
-            block_quotified_answer = ">" + standard_answer.answer.replace("\n", "\n> ")
-            formatted_answer = (
-                f'Since you mentioned _"{standard_answer.keyword}"_, '
-                f"I thought this might be useful: \n\n{block_quotified_answer}"
+        for standard_answer, is_regex_match in matching_standard_answers:
+            since_you_mentioned_pretext = (
+                f'Since you mentioned _"{standard_answer.keyword}"_'
+                if not is_regex_match
+                else f'Since your question matches the pattern _"{standard_answer.keyword}"_'
             )
+            block_quotified_answer = ">" + standard_answer.answer.replace("\n", "\n> ")
+            formatted_answer = f"{since_you_mentioned_pretext}, I thought this might be useful: \n\n{block_quotified_answer}"
             formatted_answers.append(formatted_answer)
         answer_message = "\n\n".join(formatted_answers)
 
