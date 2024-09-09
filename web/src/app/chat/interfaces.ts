@@ -15,7 +15,7 @@ export enum ChatSessionSharedStatus {
   Private = "private",
   Public = "public",
 }
-
+export const BUFFER_COUNT = 24;
 export interface RetrievalDetails {
   run_search: "always" | "never" | "auto";
   real_time: boolean;
