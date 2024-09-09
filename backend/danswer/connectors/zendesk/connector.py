@@ -3,7 +3,7 @@ from typing import Any
 import requests
 from retry import retry
 from zenpy import Zenpy  # type: ignore
-from zenpy.lib.api_objects import Ticket
+from zenpy.lib.api_objects import Ticket  # type: ignore
 from zenpy.lib.api_objects.help_centre_objects import Article  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -20,9 +20,6 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.html_utils import parse_html_page_basic
-
-# Define a constant for the time delay
-TIME_DELAY_SECONDS = 5
 
 
 def _article_to_document(article: Article, content_tags: dict[str, str]) -> Document:
@@ -135,20 +132,24 @@ class ZendeskConnector(LoadConnector, PollConnector):
         if self.zendesk_client is None:
             raise ZendeskClientNotSetUpError()
 
-        requester = BasicExpertInfo(
-            display_name=ticket.requester.name, email=ticket.requester.email
-        )
-        update_time = time_str_to_utc(ticket.updated_at)
+        owner = None
+        if ticket.requester and ticket.requester.name and ticket.requester.email:
+            owner = [
+                BasicExpertInfo(
+                    display_name=ticket.requester.name, email=ticket.requester.email
+                )
+            ]
+        update_time = time_str_to_utc(ticket.updated_at) if ticket.updated_at else None
 
-        metadata: dict[str, str | list[str]] = {
-            "status": ticket.status,
-            "priority": ticket.priority,
-            "tags": ticket.tags,
-            "ticket_type": ticket.type,
-            "subject": ticket.subject,
-        }
-
-        metadata = {k: v for k, v in metadata.items() if v}
+        metadata: dict[str, str | list[str]] = {}
+        if ticket.status is not None:
+            metadata["status"] = ticket.status
+        if ticket.priority is not None:
+            metadata["priority"] = ticket.priority
+        if ticket.tags:
+            metadata["tags"] = ticket.tags
+        if ticket.type is not None:
+            metadata["ticket_type"] = ticket.type
 
         # Fetch comments for the ticket
         comments = self.zendesk_client.tickets.comments(ticket=ticket)
@@ -156,8 +157,10 @@ class ZendeskConnector(LoadConnector, PollConnector):
         # Combine all comments into a single text
         comments_text = "\n\n".join(
             [
-                f"Comment by {comment.author.name} at {comment.created_at}:\n{comment.body}"
+                f"Comment{f' by {comment.author.name}' if comment.author and comment.author.name else ''}"
+                f"{f' at {comment.created_at}' if comment.created_at else ''}:\n{comment.body}"
                 for comment in comments
+                if comment.body
             ]
         )
 
@@ -176,12 +179,12 @@ class ZendeskConnector(LoadConnector, PollConnector):
         ticket_url = f"https://{subdomain}.zendesk.com/agent/tickets/{ticket.id}"
 
         return Document(
-            id=f"ticket:{ticket.id}",
+            id=f"zendesk_ticket_{ticket.id}",
             sections=[Section(link=ticket_url, text=full_text)],
             source=DocumentSource.ZENDESK,
-            semantic_identifier=f"Ticket #{ticket.id}: {ticket.subject}",
+            semantic_identifier=f"Ticket #{ticket.id}: {ticket.subject or 'No Subject'}",
             doc_updated_at=update_time,
-            primary_owners=[requester],
+            primary_owners=owner,
             metadata=metadata,
         )
 
@@ -202,9 +205,9 @@ class ZendeskConnector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
         articles = (
-            self.zendesk_client.help_center.articles(cursor_pagination=True)
+            self.zendesk_client.help_center.articles(cursor_pagination=True)  # type: ignore
             if start is None
-            else self.zendesk_client.help_center.articles.incremental(
+            else self.zendesk_client.help_center.articles.incremental(  # type: ignore
                 start_time=int(start)
             )
         )
@@ -234,39 +237,32 @@ class ZendeskConnector(LoadConnector, PollConnector):
         if self.zendesk_client is None:
             raise ZendeskClientNotSetUpError()
 
-        # Get all tickets if the default start time is not provided
-        if start is None:
-            start = 0
+        ticket_generator = self.zendesk_client.tickets.incremental(start_time=start)
 
-        try:
-            ticket_generator = self.zendesk_client.tickets.incremental(
-                start_time=int(start)
-            )
+        while True:
+            doc_batch = []
+            for _ in range(self.batch_size):
+                try:
+                    ticket = next(ticket_generator)
 
-            total_processed = 0
-            while True:
-                doc_batch = []
-                for _ in range(self.batch_size):
-                    try:
-                        ticket = next(ticket_generator)
+                    # Check if the ticket status is deleted and skip it if so
+                    if ticket.status == "deleted":
+                        continue
 
-                        # Check if the ticket status is deleted and skip it if so
-                        if ticket.status == "deleted":
-                            continue
+                    doc_batch.append(self._ticket_to_document(ticket))
 
-                        doc_batch.append(self._ticket_to_document(ticket))
-                        total_processed += 1
-                    except StopIteration:
-                        # No more tickets to process
-                        if doc_batch:
-                            yield doc_batch
-                        return
+                    if len(doc_batch) >= self.batch_size:
+                        yield doc_batch
+                        doc_batch.clear()
 
-                if doc_batch:
-                    yield doc_batch
+                except StopIteration:
+                    # No more tickets to process
+                    if doc_batch:
+                        yield doc_batch
+                    return
 
-        except Exception:
-            raise
+            if doc_batch:
+                yield doc_batch
 
 
 if __name__ == "__main__":
