@@ -157,6 +157,8 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification", back_populates="user"
     )
+    # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
+    has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class InputPrompt(Base):
@@ -591,6 +593,8 @@ class SearchSettings(Base):
         Enum(RerankerProvider, native_enum=False), nullable=True
     )
     rerank_api_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    rerank_api_url: Mapped[str | None] = mapped_column(String, nullable=True)
+
     num_rerank: Mapped[int] = mapped_column(Integer, default=NUM_POSTPROCESSED_RESULTS)
 
     cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(

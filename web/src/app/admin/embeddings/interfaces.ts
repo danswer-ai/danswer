@@ -5,11 +5,13 @@ export interface RerankingDetails {
   rerank_model_name: string | null;
   rerank_provider_type: RerankerProvider | null;
   rerank_api_key: string | null;
+  rerank_api_url: string | null;
   num_rerank: number;
 }
 
 export enum RerankerProvider {
   COHERE = "cohere",
+  LITELLM = "litellm",
 }
 export interface AdvancedSearchConfiguration {
   model_name: string;
@@ -40,7 +42,7 @@ export interface SavedSearchSettings extends RerankingDetails {
 
 export interface RerankingModel {
   rerank_provider_type: RerankerProvider | null;
-  modelName: string;
+  modelName?: string;
   displayName: string;
   description: string;
   link: string;
@@ -48,6 +50,13 @@ export interface RerankingModel {
 }
 
 export const rerankingModels: RerankingModel[] = [
+  {
+    rerank_provider_type: RerankerProvider.LITELLM,
+    cloud: true,
+    displayName: "LiteLLM",
+    description: "Host your own reranker or router with LiteLLM proxy",
+    link: "https://docs.litellm.ai/docs/proxy",
+  },
   {
     rerank_provider_type: null,
     cloud: false,
