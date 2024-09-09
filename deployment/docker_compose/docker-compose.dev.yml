@@ -180,7 +180,6 @@ services:
       - NOTIFY_SLACKBOT_NO_ANSWER=${NOTIFY_SLACKBOT_NO_ANSWER:-}
       - DANSWER_BOT_MAX_QPM=${DANSWER_BOT_MAX_QPM:-}
       - DANSWER_BOT_MAX_WAIT_TIME=${DANSWER_BOT_MAX_WAIT_TIME:-}
-      - CUSTOM_REFRESH_URL=${CUSTOM_REFRESH_URL:-}
       # Logging
       # Leave this on pretty please? Nothing sensitive is collected!
       # https://docs.danswer.dev/more/telemetry
@@ -229,7 +228,7 @@ services:
 
       # Enterprise Edition only
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
-      - CUSTOM_REFRESH_URL=${CUSTOM_REFRESH_URL:-}
+      - NEXT_PUBLIC_CUSTOM_REFRESH_URL=${NEXT_PUBLIC_CUSTOM_REFRESH_URL:-}
 
   inference_model_server:
     image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
