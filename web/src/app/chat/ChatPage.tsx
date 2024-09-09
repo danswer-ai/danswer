@@ -101,6 +101,7 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
+import { debounce } from "lodash";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -331,6 +332,7 @@ export function ChatPage({
     }
 
     async function initialSessionFetch() {
+      // hasBeenInitialized.current = false
       if (existingChatSessionId === null) {
         setIsFetchingChatMessages(false);
         if (defaultAssistantId !== undefined) {
@@ -818,7 +820,6 @@ export function ChatPage({
       }
     }, 50);
   };
-
   const distance = 500; // distance that should "engage" the scroll
   const debounceNumber = 100; // time for debouncing
 
