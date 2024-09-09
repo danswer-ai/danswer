@@ -45,8 +45,7 @@ export function WhitelabelingForm() {
       <Formik
         initialValues={{
           workspace_name: workspaces?.workspace_name || null,
-          workspace_description:
-            workspaces?.workspace_description || null,
+          workspace_description: workspaces?.workspace_description || null,
           use_custom_logo: workspaces?.use_custom_logo || false,
           custom_header_logo: workspaces?.custom_header_logo || "",
           custom_header_content: workspaces?.custom_header_content || "",
@@ -67,13 +66,10 @@ export function WhitelabelingForm() {
             const formData = new FormData();
             formData.append("file", selectedFile);
             setSelectedFile(null);
-            const response = await fetch(
-              "/api/admin/workspace/logo",
-              {
-                method: "PUT",
-                body: formData,
-              }
-            );
+            const response = await fetch("/api/admin/workspace/logo", {
+              method: "PUT",
+              body: formData,
+            });
             if (!response.ok) {
               const errorMsg = (await response.json()).detail;
               alert(`Failed to upload logo. ${errorMsg}`);

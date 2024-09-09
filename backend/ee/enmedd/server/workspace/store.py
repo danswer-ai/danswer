@@ -26,9 +26,7 @@ logger = setup_logger()
 def load_settings() -> Workspaces:
     dynamic_config_store = get_dynamic_config_store()
     try:
-        settings = Workspaces(
-            **cast(dict, dynamic_config_store.load(_WORKSPACES_KEY))
-        )
+        settings = Workspaces(**cast(dict, dynamic_config_store.load(_WORKSPACES_KEY)))
     except ConfigNotFoundError:
         settings = Workspaces()
         dynamic_config_store.store(_WORKSPACES_KEY, settings.dict())

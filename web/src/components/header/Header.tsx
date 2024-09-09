@@ -49,9 +49,7 @@ export function Header({ user }: HeaderProps) {
             <div className="my-auto">
               {workspaces && workspaces.workspace_name ? (
                 <div>
-                  <HeaderTitle>
-                    {workspaces.workspace_name}
-                  </HeaderTitle>
+                  <HeaderTitle>{workspaces.workspace_name}</HeaderTitle>
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED && (
                     <p className="text-xs text-subtle -mt-1.5">
                       Powered by enMedD AI

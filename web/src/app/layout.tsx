@@ -15,8 +15,7 @@ const fontSans = FontSans({
 export async function generateMetadata(): Promise<Metadata> {
   const dynamicSettings = await getCombinedSettings({ forceRetrieval: true });
   const logoLocation =
-    dynamicSettings.workspaces &&
-    dynamicSettings.workspaces?.use_custom_logo
+    dynamicSettings.workspaces && dynamicSettings.workspaces?.use_custom_logo
       ? "/api/workspace/logo"
       : buildClientUrl("/enmedd-chp.ico");
 

@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-
 from enmedd.db.models import Workspace as WorkspaceModel
+
 
 class Workspaces(BaseModel):
     """General settings that only apply to the Enterprise Edition of enMedD AI
@@ -14,7 +14,6 @@ class Workspaces(BaseModel):
     custom_logo: str | None = None
     custom_header_logo: str | None = None
     custom_header_content: str | None = None
-
 
     @classmethod
     def from_model(cls, workspace_model: WorkspaceModel) -> "Workspaces":

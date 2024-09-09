@@ -5,12 +5,6 @@ from ee.enmedd.configs.app_configs import OPENID_CONFIG_URL
 from ee.enmedd.server.analytics.api import router as analytics_router
 from ee.enmedd.server.api_key.api import router as api_key_router
 from ee.enmedd.server.auth_check import check_ee_router_auth
-from ee.enmedd.server.workspace.api import (
-    admin_router as workspaces_admin_router,
-)
-from ee.enmedd.server.workspace.api import (
-    basic_router as workspaces_router,
-)
 from ee.enmedd.server.query_and_chat.chat_backend import (
     router as chat_router,
 )
@@ -24,6 +18,12 @@ from ee.enmedd.server.seeding import seed_db
 from ee.enmedd.server.teamspace.api import router as teamspace_router
 from ee.enmedd.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
+)
+from ee.enmedd.server.workspace.api import (
+    admin_router as workspaces_admin_router,
+)
+from ee.enmedd.server.workspace.api import (
+    basic_router as workspaces_router,
 )
 from ee.enmedd.utils.encryption import test_encryption
 from enmedd.auth.users import auth_backend
@@ -87,9 +87,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, query_router)
     include_router_with_global_prefix_prepended(application, chat_router)
     # Enterprise-only global settings
-    include_router_with_global_prefix_prepended(
-        application, workspaces_admin_router
-    )
+    include_router_with_global_prefix_prepended(application, workspaces_admin_router)
     # Token rate limit settings
     include_router_with_global_prefix_prepended(
         application, token_rate_limit_settings_router
