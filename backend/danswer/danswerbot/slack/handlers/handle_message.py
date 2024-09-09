@@ -1,14 +1,11 @@
 import datetime
 
-from fastapi_users.password import PasswordHelper
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from sqlalchemy.orm import Session
 
-from danswer.auth.schemas import UserRole
 from danswer.configs.danswerbot_configs import DANSWER_BOT_FEEDBACK_REMINDER
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
-from danswer.connectors.slack.utils import expert_info_from_slack_id
 from danswer.danswerbot.slack.blocks import get_feedback_reminder_blocks
 from danswer.danswerbot.slack.handlers.handle_regular_answer import (
     handle_regular_answer,
@@ -24,8 +21,7 @@ from danswer.danswerbot.slack.utils import slack_usage_report
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
-from danswer.db.models import User
-from danswer.db.users import get_user_by_email
+from danswer.db.users import add_user_if_not_exists
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import SLACK_CHANNEL_ID
 
@@ -50,25 +46,6 @@ def send_msg_ack_to_user(details: SlackMessageInfo, client: WebClient) -> None:
         remove=False,
         client=client,
     )
-
-
-def add_user_if_not_exists(email: str, db_session: Session) -> User:
-    user = get_user_by_email(email, db_session)
-    if user is not None:
-        return user
-
-    fastapi_users_pw_helper = PasswordHelper()
-    password = fastapi_users_pw_helper.generate()
-    hashed_pass = fastapi_users_pw_helper.hash(password)
-    user = User(
-        email=email,
-        hashed_password=hashed_pass,
-        has_web_login=False,
-        role=UserRole.BASIC,
-    )
-    db_session.add(user)
-    db_session.commit()
-    return user
 
 
 def schedule_feedback_reminder(
@@ -232,13 +209,9 @@ def handle_message(
     except SlackApiError as e:
         logger.error(f"Was not able to react to user message due to: {e}")
 
-    slack_user_info = expert_info_from_slack_id(
-        message_info.sender, client, user_cache={}
-    )
-
     with Session(get_sqlalchemy_engine()) as db_session:
-        if slack_user_info and slack_user_info.email:
-            add_user_if_not_exists(slack_user_info.email, db_session)
+        if message_info.email:
+            add_user_if_not_exists(message_info.email, db_session)
 
         # first check if we need to respond with a standard answer
         used_standard_answer = handle_standard_answers(
