@@ -139,14 +139,14 @@ export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
           />
           <Area
             dataKey="queries"
-            type="natural"
+            type="monotoneX"
             fill="url(#fillQueries)"
             stroke={chartConfig.queries.color}
             stackId="a"
           />
           <Area
             dataKey="uniqueUsers"
-            type="natural"
+            type="monotoneX"
             fill="url(#fillUniqueUsers)"
             stroke={chartConfig.uniqueUsers.color}
             stackId="a"
