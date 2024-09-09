@@ -7,7 +7,6 @@ import zipfile
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
-from http import HTTPStatus
 from typing import BinaryIO
 from typing import cast
 
@@ -391,9 +390,6 @@ class VespaIndex(DocumentIndex):
 
         # update_start = time.monotonic()
 
-        processed_update_requests: list[_VespaUpdateRequest] = []
-        all_doc_chunk_ids: dict[str, list[str]] = {}
-
         # Fetch all chunks for each document ahead of time
         index_names = [self.index_name]
         if self.secondary_index_name:
@@ -434,9 +430,9 @@ class VespaIndex(DocumentIndex):
 
         if not update_dict["fields"]:
             logger.error("Update request received but nothing to update")
-            return HTTPStatus.OK
+            return
 
-        update_dict["condition"] = ""
+        processed_update_requests: list[_VespaUpdateRequest] = []
         for document_id in update_request.document_ids:
             for doc_chunk_id in all_doc_chunk_ids:
                 processed_update_requests.append(
@@ -460,7 +456,7 @@ class VespaIndex(DocumentIndex):
         #     time.monotonic() - update_start,
         # )
 
-        return None
+        return
 
     def delete(self, doc_ids: list[str]) -> None:
         logger.info(f"Deleting {len(doc_ids)} documents from Vespa")
