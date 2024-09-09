@@ -55,7 +55,7 @@ def send_msg_ack_to_user(details: SlackMessageInfo, client: WebClient) -> None:
     )
 
 
-def add_user_if_not_exists(sender: str, client: WebClient) -> User | None:
+def add_user_if_not_exists(sender: str | None, client: WebClient) -> User | None:
     slack_user_info = expert_info_from_slack_id(sender, client, user_cache={})
     if slack_user_info and slack_user_info.email:
         return asyncio.run(add_user_in_db_if_not_exists(slack_user_info.email))

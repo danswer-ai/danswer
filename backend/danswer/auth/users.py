@@ -188,7 +188,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         user_create: schemas.UC | UserCreate,
         safe: bool = False,
         request: Optional[Request] = None,
-    ) -> models.UP:
+    ) -> User:
         verify_email_is_invited(user_create.email)
         verify_email_domain(user_create.email)
         if hasattr(user_create, "role"):
@@ -314,7 +314,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
     async def authenticate(
         self, credentials: OAuth2PasswordRequestForm
-    ) -> Optional[models.UP]:
+    ) -> Optional[User]:
         user = await super().authenticate(credentials)
         if user is None:
             try:
