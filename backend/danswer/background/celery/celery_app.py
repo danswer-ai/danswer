@@ -654,8 +654,8 @@ def vespa_metadata_sync_task(self: Task, document_id: str) -> bool:
                 hidden=doc.hidden,
             )
 
-            # update Vespa
-            document_index.update(update_requests=[update_request])
+            # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
+            document_index.update_single(update_request=update_request)
 
             # update db last. Worst case = we crash right before this and
             # the sync might repeat again later
@@ -720,7 +720,8 @@ def document_by_cc_pair_cleanup_task(
                     hidden=doc.hidden,
                 )
 
-                document_index.update(update_requests=[update_request])
+                # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
+                document_index.update_single(update_request=update_request)
 
                 # there are still other cc_pair references to the doc, so just resync to Vespa
                 delete_document_by_connector_credential_pair__no_commit(
