@@ -95,7 +95,7 @@ const DocumentSetTable = ({
 
   return (
     <div>
-      <h3 className="font-semibold pb-5">Existing Document Sets</h3>
+      <h3 className="font-semibold pb-4">Existing Document Sets</h3>
       <Card>
         <CardContent className="p-0">
           <Table>

@@ -13,7 +13,7 @@ export function StarterMessage({
       className="h-[130px] p-4 justify-between flex flex-col cursor-pointer border shadow-none text-default"
       onClick={onClick}
     >
-      <CardContent className="p-0 overflow-hidden max-w-full line-clamp">
+      <CardContent className="p-0 line-clamp">
         <p>{starterMessage.description}</p>
       </CardContent>{" "}
       <CardFooter className="p-0">

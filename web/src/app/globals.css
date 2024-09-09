@@ -110,4 +110,6 @@ body {
   overflow: hidden;
   -webkit-line-clamp: 4;
   text-wrap: balance;
+  max-width: 100%;
+  overflow: hidden;
 }
