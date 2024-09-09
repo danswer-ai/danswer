@@ -102,6 +102,7 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
+import { Button } from "@tremor/react";
 import { debounce } from "lodash";
 
 const TEMP_USER_MESSAGE_ID = -1;
@@ -1066,6 +1067,8 @@ export function ChatPage({
       user_message_id: number;
       assistant_message_id: number;
       frozenMessageMap: Map<number, Message>;
+      initialDynamicParentMessage: Message;
+      initialDynamicAssistantMessage: Message;
     } = null;
 
     try {
@@ -1124,11 +1127,6 @@ export function ChatPage({
         return new Promise((resolve) => setTimeout(resolve, ms));
       };
 
-      let files = currentMessageFiles;
-
-      let previousMessage: PreviousAIMessage | null = null;
-      let parentId: number | null = null;
-      let generatedAssistantId: number | null = null;
       let updateFn = (messages: Message[]) => {
         return upsertToCompleteMessageMap({
           messages: messages,
@@ -1136,24 +1134,9 @@ export function ChatPage({
         });
       };
 
-      let newParentMessage: Message = {
-        messageId: regenerationRequest
-          ? regenerationRequest?.parentMessage?.messageId!
-          : -100,
-        // : initialFetchDetails.user_message_id!,
-        message: "",
-        type: "user",
-        files: currentMessageFiles,
-        toolCall: null,
-        parentMessageId: error ? null : lastSuccessfulMessageId,
-        childrenMessageIds: [
-          ...(regenerationRequest?.parentMessage?.childrenMessageIds || []),
-          -100,
-        ],
-        latestChildMessageId: -100,
-      };
-
       await delay(50);
+      let dynamicParentMessage: Message | null = null;
+      let dynamicAssistantMessage: Message | null = null;
       while (!stack.isComplete || !stack.isEmpty()) {
         await delay(2);
 
@@ -1162,6 +1145,7 @@ export function ChatPage({
           if (!packet) {
             continue;
           }
+          console.log(packet);
 
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
@@ -1214,22 +1198,80 @@ export function ChatPage({
               });
 
             const frozenMessageMap = currentFrozenMessageMap;
+
+            let initialDynamicParentMessage: Message = {
+              messageId: regenerationRequest
+                ? regenerationRequest?.parentMessage?.messageId!
+                : user_message_id!,
+              message: "",
+              type: "user",
+              files: currentMessageFiles,
+              toolCall: null,
+              parentMessageId: error ? null : lastSuccessfulMessageId,
+              childrenMessageIds: [
+                ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
+                  []),
+                -100,
+              ],
+              latestChildMessageId: -100,
+            };
+
+            let initialDynamicAssistantMessage: Message = {
+              messageId: assistant_message_id!,
+              message: error || answer,
+              type: error ? "error" : "assistant",
+              retrievalType,
+              query: finalMessage?.rephrased_query || query,
+              documents: finalMessage?.context_docs?.top_documents || documents,
+              citations: finalMessage?.citations || {},
+              files: finalMessage?.files || aiMessageImages || [],
+              toolCall: finalMessage?.tool_call || toolCall,
+              parentMessageId: regenerationRequest
+                ? regenerationRequest?.parentMessage?.messageId!
+                : user_message_id,
+              alternateAssistantID: alternativeAssistant?.id,
+              stackTrace: stackTrace,
+              overridden_model: finalMessage?.overridden_model,
+              stopReason: stopReason,
+            };
+
             initialFetchDetails = {
               frozenMessageMap,
               assistant_message_id,
               user_message_id,
+              initialDynamicParentMessage,
+              initialDynamicAssistantMessage,
             };
 
             resetRegenerationState();
           } else {
-            const { user_message_id, frozenMessageMap } = initialFetchDetails;
-            newParentMessage.childrenMessageIds = [
+            let {
+              initialDynamicParentMessage,
+              initialDynamicAssistantMessage,
+              user_message_id,
+              frozenMessageMap,
+            } = initialFetchDetails;
+
+            if (
+              dynamicParentMessage === null &&
+              dynamicAssistantMessage === null
+            ) {
+              dynamicParentMessage = initialDynamicParentMessage;
+              dynamicAssistantMessage = initialDynamicAssistantMessage;
+            }
+
+            if (!dynamicAssistantMessage || !dynamicParentMessage) {
+              return;
+            }
+
+            dynamicParentMessage.childrenMessageIds = [
               initialFetchDetails.assistant_message_id,
             ];
-            newParentMessage.latestChildMessageId =
+            dynamicParentMessage.latestChildMessageId =
               initialFetchDetails.assistant_message_id;
-            newParentMessage.messageId = initialFetchDetails.user_message_id;
-            newParentMessage.message = currMessage;
+            dynamicParentMessage.messageId =
+              initialFetchDetails.user_message_id;
+            dynamicParentMessage.message = currMessage;
 
             setChatState((prevState) => {
               if (prevState.get(chatSessionIdRef.current!) === "loading") {
@@ -1242,36 +1284,30 @@ export function ChatPage({
             });
 
             if (Object.hasOwn(packet, "answer_piece")) {
-              answer += (packet as AnswerPiecePacket).answer_piece;
+              dynamicAssistantMessage.message += (
+                packet as AnswerPiecePacket
+              ).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
-              documents = (packet as DocumentsResponse).top_documents;
+              dynamicAssistantMessage.documents = (
+                packet as DocumentsResponse
+              ).top_documents;
+              dynamicAssistantMessage.retrievalType = RetrievalType.Search;
               retrievalType = RetrievalType.Search;
-              if (documents && documents.length > 0) {
-                // point to the latest message (we don't know the messageId yet, which is why
-                // we have to use -1)
-                setSelectedMessageForDocDisplay(user_message_id);
-              }
             } else if (Object.hasOwn(packet, "tool_name")) {
-              toolCall = {
+              dynamicAssistantMessage.toolCall = {
                 tool_name: (packet as ToolCallMetadata).tool_name,
                 tool_args: (packet as ToolCallMetadata).tool_args,
                 tool_result: (packet as ToolCallMetadata).tool_result,
               };
 
               if (
-                !toolCall ||
-                !toolCall.tool_result ||
-                toolCall.tool_result == undefined
+                !dynamicAssistantMessage.toolCall ||
+                !dynamicAssistantMessage.toolCall.tool_result ||
+                dynamicAssistantMessage.toolCall.tool_result == undefined
               ) {
                 updateChatState("toolBuilding", frozenSessionId);
               } else {
                 updateChatState("streaming", frozenSessionId);
-              }
-
-              // This will be consolidated in upcoming tool calls udpate,
-              // but for now, we need to set query as early as possible
-              if (toolCall.tool_name == SEARCH_TOOL_NAME) {
-                query = toolCall.tool_args["query"];
               }
             } else if (Object.hasOwn(packet, "file_ids")) {
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
@@ -1282,78 +1318,34 @@ export function ChatPage({
                   };
                 }
               );
+              dynamicAssistantMessage.files = aiMessageImages;
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
-              stackTrace = (packet as StreamingError).stack_trace;
+              dynamicAssistantMessage.stackTrace = (
+                packet as StreamingError
+              ).stack_trace;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
+              dynamicAssistantMessage = {
+                ...dynamicAssistantMessage,
+                ...finalMessage,
+              };
             } else if (Object.hasOwn(packet, "stop_reason")) {
               const stop_reason = (packet as StreamStopInfo).stop_reason;
+
               if (stop_reason === StreamStopReason.CONTEXT_LENGTH) {
                 updateCanContinue(true, frozenSessionId);
               }
-              if (stop_reason === StreamStopReason.NEW_RESPONSE) {
-                const newUserMessageId = finalMessage?.parent_message!;
-                const newAssistantMessageId = finalMessage?.message_id;
 
+              dynamicParentMessage.message = answer;
+              currMessage = answer;
+
+              // Handle creating new messages.
+              if (stop_reason === StreamStopReason.NEW_RESPONSE) {
                 let {
                   messageMap: newFrozenMessageMap,
                   sessionId: frozenSessionId,
-                } = updateFn([
-                  {
-                    messageId: regenerationRequest
-                      ? regenerationRequest?.parentMessage?.messageId!
-                      : initialFetchDetails.user_message_id!,
-                    message: currMessage,
-                    type:
-                      previousMessage?.type || generatedAssistantId
-                        ? "assistant"
-                        : "user",
-                    files: previousMessage?.files || files,
-                    toolCall: previousMessage?.toolCall || null,
-                    parentMessageId:
-                      previousMessage?.parentMessageId ||
-                      parentMessage?.messageId ||
-                      null,
-                    childrenMessageIds: [
-                      ...(regenerationRequest?.parentMessage
-                        ?.childrenMessageIds || []),
-                      initialFetchDetails.assistant_message_id!,
-                    ],
-                    latestChildMessageId:
-                      initialFetchDetails.assistant_message_id,
-                  },
-                  {
-                    messageId: initialFetchDetails.assistant_message_id!,
-                    message: error || answer,
-                    type: error ? "error" : "assistant",
-                    retrievalType,
-                    query: finalMessage?.rephrased_query || query,
-                    documents:
-                      finalMessage?.context_docs?.top_documents || documents,
-                    citations: finalMessage?.citations || {},
-                    files: finalMessage?.files || aiMessageImages || [],
-                    toolCall: finalMessage?.tool_call || toolCall,
-                    parentMessageId: regenerationRequest
-                      ? regenerationRequest?.parentMessage?.messageId!
-                      : initialFetchDetails.user_message_id,
-
-                    alternateAssistantID: alternativeAssistant?.id,
-                  },
-                ]);
-
-                parentId = newUserMessageId;
-                currMessage = answer;
-                newParentMessage.message = answer;
-                generatedAssistantId = newUserMessageId;
-
-                previousMessage = {
-                  parentMessageId: parentId,
-                  toolCall: finalMessage?.tool_call,
-                  documents:
-                    finalMessage?.context_docs?.top_documents || documents,
-                  type: "assistant",
-                };
+                } = updateFn([dynamicParentMessage, dynamicAssistantMessage]);
 
                 updateFn = (messages: Message[]) => {
                   const replacementsMap = finalMessage
@@ -1370,11 +1362,8 @@ export function ChatPage({
                     chatSessionId: frozenSessionId!,
                   });
                 };
-                // files = finalM/essage.files;
-                // // setCurrentMessageFsetiles(finalMessage.files)
-                finalMessage = null;
-                aiMessageImages = null;
-                answer = "";
+
+                dynamicParentMessage = dynamicAssistantMessage;
               }
             }
 
@@ -1394,8 +1383,8 @@ export function ChatPage({
                       regenerationRequest?.parentMessage?.messageId,
                     ],
                     [
-                      regenerationRequest?.messageId,
-                      initialFetchDetails?.assistant_message_id,
+                      dynamicParentMessage?.messageId,
+                      dynamicAssistantMessage?.messageId,
                     ],
                   ] as [number, number][])
                 : null;
@@ -1408,86 +1397,7 @@ export function ChatPage({
               });
             };
 
-            //
-
-            console.log("---------------");
-            console.log(newParentMessage);
-            console.log({
-              messageId: regenerationRequest
-                ? regenerationRequest?.parentMessage?.messageId!
-                : initialFetchDetails.user_message_id!,
-              message: currMessage,
-              type: "user",
-              files: previousMessage?.files || currentMessageFiles,
-              toolCall: null,
-              parentMessageId: error
-                ? null
-                : previousMessage?.parentMessageId || lastSuccessfulMessageId,
-              childrenMessageIds: [
-                ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
-                  []),
-                initialFetchDetails.assistant_message_id!,
-              ],
-              latestChildMessageId: initialFetchDetails.assistant_message_id,
-            });
-
-            const newMessage: Message = {
-              messageId: initialFetchDetails.assistant_message_id!,
-              message: error || answer,
-              type: error ? "error" : "assistant",
-              retrievalType,
-              query: finalMessage?.rephrased_query || query,
-              documents: finalMessage?.context_docs?.top_documents || documents,
-              citations: finalMessage?.citations || {},
-              files: finalMessage?.files || aiMessageImages || [],
-              toolCall: finalMessage?.tool_call || toolCall,
-              parentMessageId: regenerationRequest
-                ? regenerationRequest?.parentMessage?.messageId!
-                : initialFetchDetails.user_message_id,
-              alternateAssistantID: alternativeAssistant?.id,
-              stackTrace: stackTrace,
-              overridden_model: finalMessage?.overridden_model,
-              stopReason: stopReason,
-            };
-
-            updateFn([
-              newParentMessage,
-              // {
-              //   messageId: regenerationRequest
-              //     ? regenerationRequest?.parentMessage?.messageId!
-              //     : hi!,
-              //   message: currMessage,
-              //   type: "user",
-              //   files: previousMessage?.files || currentMessageFiles,
-              //   toolCall: null,
-              //   parentMessageId: error ? null : previousMessage?.parentMessageId || lastSuccessfulMessageId,
-              //   childrenMessageIds: [
-              //     ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
-              //       []),
-              //     initialFetchDetails.assistant_message_id!,
-              //   ],
-              //   latestChildMessageId: initialFetchDetails.assistant_message_id,
-              // },
-              {
-                messageId: initialFetchDetails.assistant_message_id!,
-                message: error || answer,
-                type: error ? "error" : "assistant",
-                retrievalType,
-                query: finalMessage?.rephrased_query || query,
-                documents:
-                  finalMessage?.context_docs?.top_documents || documents,
-                citations: finalMessage?.citations || {},
-                files: finalMessage?.files || aiMessageImages || [],
-                toolCall: finalMessage?.tool_call || toolCall,
-                parentMessageId: regenerationRequest
-                  ? regenerationRequest?.parentMessage?.messageId!
-                  : initialFetchDetails.user_message_id,
-                alternateAssistantID: alternativeAssistant?.id,
-                stackTrace: stackTrace,
-                overridden_model: finalMessage?.overridden_model,
-                stopReason: stopReason,
-              },
-            ]);
+            updateFn([dynamicParentMessage, dynamicAssistantMessage]);
           }
         }
       }
@@ -2302,7 +2212,6 @@ export function ChatPage({
                                       }
                                       messageId={message.messageId}
                                       content={message.message}
-                                      // content={message.message}
                                       files={message.files}
                                       query={
                                         messageHistory[i]?.query || undefined
@@ -2557,6 +2466,9 @@ export function ChatPage({
                                 </button>
                               </div>
                             )}
+                            <Button onClick={() => console.log(messageHistory)}>
+                              CLICK EM
+                            </Button>
                             <ChatInputBar
                               showConfigureAPIKey={() =>
                                 setShowApiKeyModal(true)

@@ -728,7 +728,7 @@ def stream_chat_message_objects(
                 from danswer.chat.models import StreamStopInfo
 
                 if isinstance(packet, StreamStopInfo):
-                    print("\n\n\n-------I am saving-------\n\n\n")
+                    yield packet
                     db_citations = None
 
                     if reference_db_search_docs:

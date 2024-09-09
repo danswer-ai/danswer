@@ -165,6 +165,8 @@ class Answer:
         # self.current_streamed_output: list = []
         # self.processing_stream: list = []
         self.final_context_docs: list = []
+        self.current_streamed_output: list = []
+        self.processing_stream: list = []
 
     def _update_prompt_builder_for_search_tool(
         self, prompt_builder: AnswerPromptBuilder, final_context_documents: list[LlmDoc]
@@ -685,6 +687,7 @@ class Answer:
             and not self.skip_explicit_tool_calling
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
+        self.processing_stream = []
         print("the output generator is: ", output_generator)
 
         def _process_stream(
@@ -746,15 +749,20 @@ class Answer:
                         nonlocal new_kickoff
 
                         yield cast(str, message)
-                        for item in stream:
-                            if isinstance(item, StreamStopInfo):
-                                stream_stop_info = item
-                                return
-                            if isinstance(item, ToolCallKickoff):
-                                new_kickoff = item
-                                return
-                            else:
-                                yield cast(str, item)
+                        while True:
+                            try:
+                                item = next(stream)
+
+                                if isinstance(item, StreamStopInfo):
+                                    stream_stop_info = item
+                                    return
+                                if isinstance(item, ToolCallKickoff):
+                                    new_kickoff = item
+                                    return
+                                else:
+                                    yield cast(str, item)
+                            except StopIteration:
+                                return None
 
                     yield from process_answer_stream_fn(_stream())
 
@@ -763,33 +771,36 @@ class Answer:
                     if new_kickoff:
                         print("the new kickoff is: ", new_kickoff)
                         yield StreamStopInfo(stop_reason=StreamStopReason.NEW_RESPONSE)
+                        self.current_streamed_output = self.processing_stream
+                        self.processing_stream = []
                         yield new_kickoff
-                    # break
 
             # print("now generating the final message")
             # if not self.skip_gen_ai_answer_generation:
             #     o
 
-        processed_stream = []
+        # processed_stream = []
         for processed_packet in _process_stream(output_generator):
-            processed_stream.append(processed_packet)
+            self.processing_stream.append(processed_packet)
             yield processed_packet
 
-        self._processed_stream = processed_stream
+        print("I AM DONE PROCESSING STREAM")
+        self._processed_stream = self.processing_stream
 
     @property
     def llm_answer(self) -> str:
         answer = ""
-        for packet in self.processed_streamed_output:
+        if not self._processed_stream and not self.current_streamed_output:
+            return ""
+        for packet in self.current_streamed_output or self._processed_stream or []:
             if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
                 answer += packet.answer_piece
-
         return answer
 
     @property
     def citations(self) -> list[CitationInfo]:
         citations: list[CitationInfo] = []
-        for packet in self.processed_streamed_output:
+        for packet in self.current_streamed_output:
             if isinstance(packet, CitationInfo):
                 citations.append(packet)
 
