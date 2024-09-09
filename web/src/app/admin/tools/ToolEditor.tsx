@@ -15,6 +15,15 @@ import {
 import debounce from "lodash/debounce";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function parseJsonWithTrailingCommas(jsonString: string) {
   // Regular expression to remove trailing commas before } or ]
@@ -131,32 +140,32 @@ function ToolForm({
       />
 
       {methodSpecs && methodSpecs.length > 0 && (
-        <div className="mt-4">
-          <h3 className="mb-2 text-base font-semibold">Available methods</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-background border border-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2 border-b">Name</th>
-                  <th className="px-4 py-2 border-b">Summary</th>
-                  <th className="px-4 py-2 border-b">Method</th>
-                  <th className="px-4 py-2 border-b">Path</th>
-                </tr>
-              </thead>
-              <tbody>
-                {methodSpecs?.map((method: MethodSpec, index: number) => (
-                  <tr key={index} className="text-sm">
-                    <td className="px-4 py-2 border-b">{method.name}</td>
-                    <td className="px-4 py-2 border-b">{method.summary}</td>
-                    <td className="px-4 py-2 border-b">
-                      {method.method.toUpperCase()}
-                    </td>
-                    <td className="px-4 py-2 border-b">{method.path}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="pt-4">
+          <h3 className="font-semibold pb-2">Available methods</h3>
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Summary</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead>Path</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {methodSpecs?.map((method: MethodSpec, index: number) => (
+                    <TableRow key={index}>
+                      <TableCell>{method.name}</TableCell>
+                      <TableCell>{method.summary}</TableCell>
+                      <TableCell>{method.method.toUpperCase()}</TableCell>
+                      <TableCell>{method.path}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       )}
 

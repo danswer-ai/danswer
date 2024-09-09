@@ -91,6 +91,7 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
   currentAssistant,
+  handleToggleSideBar,
 }: {
   alternativeAssistant?: Assistant | null;
   currentAssistant: Assistant;
@@ -109,6 +110,7 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
+  handleToggleSideBar?: () => void;
 }) => {
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
@@ -174,6 +176,7 @@ export const AIMessage = ({
                       messageId={messageId}
                       isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
                       handleShowRetrieved={handleShowRetrieved}
+                      handleToggleSideBar={handleToggleSideBar}
                     />
                   </div>
                 </div>
@@ -197,6 +200,7 @@ export const AIMessage = ({
                         }
                         handleShowRetrieved={handleShowRetrieved}
                         handleSearchQueryEdit={handleSearchQueryEdit}
+                        handleToggleSideBar={handleToggleSideBar}
                       />
                     </div>
                   )}

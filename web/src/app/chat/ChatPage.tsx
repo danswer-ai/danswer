@@ -1054,7 +1054,7 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [showDocSidebar, setShowDocSidebar] = useState(true);
+  const [showDocSidebar, setShowDocSidebar] = useState(false);
   const [isWide, setIsWide] = useState(false);
 
   useEffect(() => {
@@ -1333,6 +1333,7 @@ export function ChatPage({
                               (selectedMessageForDocDisplay ===
                                 TEMP_USER_MESSAGE_ID &&
                                 i === messageHistory.length - 1);
+
                             const previousMessage =
                               i !== 0 ? messageHistory[i - 1] : null;
 
@@ -1464,6 +1465,16 @@ export function ChatPage({
                                         )
                                       : !retrievalEnabled
                                   }
+                                  handleToggleSideBar={() => {
+                                    isShowingRetrieved
+                                      ? setShowDocSidebar(true)
+                                      : setShowDocSidebar(false);
+
+                                    if (sidebarElementRef.current) {
+                                      sidebarElementRef.current.style.transition =
+                                        "width 0.3s ease-in-out";
+                                    }
+                                  }}
                                 />
                               </div>
                             );

@@ -107,6 +107,7 @@ export function TextFormField({
               placeholder={placeholder}
               autoComplete={autoCompleteDisabled ? "off" : undefined}
               {...(onChange ? { onChange } : {})}
+              className={isTextArea ? "max-h-[1000px]" : ""}
             />
           );
         }}

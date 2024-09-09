@@ -11,10 +11,12 @@ export function ShowHideDocsButton({
   messageId,
   isCurrentlyShowingRetrieved,
   handleShowRetrieved,
+  handleToggleSideBar,
 }: {
   messageId: number | null;
   isCurrentlyShowingRetrieved: boolean;
   handleShowRetrieved: (messageId: number | null) => void;
+  handleToggleSideBar?: () => void;
 }) {
   return (
     <div
@@ -22,11 +24,11 @@ export function ShowHideDocsButton({
       onClick={() => handleShowRetrieved(messageId)}
     >
       {isCurrentlyShowingRetrieved ? (
-        <Button size="xs" variant="outline">
+        <Button size="xs" variant="outline" onClick={handleToggleSideBar}>
           <div className="w-24 text-xs">Hide Docs</div>
         </Button>
       ) : (
-        <Button size="xs" variant="outline">
+        <Button size="xs" variant="outline" onClick={handleToggleSideBar}>
           <div className="w-24 text-xs">Show Docs</div>
         </Button>
       )}
@@ -41,6 +43,7 @@ export function SearchSummary({
   isCurrentlyShowingRetrieved,
   handleShowRetrieved,
   handleSearchQueryEdit,
+  handleToggleSideBar,
 }: {
   query: string;
   hasDocs: boolean;
@@ -48,6 +51,7 @@ export function SearchSummary({
   isCurrentlyShowingRetrieved: boolean;
   handleShowRetrieved: (messageId: number | null) => void;
   handleSearchQueryEdit?: (query: string) => void;
+  handleToggleSideBar?: () => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [finalQuery, setFinalQuery] = useState(query);
@@ -186,6 +190,7 @@ export function SearchSummary({
           messageId={messageId}
           isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
           handleShowRetrieved={handleShowRetrieved}
+          handleToggleSideBar={handleToggleSideBar}
         />
       )}
     </div>
