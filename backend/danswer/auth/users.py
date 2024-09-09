@@ -209,7 +209,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             ):
                 user_update = UserUpdate(
                     password=user_create.password,
-                    has_web_login=user_create.has_web_login,
+                    has_web_login=True,
                     role=user_create.role,
                     is_verified=user_create.is_verified,
                 )
