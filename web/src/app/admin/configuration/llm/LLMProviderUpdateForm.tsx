@@ -97,20 +97,20 @@ export function LLMProviderUpdateForm({
       : Yup.string(),
     ...(llmProviderDescriptor.custom_config_keys
       ? {
-        custom_config: Yup.object(
-          llmProviderDescriptor.custom_config_keys.reduce(
-            (acc, customConfigKey) => {
-              if (customConfigKey.is_required) {
-                acc[customConfigKey.name] = Yup.string().required(
-                  `${customConfigKey.name} is required`
-                );
-              }
-              return acc;
-            },
-            {} as { [key: string]: Yup.StringSchema }
-          )
-        ),
-      }
+          custom_config: Yup.object(
+            llmProviderDescriptor.custom_config_keys.reduce(
+              (acc, customConfigKey) => {
+                if (customConfigKey.is_required) {
+                  acc[customConfigKey.name] = Yup.string().required(
+                    `${customConfigKey.name} is required`
+                  );
+                }
+                return acc;
+              },
+              {} as { [key: string]: Yup.StringSchema }
+            )
+          ),
+        }
       : {}),
     default_model_name: Yup.string().required("Model name is required"),
     fast_default_model_name: Yup.string().nullable(),
@@ -221,9 +221,7 @@ export function LLMProviderUpdateForm({
       }}
     >
       {(formikProps) => (
-
         <Form className="gap-y-4 items-stretch mt-6">
-
           {!hideAdvanced && (
             <TextFormField
               name="name"
@@ -340,16 +338,23 @@ export function LLMProviderUpdateForm({
                   {llmProviderDescriptor.llm_names.length > 0 && (
                     <div className="w-full">
                       <MultiSelectField
-                        selectedInitially={formikProps.values.display_model_names}
+                        selectedInitially={
+                          formikProps.values.display_model_names
+                        }
                         name="display_model_names"
                         label="Display Models"
                         subtext="Select the models to make available to users. Unselected models will not be available."
-                        options={llmProviderDescriptor.llm_names.map((name) => ({
-                          value: name,
-                          label: getDisplayNameForModel(name),
-                        }))}
+                        options={llmProviderDescriptor.llm_names.map(
+                          (name) => ({
+                            value: name,
+                            label: getDisplayNameForModel(name),
+                          })
+                        )}
                         onChange={(selected) =>
-                          formikProps.setFieldValue("display_model_names", selected)
+                          formikProps.setFieldValue(
+                            "display_model_names",
+                            selected
+                          )
                         }
                       />
                     </div>
@@ -431,7 +436,6 @@ export function LLMProviderUpdateForm({
           </div>
         </Form>
       )}
-
     </Formik>
   );
 }
