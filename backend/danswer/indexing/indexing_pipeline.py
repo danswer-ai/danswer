@@ -10,6 +10,7 @@ from danswer.access.access import get_access_for_documents
 from danswer.access.models import DocumentAccess
 from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.app_configs import INDEXING_EXCEPTION_LIMIT
+from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
 )
@@ -264,7 +265,7 @@ def index_doc_batch(
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
 
-    no_access = DocumentAccess.build([], [], False)
+    no_access = DocumentAccess.build(user_ids=[], user_groups=[], is_public=False)
 
     ctx = index_doc_batch_prepare(
         document_batch=document_batch,
@@ -305,7 +306,11 @@ def index_doc_batch(
             )
         }
 
-        # doc aware metadata is sent via the metadata sync queue now
+        # we're concerned about race conditions where multiple simultaneous indexings might result
+        # in one set of metadata overwriting another one in vespa.
+        # we still write data here for immediate and most likely correct sync, but
+        # to resolve this, an update of the last modified field at the end of this loop
+        # always triggers a final metadata sync
         access_aware_chunks = [
             DocMetadataAwareIndexChunk.from_index_chunk(
                 index_chunk=chunk,
@@ -314,6 +319,11 @@ def index_doc_batch(
                 ),
                 document_sets=set(
                     document_id_to_document_set.get(chunk.source_document.id, [])
+                ),
+                boost=(
+                    ctx.id_to_db_doc_map[chunk.source_document.id].boost
+                    if chunk.source_document.id in ctx.id_to_db_doc_map
+                    else DEFAULT_BOOST
                 ),
             )
             for chunk in chunks_with_embeddings
@@ -332,11 +342,11 @@ def index_doc_batch(
             doc for doc in ctx.updatable_docs if doc.id in successful_doc_ids
         ]
 
-        # Update the time of latest version of the doc successfully indexed
         last_modified_ids = []
         ids_to_new_updated_at = {}
         for doc in successful_docs:
             last_modified_ids.append(doc.id)
+            # doc_updated_at is the connector source's idea of when the doc was last modified
             if doc.doc_updated_at is None:
                 continue
             ids_to_new_updated_at[doc.id] = doc.doc_updated_at

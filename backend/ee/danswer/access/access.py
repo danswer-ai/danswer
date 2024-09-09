@@ -17,7 +17,7 @@ def _get_access_for_document(
 ) -> DocumentAccess:
     id_to_access = _get_access_for_documents([document_id], db_session)
     if len(id_to_access) == 0:
-        return DocumentAccess.build([], [], False)
+        return DocumentAccess.build(user_ids=[], user_groups=[], is_public=False)
 
     return next(iter(id_to_access.values()))
 

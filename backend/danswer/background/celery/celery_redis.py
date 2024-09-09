@@ -15,11 +15,11 @@ from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
-from danswer.db.document import select_documents_for_connector_credential_pair
 from danswer.db.document import (
-    select_documents_for_connector_credential_pair_by_needs_sync,
+    construct_document_select_for_connector_credential_pair_by_needs_sync,
 )
-from danswer.db.document_set import select_documents_by_docset
+from danswer.db.document import select_documents_for_connector_credential_pair
+from danswer.db.document_set import construct_document_select_by_docset
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 
@@ -125,7 +125,7 @@ class RedisDocumentSet(RedisObjectHelper):
         last_lock_time = time.monotonic()
 
         async_results = []
-        stmt = select_documents_by_docset(self._id)
+        stmt = construct_document_select_by_docset(self._id)
         for doc in db_session.scalars(stmt).yield_per(1):
             current_time = time.monotonic()
             if current_time - last_lock_time >= (
@@ -173,14 +173,14 @@ class RedisUserGroup(RedisObjectHelper):
         async_results = []
 
         try:
-            select_documents_by_usergroup = fetch_versioned_implementation(
+            construct_document_select_by_usergroup = fetch_versioned_implementation(
                 "danswer.db.user_group",
-                "select_documents_by_usergroup",
+                "construct_document_select_by_usergroup",
             )
         except ModuleNotFoundError:
             return 0
 
-        stmt = select_documents_by_usergroup(self._id)
+        stmt = construct_document_select_by_usergroup(self._id)
         for doc in db_session.scalars(stmt).yield_per(1):
             current_time = time.monotonic()
             if current_time - last_lock_time >= (
@@ -211,18 +211,21 @@ class RedisUserGroup(RedisObjectHelper):
         return len(async_results)
 
 
-class RedisConnector(RedisObjectHelper):
+class RedisConnectorCredentialPair(RedisObjectHelper):
+    """This class differs from the default in that the taskset used spans
+    all connectors and is not per connector."""
+
     PREFIX = "connectorsync"
     FENCE_PREFIX = PREFIX + "_fence"
     TASKSET_PREFIX = PREFIX + "_taskset"
 
     @classmethod
     def get_fence_key(cls) -> str:
-        return RedisConnector.FENCE_PREFIX
+        return RedisConnectorCredentialPair.FENCE_PREFIX
 
     @classmethod
     def get_taskset_key(cls) -> str:
-        return RedisConnector.TASKSET_PREFIX
+        return RedisConnectorCredentialPair.TASKSET_PREFIX
 
     @property
     def taskset_key(self) -> str:
@@ -245,7 +248,7 @@ class RedisConnector(RedisObjectHelper):
         if not cc_pair:
             return None
 
-        stmt = select_documents_for_connector_credential_pair_by_needs_sync(
+        stmt = construct_document_select_for_connector_credential_pair_by_needs_sync(
             cc_pair.connector_id, cc_pair.credential_id
         )
         for doc in db_session.scalars(stmt).yield_per(1):
@@ -264,7 +267,9 @@ class RedisConnector(RedisObjectHelper):
 
             # add to the tracking taskset in redis BEFORE creating the celery task.
             # note that for the moment we are using a single taskset key, not differentiated by cc_pair id
-            redis_client.sadd(self.taskset_key, custom_task_id)
+            redis_client.sadd(
+                RedisConnectorCredentialPair.get_taskset_key(), custom_task_id
+            )
 
             # Priority on sync's triggered by new indexing should be medium
             result = celery_app.send_task(

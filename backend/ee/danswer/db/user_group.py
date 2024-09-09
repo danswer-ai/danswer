@@ -119,12 +119,12 @@ def fetch_user_groups_for_user(
     return db_session.scalars(stmt).all()
 
 
-def select_documents_by_usergroup(
+def construct_document_select_by_usergroup(
     user_group_id: int,
 ) -> Select:
     """This returns a statement that should be executed using
     .yield_per() to minimize overhead. The primary consumers of this function
-    are the cleanup tasks."""
+    are background processing task generators."""
     stmt = (
         select(Document)
         .join(

@@ -61,8 +61,8 @@ class IndexChunk(DocAwareChunk):
     title_embedding: Embedding | None
 
 
-# TODO(rkuo): we are no longer setting metadata on initial indexing
-# it is updated through the metadata queue.
+# TODO(rkuo): currently, this extra metadata sent during indexing is just for speed,
+# but full consistency happens on background sync
 class DocMetadataAwareIndexChunk(IndexChunk):
     """An `IndexChunk` that contains all necessary metadata to be indexed. This includes
     the following:
@@ -77,7 +77,7 @@ class DocMetadataAwareIndexChunk(IndexChunk):
 
     access: "DocumentAccess"
     document_sets: set[str]
-    # boost: int
+    boost: int
 
     @classmethod
     def from_index_chunk(
@@ -85,14 +85,14 @@ class DocMetadataAwareIndexChunk(IndexChunk):
         index_chunk: IndexChunk,
         access: "DocumentAccess",
         document_sets: set[str],
-        # boost: int,
+        boost: int,
     ) -> "DocMetadataAwareIndexChunk":
         index_chunk_data = index_chunk.model_dump()
         return cls(
             **index_chunk_data,
             access=access,
             document_sets=document_sets,
-            # boost=boost,
+            boost=boost,
         )
 
 

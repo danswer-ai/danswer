@@ -61,7 +61,7 @@ from shared_configs.enums import RerankerProvider
 
 
 class Base(DeclarativeBase):
-    pass
+    __abstract__ = True
 
 
 class EncryptedString(TypeDecorator):
@@ -463,7 +463,7 @@ class Document(Base):
     )
     tags = relationship(
         "Tag",
-        secondary="document__tag",
+        secondary=Document__Tag.__table__,
         back_populates="documents",
     )
 
@@ -480,7 +480,7 @@ class Tag(Base):
 
     documents = relationship(
         "Document",
-        secondary="document__tag",
+        secondary=Document__Tag.__table__,
         back_populates="tags",
     )
 
@@ -829,7 +829,7 @@ class SearchDoc(Base):
 
     chat_messages = relationship(
         "ChatMessage",
-        secondary="chat_message__search_doc",
+        secondary=ChatMessage__SearchDoc.__table__,
         back_populates="search_docs",
     )
 
@@ -972,7 +972,7 @@ class ChatMessage(Base):
     )
     search_docs: Mapped[list["SearchDoc"]] = relationship(
         "SearchDoc",
-        secondary="chat_message__search_doc",
+        secondary=ChatMessage__SearchDoc.__table__,
         back_populates="chat_messages",
     )
     # NOTE: Should always be attached to the `assistant` message.

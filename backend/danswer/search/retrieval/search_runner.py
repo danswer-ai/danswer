@@ -3,7 +3,6 @@ from collections.abc import Callable
 
 import nltk  # type:ignore
 from nltk.corpus import stopwords  # type:ignore
-from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
 from sqlalchemy.orm import Session
 
@@ -40,7 +39,7 @@ logger = setup_logger()
 def download_nltk_data() -> None:
     resources = {
         "stopwords": "corpora/stopwords",
-        "wordnet": "corpora/wordnet",
+        # "wordnet": "corpora/wordnet",  # Not in use
         "punkt": "tokenizers/punkt",
     }
 
@@ -58,15 +57,16 @@ def download_nltk_data() -> None:
 
 
 def lemmatize_text(keywords: list[str]) -> list[str]:
-    try:
-        query = " ".join(keywords)
-        lemmatizer = WordNetLemmatizer()
-        word_tokens = word_tokenize(query)
-        lemmatized_words = [lemmatizer.lemmatize(word) for word in word_tokens]
-        combined_keywords = list(set(keywords + lemmatized_words))
-        return combined_keywords
-    except Exception:
-        return keywords
+    raise NotImplementedError("Lemmatization should not be used currently")
+    # try:
+    #     query = " ".join(keywords)
+    #     lemmatizer = WordNetLemmatizer()
+    #     word_tokens = word_tokenize(query)
+    #     lemmatized_words = [lemmatizer.lemmatize(word) for word in word_tokens]
+    #     combined_keywords = list(set(keywords + lemmatized_words))
+    #     return combined_keywords
+    # except Exception:
+    #     return keywords
 
 
 def remove_stop_words_and_punctuation(keywords: list[str]) -> list[str]:

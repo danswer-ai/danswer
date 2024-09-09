@@ -24,6 +24,8 @@ from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.enums import EmbeddingProvider
 from shared_configs.enums import EmbedTextType
 from shared_configs.enums import RerankerProvider
+from shared_configs.model_server_models import ConnectorClassificationRequest
+from shared_configs.model_server_models import ConnectorClassificationResponse
 from shared_configs.model_server_models import Embedding
 from shared_configs.model_server_models import EmbedRequest
 from shared_configs.model_server_models import EmbedResponse
@@ -299,6 +301,37 @@ class QueryAnalysisModel:
         response_model = IntentResponse(**response.json())
 
         return response_model.is_keyword, response_model.keywords
+
+
+class ConnectorClassificationModel:
+    def __init__(
+        self,
+        model_server_host: str = MODEL_SERVER_HOST,
+        model_server_port: int = MODEL_SERVER_PORT,
+    ):
+        model_server_url = build_model_server_url(model_server_host, model_server_port)
+        self.connector_classification_endpoint = (
+            model_server_url + "/custom/connector-classification"
+        )
+
+    def predict(
+        self,
+        query: str,
+        available_connectors: list[str],
+    ) -> list[str]:
+        connector_classification_request = ConnectorClassificationRequest(
+            available_connectors=available_connectors,
+            query=query,
+        )
+        response = requests.post(
+            self.connector_classification_endpoint,
+            json=connector_classification_request.dict(),
+        )
+        response.raise_for_status()
+
+        response_model = ConnectorClassificationResponse(**response.json())
+
+        return response_model.connectors
 
 
 def warm_up_retry(

@@ -22,6 +22,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
 from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
+from danswer.connectors.slack.utils import expert_info_from_slack_id
 from danswer.danswerbot.slack.blocks import build_documents_blocks
 from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
@@ -38,6 +39,7 @@ from danswer.db.models import SlackBotConfig
 from danswer.db.models import SlackBotResponseType
 from danswer.db.persona import fetch_persona_by_id
 from danswer.db.search_settings import get_current_search_settings
+from danswer.db.users import get_user_by_email
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
@@ -99,6 +101,15 @@ def handle_regular_answer(
     messages = message_info.thread_messages
     message_ts_to_respond_to = message_info.msg_to_respond
     is_bot_msg = message_info.is_bot_msg
+    user = None
+    if message_info.is_bot_dm:
+        slack_user_info = expert_info_from_slack_id(
+            message_info.sender, client, user_cache={}
+        )
+        if slack_user_info and slack_user_info.email:
+            engine = get_sqlalchemy_engine()
+            with Session(engine) as db_session:
+                user = get_user_by_email(slack_user_info.email, db_session)
 
     document_set_names: list[str] | None = None
     persona = slack_bot_config.persona if slack_bot_config else None
@@ -185,7 +196,7 @@ def handle_regular_answer(
             # This also handles creating the query event in postgres
             answer = get_search_answer(
                 query_req=new_message_request,
-                user=None,
+                user=user,
                 max_document_tokens=max_document_tokens,
                 max_history_tokens=max_history_tokens,
                 db_session=db_session,
