@@ -128,7 +128,7 @@ export const SearchResultsDisplay = ({
   return (
     <>
       {shouldDisplayQA && (
-        <Card className="p-4 relative w-full">
+        <Card className="p-4 relative w-full mb-10">
           <CardHeader className="border-b p-0 pb-4">
             <h2 className="text-dark-900 font-bold">AI Answer</h2>
           </CardHeader>

@@ -81,6 +81,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import TopBar from "@/components/TopBar";
+import { useToast } from "@/hooks/use-toast";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -950,6 +951,8 @@ export function ChatPage({
     setAlternativeGeneratingAssistant(null);
   };
 
+  const { toast } = useToast();
+
   const onFeedback = async (
     messageId: number,
     feedbackType: FeedbackType,
@@ -968,16 +971,18 @@ export function ChatPage({
     );
 
     if (response.ok) {
-      setPopup({
-        message: "Thanks for your feedback!",
-        type: "success",
+      toast({
+        title: "Success",
+        description: "Thanks for your feedback!",
+        variant: "success",
       });
     } else {
       const responseJson = await response.json();
       const errorMsg = responseJson.detail || responseJson.message;
-      setPopup({
-        message: `Failed to submit feedback - ${errorMsg}`,
-        type: "error",
+      toast({
+        title: "Error",
+        description: `Failed to submit feedback - ${errorMsg}`,
+        variant: "destructive",
       });
     }
   };

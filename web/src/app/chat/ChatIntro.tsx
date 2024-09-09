@@ -4,6 +4,7 @@ import { Assistant } from "../admin/assistants/interfaces";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Badge } from "@/components/ui/badge";
 import { Bookmark, Info } from "lucide-react";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export function ChatIntro({
   availableSources,
@@ -35,29 +36,28 @@ export function ChatIntro({
             <div className="pt-4">
               {liveAssistant.document_sets.length > 0 && (
                 <div className="mt-2">
-                  <p className="mt-4 mb-1 font-bold ">Knowledge Sets: </p>
+                  <p className="mt-4 mb-1 font-bold text-dark-900">
+                    Knowledge Sets:{" "}
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {liveAssistant.document_sets.map((documentSet) => (
                       <div key={documentSet.id} className="w-fit">
-                        <HoverPopup
-                          mainContent={
-                            <span className="flex p-1 text-xs font-medium border rounded cursor-default w-fit border-border">
-                              <div className="my-auto mr-1">
-                                <Bookmark />
-                              </div>
+                        <CustomTooltip
+                          trigger={
+                            <Badge variant="outline">
+                              <Bookmark size={16} />
                               {documentSet.name}
-                            </span>
+                            </Badge>
                           }
-                          popupContent={
-                            <div className="flex py-1 w-96">
-                              <Info className="my-auto mr-2" />
-                              <div className="text-sm">
-                                {documentSet.description}
-                              </div>
+                        >
+                          <div className="flex items-center gap-1">
+                            <Info size={16} />
+                            <div className="!text-sm">
+                              {" "}
+                              {documentSet.description}
                             </div>
-                          }
-                          direction="top"
-                        />
+                          </div>
+                        </CustomTooltip>
                       </div>
                     ))}
                   </div>

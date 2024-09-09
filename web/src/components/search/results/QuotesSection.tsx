@@ -5,65 +5,55 @@ import { useState } from "react";
 import { SourceIcon } from "@/components/SourceIcon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
-  const [detailIsOpen, setDetailIsOpen] = useState(false);
   const [copyClicked, setCopyClicked] = useState(false);
 
   return (
-    <div
-      className="relative w-full"
-      onMouseEnter={() => {
-        setDetailIsOpen(true);
-      }}
-      onMouseLeave={() => setDetailIsOpen(false)}
+    <CustomTooltip
+      trigger={
+        <div className="text-sm flex w-full">
+          <a
+            href={quoteInfo.link || undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-fit"
+          >
+            <Button variant="outline" className="w-full">
+              <SourceIcon sourceType={quoteInfo.source_type} iconSize={16} />
+              <p className="truncate break-all ml-2 mr-2">
+                {quoteInfo.semantic_identifier || quoteInfo.document_id}
+              </p>
+            </Button>
+          </a>
+        </div>
+      }
     >
-      {detailIsOpen && (
-        <div className="absolute top-0 mt-9 pt-2 z-50">
-          <div className="flex flex-shrink-0 rounded-regular w-96 bg-background border border-border shadow p-3 text-sm leading-relaxed">
-            <div>
-              <b>Quote:</b> <i>{quoteInfo.quote}</i>
-            </div>
-            <div
-              className="my-auto pl-3 ml-auto"
-              onClick={() => {
-                navigator.clipboard.writeText(quoteInfo.quote);
-                setCopyClicked(true);
-                setTimeout(() => {
-                  setCopyClicked(false);
-                }, 1000);
-              }}
-            >
-              <div className="p-1 rounded hover:bg-hover cursor-pointer">
-                {copyClicked ? (
-                  <CheckmarkIcon
-                    className="my-auto flex flex-shrink-0"
-                    size={16}
-                  />
-                ) : (
-                  <CopyIcon className="my-auto flex flex-shrink-0" size={16} />
-                )}
-              </div>
-            </div>
+      <div className="flex flex-shrink-0 rounded-regular w-96 bg-background border border-border shadow p-3 text-sm leading-relaxed">
+        <div>
+          <b>Quote:</b> <i>{quoteInfo.quote}</i>
+        </div>
+        <div
+          className="my-auto pl-3 ml-auto"
+          onClick={() => {
+            navigator.clipboard.writeText(quoteInfo.quote);
+            setCopyClicked(true);
+            setTimeout(() => {
+              setCopyClicked(false);
+            }, 1000);
+          }}
+        >
+          <div className="p-1 rounded hover:bg-hover cursor-pointer">
+            {copyClicked ? (
+              <CheckmarkIcon className="my-auto flex flex-shrink-0" size={16} />
+            ) : (
+              <CopyIcon className="my-auto flex flex-shrink-0" size={16} />
+            )}
           </div>
         </div>
-      )}
-      <div className="text-sm flex w-full">
-        <a
-          href={quoteInfo.link || undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full"
-        >
-          <Badge variant="outline" className="w-full">
-            <SourceIcon sourceType={quoteInfo.source_type} iconSize={16} />
-            <p className="truncate break-all ml-2 mr-2">
-              {quoteInfo.semantic_identifier || quoteInfo.document_id}
-            </p>
-          </Badge>
-        </a>
       </div>
-    </div>
+    </CustomTooltip>
   );
 };
 
