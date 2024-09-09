@@ -1,6 +1,7 @@
 from slack_sdk import WebClient
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import ENTERPRISE_EDITION_ENABLED
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.danswerbot.slack.blocks import build_standard_answer_blocks
@@ -72,6 +73,10 @@ def handle_standard_answers(
     Returns True if standard answers are found to match the user's message and therefore,
     we still need to respond to the users.
     """
+    # Standard answers are only available in enterprise edition
+    if not ENTERPRISE_EDITION_ENABLED:
+        return False
+
     # if no channel config, then no standard answers are configured
     if not slack_bot_config:
         return False
