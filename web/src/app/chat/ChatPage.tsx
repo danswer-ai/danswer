@@ -540,10 +540,6 @@ export function ChatPage({
     currentMessageMap(completeMessageDetail)
   );
 
-  // if (visibleRange.get(loadedIdSessionRef.current)==undefined){
-  //   initializeVisibleRange(true);
-  // }
-
   const [submittedMessage, setSubmittedMessage] = useState("");
 
   const [chatState, setChatState] = useState<Map<number | null, ChatState>>(
@@ -1550,8 +1546,7 @@ export function ChatPage({
     debounceNumber,
   });
 
-  // Virutalization + Scrolling related effects and functions
-
+  // Virtualization + Scrolling related effects and functions
   const scrollInitialized = useRef(false);
   interface VisibleRange {
     start: number;
@@ -1596,13 +1591,7 @@ export function ChatPage({
       currentMessageMap(completeMessageDetail)
     );
 
-    if (
-      !scrollInitialized.current &&
-      upToDatemessageHistory.length > 0
-      // &&
-      // (!visibleRange.get(currentSessionId()) ||
-      //   visibleRange.get(currentSessionId())?.end == 0)
-    ) {
+    if (!scrollInitialized.current && upToDatemessageHistory.length > 0) {
       const newEnd = Math.max(upToDatemessageHistory.length, 40);
       const newStart = Math.max(0, newEnd - 20);
       const newMostVisibleMessageId =
