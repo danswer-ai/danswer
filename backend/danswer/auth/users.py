@@ -202,7 +202,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         except exceptions.UserAlreadyExists:
             user = await self.get_by_email(user_create.email)
             # Handle case where user has used product outside of web and is now creating an account through web
-            if not user.has_web_login and user_create.has_web_login:
+            if (
+                not user.has_web_login
+                and hasattr(user_create, "has_web_login")
+                and user_create.has_web_login
+            ):
                 user_update = UserUpdate(
                     password=user_create.password,
                     has_web_login=user_create.has_web_login,

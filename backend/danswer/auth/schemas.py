@@ -1,5 +1,6 @@
 import uuid
 from enum import Enum
+from typing import Optional
 
 from fastapi_users import schemas
 
@@ -33,7 +34,9 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
 
 class UserCreate(schemas.BaseUserCreate):
     role: UserRole = UserRole.BASIC
+    has_web_login: Optional[bool] = True
 
 
 class UserUpdate(schemas.BaseUserUpdate):
     role: UserRole
+    has_web_login: Optional[bool] = True
