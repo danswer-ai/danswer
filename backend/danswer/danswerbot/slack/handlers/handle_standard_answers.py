@@ -50,7 +50,8 @@ def oneoff_standard_answers(
     )
 
     server_standard_answers = [
-        StandardAnswer.from_model(db_answer) for db_answer in matching_standard_answers
+        StandardAnswer.from_model(db_answer[0])
+        for db_answer in matching_standard_answers
     ]
     return server_standard_answers
 
