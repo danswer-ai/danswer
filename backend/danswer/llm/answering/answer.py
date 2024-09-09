@@ -229,7 +229,7 @@ class Answer:
                     )
                 )
                 prompt = prompt_builder.build()
-                print(f"-----------------------\nThe current prompt is: {prompt}")
+                # print(f"-----------------------\nThe current prompt is: {prompt}")
 
                 final_tool_definitions = [
                     tool.tool_definition()
@@ -243,6 +243,8 @@ class Answer:
                     tools=final_tool_definitions if final_tool_definitions else None,
                     tool_choice="required" if self.force_use_tool.force_use else None,
                 ):
+                    if self.is_cancelled:
+                        return
                     if isinstance(message, AIMessageChunk) and (
                         message.tool_call_chunks or message.tool_calls
                     ):
@@ -368,8 +370,6 @@ class Answer:
                     if isinstance(token, str):
                         response_content += token
                     yield token
-
-                yield "FINAL TOKEN"
 
                 # Update message history with LLM response
                 self.message_history.append(
@@ -678,13 +678,14 @@ class Answer:
             return
 
         output_generator = (
-            self._raw_output_for_explicit_tool_calling_llms()
+            self._raw_output_for_explicit_tool_calling_llms_loop()
             if explicit_tool_calling_supported(
                 self.llm.config.model_provider, self.llm.config.model_name
             )
             and not self.skip_explicit_tool_calling
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
+        print("the output generator is: ", output_generator)
 
         def _process_stream(
             stream: Iterator[ToolCallKickoff | ToolResponse | str | StreamStopInfo],
@@ -727,35 +728,47 @@ class Answer:
 
                     yield message
                 else:
-                    # assumes all tool responses will come first, then the final answer
-                    break
+                    process_answer_stream_fn = _get_answer_stream_processor(
+                        context_docs=final_context_docs or [],
+                        # if doc selection is enabled, then search_results will be None,
+                        # so we need to use the final_context_docs
+                        doc_id_to_rank_map=map_document_id_order(
+                            search_results or final_context_docs or []
+                        ),
+                        answer_style_configs=self.answer_style_config,
+                    )
 
-            if not self.skip_gen_ai_answer_generation:
-                process_answer_stream_fn = _get_answer_stream_processor(
-                    context_docs=final_context_docs or [],
-                    # if doc selection is enabled, then search_results will be None,
-                    # so we need to use the final_context_docs
-                    doc_id_to_rank_map=map_document_id_order(
-                        search_results or final_context_docs or []
-                    ),
-                    answer_style_configs=self.answer_style_config,
-                )
+                    stream_stop_info = None
+                    new_kickoff = None
 
-                stream_stop_info = None
+                    def _stream() -> Iterator[str]:
+                        nonlocal stream_stop_info
+                        nonlocal new_kickoff
 
-                def _stream() -> Iterator[str]:
-                    nonlocal stream_stop_info
-                    yield cast(str, message)
-                    for item in stream:
-                        if isinstance(item, StreamStopInfo):
-                            stream_stop_info = item
-                            return
-                        yield cast(str, item)
+                        yield cast(str, message)
+                        for item in stream:
+                            if isinstance(item, StreamStopInfo):
+                                stream_stop_info = item
+                                return
+                            if isinstance(item, ToolCallKickoff):
+                                new_kickoff = item
+                                return
+                            else:
+                                yield cast(str, item)
 
-                yield from process_answer_stream_fn(_stream())
+                    yield from process_answer_stream_fn(_stream())
 
-                if stream_stop_info:
-                    yield stream_stop_info
+                    if stream_stop_info:
+                        yield stream_stop_info
+                    if new_kickoff:
+                        print("the new kickoff is: ", new_kickoff)
+                        yield StreamStopInfo(stop_reason=StreamStopReason.NEW_RESPONSE)
+                        yield new_kickoff
+                    # break
+
+            # print("now generating the final message")
+            # if not self.skip_gen_ai_answer_generation:
+            #     o
 
         processed_stream = []
         for processed_packet in _process_stream(output_generator):

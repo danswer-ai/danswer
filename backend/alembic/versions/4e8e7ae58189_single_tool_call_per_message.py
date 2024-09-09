@@ -39,6 +39,11 @@ def upgrade() -> None:
     op.drop_constraint("tool_call_message_id_fkey", "tool_call", type_="foreignkey")
     op.drop_column("tool_call", "message_id")
 
+    # Add a unique constraint to ensure one-to-one relationship
+    op.create_unique_constraint(
+        "uq_chat_message_tool_call_id", "chat_message", ["tool_call_id"]
+    )
+
 
 def downgrade() -> None:
     # Add back the old column

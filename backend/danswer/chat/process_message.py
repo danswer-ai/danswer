@@ -652,6 +652,8 @@ def stream_chat_message_objects(
         tool_result = None
 
         for packet in answer.processed_streamed_output:
+            print("packet: ", packet)
+            print("type: ", type(packet))
             if isinstance(packet, ToolResponse):
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                     (
@@ -723,6 +725,73 @@ def stream_chat_message_objects(
                     )
 
             else:
+                from danswer.chat.models import StreamStopInfo
+
+                if isinstance(packet, StreamStopInfo):
+                    print("\n\n\n-------I am saving-------\n\n\n")
+                    db_citations = None
+
+                    if reference_db_search_docs:
+                        db_citations = translate_citations(
+                            citations_list=answer.citations,
+                            db_docs=reference_db_search_docs,
+                        )
+
+                    # Saving Gen AI answer and responding with message info
+                    tool_name_to_tool_id: dict[str, int] = {}
+                    for tool_id, tool_list in tool_dict.items():
+                        for tool in tool_list:
+                            tool_name_to_tool_id[tool.name] = tool_id
+
+                    if tool_result is None:
+                        tool_call = None
+                    else:
+                        tool_call = ToolCall(
+                            tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                            tool_name=tool_result.tool_name,
+                            tool_arguments=tool_result.tool_args,
+                            tool_result=tool_result.tool_result,
+                        )
+
+                    gen_ai_response_message = partial_response(
+                        message=answer.llm_answer,
+                        rephrased_query=(
+                            qa_docs_response.rephrased_query
+                            if qa_docs_response
+                            else None
+                        ),
+                        reference_docs=reference_db_search_docs,
+                        files=ai_message_files,
+                        token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
+                        citations=db_citations,
+                        error=None,
+                        tool_call=tool_call,
+                    )
+
+                    db_session.commit()  # actually save user / assistant message
+
+                    msg_detail_response = translate_db_message_to_chat_message_detail(
+                        gen_ai_response_message
+                    )
+
+                    yield msg_detail_response
+                    # yield Delimiter(delimiter=True)
+                    partial_response = partial(
+                        create_new_chat_message,
+                        chat_session_id=chat_session_id,
+                        parent_message=gen_ai_response_message,
+                        prompt_id=prompt_id,
+                        # message=,
+                        # rephrased_query=,
+                        # token_count=,
+                        message_type=MessageType.ASSISTANT,
+                        alternate_assistant_id=new_msg_req.alternate_assistant_id,
+                        # error=,
+                        # reference_docs=,
+                        db_session=db_session,
+                        commit=False,
+                    )
+
                 if isinstance(packet, ToolCallFinalResult):
                     tool_result = packet
                 yield cast(ChatPacket, packet)
@@ -767,16 +836,14 @@ def stream_chat_message_objects(
             token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
             citations=db_citations,
             error=None,
-            tool_calls=[
-                ToolCall(
-                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                    tool_name=tool_result.tool_name,
-                    tool_arguments=tool_result.tool_args,
-                    tool_result=tool_result.tool_result,
-                )
-            ]
+            tool_call=ToolCall(
+                tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                tool_name=tool_result.tool_name,
+                tool_arguments=tool_result.tool_args,
+                tool_result=tool_result.tool_result,
+            )
             if tool_result
-            else [],
+            else None,
         )
 
         logger.debug("Committing messages")

@@ -22,6 +22,8 @@ export interface AnswerPiecePacket {
 export enum StreamStopReason {
   CONTEXT_LENGTH = "CONTEXT_LENGTH",
   CANCELLED = "CANCELLED",
+  FINISHED = "FINISHED",
+  NEW_RESPONSE = "NEW_RESPONSE",
 }
 
 export interface StreamStopInfo {

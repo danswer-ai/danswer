@@ -836,10 +836,8 @@ class ToolCall(Base):
     tool_arguments: Mapped[dict[str, JSON_ro]] = mapped_column(postgresql.JSONB())
     tool_result: Mapped[JSON_ro] = mapped_column(postgresql.JSONB())
 
-    message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
-
     message: Mapped["ChatMessage"] = relationship(
-        "ChatMessage", back_populates="tool_calls"
+        "ChatMessage", back_populates="tool_call"
     )
 
 
@@ -964,6 +962,9 @@ class ChatMessage(Base):
         secondary=ChatMessage__SearchDoc.__table__,
         back_populates="chat_messages",
     )
+    # NOTE: Should always be attached to the `assistant` message.
+    # represents the tool calls used to generate this message
+
     tool_call_id: Mapped[int | None] = mapped_column(
         ForeignKey("tool_call.id"), nullable=True
     )
