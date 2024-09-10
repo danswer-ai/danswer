@@ -83,7 +83,7 @@ export const ResponseSection = ({
         }}
       >
         <div className="my-auto">{icon}</div>
-        <div className="my-auto text-sm text-gray-200 italic">{header}</div>
+        <div className="my-auto text-sm text-subtle italic">{header}</div>
 
         {!isNotControllable && (
           <div className="ml-auto">
@@ -95,7 +95,7 @@ export const ResponseSection = ({
           </div>
         )}
       </div>
-      {finalIsOpen && <div className="mx-2 text-sm pb-10">{body}</div>}
+      {finalIsOpen && <div className="mx-2 text-sm">{body}</div>}
     </div>
   );
 };

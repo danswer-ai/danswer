@@ -20,7 +20,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
             rel="noopener noreferrer"
             className="w-fit"
           >
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full max-w-[750px]">
               <SourceIcon sourceType={quoteInfo.source_type} iconSize={16} />
               <p className="truncate break-all ml-2 mr-2">
                 {quoteInfo.semantic_identifier || quoteInfo.document_id}
@@ -30,12 +30,14 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
         </div>
       }
     >
-      <div className="flex flex-shrink-0 rounded-regular w-96 bg-background border border-border shadow p-3 text-sm leading-relaxed">
+      <div className="flex items-center gap-2 max-w-96">
         <div>
           <b>Quote:</b> <i>{quoteInfo.quote}</i>
         </div>
-        <div
-          className="my-auto pl-3 ml-auto"
+
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => {
             navigator.clipboard.writeText(quoteInfo.quote);
             setCopyClicked(true);
@@ -44,14 +46,8 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
             }, 1000);
           }}
         >
-          <div className="p-1 rounded hover:bg-hover cursor-pointer">
-            {copyClicked ? (
-              <CheckmarkIcon className="my-auto flex flex-shrink-0" size={16} />
-            ) : (
-              <CopyIcon className="my-auto flex flex-shrink-0" size={16} />
-            )}
-          </div>
-        </div>
+          {copyClicked ? <CheckmarkIcon size={16} /> : <CopyIcon size={16} />}
+        </Button>
       </div>
     </CustomTooltip>
   );
