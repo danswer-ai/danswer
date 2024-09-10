@@ -1184,20 +1184,16 @@ export function AssistantEditor({
                     />
                   </div>
 
-                  {isPaidEnterpriseFeaturesEnabled &&
-                    userGroups &&
-                    userGroups.length > 0 && (
-                      <IsPublicGroupSelector
-                        formikProps={{
-                          values,
-                          isSubmitting,
-                          setFieldValue,
-                          ...formikProps,
-                        }}
-                        objectName="assistant"
-                        enforceGroupSelection={false}
-                      />
-                    )}
+                  <IsPublicGroupSelector
+                    formikProps={{
+                      values,
+                      isSubmitting,
+                      setFieldValue,
+                      ...formikProps,
+                    }}
+                    objectName="assistant"
+                    enforceGroupSelection={false}
+                  />
                 </>
               )}
 

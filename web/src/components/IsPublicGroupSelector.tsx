@@ -1,3 +1,4 @@
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import React, { useState, useEffect } from "react";
 import { FormikProps, FieldArray, ArrayHelpers, ErrorMessage } from "formik";
 import { Text, Divider } from "@tremor/react";
@@ -27,10 +28,11 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
 }) => {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
   const { isAdmin, user, isLoadingUser, isCurator } = useUser();
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
   const [shouldHideContent, setShouldHideContent] = useState(false);
 
   useEffect(() => {
-    if (user && userGroups) {
+    if (user && userGroups && isPaidEnterpriseFeaturesEnabled) {
       const isUserAdmin = user.role === UserRole.ADMIN;
       if (!isUserAdmin) {
         formikProps.setFieldValue("is_public", false);
@@ -54,6 +56,9 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
 
   if (isLoadingUser || userGroupsIsLoading) {
     return <div>Loading...</div>;
+  }
+  if (!isPaidEnterpriseFeaturesEnabled) {
+    return null;
   }
 
   if (shouldHideContent && enforceGroupSelection) {

@@ -379,15 +379,13 @@ export default function AddConnector({
               </Card>
             )}
 
-            {!(formStep == 0 && connector == "google_drive") && (
-              <NavigationRow
-                activatedCredential={credentialActivated != null}
-                isValid={formikProps.isValid}
-                onSubmit={formikProps.handleSubmit}
-                noCredentials={noCredentials}
-                noAdvanced={connector !== "file"}
-              />
-            )}
+            <NavigationRow
+              activatedCredential={credentialActivated != null}
+              isValid={formikProps.isValid}
+              onSubmit={formikProps.handleSubmit}
+              noCredentials={noCredentials}
+              noAdvanced={connector !== "file"}
+            />
           </div>
         );
       }}

@@ -420,27 +420,12 @@ export function CustomLLMProviderUpdateForm({
             />
 
             {showAdvancedOptions && (
-              <>
-                {isPaidEnterpriseFeaturesEnabled && userGroups && (
-                  <>
-                    <BooleanFormField
-                      small
-                      removeIndent
-                      alignTop
-                      name="is_public"
-                      label="Is Public?"
-                      subtext="If set, this LLM Provider will be available to all users. If not, only the specified User Groups will be able to use it."
-                    />
-
-                    <IsPublicGroupSelector
-                      formikProps={formikProps}
-                      objectName="LLM Provider"
-                      publicToWhom="all users"
-                      enforceGroupSelection={true}
-                    />
-                  </>
-                )}
-              </>
+              <IsPublicGroupSelector
+                formikProps={formikProps}
+                objectName="LLM Provider"
+                publicToWhom="all users"
+                enforceGroupSelection={true}
+              />
             )}
 
             <div>
