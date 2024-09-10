@@ -15,7 +15,10 @@ export enum ChatSessionSharedStatus {
   Private = "private",
   Public = "public",
 }
-export const BUFFER_COUNT = 24;
+
+// The number of messages to buffer on the client side.
+export const BUFFER_COUNT = 35;
+
 export interface RetrievalDetails {
   run_search: "always" | "never" | "auto";
   real_time: boolean;

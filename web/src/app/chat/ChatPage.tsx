@@ -1557,7 +1557,7 @@ export function ChatPage({
   >(() => {
     const initialRange: VisibleRange = {
       start: 0,
-      end: 40,
+      end: BUFFER_COUNT,
       mostVisibleMessageId: null,
     };
     return new Map([[chatSessionIdRef.current, initialRange]]);
@@ -1590,8 +1590,8 @@ export function ChatPage({
     );
 
     if (!scrollInitialized.current && upToDatemessageHistory.length > 0) {
-      const newEnd = Math.max(upToDatemessageHistory.length, 40);
-      const newStart = Math.max(0, newEnd - 20);
+      const newEnd = Math.max(upToDatemessageHistory.length, BUFFER_COUNT);
+      const newStart = Math.max(0, newEnd - BUFFER_COUNT);
       const newMostVisibleMessageId =
         upToDatemessageHistory[newEnd - 1]?.messageId;
 
@@ -1946,7 +1946,7 @@ export function ChatPage({
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }
                           >
-                            {(messageHistory.length < 30
+                            {(messageHistory.length < BUFFER_COUNT
                               ? messageHistory
                               : messageHistory.slice(
                                   currentVisibleRange.start,
@@ -1954,7 +1954,7 @@ export function ChatPage({
                                 )
                             ).map((message, fauxIndex) => {
                               const i =
-                                messageHistory.length < 30
+                                messageHistory.length < BUFFER_COUNT
                                   ? fauxIndex
                                   : fauxIndex + currentVisibleRange.start;
 
