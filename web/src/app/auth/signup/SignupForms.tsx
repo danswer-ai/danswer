@@ -1,7 +1,6 @@
 "use client";
 
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { basicLogin, basicSignup } from "@/lib/user";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
@@ -10,16 +9,16 @@ import { requestEmailVerification } from "../lib";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
   const [isWorking, setIsWorking] = useState(false);
 
   return (
     <>
       {isWorking && <Spinner />}
-      {popup}
       <Formik
         initialValues={{
           full_name: "",
@@ -49,9 +48,10 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
               errorMsg =
                 "An account already exwkists with the specified email.";
             }
-            setPopup({
-              type: "error",
-              message: `Failed to sign up - ${errorMsg}`,
+            toast({
+              title: "Error",
+              description: `Failed to sign up - ${errorMsg}`,
+              variant: "destructive",
             });
             return;
           }
@@ -71,9 +71,10 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             if (errorDetail === "LOGIN_BAD_CREDENTIALS") {
               errorMsg = "Invalid email or password";
             }
-            setPopup({
-              type: "error",
-              message: `Failed to login - ${errorMsg}`,
+            toast({
+              title: "Error",
+              description: `Failed to login - ${errorMsg}`,
+              variant: "destructive",
             });
           }
         }}

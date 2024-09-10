@@ -108,6 +108,7 @@ export function ChatPage({
     openedFolders,
   } = useChatContext();
 
+  const { toast } = useToast();
   const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
 
   const [selectedAssistant, setSelectedAssistant] = useState<Assistant | null>(
@@ -685,10 +686,11 @@ export function ChatPage({
       ? messageHistory.indexOf(messageToResend)
       : null;
     if (!messageToResend && messageIdToResend !== undefined) {
-      setPopup({
-        message:
+      toast({
+        title: "Error",
+        description:
           "Failed to re-send message - please refresh the page and try again.",
-        type: "error",
+        variant: "destructive",
       });
       return;
     }
@@ -951,8 +953,6 @@ export function ChatPage({
     setAlternativeGeneratingAssistant(null);
   };
 
-  const { toast } = useToast();
-
   const onFeedback = async (
     messageId: number,
     feedbackType: FeedbackType,
@@ -1009,10 +1009,11 @@ export function ChatPage({
       file.type.startsWith("image/")
     );
     if (imageFiles.length > 0 && !llmAcceptsImages) {
-      setPopup({
-        type: "error",
-        message:
+      toast({
+        title: "Error",
+        description:
           "The current Assistant does not support image input. Please select an assistant with Vision support.",
+        variant: "destructive",
       });
       return;
     }
@@ -1040,9 +1041,10 @@ export function ChatPage({
     uploadFilesForChat(acceptedFiles).then(([files, error]) => {
       if (error) {
         setCurrentMessageFiles((prev) => removeTempFiles(prev));
-        setPopup({
-          type: "error",
-          message: error,
+        toast({
+          title: "Error",
+          description: error,
+          variant: "destructive",
         });
       } else {
         setCurrentMessageFiles((prev) => [...removeTempFiles(prev), ...files]);
@@ -1400,10 +1402,11 @@ export function ChatPage({
                                     !isStreaming
                                       ? (newQuery) => {
                                           if (!previousMessage) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
+                                            toast({
+                                              title: "Error",
+                                              description:
                                                 "Cannot edit query of first message - please refresh the page and try again.",
+                                              variant: "destructive",
                                             });
                                             return;
                                           }
@@ -1411,10 +1414,11 @@ export function ChatPage({
                                           if (
                                             previousMessage.messageId === null
                                           ) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
+                                            toast({
+                                              title: "Error",
+                                              description:
                                                 "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                              variant: "destructive",
                                             });
                                             return;
                                           }
@@ -1457,10 +1461,11 @@ export function ChatPage({
                                           currentAlternativeAssistant,
                                       });
                                     } else {
-                                      setPopup({
-                                        type: "error",
-                                        message:
+                                      toast({
+                                        title: "Error",
+                                        description:
                                           "Failed to force search - please refresh the page and try again.",
+                                        variant: "destructive",
                                       });
                                     }
                                   }}

@@ -1,25 +1,23 @@
 "use client";
 
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { basicLogin, basicSignup } from "@/lib/user";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
-import { requestEmailVerification } from "../lib";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export function LogInForms({}: {}) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
   const [isWorking, setIsWorking] = useState(false);
 
   return (
     <>
       {isWorking && <Spinner />}
-      {popup}
       <Formik
         initialValues={{
           email: "",
@@ -41,9 +39,10 @@ export function LogInForms({}: {}) {
             if (errorDetail === "LOGIN_BAD_CREDENTIALS") {
               errorMsg = "Invalid email or password";
             }
-            setPopup({
-              type: "error",
-              message: `Failed to login - ${errorMsg}`,
+            toast({
+              title: "Error",
+              description: `Failed to login - ${errorMsg}`,
+              variant: "destructive",
             });
           }
         }}
