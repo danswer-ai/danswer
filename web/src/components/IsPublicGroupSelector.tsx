@@ -13,6 +13,8 @@ export type IsPublicGroupSelectorFormType = {
   groups: number[];
 };
 
+// This should be included for all forms that require groups / public access
+// to be set, and access to this / permissioning should be handled within this component itself.
 export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   formikProps,
   objectName,
