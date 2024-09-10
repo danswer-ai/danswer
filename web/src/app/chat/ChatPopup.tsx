@@ -9,7 +9,6 @@ import remarkGfm from "remark-gfm";
 
 const ALL_USERS_INITIAL_POPUP_FLOW_COMPLETED =
   "allUsersInitialPopupFlowCompleted";
-
 export function ChatPopup() {
   const [completedFlow, setCompletedFlow] = useState(true);
 
@@ -20,16 +19,28 @@ export function ChatPopup() {
   });
 
   const settings = useContext(SettingsContext);
-  if (!settings?.enterpriseSettings?.custom_popup_content || completedFlow) {
+  const enterpriseSettings = settings?.enterpriseSettings;
+  const isConsentScreen = enterpriseSettings?.enable_consent_screen;
+
+  if (
+    (!settings?.enterpriseSettings?.custom_popup_content && !isConsentScreen) ||
+    completedFlow
+  ) {
     return null;
   }
 
-  let popupTitle = settings.enterpriseSettings.custom_popup_header;
+  let popupTitle = enterpriseSettings?.custom_popup_header;
   if (!popupTitle) {
-    popupTitle = `Welcome to ${
-      settings.enterpriseSettings.application_name || "Danswer"
-    }!`;
+    popupTitle = isConsentScreen
+      ? "Terms of Use"
+      : `Welcome to ${enterpriseSettings?.application_name || "Danswer"}!`;
   }
+
+  const popupContent =
+    enterpriseSettings?.custom_popup_content ||
+    (isConsentScreen
+      ? "By clicking 'I Agree', you acknowledge that you agree to the terms of use of this application and consent to proceed."
+      : "");
 
   return (
     <Modal width="w-3/6 xl:w-[700px]" title={popupTitle}>
@@ -49,12 +60,16 @@ export function ChatPopup() {
           }}
           remarkPlugins={[remarkGfm]}
         >
-          {settings.enterpriseSettings.custom_popup_content}
+          {popupContent}
         </ReactMarkdown>
 
-        <div className="flex w-full">
+        <div className="flex w-full justify-center gap-4 mt-4">
+          {isConsentScreen && (
+            <Button size="xs" color="red" onClick={() => {}}>
+              Cancel
+            </Button>
+          )}
           <Button
-            className="mx-auto mt-4"
             size="xs"
             onClick={() => {
               localStorage.setItem(
@@ -64,7 +79,7 @@ export function ChatPopup() {
               setCompletedFlow(true);
             }}
           >
-            Get started!
+            {isConsentScreen ? "I Agree" : "Get started!"}
           </Button>
         </div>
       </>
