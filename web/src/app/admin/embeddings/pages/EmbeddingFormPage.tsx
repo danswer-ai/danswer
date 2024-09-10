@@ -194,9 +194,9 @@ export default function EmbeddingForm() {
     if (selectedProvider.provider_type != null) {
       // This is a cloud model
       newModel = {
-        ...advancedEmbeddingDetails,
         ...selectedProvider,
         ...rerankingDetails,
+        ...advancedEmbeddingDetails,
         model_name: selectedProvider.model_name,
         provider_type:
           (selectedProvider.provider_type
@@ -206,9 +206,9 @@ export default function EmbeddingForm() {
     } else {
       // This is a locally hosted model
       newModel = {
-        ...advancedEmbeddingDetails,
         ...selectedProvider,
         ...rerankingDetails,
+        ...advancedEmbeddingDetails,
         model_name: selectedProvider.model_name!,
         provider_type: null,
       };
