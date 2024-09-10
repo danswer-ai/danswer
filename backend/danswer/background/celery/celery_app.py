@@ -100,8 +100,8 @@ def cleanup_connector_credential_pair_task(
     or updating the ACL"""
     engine = get_sqlalchemy_engine()
 
-    try:
-        with Session(engine) as db_session:
+    with Session(engine) as db_session:
+        try:
             # validate that the connector / credential pair is deletable
             cc_pair = get_connector_credential_pair(
                 db_session=db_session,
@@ -120,33 +120,30 @@ def cleanup_connector_credential_pair_task(
             if deletion_attempt_disallowed_reason:
                 raise ValueError(deletion_attempt_disallowed_reason)
 
-            try:
-                # The bulk of the work is in here, updates Postgres and Vespa
-                curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-                document_index = get_default_document_index(
-                    primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
-                )
-                return delete_connector_credential_pair(
-                    db_session=db_session,
-                    document_index=document_index,
-                    cc_pair=cc_pair,
-                )
-            except Exception as e:
-                task_logger.exception(
-                    f"Failed to run connector_deletion. "
-                    f"connector_id={connector_id} credential_id={credential_id}"
-                )
-                raise e
+            # The bulk of the work is in here, updates Postgres and Vespa
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+            )
+            return delete_connector_credential_pair(
+                db_session=db_session,
+                document_index=document_index,
+                cc_pair=cc_pair,
+            )
 
-    except Exception as e:
-        stack_trace = traceback.format_exc()
-        error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
-        add_deletion_failure_message(db_session, cc_pair.id, error_message)
-        task_logger.exception(
-            f"Failed to run connector_deletion. "
-            f"connector_id={connector_id} credential_id={credential_id}\n"
-            f"Stack Trace:\n{stack_trace}"
-        )
+        except Exception as e:
+            task_logger.exception(
+                f"Failed to run connector_deletion. "
+                f"connector_id={connector_id} credential_id={credential_id}"
+            )
+            stack_trace = traceback.format_exc()
+            error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
+            add_deletion_failure_message(db_session, cc_pair.id, error_message)
+            task_logger.exception(
+                f"Failed to run connector_deletion. "
+                f"connector_id={connector_id} credential_id={credential_id}\n"
+                f"Stack Trace:\n{stack_trace}"
+            )
 
 
 @build_celery_task_wrapper(name_cc_prune_task)
