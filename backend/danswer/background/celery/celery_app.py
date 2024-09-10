@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import timedelta
 from typing import Any
 from typing import cast
@@ -52,15 +53,24 @@ CELERY_PASSWORD_PART = ""
 if REDIS_PASSWORD:
     CELERY_PASSWORD_PART = f":{REDIS_PASSWORD}@"
 
-# example celery_broker_url: "redis://:password@localhost:6379/15"
-celery_broker_url = (
-    f"redis://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_NUMBER_CELERY}"
-)
-celery_backend_url = (
-    f"redis://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_NUMBER_CELERY}"
-)
-celery_app = Celery(__name__, broker=celery_broker_url, backend=celery_backend_url)
+# Get Redis SSL configuration from environment variables
+REDIS_SSL = os.getenv('REDIS_SSL', 'False').lower() == 'true'  # Convert "True"/"False" string to boolean
+REDIS_SCHEME = "rediss" if REDIS_SSL else "redis"  # Use rediss if REDIS_SSL is True, otherwise redis
 
+# SSL-specific query parameters for Redis URL
+SSL_QUERY_PARAMS = ""
+if REDIS_SSL:
+    ssl_cert_reqs = os.getenv('REDIS_SSL_CERT_REQS', 'CERT_NONE')
+    ssl_ca_certs = os.getenv('REDIS_SSL_CA_CERTS', '')
+    SSL_QUERY_PARAMS = f"?ssl_cert_reqs={ssl_cert_reqs}"
+    if ssl_ca_certs:
+        SSL_QUERY_PARAMS += f"&ssl_ca_certs={ssl_ca_certs}"
+
+REDIS_URL = (
+    f"{REDIS_SCHEME}://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_NUMBER_CELERY}{SSL_QUERY_PARAMS}"
+)
+
+celery_app = Celery(__name__, broker=REDIS_URL, backend=REDIS_URL)
 
 _SYNC_BATCH_SIZE = 100
 
