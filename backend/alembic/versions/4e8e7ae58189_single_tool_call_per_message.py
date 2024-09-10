@@ -2,7 +2,7 @@
 
 
 Revision ID: 4e8e7ae58189
-Revises: ba98eba0f66a
+Revises: f7e58d357687
 Create Date: 2024-09-09 10:07:58.008838
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "4e8e7ae58189"
-down_revision = "ba98eba0f66a"
+down_revision = "f7e58d357687"
 branch_labels = None
 depends_on = None
 

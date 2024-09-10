@@ -137,7 +137,6 @@ export function ChatPage({
   } = useChatContext();
 
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
-
   const { user, refreshUser, isLoadingUser } = useUser();
 
   // chat session
