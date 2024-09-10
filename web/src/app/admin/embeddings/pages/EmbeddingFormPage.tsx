@@ -191,12 +191,13 @@ export default function EmbeddingForm() {
     }
     let newModel: SavedSearchSettings;
 
+    // We use a spread operation to merge properties from multiple objects into a single object.
+    // Advanced embedding details may update default values.
     if (selectedProvider.provider_type != null) {
       // This is a cloud model
       newModel = {
-        ...advancedEmbeddingDetails,
-        ...selectedProvider,
         ...rerankingDetails,
+        ...advancedEmbeddingDetails,
         model_name: selectedProvider.model_name,
         provider_type:
           (selectedProvider.provider_type
@@ -206,9 +207,9 @@ export default function EmbeddingForm() {
     } else {
       // This is a locally hosted model
       newModel = {
-        ...advancedEmbeddingDetails,
         ...selectedProvider,
         ...rerankingDetails,
+        ...advancedEmbeddingDetails,
         model_name: selectedProvider.model_name!,
         provider_type: null,
       };
@@ -225,6 +226,7 @@ export default function EmbeddingForm() {
         },
       }
     );
+
     if (response.ok) {
       setPopup({
         message: "Changed provider suceessfully. Redirecing to embedding page",
