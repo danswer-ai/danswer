@@ -160,13 +160,7 @@ export const FullSearchBar = ({
       !(event.nativeEvent as any).isComposing
     ) {
       event.preventDefault();
-
-      if (disabled) {
-        setPopup({
-          type: "error",
-          message: "Please enter a new search query",
-        });
-      } else {
+      if (!disabled) {
         onSearch(agentic);
       }
     }
@@ -215,7 +209,7 @@ export const FullSearchBar = ({
         style={{ scrollbarWidth: "thin" }}
         role="textarea"
         aria-multiline
-        placeholder="Search for something..."
+        placeholder="Search for anything..."
         value={query}
         onChange={handleChange}
         onKeyDown={(event) => {}}
