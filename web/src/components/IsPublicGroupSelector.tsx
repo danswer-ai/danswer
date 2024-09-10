@@ -96,7 +96,8 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
       )}
 
       {(!formikProps.values.is_public || isCurator) &&
-        formikProps.values.groups.length > 0 && (
+        userGroups &&
+        userGroups?.length > 0 && (
           <>
             <div className="flex mt-4 gap-x-2 items-center">
               <div className="block font-medium text-base">
