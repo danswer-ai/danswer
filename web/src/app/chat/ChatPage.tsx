@@ -331,7 +331,6 @@ export function ChatPage({
     }
 
     async function initialSessionFetch() {
-      // scrollInitialized.current = false
       if (existingChatSessionId === null) {
         setIsFetchingChatMessages(false);
         if (defaultAssistantId !== undefined) {
@@ -793,7 +792,6 @@ export function ChatPage({
       // Check if all messages are currently rendered
       if (currentVisibleRange.end < messageHistory.length) {
         // Update visible range to include the last messages
-        console.log("Updating in scroll to bottom");
         updateCurrentVisibleRange({
           start: Math.max(
             0,
