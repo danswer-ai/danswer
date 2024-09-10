@@ -282,7 +282,7 @@ class VespaIndex(DocumentIndex):
                         raise requests.HTTPError(failure_msg) from e
 
     def update(self, update_requests: list[UpdateRequest]) -> None:
-        logger.info(f"Updating {len(update_requests)} documents in Vespa")
+        logger.debug(f"Updating {len(update_requests)} documents in Vespa")
 
         # Handle Vespa character limitations
         # Mutating update_requests but it's not used later anyway

@@ -428,11 +428,26 @@ class Document(Base):
     semantic_id: Mapped[str] = mapped_column(String)
     # First Section's link
     link: Mapped[str | None] = mapped_column(String, nullable=True)
+
     # The updated time is also used as a measure of the last successful state of the doc
     # pulled from the source (to help skip reindexing already updated docs in case of
     # connector retries)
+    # TODO: rename this column because it conflates the time of the source doc
+    # with the local last modified time of the doc and any associated metadata
+    # it should just be the server timestamp of the source doc
     doc_updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
+    )
+
+    # last time any vespa relevant row metadata or the doc changed.
+    # does not include last_synced
+    last_modified: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True, default=func.now()
+    )
+
+    # last successful sync to vespa
+    last_synced: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
     )
     # The following are not attached to User because the account/email may not be known
     # within Danswer
