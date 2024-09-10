@@ -652,8 +652,6 @@ def stream_chat_message_objects(
         tool_result = None
 
         for packet in answer.processed_streamed_output:
-            print("packet: ", packet)
-            print("type: ", type(packet))
             if isinstance(packet, ToolResponse):
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                     (
@@ -754,6 +752,7 @@ def stream_chat_message_objects(
                         )
 
                     gen_ai_response_message = partial_response(
+                        reserved_message_id=reserved_message_id,
                         message=answer.llm_answer,
                         rephrased_query=(
                             qa_docs_response.rephrased_query
@@ -775,12 +774,28 @@ def stream_chat_message_objects(
                     )
 
                     yield msg_detail_response
+                    reserved_message_id = reserve_message_id(
+                        db_session=db_session,
+                        chat_session_id=chat_session_id,
+                        parent_message=gen_ai_response_message.id
+                        if user_message is not None
+                        else gen_ai_response_message.id,
+                        message_type=MessageType.ASSISTANT,
+                    )
+
+                    yield MessageResponseIDInfo(
+                        user_message_id=gen_ai_response_message.id,
+                        reserved_assistant_message_id=reserved_message_id,
+                    )
+
                     # yield Delimiter(delimiter=True)
+
                     partial_response = partial(
                         create_new_chat_message,
                         chat_session_id=chat_session_id,
                         parent_message=gen_ai_response_message,
                         prompt_id=prompt_id,
+                        overridden_model=overridden_model,
                         # message=,
                         # rephrased_query=,
                         # token_count=,

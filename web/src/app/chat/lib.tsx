@@ -435,7 +435,7 @@ export function processRawChatHistory(
             citations: messageInfo?.citations || {},
           }
         : {}),
-      toolCalls: messageInfo.tool_calls,
+      toolCall: messageInfo.tool_call,
       parentMessageId: messageInfo.parent_message,
       childrenMessageIds: [],
       latestChildMessageId: messageInfo.latest_child_message,
@@ -479,6 +479,7 @@ export function buildLatestMessageChain(
     let currMessage: Message | null = rootMessage;
     while (currMessage) {
       finalMessageList.push(currMessage);
+
       const childMessageNumber = currMessage.latestChildMessageId;
       if (childMessageNumber && messageMap.has(childMessageNumber)) {
         currMessage = messageMap.get(childMessageNumber) as Message;

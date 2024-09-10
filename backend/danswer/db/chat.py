@@ -488,6 +488,7 @@ def create_new_chat_message(
     if reserved_message_id is not None:
         # Edit existing message
         existing_message = db_session.query(ChatMessage).get(reserved_message_id)
+        print(f"creating with reserved id {reserved_message_id}")
         if existing_message is None:
             raise ValueError(f"No message found with id {reserved_message_id}")
 

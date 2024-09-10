@@ -103,6 +103,7 @@ import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { Button } from "@tremor/react";
+import dynamic from "next/dynamic";
 import { debounce } from "lodash";
 
 const TEMP_USER_MESSAGE_ID = -1;
@@ -514,6 +515,7 @@ export function ChatPage({
       }
       newCompleteMessageMap.set(message.messageId, message);
     });
+
     // if specified, make these new message the latest of the current message chain
     if (makeLatestChildMessage) {
       const currentMessageChain = buildLatestMessageChain(
@@ -1047,8 +1049,6 @@ export function ChatPage({
     resetInputBar();
     let messageUpdates: Message[] | null = null;
 
-    let answer = "";
-
     let stopReason: StreamStopReason | null = null;
     let query: string | null = null;
     let retrievalType: RetrievalType =
@@ -1145,7 +1145,6 @@ export function ChatPage({
           if (!packet) {
             continue;
           }
-          console.log(packet);
 
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
@@ -1197,7 +1196,7 @@ export function ChatPage({
                 chatSessionId: currChatSessionId,
               });
 
-            const frozenMessageMap = currentFrozenMessageMap;
+            let frozenMessageMap = currentFrozenMessageMap;
 
             let initialDynamicParentMessage: Message = {
               messageId: regenerationRequest
@@ -1218,8 +1217,8 @@ export function ChatPage({
 
             let initialDynamicAssistantMessage: Message = {
               messageId: assistant_message_id!,
-              message: error || answer,
-              type: error ? "error" : "assistant",
+              message: "",
+              type: "assistant",
               retrievalType,
               query: finalMessage?.rephrased_query || query,
               documents: finalMessage?.context_docs?.top_documents || documents,
@@ -1256,22 +1255,57 @@ export function ChatPage({
               dynamicParentMessage === null &&
               dynamicAssistantMessage === null
             ) {
+              console.log("INITIALizing");
               dynamicParentMessage = initialDynamicParentMessage;
               dynamicAssistantMessage = initialDynamicAssistantMessage;
+              dynamicParentMessage.childrenMessageIds = [
+                initialFetchDetails.assistant_message_id,
+              ];
+
+              dynamicParentMessage.latestChildMessageId =
+                initialFetchDetails.assistant_message_id;
+
+              dynamicParentMessage.messageId =
+                initialFetchDetails.user_message_id;
+              dynamicParentMessage.message = currMessage;
             }
 
             if (!dynamicAssistantMessage || !dynamicParentMessage) {
               return;
             }
 
-            dynamicParentMessage.childrenMessageIds = [
-              initialFetchDetails.assistant_message_id,
-            ];
-            dynamicParentMessage.latestChildMessageId =
-              initialFetchDetails.assistant_message_id;
-            dynamicParentMessage.messageId =
-              initialFetchDetails.user_message_id;
-            dynamicParentMessage.message = currMessage;
+            if (Object.hasOwn(packet, "user_message_id")) {
+              let newParentMessageId = dynamicParentMessage.messageId;
+              const messageResponseIDInfo = packet as MessageResponseIDInfo;
+
+              for (const key in dynamicAssistantMessage) {
+                (dynamicParentMessage as Record<string, any>)[key] = (
+                  dynamicAssistantMessage as Record<string, any>
+                )[key];
+              }
+
+              dynamicParentMessage.parentMessageId = newParentMessageId;
+              dynamicParentMessage.latestChildMessageId =
+                messageResponseIDInfo.reserved_assistant_message_id;
+              dynamicParentMessage.childrenMessageIds = [
+                messageResponseIDInfo.reserved_assistant_message_id,
+              ];
+
+              dynamicParentMessage.messageId =
+                messageResponseIDInfo.user_message_id!;
+              dynamicAssistantMessage = {
+                messageId: messageResponseIDInfo.reserved_assistant_message_id,
+                type: "assistant",
+                message: "",
+                documents: [],
+                retrievalType: undefined,
+                toolCall: null,
+                files: [],
+                parentMessageId: dynamicParentMessage.messageId,
+                childrenMessageIds: [],
+                latestChildMessageId: null,
+              };
+            }
 
             setChatState((prevState) => {
               if (prevState.get(chatSessionIdRef.current!) === "loading") {
@@ -1336,68 +1370,44 @@ export function ChatPage({
               if (stop_reason === StreamStopReason.CONTEXT_LENGTH) {
                 updateCanContinue(true, frozenSessionId);
               }
-
-              dynamicParentMessage.message = answer;
-              currMessage = answer;
-
-              // Handle creating new messages.
-              if (stop_reason === StreamStopReason.NEW_RESPONSE) {
-                let {
-                  messageMap: newFrozenMessageMap,
-                  sessionId: frozenSessionId,
-                } = updateFn([dynamicParentMessage, dynamicAssistantMessage]);
-
-                updateFn = (messages: Message[]) => {
-                  const replacementsMap = finalMessage
-                    ? new Map([
-                        [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-                        [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-                      ] as [number, number][])
-                    : null;
-
-                  return upsertToCompleteMessageMap({
-                    messages: messages,
-                    replacementsMap: replacementsMap,
-                    completeMessageMapOverride: newFrozenMessageMap,
-                    chatSessionId: frozenSessionId!,
-                  });
-                };
-
-                dynamicParentMessage = dynamicAssistantMessage;
-              }
             }
+            if (!Object.hasOwn(packet, "stop_reason")) {
+              // on initial message send, we insert a dummy system message
+              // set this as the parent here if no parent is set
+              // parentMessage =
+              // parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
 
-            // on initial message send, we insert a dummy system message
-            // set this as the parent here if no parent is set
-            parentMessage =
-              parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
+              // Should update message map with new message based on
+              // Previous message, parent message, and new message being generated.
+              // All should have proper IDs.
+              updateFn = (messages: Message[]) => {
+                const replacementsMap = regenerationRequest
+                  ? new Map([
+                      [
+                        regenerationRequest?.parentMessage?.messageId,
+                        regenerationRequest?.parentMessage?.messageId,
+                      ],
+                      [
+                        dynamicParentMessage?.messageId,
+                        dynamicAssistantMessage?.messageId,
+                      ],
+                    ] as [number, number][])
+                  : null;
 
-            // Should update message map with new message based on
-            // Previous message, parent message, and new message being generated.
-            // All should have proper IDs.
-            updateFn = (messages: Message[]) => {
-              const replacementsMap = regenerationRequest
-                ? new Map([
-                    [
-                      regenerationRequest?.parentMessage?.messageId,
-                      regenerationRequest?.parentMessage?.messageId,
-                    ],
-                    [
-                      dynamicParentMessage?.messageId,
-                      dynamicAssistantMessage?.messageId,
-                    ],
-                  ] as [number, number][])
-                : null;
+                return upsertToCompleteMessageMap({
+                  messages: messages,
+                  replacementsMap: replacementsMap,
+                  // completeMessageMapOverride: frozenMessageMap,
+                  chatSessionId: frozenSessionId!,
+                });
+              };
 
-              return upsertToCompleteMessageMap({
-                messages: messages,
-                replacementsMap: replacementsMap,
-                completeMessageMapOverride: frozenMessageMap,
-                chatSessionId: frozenSessionId!,
-              });
-            };
-
-            updateFn([dynamicParentMessage, dynamicAssistantMessage]);
+              let { messageMap } = updateFn([
+                dynamicParentMessage,
+                dynamicAssistantMessage,
+              ]);
+              frozenMessageMap = messageMap;
+            }
           }
         }
       }
@@ -1430,7 +1440,6 @@ export function ChatPage({
       });
     }
     resetRegenerationState(currentSessionId());
-    let previousMessage: PreviousAIMessage | null = null;
 
     updateChatState("input");
     if (isNewSession) {
@@ -2466,7 +2475,12 @@ export function ChatPage({
                                 </button>
                               </div>
                             )}
-                            <Button onClick={() => console.log(messageHistory)}>
+                            <Button
+                              onClick={() => {
+                                console.log(completeMessageDetail);
+                                console.log(messageHistory);
+                              }}
+                            >
                               CLICK EM
                             </Button>
                             <ChatInputBar

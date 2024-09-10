@@ -209,7 +209,6 @@ class Answer:
             prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
 
             count += 1
-            print(f"COUNT IS {count}")
             tool_call_chunk: AIMessageChunk | None = None
 
             if self.force_use_tool.force_use and self.force_use_tool.args is not None:
@@ -231,7 +230,6 @@ class Answer:
                     )
                 )
                 prompt = prompt_builder.build()
-                # print(f"-----------------------\nThe current prompt is: {prompt}")
 
                 final_tool_definitions = [
                     tool.tool_definition()
@@ -254,23 +252,17 @@ class Answer:
                             tool_call_chunk = message
                         else:
                             tool_call_chunk += message  # type: ignore
-                    else:
-                        if tool_call_chunk is None and count != 2:
-                            print("Skipping the tool call + message compeltely")
-                            return
-                        elif message.content:
-                            yield cast(str, message.content)
+                    elif message.content:
+                        yield cast(str, message.content)
 
                 if not tool_call_chunk:
-                    print(
-                        "Skipping the tool call but generated message due to lack of existing tool call messages"
-                    )
+                    logger.info("Skipped tool call but generated message")
                     return
 
             tool_call_requests = tool_call_chunk.tool_calls
 
             logger.critical(
-                f"-------------------TOOL CALL REQUESTS ({len(tool_call_requests)})-------------------"
+                f"------{len(tool_call_requests)} TOOL CALL REQUESTS-------"
             )
 
             for tool_call_request in tool_call_requests:
@@ -299,8 +291,6 @@ class Answer:
                     and self.force_use_tool.args
                     else tool_call_request["args"]
                 )
-                print("my tool call request is htis")
-                print(tool_args)
 
                 tool_runner = ToolRunner(tool, tool_args)
                 yield tool_runner.kickoff()
@@ -352,12 +342,6 @@ class Answer:
 
                 # Generate response based on updated message history
                 prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
-                print("-------------")
-
-                print("NEW PROMPT")
-                print(prompt)
-                print("\n\n\n\n\n\n-------\n\n------")
-
                 # process_answer_stream_fn = _get_answer_stream_processor(
                 #     context_docs=self.final_context_docs or [],
                 #     doc_id_to_rank_map=map_document_id_order(
@@ -688,7 +672,6 @@ class Answer:
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
         self.processing_stream = []
-        print("the output generator is: ", output_generator)
 
         def _process_stream(
             stream: Iterator[ToolCallKickoff | ToolResponse | str | StreamStopInfo],
@@ -769,22 +752,15 @@ class Answer:
                     if stream_stop_info:
                         yield stream_stop_info
                     if new_kickoff:
-                        print("the new kickoff is: ", new_kickoff)
                         yield StreamStopInfo(stop_reason=StreamStopReason.NEW_RESPONSE)
                         self.current_streamed_output = self.processing_stream
                         self.processing_stream = []
                         yield new_kickoff
 
-            # print("now generating the final message")
-            # if not self.skip_gen_ai_answer_generation:
-            #     o
-
-        # processed_stream = []
         for processed_packet in _process_stream(output_generator):
             self.processing_stream.append(processed_packet)
             yield processed_packet
 
-        print("I AM DONE PROCESSING STREAM")
         self._processed_stream = self.processing_stream
 
     @property
