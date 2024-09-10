@@ -187,9 +187,9 @@ def get_latest_index_attempts_by_status(
     status: IndexingStatus,
 ) -> Sequence[IndexAttempt]:
     """
-    Retrieves the most recent failed index attempt for each connector_credential_pair.
-    This function returns the latest failed attempt even if there are subsequent
-    successful or in-progress attempts for the same pair.
+    Retrieves the most recent index attempt with the specified status for each connector_credential_pair.
+    Filters attempts based on the secondary_index flag to get either future or present index attempts.
+    Returns a sequence of IndexAttempt objects, one for each unique connector_credential_pair.
     """
     latest_failed_attempts = (
         select(
