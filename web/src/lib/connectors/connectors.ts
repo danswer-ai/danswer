@@ -222,7 +222,7 @@ export const connectorConfigs: Record<
     description: "Configure Confluence connector",
     subtext: `Specify the base URL of your Confluence instance, the space name, and optionally a specific page ID to index. If no page ID is provided, the entire space will be indexed.
 
-For example, entering "https://pablosfsanchez.atlassian.net/wiki" as the Wiki Base URL, "KB" as the Space, and "164331" as the Page ID will index the specific page at https://pablosfsanchez.atlassian.net/wiki/spaces/KB/pages/164331/Page. If you leave the Page ID empty, it will index the entire KB space.
+For example, entering "https://your-company.atlassian.net/wiki" as the Wiki Base URL, "KB" as the Space, and "164331" as the Page ID will index the specific page at https:///your-company.atlassian.net/wiki/spaces/KB/pages/164331/Page. If you leave the Page ID empty, it will index the entire KB space.
 
 Selecting the "Index Recursively" checkbox will index the specified page and all of its children.`,
     values: [
