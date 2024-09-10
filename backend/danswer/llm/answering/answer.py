@@ -69,6 +69,7 @@ from danswer.tools.tool_runner import ToolRunner
 from danswer.tools.tool_selection import select_single_tool_for_non_tool_calling_llm
 from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import MAX_TOOL_CALLS
 
 
 logger = setup_logger()
@@ -162,8 +163,6 @@ class Answer:
         self.skip_gen_ai_answer_generation = skip_gen_ai_answer_generation
         self._is_cancelled = False
 
-        # self.current_streamed_output: list = []
-        # self.processing_stream: list = []
         self.final_context_docs: list = []
         self.current_streamed_output: list = []
         self.processing_stream: list = []
@@ -198,17 +197,14 @@ class Answer:
                 )
             )
 
-    def _raw_output_for_explicit_tool_calling_llms_loop(
+    def _raw_output_for_explicit_tool_calling_llms(
         self,
     ) -> Iterator[
         str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallFinalResult
     ]:
-        count = 1
-        maximum_count = 4
-        while count <= maximum_count:
+        for i in range(MAX_TOOL_CALLS):
             prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
 
-            count += 1
             tool_call_chunk: AIMessageChunk | None = None
 
             if self.force_use_tool.force_use and self.force_use_tool.args is not None:
@@ -220,6 +216,7 @@ class Answer:
                         "id": str(uuid4()),
                     }
                 ]
+
             else:
                 prompt_builder.update_system_prompt(
                     default_build_system_message(self.prompt_config)
@@ -243,8 +240,6 @@ class Answer:
                     tools=final_tool_definitions if final_tool_definitions else None,
                     tool_choice="required" if self.force_use_tool.force_use else None,
                 ):
-                    if self.is_cancelled:
-                        return
                     if isinstance(message, AIMessageChunk) and (
                         message.tool_call_chunks or message.tool_calls
                     ):
@@ -252,19 +247,26 @@ class Answer:
                             tool_call_chunk = message
                         else:
                             tool_call_chunk += message  # type: ignore
-                    elif message.content:
-                        yield cast(str, message.content)
+                    else:
+                        if message.content:
+                            if self.is_cancelled:
+                                return
+                            yield cast(str, message.content)
+                        if (
+                            message.additional_kwargs.get("usage_metadata", {}).get(
+                                "stop"
+                            )
+                            == "length"
+                        ):
+                            yield StreamStopInfo(
+                                stop_reason=StreamStopReason.CONTEXT_LENGTH
+                            )
 
                 if not tool_call_chunk:
                     logger.info("Skipped tool call but generated message")
                     return
 
             tool_call_requests = tool_call_chunk.tool_calls
-
-            logger.critical(
-                f"------{len(tool_call_requests)} TOOL CALL REQUESTS-------"
-            )
-
             for tool_call_request in tool_call_requests:
                 known_tools_by_name = [
                     tool
@@ -342,20 +344,13 @@ class Answer:
 
                 # Generate response based on updated message history
                 prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
-                # process_answer_stream_fn = _get_answer_stream_processor(
-                #     context_docs=self.final_context_docs or [],
-                #     doc_id_to_rank_map=map_document_id_order(
-                #         self.final_context_docs or []
-                #     ),
-                #     answer_style_configs=self.answer_style_config,
-                # )
 
                 response_content = ""
 
-                for token in self._process_llm_stream(prompt=prompt, tools=None):
-                    if isinstance(token, str):
-                        response_content += token
-                    yield token
+                yield from self._process_llm_stream(
+                    prompt=prompt,
+                    tools=[tool.tool_definition() for tool in self.tools],
+                )
 
                 # Update message history with LLM response
                 self.message_history.append(
@@ -367,134 +362,6 @@ class Answer:
                         files=[],  # You may want to implement a token counting method
                     )
                 )
-
-    def _raw_output_for_explicit_tool_calling_llms(
-        self,
-    ) -> Iterator[
-        str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallFinalResult
-    ]:
-        prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
-
-        tool_call_chunk: AIMessageChunk | None = None
-        if self.force_use_tool.force_use and self.force_use_tool.args is not None:
-            # if we are forcing a tool WITH args specified, we don't need to check which tools to run
-            # / need to generate the args
-            tool_call_chunk = AIMessageChunk(
-                content="",
-            )
-            tool_call_chunk.tool_calls = [
-                {
-                    "name": self.force_use_tool.tool_name,
-                    "args": self.force_use_tool.args,
-                    "id": str(uuid4()),
-                }
-            ]
-        else:
-            # if tool calling is supported, first try the raw message
-            # to see if we don't need to use any tools
-            prompt_builder.update_system_prompt(
-                default_build_system_message(self.prompt_config)
-            )
-            prompt_builder.update_user_prompt(
-                default_build_user_message(
-                    self.question, self.prompt_config, self.latest_query_files
-                )
-            )
-            prompt = prompt_builder.build()
-            final_tool_definitions = [
-                tool.tool_definition()
-                for tool in filter_tools_for_force_tool_use(
-                    self.tools, self.force_use_tool
-                )
-            ]
-
-            for message in self.llm.stream(
-                prompt=prompt,
-                tools=final_tool_definitions if final_tool_definitions else None,
-                tool_choice="required" if self.force_use_tool.force_use else None,
-            ):
-                if isinstance(message, AIMessageChunk) and (
-                    message.tool_call_chunks or message.tool_calls
-                ):
-                    if tool_call_chunk is None:
-                        tool_call_chunk = message
-                    else:
-                        tool_call_chunk += message  # type: ignore
-                else:
-                    if message.content:
-                        if self.is_cancelled:
-                            return
-                        yield cast(str, message.content)
-                    if (
-                        message.additional_kwargs.get("usage_metadata", {}).get("stop")
-                        == "length"
-                    ):
-                        yield StreamStopInfo(
-                            stop_reason=StreamStopReason.CONTEXT_LENGTH
-                        )
-
-            if not tool_call_chunk:
-                return  # no tool call needed
-
-        # if we have a tool call, we need to call the tool
-        tool_call_requests = tool_call_chunk.tool_calls
-        for tool_call_request in tool_call_requests:
-            known_tools_by_name = [
-                tool for tool in self.tools if tool.name == tool_call_request["name"]
-            ]
-
-            if not known_tools_by_name:
-                logger.error(
-                    "Tool call requested with unknown name field. \n"
-                    f"self.tools: {self.tools}"
-                    f"tool_call_request: {tool_call_request}"
-                )
-                if self.tools:
-                    tool = self.tools[0]
-                else:
-                    continue
-            else:
-                tool = known_tools_by_name[0]
-            tool_args = (
-                self.force_use_tool.args
-                if self.force_use_tool.tool_name == tool.name
-                and self.force_use_tool.args
-                else tool_call_request["args"]
-            )
-
-            tool_runner = ToolRunner(tool, tool_args)
-            yield tool_runner.kickoff()
-            yield from tool_runner.tool_responses()
-
-            tool_call_summary = ToolCallSummary(
-                tool_call_request=tool_call_chunk,
-                tool_call_result=build_tool_message(
-                    tool_call_request, tool_runner.tool_message_content()
-                ),
-            )
-
-            if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
-                self._update_prompt_builder_for_search_tool(prompt_builder, [])
-            elif tool.name == ImageGenerationTool._NAME:
-                img_urls = [
-                    img_generation_result["url"]
-                    for img_generation_result in tool_runner.tool_final_result().tool_result
-                ]
-                prompt_builder.update_user_prompt(
-                    build_image_generation_user_prompt(
-                        query=self.question, img_urls=img_urls
-                    )
-                )
-            yield tool_runner.tool_final_result()
-
-            prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
-
-            yield from self._process_llm_stream(
-                prompt=prompt,
-                tools=[tool.tool_definition() for tool in self.tools],
-            )
-
-            return
 
     # This method processes the LLM stream and yields the content or stop information
     def _process_llm_stream(
@@ -664,7 +531,7 @@ class Answer:
             return
 
         output_generator = (
-            self._raw_output_for_explicit_tool_calling_llms_loop()
+            self._raw_output_for_explicit_tool_calling_llms()
             if explicit_tool_calling_supported(
                 self.llm.config.model_provider, self.llm.config.model_name
             )
@@ -732,29 +599,29 @@ class Answer:
                         nonlocal new_kickoff
 
                         yield cast(str, message)
-                        while True:
-                            try:
-                                item = next(stream)
-
-                                if isinstance(item, StreamStopInfo):
-                                    stream_stop_info = item
-                                    return
-                                if isinstance(item, ToolCallKickoff):
-                                    new_kickoff = item
-                                    return
-                                else:
-                                    yield cast(str, item)
-                            except StopIteration:
-                                return None
+                        for item in stream:
+                            if isinstance(item, StreamStopInfo):
+                                stream_stop_info = item
+                                return
+                            if isinstance(item, ToolCallKickoff):
+                                new_kickoff = item
+                                stream_stop_info = StreamStopInfo(
+                                    stop_reason=StreamStopReason.NEW_RESPONSE
+                                )
+                                return
+                            else:
+                                yield cast(str, item)
 
                     yield from process_answer_stream_fn(_stream())
 
                     if stream_stop_info:
                         yield stream_stop_info
+
+                    # if new_kickoff: handle new tool call (continuation of message)
                     if new_kickoff:
-                        yield StreamStopInfo(stop_reason=StreamStopReason.NEW_RESPONSE)
                         self.current_streamed_output = self.processing_stream
                         self.processing_stream = []
+
                         yield new_kickoff
 
         for processed_packet in _process_stream(output_generator):
