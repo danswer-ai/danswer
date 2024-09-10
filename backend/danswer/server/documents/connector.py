@@ -66,6 +66,7 @@ from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
+from danswer.db.index_attempt import get_latest_failed_index_attempts
 from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
@@ -379,6 +380,7 @@ def upload_files(
 @router.get("/admin/connector/indexing-status")
 def get_connector_indexing_status(
     secondary_index: bool = False,
+    failed: bool = False,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
     get_editable: bool = Query(
@@ -406,9 +408,16 @@ def get_connector_indexing_status(
         for cc_pair in cc_pairs
     ]
 
-    latest_index_attempts = get_latest_index_attempts(
-        secondary_index=secondary_index,
-        db_session=db_session,
+    latest_index_attempts = (
+        get_latest_failed_index_attempts(
+            secondary_index=secondary_index,
+            db_session=db_session,
+        )
+        if failed
+        else get_latest_index_attempts(
+            secondary_index=secondary_index,
+            db_session=db_session,
+        )
     )
 
     cc_pair_to_latest_index_attempt = {
@@ -418,6 +427,14 @@ def get_connector_indexing_status(
         ): index_attempt
         for index_attempt in latest_index_attempts
     }
+
+    if failed:
+        cc_pairs = [
+            cc_pair
+            for cc_pair in cc_pairs
+            if (cc_pair.connector_id, cc_pair.credential_id)
+            in cc_pair_to_latest_index_attempt
+        ]
 
     document_count_info = get_document_cnts_for_cc_pairs(
         db_session=db_session,

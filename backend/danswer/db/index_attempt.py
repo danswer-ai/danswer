@@ -181,6 +181,45 @@ def get_last_attempt(
     return db_session.execute(stmt).scalars().first()
 
 
+# TODO check the value
+def get_latest_failed_index_attempts(
+    secondary_index: bool,
+    db_session: Session,
+) -> Sequence[IndexAttempt]:
+    """
+    Retrieves the most recent failed index attempt for each connector_credential_pair.
+    This function returns the latest failed attempt even if there are subsequent
+    successful or in-progress attempts for the same pair.
+    """
+    latest_failed_attempts = (
+        select(
+            IndexAttempt.connector_credential_pair_id,
+            func.max(IndexAttempt.id).label("max_failed_id"),
+        )
+        .join(SearchSettings, IndexAttempt.search_settings_id == SearchSettings.id)
+        .where(
+            SearchSettings.status
+            == (
+                IndexModelStatus.FUTURE if secondary_index else IndexModelStatus.PRESENT
+            ),
+            IndexAttempt.status == IndexingStatus.FAILED,
+        )
+        .group_by(IndexAttempt.connector_credential_pair_id)
+        .subquery()
+    )
+
+    stmt = select(IndexAttempt).join(
+        latest_failed_attempts,
+        (
+            IndexAttempt.connector_credential_pair_id
+            == latest_failed_attempts.c.connector_credential_pair_id
+        )
+        & (IndexAttempt.id == latest_failed_attempts.c.max_failed_id),
+    )
+
+    return db_session.execute(stmt).scalars().all()
+
+
 def get_latest_index_attempts(
     secondary_index: bool,
     db_session: Session,

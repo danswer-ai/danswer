@@ -200,6 +200,7 @@ class VespaIndex(DocumentIndex):
             concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor,
             httpx.Client(http2=True) as http_client,
         ):
+            raise Exception("Not implemented")
             # Check for existing documents, existing documents need to have all of their chunks deleted
             # prior to indexing as the document size (num chunks) may have shrunk
             first_chunks = [chunk for chunk in cleaned_chunks if chunk.chunk_id == 0]

@@ -12,6 +12,7 @@ import {
   HostedEmbeddingModel,
 } from "../../../../components/embedding/interfaces";
 import { Connector } from "@/lib/connectors/connectors";
+import { FailedReIndexAttempts } from "@/components/embedding/FailedReIndexAttempts";
 
 export default function UpgradingPage({
   futureEmbeddingModel,
@@ -34,6 +35,17 @@ export default function UpgradingPage({
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
+
+  const {
+    data: failedIndexingStatus,
+    isLoading: isLoadingFailedIndexingStatus,
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
+    "/api/manage/admin/connector/indexing-status?secondary_index=true&failed=true",
+    errorHandlingFetcher,
+    { refreshInterval: 5000 } // 5 seconds
+  );
+
+  console.log(failedIndexingStatus);
 
   const onCancel = async () => {
     const response = await fetch("/api/search-settings/cancel-new-embedding", {
@@ -71,6 +83,26 @@ export default function UpgradingPage({
       );
     });
   }, [ongoingReIndexingStatus]);
+
+  // const sortedFailedReindexingProgress = useMemo(() => {
+  //   return [...(failedIndexingStatus || [])].sort((a, b) => {
+  //     const statusComparison =
+  //       statusOrder[a.latest_index_attempt?.status || "not_started"] -
+  //       statusOrder[b.latest_index_attempt?.status || "not_started"];
+
+  //     if (statusComparison !== 0) {
+  //       return statusComparison;
+  //     }
+
+  //     return (
+  //       (a.latest_index_attempt?.id || 0) - (b.latest_index_attempt?.id || 0)
+  //     );
+  //   });
+  // }, [failedIndexingStatus]);
+
+  if (!failedIndexingStatus) {
+    return <div>No failed index attempts</div>;
+  }
 
   return (
     <>
@@ -113,6 +145,11 @@ export default function UpgradingPage({
             >
               Cancel
             </Button>
+            {failedIndexingStatus.length > 0 && (
+              <FailedReIndexAttempts
+                reindexingProgress={failedIndexingStatus}
+              />
+            )}
 
             <Text className="my-4">
               The table below shows the re-indexing progress of all existing
