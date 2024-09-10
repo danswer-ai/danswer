@@ -23,7 +23,7 @@ result_backend = (
 # NOTE: prefetch 4 is significantly faster than prefetch 1
 # however, prefetching is bad when tasks are lengthy as those tasks
 # can stall other tasks.
-worker_prefetch_multiplier = 4
+worker_prefetch_multiplier = 16
 
 broker_transport_options = {
     "priority_steps": list(range(len(DanswerCeleryPriority))),

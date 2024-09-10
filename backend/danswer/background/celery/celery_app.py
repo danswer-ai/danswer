@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import Any
 from typing import cast
 
+import httpx
 import redis
 from celery import Celery
 from celery import signals
@@ -92,14 +93,16 @@ celery_app.config_from_object(
     "danswer.background.celery.celeryconfig"
 )  # Load configuration from 'celeryconfig.py'
 
+httpx_client = httpx.Client(
+    http2=True, limits=httpx.Limits(max_connections=64, max_keepalive_connections=64)
+)
+
 
 #####
 # Tasks that need to be run in job queue, registered via APIs
 #
 # If imports from this module are needed, use local imports to avoid circular importing
 #####
-
-
 @build_celery_task_wrapper(name_cc_prune_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def prune_documents_task(connector_id: int, credential_id: int) -> None:
@@ -145,7 +148,9 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
 
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
             document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+                primary_index_name=curr_ind_name,
+                secondary_index_name=sec_ind_name,
+                httpx_client=httpx_client,
             )
 
             if len(doc_ids_to_remove) == 0:
@@ -631,7 +636,9 @@ def vespa_metadata_sync_task(self: Task, document_id: str) -> bool:
         with Session(get_sqlalchemy_engine()) as db_session:
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
             document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+                primary_index_name=curr_ind_name,
+                secondary_index_name=sec_ind_name,
+                httpx_client=httpx_client,
             )
 
             doc = get_document(document_id, db_session)
