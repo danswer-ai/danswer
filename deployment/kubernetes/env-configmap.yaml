@@ -31,6 +31,7 @@ data:
   # Other Services
   POSTGRES_HOST: "relational-db-service"
   VESPA_HOST: "document-index-service"
+  REDIS_HOST: "redis-service"
   # Internet Search Tool
   BING_API_KEY: ""
   # Don't change the NLP models unless you know what you're doing

@@ -91,7 +91,6 @@ import FunctionalHeader from "@/components/chat_search/Header";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import FixedLogo from "./shared_chat_search/FixedLogo";
-import { getSecondsUntilExpiration } from "@/lib/time";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { DeleteEntityModal } from "../../components/modals/DeleteEntityModal";
 import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
@@ -99,6 +98,7 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
+import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -107,12 +107,10 @@ const SYSTEM_MESSAGE_ID = -3;
 export function ChatPage({
   toggle,
   documentSidebarInitialWidth,
-  defaultSelectedAssistantId,
   toggledSidebar,
 }: {
   toggle: (toggled?: boolean) => void;
   documentSidebarInitialWidth?: number;
-  defaultSelectedAssistantId?: number;
   toggledSidebar: boolean;
 }) {
   const router = useRouter();
@@ -127,9 +125,14 @@ export function ChatPage({
     folders,
     openedFolders,
     userInputPrompts,
+    defaultAssistantId,
+    shouldShowWelcomeModal,
+    refreshChatSessions,
   } = useChatContext();
 
-  const { user, refreshUser } = useUser();
+  const [showApiKeyModal, setShowApiKeyModal] = useState(true);
+
+  const { user, refreshUser, isLoadingUser } = useUser();
 
   // chat session
   const existingChatIdRaw = searchParams.get("chatId");
@@ -138,6 +141,7 @@ export function ChatPage({
   const existingChatSessionId = existingChatIdRaw
     ? parseInt(existingChatIdRaw)
     : null;
+
   const selectedChatSession = chatSessions.find(
     (chatSession) => chatSession.id === existingChatSessionId
   );
@@ -162,9 +166,9 @@ export function ChatPage({
       ? availableAssistants.find(
           (assistant) => assistant.id === existingChatSessionAssistantId
         )
-      : defaultSelectedAssistantId !== undefined
+      : defaultAssistantId !== undefined
         ? availableAssistants.find(
-            (assistant) => assistant.id === defaultSelectedAssistantId
+            (assistant) => assistant.id === defaultAssistantId
           )
         : undefined
   );
@@ -206,6 +210,7 @@ export function ChatPage({
     selectedAssistant ||
     filteredAssistants[0] ||
     availableAssistants[0];
+
   useEffect(() => {
     if (!loadedIdSessionRef.current && !currentPersonaId) {
       return;
@@ -279,6 +284,7 @@ export function ChatPage({
   );
 
   const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
     Prism.highlightAll();
     setIsReady(true);
@@ -325,8 +331,8 @@ export function ChatPage({
     async function initialSessionFetch() {
       if (existingChatSessionId === null) {
         setIsFetchingChatMessages(false);
-        if (defaultSelectedAssistantId !== undefined) {
-          setSelectedAssistantFromId(defaultSelectedAssistantId);
+        if (defaultAssistantId !== undefined) {
+          setSelectedAssistantFromId(defaultAssistantId);
         } else {
           setSelectedAssistant(undefined);
         }
@@ -400,7 +406,7 @@ export function ChatPage({
         // force re-name if the chat session doesn't have one
         if (!chatSession.description) {
           await nameChatSession(existingChatSessionId, seededMessage);
-          router.refresh(); // need to refresh to update name on sidebar
+          refreshChatSessions();
         }
       }
     }
@@ -674,12 +680,10 @@ export function ChatPage({
   useEffect(() => {
     if (messageHistory.length === 0 && chatSessionIdRef.current === null) {
       setSelectedAssistant(
-        filteredAssistants.find(
-          (persona) => persona.id === defaultSelectedAssistantId
-        )
+        filteredAssistants.find((persona) => persona.id === defaultAssistantId)
       );
     }
-  }, [defaultSelectedAssistantId]);
+  }, [defaultAssistantId]);
 
   const [
     selectedDocuments,
@@ -776,11 +780,16 @@ export function ChatPage({
 
   const clientScrollToBottom = (fast?: boolean) => {
     setTimeout(() => {
-      if (fast) {
-        endDivRef.current?.scrollIntoView();
-      } else {
-        endDivRef.current?.scrollIntoView({ behavior: "smooth" });
+      if (!endDivRef.current) {
+        return;
       }
+
+      const rect = endDivRef.current.getBoundingClientRect();
+      const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+
+      if (isVisible) return;
+
+      endDivRef.current.scrollIntoView({ behavior: fast ? "auto" : "smooth" });
       setHasPerformedInitialScroll(true);
     }, 50);
   };
@@ -925,13 +934,6 @@ export function ChatPage({
 
       return;
     }
-    updateRegenerationState(
-      regenerationRequest
-        ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
-        : null
-    );
-
-    updateChatState("loading");
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
@@ -962,6 +964,11 @@ export function ChatPage({
       (message) => message.messageId === messageIdToResend
     );
 
+    updateRegenerationState(
+      regenerationRequest
+        ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
+        : null
+    );
     const messageMap = currentMessageMap(completeMessageDetail);
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
@@ -988,6 +995,9 @@ export function ChatPage({
     }
 
     setSubmittedMessage(currMessage);
+
+    updateChatState("loading");
+
     const currMessageHistory =
       messageToResendIndex !== null
         ? messageHistory.slice(0, messageToResendIndex)
@@ -1102,6 +1112,12 @@ export function ChatPage({
               console.error(
                 "First packet should contain message response info "
               );
+              if (Object.hasOwn(packet, "error")) {
+                const error = (packet as StreamingError).error;
+                setLoadingError(error);
+                updateChatState("input");
+                return;
+              }
               continue;
             }
 
@@ -1321,6 +1337,7 @@ export function ChatPage({
       if (!searchParamBasedChatSessionName) {
         await new Promise((resolve) => setTimeout(resolve, 200));
         await nameChatSession(currChatSessionId, currMessage);
+        refreshChatSessions();
       }
 
       // NOTE: don't switch pages if the user has navigated away from the chat
@@ -1456,6 +1473,7 @@ export function ChatPage({
 
   // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
   const [untoggled, setUntoggled] = useState(false);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   const explicitlyUntoggle = () => {
     setShowDocSidebar(false);
@@ -1559,7 +1577,6 @@ export function ChatPage({
     setDocumentSelection((documentSelection) => !documentSelection);
     setShowDocSidebar(false);
   };
-  const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   interface RegenerationRequest {
     messageId: number;
@@ -1579,7 +1596,12 @@ export function ChatPage({
 
   return (
     <>
-      <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
+      <HealthCheckBanner />
+
+      {showApiKeyModal && !shouldShowWelcomeModal && (
+        <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
+      )}
+
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       {popup}
@@ -1621,10 +1643,14 @@ export function ChatPage({
             if (response.ok) {
               setDeletingChatSession(null);
               // go back to the main page
-              router.push("/chat");
+              if (deletingChatSession.id === chatSessionIdRef.current) {
+                router.push("/chat");
+              }
             } else {
-              alert("Failed to delete chat session");
+              const responseJson = await response.json();
+              setPopup({ message: responseJson.detail, type: "error" });
             }
+            router.refresh();
           }}
         />
       )}
@@ -1721,7 +1747,9 @@ export function ChatPage({
                 />
               )}
 
-              {documentSidebarInitialWidth !== undefined && isReady ? (
+              {documentSidebarInitialWidth !== undefined &&
+              isReady &&
+              !isLoadingUser ? (
                 <Dropzone onDrop={handleImageUpload} noClick>
                   {({ getRootProps }) => (
                     <div className="flex h-full w-full">
@@ -1746,7 +1774,6 @@ export function ChatPage({
                         className={`h-full w-full relative flex-auto transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[100px]`}
                         {...getRootProps()}
                       >
-                        {/* <input {...getInputProps()} /> */}
                         <div
                           className={`w-full h-full  flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
                           ref={scrollableDivRef}
@@ -1756,7 +1783,8 @@ export function ChatPage({
 
                           {messageHistory.length === 0 &&
                             !isFetchingChatMessages &&
-                            currentSessionChatState == "input" && (
+                            currentSessionChatState == "input" &&
+                            !loadingError && (
                               <ChatIntro
                                 availableSources={finalAvailableSources}
                                 selectedPersona={liveAssistant}
@@ -1782,9 +1810,14 @@ export function ChatPage({
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
                               if (
-                                currentSessionRegenerationState?.regenerating &&
-                                message.messageId >=
-                                  currentSessionRegenerationState?.finalMessageIndex!
+                                (currentSessionRegenerationState?.regenerating &&
+                                  message.messageId >
+                                    currentSessionRegenerationState?.finalMessageIndex!) ||
+                                (currentSessionChatState == "loading" &&
+                                  ((i >= messageHistory.length - 2 &&
+                                    message.type == "user") ||
+                                    (i >= messageHistory.length - 1 &&
+                                      !currentSessionRegenerationState?.regenerating)))
                               ) {
                                 return <></>;
                               }
@@ -1861,7 +1894,8 @@ export function ChatPage({
                                 if (
                                   currentSessionRegenerationState?.regenerating &&
                                   currentSessionChatState == "loading" &&
-                                  message.messageId == messageHistory.length - 1
+                                  (i == messageHistory.length - 1 ||
+                                    currentSessionRegenerationState?.regenerating)
                                 ) {
                                   return <></>;
                                 }
@@ -2064,16 +2098,17 @@ export function ChatPage({
                               }
                             })}
 
-                            {currentSessionChatState == "loading" &&
-                              !currentSessionRegenerationState?.regenerating &&
-                              messageHistory[messageHistory.length - 1]?.type !=
-                                "user" && (
-                                <HumanMessage
-                                  key={-2}
-                                  messageId={-1}
-                                  content={submittedMessage}
-                                />
-                              )}
+                            {(currentSessionChatState == "loading" ||
+                              (loadingError &&
+                                !currentSessionRegenerationState?.regenerating &&
+                                messageHistory[messageHistory.length - 1]
+                                  ?.type != "user")) && (
+                              <HumanMessage
+                                key={-2}
+                                messageId={-1}
+                                content={submittedMessage}
+                              />
+                            )}
 
                             {currentSessionChatState == "loading" && (
                               <div
@@ -2102,6 +2137,20 @@ export function ChatPage({
                               </div>
                             )}
 
+                            {loadingError && (
+                              <div key={-1}>
+                                <AIMessage
+                                  currentPersona={liveAssistant}
+                                  messageId={-1}
+                                  personaName={liveAssistant.name}
+                                  content={
+                                    <p className="text-red-700 text-sm my-auto">
+                                      {loadingError}
+                                    </p>
+                                  }
+                                />
+                              </div>
+                            )}
                             {currentPersona &&
                               currentPersona.starter_messages &&
                               currentPersona.starter_messages.length > 0 &&
@@ -2163,6 +2212,9 @@ export function ChatPage({
                               </div>
                             )}
                             <ChatInputBar
+                              showConfigureAPIKey={() =>
+                                setShowApiKeyModal(true)
+                              }
                               chatState={currentSessionChatState}
                               stopGenerating={stopGenerating}
                               openModelSettings={() => setSettingsToggled(true)}

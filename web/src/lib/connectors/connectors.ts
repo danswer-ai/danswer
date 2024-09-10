@@ -26,7 +26,6 @@ export interface Option {
 
 export interface SelectOption extends Option {
   type: "select";
-  default?: number;
   options?: StringWithDescription[];
 }
 
@@ -96,7 +95,6 @@ export const connectorConfigs: Record<
         query: "Select the web connector type:",
         label: "Scrape Method",
         name: "web_connector_type",
-        optional: true,
         options: [
           { name: "recursive", value: "recursive" },
           { name: "single", value: "single" },
@@ -257,9 +255,10 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
       {
         type: "checkbox",
         query: "Should index pages recursively?",
-        label:
-          "Index Recursively (if this is set and the Wiki Page URL leads to a page, we will index the page and all of its children instead of just the page)",
+        label: "Index Recursively",
         name: "index_recursively",
+        description:
+          "If this is set and the Wiki Page URL leads to a page, we will index the page and all of its children instead of just the page. This is set by default for Confluence connectors without a page ID specified.",
         optional: false,
       },
       {
@@ -587,7 +586,20 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
   },
   zendesk: {
     description: "Configure Zendesk connector",
-    values: [],
+    values: [
+      {
+        type: "select",
+        query: "Select the what content this connector will index:",
+        label: "Content Type",
+        name: "content_type",
+        optional: false,
+        options: [
+          { name: "articles", value: "articles" },
+          { name: "tickets", value: "tickets" },
+        ],
+        default: 0,
+      },
+    ],
   },
   linear: {
     description: "Configure Dropbox connector",

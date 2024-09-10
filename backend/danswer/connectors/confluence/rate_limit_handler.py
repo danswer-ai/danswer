@@ -23,7 +23,7 @@ class ConfluenceRateLimitError(Exception):
 
 def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
     def wrapped_call(*args: list[Any], **kwargs: Any) -> Any:
-        max_retries = 10
+        max_retries = 5
         starting_delay = 5
         backoff = 2
         max_delay = 600

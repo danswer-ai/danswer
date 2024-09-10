@@ -715,6 +715,7 @@ export const HumanMessage = ({
       // Move the cursor to the end of the text
       textareaRef.current.selectionStart = textareaRef.current.value.length;
       textareaRef.current.selectionEnd = textareaRef.current.value.length;
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [isEditing]);
 
@@ -787,6 +788,7 @@ export const HumanMessage = ({
                         style={{ scrollbarWidth: "thin" }}
                         onChange={(e) => {
                           setEditedContent(e.target.value);
+                          textareaRef.current!.style.height = "auto";
                           e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
                         onKeyDown={(e) => {

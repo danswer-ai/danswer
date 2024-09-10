@@ -55,6 +55,8 @@ class GDriveMimeType(str, Enum):
     POWERPOINT = (
         "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     )
+    PLAIN_TEXT = "text/plain"
+    MARKDOWN = "text/markdown"
 
 
 GoogleDriveFileType = dict[str, Any]
@@ -309,19 +311,22 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         GDriveMimeType.PPT.value,
         GDriveMimeType.SPREADSHEET.value,
     ]:
-        export_mime_type = "text/plain"
-        if mime_type == GDriveMimeType.SPREADSHEET.value:
-            export_mime_type = "text/csv"
-        elif mime_type == GDriveMimeType.PPT.value:
-            export_mime_type = "text/plain"
-
-        response = (
+        export_mime_type = (
+            "text/plain"
+            if mime_type != GDriveMimeType.SPREADSHEET.value
+            else "text/csv"
+        )
+        return (
             service.files()
             .export(fileId=file["id"], mimeType=export_mime_type)
             .execute()
+            .decode("utf-8")
         )
-        return response.decode("utf-8")
-
+    elif mime_type in [
+        GDriveMimeType.PLAIN_TEXT.value,
+        GDriveMimeType.MARKDOWN.value,
+    ]:
+        return service.files().get_media(fileId=file["id"]).execute().decode("utf-8")
     elif mime_type == GDriveMimeType.WORD_DOC.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return docx_to_text(file=io.BytesIO(response))
