@@ -352,8 +352,8 @@ def warm_up_retry(
                 return func(*args, **kwargs)
             except Exception as e:
                 exceptions.append(e)
-                logger.exception(
-                    f"Attempt {attempt + 1} failed; retrying in {delay} seconds..."
+                logger.info(
+                    f"Attempt {attempt + 1}/{tries} failed; retrying in {delay} seconds..."
                 )
                 time.sleep(delay)
         raise Exception(f"All retries failed: {exceptions}")
