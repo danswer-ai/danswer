@@ -220,6 +220,7 @@ class CCPairFullInfo(BaseModel):
     latest_deletion_attempt: DeletionAttemptSnapshot | None
     is_public: bool
     is_editable_for_current_user: bool
+    deletion_failure_message: str | None
 
     @classmethod
     def from_models(
@@ -262,6 +263,7 @@ class CCPairFullInfo(BaseModel):
             latest_deletion_attempt=latest_deletion_attempt,
             is_public=cc_pair_model.is_public,
             is_editable_for_current_user=is_editable_for_current_user,
+            deletion_failure_message=cc_pair_model.deletion_failure_message,
         )
 
 

@@ -88,6 +88,18 @@ module.exports = {
 
         input: "#ffffff",
 
+        // Error colors
+        "error-50": "#fef2f2",
+        "error-100": "#fee2e2",
+        "error-200": "#fecaca",
+        "error-300": "#fca5a5",
+        "error-400": "#f87171",
+        "error-500": "#ef4444",
+        "error-600": "#dc2626",
+        "error-700": "#b91c1c",
+        "error-800": "#991b1b",
+        "error-900": "#7f1d1d",
+
         background: "#fafafa", // 50
         "background-100": "#f5f5f5", // neutral-100
         "background-125": "#F1F2F4", // gray-125
