@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
   BackendMessage,
+  BUFFER_COUNT,
   ChatFileType,
   ChatSession,
   ChatSessionSharedStatus,
@@ -48,6 +49,7 @@ import {
   SetStateAction,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -349,6 +351,9 @@ export function ChatPage({
         }
         return;
       }
+      const shouldScrollToBottom =
+        visibleRange.get(existingChatSessionId) === undefined ||
+        visibleRange.get(existingChatSessionId)?.end == 0;
 
       clearSelectedDocuments();
       setIsFetchingChatMessages(true);
@@ -384,10 +389,16 @@ export function ChatPage({
 
       // go to bottom. If initial load, then do a scroll,
       // otherwise just appear at the bottom
-      if (!hasPerformedInitialScroll) {
-        clientScrollToBottom();
-      } else if (isChatSessionSwitch) {
-        clientScrollToBottom(true);
+      if (shouldScrollToBottom) {
+        scrollInitialized.current = false;
+      }
+
+      if (shouldScrollToBottom) {
+        if (!hasPerformedInitialScroll) {
+          clientScrollToBottom();
+        } else if (isChatSessionSwitch) {
+          clientScrollToBottom(true);
+        }
       }
       setIsFetchingChatMessages(false);
 
@@ -533,17 +544,6 @@ export function ChatPage({
   const [chatState, setChatState] = useState<Map<number | null, ChatState>>(
     new Map([[chatSessionIdRef.current, "input"]])
   );
-
-  const [scrollHeight, setScrollHeight] = useState<Map<number | null, number>>(
-    new Map([[chatSessionIdRef.current, 0]])
-  );
-  const currentScrollHeight = () => {
-    return scrollHeight.get(currentSessionId());
-  };
-
-  const retrieveCurrentScrollHeight = (): number | null => {
-    return scrollHeight.get(currentSessionId()) || null;
-  };
 
   const [regenerationState, setRegenerationState] = useState<
     Map<number | null, RegenerationState | null>
@@ -780,7 +780,7 @@ export function ChatPage({
 
   const clientScrollToBottom = (fast?: boolean) => {
     setTimeout(() => {
-      if (!endDivRef.current) {
+      if (!endDivRef.current || !scrollableDivRef.current) {
         return;
       }
 
@@ -789,13 +789,38 @@ export function ChatPage({
 
       if (isVisible) return;
 
-      endDivRef.current.scrollIntoView({ behavior: fast ? "auto" : "smooth" });
-      setHasPerformedInitialScroll(true);
+      // Check if all messages are currently rendered
+      if (currentVisibleRange.end < messageHistory.length) {
+        // Update visible range to include the last messages
+        updateCurrentVisibleRange({
+          start: Math.max(
+            0,
+            messageHistory.length -
+              (currentVisibleRange.end - currentVisibleRange.start)
+          ),
+          end: messageHistory.length,
+          mostVisibleMessageId: currentVisibleRange.mostVisibleMessageId,
+        });
+
+        // Wait for the state update and re-render before scrolling
+        setTimeout(() => {
+          endDivRef.current?.scrollIntoView({
+            behavior: fast ? "auto" : "smooth",
+          });
+          setHasPerformedInitialScroll(true);
+        }, 0);
+      } else {
+        // If all messages are already rendered, scroll immediately
+        endDivRef.current.scrollIntoView({
+          behavior: fast ? "auto" : "smooth",
+        });
+        setHasPerformedInitialScroll(true);
+      }
     }, 50);
   };
 
   const distance = 500; // distance that should "engage" the scroll
-  const debounce = 100; // time for debouncing
+  const debounceNumber = 100; // time for debouncing
 
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
     existingChatSessionId === null
@@ -1516,8 +1541,128 @@ export function ChatPage({
     scrollDist,
     endDivRef,
     distance,
-    debounce,
+    debounceNumber,
   });
+
+  // Virtualization + Scrolling related effects and functions
+  const scrollInitialized = useRef(false);
+  interface VisibleRange {
+    start: number;
+    end: number;
+    mostVisibleMessageId: number | null;
+  }
+
+  const [visibleRange, setVisibleRange] = useState<
+    Map<number | null, VisibleRange>
+  >(() => {
+    const initialRange: VisibleRange = {
+      start: 0,
+      end: BUFFER_COUNT,
+      mostVisibleMessageId: null,
+    };
+    return new Map([[chatSessionIdRef.current, initialRange]]);
+  });
+
+  // Function used to update current visible range. Only method for updating `visibleRange` state.
+  const updateCurrentVisibleRange = (
+    newRange: VisibleRange,
+    forceUpdate?: boolean
+  ) => {
+    if (
+      scrollInitialized.current &&
+      visibleRange.get(loadedIdSessionRef.current) == undefined &&
+      !forceUpdate
+    ) {
+      return;
+    }
+
+    setVisibleRange((prevState) => {
+      const newState = new Map(prevState);
+      newState.set(loadedIdSessionRef.current, newRange);
+      return newState;
+    });
+  };
+
+  //  Set first value for visibleRange state on page load / refresh.
+  const initializeVisibleRange = () => {
+    const upToDatemessageHistory = buildLatestMessageChain(
+      currentMessageMap(completeMessageDetail)
+    );
+
+    if (!scrollInitialized.current && upToDatemessageHistory.length > 0) {
+      const newEnd = Math.max(upToDatemessageHistory.length, BUFFER_COUNT);
+      const newStart = Math.max(0, newEnd - BUFFER_COUNT);
+      const newMostVisibleMessageId =
+        upToDatemessageHistory[newEnd - 1]?.messageId;
+
+      updateCurrentVisibleRange(
+        {
+          start: newStart,
+          end: newEnd,
+          mostVisibleMessageId: newMostVisibleMessageId,
+        },
+        true
+      );
+      scrollInitialized.current = true;
+    }
+  };
+
+  const updateVisibleRangeBasedOnScroll = () => {
+    if (!scrollInitialized.current) return;
+    const scrollableDiv = scrollableDivRef.current;
+    if (!scrollableDiv) return;
+
+    const viewportHeight = scrollableDiv.clientHeight;
+    let mostVisibleMessageIndex = -1;
+
+    messageHistory.forEach((message, index) => {
+      const messageElement = document.getElementById(
+        `message-${message.messageId}`
+      );
+      if (messageElement) {
+        const rect = messageElement.getBoundingClientRect();
+        const isVisible = rect.bottom <= viewportHeight && rect.bottom > 0;
+        if (isVisible && index > mostVisibleMessageIndex) {
+          mostVisibleMessageIndex = index;
+        }
+      }
+    });
+
+    if (mostVisibleMessageIndex !== -1) {
+      const startIndex = Math.max(0, mostVisibleMessageIndex - BUFFER_COUNT);
+      const endIndex = Math.min(
+        messageHistory.length,
+        mostVisibleMessageIndex + BUFFER_COUNT + 1
+      );
+
+      updateCurrentVisibleRange({
+        start: startIndex,
+        end: endIndex,
+        mostVisibleMessageId: messageHistory[mostVisibleMessageIndex].messageId,
+      });
+    }
+  };
+
+  useEffect(() => {
+    initializeVisibleRange();
+  }, [router, messageHistory, chatSessionIdRef.current]);
+
+  useLayoutEffect(() => {
+    const handleScroll = () => {
+      updateVisibleRangeBasedOnScroll();
+    };
+    scrollableDivRef.current?.addEventListener("scroll", handleScroll);
+
+    return () => {
+      scrollableDivRef.current?.removeEventListener("scroll", handleScroll);
+    };
+  }, [messageHistory]);
+
+  const currentVisibleRange = visibleRange.get(currentSessionId()) || {
+    start: 0,
+    end: 0,
+    mostVisibleMessageId: null,
+  };
 
   useEffect(() => {
     const includes = checkAnyAssistantHasSearch(
@@ -1801,7 +1946,18 @@ export function ChatPage({
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }
                           >
-                            {messageHistory.map((message, i) => {
+                            {(messageHistory.length < BUFFER_COUNT
+                              ? messageHistory
+                              : messageHistory.slice(
+                                  currentVisibleRange.start,
+                                  currentVisibleRange.end
+                                )
+                            ).map((message, fauxIndex) => {
+                              const i =
+                                messageHistory.length < BUFFER_COUNT
+                                  ? fauxIndex
+                                  : fauxIndex + currentVisibleRange.start;
+
                               const messageMap = currentMessageMap(
                                 completeMessageDetail
                               );
@@ -1809,6 +1965,7 @@ export function ChatPage({
                               const parentMessage = message.parentMessageId
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
+
                               if (
                                 (currentSessionRegenerationState?.regenerating &&
                                   message.messageId >
@@ -1824,7 +1981,10 @@ export function ChatPage({
 
                               if (message.type === "user") {
                                 return (
-                                  <div key={messageReactComponentKey}>
+                                  <div
+                                    id={`message-${message.messageId}`}
+                                    key={messageReactComponentKey}
+                                  >
                                     <HumanMessage
                                       stopGenerating={stopGenerating}
                                       content={message.message}
@@ -1901,6 +2061,7 @@ export function ChatPage({
                                 }
                                 return (
                                   <div
+                                    id={`message-${message.messageId}`}
                                     key={messageReactComponentKey}
                                     ref={
                                       i == messageHistory.length - 1
