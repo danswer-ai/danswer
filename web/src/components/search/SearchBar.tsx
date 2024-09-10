@@ -16,6 +16,7 @@ interface FullSearchBarProps {
   finalAvailableSources: string[];
   tags: Tag[];
   showingSidebar: boolean;
+  previousSearch: string;
 }
 
 import { useState, useEffect, useRef } from "react";
@@ -140,6 +141,7 @@ export const FullSearchBar = ({
   setPopup,
   finalAvailableSources,
   tags,
+  previousSearch,
 }: FullSearchBarProps) => {
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const target = event.target;
@@ -158,10 +160,11 @@ export const FullSearchBar = ({
       !(event.nativeEvent as any).isComposing
     ) {
       event.preventDefault();
+
       if (disabled) {
         setPopup({
           type: "error",
-          message: "Please wait for search to complete",
+          message: "Please enter a new search query",
         });
       } else {
         onSearch(agentic);
