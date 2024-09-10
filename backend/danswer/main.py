@@ -322,9 +322,11 @@ def setup_vespa(
     secondary_index_setting: IndexingSetting | None,
 ) -> bool:
     # Vespa startup is a bit slow, so give it a few seconds
-    wait_time = 5
-    for _ in range(5):
+    WAIT_SECONDS = 5
+    VESPA_ATTEMPTS = 5
+    for x in range(VESPA_ATTEMPTS):
         try:
+            logger.notice(f"Setting up Vespa (attempt {x+1}/{VESPA_ATTEMPTS})...")
             document_index.ensure_indices_exist(
                 index_embedding_dim=index_setting.model_dim,
                 secondary_index_embedding_dim=secondary_index_setting.model_dim
@@ -332,11 +334,17 @@ def setup_vespa(
                 else None,
             )
 
+            logger.notice("Vespa setup complete.")
             return True
         except Exception:
-            logger.notice(f"Waiting on Vespa, retrying in {wait_time} seconds...")
-            time.sleep(wait_time)
+            logger.notice(
+                f"Vespa setup did not succeed. The Vespa service may not be ready yet. Retrying in {WAIT_SECONDS} seconds."
+            )
+            time.sleep(WAIT_SECONDS)
 
+    logger.error(
+        f"Vespa setup did not succeed. Attempt limit reached. ({VESPA_ATTEMPTS})"
+    )
     return False
 
 
@@ -360,7 +368,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # fill up Postgres connection pools
     await warm_up_connections()
 
-    # We cache this at the beginning so there is no delay in the first telemtry
+    # We cache this at the beginning so there is no delay in the first telemetry
     get_or_generate_uuid()
 
     with Session(engine) as db_session:
