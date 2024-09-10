@@ -7,7 +7,6 @@ export interface RerankingDetails {
   rerank_provider_type: RerankerProvider | null;
   rerank_api_key: string | null;
   rerank_api_url: string | null;
-  num_rerank: number;
 }
 
 export enum RerankerProvider {
