@@ -191,10 +191,11 @@ export default function EmbeddingForm() {
     }
     let newModel: SavedSearchSettings;
 
+    // We use a spread operation to merge properties from multiple objects into a single object.
+    // Advanced embedding details may update default values.
     if (selectedProvider.provider_type != null) {
       // This is a cloud model
       newModel = {
-        ...selectedProvider,
         ...rerankingDetails,
         ...advancedEmbeddingDetails,
         model_name: selectedProvider.model_name,
@@ -225,6 +226,7 @@ export default function EmbeddingForm() {
         },
       }
     );
+
     if (response.ok) {
       setPopup({
         message: "Changed provider suceessfully. Redirecing to embedding page",
