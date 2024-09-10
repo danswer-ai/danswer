@@ -17,6 +17,7 @@ import {
 } from "../../../../components/embedding/interfaces";
 import { Connector } from "@/lib/connectors/connectors";
 import { FailedReIndexAttempts } from "@/components/embedding/FailedReIndexAttempts";
+import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 
 export default function UpgradingPage({
   futureEmbeddingModel,
@@ -25,6 +26,7 @@ export default function UpgradingPage({
 }) {
   const [isCancelling, setIsCancelling] = useState<boolean>(false);
 
+  const { setPopup, popup } = usePopup();
   const { data: connectors } = useSWR<Connector<any>[]>(
     "/api/manage/connector",
     errorHandlingFetcher,
@@ -91,6 +93,7 @@ export default function UpgradingPage({
 
   return (
     <>
+      {popup}
       {isCancelling && (
         <Modal
           onOutsideClick={() => setIsCancelling(false)}
@@ -133,6 +136,7 @@ export default function UpgradingPage({
             {failedIndexingStatus.length > 0 && (
               <FailedReIndexAttempts
                 failedIndexingStatuses={failedIndexingStatus}
+                setPopup={setPopup}
               />
             )}
 
