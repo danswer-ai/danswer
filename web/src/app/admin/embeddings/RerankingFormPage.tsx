@@ -66,14 +66,7 @@ const RerankingDetailsForm = forwardRef<
       >
         {({ values, setFieldValue, resetForm }) => {
           const resetRerankingValues = () => {
-            setRerankingDetails({
-              ...values,
-              rerank_provider_type: null!,
-              rerank_model_name: null,
-            });
-            setFieldValue("rerank_provider_type", null);
-            setFieldValue("rerank_model_name", null);
-            setFieldValue("rerank_api_key", null);
+            resetForm();
           };
 
           return (
@@ -346,7 +339,7 @@ const RerankingDetailsForm = forwardRef<
                         }}
                         type="password"
                         label="Cohere API Key"
-                        name="api_key"
+                        name="rerank_api_key"
                       />
                       <div className="flex w-full justify-end mt-4">
                         <Button
