@@ -181,10 +181,10 @@ def get_last_attempt(
     return db_session.execute(stmt).scalars().first()
 
 
-# TODO check the value
-def get_latest_failed_index_attempts(
+def get_latest_index_attempts_by_status(
     secondary_index: bool,
     db_session: Session,
+    status: IndexingStatus,
 ) -> Sequence[IndexAttempt]:
     """
     Retrieves the most recent failed index attempt for each connector_credential_pair.
@@ -202,7 +202,7 @@ def get_latest_failed_index_attempts(
             == (
                 IndexModelStatus.FUTURE if secondary_index else IndexModelStatus.PRESENT
             ),
-            IndexAttempt.status == IndexingStatus.FAILED,
+            IndexAttempt.status == status,
         )
         .group_by(IndexAttempt.connector_credential_pair_id)
         .subquery()

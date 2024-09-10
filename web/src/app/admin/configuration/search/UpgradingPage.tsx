@@ -1,7 +1,11 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { Modal } from "@/components/Modal";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { ConnectorIndexingStatus, ValidStatuses } from "@/lib/types";
+import {
+  ConnectorIndexingStatus,
+  FailedConnectorIndexingStatus,
+  ValidStatuses,
+} from "@/lib/types";
 import { Button, Text, Title } from "@tremor/react";
 import { useMemo, useState } from "react";
 import useSWR, { mutate } from "swr";
@@ -36,16 +40,13 @@ export default function UpgradingPage({
     { refreshInterval: 5000 } // 5 seconds
   );
 
-  const {
-    data: failedIndexingStatus,
-    isLoading: isLoadingFailedIndexingStatus,
-  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
-    "/api/manage/admin/connector/indexing-status?secondary_index=true&failed=true",
+  const { data: failedIndexingStatus } = useSWR<
+    FailedConnectorIndexingStatus[]
+  >(
+    "/api/manage/admin/connector/failed-indexing-status?secondary_index=true",
     errorHandlingFetcher,
     { refreshInterval: 5000 } // 5 seconds
   );
-
-  console.log(failedIndexingStatus);
 
   const onCancel = async () => {
     const response = await fetch("/api/search-settings/cancel-new-embedding", {
@@ -83,22 +84,6 @@ export default function UpgradingPage({
       );
     });
   }, [ongoingReIndexingStatus]);
-
-  // const sortedFailedReindexingProgress = useMemo(() => {
-  //   return [...(failedIndexingStatus || [])].sort((a, b) => {
-  //     const statusComparison =
-  //       statusOrder[a.latest_index_attempt?.status || "not_started"] -
-  //       statusOrder[b.latest_index_attempt?.status || "not_started"];
-
-  //     if (statusComparison !== 0) {
-  //       return statusComparison;
-  //     }
-
-  //     return (
-  //       (a.latest_index_attempt?.id || 0) - (b.latest_index_attempt?.id || 0)
-  //     );
-  //   });
-  // }, [failedIndexingStatus]);
 
   if (!failedIndexingStatus) {
     return <div>No failed index attempts</div>;
@@ -147,7 +132,7 @@ export default function UpgradingPage({
             </Button>
             {failedIndexingStatus.length > 0 && (
               <FailedReIndexAttempts
-                reindexingProgress={failedIndexingStatus}
+                failedIndexingStatuses={failedIndexingStatus}
               />
             )}
 

@@ -1,7 +1,13 @@
+import { buildCCPairInfoUrl } from "@/app/admin/connector/[ccPairId]/lib";
 import { PageSelector } from "@/components/PageSelector";
 import { IndexAttemptStatus } from "@/components/Status";
-import { ConnectorIndexingStatus } from "@/lib/types";
+import { deleteCCPair } from "@/lib/documentDeletion";
 import {
+  ConnectorIndexingStatus,
+  FailedConnectorIndexingStatus,
+} from "@/lib/types";
+import {
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -12,15 +18,23 @@ import {
 } from "@tremor/react";
 import Link from "next/link";
 import { useState } from "react";
-import { FiLink, FiMaximize2 } from "react-icons/fi";
+import { FiLink, FiMaximize2, FiTrash, FiTrash2 } from "react-icons/fi";
+import { mutate } from "swr";
+import { PopupSpec } from "../admin/connectors/Popup";
 
 export function FailedReIndexAttempts({
-  reindexingProgress,
+  failedIndexingStatuses,
+  setPopup,
 }: {
-  reindexingProgress: ConnectorIndexingStatus<any, any>[];
+  failedIndexingStatuses: FailedConnectorIndexingStatus[];
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }) {
   const numToDisplay = 10;
   const [page, setPage] = useState(1);
+
+  const anyDeletable = failedIndexingStatuses.some(
+    (status) => status.is_deletable
+  );
 
   return (
     <div className="mt-6 mb-8 p-4 border border-red-300 rounded-lg bg-red-50">
@@ -38,22 +52,27 @@ export function FailedReIndexAttempts({
         <Table>
           <TableHead>
             <TableRow>
-              <TableHeaderCell className="w-1/7 sm:w-1/5">
+              <TableHeaderCell className="w-1/8 sm:w-1/6">
                 Connector Name
               </TableHeaderCell>
-              <TableHeaderCell className="w-1/7 sm:w-1/5">
+              <TableHeaderCell className="w-1/8 sm:w-1/6">
                 Status
               </TableHeaderCell>
-              <TableHeaderCell className="w-4/7 sm:w-2/5">
+              <TableHeaderCell className="w-4/8 sm:w-2/6">
                 Error Message
               </TableHeaderCell>
-              <TableHeaderCell className="w-1/7 sm:w-2/5">
+              <TableHeaderCell className="w-1/8 sm:w-1/6">
                 Visit Connector
               </TableHeaderCell>
+              {anyDeletable && (
+                <TableHeaderCell className="w-1/8 sm:w-2/6">
+                  Delete Connector
+                </TableHeaderCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
-            {reindexingProgress
+            {failedIndexingStatuses
               .slice(numToDisplay * (page - 1), numToDisplay * page)
               .map((reindexingProgress) => {
                 return (
@@ -68,13 +87,7 @@ export function FailedReIndexAttempts({
                       </Link>
                     </TableCell>
                     <TableCell>
-                      {reindexingProgress.latest_index_attempt?.status && (
-                        <IndexAttemptStatus
-                          status={
-                            reindexingProgress.latest_index_attempt.status
-                          }
-                        />
-                      )}
+                      <IndexAttemptStatus status="failed" />
                     </TableCell>
 
                     <TableCell>
@@ -93,6 +106,29 @@ export function FailedReIndexAttempts({
                         Visit Connector
                       </Link>
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        size="xs"
+                        color="red"
+                        onClick={() =>
+                          deleteCCPair(
+                            reindexingProgress.connector_id,
+                            reindexingProgress.credential_id,
+                            setPopup,
+                            () =>
+                              mutate(
+                                buildCCPairInfoUrl(
+                                  reindexingProgress.cc_pair_id
+                                )
+                              )
+                          )
+                        }
+                        icon={FiTrash}
+                        disabled={reindexingProgress.is_deletable}
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -102,7 +138,9 @@ export function FailedReIndexAttempts({
         <div className="mt-3 flex">
           <div className="mx-auto">
             <PageSelector
-              totalPages={Math.ceil(reindexingProgress.length / numToDisplay)}
+              totalPages={Math.ceil(
+                failedIndexingStatuses.length / numToDisplay
+              )}
               currentPage={page}
               onPageChange={(newPage) => setPage(newPage)}
             />
