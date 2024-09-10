@@ -11,6 +11,7 @@ const ALL_USERS_INITIAL_POPUP_FLOW_COMPLETED =
   "allUsersInitialPopupFlowCompleted";
 export function ChatPopup() {
   const [completedFlow, setCompletedFlow] = useState(true);
+  const [showConsentError, setShowConsentError] = useState(false);
 
   useEffect(() => {
     setCompletedFlow(
@@ -21,20 +22,18 @@ export function ChatPopup() {
   const settings = useContext(SettingsContext);
   const enterpriseSettings = settings?.enterpriseSettings;
   const isConsentScreen = enterpriseSettings?.enable_consent_screen;
-
   if (
-    (!settings?.enterpriseSettings?.custom_popup_content && !isConsentScreen) ||
+    (!enterpriseSettings?.custom_popup_content && !isConsentScreen) ||
     completedFlow
   ) {
     return null;
   }
 
-  let popupTitle = enterpriseSettings?.custom_popup_header;
-  if (!popupTitle) {
-    popupTitle = isConsentScreen
+  const popupTitle =
+    enterpriseSettings?.custom_popup_header ||
+    (isConsentScreen
       ? "Terms of Use"
-      : `Welcome to ${enterpriseSettings?.application_name || "Danswer"}!`;
-  }
+      : `Welcome to ${enterpriseSettings?.application_name || "Danswer"}!`);
 
   const popupContent =
     enterpriseSettings?.custom_popup_content ||
@@ -63,9 +62,19 @@ export function ChatPopup() {
           {popupContent}
         </ReactMarkdown>
 
+        {showConsentError && (
+          <p className="text-red-500 text-sm mt-2">
+            You need to agree to the terms to access the application.
+          </p>
+        )}
+
         <div className="flex w-full justify-center gap-4 mt-4">
           {isConsentScreen && (
-            <Button size="xs" color="red" onClick={() => {}}>
+            <Button
+              size="xs"
+              color="red"
+              onClick={() => setShowConsentError(true)}
+            >
               Cancel
             </Button>
           )}
