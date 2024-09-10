@@ -132,10 +132,6 @@ def cleanup_connector_credential_pair_task(
             )
 
         except Exception as e:
-            task_logger.exception(
-                f"Failed to run connector_deletion. "
-                f"connector_id={connector_id} credential_id={credential_id}"
-            )
             stack_trace = traceback.format_exc()
             error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
             add_deletion_failure_message(db_session, cc_pair.id, error_message)
