@@ -647,14 +647,14 @@ export async function useScrollonStream({
   scrollDist,
   endDivRef,
   distance,
-  debounce,
+  debounceNumber,
 }: {
   chatState: ChatState;
   scrollableDivRef: RefObject<HTMLDivElement>;
   scrollDist: MutableRefObject<number>;
   endDivRef: RefObject<HTMLDivElement>;
   distance: number;
-  debounce: number;
+  debounceNumber: number;
   mobile?: boolean;
 }) {
   const preventScrollInterference = useRef<boolean>(false);
@@ -711,7 +711,7 @@ export async function useScrollonStream({
 
           setTimeout(() => {
             blockActionRef.current = false;
-          }, debounce);
+          }, debounceNumber);
         }
       }
     }

@@ -320,21 +320,32 @@ def setup_vespa(
     document_index: DocumentIndex,
     index_setting: IndexingSetting,
     secondary_index_setting: IndexingSetting | None,
-) -> None:
+) -> bool:
     # Vespa startup is a bit slow, so give it a few seconds
-    wait_time = 5
-    for _ in range(5):
+    WAIT_SECONDS = 5
+    VESPA_ATTEMPTS = 5
+    for x in range(VESPA_ATTEMPTS):
         try:
+            logger.notice(f"Setting up Vespa (attempt {x+1}/{VESPA_ATTEMPTS})...")
             document_index.ensure_indices_exist(
                 index_embedding_dim=index_setting.model_dim,
                 secondary_index_embedding_dim=secondary_index_setting.model_dim
                 if secondary_index_setting
                 else None,
             )
-            break
+
+            logger.notice("Vespa setup complete.")
+            return True
         except Exception:
-            logger.notice(f"Waiting on Vespa, retrying in {wait_time} seconds...")
-            time.sleep(wait_time)
+            logger.notice(
+                f"Vespa setup did not succeed. The Vespa service may not be ready yet. Retrying in {WAIT_SECONDS} seconds."
+            )
+            time.sleep(WAIT_SECONDS)
+
+    logger.error(
+        f"Vespa setup did not succeed. Attempt limit reached. ({VESPA_ATTEMPTS})"
+    )
+    return False
 
 
 @asynccontextmanager
@@ -357,7 +368,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # fill up Postgres connection pools
     await warm_up_connections()
 
-    # We cache this at the beginning so there is no delay in the first telemtry
+    # We cache this at the beginning so there is no delay in the first telemetry
     get_or_generate_uuid()
 
     with Session(engine) as db_session:
@@ -419,13 +430,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             if secondary_search_settings
             else None,
         )
-        setup_vespa(
+
+        success = setup_vespa(
             document_index,
             IndexingSetting.from_db_model(search_settings),
             IndexingSetting.from_db_model(secondary_search_settings)
             if secondary_search_settings
             else None,
         )
+        if not success:
+            raise RuntimeError(
+                "Could not connect to Vespa within the specified timeout."
+            )
 
         logger.notice(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
         if search_settings.provider_type is None:
