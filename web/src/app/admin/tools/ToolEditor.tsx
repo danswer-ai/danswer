@@ -6,7 +6,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { MethodSpec, ToolSnapshot } from "@/lib/tools/interfaces";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { Button, Divider } from "@tremor/react";
+import { Button, Divider, Text } from "@tremor/react";
 import {
   createCustomTool,
   updateCustomTool,
@@ -138,7 +138,30 @@ function ToolForm({
         component="div"
         className="text-error text-sm"
       />
-
+      <div className="mt-4 mb-2 bg-background border border-border rounded-lg p-4 shadow-sm">
+        <Text className="text-text font-semibold mb-2">
+          Available dynamic variables for your OpenAPI definition:
+        </Text>
+        <ul className="list-disc list-inside mb-4 text-text-light">
+          <li>
+            <code className="bg-background-dark px-1 py-0.5 rounded">
+              CHAT_SESSION_ID
+            </code>
+            : Automatically populated with the ID of the current chat session
+          </li>
+          <li>
+            <code className="bg-background-dark px-1 py-0.5 rounded">
+              CHAT_MESSAGE_ID
+            </code>
+            : Automatically populated with the ID of the message that triggered
+            the tool call
+          </li>
+        </ul>
+        <Text className="text-sm text-text-light">
+          These values will be automatically inserted when the tool is called,
+          allowing you to reference the current context in your API requests.
+        </Text>
+      </div>
       {methodSpecs && methodSpecs.length > 0 && (
         <div className="mt-4">
           <h3 className="text-base font-semibold mb-2">Available methods</h3>
