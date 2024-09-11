@@ -184,24 +184,20 @@ def build_custom_tools_from_openapi_schema(
     if dynamic_schema_info:
         # Process dynamic schema information
         schema_str = json.dumps(openapi_schema)
-        if dynamic_schema_info.chat_session_id:
-            schema_str = schema_str.replace(
-                CHAT_SESSION_ID_PLACEHOLDER, str(dynamic_schema_info.chat_session_id)
-            )
-        if dynamic_schema_info.message_id:
-            schema_str = schema_str.replace(
-                MESSAGE_ID_PLACEHOLDER, str(dynamic_schema_info.message_id)
-            )
-        for key, value in dynamic_schema_info.dynamic_values.items():
-            schema_str = schema_str.replace(key, json.dumps(value))
+        placeholders = {
+            CHAT_SESSION_ID_PLACEHOLDER: dynamic_schema_info.chat_session_id,
+            MESSAGE_ID_PLACEHOLDER: dynamic_schema_info.message_id,
+        }
+
+        for placeholder, value in placeholders.items():
+            if value:
+                schema_str = schema_str.replace(placeholder, str(value))
+
         openapi_schema = json.loads(schema_str)
 
     url = openapi_to_url(openapi_schema)
     method_specs = openapi_to_method_specs(openapi_schema)
-    return [
-        CustomTool(method_spec, url, dynamic_schema_info)
-        for method_spec in method_specs
-    ]
+    return [CustomTool(method_spec, url) for method_spec in method_specs]
 
 
 if __name__ == "__main__":
