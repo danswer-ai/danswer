@@ -390,7 +390,7 @@ def get_currently_failed_indexing_status(
     ),
 ) -> list[FailedConnectorIndexingStatus]:
     # Get the latest failed indexing attempts
-    lastest_failed_indexing_attempts = get_latest_index_attempts_by_status(
+    latest_failed_indexing_attempts = get_latest_index_attempts_by_status(
         secondary_index=secondary_index,
         db_session=db_session,
         status=IndexingStatus.FAILED,
@@ -413,7 +413,7 @@ def get_currently_failed_indexing_status(
     # Filter out failed attempts that have a more recent successful attempt
     filtered_failed_attempts = [
         failed_attempt
-        for failed_attempt in lastest_failed_indexing_attempts
+        for failed_attempt in latest_failed_indexing_attempts
         if not any(
             success_attempt.connector_credential_pair_id
             == failed_attempt.connector_credential_pair_id
@@ -428,7 +428,7 @@ def get_currently_failed_indexing_status(
         for cc_pair in cc_pairs
         if not any(
             attempt.connector_credential_pair == cc_pair
-            for attempt in lastest_failed_indexing_attempts
+            for attempt in latest_failed_indexing_attempts
         )
         or any(
             attempt.connector_credential_pair == cc_pair
