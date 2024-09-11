@@ -56,9 +56,8 @@ Danswer being a fully functional app, relies on some external software, specific
 
 
 > **Note:**
-> This guide provides instructions to set up the Danswer specific services outside of Docker because it's easier for
-> development purposes. However, you can also use the containers and update with local changes by providing the
-> `--build` flag.
+> This guide provides instructions to build and run Danswer locally from source with Docker containers providing the above external software. We believe this combination is easier for
+> development purposes. If you prefer to use pre-built container images, we provide instructions on running the full Danswer stack within Docker below.
 
 
 ### Local Set Up
@@ -110,13 +109,12 @@ You may have to deactivate and reactivate your virtualenv for `playwright` to ap
 #### Frontend: Node dependencies
 
 Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
-
 Once the above is done, navigate to `danswer/web` run:
 ```bash
 npm i
 ```
 
-#### Dependent Docker Containers
+#### Docker containers for external software
 You will need Docker installed to run these containers.
 
 First navigate to `danswer/deployment/docker_compose`, then start up Postgres/Vespa/Redis with:
@@ -126,7 +124,7 @@ docker compose -f docker-compose.dev.yml -p danswer-stack up -d index relational
 (index refers to Vespa, relational_db refers to Postgres, and cache refers to Redis)
 
 
-#### Running Danswer
+#### Running Danswer locally
 To start the frontend, navigate to `danswer/web` and run:
 ```bash
 npm run dev
@@ -175,6 +173,23 @@ powershell -Command "
 > **Note:**
 > If you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.
 
+#### Running the Danswer application in a container
+
+You can run the full Danswer application stack from pre-built images including all external software dependencies.
+
+Navigate to `danswer/deployment/docker_compose` and run:
+
+```bash
+docker compose up
+```
+
+After Docker pulls and starts these containers, navigate to `http://localhost:3000` to use Danswer.
+
+If you want to make changes to Danswer and run those changes in Docker, you can also build a local version of the Danswer container images that incorporates your changes like so:
+
+```bash
+docker compose up --build
+```
 
 ### Formatting and Linting
 #### Backend
