@@ -68,7 +68,7 @@ If using a lower version, modifications will have to be made to the code.
 If using a higher version, sometimes some libraries will not be available (i.e. we had problems with Tensorflow in the past with higher versions of python).
 
 
-#### Installing Requirements
+#### Backend: Python requirements
 Currently, we use pip and recommend creating a virtual environment.
 
 For convenience here's a command for it:
@@ -98,24 +98,23 @@ pip install -r danswer/backend/requirements/ee.txt
 pip install -r danswer/backend/requirements/model_server.txt
 ```
 
+Install Playwright for Python (headless browser required by the Web Connector)
 
-Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
-Once the above is done, navigate to `danswer/web` run:
-```bash
-npm i
-```
-
-Install Playwright (headless browser required by the Web Connector)
-
-> **Note:**
-> If you have just run the pip install, open a new terminal and source the python virtual-env again.
-> This will pull the updated PATH to include playwright
-
-Then install Playwright by running:
+In the activated Python virtualenv, install Playwright for Python by running:
 ```bash
 playwright install
 ```
 
+You may have to deactivate and reactivate your virtualenv for `playwright` to appear on your path.
+
+#### Frontend: Node dependencies
+
+Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
+
+Once the above is done, navigate to `danswer/web` run:
+```bash
+npm i
+```
 
 #### Dependent Docker Containers
 You will need Docker installed to run these containers.
