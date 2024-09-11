@@ -93,7 +93,7 @@ services:
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
       - API_KEY_HASH_ROUNDS=${API_KEY_HASH_ROUNDS:-}
       # Seeding configuration
-      - ENV_SEED_CONFIGURATION=${ENV_SEED_CONFIGURATION:-}
+      - EMBEDDING_BATCH_SIZE=${EMBEDDING_BATCH_SIZE:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -167,6 +167,7 @@ services:
       - GONG_CONNECTOR_START_TIME=${GONG_CONNECTOR_START_TIME:-}
       - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
       - GITHUB_CONNECTOR_BASE_URL=${GITHUB_CONNECTOR_BASE_URL:-}
+
       # Danswer SlackBot Configs
       - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
       - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
@@ -269,6 +270,7 @@ services:
       fi"
     restart: on-failure
     environment:
+      - INDEX_BATCH_SIZE=${INDEX_BATCH_SIZE:-}
       - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
       - INDEXING_ONLY=True
       # Set to debug to get more fine-grained logs
@@ -290,7 +292,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
 

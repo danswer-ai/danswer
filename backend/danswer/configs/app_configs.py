@@ -126,6 +126,7 @@ try:
 except ValueError:
     INDEX_BATCH_SIZE = 16
 
+
 # Below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
 POSTGRES_USER = os.environ.get("POSTGRES_USER") or "postgres"
