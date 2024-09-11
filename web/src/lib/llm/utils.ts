@@ -73,6 +73,10 @@ const MODELS_SUPPORTING_IMAGES = [
   ["azure", "gpt-4-vision-preview"],
   ["azure", "gpt-4-turbo"],
   ["azure", "gpt-4-1106-vision-preview"],
+  ["anthropic", "claude-3-5-sonnet-20240620"],
+  ["anthropic", "claude-3-opus-20240229"],
+  ["anthropic", "claude-3-sonnet-20240229"],
+  ["anthropic", "claude-3-haiku-20240307"],
 ];
 
 export function checkLLMSupportsImageInput(provider: string, model: string) {
