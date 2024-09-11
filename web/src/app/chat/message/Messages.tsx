@@ -303,7 +303,10 @@ export const AIMessage = ({
                     .filter(([_, document]) => document.semantic_identifier)
                     .map(([citationKey, document], ind) => {
                       const display = (
-                        <Badge variant="secondary">
+                        <Badge
+                          variant="secondary"
+                          className="cursor-pointer hover:opacity-75"
+                        >
                           <div className="my-auto mr-1">
                             <SourceIcon
                               sourceType={document.source_type}

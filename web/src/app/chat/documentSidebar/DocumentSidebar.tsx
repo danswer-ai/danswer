@@ -88,7 +88,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         <div className="flex flex-col flex-initial w-full h-screen overflow-y-hidden">
           <div
             className={`flex flex-col h-full ${
-              showDocSidebar
+              !showDocSidebar
                 ? "opacity-0 duration-100"
                 : "opacity-100 duration-500 delay-300"
             }`}

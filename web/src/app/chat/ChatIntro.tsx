@@ -24,8 +24,12 @@ export function ChatIntro({
     <>
       <div className="flex 2xl:justify-center w-full my-auto">
         <div className="max-w-full 2xl:w-searchbar px-5 2xl:px-0 mt-10 md:mt-16 lg:mt-0 2xl:mt-14">
-          <div className="flex flex-col items-center gap-4 pb-6">
-            <Image src={Logo} alt="logo" />
+          <div className="flex flex-col items-center gap-4 md:pb-6">
+            <Image
+              src={Logo}
+              alt="logo"
+              className="w-16 h-16 md:w-24 md:h-24"
+            />
             <h1 className="text-[1.5rem] md:text-[2.5rem] font-semibold leading-[1.2] tracking-tighter text-dark-900 text-center">
               Fitness, Workout & Diet - PhD Coach
             </h1>
@@ -33,7 +37,7 @@ export function ChatIntro({
               <span className="text-subtle">By |</span>
               <p className="text-dark-900">{user?.full_name}</p>
             </div>
-            <p className="text-center text-dark-900 w-3/4 line-clamp">
+            <p className="text-center text-dark-900 w-full md:w-3/4 line-clamp">
               Lorem ipsum, dolor sit amet consectetur adipisicing elit. Minima,
               voluptatum odio? Aspernatur ducimus porro voluptas veniam maiores
               possimus consequuntur debitis dolore dolorum minima saepe, aliquid

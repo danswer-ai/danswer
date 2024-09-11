@@ -24,12 +24,22 @@ export function ShowHideDocsButton({
       onClick={() => handleShowRetrieved(messageId)}
     >
       {isCurrentlyShowingRetrieved ? (
-        <Button size="xs" variant="outline" onClick={handleToggleSideBar}>
-          <div className="w-24 text-xs">Hide Docs</div>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={handleToggleSideBar}
+          className="w-24"
+        >
+          Hide Docs
         </Button>
       ) : (
-        <Button size="xs" variant="outline" onClick={handleToggleSideBar}>
-          <div className="w-24 text-xs">Show Docs</div>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={handleToggleSideBar}
+          className="w-24"
+        >
+          Show Docs
         </Button>
       )}
     </div>

@@ -1061,12 +1061,14 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [showDocSidebar, setShowDocSidebar] = useState(false);
+  const [showDocSidebar, setShowDocSidebar] = useState(
+    window.innerWidth >= 1420
+  );
   const [isWide, setIsWide] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsWide(window.innerWidth >= 1024);
+      setIsWide(window.innerWidth >= 1420);
     };
 
     handleResize();
@@ -1082,7 +1084,7 @@ export function ChatPage({
       sidebarElementRef.current.style.width = showDocSidebar ? "300px" : "0px";
     }
 
-    setShowDocSidebar((showDocSidebar) => !showDocSidebar);
+    setShowDocSidebar((prevState) => !prevState);
   };
 
   useEffect(() => {
@@ -1148,7 +1150,7 @@ export function ChatPage({
               </ShareChatSessionModal>
             )}
 
-            {retrievalEnabled && showDocSidebar && (
+            {retrievalEnabled && (
               <Button onClick={toggleSidebar} variant="ghost" size="icon">
                 <PanelLeftClose size={24} />
               </Button>
@@ -1432,11 +1434,9 @@ export function ChatPage({
                                         }
                                       : undefined
                                   }
-                                  isCurrentlyShowingRetrieved={
-                                    isShowingRetrieved
-                                  }
+                                  isCurrentlyShowingRetrieved={showDocSidebar}
                                   handleShowRetrieved={(messageNumber) => {
-                                    if (isShowingRetrieved) {
+                                    if (showDocSidebar) {
                                       setSelectedMessageForDocDisplay(null);
                                     } else {
                                       if (messageNumber !== null) {
@@ -1476,16 +1476,7 @@ export function ChatPage({
                                         )
                                       : !retrievalEnabled
                                   }
-                                  handleToggleSideBar={() => {
-                                    isShowingRetrieved
-                                      ? setShowDocSidebar(true)
-                                      : setShowDocSidebar(false);
-
-                                    if (sidebarElementRef.current) {
-                                      sidebarElementRef.current.style.transition =
-                                        "width 0.3s ease-in-out";
-                                    }
-                                  }}
+                                  handleToggleSideBar={toggleSidebar}
                                 />
                               </div>
                             );
@@ -1581,18 +1572,18 @@ export function ChatPage({
                   {retrievalEnabled || editingRetrievalEnabled ? (
                     <>
                       <AnimatePresence>
-                        {!showDocSidebar && (
+                        {showDocSidebar && (
                           <motion.div
                             className={`fixed w-full h-full bg-background-inverted bg-opacity-20 inset-0 z-overlay 2xl:hidden`}
                             initial={{ opacity: 0 }}
-                            animate={{ opacity: !showDocSidebar ? 1 : 0 }}
+                            animate={{ opacity: showDocSidebar ? 1 : 0 }}
                             exit={{ opacity: 0 }}
                             transition={{
                               duration: 0.2,
-                              opacity: { delay: !showDocSidebar ? 0 : 0.3 },
+                              opacity: { delay: showDocSidebar ? 0 : 0.3 },
                             }}
                             style={{
-                              pointerEvents: !showDocSidebar ? "auto" : "none",
+                              pointerEvents: showDocSidebar ? "auto" : "none",
                             }}
                             onClick={toggleSidebar}
                           />
@@ -1603,7 +1594,7 @@ export function ChatPage({
                         ref={sidebarElementRef}
                         className="fixed 2xl:relative top-0 right-0 z-overlay bg-background  flex-none overflow-y-hidden h-full"
                         style={{
-                          width: !showDocSidebar
+                          width: showDocSidebar
                             ? Math.max(350, usedSidebarWidth)
                             : 0,
                         }}
