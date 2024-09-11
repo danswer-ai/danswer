@@ -126,7 +126,7 @@ function buildPersonaAPIBody(
     icon_color,
     icon_shape,
     remove_image,
-    search_start_date: start_date,
+    search_start_date,
   } = creationRequest;
 
   const is_default_persona =
@@ -154,8 +154,7 @@ function buildPersonaAPIBody(
     icon_shape,
     uploaded_image_id,
     remove_image,
-    start_date,
-    is_default_persona,
+    search_start_date,
   };
 }
 
