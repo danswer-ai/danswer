@@ -333,6 +333,11 @@ vespa:
 redis:
   enabled: true
   architecture: standalone
+  commonConfiguration: |-
+    # Enable AOF https://redis.io/topics/persistence#append-only-file
+    appendonly no
+    # Disable RDB persistence, AOF persistence already enabled.
+    save ""
   master:
     replicaCount: 1
     image:
@@ -340,6 +345,8 @@ redis:
       repository: bitnami/redis
       tag: "7.4.0"
       pullPolicy: IfNotPresent
+    persistence:
+      enabled: false
   service:
     type: ClusterIP
     port: 6379
