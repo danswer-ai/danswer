@@ -265,6 +265,17 @@ class CCPairFullInfo(BaseModel):
         )
 
 
+class FailedConnectorIndexingStatus(BaseModel):
+    """Simplified version of ConnectorIndexingStatus for failed indexing attempts"""
+
+    cc_pair_id: int
+    name: str | None
+    error_msg: str | None
+    is_deletable: bool
+    connector_id: int
+    credential_id: int
+
+
 class ConnectorIndexingStatus(BaseModel):
     """Represents the latest indexing status of a connector"""
 
