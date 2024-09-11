@@ -42,6 +42,7 @@ def insert_standard_answer(
     keyword: str,
     answer: str,
     category_ids: list[int],
+    match_regex: bool,
     db_session: Session,
 ) -> StandardAnswer:
     existing_categories = fetch_standard_answer_categories_by_ids(
@@ -56,6 +57,7 @@ def insert_standard_answer(
         answer=answer,
         categories=existing_categories,
         active=True,
+        match_regex=match_regex,
     )
     db_session.add(standard_answer)
     db_session.commit()

@@ -1371,6 +1371,7 @@ class StandardAnswer(Base):
     keyword: Mapped[str] = mapped_column(String)
     answer: Mapped[str] = mapped_column(String)
     active: Mapped[bool] = mapped_column(Boolean)
+    match_regex: Mapped[bool] = mapped_column(Boolean)
 
     __table_args__ = (
         Index(
