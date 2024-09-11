@@ -173,6 +173,19 @@ powershell -Command "
 > **Note:**
 > If you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.
 
+#### Wrapping up
+
+You should now have 4 servers running:
+
+- Web server
+- Backend API
+- Model server
+- Background jobs
+
+Now, visit `http://localhost:3000` in your browser. You should see the Danswer onboarding wizard where you can connect your external LLM provider to Danswer.
+
+You've successfully set up a local Danswer instance! 🏁
+
 #### Running the Danswer application in a container
 
 You can run the full Danswer application stack from pre-built images including all external software dependencies.
