@@ -335,6 +335,16 @@ def delete_index_attempts(
     cc_pair_id: int,
     db_session: Session,
 ) -> None:
+    # First, delete related entries in IndexAttemptErrors
+    stmt_errors = delete(IndexAttemptError).where(
+        IndexAttemptError.index_attempt_id.in_(
+            select(IndexAttempt.id).where(
+                IndexAttempt.connector_credential_pair_id == cc_pair_id
+            )
+        )
+    )
+    db_session.execute(stmt_errors)
+
     stmt = delete(IndexAttempt).where(
         IndexAttempt.connector_credential_pair_id == cc_pair_id,
     )
