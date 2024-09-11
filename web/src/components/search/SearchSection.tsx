@@ -260,15 +260,7 @@ export const SearchSection = ({
         </div>
 
         <div className="w-full flex justify-between flex-col md:flex-row gap-5">
-          {/*  <div className="p-[3px] rounded-sm bg-primary-light flex gap-1 text-dark-900 text-sm font-medium">
-            <button className="px-4 py-2 bg-background rounded-xs w-full">
-              All
-            </button>
-            <button className="px-4 py-2 rounded-xs w-full">Public</button>
-            <button className="px-4 py-2 rounded-xs w-full">Private</button>
-          </div> */}
-
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="items-center gap-2 ml-auto hidden lg:flex">
             <DateRangeSearchSelector
               value={filterManager.timeRange}
               onValueChange={filterManager.setTimeRange}

@@ -22,6 +22,7 @@ import { Brain } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { SortSearch } from "../SortSearch";
 import { DateRangeSearchSelector } from "../DateRangeSearchSelector";
+import { Button } from "@/components/ui/button";
 
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="flex px-2 py-3 text-sm font-bold">{children}</div>
@@ -81,13 +82,23 @@ export function SourceSelector({
   return (
     <div className="w-full flex flex-col lg:gap-4 text-dark-900">
       <div className="lg:hidden">
-        <SortSearch isMobile />
+        <div className="w-full p-2.5">
+          <span className="flex p-2 text-sm font-bold">Sort by</span>
+          <div className="flex gap-2 flex-wrap">
+            <Button>Last Accessed</Button>
+            <Button variant="secondary">Tags/Labels</Button>
+            <Button variant="secondary">Relevance</Button>
+          </div>
+        </div>
 
-        <DateRangeSearchSelector
-          isMobile
-          value={timeRange}
-          onValueChange={setTimeRange}
-        />
+        <div className="w-full p-2.5">
+          <span className="flex p-2 text-sm font-bold">Date</span>
+          <div className="flex gap-2 flex-wrap">
+            <Button>Today</Button>
+            <Button variant="secondary">Last 7 days</Button>
+            <Button variant="secondary">Last 30 days</Button>
+          </div>
+        </div>
       </div>
 
       {existingSources.length > 0 && (
@@ -229,12 +240,11 @@ export function HorizontalFilters({
   return (
     <div>
       <div className="flex flex-col gap-3 md:flex-row">
-        <div className="w-64">
-          <DateRangeSearchSelector
-            value={timeRange}
-            onValueChange={setTimeRange}
-          />
-        </div>
+        <DateRangeSearchSelector
+          value={timeRange}
+          onValueChange={setTimeRange}
+          fullWidth
+        />
 
         <Select
           onValueChange={(value) => {
@@ -244,7 +254,7 @@ export function HorizontalFilters({
             if (selectedSource) handleSourceSelect(selectedSource);
           }}
         >
-          <SelectTrigger className="w-64">
+          <SelectTrigger className="w-full lg:w-64">
             <div className="flex items-center gap-3">
               <FiMap size={16} />
               <SelectValue placeholder="All Sources" />
@@ -266,7 +276,7 @@ export function HorizontalFilters({
           onValueChange={(value) => handleDocumentSetSelect(value)}
           defaultValue=""
         >
-          <SelectTrigger className="w-64">
+          <SelectTrigger className="w-full lg:w-64">
             <div className="flex items-center gap-3">
               <FiBook size={16} />
               <SelectValue placeholder="All Document Sets" />

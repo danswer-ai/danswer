@@ -65,10 +65,10 @@ function Main({ ccPairId }: { ccPairId: number }) {
   return (
     <>
       <BackButton />
-      <div className="pb-5 flex">
+      <div className="pb-5 flex flex-col sm:flex-row gap-4">
         <h1 className="text-3xl  font-bold">{ccPair.name}</h1>
 
-        <div className="ml-auto">
+        <div className="sm:ml-auto">
           <ModifyStatusButtonCluster ccPair={ccPair} />
         </div>
       </div>
@@ -88,8 +88,8 @@ function Main({ ccPairId }: { ccPairId: number }) {
       {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
         to render these conditionally.*/}
       <Card className="mt-6">
-        <CardHeader className="border-b pb-10">
-          <div className="flex items-center">
+        <CardHeader className="border-b sm:pb-10">
+          <div className="flex items-start justify-between sm:items-center flex-col sm:flex-row gap-2">
             <h3 className="font-semibold">Indexing Attempts</h3>
 
             {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(

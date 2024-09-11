@@ -40,7 +40,7 @@ export function IndexAttemptStatus({
     );
   } else if (status === "in_progress") {
     badge = (
-      <Badge>
+      <Badge className="whitespace-nowrap">
         <Clock size={14} className="mr-0.5" /> In Progress
       </Badge>
     );

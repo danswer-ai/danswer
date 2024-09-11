@@ -148,7 +148,9 @@ export const TeamspacesTable = ({
                     </TableCell>
                     <TableCell>
                       {!teamspace.is_up_to_date ? (
-                        <Badge variant="success">Up to date!</Badge>
+                        <Badge variant="success" className="whitespace-nowrap">
+                          Up to date!
+                        </Badge>
                       ) : (
                         <Badge variant="outline" className="w-20">
                           <LoadingAnimation text="Syncing" />

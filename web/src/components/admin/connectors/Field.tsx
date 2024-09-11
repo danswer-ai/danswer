@@ -303,7 +303,7 @@ export function SelectorFormField({
           value={field.value || ""} // Ensure field.value is reset correctly
           onValueChange={handleSelectChange}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger>
             <SelectValue placeholder="Select an option">
               {selectedOption ? selectedOption.name : "Select an option"}
             </SelectValue>

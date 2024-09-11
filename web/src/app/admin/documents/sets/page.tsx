@@ -146,7 +146,10 @@ const DocumentSetTable = ({
                       </TableCell>
                       <TableCell>
                         {documentSet.is_up_to_date ? (
-                          <Badge variant="success">
+                          <Badge
+                            variant="success"
+                            className="whitespace-nowrap"
+                          >
                             <CircleCheckBig size={14} /> Up to Date
                           </Badge>
                         ) : documentSet.cc_pair_descriptors.length > 0 ? (
