@@ -85,8 +85,8 @@ function ToolForm({
   }, [values.definition, debouncedValidateDefinition]);
 
   return (
-    <Form>
-      <div className="relative">
+    <Form className="max-w-4xl">
+      <div className="relative w-full">
         <TextFormField
           name="definition"
           label="Definition"
@@ -159,7 +159,7 @@ function ToolForm({
         </ul>
         <Text className="text-sm text-text-light">
           These values will be automatically inserted when the tool is called,
-          allowing you to reference the current context in your API requests.
+          allowing you to reference the current context in your tool calls.
         </Text>
       </div>
       {methodSpecs && methodSpecs.length > 0 && (
