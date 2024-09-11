@@ -92,6 +92,9 @@ export const AIMessage = ({
   retrievalDisabled,
   currentAssistant,
   handleToggleSideBar,
+  currentFeedback,
+  onClose,
+  onSubmit,
 }: {
   alternativeAssistant?: Assistant | null;
   currentAssistant: Assistant;
@@ -111,8 +114,16 @@ export const AIMessage = ({
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
   handleToggleSideBar?: () => void;
+  currentFeedback?: [FeedbackType, number] | null;
+  onClose?: () => void;
+  onSubmit?: (feedbackDetails: {
+    message: string;
+    predefinedFeedback?: string;
+  }) => void;
 }) => {
   const [isReady, setIsReady] = useState(false);
+  const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
+  const [isDislikeModalOpen, setIsDislikeModalOpen] = useState(false);
 
   useEffect(() => {
     Prism.highlightAll();
@@ -345,20 +356,53 @@ export const AIMessage = ({
           {handleFeedback && (
             <div className="flex flex-row gap-x-0.5 pl-1 md:pl-12 mt-1.5">
               <CopyButton content={content.toString()} />
-              <Button
-                variant="ghost"
-                size="smallIcon"
-                onClick={() => handleFeedback("like")}
+              <CustomModal
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="smallIcon"
+                    onClick={() => {
+                      handleFeedback("like");
+                      setIsLikeModalOpen(true);
+                    }}
+                  >
+                    <ThumbsUp size={16} />
+                  </Button>
+                }
+                onClose={() => setIsLikeModalOpen(false)}
+                open={isLikeModalOpen}
               >
-                <ThumbsUp size={16} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="smallIcon"
-                onClick={() => handleFeedback("dislike")}
+                <FeedbackModal
+                  feedbackType="like"
+                  onClose={onClose}
+                  onSubmit={onSubmit}
+                  onModalClose={() => setIsLikeModalOpen(false)}
+                />
+              </CustomModal>
+
+              <CustomModal
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="smallIcon"
+                    onClick={() => {
+                      handleFeedback("dislike");
+                      setIsDislikeModalOpen(true);
+                    }}
+                  >
+                    <ThumbsDown size={16} />
+                  </Button>
+                }
+                onClose={() => setIsDislikeModalOpen(false)}
+                open={isDislikeModalOpen}
               >
-                <ThumbsDown size={16} />
-              </Button>
+                <FeedbackModal
+                  feedbackType="dislike"
+                  onClose={onClose}
+                  onSubmit={onSubmit}
+                  onModalClose={() => setIsDislikeModalOpen(false)}
+                />
+              </CustomModal>
             </div>
           )}
         </div>
@@ -413,6 +457,8 @@ import {
   User,
 } from "lucide-react";
 import { User as UserTypes } from "@/lib/types";
+import { FeedbackModal } from "../modal/FeedbackModal";
+import { CustomModal } from "@/components/CustomModal";
 
 export const HumanMessage = ({
   content,

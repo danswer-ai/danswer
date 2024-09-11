@@ -138,8 +138,6 @@ export function ChatPage({
   // are run twice on initial load during development
   const submitOnLoadPerformed = useRef<boolean>(false);
 
-  const { popup, setPopup } = usePopup();
-
   // fetch messages for the chat session
   const [isFetchingChatMessages, setIsFetchingChatMessages] = useState(
     existingChatSessionId !== null
@@ -458,9 +456,6 @@ export function ChatPage({
   const [currentFeedback, setCurrentFeedback] = useState<
     [FeedbackType, number] | null
   >(null);
-
-  const [sharingModalVisible, setSharingModalVisible] =
-    useState<boolean>(false);
 
   // state for cancelling streaming
   const [isCancelled, setIsCancelled] = useState(false);
@@ -1141,10 +1136,7 @@ export function ChatPage({
                   )
                 }
               >
-                <div
-                  onClick={() => setSharingModalVisible(true)}
-                  className="h-10 w-10 hover:bg-light hover:text-accent-foreground inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-regular text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-                >
+                <div className="h-10 w-10 hover:bg-light hover:text-accent-foreground inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-regular text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
                   <Share size={20} />
                 </div>
               </ShareChatSessionModal>
@@ -1182,8 +1174,7 @@ export function ChatPage({
         </DynamicSidebar>
 
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
-          {popup}
-          {currentFeedback && (
+          {/* {currentFeedback && (
             <FeedbackModal
               feedbackType={currentFeedback[0]}
               onClose={() => setCurrentFeedback(null)}
@@ -1197,7 +1188,7 @@ export function ChatPage({
                 setCurrentFeedback(null);
               }}
             />
-          )}
+          )} */}
 
           <ConfigurationModal
             chatSessionId={chatSessionIdRef.current!}
@@ -1399,6 +1390,20 @@ export function ChatPage({
                                             message.messageId as number,
                                           ])
                                   }
+                                  currentFeedback={currentFeedback}
+                                  onClose={() => setCurrentFeedback(null)}
+                                  onSubmit={({
+                                    message,
+                                    predefinedFeedback,
+                                  }) => {
+                                    onFeedback(
+                                      currentFeedback![1],
+                                      currentFeedback![0],
+                                      message,
+                                      predefinedFeedback
+                                    );
+                                    setCurrentFeedback(null);
+                                  }}
                                   handleSearchQueryEdit={
                                     i === messageHistory.length - 1 &&
                                     !isStreaming
