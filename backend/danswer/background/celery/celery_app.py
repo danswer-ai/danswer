@@ -101,19 +101,18 @@ def cleanup_connector_credential_pair_task(
     engine = get_sqlalchemy_engine()
 
     with Session(engine) as db_session:
-        try:
-            # validate that the connector / credential pair is deletable
-            cc_pair = get_connector_credential_pair(
-                db_session=db_session,
-                connector_id=connector_id,
-                credential_id=credential_id,
+        # validate that the connector / credential pair is deletable
+        cc_pair = get_connector_credential_pair(
+            db_session=db_session,
+            connector_id=connector_id,
+            credential_id=credential_id,
+        )
+        if not cc_pair:
+            raise ValueError(
+                f"Cannot run deletion attempt - connector_credential_pair with Connector ID: "
+                f"{connector_id} and Credential ID: {credential_id} does not exist."
             )
-            if not cc_pair:
-                raise ValueError(
-                    f"Cannot run deletion attempt - connector_credential_pair with Connector ID: "
-                    f"{connector_id} and Credential ID: {credential_id} does not exist."
-                )
-
+        try:
             deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(
                 connector_credential_pair=cc_pair, db_session=db_session
             )
@@ -140,6 +139,7 @@ def cleanup_connector_credential_pair_task(
                 f"connector_id={connector_id} credential_id={credential_id}\n"
                 f"Stack Trace:\n{stack_trace}"
             )
+            raise e
 
 
 @build_celery_task_wrapper(name_cc_prune_task)
