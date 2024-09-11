@@ -136,7 +136,9 @@ class VespaIndex(DocumentIndex):
 
         doc_lines = _create_document_xml_lines(schema_names)
         services = services_template.replace(DOCUMENT_REPLACEMENT_PAT, doc_lines)
-        services = services.replace(SEARCH_THREAD_NUMBER_PAT, VESPA_SEARCHER_THREADS)
+        services = services.replace(
+            SEARCH_THREAD_NUMBER_PAT, str(VESPA_SEARCHER_THREADS)
+        )
 
         kv_store = get_dynamic_config_store()
 
