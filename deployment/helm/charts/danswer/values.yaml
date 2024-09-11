@@ -305,7 +305,7 @@ vespa:
     type: ClusterIP
   readinessProbe:
     enabled: false
-    
+
   podSecurityContext: {}
     # fsGroup: 2000
 
