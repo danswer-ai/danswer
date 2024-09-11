@@ -21,10 +21,14 @@ import {
   Image as ImageIcon,
   Activity,
 } from "lucide-react";
+import { useContext } from "react";
+import { SettingsContext } from "./settings/SettingsProvider";
+import { getCombinedSettings } from "./settings/lib";
 
 interface SideBarProps {}
 
-export const SideBar: React.FC<SideBarProps> = ({}) => {
+export async function SideBar() {
+  const dynamicSettings = await getCombinedSettings({ forceRetrieval: true });
   return (
     <div className="w-full h-full p-4 overflow-y-auto bg-background">
       <AdminSidebar
@@ -175,20 +179,20 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
               },
             ],
           },
-          ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
-            ? [
-                {
-                  name: "Performance",
-                  items: [
-                    {
-                      name: (
-                        <div className="flex items-center gap-2">
-                          <Activity size={20} />
-                          <div>Usage Statistics</div>
-                        </div>
-                      ),
-                      link: "/admin/performance/usage",
-                    },
+          {
+            name: "Performance",
+            items: [
+              {
+                name: (
+                  <div className="flex items-center gap-2">
+                    <Activity size={20} />
+                    <div>Usage Statistics</div>
+                  </div>
+                ),
+                link: "/admin/performance/usage",
+              },
+              ...(dynamicSettings.featureFlags.query_history
+                ? [
                     {
                       name: (
                         <div className="flex items-center gap-2">
@@ -198,19 +202,19 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                       ),
                       link: "/admin/performance/query-history",
                     },
-                    // {
-                    //   name: (
-                    //     <div className="flex items-center gap-2">
-                    //       <FiBarChart2 size={20} />
-                    //       <div >Custom Analytics</div>
-                    //     </div>
-                    //   ),
-                    //   link: "/admin/performance/custom-analytics",
-                    // },
-                  ],
-                },
-              ]
-            : []),
+                  ]
+                : []),
+              // {
+              //   name: (
+              //     <div className="flex items-center gap-2">
+              //       <FiBarChart2 size={20} />
+              //       <div >Custom Analytics</div>
+              //     </div>
+              //   ),
+              //   link: "/admin/performance/custom-analytics",
+              // },
+            ],
+          },
           {
             name: "Settings",
             items: [
@@ -223,23 +227,23 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                 ),
                 link: "/admin/settings",
               },
-              // ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
-              //   ? [
-              //       {
-              //         name: (
-              //           <div className="flex items-center gap-2">
-              //             <ImageIcon size={20} />
-              //             <div>Whitelabeling</div>
-              //           </div>
-              //         ),
-              //         link: "/admin/whitelabeling",
-              //       },
-              //     ]
-              //   : []),
+              ...(dynamicSettings.featureFlags.whitelabelling
+                ? [
+                    {
+                      name: (
+                        <div className="flex items-center gap-2">
+                          <ImageIcon size={20} />
+                          <div>Whitelabeling</div>
+                        </div>
+                      ),
+                      link: "/admin/whitelabeling",
+                    },
+                  ]
+                : []),
             ],
           },
         ]}
       />
     </div>
   );
-};
+}

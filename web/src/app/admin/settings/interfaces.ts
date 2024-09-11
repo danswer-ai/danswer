@@ -15,15 +15,19 @@ export interface EnterpriseSettings {
   custom_popup_content: string | null;
 }
 
-export interface CombinedSettings {
-  settings: Settings;
-  enterpriseSettings: EnterpriseSettings | null;
-  customAnalyticsScript: string | null;
-}
-
 export interface FeatureFlags {
   profile_page: boolean;
   multi_teamspace: boolean;
   multi_workspace: boolean;
   query_history: boolean;
+  whitelabelling: boolean;
+  share_chat: boolean;
+  explore_assistants: boolean;
+}
+
+export interface CombinedSettings {
+  settings: Settings;
+  featureFlags: FeatureFlags;
+  enterpriseSettings: EnterpriseSettings | null;
+  customAnalyticsScript: string | null;
 }

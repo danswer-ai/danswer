@@ -120,17 +120,19 @@ export const ChatSidebar = ({
                   <MessageCircleMore size={16} className="min-w-4 min-h-4" />
                   Chat
                 </Link>
-                {/*  <Link
-                  href="/assistants/mine"
-                  className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
-                    isAssistant
-                      ? "bg-primary text-white"
-                      : "hover:bg-hover-light"
-                  }`}
-                >
-                  <Headset size={16} />
-                  <span className="truncate">Explore Assistants</span>
-                </Link> */}
+                {combinedSettings.featureFlags.explore_assistants && (
+                  <Link
+                    href="/assistants/mine"
+                    className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
+                      isAssistant
+                        ? "bg-primary text-white"
+                        : "hover:bg-hover-light"
+                    }`}
+                  >
+                    <Headset size={16} />
+                    <span className="truncate">Explore Assistants</span>
+                  </Link>
+                )}
               </>
             )}
             <Separator className="mt-4" />
