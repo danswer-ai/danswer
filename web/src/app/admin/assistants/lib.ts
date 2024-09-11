@@ -179,7 +179,6 @@ export async function uploadFile(file: File): Promise<string | null> {
 export async function createPersona(
   personaCreationRequest: PersonaCreationRequest
 ): Promise<[Response, Response | null]> {
-  console.log(personaCreationRequest);
   // first create prompt
   const createPromptResponse = await createPrompt({
     personaName: personaCreationRequest.name,

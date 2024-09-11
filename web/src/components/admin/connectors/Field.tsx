@@ -170,7 +170,6 @@ export function TextFormField({
   if (isTextArea && !heightString) {
     heightString = "h-28";
   }
-  console.log(value);
 
   const [field, , helpers] = useField(name);
   const { setValue } = helpers;

@@ -246,7 +246,6 @@ export function AssistantEditor({
     // EE Only
     groups: existingPersona?.groups ?? [],
   };
-  console.log(initialValues);
 
   const [isRequestSuccessful, setIsRequestSuccessful] = useState(false);
 
