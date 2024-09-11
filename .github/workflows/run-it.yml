@@ -7,8 +7,6 @@ on:
   merge_group:
   pull_request:
     branches: [ main ]
-    paths:
-      - 'backend/**'
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
