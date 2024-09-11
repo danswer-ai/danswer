@@ -330,6 +330,26 @@ vespa:
   affinity: {}
 
 
+redis:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: redis
+    pullPolicy: IfNotPresent
+    tag: "7.4-alpine"
+  deploymentLabels:
+    app: redis
+  podAnnotations: {}
+  podLabels:
+    app: redis
+  service:
+    type: ClusterIP
+    port: 6379
+  auth:
+    existingSecret: danswer-secrets
+    existingSecretPasswordKey: redis_password
+
+
 # ingress:
 #  enabled: false
 #  className: ""
