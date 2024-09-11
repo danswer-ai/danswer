@@ -1,0 +1,23 @@
+name: Check Backend Changes
+
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-run-needed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^backend/'; then
+            echo "run-tests=true" > run-tests.txt
+          else
+            echo "run-tests=false" > run-tests.txt
+          fi
+      - uses: actions/upload-artifact@v3
+        with:
+          name: run-tests-flag
+          path: run-tests.txt
