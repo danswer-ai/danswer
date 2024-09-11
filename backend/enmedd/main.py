@@ -59,6 +59,10 @@ from enmedd.server.documents.connector import router as connector_router
 from enmedd.server.documents.credential import router as credential_router
 from enmedd.server.documents.document import router as document_router
 from enmedd.server.enmedd_api.ingestion import router as enmedd_api_server
+from enmedd.server.feature_flags.api import (
+    instance_admin_router as ff_instance_admin_router,
+)
+from enmedd.server.feature_flags.api import router as ff_settings_router
 from enmedd.server.features.assistant.api import admin_router as admin_assistant_router
 from enmedd.server.features.assistant.api import basic_router as assistant_router
 from enmedd.server.features.document_set.api import router as document_set_router
@@ -289,6 +293,8 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, gpts_router)
     include_router_with_global_prefix_prepended(application, settings_router)
     include_router_with_global_prefix_prepended(application, settings_admin_router)
+    include_router_with_global_prefix_prepended(application, ff_instance_admin_router)
+    include_router_with_global_prefix_prepended(application, ff_settings_router)
     include_router_with_global_prefix_prepended(application, llm_admin_router)
     include_router_with_global_prefix_prepended(application, llm_router)
     include_router_with_global_prefix_prepended(
