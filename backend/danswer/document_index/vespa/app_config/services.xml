@@ -5,7 +5,6 @@
         <search>
             <threadpool>
                 <threads boost="2">SEARCH_THREAD_NUMBER</threads>
-                <queue>100</queue>
             </threadpool>
         </search>
 
