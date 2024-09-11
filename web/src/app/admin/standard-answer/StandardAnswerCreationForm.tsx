@@ -14,6 +14,7 @@ import {
 import {
   TextFormField,
   MarkdownFormField,
+  BooleanFormField,
 } from "@/components/admin/connectors/Field";
 import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 
@@ -41,6 +42,9 @@ export const StandardAnswerCreationForm = ({
             categories: existingStandardAnswer
               ? existingStandardAnswer.categories
               : [],
+            matchRegex: existingStandardAnswer
+              ? existingStandardAnswer.match_regex
+              : false,
           }}
           validationSchema={Yup.object().shape({
             keyword: Yup.string()
@@ -86,12 +90,28 @@ export const StandardAnswerCreationForm = ({
         >
           {({ isSubmitting, values, setFieldValue }) => (
             <Form>
-              <TextFormField
-                name="keyword"
-                label="Keywords or pattern"
-                tooltip="Triggers if all specified keywords are in the question or if regex pattern exists in the question"
-                placeholder="e.g. Wifi Password or \bwifi\b"
-                autoCompleteDisabled={true}
+              {values.matchRegex ? (
+                <TextFormField
+                  name="keyword"
+                  label="Regex pattern"
+                  isCode
+                  tooltip="Triggers if the question contains this regex pattern (matches Python `re.search()`)"
+                  placeholder="danswer/.*?/admin"
+                />
+              ) : (
+                <TextFormField
+                  name="keyword"
+                  label="Keywords or pattern"
+                  tooltip="Triggers if all specified keywords are in the question or if regex pattern exists in the question"
+                  placeholder="wifi"
+                  autoCompleteDisabled={true}
+                />
+              )}
+              <BooleanFormField
+                subtext="Match a regex pattern instead of an exact keyword"
+                optional
+                label="Match regex"
+                name="matchRegex"
               />
               <div className="w-full">
                 <MarkdownFormField
