@@ -64,11 +64,11 @@ export default function DynamicReactRenderer({
   }
 
   return (
-    <div className="w-full">
+    <div className=" w-full">
       <iframe
         srcDoc={iframeContent}
         sandbox="allow-scripts allow-same-origin"
-        className="w-full h-96 border border-gray-300 rounded"
+        className="scale-.9  w-full h-[700px] border border-gray-300 rounded"
         title="Dynamic React Component"
       />
       <div className="mt-2">
@@ -82,3 +82,45 @@ export default function DynamicReactRenderer({
     </div>
   );
 }
+
+//
+
+// EXAMPLE COMPONENT
+// const Component = () => {
+//     const containerStyle = {
+//       width: '100px',
+//       height: '100px',
+//       borderRadius: '50%',
+//       backgroundColor: 'yellow',
+//       display: 'flex',
+//       flexDirection: 'column',
+//       justifyContent: 'center',
+//       alignItems: 'center',
+//       position: 'relative',
+//     };
+
+//     const eyeStyle = {
+//       width: '15px',
+//       height: '15px',
+//       borderRadius: '50%',
+//       backgroundColor: 'black',
+//       position: 'absolute',
+//       top: '25px',
+//     };
+
+//     const mouthStyle = {
+//       width: '50px',
+//       height: '25px',
+//       borderRadius: '0 0 25px 25px',
+//       borderBottom: '5px solid black',
+//       position: 'absolute',
+//       bottom: '20px',
+//     };
+
+//     return (
+//       <div style={containerStyle}>
+//         <div style={{...eyeStyle, left: '20px'}}></div>
+//         <div style={{...eyeStyle, right: '20px'}}></div>
+//         <div style={mouthStyle}></div>
+//       </div>
+//     );

@@ -239,6 +239,7 @@ def update_default_multipass_indexing(db_session: Session) -> None:
 
         logger.notice(f"Updating multipass indexing setting to: {gpu_available}")
         updated_settings = SavedSearchSettings.from_db_model(current_settings)
+
         # Enable multipass indexing if GPU is available or if using a cloud provider
         updated_settings.multipass_indexing = (
             gpu_available or current_settings.cloud_provider is not None
