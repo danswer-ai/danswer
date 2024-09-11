@@ -20,3 +20,10 @@ export interface CombinedSettings {
   enterpriseSettings: EnterpriseSettings | null;
   customAnalyticsScript: string | null;
 }
+
+export interface FeatureFlags {
+  profile_page: boolean;
+  multi_teamspace: boolean;
+  multi_workspace: boolean;
+  query_history: boolean;
+}
