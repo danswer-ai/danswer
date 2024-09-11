@@ -15,7 +15,6 @@ from danswer.configs.model_configs import (
     BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
 )
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.configs.model_configs import EMBEDDING_BATCH_SIZE
 from danswer.db.models import SearchSettings
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.natural_language_processing.utils import tokenizer_trim_content
@@ -174,10 +173,8 @@ class EmbeddingModel:
         texts: list[str],
         text_type: EmbedTextType,
         large_chunks_present: bool = False,
-        local_embedding_batch_size: int = EMBEDDING_BATCH_SIZE
-        or BATCH_SIZE_ENCODE_CHUNKS,
-        api_embedding_batch_size: int = EMBEDDING_BATCH_SIZE
-        or BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
+        local_embedding_batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
+        api_embedding_batch_size: int = BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
         max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
     ) -> list[Embedding]:
         if not texts or not all(texts):
