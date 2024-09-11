@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -11,7 +12,6 @@ from danswer.server.features.prompt.models import PromptSnapshot
 from danswer.server.features.tool.api import ToolSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
-
 
 logger = setup_logger()
 
@@ -38,8 +38,12 @@ class CreatePersonaRequest(BaseModel):
     icon_shape: int | None = None
     uploaded_image_id: str | None = None  # New field for uploaded image
     remove_image: bool | None = None
+<<<<<<< HEAD
     is_default_persona: bool = False
     display_priority: int | None = None
+=======
+    search_start_date: datetime | None = None
+>>>>>>> c64a773b1 (add start date to persona)
 
 
 class PersonaSnapshot(BaseModel):
@@ -65,7 +69,11 @@ class PersonaSnapshot(BaseModel):
     icon_color: str | None
     icon_shape: int | None
     uploaded_image_id: str | None = None
+<<<<<<< HEAD
     is_default_persona: bool
+=======
+    search_start_date: datetime | None = None
+>>>>>>> c64a773b1 (add start date to persona)
 
     @classmethod
     def from_model(
@@ -112,6 +120,7 @@ class PersonaSnapshot(BaseModel):
             icon_color=persona.icon_color,
             icon_shape=persona.icon_shape,
             uploaded_image_id=persona.uploaded_image_id,
+            search_start_date=persona.search_start_date,
         )
 
 

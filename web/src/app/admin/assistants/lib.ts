@@ -21,6 +21,7 @@ interface PersonaCreationRequest {
   icon_shape: number | null;
   remove_image?: boolean;
   uploaded_image: File | null;
+  search_start_date: Date | null;
   is_default_persona: boolean;
 }
 
@@ -46,6 +47,7 @@ interface PersonaUpdateRequest {
   icon_shape: number | null;
   remove_image: boolean;
   uploaded_image: File | null;
+  search_start_date: Date | null;
 }
 
 function promptNameFromPersonaName(personaName: string) {
@@ -124,6 +126,7 @@ function buildPersonaAPIBody(
     icon_color,
     icon_shape,
     remove_image,
+    search_start_date: start_date,
   } = creationRequest;
 
   const is_default_persona =
@@ -151,6 +154,7 @@ function buildPersonaAPIBody(
     icon_shape,
     uploaded_image_id,
     remove_image,
+    start_date,
     is_default_persona,
   };
 }
@@ -175,6 +179,7 @@ export async function uploadFile(file: File): Promise<string | null> {
 export async function createPersona(
   personaCreationRequest: PersonaCreationRequest
 ): Promise<[Response, Response | null]> {
+  console.log(personaCreationRequest);
   // first create prompt
   const createPromptResponse = await createPrompt({
     personaName: personaCreationRequest.name,

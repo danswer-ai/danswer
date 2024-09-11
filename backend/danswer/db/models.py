@@ -1314,6 +1314,9 @@ class Persona(Base):
     starter_messages: Mapped[list[StarterMessage] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
+    search_start_date: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
     # Built-in personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     builtin_persona: Mapped[bool] = mapped_column(Boolean, default=False)
