@@ -301,8 +301,13 @@ vespa:
     app: vespa
     app.kubernetes.io/instance: danswer
     app.kubernetes.io/name: vespa
-  service:
-    type: ClusterIP
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext:
+    privileged: true
+    runAsUser: 0
 
   resources:
   # The Vespa Helm chart specifies default resources, which are quite modest. We override
