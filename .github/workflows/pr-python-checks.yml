@@ -22,7 +22,7 @@ jobs:
 
   mypy-check:
     needs: check-run-needed
-    if: needs.check-run-needed.outputs.run-tests == 'true'  backend-check:
+    if: needs.check-run-needed.outputs.run-tests == 'true'  mypy-check:
     runs-on: ubuntu-latest
 
     steps:
