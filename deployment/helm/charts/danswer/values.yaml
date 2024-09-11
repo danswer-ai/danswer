@@ -290,6 +290,7 @@ background:
   tolerations: []
 
 vespa:
+  enabled: true
   replicaCount: 1
   image:
     repository: vespa
@@ -300,7 +301,8 @@ vespa:
     app: vespa
     app.kubernetes.io/instance: danswer
     app.kubernetes.io/name: vespa
-  enabled: true
+  service:
+    type: ClusterIP
 
   podSecurityContext: {}
     # fsGroup: 2000
