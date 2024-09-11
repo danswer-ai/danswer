@@ -332,16 +332,14 @@ vespa:
 
 redis:
   enabled: true
-  replicaCount: 1
-  image:
-    repository: redis
-    pullPolicy: IfNotPresent
-    tag: "7.4-alpine"
-  deploymentLabels:
-    app: redis
-  podAnnotations: {}
-  podLabels:
-    app: redis
+  architecture: standalone
+  master:
+    replicaCount: 1
+    image:
+      registry: docker.io
+      repository: bitnami/redis
+      tag: "7.4.0"
+      pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 6379
