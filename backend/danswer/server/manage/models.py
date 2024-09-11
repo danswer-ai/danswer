@@ -184,7 +184,7 @@ class StandardAnswerCreationRequest(BaseModel):
             return self
         except re.error as err:
             raise ValueError(
-                f'invalid regex pattern r"{err.pattern}" in `keyword`: {err.msg}'
+                f'invalid regex pattern r"{str(err.pattern, "utf-8")}" in `keyword`: {err.msg}'
             )
 
 
