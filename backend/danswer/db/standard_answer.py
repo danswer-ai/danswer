@@ -69,6 +69,7 @@ def update_standard_answer(
     keyword: str,
     answer: str,
     category_ids: list[int],
+    match_regex: bool,
     db_session: Session,
 ) -> StandardAnswer:
     standard_answer = db_session.scalar(
@@ -87,6 +88,7 @@ def update_standard_answer(
     standard_answer.keyword = keyword
     standard_answer.answer = answer
     standard_answer.categories = list(existing_categories)
+    standard_answer.match_regex = match_regex
 
     db_session.commit()
 
