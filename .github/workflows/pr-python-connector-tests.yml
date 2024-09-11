@@ -3,8 +3,6 @@ name: Connector Tests
 on:
   pull_request:
     branches: [main]
-    paths:
-      - 'backend/**'
   schedule:
     # This cron expression runs the job daily at 16:00 UTC (9am PT)
     - cron: "0 16 * * *"
@@ -19,7 +17,23 @@ env:
   CONFLUENCE_ACCESS_TOKEN: ${{ secrets.CONFLUENCE_ACCESS_TOKEN }}
 
 jobs:
+  check-run-needed:
+    runs-on: ubuntu-latest
+    outputs:
+      run-tests: ${{ steps.check.outputs.run-tests }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^backend/'; then
+            echo "run-tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "run-tests=false" >> $GITHUB_OUTPUT
+          fi
+
   connectors-check:
+    needs: check-run-needed
+    if: needs.check-run-needed.outputs.run-tests == 'true'
     runs-on: ubuntu-latest
 
     env:
@@ -57,3 +71,10 @@ jobs:
             -H 'Content-type: application/json' \
             --data '{"text":"Scheduled Connector Tests failed! Check the run at: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
             $SLACK_WEBHOOK
+
+  skip-tests:
+    needs: check-run-needed
+    if: needs.check-run-needed.outputs.run-tests == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No changes in backend, skipping this test."
