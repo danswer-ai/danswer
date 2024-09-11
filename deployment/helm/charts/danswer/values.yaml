@@ -303,8 +303,7 @@ vespa:
     app.kubernetes.io/name: vespa
   service:
     type: ClusterIP
-  readinessProbe:
-    enabled: false
+  readinessProbe: {}
 
   podSecurityContext: {}
     # fsGroup: 2000
