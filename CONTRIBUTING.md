@@ -62,7 +62,7 @@ Danswer being a fully functional app, relies on some external software, specific
 
 
 ### Local Set Up
-Be sure to use Python version 3.11.
+Be sure to use Python version 3.11. For instructions on installing Python 3.11 on macOS, refer to the [CONTRIBUTING_MACOS.md](./CONTRIBUTING_MACOS.md) readme.
 
 If using a lower version, modifications will have to be made to the code.
 If using a higher version, sometimes some libraries will not be available (i.e. we had problems with Tensorflow in the past with higher versions of python).
