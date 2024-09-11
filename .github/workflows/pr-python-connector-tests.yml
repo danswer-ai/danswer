@@ -33,7 +33,7 @@ jobs:
 
   connectors-check:
     needs: check-run-needed
-    if: needs.check-run-needed.outputs.run-tests == 'true' connectors-check:
+    if: needs.check-run-needed.outputs.run-tests == 'true'
     runs-on: ubuntu-latest
 
     env:

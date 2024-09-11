@@ -30,7 +30,7 @@ jobs:
 
   integration-tests:
     needs: check-run-needed
-    if: needs.check-run-needed.outputs.run-tests == 'true' integration-tests:
+    if: needs.check-run-needed.outputs.run-tests == 'true'
     runs-on: 
       group: 'arm64-image-builders'
     steps:
