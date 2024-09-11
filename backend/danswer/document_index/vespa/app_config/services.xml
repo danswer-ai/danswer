@@ -4,7 +4,7 @@
         <document-api/>
         <search>
             <threadpool>
-                <threads boost="2">SEARCH_THREAD_NUMBER</threads>
+                <threads>SEARCH_THREAD_NUMBER</threads>
             </threadpool>
         </search>
 
