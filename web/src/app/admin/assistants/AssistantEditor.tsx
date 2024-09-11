@@ -230,7 +230,9 @@ export function AssistantEditor({
       existingPersona?.document_sets?.map((documentSet) => documentSet.id) ??
       ([] as number[]),
     num_chunks: existingPersona?.num_chunks ?? null,
-    search_start_date: existingPersona?.search_start_date ?? null,
+    search_start_date: existingPersona?.search_start_date
+      ? existingPersona?.search_start_date.toString().split("T")[0]
+      : null,
     include_citations: existingPersona?.prompts[0]?.include_citations ?? true,
     llm_relevance_filter: existingPersona?.llm_relevance_filter ?? false,
     llm_model_provider_override:
@@ -375,6 +377,9 @@ export function AssistantEditor({
               id: existingPersona.id,
               existingPromptId: existingPrompt?.id,
               ...values,
+              search_start_date: values.search_start_date
+                ? new Date(values.search_start_date)
+                : null,
               num_chunks: numChunks,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
@@ -387,6 +392,9 @@ export function AssistantEditor({
               ...values,
               is_default_persona: admin!,
               num_chunks: numChunks,
+              search_start_date: values.search_start_date
+                ? new Date(values.search_start_date)
+                : null,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
@@ -938,13 +946,9 @@ export function AssistantEditor({
                                     small
                                     subtext="Documents prior to this date will not be referenced by the search tool"
                                     optional
-                                    label="Indexing Start Date"
-                                    value={
-                                      values.start_date
-                                        ? values.start_date.split("T")[0]
-                                        : ""
-                                    }
-                                    name="start_date"
+                                    label="Search Start Date"
+                                    value={values.search_start_date}
+                                    name="search_start_date"
                                   />
 
                                   <BooleanFormField
