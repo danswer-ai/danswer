@@ -18,13 +18,7 @@ env:
 
 jobs:
   check-changes:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: run-tests-flag
-      - id: check
-        run: echo "run-tests=$(cat run-tests.txt)" >> $GITHUB_OUTPUT
+    uses: ./.github/workflows/check-backend-changes.yml
 
   connectors-check:
     needs: check-changes
