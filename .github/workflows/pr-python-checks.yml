@@ -4,6 +4,8 @@ on:
   merge_group:
   pull_request:
     branches: [ main ]
+    paths:
+      - 'backend/**'
 
 jobs:
   mypy-check:
