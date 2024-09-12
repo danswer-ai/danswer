@@ -31,17 +31,16 @@ export function ChatIntro({
               className="w-16 h-16 md:w-24 md:h-24"
             />
             <h1 className="text-[1.5rem] md:text-[2.5rem] font-semibold leading-[1.2] tracking-tighter text-dark-900 text-center">
-              Fitness, Workout & Diet - PhD Coach
+              {liveAssistant.name}
             </h1>
             <div className="flex items-center gap-2">
               <span className="text-subtle">By |</span>
-              <p className="text-dark-900">{user?.full_name}</p>
+              <p className="text-dark-900">
+                {liveAssistant?.owner?.email || "enMedD AI"}
+              </p>
             </div>
             <p className="text-center text-dark-900 w-full md:w-3/4 line-clamp">
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Minima,
-              voluptatum odio? Aspernatur ducimus porro voluptas veniam maiores
-              possimus consequuntur debitis dolore dolorum minima saepe, aliquid
-              culpa facilis eaque doloremque quisquam.
+              {liveAssistant.description}
             </p>
           </div>
 
