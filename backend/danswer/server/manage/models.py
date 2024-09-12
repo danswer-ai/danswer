@@ -183,9 +183,17 @@ class StandardAnswerCreationRequest(BaseModel):
             re.compile(self.keyword)
             return self
         except re.error as err:
-            raise ValueError(
-                f'invalid regex pattern r"{str(err.pattern, "utf-8")}" in `keyword`: {err.msg}'
-            )
+            if isinstance(err.pattern, bytes):
+                raise ValueError(
+                    f'invalid regex pattern r"{err.pattern.decode()}" in `keyword`: {err.msg}'
+                )
+            else:
+                pattern = f'r"{err.pattern}"' if err.pattern is not None else ""
+                raise ValueError(
+                    " ".join(
+                        ["invalid regex pattern", pattern, f"in `keyword`: {err.msg}"]
+                    )
+                )
 
 
 class SlackBotTokens(BaseModel):
