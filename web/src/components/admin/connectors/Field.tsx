@@ -84,7 +84,7 @@ export function TextFormField({
   }
 
   return (
-    <div className="grid gap-2 pb-4">
+    <div className="grid pb-4">
       <div className="grid leading-none">
         <ShadcnLabel
           htmlFor={label}

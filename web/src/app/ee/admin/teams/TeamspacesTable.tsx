@@ -22,8 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Pen } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 const MAX_USERS_TO_DISPLAY = 6;
 
@@ -76,14 +75,21 @@ export const TeamspacesTable = ({
               .filter((teamspace) => !teamspace.is_up_for_deletion)
               .map((teamspace) => {
                 return (
-                  <TableRow key={teamspace.id}>
+                  <TableRow
+                    key={teamspace.id}
+                    onClick={() => router.push(`/admin/teams/${teamspace.id}`)}
+                    className="cursor-pointer"
+                  >
                     <TableCell>
-                      <Link href={`/admin/teams/${teamspace.id}`}>
-                        <Button variant="ghost">
-                          <Pen size={16} />
-                          <p className="text font-medium">{teamspace.name}</p>
-                        </Button>
-                      </Link>
+                      <div className="flex items-center gap-2 my-auto">
+                        <div className="p-4">
+                          <Pencil size={16} />
+                        </div>
+                        <p className="whitespace-normal break-all max-w-3xl font-medium">
+                          {teamspace.name}
+                        </p>
+                      </div>
+                      {/*  </Link> */}
                     </TableCell>
                     <TableCell>
                       {teamspace.cc_pairs.length > 0 ? (

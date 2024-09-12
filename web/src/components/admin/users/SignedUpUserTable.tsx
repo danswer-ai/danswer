@@ -45,6 +45,7 @@ const PromoterButton = ({
     <Button
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
+      variant={promote ? "default" : "outline"}
     >
       {promote ? "Promote" : "Demote"} to {promote ? "Admin" : "Basic"} User
     </Button>
@@ -87,7 +88,7 @@ const DeactivaterButton = ({
     <Button
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
-      variant="outline"
+      variant="destructive"
     >
       {deactivate ? "Deactivate" : "Activate"}
     </Button>
