@@ -2,10 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --text-50: #fafafa; /* neutral-50 */
+    --text-100: #f5f5f5; /* neutral-100, lighter */
+    --text-200: #e5e5e5; /* neutral-200, light */
+    --text-300: #d4d4d4; /* neutral-300, stronger */
+    --text-400: #a3a3a3; /* neutral-400, medium */
+    --text-500: #737373; /* neutral-500, darkMedium */
+    --text-600: #525252; /* neutral-600, dark */
+    --text-700: #404040; /* neutral-700, solid */
+    --text-800: #262626; /* neutral-800, solidDark */
+    --text-900: #111827; /* neutral-900 */
+    --text-950: #0a0a0a; /* solidDark */
+
+    --background: #fafafa; /* 50 */
+    --background-100: #f5f5f5; /* neutral-100 */
+    --background-125: #f1f2f4; /* gray-125 */
+    --background-150: #eaeaea; /* gray-150 */
+    --background-200: #e5e5e5; /* neutral-200 */
+    --background-300: #d4d4d4; /* neutral-300 */
+    --background-400: #a3a3a3; /* neutral-400 */
+    --background-500: #737373; /* neutral-500 */
+    --background-600: #525252; /* neutral-600 */
+    --background-700: #404040; /* neutral-700 */
+    --background-800: #262626; /* neutral-800 */
+    --background-900: #111827; /* gray-900 */
+    --background-inverted: #000000; /* black */
+
+    --background-emphasis: #f6f7f8;
+    --background-strong: #eaecef;
+    --border: #e5e5e5; /* gray-200 */
+    --border-light: #f5f5f5; /* gray-100 */
+    --border-medium: #d4d4d4; /* gray-300 */
+    --border-strong: #a3a3a3; /* gray-400 */
+    --border-dark: #525252; /* neutral-600 */
+
+    --link: #3b82f6; /* blue-500 */
+    --link-hover: #1d4ed8; /* blue-700 */
+    --error: #ef4444; /* red-500 */
+    --success: #059669; /* emerald-600 */
+    --alert: #f59e0b; /* amber-600 */
+    --accent: #6366f1; /* indigo-500 */
+    --accent-hover: #4f46e5;
+
+    --black: #000000;
+    --white: #ffffff;
+
+    --code-text: #e0e0e0;
+    --token-comment: #608b4e;
+    --token-punctuation: #d4d4d4;
+    --token-property: #569cd6;
+    --token-selector: #e07b53;
+    --token-atrule: #d18ad8;
+    --token-function: #f0e68c;
+    --token-regex: #9cdcfe;
+    --token-attr-name: #9cdcfe;
+
+    --non-selectable: #f8d7da;
+  }
+}
+
 @layer utilities {
   /* Hide scrollbar for Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
-    display: none;
+    --text-900:              
+  ;
   }
 
   /* Hide scrollbar for IE, Edge and Firefox */
