@@ -1,27 +1,32 @@
 "use client";
 
-import { DynamicSidebar } from "@/components/DynamicSidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { User } from "@/lib/types";
 import TopBar from "@/components/TopBar";
+import { DynamicSidebar } from "@/components/DynamicSidebar";
 
-export function ProfileBars({
+export function AdminBar({
   children,
   user,
 }: {
-  children?: React.ReactNode;
+  children: React.ReactNode;
   user?: User | null;
 }) {
   const [openSidebar, setOpenSidebar] = useState(false);
+  const pathname = usePathname();
 
   const toggleLeftSideBar = () => {
     setOpenSidebar((prevState) => !prevState);
   };
 
+  useEffect(() => {
+    setOpenSidebar(false);
+  }, [pathname]);
+
   return (
     <>
       <TopBar toggleLeftSideBar={toggleLeftSideBar} />
-
       <DynamicSidebar
         user={user}
         openSidebar={openSidebar}

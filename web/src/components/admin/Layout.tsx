@@ -6,7 +6,8 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { SideBar } from "../SideBar";
-import { AdminBars } from "./AdminBars";
+import { BarLayout } from "../BarLayout";
+import { AdminBar } from "./AdminBar";
 
 export async function Layout({ children }: { children: React.ReactNode }) {
   const tasks = [getAuthTypeMetadataSS(), getCurrentUserSS()];
@@ -41,9 +42,9 @@ export async function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="h-full overflow-y-auto">
       <div className="flex h-full">
-        <AdminBars user={user}>
+        <AdminBar user={user}>
           <SideBar />
-        </AdminBars>
+        </AdminBar>
         <div className="h-full overflow-y-auto w-full">
           <div className="h-full px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 container">
             <div className="h-full container mx-auto">{children}</div>

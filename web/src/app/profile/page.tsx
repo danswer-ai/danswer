@@ -8,11 +8,7 @@ import {
 import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
 import Profile from "./profile";
-import { WorkSpaceSidebar } from "../chat/sessionSidebar/WorkSpaceSidebar";
-import { AssistantsBars } from "../assistants/mine/AssistantsBars";
-import TopBar from "@/components/TopBar";
-import { DynamicSidebar } from "@/components/DynamicSidebar";
-import { ProfileBars } from "./ProfileBars";
+import { BarLayout } from "@/components/BarLayout";
 
 export default async function ProfilePage() {
   const tasks = [
@@ -54,7 +50,7 @@ export default async function ProfilePage() {
   return (
     <div className="h-full flex relative flex-row">
       <div className="hidden md:flex">
-        <ProfileBars user={user} />
+        <BarLayout user={user} />
       </div>
       <div className="h-full px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 container overflow-y-auto">
         <Profile user={user} />

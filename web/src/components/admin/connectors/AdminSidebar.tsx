@@ -23,7 +23,7 @@ export function AdminSidebar({ collections }: AdminSidebarProps) {
     <aside className="w-full">
       <nav className="space-y-4 h-full">
         {collections.map((collection, collectionInd) => (
-          <div key={collectionInd} className="">
+          <div key={collectionInd}>
             <h2 className="pb-2 px-4 font-semibold text-dark-900">
               {collection.name}
             </h2>
