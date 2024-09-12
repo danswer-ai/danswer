@@ -184,6 +184,7 @@ def update_current_search_settings(
     # Whenever we update the current search settinsg, we should ensure that the local reranking model is warmed up.
     if (
         current_settings.provider_type is None
+        and current_settings.rerank_model_name is not None
         and current_settings.rerank_model_name != search_settings.rerank_model_name
     ):
         warm_up_cross_encoder(search_settings.rerank_model_name)
