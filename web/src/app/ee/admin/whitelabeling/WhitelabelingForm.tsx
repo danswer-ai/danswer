@@ -11,11 +11,6 @@ import { ImageUpload } from "./ImageUpload";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
-function getLogoSrc() {
-  const timestamp = Date.now();
-  return encodeURI(`/api/enterprise-settings/logo?u=${timestamp}`);
-}
-
 export function WhitelabelingForm() {
   const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -117,8 +112,7 @@ export function WhitelabelingForm() {
                   <SubLabel>Current Custom Logo: </SubLabel>
                 </div>
                 <Image
-                  /* src={"/api/enterprise-settings/logo?u=" + Date.now()} */
-                  src={getLogoSrc()}
+                  src={"/api/enterprise-settings/logo?u=" + Date.now()}
                   alt="Logo"
                   style={{ objectFit: "contain" }}
                   className="w-32 h-32"

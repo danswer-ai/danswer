@@ -65,7 +65,7 @@ export function ShareChatSessionModal({
 
   return (
     <Dialog>
-      <DialogTrigger>{children}</DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
 
       <DialogContent className="max-w-3xl">
         <DialogHeader>

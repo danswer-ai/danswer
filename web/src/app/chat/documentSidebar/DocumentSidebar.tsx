@@ -16,20 +16,11 @@ function SectionHeader({
   closeHeader?: () => void;
 }) {
   return (
-    <div
-      className={`w-full pt-3 flex text-lg font-medium items-end border-b border-border`}
-    >
-      <div className="flex justify-between w-full mt-auto items-center pb-3.5">
-        <p className="flex truncate text-dark-900">
-          {icon && <FileText size={24} className="my-auto mr-2" />}
-          {name}
-        </p>
-        {closeHeader && (
-          <Button onClick={() => closeHeader()} variant="ghost" size="icon">
-            <PanelRightClose size={24} />
-          </Button>
-        )}
-      </div>
+    <div className="flex justify-between w-full mt-auto items-center py-5 text-lg font-medium border-b border-border">
+      <p className="flex truncate text-dark-900">
+        {icon && <FileText size={24} className="my-auto mr-2" />}
+        {name}
+      </p>
     </div>
   );
 }

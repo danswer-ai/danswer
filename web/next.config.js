@@ -21,7 +21,7 @@ const nextConfig = {
       },
     ];
   },
-  redirects: async () => {
+  /* redirects: async () => {
     // In production, something else (nginx in the one box setup) should take
     // care of this redirect. TODO (chris): better support setups where
     // web_server and api_server are on different machines.
@@ -48,7 +48,7 @@ const nextConfig = {
         permanent: true,
       },
     ]);
-  },
+  }, */
   publicRuntimeConfig: {
     version,
   },

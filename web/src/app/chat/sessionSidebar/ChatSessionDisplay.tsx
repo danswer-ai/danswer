@@ -130,56 +130,68 @@ export function ChatSessionDisplay({
                     <div className="ml-auto my-auto flex z-30 gap-1">
                       <div className="flex items-center">
                         <div className={"-m-1"}>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <div className="hover:bg-background-inverted/10 p-1 rounded">
-                                <Ellipsis size={16} />
-                              </div>
-                            </PopoverTrigger>
-                            <PopoverContent>
-                              <div className="flex flex-col w-full">
-                                <ShareChatSessionModal
-                                  chatSessionId={chatSession.id}
-                                  existingSharedStatus={
-                                    chatSession.shared_status
-                                  }
-                                >
-                                  <Button
-                                    variant="ghost"
-                                    className="w-full flex justify-start hover:bg-primary hover:text-inverted"
-                                  >
-                                    <Share2 className="mr-2" size={16} />
-                                    Share
-                                  </Button>
-                                </ShareChatSessionModal>
-                                <Button
-                                  variant="ghost"
-                                  onClick={() => setIsRenamingChat(true)}
-                                  className="w-full hover:bg-primary hover:text-inverted"
-                                >
-                                  <Pencil className="mr-2" size={16} />
-                                  Rename
-                                </Button>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                          <CustomTooltip
+                            trigger={
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <div className="hover:bg-background-inverted/10 p-1 rounded flex items-center justify-center">
+                                    <Ellipsis size={16} />
+                                  </div>
+                                </PopoverTrigger>
+                                <PopoverContent>
+                                  <div className="flex flex-col w-full">
+                                    <ShareChatSessionModal
+                                      chatSessionId={chatSession.id}
+                                      existingSharedStatus={
+                                        chatSession.shared_status
+                                      }
+                                    >
+                                      <Button
+                                        variant="ghost"
+                                        className="w-full flex justify-start hover:bg-primary hover:text-inverted"
+                                      >
+                                        <Share2 className="mr-2" size={16} />
+                                        Share
+                                      </Button>
+                                    </ShareChatSessionModal>
+                                    <Button
+                                      variant="ghost"
+                                      onClick={() => setIsRenamingChat(true)}
+                                      className="w-full hover:bg-primary hover:text-inverted"
+                                    >
+                                      <Pencil className="mr-2" size={16} />
+                                      Rename
+                                    </Button>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            }
+                          >
+                            More
+                          </CustomTooltip>
                         </div>
                       </div>
 
-                      <DeleteChatModal
-                        onSubmit={async () => {
-                          const response = await deleteChatSession(
-                            chatSession.id
-                          );
-                          if (response.ok) {
-                            // go back to the main page
-                            router.push("/chat");
-                          } else {
-                            alert("Failed to delete chat session");
-                          }
-                        }}
-                        chatSessionName={chatSession.name}
-                      />
+                      <CustomTooltip
+                        trigger={
+                          <DeleteChatModal
+                            onSubmit={async () => {
+                              const response = await deleteChatSession(
+                                chatSession.id
+                              );
+                              if (response.ok) {
+                                // go back to the main page
+                                router.push("/chat");
+                              } else {
+                                alert("Failed to delete chat session");
+                              }
+                            }}
+                            chatSessionName={chatSession.name}
+                          />
+                        }
+                      >
+                        Delete
+                      </CustomTooltip>
                     </div>
                   ))}
               </div>

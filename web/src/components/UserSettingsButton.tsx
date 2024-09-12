@@ -64,7 +64,13 @@ export function UserSettingsButton({
             )}
           </div>
         </PopoverTrigger>
-        <PopoverContent className={`w-[250px] !z-modal mb-2 ml-4 text-sm`}>
+        <PopoverContent
+          className="w-[250px] !z-modal mb-2 ml-4 text-sm"
+          side="right"
+          align="end"
+          sideOffset={-5}
+          alignOffset={-10}
+        >
           <div className="w-full">
             <>
               <div className="flex py-3 px-4 rounded-regular items-center gap-3 group">
