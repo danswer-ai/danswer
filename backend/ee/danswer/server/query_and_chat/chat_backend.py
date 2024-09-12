@@ -231,7 +231,7 @@ def handle_send_message_simple_with_history(
         message=query,
         file_descriptors=[],
         prompt_id=req.prompt_id,
-        search_doc_ids=None,
+        search_doc_ids=req.search_doc_ids,
         retrieval_options=req.retrieval_options,
         query_override=rephrased_query,
         chunks_above=0,

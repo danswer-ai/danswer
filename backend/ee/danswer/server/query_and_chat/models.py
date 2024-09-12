@@ -55,6 +55,7 @@ class BasicCreateChatMessageWithHistoryRequest(ChunkContext):
     retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
     query_override: str | None = None
     skip_rerank: bool | None = None
+    search_doc_ids: list[int] | None = None
 
 
 class SimpleDoc(BaseModel):
