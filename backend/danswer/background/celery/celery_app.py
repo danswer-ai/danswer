@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import timedelta
 from typing import Any
 from typing import cast
@@ -7,6 +8,7 @@ import redis
 from celery import Celery
 from celery import signals
 from celery import Task
+from celery._state import get_current_task
 from celery.contrib.abortable import AbortableTask  # type: ignore
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.exceptions import TaskRevokedError
@@ -62,6 +64,7 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.redis.redis_pool import RedisPool
+from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import (
@@ -848,6 +851,16 @@ def on_beat_init(sender: Any, **kwargs: Any) -> None:
     init_sqlalchemy_engine(POSTGRES_CELERY_BEAT_APP_NAME)
 
 
+class CeleryTaskFormatter(ColoredFormatter):
+    def format(self, record) -> str:
+        task = get_current_task()
+        if task and task.request:
+            record.__dict__.update(task_id=task.request.id, task_name=task.name)
+            record.msg = f"[{record.task_name}({record.task_id})] {record.msg}"
+
+        return super().format(record)
+
+
 @worker_init.connect
 def on_worker_init(sender: Any, **kwargs: Any) -> None:
     init_sqlalchemy_engine(POSTGRES_CELERY_WORKER_APP_NAME)
@@ -873,6 +886,33 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
     for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
         r.delete(key)
+
+
+@signals.setup_logging.connect
+def on_setup_logging(loglevel, logfile, format, colorize, **kwargs):
+    # reformats celery's worker logger
+    root_formatter = ColoredFormatter(
+        "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+    root_handler = logging.StreamHandler()  # Set up a handler for the root logger
+    root_handler.setFormatter(root_formatter)
+
+    root_logger = logging.getLogger()
+    root_logger.addHandler(root_handler)  # Apply the handler to the root logger
+    root_logger.setLevel(loglevel)
+
+    # reformats celery's task logger
+    task_formatter = CeleryTaskFormatter(
+        "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+    task_handler = logging.StreamHandler()  # Set up a handler for the task logger
+    task_handler.setFormatter(task_formatter)
+
+    task_logger.addHandler(task_handler)  # Apply the handler to the task logger
+    task_logger.setLevel(loglevel)
+    task_logger.propagate = False
 
 
 #####
