@@ -132,41 +132,48 @@ export function ChatSessionDisplay({
                     <div className="ml-auto my-auto flex z-30 gap-1">
                       <div className="flex items-center">
                         <div className={"-m-1"}>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <div className="hover:bg-background-inverted/10 p-1 rounded">
-                                <Ellipsis size={16} />
-                              </div>
-                            </PopoverTrigger>
-                            <PopoverContent>
-                              <div className="flex flex-col w-full">
-                                {combinedSettings?.featureFlags.share_chat && (
-                                  <ShareChatSessionModal
-                                    chatSessionId={chatSession.id}
-                                    existingSharedStatus={
-                                      chatSession.shared_status
-                                    }
-                                  >
+                          <CustomTooltip
+                            trigger={
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <div className="hover:bg-background-inverted/10 p-1 rounded flex items-center justify-center">
+                                    <Ellipsis size={16} />
+                                  </div>
+                                </PopoverTrigger>
+                                <PopoverContent>
+                                  <div className="flex flex-col w-full">
+                                    {combinedSettings?.featureFlags
+                                      .share_chat && (
+                                      <ShareChatSessionModal
+                                        chatSessionId={chatSession.id}
+                                        existingSharedStatus={
+                                          chatSession.shared_status
+                                        }
+                                      >
+                                        <Button
+                                          variant="ghost"
+                                          className="w-full flex justify-start hover:bg-primary hover:text-inverted"
+                                        >
+                                          <Share2 className="mr-2" size={16} />
+                                          Share
+                                        </Button>
+                                      </ShareChatSessionModal>
+                                    )}
                                     <Button
                                       variant="ghost"
-                                      className="w-full flex justify-start hover:bg-primary hover:text-inverted"
+                                      onClick={() => setIsRenamingChat(true)}
+                                      className="w-full hover:bg-primary hover:text-inverted"
                                     >
-                                      <Share2 className="mr-2" size={16} />
-                                      Share
+                                      <Pencil className="mr-2" size={16} />
+                                      Rename
                                     </Button>
-                                  </ShareChatSessionModal>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  onClick={() => setIsRenamingChat(true)}
-                                  className="w-full hover:bg-primary hover:text-inverted"
-                                >
-                                  <Pencil className="mr-2" size={16} />
-                                  Rename
-                                </Button>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            }
+                          >
+                            More
+                          </CustomTooltip>
                         </div>
                       </div>
 

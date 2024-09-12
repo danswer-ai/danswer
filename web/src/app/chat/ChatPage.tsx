@@ -1057,7 +1057,7 @@ export function ChatPage({
   }
 
   const [isMobile, setIsMobile] = useState(false);
-  const [showDocSidebar, setShowDocSidebar] = useState(true);
+  const [showDocSidebar, setShowDocSidebar] = useState(false);
   const [isWide, setIsWide] = useState(false);
 
   useEffect(() => {

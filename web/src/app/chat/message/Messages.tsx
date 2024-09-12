@@ -195,14 +195,14 @@ export const AIMessage = ({
               )}
           </div>
 
-          <div className="pl-1.5 md:pl-12 break-words w-full">
+          <div className="pl-1.5 md:pl-12 break-words w-full pt-4">
             {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
               <>
                 {query !== undefined &&
                   handleShowRetrieved !== undefined &&
                   isCurrentlyShowingRetrieved !== undefined &&
                   !retrievalDisabled && (
-                    <div className="my-1">
+                    <div className="mb-4">
                       <SearchSummary
                         query={query}
                         hasDocs={hasDocs || false}
@@ -459,6 +459,7 @@ import {
 import { User as UserTypes } from "@/lib/types";
 import { FeedbackModal } from "../modal/FeedbackModal";
 import { CustomModal } from "@/components/CustomModal";
+import { UserProfile } from "@/components/UserProfile";
 
 export const HumanMessage = ({
   content,
@@ -519,12 +520,8 @@ export const HumanMessage = ({
       <div className="w-full">
         <div className="">
           <div className="flex">
-            <div className="flex items-center justify-center bg-background rounded-full min-h-[34px] min-w-[34px] max-h-[34px] max-w-[34px] aspect-square text-base font-normal border-2 border-gray-900 ault py-2 mx-1">
-              {user && user.full_name ? (
-                user.full_name.charAt(0)
-              ) : (
-                <User size={25} className="mx-auto" />
-              )}
+            <div className="mx-1">
+              <UserProfile user={user} size={34} textSize="text-base" />
             </div>
 
             <div className="my-auto ml-2 font-bold text-inverted-inverted">

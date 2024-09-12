@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useContext } from "react";
-import { FiTool, FiLogOut } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User as UserTypes } from "@/lib/types";
@@ -14,9 +13,11 @@ import {
   MessageCircleMore,
   Search,
   User,
+  Wrench,
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 import { SettingsContext } from "./settings/SettingsProvider";
+import { UserProfile } from "./UserProfile";
 
 function getNameInitials(full_name: string) {
   const names = full_name.split(" ");
@@ -52,21 +53,13 @@ export function UserSettingsButton({
     <div className="relative" ref={userInfoRef}>
       <Popover>
         <PopoverTrigger
-          asChild
           onClick={() => setUserInfoVisible(!userInfoVisible)}
           className="w-full relative cursor-pointer"
         >
-          <div
-            className="flex items-center justify-center bg-background rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-xl font-normal border-2 border-gray-900 ault py-2"
+          <UserProfile
+            user={user}
             onClick={() => setUserInfoVisible(!userInfoVisible)}
-          >
-            {user && user.full_name ? (
-              // TODO: move the user's profile as a separate component
-              getNameInitials(user.full_name)
-            ) : (
-              <User size={25} className="mx-auto" />
-            )}
-          </div>
+          />
         </PopoverTrigger>
         <PopoverContent
           className="w-[250px] !z-modal mb-2 ml-4 text-sm"
@@ -78,13 +71,7 @@ export function UserSettingsButton({
           <div className="w-full">
             <>
               <div className="flex py-3 px-4 rounded-regular items-center gap-3 group">
-                <div className="flex items-center justify-center bg-background rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 ault py-2 text-default">
-                  {user && user.full_name ? (
-                    getNameInitials(user.full_name)
-                  ) : (
-                    <User size={25} className="mx-auto" />
-                  )}
-                </div>
+                <UserProfile user={user} textSize="text-base" />
                 <div className="flex flex-col w-[160px]">
                   <span className="truncate">
                     {user?.full_name || "Unknown User"}
@@ -123,7 +110,7 @@ export function UserSettingsButton({
                   href="/admin/indexing/status"
                   className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
                 >
-                  <FiTool
+                  <Wrench
                     className="my-auto mr-3"
                     size={24}
                     strokeWidth={1.5}

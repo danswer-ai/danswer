@@ -171,7 +171,7 @@ export function SearchSummary({
         editInput
       ) : (
         <>
-          <div className="text-sm my-2">
+          <div className="text-sm">
             {isOverflowed ? (
               <CustomTooltip trigger={searchingForDisplay} align="start">
                 <div className="w-full max-w-96 lg:max-w-screen-md max-h-40 overflow-auto">
