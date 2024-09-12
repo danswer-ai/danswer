@@ -375,6 +375,9 @@ class ConnectorCredentialPair(Base):
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
+
+    deletion_failure_message: Mapped[str | None] = mapped_column(String, nullable=True)
+
     credential_id: Mapped[int] = mapped_column(
         ForeignKey("credential.id"), primary_key=True
     )
