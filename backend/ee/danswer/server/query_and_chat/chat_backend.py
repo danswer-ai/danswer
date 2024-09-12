@@ -259,14 +259,22 @@ def handle_send_message_simple_with_history(
         history_str=history_str,
     )
 
+    if req.retrieval_options is None and req.search_doc_ids is None:
+        retrieval_options: RetrievalDetails | None = RetrievalDetails(
+            run_search=OptionalSearchSetting.ALWAYS,
+            real_time=False,
+        )
+    else:
+        retrieval_options = req.retrieval_options
+
     full_chat_msg_info = CreateChatMessageRequest(
         chat_session_id=chat_session.id,
         parent_message_id=chat_message.id,
         message=query,
         file_descriptors=[],
         prompt_id=req.prompt_id,
-        search_doc_ids=None,
-        retrieval_options=req.retrieval_options,
+        search_doc_ids=req.search_doc_ids,
+        retrieval_options=retrieval_options,
         query_override=rephrased_query,
         chunks_above=0,
         chunks_below=0,

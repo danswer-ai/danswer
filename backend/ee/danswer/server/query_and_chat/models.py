@@ -52,9 +52,11 @@ class BasicCreateChatMessageWithHistoryRequest(ChunkContext):
     messages: list[ThreadMessage]
     prompt_id: int | None
     persona_id: int
-    retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
+    retrieval_options: RetrievalDetails | None = None
     query_override: str | None = None
     skip_rerank: bool | None = None
+    # If search_doc_ids provided, then retrieval options are unused
+    search_doc_ids: list[int] | None = None
 
 
 class SimpleDoc(BaseModel):
