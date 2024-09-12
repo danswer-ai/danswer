@@ -27,6 +27,7 @@ from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
+from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.db.index_attempt import get_last_attempt_for_cc_pair
 from danswer.db.index_attempt import get_not_started_index_attempts
@@ -146,6 +147,42 @@ def _mark_run_failed(
     )
 
 
+def _should_full_reindex(db_session: Session, cc_pair: ConnectorCredentialPair) -> bool:
+    # do a full reindex if the row count of docs for the cc_pair is zero
+    cc_pair_identifier = ConnectorCredentialPairIdentifier(
+        connector_id=cc_pair.connector_id,
+        credential_id=cc_pair.credential_id,
+    )
+
+    document_count_info = get_document_cnts_for_cc_pairs(
+        db_session=db_session, cc_pair_identifiers=[cc_pair_identifier]
+    )
+
+    if len(document_count_info) > 0:
+        if (
+            document_count_info[0][2] == 0
+        ):  # tuple is (connector_id, credential_id, doc_count)
+            return True
+    else:
+        logger.warning(
+            f"get_document_cnts_for_cc_pairs returned no info! cc_pair={cc_pair.id}"
+        )
+
+    all_docs_indexed = 0
+    attempts = get_index_attempts_for_cc_pair(
+        db_session=db_session, cc_pair_identifier=cc_pair_identifier
+    )
+    for attempt in attempts:
+        if attempt.total_docs_indexed is None:
+            continue
+        all_docs_indexed += attempt.total_docs_indexed
+
+    if all_docs_indexed == 0:
+        return True
+
+    return False
+
+
 """Main funcs"""
 
 
@@ -203,26 +240,7 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                 ):
                     continue
 
-                full_reindex = False
-
-                # do a full reindex if the current doc count for the cc_pair is zero
-                # TODO: use total docs indexed? or actually count docs?
-                cc_pair_identifier = ConnectorCredentialPairIdentifier(
-                    connector_id=cc_pair.connector_id,
-                    credential_id=cc_pair.credential_id,
-                )
-                document_count_info = get_document_cnts_for_cc_pairs(
-                    db_session=db_session, cc_pair_identifiers=[cc_pair_identifier]
-                )
-                if len(document_count_info) > 0:
-                    doc_count = document_count_info[0][2]
-                    if doc_count == 0:
-                        full_reindex = True
-                else:
-                    logger.warning(
-                        f"get_document_cnts_for_cc_pairs returned no info! cc_pair={cc_pair.id}"
-                    )
-
+                full_reindex = _should_full_reindex(db_session, cc_pair)
                 create_index_attempt(
                     cc_pair.id,
                     search_settings_instance.id,
