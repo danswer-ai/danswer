@@ -27,7 +27,6 @@ import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
-
 export function ChatSessionDisplay({
   chatSession,
   isSelected,
@@ -105,7 +104,8 @@ export function ChatSessionDisplay({
                     }}
                     className="-my-px px-1 py-[1px] mr-2 w-full rounded"
                   />
-                ) : (                  <p className="break-all overflow-hidden whitespace-nowrap mr-3  text-ellipsis">
+                ) : (
+                  <p className="break-all overflow-hidden whitespace-nowrap mr-3  text-ellipsis">
                     {chatName || `Chat ${chatSession.id}`}
                   </p>
                 )}
@@ -140,21 +140,22 @@ export function ChatSessionDisplay({
                             </PopoverTrigger>
                             <PopoverContent>
                               <div className="flex flex-col w-full">
-                              {combinedSettings?.featureFlags.share_chat && (
-                                <ShareChatSessionModal
-                                  chatSessionId={chatSession.id}
-                                  existingSharedStatus={
-                                    chatSession.shared_status
-                                  }
-                                >
-                                  <Button
-                                    variant="ghost"
-                                    className="w-full flex justify-start hover:bg-primary hover:text-inverted"
+                                {combinedSettings?.featureFlags.share_chat && (
+                                  <ShareChatSessionModal
+                                    chatSessionId={chatSession.id}
+                                    existingSharedStatus={
+                                      chatSession.shared_status
+                                    }
                                   >
-                                    <Share2 className="mr-2" size={16} />
-                                    Share
-                                  </Button>
-                                </ShareChatSessionModal>
+                                    <Button
+                                      variant="ghost"
+                                      className="w-full flex justify-start hover:bg-primary hover:text-inverted"
+                                    >
+                                      <Share2 className="mr-2" size={16} />
+                                      Share
+                                    </Button>
+                                  </ShareChatSessionModal>
+                                )}
                                 <Button
                                   variant="ghost"
                                   onClick={() => setIsRenamingChat(true)}
