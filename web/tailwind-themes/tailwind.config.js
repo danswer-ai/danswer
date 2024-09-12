@@ -148,27 +148,27 @@ module.exports = {
 
         // keyword highlighting
         highlight: {
-          text: "#fef9c3", // yellow-100
+          text: "var(--highlight-text)",
         },
 
         // scrollbar
         scrollbar: {
-          track: "#f9fafb",
-          thumb: "#e5e7eb",
-          "thumb-hover": "#d1d5db",
+          track: "var(--scrollbar-track)",
+          thumb: "var(--scrollbar-thumb)",
+          "thumb-hover": "var(--scrollbar-thumb-hover)",
 
           dark: {
-            thumb: "#989a9c",
-            "thumb-hover": "#c7cdd2",
+            thumb: "var(--scrollbar-dark-thumb)",
+            "thumb-hover": "var(--scrollbar-dark-thumb-hover)",
           },
         },
 
         // bubbles in chat for each "user"
-        user: "#F1F2F4", // near gray-100
-        ai: "#60a5fa", // blue-400
+        user: "var(--user-bubble)",
+        ai: "var(--ai-bubble)",
 
         // for display documents
-        document: "#f43f5e", // pink-500
+        document: "var(--document-color)",
 
         // light mode
         tremor: {
