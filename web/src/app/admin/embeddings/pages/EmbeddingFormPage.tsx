@@ -209,6 +209,7 @@ export default function EmbeddingForm() {
         ...selectedProvider,
         ...rerankingDetails,
         ...advancedEmbeddingDetails,
+        ...selectedProvider,
         provider_type: null,
       };
     }
