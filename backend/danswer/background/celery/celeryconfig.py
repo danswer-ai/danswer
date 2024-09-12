@@ -19,7 +19,7 @@ REDIS_SCHEME = "redis"
 # SSL-specific query parameters for Redis URL
 SSL_QUERY_PARAMS = ""
 if REDIS_SSL:
-    REDIS_SCHEME == "rediss"
+    REDIS_SCHEME = "rediss"
     SSL_QUERY_PARAMS = f"?ssl_cert_reqs={REDIS_SSL_CERT_REQS}"
     if REDIS_SSL_CA_CERTS:
         SSL_QUERY_PARAMS += f"&ssl_ca_certs={REDIS_SSL_CA_CERTS}"
