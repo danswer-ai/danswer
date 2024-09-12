@@ -31,13 +31,14 @@ class RedisPool:
 
     def _init_pool(self) -> None:
         if REDIS_SSL:
+            # Examples: https://github.com/redis/redis-py/issues/780
             self._pool = redis.ConnectionPool(
                 host=REDIS_HOST,
                 port=REDIS_PORT,
                 db=REDIS_DB_NUMBER,
                 password=REDIS_PASSWORD,
                 max_connections=REDIS_POOL_MAX_CONNECTIONS,
-                ssl=True,
+                connection_class=redis.SSLConnection,
                 ssl_ca_certs=REDIS_SSL_CA_CERTS,
                 ssl_cert_reqs=REDIS_SSL_CERT_REQS,
             )
