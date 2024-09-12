@@ -4,7 +4,6 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-import enmedd.db.models as db_models
 from ee.enmedd.db.teamspace import fetch_teamspace
 from ee.enmedd.db.teamspace import fetch_teamspaces
 from ee.enmedd.db.teamspace import insert_teamspace
@@ -15,14 +14,15 @@ from ee.enmedd.server.teamspace.models import TeamspaceCreate
 from ee.enmedd.server.teamspace.models import TeamspaceUpdate
 from enmedd.auth.users import current_admin_user
 from enmedd.db.engine import get_session
+from enmedd.db.models import User
 
 router = APIRouter(prefix="/manage")
 
 
 @router.get("/admin/teamspace/{teamspace_id}")
-def get_teamspace(
+def get_teamspace_by_id(
     teamspace_id: int,
-    _: db_models.User = Depends(current_admin_user),
+    _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> Teamspace:
     db_teamspace = fetch_teamspace(db_session, teamspace_id)
@@ -35,7 +35,7 @@ def get_teamspace(
 
 @router.get("/admin/teamspace")
 def list_teamspaces(
-    _: db_models.User = Depends(current_admin_user),
+    _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[Teamspace]:
     teamspaces = fetch_teamspaces(db_session, only_current=False)
@@ -45,7 +45,7 @@ def list_teamspaces(
 @router.post("/admin/teamspace")
 def create_teamspace(
     teamspace: TeamspaceCreate,
-    _: db_models.User = Depends(current_admin_user),
+    _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> Teamspace:
     try:
@@ -63,7 +63,7 @@ def create_teamspace(
 def patch_teamspace(
     teamspace_id: int,
     teamspace: TeamspaceUpdate,
-    _: db_models.User = Depends(current_admin_user),
+    _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> Teamspace:
     try:
@@ -77,7 +77,7 @@ def patch_teamspace(
 @router.delete("/admin/teamspace/{teamspace_id}")
 def delete_teamspace(
     teamspace_id: int,
-    _: db_models.User = Depends(current_admin_user),
+    _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
