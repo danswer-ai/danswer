@@ -21,6 +21,7 @@ from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import POSTGRES_INDEXER_APP_NAME
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
+from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
@@ -40,6 +41,7 @@ from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
+from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
@@ -201,8 +203,31 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                 ):
                     continue
 
+                full_reindex = False
+
+                # do a full reindex if the current doc count for the cc_pair is zero
+                # TODO: use total docs indexed? or actually count docs?
+                cc_pair_identifier = ConnectorCredentialPairIdentifier(
+                    connector_id=cc_pair.connector_id,
+                    credential_id=cc_pair.credential_id,
+                )
+                document_count_info = get_document_cnts_for_cc_pairs(
+                    db_session=db_session, cc_pair_identifiers=[cc_pair_identifier]
+                )
+                if len(document_count_info) > 0:
+                    doc_count = document_count_info[0][2]
+                    if doc_count == 0:
+                        full_reindex = True
+                else:
+                    logger.warning(
+                        f"get_document_cnts_for_cc_pairs returned no info! cc_pair={cc_pair.id}"
+                    )
+
                 create_index_attempt(
-                    cc_pair.id, search_settings_instance.id, db_session
+                    cc_pair.id,
+                    search_settings_instance.id,
+                    db_session,
+                    from_beginning=full_reindex,
                 )
 
 

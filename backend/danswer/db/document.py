@@ -144,6 +144,7 @@ def get_document_connector_cnts(
 def get_document_cnts_for_cc_pairs(
     db_session: Session, cc_pair_identifiers: list[ConnectorCredentialPairIdentifier]
 ) -> Sequence[tuple[int, int, int]]:
+    """Returns tuples of [connector_id, credential_id, document_count]."""
     stmt = (
         select(
             DocumentByConnectorCredentialPair.connector_id,
