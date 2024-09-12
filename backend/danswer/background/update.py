@@ -148,6 +148,25 @@ def _mark_run_failed(
 
 
 def _should_full_reindex(db_session: Session, cc_pair: ConnectorCredentialPair) -> bool:
+    """
+    Determines whether a full reindex is needed for a given ConnectorCredentialPair.
+
+    A full reindex is required in the following cases:
+    1. There are no documents currently indexed for the given connector and credential pair.
+    2. No successful indexing attempts ever indexed any docs.
+
+    Parameters:
+    ----------
+    db_session : Session
+        The database session to use for querying the document counts and indexing attempts.
+    cc_pair : ConnectorCredentialPair
+        The connector credential pair for which to determine if a full reindex is needed.
+
+    Returns:
+    -------
+    bool
+        True if a full reindex should be performed, False otherwise.
+    """
     # do a full reindex if the row count of docs for the cc_pair is zero
     cc_pair_identifier = ConnectorCredentialPairIdentifier(
         connector_id=cc_pair.connector_id,
@@ -168,13 +187,20 @@ def _should_full_reindex(db_session: Session, cc_pair: ConnectorCredentialPair) 
             f"get_document_cnts_for_cc_pairs returned no info! cc_pair={cc_pair.id}"
         )
 
+    # count the total number of all successful index attempts made with
+    # the current search settings
     all_docs_indexed = 0
     attempts = get_index_attempts_for_cc_pair(
-        db_session=db_session, cc_pair_identifier=cc_pair_identifier
+        db_session=db_session, cc_pair_identifier=cc_pair_identifier, only_current=True
     )
     for attempt in attempts:
+        if attempt.status != IndexingStatus.SUCCESS:
+            # only count successful attempts
+            continue
+
         if attempt.total_docs_indexed is None:
             continue
+
         all_docs_indexed += attempt.total_docs_indexed
 
     if all_docs_indexed == 0:
