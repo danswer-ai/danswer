@@ -139,8 +139,6 @@ class VespaIndex(DocumentIndex):
         services = services.replace(
             SEARCH_THREAD_NUMBER_PAT, str(VESPA_SEARCHER_THREADS)
         )
-        print("sending over this")
-        print(services)
 
         kv_store = get_dynamic_config_store()
 
