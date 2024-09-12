@@ -1,5 +1,3 @@
-import { EmphasizedClickable } from "@/components/BasicClickable";
-import { HoverPopup } from "@/components/HoverPopup";
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -23,25 +21,28 @@ export function ShowHideDocsButton({
       className="ml-auto my-auto"
       onClick={() => handleShowRetrieved(messageId)}
     >
-      {isCurrentlyShowingRetrieved ? (
-        <Button
-          size="xs"
-          variant="outline"
-          onClick={handleToggleSideBar}
-          className="w-24"
-        >
-          Hide Docs
-        </Button>
-      ) : (
-        <Button
-          size="xs"
-          variant="outline"
-          onClick={handleToggleSideBar}
-          className="w-24"
-        >
-          Show Docs
-        </Button>
-      )}
+      {(() => {
+        const isMobile = window.innerWidth <= 1420;
+
+        const buttonLabel = isMobile
+          ? isCurrentlyShowingRetrieved
+            ? "Show Docs"
+            : "Hide Docs"
+          : isCurrentlyShowingRetrieved
+            ? "Hide Docs"
+            : "Show Docs";
+
+        return (
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={handleToggleSideBar}
+            className="w-24"
+          >
+            {buttonLabel}
+          </Button>
+        );
+      })()}
     </div>
   );
 }

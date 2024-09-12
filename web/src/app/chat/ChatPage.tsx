@@ -1056,9 +1056,9 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [showDocSidebar, setShowDocSidebar] = useState(
-    window.innerWidth >= 1420
-  );
+  const isMobile = window.innerWidth <= 1420;
+
+  const [showDocSidebar, setShowDocSidebar] = useState(!isMobile);
   const [isWide, setIsWide] = useState(false);
 
   useEffect(() => {
@@ -1174,22 +1174,6 @@ export function ChatPage({
         </DynamicSidebar>
 
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
-          {/* {currentFeedback && (
-            <FeedbackModal
-              feedbackType={currentFeedback[0]}
-              onClose={() => setCurrentFeedback(null)}
-              onSubmit={({ message, predefinedFeedback }) => {
-                onFeedback(
-                  currentFeedback[1],
-                  currentFeedback[0],
-                  message,
-                  predefinedFeedback
-                );
-                setCurrentFeedback(null);
-              }}
-            />
-          )} */}
-
           <ConfigurationModal
             chatSessionId={chatSessionIdRef.current!}
             activeTab={configModalActiveTab}
@@ -1439,17 +1423,33 @@ export function ChatPage({
                                         }
                                       : undefined
                                   }
-                                  isCurrentlyShowingRetrieved={showDocSidebar}
+                                  isCurrentlyShowingRetrieved={
+                                    isShowingRetrieved
+                                  }
                                   handleShowRetrieved={(messageNumber) => {
-                                    if (showDocSidebar) {
-                                      setSelectedMessageForDocDisplay(null);
-                                    } else {
-                                      if (messageNumber !== null) {
-                                        setSelectedMessageForDocDisplay(
-                                          messageNumber
-                                        );
+                                    if (isMobile) {
+                                      if (!isShowingRetrieved) {
+                                        setSelectedMessageForDocDisplay(null);
                                       } else {
-                                        setSelectedMessageForDocDisplay(-1);
+                                        if (messageNumber !== null) {
+                                          setSelectedMessageForDocDisplay(
+                                            messageNumber
+                                          );
+                                        } else {
+                                          setSelectedMessageForDocDisplay(-1);
+                                        }
+                                      }
+                                    } else {
+                                      if (isShowingRetrieved) {
+                                        setSelectedMessageForDocDisplay(null);
+                                      } else {
+                                        if (messageNumber !== null) {
+                                          setSelectedMessageForDocDisplay(
+                                            messageNumber
+                                          );
+                                        } else {
+                                          setSelectedMessageForDocDisplay(-1);
+                                        }
                                       }
                                     }
                                   }}
@@ -1481,7 +1481,20 @@ export function ChatPage({
                                         )
                                       : !retrievalEnabled
                                   }
-                                  handleToggleSideBar={toggleSidebar}
+                                  handleToggleSideBar={() => {
+                                    if (isMobile) {
+                                      setShowDocSidebar(isShowingRetrieved);
+                                    } else {
+                                      !isShowingRetrieved
+                                        ? setShowDocSidebar(true)
+                                        : setShowDocSidebar(false);
+                                    }
+
+                                    if (sidebarElementRef.current) {
+                                      sidebarElementRef.current.style.transition =
+                                        "width 0.3s ease-in-out";
+                                    }
+                                  }}
                                 />
                               </div>
                             );
