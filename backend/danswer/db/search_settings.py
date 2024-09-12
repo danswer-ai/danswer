@@ -181,7 +181,7 @@ def update_current_search_settings(
         logger.warning("No current search settings found to update")
         return
 
-    # Whenever we update the current search settinsg, we should ensure that the local reranking model is warmed up.
+    # Whenever we update the current search settings, we should ensure that the local reranking model is warmed up.
     if (
         current_settings.provider_type is None
         and search_settings.rerank_model_name is not None
