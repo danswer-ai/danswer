@@ -138,6 +138,7 @@ services:
       - INDEXING_ONLY=True
       - LOG_LEVEL=${LOG_LEVEL:-debug}
       - index_model_cache_huggingface:/root/.cache/huggingface/
+      - VESPA_SEARCHER_THREADS=${VESPA_SEARCHER_THREADS:-1}
     logging:
       driver: json-file
       options:
