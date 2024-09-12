@@ -97,6 +97,10 @@ class CitationInfo(BaseModel):
     document_id: str
 
 
+class AllCitations(BaseModel):
+    citations: list[CitationInfo]
+
+
 # This is a mapping of the citation number to the document index within
 # the result search doc set
 class MessageSpecificCitations(BaseModel):

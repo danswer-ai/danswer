@@ -12,17 +12,20 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def get_json_line(json_dict: dict[str, Any]) -> str:
+def get_json_line(
+    json_dict: dict[str, Any], encoder: type[json.JSONEncoder] = DateTimeEncoder
+) -> str:
     """
     Convert a dictionary to a JSON string with datetime handling, and add a newline.
 
     Args:
         json_dict: The dictionary to be converted to JSON.
+        encoder: JSON encoder class to use, defaults to DateTimeEncoder.
 
     Returns:
         A JSON string representation of the input dictionary with a newline character.
     """
-    return json.dumps(json_dict, cls=DateTimeEncoder) + "\n"
+    return json.dumps(json_dict, cls=encoder) + "\n"
 
 
 def mask_string(sensitive_str: str) -> str:

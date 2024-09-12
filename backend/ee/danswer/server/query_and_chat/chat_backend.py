@@ -7,11 +7,11 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
+from danswer.chat.models import AllCitations
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import FinalUsedContextDocsResponse
 from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMRelevanceFilterResponse
-from danswer.chat.models import MessageSpecificCitations
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.chat.process_message import stream_chat_message_objects
@@ -74,14 +74,10 @@ def _get_final_context_doc_indices(
     if final_context_docs is None or simple_search_docs is None:
         return None
 
-    final_context_indices: list[int] = []
-    for i, simple_doc in enumerate(simple_search_docs):
-        for doc in final_context_docs:
-            if doc.document_id == simple_doc.id:
-                final_context_indices.append(i)
-                break
-
-    return final_context_indices
+    final_context_doc_ids = {doc.document_id for doc in final_context_docs}
+    return [
+        i for i, doc in enumerate(simple_search_docs) if doc.id in final_context_doc_ids
+    ]
 
 
 def remove_answer_citations(answer: str) -> str:
@@ -158,8 +154,11 @@ def handle_simplified_chat_message(
             response.message_id = packet.message_id
         elif isinstance(packet, FinalUsedContextDocsResponse):
             final_context_docs = packet.final_context_docs
-        elif isinstance(packet, MessageSpecificCitations):
-            response.cited_documents = packet.citation_map
+        elif isinstance(packet, AllCitations):
+            response.cited_documents = {
+                citation.citation_num: citation.document_id
+                for citation in packet.citations
+            }
 
     response.final_context_doc_indices = _get_final_context_doc_indices(
         final_context_docs, response.simple_search_docs
@@ -297,8 +296,11 @@ def handle_send_message_simple_with_history(
             response.llm_selected_doc_indices = packet.llm_selected_doc_indices
         elif isinstance(packet, FinalUsedContextDocsResponse):
             final_context_docs = packet.final_context_docs
-        elif isinstance(packet, MessageSpecificCitations):
-            response.cited_documents = packet.citation_map
+        elif isinstance(packet, AllCitations):
+            response.cited_documents = {
+                citation.citation_num: citation.document_id
+                for citation in packet.citations
+            }
 
     response.final_context_doc_indices = _get_final_context_doc_indices(
         final_context_docs, response.simple_search_docs

@@ -7,6 +7,7 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import create_chat_chain
+from danswer.chat.models import AllCitations
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
@@ -245,6 +246,7 @@ ChatPacket = (
     | FinalUsedContextDocsResponse
     | ChatMessageDetail
     | DanswerAnswerPiece
+    | AllCitations
     | CitationInfo
     | ImageGenerationDisplay
     | CustomToolResponse
@@ -758,7 +760,7 @@ def stream_chat_message_objects(
                 citations_list=answer.citations,
                 db_docs=reference_db_search_docs,
             )
-            yield message_specific_citations
+            yield AllCitations(citations=answer.citations)
 
         # Saving Gen AI answer and responding with message info
         tool_name_to_tool_id: dict[str, int] = {}

@@ -76,4 +76,5 @@ class ChatBasicResponse(BaseModel):
     message_id: int | None = None
     llm_selected_doc_indices: list[int] | None = None
     final_context_doc_indices: list[int] | None = None
-    cited_documents: dict[int, int] | None = None
+    # this is a map of the citation number to the document id
+    cited_documents: dict[int, str] | None = None
