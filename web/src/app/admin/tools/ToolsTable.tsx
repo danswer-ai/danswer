@@ -60,7 +60,7 @@ export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
                     </p>
                   </div>
                 </TableCell>
-                <TableCell className="whitespace-normal break-all max-w-2xl">
+                <TableCell className="whitespace-normal break-all min-w-80 max-w-2xl">
                   {tool.description}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">

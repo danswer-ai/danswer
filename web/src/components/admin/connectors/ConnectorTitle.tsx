@@ -1,3 +1,4 @@
+import { CustomTooltip } from "@/components/CustomTooltip";
 import { getSourceMetadata } from "@/lib/sources";
 import {
   ConfluenceConfig,
@@ -74,12 +75,18 @@ export const ConnectorTitle = ({
 
   const mainSectionClassName = "flex w-fit";
   const mainDisplay = (
-    <>
-      {sourceMetadata.icon({ size: 14 })}
-      <div className="ml-1 my-auto">
-        {ccPairName || sourceMetadata.displayName}
-      </div>
-    </>
+    <CustomTooltip
+      trigger={
+        <div className="flex items-center gap-1">
+          {sourceMetadata.icon({ size: 14 })}
+          <div className="ml-1 my-auto max-w-[350px] truncate">
+            {ccPairName || sourceMetadata.displayName}
+          </div>
+        </div>
+      }
+    >
+      {ccPairName || sourceMetadata.displayName}
+    </CustomTooltip>
   );
   return (
     <div className="my-auto">

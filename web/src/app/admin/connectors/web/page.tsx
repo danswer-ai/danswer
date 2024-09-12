@@ -80,6 +80,7 @@ export default function Web() {
                   label="URL to Index:"
                   autoCompleteDisabled={false}
                 />
+
                 <div className="w-full">
                   <SelectorFormField
                     name="web_connector_type"

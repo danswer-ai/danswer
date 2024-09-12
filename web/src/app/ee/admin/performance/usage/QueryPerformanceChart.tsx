@@ -48,7 +48,8 @@ export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
     );
   } else {
     const initialDate = timeRange.from || new Date(queryAnalyticsData[0].date);
-    const dateRange = getDatesList(initialDate);
+    const endDate = timeRange.to || new Date();
+    const dateRange = getDatesList(initialDate, endDate);
 
     const data = dateRange.map((dateStr) => {
       const queryAnalyticsForDate = queryAnalyticsData.find(
@@ -139,14 +140,14 @@ export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
           />
           <Area
             dataKey="queries"
-            type="natural"
+            type="monotoneX"
             fill="url(#fillQueries)"
             stroke={chartConfig.queries.color}
             stackId="a"
           />
           <Area
             dataKey="uniqueUsers"
-            type="natural"
+            type="monotoneX"
             fill="url(#fillUniqueUsers)"
             stroke={chartConfig.uniqueUsers.color}
             stackId="a"

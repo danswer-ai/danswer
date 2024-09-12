@@ -128,7 +128,7 @@ export const SearchResultsDisplay = ({
   return (
     <div className="px-2">
       {shouldDisplayQA && (
-        <Card className="p-4 relative">
+        <Card className="p-4 relative w-full mb-10">
           <CardHeader className="border-b p-0 pb-4">
             <h2 className="text-dark-900 font-bold">AI Answer</h2>
           </CardHeader>
@@ -148,7 +148,7 @@ export const SearchResultsDisplay = ({
           </CardContent>
 
           {quotes !== null && answer && !isAssistant && (
-            <CardFooter className="p-0 border-t pt-2">
+            <CardFooter className="p-0 border-t pt-2 flex-col items-end">
               <QuotesSection
                 quotes={dedupedQuotes}
                 isFetching={isFetching}
@@ -156,7 +156,7 @@ export const SearchResultsDisplay = ({
               />
 
               {searchResponse.messageId !== null && (
-                <div className="absolute right-4 bottom-4">
+                <div className="pt-4">
                   <QAFeedbackBlock messageId={searchResponse.messageId} />
                 </div>
               )}

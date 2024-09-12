@@ -43,7 +43,6 @@ export const ChatSidebar = ({
   toggleSideBar?: () => void;
   isAssistant?: boolean;
 }) => {
-  let { user } = useChatContext();
   const router = useRouter();
   const { toast } = useToast();
 

@@ -95,7 +95,7 @@ const DocumentSetTable = ({
 
   return (
     <div>
-      <h3 className="font-semibold pb-5">Existing Document Sets</h3>
+      <h3 className="font-semibold pb-4">Existing Document Sets</h3>
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -146,7 +146,10 @@ const DocumentSetTable = ({
                       </TableCell>
                       <TableCell>
                         {documentSet.is_up_to_date ? (
-                          <Badge variant="success">
+                          <Badge
+                            variant="success"
+                            className="whitespace-nowrap"
+                          >
                             <CircleCheckBig size={14} /> Up to Date
                           </Badge>
                         ) : documentSet.cc_pair_descriptors.length > 0 ? (

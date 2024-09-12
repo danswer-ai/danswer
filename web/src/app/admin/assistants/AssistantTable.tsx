@@ -16,14 +16,14 @@ import { useToast } from "@/hooks/use-toast";
 
 function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
   if (assistant.default_assistant) {
-    return <p>Built-In</p>;
+    return <p className="whitespace-nowrap">Built-In</p>;
   }
 
   if (assistant.is_public) {
     return <p>Global</p>;
   }
 
-  return <p>Assistantl {assistant.owner && <>({assistant.owner.email})</>}</p>;
+  return <p>Assistant {assistant.owner && <>({assistant.owner.email})</>}</p>;
 }
 
 export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {

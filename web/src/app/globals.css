@@ -103,3 +103,13 @@ body {
   background-clip: text;
   color: transparent;
 }
+
+.line-clamp {
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 4;
+  text-wrap: balance;
+  max-width: 100%;
+  overflow: hidden;
+}

@@ -79,6 +79,7 @@ export function CustomDatePicker({
       const defaultRange = getDateRange(selectedRange);
       onValueChange(defaultRange);
     }
+    console.log(range);
     setSelectedRange("");
   };
 
@@ -94,6 +95,10 @@ export function CustomDatePicker({
         calendarValue.to ? ` - ${format(calendarValue.to, "LLL dd, y")}` : ""
       }`
     : "Select Range";
+
+  const disablePastDates = (date: Date) => {
+    return date > new Date();
+  };
 
   return (
     <div className="flex">
@@ -113,6 +118,7 @@ export function CustomDatePicker({
             selected={calendarValue}
             onSelect={handleSelectDateRange}
             numberOfMonths={2}
+            disabled={disablePastDates}
           />
         </PopoverContent>
       </Popover>

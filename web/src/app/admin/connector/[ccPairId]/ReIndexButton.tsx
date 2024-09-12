@@ -121,7 +121,6 @@ export function ReIndexButton({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              className="ml-auto"
               onClick={() => {
                 setReIndexPopupVisible(true);
               }}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
 import { ThumbsDownIcon, ThumbsUpIcon } from "../icons/icons";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "../ui/button";
 
 type Feedback = "like" | "dislike";
 
@@ -28,14 +29,12 @@ interface QAFeedbackIconProps {
 }
 
 const QAFeedback = ({ messageId, feedbackType }: QAFeedbackIconProps) => {
-  const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
 
-  const size = isHovered ? 22 : 20;
-  const paddingY = isHovered ? "" : "py-0.5 ";
-
   return (
-    <div
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={async () => {
         const isSuccessful = await giveFeedback(messageId, feedbackType);
         if (isSuccessful) {
@@ -46,24 +45,14 @@ const QAFeedback = ({ messageId, feedbackType }: QAFeedbackIconProps) => {
           });
         }
       }}
-      onMouseEnter={() => {
-        setIsHovered(true);
-      }}
-      onMouseLeave={() => setIsHovered(false)}
-      className={"cursor-pointer " + paddingY}
+      className="cursor-pointer"
     >
       {feedbackType === "like" ? (
-        <ThumbsUpIcon
-          size={size}
-          className="my-auto flex flex-shrink-0 text-gray-500"
-        />
+        <ThumbsUpIcon size={16} />
       ) : (
-        <ThumbsDownIcon
-          size={size}
-          className="my-auto flex flex-shrink-0 text-gray-500"
-        />
+        <ThumbsDownIcon size={16} />
       )}
-    </div>
+    </Button>
   );
 };
 
@@ -75,9 +64,7 @@ export const QAFeedbackBlock = ({ messageId }: QAFeedbackBlockProps) => {
   return (
     <div className="flex">
       <QAFeedback messageId={messageId} feedbackType="like" />
-      <div className="ml-2">
-        <QAFeedback messageId={messageId} feedbackType="dislike" />
-      </div>
+      <QAFeedback messageId={messageId} feedbackType="dislike" />
     </div>
   );
 };

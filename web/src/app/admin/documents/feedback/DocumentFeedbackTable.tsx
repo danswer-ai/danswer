@@ -3,7 +3,6 @@ import { PageSelector } from "@/components/PageSelector";
 import { DocumentBoostStatus } from "@/lib/types";
 import { updateHiddenStatus } from "../lib";
 import { numToDisplay } from "./constants";
-import { FiEye, FiEyeOff } from "react-icons/fi";
 import { getErrorMsg } from "@/lib/fetchUtils";
 import { ScoreSection } from "../ScoreEditor";
 import {
@@ -19,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 const IsVisibleSection = ({
   document,
@@ -63,14 +63,14 @@ const IsVisibleSection = ({
         )
       }
     >
-      <div className="text-xs">
+      <div className="text-xs font-medium">
         {document.hidden ? (
           <div className="flex">
-            <FiEye className="my-auto mr-1" /> Unhide
+            <Eye size={16} className="my-auto mr-1" /> Unhide
           </div>
         ) : (
           <div className="flex">
-            <FiEyeOff className="my-auto mr-1" />
+            <EyeOff size={16} className="my-auto mr-1" />
             Hide
           </div>
         )}

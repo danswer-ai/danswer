@@ -79,6 +79,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import TopBar from "@/components/TopBar";
+import { useToast } from "@/hooks/use-toast";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -105,6 +106,7 @@ export function ChatPage({
     openedFolders,
   } = useChatContext();
 
+  const { toast } = useToast();
   const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
 
   const [selectedAssistant, setSelectedAssistant] = useState<Assistant | null>(
@@ -682,10 +684,11 @@ export function ChatPage({
       ? messageHistory.indexOf(messageToResend)
       : null;
     if (!messageToResend && messageIdToResend !== undefined) {
-      setPopup({
-        message:
+      toast({
+        title: "Error",
+        description:
           "Failed to re-send message - please refresh the page and try again.",
-        type: "error",
+        variant: "destructive",
       });
       return;
     }
@@ -966,16 +969,18 @@ export function ChatPage({
     );
 
     if (response.ok) {
-      setPopup({
-        message: "Thanks for your feedback!",
-        type: "success",
+      toast({
+        title: "Success",
+        description: "Thanks for your feedback!",
+        variant: "success",
       });
     } else {
       const responseJson = await response.json();
       const errorMsg = responseJson.detail || responseJson.message;
-      setPopup({
-        message: `Failed to submit feedback - ${errorMsg}`,
-        type: "error",
+      toast({
+        title: "Error",
+        description: `Failed to submit feedback - ${errorMsg}`,
+        variant: "destructive",
       });
     }
   };
@@ -1002,10 +1007,11 @@ export function ChatPage({
       file.type.startsWith("image/")
     );
     if (imageFiles.length > 0 && !llmAcceptsImages) {
-      setPopup({
-        type: "error",
-        message:
+      toast({
+        title: "Error",
+        description:
           "The current Assistant does not support image input. Please select an assistant with Vision support.",
+        variant: "destructive",
       });
       return;
     }
@@ -1033,9 +1039,10 @@ export function ChatPage({
     uploadFilesForChat(acceptedFiles).then(([files, error]) => {
       if (error) {
         setCurrentMessageFiles((prev) => removeTempFiles(prev));
-        setPopup({
-          type: "error",
-          message: error,
+        toast({
+          title: "Error",
+          description: error,
+          variant: "destructive",
         });
       } else {
         setCurrentMessageFiles((prev) => [...removeTempFiles(prev), ...files]);
@@ -1052,12 +1059,14 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [showDocSidebar, setShowDocSidebar] = useState(true);
+  const [showDocSidebar, setShowDocSidebar] = useState(
+    window.innerWidth >= 1420
+  );
   const [isWide, setIsWide] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsWide(window.innerWidth >= 1024);
+      setIsWide(window.innerWidth >= 1420);
     };
 
     handleResize();
@@ -1073,7 +1082,7 @@ export function ChatPage({
       sidebarElementRef.current.style.width = showDocSidebar ? "300px" : "0px";
     }
 
-    setShowDocSidebar((showDocSidebar) => !showDocSidebar);
+    setShowDocSidebar((prevState) => !prevState);
   };
 
   useEffect(() => {
@@ -1140,7 +1149,7 @@ export function ChatPage({
                 </ShareChatSessionModal>
               )}
 
-            {retrievalEnabled && showDocSidebar && (
+            {retrievalEnabled && (
               <Button onClick={toggleSidebar} variant="ghost" size="icon">
                 <PanelLeftClose size={24} />
               </Button>
@@ -1231,6 +1240,7 @@ export function ChatPage({
                           <ChatIntro
                             availableSources={finalAvailableSources}
                             liveAssistant={liveAssistant}
+                            user={user}
                           >
                             {currentAssistant &&
                               currentAssistant.starter_messages &&
@@ -1332,6 +1342,7 @@ export function ChatPage({
                               (selectedMessageForDocDisplay ===
                                 TEMP_USER_MESSAGE_ID &&
                                 i === messageHistory.length - 1);
+
                             const previousMessage =
                               i !== 0 ? messageHistory[i - 1] : null;
 
@@ -1392,10 +1403,11 @@ export function ChatPage({
                                     !isStreaming
                                       ? (newQuery) => {
                                           if (!previousMessage) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
+                                            toast({
+                                              title: "Error",
+                                              description:
                                                 "Cannot edit query of first message - please refresh the page and try again.",
+                                              variant: "destructive",
                                             });
                                             return;
                                           }
@@ -1403,10 +1415,11 @@ export function ChatPage({
                                           if (
                                             previousMessage.messageId === null
                                           ) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
+                                            toast({
+                                              title: "Error",
+                                              description:
                                                 "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                              variant: "destructive",
                                             });
                                             return;
                                           }
@@ -1420,11 +1433,9 @@ export function ChatPage({
                                         }
                                       : undefined
                                   }
-                                  isCurrentlyShowingRetrieved={
-                                    isShowingRetrieved
-                                  }
+                                  isCurrentlyShowingRetrieved={showDocSidebar}
                                   handleShowRetrieved={(messageNumber) => {
-                                    if (isShowingRetrieved) {
+                                    if (showDocSidebar) {
                                       setSelectedMessageForDocDisplay(null);
                                     } else {
                                       if (messageNumber !== null) {
@@ -1449,10 +1460,11 @@ export function ChatPage({
                                           currentAlternativeAssistant,
                                       });
                                     } else {
-                                      setPopup({
-                                        type: "error",
-                                        message:
+                                      toast({
+                                        title: "Error",
+                                        description:
                                           "Failed to force search - please refresh the page and try again.",
+                                        variant: "destructive",
                                       });
                                     }
                                   }}
@@ -1463,6 +1475,7 @@ export function ChatPage({
                                         )
                                       : !retrievalEnabled
                                   }
+                                  handleToggleSideBar={toggleSidebar}
                                 />
                               </div>
                             );
@@ -1558,18 +1571,18 @@ export function ChatPage({
                   {retrievalEnabled || editingRetrievalEnabled ? (
                     <>
                       <AnimatePresence>
-                        {!showDocSidebar && (
+                        {showDocSidebar && (
                           <motion.div
                             className={`fixed w-full h-full bg-background-inverted bg-opacity-20 inset-0 z-overlay 2xl:hidden`}
                             initial={{ opacity: 0 }}
-                            animate={{ opacity: !showDocSidebar ? 1 : 0 }}
+                            animate={{ opacity: showDocSidebar ? 1 : 0 }}
                             exit={{ opacity: 0 }}
                             transition={{
                               duration: 0.2,
-                              opacity: { delay: !showDocSidebar ? 0 : 0.3 },
+                              opacity: { delay: showDocSidebar ? 0 : 0.3 },
                             }}
                             style={{
-                              pointerEvents: !showDocSidebar ? "auto" : "none",
+                              pointerEvents: showDocSidebar ? "auto" : "none",
                             }}
                             onClick={toggleSidebar}
                           />
@@ -1580,7 +1593,7 @@ export function ChatPage({
                         ref={sidebarElementRef}
                         className="fixed 2xl:relative top-0 right-0 z-overlay bg-background  flex-none overflow-y-hidden h-full"
                         style={{
-                          width: !showDocSidebar
+                          width: showDocSidebar
                             ? Math.max(350, usedSidebarWidth)
                             : 0,
                         }}

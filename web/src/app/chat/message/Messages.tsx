@@ -91,6 +91,7 @@ export const AIMessage = ({
   handleForceSearch,
   retrievalDisabled,
   currentAssistant,
+  handleToggleSideBar,
 }: {
   alternativeAssistant?: Assistant | null;
   currentAssistant: Assistant;
@@ -109,8 +110,10 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
+  handleToggleSideBar?: () => void;
 }) => {
   const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
     Prism.highlightAll();
     setIsReady(true);
@@ -174,6 +177,7 @@ export const AIMessage = ({
                       messageId={messageId}
                       isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
                       handleShowRetrieved={handleShowRetrieved}
+                      handleToggleSideBar={handleToggleSideBar}
                     />
                   </div>
                 </div>
@@ -197,6 +201,7 @@ export const AIMessage = ({
                         }
                         handleShowRetrieved={handleShowRetrieved}
                         handleSearchQueryEdit={handleSearchQueryEdit}
+                        handleToggleSideBar={handleToggleSideBar}
                       />
                     </div>
                   )}
@@ -298,7 +303,10 @@ export const AIMessage = ({
                     .filter(([_, document]) => document.semantic_identifier)
                     .map(([citationKey, document], ind) => {
                       const display = (
-                        <Badge variant="secondary">
+                        <Badge
+                          variant="secondary"
+                          className="cursor-pointer hover:opacity-75"
+                        >
                           <div className="my-auto mr-1">
                             <SourceIcon
                               sourceType={document.source_type}
@@ -371,7 +379,7 @@ function MessageSwitcher({
   handleNext: () => void;
 }) {
   return (
-    <div className="flex items-center text-sm space-x-0.5">
+    <div className="flex items-center text-sm space-x-2">
       <Button
         variant="ghost"
         size="smallIcon"
@@ -466,13 +474,11 @@ export const HumanMessage = ({
         <div className="">
           <div className="flex">
             <div className="flex items-center justify-center bg-background rounded-full min-h-[34px] min-w-[34px] max-h-[34px] max-w-[34px] aspect-square text-base font-normal border-2 border-gray-900 ault py-2 mx-1">
-              {/*  {user && user.email ? (
-                user.email[0].toUpperCase()
+              {user && user.full_name ? (
+                user.full_name.charAt(0)
               ) : (
                 <User size={25} className="mx-auto" />
-              )} */}
-
-              <User size={25} className="mx-auto" />
+              )}
             </div>
 
             <div className="my-auto ml-2 font-bold text-inverted-inverted">
