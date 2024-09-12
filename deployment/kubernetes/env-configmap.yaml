@@ -35,6 +35,7 @@ data:
   # Internet Search Tool
   BING_API_KEY: ""
   # Don't change the NLP models unless you know what you're doing
+  EMBEDDING_BATCH_SIZE: ""
   DOCUMENT_ENCODER_MODEL: ""
   NORMALIZE_EMBEDDINGS: ""
   ASYM_QUERY_PREFIX: ""
