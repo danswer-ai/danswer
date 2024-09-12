@@ -50,8 +50,7 @@ def oneoff_standard_answers(
     )
 
     server_standard_answers = [
-        StandardAnswer.from_model(db_answer[0])
-        for db_answer in matching_standard_answers
+        StandardAnswer.from_model(db_answer) for db_answer in matching_standard_answers
     ]
     return server_standard_answers
 
@@ -150,11 +149,11 @@ def handle_standard_answers(
         )
 
         formatted_answers = []
-        for standard_answer, is_regex_match in matching_standard_answers:
+        for standard_answer in matching_standard_answers:
             since_you_mentioned_pretext = (
                 f'Since you mentioned _"{standard_answer.keyword}"_'
-                if not is_regex_match
-                else f'Since your question matches the pattern _"{standard_answer.keyword}"_'
+                if not standard_answer.match_regex
+                else f"Since your question matches the regex pattern `{standard_answer.keyword}`"
             )
             block_quotified_answer = ">" + standard_answer.answer.replace("\n", "\n> ")
             formatted_answer = f"{since_you_mentioned_pretext}, I thought this might be useful: \n\n{block_quotified_answer}"

@@ -186,7 +186,7 @@ def find_matching_standard_answers(
     id_in: list[int],
     query: str,
     db_session: Session,
-) -> list[tuple[StandardAnswer, bool]]:
+) -> list[StandardAnswer]:
     """
     Returns a list of tuples, where each tuple contains a StandardAnswer and a boolean
     indicating if the query is a regex match.
@@ -196,27 +196,30 @@ def find_matching_standard_answers(
         .where(StandardAnswer.active.is_(True))
         .where(StandardAnswer.id.in_(id_in))
     )
-    possible_standard_answers = db_session.scalars(stmt).all()
+    possible_standard_answers: Sequence[StandardAnswer] = db_session.scalars(stmt).all()
 
-    matching_standard_answers: list[tuple[StandardAnswer, bool]] = []
+    matching_standard_answers: list[StandardAnswer] = []
     for standard_answer in possible_standard_answers:
-        # Remove punctuation and split the keyword into individual words
-        keyword_words = "".join(
-            char
-            for char in standard_answer.keyword.lower()
-            if char not in string.punctuation
-        ).split()
+        if standard_answer.match_regex:
+            if re.search(standard_answer.keyword, query, re.IGNORECASE):
+                matching_standard_answers.append(standard_answer)
 
-        # Remove punctuation and split the query into individual words
-        query_words = "".join(
-            char for char in query.lower() if char not in string.punctuation
-        ).split()
+        else:
+            # Remove punctuation and split the keyword into individual words
+            keyword_words = "".join(
+                char
+                for char in standard_answer.keyword.lower()
+                if char not in string.punctuation
+            ).split()
 
-        # Check if all of the keyword words are in the query words
-        if all(word in query_words for word in keyword_words):
-            matching_standard_answers.append((standard_answer, False))
-        elif re.search(standard_answer.keyword, query, re.IGNORECASE):
-            matching_standard_answers.append((standard_answer, True))
+            # Remove punctuation and split the query into individual words
+            query_words = "".join(
+                char for char in query.lower() if char not in string.punctuation
+            ).split()
+
+            # Check if all of the keyword words are in the query words
+            if all(word in query_words for word in keyword_words):
+                matching_standard_answers.append(standard_answer)
 
     return matching_standard_answers
 
