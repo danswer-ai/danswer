@@ -141,6 +141,27 @@ export const connectorConfigs: Record<
       },
     ],
   },
+  github_pages: {
+    description: "Configure GitHub Pages connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter the base URL of your GitHub Pages site:",
+        label: "GitHub Pages Base URL",
+        name: "github_pages_base_url",
+        optional: false,
+      },
+      {
+        type: "number",
+        query: "Enter the batch size for indexing (number of pages per batch):",
+        label: "Index Batch Size",
+        name: "github_pages_batch_size",
+        optional: true,
+        default: 10, // Default batch size
+      },
+    ],
+  },
+  
   gitlab: {
     description: "Configure GitLab connector",
     values: [

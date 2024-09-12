@@ -1068,6 +1068,20 @@ export const GithubIcon = ({
     </div>
   );
 };
+export const GitHubPagesIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  // GitHub Pages Icon adjustment for surrounding whitespace
+  return (
+    <div
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={githubPagesSVG} alt="GitHub Pages Logo" width="96" height="96" />
+    </div>
+  );
+};
 
 export const GmailIcon = ({
   size = 16,

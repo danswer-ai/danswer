@@ -211,6 +211,7 @@ export interface UserGroup {
 const validSources = [
   "web",
   "github",
+  "github_pages",
   "gitlab",
   "slack",
   "google_drive",

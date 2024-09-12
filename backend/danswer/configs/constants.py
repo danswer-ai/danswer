@@ -102,6 +102,7 @@ class DocumentSource(str, Enum):
     S3 = "s3"
     R2 = "r2"
     GOOGLE_CLOUD_STORAGE = "google_cloud_storage"
+    GITHUB_PAGES = "github_pages"
     OCI_STORAGE = "oci_storage"
     NOT_APPLICABLE = "not_applicable"
 

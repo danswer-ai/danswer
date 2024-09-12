@@ -18,6 +18,11 @@ export interface Credential<T> extends CredentialBase<T> {
 export interface GithubCredentialJson {
   github_access_token: string;
 }
+export interface GitthubPagesCredentialJson {
+  github_username: string;
+  github_access_token: string;
+  github_repo: string;
+}
 
 export interface GitlabCredentialJson {
   gitlab_url: string;

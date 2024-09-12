@@ -8,6 +8,7 @@ import {
   DropboxIcon,
   FileIcon,
   GithubIcon,
+  GitHubPagesIcon,
   GitlabIcon,
   GlobeIcon,
   GmailIcon,
@@ -92,6 +93,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Github",
     category: SourceCategory.CodeRepository,
     docs: "https://docs.danswer.dev/connectors/github",
+  },
+  github_pages: {
+    icon: GitHubPagesIcon,
+    displayName: "Github Pages",
+    category: SourceCategory.Wiki,
+    docs: "https://docs.danswer.dev/connectors/github_pages",
   },
   gitlab: {
     icon: GitlabIcon,
