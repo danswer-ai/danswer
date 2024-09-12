@@ -56,9 +56,7 @@ export default async function Page({
           defaultAssistantId,
         }}
       >
-        <ProviderContextProvider>
-          <WrappedChat initiallyToggled={toggleSidebar} />
-        </ProviderContextProvider>
+        <WrappedChat initiallyToggled={toggleSidebar} />
       </ChatProvider>
     </>
   );
