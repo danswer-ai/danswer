@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { deleteChatSession, renameChatSession } from "../lib";
 import { DeleteChatModal } from "../modal/DeleteChatModal";
 import { BasicSelectable } from "@/components/BasicClickable";
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 export function ChatSessionDisplay({
   chatSession,
@@ -40,6 +41,7 @@ export function ChatSessionDisplay({
   toggleSideBar?: () => void;
 }) {
   const router = useRouter();
+  const combinedSettings = useContext(SettingsContext);
   const [isRenamingChat, setIsRenamingChat] = useState(false);
   const [chatName, setChatName] = useState(chatSession.name);
   const [delayedSkipGradient, setDelayedSkipGradient] = useState(skipGradient);
@@ -130,45 +132,41 @@ export function ChatSessionDisplay({
                     <div className="ml-auto my-auto flex z-30 gap-1">
                       <div className="flex items-center">
                         <div className={"-m-1"}>
-                          <CustomTooltip
-                            trigger={
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <div className="hover:bg-background-inverted/10 p-1 rounded flex items-center justify-center">
-                                    <Ellipsis size={16} />
-                                  </div>
-                                </PopoverTrigger>
-                                <PopoverContent>
-                                  <div className="flex flex-col w-full">
-                                    <ShareChatSessionModal
-                                      chatSessionId={chatSession.id}
-                                      existingSharedStatus={
-                                        chatSession.shared_status
-                                      }
-                                    >
-                                      <Button
-                                        variant="ghost"
-                                        className="w-full flex justify-start hover:bg-primary hover:text-inverted"
-                                      >
-                                        <Share2 className="mr-2" size={16} />
-                                        Share
-                                      </Button>
-                                    </ShareChatSessionModal>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <div className="hover:bg-background-inverted/10 p-1 rounded">
+                                <Ellipsis size={16} />
+                              </div>
+                            </PopoverTrigger>
+                            <PopoverContent>
+                              <div className="flex flex-col w-full">
+                                {combinedSettings?.featureFlags.share_chat && (
+                                  <ShareChatSessionModal
+                                    chatSessionId={chatSession.id}
+                                    existingSharedStatus={
+                                      chatSession.shared_status
+                                    }
+                                  >
                                     <Button
                                       variant="ghost"
-                                      onClick={() => setIsRenamingChat(true)}
-                                      className="w-full hover:bg-primary hover:text-inverted"
+                                      className="w-full flex justify-start hover:bg-primary hover:text-inverted"
                                     >
-                                      <Pencil className="mr-2" size={16} />
-                                      Rename
+                                      <Share2 className="mr-2" size={16} />
+                                      Share
                                     </Button>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            }
-                          >
-                            More
-                          </CustomTooltip>
+                                  </ShareChatSessionModal>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  onClick={() => setIsRenamingChat(true)}
+                                  className="w-full hover:bg-primary hover:text-inverted"
+                                >
+                                  <Pencil className="mr-2" size={16} />
+                                  Rename
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         </div>
                       </div>
 

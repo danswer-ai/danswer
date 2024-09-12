@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
 import { FileDescriptor } from "../interfaces";
 import { InputBarPreview } from "../files/InputBarPreview";

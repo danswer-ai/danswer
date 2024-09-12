@@ -20,8 +20,8 @@ export function Logo({
 
   if (
     !settings ||
-    !settings.enterpriseSettings ||
-    !settings.enterpriseSettings.use_custom_logo
+    !settings.workspaces ||
+    !settings.workspaces.use_custom_logo
   ) {
     return (
       <div style={{ height, width }} className={className}>
@@ -39,7 +39,7 @@ export function Logo({
   return (
     <div style={{ height, width }} className={`relative ${className}`}>
       <Image
-        src="/api/enterprise-settings/logo"
+        src="/api/workspace/logo"
         alt="Logo"
         className="object-contain rounded-regular"
         width={width}

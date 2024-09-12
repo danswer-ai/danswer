@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import enmedd.db.models as db_models
+from ee.enmedd.db.teamspace import fetch_teamspace
 from ee.enmedd.db.teamspace import fetch_teamspaces
 from ee.enmedd.db.teamspace import insert_teamspace
 from ee.enmedd.db.teamspace import prepare_teamspace_for_deletion
@@ -16,6 +17,20 @@ from enmedd.auth.users import current_admin_user
 from enmedd.db.engine import get_session
 
 router = APIRouter(prefix="/manage")
+
+
+@router.get("/admin/teamspace/{teamspace_id}")
+def get_teamspace(
+    teamspace_id: int,
+    _: db_models.User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> Teamspace:
+    db_teamspace = fetch_teamspace(db_session, teamspace_id)
+    if db_teamspace is None:
+        raise HTTPException(
+            status_code=404, detail=f"Teamspace with id '{teamspace_id}' not found"
+        )
+    return Teamspace.from_model(db_teamspace)
 
 
 @router.get("/admin/teamspace")

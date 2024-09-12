@@ -5,18 +5,28 @@ export interface Settings {
   maximum_chat_retention_days: number | null;
 }
 
-export interface EnterpriseSettings {
-  application_name: string | null;
-  application_description: string | null;
+export interface Workspaces {
+  workspace_name: string | null;
+  workspace_description: string | null;
   use_custom_logo: boolean;
 
   // custom Chat components
-  custom_popup_header: string | null;
-  custom_popup_content: string | null;
+  custom_header_logo: string | null;
+  custom_header_content: string | null;
 }
+
+export interface FeatureFlags {
+  profile_page: boolean;
+  multi_teamspace: boolean;
+  multi_workspace: boolean;
+  query_history: boolean;
+  whitelabelling: boolean;
+  share_chat: boolean;
+  explore_assistants: boolean;
 
 export interface CombinedSettings {
   settings: Settings;
-  enterpriseSettings: EnterpriseSettings | null;
+  featureFlags: FeatureFlags;
+  workspaces: Workspaces | null;
   customAnalyticsScript: string | null;
 }

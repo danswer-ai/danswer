@@ -59,7 +59,7 @@ import Dropzone from "react-dropzone";
 import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
@@ -650,7 +650,6 @@ export function ChatPage({
     alternativeAssistant?: Assistant | null;
   } = {}) => {
     setAlternativeGeneratingAssistant(alternativeAssistant);
-
     clientScrollToBottom();
     let currChatSessionId: number;
     let isNewSession = chatSessionIdRef.current === null;
@@ -658,6 +657,7 @@ export function ChatPage({
       searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
 
     if (isNewSession) {
+      toggleSidebar();
       currChatSessionId = await createChatSession(
         liveAssistant?.id || 0,
         searchParamBasedChatSessionName

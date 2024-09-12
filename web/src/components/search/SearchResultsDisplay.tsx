@@ -319,7 +319,7 @@ export const SearchResultsDisplay = ({
     defaultOverrides.forceDisplayQA;
 
   return (
-    <>
+    <div className="px-2">
       {shouldDisplayQA && (
         <Card className="p-4 relative w-full mb-10">
           <CardHeader className="border-b p-0 pb-4">
@@ -384,6 +384,6 @@ export const SearchResultsDisplay = ({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }; */

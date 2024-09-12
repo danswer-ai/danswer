@@ -22,7 +22,7 @@ import { createFolder } from "../folders/FolderManagement";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import EnmeddLogo from "../../../../public/logo-brand.png";
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/Logo";
@@ -59,7 +59,7 @@ export const ChatSidebar = ({
     return null;
   }
   const settings = combinedSettings.settings;
-  const enterpriseSettings = combinedSettings.enterpriseSettings;
+  const workspaces = combinedSettings.workspaces;
 
   return (
     <>
@@ -75,7 +75,7 @@ export const ChatSidebar = ({
       >
         <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-6">
           <div className="flex">
-            {enterpriseSettings && enterpriseSettings.application_name ? (
+            {workspaces && workspaces.workspace_name ? (
               <Image src={EnmeddLogo} alt="LogoBrand" height={40} />
             ) : (
               <Image src={EnmeddLogo} alt="enmedd-logo" height={40} />
@@ -119,17 +119,19 @@ export const ChatSidebar = ({
                   <MessageCircleMore size={16} className="min-w-4 min-h-4" />
                   Chat
                 </Link>
-                {/*  <Link
-                  href="/assistants/mine"
-                  className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
-                    isAssistant
-                      ? "bg-primary text-white"
-                      : "hover:bg-hover-light"
-                  }`}
-                >
-                  <Headset size={16} />
-                  <span className="truncate">Explore Assistants</span>
-                </Link> */}
+                {combinedSettings.featureFlags.explore_assistants && (
+                  <Link
+                    href="/assistants/mine"
+                    className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
+                      isAssistant
+                        ? "bg-primary text-white"
+                        : "hover:bg-hover-light"
+                    }`}
+                  >
+                    <Headset size={16} />
+                    <span className="truncate">Explore Assistants</span>
+                  </Link>
+                )}
               </>
             )}
             <Separator className="mt-4" />

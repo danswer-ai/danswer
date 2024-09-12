@@ -37,6 +37,7 @@ PUBLIC_ENDPOINT_SPECS = [
     ("/users/{id}", {"GET"}),
     ("/users/{id}", {"PATCH"}),
     ("/users/{id}", {"DELETE"}),
+    ("/ff", {"GET"}),
     # oauth
     ("/auth/oauth/authorize", {"GET"}),
     ("/auth/oauth/callback", {"GET"}),

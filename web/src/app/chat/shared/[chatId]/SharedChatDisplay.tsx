@@ -10,7 +10,7 @@ import {
 import { AIMessage, HumanMessage } from "../../message/Messages";
 import { Button, Callout, Divider } from "@tremor/react";
 import { useRouter } from "next/navigation";
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 
 // TODO: replace the component name
 function BackToEnmeddButton() {

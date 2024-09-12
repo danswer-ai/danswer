@@ -1432,8 +1432,11 @@ class Workspace(Base):
         ForeignKey("instance.id"), nullable=True
     )
     workspace_name: Mapped[str] = mapped_column(Text)
+    workspace_description: Mapped[str] = mapped_column(Text, nullable=True)
+    use_custom_logo: Mapped[bool] = mapped_column(Boolean, default=False)
     custom_logo: Mapped[str | None] = mapped_column(Text, nullable=True)
     custom_header_logo: Mapped[str | None] = mapped_column(Text, nullable=True)
+    custom_header_content: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     users: Mapped[list[User]] = relationship(
         "User", secondary=Workspace__Users.__table__, back_populates="workspace"

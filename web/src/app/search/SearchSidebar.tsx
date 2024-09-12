@@ -33,7 +33,7 @@ export const SearchSidebar = ({
     return null;
   }
   const settings = combinedSettings.settings;
-  const enterpriseSettings = combinedSettings.enterpriseSettings;
+  const workspaces = combinedSettings.workspaces;
 
   return (
     <>
@@ -49,7 +49,7 @@ export const SearchSidebar = ({
       >
         <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-6">
           <div className="flex">
-            {enterpriseSettings && enterpriseSettings.application_name ? (
+            {workspaces && workspaces.workspace_name ? (
               <Image src={EnmeddLogo} alt="enmedd-logo" height={40} />
             ) : (
               <Image src={EnmeddLogo} alt="enmedd-logo" height={40} />

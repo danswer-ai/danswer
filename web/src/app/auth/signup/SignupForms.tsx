@@ -25,12 +25,16 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
           company_name: "",
           email: "",
           password: "",
+          confirm_password: "",
         }}
         validationSchema={Yup.object().shape({
           full_name: Yup.string().min(3).max(70).required(),
           company_name: Yup.string().required(),
-          email: Yup.string().email().required(),
-          password: Yup.string().required(),
+          email: Yup.string().email().required("Email is required"),
+          password: Yup.string().required("Password is required").min(8),
+          confirm_password: Yup.string()
+            .required("Confirm password is required")
+            .oneOf([Yup.ref("password")], "Passwords must match"),
         })}
         onSubmit={async (values) => {
           setIsWorking(true);
@@ -96,6 +100,12 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             <TextFormField
               name="password"
               label="Password"
+              type="password"
+              placeholder="**************"
+            />
+            <TextFormField
+              name="confirm_password"
+              label="Confirm Password"
               type="password"
               placeholder="**************"
             />
