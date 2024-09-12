@@ -66,6 +66,7 @@ const RerankingDetailsForm = forwardRef<
       >
         {({ values, setFieldValue, resetForm }) => {
           const resetRerankingValues = () => {
+            setRerankingDetails(originalRerankingDetails);
             resetForm();
           };
 
@@ -191,7 +192,8 @@ const RerankingDetailsForm = forwardRef<
                             {card.rerank_provider_type ===
                             RerankerProvider.LITELLM ? (
                               <LiteLLMIcon size={24} className="mr-2" />
-                            ) : RerankerProvider.COHERE ? (
+                            ) : card.rerank_provider_type ===
+                              RerankerProvider.COHERE ? (
                               <CohereIcon size={24} className="mr-2" />
                             ) : (
                               <MixedBreadIcon size={24} className="mr-2" />
