@@ -23,6 +23,7 @@ export interface FeatureFlags {
   whitelabelling: boolean;
   share_chat: boolean;
   explore_assistants: boolean;
+}
 
 export interface CombinedSettings {
   settings: Settings;
