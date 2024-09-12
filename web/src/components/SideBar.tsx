@@ -1,3 +1,5 @@
+"use client";
+
 import {
   BookmarkIcon,
   ConnectorIcon,
@@ -23,12 +25,11 @@ import {
 } from "lucide-react";
 import { useContext } from "react";
 import { SettingsContext } from "./settings/SettingsProvider";
-import { getCombinedSettings } from "./settings/lib";
 
 interface SideBarProps {}
 
-export async function SideBar() {
-  const dynamicSettings = await getCombinedSettings({ forceRetrieval: true });
+export const SideBar: React.FC<SideBarProps> = ({}) => {
+  const dynamicSettings = useContext(SettingsContext);
   return (
     <div className="w-full h-full p-4 overflow-y-auto bg-background">
       <AdminSidebar
@@ -191,7 +192,7 @@ export async function SideBar() {
                 ),
                 link: "/admin/performance/usage",
               },
-              ...(dynamicSettings.featureFlags.query_history
+              ...(dynamicSettings?.featureFlags.query_history
                 ? [
                     {
                       name: (
@@ -227,7 +228,7 @@ export async function SideBar() {
                 ),
                 link: "/admin/settings",
               },
-              ...(dynamicSettings.featureFlags.whitelabelling
+              ...(dynamicSettings?.featureFlags.whitelabelling
                 ? [
                     {
                       name: (
@@ -246,4 +247,4 @@ export async function SideBar() {
       />
     </div>
   );
-}
+};
