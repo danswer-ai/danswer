@@ -150,6 +150,7 @@ try:
 except ValueError:
     POSTGRES_POOL_RECYCLE = POSTGRES_POOL_RECYCLE_DEFAULT
 
+REDIS_SSL = os.getenv("REDIS_SSL", "").lower() == "true"
 REDIS_HOST = os.environ.get("REDIS_HOST") or "localhost"
 REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD") or ""
@@ -159,6 +160,9 @@ REDIS_DB_NUMBER = int(os.environ.get("REDIS_DB_NUMBER", 0))
 
 # Used by celery as broker and backend
 REDIS_DB_NUMBER_CELERY = int(os.environ.get("REDIS_DB_NUMBER_CELERY", 15))
+
+REDIS_SSL_CERT_REQS = os.getenv("REDIS_SSL_CERT_REQS", "CERT_NONE")
+REDIS_SSL_CA_CERTS = os.getenv("REDIS_SSL_CA_CERTS", "")
 
 #####
 # Connector Configs

@@ -9,6 +9,9 @@ from danswer.configs.app_configs import REDIS_DB_NUMBER
 from danswer.configs.app_configs import REDIS_HOST
 from danswer.configs.app_configs import REDIS_PASSWORD
 from danswer.configs.app_configs import REDIS_PORT
+from danswer.configs.app_configs import REDIS_SSL
+from danswer.configs.app_configs import REDIS_SSL_CA_CERTS
+from danswer.configs.app_configs import REDIS_SSL_CERT_REQS
 
 REDIS_POOL_MAX_CONNECTIONS = 10
 
@@ -27,13 +30,25 @@ class RedisPool:
         return cls._instance
 
     def _init_pool(self) -> None:
-        self._pool = redis.ConnectionPool(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            db=REDIS_DB_NUMBER,
-            password=REDIS_PASSWORD,
-            max_connections=REDIS_POOL_MAX_CONNECTIONS,
-        )
+        if REDIS_SSL:
+            self._pool = redis.ConnectionPool(
+                host=REDIS_HOST,
+                port=REDIS_PORT,
+                db=REDIS_DB_NUMBER,
+                password=REDIS_PASSWORD,
+                max_connections=REDIS_POOL_MAX_CONNECTIONS,
+                ssl=True,
+                ssl_ca_certs=REDIS_SSL_CA_CERTS,
+                ssl_cert_reqs=REDIS_SSL_CERT_REQS,
+            )
+        else:
+            self._pool = redis.ConnectionPool(
+                host=REDIS_HOST,
+                port=REDIS_PORT,
+                db=REDIS_DB_NUMBER,
+                password=REDIS_PASSWORD,
+                max_connections=REDIS_POOL_MAX_CONNECTIONS,
+            )
 
     def get_client(self) -> Redis:
         return redis.Redis(connection_pool=self._pool)
