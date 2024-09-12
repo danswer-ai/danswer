@@ -193,7 +193,7 @@ You can run the full Danswer application stack from pre-built images including a
 Navigate to `danswer/deployment/docker_compose` and run:
 
 ```bash
-docker compose up
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d
 ```
 
 After Docker pulls and starts these containers, navigate to `http://localhost:3000` to use Danswer.
@@ -201,7 +201,7 @@ After Docker pulls and starts these containers, navigate to `http://localhost:30
 If you want to make changes to Danswer and run those changes in Docker, you can also build a local version of the Danswer container images that incorporates your changes like so:
 
 ```bash
-docker compose up --build
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build
 ```
 
 ### Formatting and Linting
