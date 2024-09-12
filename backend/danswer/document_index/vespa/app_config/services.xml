@@ -2,11 +2,7 @@
 <services version="1.0">
     <container id="default" version="1.0">
         <document-api/>
-        <search>
-            <requestthreads>
-                <persearch>SEARCH_THREAD_NUMBER</persearch>
-            </requestthreads>
-        </search>
+        <search/>
         <http>
             <server id="default" port="8081"/>
         </http>
@@ -15,6 +11,17 @@
         </nodes>
     </container>
     <content id="danswer_index" version="1.0">
+        <engine>    
+            <proton>
+                <tuning>
+                    <searchnode>
+                        <requestthreads>
+                            <persearch>SEARCH_THREAD_NUMBER</persearch>
+                        </requestthreads>
+                    </searchnode>
+                </tuning>
+            </proton>
+        </engine>
         <redundancy>1</redundancy>
         <documents>
             <!-- <document type="danswer_chunk" mode="index" /> -->
