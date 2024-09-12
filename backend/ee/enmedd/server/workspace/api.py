@@ -5,26 +5,26 @@ from fastapi import Response
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
-from ee.enmedd.server.enterprise_settings.models import AnalyticsScriptUpload
-from ee.enmedd.server.enterprise_settings.models import EnterpriseSettings
-from ee.enmedd.server.enterprise_settings.store import _LOGO_FILENAME
-from ee.enmedd.server.enterprise_settings.store import load_analytics_script
-from ee.enmedd.server.enterprise_settings.store import load_settings
-from ee.enmedd.server.enterprise_settings.store import store_analytics_script
-from ee.enmedd.server.enterprise_settings.store import store_settings
-from ee.enmedd.server.enterprise_settings.store import upload_logo
+from ee.enmedd.server.workspace.models import AnalyticsScriptUpload
+from ee.enmedd.server.workspace.models import Workspaces
+from ee.enmedd.server.workspace.store import _LOGO_FILENAME
+from ee.enmedd.server.workspace.store import load_analytics_script
+from ee.enmedd.server.workspace.store import load_settings
+from ee.enmedd.server.workspace.store import store_analytics_script
+from ee.enmedd.server.workspace.store import store_settings
+from ee.enmedd.server.workspace.store import upload_logo
 from enmedd.auth.users import current_admin_user
 from enmedd.db.engine import get_session
 from enmedd.db.models import User
 from enmedd.file_store.file_store import get_default_file_store
 
-admin_router = APIRouter(prefix="/admin/enterprise-settings")
-basic_router = APIRouter(prefix="/enterprise-settings")
+admin_router = APIRouter(prefix="/admin/workspace")
+basic_router = APIRouter(prefix="/workspace")
 
 
 @admin_router.put("")
 def put_settings(
-    settings: EnterpriseSettings, _: User | None = Depends(current_admin_user)
+    settings: Workspaces, _: User | None = Depends(current_admin_user)
 ) -> None:
     try:
         settings.check_validity()
@@ -34,7 +34,7 @@ def put_settings(
 
 
 @basic_router.get("")
-def fetch_settings() -> EnterpriseSettings:
+def fetch_settings() -> Workspaces:
     return load_settings()
 
 

@@ -26,7 +26,7 @@ export const WorkSpaceSidebar = ({
     return null;
   }
   const settings = combinedSettings.settings;
-  const enterpriseSettings = combinedSettings.enterpriseSettings;
+  const workspaces = combinedSettings.workspaces;
   const defaultPage = settings.default_page;
 
   return (
@@ -55,8 +55,8 @@ export const WorkSpaceSidebar = ({
               side="right"
               delayDuration={0}
             >
-              {enterpriseSettings!.application_name
-                ? enterpriseSettings!.application_name
+              {workspaces!.workspace_name
+                ? workspaces!.workspace_name
                 : "enMedD AI"}
             </CustomTooltip>
           </div>

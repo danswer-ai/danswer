@@ -1,5 +1,5 @@
 import {
-  EnterpriseSettings,
+  Workspaces,
   FeatureFlags,
   Settings,
 } from "@/app/admin/settings/interfaces";
@@ -12,9 +12,9 @@ import { fetchSS } from "@/lib/utilsSS";
 export async function fetchSettingsSS() {
   const tasks = [fetchSS("/settings"), fetchSS("/ff")];
   if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
-    tasks.push(fetchSS("/enterprise-settings"));
+    tasks.push(fetchSS("/workspace"));
     if (CUSTOM_ANALYTICS_ENABLED) {
-      tasks.push(fetchSS("/enterprise-settings/custom-analytics-script"));
+      tasks.push(fetchSS("/workspace/custom-analytics-script"));
     }
   }
 
@@ -22,8 +22,8 @@ export async function fetchSettingsSS() {
 
   const settings = (await results[0].json()) as Settings;
   const featureFlags = (await results[1].json()) as FeatureFlags;
-  const enterpriseSettings =
-    tasks.length > 2 ? ((await results[2].json()) as EnterpriseSettings) : null;
+  const workspaces =
+    tasks.length > 2 ? ((await results[2].json()) as Workspaces) : null;
   const customAnalyticsScript = (
     tasks.length > 3 ? await results[3].json() : null
   ) as string | null;
@@ -31,7 +31,7 @@ export async function fetchSettingsSS() {
   const combinedSettings: CombinedSettings = {
     settings,
     featureFlags,
-    enterpriseSettings,
+    workspaces,
     customAnalyticsScript,
   };
 
@@ -40,7 +40,7 @@ export async function fetchSettingsSS() {
 
 export interface CombinedSettings {
   settings: Settings;
-  enterpriseSettings: EnterpriseSettings | null;
+  workspaces: Workspaces | null;
   customAnalyticsScript: string | null;
   featureFlags: FeatureFlags;
 }
