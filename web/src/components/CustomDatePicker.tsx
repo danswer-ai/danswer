@@ -79,7 +79,6 @@ export function CustomDatePicker({
       const defaultRange = getDateRange(selectedRange);
       onValueChange(defaultRange);
     }
-    console.log(range);
     setSelectedRange("");
   };
 
