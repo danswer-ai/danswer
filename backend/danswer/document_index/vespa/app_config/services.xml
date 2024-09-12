@@ -3,11 +3,10 @@
     <container id="default" version="1.0">
         <document-api/>
         <search>
-            <threadpool>
-                <threads>SEARCH_THREAD_NUMBER</threads>
-            </threadpool>
+            <requestthreads>
+                <persearch>SEARCH_THREAD_NUMBER</persearch>
+            </requestthreads>
         </search>
-
         <http>
             <server id="default" port="8081"/>
         </http>
