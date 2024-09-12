@@ -60,11 +60,12 @@ export const ResponseSection = ({
   // `isOpen` state
   const finalIsOpen = isOpen !== null ? isOpen : desiredOpenStatus;
   return (
-    <div className="w-full">
+    <div className="max-w-full">
       <div
         className={`
         flex 
         my-1 
+        max-w-full
         p-1 
         rounded  
         select-none 
@@ -83,7 +84,9 @@ export const ResponseSection = ({
         }}
       >
         <div className="my-auto">{icon}</div>
-        <div className="my-auto text-sm text-subtle italic">{header}</div>
+        <div className="my-auto text-sm text-gray-200 italic max-w-full truncate">
+          {header}
+        </div>
 
         {!isNotControllable && (
           <div className="ml-auto">

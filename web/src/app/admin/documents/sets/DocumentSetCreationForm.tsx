@@ -175,46 +175,46 @@ export const DocumentSetCreationForm = ({
                       <>
                         If the document set is public, then it will be visible
                         to <b>all users</b>. If it is not public, then only
-                        users in the specified groups will be able to see it.
+                        users in the specified teamspace will be able to see it.
                       </>
                     }
                   />
 
                   <Divider />
                   <h2 className="mb-1 font-medium text-base">
-                    Groups with Access
+                    Teamspace with Access
                   </h2>
                   {!values.is_public ? (
                     <>
                       <p className="mb-3 text-subtle text-xs ">
-                        If any groups are specified, then this Document Set will
-                        only be visible to the specified groups. If no groups
-                        are specified, then the Document Set will be visible to
-                        all users.
+                        If any teamspace are specified, then this Document Set
+                        will only be visible to the specified teamspace. If no
+                        teamspace are specified, then the Document Set will be
+                        visible to all users.
                       </p>
                       <FieldArray
                         name="groups"
                         render={(arrayHelpers: ArrayHelpers) => (
                           <div className="flex gap-2 flex-wrap">
-                            {teamspaces.map((userGroup) => {
-                              const ind = values.groups.indexOf(userGroup.id);
+                            {teamspaces.map((teamspace) => {
+                              const ind = values.groups.indexOf(teamspace.id);
                               let isSelected = ind !== -1;
                               return (
                                 <Badge
-                                  key={userGroup.id}
+                                  key={teamspace.id}
                                   variant={isSelected ? "default" : "outline"}
                                   className="cursor-pointer hover:opacity-75"
                                   onClick={() => {
                                     if (isSelected) {
                                       arrayHelpers.remove(ind);
                                     } else {
-                                      arrayHelpers.push(userGroup.id);
+                                      arrayHelpers.push(teamspace.id);
                                     }
                                   }}
                                 >
                                   <div className="my-auto flex">
                                     <FiUsers className="my-auto mr-2" />{" "}
-                                    {userGroup.name}
+                                    {teamspace.name}
                                   </div>
                                 </Badge>
                               );
@@ -226,8 +226,8 @@ export const DocumentSetCreationForm = ({
                   ) : (
                     <p className="text-sm text-subtle">
                       This Document Set is public, so this does not apply. If
-                      you want to control which user groups see this Document
-                      Set, mark it as non-public!
+                      you want to control which teamspace see this Document Set,
+                      mark it as non-public!
                     </p>
                   )}
                 </div>

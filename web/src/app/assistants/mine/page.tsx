@@ -1,7 +1,7 @@
 import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { UserDropdown } from "@/components/UserDropdown";
-import { ChatProvider } from "@/components/context/ChatContext";
+import { ChatProvider } from "@/context/ChatContext";
 import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { fetchChatData } from "@/lib/chat/fetchChatData";

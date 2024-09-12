@@ -6,9 +6,9 @@ from enmedd.server.auth_check import PUBLIC_ENDPOINT_SPECS
 
 EE_PUBLIC_ENDPOINT_SPECS = PUBLIC_ENDPOINT_SPECS + [
     # needs to be accessible prior to user login
-    ("/enterprise-settings", {"GET"}),
-    ("/enterprise-settings/logo", {"GET"}),
-    ("/enterprise-settings/custom-analytics-script", {"GET"}),
+    ("/workspace", {"GET"}),
+    ("/workspace/logo", {"GET"}),
+    ("/workspace/custom-analytics-script", {"GET"}),
     # oidc
     ("/auth/oidc/authorize", {"GET"}),
     ("/auth/oidc/callback", {"GET"}),

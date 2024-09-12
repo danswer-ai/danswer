@@ -59,7 +59,7 @@ import Dropzone from "react-dropzone";
 import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
@@ -73,8 +73,6 @@ import {
   PanelRightClose,
   Share,
 } from "lucide-react";
-import Image from "next/image";
-import Logo from "../../../public/logo-brand.png";
 import { Button } from "@/components/ui/button";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
@@ -655,7 +653,6 @@ export function ChatPage({
     alternativeAssistant?: Assistant | null;
   } = {}) => {
     setAlternativeGeneratingAssistant(alternativeAssistant);
-
     clientScrollToBottom();
     let currChatSessionId: number;
     let isNewSession = chatSessionIdRef.current === null;
@@ -663,6 +660,7 @@ export function ChatPage({
       searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
 
     if (isNewSession) {
+      toggleSidebar();
       currChatSessionId = await createChatSession(
         liveAssistant?.id || 0,
         searchParamBasedChatSessionName
@@ -1129,26 +1127,27 @@ export function ChatPage({
       {liveAssistant && (
         <TopBar toggleLeftSideBar={toggleLeftSideBar}>
           <div className="flex ml-auto gap-2 items-center">
-            {chatSessionIdRef.current !== null && (
-              <ShareChatSessionModal
-                chatSessionId={chatSessionIdRef.current}
-                existingSharedStatus={chatSessionSharedStatus}
-                onShare={(shared) =>
-                  setChatSessionSharedStatus(
-                    shared
-                      ? ChatSessionSharedStatus.Public
-                      : ChatSessionSharedStatus.Private
-                  )
-                }
-              >
-                <div
-                  onClick={() => setSharingModalVisible(true)}
-                  className="h-10 w-10 hover:bg-light hover:text-accent-foreground inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-regular text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+            {settings?.featureFlags.share_chat &&
+              chatSessionIdRef.current !== null && (
+                <ShareChatSessionModal
+                  chatSessionId={chatSessionIdRef.current}
+                  existingSharedStatus={chatSessionSharedStatus}
+                  onShare={(shared) =>
+                    setChatSessionSharedStatus(
+                      shared
+                        ? ChatSessionSharedStatus.Public
+                        : ChatSessionSharedStatus.Private
+                    )
+                  }
                 >
-                  <Share size={20} />
-                </div>
-              </ShareChatSessionModal>
-            )}
+                  <div
+                    onClick={() => setSharingModalVisible(true)}
+                    className="h-10 w-10 hover:bg-light hover:text-accent-foreground inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-regular text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <Share size={20} />
+                  </div>
+                </ShareChatSessionModal>
+              )}
 
             {retrievalEnabled && (
               <Button onClick={toggleSidebar} variant="ghost" size="icon">
