@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { deleteChatSession, renameChatSession } from "../lib";
 import { DeleteChatModal } from "../modal/DeleteChatModal";
 import { BasicSelectable } from "@/components/BasicClickable";
@@ -24,6 +24,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 export function ChatSessionDisplay({
   chatSession,
@@ -39,6 +40,7 @@ export function ChatSessionDisplay({
   toggleSideBar?: () => void;
 }) {
   const router = useRouter();
+  const combinedSettings = useContext(SettingsContext);
   const [isDeletionModalVisible, setIsDeletionModalVisible] = useState(false);
   const [isRenamingChat, setIsRenamingChat] = useState(false);
   const [chatName, setChatName] = useState(chatSession.name);
@@ -137,18 +139,22 @@ export function ChatSessionDisplay({
                           </PopoverTrigger>
                           <PopoverContent>
                             <div className="flex flex-col w-full">
-                              {/* <ShareChatSessionModal
-                                chatSessionId={chatSession.id}
-                                existingSharedStatus={chatSession.shared_status}
-                              >
-                                <Button
-                                  variant="ghost"
-                                  className="w-full flex justify-start hover:bg-primary hover:text-inverted"
+                              {combinedSettings?.featureFlags.share_chat && (
+                                <ShareChatSessionModal
+                                  chatSessionId={chatSession.id}
+                                  existingSharedStatus={
+                                    chatSession.shared_status
+                                  }
                                 >
-                                  <Share2 className="mr-2" size={16} />
-                                  Share
-                                </Button>
-                              </ShareChatSessionModal> */}
+                                  <Button
+                                    variant="ghost"
+                                    className="w-full flex justify-start hover:bg-primary hover:text-inverted"
+                                  >
+                                    <Share2 className="mr-2" size={16} />
+                                    Share
+                                  </Button>
+                                </ShareChatSessionModal>
+                              )}
                               <Button
                                 variant="ghost"
                                 onClick={() => setIsRenamingChat(true)}

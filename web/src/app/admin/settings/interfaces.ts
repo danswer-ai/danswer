@@ -15,8 +15,18 @@ export interface Workspaces {
   custom_header_content: string | null;
 }
 
+export interface FeatureFlags {
+  profile_page: boolean;
+  multi_teamspace: boolean;
+  multi_workspace: boolean;
+  query_history: boolean;
+  whitelabelling: boolean;
+  share_chat: boolean;
+  explore_assistants: boolean;
+
 export interface CombinedSettings {
   settings: Settings;
+  featureFlags: FeatureFlags;
   workspaces: Workspaces | null;
   customAnalyticsScript: string | null;
 }

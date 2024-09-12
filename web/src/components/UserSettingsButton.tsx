@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useContext } from "react";
 import { FiTool, FiLogOut } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,12 @@ import {
   User,
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
+import { SettingsContext } from "./settings/SettingsProvider";
+
+function getNameInitials(full_name: string) {
+  const names = full_name.split(" ");
+  return names[0][0].toUpperCase() + names[names.length - 1][0].toUpperCase();
+}
 
 export function UserSettingsButton({
   user,
@@ -26,6 +32,7 @@ export function UserSettingsButton({
 }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
+  const settings = useContext(SettingsContext);
   const router = useRouter();
 
   const handleLogout = () => {
@@ -37,10 +44,6 @@ export function UserSettingsButton({
     });
   };
 
-  const toPascalCase = (str: string) =>
-    (str.match(/[a-zA-Z0-9]+/g) || [])
-      .map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`)
-      .join("");
   const showAdminPanel = !user || user.role === "admin";
   const showLogout =
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
@@ -57,12 +60,12 @@ export function UserSettingsButton({
             className="flex items-center justify-center bg-background rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 ault py-2"
             onClick={() => setUserInfoVisible(!userInfoVisible)}
           >
-            {/* {user && user.email ? (
-              user.email[0].toUpperCase()
+            {user && user.full_name ? (
+              // TODO: move the user's profile as a separate component
+              getNameInitials(user.full_name)
             ) : (
               <User size={25} className="mx-auto" />
-            )} */}
-            <User size={25} className="mx-auto" />
+            )}
           </div>
         </PopoverTrigger>
         <PopoverContent className={`w-[250px] !z-modal mb-2 ml-4 text-sm`}>
@@ -70,8 +73,8 @@ export function UserSettingsButton({
             <>
               <div className="flex py-3 px-4 rounded-regular items-center gap-3 group">
                 <div className="flex items-center justify-center bg-background rounded-full min-h-10 min-w-10 max-h-10 max-w-10 aspect-square text-base font-normal border-2 border-gray-900 ault py-2 text-default">
-                  {user && user.email ? (
-                    user.email[0].toUpperCase()
+                  {user && user.full_name ? (
+                    getNameInitials(user.full_name)
                   ) : (
                     <User size={25} className="mx-auto" />
                   )}
@@ -87,13 +90,15 @@ export function UserSettingsButton({
               </div>
               <div className="my-1 border-b border-border" />
             </>
-            <Link
-              href="/profile"
-              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
-            >
-              <User className="my-auto mr-3" size={24} strokeWidth={1.5} />
-              Profile Settings
-            </Link>
+            {settings?.featureFlags.profile_page && (
+              <Link
+                href="/profile"
+                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
+              >
+                <User className="my-auto mr-3" size={24} strokeWidth={1.5} />
+                Profile Settings
+              </Link>
+            )}
             <Link
               // redirect to default page
               href={`/${defaultPage}`}
