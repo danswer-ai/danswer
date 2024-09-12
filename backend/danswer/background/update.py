@@ -167,7 +167,7 @@ def _should_full_reindex(db_session: Session, cc_pair: ConnectorCredentialPair) 
     bool
         True if a full reindex should be performed, False otherwise.
     """
-    # do a full reindex if the row count of docs for the cc_pair is zero
+    # do full reindex if the row count of docs for the cc_pair is zero
     cc_pair_identifier = ConnectorCredentialPairIdentifier(
         connector_id=cc_pair.connector_id,
         credential_id=cc_pair.credential_id,
@@ -187,9 +187,7 @@ def _should_full_reindex(db_session: Session, cc_pair: ConnectorCredentialPair) 
             f"get_document_cnts_for_cc_pairs returned no info! cc_pair={cc_pair.id}"
         )
 
-    # count the total number of all successful index attempts made with
-    # the current search settings
-    all_docs_indexed = 0
+    # do full reindex if no successful attempt ever indexed any docs
     attempts = get_index_attempts_for_cc_pair(
         db_session=db_session, cc_pair_identifier=cc_pair_identifier, only_current=True
     )
@@ -201,12 +199,10 @@ def _should_full_reindex(db_session: Session, cc_pair: ConnectorCredentialPair) 
         if attempt.total_docs_indexed is None:
             continue
 
-        all_docs_indexed += attempt.total_docs_indexed
+        if attempt.total_docs_indexed > 0:
+            return False
 
-    if all_docs_indexed == 0:
-        return True
-
-    return False
+    return True
 
 
 """Main funcs"""
