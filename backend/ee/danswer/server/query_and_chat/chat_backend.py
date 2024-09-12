@@ -8,7 +8,10 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import FinalUsedContextDocsResponse
+from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMRelevanceFilterResponse
+from danswer.chat.models import MessageSpecificCitations
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.chat.process_message import stream_chat_message_objects
@@ -41,7 +44,7 @@ logger = setup_logger()
 router = APIRouter(prefix="/chat")
 
 
-def translate_doc_response_to_simple_doc(
+def _translate_doc_response_to_simple_doc(
     doc_response: QADocsResponse,
 ) -> list[SimpleDoc]:
     return [
@@ -58,6 +61,27 @@ def translate_doc_response_to_simple_doc(
         )
         for doc in doc_response.top_documents
     ]
+
+
+def _get_final_context_doc_indices(
+    final_context_docs: list[LlmDoc] | None,
+    simple_search_docs: list[SimpleDoc] | None,
+) -> list[int] | None:
+    """
+    this function returns a list of indices of the simple search docs
+    that were actually fed to the LLM.
+    """
+    if final_context_docs is None or simple_search_docs is None:
+        return None
+
+    final_context_indices: list[int] = []
+    for i, simple_doc in enumerate(simple_search_docs):
+        for doc in final_context_docs:
+            if doc.document_id == simple_doc.id:
+                final_context_indices.append(i)
+                break
+
+    return final_context_indices
 
 
 def remove_answer_citations(answer: str) -> str:
@@ -120,17 +144,26 @@ def handle_simplified_chat_message(
     )
 
     response = ChatBasicResponse()
+    final_context_docs: list[LlmDoc] = []
 
     answer = ""
     for packet in packets:
         if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
-            response.simple_search_docs = translate_doc_response_to_simple_doc(packet)
+            response.simple_search_docs = _translate_doc_response_to_simple_doc(packet)
         elif isinstance(packet, StreamingError):
             response.error_msg = packet.error
         elif isinstance(packet, ChatMessageDetail):
             response.message_id = packet.message_id
+        elif isinstance(packet, FinalUsedContextDocsResponse):
+            final_context_docs = packet.final_context_docs
+        elif isinstance(packet, MessageSpecificCitations):
+            response.cited_documents = packet.citation_map
+
+    response.final_context_doc_indices = _get_final_context_doc_indices(
+        final_context_docs, response.simple_search_docs
+    )
 
     response.answer = answer
     if answer:
@@ -152,6 +185,8 @@ def handle_send_message_simple_with_history(
     if len(req.messages) == 0:
         raise HTTPException(status_code=400, detail="Messages cannot be zero length")
 
+    # This is a sanity check to make sure the chat history is valid
+    # It must start with a user message and alternate between user and assistant
     expected_role = MessageType.USER
     for msg in req.messages:
         if not msg.message:
@@ -246,19 +281,28 @@ def handle_send_message_simple_with_history(
     )
 
     response = ChatBasicResponse()
+    final_context_docs: list[LlmDoc] = []
 
     answer = ""
     for packet in packets:
         if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
-            response.simple_search_docs = translate_doc_response_to_simple_doc(packet)
+            response.simple_search_docs = _translate_doc_response_to_simple_doc(packet)
         elif isinstance(packet, StreamingError):
             response.error_msg = packet.error
         elif isinstance(packet, ChatMessageDetail):
             response.message_id = packet.message_id
         elif isinstance(packet, LLMRelevanceFilterResponse):
-            response.llm_chunks_indices = packet.relevant_chunk_indices
+            response.llm_selected_doc_indices = packet.llm_selected_doc_indices
+        elif isinstance(packet, FinalUsedContextDocsResponse):
+            final_context_docs = packet.final_context_docs
+        elif isinstance(packet, MessageSpecificCitations):
+            response.cited_documents = packet.citation_map
+
+    response.final_context_doc_indices = _get_final_context_doc_indices(
+        final_context_docs, response.simple_search_docs
+    )
 
     response.answer = answer
     if answer:
