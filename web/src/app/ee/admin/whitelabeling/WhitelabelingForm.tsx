@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { EnterpriseSettings } from "@/app/admin/settings/interfaces";
+import { Workspaces } from "@/app/admin/settings/interfaces";
 import { useContext, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Form, Formik } from "formik";
@@ -19,16 +19,16 @@ export function WhitelabelingForm() {
   if (!settings) {
     return null;
   }
-  const enterpriseSettings = settings.enterpriseSettings;
+  const workspaces = settings.workspaces;
 
-  async function updateEnterpriseSettings(newValues: EnterpriseSettings) {
-    const response = await fetch("/api/admin/enterprise-settings", {
+  async function updateWorkspaces(newValues: Workspaces) {
+    const response = await fetch("/api/admin/workspace", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        ...(enterpriseSettings || {}),
+        ...(workspaces || {}),
         ...newValues,
       }),
     });
@@ -44,19 +44,18 @@ export function WhitelabelingForm() {
     <div>
       <Formik
         initialValues={{
-          application_name: enterpriseSettings?.application_name || null,
-          application_description:
-            enterpriseSettings?.application_description || null,
-          use_custom_logo: enterpriseSettings?.use_custom_logo || false,
-          custom_popup_header: enterpriseSettings?.custom_popup_header || "",
-          custom_popup_content: enterpriseSettings?.custom_popup_content || "",
+          workspace_name: workspaces?.workspace_name || null,
+          workspace_description: workspaces?.workspace_description || null,
+          use_custom_logo: workspaces?.use_custom_logo || false,
+          custom_header_logo: workspaces?.custom_header_logo || "",
+          custom_header_content: workspaces?.custom_header_content || "",
         }}
         validationSchema={Yup.object().shape({
-          application_name: Yup.string().nullable(),
-          application_description: Yup.string().nullable(),
+          workspace_name: Yup.string().nullable(),
+          workspace_description: Yup.string().nullable(),
           use_custom_logo: Yup.boolean().required(),
-          custom_popup_header: Yup.string().nullable(),
-          custom_popup_content: Yup.string().nullable(),
+          custom_header_logo: Yup.string().nullable(),
+          custom_header_content: Yup.string().nullable(),
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
@@ -67,13 +66,10 @@ export function WhitelabelingForm() {
             const formData = new FormData();
             formData.append("file", selectedFile);
             setSelectedFile(null);
-            const response = await fetch(
-              "/api/admin/enterprise-settings/logo",
-              {
-                method: "PUT",
-                body: formData,
-              }
-            );
+            const response = await fetch("/api/admin/workspace/logo", {
+              method: "PUT",
+              body: formData,
+            });
             if (!response.ok) {
               const errorMsg = (await response.json()).detail;
               alert(`Failed to upload logo. ${errorMsg}`);
@@ -82,22 +78,22 @@ export function WhitelabelingForm() {
             }
           }
           formikHelpers.setValues(values);
-          await updateEnterpriseSettings(values);
+          await updateWorkspaces(values);
         }}
       >
         {({ isSubmitting, values, setValues }) => (
           <Form>
             <TextFormField
               label="Workspace Name"
-              name="application_name"
+              name="workspace_name"
               subtext={`The custom name you are giving for your workspace. This will replace 'enMedD AI' everywhere in the UI.`}
               placeholder="Custom name which will replace 'enMedD AI'"
               disabled={isSubmitting}
             />
             <TextFormField
               label="Description"
-              name="application_description"
-              subtext={`The custom description metadata you are giving ${values.application_name || "enMedD AI"} for your workspace.\
+              name="workspace_description"
+              subtext={`The custom description metadata you are giving ${values.workspace_name || "enMedD AI"} for your workspace.\
                 This will be seen when sharing the link or searching through the browser.`}
               placeholder="Custom description for your Workspace"
               disabled={isSubmitting}
@@ -126,7 +122,7 @@ export function WhitelabelingForm() {
                       ...values,
                       use_custom_logo: false,
                     };
-                    await updateEnterpriseSettings(valuesWithoutLogo);
+                    await updateWorkspaces(valuesWithoutLogo);
                     setValues(valuesWithoutLogo);
                   }}
                 >
@@ -155,7 +151,7 @@ export function WhitelabelingForm() {
                 name="custom_popup_header"
                 subtext={`The title for the popup that will be displayed for each user on their initial visit 
               to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${
-                values.application_name || "enMedD AI"
+                values.workspace_name || "enMedD AI"
               }!".`}
                 placeholder="Initial Popup Header"
                 disabled={isSubmitting}
@@ -165,7 +161,7 @@ export function WhitelabelingForm() {
             <div>
               <TextFormField
                 label="Custom Popup Content"
-                name="custom_popup_content"
+                name="custom_header_content"
                 subtext={`Custom Markdown content that will be displayed as a popup on initial visit to the application.`}
                 placeholder="Your popup content..."
                 isTextArea

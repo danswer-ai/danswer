@@ -3,9 +3,9 @@ import os
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ee.enmedd.server.enterprise_settings.models import EnterpriseSettings
-from ee.enmedd.server.enterprise_settings.store import store_settings
-from ee.enmedd.server.enterprise_settings.store import upload_logo
+from ee.enmedd.server.workspace.models import Workspaces
+from ee.enmedd.server.workspace.store import store_settings
+from ee.enmedd.server.workspace.store import upload_logo
 from enmedd.db.engine import get_session_context_manager
 from enmedd.db.llm import fetch_existing_llm_providers
 from enmedd.db.llm import update_default_provider
@@ -73,8 +73,8 @@ def seed_db() -> None:
         seeded_name = seed_config.seeded_name
 
         if is_seeded_logo or seeded_name:
-            logger.info("Seeding enterprise settings")
-            seeded_settings = EnterpriseSettings(
-                application_name=seeded_name, use_custom_logo=is_seeded_logo
+            logger.info("Seeding workspaces")
+            seeded_settings = Workspaces(
+                workspace_name=seeded_name, use_custom_logo=is_seeded_logo
             )
             store_settings(seeded_settings)

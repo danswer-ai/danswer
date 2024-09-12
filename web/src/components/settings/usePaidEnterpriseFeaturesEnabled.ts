@@ -8,5 +8,5 @@ export function usePaidEnterpriseFeaturesEnabled() {
   if (!combinedSettings) {
     return null;
   }
-  return combinedSettings.enterpriseSettings !== null;
+  return combinedSettings.workspaces !== null;
 }
