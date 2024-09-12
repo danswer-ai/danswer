@@ -98,7 +98,7 @@ export const ResponseSection = ({
           </div>
         )}
       </div>
-      {finalIsOpen && <div className="mx-2 text-sm">{body}</div>}
+      {finalIsOpen && <div className="pb-1 mx-2 text-sm mb-1">{body}</div>}
     </div>
   );
 };
