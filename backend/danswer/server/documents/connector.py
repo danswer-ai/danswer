@@ -422,15 +422,11 @@ def get_currently_failed_indexing_status(
         )
     ]
 
-    # Filter cc_pairs to include only those with failed attempts or no attempts
+    # Filter cc_pairs to include only those with failed attempts
     cc_pairs = [
         cc_pair
         for cc_pair in cc_pairs
-        if not any(
-            attempt.connector_credential_pair == cc_pair
-            for attempt in latest_failed_indexing_attempts
-        )
-        or any(
+        if any(
             attempt.connector_credential_pair == cc_pair
             for attempt in filtered_failed_attempts
         )

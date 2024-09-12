@@ -1,4 +1,5 @@
 import json
+import traceback
 from datetime import timedelta
 from typing import Any
 from typing import cast
@@ -40,6 +41,7 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_APP_NAME
 from danswer.configs.constants import PostgresAdvisoryLocks
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import InputType
+from danswer.db.connector_credential_pair import add_deletion_failure_message
 from danswer.db.connector_credential_pair import (
     get_connector_credential_pair,
 )
@@ -97,6 +99,7 @@ def cleanup_connector_credential_pair_task(
     Needs to potentially update a large number of Postgres and Vespa docs, including deleting them
     or updating the ACL"""
     engine = get_sqlalchemy_engine()
+
     with Session(engine) as db_session:
         # validate that the connector / credential pair is deletable
         cc_pair = get_connector_credential_pair(
@@ -109,14 +112,13 @@ def cleanup_connector_credential_pair_task(
                 f"Cannot run deletion attempt - connector_credential_pair with Connector ID: "
                 f"{connector_id} and Credential ID: {credential_id} does not exist."
             )
-
-        deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(
-            connector_credential_pair=cc_pair, db_session=db_session
-        )
-        if deletion_attempt_disallowed_reason:
-            raise ValueError(deletion_attempt_disallowed_reason)
-
         try:
+            deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(
+                connector_credential_pair=cc_pair, db_session=db_session
+            )
+            if deletion_attempt_disallowed_reason:
+                raise ValueError(deletion_attempt_disallowed_reason)
+
             # The bulk of the work is in here, updates Postgres and Vespa
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
             document_index = get_default_document_index(
@@ -127,10 +129,15 @@ def cleanup_connector_credential_pair_task(
                 document_index=document_index,
                 cc_pair=cc_pair,
             )
+
         except Exception as e:
+            stack_trace = traceback.format_exc()
+            error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
+            add_deletion_failure_message(db_session, cc_pair.id, error_message)
             task_logger.exception(
                 f"Failed to run connector_deletion. "
-                f"connector_id={connector_id} credential_id={credential_id}"
+                f"connector_id={connector_id} credential_id={credential_id}\n"
+                f"Stack Trace:\n{stack_trace}"
             )
             raise e
 
@@ -410,6 +417,7 @@ def check_for_cc_pair_deletion_task() -> None:
                 task_logger.info(
                     f"Deleting the {cc_pair.name} connector credential pair"
                 )
+
                 cleanup_connector_credential_pair_task.apply_async(
                     kwargs=dict(
                         connector_id=cc_pair.connector.id,
