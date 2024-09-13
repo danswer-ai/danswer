@@ -40,14 +40,17 @@ def _fetch_permissions_paginated(
             .get(fileId=drive_file_id, fields="id, trashed")
             .execute()
         )()
-    except Exception as e:
-        logger.error(f"Failed to fetch file metadata: {e}")
-        return
+    except HttpError as e:
+        if e.resp.status == 404 or e.resp.status == 403:
+            return
+        logger.error(f"Failed to fetch permissions: {e}")
+        raise
 
     if file_metadata.get("trashed", False):
-        logger.warning(f"File with ID {drive_file_id} is trashed")
+        logger.debug(f"File with ID {drive_file_id} is trashed")
         return
 
+    # Get paginated permissions for the file id
     while True:
         try:
             permissions_resp: dict[str, Any] = add_retries(

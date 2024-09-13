@@ -55,7 +55,7 @@ def _get_access_for_documents(
             user_groups=set(user_group_info.get(document_id, [])),
             external_user_emails=ext_u_emails,
             external_user_group_ids=ext_u_groups,
-            is_externally_public=non_ee_access.is_externally_public,
+            is_externally_public=document.is_externally_public,
         )
     return access_map
 

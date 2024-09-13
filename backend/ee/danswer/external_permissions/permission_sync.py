@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from danswer.access.access import get_access_for_documents
 from danswer.configs.constants import DocumentSource
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
-from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.search_settings import get_current_search_settings
 from danswer.document_index.factory import get_default_document_index
@@ -67,21 +66,21 @@ def run_permission_sync_entrypoint(
             f"No permission sync function found for source type: {source_type}"
         )
 
-    docs_for_connector = get_documents_for_connector_credential_pair(
-        db_session=db_session,
-        connector_id=cc_pair.connector_id,
-        credential_id=cc_pair.credential_id,
-    )
-
-    docs_with_additional_info = fetch_docs_with_additional_info(
-        db_session=db_session, cc_pair=cc_pair
-    )
-
     sync_details = cc_pair.auto_sync_options
     if not sync_details:
         raise ValueError(f"No auto sync options found for source type: {source_type}")
 
-    # Both of these edit postgres but do not commit
+    # Here we run the connector to grab all the ids
+    # this may grab ids before they are indexed but that is fine because
+    # we create a document in postgres to hold the permissions info
+    # until the indexing job has a chance to run
+    docs_with_additional_info = fetch_docs_with_additional_info(
+        db_session=db_session, cc_pair=cc_pair
+    )
+
+    # This function updates:
+    # - the user_email <-> external_user_group_id mapping
+    # in postgres without committing
     logger.debug(f"Syncing groups for {source_type}")
     if group_sync_func is not None:
         group_sync_func(
@@ -90,6 +89,11 @@ def run_permission_sync_entrypoint(
             docs_with_additional_info,
             sync_details,
         )
+
+    # This function updates:
+    # - the user_email <-> document mapping
+    # - the external_user_group_id <-> document mapping
+    # in postgres without committing
     logger.debug(f"Syncing docs for {source_type}")
     if doc_sync_func is not None:
         doc_sync_func(
@@ -99,14 +103,19 @@ def run_permission_sync_entrypoint(
             sync_details,
         )
 
+    # This function fetches the updated access for the documents
+    # and returns a dictionary of document_ids and access
+    # This is the access we want to update vespa with
     docs_access = get_access_for_documents(
-        document_ids=[doc.id for doc in docs_for_connector],
+        document_ids=[doc_id for doc_id in docs_with_additional_info.keys()],
         db_session=db_session,
     )
 
-    update_reqs = []
-    for doc_id, doc_access in docs_access.items():
-        update_reqs.append(UpdateRequest(document_ids=[doc_id], access=doc_access))
+    # Then we build the update requests to update vespa
+    update_reqs = [
+        UpdateRequest(document_ids=[doc_id], access=doc_access)
+        for doc_id, doc_access in docs_access.items()
+    ]
 
     # Don't bother sync-ing secondary, it will be sync-ed after switch anyway
     search_settings = get_current_search_settings(db_session)
