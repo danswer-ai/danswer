@@ -125,13 +125,21 @@ def get_standard_formatter() -> ColoredFormatter:
 
 
 def is_running_in_container():
-    # Multiple file checks for redundancy
-    local_only_files = [
-        "Dockerfile",
-        "Dockerfile.model_server",
+    container_indicators = [
+        "/.dockerenv",
+        "/run/.containerenv",
     ]
 
-    return not any(os.path.exists(file) for file in local_only_files)
+    env_indicators = [
+        "KUBERNETES_SERVICE_HOST",
+        "CONTAINER_RUNTIME",
+        "DOCKER_CONTAINER",
+        "CONTAINERD_NAMESPACE",
+    ]
+
+    return any(os.path.exists(path) for path in container_indicators) or any(
+        os.environ.get(env_var) for env_var in env_indicators
+    )
 
 
 def setup_logger(
@@ -162,7 +170,6 @@ def setup_logger(
         uvicorn_logger.setLevel(log_level)
 
     is_containerized = is_running_in_container()
-
     if LOG_FILE_NAME and (is_containerized or DEV_LOGGING_ENABLED):
         log_levels = ["debug", "info", "notice"]
         for level in log_levels:
