@@ -91,6 +91,28 @@ export function FiltersTab({
                       selectedSource.internalName ===
                       sourceMetadata.internalName
                   );
+                  /* return (
+                    <Bubble
+                      key={sourceMetadata.internalName}
+                      isSelected={isSelected}
+                      onClick={() =>
+                        filterManager.setSelectedSources((prev) =>
+                          isSelected
+                            ? prev.filter(
+                                (s) =>
+                                  s.internalName !== sourceMetadata.internalName
+                              )
+                            : [...prev, sourceMetadata]
+                        )
+                      }
+                      showCheckbox={true}
+                    >
+                      <div className="flex items-center space-x-2">
+                        {sourceMetadata?.icon({ size: 16 })}
+                        <span>{sourceMetadata.displayName}</span>
+                      </div>
+                    </Bubble>
+                  ); */
                   return (
                     <Bubble
                       key={sourceMetadata.internalName}

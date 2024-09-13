@@ -643,16 +643,23 @@ export const HumanMessage = ({
                     !isEditing &&
                     (!files || files.length === 0) && (
                       <div className="bg-hover absolute -top-11 right-0 rounded">
-                        <Button
-                          variant="ghost"
-                          size="smallIcon"
-                          onClick={() => {
-                            setIsEditing(true);
-                            setIsHovered(false);
-                          }}
+                        <CustomTooltip
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="smallIcon"
+                              onClick={() => {
+                                setIsEditing(true);
+                                setIsHovered(false);
+                              }}
+                            >
+                              <Pencil size={16} />
+                            </Button>
+                          }
+                          asChild
                         >
-                          <Pencil size={16} />
-                        </Button>
+                          Edit
+                        </CustomTooltip>
                       </div>
                     )}
                 </div>
