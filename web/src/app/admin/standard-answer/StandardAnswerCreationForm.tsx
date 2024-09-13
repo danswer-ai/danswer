@@ -101,8 +101,8 @@ export const StandardAnswerCreationForm = ({
               ) : (
                 <TextFormField
                   name="keyword"
-                  label="Keywords or pattern"
-                  tooltip="Triggers if all specified keywords are in the question or if regex pattern exists in the question"
+                  label="Keywords"
+                  tooltip="Triggers if the question contains all of these keywords, in any order."
                   placeholder="wifi"
                   autoCompleteDisabled={true}
                 />
