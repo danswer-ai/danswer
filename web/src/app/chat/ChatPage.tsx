@@ -1795,7 +1795,7 @@ export function ChatPage({
               const responseJson = await response.json();
               setPopup({ message: responseJson.detail, type: "error" });
             }
-            router.refresh();
+            refreshChatSessions();
           }}
         />
       )}
