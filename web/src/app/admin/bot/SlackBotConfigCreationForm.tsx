@@ -92,7 +92,8 @@ export const SlackBotCreationForm = ({
               existingSlackBotConfig?.persona &&
               !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
                 ? existingSlackBotConfig.persona.id
-                : knowledgePersona?.id ?? null,
+                : // prettier-ignore
+                  knowledgePersona?.id ?? null,
             response_type: existingSlackBotConfig?.response_type || "citations",
             standard_answer_categories: existingSlackBotConfig
               ? existingSlackBotConfig.standard_answer_categories
