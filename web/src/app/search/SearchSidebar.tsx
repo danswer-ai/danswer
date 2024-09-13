@@ -89,16 +89,18 @@ export const SearchSidebar = ({
                   <MessageCircleMore size={16} className="min-w-4 min-h-4" />
                   Chat
                 </Link>
-                {/*  <Link
-                  href="/assistants/mine"
-                  className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
-                >
-                  <Headset size={16} />
-                  <span className="truncate">Explore Assistants</span>
-                </Link> */}
+                {combinedSettings.featureFlags.explore_assistants && (
+                  <Link
+                    href="/assistants/mine"
+                    className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
+                  >
+                    <Headset size={16} />
+                    <span className="truncate">Explore Assistants</span>
+                  </Link>
+                )}
               </>
             )}
-            <Separator className="mt-3" />
+            <Separator className="mt-4" />
           </div>
         </div>
       </div>

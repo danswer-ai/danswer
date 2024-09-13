@@ -1,11 +1,10 @@
 import { User } from "lucide-react";
 import React from "react";
 
-const getNameInitials = (fullName: string) => {
-  const names = fullName.split(" ");
-  const initials = names.map((name) => name[0]?.toUpperCase() || "").join("");
-  return initials;
-};
+function getNameInitials(full_name: string) {
+  const names = full_name.split(" ");
+  return names[0][0].toUpperCase() + names[names.length - 1][0].toUpperCase();
+}
 
 const generateGradient = (initials: string) => {
   const colors = {

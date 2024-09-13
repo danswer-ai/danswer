@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
       : buildClientUrl("/enmedd-chp.ico");
 
   return {
-    title: dynamicSettings.workspaces?.workspace_name ?? "enMedD AI",
+    title: dynamicSettings.workspaces?.workspace_name || "enMedD AI",
     description:
       dynamicSettings.workspaces?.workspace_description ||
       "enMedD Conversational Health Platform",

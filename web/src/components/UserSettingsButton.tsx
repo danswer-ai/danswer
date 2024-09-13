@@ -19,11 +19,6 @@ import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 import { SettingsContext } from "./settings/SettingsProvider";
 import { UserProfile } from "./UserProfile";
 
-function getNameInitials(full_name: string) {
-  const names = full_name.split(" ");
-  return names[0][0].toUpperCase() + names[names.length - 1][0].toUpperCase();
-}
-
 export function UserSettingsButton({
   user,
   defaultPage,

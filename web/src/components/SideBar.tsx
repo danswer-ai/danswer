@@ -147,7 +147,7 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                 ),
                 link: "/admin/users",
               },
-              ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
+              ...(dynamicSettings?.featureFlags.multi_teamspace
                 ? [
                     {
                       name: (
@@ -158,17 +158,17 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                       ),
                       link: "/admin/teams",
                     },
-                    {
-                      name: (
-                        <div className="flex items-center gap-2">
-                          <KeyIcon size={20} />
-                          <div>API Keys</div>
-                        </div>
-                      ),
-                      link: "/admin/api-key",
-                    },
                   ]
                 : []),
+              {
+                name: (
+                  <div className="flex items-center gap-2">
+                    <KeyIcon size={20} />
+                    <div>API Keys</div>
+                  </div>
+                ),
+                link: "/admin/api-key",
+              },
               {
                 name: (
                   <div className="flex items-center gap-2">
