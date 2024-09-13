@@ -45,7 +45,7 @@ function SourceTile({
           </div>
         }
         delayDuration={0}
-        style="bg-primary border-none text-inverted"
+        /* style="bg-primary border-none text-inverted" */
       >
         {sourceMetadata.displayName}
       </CustomTooltip>

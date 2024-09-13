@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { User } from "@/lib/types";
 import { useContext, useEffect, useState } from "react";
 import { SettingsContext } from "./settings/SettingsProvider";
+import { CustomTooltip } from "./CustomTooltip";
 
 interface SidebarProps {
   user?: User | null;
@@ -100,16 +101,24 @@ export function DynamicSidebar({
                 </div>
               </div>
               <div className="h-full flex items-center justify-center">
-                <button
-                  onClick={toggleWidth}
-                  className="border rounded-r py-2 border-l-0 bg-background hidden lg:flex"
+                <CustomTooltip
+                  trigger={
+                    <button
+                      onClick={toggleWidth}
+                      className="border rounded-r py-2 border-l-0 bg-background hidden lg:flex"
+                    >
+                      {isExpanded ? (
+                        <ChevronLeft size={16} />
+                      ) : (
+                        <ChevronRight size={16} />
+                      )}
+                    </button>
+                  }
+                  asChild
+                  side="right"
                 >
-                  {isExpanded ? (
-                    <ChevronLeft size={16} />
-                  ) : (
-                    <ChevronRight size={16} />
-                  )}
-                </button>
+                  {isExpanded ? "Close" : "Open"}
+                </CustomTooltip>
               </div>
             </>
           )}

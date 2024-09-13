@@ -102,7 +102,7 @@ export function SearchSummary({
   const searchingForDisplay = (
     <div
       className={`flex items-center py-1 rounded ${
-        isOverflowed && "cursor-default"
+        isOverflowed ? "cursor-default" : ""
       }`}
     >
       <Search size={16} className="min-w-4 min-h-4 mr-2" />
@@ -185,13 +185,19 @@ export function SearchSummary({
           </div>
           {handleSearchQueryEdit && (
             <div className="my-auto mx-2">
-              <Button
-                variant="ghost"
-                size="smallIcon"
-                onClick={() => setIsEditing(true)}
+              <CustomTooltip
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="smallIcon"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Pencil size={16} />
+                  </Button>
+                }
               >
-                <Pencil size={16} />
-              </Button>
+                Edit
+              </CustomTooltip>
             </div>
           )}
         </>

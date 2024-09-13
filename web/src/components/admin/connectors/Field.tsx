@@ -92,7 +92,9 @@ export function TextFormField({
         >
           {label}
         </ShadcnLabel>
-        {subtext && <p className="text-sm text-muted-foreground">{subtext}</p>}
+        {subtext && (
+          <p className="text-sm text-muted-foreground pb-2">{subtext}</p>
+        )}
       </div>
       <Field name={name}>
         {({ field }: FieldProps) => {

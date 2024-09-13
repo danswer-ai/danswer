@@ -82,6 +82,7 @@ import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import TopBar from "@/components/TopBar";
 import { useToast } from "@/hooks/use-toast";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1204,26 +1205,38 @@ export function ChatPage({
                                   )
                                 }
                               >
-                                <div>
-                                  <Button variant="ghost" size="icon">
-                                    <Share size={20} />
-                                  </Button>
-                                </div>
+                                <CustomTooltip
+                                  trigger={
+                                    <Button variant="ghost" size="icon">
+                                      <Share size={20} />
+                                    </Button>
+                                  }
+                                  asChild
+                                >
+                                  Share
+                                </CustomTooltip>
                               </ShareChatSessionModal>
                             )}
 
                             {retrievalEnabled && (
-                              <Button
-                                onClick={toggleSidebar}
-                                variant="ghost"
-                                size="icon"
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    onClick={toggleSidebar}
+                                    variant="ghost"
+                                    size="icon"
+                                  >
+                                    {showDocSidebar ? (
+                                      <PanelRightClose size={24} />
+                                    ) : (
+                                      <PanelLeftClose size={24} />
+                                    )}
+                                  </Button>
+                                }
+                                asChild
                               >
-                                {showDocSidebar ? (
-                                  <PanelRightClose size={24} />
-                                ) : (
-                                  <PanelLeftClose size={24} />
-                                )}
-                              </Button>
+                                {showDocSidebar ? "Hide Docs" : "Show Docs"}
+                              </CustomTooltip>
                             )}
                           </div>
                         </div>
