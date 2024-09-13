@@ -1,4 +1,5 @@
 import json
+import traceback
 from datetime import timedelta
 from typing import Any
 from typing import cast
@@ -39,6 +40,7 @@ from danswer.configs.constants import PostgresAdvisoryLocks
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import InputType
 from danswer.db.connector import fetch_connector_by_id
+from danswer.db.connector_credential_pair import add_deletion_failure_message
 from danswer.db.connector_credential_pair import (
     delete_connector_credential_pair__no_commit,
 )
@@ -835,9 +837,7 @@ def monitor_connector_taskset(r: Redis) -> None:
         task_logger.info(f"Successfully synced stale documents. count={initial_count}")
 
 
-def monitor_document_set_taskset(
-    key_bytes: bytes, r: Redis, db_session: Session
-) -> None:
+def monitor_document_set_taskset(key_bytes: bytes, r: Redis) -> None:
     fence_key = key_bytes.decode("utf-8")
     document_set_id = RedisDocumentSet.get_id_from_fence_key(fence_key)
     if document_set_id is None:
@@ -863,28 +863,33 @@ def monitor_document_set_taskset(
     if count > 0:
         return
 
-    document_set = cast(
-        DocumentSet,
-        get_document_set_by_id(db_session=db_session, document_set_id=document_set_id),
-    )  # casting since we "know" a document set with this ID exists
-    if document_set:
-        if not document_set.connector_credential_pairs:
-            # if there are no connectors, then delete the document set.
-            delete_document_set(document_set_row=document_set, db_session=db_session)
-            task_logger.info(
-                f"Successfully deleted document set with ID: '{document_set_id}'!"
-            )
-        else:
-            mark_document_set_as_synced(document_set_id, db_session)
-            task_logger.info(
-                f"Successfully synced document set with ID: '{document_set_id}'!"
-            )
+    with Session(get_sqlalchemy_engine()) as db_session:
+        document_set = cast(
+            DocumentSet,
+            get_document_set_by_id(
+                db_session=db_session, document_set_id=document_set_id
+            ),
+        )  # casting since we "know" a document set with this ID exists
+        if document_set:
+            if not document_set.connector_credential_pairs:
+                # if there are no connectors, then delete the document set.
+                delete_document_set(
+                    document_set_row=document_set, db_session=db_session
+                )
+                task_logger.info(
+                    f"Successfully deleted document set with ID: '{document_set_id}'!"
+                )
+            else:
+                mark_document_set_as_synced(document_set_id, db_session)
+                task_logger.info(
+                    f"Successfully synced document set with ID: '{document_set_id}'!"
+                )
 
     r.delete(rds.taskset_key)
     r.delete(rds.fence_key)
 
 
-def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -> None:
+def monitor_usergroup_taskset(key_bytes: bytes, r: Redis) -> None:
     key = key_bytes.decode("utf-8")
     usergroup_id = RedisUserGroup.get_id_from_fence_key(key)
     if not usergroup_id:
@@ -909,42 +914,45 @@ def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -
     if count > 0:
         return
 
-    try:
-        fetch_user_group = fetch_versioned_implementation(
-            "danswer.db.user_group", "fetch_user_group"
-        )
-    except ModuleNotFoundError:
-        task_logger.exception(
-            "fetch_versioned_implementation failed to look up fetch_user_group."
-        )
-        return
-
-    user_group: UserGroup | None = fetch_user_group(
-        db_session=db_session, user_group_id=usergroup_id
-    )
-    if user_group:
-        if user_group.is_up_for_deletion:
-            delete_user_group = fetch_versioned_implementation_with_fallback(
-                "danswer.db.user_group", "delete_user_group", noop_fallback
+    with Session(get_sqlalchemy_engine()) as db_session:
+        try:
+            fetch_user_group = fetch_versioned_implementation(
+                "danswer.db.user_group", "fetch_user_group"
             )
-
-            delete_user_group(db_session=db_session, user_group=user_group)
-            task_logger.info(f" Deleted usergroup. id='{usergroup_id}'")
-        else:
-            mark_user_group_as_synced = fetch_versioned_implementation_with_fallback(
-                "danswer.db.user_group", "mark_user_group_as_synced", noop_fallback
+        except ModuleNotFoundError:
+            task_logger.exception(
+                "fetch_versioned_implementation failed to look up fetch_user_group."
             )
+            return
 
-            mark_user_group_as_synced(db_session=db_session, user_group=user_group)
-            task_logger.info(f"Synced usergroup. id='{usergroup_id}'")
+        user_group: UserGroup | None = fetch_user_group(
+            db_session=db_session, user_group_id=usergroup_id
+        )
+        if user_group:
+            if user_group.is_up_for_deletion:
+                delete_user_group = fetch_versioned_implementation_with_fallback(
+                    "danswer.db.user_group", "delete_user_group", noop_fallback
+                )
+
+                delete_user_group(db_session=db_session, user_group=user_group)
+                task_logger.info(f" Deleted usergroup. id='{usergroup_id}'")
+            else:
+                mark_user_group_as_synced = (
+                    fetch_versioned_implementation_with_fallback(
+                        "danswer.db.user_group",
+                        "mark_user_group_as_synced",
+                        noop_fallback,
+                    )
+                )
+
+                mark_user_group_as_synced(db_session=db_session, user_group=user_group)
+                task_logger.info(f"Synced usergroup. id='{usergroup_id}'")
 
     r.delete(rug.taskset_key)
     r.delete(rug.fence_key)
 
 
-def monitor_connector_deletion_taskset(
-    key_bytes: bytes, r: Redis, db_session: Session
-) -> None:
+def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
     fence_key = key_bytes.decode("utf-8")
     cc_pair_id = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
     if cc_pair_id is None:
@@ -970,50 +978,63 @@ def monitor_connector_deletion_taskset(
     if count > 0:
         return
 
-    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
-    if not cc_pair:
-        return
+    with Session(get_sqlalchemy_engine()) as db_session:
+        cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+        if not cc_pair:
+            return
 
-    # clean up the rest of the related Postgres entities
-    # index attempts
-    delete_index_attempts(
-        db_session=db_session,
-        cc_pair_id=cc_pair.id,
-    )
+        try:
+            # clean up the rest of the related Postgres entities
+            # index attempts
+            delete_index_attempts(
+                db_session=db_session,
+                cc_pair_id=cc_pair.id,
+            )
 
-    # document sets
-    delete_document_set_cc_pair_relationship__no_commit(
-        db_session=db_session,
-        connector_id=cc_pair.connector_id,
-        credential_id=cc_pair.credential_id,
-    )
+            # document sets
+            delete_document_set_cc_pair_relationship__no_commit(
+                db_session=db_session,
+                connector_id=cc_pair.connector_id,
+                credential_id=cc_pair.credential_id,
+            )
 
-    # user groups
-    cleanup_user_groups = fetch_versioned_implementation_with_fallback(
-        "danswer.db.user_group",
-        "delete_user_group_cc_pair_relationship__no_commit",
-        noop_fallback,
-    )
-    cleanup_user_groups(
-        cc_pair_id=cc_pair.id,
-        db_session=db_session,
-    )
+            # user groups
+            cleanup_user_groups = fetch_versioned_implementation_with_fallback(
+                "danswer.db.user_group",
+                "delete_user_group_cc_pair_relationship__no_commit",
+                noop_fallback,
+            )
+            cleanup_user_groups(
+                cc_pair_id=cc_pair.id,
+                db_session=db_session,
+            )
 
-    # finally, delete the cc-pair
-    delete_connector_credential_pair__no_commit(
-        db_session=db_session,
-        connector_id=cc_pair.connector_id,
-        credential_id=cc_pair.credential_id,
-    )
-    # if there are no credentials left, delete the connector
-    connector = fetch_connector_by_id(
-        db_session=db_session,
-        connector_id=cc_pair.connector_id,
-    )
-    if not connector or not len(connector.credentials):
-        task_logger.info("Found no credentials left for connector, deleting connector")
-        db_session.delete(connector)
-    db_session.commit()
+            # finally, delete the cc-pair
+            delete_connector_credential_pair__no_commit(
+                db_session=db_session,
+                connector_id=cc_pair.connector_id,
+                credential_id=cc_pair.credential_id,
+            )
+            # if there are no credentials left, delete the connector
+            connector = fetch_connector_by_id(
+                db_session=db_session,
+                connector_id=cc_pair.connector_id,
+            )
+            if not connector or not len(connector.credentials):
+                task_logger.info(
+                    "Found no credentials left for connector, deleting connector"
+                )
+                db_session.delete(connector)
+            db_session.commit()
+        except Exception as e:
+            stack_trace = traceback.format_exc()
+            error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
+            add_deletion_failure_message(db_session, cc_pair.id, error_message)
+            task_logger.exception(
+                f"Failed to run connector_deletion. "
+                f"connector_id={cc_pair.connector_id} credential_id={cc_pair.credential_id}"
+            )
+            raise e
 
     task_logger.info(
         f"Successfully deleted connector_credential_pair with connector_id: '{cc_pair.connector_id}' "
@@ -1046,18 +1067,17 @@ def monitor_vespa_sync() -> None:
         if not lock_beat.acquire(blocking=False):
             return
 
-        with Session(get_sqlalchemy_engine()) as db_session:
-            if r.exists(RedisConnectorCredentialPair.get_fence_key()):
-                monitor_connector_taskset(r)
+        if r.exists(RedisConnectorCredentialPair.get_fence_key()):
+            monitor_connector_taskset(r)
 
-            for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
-                monitor_document_set_taskset(key_bytes, r, db_session)
+        for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
+            monitor_document_set_taskset(key_bytes, r)
 
-            for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
-                monitor_usergroup_taskset(key_bytes, r, db_session)
+        for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
+            monitor_usergroup_taskset(key_bytes, r)
 
-            for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
-                monitor_connector_deletion_taskset(key_bytes, r, db_session)
+        for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
+            monitor_connector_deletion_taskset(key_bytes, r)
 
         # r_celery = celery_app.broker_connection().channel().client
         # length = celery_get_queue_length(DanswerCeleryQueues.VESPA_METADATA_SYNC, r_celery)

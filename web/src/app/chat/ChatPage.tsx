@@ -1965,21 +1965,16 @@ export function ChatPage({
                               const parentMessage = message.parentMessageId
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
-
-                              if (
-                                (currentSessionRegenerationState?.regenerating &&
-                                  message.messageId >
-                                    currentSessionRegenerationState?.finalMessageIndex!) ||
-                                (currentSessionChatState == "loading" &&
-                                  ((i >= messageHistory.length - 2 &&
-                                    message.type == "user") ||
-                                    (i >= messageHistory.length - 1 &&
-                                      !currentSessionRegenerationState?.regenerating)))
-                              ) {
-                                return <></>;
-                              }
-
                               if (message.type === "user") {
+                                if (
+                                  (currentSessionChatState == "loading" &&
+                                    i == messageHistory.length - 1) ||
+                                  (currentSessionRegenerationState?.regenerating &&
+                                    message.messageId >=
+                                      currentSessionRegenerationState?.finalMessageIndex!)
+                                ) {
+                                  return <></>;
+                                }
                                 return (
                                   <div
                                     id={`message-${message.messageId}`}
@@ -2052,10 +2047,11 @@ export function ChatPage({
                                     : null;
 
                                 if (
-                                  currentSessionRegenerationState?.regenerating &&
-                                  currentSessionChatState == "loading" &&
-                                  (i == messageHistory.length - 1 ||
-                                    currentSessionRegenerationState?.regenerating)
+                                  (currentSessionChatState == "loading" &&
+                                    i > messageHistory.length - 1) ||
+                                  (currentSessionRegenerationState?.regenerating &&
+                                    message.messageId >
+                                      currentSessionRegenerationState?.finalMessageIndex!)
                                 ) {
                                   return <></>;
                                 }
