@@ -71,8 +71,6 @@ def patch_user_presona_public_status(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    print("request is ")
-    print(is_public_request.__dict__)
     try:
         update_persona_public_status(
             persona_id=persona_id,

@@ -223,8 +223,6 @@ def update_persona_public_status(
         raise ValueError("You don't have permission to modify this persona")
 
     persona.is_public = is_public
-    print("persona is now")
-    print(persona.__dict__)
     db_session.commit()
 
 
