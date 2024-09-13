@@ -127,10 +127,8 @@ def get_standard_formatter() -> ColoredFormatter:
 def is_running_in_container():
     # Multiple file checks for redundancy
     local_only_files = [
-        "pyproject.toml",
         "Dockerfile",
         "Dockerfile.model_server",
-        "alembic.ini",
     ]
 
     return not any(os.path.exists(file) for file in local_only_files)
