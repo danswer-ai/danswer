@@ -80,6 +80,16 @@ class DanswerLoggingAdapter(logging.LoggerAdapter):
         )
 
 
+class PlainFormatter(logging.Formatter):
+    """Adds log levels."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        levelname = record.levelname
+        level_display = f"{levelname}:"
+        formatted_message = super().format(record)
+        return f"{level_display.ljust(9)} {formatted_message}"
+
+
 class ColoredFormatter(logging.Formatter):
     """Custom formatter to add colors to log levels."""
 
