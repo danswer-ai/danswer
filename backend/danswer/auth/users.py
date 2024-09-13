@@ -268,7 +268,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             )
             user.is_verified = is_verified_by_default
             user.has_web_login = True
-            
+
         return user
 
     async def on_after_register(
