@@ -26,7 +26,6 @@ const nextConfig = {
   //   // care of this redirect. TODO (chris): better support setups where
   //   // web_server and api_server are on different machines.
   //   const defaultRedirects = [];
-
   //   if (process.env.NODE_ENV === "production") return defaultRedirects;
   //   return defaultRedirects.concat([
   //     {

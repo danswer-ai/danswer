@@ -122,7 +122,7 @@ export const SearchResultsDisplay = ({
   const shouldDisplayQA =
     searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
     defaultOverrides.forceDisplayQA;
-  
+
   return (
     <div className="px-2">
       {shouldDisplayQA && (
@@ -191,4 +191,4 @@ export const SearchResultsDisplay = ({
       )}
     </div>
   );
-}; */
+};
