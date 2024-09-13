@@ -56,20 +56,6 @@ export function AssistantSharedStatusDisplay({
             )}
           </div>
         )}
-        <div className="relative mt-4 text-xs flex text-subtle">
-          <span className="font-medium">Powers:</span>{" "}
-          {assistant.tools.length == 0 ? (
-            <p className="ml-2">None</p>
-          ) : (
-            assistant.tools.map((tool, ind) => {
-              if (tool.name === "SearchTool") {
-                return <FiSearch key={ind} className="ml-1 h-3 w-3 my-auto" />;
-              } else if (tool.name === "ImageGenerationTool") {
-                return <FiImage key={ind} className="ml-1 h-3 w-3 my-auto" />;
-              }
-            })
-          )}
-        </div>
       </div>
     );
   }

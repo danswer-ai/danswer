@@ -124,6 +124,15 @@ def get_standard_formatter() -> ColoredFormatter:
     )
 
 
+def is_containerized():
+    return (
+        os.path.exists("/.dockerenv")
+        or os.path.exists("/run/.containerenv")
+        or os.environ.get("KUBERNETES_SERVICE_HOST") is not None
+        or os.environ.get("CONTAINER_RUNTIME") is not None
+    )
+
+
 def setup_logger(
     name: str = __name__,
     log_level: int = get_log_level_from_str(),

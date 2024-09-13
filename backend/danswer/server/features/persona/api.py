@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
 from fastapi import Query
 from fastapi import UploadFile
 from pydantic import BaseModel
@@ -50,6 +51,30 @@ def patch_persona_visibility(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    update_persona_visibility(
+        persona_id=persona_id,
+        is_visible=is_visible_request.is_visible,
+        db_session=db_session,
+        user=user,
+    )
+
+
+@basic_router.patch("/{persona_id}/visible")
+def patch_user_presona_visibility(
+    persona_id: int,
+    is_visible_request: IsVisibleRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    persona = get_persona_by_id(persona_id, db_session)
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    if persona.user_id != user.id:
+        raise HTTPException(
+            status_code=403, detail="You don't have permission to modify this persona"
+        )
+
     update_persona_visibility(
         persona_id=persona_id,
         is_visible=is_visible_request.is_visible,
