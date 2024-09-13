@@ -32,7 +32,6 @@ jobs:
         push: true
         tags: |
           danswer/danswer-model-server:${{ github.ref_name }}
-          danswer/danswer-model-server:latest
         build-args: |
           DANSWER_VERSION=${{ github.ref_name }}
 

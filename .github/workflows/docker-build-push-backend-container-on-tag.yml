@@ -36,7 +36,6 @@ jobs:
         push: true
         tags: |
           ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}
-          ${{ env.REGISTRY_IMAGE }}:latest
         build-args: |
           DANSWER_VERSION=${{ github.ref_name }}
 
