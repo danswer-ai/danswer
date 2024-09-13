@@ -11,8 +11,6 @@ import {
 import {
   BooleanFormField,
   Label,
-  LabelWithTooltip,
-  SectionHeader,
   SelectorFormField,
   SubLabel,
   TextArrayField,
@@ -22,21 +20,10 @@ import {
   isPersonaASlackBotPersona,
   updateSlackBotConfig,
 } from "./lib";
-import {
-  Button,
-  Card,
-  Divider,
-  Tab,
-  TabGroup,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Text,
-} from "@tremor/react";
+import { Button, Card, Divider } from "@tremor/react";
 import { useRouter } from "next/navigation";
 import { Persona } from "../assistants/interfaces";
 import { useState } from "react";
-import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
 import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
