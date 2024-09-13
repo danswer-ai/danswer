@@ -203,7 +203,7 @@ def find_matching_standard_answers(
     )
     possible_standard_answers: Sequence[StandardAnswer] = db_session.scalars(stmt).all()
 
-    matching_standard_answers: list[StandardAnswer] = []
+    matching_standard_answers: list[tuple[StandardAnswer, str]] = []
     for standard_answer in possible_standard_answers:
         if standard_answer.match_regex:
             maybe_matches = re.search(standard_answer.keyword, query, re.IGNORECASE)
