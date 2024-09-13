@@ -12,6 +12,7 @@ from danswer.db.models import User__UserGroup
 from danswer.server.manage.embedding.models import CloudEmbeddingProvider
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
+from danswer.server.manage.llm.models import FullLLMProviderSnapshot
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from shared_configs.enums import EmbeddingProvider
 
@@ -59,9 +60,12 @@ def upsert_cloud_embedding_provider(
     return CloudEmbeddingProvider.from_request(existing_provider)
 
 
+# from danswer.server.manage.llm.models import FullLLMProviderSnapshot
+
+
 def upsert_llm_provider(
     llm_provider: LLMProviderUpsertRequest, db_session: Session
-) -> FullLLMProvider:
+) -> FullLLMProviderSnapshot:
     existing_llm_provider = db_session.scalar(
         select(LLMProviderModel).where(LLMProviderModel.name == llm_provider.name)
     )
@@ -94,7 +98,9 @@ def upsert_llm_provider(
 
     db_session.commit()
 
-    return FullLLMProvider.from_model(existing_llm_provider)
+    return FullLLMProviderSnapshot.from_full_llm_provider(
+        FullLLMProvider.from_model(existing_llm_provider)
+    )
 
 
 def fetch_existing_embedding_providers(

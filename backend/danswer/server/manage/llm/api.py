@@ -19,6 +19,7 @@ from danswer.llm.llm_provider_options import fetch_available_well_known_llms
 from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
 from danswer.llm.utils import test_llm
 from danswer.server.manage.llm.models import FullLLMProvider
+from danswer.server.manage.llm.models import FullLLMProviderSnapshot
 from danswer.server.manage.llm.models import LLMProviderDescriptor
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.manage.llm.models import TestLLMRequest
@@ -120,8 +121,10 @@ def put_llm_provider(
     llm_provider: LLMProviderUpsertRequest,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> FullLLMProvider:
-    return upsert_llm_provider(llm_provider=llm_provider, db_session=db_session)
+) -> FullLLMProviderSnapshot:
+    return FullLLMProviderSnapshot.from_full_llm_provider(
+        upsert_llm_provider(llm_provider=llm_provider, db_session=db_session)
+    )
 
 
 @admin_router.delete("/provider/{provider_id}")

@@ -92,7 +92,7 @@ class SearchSettingsSnapshot(SavedSearchSettings):
     def from_saved_settings(
         cls, settings: SavedSearchSettings
     ) -> "SearchSettingsSnapshot":
-        data = settings.dict(exclude={"rerank_api_key"})
+        data = settings.dict(exclude={"rerank_api_key", "api_key"})
         data["rerank_api_key"] = obfuscate_api_key(settings.rerank_api_key)
         data["api_key"] = obfuscate_api_key(settings.api_key)
 

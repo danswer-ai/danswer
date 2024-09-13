@@ -101,3 +101,13 @@ class FullLLMProvider(LLMProvider):
             is_public=llm_provider_model.is_public,
             groups=[group.id for group in llm_provider_model.groups],
         )
+
+
+class FullLLMProviderSnapshot(FullLLMProvider):
+    @classmethod
+    def from_full_llm_provider(
+        cls, settings: FullLLMProvider
+    ) -> "FullLLMProviderSnapshot":
+        data = settings.dict(exclude={"api_key"})
+        data["api_key"] = obfuscate_api_key(settings.api_key)
+        return cls(**data)
