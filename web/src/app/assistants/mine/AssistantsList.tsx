@@ -6,11 +6,15 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { Divider, Text } from "@tremor/react";
 import {
   FiEdit2,
+  FiFigma,
   FiMenu,
+  FiMinus,
   FiMoreHorizontal,
   FiPlus,
   FiSearch,
+  FiShare,
   FiShare2,
+  FiToggleLeft,
   FiTrash,
   FiX,
 } from "react-icons/fi";
@@ -50,12 +54,11 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
 import { DragHandle } from "@/components/table/DragHandle";
 import {
   deletePersona,
-  togglePersonaVisibility,
+  togglePersonaPublicStatus,
 } from "@/app/admin/assistants/lib";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 import { MakePublicAssistantModal } from "@/app/chat/modal/MakePublicAssistantModal";
@@ -269,7 +272,8 @@ function AssistantListItem({
                       className="flex items-center gap-x-2"
                       onClick={() => shareAssistant(assistant)}
                     >
-                      <FiShare2 /> Make Public
+                      {assistant.is_public ? <FiMinus /> : <FiPlus />} Make{" "}
+                      {assistant.is_public ? "Private" : "Public"}
                     </div>
                   ) : (
                     <></>
@@ -326,7 +330,7 @@ export function AssistantsList({
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-
+    filteredAssistants;
     if (over && active.id !== over.id) {
       setFilteredAssistants((assistants) => {
         const oldIndex = assistants.findIndex(
@@ -369,12 +373,18 @@ export function AssistantsList({
           }}
         />
       )}
+
       {makePublicPersona && (
         <MakePublicAssistantModal
           isPublic={makePublicPersona.is_public}
           onClose={() => setMakePublicPersona(null)}
-          onShare={(newPublicStatus: boolean) => {
-            togglePersonaVisibility(makePublicPersona.id, newPublicStatus);
+          onShare={async (newPublicStatus: boolean) => {
+            await togglePersonaPublicStatus(
+              makePublicPersona.id,
+              newPublicStatus
+            );
+            console.log("newPublicStatus", newPublicStatus);
+            router.refresh();
           }}
         />
       )}

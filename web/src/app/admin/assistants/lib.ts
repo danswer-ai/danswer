@@ -323,13 +323,29 @@ export const togglePersonaVisibility = async (
   personaId: number,
   isVisible: boolean
 ) => {
-  const response = await fetch(`/api/admin/persona/${personaId}/visible`, {
+  const response = await fetch(`/api/persona/${personaId}/visible`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       is_visible: !isVisible,
+    }),
+  });
+  return response;
+};
+
+export const togglePersonaPublicStatus = async (
+  personaId: number,
+  isPublic: boolean
+) => {
+  const response = await fetch(`/api/persona/${personaId}/public`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      is_public: isPublic,
     }),
   });
   return response;
