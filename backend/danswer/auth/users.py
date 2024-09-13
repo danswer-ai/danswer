@@ -268,6 +268,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             )
             user.is_verified = is_verified_by_default
             user.has_web_login = True
+
         return user
 
     async def on_after_register(
@@ -414,6 +415,7 @@ async def optional_user(
 async def double_check_user(
     user: User | None,
     optional: bool = DISABLE_AUTH,
+    include_expired: bool = False,
 ) -> User | None:
     if optional:
         return None
@@ -430,13 +432,23 @@ async def double_check_user(
             detail="Access denied. User is not verified.",
         )
 
-    if user.oidc_expiry and user.oidc_expiry < datetime.now(timezone.utc):
+    if (
+        user.oidc_expiry
+        and user.oidc_expiry < datetime.now(timezone.utc)
+        and not include_expired
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. User's OIDC token has expired.",
         )
 
     return user
+
+
+async def current_user_with_expired_token(
+    user: User | None = Depends(optional_user),
+) -> User | None:
+    return await double_check_user(user, include_expired=True)
 
 
 async def current_user(
