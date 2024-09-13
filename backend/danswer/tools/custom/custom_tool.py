@@ -150,8 +150,6 @@ class CustomTool(Tool):
         path_params = {}
 
         for path_param_schema in self._method_spec.get_path_param_schemas():
-            print(path_param_schema, kwargs)
-
             path_params[path_param_schema["name"]] = kwargs[path_param_schema["name"]]
 
         query_params = {}
