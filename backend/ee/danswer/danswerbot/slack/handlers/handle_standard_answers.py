@@ -16,10 +16,7 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.models import Prompt
 from danswer.db.models import SlackBotConfig
 from danswer.db.models import StandardAnswer as StandardAnswerModel
-from danswer.db.standard_answer import fetch_standard_answer_categories_by_names
-from danswer.db.standard_answer import find_matching_standard_answers
 from danswer.server.manage.models import StandardAnswer as PydanticStandardAnswer
-from danswer.server.manage.models import StandardAnswer
 from danswer.utils.logger import DanswerLoggingAdapter
 from danswer.utils.logger import setup_logger
 from ee.danswer.danswerbot.slack.blocks import build_standard_answer_blocks
