@@ -114,14 +114,15 @@ def handle_standard_answers(
     usable_standard_answers = configured_standard_answers.difference(
         used_standard_answer_ids
     )
+
+    matching_standard_answers: list[tuple[StandardAnswer, str]] = []
     if usable_standard_answers:
         matching_standard_answers = find_matching_standard_answers(
             query=query_msg.message,
             id_in=[standard_answer.id for standard_answer in usable_standard_answers],
             db_session=db_session,
         )
-    else:
-        matching_standard_answers = []
+
     if matching_standard_answers:
         chat_session = create_chat_session(
             db_session=db_session,
@@ -149,11 +150,9 @@ def handle_standard_answers(
         )
 
         formatted_answers = []
-        for standard_answer in matching_standard_answers:
+        for standard_answer, match_str in matching_standard_answers:
             since_you_mentioned_pretext = (
-                f'Since you mentioned _"{standard_answer.keyword}"_'
-                if not standard_answer.match_regex
-                else f"Since your question matches the regex pattern `{standard_answer.keyword}`"
+                f'Since your question contained "_{match_str}_"'
             )
             block_quotified_answer = ">" + standard_answer.answer.replace("\n", "\n> ")
             formatted_answer = f"{since_you_mentioned_pretext}, I thought this might be useful: \n\n{block_quotified_answer}"

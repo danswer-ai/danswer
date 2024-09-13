@@ -186,7 +186,7 @@ def find_matching_standard_answers(
     id_in: list[int],
     query: str,
     db_session: Session,
-) -> list[StandardAnswer]:
+) -> list[tuple[StandardAnswer, str]]:
     """
     Returns a list of StandardAnswer definitions matching the query.
 
@@ -206,8 +206,10 @@ def find_matching_standard_answers(
     matching_standard_answers: list[StandardAnswer] = []
     for standard_answer in possible_standard_answers:
         if standard_answer.match_regex:
-            if re.search(standard_answer.keyword, query, re.IGNORECASE):
-                matching_standard_answers.append(standard_answer)
+            maybe_matches = re.search(standard_answer.keyword, query, re.IGNORECASE)
+            if maybe_matches is not None:
+                match_group = maybe_matches.group(0)
+                matching_standard_answers.append((standard_answer, match_group))
 
         else:
             # Remove punctuation and split the keyword into individual words
@@ -224,7 +226,9 @@ def find_matching_standard_answers(
 
             # Check if all of the keyword words are in the query words
             if all(word in query_words for word in keyword_words):
-                matching_standard_answers.append(standard_answer)
+                matching_standard_answers.append(
+                    (standard_answer, standard_answer.keyword)
+                )
 
     return matching_standard_answers
 
