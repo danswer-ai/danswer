@@ -43,9 +43,6 @@ function NewApiKeyModal({
 
   return (
     <div className="h-full">
-      <div className="flex w-full border-b border-border mb-4 pb-4">
-        <h3 className="font-semibold">New API Key</h3>
-      </div>
       <div>
         <p className="pb-4">
           Make sure you copy your new API key. You won’t be able to see this key
@@ -95,6 +92,8 @@ function Main() {
     setShowCreateUpdateForm(true);
   };
 
+  const isUpdate = selectedApiKey !== undefined;
+
   if (isLoading) {
     return <ThreeDotsLoader />;
   }
@@ -123,6 +122,7 @@ function Main() {
           trigger={newApiKeyButton}
           onClose={() => setShowCreateUpdateForm(false)}
           open={showCreateUpdateForm}
+          title={isUpdate ? "Update API Key" : "Create a new API Key"}
         >
           <EnmeddApiKeyForm
             onCreateApiKey={(apiKey) => setFullApiKey(apiKey.api_key)}
@@ -145,6 +145,7 @@ function Main() {
           trigger={null}
           onClose={() => setFullApiKey(null)}
           open={Boolean(fullApiKey)}
+          title="New API Key"
         >
           <NewApiKeyModal
             apiKey={fullApiKey}
@@ -161,6 +162,7 @@ function Main() {
         trigger={newApiKeyButton}
         onClose={() => setShowCreateUpdateForm(false)}
         open={showCreateUpdateForm}
+        title={isUpdate ? "Update API Key" : "Create a new API Key"}
       >
         <EnmeddApiKeyForm
           onCreateApiKey={(apiKey) => setFullApiKey(apiKey.api_key)}

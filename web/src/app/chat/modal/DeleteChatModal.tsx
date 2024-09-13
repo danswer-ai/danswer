@@ -79,10 +79,9 @@ export const DeleteChatModal = ({
           <Trash size={16} />
         </div>
       }
+      title="Delete chat?"
     >
       <div>
-        <h2 className="text-2xl font-semibold pb-6">Delete chat?</h2>
-
         <div className="pt-2">
           <p className="mb-4">
             Click below to confirm that you want to delete{" "}

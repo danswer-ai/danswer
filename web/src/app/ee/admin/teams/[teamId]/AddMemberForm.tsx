@@ -20,7 +20,6 @@ export const AddMemberForm: React.FC<AddMemberFormProps> = ({
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold pb-6">Add New User</h2>
       <UserEditor
         selectedUserIds={selectedUserIds}
         setSelectedUserIds={setSelectedUserIds}

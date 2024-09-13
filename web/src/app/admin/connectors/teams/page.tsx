@@ -270,9 +270,6 @@ const MainSection = () => {
 export default function Page() {
   return (
     <div className="py-24 md:py-32 lg:pt-16">
-      <div>
-        <HealthCheckBanner />
-      </div>
       <BackButton />
 
       <AdminPageTitle icon={<TeamsIcon size={32} />} title="Teams" />

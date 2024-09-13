@@ -36,10 +36,8 @@ export function NoCompleteSourcesModal({
       open={!isHidden}
       onClose={() => setIsHidden(true)}
       trigger={null}
+      title="⏳ None of your connectors have finished a full sync yet"
     >
-      <h2 className="text-2xl font-semibold pb-6">
-        ⏳ None of your connectors have finished a full sync yet
-      </h2>
       <div>
         You&apos;ve connected some sources, but none of them have finished
         syncing. Depending on the size of the knowledge base(s) you&apos;ve

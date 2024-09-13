@@ -131,10 +131,6 @@ export default function Page({ params }: { params: { ccPairId: string } }) {
 
   return (
     <div className="py-24 md:py-32 lg:pt-16">
-      <div>
-        <HealthCheckBanner />
-      </div>
-
       <Main ccPairId={ccPairId} />
     </div>
   );

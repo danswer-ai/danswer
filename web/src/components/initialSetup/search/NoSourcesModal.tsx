@@ -23,8 +23,8 @@ export function NoSourcesModal() {
       open={!isHidden}
       onClose={() => setIsHidden(true)}
       trigger={null}
+      title="🧐 No sources connected"
     >
-      <h2 className="text-2xl font-semibold pb-6">🧐 No sources connected</h2>
       <div>
         <Text>
           Before using Search you&apos;ll need to connect at least one source.

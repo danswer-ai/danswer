@@ -105,8 +105,8 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                           }
                           onClose={handleClose}
                           open={modalIsVisible}
+                          title="Full Exception Trace"
                         >
-                          <div className="font-bold">Full Exception Trace</div>
                           <div className="mb-6">
                             {!copyClicked ? (
                               <Button

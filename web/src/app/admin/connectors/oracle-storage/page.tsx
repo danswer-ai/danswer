@@ -264,9 +264,6 @@ const OCIMain = () => {
 export default function Page() {
   return (
     <div className="py-24 md:py-32 lg:pt-16">
-      <div>
-        <HealthCheckBanner />
-      </div>
       <BackButton />
       <AdminPageTitle
         icon={<OCIStorageIcon size={32} />}

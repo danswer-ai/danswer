@@ -32,7 +32,7 @@ function LLMProviderUpdateModal({
     "Custom LLM Provider";
   return (
     <div className="px-4">
-      <h2 className="text-2xl font-semibold pb-6">{`Setup ${providerName}`}</h2>
+      {/* <h2 className="text-2xl font-semibold pb-6">{`Setup ${providerName}`}</h2> */}
       {llmProviderDescriptor ? (
         <LLMProviderUpdateForm
           llmProviderDescriptor={llmProviderDescriptor}
@@ -80,6 +80,7 @@ function DefaultLLMProviderDisplay({
           }
           open={formIsVisible}
           onClose={handleClose}
+          title={`Setup ${providerName}`}
         >
           <LLMProviderUpdateModal
             llmProviderDescriptor={llmProviderDescriptor}
@@ -112,11 +113,9 @@ function AddCustomLLMProvider({
       }
       onClose={handleClose}
       open={formIsVisible}
+      title="Setup Custom LLM Provider"
     >
       <div className="px-4">
-        <h2 className="text-2xl font-semibold pb-6">
-          Setup Custom LLM Provider
-        </h2>
         <CustomLLMProviderUpdateForm
           onClose={handleClose}
           shouldMarkAsDefault={existingLlmProviders.length === 0}

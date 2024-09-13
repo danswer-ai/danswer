@@ -66,43 +66,43 @@ const Page = async ({
   }
 
   return (
-    <main className="flex justify-center">
-      <div className="absolute w-full top-10x">
-        <HealthCheckBanner />
-      </div>
-      <div className="flex items-center justify-center lg:justify-between w-full min-h-screen px-6 md:w-2/3 md:px-0 gap-10">
-        <div>
-          {authUrl && authTypeMetadata && (
-            <>
-              <LoginText />
-              <SignInButton
-                authorizeUrl={authUrl}
-                authType={authTypeMetadata?.authType}
-              />
-            </>
-          )}
-          {authTypeMetadata?.authType === "basic" && (
-            <div className="lg:w-96">
-              <LoginText />
-              <div className="my-6">
-                <LogInForms />
+    <main>
+      <HealthCheckBanner />
+      <div className="flex justify-center">
+        <div className="flex items-center justify-center lg:justify-between w-full min-h-screen px-6 md:w-2/3 md:px-0 gap-10">
+          <div>
+            {authUrl && authTypeMetadata && (
+              <>
+                <LoginText />
+                <SignInButton
+                  authorizeUrl={authUrl}
+                  authType={authTypeMetadata?.authType}
+                />
+              </>
+            )}
+            {authTypeMetadata?.authType === "basic" && (
+              <div className="lg:w-96">
+                <LoginText />
+                <div className="my-6">
+                  <LogInForms />
+                </div>
+                <div className="flex">
+                  <Text className="mt-4">
+                    Don&apos;t have an account?{" "}
+                    <Link href="/auth/signup" className="font-medium text-link">
+                      Create an account
+                    </Link>
+                  </Text>
+                </div>
               </div>
-              <div className="flex">
-                <Text className="mt-4">
-                  Don&apos;t have an account?{" "}
-                  <Link href="/auth/signup" className="font-medium text-link">
-                    Create an account
-                  </Link>
-                </Text>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
+          <Image
+            src={LoginImage}
+            alt="LoginImage"
+            className="hidden w-1/2 h-auto lg:flex"
+          />
         </div>
-        <Image
-          src={LoginImage}
-          alt="LoginImage"
-          className="hidden w-1/2 h-auto lg:flex"
-        />
       </div>
     </main>
   );

@@ -56,6 +56,7 @@ export const Main = ({ assistants }: { assistants: Assistant[] }) => {
         }
         onClose={() => setShowForm(false)}
         open={showForm}
+        title="Create a new Teamspace"
       >
         <TeamspaceCreationForm
           onClose={() => {

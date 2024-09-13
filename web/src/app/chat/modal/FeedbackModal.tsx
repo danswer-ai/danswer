@@ -170,17 +170,6 @@ export const FeedbackModal = ({
 
   return (
     <div className="max-w-5xl">
-      <div className="flex text-2xl font-bold pb-6">
-        <div className="my-auto mr-1">
-          {feedbackType === "like" ? (
-            <FiThumbsUp className="my-auto mr-2 text-green-500" />
-          ) : (
-            <FiThumbsDown className="my-auto mr-2 text-red-600" />
-          )}
-        </div>
-        Provide additional feedback
-      </div>
-
       <Textarea
         autoFocus
         role="textarea"

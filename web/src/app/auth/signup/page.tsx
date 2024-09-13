@@ -56,9 +56,7 @@ const Page = async () => {
 
   return (
     <main>
-      <div className="absolute w-full top-10">
-        <HealthCheckBanner />
-      </div>
+      <HealthCheckBanner />
       <div className="flex items-center justify-center min-h-screen px-6 py-12 sm:px-6 lg:px-8">
         <div>
           <Card className="flex flex-col items-center px-5 py-8 md:p-12 ">

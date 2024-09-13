@@ -658,7 +658,6 @@ export function ChatPage({
       searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
 
     if (isNewSession) {
-      toggleSidebar();
       currChatSessionId = await createChatSession(
         liveAssistant?.id || 0,
         searchParamBasedChatSessionName
@@ -1057,27 +1056,10 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [isMobile, setIsMobile] = useState(false);
-  const [showDocSidebar, setShowDocSidebar] = useState(false);
-  const [isWide, setIsWide] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const windowWidth = window.innerWidth;
-      setIsMobile(windowWidth <= 1420);
-      setIsWide(windowWidth >= 1420);
-      setShowDocSidebar(windowWidth >= 1420);
-    };
-
-    // Initial check
-    handleResize();
-
-    // Attach event listener for window resize
-    window.addEventListener("resize", handleResize);
-
-    // Cleanup listener on component unmount
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const windowWidth = window.innerWidth;
+  const [isMobile, setIsMobile] = useState(windowWidth <= 1420);
+  const [showDocSidebar, setShowDocSidebar] = useState(windowWidth >= 1420);
+  const [isWide, setIsWide] = useState(windowWidth >= 1420);
 
   const toggleSidebar = () => {
     if (sidebarElementRef.current) {

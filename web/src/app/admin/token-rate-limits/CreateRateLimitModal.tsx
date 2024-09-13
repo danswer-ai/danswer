@@ -66,9 +66,6 @@ export const CreateRateLimitModal = ({
 
   return (
     <div className="mt-4">
-      <h2 className="text-lg font-semibold leading-none tracking-tight pb-8">
-        Create a Token Rate Limit
-      </h2>
       <Formik
         initialValues={{
           enabled: true,

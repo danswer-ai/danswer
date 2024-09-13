@@ -143,6 +143,7 @@ function Main() {
         }
         onClose={() => setModalIsOpen(false)}
         open={modalIsOpen}
+        title="Create a Token Rate Limit"
       >
         <CreateRateLimitModal
           isOpen={modalIsOpen}

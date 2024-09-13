@@ -66,6 +66,7 @@ export const AddTokenRateLimitForm: React.FC<AddMemberFormProps> = ({
       }
       onClose={() => setModalIsOpen(false)}
       open={modalIsOpen}
+      title="Create a Token Rate Limit"
     >
       <CreateRateLimitModal
         onSubmit={handleSubmit}

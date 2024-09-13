@@ -33,6 +33,13 @@ export const TeamspaceCreationForm = ({
   const isUpdate = existingTeamspace !== undefined;
   const { toast } = useToast();
 
+  const {
+    data: documentSets,
+    isLoading: isDocumentSetsLoading,
+    error: documentSetsError,
+    refreshDocumentSets,
+  } = useDocumentSets();
+
   return (
     <div>
       <h2 className="text-xl font-bold flex">

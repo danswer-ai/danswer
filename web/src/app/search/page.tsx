@@ -149,29 +149,31 @@ export default async function Home() {
     !shouldShowWelcomeModal;
 
   return (
-    <div className="relative flex h-full">
-      <BarLayout user={user} BarComponent={SearchSidebar} isSearch />;
+    <div className="h-full">
       <HealthCheckBanner />
-      {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-      {!shouldShowWelcomeModal &&
-        !shouldDisplayNoSourcesModal &&
-        !shouldDisplaySourcesIncompleteModal && <ApiKeyModal user={user} />}
-      {shouldDisplayNoSourcesModal && <NoSourcesModal />}
-      {shouldDisplaySourcesIncompleteModal && (
-        <NoCompleteSourcesModal ccPairs={ccPairs} />
-      )}
-      {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
+      <div className="relative flex h-full">
+        <BarLayout user={user} BarComponent={SearchSidebar} isSearch />;
+        {shouldShowWelcomeModal && <WelcomeModal user={user} />}
+        {!shouldShowWelcomeModal &&
+          !shouldDisplayNoSourcesModal &&
+          !shouldDisplaySourcesIncompleteModal && <ApiKeyModal user={user} />}
+        {shouldDisplayNoSourcesModal && <NoSourcesModal />}
+        {shouldDisplaySourcesIncompleteModal && (
+          <NoCompleteSourcesModal ccPairs={ccPairs} />
+        )}
+        {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
-      <ChatPopup />
-      <InstantSSRAutoRefresh />
-      <div className="container pt-20 lg:pt-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 h-screen overflow-hidden">
-        <SearchSection
-          ccPairs={ccPairs}
-          documentSets={documentSets}
-          assistants={assistants}
-          tags={tags}
-          defaultSearchType={searchTypeDefault}
-        />
+        <ChatPopup />
+        <InstantSSRAutoRefresh />
+        <div className="container pt-20 lg:pt-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 h-screen overflow-hidden">
+          <SearchSection
+            ccPairs={ccPairs}
+            documentSets={documentSets}
+            assistants={assistants}
+            tags={tags}
+            defaultSearchType={searchTypeDefault}
+          />
+        </div>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { SideBar } from "../SideBar";
 import { BarLayout } from "../BarLayout";
 import { AdminBar } from "./AdminBar";
+import { HealthCheckBanner } from "../health/healthcheck";
 
 export async function Layout({ children }: { children: React.ReactNode }) {
   const tasks = [getAuthTypeMetadataSS(), getCurrentUserSS()];
@@ -41,6 +42,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="h-full overflow-y-auto">
+      <HealthCheckBanner />
       <div className="flex h-full">
         <AdminBar user={user}>
           <SideBar />

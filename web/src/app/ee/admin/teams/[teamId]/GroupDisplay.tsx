@@ -148,6 +148,7 @@ export const GroupDisplay = ({
         }
         onClose={() => setAddMemberFormVisible(false)}
         open={addMemberFormVisible}
+        title="Add New User"
       >
         <AddMemberForm
           users={users}
@@ -250,6 +251,7 @@ export const GroupDisplay = ({
         }
         onClose={() => setAddConnectorFormVisible(false)}
         open={addConnectorFormVisible}
+        title="Add New Connector"
       >
         <AddConnectorForm
           ccPairs={ccPairs}

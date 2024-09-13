@@ -373,6 +373,14 @@ export const AIMessage = ({
                     }
                     onClose={() => setIsLikeModalOpen(false)}
                     open={isLikeModalOpen}
+                    title={
+                      <div className="flex text-2xl font-bold pb-6">
+                        <div className="my-auto mr-1">
+                          <ThumbsUpIcon className="my-auto mr-2 text-green-500" />
+                        </div>
+                        Provide additional feedback
+                      </div>
+                    }
                   >
                     <FeedbackModal
                       feedbackType="like"
@@ -403,6 +411,14 @@ export const AIMessage = ({
                     }
                     onClose={() => setIsDislikeModalOpen(false)}
                     open={isDislikeModalOpen}
+                    title={
+                      <div className="flex text-2xl font-bold pb-6">
+                        <div className="my-auto mr-1">
+                          <ThumbsDownIcon className="my-auto mr-2 text-red-600" />
+                        </div>
+                        Provide additional feedback
+                      </div>
+                    }
                   >
                     <FeedbackModal
                       feedbackType="dislike"
@@ -467,6 +483,8 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  ThumbsDownIcon,
+  ThumbsUpIcon,
 } from "lucide-react";
 import { User as UserTypes } from "@/lib/types";
 import { FeedbackModal } from "../modal/FeedbackModal";

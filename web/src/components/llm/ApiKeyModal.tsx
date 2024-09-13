@@ -117,9 +117,9 @@ export const ApiKeyModal = ({ user }: { user: User | null }) => {
       open={!forceHidden}
       onClose={() => setForceHidden(true)}
       trigger={null}
+      title="LLM Key Setup"
     >
       <div>
-        <h2 className="text-2xl font-semibold pb-6">LLM Key Setup</h2>
         <div className="mb-5 text-sm">
           Please setup an LLM below in order to start using Search or Chat.
           Don&apos;t worry, you can always change this later in the Admin Panel.

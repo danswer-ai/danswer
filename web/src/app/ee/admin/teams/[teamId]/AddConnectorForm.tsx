@@ -27,7 +27,6 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
   );
   return (
     <div>
-      <h2 className="text-2xl font-semibold pb-6">Add New Connector</h2>
       <div className="mb-2 flex flex-wrap gap-x-2">
         {selectedCCPairs.length > 0 &&
           selectedCCPairs.map((ccPair) => (

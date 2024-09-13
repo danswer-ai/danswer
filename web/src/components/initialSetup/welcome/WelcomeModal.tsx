@@ -260,11 +260,9 @@ export function _WelcomeModal({ user }: { user: User | null }) {
         open={!isHidden}
         onClose={() => setIsHidden(true)}
         trigger={null}
+        title={title}
       >
-        <div>
-          <h2 className="text-2xl font-semibold pb-6">{title}</h2>
-          {body}
-        </div>
+        <div>{body}</div>
       </CustomModal>
     </Modal>
   );

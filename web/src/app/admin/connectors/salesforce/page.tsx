@@ -286,9 +286,6 @@ const MainSection = () => {
 export default function Page() {
   return (
     <div className="py-24 md:py-32 lg:pt-16">
-      <div>
-        <HealthCheckBanner />
-      </div>
       <BackButton />
 
       <AdminPageTitle icon={<SalesforceIcon size={32} />} title="Salesforce" />

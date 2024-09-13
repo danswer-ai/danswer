@@ -21,17 +21,8 @@ function LLMProviderUpdateModal({
   existingLlmProvider?: FullLLMProvider;
   shouldMarkAsDefault?: boolean;
 }) {
-  const providerName = existingLlmProvider?.name
-    ? `"${existingLlmProvider.name}"`
-    : null ||
-      llmProviderDescriptor?.display_name ||
-      llmProviderDescriptor?.name ||
-      "Custom LLM Provider";
   return (
     <div className="px-4">
-      <h2 className="text-2xl font-semibold pb-6">{`${
-        llmProviderDescriptor ? "Configure" : "Setup"
-      } ${providerName}`}</h2>
       {llmProviderDescriptor ? (
         <LLMProviderUpdateForm
           llmProviderDescriptor={llmProviderDescriptor}
@@ -62,10 +53,11 @@ function LLMProviderDisplay({
   const [formIsVisible, setFormIsVisible] = useState(false);
   const { toast } = useToast();
 
-  const providerName =
-    existingLlmProvider?.name ||
-    llmProviderDescriptor?.display_name ||
-    llmProviderDescriptor?.name;
+  const providerName = existingLlmProvider?.name
+    ? existingLlmProvider.name
+    : llmProviderDescriptor?.display_name ||
+      llmProviderDescriptor?.name ||
+      "Custom LLM Provider";
 
   const handleClose = () => {
     setFormIsVisible(false);
@@ -131,6 +123,9 @@ function LLMProviderDisplay({
           }
           onClose={handleClose}
           open={formIsVisible}
+          title={`${
+            llmProviderDescriptor ? "Configure" : "Setup"
+          } ${providerName}`}
         >
           <LLMProviderUpdateModal
             llmProviderDescriptor={llmProviderDescriptor}

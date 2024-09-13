@@ -191,6 +191,7 @@ export const ChatSidebar = ({
                 </Button>
               }
               asChild
+              side="right"
             >
               Create New Folder
             </CustomTooltip>

@@ -47,9 +47,7 @@ export function Verify({ user }: { user: User | null }) {
 
   return (
     <main>
-      <div className="absolute top-10x w-full">
-        <HealthCheckBanner />
-      </div>
+      <HealthCheckBanner />
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div>
           <Logo
