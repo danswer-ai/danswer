@@ -188,8 +188,13 @@ def find_matching_standard_answers(
     db_session: Session,
 ) -> list[StandardAnswer]:
     """
-    Returns a list of tuples, where each tuple contains a StandardAnswer and a boolean
-    indicating if the query is a regex match.
+    Returns a list of StandardAnswer definitions matching the query.
+
+    If `answer_instance.match_regex` is true, the definition is considered "matched"
+    if the query matches the `answer_instance.keyword` using `re.search`.
+
+    Otherwise, the definition is considered "matched" if each space-delimited token
+    in `keyword` exists in `query`.
     """
     stmt = (
         select(StandardAnswer)
