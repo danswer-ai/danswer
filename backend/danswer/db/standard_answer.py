@@ -188,7 +188,9 @@ def find_matching_standard_answers(
     db_session: Session,
 ) -> list[tuple[StandardAnswer, str]]:
     """
-    Returns a list of StandardAnswer definitions matching the query.
+    Returns a list of tuples, where each tuple is a StandardAnswer definition matching
+    the query and a string representing the match (either the regex match group or the
+    set of keywords).
 
     If `answer_instance.match_regex` is true, the definition is considered "matched"
     if the query matches the `answer_instance.keyword` using `re.search`.
