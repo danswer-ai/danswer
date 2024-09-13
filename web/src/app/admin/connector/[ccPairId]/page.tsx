@@ -65,13 +65,15 @@ function Main({ ccPairId }: { ccPairId: number }) {
   return (
     <>
       <BackButton />
-      <div className="pb-5 flex flex-col sm:flex-row gap-4">
-        <h1 className="text-3xl  font-bold">{ccPair.name}</h1>
 
-        <div className="sm:ml-auto">
+      <div className="pb-5 flex flex-col items-start sm:flex-row lg:items-center gap-4 w-full">
+        <h1 className="text-3xl font-bold truncate">{ccPair.name}</h1>
+
+        <div className="sm:ml-auto flex-shrink-0">
           <ModifyStatusButtonCluster ccPair={ccPair} />
         </div>
       </div>
+
       <CCPairStatus
         status={lastIndexAttempt?.status || "not_started"}
         disabled={ccPair.connector.disabled}

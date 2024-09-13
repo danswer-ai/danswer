@@ -14,7 +14,7 @@ export const Assistants = ({ assistants }: AssistantsProps) => {
         return (
           <Badge
             key={i}
-            className="cursor-pointer hover:opacity-75"
+            className="cursor-pointer hover:bg-opacity-80"
             variant="outline"
           >
             {assistant.name}

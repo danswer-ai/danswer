@@ -38,7 +38,7 @@ export const UserEditor = ({
                 );
               }}
               variant="outline"
-              className="hover:opacity-75 cursor-pointer"
+              className="cursor-pointer hover:bg-opacity-80"
             >
               {selectedUser.email}{" "}
               <X className="ml-1 my-auto cursor-pointer" size={14} />

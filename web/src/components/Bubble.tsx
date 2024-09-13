@@ -19,7 +19,7 @@ export function Bubble({
     <Badge
       variant={isSelected ? "default" : "outline"}
       onClick={onClick}
-      className="cursor-pointer hover:opacity-75"
+      className="cursor-pointer hover:bg-opacity-80"
     >
       <div className="my-auto">{children}</div>
       {showCheckbox && <Checkbox checked={isSelected} onChange={() => null} />}

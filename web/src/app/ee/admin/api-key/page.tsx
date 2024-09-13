@@ -25,8 +25,9 @@ import {
 import { EnmeddApiKeyForm } from "./EnmeddApiKeyForm";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
-import { Edit2, RefreshCw } from "lucide-react";
+import { Check, Copy, Edit2, RefreshCw } from "lucide-react";
 import { CustomModal } from "@/components/CustomModal";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 const API_KEY_TEXT = `
 API Keys allow you to access enMedD AI APIs programmatically. Click the button below to generate a new API Key.
@@ -51,18 +52,27 @@ function NewApiKeyModal({
 
         <div className="flex pt-2 pb-10">
           <b className="my-auto break-all">{apiKey}</b>
-          <div
-            className="ml-2 my-auto p-2 hover:bg-hover rounded cursor-pointer"
-            onClick={() => {
-              setCopyClicked(true);
-              navigator.clipboard.writeText(apiKey);
-              setTimeout(() => {
-                setCopyClicked(false);
-              }, 10000);
-            }}
+          <CustomTooltip
+            trigger={
+              <Button
+                onClick={() => {
+                  setCopyClicked(true);
+                  navigator.clipboard.writeText(apiKey);
+                  setTimeout(() => {
+                    setCopyClicked(false);
+                  }, 2000);
+                }}
+                variant="ghost"
+                size="icon"
+                className="ml-2"
+              >
+                {copyClicked ? <Check size="16" /> : <Copy size="16" />}
+              </Button>
+            }
+            asChild
           >
-            <FiCopy size="16" className="my-auto" />
-          </div>
+            {copyClicked ? "Copied" : "Copy"}
+          </CustomTooltip>
         </div>
         {copyClicked && (
           <p className="text-success text-xs font-medium pt-1">

@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
   if (assistant.default_assistant) {
@@ -94,18 +95,25 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                 cells: [
                   <div key="name" className="flex gap-2 items-center">
                     {!assistant.default_assistant && (
-                      <Button variant="ghost" size="icon">
-                        <Pencil
-                          size={16}
-                          onClick={() =>
-                            router.push(
-                              `/admin/assistants/${
-                                assistant.id
-                              }?u=${Date.now()}`
-                            )
-                          }
-                        />
-                      </Button>
+                      <CustomTooltip
+                        trigger={
+                          <Button variant="ghost" size="icon">
+                            <Pencil
+                              size={16}
+                              onClick={() =>
+                                router.push(
+                                  `/admin/assistants/${
+                                    assistant.id
+                                  }?u=${Date.now()}`
+                                )
+                              }
+                            />
+                          </Button>
+                        }
+                        asChild
+                      >
+                        Edit
+                      </CustomTooltip>
                     )}
                     <p className="text font-medium whitespace-normal break-none">
                       {assistant.name}
@@ -147,7 +155,7 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                       }
                     }}
                     variant="outline"
-                    className="py-1.5 px-3 w-[84px] cursor-pointer hover:opacity-80 gap-1.5"
+                    className="py-1.5 px-3 w-[84px] cursor-pointer hover:bg-opacity-80 gap-1.5"
                   >
                     {!assistant.is_visible ? (
                       <div className="text-error">Hidden</div>
@@ -160,24 +168,31 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                   <div key="edit" className="flex">
                     <div className="mx-auto my-auto">
                       {!assistant.default_assistant ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={async () => {
-                            const response = await deleteAssistant(
-                              assistant.id
-                            );
-                            if (response.ok) {
-                              router.refresh();
-                            } else {
-                              alert(
-                                `Failed to delete assistant - ${await response.text()}`
-                              );
-                            }
-                          }}
+                        <CustomTooltip
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={async () => {
+                                const response = await deleteAssistant(
+                                  assistant.id
+                                );
+                                if (response.ok) {
+                                  router.refresh();
+                                } else {
+                                  alert(
+                                    `Failed to delete assistant - ${await response.text()}`
+                                  );
+                                }
+                              }}
+                            >
+                              <TrashIcon />
+                            </Button>
+                          }
+                          asChild
                         >
-                          <TrashIcon />
-                        </Button>
+                          Delete
+                        </CustomTooltip>
                       ) : (
                         "-"
                       )}

@@ -11,9 +11,9 @@ export const HealthCheckBanner = () => {
   const { error } = useSWR("/api/health", errorHandlingFetcher);
   const [isModalOpen, setIsModalOpen] = useState(true);
 
-  /*   if (!error) {
+  if (!error) {
     return null;
-  } */
+  }
 
   if (error instanceof RedirectError) {
     return (

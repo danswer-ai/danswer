@@ -6,6 +6,7 @@ import { getFinalLLM } from "@/lib/llm/utils";
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bookmark } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface AssistantsTabProps {
   selectedAssistant: Assistant;
@@ -55,12 +56,10 @@ export function AssistantsTab({
                       <p className="my-auto font-medium">Document Sets:</p>
                       <div className="flex flex-wrap gap-2">
                         {assistant.document_sets.map((set) => (
-                          <Bubble key={set.id} isSelected={false}>
-                            <div className="flex flex-row gap-1">
-                              <Bookmark size={16} className="mr-1 my-auto" />
-                              {set.name}
-                            </div>
-                          </Bubble>
+                          <Badge variant="secondary" key={set.id}>
+                            <Bookmark size={16} />
+                            {set.name}
+                          </Badge>
                         ))}
                       </div>
                     </div>

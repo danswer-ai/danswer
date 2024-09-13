@@ -29,7 +29,7 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
                 <Badge
                   variant="outline"
                   key={document.document_id}
-                  className="cursor-pointer hover:opacity-75"
+                  className="cursor-pointer hover:bg-opacity-80"
                 >
                   <Book
                     size={12}

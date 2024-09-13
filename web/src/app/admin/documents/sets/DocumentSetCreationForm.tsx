@@ -137,7 +137,7 @@ export const DocumentSetCreationForm = ({
                       <Badge
                         key={`${ccPair.connector.id}-${ccPair.credential.id}`}
                         variant={isSelected ? "default" : "outline"}
-                        className="cursor-pointer hover:opacity-75"
+                        className="cursor-pointer hover:bg-opacity-75"
                         onClick={() => {
                           if (isSelected) {
                             arrayHelpers.remove(ind);
@@ -203,7 +203,7 @@ export const DocumentSetCreationForm = ({
                                 <Badge
                                   key={teamspace.id}
                                   variant={isSelected ? "default" : "outline"}
-                                  className="cursor-pointer hover:opacity-75"
+                                  className="cursor-pointer hover:bg-opacity-80"
                                   onClick={() => {
                                     if (isSelected) {
                                       arrayHelpers.remove(ind);

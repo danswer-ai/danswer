@@ -21,7 +21,7 @@ export const ConnectorEditor = ({
         return (
           <Badge
             key={`${ccPair.connector.id}-${ccPair.credential.id}`}
-            className="cursor-pointer hover:opacity-75"
+            className="cursor-pointer hover:bg-opacity-80"
             variant={isSelected ? "default" : "outline"}
             onClick={() => {
               if (isSelected) {

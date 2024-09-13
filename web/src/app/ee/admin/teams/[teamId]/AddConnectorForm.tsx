@@ -40,7 +40,7 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
                 );
               }}
               variant="outline"
-              className="hover:opacity-75 cursor-pointer"
+              className="cursor-pointer hover:bg-opacity-80"
             >
               <ConnectorTitle
                 ccPairId={ccPair.cc_pair_id}

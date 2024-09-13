@@ -54,7 +54,7 @@ const DocumentDisplay = ({
       <div className="flex items-center flex-wrap pt-2 text-xs gap-x-2">
         <Badge
           variant="outline"
-          className="px-3 gap-1.5 max-h-[30px] cursor-pointer hover:opacity-80"
+          className="px-3 gap-1.5 max-h-[30px] cursor-pointer hover:bg-opacity-80"
         >
           <p className="my-auto mr-1">Boost:</p>
           <ScoreSection
@@ -83,7 +83,7 @@ const DocumentDisplay = ({
             }
           }}
           variant="outline"
-          className="py-1.5 px-3 gap-1.5 cursor-pointer hover:opacity-80"
+          className="py-1.5 px-3 gap-1.5 cursor-pointer hover:bg-opacity-80"
         >
           <div className="my-auto">
             {document.hidden ? (

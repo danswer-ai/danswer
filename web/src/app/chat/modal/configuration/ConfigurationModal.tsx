@@ -66,10 +66,7 @@ export function ConfigurationModal({
           <TabsTrigger value="assistant" className="w-full">
             <Cpu size={16} className="mr-2" /> My Assistant
           </TabsTrigger>
-          {/*  <TabsTrigger value="models" className="w-full">
-            <Sparkles size={16} className="mr-2" />
-            Model
-          </TabsTrigger> */}
+
           <TabsTrigger value="filters" className="w-full">
             <Filter size={16} className="mr-2" /> Filters
           </TabsTrigger>
@@ -87,13 +84,7 @@ export function ConfigurationModal({
             />
           </div>
         </TabsContent>
-        {/* <TabsContent value="models">
-          <LlmTab
-            chatSessionId={chatSessionId}
-            llmOverrideManager={llmOverrideManager}
-            currentAssistant={selectedAssistant}
-          />
-        </TabsContent> */}
+
         <TabsContent value="filters">
           <FiltersTab filterManager={filterManager} />
         </TabsContent>

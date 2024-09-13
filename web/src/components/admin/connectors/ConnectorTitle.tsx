@@ -84,6 +84,7 @@ export const ConnectorTitle = ({
           </div>
         </div>
       }
+      asChild
     >
       {ccPairName || sourceMetadata.displayName}
     </CustomTooltip>
