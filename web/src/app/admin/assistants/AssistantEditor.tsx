@@ -132,11 +132,6 @@ export function AssistantEditor({
 
   const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
 
-  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
-
-  // EE only
-  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
-
   const [finalPrompt, setFinalPrompt] = useState<string | null>("");
   const [finalPromptError, setFinalPromptError] = useState<string>("");
   const [removePersonaImage, setRemovePersonaImage] = useState(false);
@@ -172,7 +167,7 @@ export function AssistantEditor({
   const defaultProvider = llmProviders.find(
     (llmProvider) => llmProvider.is_default_provider
   );
-  const defaultProviderName = defaultProvider?.provider;
+
   const defaultModelName = defaultProvider?.default_model_name;
   const providerDisplayNameToProviderName = new Map<string, string>();
   llmProviders.forEach((llmProvider) => {
@@ -193,7 +188,8 @@ export function AssistantEditor({
     modelOptionsByProvider.set(llmProvider.name, providerOptions);
   });
   const providerSupportingImageGenerationExists = llmProviders.some(
-    (provider) => provider.provider === "openai"
+    (provider) =>
+      provider.provider === "openai" || provider.provider === "anthropic"
   );
 
   const personaCurrentToolIds =

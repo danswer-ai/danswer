@@ -1432,13 +1432,13 @@ export function ChatPage({
   };
 
   const handleImageUpload = (acceptedFiles: File[]) => {
-    const llmAcceptsImages = checkLLMSupportsImageInput(
-      ...getFinalLLM(
-        llmProviders,
-        liveAssistant,
-        llmOverrideManager.llmOverride
-      )
+    const [_, llmModel] = getFinalLLM(
+      llmProviders,
+      liveAssistant,
+      llmOverrideManager.llmOverride
     );
+    const llmAcceptsImages = checkLLMSupportsImageInput(llmModel);
+
     const imageFiles = acceptedFiles.filter((file) =>
       file.type.startsWith("image/")
     );
