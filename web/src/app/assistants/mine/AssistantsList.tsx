@@ -383,7 +383,6 @@ export function AssistantsList({
               makePublicPersona.id,
               newPublicStatus
             );
-            console.log("newPublicStatus", newPublicStatus);
             router.refresh();
           }}
         />
