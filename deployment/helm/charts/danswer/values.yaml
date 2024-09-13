@@ -290,6 +290,7 @@ background:
   tolerations: []
 
 vespa:
+  enabled: true
   replicaCount: 1
   image:
     repository: vespa
@@ -300,7 +301,6 @@ vespa:
     app: vespa
     app.kubernetes.io/instance: danswer
     app.kubernetes.io/name: vespa
-  enabled: true
 
   podSecurityContext: {}
     # fsGroup: 2000
@@ -308,12 +308,6 @@ vespa:
   securityContext:
     privileged: true
     runAsUser: 0
-    # capabilities:
-    #   drop:
-    #   - ALL
-    # readOnlyRootFilesystem: true
-    # runAsNonRoot: true
-    # runAsUser: 1000
 
   resources:
   # The Vespa Helm chart specifies default resources, which are quite modest. We override
@@ -328,6 +322,31 @@ vespa:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+
+
+redis:
+  enabled: true
+  architecture: standalone
+  commonConfiguration: |-
+    # Enable AOF https://redis.io/topics/persistence#append-only-file
+    appendonly no
+    # Disable RDB persistence, AOF persistence already enabled.
+    save ""
+  master:
+    replicaCount: 1
+    image:
+      registry: docker.io
+      repository: bitnami/redis
+      tag: "7.4.0"
+      pullPolicy: IfNotPresent
+    persistence:
+      enabled: false
+  service:
+    type: ClusterIP
+    port: 6379
+  auth:
+    existingSecret: danswer-secrets
+    existingSecretPasswordKey: redis_password
 
 
 # ingress:

@@ -120,7 +120,7 @@ class VespaIndex(DocumentIndex):
         secondary_index_embedding_dim: int | None,
     ) -> None:
         deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
-        logger.debug(f"Sending Vespa zip to {deploy_url}")
+        logger.info(f"Deploying Vespa application package to {deploy_url}")
 
         vespa_schema_path = os.path.join(
             os.getcwd(), "danswer", "document_index", "vespa", "app_config"
