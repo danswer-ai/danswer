@@ -347,11 +347,6 @@ export function AssistantEditor({
           if (imageGenerationToolEnabled) {
             if (
               !checkLLMSupportsImageInput(
-                providerDisplayNameToProviderName.get(
-                  values.llm_model_provider_override || ""
-                ) ||
-                  defaultProviderName ||
-                  "",
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -767,9 +762,6 @@ export function AssistantEditor({
                           <div
                             className={`w-fit ${
                               !checkLLMSupportsImageInput(
-                                providerDisplayNameToProviderName.get(
-                                  values.llm_model_provider_override || ""
-                                ) || "",
                                 values.llm_model_version_override || ""
                               )
                                 ? "opacity-70 cursor-not-allowed"
@@ -785,9 +777,6 @@ export function AssistantEditor({
                               }}
                               disabled={
                                 !checkLLMSupportsImageInput(
-                                  providerDisplayNameToProviderName.get(
-                                    values.llm_model_provider_override || ""
-                                  ) || "",
                                   values.llm_model_version_override || ""
                                 )
                               }
@@ -795,9 +784,6 @@ export function AssistantEditor({
                           </div>
                         </TooltipTrigger>
                         {!checkLLMSupportsImageInput(
-                          providerDisplayNameToProviderName.get(
-                            values.llm_model_provider_override || ""
-                          ) || "",
                           values.llm_model_version_override || ""
                         ) && (
                           <TooltipContent side="top" align="center">
