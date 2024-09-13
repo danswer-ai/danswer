@@ -95,15 +95,15 @@ export const StandardAnswerCreationForm = ({
                   name="keyword"
                   label="Regex pattern"
                   isCode
-                  tooltip="Triggers if the question contains this regex pattern (matches Python `re.search()`)"
-                  placeholder="danswer/.*?/admin"
+                  tooltip="Triggers if the question matches this regex pattern (using Python `re.search()`)"
+                  placeholder="(?:it|support)\s*ticket"
                 />
               ) : (
                 <TextFormField
                   name="keyword"
                   label="Keywords"
                   tooltip="Triggers if the question contains all of these keywords, in any order."
-                  placeholder="wifi"
+                  placeholder="it ticket"
                   autoCompleteDisabled={true}
                 />
               )}
@@ -117,7 +117,7 @@ export const StandardAnswerCreationForm = ({
                 <MarkdownFormField
                   name="answer"
                   label="Answer"
-                  placeholder="The answer in markdown"
+                  placeholder="The answer in Markdown. Example: If you need any help from the IT team, please email internalsupport@company.com"
                 />
               </div>
               <div className="w-4/12">
