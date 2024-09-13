@@ -6,13 +6,20 @@ import { User } from "@/lib/types";
 import TopBar from "@/components/TopBar";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 
-export function AdminBars({
-  children,
-  user,
-}: {
-  children: React.ReactNode;
+interface BarLayoutProps {
   user?: User | null;
-}) {
+  BarComponent?: React.ComponentType<{
+    openSidebar: boolean;
+    toggleSideBar: () => void;
+  }>;
+  isSearch?: boolean;
+}
+
+export function BarLayout({
+  user,
+  BarComponent,
+  isSearch = false,
+}: BarLayoutProps) {
   const [openSidebar, setOpenSidebar] = useState(false);
   const pathname = usePathname();
 
@@ -30,10 +37,15 @@ export function AdminBars({
       <DynamicSidebar
         user={user}
         openSidebar={openSidebar}
-        isSearch
+        isSearch={isSearch}
         toggleLeftSideBar={toggleLeftSideBar}
       >
-        {children}
+        {BarComponent && (
+          <BarComponent
+            openSidebar={openSidebar}
+            toggleSideBar={toggleLeftSideBar}
+          />
+        )}
       </DynamicSidebar>
     </>
   );

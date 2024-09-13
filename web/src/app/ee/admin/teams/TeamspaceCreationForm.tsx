@@ -9,12 +9,19 @@ import { ConnectorEditor } from "./ConnectorEditor";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useDocumentSets } from "@/app/admin/documents/sets/hooks";
+import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
+import { useChatContext } from "@/components/context/ChatContext";
+import { Assistant } from "@/app/admin/assistants/interfaces";
+import { Badge } from "@/components/ui/badge";
+import { Assistants } from "./Assistants";
 
 interface TeamspaceCreationFormProps {
   onClose: () => void;
   users: User[];
   ccPairs: ConnectorIndexingStatus<any, any>[];
   existingTeamspace?: Teamspace;
+  assistants: Assistant[];
 }
 
 export const TeamspaceCreationForm = ({
@@ -22,9 +29,17 @@ export const TeamspaceCreationForm = ({
   users,
   ccPairs,
   existingTeamspace,
+  assistants,
 }: TeamspaceCreationFormProps) => {
   const isUpdate = existingTeamspace !== undefined;
   const { toast } = useToast();
+
+  const {
+    data: documentSets,
+    isLoading: isDocumentSetsLoading,
+    error: documentSetsError,
+    refreshDocumentSets,
+  } = useDocumentSets();
 
   return (
     <div>
@@ -97,6 +112,14 @@ export const TeamspaceCreationForm = ({
                 }
               />
 
+              {/* <div>
+                <h2 className="mb-1 font-medium">Assistants</h2>
+                <p className="mb-3 text-xs">
+                  Lorem ipsum dolor sit amet consectetur, adipisicing elit.
+                </p>
+                <Assistants assistants={assistants} />
+              </div> */}
+
               <h2 className="mb-1 font-medium">
                 Select which Users should be a part of this Group.
               </h2>
@@ -114,7 +137,8 @@ export const TeamspaceCreationForm = ({
                   existingUsers={[]}
                 />
               </div>
-              <div className="flex pt-4">
+
+              <div className="flex pt-6">
                 <Button
                   type="submit"
                   disabled={isSubmitting}

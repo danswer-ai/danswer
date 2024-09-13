@@ -92,6 +92,9 @@ export const AIMessage = ({
   retrievalDisabled,
   currentAssistant,
   handleToggleSideBar,
+  currentFeedback,
+  onClose,
+  onSubmit,
 }: {
   alternativeAssistant?: Assistant | null;
   currentAssistant: Assistant;
@@ -111,8 +114,16 @@ export const AIMessage = ({
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
   handleToggleSideBar?: () => void;
+  currentFeedback?: [FeedbackType, number] | null;
+  onClose?: () => void;
+  onSubmit?: (feedbackDetails: {
+    message: string;
+    predefinedFeedback?: string;
+  }) => void;
 }) => {
   const [isReady, setIsReady] = useState(false);
+  const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
+  const [isDislikeModalOpen, setIsDislikeModalOpen] = useState(false);
 
   useEffect(() => {
     Prism.highlightAll();
@@ -184,14 +195,14 @@ export const AIMessage = ({
               )}
           </div>
 
-          <div className="pl-1.5 md:pl-12 break-words w-full">
+          <div className="pl-1.5 md:pl-12 break-words w-full pt-4">
             {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
               <>
                 {query !== undefined &&
                   handleShowRetrieved !== undefined &&
                   isCurrentlyShowingRetrieved !== undefined &&
                   !retrievalDisabled && (
-                    <div className="my-1">
+                    <div className="mb-4">
                       <SearchSummary
                         query={query}
                         hasDocs={hasDocs || false}
@@ -345,20 +356,65 @@ export const AIMessage = ({
           {handleFeedback && (
             <div className="flex flex-row gap-x-0.5 pl-1 md:pl-12 mt-1.5">
               <CopyButton content={content.toString()} />
-              <Button
-                variant="ghost"
-                size="smallIcon"
-                onClick={() => handleFeedback("like")}
+              <CustomTooltip
+                trigger={
+                  <CustomModal
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="smallIcon"
+                        onClick={() => {
+                          handleFeedback("like");
+                          setIsLikeModalOpen(true);
+                        }}
+                      >
+                        <ThumbsUp size={16} />
+                      </Button>
+                    }
+                    onClose={() => setIsLikeModalOpen(false)}
+                    open={isLikeModalOpen}
+                  >
+                    <FeedbackModal
+                      feedbackType="like"
+                      onClose={onClose}
+                      onSubmit={onSubmit}
+                      onModalClose={() => setIsLikeModalOpen(false)}
+                    />
+                  </CustomModal>
+                }
               >
-                <ThumbsUp size={16} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="smallIcon"
-                onClick={() => handleFeedback("dislike")}
+                Like
+              </CustomTooltip>
+
+              <CustomTooltip
+                trigger={
+                  <CustomModal
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="smallIcon"
+                        onClick={() => {
+                          handleFeedback("dislike");
+                          setIsDislikeModalOpen(true);
+                        }}
+                      >
+                        <ThumbsDown size={16} />
+                      </Button>
+                    }
+                    onClose={() => setIsDislikeModalOpen(false)}
+                    open={isDislikeModalOpen}
+                  >
+                    <FeedbackModal
+                      feedbackType="dislike"
+                      onClose={onClose}
+                      onSubmit={onSubmit}
+                      onModalClose={() => setIsDislikeModalOpen(false)}
+                    />
+                  </CustomModal>
+                }
               >
-                <ThumbsDown size={16} />
-              </Button>
+                Dislike
+              </CustomTooltip>
             </div>
           )}
         </div>
@@ -413,6 +469,10 @@ import {
   User,
 } from "lucide-react";
 import { User as UserTypes } from "@/lib/types";
+import { FeedbackModal } from "../modal/FeedbackModal";
+import { CustomModal } from "@/components/CustomModal";
+import { UserProfile } from "@/components/UserProfile";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export const HumanMessage = ({
   content,
@@ -473,12 +533,8 @@ export const HumanMessage = ({
       <div className="w-full">
         <div className="">
           <div className="flex">
-            <div className="flex items-center justify-center bg-background rounded-full min-h-[34px] min-w-[34px] max-h-[34px] max-w-[34px] aspect-square text-base font-normal border-2 border-gray-900 ault py-2 mx-1">
-              {user && user.full_name ? (
-                user.full_name.charAt(0)
-              ) : (
-                <User size={25} className="mx-auto" />
-              )}
+            <div className="mx-1">
+              <UserProfile user={user} size={34} textSize="text-base" />
             </div>
 
             <div className="my-auto ml-2 font-bold text-inverted-inverted">

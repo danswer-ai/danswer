@@ -84,7 +84,7 @@ export function TextFormField({
   }
 
   return (
-    <div className="grid gap-2 pb-4">
+    <div className="grid pb-4">
       <div className="grid leading-none">
         <ShadcnLabel
           htmlFor={label}
@@ -92,7 +92,9 @@ export function TextFormField({
         >
           {label}
         </ShadcnLabel>
-        {subtext && <p className="text-sm text-muted-foreground">{subtext}</p>}
+        {subtext && (
+          <p className="text-sm text-muted-foreground pb-2">{subtext}</p>
+        )}
       </div>
       <Field name={name}>
         {({ field }: FieldProps) => {

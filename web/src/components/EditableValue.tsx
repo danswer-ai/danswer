@@ -5,6 +5,7 @@ import { CheckmarkIcon } from "./icons/icons";
 import { Pencil } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { CustomTooltip } from "./CustomTooltip";
 
 export function EditableValue({
   initialValue,
@@ -42,18 +43,24 @@ export function EditableValue({
           }}
           className="w-12 h-6 text-xs px-2"
         />
-        <Button
-          onClick={async () => {
-            const success = await onSubmit(editedValue);
-            if (success) {
-              setIsOpen(false);
-            }
-          }}
-          variant="ghost"
-          size="smallIcon"
+        <CustomTooltip
+          trigger={
+            <Button
+              onClick={async () => {
+                const success = await onSubmit(editedValue);
+                if (success) {
+                  setIsOpen(false);
+                }
+              }}
+              variant="ghost"
+              size="smallIcon"
+            >
+              <CheckmarkIcon size={14} className="text-green-700" />
+            </Button>
+          }
         >
-          <CheckmarkIcon size={14} className="text-green-700" />
-        </Button>
+          Done
+        </CustomTooltip>
       </div>
     );
   }
@@ -61,9 +68,19 @@ export function EditableValue({
   return (
     <div className="flex items-center gap-2">
       <span>{initialValue || emptyDisplay}</span>
-      <Button onClick={() => setIsOpen(true)} variant="ghost" size="smallIcon">
-        <Pencil size={14} />
-      </Button>
+      <CustomTooltip
+        trigger={
+          <Button
+            onClick={() => setIsOpen(true)}
+            variant="ghost"
+            size="smallIcon"
+          >
+            <Pencil size={14} />
+          </Button>
+        }
+      >
+        Edit
+      </CustomTooltip>
     </div>
   );
 }

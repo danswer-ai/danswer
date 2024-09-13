@@ -73,6 +73,8 @@ import {
   PanelRightClose,
   Share,
 } from "lucide-react";
+import Image from "next/image";
+import Logo from "../../../public/logo-brand.png";
 import { Button } from "@/components/ui/button";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
@@ -80,6 +82,7 @@ import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import TopBar from "@/components/TopBar";
 import { useToast } from "@/hooks/use-toast";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -135,8 +138,6 @@ export function ChatPage({
   // NOTE: this is required due to React strict mode, where all `useEffect` hooks
   // are run twice on initial load during development
   const submitOnLoadPerformed = useRef<boolean>(false);
-
-  const { popup, setPopup } = usePopup();
 
   // fetch messages for the chat session
   const [isFetchingChatMessages, setIsFetchingChatMessages] = useState(
@@ -456,9 +457,6 @@ export function ChatPage({
   const [currentFeedback, setCurrentFeedback] = useState<
     [FeedbackType, number] | null
   >(null);
-
-  const [sharingModalVisible, setSharingModalVisible] =
-    useState<boolean>(false);
 
   // state for cancelling streaming
   const [isCancelled, setIsCancelled] = useState(false);
@@ -1059,19 +1057,25 @@ export function ChatPage({
     router.push("/search");
   }
 
-  const [showDocSidebar, setShowDocSidebar] = useState(
-    window.innerWidth >= 1420
-  );
+  const [isMobile, setIsMobile] = useState(false);
+  const [showDocSidebar, setShowDocSidebar] = useState(false);
   const [isWide, setIsWide] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsWide(window.innerWidth >= 1420);
+      const windowWidth = window.innerWidth;
+      setIsMobile(windowWidth <= 1420);
+      setIsWide(windowWidth >= 1420);
+      setShowDocSidebar(windowWidth >= 1420);
     };
 
+    // Initial check
     handleResize();
+
+    // Attach event listener for window resize
     window.addEventListener("resize", handleResize);
 
+    // Cleanup listener on component unmount
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -1124,40 +1128,6 @@ export function ChatPage({
 
   return (
     <>
-      {liveAssistant && (
-        <TopBar toggleLeftSideBar={toggleLeftSideBar}>
-          <div className="flex ml-auto gap-2 items-center">
-            {settings?.featureFlags.share_chat &&
-              chatSessionIdRef.current !== null && (
-                <ShareChatSessionModal
-                  chatSessionId={chatSessionIdRef.current}
-                  existingSharedStatus={chatSessionSharedStatus}
-                  onShare={(shared) =>
-                    setChatSessionSharedStatus(
-                      shared
-                        ? ChatSessionSharedStatus.Public
-                        : ChatSessionSharedStatus.Private
-                    )
-                  }
-                >
-                  <div
-                    onClick={() => setSharingModalVisible(true)}
-                    className="h-10 w-10 hover:bg-light hover:text-accent-foreground inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-regular text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-                  >
-                    <Share size={20} />
-                  </div>
-                </ShareChatSessionModal>
-              )}
-
-            {retrievalEnabled && (
-              <Button onClick={toggleSidebar} variant="ghost" size="icon">
-                <PanelLeftClose size={24} />
-              </Button>
-            )}
-          </div>
-        </TopBar>
-      )}
-
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
 
@@ -1181,23 +1151,6 @@ export function ChatPage({
         </DynamicSidebar>
 
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
-          {popup}
-          {currentFeedback && (
-            <FeedbackModal
-              feedbackType={currentFeedback[0]}
-              onClose={() => setCurrentFeedback(null)}
-              onSubmit={({ message, predefinedFeedback }) => {
-                onFeedback(
-                  currentFeedback[1],
-                  currentFeedback[0],
-                  message,
-                  predefinedFeedback
-                );
-                setCurrentFeedback(null);
-              }}
-            />
-          )}
-
           <ConfigurationModal
             chatSessionId={chatSessionIdRef.current!}
             activeTab={configModalActiveTab}
@@ -1220,14 +1173,82 @@ export function ChatPage({
                       !retrievalEnabled ? "" : ""
                     }
                       flex-auto transition-margin duration-300 
-                      overflow-x-auto
+                      overflow-x-auto  overflow-y-auto
                       `}
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
 
-                    <div
+                    {liveAssistant && (
+                      <div className="relative z-top-bar shrink-0">
+                        <div className="flex w-full items-start p-5 justify-between">
+                          <div className="flex lg:hidden items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={toggleLeftSideBar}
+                            >
+                              <PanelRightClose size={24} />
+                            </Button>
+                            <Image src={Logo} alt="Logo" width={112} />
+                          </div>
+                          <div className="flex ml-auto gap-2 items-center">
+                            {chatSessionIdRef.current !== null && (
+                              <ShareChatSessionModal
+                                chatSessionId={chatSessionIdRef.current}
+                                existingSharedStatus={chatSessionSharedStatus}
+                                onShare={(shared) =>
+                                  setChatSessionSharedStatus(
+                                    shared
+                                      ? ChatSessionSharedStatus.Public
+                                      : ChatSessionSharedStatus.Private
+                                  )
+                                }
+                              >
+                                <CustomTooltip
+                                  trigger={
+                                    <Button variant="ghost" size="icon">
+                                      <Share size={20} />
+                                    </Button>
+                                  }
+                                  asChild
+                                >
+                                  Share
+                                </CustomTooltip>
+                              </ShareChatSessionModal>
+                            )}
+
+                            {retrievalEnabled && (
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    onClick={toggleSidebar}
+                                    variant="ghost"
+                                    size="icon"
+                                  >
+                                    {showDocSidebar ? (
+                                      <PanelRightClose size={24} />
+                                    ) : (
+                                      <PanelLeftClose size={24} />
+                                    )}
+                                  </Button>
+                                }
+                                asChild
+                              >
+                                {showDocSidebar ? "Hide Docs" : "Show Docs"}
+                              </CustomTooltip>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/*  <div
                       className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative scroll-smooth flex-1`}
+                      ref={scrollableDivRef}
+                    > */}
+                    <div
+                      className={`w-full h-full flex flex-col overflow-x-hidden relative scroll-smooth flex-1`}
                       ref={scrollableDivRef}
                     >
                       {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -1273,8 +1294,13 @@ export function ChatPage({
                           </ChatIntro>
                         )}
 
+                      {/*  <div
+                        className={`pt-20 pb-10 md:pb-14 lg:py-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
+                          hasPerformedInitialScroll ? "" : " invisible"
+                        } ${messageHistory.length === 0 ? "hidden" : "block"}`}
+                      > */}
                       <div
-                        className={`mt-4 pt-20 pb-10 md:pb-14 lg:py-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
+                        className={`pb-10 md:pb-14 lg:pb-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
                           hasPerformedInitialScroll ? "" : " invisible"
                         } ${messageHistory.length === 0 ? "hidden" : "block"}`}
                       >
@@ -1398,6 +1424,20 @@ export function ChatPage({
                                             message.messageId as number,
                                           ])
                                   }
+                                  currentFeedback={currentFeedback}
+                                  onClose={() => setCurrentFeedback(null)}
+                                  onSubmit={({
+                                    message,
+                                    predefinedFeedback,
+                                  }) => {
+                                    onFeedback(
+                                      currentFeedback![1],
+                                      currentFeedback![0],
+                                      message,
+                                      predefinedFeedback
+                                    );
+                                    setCurrentFeedback(null);
+                                  }}
                                   handleSearchQueryEdit={
                                     i === messageHistory.length - 1 &&
                                     !isStreaming
@@ -1433,17 +1473,33 @@ export function ChatPage({
                                         }
                                       : undefined
                                   }
-                                  isCurrentlyShowingRetrieved={showDocSidebar}
+                                  isCurrentlyShowingRetrieved={
+                                    isShowingRetrieved
+                                  }
                                   handleShowRetrieved={(messageNumber) => {
-                                    if (showDocSidebar) {
-                                      setSelectedMessageForDocDisplay(null);
-                                    } else {
-                                      if (messageNumber !== null) {
-                                        setSelectedMessageForDocDisplay(
-                                          messageNumber
-                                        );
+                                    if (isMobile) {
+                                      if (!isShowingRetrieved) {
+                                        setSelectedMessageForDocDisplay(null);
                                       } else {
-                                        setSelectedMessageForDocDisplay(-1);
+                                        if (messageNumber !== null) {
+                                          setSelectedMessageForDocDisplay(
+                                            messageNumber
+                                          );
+                                        } else {
+                                          setSelectedMessageForDocDisplay(-1);
+                                        }
+                                      }
+                                    } else {
+                                      if (isShowingRetrieved) {
+                                        setSelectedMessageForDocDisplay(null);
+                                      } else {
+                                        if (messageNumber !== null) {
+                                          setSelectedMessageForDocDisplay(
+                                            messageNumber
+                                          );
+                                        } else {
+                                          setSelectedMessageForDocDisplay(-1);
+                                        }
                                       }
                                     }
                                   }}
@@ -1475,7 +1531,20 @@ export function ChatPage({
                                         )
                                       : !retrievalEnabled
                                   }
-                                  handleToggleSideBar={toggleSidebar}
+                                  handleToggleSideBar={() => {
+                                    if (isMobile) {
+                                      setShowDocSidebar(isShowingRetrieved);
+                                    } else {
+                                      !isShowingRetrieved
+                                        ? setShowDocSidebar(true)
+                                        : setShowDocSidebar(false);
+                                    }
+
+                                    if (sidebarElementRef.current) {
+                                      sidebarElementRef.current.style.transition =
+                                        "width 0.3s ease-in-out";
+                                    }
+                                  }}
                                 />
                               </div>
                             );

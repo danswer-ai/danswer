@@ -93,7 +93,9 @@ export function WhitelabelingForm() {
             <TextFormField
               label="Description"
               name="workspace_description"
-              subtext={`The custom description metadata you are giving ${values.workspace_name || "enMedD AI"} for your workspace.\
+              subtext={`The custom description metadata you are giving ${
+                values.workspace_name || "enMedD AI"
+              } for your workspace.\
                 This will be seen when sharing the link or searching through the browser.`}
               placeholder="Custom description for your Workspace"
               disabled={isSubmitting}

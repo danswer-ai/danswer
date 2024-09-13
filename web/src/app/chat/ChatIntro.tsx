@@ -22,7 +22,7 @@ export function ChatIntro({
 
   return (
     <>
-      <div className="flex 2xl:justify-center w-full my-auto">
+      <div className="flex 2xl:justify-center w-full my-auto md:py-20">
         <div className="max-w-full 2xl:w-searchbar px-5 2xl:px-0 mt-10 md:mt-16 lg:mt-0 2xl:mt-14">
           <div className="flex flex-col items-center gap-4 md:pb-6">
             <Image
@@ -45,7 +45,7 @@ export function ChatIntro({
           </div>
 
           {liveAssistant && liveAssistant.num_chunks !== 0 && (
-            <div className="pt-4">
+            <div>
               {liveAssistant.document_sets.length > 0 && (
                 <div className="mt-2">
                   <p className="mt-4 mb-1 font-bold text-dark-900">

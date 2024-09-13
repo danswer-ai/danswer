@@ -29,7 +29,7 @@ export function CustomTooltip({
         <TooltipContent
           align={align}
           side={side}
-          className={`!z-modal ${style}`}
+          className={`!z-modal ${style} bg-primary border-none text-inverted`}
         >
           {children}
         </TooltipContent>

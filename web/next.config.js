@@ -28,7 +28,6 @@ const nextConfig = {
   //   const defaultRedirects = [];
 
   //   if (process.env.NODE_ENV === "production") return defaultRedirects;
-
   //   return defaultRedirects.concat([
   //     {
   //       source: "/api/chat/send-message:params*",

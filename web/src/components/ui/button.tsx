@@ -5,19 +5,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-regular text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center gap-1.5 justify-center whitespace-nowrap rounded-regular text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-primary text-inverted hover:bg-primary-foreground",
+        default:
+          "bg-primary text-inverted hover:bg-primary-foreground focus-visible:ring-primary",
         destructive:
-          "bg-destructive text-inverted hover:bg-destructive-foreground",
+          "bg-destructive text-inverted hover:bg-destructive-foreground focus-visible:ring-destructive",
         outline:
-          "border border-input-colored bg-background hover:bg-[#B0DEFF] hover:text-accent-foreground",
-        secondary: "bg-secondary text-inverted hover:bg-secondary-foreground",
-        ghost: "hover:bg-light hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        success: "bg-success text-inverted hover:bg-success-foreground",
+          "border border-input-colored bg-background hover:bg-[#B0DEFF] hover:text-accent-foreground focus-visible:ring-input-colored",
+        secondary:
+          "bg-secondary text-inverted hover:bg-secondary-foreground focus-visible:ring-secondary",
+        ghost:
+          "hover:bg-light hover:text-accent-foreground focus-visible:ring-light",
+        link: "text-primary underline-offset-4 hover:underline focus-visible:ring-primary",
+        success:
+          "bg-success text-inverted hover:bg-success-foreground focus-visible:ring-success",
       },
       size: {
         default: "h-10 px-4 py-2",

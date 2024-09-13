@@ -23,8 +23,8 @@ import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingM
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
-import { SearchBars } from "./SearchBars";
-import { CustomModal } from "@/components/CustomModal";
+import { SearchSidebar } from "./SearchSidebar";
+import { BarLayout } from "@/components/BarLayout";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / assistant info
@@ -150,28 +150,20 @@ export default async function Home() {
 
   return (
     <div className="relative flex h-full">
-      <SearchBars user={user} />
-
+      <BarLayout user={user} BarComponent={SearchSidebar} isSearch />;
       <HealthCheckBanner />
-
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-
       {!shouldShowWelcomeModal &&
         !shouldDisplayNoSourcesModal &&
         !shouldDisplaySourcesIncompleteModal && <ApiKeyModal user={user} />}
-
       {shouldDisplayNoSourcesModal && <NoSourcesModal />}
-
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
-
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       <ChatPopup />
-
       <InstantSSRAutoRefresh />
-
       <div className="container pt-20 lg:pt-14 px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 h-screen overflow-hidden">
         <SearchSection
           ccPairs={ccPairs}

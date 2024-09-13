@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export const ChatSidebar = ({
   existingChats,
@@ -166,26 +167,33 @@ export const ChatSidebar = ({
             </Button>
           </Link>
           <div>
-            <Button
-              onClick={() =>
-                createFolder("New Folder")
-                  .then((folderId) => {
-                    console.log(`Folder created with ID: ${folderId}`);
-                    router.refresh();
-                  })
-                  .catch((error) => {
-                    console.error("Failed to create folder:", error);
-                    toast({
-                      title: "Error",
-                      description: `Failed to create folder: ${error.message}`,
-                      variant: "destructive",
-                    });
-                  })
+            <CustomTooltip
+              trigger={
+                <Button
+                  onClick={() =>
+                    createFolder("New Folder")
+                      .then((folderId) => {
+                        console.log(`Folder created with ID: ${folderId}`);
+                        router.refresh();
+                      })
+                      .catch((error) => {
+                        console.error("Failed to create folder:", error);
+                        toast({
+                          title: "Error",
+                          description: `Failed to create folder: ${error.message}`,
+                          variant: "destructive",
+                        });
+                      })
+                  }
+                  size="icon"
+                >
+                  <FolderPlus size={16} />
+                </Button>
               }
-              size="icon"
+              asChild
             >
-              <FolderPlus size={16} />
-            </Button>
+              Create New Folder
+            </CustomTooltip>
           </div>
         </div>
       </div>

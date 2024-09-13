@@ -1,5 +1,3 @@
-import { EmphasizedClickable } from "@/components/BasicClickable";
-import { HoverPopup } from "@/components/HoverPopup";
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -23,25 +21,28 @@ export function ShowHideDocsButton({
       className="ml-auto my-auto"
       onClick={() => handleShowRetrieved(messageId)}
     >
-      {isCurrentlyShowingRetrieved ? (
-        <Button
-          size="xs"
-          variant="outline"
-          onClick={handleToggleSideBar}
-          className="w-24"
-        >
-          Hide Docs
-        </Button>
-      ) : (
-        <Button
-          size="xs"
-          variant="outline"
-          onClick={handleToggleSideBar}
-          className="w-24"
-        >
-          Show Docs
-        </Button>
-      )}
+      {(() => {
+        const isMobile = window.innerWidth <= 1420;
+
+        const buttonLabel = isMobile
+          ? isCurrentlyShowingRetrieved
+            ? "Show Docs"
+            : "Hide Docs"
+          : isCurrentlyShowingRetrieved
+            ? "Hide Docs"
+            : "Show Docs";
+
+        return (
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={handleToggleSideBar}
+            className="w-24"
+          >
+            {buttonLabel}
+          </Button>
+        );
+      })()}
     </div>
   );
 }
@@ -101,7 +102,7 @@ export function SearchSummary({
   const searchingForDisplay = (
     <div
       className={`flex items-center py-1 rounded ${
-        isOverflowed && "cursor-default"
+        isOverflowed ? "cursor-default" : ""
       }`}
     >
       <Search size={16} className="min-w-4 min-h-4 mr-2" />
@@ -170,7 +171,7 @@ export function SearchSummary({
         editInput
       ) : (
         <>
-          <div className="text-sm my-2">
+          <div className="text-sm">
             {isOverflowed ? (
               <CustomTooltip trigger={searchingForDisplay} align="start">
                 <div className="w-full max-w-96 lg:max-w-screen-md max-h-40 overflow-auto">
@@ -184,13 +185,19 @@ export function SearchSummary({
           </div>
           {handleSearchQueryEdit && (
             <div className="my-auto mx-2">
-              <Button
-                variant="ghost"
-                size="smallIcon"
-                onClick={() => setIsEditing(true)}
+              <CustomTooltip
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="smallIcon"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Pencil size={16} />
+                  </Button>
+                }
               >
-                <Pencil size={16} />
-              </Button>
+                Edit
+              </CustomTooltip>
             </div>
           )}
         </>
