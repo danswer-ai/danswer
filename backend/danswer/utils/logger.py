@@ -124,6 +124,24 @@ def get_standard_formatter() -> ColoredFormatter:
     )
 
 
+def is_running_in_container():
+    container_indicators = [
+        "/.dockerenv",
+        "/run/.containerenv",
+    ]
+
+    env_indicators = [
+        "KUBERNETES_SERVICE_HOST",
+        "CONTAINER_RUNTIME",
+        "DOCKER_CONTAINER",
+        "CONTAINERD_NAMESPACE",
+    ]
+
+    return any(os.path.exists(path) for path in container_indicators) or any(
+        os.environ.get(env_var) for env_var in env_indicators
+    )
+
+
 def setup_logger(
     name: str = __name__,
     log_level: int = get_log_level_from_str(),
@@ -151,7 +169,7 @@ def setup_logger(
         uvicorn_logger.addHandler(handler)
         uvicorn_logger.setLevel(log_level)
 
-    is_containerized = os.path.exists("/.dockerenv")
+    is_containerized = is_running_in_container()
     if LOG_FILE_NAME and (is_containerized or DEV_LOGGING_ENABLED):
         log_levels = ["debug", "info", "notice"]
         for level in log_levels:
