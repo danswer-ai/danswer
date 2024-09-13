@@ -209,8 +209,8 @@ function ToolForm({
         <div className="mt-4">
           <h3 className="text-base font-semibold mb-2">Custom Headers</h3>
           <p className="text-sm mb-4 text-text-500">
-            Specify custom headers to be sent with each request to this tool's
-            API.
+            Specify custom headers to be sent with each request to this
+            tool&apos;s API.
           </p>
           {values.customHeaders.length}
           {existingTool?.custom_headers?.length}
@@ -218,7 +218,8 @@ function ToolForm({
             name="customHeaders"
             render={(arrayHelpers: ArrayHelpers) => (
               <div>
-                {values.customHeaders && values.customHeaders.length > 0 ? (
+                {values.customHeaders &&
+                  values.customHeaders.length > 0 &&
                   values.customHeaders.map(
                     (header: { key: string; value: string }, index: number) => (
                       <div key={index} className="flex items-center mb-3">
@@ -242,10 +243,8 @@ function ToolForm({
                         </Button>
                       </div>
                     )
-                  )
-                ) : (
-                  <p>No custom headers. Add one below.</p>
-                )}
+                  )}
+
                 <Button
                   type="button"
                   onClick={() => arrayHelpers.push({ key: "", value: "" })}
