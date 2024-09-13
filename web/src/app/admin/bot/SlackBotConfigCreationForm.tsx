@@ -88,12 +88,12 @@ export const SlackBotCreationForm = ({
                     (documentSet) => documentSet.id
                   )
                 : ([] as number[]),
+            // prettier-ignore
             persona_id:
               existingSlackBotConfig?.persona &&
               !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
                 ? existingSlackBotConfig.persona.id
-                : // prettier-ignore
-                  knowledgePersona?.id ?? null,
+                : knowledgePersona?.id ?? null,
             response_type: existingSlackBotConfig?.response_type || "citations",
             standard_answer_categories: existingSlackBotConfig
               ? existingSlackBotConfig.standard_answer_categories
