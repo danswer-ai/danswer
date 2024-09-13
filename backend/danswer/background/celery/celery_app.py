@@ -915,7 +915,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
         time.sleep(WAIT_INTERVAL)
 
-    logger.info("Redis: Readiness check succeeded.")
+    logger.info("Redis: Readiness check succeeded. Continuing...")
 
     if not is_celery_app_primary(sender):
         logger.info("Running as a secondary celery worker.")
