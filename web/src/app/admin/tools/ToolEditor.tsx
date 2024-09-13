@@ -212,8 +212,6 @@ function ToolForm({
             Specify custom headers to be sent with each request to this
             tool&apos;s API.
           </p>
-          {values.customHeaders.length}
-          {existingTool?.custom_headers?.length}
           <FieldArray
             name="customHeaders"
             render={(arrayHelpers: ArrayHelpers) => (
