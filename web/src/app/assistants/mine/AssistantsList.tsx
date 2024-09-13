@@ -53,8 +53,12 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 import { DragHandle } from "@/components/table/DragHandle";
-import { deletePersona } from "@/app/admin/assistants/lib";
+import {
+  deletePersona,
+  togglePersonaVisibility,
+} from "@/app/admin/assistants/lib";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
+import { MakePublicAssistantModal } from "@/app/chat/modal/MakePublicAssistantModal";
 
 function DraggableAssistantListItem(props: any) {
   const {
@@ -81,7 +85,7 @@ function DraggableAssistantListItem(props: any) {
         <DragHandle />
       </div>
       <div className="flex-grow">
-        <AssistantListItem del {...props} />
+        <AssistantListItem {...props} />
       </div>
     </div>
   );
@@ -95,6 +99,7 @@ function AssistantListItem({
   isVisible,
   setPopup,
   deleteAssistant,
+  shareAssistant,
 }: {
   assistant: Persona;
   user: User | null;
@@ -102,7 +107,7 @@ function AssistantListItem({
   allAssistantIds: string[];
   isVisible: boolean;
   deleteAssistant: Dispatch<SetStateAction<Persona | null>>;
-
+  shareAssistant: Dispatch<SetStateAction<Persona | null>>;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }) {
   const router = useRouter();
@@ -258,6 +263,17 @@ function AssistantListItem({
                   ) : (
                     <></>
                   ),
+                  isOwnedByUser ? (
+                    <div
+                      key="delete"
+                      className="flex items-center gap-x-2"
+                      onClick={() => shareAssistant(assistant)}
+                    >
+                      <FiShare2 /> Make Public
+                    </div>
+                  ) : (
+                    <></>
+                  ),
                 ]}
               </DefaultPopover>
             </div>
@@ -290,6 +306,9 @@ export function AssistantsList({
     assistant.id.toString()
   );
   const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
+  const [makePublicPersona, setMakePublicPersona] = useState<Persona | null>(
+    null
+  );
 
   const { popup, setPopup } = usePopup();
   const router = useRouter();
@@ -350,6 +369,15 @@ export function AssistantsList({
           }}
         />
       )}
+      {makePublicPersona && (
+        <MakePublicAssistantModal
+          isPublic={makePublicPersona.is_public}
+          onClose={() => setMakePublicPersona(null)}
+          onShare={(newPublicStatus: boolean) => {
+            togglePersonaVisibility(makePublicPersona.id, newPublicStatus);
+          }}
+        />
+      )}
 
       <div className="mx-auto mobile:w-[90%] desktop:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>My Assistants</AssistantsPageTitle>
@@ -403,6 +431,7 @@ export function AssistantsList({
               {filteredAssistants.map((assistant, index) => (
                 <DraggableAssistantListItem
                   deleteAssistant={setDeletingPersona}
+                  shareAssistant={setMakePublicPersona}
                   key={assistant.id}
                   assistant={assistant}
                   user={user}
@@ -431,6 +460,7 @@ export function AssistantsList({
               {ownedButHiddenAssistants.map((assistant, index) => (
                 <AssistantListItem
                   deleteAssistant={setDeletingPersona}
+                  shareAssistant={setMakePublicPersona}
                   key={assistant.id}
                   assistant={assistant}
                   user={user}

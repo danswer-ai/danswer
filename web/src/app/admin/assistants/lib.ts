@@ -320,6 +320,22 @@ export function personaComparator(a: Persona, b: Persona) {
   return closerToZeroNegativesFirstComparator(a.id, b.id);
 }
 
+export const togglePersonaVisibility = async (
+  personaId: number,
+  isVisible: boolean
+) => {
+  const response = await fetch(`/api/admin/persona/${personaId}/visible`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      is_visible: !isVisible,
+    }),
+  });
+  return response;
+};
+
 export function checkPersonaRequiresImageGeneration(persona: Persona) {
   for (const tool of persona.tools) {
     if (tool.name === "ImageGenerationTool") {
