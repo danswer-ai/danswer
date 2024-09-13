@@ -292,7 +292,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
 
