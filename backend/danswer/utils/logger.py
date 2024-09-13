@@ -124,22 +124,11 @@ def get_standard_formatter() -> ColoredFormatter:
     )
 
 
+DANSWER_DOCKER_ENV_STR = "DANSWER_RUNNING_IN_DOCKER"
+
+
 def is_running_in_container():
-    container_indicators = [
-        "/.dockerenv",
-        "/run/.containerenv",
-    ]
-
-    env_indicators = [
-        "KUBERNETES_SERVICE_HOST",
-        "CONTAINER_RUNTIME",
-        "DOCKER_CONTAINER",
-        "CONTAINERD_NAMESPACE",
-    ]
-
-    return any(os.path.exists(path) for path in container_indicators) or any(
-        os.environ.get(env_var) for env_var in env_indicators
-    )
+    return os.getenv(DANSWER_DOCKER_ENV_STR) == "true"
 
 
 def setup_logger(
