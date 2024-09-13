@@ -122,7 +122,10 @@ const StandardAnswersTableRow = ({
             ? `\`${standardAnswer.keyword}\``
             : standardAnswer.keyword}
         </ReactMarkdown>,
-        <CustomCheckbox checked={standardAnswer.match_regex} />,
+        <CustomCheckbox
+          key={`match_regex-${standardAnswer.id}`}
+          checked={standardAnswer.match_regex}
+        />,
         <ReactMarkdown
           key={`answer-${standardAnswer.id}`}
           className="prose"
