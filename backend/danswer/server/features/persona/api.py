@@ -21,6 +21,7 @@ from danswer.db.persona import get_personas
 from danswer.db.persona import mark_persona_as_deleted
 from danswer.db.persona import mark_persona_as_not_deleted
 from danswer.db.persona import update_all_personas_display_priority
+from danswer.db.persona import update_persona_public_status
 from danswer.db.persona import update_persona_shared_users
 from danswer.db.persona import update_persona_visibility
 from danswer.file_store.file_store import get_default_file_store
@@ -44,6 +45,10 @@ class IsVisibleRequest(BaseModel):
     is_visible: bool
 
 
+class IsPublicRequest(BaseModel):
+    is_public: bool
+
+
 @admin_router.patch("/{persona_id}/visible")
 def patch_persona_visibility(
     persona_id: int,
@@ -59,28 +64,24 @@ def patch_persona_visibility(
     )
 
 
-@basic_router.patch("/{persona_id}/visible")
-def patch_user_presona_visibility(
+@basic_router.patch("/{persona_id}/public")
+def patch_user_presona_public_status(
     persona_id: int,
-    is_visible_request: IsVisibleRequest,
+    is_public_request: IsPublicRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    persona = get_persona_by_id(persona_id, db_session)
-    if not persona:
-        raise HTTPException(status_code=404, detail="Persona not found")
-
-    if persona.user_id != user.id:
-        raise HTTPException(
-            status_code=403, detail="You don't have permission to modify this persona"
+    print("request is ")
+    print(is_public_request.__dict__)
+    try:
+        update_persona_public_status(
+            persona_id=persona_id,
+            is_public=is_public_request.is_public,
+            db_session=db_session,
+            user=user,
         )
-
-    update_persona_visibility(
-        persona_id=persona_id,
-        is_visible=is_visible_request.is_visible,
-        db_session=db_session,
-        user=user,
-    )
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 
 @admin_router.put("/display-priority")
