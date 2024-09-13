@@ -46,6 +46,8 @@ class RedisPool:
         ssl_cert_reqs: str = REDIS_SSL_CERT_REQS,
         ssl: bool = False,
     ) -> redis.ConnectionPool:
+        # Using ConnectionPool is not well documented.
+        # Useful examples: https://github.com/redis/redis-py/issues/780
         if ssl:
             return redis.ConnectionPool(
                 host=host,
