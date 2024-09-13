@@ -16,7 +16,7 @@ from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
 from shared_configs.enums import RerankerProvider
-
+from shared_configs.utils import obfuscate_api_key
 
 MAX_METRICS_CONTENT = (
     200  # Just need enough characters to identify where in the doc the chunk is
@@ -85,6 +85,22 @@ class SavedSearchSettings(InferenceSettings, IndexingSetting):
             multilingual_expansion=search_settings.multilingual_expansion,
             rerank_api_url=search_settings.rerank_api_url,
         )
+
+
+class SearchSettingsSnapshot(SavedSearchSettings):
+    @classmethod
+    def from_saved_settings(
+        cls, settings: SavedSearchSettings
+    ) -> "SearchSettingsSnapshot":
+        data = settings.dict(exclude={"rerank_api_key"})
+        data["rerank_api_key"] = obfuscate_api_key(settings.rerank_api_key)
+        data["api_key"] = obfuscate_api_key(settings.api_key)
+
+        return cls(**data)
+
+    @classmethod
+    def from_db_model(cls, settings: SearchSettings) -> "SearchSettingsSnapshot":
+        return cls.from_saved_settings(SavedSearchSettings.from_db_model(settings))
 
 
 class Tag(BaseModel):

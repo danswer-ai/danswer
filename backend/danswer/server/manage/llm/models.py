@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from danswer.llm.llm_provider_options import fetch_models_for_provider
-
+from shared_configs.utils import obfuscate_api_key
 
 if TYPE_CHECKING:
     from danswer.db.models import LLMProvider as LLMProviderModel
@@ -82,10 +82,10 @@ class FullLLMProvider(LLMProvider):
     @classmethod
     def from_model(cls, llm_provider_model: "LLMProviderModel") -> "FullLLMProvider":
         return cls(
+            api_key=obfuscate_api_key(llm_provider_model.api_key),
             id=llm_provider_model.id,
             name=llm_provider_model.name,
             provider=llm_provider_model.provider,
-            api_key=llm_provider_model.api_key,
             api_base=llm_provider_model.api_base,
             api_version=llm_provider_model.api_version,
             custom_config=llm_provider_model.custom_config,

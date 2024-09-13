@@ -24,6 +24,7 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.search.models import SavedSearchSettings
 from danswer.search.models import SearchSettingsCreationRequest
+from danswer.search.models import SearchSettingsSnapshot
 from danswer.server.manage.embedding.models import SearchSettingsDeleteRequest
 from danswer.server.manage.models import FullModelVersionResponse
 from danswer.server.models import IdReturn
@@ -154,21 +155,21 @@ def delete_search_settings_endpoint(
 def get_current_search_settings_endpoint(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> SavedSearchSettings:
+) -> SearchSettingsSnapshot:
     current_search_settings = get_current_search_settings(db_session)
-    return SavedSearchSettings.from_db_model(current_search_settings)
+    return SearchSettingsSnapshot.from_db_model(current_search_settings)
 
 
 @router.get("/get-secondary-search-settings")
 def get_secondary_search_settings_endpoint(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> SavedSearchSettings | None:
+) -> SearchSettingsSnapshot | None:
     secondary_search_settings = get_secondary_search_settings(db_session)
     if not secondary_search_settings:
         return None
 
-    return SavedSearchSettings.from_db_model(secondary_search_settings)
+    return SearchSettingsSnapshot.from_db_model(secondary_search_settings)
 
 
 @router.get("/get-all-search-settings")
