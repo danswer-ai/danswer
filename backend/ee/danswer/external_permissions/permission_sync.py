@@ -82,15 +82,17 @@ def run_permission_sync_entrypoint(
         raise ValueError(f"No auto sync options found for source type: {source_type}")
 
     # Both of these edit postgres but do not commit
-    if doc_sync_func is not None:
-        doc_sync_func(
+    logger.debug(f"Syncing groups for {source_type}")
+    if group_sync_func is not None:
+        group_sync_func(
             db_session,
             cc_pair,
             docs_with_additional_info,
             sync_details,
         )
-    if group_sync_func is not None:
-        group_sync_func(
+    logger.debug(f"Syncing docs for {source_type}")
+    if doc_sync_func is not None:
+        doc_sync_func(
             db_session,
             cc_pair,
             docs_with_additional_info,
@@ -105,6 +107,7 @@ def run_permission_sync_entrypoint(
     update_reqs = []
     for doc_id, doc_access in docs_access.items():
         update_reqs.append(UpdateRequest(document_ids=[doc_id], access=doc_access))
+
     # Don't bother sync-ing secondary, it will be sync-ed after switch anyway
     search_settings = get_current_search_settings(db_session)
     document_index = get_default_document_index(
@@ -113,7 +116,9 @@ def run_permission_sync_entrypoint(
     )
 
     try:
+        # update vespa
         document_index.update(update_reqs)
+        # update postgres
         db_session.commit()
     except Exception as e:
         logger.error(f"Error updating document index: {e}")

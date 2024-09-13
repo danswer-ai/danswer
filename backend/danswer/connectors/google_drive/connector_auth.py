@@ -10,11 +10,13 @@ from google.oauth2.service_account import Credentials as ServiceAccountCredentia
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import ENTERPRISE_EDITION_ENABLED
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import KV_CRED_KEY
 from danswer.configs.constants import KV_GOOGLE_DRIVE_CRED_KEY
 from danswer.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
+from danswer.connectors.google_drive.constants import BASE_SCOPES
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
 )
@@ -22,7 +24,8 @@ from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
 from danswer.connectors.google_drive.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
-from danswer.connectors.google_drive.constants import SCOPES
+from danswer.connectors.google_drive.constants import FETCH_GROUPS_SCOPES
+from danswer.connectors.google_drive.constants import FETCH_PERMISSIONS_SCOPES
 from danswer.db.credentials import update_credential_json
 from danswer.db.models import User
 from danswer.dynamic_configs.factory import get_dynamic_config_store
@@ -34,12 +37,22 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
+def build_gdrive_scopes() -> list[str]:
+    base_scopes: list[str] = BASE_SCOPES
+    permissions_scopes: list[str] = FETCH_PERMISSIONS_SCOPES
+    groups_scopes: list[str] = FETCH_GROUPS_SCOPES
+
+    if ENTERPRISE_EDITION_ENABLED:
+        return base_scopes + permissions_scopes + groups_scopes
+    return base_scopes + permissions_scopes
+
+
 def _build_frontend_google_drive_redirect() -> str:
     return f"{WEB_DOMAIN}/admin/connectors/google-drive/auth/callback"
 
 
 def get_google_drive_creds_for_authorized_user(
-    token_json_str: str, scopes: list[str] = SCOPES
+    token_json_str: str, scopes: list[str] = build_gdrive_scopes()
 ) -> OAuthCredentials | None:
     creds_json = json.loads(token_json_str)
     creds = OAuthCredentials.from_authorized_user_info(creds_json, scopes)
@@ -59,8 +72,8 @@ def get_google_drive_creds_for_authorized_user(
     return None
 
 
-def get_google_drive_creds_for_service_account(
-    service_account_key_json_str: str, scopes: list[str] = SCOPES
+def _get_google_drive_creds_for_service_account(
+    service_account_key_json_str: str, scopes: list[str] = build_gdrive_scopes()
 ) -> ServiceAccountCredentials | None:
     service_account_key = json.loads(service_account_key_json_str)
     creds = ServiceAccountCredentials.from_service_account_info(
@@ -72,7 +85,7 @@ def get_google_drive_creds_for_service_account(
 
 
 def get_google_drive_creds(
-    credentials: dict[str, str], scopes: list[str] = SCOPES
+    credentials: dict[str, str], scopes: list[str] = build_gdrive_scopes()
 ) -> tuple[ServiceAccountCredentials | OAuthCredentials, dict[str, str] | None]:
     creds = None
     new_creds_dict = None
@@ -92,7 +105,7 @@ def get_google_drive_creds(
         service_account_key_json_str = credentials[
             DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
         ]
-        creds = get_google_drive_creds_for_service_account(
+        creds = _get_google_drive_creds_for_service_account(
             service_account_key_json_str=service_account_key_json_str,
             scopes=scopes,
         )
@@ -125,7 +138,7 @@ def get_auth_url(credential_id: int) -> str:
     credential_json = json.loads(creds_str)
     flow = InstalledAppFlow.from_client_config(
         credential_json,
-        scopes=SCOPES,
+        scopes=build_gdrive_scopes(),
         redirect_uri=_build_frontend_google_drive_redirect(),
     )
     auth_url, _ = flow.authorization_url(prompt="consent")
@@ -148,7 +161,7 @@ def update_credential_access_tokens(
     app_credentials = get_google_app_cred()
     flow = InstalledAppFlow.from_client_config(
         app_credentials.model_dump(),
-        scopes=SCOPES,
+        scopes=build_gdrive_scopes(),
         redirect_uri=_build_frontend_google_drive_redirect(),
     )
     flow.fetch_token(code=auth_code)

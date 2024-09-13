@@ -1,7 +1,7 @@
 """Add Permission Syncing
 
 Revision ID: 61ff3651add4
-Revises: bceb1e139447
+Revises: f7e58d357687
 Create Date: 2024-09-05 13:57:11.770413
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "61ff3651add4"
-down_revision = "bceb1e139447"
+down_revision = "f7e58d357687"
 branch_labels = None
 depends_on = None
 
@@ -62,12 +62,6 @@ def upgrade() -> None:
         "document",
         sa.Column("last_time_perm_sync", sa.DateTime(timezone=True), nullable=True),
     )
-    op.add_column(
-        "user",
-        sa.Column(
-            "external_user_group_ids", postgresql.ARRAY(sa.String()), nullable=True
-        ),
-    )
 
     op.add_column(
         "email_to_external_user_cache",
@@ -82,6 +76,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_email", sa.String(), nullable=False),
         sa.Column("external_user_group_id", sa.String(), nullable=False),
+        sa.Column("cc_pair_id", sa.Integer(), nullable=False),
         sa.Column(
             "source_type",
             sa.String(),
@@ -112,23 +107,10 @@ def downgrade() -> None:
     op.drop_column("connector_credential_pair", "access_type")
     op.drop_column("document", "external_user_emails")
     op.drop_column("document", "external_user_groups")
-    op.drop_column("document", "public")
+    op.drop_column("document", "is_externally_public")
     op.drop_column("document", "last_time_perm_sync")
-    op.drop_column("email_to_external_user_cache", "source_type")
-    op.drop_column("user", "external_user_group_ids")
-    op.add_column(
-        "external_permission",
-        sa.Column("user_id", sa.UUID(), nullable=True),
-    )
-    op.add_column(
-        "email_to_external_user_cache",
-        sa.Column("user_id", sa.UUID(), nullable=True),
-    )
-    op.add_column(
-        "permission_sync_run",
-        sa.Column("cc_pair_id", sa.Integer(), nullable=True),
-    )
-    op.alter_column("permission_sync_run", "start_time", new_column_name="updated_at")
+
+    op.drop_table("external_user_email__external_user_group_id")
 
     # Drop the enum type at the end of the downgrade
     op.execute("DROP TYPE accesstype")

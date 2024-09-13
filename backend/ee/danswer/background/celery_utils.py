@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from danswer.db.enums import AccessType
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import UserGroup
 from danswer.db.tasks import check_task_is_live_and_not_timed_out
@@ -19,7 +20,7 @@ def should_sync_user_groups(user_group: UserGroup, db_session: Session) -> bool:
     latest_sync = get_latest_task(task_name, db_session)
 
     if latest_sync and check_task_is_live_and_not_timed_out(latest_sync, db_session):
-        logger.info("TTL check is already being performed. Skipping.")
+        logger.debug(f"{task_name} is already being performed. Skipping.")
         return False
     return True
 
@@ -37,7 +38,7 @@ def should_perform_chat_ttl_check(
         return True
 
     if latest_task and check_task_is_live_and_not_timed_out(latest_task, db_session):
-        logger.info("TTL check is already being performed. Skipping.")
+        logger.debug(f"{task_name} is already being performed. Skipping.")
         return False
     return True
 
@@ -45,12 +46,17 @@ def should_perform_chat_ttl_check(
 def should_perform_external_permissions_check(
     cc_pair: ConnectorCredentialPair, db_session: Session
 ) -> bool:
+    if cc_pair.access_type != AccessType.SYNC:
+        return False
+
     task_name = name_sync_external_permissions_task(cc_pair_id=cc_pair.id)
+
     latest_task = get_latest_task(task_name, db_session)
     if not latest_task:
         return True
 
-    if latest_task and check_task_is_live_and_not_timed_out(latest_task, db_session):
-        logger.info("External permissions check is already being performed. Skipping.")
+    if check_task_is_live_and_not_timed_out(latest_task, db_session):
+        logger.debug(f"{task_name} is already being performed. Skipping.")
         return False
+
     return True

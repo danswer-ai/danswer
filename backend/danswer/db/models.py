@@ -161,10 +161,6 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
     has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    external_user_group_ids: Mapped[list[str]] = mapped_column(
-        postgresql.ARRAY(String), nullable=True
-    )
-
 
 class InputPrompt(Base):
     __tablename__ = "inputprompt"

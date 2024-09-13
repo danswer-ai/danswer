@@ -5,6 +5,7 @@ from danswer.access.access import (
 )
 from danswer.access.access import _get_acl_for_user as get_acl_for_user_without_groups
 from danswer.access.models import DocumentAccess
+from danswer.access.utils import prefix_external_group
 from danswer.access.utils import prefix_group_w_source
 from danswer.access.utils import prefix_user_group
 from danswer.db.models import User
@@ -67,15 +68,22 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
 
     NOTE: is imported in danswer.access.access by `fetch_versioned_implementation`
     DO NOT REMOVE."""
-    user_groups = fetch_user_groups_for_user(db_session, user.id) if user else []
+    db_user_groups = fetch_user_groups_for_user(db_session, user.id) if user else []
+    prefixed_user_groups = [
+        prefix_user_group(db_user_group.name) for db_user_group in db_user_groups
+    ]
+
     db_ext_groups = fetch_ext_groups_for_user(db_session, user.email) if user else []
-    ext_groups = [
-        prefix_group_w_source(
-            db_ext_group.external_user_group_id, db_ext_group.source_type
+    prefixed_ext_groups = [
+        prefix_external_group(
+            prefix_group_w_source(
+                db_ext_group.external_user_group_id, db_ext_group.source_type
+            )
         )
         for db_ext_group in db_ext_groups
     ]
 
-    return set(
-        [prefix_user_group(user_group.name) for user_group in user_groups] + ext_groups
-    ).union(get_acl_for_user_without_groups(user, db_session))
+    user_acl = set(prefixed_user_groups + prefixed_ext_groups)
+    user_acl.update(get_acl_for_user_without_groups(user, db_session))
+
+    return user_acl

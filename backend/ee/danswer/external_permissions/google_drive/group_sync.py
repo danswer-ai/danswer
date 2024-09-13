@@ -10,15 +10,14 @@ from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
 from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds,
 )
+from danswer.connectors.google_drive.constants import FETCH_GROUPS_SCOPES
 from danswer.db.models import ConnectorCredentialPair
+from danswer.utils.logger import setup_logger
 from ee.danswer.db.external_perm import (
     replace_external_user__group_relations__no_commit,
 )
 
-
-_FETCH_GROUPS_SCOPES = [
-    "https://www.googleapis.com/auth/cloud-identity.groups",
-]
+logger = setup_logger()
 
 
 # Google Drive APIs are quite flakey and may 500 for an
@@ -50,15 +49,21 @@ def _fetch_groups_paginated(
     )
 
     while True:
-        groups_resp: dict[str, Any] = add_retries(
-            lambda: (cloud_identity_service.groups().list(parent=parent).execute())
-        )()
-        for group in groups_resp.get("groups", []):
-            yield group
+        try:
+            groups_resp: dict[str, Any] = add_retries(
+                lambda: (cloud_identity_service.groups().list(parent=parent).execute())
+            )()
+            for group in groups_resp.get("groups", []):
+                yield group
 
-        next_token = groups_resp.get("nextPageToken")
-        if not next_token:
-            break
+            next_token = groups_resp.get("nextPageToken")
+            if not next_token:
+                break
+        except HttpError as e:
+            if e.resp.status == 404 or e.resp.status == 403:
+                break
+            logger.error(f"Error fetching groups: {e}")
+            raise
 
 
 def _fetch_group_members_paginated(
@@ -91,6 +96,7 @@ def _fetch_group_members_paginated(
         except HttpError as e:
             if e.resp.status == 404 or e.resp.status == 403:
                 break
+            logger.error(f"Error fetching group members: {e}")
             raise
 
 
@@ -102,13 +108,13 @@ def gdrive_group_sync(
 ) -> None:
     google_drive_creds, _ = get_google_drive_creds(
         cc_pair.credential.credential_json,
-        scopes=_FETCH_GROUPS_SCOPES,
+        scopes=FETCH_GROUPS_SCOPES,
     )
 
     danswer_groups: dict[str, list[str]] = {}
     for group in _fetch_groups_paginated(google_drive_creds):
-        # We are using the group email as the group id
-        group_email = group["groupKey"]["email"]
+        # The id is the group email
+        group_email = group["groupKey"]["id"]
 
         emails: list[str] = []
         for member in _fetch_group_members_paginated(google_drive_creds, group["name"]):

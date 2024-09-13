@@ -3,6 +3,7 @@ from typing import Any
 from typing import cast
 
 from googleapiclient.discovery import build  # type: ignore
+from googleapiclient.errors import HttpError  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
@@ -11,31 +12,44 @@ from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
 from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds,
 )
+from danswer.connectors.google_drive.constants import FETCH_PERMISSIONS_SCOPES
 from danswer.db.models import ConnectorCredentialPair
-from ee.danswer.db.document import upsert_document_external_perms
+from danswer.utils.logger import setup_logger
+from ee.danswer.db.document import upsert_document_external_perms__no_commit
 
-_FETCH_PERMISSIONS_SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly"]
 # Google Drive APIs are quite flakey and may 500 for an
 # extended period of time. Trying to combat here by adding a very
 # long retry period (~20 minutes of trying every minute)
 add_retries = retry_builder(tries=5, delay=5, max_delay=30)
 
 
-def _fetch_google_permissions_for_document_id(
-    drive_file_id: str,
-    raw_credentials_json: dict[str, str],
-    company_google_domains: list[str],
-) -> ExternalAccess:
-    # Authenticate and construct service
-    google_drive_creds, _ = get_google_drive_creds(
-        raw_credentials_json, scopes=_FETCH_PERMISSIONS_SCOPES
-    )
+logger = setup_logger()
 
-    drive_service = build("drive", "v3", credentials=google_drive_creds)
 
-    def _fetch_permissions_paginated() -> Iterator[dict[str, Any]]:
-        next_token = None
-        while True:
+def _fetch_permissions_paginated(
+    drive_service: Any, drive_file_id: str
+) -> Iterator[dict[str, Any]]:
+    next_token = None
+
+    # Check if the file is trashed
+    # Returning nothing here will cause the external permissions to
+    # be empty which will get written to vespa (failing shut)
+    try:
+        file_metadata = add_retries(
+            lambda: drive_service.files()
+            .get(fileId=drive_file_id, fields="id, trashed")
+            .execute()
+        )()
+    except Exception as e:
+        logger.error(f"Failed to fetch file metadata: {e}")
+        return
+
+    if file_metadata.get("trashed", False):
+        logger.warning(f"File with ID {drive_file_id} is trashed")
+        return
+
+    while True:
+        try:
             permissions_resp: dict[str, Any] = add_retries(
                 lambda: (
                     drive_service.permissions()
@@ -48,17 +62,38 @@ def _fetch_google_permissions_for_document_id(
                     .execute()
                 )
             )()
-            for permission in permissions_resp.get("permissions", []):
-                yield permission
-
-            next_token = permissions_resp.get("nextPageToken")
-            if not next_token:
+        except HttpError as e:
+            if e.resp.status == 404 or e.resp.status == 403:
                 break
+            logger.error(f"Failed to fetch permissions: {e}")
+            raise
+
+        for permission in permissions_resp.get("permissions", []):
+            yield permission
+
+        next_token = permissions_resp.get("nextPageToken")
+        if not next_token:
+            break
+
+
+def _fetch_google_permissions_for_document_id(
+    drive_file_id: str,
+    raw_credentials_json: dict[str, str],
+    company_google_domains: list[str],
+) -> ExternalAccess:
+    # Authenticate and construct service
+    google_drive_creds, _ = get_google_drive_creds(
+        raw_credentials_json, scopes=FETCH_PERMISSIONS_SCOPES
+    )
+    if not google_drive_creds.valid:
+        raise ValueError("Invalid Google Drive credentials")
+
+    drive_service = build("drive", "v3", credentials=google_drive_creds)
 
     users: set[str] = set()
     groups: set[str] = set()
     public = False
-    for permission in _fetch_permissions_paginated():
+    for permission in _fetch_permissions_paginated(drive_service, drive_file_id):
         permission_type = permission["type"]
         if permission_type == "user":
             users.add(permission["emailAddress"])
@@ -97,7 +132,7 @@ def gdrive_doc_sync(
                 cast(dict[str, str], sync_details)["company_domain"]
             ],
         )
-        upsert_document_external_perms(
+        upsert_document_external_perms__no_commit(
             db_session=db_session,
             doc_id=danswer_doc_id,
             external_access=ext_access,
