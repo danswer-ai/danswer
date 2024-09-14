@@ -56,11 +56,13 @@ def find_matching_standard_answers(
 
         else:
             # Remove punctuation and split the keyword into individual words
-            keyword_words = "".join(
-                char
-                for char in standard_answer.keyword.lower()
-                if char not in string.punctuation
-            ).split()
+            keyword_words = set(
+                "".join(
+                    char
+                    for char in standard_answer.keyword.lower()
+                    if char not in string.punctuation
+                ).split()
+            )
 
             # Remove punctuation and split the query into individual words
             query_words = "".join(
@@ -69,14 +71,17 @@ def find_matching_standard_answers(
 
             # Check if all of the keyword words are in the query words
             if standard_answer.match_any_keywords:
-                if any(word in query_words for word in keyword_words):
-                    matching_standard_answers.append(
-                        (standard_answer, standard_answer.keyword)
-                    )
+                for word in query_words:
+                    if word in keyword_words:
+                        matching_standard_answers.append((standard_answer, word))
+                        break
             else:
                 if all(word in query_words for word in keyword_words):
                     matching_standard_answers.append(
-                        (standard_answer, standard_answer.keyword)
+                        (
+                            standard_answer,
+                            re.sub(r"\s+?", ", ", standard_answer.keyword),
+                        )
                     )
 
     return matching_standard_answers
