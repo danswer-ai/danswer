@@ -85,8 +85,8 @@ def validate_cors_origin(origin):
 
 CORS_ALLOWED_ORIGIN = os.environ.get("CORS_ALLOWED_ORIGIN", "*").split(",") or ["*"]
 
-[
+any(
     validate_cors_origin(stripped_origin)
     for origin in CORS_ALLOWED_ORIGIN
     if origin != "*" and (stripped_origin := origin.strip())
-]
+)
