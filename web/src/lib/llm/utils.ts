@@ -86,6 +86,7 @@ const MODEL_NAMES_SUPPORTING_IMAGES = [
 export function checkLLMSupportsImageInput(model: string) {
   return MODEL_NAMES_SUPPORTING_IMAGES.some((modelName) => modelName === model);
 }
+
 export const structureValue = (
   name: string,
   provider: string,
