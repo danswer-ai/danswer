@@ -79,6 +79,7 @@ def patch_user_presona_public_status(
             user=user,
         )
     except ValueError as e:
+        logger.exception("Failed to update persona public status")
         raise HTTPException(status_code=403, detail=str(e))
 
 

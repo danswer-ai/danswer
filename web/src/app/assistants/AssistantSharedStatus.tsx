@@ -1,14 +1,7 @@
 import { User } from "@/lib/types";
 import { Persona } from "../admin/assistants/interfaces";
 import { checkUserOwnsAssistant } from "@/lib/assistants/checkOwnership";
-import {
-  FiImage,
-  FiLock,
-  FiMoreHorizontal,
-  FiSearch,
-  FiUnlock,
-} from "react-icons/fi";
-import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
+import { FiLock, FiUnlock } from "react-icons/fi";
 
 export function AssistantSharedStatusDisplay({
   assistant,

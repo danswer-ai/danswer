@@ -24,7 +24,7 @@ export function MakePublicAssistantModal({
           </span>
           .
           {isPublic
-            ? " Anyone with the link can view and use this assistant."
+            ? " Anyone can currently access this assistant."
             : " Only you can access this assistant."}
         </Text>
 
