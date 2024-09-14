@@ -67,8 +67,6 @@ def find_matching_standard_answers(
                 char for char in query.lower() if char not in string.punctuation
             ).split()
 
-            print(f"{query_words=} {standard_answer.match_any_keywords}")
-
             # Check if all of the keyword words are in the query words
             if standard_answer.match_any_keywords:
                 if any(word in query_words for word in keyword_words):
