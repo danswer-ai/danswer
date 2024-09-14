@@ -292,8 +292,6 @@ def test_connector_deletion_for_overlapping_connectors(
         doc_creating_user=admin_user,
     )
 
-    # EVERYTHING BELOW HERE IS CURRENTLY BROKEN AND NEEDS TO BE FIXED SERVER SIDE
-
     # delete connector 1
     CCPairManager.pause_cc_pair(
         cc_pair=cc_pair_1,
