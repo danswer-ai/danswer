@@ -25,7 +25,13 @@ def handle_standard_answers(
         "_handle_standard_answers",
     )
     return versioned_handle_standard_answers(
-        message_info, receiver_ids, slack_bot_config, prompt, logger, client, db_session
+        message_info=message_info,
+        receiver_ids=receiver_ids,
+        slack_bot_config=slack_bot_config,
+        prompt=prompt,
+        logger=logger,
+        client=client,
+        db_session=db_session,
     )
 
 
