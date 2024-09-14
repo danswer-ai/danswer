@@ -56,6 +56,7 @@ from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
+from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.configs import SLACK_CHANNEL_ID
@@ -480,6 +481,8 @@ def _initialize_socket_client(socket_client: SocketModeClient) -> None:
 if __name__ == "__main__":
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None
+
+    set_is_ee_based_on_env_variable()
 
     logger.notice("Verifying query preprocessing (NLTK) data is downloaded")
     download_nltk_data()
