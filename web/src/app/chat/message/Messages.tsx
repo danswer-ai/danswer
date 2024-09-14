@@ -373,7 +373,10 @@ export const AIMessage = ({
 
                                   if (value?.toString().startsWith("*")) {
                                     return (
-                                      <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
+                                      <div
+                                        key={props.id}
+                                        className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2"
+                                      />
                                     );
                                   } else if (
                                     value?.toString().startsWith("[")
@@ -385,7 +388,7 @@ export const AIMessage = ({
                                     return (
                                       <Citation
                                         link={rest?.href}
-                                        key={node?.position?.start?.offset}
+                                        key={props.id}
                                       >
                                         {rest.children}
                                       </Citation>
@@ -393,7 +396,7 @@ export const AIMessage = ({
                                   } else {
                                     return (
                                       <a
-                                        key={node?.position?.start?.offset}
+                                        key={props.id}
                                         onMouseDown={() =>
                                           rest.href
                                             ? window.open(rest.href, "_blank")
@@ -411,10 +414,15 @@ export const AIMessage = ({
                                     className="w-full"
                                     {...props}
                                     content={content as string}
+                                    key={props.id}
                                   />
                                 ),
                                 p: ({ node, ...props }) => (
-                                  <p {...props} className="text-default" />
+                                  <p
+                                    key={props.id}
+                                    {...props}
+                                    className="text-default"
+                                  />
                                 ),
                               }}
                               remarkPlugins={[remarkGfm]}
