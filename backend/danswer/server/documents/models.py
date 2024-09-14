@@ -221,6 +221,7 @@ class CCPairFullInfo(BaseModel):
     latest_deletion_attempt: DeletionAttemptSnapshot | None
     access_type: AccessType
     is_editable_for_current_user: bool
+    deletion_failure_message: str | None
 
     @classmethod
     def from_models(
@@ -263,7 +264,19 @@ class CCPairFullInfo(BaseModel):
             latest_deletion_attempt=latest_deletion_attempt,
             access_type=cc_pair_model.access_type,
             is_editable_for_current_user=is_editable_for_current_user,
+            deletion_failure_message=cc_pair_model.deletion_failure_message,
         )
+
+
+class FailedConnectorIndexingStatus(BaseModel):
+    """Simplified version of ConnectorIndexingStatus for failed indexing attempts"""
+
+    cc_pair_id: int
+    name: str | None
+    error_msg: str | None
+    is_deletable: bool
+    connector_id: int
+    credential_id: int
 
 
 class ConnectorIndexingStatus(BaseModel):

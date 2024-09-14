@@ -41,11 +41,11 @@ export default function EmbeddingForm() {
       multilingual_expansion: [],
       disable_rerank_for_streaming: false,
       api_url: null,
+      num_rerank: 0,
     });
 
   const [rerankingDetails, setRerankingDetails] = useState<RerankingDetails>({
     rerank_api_key: "",
-    num_rerank: 0,
     rerank_provider_type: null,
     rerank_model_name: "",
     rerank_api_url: null,
@@ -117,11 +117,12 @@ export default function EmbeddingForm() {
         multilingual_expansion: searchSettings.multilingual_expansion,
         disable_rerank_for_streaming:
           searchSettings.disable_rerank_for_streaming,
+        num_rerank: searchSettings.num_rerank,
         api_url: null,
       });
+
       setRerankingDetails({
         rerank_api_key: searchSettings.rerank_api_key,
-        num_rerank: searchSettings.num_rerank,
         rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
         rerank_api_url: searchSettings.rerank_api_url,
@@ -132,14 +133,12 @@ export default function EmbeddingForm() {
   const originalRerankingDetails: RerankingDetails = searchSettings
     ? {
         rerank_api_key: searchSettings.rerank_api_key,
-        num_rerank: searchSettings.num_rerank,
         rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
         rerank_api_url: searchSettings.rerank_api_url,
       }
     : {
         rerank_api_key: "",
-        num_rerank: 0,
         rerank_provider_type: null,
         rerank_model_name: "",
         rerank_api_url: null,
@@ -191,13 +190,14 @@ export default function EmbeddingForm() {
     }
     let newModel: SavedSearchSettings;
 
+    // We use a spread operation to merge properties from multiple objects into a single object.
+    // Advanced embedding details may update default values.
     if (selectedProvider.provider_type != null) {
       // This is a cloud model
       newModel = {
+        ...rerankingDetails,
         ...advancedEmbeddingDetails,
         ...selectedProvider,
-        ...rerankingDetails,
-        model_name: selectedProvider.model_name,
         provider_type:
           (selectedProvider.provider_type
             ?.toLowerCase()
@@ -206,10 +206,10 @@ export default function EmbeddingForm() {
     } else {
       // This is a locally hosted model
       newModel = {
-        ...advancedEmbeddingDetails,
         ...selectedProvider,
         ...rerankingDetails,
-        model_name: selectedProvider.model_name!,
+        ...advancedEmbeddingDetails,
+        ...selectedProvider,
         provider_type: null,
       };
     }
@@ -225,6 +225,7 @@ export default function EmbeddingForm() {
         },
       }
     );
+
     if (response.ok) {
       setPopup({
         message: "Changed provider suceessfully. Redirecing to embedding page",
@@ -420,13 +421,6 @@ export default function EmbeddingForm() {
           <>
             <Card>
               <AdvancedEmbeddingFormPage
-                updateNumRerank={(newNumRerank: number) =>
-                  setRerankingDetails({
-                    ...rerankingDetails,
-                    num_rerank: newNumRerank,
-                  })
-                }
-                numRerank={rerankingDetails.num_rerank}
                 advancedEmbeddingDetails={advancedEmbeddingDetails}
                 updateAdvancedEmbeddingDetails={updateAdvancedEmbeddingDetails}
               />

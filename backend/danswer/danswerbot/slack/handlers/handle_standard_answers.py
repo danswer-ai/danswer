@@ -16,9 +16,10 @@ from danswer.db.chat import get_chat_sessions_by_slack_thread_id
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.models import Prompt
 from danswer.db.models import SlackBotConfig
+from danswer.db.models import StandardAnswer as StandardAnswerModel
 from danswer.db.standard_answer import fetch_standard_answer_categories_by_names
 from danswer.db.standard_answer import find_matching_standard_answers
-from danswer.server.manage.models import StandardAnswer
+from danswer.server.manage.models import StandardAnswer as PydanticStandardAnswer
 from danswer.utils.logger import DanswerLoggingAdapter
 from danswer.utils.logger import setup_logger
 
@@ -29,7 +30,7 @@ def oneoff_standard_answers(
     message: str,
     slack_bot_categories: list[str],
     db_session: Session,
-) -> list[StandardAnswer]:
+) -> list[PydanticStandardAnswer]:
     """
     Respond to the user message if it matches any configured standard answers.
 
@@ -50,7 +51,8 @@ def oneoff_standard_answers(
     )
 
     server_standard_answers = [
-        StandardAnswer.from_model(db_answer) for db_answer in matching_standard_answers
+        PydanticStandardAnswer.from_model(standard_answer_model)
+        for (standard_answer_model, _) in matching_standard_answers
     ]
     return server_standard_answers
 
@@ -114,14 +116,15 @@ def handle_standard_answers(
     usable_standard_answers = configured_standard_answers.difference(
         used_standard_answer_ids
     )
+
+    matching_standard_answers: list[tuple[StandardAnswerModel, str]] = []
     if usable_standard_answers:
         matching_standard_answers = find_matching_standard_answers(
             query=query_msg.message,
             id_in=[standard_answer.id for standard_answer in usable_standard_answers],
             db_session=db_session,
         )
-    else:
-        matching_standard_answers = []
+
     if matching_standard_answers:
         chat_session = create_chat_session(
             db_session=db_session,
@@ -149,12 +152,12 @@ def handle_standard_answers(
         )
 
         formatted_answers = []
-        for standard_answer in matching_standard_answers:
-            block_quotified_answer = ">" + standard_answer.answer.replace("\n", "\n> ")
-            formatted_answer = (
-                f'Since you mentioned _"{standard_answer.keyword}"_, '
-                f"I thought this might be useful: \n\n{block_quotified_answer}"
+        for standard_answer, match_str in matching_standard_answers:
+            since_you_mentioned_pretext = (
+                f'Since your question contained "_{match_str}_"'
             )
+            block_quotified_answer = ">" + standard_answer.answer.replace("\n", "\n> ")
+            formatted_answer = f"{since_you_mentioned_pretext}, I thought this might be useful: \n\n{block_quotified_answer}"
             formatted_answers.append(formatted_answer)
         answer_message = "\n\n".join(formatted_answers)
 

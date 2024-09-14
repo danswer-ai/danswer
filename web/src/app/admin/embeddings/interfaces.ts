@@ -1,18 +1,19 @@
 import { EmbeddingProvider } from "@/components/embedding/interfaces";
-import { NonNullChain } from "typescript";
 
+// This is a slightly differnte interface than used in the backend
+// but is always used in conjunction with `AdvancedSearchConfiguration`
 export interface RerankingDetails {
   rerank_model_name: string | null;
   rerank_provider_type: RerankerProvider | null;
   rerank_api_key: string | null;
   rerank_api_url: string | null;
-  num_rerank: number;
 }
 
 export enum RerankerProvider {
   COHERE = "cohere",
   LITELLM = "litellm",
 }
+
 export interface AdvancedSearchConfiguration {
   model_name: string;
   model_dim: number;
@@ -24,19 +25,12 @@ export interface AdvancedSearchConfiguration {
   multilingual_expansion: string[];
   disable_rerank_for_streaming: boolean;
   api_url: string | null;
+  num_rerank: number;
 }
 
-export interface SavedSearchSettings extends RerankingDetails {
-  model_name: string;
-  model_dim: number;
-  normalize: boolean;
-  query_prefix: string;
-  passage_prefix: string;
-  index_name: string | null;
-  multipass_indexing: boolean;
-  multilingual_expansion: string[];
-  disable_rerank_for_streaming: boolean;
-  api_url: string | null;
+export interface SavedSearchSettings
+  extends RerankingDetails,
+    AdvancedSearchConfiguration {
   provider_type: EmbeddingProvider | null;
 }
 

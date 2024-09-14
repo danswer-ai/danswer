@@ -883,7 +883,7 @@ export const HumanMessage = ({
                           !isEditing &&
                           (!files || files.length === 0)
                         ) && "ml-auto"
-                      } relative   flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
+                      } relative flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>
