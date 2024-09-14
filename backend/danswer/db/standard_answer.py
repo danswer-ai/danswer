@@ -41,6 +41,7 @@ def insert_standard_answer(
     answer: str,
     category_ids: list[int],
     match_regex: bool,
+    match_any_keywords: bool,
     db_session: Session,
 ) -> StandardAnswer:
     existing_categories = fetch_standard_answer_categories_by_ids(
@@ -56,6 +57,7 @@ def insert_standard_answer(
         categories=existing_categories,
         active=True,
         match_regex=match_regex,
+        match_any_keywords=match_any_keywords,
     )
     db_session.add(standard_answer)
     db_session.commit()
@@ -68,6 +70,7 @@ def update_standard_answer(
     answer: str,
     category_ids: list[int],
     match_regex: bool,
+    match_any_keywords: bool,
     db_session: Session,
 ) -> StandardAnswer:
     standard_answer = db_session.scalar(
@@ -87,6 +90,7 @@ def update_standard_answer(
     standard_answer.answer = answer
     standard_answer.categories = list(existing_categories)
     standard_answer.match_regex = match_regex
+    standard_answer.match_any_keywords = match_any_keywords
 
     db_session.commit()
 

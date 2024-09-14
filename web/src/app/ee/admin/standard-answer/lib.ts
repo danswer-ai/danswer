@@ -7,6 +7,7 @@ export interface StandardAnswerCreationRequest {
   answer: string;
   categories: number[];
   matchRegex: boolean;
+  matchAnyKeywords: boolean;
 }
 
 const buildRequestBodyFromStandardAnswerCategoryCreationRequest = (
@@ -50,6 +51,7 @@ const buildRequestBodyFromStandardAnswerCreationRequest = (
     answer: request.answer,
     categories: request.categories,
     match_regex: request.matchRegex,
+    match_any_keywords: request.matchAnyKeywords,
   });
 };
 
