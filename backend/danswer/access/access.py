@@ -9,14 +9,43 @@ from danswer.db.models import User
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 
+def _get_access_for_document(
+    document_id: str,
+    db_session: Session,
+) -> DocumentAccess:
+    info = get_access_info_for_document(
+        db_session=db_session,
+        document_id=document_id,
+    )
+
+    return DocumentAccess.build(
+        user_emails=info[1] if info and info[1] else [],
+        user_groups=[],
+        external_user_emails=[],
+        external_user_group_ids=[],
+        is_public=info[2] if info else False,
+    )
+
+
+def get_access_for_document(
+    document_id: str,
+    db_session: Session,
+) -> DocumentAccess:
+    versioned_get_access_for_document_fn = fetch_versioned_implementation(
+        "danswer.access.access", "_get_access_for_document"
+    )
+    return versioned_get_access_for_document_fn(document_id, db_session)  # type: ignore
+
+
 def get_null_document_access() -> DocumentAccess:
     return DocumentAccess(
         user_emails=set(),
         user_groups=set(),
+        is_public=False,
         external_user_emails=set(),
         external_user_group_ids=set(),
-        is_externally_public=False,
     )
+
 
 def _get_access_for_documents(
     document_ids: list[str],
@@ -31,9 +60,9 @@ def _get_access_for_documents(
             user_emails=set([email for email in user_emails if email]),
             # MIT version will wipe all groups and external groups on update
             user_groups=set(),
+            is_public=is_public,
             external_user_emails=set(),
             external_user_group_ids=set(),
-            is_externally_public=is_public,
         )
         for document_id, user_emails, is_public in document_access_info
     }

@@ -3,6 +3,7 @@ import time
 from collections.abc import Generator
 from collections.abc import Sequence
 from datetime import datetime
+from datetime import timezone
 
 from sqlalchemy import and_
 from sqlalchemy import delete
@@ -171,6 +172,26 @@ def get_document_cnts_for_cc_pairs(
     )
 
     return db_session.execute(stmt).all()  # type: ignore
+
+
+def get_access_info_for_document(
+    db_session: Session,
+    document_id: str,
+) -> tuple[str, list[str | None], bool] | None:
+    """Gets access info for a single document by calling the get_access_info_for_documents function
+    and passing a list with a single document ID.
+    Args:
+        db_session (Session): The database session to use.
+        document_id (str): The document ID to fetch access info for.
+    Returns:
+        Optional[Tuple[str, List[str | None], bool]]: A tuple containing the document ID, a list of user emails,
+        and a boolean indicating if the document is globally public, or None if no results are found.
+    """
+    results = get_access_info_for_documents(db_session, [document_id])
+    if not results:
+        return None
+
+    return results[0]
 
 
 def get_access_info_for_documents(

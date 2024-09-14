@@ -12,12 +12,9 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from ee.danswer.background.celery_utils import should_perform_chat_ttl_check
 from ee.danswer.background.celery_utils import should_perform_external_permissions_check
-from ee.danswer.background.celery_utils import should_sync_user_groups
 from ee.danswer.background.task_name_builders import name_chat_ttl_task
 from ee.danswer.background.task_name_builders import name_sync_external_permissions_task
-from ee.danswer.background.task_name_builders import name_user_group_sync_task
 from ee.danswer.db.connector_credential_pair import get_all_auto_sync_cc_pairs
-from ee.danswer.db.user_group import fetch_user_groups
 from ee.danswer.external_permissions.permission_sync import (
     run_permission_sync_entrypoint,
 )
@@ -29,18 +26,18 @@ logger = setup_logger()
 global_version.set_ee()
 
 
-@build_celery_task_wrapper(name_chat_ttl_task)
-@celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def perform_ttl_management_task(retention_limit_days: int) -> None:
-    with Session(get_sqlalchemy_engine()) as db_session:
-        delete_chat_sessions_older_than(retention_limit_days, db_session)
-
-
 @build_celery_task_wrapper(name_sync_external_permissions_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def sync_external_permissions_task(cc_pair_id: int) -> None:
     with Session(get_sqlalchemy_engine()) as db_session:
         run_permission_sync_entrypoint(db_session=db_session, cc_pair_id=cc_pair_id)
+
+
+@build_celery_task_wrapper(name_chat_ttl_task)
+@celery_app.task(soft_time_limit=JOB_TIMEOUT)
+def perform_ttl_management_task(retention_limit_days: int) -> None:
+    with Session(get_sqlalchemy_engine()) as db_session:
+        delete_chat_sessions_older_than(retention_limit_days, db_session)
 
 
 #####
@@ -97,10 +94,6 @@ def autogenerate_usage_report_task() -> None:
 # Celery Beat (Periodic Tasks) Settings
 #####
 celery_app.conf.beat_schedule = {
-    "check-for-user-group-sync": {
-        "task": "check_for_user_groups_sync_task",
-        "schedule": timedelta(seconds=5),
-    },
     "sync-external-permissions": {
         "task": "check_sync_external_permissions_task",
         "schedule": timedelta(seconds=5),

@@ -1,7 +1,7 @@
 """Add Permission Syncing
 
 Revision ID: 61ff3651add4
-Revises: f7e58d357687
+Revises: efb35676026c
 Create Date: 2024-09-05 13:57:11.770413
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "61ff3651add4"
-down_revision = "f7e58d357687"
+down_revision = "efb35676026c"
 branch_labels = None
 depends_on = None
 
@@ -52,36 +52,25 @@ def upgrade() -> None:
     )
     op.add_column(
         "document",
-        sa.Column("external_user_groups", postgresql.ARRAY(sa.String()), nullable=True),
+        sa.Column(
+            "external_user_group_ids", postgresql.ARRAY(sa.String()), nullable=True
+        ),
     )
     op.add_column(
         "document",
-        sa.Column("is_externally_public", sa.Boolean(), nullable=True),
+        sa.Column("is_public", sa.Boolean(), nullable=True),
     )
     op.add_column(
         "document",
         sa.Column("last_time_perm_sync", sa.DateTime(timezone=True), nullable=True),
     )
 
-    op.add_column(
-        "email_to_external_user_cache",
-        sa.Column(
-            "source_type",
-            sa.String(),
-            nullable=False,
-        ),
-    )
     op.create_table(
         "external_user_email__external_user_group_id",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_email", sa.String(), nullable=False),
         sa.Column("external_user_group_id", sa.String(), nullable=False),
         sa.Column("cc_pair_id", sa.Integer(), nullable=False),
-        sa.Column(
-            "source_type",
-            sa.String(),
-            nullable=False,
-        ),
         sa.PrimaryKeyConstraint("id"),
     )
 
@@ -106,8 +95,8 @@ def downgrade() -> None:
     op.drop_column("connector_credential_pair", "auto_sync_options")
     op.drop_column("connector_credential_pair", "access_type")
     op.drop_column("document", "external_user_emails")
-    op.drop_column("document", "external_user_groups")
-    op.drop_column("document", "is_externally_public")
+    op.drop_column("document", "external_user_group_ids")
+    op.drop_column("document", "is_public")
     op.drop_column("document", "last_time_perm_sync")
 
     op.drop_table("external_user_email__external_user_group_id")

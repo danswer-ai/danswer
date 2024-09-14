@@ -53,13 +53,13 @@ def upsert_document_external_perms__no_commit(
             id=doc_id,
             semantic_id="",
             external_user_emails=external_access.external_user_emails,
-            external_user_groups=prefixed_external_groups,
-            is_externally_public=external_access.is_externally_public,
+            external_user_group_ids=prefixed_external_groups,
+            is_public=external_access.is_public,
             last_time_perm_sync=func.now(),
         )
         db_session.add(document)
 
     document.external_user_emails = list(external_access.external_user_emails)
-    document.external_user_groups = prefixed_external_groups
-    document.is_externally_public = external_access.is_externally_public
+    document.external_user_group_ids = prefixed_external_groups
+    document.is_public = external_access.is_public
     document.last_time_perm_sync = func.now()  # type: ignore

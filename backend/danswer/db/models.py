@@ -470,10 +470,11 @@ class Document(Base):
     external_user_emails: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
-    external_user_groups: Mapped[list[str] | None] = mapped_column(
+    # These group ids have been prefixed by the source type
+    external_user_group_ids: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
-    is_externally_public: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False)
     last_time_perm_sync: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -1680,10 +1681,8 @@ class ExternalUserEmail__ExternalUserGroupId(Base):
     # Email is needed because we want to keep track of users not in Danswer to simplify process
     # when the user joins
     user_email: Mapped[str] = mapped_column(String)
+    # These group ids have been prefixed by the source type
     external_user_group_id: Mapped[str] = mapped_column(String)
-    source_type: Mapped[DocumentSource] = mapped_column(
-        Enum(DocumentSource, native_enum=False)
-    )
     cc_pair_id: Mapped[int] = mapped_column(ForeignKey("connector_credential_pair.id"))
 
 

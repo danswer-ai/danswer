@@ -111,7 +111,7 @@ def _fetch_google_permissions_for_document_id(
     return ExternalAccess(
         external_user_emails=users,
         external_user_group_ids=groups,
-        is_externally_public=public,
+        is_public=public,
     )
 
 
