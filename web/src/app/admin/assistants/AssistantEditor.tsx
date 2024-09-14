@@ -28,7 +28,7 @@ import { Option } from "@/components/Dropdown";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useUserGroups } from "@/lib/hooks";
-import { checkLLMSupportsImageInput, destructureValue } from "@/lib/llm/utils";
+import { checkLLMSupportsImageOutput, destructureValue } from "@/lib/llm/utils";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 
@@ -132,6 +132,11 @@ export function AssistantEditor({
 
   const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
 
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
+
+  // EE only
+  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
+
   const [finalPrompt, setFinalPrompt] = useState<string | null>("");
   const [finalPromptError, setFinalPromptError] = useState<string>("");
   const [removePersonaImage, setRemovePersonaImage] = useState(false);
@@ -167,7 +172,7 @@ export function AssistantEditor({
   const defaultProvider = llmProviders.find(
     (llmProvider) => llmProvider.is_default_provider
   );
-
+  const defaultProviderName = defaultProvider?.provider;
   const defaultModelName = defaultProvider?.default_model_name;
   const providerDisplayNameToProviderName = new Map<string, string>();
   llmProviders.forEach((llmProvider) => {
@@ -188,8 +193,7 @@ export function AssistantEditor({
     modelOptionsByProvider.set(llmProvider.name, providerOptions);
   });
   const providerSupportingImageGenerationExists = llmProviders.some(
-    (provider) =>
-      provider.provider === "openai" || provider.provider === "anthropic"
+    (provider) => provider.provider === "openai"
   );
 
   const personaCurrentToolIds =
@@ -342,7 +346,12 @@ export function AssistantEditor({
 
           if (imageGenerationToolEnabled) {
             if (
-              !checkLLMSupportsImageInput(
+              !checkLLMSupportsImageOutput(
+                providerDisplayNameToProviderName.get(
+                  values.llm_model_provider_override || ""
+                ) ||
+                  defaultProviderName ||
+                  "",
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -757,7 +766,10 @@ export function AssistantEditor({
                         <TooltipTrigger asChild>
                           <div
                             className={`w-fit ${
-                              !checkLLMSupportsImageInput(
+                              !checkLLMSupportsImageOutput(
+                                providerDisplayNameToProviderName.get(
+                                  values.llm_model_provider_override || ""
+                                ) || "",
                                 values.llm_model_version_override || ""
                               )
                                 ? "opacity-70 cursor-not-allowed"
@@ -772,14 +784,20 @@ export function AssistantEditor({
                                 toggleToolInValues(imageGenerationTool.id);
                               }}
                               disabled={
-                                !checkLLMSupportsImageInput(
+                                !checkLLMSupportsImageOutput(
+                                  providerDisplayNameToProviderName.get(
+                                    values.llm_model_provider_override || ""
+                                  ) || "",
                                   values.llm_model_version_override || ""
                                 )
                               }
                             />
                           </div>
                         </TooltipTrigger>
-                        {!checkLLMSupportsImageInput(
+                        {!checkLLMSupportsImageOutput(
+                          providerDisplayNameToProviderName.get(
+                            values.llm_model_provider_override || ""
+                          ) || "",
                           values.llm_model_version_override || ""
                         ) && (
                           <TooltipContent side="top" align="center">

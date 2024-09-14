@@ -1673,6 +1673,7 @@ export function ChatPage({
     setRetrievalEnabled(includes);
   }, [messageHistory, availableAssistants, liveAssistant]);
 
+  console.log(availableAssistants);
   const [retrievalEnabled, setRetrievalEnabled] = useState(() => {
     return checkAnyAssistantHasSearch(
       messageHistory,
