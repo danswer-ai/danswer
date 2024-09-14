@@ -58,7 +58,7 @@
     /* Very light grayish blue */
     --background-strong: #eaecef;
     /* Light grayish blue */
-    --border: #e5e5e5;
+    --border: #e5e7eb;
     /* gray-200 - Light gray */
     --border-light: #f5f5f5;
     /* gray-100 - Very light gray */
@@ -129,6 +129,62 @@
     /* Medium gray for dark scrollbar thumb */
     --scrollbar-dark-thumb-hover: #c7cdd2;
     /* Light medium gray for dark scrollbar thumb on hover */
+
+    /* Adding missing colors from tailwind-themes/tailwind.config.js */
+    --tremor-brand-faint: #eff6ff;
+    /* blue-50 */
+    --tremor-brand-muted: #bfdbfe;
+    /* blue-200 */
+    --tremor-brand-subtle: #60a5fa;
+    /* blue-400 */
+    --tremor-brand-emphasis: #1d4ed8;
+    /* blue-700 */
+    --tremor-brand-inverted: #ffffff;
+    /* white */
+    --tremor-background-muted: #f9fafb;
+    /* gray-50 */
+    --tremor-background-subtle: #f3f4f6;
+    /* gray-100 */
+    --tremor-background-emphasis: #374151;
+    /* gray-700 */
+    --tremor-content-subtle: #9ca3af;
+    /* gray-400 */
+    --tremor-content-default: #4b5563;
+    /* gray-600 */
+    --tremor-content-emphasis: #374151;
+    /* gray-700 */
+    --tremor-content-strong: #111827;
+    /* gray-900 */
+    --tremor-content-inverted: #ffffff;
+    /* white */
+    --dark-tremor-brand-faint: #0b1229;
+    /* custom */
+    --dark-tremor-brand-muted: #172554;
+    /* blue-950 */
+    --dark-tremor-brand-subtle: #1e40af;
+    /* blue-800 */
+    --dark-tremor-brand-emphasis: #60a5fa;
+    /* blue-400 */
+    --dark-tremor-brand-inverted: #030712;
+    /* gray-950 */
+    --dark-tremor-background-muted: #131a2b;
+    /* custom */
+    --dark-tremor-background-subtle: #1f2937;
+    /* gray-800 */
+    --dark-tremor-background-default: #111827;
+    /* gray-900 */
+    --dark-tremor-background-emphasis: #d1d5db;
+    /* gray-300 */
+    --dark-tremor-content-subtle: #6b7280;
+    /* gray-500 */
+    --dark-tremor-content-default: #d1d5db;
+    /* gray-300 */
+    --dark-tremor-content-emphasis: #f3f4f6;
+    /* gray-100 */
+    --dark-tremor-content-strong: #f9fafb;
+    /* gray-50 */
+    --dark-tremor-content-inverted: #000000;
+    /* black */
   }
 }
 
