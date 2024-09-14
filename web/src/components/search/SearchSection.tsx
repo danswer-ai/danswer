@@ -270,7 +270,7 @@ export const SearchSection = ({
           </div>
         </div>
 
-        <div className="h-full overflow-auto">
+        <div className="h-full overflow-y-auto">
           <SearchResultsDisplay
             searchResponse={searchResponse}
             validQuestionResponse={validQuestionResponse}

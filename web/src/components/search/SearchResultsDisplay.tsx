@@ -146,7 +146,7 @@ export const SearchResultsDisplay = ({
           </CardContent>
 
           {quotes !== null && answer && !isAssistant && (
-            <CardFooter className="p-0 border-t pt-2">
+            <CardFooter className="p-0 border-t pt-2 flex flex-col items-start">
               <QuotesSection
                 quotes={dedupedQuotes}
                 isFetching={isFetching}
@@ -154,7 +154,7 @@ export const SearchResultsDisplay = ({
               />
 
               {searchResponse.messageId !== null && (
-                <div className="absolute right-4 bottom-4">
+                <div className="ml-auto">
                   <QAFeedbackBlock messageId={searchResponse.messageId} />
                 </div>
               )}

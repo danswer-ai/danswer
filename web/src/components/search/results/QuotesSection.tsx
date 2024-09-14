@@ -4,6 +4,7 @@ import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
 import { useState } from "react";
 import { SourceIcon } from "@/components/SourceIcon";
 import { Button } from "@/components/ui/button";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
   const [detailIsOpen, setDetailIsOpen] = useState(false);
@@ -19,31 +20,46 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
     >
       {detailIsOpen && (
         <div className="absolute top-0 mt-9 pt-2 z-50">
-          <div className="flex flex-shrink-0 rounded-regular w-96 bg-background border border-border shadow p-3 text-sm leading-relaxed">
+          <div className="flex items-center gap-2 flex-shrink-0 rounded-regular w-96 bg-background border border-border shadow p-3 text-sm leading-relaxed">
             <div>
-              <b>Quote:</b> <i>{quoteInfo.quote}</i>
+              <b>Quote:</b>{" "}
+              <i>
+                {quoteInfo.quote} Quote: React lets you build user interfaces
+                out of individual pieces called components.
+              </i>
             </div>
-            <div
-              className="my-auto pl-3 ml-auto"
-              onClick={() => {
-                navigator.clipboard.writeText(quoteInfo.quote);
-                setCopyClicked(true);
-                setTimeout(() => {
-                  setCopyClicked(false);
-                }, 1000);
-              }}
+
+            <CustomTooltip
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="p-1 rounded hover:bg-hover cursor-pointer"
+                  onClick={() => {
+                    navigator.clipboard.writeText(quoteInfo.quote);
+                    setCopyClicked(true);
+                    setTimeout(() => {
+                      setCopyClicked(false);
+                    }, 1000);
+                  }}
+                >
+                  {copyClicked ? (
+                    <CheckmarkIcon
+                      className="my-auto flex flex-shrink-0"
+                      size={16}
+                    />
+                  ) : (
+                    <CopyIcon
+                      className="my-auto flex flex-shrink-0"
+                      size={16}
+                    />
+                  )}
+                </Button>
+              }
+              asChild
             >
-              <div className="p-1 rounded hover:bg-hover cursor-pointer">
-                {copyClicked ? (
-                  <CheckmarkIcon
-                    className="my-auto flex flex-shrink-0"
-                    size={16}
-                  />
-                ) : (
-                  <CopyIcon className="my-auto flex flex-shrink-0" size={16} />
-                )}
-              </div>
-            </div>
+              {copyClicked ? "Copied" : "Copy"}
+            </CustomTooltip>
           </div>
         </div>
       )}

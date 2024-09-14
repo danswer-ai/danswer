@@ -3,6 +3,7 @@ import { PopupSpec } from "../admin/connectors/Popup";
 import { ThumbsDownIcon, ThumbsUpIcon } from "../icons/icons";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "../ui/button";
+import { CustomTooltip } from "../CustomTooltip";
 
 type Feedback = "like" | "dislike";
 
@@ -32,27 +33,34 @@ const QAFeedback = ({ messageId, feedbackType }: QAFeedbackIconProps) => {
   const { toast } = useToast();
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={async () => {
-        const isSuccessful = await giveFeedback(messageId, feedbackType);
-        if (isSuccessful) {
-          toast({
-            title: "Success",
-            description: "Thanks for your feedback!",
-            variant: "success",
-          });
-        }
-      }}
-      className="cursor-pointer"
+    <CustomTooltip
+      trigger={
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={async () => {
+            const isSuccessful = await giveFeedback(messageId, feedbackType);
+            if (isSuccessful) {
+              toast({
+                title: "Success",
+                description: "Thanks for your feedback!",
+                variant: "success",
+              });
+            }
+          }}
+          className="cursor-pointer"
+        >
+          {feedbackType === "like" ? (
+            <ThumbsUpIcon size={16} />
+          ) : (
+            <ThumbsDownIcon size={16} />
+          )}
+        </Button>
+      }
+      asChild
     >
-      {feedbackType === "like" ? (
-        <ThumbsUpIcon size={16} />
-      ) : (
-        <ThumbsDownIcon size={16} />
-      )}
-    </Button>
+      {feedbackType === "like" ? "Like" : "Dislike"}
+    </CustomTooltip>
   );
 };
 
