@@ -73,3 +73,10 @@ PRESERVED_SEARCH_FIELDS = [
     "passage_prefix",
     "query_prefix",
 ]
+
+# CORS
+CORS_ALLOW_ORIGIN = [
+    origin.strip()
+    for origin in os.environ.get("CORS_ALLOW_ORIGIN", "*").split(",")
+    if origin.strip()
+] or ["*"]
