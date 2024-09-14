@@ -472,6 +472,8 @@ def handle_regular_answer(
         # For DM (ephemeral message), we need to create a thread via a normal message so the user can see
         # the ephemeral message. This also will give the user a notification which ephemeral message does not.
         if receiver_ids:
+            if not message_ts_to_respond_to:
+                return True
             send_team_member_message(
                 client=client,
                 channel=channel,
