@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 
 # Used for logging
 SLACK_CHANNEL_ID = "channel_id"
@@ -74,9 +75,18 @@ PRESERVED_SEARCH_FIELDS = [
     "query_prefix",
 ]
 
+
 # CORS
-CORS_ALLOW_ORIGIN = [
-    origin.strip()
-    for origin in os.environ.get("CORS_ALLOW_ORIGIN", "*").split(",")
-    if origin.strip()
-] or ["*"]
+def validate_cors_origin(origin):
+    parsed = urlparse(origin)
+    if parsed.scheme not in ["http", "https"] or not parsed.netloc:
+        raise ValueError(f"Invalid CORS origin: '{origin}'")
+
+
+CORS_ALLOW_ORIGIN = os.environ.get("CORS_ALLOW_ORIGIN", "*").split(",") or ["*"]
+
+[
+    validate_cors_origin(stripped_origin)
+    for origin in CORS_ALLOW_ORIGIN
+    if origin != "*" and (stripped_origin := origin.strip())
+]
