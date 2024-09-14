@@ -384,7 +384,7 @@ export default function AddConnector({
               isValid={formikProps.isValid}
               onSubmit={formikProps.handleSubmit}
               noCredentials={noCredentials}
-              noAdvanced={connector !== "file"}
+              noAdvanced={connector == "file"}
             />
           </div>
         );
