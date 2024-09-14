@@ -36,8 +36,8 @@ def find_matching_standard_answers(
     If `answer_instance.match_regex` is true, the definition is considered "matched"
     if the query matches the `answer_instance.keyword` using `re.search`.
 
-    Otherwise, the definition is considered "matched" if each space-delimited token
-    in `keyword` exists in `query`.
+    Otherwise, the definition is considered "matched" if the space-delimited tokens
+    in `keyword` exists in `query`, depending on the state of `match_any_keywords`
     """
     stmt = (
         select(StandardAnswer)
@@ -67,10 +67,18 @@ def find_matching_standard_answers(
                 char for char in query.lower() if char not in string.punctuation
             ).split()
 
+            print(f"{query_words=} {standard_answer.match_any_keywords}")
+
             # Check if all of the keyword words are in the query words
-            if all(word in query_words for word in keyword_words):
-                matching_standard_answers.append(
-                    (standard_answer, standard_answer.keyword)
-                )
+            if standard_answer.match_any_keywords:
+                if any(word in query_words for word in keyword_words):
+                    matching_standard_answers.append(
+                        (standard_answer, standard_answer.keyword)
+                    )
+            else:
+                if all(word in query_words for word in keyword_words):
+                    matching_standard_answers.append(
+                        (standard_answer, standard_answer.keyword)
+                    )
 
     return matching_standard_answers
