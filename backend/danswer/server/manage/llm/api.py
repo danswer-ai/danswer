@@ -37,7 +37,6 @@ basic_router = APIRouter(prefix="/llm")
 def fetch_llm_options(
     _: User | None = Depends(current_admin_user),
 ) -> list[WellKnownLLMProviderDescriptor]:
-    print("FETCHING")
     return fetch_available_well_known_llms()
 
 
