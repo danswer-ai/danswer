@@ -1,9 +1,14 @@
 from slack_sdk import WebClient
+from slack_sdk.models.blocks import ActionsBlock
+from slack_sdk.models.blocks import Block
+from slack_sdk.models.blocks import ButtonElement
+from slack_sdk.models.blocks import SectionBlock
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.danswerbot.slack.blocks import get_restate_blocks
+from danswer.danswerbot.slack.constants import GENERATE_ANSWER_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.handlers.utils import send_team_member_message
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import respond_in_thread
@@ -19,11 +24,26 @@ from danswer.db.models import StandardAnswer as StandardAnswerModel
 from danswer.server.manage.models import StandardAnswer as PydanticStandardAnswer
 from danswer.utils.logger import DanswerLoggingAdapter
 from danswer.utils.logger import setup_logger
-from ee.danswer.danswerbot.slack.blocks import build_standard_answer_blocks
 from ee.danswer.db.standard_answer import fetch_standard_answer_categories_by_names
 from ee.danswer.db.standard_answer import find_matching_standard_answers
 
 logger = setup_logger()
+
+
+def build_standard_answer_blocks(
+    answer_message: str,
+) -> list[Block]:
+    generate_button_block = ButtonElement(
+        action_id=GENERATE_ANSWER_BUTTON_ACTION_ID,
+        text="Generate Full Answer",
+    )
+    answer_block = SectionBlock(text=answer_message)
+    return [
+        answer_block,
+        ActionsBlock(
+            elements=[generate_button_block],
+        ),
+    ]
 
 
 def oneoff_standard_answers(
