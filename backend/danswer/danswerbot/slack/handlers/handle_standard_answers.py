@@ -20,6 +20,8 @@ def handle_standard_answers(
     client: WebClient,
     db_session: Session,
 ) -> bool:
+    """Returns whether one or more Standard Answer message blocks were
+    emitted by the Slack bot"""
     versioned_handle_standard_answers = fetch_versioned_implementation(
         "danswer.danswerbot.slack.handlers.handle_standard_answers",
         "_handle_standard_answers",
@@ -44,4 +46,11 @@ def _handle_standard_answers(
     client: WebClient,
     db_session: Session,
 ) -> bool:
+    """
+    Standard Answers are a paid Enterprise Edition feature. This is the fallback
+    function handling the case where EE features are not enabled.
+
+    Always returns false i.e. since EE features are not enabled, we NEVER create any
+    Slack message blocks.
+    """
     return False
