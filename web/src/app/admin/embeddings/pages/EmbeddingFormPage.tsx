@@ -20,6 +20,7 @@ import {
   AdvancedSearchConfiguration,
   RerankingDetails,
   SavedSearchSettings,
+  SearchSettingsSnapshot,
 } from "../interfaces";
 import RerankingDetailsForm from "../RerankingFormPage";
 import { useEmbeddingFormContext } from "@/components/context/EmbeddingContext";
@@ -98,7 +99,7 @@ export default function EmbeddingForm() {
   >(currentEmbeddingModel!);
 
   const { data: searchSettings, isLoading: isLoadingSearchSettings } =
-    useSWR<SavedSearchSettings | null>(
+    useSWR<SearchSettingsSnapshot | null>(
       "/api/search-settings/get-current-search-settings",
       errorHandlingFetcher,
       { refreshInterval: 5000 } // 5 seconds
@@ -122,7 +123,7 @@ export default function EmbeddingForm() {
       });
 
       setRerankingDetails({
-        rerank_api_key: searchSettings.rerank_api_key,
+        rerank_api_key: null,
         rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
         rerank_api_url: searchSettings.rerank_api_url,
@@ -132,7 +133,7 @@ export default function EmbeddingForm() {
 
   const originalRerankingDetails: RerankingDetails = searchSettings
     ? {
-        rerank_api_key: searchSettings.rerank_api_key,
+        rerank_api_key: null,
         rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
         rerank_api_url: searchSettings.rerank_api_url,
@@ -173,7 +174,7 @@ export default function EmbeddingForm() {
     const response = await updateSearchSettings(values);
     if (response.ok) {
       setPopup({
-        message: "Updated search settings succesffuly",
+        message: "Updated search settings successfully",
         type: "success",
       });
       mutate("/api/search-settings/get-current-search-settings");

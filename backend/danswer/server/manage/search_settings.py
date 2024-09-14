@@ -74,7 +74,9 @@ def set_new_search_settings(
         search_values["index_name"] = index_name
         new_search_settings_request = SavedSearchSettings(**search_values)
     else:
-        new_search_settings_request = SavedSearchSettings(**search_settings_new.dict())
+        new_search_settings_request = SavedSearchSettings(
+            **search_settings_new.dict().exclude("api_key_set", "rerank_api_key_set")
+        )
 
     secondary_search_settings = get_secondary_search_settings(db_session)
 

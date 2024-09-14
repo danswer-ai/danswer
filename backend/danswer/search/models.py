@@ -16,7 +16,6 @@ from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
 from shared_configs.enums import RerankerProvider
-from shared_configs.utils import obfuscate_api_key
 
 MAX_METRICS_CONTENT = (
     200  # Just need enough characters to identify where in the doc the chunk is
@@ -53,14 +52,8 @@ class InferenceSettings(RerankingDetails):
 
 
 class SearchSettingsCreationRequest(InferenceSettings, IndexingSetting):
-    @classmethod
-    def from_db_model(
-        cls, search_settings: SearchSettings
-    ) -> "SearchSettingsCreationRequest":
-        inference_settings = InferenceSettings.from_db_model(search_settings)
-        indexing_setting = IndexingSetting.from_db_model(search_settings)
-
-        return cls(**inference_settings.dict(), **indexing_setting.dict())
+    api_key_set: bool
+    rerank_api_key_set: bool
 
 
 class SavedSearchSettings(InferenceSettings, IndexingSetting):
@@ -88,13 +81,18 @@ class SavedSearchSettings(InferenceSettings, IndexingSetting):
 
 
 class SearchSettingsSnapshot(SavedSearchSettings):
+    rerank_api_key: None = None
+    api_key: None = None
+    rerank_api_key_set: bool
+    api_key_set: bool
+
     @classmethod
     def from_saved_settings(
         cls, settings: SavedSearchSettings
     ) -> "SearchSettingsSnapshot":
         data = settings.dict(exclude={"rerank_api_key", "api_key"})
-        data["rerank_api_key"] = obfuscate_api_key(settings.rerank_api_key)
-        data["api_key"] = obfuscate_api_key(settings.api_key)
+        data["rerank_api_key_set"] = bool(settings.rerank_api_key)
+        data["api_key_set"] = bool(settings.api_key)
 
         return cls(**data)
 

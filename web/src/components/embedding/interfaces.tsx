@@ -52,6 +52,11 @@ export interface EmbeddingModelDescriptor {
   index_name: string | null;
 }
 
+export interface EmbeddingModelSnapshot
+  extends Omit<CloudEmbeddingModel, "api_key"> {
+  api_key_set: boolean;
+}
+
 export interface CloudEmbeddingModel extends EmbeddingModelDescriptor {
   pricePerMillion: number;
   enabled?: boolean;
