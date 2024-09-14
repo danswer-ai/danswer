@@ -143,6 +143,7 @@ class StandardAnswer(BaseModel):
     answer: str
     categories: list[StandardAnswerCategory]
     match_regex: bool
+    match_any_keywords: bool
 
     @classmethod
     def from_model(cls, standard_answer_model: StandardAnswerModel) -> "StandardAnswer":
@@ -151,6 +152,7 @@ class StandardAnswer(BaseModel):
             keyword=standard_answer_model.keyword,
             answer=standard_answer_model.answer,
             match_regex=standard_answer_model.match_regex,
+            match_any_keywords=standard_answer_model.match_any_keywords,
             categories=[
                 StandardAnswerCategory.from_model(standard_answer_category_model)
                 for standard_answer_category_model in standard_answer_model.categories
@@ -163,6 +165,7 @@ class StandardAnswerCreationRequest(BaseModel):
     answer: str
     categories: list[int]
     match_regex: bool
+    match_any_keywords: bool
 
     @field_validator("categories", mode="before")
     @classmethod
@@ -172,6 +175,15 @@ class StandardAnswerCreationRequest(BaseModel):
                 "At least one category must be attached to a standard answer"
             )
         return value
+
+    @model_validator(mode="after")
+    def validate_only_match_any_if_not_regex(self) -> Any:
+        if self.match_regex and self.match_any_keywords:
+            raise ValueError(
+                "Can only match any keywords in keyword mode, not regex mode"
+            )
+
+        return self
 
     @model_validator(mode="after")
     def validate_keyword_if_regex(self) -> Any:
