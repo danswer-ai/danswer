@@ -89,7 +89,7 @@ export function checkLLMSupportsImageInput(model: string) {
   );
 }
 
-const MODEL_PROVIDERS_SUPPORTING_IMAGES = [
+const MODEL_PROVIDER_PAIRS_SUPPORTING_IMAGE_OUPTUT = [
   ["openai", "gpt-4o"],
   ["openai", "gpt-4o-mini"],
   ["openai", "gpt-4-vision-preview"],
@@ -103,7 +103,7 @@ const MODEL_PROVIDERS_SUPPORTING_IMAGES = [
 ];
 
 export function checkLLMSupportsImageOutput(provider: string, model: string) {
-  return MODEL_PROVIDERS_SUPPORTING_IMAGES.some(
+  return MODEL_PROVIDER_PAIRS_SUPPORTING_IMAGE_OUPTUT.some(
     (modelProvider) =>
       modelProvider[0] === provider && modelProvider[1] === model
   );
