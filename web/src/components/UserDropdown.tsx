@@ -152,14 +152,14 @@ export function UserDropdown({
 
             {showAdminPanel ? (
               <DropdownOption
-                href="/admin/indexing/status"
+                href="/admin"
                 icon={<LightSettingsIcon className="h-5 w-5 my-auto mr-2" />}
                 label="Admin Panel"
               />
             ) : (
               showCuratorPanel && (
                 <DropdownOption
-                  href="/admin/indexing/status"
+                  href="/admin"
                   icon={<LightSettingsIcon className="h-5 w-5 my-auto mr-2" />}
                   label="Curator Panel"
                 />
