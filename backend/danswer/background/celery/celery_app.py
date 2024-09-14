@@ -21,6 +21,7 @@ from redis import Redis
 from sqlalchemy import inspect
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import ObjectDeletedError
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
@@ -335,6 +336,14 @@ def try_generate_document_cc_pair_cleanup_tasks(
 
     # don't generate sync tasks if tasks are still pending
     if r.exists(rcd.fence_key):
+        return None
+
+    # we need to refresh the state of the object inside the fence
+    # to avoid a race condition with db.commit/fence deletion
+    # at the end of this taskset
+    try:
+        db_session.refresh(cc_pair)
+    except ObjectDeletedError:
         return None
 
     if cc_pair.status != ConnectorCredentialPairStatus.DELETING:
