@@ -33,6 +33,7 @@ def create_standard_answer(
         keyword=standard_answer_creation_request.keyword,
         answer=standard_answer_creation_request.answer,
         category_ids=standard_answer_creation_request.categories,
+        match_regex=standard_answer_creation_request.match_regex,
         db_session=db_session,
     )
     return StandardAnswer.from_model(standard_answer_model)
@@ -70,6 +71,7 @@ def patch_standard_answer(
         keyword=standard_answer_creation_request.keyword,
         answer=standard_answer_creation_request.answer,
         category_ids=standard_answer_creation_request.categories,
+        match_regex=standard_answer_creation_request.match_regex,
         db_session=db_session,
     )
     return StandardAnswer.from_model(standard_answer_model)

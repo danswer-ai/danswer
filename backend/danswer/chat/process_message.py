@@ -88,6 +88,7 @@ from danswer.tools.internet_search.internet_search_tool import (
 )
 from danswer.tools.internet_search.internet_search_tool import InternetSearchResponse
 from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
+from danswer.tools.models import DynamicSchemaInfo
 from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
@@ -605,7 +606,11 @@ def stream_chat_message_objects(
                 tool_dict[db_tool_model.id] = cast(
                     list[Tool],
                     build_custom_tools_from_openapi_schema(
-                        db_tool_model.openapi_schema
+                        db_tool_model.openapi_schema,
+                        dynamic_schema_info=DynamicSchemaInfo(
+                            chat_session_id=chat_session_id,
+                            message_id=user_message.id if user_message else None,
+                        ),
                     ),
                 )
 

@@ -197,7 +197,7 @@ export default function EmbeddingForm() {
       newModel = {
         ...rerankingDetails,
         ...advancedEmbeddingDetails,
-        model_name: selectedProvider.model_name,
+        ...selectedProvider,
         provider_type:
           (selectedProvider.provider_type
             ?.toLowerCase()
@@ -209,7 +209,7 @@ export default function EmbeddingForm() {
         ...selectedProvider,
         ...rerankingDetails,
         ...advancedEmbeddingDetails,
-        model_name: selectedProvider.model_name!,
+        ...selectedProvider,
         provider_type: null,
       };
     }

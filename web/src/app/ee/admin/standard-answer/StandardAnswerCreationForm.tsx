@@ -14,6 +14,7 @@ import {
 import {
   TextFormField,
   MarkdownFormField,
+  BooleanFormField,
 } from "@/components/admin/connectors/Field";
 import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 
@@ -41,10 +42,13 @@ export const StandardAnswerCreationForm = ({
             categories: existingStandardAnswer
               ? existingStandardAnswer.categories
               : [],
+            matchRegex: existingStandardAnswer
+              ? existingStandardAnswer.match_regex
+              : false,
           }}
           validationSchema={Yup.object().shape({
             keyword: Yup.string()
-              .required("Keyword or phrase is required")
+              .required("Keywords or pattern is required")
               .max(255)
               .min(1),
             answer: Yup.string().required("Answer is required").min(1),
@@ -86,18 +90,34 @@ export const StandardAnswerCreationForm = ({
         >
           {({ isSubmitting, values, setFieldValue }) => (
             <Form>
-              <TextFormField
-                name="keyword"
-                label="Keywords"
-                tooltip="If all specified keywords are in the question, then we will respond with the answer below"
-                placeholder="e.g. Wifi Password"
-                autoCompleteDisabled={true}
+              {values.matchRegex ? (
+                <TextFormField
+                  name="keyword"
+                  label="Regex pattern"
+                  isCode
+                  tooltip="Triggers if the question matches this regex pattern (using Python `re.search()`)"
+                  placeholder="(?:it|support)\s*ticket"
+                />
+              ) : (
+                <TextFormField
+                  name="keyword"
+                  label="Keywords"
+                  tooltip="Triggers if the question contains all of these keywords, in any order."
+                  placeholder="it ticket"
+                  autoCompleteDisabled={true}
+                />
+              )}
+              <BooleanFormField
+                subtext="Match a regex pattern instead of an exact keyword"
+                optional
+                label="Match regex"
+                name="matchRegex"
               />
               <div className="w-full">
                 <MarkdownFormField
                   name="answer"
                   label="Answer"
-                  placeholder="The answer in markdown"
+                  placeholder="The answer in Markdown. Example: If you need any help from the IT team, please email internalsupport@company.com"
                 />
               </div>
               <div className="w-4/12">

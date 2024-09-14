@@ -1,4 +1,5 @@
 import json
+import logging
 import traceback
 from datetime import timedelta
 from typing import Any
@@ -6,6 +7,7 @@ from typing import cast
 
 import redis
 from celery import Celery
+from celery import current_task
 from celery import signals
 from celery import Task
 from celery.contrib.abortable import AbortableTask  # type: ignore
@@ -75,6 +77,8 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.redis.redis_pool import RedisPool
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
+from danswer.utils.logger import ColoredFormatter
+from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import (
@@ -1127,6 +1131,77 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
     for key in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
         r.delete(key)
+
+
+class CeleryTaskPlainFormatter(PlainFormatter):
+    def format(self, record: logging.LogRecord) -> str:
+        task = current_task
+        if task and task.request:
+            record.__dict__.update(task_id=task.request.id, task_name=task.name)
+            record.msg = f"[{task.name}({task.request.id})] {record.msg}"
+
+        return super().format(record)
+
+
+class CeleryTaskColoredFormatter(ColoredFormatter):
+    def format(self, record: logging.LogRecord) -> str:
+        task = current_task
+        if task and task.request:
+            record.__dict__.update(task_id=task.request.id, task_name=task.name)
+            record.msg = f"[{task.name}({task.request.id})] {record.msg}"
+
+        return super().format(record)
+
+
+@signals.setup_logging.connect
+def on_setup_logging(
+    loglevel: Any, logfile: Any, format: Any, colorize: Any, **kwargs: Any
+) -> None:
+    # TODO: could unhardcode format and colorize and accept these as options from
+    # celery's config
+
+    # reformats celery's worker logger
+    root_logger = logging.getLogger()
+
+    root_handler = logging.StreamHandler()  # Set up a handler for the root logger
+    root_formatter = ColoredFormatter(
+        "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+    root_handler.setFormatter(root_formatter)
+    root_logger.addHandler(root_handler)  # Apply the handler to the root logger
+
+    if logfile:
+        root_file_handler = logging.FileHandler(logfile)
+        root_file_formatter = PlainFormatter(
+            "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+            datefmt="%m/%d/%Y %I:%M:%S %p",
+        )
+        root_file_handler.setFormatter(root_file_formatter)
+        root_logger.addHandler(root_file_handler)
+
+    root_logger.setLevel(loglevel)
+
+    # reformats celery's task logger
+    task_formatter = CeleryTaskColoredFormatter(
+        "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+    task_handler = logging.StreamHandler()  # Set up a handler for the task logger
+    task_handler.setFormatter(task_formatter)
+    task_logger.addHandler(task_handler)  # Apply the handler to the task logger
+
+    if logfile:
+        task_file_handler = logging.FileHandler(logfile)
+        task_file_formatter = CeleryTaskPlainFormatter(
+            "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+            datefmt="%m/%d/%Y %I:%M:%S %p",
+        )
+        task_file_handler.setFormatter(task_file_formatter)
+        task_logger.addHandler(task_file_handler)
+
+    task_logger.setLevel(loglevel)
+    task_logger.propagate = False
 
 
 #####

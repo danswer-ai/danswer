@@ -1432,13 +1432,13 @@ export function ChatPage({
   };
 
   const handleImageUpload = (acceptedFiles: File[]) => {
-    const llmAcceptsImages = checkLLMSupportsImageInput(
-      ...getFinalLLM(
-        llmProviders,
-        liveAssistant,
-        llmOverrideManager.llmOverride
-      )
+    const [_, llmModel] = getFinalLLM(
+      llmProviders,
+      liveAssistant,
+      llmOverrideManager.llmOverride
     );
+    const llmAcceptsImages = checkLLMSupportsImageInput(llmModel);
+
     const imageFiles = acceptedFiles.filter((file) =>
       file.type.startsWith("image/")
     );
@@ -1795,7 +1795,7 @@ export function ChatPage({
               const responseJson = await response.json();
               setPopup({ message: responseJson.detail, type: "error" });
             }
-            router.refresh();
+            refreshChatSessions();
           }}
         />
       )}
