@@ -83,6 +83,9 @@ jobs:
           docker compose -f docker-compose.dev.yml -p danswer-stack up -d
         id: start_docker
 
+      - name: Stream API server logs
+        run: docker logs -f danswer-stack-api_server-1 &
+
       - name: Wait for service to be ready
         run: |
           echo "Starting wait-for-service script..."
