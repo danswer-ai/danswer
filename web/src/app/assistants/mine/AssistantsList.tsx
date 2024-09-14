@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 function AssistantListItem({
   assistant,
@@ -108,18 +109,32 @@ function AssistantListItem({
         {isOwnedByUser && (
           <div className="ml-auto flex items-center">
             {!assistant.is_public && (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setShowSharingModal(true)}
+              <CustomTooltip
+                trigger={
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setShowSharingModal(true)}
+                  >
+                    <Share2 size={16} />
+                  </Button>
+                }
+                asChild
               >
-                <Share2 size={16} />
-              </Button>
+                Share
+              </CustomTooltip>
             )}
             <Link href={`/assistants/edit/${assistant.id}`}>
-              <Button size="icon" variant="ghost">
-                <Pen size={16} />
-              </Button>
+              <CustomTooltip
+                trigger={
+                  <Button size="icon" variant="ghost">
+                    <Pen size={16} />
+                  </Button>
+                }
+                asChild
+              >
+                Edit
+              </CustomTooltip>
             </Link>
           </div>
         )}

@@ -18,7 +18,7 @@ import { AlertIcon } from "../icons/icons";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import useSWR from "swr";
-import { ConnectorIndexingStatus } from "@/lib/types";
+import { ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 
 const getSelectedDocumentIds = (
@@ -38,12 +38,14 @@ export const SearchResultsDisplay = ({
   isFetching,
   defaultOverrides,
   assistantName = null,
+  availableDocumentSets,
 }: {
   searchResponse: SearchResponse | null;
   validQuestionResponse: ValidQuestionResponse;
   isFetching: boolean;
   defaultOverrides: SearchDefaultOverrides;
   assistantName?: string | null;
+  availableDocumentSets: DocumentSet[];
 }) => {
   const {
     data: indexAttemptData,
@@ -122,6 +124,10 @@ export const SearchResultsDisplay = ({
   const shouldDisplayQA =
     searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
     defaultOverrides.forceDisplayQA;
+
+  /* console.log(documents[0].document_id); */
+  /* console.log(availableDocumentSets[0].cc_pair_descriptors[0].name); */
+  console.log(selectedDocumentIds);
 
   return (
     <div className="px-2">

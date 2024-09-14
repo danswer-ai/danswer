@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -818,14 +819,23 @@ export function AssistantEditor({
                                         />
                                       </div>
                                     </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="my-auto"
-                                      onClick={() => arrayHelpers.remove(index)}
+                                    <CustomTooltip
+                                      trigger={
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="my-auto"
+                                          onClick={() =>
+                                            arrayHelpers.remove(index)
+                                          }
+                                        >
+                                          <X />
+                                        </Button>
+                                      }
+                                      asChild
                                     >
-                                      <X />
-                                    </Button>
+                                      Remove
+                                    </CustomTooltip>
                                   </div>
                                 </div>
                               );

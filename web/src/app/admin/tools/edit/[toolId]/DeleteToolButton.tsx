@@ -1,17 +1,15 @@
 "use client";
 
-import { Button } from "@tremor/react";
-import { FiTrash } from "react-icons/fi";
 import { deleteCustomTool } from "@/lib/tools/edit";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Trash } from "lucide-react";
 
 export function DeleteToolButton({ toolId }: { toolId: number }) {
   const router = useRouter();
 
   return (
     <Button
-      size="xs"
-      color="red"
       onClick={async () => {
         const response = await deleteCustomTool(toolId);
         if (response.data) {
@@ -20,9 +18,9 @@ export function DeleteToolButton({ toolId }: { toolId: number }) {
           alert(`Failed to delete tool - ${response.error}`);
         }
       }}
-      icon={FiTrash}
+      variant="destructive"
     >
-      Delete
+      <Trash size={16} /> Delete
     </Button>
   );
 }

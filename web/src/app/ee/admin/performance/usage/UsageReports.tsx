@@ -23,6 +23,7 @@ import {
 import { CustomDatePicker } from "@/components/CustomDatePicker";
 import { DateRange } from "react-day-picker";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 const predefinedRanges = [
   { value: "7d", label: "Last 7 days" },
@@ -200,9 +201,16 @@ function UsageReportsTable() {
                     </TableCell>
                     <TableCell>
                       <Link href={`/api/admin/usage-report/${r.report_name}`}>
-                        <Button variant="ghost" size="icon">
-                          <Download size={16} />
-                        </Button>
+                        <CustomTooltip
+                          trigger={
+                            <Button variant="ghost" size="icon">
+                              <Download size={16} />
+                            </Button>
+                          }
+                          asChild
+                        >
+                          Download
+                        </CustomTooltip>
                       </Link>
                     </TableCell>
                   </TableRow>

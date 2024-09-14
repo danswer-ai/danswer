@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, X } from "lucide-react";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export function SectionHeader({
   children,
@@ -217,9 +218,19 @@ export function TextArrayField<T extends Yup.AnyObject>({
                       )}
                     </Field>
 
-                    <Button variant="ghost" size="icon">
-                      <X size={16} onClick={() => arrayHelpers.remove(index)} />
-                    </Button>
+                    <CustomTooltip
+                      trigger={
+                        <Button variant="ghost" size="icon">
+                          <X
+                            size={16}
+                            onClick={() => arrayHelpers.remove(index)}
+                          />
+                        </Button>
+                      }
+                      asChild
+                    >
+                      Remove
+                    </CustomTooltip>
                   </div>
                   <ErrorMessage
                     name={`${name}.${index}`}

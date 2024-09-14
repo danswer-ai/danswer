@@ -7,6 +7,7 @@ import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
 import { Badge } from "../ui/badge";
 import { CustomTooltip } from "../CustomTooltip";
+import { Radio } from "lucide-react";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -191,7 +192,7 @@ export const DocumentDisplay = ({
                 <CustomTooltip
                   trigger={
                     <Badge variant="secondary">
-                      <FiRadio size={16} />
+                      <Radio size={16} />
                     </Badge>
                   }
                 >

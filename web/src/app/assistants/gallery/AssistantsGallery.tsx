@@ -17,6 +17,7 @@ import { ToolsDisplay } from "../ToolsDisplay";
 import { useToast } from "@/hooks/use-toast";
 import { Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export function AssistantsGallery({
   assistants,
@@ -115,71 +116,87 @@ export function AssistantsGallery({
                   user.preferences?.chosen_assistants?.includes(
                     assistant.id
                   ) ? (
-                    <Button
-                      onClick={async () => {
-                        if (
-                          user.preferences?.chosen_assistants &&
-                          user.preferences?.chosen_assistants.length === 1
-                        ) {
-                          toast({
-                            title: "Error",
-                            description: `Cannot remove "${assistant.name}" - you must have at least one assistant.`,
-                            variant: "destructive",
-                          });
-                          return;
-                        }
+                    <CustomTooltip
+                      trigger={
+                        <Button
+                          onClick={async () => {
+                            if (
+                              user.preferences?.chosen_assistants &&
+                              user.preferences?.chosen_assistants.length === 1
+                            ) {
+                              toast({
+                                title: "Error",
+                                description: `Cannot remove "${assistant.name}" - you must have at least one assistant.`,
+                                variant: "destructive",
+                              });
+                              return;
+                            }
 
-                        const success = await removeAssistantFromList(
-                          assistant.id,
-                          user.preferences?.chosen_assistants || allAssistantIds
-                        );
-                        if (success) {
-                          toast({
-                            title: "Success",
-                            description: `"${assistant.name}" has been removed from your list.`,
-                            variant: "success",
-                          });
-                          router.refresh();
-                        } else {
-                          toast({
-                            title: "Error",
-                            description: `"${assistant.name}" could not be removed from your list.`,
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                      size="smallIcon"
-                      variant="destructive"
+                            const success = await removeAssistantFromList(
+                              assistant.id,
+                              user.preferences?.chosen_assistants ||
+                                allAssistantIds
+                            );
+                            if (success) {
+                              toast({
+                                title: "Success",
+                                description: `"${assistant.name}" has been removed from your list.`,
+                                variant: "success",
+                              });
+                              router.refresh();
+                            } else {
+                              toast({
+                                title: "Error",
+                                description: `"${assistant.name}" could not be removed from your list.`,
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          size="smallIcon"
+                          variant="destructive"
+                        >
+                          <Minus size={16} />
+                        </Button>
+                      }
+                      asChild
                     >
-                      <Minus size={16} />
-                    </Button>
+                      Remove
+                    </CustomTooltip>
                   ) : (
-                    <Button
-                      onClick={async () => {
-                        const success = await addAssistantToList(
-                          assistant.id,
-                          user.preferences?.chosen_assistants || allAssistantIds
-                        );
-                        if (success) {
-                          toast({
-                            title: "Success",
-                            description: `"${assistant.name}" has been added to your list.`,
-                            variant: "success",
-                          });
-                          router.refresh();
-                        } else {
-                          toast({
-                            title: "Error",
-                            description: `"${assistant.name}" could not be added to your list.`,
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                      size="icon"
-                      variant="ghost"
+                    <CustomTooltip
+                      trigger={
+                        <Button
+                          onClick={async () => {
+                            const success = await addAssistantToList(
+                              assistant.id,
+                              user.preferences?.chosen_assistants ||
+                                allAssistantIds
+                            );
+                            if (success) {
+                              toast({
+                                title: "Success",
+                                description: `"${assistant.name}" has been added to your list.`,
+                                variant: "success",
+                              });
+                              router.refresh();
+                            } else {
+                              toast({
+                                title: "Error",
+                                description: `"${assistant.name}" could not be added to your list.`,
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          size="icon"
+                          variant="ghost"
+                        >
+                          <Plus size={16} />
+                        </Button>
+                      }
+                      asChild
                     >
-                      <Plus size={16} />
-                    </Button>
+                      Add
+                    </CustomTooltip>
                   )}
                 </div>
               )}

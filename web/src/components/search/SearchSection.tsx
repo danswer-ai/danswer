@@ -281,6 +281,7 @@ export const SearchSection = ({
                 ? assistants.find((p) => p.id === selectedAssistant)?.name
                 : null
             }
+            availableDocumentSets={finalAvailableDocumentSets}
           />
         </div>
       </div>

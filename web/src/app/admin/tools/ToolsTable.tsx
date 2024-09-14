@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { CircleCheckBig, CircleX, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
   const router = useRouter();
@@ -43,17 +44,24 @@ export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     {tool.in_code_tool_id === null && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          router.push(
-                            `/admin/tools/edit/${tool.id}?u=${Date.now()}`
-                          )
+                      <CustomTooltip
+                        trigger={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              router.push(
+                                `/admin/tools/edit/${tool.id}?u=${Date.now()}`
+                              )
+                            }
+                          >
+                            <Pencil size={16} />
+                          </Button>
                         }
+                        asChild
                       >
-                        <Pencil size={16} />
-                      </Button>
+                        Edit
+                      </CustomTooltip>
                     )}
                     <p className="text font-medium whitespace-normal break-none">
                       {tool.name}
@@ -79,24 +87,31 @@ export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
                 <TableCell className="whitespace-nowrap">
                   <div className="flex">
                     {tool.in_code_tool_id === null ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={async () => {
-                          const response = await deleteCustomTool(tool.id);
-                          if (response.data) {
-                            router.refresh();
-                          } else {
-                            toast({
-                              title: "Error",
-                              description: `Failed to delete tool - ${response.error}`,
-                              variant: "destructive",
-                            });
-                          }
-                        }}
+                      <CustomTooltip
+                        trigger={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={async () => {
+                              const response = await deleteCustomTool(tool.id);
+                              if (response.data) {
+                                router.refresh();
+                              } else {
+                                toast({
+                                  title: "Error",
+                                  description: `Failed to delete tool - ${response.error}`,
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                          >
+                            <TrashIcon />
+                          </Button>
+                        }
+                        asChild
                       >
-                        <TrashIcon />
-                      </Button>
+                        Delete
+                      </CustomTooltip>
                     ) : (
                       "-"
                     )}
