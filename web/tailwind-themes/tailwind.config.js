@@ -173,18 +173,18 @@ module.exports = {
         // light mode
         tremor: {
           brand: {
-            faint: "#eff6ff", // blue-50
-            muted: "#bfdbfe", // blue-200
-            subtle: "#60a5fa", // blue-400
+            faint: "var(--tremor-brand-faint)",
+            muted: "var(--tremor-brand-muted)",
+            subtle: "var(--tremor-brand-subtle)",
             DEFAULT: "#3b82f6", // blue-500
-            emphasis: "#1d4ed8", // blue-700
-            inverted: "#ffffff", // white
+            emphasis: "var(--tremor-brand-emphasis)",
+            inverted: "var(--tremor-brand-inverted)",
           },
           background: {
-            muted: "#f9fafb", // gray-50
-            subtle: "#f3f4f6", // gray-100
+            muted: "var(--tremor-background-muted)",
+            subtle: "var(--tremor-background-subtle)",
             DEFAULT: "#ffffff", // white
-            emphasis: "#374151", // gray-700
+            emphasis: "var(--tremor-background-emphasis)",
           },
           border: {
             DEFAULT: "#e5e7eb", // gray-200
@@ -193,28 +193,28 @@ module.exports = {
             DEFAULT: "#e5e7eb", // gray-200
           },
           content: {
-            subtle: "#9ca3af", // gray-400
-            DEFAULT: "#4b5563", // gray-600
-            emphasis: "#374151", // gray-700
-            strong: "#111827", // gray-900
-            inverted: "#ffffff", // white
+            subtle: "var(--tremor-content-subtle)",
+            DEFAULT: "var(--tremor-content-default)",
+            emphasis: "var(--tremor-content-emphasis)",
+            strong: "var(--tremor-content-strong)",
+            inverted: "var(--tremor-content-inverted)",
           },
         },
         // dark mode
         "dark-tremor": {
           brand: {
-            faint: "#0B1229", // custom
-            muted: "#172554", // blue-950
-            subtle: "#1e40af", // blue-800
+            faint: "var(--dark-tremor-brand-faint)",
+            muted: "var(--dark-tremor-brand-muted)",
+            subtle: "var(--dark-tremor-brand-subtle)",
             DEFAULT: "#3b82f6", // blue-500
-            emphasis: "#60a5fa", // blue-400
-            inverted: "#030712", // gray-950
+            emphasis: "var(--dark-tremor-brand-emphasis)",
+            inverted: "var(--dark-tremor-brand-inverted)",
           },
           background: {
-            muted: "#131A2B", // custom
-            subtle: "#1f2937", // gray-800
-            DEFAULT: "#111827", // gray-900
-            emphasis: "#d1d5db", // gray-300
+            muted: "var(--dark-tremor-background-muted)",
+            subtle: "var(--dark-tremor-background-subtle)",
+            DEFAULT: "var(--dark-tremor-background-default)",
+            emphasis: "var(--dark-tremor-background-emphasis)",
           },
           border: {
             DEFAULT: "#1f2937", // gray-800
@@ -223,11 +223,11 @@ module.exports = {
             DEFAULT: "#1f2937", // gray-800
           },
           content: {
-            subtle: "#6b7280", // gray-500
-            DEFAULT: "#d1d5db", // gray-300
-            emphasis: "#f3f4f6", // gray-100
-            strong: "#f9fafb", // gray-50
-            inverted: "#000000", // black
+            subtle: "var(--dark-tremor-content-subtle)",
+            DEFAULT: "var(--dark-tremor-content-default)",
+            emphasis: "var(--dark-tremor-content-emphasis)",
+            strong: "var(--dark-tremor-content-strong)",
+            inverted: "var(--dark-tremor-content-inverted)",
           },
         },
       },
