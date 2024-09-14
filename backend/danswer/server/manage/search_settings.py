@@ -75,7 +75,11 @@ def set_new_search_settings(
         new_search_settings_request = SavedSearchSettings(**search_values)
     else:
         new_search_settings_request = SavedSearchSettings(
-            **search_settings_new.dict().exclude("api_key_set", "rerank_api_key_set")
+            **{
+                k: v
+                for k, v in search_settings_new.dict().items()
+                if k not in ["api_key_set", "rerank_api_key_set"]
+            }
         )
 
     secondary_search_settings = get_secondary_search_settings(db_session)

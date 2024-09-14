@@ -55,6 +55,21 @@ class SearchSettingsCreationRequest(InferenceSettings, IndexingSetting):
     api_key_set: bool
     rerank_api_key_set: bool
 
+    @classmethod
+    def from_db_model(
+        cls, search_settings: SearchSettings
+    ) -> "SearchSettingsCreationRequest":
+        reranking_details = RerankingDetails.from_db_model(search_settings)
+        indexing_setting = IndexingSetting.from_db_model(search_settings)
+
+        return cls(
+            **reranking_details.dict(),
+            **indexing_setting.dict(),
+            api_key_set=bool(search_settings.api_key),
+            rerank_api_key_set=bool(search_settings.rerank_api_key),
+            multilingual_expansion=search_settings.multilingual_expansion,
+        )
+
 
 class SavedSearchSettings(InferenceSettings, IndexingSetting):
     @classmethod
