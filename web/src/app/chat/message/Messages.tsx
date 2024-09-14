@@ -383,17 +383,13 @@ export const AIMessage = ({
                                     // TODO: fix the fact that you have to double click to follow link
                                     // for the first link
                                     return (
-                                      <Citation
-                                        link={rest?.href}
-                                        key={node?.position?.start?.offset}
-                                      >
+                                      <Citation link={rest?.href}>
                                         {rest.children}
                                       </Citation>
                                     );
                                   } else {
                                     return (
                                       <a
-                                        key={node?.position?.start?.offset}
                                         onMouseDown={() =>
                                           rest.href
                                             ? window.open(rest.href, "_blank")
@@ -570,8 +566,8 @@ export const AIMessage = ({
                       <div
                         ref={hoverElementRef}
                         className={`
-
                         absolute -bottom-5
+                        z-20
                         invisible ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!visible"}
                         opacity-0 ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!opacity-100"}
                         translate-y-2 ${(isHovering || settings?.isMobile) && "!translate-y-0"}
