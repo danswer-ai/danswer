@@ -225,10 +225,16 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                     status={indexAttempt.status || "not_started"}
                     size="xs"
                   />
-                  {docsPerMinute && (
+                  {docsPerMinute ? (
                     <div className="text-xs mt-1">
                       {docsPerMinute} docs / min
                     </div>
+                  ) : (
+                    indexAttempt.status === "success" && (
+                      <div className="text-xs mt-1">
+                        No additional docs processed
+                      </div>
+                    )
                   )}
                 </TableCell>
                 <TableCell>
