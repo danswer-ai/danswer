@@ -127,12 +127,10 @@ def put_llm_provider(
     db_session: Session = Depends(get_session),
 ) -> FullLLMProvider:
     try:
-        return FullLLMProvider.from_full_llm_provider(
-            upsert_llm_provider(
-                llm_provider=llm_provider,
-                db_session=db_session,
-                is_creation=is_creation,
-            )
+        return upsert_llm_provider(
+            llm_provider=llm_provider,
+            db_session=db_session,
+            is_creation=is_creation,
         )
     except ValueError as e:
         logger.exception("Failed to upsert LLM Provider")
