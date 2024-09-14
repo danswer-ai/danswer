@@ -135,7 +135,8 @@ def handle_regular_answer(
         else slack_bot_config.response_type == SlackBotResponseType.CITATIONS
     )
 
-    if not message_ts_to_respond_to:
+    if not message_ts_to_respond_to and not is_bot_msg:
+        # if the message is not "/danswer" command, then it should have a message ts to respond to
         raise RuntimeError(
             "No message timestamp to respond to in `handle_message`. This should never happen."
         )
