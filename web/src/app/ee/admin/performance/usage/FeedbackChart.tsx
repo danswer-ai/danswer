@@ -127,14 +127,12 @@ export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
             type="monotoneX"
             fill="url(#fillPositive)"
             stroke={chartConfig["Positive Feedback"].color}
-            stackId="a"
           />
           <Area
             dataKey="Negative Feedback"
             type="monotoneX"
             fill="url(#fillNegative)"
             stroke={chartConfig["Negative Feedback"].color}
-            stackId="a"
           />
         </AreaChart>
       </ChartContainer>

@@ -13,7 +13,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { DateRangeSelector } from "../DateRangeSelector";
 import { SubLabel } from "@/components/admin/connectors/Field";
 
 export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
@@ -138,19 +137,18 @@ export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
               />
             }
           />
+
           <Area
-            dataKey="queries"
             type="monotoneX"
+            dataKey="queries"
             fill="url(#fillQueries)"
             stroke={chartConfig.queries.color}
-            stackId="a"
           />
           <Area
-            dataKey="uniqueUsers"
             type="monotoneX"
+            dataKey="uniqueUsers"
             fill="url(#fillUniqueUsers)"
             stroke={chartConfig.uniqueUsers.color}
-            stackId="a"
           />
         </AreaChart>
       </ChartContainer>
