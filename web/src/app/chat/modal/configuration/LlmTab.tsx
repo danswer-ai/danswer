@@ -56,8 +56,6 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
       setLocalTemperature(value);
       debouncedSetTemperature(value);
     };
-    console.log(currentAssistant);
-    console.log(requiresImageGeneration);
 
     return (
       <div className="w-full">
