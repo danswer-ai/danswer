@@ -77,7 +77,7 @@ PRESERVED_SEARCH_FIELDS = [
 
 
 # CORS
-def validate_cors_origin(origin):
+def validate_cors_origin(origin: str) -> None:
     parsed = urlparse(origin)
     if parsed.scheme not in ["http", "https"] or not parsed.netloc:
         raise ValueError(f"Invalid CORS origin: '{origin}'")
@@ -85,8 +85,9 @@ def validate_cors_origin(origin):
 
 CORS_ALLOWED_ORIGIN = os.environ.get("CORS_ALLOWED_ORIGIN", "*").split(",") or ["*"]
 
-any(
-    validate_cors_origin(stripped_origin)
-    for origin in CORS_ALLOWED_ORIGIN
-    if origin != "*" and (stripped_origin := origin.strip())
-)
+# Validate non-wildcard origins
+for origin in CORS_ALLOWED_ORIGIN:
+    if origin != "*":
+        stripped_origin = origin.strip()
+        if stripped_origin:
+            validate_cors_origin(stripped_origin)
