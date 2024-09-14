@@ -83,10 +83,10 @@ def validate_cors_origin(origin):
         raise ValueError(f"Invalid CORS origin: '{origin}'")
 
 
-CORS_ALLOW_ORIGIN = os.environ.get("CORS_ALLOW_ORIGIN", "*").split(",") or ["*"]
+CORS_ALLOWED_ORIGIN = os.environ.get("CORS_ALLOWED_ORIGIN", "*").split(",") or ["*"]
 
 [
     validate_cors_origin(stripped_origin)
-    for origin in CORS_ALLOW_ORIGIN
+    for origin in CORS_ALLOWED_ORIGIN
     if origin != "*" and (stripped_origin := origin.strip())
 ]
