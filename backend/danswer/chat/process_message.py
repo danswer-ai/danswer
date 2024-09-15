@@ -634,7 +634,6 @@ def stream_chat_message_objects(
         )
 
         # LLM prompt building, response capturing, etc.
-        print("IS CONNECTED FUNCTION IS", is_connected)
         logger.info(f"Is connected function: {is_connected}")
         if is_connected:
             logger.debug(f"Is connected function type: {type(is_connected)}")
@@ -853,7 +852,6 @@ def stream_chat_message_objects(
 
     # Post-LLM answer processing
     try:
-        print("I am in the final ")
         message_specific_citations: MessageSpecificCitations | None = None
         if reference_db_search_docs:
             message_specific_citations = _translate_citations(
@@ -865,7 +863,6 @@ def stream_chat_message_objects(
         if answer.llm_answer == "":
             return
 
-        # print(answer.llm_answer)
         gen_ai_response_message = partial_response(
             reserved_message_id=reserved_message_id,
             message=answer.llm_answer,

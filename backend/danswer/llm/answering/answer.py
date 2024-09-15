@@ -243,8 +243,6 @@ class Answer:
                         self.tools, self.force_use_tool
                     )
                 ]
-                print("\n----\nStreaming with initial prompt to get tool calls\n----\n")
-                print(f"\n\n\n----------Initial prompt is {prompt}----------\n\n\n")
 
                 existing_message = ""
 
@@ -319,17 +317,14 @@ class Answer:
 
                 tool_runner = ToolRunner(tool, tool_args)
                 tool_kickoff = tool_runner.kickoff()
-                print("----\n\n\n")
-                print(tool_kickoff)
-                print(type(tool_kickoff))
                 yield tool_kickoff
 
-                tool_responses = list(tool_runner.tool_responses())
-                for response in tool_responses:
-                    print("----\n\n\n")
-                    print(response)
+                yield from tool_runner.tool_responses()
+
+                tool_responses = []
+                for response in tool_runner.tool_responses():
+                    tool_responses.append(response)
                     yield response
-                # yield from tool_responses
 
                 tool_call_summary = ToolCallSummary(
                     tool_call_request=tool_call_chunk,
@@ -342,7 +337,6 @@ class Answer:
                     self._update_prompt_builder_for_search_tool(prompt_builder, [])
 
                 elif tool.name == ImageGenerationTool._NAME:
-                    print("\n----\nUpdating image prompt user message\n----\n")
                     img_urls = [
                         img_generation_result["url"]
                         for img_generation_result in tool_runner.tool_final_result().tool_result
@@ -352,8 +346,6 @@ class Answer:
                             query=self.question, img_urls=img_urls
                         )
                     )
-
-                print("now stremign wie fianl results")
 
                 yield tool_runner.tool_final_result()
 
@@ -387,8 +379,6 @@ class Answer:
                     )
                 )
 
-                print("\n----\nBuilding final prompt with Tool call summary\n----\n")
-
                 # Generate response based on updated message history
                 prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
 
@@ -402,7 +392,6 @@ class Answer:
                         response_content += content
                     yield content
 
-                print(response_content)
                 # Update message history with LLM response
                 self.message_history.append(
                     PreviousMessage(

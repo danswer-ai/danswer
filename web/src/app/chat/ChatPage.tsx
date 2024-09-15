@@ -1143,7 +1143,6 @@ export function ChatPage({
             continue;
           }
 
-          console.log("PACKET IS: ", packet);
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
               console.error(
@@ -1168,7 +1167,7 @@ export function ChatPage({
             messageUpdates = [
               {
                 messageId: regenerationRequest
-                  ? regenerationRequest?.parentMessage?.messageId!
+                  ? regenerationRequest?.messageId
                   : user_message_id,
                 message: currMessage,
                 type: "user",
@@ -1195,23 +1194,19 @@ export function ChatPage({
               });
 
             let frozenMessageMap = currentFrozenMessageMap;
-
-            let initialDynamicParentMessage: Message = {
-              messageId: regenerationRequest
-                ? regenerationRequest?.parentMessage?.messageId!
-                : user_message_id!,
-              message: "",
-              type: "user",
-              files: currentMessageFiles,
-              toolCall: null,
-              parentMessageId: error ? null : lastSuccessfulMessageId,
-              childrenMessageIds: [
-                ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
-                  []),
-                -100,
-              ],
-              latestChildMessageId: -100,
-            };
+            regenerationRequest?.parentMessage;
+            let initialDynamicParentMessage: Message = regenerationRequest
+              ? regenerationRequest?.parentMessage
+              : {
+                  messageId: user_message_id!,
+                  message: "",
+                  type: "user",
+                  files: currentMessageFiles,
+                  toolCall: null,
+                  parentMessageId: error ? null : lastSuccessfulMessageId,
+                  childrenMessageIds: [assistant_message_id!],
+                  latestChildMessageId: -100,
+                };
 
             let initialDynamicAssistantMessage: Message = {
               messageId: assistant_message_id!,
@@ -1255,15 +1250,7 @@ export function ChatPage({
             ) {
               dynamicParentMessage = initialDynamicParentMessage;
               dynamicAssistantMessage = initialDynamicAssistantMessage;
-              dynamicParentMessage.childrenMessageIds = [
-                initialFetchDetails.assistant_message_id,
-              ];
 
-              dynamicParentMessage.latestChildMessageId =
-                initialFetchDetails.assistant_message_id;
-
-              dynamicParentMessage.messageId =
-                initialFetchDetails.user_message_id;
               dynamicParentMessage.message = currMessage;
             }
 
@@ -1272,8 +1259,6 @@ export function ChatPage({
             }
 
             if (Object.hasOwn(packet, "user_message_id")) {
-              debugger;
-
               let newParentMessageId = dynamicParentMessage.messageId;
               const messageResponseIDInfo = packet as MessageResponseIDInfo;
 
@@ -1327,8 +1312,6 @@ export function ChatPage({
               dynamicAssistantMessage.retrievalType = RetrievalType.Search;
               retrievalType = RetrievalType.Search;
             } else if (Object.hasOwn(packet, "tool_name")) {
-              debugger;
-
               dynamicAssistantMessage.toolCall = {
                 tool_name: (packet as ToolCallMetadata).tool_name,
                 tool_args: (packet as ToolCallMetadata).tool_args,
@@ -1379,14 +1362,6 @@ export function ChatPage({
               }
             }
             if (!Object.hasOwn(packet, "stop_reason")) {
-              // on initial message send, we insert a dummy system message
-              // set this as the parent here if no parent is set
-              // parentMessage =
-              // parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
-
-              // Should update message map with new message based on
-              // Previous message, parent message, and new message being generated.
-              // All should have proper IDs.
               updateFn = (messages: Message[]) => {
                 const replacementsMap = regenerationRequest
                   ? new Map([
@@ -1409,15 +1384,6 @@ export function ChatPage({
                 });
               };
 
-              console.log("\n-----");
-              console.log(
-                "dynamicParentMessage",
-                JSON.stringify(dynamicParentMessage)
-              );
-              console.log(
-                "dynamicAssistantMessage",
-                JSON.stringify(dynamicAssistantMessage)
-              );
               let { messageMap } = updateFn([
                 dynamicParentMessage,
                 dynamicAssistantMessage,
@@ -2066,9 +2032,8 @@ export function ChatPage({
                                 completeMessageDetail
                               );
                               const messageReactComponentKey = `${i}-${currentSessionId()}`;
-                              const parentMessage = message.parentMessageId
-                                ? messageMap.get(message.parentMessageId)
-                                : null;
+                              const parentMessage =
+                                i > 1 ? messageHistory[i - 1] : null;
                               if (message.type === "user") {
                                 if (
                                   (currentSessionChatState == "loading" &&
