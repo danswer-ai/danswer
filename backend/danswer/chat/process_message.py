@@ -754,6 +754,7 @@ def stream_chat_message_objects(
             elif isinstance(packet, StreamStopInfo):
                 print("PACKET IS ENINDG")
                 print(packet)
+
                 if packet.stop_reason is not StreamStopReason.NEW_RESPONSE:
                     break
 
@@ -766,7 +767,6 @@ def stream_chat_message_objects(
                     )
 
                 # Saving Gen AI answer and responding with message info
-
                 if tool_result is None:
                     tool_call = None
                 else:
@@ -786,7 +786,7 @@ def stream_chat_message_objects(
                     reference_docs=reference_db_search_docs,
                     files=ai_message_files,
                     token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-                    citations=db_citations,
+                    citations=db_citations.citation_map if db_citations else None,
                     error=None,
                     tool_call=tool_call,
                 )
@@ -823,6 +823,7 @@ def stream_chat_message_objects(
                     db_session=db_session,
                     commit=False,
                 )
+                reference_db_search_docs = None
             else:
                 if isinstance(packet, ToolCallFinalResult):
                     tool_result = packet
@@ -845,6 +846,7 @@ def stream_chat_message_objects(
 
     # Post-LLM answer processing
     try:
+        print("I am in the final ")
         message_specific_citations: MessageSpecificCitations | None = None
         if reference_db_search_docs:
             message_specific_citations = _translate_citations(

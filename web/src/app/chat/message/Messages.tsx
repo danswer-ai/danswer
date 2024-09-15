@@ -213,7 +213,10 @@ export const AIMessage = ({
         return content;
       }
     }
-    if (toolCall?.tool_result) {
+    if (
+      toolCall?.tool_result &&
+      toolCall.tool_result.tool_name == INTERNET_SEARCH_TOOL_NAME
+    ) {
       return content + ` [${toolCall.tool_name}]()`;
     }
 
@@ -306,27 +309,35 @@ export const AIMessage = ({
             ) : (
               <div className="w-6" />
             )}
+
             <div className="w-full">
               <div className="max-w-message-max break-words">
                 <div className="w-full ml-4">
                   <div className="max-w-message-max break-words">
-                    {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
+                    {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
                       <>
                         {query !== undefined &&
                           handleShowRetrieved !== undefined &&
+                          isCurrentlyShowingRetrieved !== undefined &&
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary
+                                docs={docs}
+                                filteredDocs={filteredDocs}
                                 query={query}
-                                finished={toolCall?.tool_result != undefined}
-                                hasDocs={hasDocs || false}
-                                messageId={messageId}
-                                handleShowRetrieved={handleShowRetrieved}
+                                finished={
+                                  toolCall?.tool_result != undefined ||
+                                  isComplete!
+                                }
+                                toggleDocumentSelection={
+                                  toggleDocumentSelection
+                                }
                                 handleSearchQueryEdit={handleSearchQueryEdit}
                               />
                             </div>
                           )}
                         {handleForceSearch &&
+                          !hasChildAI &&
                           content &&
                           query === undefined &&
                           !hasDocs &&
@@ -338,7 +349,7 @@ export const AIMessage = ({
                             </div>
                           )}
                       </>
-                    ) : null}
+                    )}
 
                     {toolCall &&
                       !TOOLS_WITH_CUSTOM_HANDLING.includes(
@@ -439,10 +450,6 @@ export const AIMessage = ({
                                   } else if (
                                     value?.toString().startsWith("[")
                                   ) {
-                                    // for some reason <a> tags cause the onClick to not apply
-                                    // and the links are unclickable
-                                    // TODO: fix the fact that you have to double click to follow link
-                                    // for the first link
                                     return (
                                       <Citation link={rest?.href}>
                                         {rest.children}
@@ -488,79 +495,6 @@ export const AIMessage = ({
                       </>
                     ) : isComplete ? null : (
                       <></>
-                    )}
-                    {isComplete && docs && docs.length > 0 && (
-                      <div className="mt-2 -mx-8 w-full mb-4 flex relative">
-                        <div className="w-full">
-                          <div className="px-8 flex gap-x-2">
-                            {!settings?.isMobile &&
-                              filteredDocs.length > 0 &&
-                              filteredDocs.slice(0, 2).map((doc, ind) => (
-                                <div
-                                  key={doc.document_id}
-                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
-                              `}
-                                >
-                                  <a
-                                    href={doc.link || undefined}
-                                    target="_blank"
-                                    className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
-                                  >
-                                    <Citation link={doc.link} index={ind + 1} />
-                                    <p className="shrink truncate ellipsis break-all">
-                                      {doc.semantic_identifier ||
-                                        doc.document_id}
-                                    </p>
-                                    <div className="ml-auto flex-none">
-                                      {doc.is_internet ? (
-                                        <InternetSearchIcon url={doc.link} />
-                                      ) : (
-                                        <SourceIcon
-                                          sourceType={doc.source_type}
-                                          iconSize={18}
-                                        />
-                                      )}
-                                    </div>
-                                  </a>
-                                  <div className="flex overscroll-x-scroll mt-.5">
-                                    <DocumentMetadataBlock document={doc} />
-                                  </div>
-                                  <div className="line-clamp-3 text-xs break-words pt-1">
-                                    {doc.blurb}
-                                  </div>
-                                </div>
-                              ))}
-                            <div
-                              onClick={() => {
-                                if (toggleDocumentSelection) {
-                                  toggleDocumentSelection();
-                                }
-                              }}
-                              key={-1}
-                              className="cursor-pointer w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b"
-                            >
-                              <div className="text-sm flex justify-between font-semibold text-text-700">
-                                <p className="line-clamp-1">See context</p>
-                                <div className="flex gap-x-1">
-                                  {uniqueSources.map((sourceType, ind) => {
-                                    return (
-                                      <div key={ind} className="flex-none">
-                                        <SourceIcon
-                                          sourceType={sourceType}
-                                          iconSize={18}
-                                        />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                              <div className="line-clamp-3 text-xs break-words pt-1">
-                                See more
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     )}
                   </div>
 

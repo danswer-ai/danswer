@@ -1143,6 +1143,7 @@ export function ChatPage({
             continue;
           }
 
+          console.log("PACKET IS: ", packet);
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
               console.error(
@@ -1329,6 +1330,12 @@ export function ChatPage({
                 tool_args: (packet as ToolCallMetadata).tool_args,
                 tool_result: (packet as ToolCallMetadata).tool_result,
               };
+              if (
+                dynamicAssistantMessage.toolCall.tool_name === SEARCH_TOOL_NAME
+              ) {
+                dynamicAssistantMessage.query =
+                  dynamicAssistantMessage.toolCall.tool_args.query;
+              }
 
               if (
                 !dynamicAssistantMessage.toolCall ||
