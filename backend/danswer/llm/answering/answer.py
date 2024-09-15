@@ -352,9 +352,9 @@ class Answer:
                 # Update message history with tool call and response
                 self.message_history.append(
                     PreviousMessage(
-                        message=str(self.question),
+                        message=self.question,
                         message_type=MessageType.USER,
-                        token_count=10,
+                        token_count=len(self.llm_tokenizer.encode(self.question)),
                         tool_call=None,
                         files=[],
                     )
@@ -364,7 +364,9 @@ class Answer:
                     PreviousMessage(
                         message=str(tool_call_request),
                         message_type=MessageType.ASSISTANT,
-                        token_count=10,
+                        token_count=len(
+                            self.llm_tokenizer.encode(str(tool_call_request))
+                        ),
                         tool_call=None,
                         files=[],
                     )
@@ -373,7 +375,11 @@ class Answer:
                     PreviousMessage(
                         message="\n".join(str(response) for response in tool_responses),
                         message_type=MessageType.SYSTEM,
-                        token_count=10,
+                        token_count=len(
+                            self.llm_tokenizer.encode(
+                                "\n".join(str(response) for response in tool_responses)
+                            )
+                        ),
                         tool_call=None,
                         files=[],
                     )
@@ -397,7 +403,7 @@ class Answer:
                     PreviousMessage(
                         message=response_content,
                         message_type=MessageType.ASSISTANT,
-                        token_count=10,
+                        token_count=len(self.llm_tokenizer.encode(response_content)),
                         tool_call=None,
                         files=[],
                     )
@@ -430,139 +436,197 @@ class Answer:
     ) -> Iterator[
         str | StreamStopInfo | ToolCallKickoff | ToolResponse | ToolCallFinalResult
     ]:
-        prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
-        chosen_tool_and_args: tuple[Tool, dict] | None = None
+        tool_calls = 0
+        initiated = False
+        while tool_calls < MAX_TOOL_CALLS:
+            if initiated:
+                yield StreamStopInfo(stop_reason=StreamStopReason.NEW_RESPONSE)
 
-        if self.force_use_tool.force_use:
-            # if we are forcing a tool, we don't need to check which tools to run
-            tool = next(
-                iter(
-                    [
-                        tool
-                        for tool in self.tools
-                        if tool.name == self.force_use_tool.tool_name
-                    ]
-                ),
-                None,
-            )
-            if not tool:
-                raise RuntimeError(f"Tool '{self.force_use_tool.tool_name}' not found")
+            initiated = True
+            prompt_builder = AnswerPromptBuilder(self.message_history, self.llm.config)
+            chosen_tool_and_args: tuple[Tool, dict] | None = None
 
-            tool_args = (
-                self.force_use_tool.args
-                if self.force_use_tool.args is not None
-                else tool.get_args_for_non_tool_calling_llm(
+            if self.force_use_tool.force_use:
+                # if we are forcing a tool, we don't need to check which tools to run
+                tool = next(
+                    iter(
+                        [
+                            tool
+                            for tool in self.tools
+                            if tool.name == self.force_use_tool.tool_name
+                        ]
+                    ),
+                    None,
+                )
+                if not tool:
+                    raise RuntimeError(
+                        f"Tool '{self.force_use_tool.tool_name}' not found"
+                    )
+
+                tool_args = (
+                    self.force_use_tool.args
+                    if self.force_use_tool.args is not None
+                    else tool.get_args_for_non_tool_calling_llm(
+                        query=self.question,
+                        history=self.message_history,
+                        llm=self.llm,
+                        force_run=True,
+                    )
+                )
+
+                if tool_args is None:
+                    raise RuntimeError(f"Tool '{tool.name}' did not return args")
+
+                chosen_tool_and_args = (tool, tool_args)
+            else:
+                tool_options = check_which_tools_should_run_for_non_tool_calling_llm(
+                    tools=self.tools,
                     query=self.question,
                     history=self.message_history,
                     llm=self.llm,
-                    force_run=True,
                 )
-            )
 
-            if tool_args is None:
-                raise RuntimeError(f"Tool '{tool.name}' did not return args")
+                available_tools_and_args = [
+                    (self.tools[ind], args)
+                    for ind, args in enumerate(tool_options)
+                    if args is not None
+                ]
 
-            chosen_tool_and_args = (tool, tool_args)
-        else:
-            tool_options = check_which_tools_should_run_for_non_tool_calling_llm(
-                tools=self.tools,
-                query=self.question,
-                history=self.message_history,
-                llm=self.llm,
-            )
-
-            available_tools_and_args = [
-                (self.tools[ind], args)
-                for ind, args in enumerate(tool_options)
-                if args is not None
-            ]
-
-            logger.info(
-                f"Selecting single tool from tools: {[(tool.name, args) for tool, args in available_tools_and_args]}"
-            )
-
-            chosen_tool_and_args = (
-                select_single_tool_for_non_tool_calling_llm(
-                    tools_and_args=available_tools_and_args,
-                    history=self.message_history,
-                    query=self.question,
-                    llm=self.llm,
+                logger.info(
+                    f"Selecting single tool from tools: {[(tool.name, args) for tool, args in available_tools_and_args]}"
                 )
-                if available_tools_and_args
-                else None
-            )
 
-            logger.notice(f"Chosen tool: {chosen_tool_and_args}")
-
-        if not chosen_tool_and_args:
-            prompt_builder.update_system_prompt(
-                default_build_system_message(self.prompt_config)
-            )
-            prompt_builder.update_user_prompt(
-                default_build_user_message(
-                    self.question, self.prompt_config, self.latest_query_files
+                chosen_tool_and_args = (
+                    select_single_tool_for_non_tool_calling_llm(
+                        tools_and_args=available_tools_and_args,
+                        history=self.message_history,
+                        query=self.question,
+                        llm=self.llm,
+                    )
+                    if available_tools_and_args
+                    else None
                 )
+
+                logger.notice(f"Chosen tool: {chosen_tool_and_args}")
+
+            if not chosen_tool_and_args:
+                prompt_builder.update_system_prompt(
+                    default_build_system_message(self.prompt_config)
+                )
+                prompt_builder.update_user_prompt(
+                    default_build_user_message(
+                        self.question, self.prompt_config, self.latest_query_files
+                    )
+                )
+                prompt = prompt_builder.build()
+                yield from self._process_llm_stream(
+                    prompt=prompt,
+                    tools=None,
+                )
+                return
+            tool_calls += 1
+
+            tool, tool_args = chosen_tool_and_args
+            tool_runner = ToolRunner(tool, tool_args)
+            yield tool_runner.kickoff()
+            tool_responses = []
+            for response in tool_runner.tool_responses():
+                tool_responses.append(response)
+                yield response
+
+            if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
+                final_context_documents = None
+                for response in tool_runner.tool_responses():
+                    if response.id == FINAL_CONTEXT_DOCUMENTS_ID:
+                        final_context_documents = cast(list[LlmDoc], response.response)
+                    yield response
+
+                if final_context_documents is None:
+                    raise RuntimeError(
+                        f"{tool.name} did not return final context documents"
+                    )
+
+                self._update_prompt_builder_for_search_tool(
+                    prompt_builder, final_context_documents
+                )
+            elif tool.name == ImageGenerationTool._NAME:
+                img_urls = []
+                for response in tool_runner.tool_responses():
+                    if response.id == IMAGE_GENERATION_RESPONSE_ID:
+                        img_generation_response = cast(
+                            list[ImageGenerationResponse], response.response
+                        )
+                        img_urls = [img.url for img in img_generation_response]
+
+                    yield response
+
+                prompt_builder.update_user_prompt(
+                    build_image_generation_user_prompt(
+                        query=self.question,
+                        img_urls=img_urls,
+                    )
+                )
+            else:
+                prompt_builder.update_user_prompt(
+                    HumanMessage(
+                        content=build_user_message_for_custom_tool_for_non_tool_calling_llm(
+                            self.question,
+                            tool.name,
+                            *tool_runner.tool_responses(),
+                        )
+                    )
+                )
+            final_result = tool_runner.tool_final_result()
+            yield final_result
+
+            # Update message history
+            self.message_history.extend(
+                [
+                    PreviousMessage(
+                        message=str(self.question),
+                        message_type=MessageType.USER,
+                        token_count=len(self.llm_tokenizer.encode(str(self.question))),
+                        tool_call=None,
+                        files=[],
+                    ),
+                    PreviousMessage(
+                        message=f"Tool used: {tool.name}",
+                        message_type=MessageType.ASSISTANT,
+                        token_count=len(
+                            self.llm_tokenizer.encode(f"Tool used: {tool.name}")
+                        ),
+                        tool_call=None,
+                        files=[],
+                    ),
+                    PreviousMessage(
+                        message=str(final_result),
+                        message_type=MessageType.SYSTEM,
+                        token_count=len(self.llm_tokenizer.encode(str(final_result))),
+                        tool_call=None,
+                        files=[],
+                    ),
+                ]
             )
+
+            # Generate response based on updated message history
             prompt = prompt_builder.build()
-            yield from self._process_llm_stream(
-                prompt=prompt,
-                tools=None,
-            )
-            return
 
-        tool, tool_args = chosen_tool_and_args
-        tool_runner = ToolRunner(tool, tool_args)
-        yield tool_runner.kickoff()
+            response_content = ""
+            for content in self._process_llm_stream(prompt=prompt, tools=None):
+                if isinstance(content, str):
+                    response_content += content
+                yield content
 
-        if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
-            final_context_documents = None
-            for response in tool_runner.tool_responses():
-                if response.id == FINAL_CONTEXT_DOCUMENTS_ID:
-                    final_context_documents = cast(list[LlmDoc], response.response)
-                yield response
-
-            if final_context_documents is None:
-                raise RuntimeError(
-                    f"{tool.name} did not return final context documents"
-                )
-
-            self._update_prompt_builder_for_search_tool(
-                prompt_builder, final_context_documents
-            )
-        elif tool.name == ImageGenerationTool._NAME:
-            img_urls = []
-            for response in tool_runner.tool_responses():
-                if response.id == IMAGE_GENERATION_RESPONSE_ID:
-                    img_generation_response = cast(
-                        list[ImageGenerationResponse], response.response
-                    )
-                    img_urls = [img.url for img in img_generation_response]
-
-                yield response
-
-            prompt_builder.update_user_prompt(
-                build_image_generation_user_prompt(
-                    query=self.question,
-                    img_urls=img_urls,
+            # Update message history with LLM response
+            self.message_history.append(
+                PreviousMessage(
+                    message=response_content,
+                    message_type=MessageType.ASSISTANT,
+                    token_count=len(self.llm_tokenizer.encode(response_content)),
+                    tool_call=None,
+                    files=[],
                 )
             )
-        else:
-            prompt_builder.update_user_prompt(
-                HumanMessage(
-                    content=build_user_message_for_custom_tool_for_non_tool_calling_llm(
-                        self.question,
-                        tool.name,
-                        *tool_runner.tool_responses(),
-                    )
-                )
-            )
-        final = tool_runner.tool_final_result()
-
-        yield final
-
-        prompt = prompt_builder.build()
-
-        yield from self._process_llm_stream(prompt=prompt, tools=None)
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -578,6 +642,7 @@ class Answer:
             and not self.skip_explicit_tool_calling
             else self._raw_output_for_non_explicit_tool_calling_llms()
         )
+
         self.processing_stream = []
 
         def _process_stream(
