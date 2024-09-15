@@ -101,7 +101,7 @@ def get_google_drive_creds(
         if new_creds_json_str != access_token_json_str:
             new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
 
-    if DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY in credentials:
+    elif DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY in credentials:
         service_account_key_json_str = credentials[
             DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
         ]

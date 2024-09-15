@@ -57,6 +57,9 @@ export async function submitConnector<T>(
   if (!connector.connector_specific_config) {
     connector.connector_specific_config = {} as T;
   }
+  // console.log("connector", connector);
+  // console.log("isUpdate", isUpdate);
+  // console.log("connectorId", connectorId);
 
   try {
     if (fakeCredential) {
@@ -219,6 +222,7 @@ export default function AddConnector({
           indexingStart,
           refreshFreq,
           auto_sync_options,
+          is_public,
           ...connector_specific_config
         } = values;
 
@@ -291,6 +295,7 @@ export default function AddConnector({
             input_type: connector == "web" ? "load_state" : "poll", // single case
             name: name,
             source: connector,
+            is_public: access_type == "public",
             refresh_freq: advancedConfiguration.refreshFreq || null,
             prune_freq: advancedConfiguration.pruneFreq || null,
             indexing_start: advancedConfiguration.indexingStart || null,
@@ -298,7 +303,7 @@ export default function AddConnector({
           },
           undefined,
           credentialActivated ? false : true,
-          access_type
+          access_type == "public"
         );
         // If no credential
         if (!credentialActivated) {

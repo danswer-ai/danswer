@@ -1,6 +1,7 @@
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { useFormikContext } from "formik";
 import { ValidAutoSyncSources } from "@/lib/types";
+import { Divider } from "@tremor/react";
 
 // The first key is the connector type, and the second key is the field name
 const autoSyncConfig = {
@@ -51,15 +52,19 @@ export function AutoSyncOptions({
 
   return (
     <div>
-      {Object.entries(autoSyncConfig[connectorType]).map(([key, config]) => (
-        <TextFormField
-          key={key}
-          name={`auto_sync_options.${key}`}
-          label={config.label}
-          subtext={config.subtext}
-          onChange={(e) => handleInputChange(key, e.target.value)}
-        />
-      ))}
+      <Divider />
+      <>
+        {Object.entries(autoSyncConfig[connectorType]).map(([key, config]) => (
+          <div key={key} className="mb-4">
+            <TextFormField
+              name={`auto_sync_options.${key}`}
+              label={config.label}
+              subtext={config.subtext}
+              onChange={(e) => handleInputChange(key, e.target.value)}
+            />
+          </div>
+        ))}
+      </>
     </div>
   );
 }

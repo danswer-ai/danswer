@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from typing import Any
 
+from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 from googleapiclient.discovery import build  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
@@ -27,7 +28,7 @@ add_retries = retry_builder(tries=5, delay=5, max_delay=30)
 
 
 def _fetch_groups_paginated(
-    google_drive_creds: ServiceAccountCredentials,
+    google_drive_creds: ServiceAccountCredentials | OAuthCredentials,
     identity_source: str | None = None,
     customer_id: str | None = None,
 ) -> Iterator[dict[str, Any]]:
@@ -67,7 +68,7 @@ def _fetch_groups_paginated(
 
 
 def _fetch_group_members_paginated(
-    google_drive_creds: ServiceAccountCredentials,
+    google_drive_creds: ServiceAccountCredentials | OAuthCredentials,
     group_name: str,
 ) -> Iterator[dict[str, Any]]:
     cloud_identity_service = build(
