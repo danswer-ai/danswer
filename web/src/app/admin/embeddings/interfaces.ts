@@ -1,4 +1,10 @@
-import { EmbeddingProvider } from "@/components/embedding/interfaces";
+import {
+  AVAILABLE_CLOUD_PROVIDERS,
+  AVAILABLE_MODELS,
+  CloudEmbeddingModel,
+  EmbeddingProvider,
+  HostedEmbeddingModel,
+} from "@/components/embedding/interfaces";
 
 // This is a slightly differnte interface than used in the backend
 // but is always used in conjunction with `AdvancedSearchConfiguration`
@@ -92,3 +98,24 @@ export const rerankingModels: RerankingModel[] = [
     link: "https://docs.cohere.com/docs/rerank",
   },
 ];
+
+export const getCurrentModelCopy = (
+  currentModelName: string
+): CloudEmbeddingModel | HostedEmbeddingModel | null => {
+  const AVAILABLE_CLOUD_PROVIDERS_FLATTENED = AVAILABLE_CLOUD_PROVIDERS.flatMap(
+    (provider) =>
+      provider.embedding_models.map((model) => ({
+        ...model,
+        provider_type: provider.provider_type,
+        model_name: model.model_name,
+      }))
+  );
+
+  return (
+    AVAILABLE_MODELS.find((model) => model.model_name === currentModelName) ||
+    AVAILABLE_CLOUD_PROVIDERS_FLATTENED.find(
+      (model) => model.model_name === currentModelName
+    ) ||
+    null
+  );
+};
