@@ -13,7 +13,6 @@ import {
   ImageGenerationDisplay,
   Message,
   MessageResponseIDInfo,
-  PreviousAIMessage,
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
@@ -1253,7 +1252,6 @@ export function ChatPage({
               dynamicParentMessage === null &&
               dynamicAssistantMessage === null
             ) {
-              console.log("INITIALizing");
               dynamicParentMessage = initialDynamicParentMessage;
               dynamicAssistantMessage = initialDynamicAssistantMessage;
               dynamicParentMessage.childrenMessageIds = [
@@ -2469,14 +2467,6 @@ export function ChatPage({
                                 </button>
                               </div>
                             )}
-                            <Button
-                              onClick={() => {
-                                console.log(completeMessageDetail);
-                                console.log(messageHistory);
-                              }}
-                            >
-                              CLICK EM
-                            </Button>
                             <ChatInputBar
                               showConfigureAPIKey={() =>
                                 setShowApiKeyModal(true)

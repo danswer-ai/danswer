@@ -634,6 +634,13 @@ def stream_chat_message_objects(
         )
 
         # LLM prompt building, response capturing, etc.
+        print("IS CONNECTED FUNCTION IS", is_connected)
+        logger.info(f"Is connected function: {is_connected}")
+        if is_connected:
+            logger.debug(f"Is connected function type: {type(is_connected)}")
+            logger.debug(f"Is connected function callable: {callable(is_connected)}")
+        else:
+            logger.warning("Is connected function is None or falsy")
         answer = Answer(
             is_connected=is_connected,
             question=final_msg.message,
@@ -744,7 +751,6 @@ def stream_chat_message_objects(
                         response=custom_tool_response.tool_result,
                         tool_name=custom_tool_response.tool_name,
                     )
-
             elif isinstance(packet, StreamStopInfo):
                 if packet.stop_reason is not StreamStopReason.NEW_RESPONSE:
                     break
@@ -815,10 +821,11 @@ def stream_chat_message_objects(
                     db_session=db_session,
                     commit=False,
                 )
+            else:
+                if isinstance(packet, ToolCallFinalResult):
+                    tool_result = packet
+                yield cast(ChatPacket, packet)
 
-            elif isinstance(packet, ToolCallFinalResult):
-                tool_result = packet
-            yield cast(ChatPacket, packet)
         logger.debug("Reached end of stream")
     except Exception as e:
         error_msg = str(e)

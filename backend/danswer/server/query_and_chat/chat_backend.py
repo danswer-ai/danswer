@@ -279,16 +279,23 @@ async def is_disconnected(request: Request) -> Callable[[], bool]:
     main_loop = asyncio.get_event_loop()
 
     def is_disconnected_sync() -> bool:
+        logger.info("Checking if client is disconnected")
         future = asyncio.run_coroutine_threadsafe(request.is_disconnected(), main_loop)
         try:
-            return not future.result(timeout=0.01)
+            result = not future.result(timeout=0.01)
+            if result:
+                logger.info("Client disconnected")
+            return result
         except asyncio.TimeoutError:
-            logger.error("Asyncio timed out")
+            logger.error("Asyncio timed out while checking client connection")
+            return True
+        except asyncio.CancelledError:
+            logger.info("Disconnect check was cancelled")
             return True
         except Exception as e:
             error_msg = str(e)
             logger.critical(
-                f"An unexpected error occured with the disconnect check coroutine: {error_msg}"
+                f"An unexpected error occurred with the disconnect check coroutine: {error_msg}"
             )
             return True
 

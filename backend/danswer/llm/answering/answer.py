@@ -249,8 +249,12 @@ class Answer:
                             tool_call_chunk += message  # type: ignore
                     else:
                         if message.content:
+                            print(message)
+
                             if self.is_cancelled:
                                 return
+                            else:
+                                print("not canncelled")
                             yield cast(str, message.content)
                         if (
                             message.additional_kwargs.get("usage_metadata", {}).get(
@@ -463,11 +467,13 @@ class Answer:
                     self.question, self.prompt_config, self.latest_query_files
                 )
             )
+            print("I am now yielding from here")
             prompt = prompt_builder.build()
             yield from self._process_llm_stream(
                 prompt=prompt,
                 tools=None,
             )
+            print("yielding complete")
             return
 
         tool, tool_args = chosen_tool_and_args
@@ -552,6 +558,7 @@ class Answer:
             final_context_docs: list[LlmDoc] | None = None
 
             for message in stream:
+                print(message)
                 if isinstance(message, ToolCallKickoff) or isinstance(
                     message, ToolCallFinalResult
                 ):

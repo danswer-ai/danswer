@@ -777,7 +777,7 @@ export const HumanMessage = ({
                         outline-none 
                         placeholder-gray-400 
                         resize-none
-                        pl-4crea
+                        pl-4
                         overflow-y-auto
                         pr-12 
                         py-4`}
