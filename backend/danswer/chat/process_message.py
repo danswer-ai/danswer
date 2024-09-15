@@ -704,15 +704,17 @@ def stream_chat_message_objects(
                 gen_ai_response_message = partial_response(
                     reserved_message_id=reserved_message_id,
                     message=answer.llm_answer,
-                    rephrased_query=(
-                        qa_docs_response.rephrased_query if qa_docs_response else None
-                    ),
+                    rephrased_query=cast(
+                        QADocsResponse, qa_docs_response
+                    ).rephrased_query
+                    if qa_docs_response is not None
+                    else None,
                     reference_docs=reference_db_search_docs,
                     files=ai_message_files,
                     token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-                    citations=(
-                        db_citations.citation_map if db_citations is not None else None
-                    ),
+                    citations=cast(MessageSpecificCitations, db_citations).citation_map
+                    if db_citations is not None
+                    else None,
                     error=None,
                     tool_call=tool_call,
                 )
