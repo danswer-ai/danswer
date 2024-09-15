@@ -698,7 +698,8 @@ export async function useScrollonStream({
       ) {
         // catch up if necessary!
         const scrollAmount = scrollDist.current + 10000;
-        if (scrollDist.current > 140) {
+        if (scrollDist.current > 300) {
+          // if (scrollDist.current > 140) {
           endDivRef.current.scrollIntoView();
         } else {
           blockActionRef.current = true;
