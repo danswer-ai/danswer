@@ -26,7 +26,12 @@ import { SourceIcon } from "@/components/SourceIcon";
 import { SkippedSearch } from "./SkippedSearch";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "@/components/CopyButton";
-import { ChatFileType, FileDescriptor, ToolCallMetadata } from "../interfaces";
+import {
+  ChatFileType,
+  FileDescriptor,
+  ImageGenerationResults,
+  ToolCallMetadata,
+} from "../interfaces";
 import {
   IMAGE_GENERATION_TOOL_NAME,
   SEARCH_TOOL_NAME,
@@ -46,7 +51,11 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
 import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
-import { LikeFeedback, DislikeFeedback } from "@/components/icons/icons";
+import {
+  LikeFeedback,
+  DislikeFeedback,
+  ToolCallIcon,
+} from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
@@ -60,6 +69,9 @@ import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
+import DualPromptDisplay from "../tools/ImagePromptCitaiton";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
+import { Popover } from "@/components/popover/Popover";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -145,6 +157,7 @@ export const AIMessage = ({
   currentPersona,
   otherMessagesCanSwitchTo,
   onMessageSelection,
+  setPopup,
 }: {
   hasChildAI?: boolean;
   hasParentAI?: boolean;
@@ -175,7 +188,9 @@ export const AIMessage = ({
   retrievalDisabled?: boolean;
   overriddenModel?: string;
   regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
+  setPopup?: (popupSpec: PopupSpec | null) => void;
 }) => {
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
     if (typeof content !== "string") {
@@ -197,6 +212,9 @@ export const AIMessage = ({
       if (!lastMatch.endsWith("```")) {
         return content;
       }
+    }
+    if (toolCall?.tool_result) {
+      return content + ` [${toolCall.tool_name}]()`;
     }
 
     return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
@@ -372,6 +390,47 @@ export const AIMessage = ({
                                 a: (props) => {
                                   const { node, ...rest } = props;
                                   const value = rest.children;
+
+                                  if (
+                                    value
+                                      ?.toString()
+                                      .startsWith(IMAGE_GENERATION_TOOL_NAME)
+                                  ) {
+                                    const imageGenerationResult =
+                                      toolCall?.tool_result as ImageGenerationResults;
+
+                                    return (
+                                      <Popover
+                                        open={isPopoverOpen}
+                                        onOpenChange={() => null} // only allow closing from the icon
+                                        content={
+                                          <button
+                                            onMouseDown={() => {
+                                              setIsPopoverOpen(!isPopoverOpen);
+                                            }}
+                                          >
+                                            <ToolCallIcon className="cursor-pointer flex-none text-blue-500 hover:text-blue-700 !h-4 !w-4 inline-block" />
+                                          </button>
+                                        }
+                                        popover={
+                                          <DualPromptDisplay
+                                            arg="Prompt"
+                                            setPopup={setPopup!}
+                                            prompt1={
+                                              imageGenerationResult[0]
+                                                .revised_prompt
+                                            }
+                                            prompt2={
+                                              imageGenerationResult[1]
+                                                .revised_prompt
+                                            }
+                                          />
+                                        }
+                                        side="top"
+                                        align="center"
+                                      />
+                                    );
+                                  }
 
                                   if (value?.toString().startsWith("*")) {
                                     return (

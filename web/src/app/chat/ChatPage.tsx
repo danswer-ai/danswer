@@ -2165,6 +2165,7 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      setPopup={setPopup}
                                       hasChildAI={hasChildAI}
                                       hasParentAI={hasParentAI}
                                       continueGenerating={

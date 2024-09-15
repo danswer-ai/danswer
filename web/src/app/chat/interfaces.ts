@@ -143,3 +143,10 @@ export interface StreamingError {
   error: string;
   stack_trace: string;
 }
+
+export interface ImageGenerationResult {
+  revised_prompt: string;
+  url: string;
+}
+
+export type ImageGenerationResults = ImageGenerationResult[];
