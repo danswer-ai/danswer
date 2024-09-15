@@ -87,17 +87,18 @@ def _get_google_drive_creds_for_service_account(
 def get_google_drive_creds(
     credentials: dict[str, str], scopes: list[str] = build_gdrive_scopes()
 ) -> tuple[ServiceAccountCredentials | OAuthCredentials, dict[str, str] | None]:
-    creds = None
+    oauth_creds = None
+    service_creds = None
     new_creds_dict = None
     if DB_CREDENTIALS_DICT_TOKEN_KEY in credentials:
         access_token_json_str = cast(str, credentials[DB_CREDENTIALS_DICT_TOKEN_KEY])
-        creds = get_google_drive_creds_for_authorized_user(
+        oauth_creds = get_google_drive_creds_for_authorized_user(
             token_json_str=access_token_json_str, scopes=scopes
         )
 
         # tell caller to update token stored in DB if it has changed
         # (e.g. the token has been refreshed)
-        new_creds_json_str = creds.to_json() if creds else ""
+        new_creds_json_str = oauth_creds.to_json() if oauth_creds else ""
         if new_creds_json_str != access_token_json_str:
             new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
 
@@ -105,7 +106,7 @@ def get_google_drive_creds(
         service_account_key_json_str = credentials[
             DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
         ]
-        creds = _get_google_drive_creds_for_service_account(
+        service_creds = _get_google_drive_creds_for_service_account(
             service_account_key_json_str=service_account_key_json_str,
             scopes=scopes,
         )
@@ -115,8 +116,15 @@ def get_google_drive_creds(
             str | None, credentials.get(DB_CREDENTIALS_DICT_DELEGATED_USER_KEY)
         )
         if delegated_user_email:
-            creds = creds.with_subject(delegated_user_email) if creds else None
+            service_creds = (
+                service_creds.with_subject(delegated_user_email)
+                if service_creds
+                else None
+            )
 
+    creds: ServiceAccountCredentials | OAuthCredentials | None = (
+        oauth_creds or service_creds
+    )
     if creds is None:
         raise PermissionError(
             "Unable to access Google Drive - unknown credential structure."
