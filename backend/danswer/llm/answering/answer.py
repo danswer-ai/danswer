@@ -338,6 +338,7 @@ class Answer:
                     self._update_prompt_builder_for_search_tool(prompt_builder, [])
 
                 elif tool.name == ImageGenerationTool._NAME:
+                    print("\n----\nUpdating image prompt user message\n----\n")
                     img_urls = [
                         img_generation_result["url"]
                         for img_generation_result in tool_runner.tool_final_result().tool_result
@@ -347,6 +348,8 @@ class Answer:
                             query=self.question, img_urls=img_urls
                         )
                     )
+
+                print("now stremign wie fianl results")
 
                 yield tool_runner.tool_final_result()
 
@@ -385,6 +388,8 @@ class Answer:
                         files=[],
                     )
                 )
+
+                print("\n----\nBuilding final prompt with Tool call summary\n----\n")
 
                 # Generate response based on updated message history
                 prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
