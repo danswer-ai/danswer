@@ -2254,7 +2254,6 @@ export function ChatPage({
                                               ])
                                       }
                                       handleSearchQueryEdit={
-                                        i === messageHistory.length - 1 &&
                                         currentSessionChatState == "input"
                                           ? (newQuery) => {
                                               if (!previousMessage) {

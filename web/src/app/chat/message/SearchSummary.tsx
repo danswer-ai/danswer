@@ -71,10 +71,6 @@ export function SearchSummary({
 
   const settings = useContext(SettingsContext);
 
-  const uniqueSourceTypes = Array.from(
-    new Set((docs || []).map((doc) => doc.source_type))
-  ).slice(0, 3);
-
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
@@ -118,7 +114,7 @@ export function SearchSummary({
             onClick={() => {
               toggleDropdown();
             }}
-            className={` transition-colors duration-300 group-hover:text-text-toolhover cursor-pointer text-text-toolrun !line-clamp-1 !break-all pr-0.5`}
+            className={`transition-colors duration-300 group-hover:text-text-toolhover cursor-pointer text-text-toolrun !line-clamp-1 !break-all pr-0.5`}
             ref={searchingForRef}
           >
             Searched {filteredDocs.length > 0 && filteredDocs.length} document
@@ -243,10 +239,10 @@ export function SearchSummary({
                 searchingForDisplay
               )}
             </div>
-            {handleSearchQueryEdit && (
+            {handleSearchQueryEdit ? (
               <Tooltip delayDuration={1000} content={"Edit Search"}>
                 <button
-                  className="my-auto cursor-pointer rounded"
+                  className="my-auto invisible group-hover:visible transition-all duration-300 cursor-pointer rounded"
                   onClick={() => {
                     setIsEditing(true);
                   }}
@@ -254,7 +250,10 @@ export function SearchSummary({
                   <FiEdit2 />
                 </button>
               </Tooltip>
+            ) : (
+              "Hi"
             )}
+
             <button
               className="my-auto invisible group-hover:visible transition-all duration-300 hover:bg-hover rounded"
               onClick={toggleDropdown}
