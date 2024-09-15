@@ -145,6 +145,19 @@ export function ClientLayout({
                           ),
                           link: "/admin/tools",
                         },
+                        ...(enableEnterprise
+                          ? [
+                              {
+                                name: (
+                                  <div className="flex">
+                                    <ClipboardIcon size={18} />
+                                    <div className="ml-1">Standard Answers</div>
+                                  </div>
+                                ),
+                                link: "/admin/standard-answer",
+                              },
+                            ]
+                          : []),
                         {
                           name: (
                             <div className="flex">

@@ -46,12 +46,7 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
 import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
-import {
-  ThumbsUpIcon,
-  ThumbsDownIcon,
-  LikeFeedback,
-  DislikeFeedback,
-} from "@/components/icons/icons";
+import { LikeFeedback, DislikeFeedback } from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
@@ -121,6 +116,8 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
+  hasChildAI,
+  hasParentAI,
   regenerate,
   overriddenModel,
   continueGenerating,
@@ -149,6 +146,8 @@ export const AIMessage = ({
   otherMessagesCanSwitchTo,
   onMessageSelection,
 }: {
+  hasChildAI?: boolean;
+  hasParentAI?: boolean;
   shared?: boolean;
   isActive?: boolean;
   continueGenerating?: () => void;
@@ -165,7 +164,7 @@ export const AIMessage = ({
   query?: string;
   personaName?: string;
   citedDocuments?: [string, DanswerDocument][] | null;
-  toolCall?: ToolCallMetadata;
+  toolCall?: ToolCallMetadata | null;
   isComplete?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;
@@ -274,18 +273,21 @@ export const AIMessage = ({
     <div
       id="danswer-ai-message"
       ref={trackedElementRef}
-      className={"py-5 ml-4 px-5 relative flex "}
+      className={`${hasParentAI ? "pb-5" : "py-5"} px-2 lg:px-5 relative flex `}
     >
       <div
         className={`mx-auto ${shared ? "w-full" : "w-[90%]"}  max-w-message-max`}
       >
         <div className={`desktop:mr-12 ${!shared && "mobile:ml-0 md:ml-8"}`}>
           <div className="flex">
-            <AssistantIcon
-              size="small"
-              assistant={alternativeAssistant || currentPersona}
-            />
-
+            {!hasParentAI ? (
+              <AssistantIcon
+                size="small"
+                assistant={alternativeAssistant || currentPersona}
+              />
+            ) : (
+              <div className="w-6" />
+            )}
             <div className="w-full">
               <div className="max-w-message-max break-words">
                 <div className="w-full ml-4">
@@ -503,7 +505,8 @@ export const AIMessage = ({
                     )}
                   </div>
 
-                  {handleFeedback &&
+                  {!hasChildAI &&
+                    handleFeedback &&
                     (isActive ? (
                       <div
                         className={`
@@ -774,7 +777,7 @@ export const HumanMessage = ({
                         outline-none 
                         placeholder-gray-400 
                         resize-none
-                        pl-4
+                        pl-4crea
                         overflow-y-auto
                         pr-12 
                         py-4`}
