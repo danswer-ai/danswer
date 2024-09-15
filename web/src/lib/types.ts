@@ -257,3 +257,7 @@ export type ConfigurableSources = Exclude<
   ValidSources,
   "not_applicable" | "ingestion_api"
 >;
+
+// The sources that have auto-sync support on the backend
+export const validAutoSyncSources = ["google_drive"] as const;
+export type ValidAutoSyncSources = (typeof validAutoSyncSources)[number];

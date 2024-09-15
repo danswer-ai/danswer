@@ -112,7 +112,11 @@ def gdrive_group_sync(
     )
 
     danswer_groups: dict[str, list[str]] = {}
-    for group in _fetch_groups_paginated(google_drive_creds):
+    for group in _fetch_groups_paginated(
+        google_drive_creds,
+        identity_source=sync_details.get("identity_source"),
+        customer_id=sync_details.get("customer_id"),
+    ):
         # The id is the group email
         group_email = group["groupKey"]["id"]
 
