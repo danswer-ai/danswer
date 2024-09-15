@@ -80,7 +80,6 @@ async function handleRequest(request: NextRequest, path: string[]) {
       headers: request.headers,
       body: request.body,
       signal: request.signal,
-
       // @ts-ignore
       duplex: "half",
     });
