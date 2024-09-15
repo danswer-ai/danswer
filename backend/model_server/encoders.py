@@ -1,4 +1,6 @@
 import json
+import os 
+
 from typing import Any
 from typing import Optional
 
@@ -240,7 +242,7 @@ def embed_with_litellm_proxy(
 ) -> list[Embedding]:
     headers = {} if not api_key else {"Authorization": f"Bearer {api_key}"}
 
-    with httpx.Client() as client:
+    with httpx.Client(timeout=httpx.Timeout(os.getenv("HTTPX_TIMEOUT", 10))) as client:
         response = client.post(
             api_url,
             json={
@@ -366,7 +368,7 @@ def litellm_rerank(
     query: str, docs: list[str], api_url: str, model_name: str, api_key: str | None
 ) -> list[float]:
     headers = {} if not api_key else {"Authorization": f"Bearer {api_key}"}
-    with httpx.Client() as client:
+    with httpx.Client(timeout=httpx.Timeout(os.getenv("HTTPX_TIMEOUT", 10))) as client:
         response = client.post(
             api_url,
             json={

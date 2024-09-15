@@ -204,7 +204,7 @@ class VespaIndex(DocumentIndex):
         # indexing / updates / deletes since we have to make a large volume of requests.
         with (
             concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor,
-            httpx.Client(http2=True) as http_client,
+            httpx.Client(http2=True, timeout=httpx.Timeout(os.getenv("HTTPX_TIMEOUT", 10))) as http_client,
         ):
             # Check for existing documents, existing documents need to have all of their chunks deleted
             # prior to indexing as the document size (num chunks) may have shrunk
@@ -268,7 +268,7 @@ class VespaIndex(DocumentIndex):
         # indexing / updates / deletes since we have to make a large volume of requests.
         with (
             concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor,
-            httpx.Client(http2=True) as http_client,
+            httpx.Client(http2=True, timeout=httpx.Timeout(os.getenv("HTTPX_TIMEOUT", 10))) as http_client,
         ):
             for update_batch in batch_generator(updates, batch_size):
                 future_to_document_id = {
@@ -384,7 +384,7 @@ class VespaIndex(DocumentIndex):
 
         # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficial for
         # indexing / updates / deletes since we have to make a large volume of requests.
-        with httpx.Client(http2=True) as http_client:
+        with httpx.Client(http2=True, timeout=httpx.Timeout(os.getenv("HTTPX_TIMEOUT", 10))) as http_client:
             index_names = [self.index_name]
             if self.secondary_index_name:
                 index_names.append(self.secondary_index_name)
