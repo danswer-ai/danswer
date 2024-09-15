@@ -20,7 +20,8 @@ export function AccessTypeForm({
 }: {
   connector: ConfigurableSources;
 }) {
-  const [field, meta, helpers] = useField<AccessType>("access_type");
+  const [access_type, meta, access_type_helpers] =
+    useField<AccessType>("access_type");
 
   const isAutoSyncSupported = isValidAutoSyncSource(connector);
 
@@ -57,12 +58,14 @@ export function AccessTypeForm({
 
       <DefaultDropdown
         options={options}
-        selected={field.value}
-        onSelect={(selected) => helpers.setValue(selected as AccessType)}
+        selected={access_type.value}
+        onSelect={(selected) =>
+          access_type_helpers.setValue(selected as AccessType)
+        }
         includeDefault={false}
       />
 
-      {field.value === "sync" && isAutoSyncSupported && (
+      {access_type.value === "sync" && isAutoSyncSupported && (
         <div className="mt-6">
           <AutoSyncOptions connectorType={connector as ValidAutoSyncSources} />
         </div>

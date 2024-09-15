@@ -36,6 +36,7 @@ import {
 } from "./pages/utils/hooks";
 import { Formik } from "formik";
 import { AccessTypeForm } from "@/components/admin/connectors/AccessTypeForm";
+import { AccessTypeGroupSelector } from "@/components/admin/connectors/AccessTypeGroupSelector";
 import NavigationRow from "./NavigationRow";
 
 export interface AdvancedConfig {
@@ -429,6 +430,7 @@ export default function AddConnector({
                 />
 
                 <AccessTypeForm connector={connector} />
+                <AccessTypeGroupSelector />
               </Card>
             )}
 
