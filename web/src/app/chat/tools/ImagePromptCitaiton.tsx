@@ -48,7 +48,7 @@ const DualPromptDisplay = forwardRef<HTMLDivElement, PromptDisplayProps>(
           onMouseDown={() => copyToClipboard(prompt, index)}
           className="flex mt-2 text-sm cursor-pointer items-center justify-center py-2 px-3 border border-background-200 bg-inverted text-text-900 rounded-full hover:bg-background-100 transition duration-200"
         >
-          {copied != null ? (
+          {copied == index ? (
             <>
               <FiCheck className="mr-2" size={16} />
               Copied!

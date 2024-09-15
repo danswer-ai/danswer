@@ -4,7 +4,7 @@ from danswer.llm.utils import build_content_with_imgs
 
 
 IMG_GENERATION_SUMMARY_PROMPT = """
-You have just created the attached images in response to the following query: "{query}".
+You have just created the most recent attached images in response to the following query: "{query}".
 
 Can you please summarize them in a sentence or two? Do NOT include image urls or bulleted lists.
 """

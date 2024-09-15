@@ -49,7 +49,10 @@ def default_build_user_message(
         else user_query
     )
     if previous_tool_calls > 0:
-        user_prompt = f"You have already generated the above but remember the query is: `{user_prompt}`"
+        user_prompt = (
+            f"You have already generated the above so do not call a tool if not necessary. "
+            f"Remember the query is: `{user_prompt}`"
+        )
 
     user_prompt = user_prompt.strip()
     user_msg = HumanMessage(

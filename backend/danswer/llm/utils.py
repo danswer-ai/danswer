@@ -139,7 +139,9 @@ def translate_danswer_msg_to_langchain(
     wrapped_content = ""
     if msg.message_type == MessageType.ASSISTANT:
         try:
-            parsed_content = json.loads(content)
+            parsed_content = (
+                json.loads(content) if isinstance(content, str) else content
+            )
             if (
                 "name" in parsed_content
                 and parsed_content["name"] == "run_image_generation"
@@ -157,9 +159,9 @@ def translate_danswer_msg_to_langchain(
                     wrapped_content += f"  Image URL: {img['url']}\n\n"
                 wrapped_content += "[/AI IMAGE GENERATION RESPONSE]"
             else:
-                wrapped_content = content
+                wrapped_content = str(content)
         except json.JSONDecodeError:
-            wrapped_content = content
+            wrapped_content = str(content)
         return AIMessage(content=wrapped_content)
 
     if msg.message_type == MessageType.USER:

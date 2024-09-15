@@ -143,7 +143,6 @@ export const AIMessage = ({
   files,
   selectedDocuments,
   query,
-  personaName,
   citedDocuments,
   toolCall,
   isComplete,
@@ -175,7 +174,6 @@ export const AIMessage = ({
   content: string | JSX.Element;
   files?: FileDescriptor[];
   query?: string;
-  personaName?: string;
   citedDocuments?: [string, DanswerDocument][] | null;
   toolCall?: ToolCallMetadata | null;
   isComplete?: boolean;
@@ -191,6 +189,7 @@ export const AIMessage = ({
   setPopup?: (popupSpec: PopupSpec | null) => void;
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
   const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
     if (typeof content !== "string") {
@@ -214,8 +213,9 @@ export const AIMessage = ({
       }
     }
     if (
+      isComplete &&
       toolCall?.tool_result &&
-      toolCall.tool_result.tool_name == INTERNET_SEARCH_TOOL_NAME
+      toolCall.tool_name == IMAGE_GENERATION_TOOL_NAME
     ) {
       return content + ` [${toolCall.tool_name}]()`;
     }
@@ -225,6 +225,7 @@ export const AIMessage = ({
   const finalContent = processContent(content as string);
 
   const [isRegenerateHovered, setIsRegenerateHovered] = useState(false);
+
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
 
   const settings = useContext(SettingsContext);
@@ -413,7 +414,10 @@ export const AIMessage = ({
                                     return (
                                       <Popover
                                         open={isPopoverOpen}
-                                        onOpenChange={() => null} // only allow closing from the icon
+                                        onOpenChange={
+                                          () => null
+                                          // setIsPopoverOpen(isPopoverOpen => !isPopoverOpen)
+                                        } // only allow closing from the icon
                                         content={
                                           <button
                                             onMouseDown={() => {

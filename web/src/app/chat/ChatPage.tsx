@@ -1272,6 +1272,8 @@ export function ChatPage({
             }
 
             if (Object.hasOwn(packet, "user_message_id")) {
+              debugger;
+
               let newParentMessageId = dynamicParentMessage.messageId;
               const messageResponseIDInfo = packet as MessageResponseIDInfo;
 
@@ -1325,6 +1327,8 @@ export function ChatPage({
               dynamicAssistantMessage.retrievalType = RetrievalType.Search;
               retrievalType = RetrievalType.Search;
             } else if (Object.hasOwn(packet, "tool_name")) {
+              debugger;
+
               dynamicAssistantMessage.toolCall = {
                 tool_name: (packet as ToolCallMetadata).tool_name,
                 tool_args: (packet as ToolCallMetadata).tool_args,
@@ -1405,6 +1409,15 @@ export function ChatPage({
                 });
               };
 
+              console.log("\n-----");
+              console.log(
+                "dynamicParentMessage",
+                JSON.stringify(dynamicParentMessage)
+              );
+              console.log(
+                "dynamicAssistantMessage",
+                JSON.stringify(dynamicAssistantMessage)
+              );
               let { messageMap } = updateFn([
                 dynamicParentMessage,
                 dynamicAssistantMessage,
@@ -2225,7 +2238,6 @@ export function ChatPage({
                                       query={
                                         messageHistory[i]?.query || undefined
                                       }
-                                      personaName={liveAssistant.name}
                                       citedDocuments={getCitedDocumentsFromMessage(
                                         message
                                       )}
@@ -2337,7 +2349,6 @@ export function ChatPage({
                                     <AIMessage
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
-                                      personaName={liveAssistant.name}
                                       content={
                                         <p className="text-red-700 text-sm my-auto">
                                           {message.message}
@@ -2385,7 +2396,6 @@ export function ChatPage({
                                     alternativeAssistant
                                   }
                                   messageId={null}
-                                  personaName={liveAssistant.name}
                                   content={
                                     <div
                                       key={"Generating"}
@@ -2405,7 +2415,6 @@ export function ChatPage({
                                 <AIMessage
                                   currentPersona={liveAssistant}
                                   messageId={-1}
-                                  personaName={liveAssistant.name}
                                   content={
                                     <p className="text-red-700 text-sm my-auto">
                                       {loadingError}

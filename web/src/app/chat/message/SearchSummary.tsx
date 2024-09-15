@@ -203,7 +203,6 @@ export function SearchSummary({
             target="_blank"
             className="line-clamp-1 text-text-900"
           >
-            {/* <Citation link={doc.link} index={ind + 1} /> */}
             <p className="shrink truncate ellipsis break-all ">
               {doc.semantic_identifier || doc.document_id}
             </p>
@@ -239,6 +238,16 @@ export function SearchSummary({
                 searchingForDisplay
               )}
             </div>
+
+            <button
+              className="my-auto invisible group-hover:visible transition-all duration-300 rounded"
+              onClick={toggleDropdown}
+            >
+              <ChevronDownIcon
+                className={`transform transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
             {handleSearchQueryEdit ? (
               <Tooltip delayDuration={1000} content={"Edit Search"}>
                 <button
@@ -251,17 +260,8 @@ export function SearchSummary({
                 </button>
               </Tooltip>
             ) : (
-              "Hi"
+              <></>
             )}
-
-            <button
-              className="my-auto invisible group-hover:visible transition-all duration-300 hover:bg-hover rounded"
-              onClick={toggleDropdown}
-            >
-              <ChevronDownIcon
-                className={`transform transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
-              />
-            </button>
           </>
         )}
       </div>

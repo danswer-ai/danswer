@@ -676,85 +676,10 @@ def stream_chat_message_objects(
         ai_message_files = None  # any files to associate with the AI message e.g. dall-e generated images
         dropped_indices = None
         tool_result = None
+        yielded_message_id_info = True
 
         for packet in answer.processed_streamed_output:
-            if isinstance(packet, ToolResponse):
-                if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
-                    (
-                        qa_docs_response,
-                        reference_db_search_docs,
-                        dropped_indices,
-                    ) = _handle_search_tool_response_summary(
-                        packet=packet,
-                        db_session=db_session,
-                        selected_search_docs=selected_db_search_docs,
-                        # Deduping happens at the last step to avoid harming quality by dropping content early on
-                        dedupe_docs=retrieval_options.dedupe_docs
-                        if retrieval_options
-                        else False,
-                    )
-                    yield qa_docs_response
-                elif packet.id == SECTION_RELEVANCE_LIST_ID:
-                    relevance_sections = packet.response
-
-                    if reference_db_search_docs is not None:
-                        llm_indices = relevant_sections_to_indices(
-                            relevance_sections=relevance_sections,
-                            items=[
-                                translate_db_search_doc_to_server_search_doc(doc)
-                                for doc in reference_db_search_docs
-                            ],
-                        )
-
-                        if dropped_indices:
-                            llm_indices = drop_llm_indices(
-                                llm_indices=llm_indices,
-                                search_docs=reference_db_search_docs,
-                                dropped_indices=dropped_indices,
-                            )
-
-                        yield LLMRelevanceFilterResponse(
-                            llm_selected_doc_indices=llm_indices
-                        )
-
-                elif packet.id == FINAL_CONTEXT_DOCUMENTS_ID:
-                    yield FinalUsedContextDocsResponse(
-                        final_context_docs=packet.response
-                    )
-                elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
-                    img_generation_response = cast(
-                        list[ImageGenerationResponse], packet.response
-                    )
-
-                    file_ids = save_files_from_urls(
-                        [img.url for img in img_generation_response]
-                    )
-                    ai_message_files = [
-                        FileDescriptor(id=str(file_id), type=ChatFileType.IMAGE)
-                        for file_id in file_ids
-                    ]
-                    yield ImageGenerationDisplay(
-                        file_ids=[str(file_id) for file_id in file_ids]
-                    )
-                elif packet.id == INTERNET_SEARCH_RESPONSE_ID:
-                    (
-                        qa_docs_response,
-                        reference_db_search_docs,
-                    ) = _handle_internet_search_tool_response_summary(
-                        packet=packet,
-                        db_session=db_session,
-                    )
-                    yield qa_docs_response
-                elif packet.id == CUSTOM_TOOL_RESPONSE_ID:
-                    custom_tool_response = cast(CustomToolCallSummary, packet.response)
-                    yield CustomToolResponse(
-                        response=custom_tool_response.tool_result,
-                        tool_name=custom_tool_response.tool_name,
-                    )
-            elif isinstance(packet, StreamStopInfo):
-                print("PACKET IS ENINDG")
-                print(packet)
-
+            if isinstance(packet, StreamStopInfo):
                 if packet.stop_reason is not StreamStopReason.NEW_RESPONSE:
                     break
 
@@ -786,7 +711,9 @@ def stream_chat_message_objects(
                     reference_docs=reference_db_search_docs,
                     files=ai_message_files,
                     token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-                    citations=db_citations.citation_map if db_citations else None,
+                    citations=(
+                        db_citations.citation_map if db_citations is not None else None
+                    ),
                     error=None,
                     tool_call=tool_call,
                 )
@@ -806,11 +733,7 @@ def stream_chat_message_objects(
                     else gen_ai_response_message.id,
                     message_type=MessageType.ASSISTANT,
                 )
-
-                yield MessageResponseIDInfo(
-                    user_message_id=gen_ai_response_message.id,
-                    reserved_assistant_message_id=reserved_message_id,
-                )
+                yielded_message_id_info = False
 
                 partial_response = partial(
                     create_new_chat_message,
@@ -824,10 +747,94 @@ def stream_chat_message_objects(
                     commit=False,
                 )
                 reference_db_search_docs = None
+
             else:
-                if isinstance(packet, ToolCallFinalResult):
-                    tool_result = packet
-                yield cast(ChatPacket, packet)
+                if not yielded_message_id_info:
+                    yield MessageResponseIDInfo(
+                        user_message_id=gen_ai_response_message.id,
+                        reserved_assistant_message_id=reserved_message_id,
+                    )
+                    yielded_message_id_info = True
+
+                if isinstance(packet, ToolResponse):
+                    if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
+                        (
+                            qa_docs_response,
+                            reference_db_search_docs,
+                            dropped_indices,
+                        ) = _handle_search_tool_response_summary(
+                            packet=packet,
+                            db_session=db_session,
+                            selected_search_docs=selected_db_search_docs,
+                            # Deduping happens at the last step to avoid harming quality by dropping content early on
+                            dedupe_docs=retrieval_options.dedupe_docs
+                            if retrieval_options
+                            else False,
+                        )
+                        yield qa_docs_response
+                    elif packet.id == SECTION_RELEVANCE_LIST_ID:
+                        relevance_sections = packet.response
+
+                        if reference_db_search_docs is not None:
+                            llm_indices = relevant_sections_to_indices(
+                                relevance_sections=relevance_sections,
+                                items=[
+                                    translate_db_search_doc_to_server_search_doc(doc)
+                                    for doc in reference_db_search_docs
+                                ],
+                            )
+
+                            if dropped_indices:
+                                llm_indices = drop_llm_indices(
+                                    llm_indices=llm_indices,
+                                    search_docs=reference_db_search_docs,
+                                    dropped_indices=dropped_indices,
+                                )
+
+                            yield LLMRelevanceFilterResponse(
+                                llm_selected_doc_indices=llm_indices
+                            )
+
+                    elif packet.id == FINAL_CONTEXT_DOCUMENTS_ID:
+                        yield FinalUsedContextDocsResponse(
+                            final_context_docs=packet.response
+                        )
+                    elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
+                        img_generation_response = cast(
+                            list[ImageGenerationResponse], packet.response
+                        )
+
+                        file_ids = save_files_from_urls(
+                            [img.url for img in img_generation_response]
+                        )
+                        ai_message_files = [
+                            FileDescriptor(id=str(file_id), type=ChatFileType.IMAGE)
+                            for file_id in file_ids
+                        ]
+                        yield ImageGenerationDisplay(
+                            file_ids=[str(file_id) for file_id in file_ids]
+                        )
+                    elif packet.id == INTERNET_SEARCH_RESPONSE_ID:
+                        (
+                            qa_docs_response,
+                            reference_db_search_docs,
+                        ) = _handle_internet_search_tool_response_summary(
+                            packet=packet,
+                            db_session=db_session,
+                        )
+                        yield qa_docs_response
+                    elif packet.id == CUSTOM_TOOL_RESPONSE_ID:
+                        custom_tool_response = cast(
+                            CustomToolCallSummary, packet.response
+                        )
+                        yield CustomToolResponse(
+                            response=custom_tool_response.tool_result,
+                            tool_name=custom_tool_response.tool_name,
+                        )
+                else:
+                    if isinstance(packet, ToolCallFinalResult):
+                        tool_result = packet
+                    yield cast(ChatPacket, packet)
 
         logger.debug("Reached end of stream")
     except Exception as e:
@@ -855,6 +862,10 @@ def stream_chat_message_objects(
             )
             yield AllCitations(citations=answer.citations)
 
+        if answer.llm_answer == "":
+            return
+
+        # print(answer.llm_answer)
         gen_ai_response_message = partial_response(
             reserved_message_id=reserved_message_id,
             message=answer.llm_answer,
