@@ -752,6 +752,8 @@ def stream_chat_message_objects(
                         tool_name=custom_tool_response.tool_name,
                     )
             elif isinstance(packet, StreamStopInfo):
+                print("PACKET IS ENINDG")
+                print(packet)
                 if packet.stop_reason is not StreamStopReason.NEW_RESPONSE:
                     break
 

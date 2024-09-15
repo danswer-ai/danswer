@@ -22,7 +22,7 @@ INTENT_MODEL_VERSION = "danswer/hybrid-intent-token-classifier"
 INTENT_MODEL_TAG = "v1.0.3"
 
 # Tool call configs
-MAX_TOOL_CALLS = 2
+MAX_TOOL_CALLS = 3
 
 # Bi-Encoder, other details
 DOC_EMBEDDING_CONTEXT_SIZE = 512

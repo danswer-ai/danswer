@@ -36,7 +36,10 @@ def default_build_system_message(
 
 
 def default_build_user_message(
-    user_query: str, prompt_config: PromptConfig, files: list[InMemoryChatFile] = []
+    user_query: str,
+    prompt_config: PromptConfig,
+    files: list[InMemoryChatFile] = [],
+    previous_tool_calls: int = 0,
 ) -> HumanMessage:
     user_prompt = (
         CHAT_USER_CONTEXT_FREE_PROMPT.format(
@@ -45,6 +48,9 @@ def default_build_user_message(
         if prompt_config.task_prompt
         else user_query
     )
+    if previous_tool_calls > 0:
+        user_prompt = f"You have already generated the above but remember the query is: `{user_prompt}`"
+
     user_prompt = user_prompt.strip()
     user_msg = HumanMessage(
         content=build_content_with_imgs(user_prompt, files) if files else user_prompt
