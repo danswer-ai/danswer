@@ -11,8 +11,10 @@ from ee.danswer.db.standard_answer import fetch_standard_answers
 from ee.danswer.db.standard_answer import insert_standard_answer
 from ee.danswer.db.standard_answer import remove_standard_answer
 from ee.danswer.db.standard_answer import update_standard_answer
-from ee.danswer.server.manage.models import StandardAnswer
-from ee.danswer.server.manage.models import StandardAnswerCreationRequest
+from ee.danswer.server.features.standard_answer.models import StandardAnswer
+from ee.danswer.server.features.standard_answer.models import (
+    StandardAnswerCreationRequest,
+)
 
 router = APIRouter(prefix="/manage")
 

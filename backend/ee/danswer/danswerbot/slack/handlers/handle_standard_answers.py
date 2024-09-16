@@ -25,7 +25,9 @@ from danswer.utils.logger import DanswerLoggingAdapter
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.standard_answer import fetch_standard_answers
 from ee.danswer.db.standard_answer import find_matching_standard_answers
-from ee.danswer.server.manage.models import StandardAnswer as PydanticStandardAnswer
+from ee.danswer.server.features.standard_answer.models import (
+    StandardAnswer as PydanticStandardAnswer,
+)
 
 logger = setup_logger()
 
