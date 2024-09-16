@@ -145,6 +145,10 @@ def create_deletion_attempt_for_connector_id(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    # from danswer.background.celery.tasks.connector_deletion.tasks import (
+    #     cleanup_connector_credential_pair_task,
+    # )
+
     from danswer.background.celery.celery_app import (
         cleanup_connector_credential_pair_task,
     )
@@ -191,7 +195,14 @@ def create_deletion_attempt_for_connector_id(
         cc_pair_id=cc_pair.id,
         status=ConnectorCredentialPairStatus.DELETING,
     )
+
     # actually kick off the deletion
+
+    # TODO: will switch to send_task after the wrapper stuff around the task is obsolete
+    # celery_app.send_task("cleanup_connector_credential_pair_task",
+    #     kwargs=dict(connector_id=connector_id, credential_id=credential_id),
+    # )
+
     cleanup_connector_credential_pair_task.apply_async(
         kwargs=dict(connector_id=connector_id, credential_id=credential_id),
     )

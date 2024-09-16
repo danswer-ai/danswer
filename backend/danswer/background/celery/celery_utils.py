@@ -15,11 +15,8 @@ from danswer.connectors.interfaces import IdConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import Document
-from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.engine import get_db_current_time
-from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import Connector
-from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
 from danswer.db.models import TaskQueueState
 from danswer.db.tasks import check_task_is_live_and_not_timed_out
@@ -52,31 +49,6 @@ def get_deletion_attempt_snapshot(
         credential_id=credential_id,
         status=deletion_task.status,
     )
-
-
-def should_kick_off_deletion_of_cc_pair(
-    cc_pair: ConnectorCredentialPair, db_session: Session
-) -> bool:
-    if cc_pair.status != ConnectorCredentialPairStatus.DELETING:
-        return False
-
-    if check_deletion_attempt_is_allowed(cc_pair, db_session):
-        return False
-
-    deletion_task = _get_deletion_status(
-        connector_id=cc_pair.connector_id,
-        credential_id=cc_pair.credential_id,
-        db_session=db_session,
-    )
-    if deletion_task and check_task_is_live_and_not_timed_out(
-        deletion_task,
-        db_session,
-        # 1 hour timeout
-        timeout=60 * 60,
-    ):
-        return False
-
-    return True
 
 
 def should_prune_cc_pair(
