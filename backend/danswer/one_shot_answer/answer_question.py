@@ -115,7 +115,6 @@ def stream_answer_objects(
         db_session=db_session,
         description="",  # One shot queries don't need naming as it's never displayed
         user_id=user_id,
-        # TODO fix this - should not store? Or add a new default value (-3) for custom?
         persona_id=query_req.persona_id,
         one_shot=True,
         danswerbot_flow=danswerbot_flow,
