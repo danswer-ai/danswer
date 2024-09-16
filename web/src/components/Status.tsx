@@ -80,6 +80,12 @@ export function CCPairStatus({
         <CirclePause size={14} className="mr-0.5" /> Paused
       </Badge>
     );
+  } else if (status == "in_progress") {
+    badge = (
+      <Badge variant="secondary">
+        <CirclePause size={14} className="mr-0.5" /> In Progress
+      </Badge>
+    );
   } else if (status === "failed") {
     badge = (
       <Badge variant="destructive">
