@@ -271,7 +271,7 @@ export function SearchSummary({
           className={`mt-2 -mx-8 w-full mb-4 flex relative transition-all duration-300 ${isDropdownOpen ? "opacity-100 max-h-[1000px]" : "opacity-0 max-h-0"}`}
         >
           <div className="w-full">
-            <div className="mx-8 flex rounded overflow-hidden rounded-lg border-1.5 border  divide-y divider-y-1.5 divider-y-border border-border flex-col gap-x-4">
+            <div className="mx-8 flex rounded  max-h-[500px] overflow-y-scroll rounded-lg border-1.5 border  divide-y divider-y-1.5 divider-y-border border-border flex-col gap-x-4">
               {!settings?.isMobile &&
                 filteredDocs.length > 0 &&
                 filteredDocs.map((doc, ind) => (
