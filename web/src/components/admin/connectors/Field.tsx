@@ -89,7 +89,7 @@ export function TextFormField({
       <div className="grid leading-none">
         <ShadcnLabel
           htmlFor={label}
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed"
+          className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
         >
           {label}
         </ShadcnLabel>

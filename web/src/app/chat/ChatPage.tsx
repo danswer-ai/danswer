@@ -1063,7 +1063,7 @@ export function ChatPage({
 
   const toggleSidebar = () => {
     if (sidebarElementRef.current) {
-      sidebarElementRef.current.style.transition = "width 0.3s ease-in-out";
+      sidebarElementRef.current.style.transition = "all 0.3s ease-in-out";
 
       sidebarElementRef.current.style.width = showDocSidebar ? "300px" : "0px";
     }
@@ -1566,6 +1566,7 @@ export function ChatPage({
                                   <div className="my-auto text-sm flex flex-col gap-1">
                                     <Skeleton className="h-5 w-full" />
                                     <Skeleton className="h-5 w-full" />
+                                    <Skeleton className="h-5 w-1/2" />
                                   </div>
                                 }
                               />
@@ -1642,7 +1643,9 @@ export function ChatPage({
 
                       <div
                         ref={sidebarElementRef}
-                        className="fixed 2xl:relative top-0 right-0 z-overlay bg-background  flex-none overflow-y-hidden h-full"
+                        className={`fixed 2xl:relative top-0 right-0 z-overlay bg-background  flex-none overflow-y-hidden h-full ${
+                          showDocSidebar ? "translate-x-0" : "translate-x-full"
+                        }`}
                         style={{
                           width: showDocSidebar
                             ? Math.max(350, usedSidebarWidth)

@@ -160,6 +160,7 @@ export const AIMessage = ({
     <div className="my-auto text-sm flex flex-col gap-1">
       <Skeleton className="h-5 w-full" />
       <Skeleton className="h-5 w-full" />
+      <Skeleton className="h-5 w-3/4" />
     </div>
   ) : undefined;
 

@@ -39,7 +39,7 @@ function CheckboxComponent({
       <div className="grid leading-none">
         <ShadcnLabel
           htmlFor={label}
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
           {label}
         </ShadcnLabel>
@@ -64,7 +64,14 @@ export function Selector({
 }) {
   return (
     <div className="mb-8">
-      {label && <Label>{label}</Label>}
+      {label && (
+        <ShadcnLabel
+          htmlFor={label}
+          className="font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          {label}
+        </ShadcnLabel>
+      )}
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <div className="mt-2 w-full max-w-96">
@@ -104,7 +111,13 @@ function IntegerInput({
 }) {
   return (
     <label className="flex flex-col text-sm mb-4">
-      <Label>{label}</Label>
+      <ShadcnLabel
+        htmlFor={label}
+        className="font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+      >
+        {label}
+      </ShadcnLabel>
+
       <SubLabel>{sublabel}</SubLabel>
       <Input
         type="number"
@@ -207,7 +220,7 @@ export function SettingsForm() {
 
   return (
     <div>
-      <Title className="mb-4">Page Visibility</Title>
+      <h3 className="mb-4 font-semibold">Page Visibility</h3>
 
       <CheckboxComponent
         label="Search Page Enabled?"
@@ -261,7 +274,7 @@ export function SettingsForm() {
 
       {isEnterpriseEnabled && (
         <>
-          <Title className="mb-4">Chat Settings</Title>
+          <h3 className="mb-4 font-semibold">Chat Settings</h3>
           <IntegerInput
             label="Chat Retention"
             sublabel="Enter the maximum number of days you would like enMedD AI to retain chat messages. Leaving this field empty will cause enMedD AI to never delete chat messages."

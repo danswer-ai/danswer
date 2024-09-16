@@ -188,7 +188,7 @@ function Main() {
 
       {currentModel ? (
         <>
-          <h3 className="mt-8 font-semibold text-xl pb-4">
+          <h3 className="mt-8 font-semibold text-lg pb-4">
             Current Embedding Model
           </h3>
 
@@ -200,7 +200,7 @@ function Main() {
         newModelSelection &&
         (!connectors || !connectors.length) && (
           <>
-            <h3 className="mt-8 font-semibold text-xl pb-4">
+            <h3 className="mt-8 font-semibold text-lg pb-4">
               Current Embedding Model
             </h3>
 
@@ -216,7 +216,7 @@ function Main() {
           <div>
             {currentModel ? (
               <>
-                <h3 className="mt-8 font-semibold text-xl pb-4">
+                <h3 className="mt-8 font-semibold text-lg pb-4">
                   Switch your Embedding Model
                 </h3>
 
@@ -232,7 +232,7 @@ function Main() {
               </>
             ) : (
               <>
-                <h3 className="mt-8 font-semibold text-xl pb-4">
+                <h3 className="mt-8 font-semibold text-lg pb-4">
                   Choose your Embedding Model
                 </h3>
               </>
