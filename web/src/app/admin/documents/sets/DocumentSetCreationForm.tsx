@@ -182,76 +182,74 @@ export const DocumentSetCreationForm = ({
               />
             </div>
 
-            {isPaidEnterpriseFeaturesEnabled &&
-              teamspaces &&
-              teamspaces.length > 0 && (
-                <div>
-                  <Divider />
+            {teamspaces && teamspaces.length > 0 && (
+              <div>
+                <Divider />
 
-                  <BooleanFormField
-                    name="is_public"
-                    label="Is Public?"
-                    subtext={
-                      <>
-                        If the document set is public, then it will be visible
-                        to <b>all users</b>. If it is not public, then only
-                        users in the specified teamspace will be able to see it.
-                      </>
-                    }
-                  />
-
-                  <Divider />
-                  <h2 className="mb-1 font-medium text-base">
-                    Teamspace with Access
-                  </h2>
-                  {!values.is_public ? (
+                <BooleanFormField
+                  name="is_public"
+                  label="Is Public?"
+                  subtext={
                     <>
-                      <p className="mb-3 text-subtle text-xs ">
-                        If any teamspace are specified, then this Document Set
-                        will only be visible to the specified teamspace. If no
-                        teamspace are specified, then the Document Set will be
-                        visible to all users.
-                      </p>
-                      <FieldArray
-                        name="groups"
-                        render={(arrayHelpers: ArrayHelpers) => (
-                          <div className="flex gap-2 flex-wrap">
-                            {teamspaces.map((teamspace) => {
-                              const ind = values.groups.indexOf(teamspace.id);
-                              let isSelected = ind !== -1;
-                              return (
-                                <Badge
-                                  key={teamspace.id}
-                                  variant={isSelected ? "default" : "outline"}
-                                  className="cursor-pointer hover:bg-opacity-80"
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      arrayHelpers.remove(ind);
-                                    } else {
-                                      arrayHelpers.push(teamspace.id);
-                                    }
-                                  }}
-                                >
-                                  <div className="my-auto flex">
-                                    <FiUsers className="my-auto mr-2" />{" "}
-                                    {teamspace.name}
-                                  </div>
-                                </Badge>
-                              );
-                            })}
-                          </div>
-                        )}
-                      />
+                      If the document set is public, then it will be visible to{" "}
+                      <b>all users</b>. If it is not public, then only users in
+                      the specified teamspace will be able to see it.
                     </>
-                  ) : (
-                    <p className="text-sm text-subtle">
-                      This Document Set is public, so this does not apply. If
-                      you want to control which teamspace see this Document Set,
-                      mark it as non-public!
+                  }
+                />
+
+                <Divider />
+                <h2 className="mb-1 font-medium text-base">
+                  Teamspace with Access
+                </h2>
+                {!values.is_public ? (
+                  <>
+                    <p className="mb-3 text-subtle text-xs ">
+                      If any teamspace are specified, then this Document Set
+                      will only be visible to the specified teamspace. If no
+                      teamspace are specified, then the Document Set will be
+                      visible to all users.
                     </p>
-                  )}
-                </div>
-              )}
+                    <FieldArray
+                      name="groups"
+                      render={(arrayHelpers: ArrayHelpers) => (
+                        <div className="flex gap-2 flex-wrap">
+                          {teamspaces.map((teamspace) => {
+                            const ind = values.groups.indexOf(teamspace.id);
+                            let isSelected = ind !== -1;
+                            return (
+                              <Badge
+                                key={teamspace.id}
+                                variant={isSelected ? "default" : "outline"}
+                                className="cursor-pointer hover:bg-opacity-80"
+                                onClick={() => {
+                                  if (isSelected) {
+                                    arrayHelpers.remove(ind);
+                                  } else {
+                                    arrayHelpers.push(teamspace.id);
+                                  }
+                                }}
+                              >
+                                <div className="my-auto flex">
+                                  <FiUsers className="my-auto mr-2" />{" "}
+                                  {teamspace.name}
+                                </div>
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      )}
+                    />
+                  </>
+                ) : (
+                  <p className="text-sm text-subtle">
+                    This Document Set is public, so this does not apply. If you
+                    want to control which teamspace see this Document Set, mark
+                    it as non-public!
+                  </p>
+                )}
+              </div>
+            )}
             <div className="flex mt-6">
               <Button
                 type="submit"
