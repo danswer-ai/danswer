@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.db.models import StandardAnswer
+from danswer.db.persona import get_personas_by_ids
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -17,8 +18,16 @@ def insert_standard_answer(
     match_regex: bool,
     match_any_keywords: bool,
     apply_globally: bool,
+    persona_ids: list[int],
     db_session: Session,
 ) -> StandardAnswer:
+    existing_personas = get_personas_by_ids(
+        persona_ids=persona_ids,
+        db_session=db_session,
+    )
+    if len(existing_personas) != len(persona_ids):
+        raise ValueError(f"Some or all personas with ids {persona_ids} do not exist")
+
     standard_answer = StandardAnswer(
         keyword=keyword,
         answer=answer,
@@ -26,6 +35,7 @@ def insert_standard_answer(
         match_regex=match_regex,
         match_any_keywords=match_any_keywords,
         apply_globally=apply_globally,
+        personas=existing_personas,
     )
     db_session.add(standard_answer)
     db_session.commit()
@@ -39,6 +49,7 @@ def update_standard_answer(
     match_regex: bool,
     match_any_keywords: bool,
     apply_globally: bool,
+    persona_ids: list[int],
     db_session: Session,
 ) -> StandardAnswer:
     standard_answer = db_session.scalar(
@@ -47,11 +58,19 @@ def update_standard_answer(
     if standard_answer is None:
         raise ValueError(f"No standard answer with id {standard_answer_id}")
 
+    existing_personas = get_personas_by_ids(
+        persona_ids=persona_ids,
+        db_session=db_session,
+    )
+    if len(existing_personas) != len(persona_ids):
+        raise ValueError(f"Some or all personas with ids {persona_ids} do not exist")
+
     standard_answer.keyword = keyword
     standard_answer.answer = answer
     standard_answer.match_regex = match_regex
     standard_answer.match_any_keywords = match_any_keywords
     standard_answer.apply_globally = apply_globally
+    standard_answer.personas = list(existing_personas)
 
     db_session.commit()
 

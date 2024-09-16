@@ -158,6 +158,7 @@ export interface StandardAnswer {
   match_regex: boolean;
   match_any_keywords: boolean;
   apply_globally: boolean;
+  personas: Persona[];
 }
 
 // SLACK BOT CONFIGS

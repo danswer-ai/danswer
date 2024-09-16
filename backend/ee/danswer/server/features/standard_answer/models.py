@@ -4,7 +4,8 @@ from typing import Any
 from pydantic import BaseModel
 from pydantic import model_validator
 
-from danswer.db.models import StandardAnswer as StandardAnswerModel
+from danswer.db.models import StandardAnswer as DbStandardAnswer
+from danswer.server.features.persona.models import PersonaSnapshot
 
 
 class StandardAnswer(BaseModel):
@@ -13,15 +14,22 @@ class StandardAnswer(BaseModel):
     answer: str
     match_regex: bool
     match_any_keywords: bool
+    apply_globally: bool
+    personas: list[PersonaSnapshot] | None
 
     @classmethod
-    def from_model(cls, standard_answer_model: StandardAnswerModel) -> "StandardAnswer":
+    def from_model(cls, standard_answer_model: DbStandardAnswer) -> "StandardAnswer":
         return cls(
             id=standard_answer_model.id,
             keyword=standard_answer_model.keyword,
             answer=standard_answer_model.answer,
             match_regex=standard_answer_model.match_regex,
             match_any_keywords=standard_answer_model.match_any_keywords,
+            apply_globally=standard_answer_model.apply_globally,
+            personas=[
+                PersonaSnapshot.from_model(persona)
+                for persona in standard_answer_model.personas
+            ],
         )
 
 
@@ -31,6 +39,23 @@ class StandardAnswerCreationRequest(BaseModel):
     match_regex: bool
     match_any_keywords: bool
     apply_globally: bool
+    personas: list[int]
+
+    @model_validator(mode="after")
+    def validate_personas(self) -> any:
+        personas_specified = len(self.personas) > 0
+
+        if personas_specified and self.apply_globally:
+            raise ValueError(
+                "A standard answer can watch for all messages or for messages on one or more assistants, not both"
+            )
+
+        if not self.apply_globally and not personas_specified:
+            raise ValueError(
+                "No message watchers specified: choose at least one assistant or turn on watching for all messages"
+            )
+
+        return self
 
     @model_validator(mode="after")
     def validate_only_match_any_if_not_regex(self) -> Any:

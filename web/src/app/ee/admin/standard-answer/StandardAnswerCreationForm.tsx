@@ -17,7 +17,6 @@ import {
   BooleanFormField,
   SelectorFormField,
 } from "@/components/admin/connectors/Field";
-import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 
 function mapKeywordSelectToMatchAny(keywordSelect: "any" | "all"): boolean {
   return keywordSelect == "any";
@@ -57,6 +56,9 @@ export const StandardAnswerCreationForm = ({
             applyGlobally: existingStandardAnswer
               ? existingStandardAnswer.apply_globally
               : false,
+            personas: existingStandardAnswer
+              ? existingStandardAnswer.personas
+              : [],
           }}
           validationSchema={Yup.object().shape({
             keyword: Yup.string()
@@ -73,6 +75,7 @@ export const StandardAnswerCreationForm = ({
               matchAnyKeywords: mapKeywordSelectToMatchAny(
                 values.matchAnyKeywords
               ),
+              personas: values.personas.map((persona) => persona.id),
             };
 
             let response;
@@ -151,6 +154,21 @@ export const StandardAnswerCreationForm = ({
                   onSelect={(selected) => {
                     setFieldValue("matchAnyKeywords", selected);
                   }}
+                />
+              )}
+              {values.matchRegex ? (
+                <BooleanFormField
+                  subtext="Attempt to match the above regex pattern against every user question Danswer receives from users in your instance"
+                  optional
+                  label="Watch every question"
+                  name="applyGlobally"
+                />
+              ) : (
+                <BooleanFormField
+                  subtext="Attempt to match the above keywords against every question Danswer receives from users in your instance "
+                  optional
+                  label="Watch every message"
+                  name="applyGlobally"
                 />
               )}
               <div className="w-full">

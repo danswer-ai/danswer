@@ -37,15 +37,23 @@ const RowTemplate = ({
   entries,
 }: {
   id: number;
-  entries: [Displayable, Displayable, Displayable, Displayable, Displayable];
+  entries: [
+    Displayable,
+    Displayable,
+    Displayable,
+    Displayable,
+    Displayable,
+    Displayable,
+  ];
 }) => {
   return (
     <TableRow key={id}>
       <TableCell className="w-1/24">{entries[0]}</TableCell>
       <TableCell className="w-2/12">{entries[1]}</TableCell>
       <TableCell className="w-1/24">{entries[2]}</TableCell>
-      <TableCell className="w-7/12 overflow-auto">{entries[3]}</TableCell>
-      <TableCell className="w-1/24">{entries[4]}</TableCell>
+      <TableCell className="w-1/24">{entries[3]}</TableCell>
+      <TableCell className="w-7/12 overflow-auto">{entries[4]}</TableCell>
+      <TableCell className="w-1/24">{entries[5]}</TableCell>
     </TableRow>
   );
 };
@@ -76,6 +84,9 @@ const StandardAnswersTableRow = ({
           key={`match_regex-${standardAnswer.id}`}
           checked={standardAnswer.match_regex}
         />,
+        <ReactMarkdown key={`watch_mode-${standardAnswer.id}`}>
+          {standardAnswer.apply_globally ? "All questions" : "X Assistants"}
+        </ReactMarkdown>,
         <ReactMarkdown
           key={`answer-${standardAnswer.id}`}
           className="prose"
@@ -110,13 +121,21 @@ const StandardAnswersTable = ({
     { name: "", key: "edit" },
     { name: "Keywords/Pattern", key: "keyword" },
     { name: "Match regex?", key: "match_regex" },
+    { name: "Watching for", key: "apply_globally" },
     { name: "Answer", key: "answer" },
     { name: "", key: "delete" },
   ];
 
   const filteredStandardAnswers = standardAnswers.filter((standardAnswer) => {
-    const { answer, id, match_regex, match_any_keywords, ...fieldsToSearch } =
-      standardAnswer;
+    const {
+      answer,
+      id,
+      match_regex,
+      match_any_keywords,
+      apply_globally,
+      personas,
+      ...fieldsToSearch
+    } = standardAnswer;
     const cleanedQuery = query.toLowerCase();
     const searchMatch = Object.values(fieldsToSearch).some((value) => {
       return value.toLowerCase().includes(cleanedQuery);
@@ -200,7 +219,7 @@ const StandardAnswersTable = ({
                 />
               ))
             ) : (
-              <RowTemplate id={0} entries={["", "", "", "", ""]} />
+              <RowTemplate id={0} entries={["", "", "", "", "", ""]} />
             )}
           </TableBody>
         </Table>
