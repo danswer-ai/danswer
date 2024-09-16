@@ -33,11 +33,8 @@ export function ChatIntro({
             <h1 className="text-[1.5rem] md:text-[2.5rem] font-semibold leading-[1.2] tracking-tighter text-dark-900 text-center">
               {liveAssistant.name}
             </h1>
-            <div className="flex items-center gap-2">
-              <span className="text-subtle">By |</span>
-              <p className="text-dark-900">
-                {liveAssistant?.owner?.email || "enMedD AI"}
-              </p>
+            <div className="flex items-center gap-2 text-subtle">
+              By | {liveAssistant?.owner?.email || "enMedD AI"}
             </div>
             <p className="text-center text-dark-900 w-full md:w-3/4 line-clamp">
               {liveAssistant.description}
