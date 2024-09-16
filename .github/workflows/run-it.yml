@@ -1,7 +1,7 @@
 name: Run Integration Tests
 concurrency:
   group: Run-Integration-Tests-${{ github.head_ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 on:
   merge_group:
