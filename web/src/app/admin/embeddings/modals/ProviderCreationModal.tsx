@@ -75,7 +75,6 @@ export function ProviderCreationModal({
             "Failed to parse JSON file. Please ensure it's a valid JSON."
           );
         }
-        console.log(JSON.stringify(jsonContent));
         setFieldValue("api_key", JSON.stringify(jsonContent));
       } catch (error) {
         setFieldValue("api_key", "");
