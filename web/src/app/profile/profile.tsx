@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProfileTab from "./tabContent/profileTab";
 import SecurityTab from "./tabContent/securityTab";
 import { CreditCard, Link2, Lock, User, UserRoundPen } from "lucide-react";
+import BillingTab from "./tabContent/billingTab";
 
 export default function Profile({ user }: { user: UserTypes | null }) {
   return (
@@ -30,7 +31,7 @@ export default function Profile({ user }: { user: UserTypes | null }) {
           <SecurityTab user={user} />
         </TabsContent>
         <TabsContent value="billing">
-          <SecurityTab user={user} />
+          <BillingTab user={user} />
         </TabsContent>
       </Tabs>
     </div>
