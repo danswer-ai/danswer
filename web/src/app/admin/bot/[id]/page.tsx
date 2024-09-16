@@ -11,7 +11,6 @@ import {
   FetchAssistantsResponse,
   fetchAssistantsSS,
 } from "@/lib/assistants/fetchAssistantsSS";
-import { getStandardAnswerCategoriesIfEE } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
 
 async function Page({ params }: { params: { id: string } }) {
   const tasks = [
@@ -29,9 +28,6 @@ async function Page({ params }: { params: { id: string } }) {
     Response,
     FetchAssistantsResponse,
   ];
-
-  const eeStandardAnswerCategoryResponse =
-    await getStandardAnswerCategoriesIfEE();
 
   if (!slackBotsResponse.ok) {
     return (
@@ -92,7 +88,6 @@ async function Page({ params }: { params: { id: string } }) {
       <SlackBotCreationForm
         documentSets={documentSets}
         personas={assistants}
-        standardAnswerCategoryResponse={eeStandardAnswerCategoryResponse}
         existingSlackBotConfig={slackBotConfig}
       />
     </div>

@@ -5,24 +5,8 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { BackButton } from "@/components/BackButton";
 import { Text } from "@tremor/react";
 import { ClipboardIcon } from "@/components/icons/icons";
-import { StandardAnswerCategory } from "@/lib/types";
 
 async function Page() {
-  const standardAnswerCategoriesResponse = await fetchSS(
-    "/manage/admin/standard-answer/category"
-  );
-
-  if (!standardAnswerCategoriesResponse.ok) {
-    return (
-      <ErrorCallout
-        errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch standard answer categories - ${await standardAnswerCategoriesResponse.text()}`}
-      />
-    );
-  }
-  const standardAnswerCategories =
-    (await standardAnswerCategoriesResponse.json()) as StandardAnswerCategory[];
-
   return (
     <div className="container mx-auto">
       <BackButton />
@@ -31,9 +15,7 @@ async function Page() {
         icon={<ClipboardIcon size={32} />}
       />
 
-      <StandardAnswerCreationForm
-        standardAnswerCategories={standardAnswerCategories}
-      />
+      <StandardAnswerCreationForm />
     </div>
   );
 }

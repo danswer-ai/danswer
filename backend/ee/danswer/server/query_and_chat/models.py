@@ -14,7 +14,6 @@ from ee.danswer.server.manage.models import StandardAnswer
 
 class StandardAnswerRequest(BaseModel):
     message: str
-    slack_bot_categories: list[str]
 
 
 class StandardAnswerResponse(BaseModel):

@@ -24,18 +24,14 @@ import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import CollapsibleSection from "../assistants/CollapsibleSection";
-import { StandardAnswerCategoryResponse } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
-import { StandardAnswerCategoryDropdownField } from "@/components/standardAnswers/StandardAnswerCategoryDropdown";
 
 export const SlackBotCreationForm = ({
   documentSets,
   personas,
-  standardAnswerCategoryResponse,
   existingSlackBotConfig,
 }: {
   documentSets: DocumentSet[];
   personas: Persona[];
-  standardAnswerCategoryResponse: StandardAnswerCategoryResponse;
   existingSlackBotConfig?: SlackBotConfig;
 }) => {
   const isUpdate = existingSlackBotConfig !== undefined;
@@ -93,9 +89,6 @@ export const SlackBotCreationForm = ({
                 ? existingSlackBotConfig.persona.id
                 : knowledgePersona?.id ?? null,
             response_type: existingSlackBotConfig?.response_type || "citations",
-            standard_answer_categories: existingSlackBotConfig
-              ? existingSlackBotConfig.standard_answer_categories
-              : [],
           }}
           validationSchema={Yup.object().shape({
             channel_names: Yup.array().of(Yup.string()),
@@ -112,7 +105,6 @@ export const SlackBotCreationForm = ({
             follow_up_tags: Yup.array().of(Yup.string()),
             document_sets: Yup.array().of(Yup.number()),
             persona_id: Yup.number().nullable(),
-            standard_answer_categories: Yup.array(),
           })}
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
@@ -125,9 +117,6 @@ export const SlackBotCreationForm = ({
               ),
               respond_member_group_list: values.respond_member_group_list,
               usePersona: usingPersonas,
-              standard_answer_categories: values.standard_answer_categories.map(
-                (category) => category.id
-              ),
             };
             if (!cleanedValues.still_need_help_enabled) {
               cleanedValues.follow_up_tags = undefined;
@@ -353,16 +342,6 @@ export const SlackBotCreationForm = ({
                         />
                       </div>
                     </div>
-
-                    <StandardAnswerCategoryDropdownField
-                      standardAnswerCategoryResponse={
-                        standardAnswerCategoryResponse
-                      }
-                      categories={values.standard_answer_categories}
-                      setCategories={(categories) =>
-                        setFieldValue("standard_answer_categories", categories)
-                      }
-                    />
                   </div>
                 )}
 

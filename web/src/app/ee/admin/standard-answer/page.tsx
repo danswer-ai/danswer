@@ -3,12 +3,12 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import { ClipboardIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { useStandardAnswers, useStandardAnswerCategories } from "./hooks";
+import { useStandardAnswers } from "./hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Button, Divider, Text } from "@tremor/react";
 import Link from "next/link";
-import { StandardAnswer, StandardAnswerCategory } from "@/lib/types";
+import { StandardAnswer } from "@/lib/types";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
 import {
@@ -37,63 +37,18 @@ const RowTemplate = ({
   entries,
 }: {
   id: number;
-  entries: [
-    Displayable,
-    Displayable,
-    Displayable,
-    Displayable,
-    Displayable,
-    Displayable,
-  ];
+  entries: [Displayable, Displayable, Displayable, Displayable, Displayable];
 }) => {
   return (
     <TableRow key={id}>
       <TableCell className="w-1/24">{entries[0]}</TableCell>
       <TableCell className="w-2/12">{entries[1]}</TableCell>
-      <TableCell className="w-2/12">{entries[2]}</TableCell>
-      <TableCell className="w-1/24">{entries[3]}</TableCell>
-      <TableCell className="w-7/12 overflow-auto">{entries[4]}</TableCell>
-      <TableCell className="w-1/24">{entries[5]}</TableCell>
+      <TableCell className="w-1/24">{entries[2]}</TableCell>
+      <TableCell className="w-7/12 overflow-auto">{entries[3]}</TableCell>
+      <TableCell className="w-1/24">{entries[4]}</TableCell>
     </TableRow>
   );
 };
-
-const CategoryBubble = ({
-  name,
-  onDelete,
-}: {
-  name: string;
-  onDelete?: () => void;
-}) => (
-  <span
-    className={`
-      inline-block
-      px-2
-      py-1
-      mr-1
-      mb-1
-      text-xs
-      font-semibold
-      text-emphasis
-      bg-hover
-      rounded-full
-      items-center
-      w-fit
-      ${onDelete ? "cursor-pointer" : ""}
-    `}
-    onClick={onDelete}
-  >
-    {name}
-    {onDelete && (
-      <button
-        className="ml-1 text-subtle hover:text-emphasis"
-        aria-label="Remove category"
-      >
-        &times;
-      </button>
-    )}
-  </span>
-);
 
 const StandardAnswersTableRow = ({
   standardAnswer,
@@ -112,11 +67,6 @@ const StandardAnswersTableRow = ({
         >
           <EditIcon />
         </Link>,
-        <div key={`categories-${standardAnswer.id}`}>
-          {standardAnswer.categories.map((category) => (
-            <CategoryBubble key={category.id} name={category.name} />
-          ))}
-        </div>,
         <ReactMarkdown key={`keyword-${standardAnswer.id}`}>
           {standardAnswer.match_regex
             ? `\`${standardAnswer.keyword}\``
@@ -147,23 +97,17 @@ const StandardAnswersTableRow = ({
 
 const StandardAnswersTable = ({
   standardAnswers,
-  standardAnswerCategories,
   refresh,
   setPopup,
 }: {
   standardAnswers: StandardAnswer[];
-  standardAnswerCategories: StandardAnswerCategory[];
   refresh: () => void;
   setPopup: (popup: PopupSpec | null) => void;
 }) => {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedCategories, setSelectedCategories] = useState<
-    StandardAnswerCategory[]
-  >([]);
   const columns = [
     { name: "", key: "edit" },
-    { name: "Categories", key: "category" },
     { name: "Keywords/Pattern", key: "keyword" },
     { name: "Match regex?", key: "match_regex" },
     { name: "Answer", key: "answer" },
@@ -171,24 +115,13 @@ const StandardAnswersTable = ({
   ];
 
   const filteredStandardAnswers = standardAnswers.filter((standardAnswer) => {
-    const {
-      answer,
-      id,
-      categories,
-      match_regex,
-      match_any_keywords,
-      ...fieldsToSearch
-    } = standardAnswer;
+    const { answer, id, match_regex, match_any_keywords, ...fieldsToSearch } =
+      standardAnswer;
     const cleanedQuery = query.toLowerCase();
     const searchMatch = Object.values(fieldsToSearch).some((value) => {
       return value.toLowerCase().includes(cleanedQuery);
     });
-    const categoryMatch =
-      selectedCategories.length == 0 ||
-      selectedCategories.some((category) =>
-        categories.map((c) => c.id).includes(category.id)
-      );
-    return searchMatch && categoryMatch;
+    return searchMatch;
   });
 
   const totalPages = Math.ceil(
@@ -222,16 +155,6 @@ const StandardAnswersTable = ({
     refresh();
   };
 
-  const handleCategorySelect = (category: StandardAnswerCategory) => {
-    setSelectedCategories((prev: StandardAnswerCategory[]) => {
-      const prevCategoryIds = prev.map((category) => category.id);
-      if (prevCategoryIds.includes(category.id)) {
-        return prev.filter((c) => c.id !== category.id);
-      }
-      return [...prev, category];
-    });
-  };
-
   return (
     <div className="justify-center py-2">
       <div className="flex items-center w-full border-2 border-border rounded-lg px-4 py-2 focus-within:border-accent">
@@ -255,39 +178,6 @@ const StandardAnswersTable = ({
           suppressContentEditableWarning={true}
         />
       </div>
-      <div className="my-4 border-b border-border">
-        <FilterDropdown
-          options={standardAnswerCategories.map((category) => {
-            return {
-              key: category.name,
-              display: category.name,
-            };
-          })}
-          selected={selectedCategories.map((category) => category.name)}
-          handleSelect={(option) => {
-            handleCategorySelect(
-              standardAnswerCategories.find(
-                (category) => category.name === option.key
-              )!
-            );
-          }}
-          icon={
-            <div className="my-auto mr-2 w-[16px] h-[16px]">
-              <FiTag size={16} />
-            </div>
-          }
-          defaultDisplay="All Categories"
-        />
-        <div className="flex flex-wrap pb-4 mt-3">
-          {selectedCategories.map((category) => (
-            <CategoryBubble
-              key={category.id}
-              name={category.name}
-              onDelete={() => handleCategorySelect(category)}
-            />
-          ))}
-        </div>
-      </div>
       <div className="mx-auto">
         <Table>
           <TableHead>
@@ -310,7 +200,7 @@ const StandardAnswersTable = ({
                 />
               ))
             ) : (
-              <RowTemplate id={0} entries={["", "", "", "", "", ""]} />
+              <RowTemplate id={0} entries={["", "", "", "", ""]} />
             )}
           </TableBody>
         </Table>
@@ -323,7 +213,7 @@ const StandardAnswersTable = ({
           <>
             <div className="mt-4">
               <Text>
-                Ensure that you have added the category to the relevant{" "}
+                Ensure that you have added the Assistant to the relevant{" "}
                 <a className="text-link" href="/admin/bot">
                   Slack bot
                 </a>
@@ -353,13 +243,8 @@ const Main = () => {
     isLoading: standardAnswersIsLoading,
     refreshStandardAnswers,
   } = useStandardAnswers();
-  const {
-    data: standardAnswerCategories,
-    error: standardAnswerCategoriesError,
-    isLoading: standardAnswerCategoriesIsLoading,
-  } = useStandardAnswerCategories();
 
-  if (standardAnswersIsLoading || standardAnswerCategoriesIsLoading) {
+  if (standardAnswersIsLoading) {
     return <ThreeDotsLoader />;
   }
 
@@ -370,18 +255,6 @@ const Main = () => {
         errorMsg={
           standardAnswersError.info?.message ||
           standardAnswersError.message.info?.detail
-        }
-      />
-    );
-  }
-
-  if (standardAnswerCategoriesError || !standardAnswerCategories) {
-    return (
-      <ErrorCallout
-        errorTitle="Error loading standard answer categories"
-        errorMsg={
-          standardAnswerCategoriesError.info?.message ||
-          standardAnswerCategoriesError.message.info?.detail
         }
       />
     );
@@ -413,7 +286,6 @@ const Main = () => {
       <div>
         <StandardAnswersTable
           standardAnswers={standardAnswers}
-          standardAnswerCategories={standardAnswerCategories}
           refresh={refreshStandardAnswers}
           setPopup={setPopup}
         />

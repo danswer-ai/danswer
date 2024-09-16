@@ -5,15 +5,11 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { BackButton } from "@/components/BackButton";
 import { Text } from "@tremor/react";
 import { ClipboardIcon } from "@/components/icons/icons";
-import { StandardAnswer, StandardAnswerCategory } from "@/lib/types";
+import { StandardAnswer } from "@/lib/types";
 
 async function Page({ params }: { params: { id: string } }) {
-  const tasks = [
-    fetchSS("/manage/admin/standard-answer"),
-    fetchSS(`/manage/admin/standard-answer/category`),
-  ];
-  const [standardAnswersResponse, standardAnswerCategoriesResponse] =
-    await Promise.all(tasks);
+  const tasks = [fetchSS("/manage/admin/standard-answer")];
+  const [standardAnswersResponse] = await Promise.all(tasks);
   if (!standardAnswersResponse.ok) {
     return (
       <ErrorCallout
@@ -37,17 +33,6 @@ async function Page({ params }: { params: { id: string } }) {
     );
   }
 
-  if (!standardAnswerCategoriesResponse.ok) {
-    return (
-      <ErrorCallout
-        errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch standard answer categories - ${await standardAnswerCategoriesResponse.text()}`}
-      />
-    );
-  }
-
-  const standardAnswerCategories =
-    (await standardAnswerCategoriesResponse.json()) as StandardAnswerCategory[];
   return (
     <div className="container mx-auto">
       <BackButton />
@@ -56,10 +41,7 @@ async function Page({ params }: { params: { id: string } }) {
         icon={<ClipboardIcon size={32} />}
       />
 
-      <StandardAnswerCreationForm
-        standardAnswerCategories={standardAnswerCategories}
-        existingStandardAnswer={standardAnswer}
-      />
+      <StandardAnswerCreationForm existingStandardAnswer={standardAnswer} />
     </div>
   );
 }

@@ -3,29 +3,18 @@ import { CPUIcon } from "@/components/icons/icons";
 import { SlackBotCreationForm } from "../SlackBotConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { DocumentSet, StandardAnswerCategory } from "@/lib/types";
+import { DocumentSet } from "@/lib/types";
 import { BackButton } from "@/components/BackButton";
 import { Text } from "@tremor/react";
 import {
   FetchAssistantsResponse,
   fetchAssistantsSS,
 } from "@/lib/assistants/fetchAssistantsSS";
-import { getStandardAnswerCategoriesIfEE } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
 
 async function Page() {
   const tasks = [fetchSS("/manage/document-set"), fetchAssistantsSS()];
-  const [
-    documentSetsResponse,
-    [assistants, assistantsFetchError],
-    standardAnswerCategoriesResponse,
-  ] = (await Promise.all(tasks)) as [
-    Response,
-    FetchAssistantsResponse,
-    Response,
-  ];
-
-  const eeStandardAnswerCategoryResponse =
-    await getStandardAnswerCategoriesIfEE();
+  const [documentSetsResponse, [assistants, assistantsFetchError]] =
+    (await Promise.all(tasks)) as [Response, FetchAssistantsResponse, Response];
 
   if (!documentSetsResponse.ok) {
     return (
@@ -54,11 +43,7 @@ async function Page() {
         title="New Slack Bot Config"
       />
 
-      <SlackBotCreationForm
-        documentSets={documentSets}
-        personas={assistants}
-        standardAnswerCategoryResponse={eeStandardAnswerCategoryResponse}
-      />
+      <SlackBotCreationForm documentSets={documentSets} personas={assistants} />
     </div>
   );
 }

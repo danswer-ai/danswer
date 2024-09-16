@@ -188,7 +188,6 @@ def get_standard_answer(
     try:
         standard_answers = oneoff_standard_answers(
             message=request.message,
-            slack_bot_categories=request.slack_bot_categories,
             db_session=db_session,
         )
         return StandardAnswerResponse(standard_answers=standard_answers)

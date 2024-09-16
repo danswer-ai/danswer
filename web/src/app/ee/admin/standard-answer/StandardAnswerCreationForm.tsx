@@ -1,14 +1,13 @@
 "use client";
 
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { StandardAnswerCategory, StandardAnswer } from "@/lib/types";
+import { StandardAnswer } from "@/lib/types";
 import { Button, Card } from "@tremor/react";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
 import {
   createStandardAnswer,
-  createStandardAnswerCategory,
   StandardAnswerCreationRequest,
   updateStandardAnswer,
 } from "./lib";
@@ -29,10 +28,8 @@ function mapMatchAnyToKeywordSelect(matchAny: boolean): "any" | "all" {
 }
 
 export const StandardAnswerCreationForm = ({
-  standardAnswerCategories,
   existingStandardAnswer,
 }: {
-  standardAnswerCategories: StandardAnswerCategory[];
   existingStandardAnswer?: StandardAnswer;
 }) => {
   const isUpdate = existingStandardAnswer !== undefined;
@@ -49,9 +46,6 @@ export const StandardAnswerCreationForm = ({
               ? existingStandardAnswer.keyword
               : "",
             answer: existingStandardAnswer ? existingStandardAnswer.answer : "",
-            categories: existingStandardAnswer
-              ? existingStandardAnswer.categories
-              : [],
             matchRegex: existingStandardAnswer
               ? existingStandardAnswer.match_regex
               : false,
@@ -67,9 +61,6 @@ export const StandardAnswerCreationForm = ({
               .max(255)
               .min(1),
             answer: Yup.string().required("Answer is required").min(1),
-            categories: Yup.array()
-              .required()
-              .min(1, "At least one category is required"),
           })}
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
@@ -79,7 +70,6 @@ export const StandardAnswerCreationForm = ({
               matchAnyKeywords: mapKeywordSelectToMatchAny(
                 values.matchAnyKeywords
               ),
-              categories: values.categories.map((category) => category.id),
             };
 
             let response;
@@ -165,39 +155,6 @@ export const StandardAnswerCreationForm = ({
                   name="answer"
                   label="Answer"
                   placeholder="The answer in Markdown. Example: If you need any help from the IT team, please email internalsupport@company.com"
-                />
-              </div>
-              <div className="w-4/12">
-                <MultiSelectDropdown
-                  name="categories"
-                  label="Categories:"
-                  onChange={(selected_options) => {
-                    const selected_categories = selected_options.map(
-                      (option) => {
-                        return { id: Number(option.value), name: option.label };
-                      }
-                    );
-                    setFieldValue("categories", selected_categories);
-                  }}
-                  creatable={true}
-                  onCreate={async (created_name) => {
-                    const response = await createStandardAnswerCategory({
-                      name: created_name,
-                    });
-                    const newCategory = await response.json();
-                    return {
-                      label: newCategory.name,
-                      value: newCategory.id.toString(),
-                    };
-                  }}
-                  options={standardAnswerCategories.map((category) => ({
-                    label: category.name,
-                    value: category.id.toString(),
-                  }))}
-                  initialSelectedOptions={values.categories.map((category) => ({
-                    label: category.name,
-                    value: category.id.toString(),
-                  }))}
                 />
               </div>
               <div className="p-4 flex">
