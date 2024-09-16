@@ -87,11 +87,11 @@ export function DynamicSidebar({
           {children && (
             <>
               <div
-                className={`bg-background h-full ease-in-out transition-[width] duration-500 w-full overflow-hidden lg:overflow-visible
+                className={`bg-background h-full ease-in-out transition-all duration-500 w-full overflow-hidden lg:overflow-visible border-border
           ${
             isExpanded
-              ? "lg:w-sidebar border-r border-border"
-              : "lg:w-0 border-none"
+              ? "lg:w-sidebar translate-x-0 border-r"
+              : "lg:w-0 -translate-x-full border-none"
           }`}
               >
                 <div

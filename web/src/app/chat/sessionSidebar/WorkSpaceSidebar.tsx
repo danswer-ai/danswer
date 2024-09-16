@@ -30,7 +30,7 @@ export const WorkSpaceSidebar = ({
   const defaultPage = settings.default_page;
 
   return (
-    <div className={`bg-background h-full p-4 border-r border-border`}>
+    <div className={`bg-background h-full p-4 border-r border-border z-10`}>
       <div
         className={`h-full flex flex-col justify-between transition-opacity duration-300 ease-in-out lg:!opacity-100  ${
           openSidebar ? "opacity-100 delay-200" : "opacity-0 delay-100"
