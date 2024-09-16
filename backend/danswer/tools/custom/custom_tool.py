@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from danswer.dynamic_configs.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
-from danswer.server.features.tool.models import Header
 from danswer.tools.custom.base_tool_types import ToolResultType
 from danswer.tools.custom.custom_tool_prompts import (
     SHOULD_USE_CUSTOM_TOOL_SYSTEM_PROMPT,
@@ -47,7 +46,7 @@ class CustomTool(Tool):
         self,
         method_spec: MethodSpec,
         base_url: str,
-        custom_headers: list[Header] = [],
+        custom_headers: list[dict[str, str]] | None = [],
     ) -> None:
         self._base_url = base_url
         self._method_spec = method_spec
@@ -186,7 +185,7 @@ class CustomTool(Tool):
 
 def build_custom_tools_from_openapi_schema_and_headers(
     openapi_schema: dict[str, Any],
-    custom_headers: list[Header] = [],
+    custom_headers: list[dict[str, str]] | None = [],
     dynamic_schema_info: DynamicSchemaInfo | None = None,
 ) -> list[CustomTool]:
     if dynamic_schema_info:
