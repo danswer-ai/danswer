@@ -42,7 +42,7 @@ export const WorkSpaceSidebar = ({
             alt="ArnoldAi Logo"
             width={40}
             height={40}
-            className="rounded-regular min-w-10 min-h-10"
+            className="rounded-regular shrink-0"
           />
           <Separator className="mt-6" />
           <div className="flex flex-col items-center gap-4 pt-4">

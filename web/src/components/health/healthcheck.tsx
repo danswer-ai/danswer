@@ -37,7 +37,7 @@ export const HealthCheckBanner = () => {
   } else {
     return (
       <div className="text-sm bg-destructive p-3 rounded-xs border-hidden flex gap-2 m-1.5 mb-0">
-        <CircleAlert size={20} className="min-w-5 min-h-5" />
+        <CircleAlert size={20} className="shrink-0" />
         <p className="font-bold">The backend is currently unavailable.</p>
 
         <p className="ml-2">

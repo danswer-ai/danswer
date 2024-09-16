@@ -236,23 +236,23 @@ export function ChatInputBar({
         >
           <CirclePlus
             size={24}
-            className="mr-4 min-w-6 min-h-6"
+            className="mr-4 shrink-0"
             onClick={handleShowTools}
           />
           <Cpu
             size={24}
             onClick={() => setConfigModalActiveTab("assistant")}
-            className="mr-4 min-w-6 min-h-6"
+            className="mr-4 shrink-0"
           />
 
           <Filter
             size={24}
             onClick={() => setConfigModalActiveTab("filters")}
-            className="mr-4 min-w-6 min-h-6"
+            className="mr-4 shrink-0"
           />
           <Paperclip
             size={24}
-            className="mr-4 min-w-6 min-h-6"
+            className="mr-4 shrink-0"
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file";

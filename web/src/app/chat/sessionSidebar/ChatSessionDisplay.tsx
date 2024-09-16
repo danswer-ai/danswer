@@ -91,7 +91,7 @@ export function ChatSessionDisplay({
           <BasicSelectable fullWidth selected={isSelected}>
             <>
               <div className="flex relative items-center gap-2 w-full">
-                <MessageCircleMore size={16} className="min-w-4 min-h-4" />
+                <MessageCircleMore size={16} className="shrink-0" />
                 {isRenamingChat ? (
                   <input
                     value={chatName}

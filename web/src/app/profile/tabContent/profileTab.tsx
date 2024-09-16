@@ -15,7 +15,7 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
           <p className="pt-1">This will be displayed on your profile.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center bg-background rounded-full min-h-[65px] min-w-[65px] max-h-[65px] max-w-[65px] aspect-square text-2xl font-normal border-2 border-gray-900 ault py-2">
+          <div className="flex items-center justify-center bg-background rounded-full h-[65px] w-[65px] shrink-0 aspect-square text-2xl font-normal border-2 border-gray-900 ault py-2">
             {user && user.email ? (
               user.email[0].toUpperCase()
             ) : (

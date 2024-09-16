@@ -75,7 +75,7 @@ export const SearchSidebar = ({
                   href="/search"
                   className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer bg-primary text-white items-center gap-2`}
                 >
-                  <Search size={16} className="min-w-4 min-h-4" />
+                  <Search size={16} className="shrink-0" />
                   Search
                 </Link>
               </>
@@ -86,7 +86,7 @@ export const SearchSidebar = ({
                   href="/chat"
                   className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2`}
                 >
-                  <MessageCircleMore size={16} className="min-w-4 min-h-4" />
+                  <MessageCircleMore size={16} className="shrink-0" />
                   Chat
                 </Link>
                 {combinedSettings.featureFlags.explore_assistants && (
