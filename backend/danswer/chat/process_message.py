@@ -535,7 +535,6 @@ def stream_chat_message_objects(
         search_tool: SearchTool | None = None
         tool_dict: dict[int, list[Tool]] = {}  # tool_id to tool
         for db_tool_model in persona.tools:
-            print(f"TOOL IS {db_tool_model}")
             # handle in-code tools specially
 
             if db_tool_model.in_code_tool_id:
@@ -544,7 +543,6 @@ def stream_chat_message_objects(
                     tool_cls.__name__ == CSVAnalysisTool.__name__
                     and not latest_query_files
                 ):
-                    print("TOOL CALL")
                     tool_dict[db_tool_model.id] = [CSVAnalysisTool()]
 
                 if (
@@ -623,8 +621,6 @@ def stream_chat_message_objects(
                     ]
 
                 continue
-            else:
-                print("LEAVE")
             # handle all custom tools
             if db_tool_model.openapi_schema:
                 tool_dict[db_tool_model.id] = cast(
@@ -946,5 +942,4 @@ def stream_chat_message(
             is_connected=is_connected,
         )
         for obj in objects:
-            print(obj)
             yield get_json_line(obj.model_dump())

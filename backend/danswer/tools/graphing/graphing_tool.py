@@ -56,25 +56,6 @@ Follow Up Input:
 """.strip()
 
 
-# system_message = """
-# You are an AI assistant specialized in creating Python code for generating graphs using matplotlib and Seaborn.
-# When given a request for a graph, you should generate complete Python code that uses matplotlib
-# to create the requested graph. The code should:
-# 1. Import necessary libraries (matplotlib, seaborn, numpy if needed) USE SEARBON
-# 2. Define the data (you can create sample data that fits the request)
-# 3. Create the plot using matplotlib and Seaborn
-# 4. Set appropriate labels, title, and legend
-# 5. Use plt.figure() to create the figure and assign it to a variable named 'fig'
-# 6. Do not include plt.show() at the end of the code
-# 7. Make sure to import things like `plt`
-
-# Ensure the code is complete and can be executed as-is to generate the graph.
-# Do not wrap the code in markdown code blocks or use any other formatting.
-# Simply provide the raw Python code.
-
-
-# """
-
 system_message = """
 You create Python code for graphs using matplotlib. Your code should:
 Import libraries: matplotlib.pyplot as plt, numpy as np
@@ -117,13 +98,6 @@ class GraphingTool(Tool):
     def display_name(self) -> str:
         return self._DISPLAY_NAME
 
-    @classmethod
-    def create_prompt(cls, message: PreviousMessage) -> str:
-        # TODO improve / iterate
-        print(f"\n\n\n------------\n\n\nCreating a grpah {message.message}")
-
-        return f'I searched for some things! """thigns that I searched for!: {message.message}"""'
-
     def tool_definition(self) -> dict:
         return {
             "type": "function",
@@ -149,7 +123,7 @@ class GraphingTool(Tool):
         history: list[PreviousMessage],
         llm: LLM,
     ) -> bool:
-        return True
+        # return True
         history_str = "\n".join([f"{m.message}" for m in history])
         prompt = GRAPHING_TEMPLATE.format(
             chat_history=history_str,

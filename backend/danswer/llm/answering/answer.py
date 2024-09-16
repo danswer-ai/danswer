@@ -47,7 +47,6 @@ from danswer.tools.custom.custom_tool_prompt_builder import (
 )
 from danswer.tools.force import filter_tools_for_force_tool_use
 from danswer.tools.force import ForceUseTool
-from danswer.tools.graphing.graphing_tool import GraphingTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
@@ -246,7 +245,7 @@ class Answer:
                         self.tools, self.force_use_tool
                     )
                 ]
-
+            print(final_tool_definitions)
             for message in self.llm.stream(
                 prompt=prompt,
                 tools=final_tool_definitions if final_tool_definitions else None,
@@ -537,28 +536,33 @@ class Answer:
                     prompt_builder, final_context_documents
                 )
             elif tool.name == ImageGenerationTool._NAME:
-                img_urls = []
                 for response in tool_runner.tool_responses():
                     if response.id == IMAGE_GENERATION_RESPONSE_ID:
                         img_generation_response = cast(
                             list[ImageGenerationResponse], response.response
                         )
-                        img_urls = [img.url for img in img_generation_response]
+                        # img_urls = [img.url for img in img_generation_response]
+                        prompt_builder.update_user_prompt(
+                            build_image_generation_user_prompt(
+                                query=self.question,
+                                img_urls=[img.url for img in img_generation_response],
+                            )
+                        )
 
                     yield response
             elif tool.name == CSVAnalysisTool._NAME:
                 for response in tool_runner.tool_responses():
                     yield response
 
-            elif tool.name == GraphingTool._NAME:
-                for response in tool_runner.tool_responses():
-                    yield response
-                    prompt_builder.update_user_prompt(
-                        build_image_generation_user_prompt(
-                            query=self.question,
-                            img_urls=img_urls,
-                        )
-                    )
+            # elif tool.name == GraphingTool._NAME:
+            #     for response in tool_runner.tool_responses():
+            #         yield response
+            #         prompt_builder.update_user_prompt(
+            #             build_image_generation_user_prompt(
+            #                 query=self.question,
+            #                 # img_urls=img_urls,
+            #             )
+            #         )
             else:
                 prompt_builder.update_user_prompt(
                     HumanMessage(
