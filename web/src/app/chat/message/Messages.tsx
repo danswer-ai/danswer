@@ -18,12 +18,7 @@ import { SearchSummary } from "./SearchSummary";
 import { SkippedSearch } from "./SkippedSearch";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "@/components/CopyButton";
-import {
-  ChatFileType,
-  FileDescriptor,
-  ImageGenerationResults,
-  ToolCallMetadata,
-} from "../interfaces";
+import { ChatFileType, FileDescriptor, ToolCallMetadata } from "../interfaces";
 import {
   IMAGE_GENERATION_TOOL_NAME,
   SEARCH_TOOL_NAME,
@@ -42,11 +37,7 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
 
-import {
-  LikeFeedback,
-  DislikeFeedback,
-  ToolCallIcon,
-} from "@/components/icons/icons";
+import { LikeFeedback, DislikeFeedback } from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
