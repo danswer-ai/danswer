@@ -124,7 +124,6 @@ def get_standard_formatter() -> ColoredFormatter:
     )
 
 
-<<<<<<< HEAD
 DANSWER_DOCKER_ENV_STR = "DANSWER_RUNNING_IN_DOCKER"
 
 
@@ -132,8 +131,6 @@ def is_running_in_container() -> bool:
     return os.getenv(DANSWER_DOCKER_ENV_STR) == "true"
 
 
-=======
->>>>>>> 8ccb5d1e (remove accidental update)
 def setup_logger(
     name: str = __name__,
     log_level: int = get_log_level_from_str(),
