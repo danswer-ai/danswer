@@ -1,0 +1,42 @@
+{
+  "data": [
+    {
+      "category": "A",
+      "Group 1": 3,
+      "Group 2": 5
+    },
+    {
+      "category": "B",
+      "Group 1": 7,
+      "Group 2": 3
+    },
+    {
+      "category": "C",
+      "Group 1": 2,
+      "Group 2": 4
+    },
+    {
+      "category": "D",
+      "Group 1": 5,
+      "Group 2": 6
+    },
+    {
+      "category": "E",
+      "Group 1": 8,
+      "Group 2": 2
+    }
+  ],
+  "title": "Sample Bar Chart",
+  "xLabel": "Categories",
+  "yLabel": "Values",
+  "config": {
+    "Group 1": {
+      "label": "Group 1",
+      "color": "rgb(31,119,180)"
+    },
+    "Group 2": {
+      "label": "Group 2",
+      "color": "rgb(255,127,14)"
+    }
+  }
+}

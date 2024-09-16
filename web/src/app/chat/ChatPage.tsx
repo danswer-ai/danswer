@@ -65,7 +65,7 @@ import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
-import { AIMessage, HumanMessage } from "./message/Messages";
+import { AIMessage, graph, GraphChunk, HumanMessage } from "./message/Messages";
 import { StarterMessage } from "./StarterMessage";
 import {
   AnswerPiecePacket,
@@ -1300,6 +1300,13 @@ export function ChatPage({
               }
               return prevState;
             });
+            if (Object.hasOwn(packet, "line_graph")) {
+              const GraphPacket = packet as GraphChunk;
+              setGraphs((graphs) => [
+                ...graphs,
+                { file_id: GraphPacket.file_id, line: GraphPacket.line_graph },
+              ]);
+            }
 
             if (Object.hasOwn(packet, "answer_piece")) {
               dynamicAssistantMessage.message += (
@@ -1754,6 +1761,7 @@ export function ChatPage({
     string | null
   >(null);
 
+  const [graphs, setGraphs] = useState<graph[]>([]);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
   const [settingsToggled, setSettingsToggled] = useState(false);
 
@@ -2191,6 +2199,7 @@ export function ChatPage({
                                         // and so it sticks around on page reload
                                         setMessageAsLatest(messageId);
                                       }}
+                                      graphs={graphs}
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={

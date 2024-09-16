@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  FiImage,
   FiEdit2,
   FiChevronRight,
   FiChevronLeft,
@@ -18,7 +19,12 @@ import { SearchSummary } from "./SearchSummary";
 import { SkippedSearch } from "./SkippedSearch";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "@/components/CopyButton";
-import { ChatFileType, FileDescriptor, ToolCallMetadata } from "../interfaces";
+import {
+  ChatFileType,
+  FileDescriptor,
+  ImageGenerationResults,
+  ToolCallMetadata,
+} from "../interfaces";
 import {
   IMAGE_GENERATION_TOOL_NAME,
   SEARCH_TOOL_NAME,
@@ -37,7 +43,11 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
 
-import { LikeFeedback, DislikeFeedback } from "@/components/icons/icons";
+import {
+  LikeFeedback,
+  DislikeFeedback,
+  ToolCallIcon,
+} from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
@@ -53,12 +63,27 @@ import { ContinueGenerating } from "./ContinueMessage";
 import DualPromptDisplay from "../tools/ImagePromptCitaiton";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Popover } from "@/components/popover/Popover";
+import CsvPage from "@/components/chat_display/CsvDisplay";
+import { DISABLED_CSV_DISPLAY } from "@/lib/constants";
+import {
+  LineChartDisplay,
+  ModalChartWrapper,
+} from "../../../components/chat_display/graphs/LineChartDisplay";
+import PolarChartDisplay from "@/components/chat_display/graphs/PortalChart";
+import BarChartDisplay from "@/components/chat_display/graphs/BarChart";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
   INTERNET_SEARCH_TOOL_NAME,
   IMAGE_GENERATION_TOOL_NAME,
 ];
+import plotDataJson from "./linechart.json";
+import barChartDataJson from "./barchart_data.json";
+import polarChartDataJson from "./polar_plot_data.json";
+import { JSONUpload } from "./JSONUpload";
+import { ImageDisplay } from "@/components/chat_display/graphs/ImageDisplay";
+import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
 function FileDisplay({
   files,
@@ -68,8 +93,12 @@ function FileDisplay({
   alignBubble?: boolean;
 }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
-  const nonImgFiles = files.filter((file) => file.type !== ChatFileType.IMAGE);
+  const nonImgFiles = files.filter(
+    (file) => file.type !== ChatFileType.IMAGE && file.type !== ChatFileType.CSV
+  );
+  const csvImgFiles = files.filter((file) => file.type == ChatFileType.CSV);
 
+  const [close, setClose] = useState(true);
   return (
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
@@ -92,6 +121,34 @@ function FileDisplay({
           </div>
         </div>
       )}
+      {csvImgFiles && csvImgFiles.length > 0 && (
+        <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
+          <div className="flex flex-col gap-2">
+            {csvImgFiles.map((file) => {
+              return (
+                <div key={file.id} className="w-fit">
+                  {close && !DISABLED_CSV_DISPLAY ? (
+                    <CsvPage
+                      close={() => setClose(false)}
+                      csvFileDescriptor={file}
+                    />
+                  ) : (
+                    <DocumentPreview
+                      open={
+                        DISABLED_CSV_DISPLAY ? undefined : () => setClose(true)
+                      }
+                      fileName={file.name || file.id}
+                      maxWidth="max-w-64"
+                      alignBubble={alignBubble}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {/* <LineChartDisplay /> */}
       {imageFiles && imageFiles.length > 0 && (
         <div
           id="danswer-image"
@@ -107,7 +164,15 @@ function FileDisplay({
     </>
   );
 }
+export interface graph {
+  file_id: string;
+  line: boolean;
+}
 
+export interface GraphChunk {
+  file_id: string;
+  line_graph: boolean;
+}
 export const AIMessage = ({
   hasChildAI,
   hasParentAI,
@@ -119,6 +184,7 @@ export const AIMessage = ({
   toggleDocumentSelection,
   alternativeAssistant,
   docs,
+  graphs = [],
   messageId,
   content,
   files,
@@ -139,9 +205,10 @@ export const AIMessage = ({
   onMessageSelection,
   setPopup,
 }: {
+  shared?: boolean;
   hasChildAI?: boolean;
   hasParentAI?: boolean;
-  shared?: boolean;
+  graphs?: graph[];
   isActive?: boolean;
   continueGenerating?: () => void;
   otherMessagesCanSwitchTo?: number[];
@@ -357,18 +424,39 @@ export const AIMessage = ({
 
                     {toolCall &&
                       toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
-                        <ToolRunDisplay
-                          toolName={
-                            toolCall.tool_result
-                              ? `Searched the internet`
-                              : `Searching the internet`
-                          }
-                          toolLogo={
-                            <FiGlobe size={15} className="my-auto mr-1" />
-                          }
-                          isRunning={!toolCall.tool_result}
-                        />
+                        <div className="my-2">
+                          <ToolRunDisplay
+                            toolName={
+                              toolCall.tool_result
+                                ? `Searched the internet`
+                                : `Searching the internet`
+                            }
+                            toolLogo={
+                              <FiGlobe size={15} className="my-auto mr-1" />
+                            }
+                            isRunning={!toolCall.tool_result}
+                          />
+                        </div>
                       )}
+                    {graphs.map((graph, ind) => {
+                      return graph.line ? (
+                        <ModalChartWrapper
+                          key={ind}
+                          chartType="line"
+                          fileId={graph.file_id}
+                        >
+                          <LineChartDisplay fileId={graph.file_id} />
+                        </ModalChartWrapper>
+                      ) : (
+                        <ModalChartWrapper
+                          key={ind}
+                          chartType="bar"
+                          fileId={graph.file_id}
+                        >
+                          <BarChartDisplay fileId={graph.file_id} />
+                        </ModalChartWrapper>
+                      );
+                    })}
 
                     {content || files ? (
                       <>
@@ -482,6 +570,18 @@ export const AIMessage = ({
                       <></>
                     )}
                   </div>
+                  {/* <ModalChartWrapper chartType="line" fileId="fee2ff90-4ebe-43fc-858f-a95c73385da4" >
+                        <LineChartDisplay fileId="fee2ff90-4ebe-43fc-858f-a95c73385da4" />
+                      </ModalChartWrapper> */}
+                  {/* 
+                      <ModalChartWrapper chartType="bar" fileId={"0ad36971-9353-42de-b89d-9c3361d3c3eb"}>
+                        <BarChartDisplay fileId={"0ad36971-9353-42de-b89d-9c3361d3c3eb"} />
+                      </ModalChartWrapper>
+
+                      <ModalChartWrapper chartType="other" fileId={"066fc31f-56f0-48fb-98d3-ffd46f1ac0f5"}>
+                        <ImageDisplay fileId={"066fc31f-56f0-48fb-98d3-ffd46f1ac0f5"} />
+                      </ModalChartWrapper>
+                  */}
 
                   {!hasChildAI &&
                     handleFeedback &&
@@ -889,6 +989,9 @@ export const HumanMessage = ({
               </div>
             </div>
           </div>
+
+          {/* <CSVGraph /> */}
+          {/* <CSVGraph fileId="./data.csv" /> */}
 
           <div className="flex flex-col md:flex-row gap-x-0.5 mt-1">
             {currentMessageInd !== undefined &&

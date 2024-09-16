@@ -41,11 +41,13 @@ from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import ToolChoiceOptions
 from danswer.natural_language_processing.utils import get_tokenizer
+from danswer.tools.analysis.analysis_tool import CSVAnalysisTool
 from danswer.tools.custom.custom_tool_prompt_builder import (
     build_user_message_for_custom_tool_for_non_tool_calling_llm,
 )
 from danswer.tools.force import filter_tools_for_force_tool_use
 from danswer.tools.force import ForceUseTool
+from danswer.tools.graphing.graphing_tool import GraphingTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
@@ -245,42 +247,30 @@ class Answer:
                     )
                 ]
 
-                existing_message = ""
-
-                for message in self.llm.stream(
-                    prompt=prompt,
-                    tools=final_tool_definitions if final_tool_definitions else None,
-                    tool_choice="required" if self.force_use_tool.force_use else None,
+            for message in self.llm.stream(
+                prompt=prompt,
+                tools=final_tool_definitions if final_tool_definitions else None,
+                tool_choice="required" if self.force_use_tool.force_use else None,
+            ):
+                if isinstance(message, AIMessageChunk) and (
+                    message.tool_call_chunks or message.tool_calls
                 ):
-                    if isinstance(message, AIMessageChunk) and (
-                        message.tool_call_chunks or message.tool_calls
-                    ):
-                        if tool_call_chunk is None:
-                            tool_call_chunk = message
-                        else:
-                            if len(existing_message) > 0:
-                                yield StreamStopInfo(
-                                    stop_reason=StreamStopReason.NEW_RESPONSE
-                                )
-                                existing_message = ""
-
-                            tool_call_chunk += message  # type: ignore
+                    if tool_call_chunk is None:
+                        tool_call_chunk = message
                     else:
-                        if message.content:
-                            if self.is_cancelled or tool_calls > 0:
-                                return
-
-                            existing_message += cast(str, message.content)
-                            yield cast(str, message.content)
-                        if (
-                            message.additional_kwargs.get("usage_metadata", {}).get(
-                                "stop"
-                            )
-                            == "length"
-                        ):
-                            yield StreamStopInfo(
-                                stop_reason=StreamStopReason.CONTEXT_LENGTH
-                            )
+                        tool_call_chunk += message  # type: ignore
+                else:
+                    if message.content:
+                        if self.is_cancelled:
+                            return
+                        yield cast(str, message.content)
+                    if (
+                        message.additional_kwargs.get("usage_metadata", {}).get("stop")
+                        == "length"
+                    ):
+                        yield StreamStopInfo(
+                            stop_reason=StreamStopReason.CONTEXT_LENGTH
+                        )
 
                 if not tool_call_chunk:
                     logger.info("Skipped tool call but generated message")
@@ -565,13 +555,19 @@ class Answer:
                         img_urls = [img.url for img in img_generation_response]
 
                     yield response
+            elif tool.name == CSVAnalysisTool._NAME:
+                for response in tool_runner.tool_responses():
+                    yield response
 
-                prompt_builder.update_user_prompt(
-                    build_image_generation_user_prompt(
-                        query=self.question,
-                        img_urls=img_urls,
+            elif tool.name == GraphingTool._NAME:
+                for response in tool_runner.tool_responses():
+                    yield response
+                    prompt_builder.update_user_prompt(
+                        build_image_generation_user_prompt(
+                            query=self.question,
+                            img_urls=img_urls,
+                        )
                     )
-                )
             else:
                 prompt_builder.update_user_prompt(
                     HumanMessage(
