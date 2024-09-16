@@ -23,12 +23,12 @@ from ee.danswer.external_permissions.permission_sync_utils import (
 logger = setup_logger()
 
 
-GroupSyncType = Callable[
+GroupSyncFuncType = Callable[
     [Session, ConnectorCredentialPair, list[DocsWithAdditionalInfo], dict[str, Any]],
     None,
 ]
 
-UserSyncType = Callable[
+DocSyncFuncType = Callable[
     [Session, ConnectorCredentialPair, list[DocsWithAdditionalInfo], dict[str, Any]],
     None,
 ]
@@ -37,7 +37,8 @@ UserSyncType = Callable[
 # - the user_email <-> document mapping
 # - the external_user_group_id <-> document mapping
 # in postgres without committing
-DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, UserSyncType] = {
+# THIS ONE IS OPTIONAL
+DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, DocSyncFuncType] = {
     DocumentSource.GOOGLE_DRIVE: gdrive_doc_sync,
     DocumentSource.CONFLUENCE: confluence_doc_sync,
 }
@@ -45,7 +46,8 @@ DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, UserSyncType] = {
 # These functions update:
 # - the user_email <-> external_user_group_id mapping
 # in postgres without committing
-GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, GroupSyncType] = {
+# THIS ONE IS NECESSARY
+GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, GroupSyncFuncType] = {
     DocumentSource.GOOGLE_DRIVE: gdrive_group_sync,
     DocumentSource.CONFLUENCE: confluence_group_sync,
 }
@@ -70,7 +72,7 @@ def run_permission_sync_entrypoint(
         )
 
     sync_details = cc_pair.auto_sync_options
-    if not sync_details:
+    if sync_details is None:
         raise ValueError(f"No auto sync options found for source type: {source_type}")
 
     # Here we run the connector to grab all the ids
