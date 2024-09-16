@@ -37,8 +37,8 @@ DocSyncFuncType = Callable[
 # - the user_email <-> document mapping
 # - the external_user_group_id <-> document mapping
 # in postgres without committing
-# THIS ONE IS OPTIONAL
-DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, DocSyncFuncType] = {
+# THIS ONE IS NECESSARY
+_DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, DocSyncFuncType] = {
     DocumentSource.GOOGLE_DRIVE: gdrive_doc_sync,
     DocumentSource.CONFLUENCE: confluence_doc_sync,
 }
@@ -46,8 +46,8 @@ DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, DocSyncFuncType] = {
 # These functions update:
 # - the user_email <-> external_user_group_id mapping
 # in postgres without committing
-# THIS ONE IS NECESSARY
-GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, GroupSyncFuncType] = {
+# THIS ONE IS OPTIONAL
+_GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, GroupSyncFuncType] = {
     DocumentSource.GOOGLE_DRIVE: gdrive_group_sync,
     DocumentSource.CONFLUENCE: confluence_group_sync,
 }
@@ -63,8 +63,8 @@ def run_permission_sync_entrypoint(
 
     source_type = cc_pair.connector.source
 
-    doc_sync_func = DOC_PERMISSIONS_FUNC_MAP.get(source_type)
-    group_sync_func = GROUP_PERMISSIONS_FUNC_MAP.get(source_type)
+    doc_sync_func = _DOC_PERMISSIONS_FUNC_MAP.get(source_type)
+    group_sync_func = _GROUP_PERMISSIONS_FUNC_MAP.get(source_type)
 
     if doc_sync_func is None:
         raise ValueError(
