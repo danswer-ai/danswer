@@ -15,6 +15,7 @@ interface ModalProps {
   titleSize?: string;
   hideDividerForTitle?: boolean;
   noPadding?: boolean;
+  hideCloseButton?: boolean;
 }
 
 export function Modal({
@@ -27,6 +28,7 @@ export function Modal({
   hideDividerForTitle,
   noPadding,
   icon,
+  hideCloseButton,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -60,7 +62,7 @@ export function Modal({
           ${noPadding ? "" : "p-10"}
           ${className || ""}`}
       >
-        {onOutsideClick && (
+        {onOutsideClick && !hideCloseButton && (
           <div className="absolute top-2 right-2">
             <button
               onClick={onOutsideClick}

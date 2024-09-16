@@ -23,12 +23,19 @@ class ToolRunner:
         return ToolCallKickoff(tool_name=self.tool.name, tool_args=self.args)
 
     def tool_responses(self) -> Generator[ToolResponse, None, None]:
+        print("i am in the tool responses function")
         if self._tool_responses is not None:
+            print("prev")
+            print(self._tool_responses)
             yield from self._tool_responses
             return
 
         tool_responses: list[ToolResponse] = []
+        print("runinnig the tool")
+        print(self.tool.name)
+
         for tool_response in self.tool.run(llm=self._llm, **self.args):
+            print("tool response")
             yield tool_response
             tool_responses.append(tool_response)
 

@@ -19,9 +19,10 @@ const TooltipGroupContext = createContext<{
   hoverCountRef: { current: false },
 });
 
-export const TooltipGroup: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const TooltipGroup: React.FC<{
+  children: React.ReactNode;
+  gap?: string;
+}> = ({ children, gap = "gap-x-2" }) => {
   const [groupHovered, setGroupHovered] = useState(false);
   const hoverCountRef = useRef(false);
 
@@ -29,7 +30,7 @@ export const TooltipGroup: React.FC<{ children: React.ReactNode }> = ({
     <TooltipGroupContext.Provider
       value={{ groupHovered, setGroupHovered, hoverCountRef }}
     >
-      <div className="inline-flex">{children}</div>
+      <div className={`inline-flex ${gap}`}>{children}</div>
     </TooltipGroupContext.Provider>
   );
 };

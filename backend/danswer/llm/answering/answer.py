@@ -47,6 +47,7 @@ from danswer.tools.custom.custom_tool_prompt_builder import (
 )
 from danswer.tools.force import filter_tools_for_force_tool_use
 from danswer.tools.force import ForceUseTool
+from danswer.tools.graphing.graphing_tool import GraphingTool
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
@@ -519,9 +520,31 @@ class Answer:
             print("tool args")
             print(tool_args)
 
-            tool_runner = ToolRunner(tool, tool_args)
+            tool_runner = ToolRunner(tool, tool_args, self.llm)
             yield tool_runner.kickoff()
             tool_responses = []
+            file_name = tool_runner.args["filename"]
+
+            print(f"file ame is {file_name}")
+
+            csv_file = None
+            for message in self.message_history:
+                if message.files:
+                    csv_file = next(
+                        (file for file in message.files if file.filename == file_name),
+                        None,
+                    )
+                    if csv_file:
+                        break
+            print(self.latest_query_files)
+            if csv_file is None:
+                raise ValueError(
+                    f"CSV file with name '{file_name}' not found in latest query files."
+                )
+            print("csv file found")
+
+            tool_runner.args["filename"] = csv_file.content
+
             for response in tool_runner.tool_responses():
                 tool_responses.append(response)
                 yield response
@@ -560,15 +583,30 @@ class Answer:
                 for response in tool_runner.tool_responses():
                     yield response
 
-            # elif tool.name == GraphingTool._NAME:
-            #     for response in tool_runner.tool_responses():
-            #         yield response
-            #         prompt_builder.update_user_prompt(
-            #             build_image_generation_user_prompt(
-            #                 query=self.question,
-            #                 # img_urls=img_urls,
-            #             )
-            #         )
+            elif tool.name == GraphingTool._NAME:
+                # print('this is graphing.')
+
+                # file_name = tool_runner.args["filename"]
+                # print(f"file ame is {file_name}")
+
+                # csv_file = next((file for file in self.latest_query_files if file.name == file_name), None)
+                # if csv_file is None:
+                #     raise ValueError(f"CSV file with name '{file_name}' not found in latest query files.")
+                # print('csv file found')
+                # print(csv_file.__dict__)
+                # self.ses/
+                response = tool_runner.tool_responses()
+
+                # for res in response:
+                #     print(res)
+                for response in tool_runner.tool_responses():
+                    yield response
+                    prompt_builder.update_user_prompt(
+                        build_image_generation_user_prompt(
+                            query=self.question,
+                            # img_urls=img_urls,
+                        )
+                    )
             else:
                 prompt_builder.update_user_prompt(
                     HumanMessage(

@@ -6,11 +6,13 @@ import traceback
 import uuid
 from collections.abc import Generator
 from io import BytesIO
+from io import StringIO
 from typing import Any
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from danswer.db.engine import get_session_context_manager
 from danswer.db.models import FileOrigin
@@ -262,12 +264,45 @@ class GraphingTool(Tool):
         }
 
     def run(self, llm: LLM, **kwargs: str) -> Generator[ToolResponse, None, None]:
-        kwargs["filename"]
-        return
+        # kwargs["filename"]
+        # return
+        print("\n\n\n\n\n----values-----\n")
+        print("these are the values")
+        print(kwargs)
+        content = kwargs["filename"]
 
-        code = self.preprocess_code(kwargs["prompt"])
+        file_content = content.decode("utf-8")
+        csv_file = StringIO(file_content)
+        df = pd.read_csv(csv_file)
 
-        locals_dict = {"plt": plt, "matplotlib": matplotlib, "np": np}
+        # Generate a summary of the CSV data
+        data_summary = df.describe().to_string()
+        columns_info = df.dtypes.to_string()
+
+        # Create a prompt for the LLM to generate the plotting code
+        code_generation_prompt = f"""
+        {system_message}
+
+        Given the following CSV data summary and user query, create Python code to generate an appropriate graph:
+
+        Data Summary:
+        {data_summary}
+
+        Columns:
+        {columns_info}
+
+        User Query:
+        "Graph the data"
+
+        Generate the Python code to create the graph:
+        """
+
+        # Get the code from the LLM
+        code_response = llm.invoke(code_generation_prompt)
+        code = self.preprocess_code(code_response.content)
+
+        # Continue with the existing code to execute and process the graph
+        locals_dict = {"plt": plt, "matplotlib": matplotlib, "np": np, "df": df}
         file_id = None
 
         try:
@@ -312,6 +347,8 @@ class GraphingTool(Tool):
             buf = BytesIO()
             fig.savefig(buf, format="png", bbox_inches="tight")
             img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+            with open("aaa garp.png", "wb") as f:
+                f.write(buf.getvalue())
 
             graph_result = GraphingResult(image=img_base64, plot_data=plot_data)
             print("da plot type iza")
@@ -339,3 +376,93 @@ class GraphingTool(Tool):
 
         except Exception as e:
             return {"error": f"Unexpected error in final_result: {str(e)}"}
+
+    # def run(self, llm: LLM, **kwargs: str) -> Generator[ToolResponse, None, None]:
+    #     # kwargs["filename"]
+    #     # return
+    #     print('\n\n\n\n\----values-----\n')
+    #     print('these are the values')
+    #     print(kwargs)
+    #     content = kwargs["filename"]
+
+    #     file_content = content.decode('utf-8')
+    #     csv_file = StringIO(file_content)
+    #     df = pd.read_csv(csv_file)
+
+    #     # Print the first few rows of the DataFrame for debugging
+    #     print(df.head())
+
+    #     code = self.preprocess_code(kwargs["prompt"])
+
+    #     locals_dict = {"plt": plt, "matplotlib": matplotlib, "np": np}
+    #     file_id = None
+
+    #     try:
+    #         exec(code, globals(), locals_dict)
+
+    #         fig = locals_dict.get("fig")
+
+    #         if fig is None:
+    #             raise ValueError("The provided code did not create a 'fig' variable")
+
+    #         ax = fig.gca()  # Get the current Axes
+
+    #         plot_data = None
+    #         plot_type = None
+    #         if self.is_line_plot(ax):
+    #             plot_data = self.extract_line_plot_data(ax)
+    #             plot_type = "line"
+    #         elif self.is_bar_plot(ax):
+    #             plot_data = self.extract_bar_plot_data(ax)
+    #             plot_type = "bar"
+
+    #         if plot_data:
+    #             plot_data_file = os.path.join(self.output_dir, "plot_data.json")
+    #             with open(plot_data_file, "w") as f:
+    #                 json.dump(plot_data, f)
+
+    #             with get_session_context_manager() as db_session:
+    #                 file_store = get_default_file_store(db_session)
+    #                 file_id = str(uuid.uuid4())
+
+    #                 json_content = json.dumps(plot_data)
+    #                 json_bytes = json_content.encode("utf-8")
+
+    #                 file_store.save_file(
+    #                     file_name=file_id,
+    #                     content=BytesIO(json_bytes),
+    #                     display_name="temporary",
+    #                     file_origin=FileOrigin.CHAT_UPLOAD,
+    #                     file_type="json",
+    #                 )
+
+    #         buf = BytesIO()
+    #         fig.savefig(buf, format="png", bbox_inches="tight")
+    #         img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+    #         graph_result = GraphingResult(image=img_base64, plot_data=plot_data)
+    #         print("da plot type iza")
+    #         print(plot_type)
+    #         print("\n\n\n")
+    #         print(code)
+    #         response = GraphingResponse(
+    #             graph_result=graph_result,
+    #             extra_graph_display={
+    #                 "file_id": file_id,
+    #                 "line_graph": plot_type == "line",
+    #             },
+    #         )
+    #         yield ToolResponse(id=GRAPHING_RESPONSE_ID, response=response)
+
+    #     except Exception as e:
+    #         error_msg = f"Error generating graph: {str(e)}\n{traceback.format_exc()}"
+    #         logger.error(error_msg)
+    #         yield ToolResponse(id="ERROR", response=GraphingError(error=error_msg))
+
+    # def final_result(self, *args: ToolResponse) -> JSON_ro:
+    #     try:
+    #         graph_response = next(arg for arg in args if arg.id == GRAPHING_RESPONSE_ID)
+    #         return graph_response.response.dict()
+
+    #     except Exception as e:
+    #         return {"error": f"Unexpected error in final_result: {str(e)}"}

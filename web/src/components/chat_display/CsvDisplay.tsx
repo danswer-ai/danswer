@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { FileDescriptor } from "@/app/chat/interfaces";
+import { WarningCircle } from "@phosphor-icons/react";
 
 export default function CsvPage({
   csvFileDescriptor,
@@ -39,8 +40,9 @@ export default function CsvPage({
     <>
       {expanded ? (
         <Modal
+          hideCloseButton
           onOutsideClick={() => setExpanded(false)}
-          className="!max-w-5xl rounded-2xl animate-all ease-in !p-0"
+          className="!max-w-5xl overflow-hidden rounded-lg animate-all ease-in !p-0"
         >
           <CsvSection
             close={close}
@@ -148,48 +150,43 @@ export const CsvSection = ({
 
   return (
     <div
-      className={`${!expanded ? "max-w-message-max" : "w-full"} !rounded !rounded-lg w-full border`}
+      className={`${!expanded ? "w-message-sm" : "w-full"}  !rounded !rounded-lg w-full border border-border`}
     >
-      <CardHeader className="w-full !py-0 !pb-4 border-b border-b-neutral-200 !pt-4 !mb-0 z-[10] top-0">
+      <CardHeader className="w-full !py-0  !pb-4 border-b border-b-neutral-200 !pt-4 !mb-0 z-[10] top-0">
         <div className="flex justify-between items-center">
-          <CardTitle className="!my-auto !text-xl">
+          <CardTitle className="!my-auto text-ellipsis line-clamp-1 text-xl font-semibold text-text-700 pr-4 transition-colors duration-300">
             {csvFileDescriptor.name}
           </CardTitle>
           <div className="flex !my-auto">
-            <TooltipGroup>
-              <CustomTooltip
-                showTick
-                line
-                position="top"
-                content="Download file"
-              >
+            <TooltipGroup gap="gap-x-4">
+              <CustomTooltip showTick line content="Download file">
                 <button onClick={() => downloadFile()}>
                   <DownloadCSVIcon className="cursor-pointer transition-colors duration-300 hover:text-neutral-800 h-6 w-6 text-neutral-400" />
                 </button>
               </CustomTooltip>
               <CustomTooltip
                 line
-                position="top"
+                showTick
                 content={expanded ? "Minimize" : "Full screen"}
               >
                 <button onClick={() => expand()}>
                   {!expanded ? (
-                    <ExpandTwoIcon className="transition-colors duration-300 ml-4 hover:text-neutral-800 h-6 w-6 cursor-pointer text-neutral-400" />
+                    <ExpandTwoIcon className="transition-colors duration-300 hover:text-neutral-800 h-6 w-6 cursor-pointer text-neutral-400" />
                   ) : (
-                    <DexpandTwoIcon className="transition-colors duration-300 ml-4 hover:text-neutral-800 h-6 w-6 cursor-pointer text-neutral-400" />
+                    <DexpandTwoIcon className="transition-colors duration-300 hover:text-neutral-800 h-6 w-6 cursor-pointer text-neutral-400" />
                   )}
                 </button>
               </CustomTooltip>
-              <CustomTooltip line position="top" content="No vis">
+              <CustomTooltip showTick line content="Hide">
                 <button onClick={() => close()}>
-                  <OpenIcon className="transition-colors duration-300 ml-4 hover:text-neutral-800 h-6 w-6 cursor-pointer text-neutral-400" />
+                  <OpenIcon className="transition-colors duration-300 hover:text-neutral-800 h-6 w-6 cursor-pointer text-neutral-400" />
                 </button>
               </CustomTooltip>
             </TooltipGroup>
           </div>
         </div>
       </CardHeader>
-      <Card className="w-full max-h-[600px] !p-0 relative overflow-x-scroll overflow-y-scroll mx-auto">
+      <Card className="!rounded-none w-full max-h-[600px] !p-0 relative overflow-x-scroll overflow-y-scroll mx-auto">
         <CardContent className="!p-0">
           {isLoading ? (
             <div className="flex items-center justify-center h-[300px]">
@@ -209,7 +206,7 @@ export const CsvSection = ({
             </div>
           ) : (
             <div
-              className={`transition-opacity transform duration-1000	 ease-in-out ${
+              className={`transition-opacity transform duration-1000 ease-in-out ${
                 fadeIn ? "opacity-100" : "opacity-0"
               }`}
             >
@@ -217,26 +214,48 @@ export const CsvSection = ({
                 <TableHeader className="!sticky !top-0 ">
                   <TableRow className="!bg-neutral-100">
                     {headers.map((header, index) => (
-                      <TableHead className=" !sticky !top-0 " key={index}>
-                        {index == 0 ? "" : header}
+                      <TableHead className="!sticky !top-0 " key={index}>
+                        <p className="text-text-600 line-clamp-2 my-2 font-medium">
+                          {index == 0 ? "" : header}
+                        </p>
                       </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
 
                 <TableBody className="max-h-[300px] overflow-y-auto">
-                  {data.map((row, rowIndex) => (
-                    <TableRow key={rowIndex}>
-                      {headers.map((header, cellIndex) => (
-                        <TableCell
-                          className={`${cellIndex == 0 && "sticky left-0 !bg-neutral-100"}`}
-                          key={cellIndex}
-                        >
-                          {row[header]}
-                        </TableCell>
-                      ))}
+                  {data.length > 0 ? (
+                    data.map((row, rowIndex) => (
+                      <TableRow key={rowIndex}>
+                        {headers.map((header, cellIndex) => (
+                          <TableCell
+                            className={`${cellIndex == 0 && "sticky left-0 !bg-neutral-100"}`}
+                            key={cellIndex}
+                          >
+                            {row[header]}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={headers.length}
+                        className="text-center py-8"
+                      >
+                        <div className="flex flex-col items-center justify-center space-y-2">
+                          <WarningCircle className="w-8 h-8 text-error" />
+                          <p className="text-text-600 font-medium">
+                            No data available
+                          </p>
+                          <p className="text-text-400 text-sm">
+                            The CSV file appears to be empty or couldn't be
+                            loaded properly.
+                          </p>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>

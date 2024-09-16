@@ -1,8 +1,7 @@
 import { FiFileText } from "react-icons/fi";
 import { useState, useRef, useEffect } from "react";
 import { Tooltip } from "@/components/tooltip/Tooltip";
-import { ExpandTwoIcon, OpenSourceIcon } from "@/components/icons/icons";
-import { ToggleRight } from "@phosphor-icons/react";
+import { ExpandTwoIcon } from "@/components/icons/icons";
 
 export function DocumentPreview({
   fileName,
@@ -23,47 +22,55 @@ export function DocumentPreview({
         ${alignBubble && "w-64"}
         flex
         items-center
-        p-2
+        p-3
         bg-hover
         border
         border-border
-        rounded-md
+        rounded-lg
         box-border
-        h-16
+        h-20
+        hover:shadow-sm
+        transition-all
       `}
     >
       <div className="flex-shrink-0">
         <div
           className="
-            w-12
-            h-12
+            w-14
+            h-14
             bg-document
             flex
             items-center
             justify-center
-            rounded-md
+            rounded-lg
+            transition-all
+            duration-200
+            hover:bg-document-dark
           "
         >
-          <FiFileText className="w-6 h-6 text-white" />
+          <FiFileText className="w-7 h-7 text-white" />
         </div>
       </div>
-      <div className="ml-4 relative">
+      <div className="ml-4 flex-grow">
         <Tooltip content={fileName} side="top" align="start">
           <div
             ref={fileNameRef}
-            className={`font-medium text-sm line-clamp-1 break-all ellipses ${
+            className={`font-medium text-sm line-clamp-1 break-all ellipsis ${
               maxWidth ? maxWidth : "max-w-48"
             }`}
           >
             {fileName}
           </div>
         </Tooltip>
-
-        <div className="text-subtle text-sm">Document</div>
+        <div className="text-subtle text-xs mt-1">Document</div>
       </div>
       {open && (
-        <button onClick={() => open()}>
-          <ExpandTwoIcon />
+        <button
+          onClick={() => open()}
+          className="ml-2 p-2 rounded-full hover:bg-gray-200 transition-colors duration-200"
+          aria-label="Expand document"
+        >
+          <ExpandTwoIcon className="w-5 h-5 text-gray-600" />
         </button>
       )}
     </div>
