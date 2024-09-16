@@ -6,6 +6,7 @@ import {
   validAutoSyncSources,
 } from "@/lib/types";
 import { Text, Title } from "@tremor/react";
+import { useUser } from "@/components/user/UserProvider";
 import { useField } from "formik";
 import { AutoSyncOptions } from "./AutoSyncOptions";
 
@@ -24,14 +25,9 @@ export function AccessTypeForm({
     useField<AccessType>("access_type");
 
   const isAutoSyncSupported = isValidAutoSyncSource(connector);
+  const { isLoadingUser, isAdmin } = useUser();
 
   const options = [
-    {
-      name: "Public",
-      value: "public",
-      description:
-        "Everyone with an account on Danswer can access the documents pulled in by this connector",
-    },
     {
       name: "Private",
       value: "private",
@@ -40,7 +36,16 @@ export function AccessTypeForm({
     },
   ];
 
-  if (isAutoSyncSupported) {
+  if (isAdmin) {
+    options.push({
+      name: "Public",
+      value: "public",
+      description:
+        "Everyone with an account on Danswer can access the documents pulled in by this connector",
+    });
+  }
+
+  if (isAutoSyncSupported && isAdmin) {
     options.push({
       name: "Auto Sync",
       value: "sync",
@@ -56,19 +61,25 @@ export function AccessTypeForm({
         Control who has access to the documents indexed by this connector.
       </Text>
 
-      <DefaultDropdown
-        options={options}
-        selected={access_type.value}
-        onSelect={(selected) =>
-          access_type_helpers.setValue(selected as AccessType)
-        }
-        includeDefault={false}
-      />
+      {isAdmin && (
+        <>
+          <DefaultDropdown
+            options={options}
+            selected={access_type.value}
+            onSelect={(selected) =>
+              access_type_helpers.setValue(selected as AccessType)
+            }
+            includeDefault={false}
+          />
 
-      {access_type.value === "sync" && isAutoSyncSupported && (
-        <div className="mt-6">
-          <AutoSyncOptions connectorType={connector as ValidAutoSyncSources} />
-        </div>
+          {access_type.value === "sync" && isAutoSyncSupported && (
+            <div className="mt-6">
+              <AutoSyncOptions
+                connectorType={connector as ValidAutoSyncSources}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

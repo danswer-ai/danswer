@@ -1,6 +1,6 @@
 "use client";
 
-import { errorHandlingFetcher } from "@/lib/fetcher";
+import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
@@ -140,11 +140,35 @@ export default function AddConnector({
   const { liveGDriveCredential } = useGoogleDriveCredentials();
   const { liveGmailCredential } = useGmailCredentials();
 
+  const {
+    data: appCredentialData,
+    isLoading: isAppCredentialLoading,
+    error: isAppCredentialError,
+  } = useSWR<{ client_id: string }, FetchError>(
+    "/api/manage/admin/connector/google-drive/app-credential",
+    errorHandlingFetcher
+  );
+  const {
+    data: serviceAccountKeyData,
+    isLoading: isServiceAccountKeyLoading,
+    error: isServiceAccountKeyError,
+  } = useSWR<{ service_account_email: string }, FetchError>(
+    "/api/manage/admin/connector/google-drive/service-account-key",
+    errorHandlingFetcher
+  );
+
   // Check if credential is activated
   const credentialActivated =
-    (connector === "google_drive" && liveGDriveCredential) ||
-    (connector === "gmail" && liveGmailCredential) ||
-    currentCredential;
+    (connector === "google_drive" &&
+      (liveGDriveCredential ||
+        appCredentialData ||
+        serviceAccountKeyData ||
+        currentCredential)) ||
+    (connector === "gmail" &&
+      (liveGmailCredential ||
+        appCredentialData ||
+        serviceAccountKeyData ||
+        currentCredential));
 
   // Check if there are no credentials
   const noCredentials = credentialTemplate == null;
