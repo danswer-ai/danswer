@@ -2124,6 +2124,10 @@ export function ChatPage({
                                 ) {
                                   return <></>;
                                 }
+                                const mostRecentNonAIParent = messageHistory
+                                  .slice(0, i)
+                                  .reverse()
+                                  .find((msg) => msg.type !== "assistant");
 
                                 const hasChildMessage =
                                   message.latestChildMessageId !== null &&
@@ -2162,7 +2166,7 @@ export function ChatPage({
                                       overriddenModel={message.overridden_model}
                                       regenerate={createRegenerator({
                                         messageId: message.messageId,
-                                        parentMessage: parentMessage!,
+                                        parentMessage: mostRecentNonAIParent!,
                                       })}
                                       otherMessagesCanSwitchTo={
                                         parentMessage?.childrenMessageIds || []
