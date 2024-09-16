@@ -272,9 +272,9 @@ class Answer:
                             stop_reason=StreamStopReason.CONTEXT_LENGTH
                         )
 
-                if not tool_call_chunk:
-                    logger.info("Skipped tool call but generated message")
-                    return
+            if not tool_call_chunk:
+                logger.info("Skipped tool call but generated message")
+                return
 
             tool_call_requests = tool_call_chunk.tool_calls
 
@@ -328,7 +328,6 @@ class Answer:
                     self._update_prompt_builder_for_search_tool(prompt_builder, [])
 
                 elif tool.name == ImageGenerationTool._NAME:
-                    print("\n----\nUpdating image prompt user message\n----\n")
                     img_urls = [
                         img_generation_result["url"]
                         for img_generation_result in tool_runner.tool_final_result().tool_result
@@ -338,8 +337,6 @@ class Answer:
                             query=self.question, img_urls=img_urls
                         )
                     )
-
-                print("now stremign wie fianl results")
 
                 yield tool_runner.tool_final_result()
 
@@ -379,17 +376,11 @@ class Answer:
                     )
                 )
 
-                print("\n----\nBuilding final prompt with Tool call summary\n----\n")
-
                 # Generate response based on updated message history
                 prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
 
                 response_content = ""
-                for content in self._process_llm_stream(
-                    prompt=prompt,
-                    tools=None
-                    # tools=[tool.tool_definition() for tool in self.tools],
-                ):
+                for content in self._process_llm_stream(prompt=prompt, tools=None):
                     if isinstance(content, str):
                         response_content += content
                     yield content
@@ -765,5 +756,4 @@ class Answer:
             if not self.is_connected():
                 logger.debug("Answer stream has been cancelled")
             self._is_cancelled = not self.is_connected()
-
         return self._is_cancelled

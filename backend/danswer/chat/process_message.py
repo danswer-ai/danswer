@@ -946,4 +946,5 @@ def stream_chat_message(
             is_connected=is_connected,
         )
         for obj in objects:
+            print(obj)
             yield get_json_line(obj.model_dump())
