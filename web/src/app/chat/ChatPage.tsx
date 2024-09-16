@@ -1379,7 +1379,7 @@ export function ChatPage({
                 return upsertToCompleteMessageMap({
                   messages: messages,
                   replacementsMap: replacementsMap,
-                  // completeMessageMapOverride: frozenMessageMap,
+                  completeMessageMapOverride: frozenMessageMap,
                   chatSessionId: frozenSessionId!,
                 });
               };
