@@ -87,7 +87,5 @@ CORS_ALLOWED_ORIGIN = os.environ.get("CORS_ALLOWED_ORIGIN", "*").split(",") or [
 
 # Validate non-wildcard origins
 for origin in CORS_ALLOWED_ORIGIN:
-    if origin != "*":
-        stripped_origin = origin.strip()
-        if stripped_origin:
-            validate_cors_origin(stripped_origin)
+    if origin != "*" and (stripped_origin := origin.strip()):
+        validate_cors_origin(stripped_origin)
