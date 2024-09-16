@@ -157,6 +157,7 @@ export interface StandardAnswer {
   answer: string;
   match_regex: boolean;
   match_any_keywords: boolean;
+  apply_globally: boolean;
 }
 
 // SLACK BOT CONFIGS

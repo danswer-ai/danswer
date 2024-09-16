@@ -7,6 +7,7 @@ export interface StandardAnswerCreationRequest {
   answer: string;
   matchRegex: boolean;
   matchAnyKeywords: boolean;
+  applyGlobally: boolean;
 }
 
 const buildRequestBodyFromStandardAnswerCreationRequest = (
@@ -17,6 +18,7 @@ const buildRequestBodyFromStandardAnswerCreationRequest = (
     answer: request.answer,
     match_regex: request.matchRegex,
     match_any_keywords: request.matchAnyKeywords,
+    apply_globally: request.applyGlobally,
   });
 };
 

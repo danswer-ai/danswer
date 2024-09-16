@@ -54,6 +54,9 @@ export const StandardAnswerCreationForm = ({
                   existingStandardAnswer.match_any_keywords
                 )
               : "all",
+            applyGlobally: existingStandardAnswer
+              ? existingStandardAnswer.apply_globally
+              : false,
           }}
           validationSchema={Yup.object().shape({
             keyword: Yup.string()

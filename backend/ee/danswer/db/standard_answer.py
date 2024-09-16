@@ -16,6 +16,7 @@ def insert_standard_answer(
     answer: str,
     match_regex: bool,
     match_any_keywords: bool,
+    apply_globally: bool,
     db_session: Session,
 ) -> StandardAnswer:
     standard_answer = StandardAnswer(
@@ -24,6 +25,7 @@ def insert_standard_answer(
         active=True,
         match_regex=match_regex,
         match_any_keywords=match_any_keywords,
+        apply_globally=apply_globally,
     )
     db_session.add(standard_answer)
     db_session.commit()
@@ -36,6 +38,7 @@ def update_standard_answer(
     answer: str,
     match_regex: bool,
     match_any_keywords: bool,
+    apply_globally: bool,
     db_session: Session,
 ) -> StandardAnswer:
     standard_answer = db_session.scalar(
@@ -48,6 +51,7 @@ def update_standard_answer(
     standard_answer.answer = answer
     standard_answer.match_regex = match_regex
     standard_answer.match_any_keywords = match_any_keywords
+    standard_answer.apply_globally = apply_globally
 
     db_session.commit()
 

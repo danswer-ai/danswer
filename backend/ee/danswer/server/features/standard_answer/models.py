@@ -30,6 +30,7 @@ class StandardAnswerCreationRequest(BaseModel):
     answer: str
     match_regex: bool
     match_any_keywords: bool
+    apply_globally: bool
 
     @model_validator(mode="after")
     def validate_only_match_any_if_not_regex(self) -> Any:
