@@ -8,7 +8,7 @@ from danswer.search.enums import SearchType
 from danswer.search.models import ChunkContext
 from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
-from danswer.server.manage.models import StandardAnswer
+from ee.danswer.server.manage.models import StandardAnswer
 
 
 class StandardAnswerRequest(BaseModel):
