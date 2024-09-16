@@ -4,8 +4,15 @@ import ProfileTab from "./tabContent/profileTab";
 import SecurityTab from "./tabContent/securityTab";
 import { CreditCard, Link2, Lock, User, UserRoundPen } from "lucide-react";
 import BillingTab from "./tabContent/billingTab";
+import { CombinedSettings } from "../admin/settings/interfaces";
 
-export default function Profile({ user }: { user: UserTypes | null }) {
+export default function Profile({
+  user,
+  combinedSettings,
+}: {
+  user: UserTypes | null;
+  combinedSettings: CombinedSettings | null;
+}) {
   return (
     <div className="h-full py-24 md:py-32 lg:pt-16">
       <h1 className="flex items-center font-bold text-xl md:text-[28px] text-strong gap-x-2">
@@ -25,7 +32,7 @@ export default function Profile({ user }: { user: UserTypes | null }) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
-          <ProfileTab user={user} />
+          <ProfileTab user={user} combinedSettings={combinedSettings} />
         </TabsContent>
         <TabsContent value="security">
           <SecurityTab user={user} />

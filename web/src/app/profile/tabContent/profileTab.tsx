@@ -3,8 +3,16 @@ import { User as UserTypes } from "@/lib/types";
 import Image from "next/image";
 import { User } from "lucide-react";
 import Logo from "../../../../public/logo.png";
+import { UserProfile } from "@/components/UserProfile";
+import { CombinedSettings, fetchSettingsSS } from "@/components/settings/lib";
 
-export default function ProfileTab({ user }: { user: UserTypes | null }) {
+export default function ProfileTab({
+  user,
+  combinedSettings,
+}: {
+  user: UserTypes | null;
+  combinedSettings: CombinedSettings | null;
+}) {
   return (
     <>
       <div className="flex py-8 border-b">
@@ -15,9 +23,9 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
           <p className="pt-1">This will be displayed on your profile.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center bg-background rounded-full h-[65px] w-[65px] shrink-0 aspect-square text-2xl font-normal border-2 border-gray-900 ault py-2">
-            {user && user.email ? (
-              user.email[0].toUpperCase()
+          <div className="flex items-center justify-center rounded-full h-[65px] w-[65px] shrink-0 aspect-square text-2xl font-normal">
+            {user && user.full_name ? (
+              <UserProfile size={65} user={user} />
             ) : (
               <User size={25} className="mx-auto" />
             )}
@@ -69,38 +77,41 @@ export default function ProfileTab({ user }: { user: UserTypes | null }) {
         </div>
       </div>
 
-      <div className="flex py-8 border-b">
-        <div className="w-[500px] text-sm">
-          <span className="font-semibold text-inverted-inverted">
-            Teamspaces Joined
-          </span>
-          <p className="w-3/4 pt-1">
-            Easily switch between them and access both accounts from any device.
-          </p>
-        </div>
-        <div className="flex flex-col gap-3 w-[500px]">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3">
-              <Image src={Logo} alt="Logo" width={65} height={65} />
-              <span className="font-semibold text-inverted-inverted">
-                enMedD
-              </span>
-            </div>
-
-            <Button variant="outline">Manage Team</Button>
+      {combinedSettings?.featureFlags.multi_teamspace && (
+        <div className="flex py-8 border-b">
+          <div className="w-[500px] text-sm">
+            <span className="font-semibold text-inverted-inverted">
+              Teamspaces Joined
+            </span>
+            <p className="w-3/4 pt-1">
+              Easily switch between them and access both accounts from any
+              device.
+            </p>
           </div>
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3">
-              <Image src={Logo} alt="Logo" width={65} height={65} />
-              <span className="font-semibold text-inverted-inverted">
-                enMedD
-              </span>
-            </div>
+          <div className="flex flex-col gap-3 w-[500px]">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-3">
+                <Image src={Logo} alt="Logo" width={65} height={65} />
+                <span className="font-semibold text-inverted-inverted">
+                  Vanguard AI
+                </span>
+              </div>
 
-            <Button variant="outline">Manage Team</Button>
+              <Button variant="outline">Manage Team</Button>
+            </div>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-3">
+                <Image src={Logo} alt="Logo" width={65} height={65} />
+                <span className="font-semibold text-inverted-inverted">
+                  Vanguard AI
+                </span>
+              </div>
+
+              <Button variant="outline">Manage Team</Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="flex py-8 justify-end">
         <div className="flex gap-3">

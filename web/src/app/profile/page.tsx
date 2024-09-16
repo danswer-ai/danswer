@@ -9,10 +9,13 @@ import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
 import Profile from "./profile";
 import { BarLayout } from "@/components/BarLayout";
+import { getCombinedSettings } from "@/components/settings/lib";
+import { CombinedSettings } from "../admin/settings/interfaces";
 
 export default async function ProfilePage() {
   const tasks = [
     getAuthTypeMetadataSS(),
+    getCombinedSettings({ forceRetrieval: true }),
     getCurrentUserSS(),
     fetchSS("/manage/indexing-status"),
     fetchSS("/manage/document-set"),
@@ -23,6 +26,7 @@ export default async function ProfilePage() {
 
   let results: (
     | User
+    | CombinedSettings
     | Response
     | AuthTypeMetadata
     | FullEmbeddingModelResponse
@@ -34,8 +38,9 @@ export default async function ProfilePage() {
     console.log(`Some fetch failed for the main search page - ${e}`);
   }
 
-  const user = results[1] as User | null;
   const authTypeMetadata = results[0] as AuthTypeMetadata | null;
+  const combinedSettings = results[1] as CombinedSettings | null;
+  const user = results[2] as User | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
 
@@ -53,7 +58,7 @@ export default async function ProfilePage() {
         <BarLayout user={user} />
       </div>
       <div className="h-full px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 container overflow-y-auto">
-        <Profile user={user} />
+        <Profile user={user} combinedSettings={combinedSettings} />
       </div>
     </div>
   );
