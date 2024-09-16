@@ -62,7 +62,6 @@ from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_secondary_search_settings
-from danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
@@ -185,9 +184,6 @@ def setup_postgres(db_session: Session) -> None:
     create_initial_public_credential(db_session)
     create_initial_default_connector(db_session)
     associate_default_cc_pair(db_session)
-
-    logger.notice("Verifying default standard answer category exists.")
-    create_initial_default_standard_answer_category(db_session)
 
     logger.notice("Loading default Prompts and Personas")
     delete_old_default_personas(db_session)

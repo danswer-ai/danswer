@@ -1347,55 +1347,6 @@ class ChannelConfig(TypedDict):
     follow_up_tags: NotRequired[list[str]]
 
 
-class StandardAnswerCategory(Base):
-    __tablename__ = "standard_answer_category"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True)
-    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
-        "StandardAnswer",
-        secondary=StandardAnswer__StandardAnswerCategory.__table__,
-        back_populates="categories",
-    )
-    slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
-        "SlackBotConfig",
-        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
-        back_populates="standard_answer_categories",
-    )
-
-
-class StandardAnswer(Base):
-    __tablename__ = "standard_answer"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    keyword: Mapped[str] = mapped_column(String)
-    answer: Mapped[str] = mapped_column(String)
-    active: Mapped[bool] = mapped_column(Boolean)
-    match_regex: Mapped[bool] = mapped_column(Boolean)
-    match_any_keywords: Mapped[bool] = mapped_column(Boolean)
-
-    __table_args__ = (
-        Index(
-            "unique_keyword_active",
-            keyword,
-            active,
-            unique=True,
-            postgresql_where=(active == True),  # noqa: E712
-        ),
-    )
-
-    categories: Mapped[list[StandardAnswerCategory]] = relationship(
-        "StandardAnswerCategory",
-        secondary=StandardAnswer__StandardAnswerCategory.__table__,
-        back_populates="standard_answers",
-    )
-    chat_messages: Mapped[list[ChatMessage]] = relationship(
-        "ChatMessage",
-        secondary=ChatMessage__StandardAnswer.__table__,
-        back_populates="standard_answers",
-    )
-
-
 class SlackBotResponseType(str, PyEnum):
     QUOTES = "quotes"
     CITATIONS = "citations"
@@ -1421,7 +1372,7 @@ class SlackBotConfig(Base):
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
-    standard_answer_categories: Mapped[list[StandardAnswerCategory]] = relationship(
+    standard_answer_categories: Mapped[list["StandardAnswerCategory"]] = relationship(
         "StandardAnswerCategory",
         secondary=SlackBotConfig__StandardAnswerCategory.__table__,
         back_populates="slack_bot_configs",
@@ -1648,6 +1599,55 @@ class TokenRateLimit__UserGroup(Base):
     )
     user_group_id: Mapped[int] = mapped_column(
         ForeignKey("user_group.id"), primary_key=True
+    )
+
+
+class StandardAnswerCategory(Base):
+    __tablename__ = "standard_answer_category"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
+        "StandardAnswer",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="categories",
+    )
+    slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
+        "SlackBotConfig",
+        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        back_populates="standard_answer_categories",
+    )
+
+
+class StandardAnswer(Base):
+    __tablename__ = "standard_answer"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    keyword: Mapped[str] = mapped_column(String)
+    answer: Mapped[str] = mapped_column(String)
+    active: Mapped[bool] = mapped_column(Boolean)
+    match_regex: Mapped[bool] = mapped_column(Boolean)
+    match_any_keywords: Mapped[bool] = mapped_column(Boolean)
+
+    __table_args__ = (
+        Index(
+            "unique_keyword_active",
+            keyword,
+            active,
+            unique=True,
+            postgresql_where=(active == True),  # noqa: E712
+        ),
+    )
+
+    categories: Mapped[list[StandardAnswerCategory]] = relationship(
+        "StandardAnswerCategory",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="standard_answers",
+    )
+    chat_messages: Mapped[list[ChatMessage]] = relationship(
+        "ChatMessage",
+        secondary=ChatMessage__StandardAnswer.__table__,
+        back_populates="standard_answers",
     )
 
 
