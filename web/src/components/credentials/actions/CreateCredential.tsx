@@ -232,13 +232,14 @@ export default function CreateCredential({
                           setShowAdvancedOptions={setShowAdvancedOptions}
                         />
                       )}
-                      {showAdvancedOptions && (
-                        <IsPublicGroupSelector
-                          formikProps={formikProps}
-                          objectName="credential"
-                          publicToWhom="Curators"
-                        />
-                      )}
+                      {showAdvancedOptions ||
+                        (!isAdmin && (
+                          <IsPublicGroupSelector
+                            formikProps={formikProps}
+                            objectName="credential"
+                            publicToWhom="Curators"
+                          />
+                        ))}
                     </div>
                   )}
                 </div>

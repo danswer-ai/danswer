@@ -15,6 +15,7 @@ from ee.danswer.external_permissions.confluence.doc_sync import confluence_doc_s
 from ee.danswer.external_permissions.confluence.group_sync import confluence_group_sync
 from ee.danswer.external_permissions.google_drive.doc_sync import gdrive_doc_sync
 from ee.danswer.external_permissions.google_drive.group_sync import gdrive_group_sync
+from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 from ee.danswer.external_permissions.permission_sync_utils import (
     fetch_docs_with_additional_info,
 )
@@ -23,11 +24,13 @@ logger = setup_logger()
 
 
 GroupSyncType = Callable[
-    [Session, ConnectorCredentialPair, dict[str, Any], dict[str, Any]], None
+    [Session, ConnectorCredentialPair, list[DocsWithAdditionalInfo], dict[str, Any]],
+    None,
 ]
 
 UserSyncType = Callable[
-    [Session, ConnectorCredentialPair, dict[str, Any], dict[str, Any]], None
+    [Session, ConnectorCredentialPair, list[DocsWithAdditionalInfo], dict[str, Any]],
+    None,
 ]
 
 # These functions update:
@@ -95,19 +98,18 @@ def run_permission_sync_entrypoint(
     # - the external_user_group_id <-> document mapping
     # in postgres without committing
     logger.debug(f"Syncing docs for {source_type}")
-    if doc_sync_func is not None:
-        doc_sync_func(
-            db_session,
-            cc_pair,
-            docs_with_additional_info,
-            sync_details,
-        )
+    doc_sync_func(
+        db_session,
+        cc_pair,
+        docs_with_additional_info,
+        sync_details,
+    )
 
     # This function fetches the updated access for the documents
     # and returns a dictionary of document_ids and access
     # This is the access we want to update vespa with
     docs_access = get_access_for_documents(
-        document_ids=[doc_id for doc_id in docs_with_additional_info.keys()],
+        document_ids=[doc.id for doc in docs_with_additional_info],
         db_session=db_session,
     )
 

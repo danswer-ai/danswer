@@ -16,6 +16,7 @@ from danswer.connectors.google_drive.constants import FETCH_PERMISSIONS_SCOPES
 from danswer.db.models import ConnectorCredentialPair
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.document import upsert_document_external_perms__no_commit
+from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
 # Google Drive APIs are quite flakey and may 500 for an
 # extended period of time. Trying to combat here by adding a very
@@ -118,7 +119,7 @@ def _fetch_google_permissions_for_document_id(
 def gdrive_doc_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
-    docs_with_additional_info: dict[str, Any],
+    docs_with_additional_info: list[DocsWithAdditionalInfo],
     sync_details: dict[str, Any],
 ) -> None:
     """
@@ -127,9 +128,9 @@ def gdrive_doc_sync(
     it in postgres so that when it gets created later, the permissions are
     already populated
     """
-    for danswer_doc_id, drive_doc_id in docs_with_additional_info.items():
+    for doc in docs_with_additional_info:
         ext_access = _fetch_google_permissions_for_document_id(
-            drive_file_id=drive_doc_id,
+            drive_file_id=doc.id,
             raw_credentials_json=cc_pair.credential.credential_json,
             company_google_domains=[
                 cast(dict[str, str], sync_details)["company_domain"]
@@ -137,7 +138,7 @@ def gdrive_doc_sync(
         )
         upsert_document_external_perms__no_commit(
             db_session=db_session,
-            doc_id=danswer_doc_id,
+            doc_id=doc.id,
             external_access=ext_access,
             source_type=DocumentSource.GOOGLE_DRIVE,
         )

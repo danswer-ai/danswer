@@ -17,6 +17,7 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.db.external_perm import (
     replace_external_user__group_relations__no_commit,
 )
+from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
 logger = setup_logger()
 
@@ -104,7 +105,7 @@ def _fetch_group_members_paginated(
 def gdrive_group_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
-    docs_with_additional_info: dict[str, Any],
+    docs_with_additional_info: list[DocsWithAdditionalInfo],
     sync_details: dict[str, Any],
 ) -> None:
     google_drive_creds, _ = get_google_drive_creds(

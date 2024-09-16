@@ -58,9 +58,6 @@ export async function submitConnector<T>(
   if (!connector.connector_specific_config) {
     connector.connector_specific_config = {} as T;
   }
-  // console.log("connector", connector);
-  // console.log("isUpdate", isUpdate);
-  // console.log("connectorId", connectorId);
 
   try {
     if (fakeCredential) {
