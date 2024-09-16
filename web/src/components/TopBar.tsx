@@ -12,7 +12,7 @@ export default function TopBar({
   toggleLeftSideBar?: () => void;
 }) {
   return (
-    <div className="fixed top-0 left-0 flex lg:hidden w-full z-top-bar bg-red-500">
+    <div className="fixed top-0 left-0 flex lg:hidden w-full z-top-bar">
       <div className="flex w-full items-start p-4 justify-between">
         <div className="flex lg:hidden items-center gap-2">
           <Button variant="ghost" size="icon" onClick={toggleLeftSideBar}>
