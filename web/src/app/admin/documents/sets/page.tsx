@@ -112,7 +112,6 @@ const DocumentSetTable = ({
               {documentSets
                 .slice((page - 1) * numToDisplay, page * numToDisplay)
                 .map((documentSet) => {
-                  console.log(documentSets);
                   return (
                     <TableRow key={documentSet.id}>
                       <TableCell className="break-all whitespace-normal">
