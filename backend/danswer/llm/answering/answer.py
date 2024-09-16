@@ -204,7 +204,11 @@ class Answer:
     ]:
         tool_calls = 0
         initiated = False
-        while tool_calls < MAX_TOOL_CALLS:
+        forced_tool_use = (
+            self.force_use_tool.force_use and self.force_use_tool.args is not None
+        )
+
+        while tool_calls < (1 if forced_tool_use else MAX_TOOL_CALLS):
             if initiated:
                 yield StreamStopInfo(stop_reason=StreamStopReason.NEW_RESPONSE)
             initiated = True
@@ -213,7 +217,7 @@ class Answer:
 
             tool_call_chunk: AIMessageChunk | None = None
 
-            if self.force_use_tool.force_use and self.force_use_tool.args is not None:
+            if forced_tool_use:
                 tool_call_chunk = AIMessageChunk(content="")
                 tool_call_chunk.tool_calls = [
                     {
@@ -438,7 +442,7 @@ class Answer:
     ]:
         tool_calls = 0
         initiated = False
-        while tool_calls < MAX_TOOL_CALLS:
+        while tool_calls < (1 if self.force_use_tool.force_use else MAX_TOOL_CALLS):
             if initiated:
                 yield StreamStopInfo(stop_reason=StreamStopReason.NEW_RESPONSE)
 
