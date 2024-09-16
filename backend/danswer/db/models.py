@@ -866,7 +866,9 @@ class ChatSession(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"))
+    persona_id: Mapped[int | None] = mapped_column(
+        ForeignKey("persona.id"), nullable=True
+    )
     description: Mapped[str] = mapped_column(Text)
     # One-shot direct answering, currently the two types of chats are not mixed
     one_shot: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -900,7 +902,6 @@ class ChatSession(Base):
     prompt_override: Mapped[PromptOverride | None] = mapped_column(
         PydanticType(PromptOverride), nullable=True
     )
-
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -909,7 +910,6 @@ class ChatSession(Base):
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-
     user: Mapped[User] = relationship("User", back_populates="chat_sessions")
     folder: Mapped["ChatFolder"] = relationship(
         "ChatFolder", back_populates="chat_sessions"

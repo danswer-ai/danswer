@@ -675,9 +675,11 @@ def stream_chat_message_objects(
                         db_session=db_session,
                         selected_search_docs=selected_db_search_docs,
                         # Deduping happens at the last step to avoid harming quality by dropping content early on
-                        dedupe_docs=retrieval_options.dedupe_docs
-                        if retrieval_options
-                        else False,
+                        dedupe_docs=(
+                            retrieval_options.dedupe_docs
+                            if retrieval_options
+                            else False
+                        ),
                     )
                     yield qa_docs_response
                 elif packet.id == SECTION_RELEVANCE_LIST_ID:
@@ -786,16 +788,18 @@ def stream_chat_message_objects(
             if message_specific_citations
             else None,
             error=None,
-            tool_calls=[
-                ToolCall(
-                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                    tool_name=tool_result.tool_name,
-                    tool_arguments=tool_result.tool_args,
-                    tool_result=tool_result.tool_result,
-                )
-            ]
-            if tool_result
-            else [],
+            tool_calls=(
+                [
+                    ToolCall(
+                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                        tool_name=tool_result.tool_name,
+                        tool_arguments=tool_result.tool_args,
+                        tool_result=tool_result.tool_result,
+                    )
+                ]
+                if tool_result
+                else []
+            ),
         )
 
         logger.debug("Committing messages")

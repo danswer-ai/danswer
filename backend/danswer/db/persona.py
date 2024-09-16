@@ -563,13 +563,15 @@ def validate_persona_tools(tools: list[Tool]) -> None:
             )
 
 
-def get_prompts_by_ids(prompt_ids: list[int], db_session: Session) -> Sequence[Prompt]:
+def get_prompts_by_ids(prompt_ids: list[int], db_session: Session) -> list[Prompt]:
     """Unsafe, can fetch prompts from all users"""
     if not prompt_ids:
         return []
-    prompts = db_session.scalars(select(Prompt).where(Prompt.id.in_(prompt_ids))).all()
+    prompts = db_session.scalars(
+        select(Prompt).where(Prompt.id.in_(prompt_ids)).where(Prompt.deleted.is_(False))
+    ).all()
 
-    return prompts
+    return list(prompts)
 
 
 def get_prompt_by_id(
