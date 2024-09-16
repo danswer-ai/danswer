@@ -9,7 +9,7 @@ from danswer.search.models import ChunkContext
 from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
 from danswer.search.models import SavedSearchDoc
-from danswer.server.manage.models import StandardAnswer
+from ee.danswer.server.manage.models import StandardAnswer
 
 
 class StandardAnswerRequest(BaseModel):
