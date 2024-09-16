@@ -28,6 +28,7 @@ from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
+from danswer.search.models import SavedSearchDoc
 from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
@@ -65,18 +66,18 @@ def _translate_doc_response_to_simple_doc(
 
 def _get_final_context_doc_indices(
     final_context_docs: list[LlmDoc] | None,
-    simple_search_docs: list[SimpleDoc] | None,
+    top_docs: list[SavedSearchDoc] | None,
 ) -> list[int] | None:
     """
     this function returns a list of indices of the simple search docs
     that were actually fed to the LLM.
     """
-    if final_context_docs is None or simple_search_docs is None:
+    if final_context_docs is None or top_docs is None:
         return None
 
     final_context_doc_ids = {doc.document_id for doc in final_context_docs}
     return [
-        i for i, doc in enumerate(simple_search_docs) if doc.id in final_context_doc_ids
+        i for i, doc in enumerate(top_docs) if doc.document_id in final_context_doc_ids
     ]
 
 
@@ -148,6 +149,7 @@ def handle_simplified_chat_message(
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
             response.simple_search_docs = _translate_doc_response_to_simple_doc(packet)
+            response.top_documents = packet.top_documents
         elif isinstance(packet, StreamingError):
             response.error_msg = packet.error
         elif isinstance(packet, ChatMessageDetail):
@@ -161,7 +163,7 @@ def handle_simplified_chat_message(
             }
 
     response.final_context_doc_indices = _get_final_context_doc_indices(
-        final_context_docs, response.simple_search_docs
+        final_context_docs, response.top_documents
     )
 
     response.answer = answer
@@ -296,6 +298,7 @@ def handle_send_message_simple_with_history(
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
             response.simple_search_docs = _translate_doc_response_to_simple_doc(packet)
+            response.top_documents = packet.top_documents
         elif isinstance(packet, StreamingError):
             response.error_msg = packet.error
         elif isinstance(packet, ChatMessageDetail):
@@ -311,7 +314,7 @@ def handle_send_message_simple_with_history(
             }
 
     response.final_context_doc_indices = _get_final_context_doc_indices(
-        final_context_docs, response.simple_search_docs
+        final_context_docs, response.top_documents
     )
 
     response.answer = answer
