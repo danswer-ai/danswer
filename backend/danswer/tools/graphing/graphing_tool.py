@@ -16,12 +16,13 @@ from danswer.db.engine import get_session_context_manager
 from danswer.db.models import FileOrigin
 from danswer.dynamic_configs.interface import JSON_ro
 from danswer.file_store.file_store import get_default_file_store
+from danswer.file_store.models import ChatFileType
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
+from danswer.llm.utils import _process_csv_file
 from danswer.prompts.chat_prompts import (
-    GRAPHING_QUERY_REPHRASE,
+    GRAPHING_GET_FILE_NAME_PROMPT,
 )  # You'll need to create this
-from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.tools.graphing.models import GRAPHING_RESPONSE_ID
 from danswer.tools.graphing.models import GraphingError
 from danswer.tools.graphing.models import GraphingResponse
@@ -98,6 +99,25 @@ class GraphingTool(Tool):
     def display_name(self) -> str:
         return self._DISPLAY_NAME
 
+    # def tool_definition(self) -> dict:
+    #         return {
+    #             "type": "function",
+    #             "function": {
+    #                 "name": self.name,
+    #                 "description": self.description,
+    #                 "parameters": {
+    #                     "type": "object",
+    #                     "properties": {
+    #                         "code": {
+    #                             "type": "string",
+    #                             "description": "Python code to generate the graph using matplotlib and seaborn",
+    #                         },
+    #                     },
+    #                     "required": ["code"],
+    #                 },
+    #             },
+    #         }
+
     def tool_definition(self) -> dict:
         return {
             "type": "function",
@@ -107,12 +127,12 @@ class GraphingTool(Tool):
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "code": {
+                        "filename": {
                             "type": "string",
-                            "description": "Python code to generate the graph using matplotlib and seaborn",
+                            "description": "The name of the file to analyze for graphing purposes",
                         },
                     },
-                    "required": ["code"],
+                    "required": ["filename"],
                 },
             },
         }
@@ -147,15 +167,35 @@ class GraphingTool(Tool):
         if not force_run and not self.check_if_needs_graphing(query, history, llm):
             return None
 
-        rephrased_query = history_based_query_rephrase(
-            query=query,
-            history=history,
-            llm=llm,
-            prompt_template=GRAPHING_QUERY_REPHRASE,
+        file_names_and_descriptions = []
+        for message in history:
+            for file in message.files:
+                if file.file_type == ChatFileType.CSV:
+                    file_name = file.filename
+                    description = _process_csv_file(file)
+                    file_names_and_descriptions.append(f"{file_name}: {description}")
+
+        # Use the GRAPHING_GET_FILE_NAME_PROMPT to get the file name
+        file_list = "\n".join(file_names_and_descriptions)
+        prompt = GRAPHING_GET_FILE_NAME_PROMPT.format(
+            chat_history="\n".join([f"{m.message}" for m in history]),
+            question=query,
+            file_list=file_list,
         )
 
+        file_name_response = llm.invoke(prompt)
+        file_name = file_name_response.content.strip()
+
+        # Validate that the returned file name is in our list of available files
+        available_files = [
+            name.split(":")[0].strip() for name in file_names_and_descriptions
+        ]
+        if file_name not in available_files:
+            logger.warning(f"LLM returned invalid file name: {file_name}")
+            file_name = available_files[0] if available_files else None
+
         return {
-            "prompt": rephrased_query,
+            "filename": file_name,
         }
 
     def build_tool_message_content(
@@ -222,9 +262,9 @@ class GraphingTool(Tool):
         }
 
     def run(self, llm: LLM, **kwargs: str) -> Generator[ToolResponse, None, None]:
-        print(" THE KEYWORD ARGS ARE .....")
+        kwargs["filename"]
+        return
 
-        print(kwargs)
         code = self.preprocess_code(kwargs["prompt"])
 
         locals_dict = {"plt": plt, "matplotlib": matplotlib, "np": np}

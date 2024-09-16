@@ -133,6 +133,21 @@ def translate_history_to_basemessages(
     return history_basemessages, history_token_counts
 
 
+def _process_csv_file(file: InMemoryChatFile) -> str:
+    import pandas as pd
+    import io
+
+    df = pd.read_csv(io.StringIO(file.content.decode("utf-8")))
+    csv_preview = df.head().to_string()
+
+    file_name_section = (
+        f"CSV FILE NAME: {file.filename}\n"
+        if file.filename
+        else "CSV FILE (NO NAME PROVIDED):\n"
+    )
+    return f"{file_name_section}{CODE_BLOCK_PAT.format(csv_preview)}\n\n\n"
+
+
 def _build_content(
     message: str,
     files: list[InMemoryChatFile] | None = None,
@@ -161,15 +176,8 @@ def _build_content(
         )
 
     for file in csv_files or []:
-        import pandas as pd
-        import io
+        final_message_with_files += _process_csv_file(file)
 
-        df = pd.read_csv(io.StringIO(file.content.decode("utf-8")))
-        csv_preview = df.head().to_string()
-        file_name_section = f"CSV: {file.filename}\n" if file.filename else ""
-        final_message_with_files += (
-            f"{file_name_section}{CODE_BLOCK_PAT.format(csv_preview)}\n\n\n"
-        )
     final_message_with_files += message
 
     return final_message_with_files

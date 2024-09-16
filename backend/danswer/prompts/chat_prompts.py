@@ -39,7 +39,7 @@ CHAT_USER_CONTEXT_FREE_PROMPT = f"""
 """.strip()
 
 
-GRAPHING_QUERY_REPHRASE = f"""
+GRAPHING_QUERY_REPHRASE_GRAPH = f"""
 Given the following conversation and a follow-up input, generate Python code using matplotlib to create the requested graph.
 IMPORTANT: The code should be complete and executable, including data generation if necessary.
 Focus on creating a clear and informative visualization based on the user's request.
@@ -60,6 +60,23 @@ Python Code for Graph (Respond with only the Python code to generate the graph):
 # Your code here
 ```
 """.strip()
+
+
+GRAPHING_GET_FILE_NAME_PROMPT = f"""
+Given the following conversation, a follow-up input, and a list of available CSV files,
+provide the name of the CSV file to analyze.
+
+{GENERAL_SEP_PAT}
+Chat History:
+{{chat_history}}
+{GENERAL_SEP_PAT}
+Follow Up Input: {{question}}
+{GENERAL_SEP_PAT}
+Available CSV Files:
+{{file_list}}
+{GENERAL_SEP_PAT}
+CSV File Name to Analyze:
+"""
 
 
 # Design considerations for the below:

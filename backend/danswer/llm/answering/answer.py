@@ -245,6 +245,7 @@ class Answer:
                         self.tools, self.force_use_tool
                     )
                 ]
+
             print(final_tool_definitions)
             for message in self.llm.stream(
                 prompt=prompt,
@@ -276,6 +277,8 @@ class Answer:
                 return
 
             tool_call_requests = tool_call_chunk.tool_calls
+            print("REQUESTS")
+            print(tool_call_requests)
 
             for tool_call_request in tool_call_requests:
                 tool_calls += 1
@@ -513,6 +516,9 @@ class Answer:
             tool_calls += 1
 
             tool, tool_args = chosen_tool_and_args
+            print("tool args")
+            print(tool_args)
+
             tool_runner = ToolRunner(tool, tool_args)
             yield tool_runner.kickoff()
             tool_responses = []
