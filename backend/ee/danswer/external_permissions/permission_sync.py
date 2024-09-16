@@ -17,7 +17,7 @@ from ee.danswer.external_permissions.google_drive.doc_sync import gdrive_doc_syn
 from ee.danswer.external_permissions.google_drive.group_sync import gdrive_group_sync
 from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 from ee.danswer.external_permissions.permission_sync_utils import (
-    fetch_docs_with_additional_info,
+    get_docs_with_additional_info,
 )
 
 logger = setup_logger()
@@ -77,7 +77,7 @@ def run_permission_sync_entrypoint(
     # this may grab ids before they are indexed but that is fine because
     # we create a document in postgres to hold the permissions info
     # until the indexing job has a chance to run
-    docs_with_additional_info = fetch_docs_with_additional_info(
+    docs_with_additional_info = get_docs_with_additional_info(
         db_session=db_session, cc_pair=cc_pair
     )
 

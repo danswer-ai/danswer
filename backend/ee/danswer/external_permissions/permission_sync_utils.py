@@ -15,7 +15,7 @@ class DocsWithAdditionalInfo(BaseModel):
     additional_info: Any
 
 
-def fetch_docs_with_additional_info(
+def get_docs_with_additional_info(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
 ) -> list[DocsWithAdditionalInfo]:
