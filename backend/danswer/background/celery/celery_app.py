@@ -942,7 +942,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
             time.sleep(WAIT_INTERVAL)
 
-        logger.info("Primary worker is ready. Continuing...")
+        logger.info("Wait for primary worker completed successfully. Continuing...")
         return
 
     logger.info("Running as the primary celery worker.")
@@ -988,6 +988,21 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
     for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
         r.delete(key)
+
+
+@worker_shutdown.connect
+def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
+    if not is_celery_app_primary(sender):
+        return
+
+    if not sender.primary_worker_lock:
+        return
+
+    logger.info("Releasing primary worker lock.")
+    lock = sender.primary_worker_lock
+    if lock.owned():
+        lock.release()
+        sender.primary_worker_lock = None
 
 
 class CeleryTaskPlainFormatter(PlainFormatter):
@@ -1061,21 +1076,6 @@ def on_setup_logging(
     task_logger.propagate = False
 
 
-@worker_shutdown.connect
-def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
-    if not is_celery_app_primary(sender):
-        return
-
-    if not sender.primary_worker_lock:
-        return
-
-    logger.info("Releasing primary worker lock.")
-    lock = sender.primary_worker_lock
-    if lock.owned():
-        lock.release()
-        sender.primary_worker_lock = None
-
-
 class HubPeriodicTask(bootsteps.StartStopStep):
     """Regularly reacquires the primary worker lock outside of the task queue"""
 
@@ -1116,6 +1116,7 @@ class HubPeriodicTask(bootsteps.StartStopStep):
 
 
 celery_app.steps["worker"].add(HubPeriodicTask)
+
 
 #####
 # Celery Beat (Periodic Tasks) Settings
