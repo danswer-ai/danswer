@@ -99,9 +99,9 @@ const Main = () => {
 
   return (
     <>
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h2 className="mt-6 mb-2 ml-auto mr-auto font-bold">
         Step 1: Provide your Credentials
-      </Title>
+      </h2>
 
       {jiraCredential ? (
         <>
@@ -226,9 +226,9 @@ const Main = () => {
       )}
 
       {/* TODO: make this periodic */}
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h2 className="mt-6 mb-2 ml-auto mr-auto font-bold">
         Step 2: Which spaces do you want to make searchable?
-      </Title>
+      </h2>
       {jiraCredential ? (
         <>
           {" "}

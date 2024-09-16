@@ -60,7 +60,7 @@ const EditRow = ({ documentSet }: { documentSet: DocumentSet }) => {
           </Button>
         }
       >
-        <div className="flex items-center gap-1">
+        <div className="flex gap-1">
           <InfoIcon /> Cannot update while syncing! Wait for the sync to finish,
           then try again.
         </div>
@@ -104,6 +104,7 @@ const DocumentSetTable = ({
                 <TableHead className="pl-8">Name</TableHead>
                 <TableHead>Connectors</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Visibility</TableHead>
                 <TableHead>Delete</TableHead>
               </TableRow>
             </TableHeader>
@@ -111,6 +112,7 @@ const DocumentSetTable = ({
               {documentSets
                 .slice((page - 1) * numToDisplay, page * numToDisplay)
                 .map((documentSet) => {
+                  console.log(documentSets);
                   return (
                     <TableRow key={documentSet.id}>
                       <TableCell className="break-all whitespace-normal">
@@ -160,6 +162,13 @@ const DocumentSetTable = ({
                           <Badge variant="destructive">
                             <TriangleAlert size={14} /> Deleting
                           </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {documentSet.is_public ? (
+                          <Badge>Global</Badge>
+                        ) : (
+                          <Badge variant="secondary">Private</Badge>
                         )}
                       </TableCell>
                       <TableCell>
