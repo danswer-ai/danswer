@@ -1124,9 +1124,9 @@ export function ChatPage({
 
       await delay(50);
       while (!stack.isComplete || !stack.isEmpty()) {
-        await delay(2);
+        await delay(0.5);
 
-        if (!stack.isEmpty()) {
+        if (!stack.isEmpty() && !controller.signal.aborted) {
           const packet = stack.nextPacket();
           if (!packet) {
             continue;

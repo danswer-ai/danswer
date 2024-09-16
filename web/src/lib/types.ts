@@ -161,6 +161,8 @@ export interface StandardAnswer {
   id: number;
   keyword: string;
   answer: string;
+  match_regex: boolean;
+  match_any_keywords: boolean;
   categories: StandardAnswerCategory[];
 }
 
