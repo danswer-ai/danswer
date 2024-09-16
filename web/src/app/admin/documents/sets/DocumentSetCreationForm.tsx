@@ -38,7 +38,6 @@ export const DocumentSetCreationForm = ({
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Step 3: Filter ccPairs based on the search term
   const filteredCcPairs = ccPairs.filter((ccPair) =>
     ccPair.name!.toLowerCase().includes(searchTerm.toLowerCase())
   );
