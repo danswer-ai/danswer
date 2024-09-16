@@ -30,9 +30,8 @@ export const SIDEBAR_WIDTH = `w-[350px]`;
 export const LOGOUT_DISABLED =
   process.env.NEXT_PUBLIC_DISABLE_LOGOUT?.toLowerCase() === "true";
 
-export const DISABLED_CSV_DISPLAY = false;
-
-// process.env.NEXT_PUBLIC_DISABLE_CSV_DISPLAY?.toLowerCase() === "true";
+export const DISABLED_CSV_DISPLAY =
+  process.env.NEXT_PUBLIC_DISABLE_CSV_DISPLAY?.toLowerCase() === "true";
 
 export const NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN =
   process.env.NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN?.toLowerCase() === "true";
