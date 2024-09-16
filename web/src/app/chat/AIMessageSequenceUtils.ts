@@ -1,8 +1,12 @@
-// For handling AI message `sequences` (ie. ai messages which are streamed in sequence as separate messags but are in reality one message)
+// This module handles AI message sequences - consecutive AI messages that are streamed
+// separately but represent a single logical message. These utilities are used for
+// processing and displaying such sequences in the chat interface.
 
 import { Message } from "@/app/chat/interfaces";
 import { DanswerDocument } from "@/lib/search/interfaces";
 
+// Retrieves the consecutive AI messages at the end of the message history.
+// This is useful for combining or processing the latest AI response sequence.
 export function getConsecutiveAIMessagesAtEnd(
   messageHistory: Message[]
 ): Message[] {
@@ -16,6 +20,10 @@ export function getConsecutiveAIMessagesAtEnd(
   }
   return aiMessages;
 }
+
+// Extracts unique documents from a sequence of AI messages.
+// This is used to compile a comprehensive list of referenced documents
+// across multiple parts of an AI response.
 export function getUniqueDocumentsFromAIMessages(
   messages: Message[]
 ): DanswerDocument[] {

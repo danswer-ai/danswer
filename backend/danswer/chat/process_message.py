@@ -634,12 +634,6 @@ def stream_chat_message_objects(
         )
 
         # LLM prompt building, response capturing, etc.
-        logger.info(f"Is connected function: {is_connected}")
-        if is_connected:
-            logger.debug(f"Is connected function type: {type(is_connected)}")
-            logger.debug(f"Is connected function callable: {callable(is_connected)}")
-        else:
-            logger.warning("Is connected function is None or falsy")
         answer = Answer(
             is_connected=is_connected,
             question=final_msg.message,

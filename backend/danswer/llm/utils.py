@@ -99,29 +99,6 @@ def litellm_exception_to_error_msg(e: Exception, llm: LLM) -> str:
     return error_msg
 
 
-# def translate_danswer_msg_to_langchain(
-#     msg: Union[ChatMessage, "PreviousMessage"],
-# ) -> BaseMessage:
-#     files: list[InMemoryChatFile] = []
-
-#     # If the message is a `ChatMessage`, it doesn't have the downloaded files
-#     # attached. Just ignore them for now. Also, OpenAI doesn't allow files to
-#     # be attached to AI messages, so we must remove them
-#     if not isinstance(msg, ChatMessage) and msg.message_type != MessageType.ASSISTANT:
-#         files = msg.files
-#     content = build_content_with_imgs(msg.message, files)
-
-#     if msg.message_type == MessageType.SYSTEM:
-#         raise ValueError("System messages are not currently part of history")
-#     if msg.message_type == MessageType.ASSISTANT:
-#         return AIMessage(content=content)
-#     if msg.message_type == MessageType.USER:
-#         return HumanMessage(content=content)
-
-#     raise ValueError(f"New message type {msg.message_type} not handled")
-
-
-# TODO This is quite janky
 def translate_danswer_msg_to_langchain(
     msg: Union[ChatMessage, "PreviousMessage"],
 ) -> BaseMessage:
@@ -136,36 +113,12 @@ def translate_danswer_msg_to_langchain(
 
     if msg.message_type == MessageType.SYSTEM:
         return SystemMessage(content=content)
-    wrapped_content = ""
     if msg.message_type == MessageType.ASSISTANT:
-        try:
-            parsed_content = (
-                json.loads(content) if isinstance(content, str) else content
-            )
-            if (
-                "name" in parsed_content
-                and parsed_content["name"] == "run_image_generation"
-            ):
-                wrapped_content += f"I, the AI, am now generating an \
-                image based on the prompt: '{parsed_content['args']['prompt']}'\n"
-                wrapped_content += "[/AI IMAGE GENERATION REQUEST]"
-            elif (
-                "id" in parsed_content
-                and parsed_content["id"] == "image_generation_response"
-            ):
-                wrapped_content += "I, the AI, have generated the following image(s) based on the previous request:\n"
-                for img in parsed_content["response"]:
-                    wrapped_content += f"- Description: {img['revised_prompt']}\n"
-                    wrapped_content += f"  Image URL: {img['url']}\n\n"
-                wrapped_content += "[/AI IMAGE GENERATION RESPONSE]"
-            else:
-                wrapped_content = str(content)
-        except json.JSONDecodeError:
-            wrapped_content = str(content)
-        return AIMessage(content=wrapped_content)
-
+        return AIMessage(content=content)
     if msg.message_type == MessageType.USER:
         return HumanMessage(content=content)
+
+    raise ValueError(f"New message type {msg.message_type} not handled")
 
 
 def translate_history_to_basemessages(
