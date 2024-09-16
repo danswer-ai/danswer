@@ -45,7 +45,12 @@ import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
-import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
+import {
+  buildFinalPrompt,
+  createPersona,
+  providersContainImageGeneratingSupport,
+  updatePersona,
+} from "./lib";
 import { Popover } from "@/components/popover/Popover";
 import {
   CameraIcon,
@@ -185,9 +190,9 @@ export function AssistantEditor({
     });
     modelOptionsByProvider.set(llmProvider.name, providerOptions);
   });
-  const providerSupportingImageGenerationExists = llmProviders.some(
-    (provider) => provider.provider === "openai"
-  );
+
+  const providerSupportingImageGenerationExists =
+    providersContainImageGeneratingSupport(llmProviders);
 
   const personaCurrentToolIds =
     existingPersona?.tools.map((tool) => tool.id) || [];
@@ -454,6 +459,15 @@ export function AssistantEditor({
               ? true
               : false;
           }
+
+          const currentLLMSupportsImageOutput = checkLLMSupportsImageOutput(
+            providerDisplayNameToProviderName.get(
+              values.llm_model_provider_override || ""
+            ) ||
+              defaultProviderName ||
+              "",
+            values.llm_model_version_override || defaultModelName || ""
+          );
 
           return (
             <Form className="w-full text-text-950">
@@ -759,12 +773,7 @@ export function AssistantEditor({
                         <TooltipTrigger asChild>
                           <div
                             className={`w-fit ${
-                              !checkLLMSupportsImageOutput(
-                                providerDisplayNameToProviderName.get(
-                                  values.llm_model_provider_override || ""
-                                ) || "",
-                                values.llm_model_version_override || ""
-                              )
+                              !currentLLMSupportsImageOutput
                                 ? "opacity-70 cursor-not-allowed"
                                 : ""
                             }`}
@@ -776,23 +785,11 @@ export function AssistantEditor({
                               onChange={() => {
                                 toggleToolInValues(imageGenerationTool.id);
                               }}
-                              disabled={
-                                !checkLLMSupportsImageOutput(
-                                  providerDisplayNameToProviderName.get(
-                                    values.llm_model_provider_override || ""
-                                  ) || "",
-                                  values.llm_model_version_override || ""
-                                )
-                              }
+                              disabled={!currentLLMSupportsImageOutput}
                             />
                           </div>
                         </TooltipTrigger>
-                        {!checkLLMSupportsImageOutput(
-                          providerDisplayNameToProviderName.get(
-                            values.llm_model_provider_override || ""
-                          ) || "",
-                          values.llm_model_version_override || ""
-                        ) && (
+                        {!currentLLMSupportsImageOutput && (
                           <TooltipContent side="top" align="center">
                             <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                               To use Image Generation, select GPT-4o or another
@@ -1062,15 +1059,15 @@ export function AssistantEditor({
                                           <Field
                                             name={`starter_messages[${index}].name`}
                                             className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
+                                            border 
+                                            border-border 
+                                            bg-background 
+                                            rounded 
+                                            w-full 
+                                            py-2 
+                                            px-3 
+                                            mr-4
+                                          `}
                                             autoComplete="off"
                                           />
                                           <ErrorMessage
@@ -1092,15 +1089,15 @@ export function AssistantEditor({
                                           <Field
                                             name={`starter_messages.${index}.description`}
                                             className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
+                                            border 
+                                            border-border 
+                                            bg-background 
+                                            rounded 
+                                            w-full 
+                                            py-2 
+                                            px-3 
+                                            mr-4
+                                          `}
                                             autoComplete="off"
                                           />
                                           <ErrorMessage
@@ -1123,15 +1120,15 @@ export function AssistantEditor({
                                           <Field
                                             name={`starter_messages[${index}].message`}
                                             className={`
-                                          border 
-                                          border-border 
-                                          bg-background 
-                                          rounded 
-                                          w-full 
-                                          py-2 
-                                          px-3 
-                                          mr-4
-                                      `}
+                                              border 
+                                              border-border 
+                                              bg-background 
+                                              rounded 
+                                              w-full 
+                                              py-2 
+                                              px-3 
+                                              mr-4
+                                          `}
                                             as="textarea"
                                             autoComplete="off"
                                           />
