@@ -1,7 +1,7 @@
 name: Quality Checks PR
 concurrency:
   group: Quality-Checks-PR-${{ github.head_ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 
 on:
   merge_group:

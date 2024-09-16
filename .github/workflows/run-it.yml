@@ -1,7 +1,8 @@
 name: Run Integration Tests
 concurrency:
-  group: Run-Integration-Tests-${{ github.head_ref }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
+
 
 on:
   merge_group:
@@ -28,7 +29,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      # NOTE: we don't need to build the Web Docker image since it's not used
+      # NOTE: we don't need to build the Web Docker image since it's not usedp
       # during the IT for now. We have a separate action to verify it builds 
       # succesfully
       - name: Pull Web Docker image
