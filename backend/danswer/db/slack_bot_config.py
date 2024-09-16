@@ -20,7 +20,6 @@ from danswer.utils.errors import EERequiredError
 from danswer.utils.variable_functionality import (
     fetch_versioned_implementation_with_fallback,
 )
-from ee.danswer.db.standard_answer import fetch_standard_answer_categories_by_ids
 
 
 def _build_persona_name(channel_names: list[str]) -> str:
@@ -141,9 +140,18 @@ def update_slack_bot_config(
             f"Unable to find slack bot config with ID {slack_bot_config_id}"
         )
 
-    existing_standard_answer_categories = fetch_standard_answer_categories_by_ids(
-        standard_answer_category_ids=standard_answer_category_ids,
-        db_session=db_session,
+    versioned_fetch_standard_answer_categories_by_ids = (
+        fetch_versioned_implementation_with_fallback(
+            "danswer.db.standard_answer",
+            "fetch_standard_answer_categories_by_ids",
+            _no_ee_standard_answer_categories,
+        )
+    )
+    existing_standard_answer_categories = (
+        versioned_fetch_standard_answer_categories_by_ids(
+            standard_answer_category_ids=standard_answer_category_ids,
+            db_session=db_session,
+        )
     )
     if len(existing_standard_answer_categories) != len(standard_answer_category_ids):
         raise ValueError(
