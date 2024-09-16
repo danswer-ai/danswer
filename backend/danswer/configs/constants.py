@@ -165,6 +165,7 @@ class FileOrigin(str, Enum):
     CONNECTOR = "connector"
     GENERATED_REPORT = "generated_report"
     OTHER = "other"
+    GRAPH_GEN = "graph_gen"
 
 
 class PostgresAdvisoryLocks(Enum):

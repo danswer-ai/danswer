@@ -43,6 +43,7 @@ def select_single_tool_for_non_tool_calling_llm(
     llm: LLM,
 ) -> tuple[Tool, dict[str, Any]] | None:
     if len(tools_and_args) == 1:
+        logger.info("Only one tool available, returning it directly")
         return tools_and_args[0]
 
     tool_list_str = "\n".join(
@@ -58,21 +59,26 @@ def select_single_tool_for_non_tool_calling_llm(
         tool_list=tool_list_str, chat_history=history_str, query=query
     )
     output = message_to_string(llm.invoke(prompt))
+    logger.info(f"LLM output for tool selection: {output}")
     try:
         # First try to match the number
         number_match = re.search(r"\d+", output)
         if number_match:
             tool_ind = int(number_match.group())
+            logger.info(f"Selected tool by index: {tool_ind}")
             return tools_and_args[tool_ind]
 
         # If that fails, try to match the tool name
         for tool, args in tools_and_args:
             if tool.name.lower() in output.lower():
+                logger.info(f"Selected tool by name: {tool.name}")
                 return tool, args
 
         # If that fails, return the first tool
+        logger.warning("Failed to match tool by index or name, returning first tool")
         return tools_and_args[0]
 
-    except Exception:
+    except Exception as e:
         logger.error(f"Failed to select single tool for non-tool-calling LLM: {output}")
+        logger.exception(e)
         return None

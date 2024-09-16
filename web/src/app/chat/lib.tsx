@@ -60,6 +60,7 @@ export function getChatRetentionInfo(
     showRetentionWarning,
   };
 }
+import { GraphChunk } from "./message/Messages";
 
 export async function updateModelOverrideForChatSession(
   chatSessionId: number,
@@ -113,7 +114,8 @@ export type PacketType =
   | ImageGenerationDisplay
   | StreamingError
   | MessageResponseIDInfo
-  | StreamStopInfo;
+  | StreamStopInfo
+  | GraphChunk;
 
 export async function* sendMessage({
   regenerate,

@@ -65,7 +65,7 @@ import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
-import { AIMessage, HumanMessage } from "./message/Messages";
+import { AIMessage, graph, GraphChunk, HumanMessage } from "./message/Messages";
 import { StarterMessage } from "./StarterMessage";
 import {
   AnswerPiecePacket,
@@ -1202,6 +1202,13 @@ export function ChatPage({
               }
               return prevState;
             });
+            if (Object.hasOwn(packet, "line_graph")) {
+              const GraphPacket = packet as GraphChunk;
+              setGraphs((graphs) => [
+                ...graphs,
+                { file_id: GraphPacket.file_id, line: GraphPacket.line_graph },
+              ]);
+            }
 
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
@@ -1236,14 +1243,14 @@ export function ChatPage({
                 query = toolCalls[0].tool_args["query"];
               }
             } else if (Object.hasOwn(packet, "file_ids")) {
-              aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
-                (fileId) => {
-                  return {
-                    id: fileId,
-                    type: ChatFileType.IMAGE,
-                  };
-                }
-              );
+              // aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
+              //   (fileId) => {
+              //     return {
+              //       id: fileId,
+              //       type: ChatFileType.IMAGE,
+              //     };
+              //   }
+              // );
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
               stackTrace = (packet as StreamingError).stack_trace;
@@ -1684,6 +1691,7 @@ export function ChatPage({
     string | null
   >(null);
 
+  const [graphs, setGraphs] = useState<graph[]>([]);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
   const [settingsToggled, setSettingsToggled] = useState(false);
 
@@ -2100,6 +2108,7 @@ export function ChatPage({
                                         // and so it sticks around on page reload
                                         setMessageAsLatest(messageId);
                                       }}
+                                      graphs={graphs}
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={

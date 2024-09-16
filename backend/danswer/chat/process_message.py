@@ -72,11 +72,16 @@ from danswer.search.utils import relevant_sections_to_indices
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
+from danswer.tools.analysis.analysis_tool import CSVAnalysisTool
 from danswer.tools.built_in_tools import get_built_in_tool_by_id
 from danswer.tools.custom.custom_tool import build_custom_tools_from_openapi_schema
 from danswer.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
 from danswer.tools.custom.custom_tool import CustomToolCallSummary
 from danswer.tools.force import ForceUseTool
+from danswer.tools.graphing.graphing_tool import GraphingResponse
+from danswer.tools.graphing.graphing_tool import GraphingTool
+from danswer.tools.graphing.models import GraphGenerationDisplay
+from danswer.tools.graphing.models import GRAPHING_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
 from danswer.tools.images.image_generation_tool import ImageGenerationResponse
 from danswer.tools.images.image_generation_tool import ImageGenerationTool
@@ -251,6 +256,7 @@ ChatPacket = (
     | CitationInfo
     | ImageGenerationDisplay
     | CustomToolResponse
+    | GraphGenerationDisplay
     | MessageSpecificCitations
     | MessageResponseIDInfo
 )
@@ -527,9 +533,24 @@ def stream_chat_message_objects(
         search_tool: SearchTool | None = None
         tool_dict: dict[int, list[Tool]] = {}  # tool_id to tool
         for db_tool_model in persona.tools:
+            print(f"TOOL IS {db_tool_model}")
             # handle in-code tools specially
+
             if db_tool_model.in_code_tool_id:
                 tool_cls = get_built_in_tool_by_id(db_tool_model.id, db_session)
+                if (
+                    tool_cls.__name__ == CSVAnalysisTool.__name__
+                    and not latest_query_files
+                ):
+                    print("TOOL CALL")
+                    tool_dict[db_tool_model.id] = [CSVAnalysisTool()]
+
+                if (
+                    tool_cls.__name__ == GraphingTool.__name__
+                    and not latest_query_files
+                ):
+                    tool_dict[db_tool_model.id] = [GraphingTool(output_dir="output")]
+
                 if tool_cls.__name__ == SearchTool.__name__ and not latest_query_files:
                     search_tool = SearchTool(
                         db_session=db_session,
@@ -600,7 +621,8 @@ def stream_chat_message_objects(
                     ]
 
                 continue
-
+            else:
+                print("LEAVE")
             # handle all custom tools
             if db_tool_model.openapi_schema:
                 tool_dict[db_tool_model.id] = cast(
@@ -707,6 +729,14 @@ def stream_chat_message_objects(
                     yield FinalUsedContextDocsResponse(
                         final_context_docs=packet.response
                     )
+                elif packet.id == GRAPHING_RESPONSE_ID:
+                    graph_generation = cast(GraphingResponse, packet.response)
+
+                    yield GraphGenerationDisplay(
+                        file_id=graph_generation.extra_graph_display.file_id,
+                        line_graph=graph_generation.extra_graph_display.line_graph,
+                    )
+
                 elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                     img_generation_response = cast(
                         list[ImageGenerationResponse], packet.response

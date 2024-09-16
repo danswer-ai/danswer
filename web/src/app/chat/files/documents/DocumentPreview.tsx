@@ -1,26 +1,21 @@
 import { FiFileText } from "react-icons/fi";
 import { useState, useRef, useEffect } from "react";
 import { Tooltip } from "@/components/tooltip/Tooltip";
+import { ExpandTwoIcon, OpenSourceIcon } from "@/components/icons/icons";
+import { ToggleRight } from "@phosphor-icons/react";
 
 export function DocumentPreview({
   fileName,
   maxWidth,
   alignBubble,
+  open,
 }: {
   fileName: string;
+  open?: () => void;
   maxWidth?: string;
   alignBubble?: boolean;
 }) {
-  const [isOverflowing, setIsOverflowing] = useState(false);
   const fileNameRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (fileNameRef.current) {
-      setIsOverflowing(
-        fileNameRef.current.scrollWidth > fileNameRef.current.clientWidth
-      );
-    }
-  }, [fileName]);
 
   return (
     <div
@@ -63,8 +58,14 @@ export function DocumentPreview({
             {fileName}
           </div>
         </Tooltip>
+
         <div className="text-subtle text-sm">Document</div>
       </div>
+      {open && (
+        <button onClick={() => open()}>
+          <ExpandTwoIcon />
+        </button>
+      )}
     </div>
   );
 }

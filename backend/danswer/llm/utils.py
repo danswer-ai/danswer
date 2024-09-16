@@ -143,15 +143,32 @@ def _build_content(
         if files
         else None
     )
-    if not text_files:
+    csv_files = (
+        [file for file in files if file.file_type == ChatFileType.CSV]
+        if files
+        else None
+    )
+
+    if not text_files and not csv_files:
         return message
 
     final_message_with_files = "FILES:\n\n"
-    for file in text_files:
+    for file in text_files or []:
         file_content = file.content.decode("utf-8")
         file_name_section = f"DOCUMENT: {file.filename}\n" if file.filename else ""
         final_message_with_files += (
             f"{file_name_section}{CODE_BLOCK_PAT.format(file_content.strip())}\n\n\n"
+        )
+
+    for file in csv_files or []:
+        import pandas as pd
+        import io
+
+        df = pd.read_csv(io.StringIO(file.content.decode("utf-8")))
+        csv_preview = df.head().to_string()
+        file_name_section = f"CSV: {file.filename}\n" if file.filename else ""
+        final_message_with_files += (
+            f"{file_name_section}{CODE_BLOCK_PAT.format(csv_preview)}\n\n\n"
         )
     final_message_with_files += message
 
