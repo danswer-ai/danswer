@@ -8,21 +8,13 @@ import {
   FiGlobe,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
-import {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   DanswerDocument,
   FilteredDanswerDocument,
 } from "@/lib/search/interfaces";
 import { SearchSummary } from "./SearchSummary";
-import { SourceIcon } from "@/components/SourceIcon";
 import { SkippedSearch } from "./SkippedSearch";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "@/components/CopyButton";
@@ -49,7 +41,6 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
-import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
 import {
   LikeFeedback,
@@ -63,7 +54,6 @@ import {
 import { ValidSources } from "@/lib/types";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useMouseTracking } from "./hooks";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
