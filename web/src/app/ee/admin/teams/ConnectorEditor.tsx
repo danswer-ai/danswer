@@ -14,7 +14,7 @@ export const ConnectorEditor = ({
   allCCPairs,
 }: ConnectorEditorProps) => {
   return (
-    <div className="mb-3 flex gap-2 flex-wrap">
+    <div className="flex gap-2 flex-wrap">
       {allCCPairs.map((ccPair) => {
         const ind = selectedCCPairIds.indexOf(ccPair.cc_pair_id);
         let isSelected = ind !== -1;
