@@ -56,10 +56,12 @@ export function AccessTypeForm({
 
   return (
     <div>
-      <Title className="mb-2">Document Access</Title>
-      <Text className="mb-2">
+      <div className="flex gap-x-2 items-center">
+        <label className="text-text-950 font-medium">Document Access</label>
+      </div>
+      <p className="text-sm text-text-500 mb-2">
         Control who has access to the documents indexed by this connector.
-      </Text>
+      </p>
 
       {isAdmin && (
         <>

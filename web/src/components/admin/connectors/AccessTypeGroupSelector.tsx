@@ -23,6 +23,10 @@ export function AccessTypeGroupSelector({}: {}) {
   useEffect(() => {
     if (user && userGroups && isPaidEnterpriseFeaturesEnabled) {
       const isUserAdmin = user.role === UserRole.ADMIN;
+      if (!isPaidEnterpriseFeaturesEnabled) {
+        access_type_helpers.setValue("public");
+        return;
+      }
       if (!isUserAdmin) {
         access_type_helpers.setValue("private");
       }
@@ -102,16 +106,16 @@ export function AccessTypeGroupSelector({}: {}) {
                         <div
                           key={userGroup.id}
                           className={`
-                                                px-3 
-                                                py-1
-                                                rounded-lg 
-                                                border
-                                                border-border 
-                                                w-fit 
-                                                flex 
-                                                cursor-pointer 
-                                                ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
-                                            `}
+                            px-3 
+                            py-1
+                            rounded-lg 
+                            border
+                            border-border 
+                            w-fit 
+                            flex 
+                            cursor-pointer 
+                            ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
+                        `}
                           onClick={() => {
                             if (isSelected) {
                               arrayHelpers.remove(ind);
