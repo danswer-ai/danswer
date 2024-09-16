@@ -153,7 +153,7 @@ export const TeamspacesTable = ({
                       )}
                     </TableCell>
                     <TableCell>
-                      {!teamspace.is_up_to_date ? (
+                      {teamspace.is_up_to_date ? (
                         <Badge variant="success" className="whitespace-nowrap">
                           Up to date!
                         </Badge>

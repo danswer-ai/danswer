@@ -201,9 +201,9 @@ const Main = () => {
         </>
       )}
 
-      <h2 className="mt-6 mb-2 ml-auto mr-auto font-bold">
+      <Title className="mt-6">
         Step 2: Which spaces do you want to make searchable?
-      </h2>
+      </Title>
       {confluenceCredential ? (
         <>
           <p className="mb-4 text-sm">
