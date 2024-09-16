@@ -1,3 +1,4 @@
+import { FullLLMProvider } from "../configuration/llm/interfaces";
 import { Persona, Prompt, StarterMessage } from "./interfaces";
 
 interface PersonaCreationRequest {
@@ -317,4 +318,19 @@ export function personaComparator(a: Persona, b: Persona) {
   }
 
   return closerToZeroNegativesFirstComparator(a.id, b.id);
+}
+
+export function checkPersonaRequiresImageGeneration(persona: Persona) {
+  for (const tool of persona.tools) {
+    if (tool.name === "ImageGenerationTool") {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function providersContainImageGeneratingSupport(
+  providers: FullLLMProvider[]
+) {
+  return providers.some((provider) => provider.provider === "openai");
 }
