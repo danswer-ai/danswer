@@ -1,6 +1,6 @@
 name: Run Integration Tests
 concurrency:
-  group: Quality-Checks-PR-${{ github.head_ref }}
+  group: Run-Integration-Tests-${{ github.head_ref }}
   cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 
 
