@@ -89,23 +89,24 @@ function Main({ ccPairId }: { ccPairId: number }) {
       />
       {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
         to render these conditionally.*/}
-      <Card className="mt-6">
-        <CardHeader className="border-b sm:pb-10">
-          <div className="flex items-start justify-between sm:items-center flex-col sm:flex-row gap-2">
-            <h3 className="font-semibold">Indexing Attempts</h3>
+      <div className="flex items-start justify-between sm:items-center flex-col sm:flex-row gap-2 mt-20 mb-4">
+        <h3 className="font-semibold">Indexing Attempts</h3>
 
-            {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
-              ccPair.connector.source
-            ) && (
-              <ReIndexButton
-                ccPairId={ccPair.id}
-                connectorId={ccPair.connector.id}
-                credentialId={ccPair.credential.id}
-                isDisabled={ccPair.connector.disabled}
-              />
-            )}
-          </div>
-        </CardHeader>
+        {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
+          ccPair.connector.source
+        ) && (
+          <ReIndexButton
+            ccPairId={ccPair.id}
+            connectorId={ccPair.connector.id}
+            credentialId={ccPair.credential.id}
+            isDisabled={ccPair.connector.disabled}
+          />
+        )}
+      </div>
+      <Card>
+        {/*    <CardHeader className="border-b sm:pb-10">
+         
+        </CardHeader> */}
         <CardContent className="p-0">
           <IndexingAttemptsTable ccPair={ccPair} />
         </CardContent>

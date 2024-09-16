@@ -10,7 +10,7 @@ export function CopyButton({
   content?: string;
   onClick?: () => void;
 }) {
-  const [copyClicked, setCopyClicked] = useState(false);
+  const [isCopyClicked, setIsCopyClicked] = useState(false);
 
   return (
     <CustomTooltip
@@ -22,17 +22,17 @@ export function CopyButton({
             }
             onClick && onClick();
 
-            setCopyClicked(true);
-            setTimeout(() => setCopyClicked(false), 3000);
+            setIsCopyClicked(true);
+            setTimeout(() => setIsCopyClicked(false), 3000);
           }}
           variant="ghost"
           size="smallIcon"
         >
-          {copyClicked ? <Check size={16} /> : <Copy size={16} />}
+          {isCopyClicked ? <Check size={16} /> : <Copy size={16} />}
         </Button>
       }
     >
-      {copyClicked ? "Copied" : "Copy"}
+      {isCopyClicked ? "Copied" : "Copy"}
     </CustomTooltip>
   );
 }

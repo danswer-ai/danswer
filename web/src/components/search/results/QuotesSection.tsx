@@ -8,7 +8,7 @@ import { CustomTooltip } from "@/components/CustomTooltip";
 
 const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
   const [detailIsOpen, setDetailIsOpen] = useState(false);
-  const [copyClicked, setCopyClicked] = useState(false);
+  const [isCopyClicked, setIsCopyClicked] = useState(false);
 
   return (
     <div
@@ -37,13 +37,13 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
                   className="p-1 rounded hover:bg-hover cursor-pointer"
                   onClick={() => {
                     navigator.clipboard.writeText(quoteInfo.quote);
-                    setCopyClicked(true);
+                    setIsCopyClicked(true);
                     setTimeout(() => {
-                      setCopyClicked(false);
+                      setIsCopyClicked(false);
                     }, 1000);
                   }}
                 >
-                  {copyClicked ? (
+                  {isCopyClicked ? (
                     <CheckmarkIcon
                       className="my-auto flex flex-shrink-0"
                       size={16}
@@ -58,7 +58,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
               }
               asChild
             >
-              {copyClicked ? "Copied" : "Copy"}
+              {isCopyClicked ? "Copied" : "Copy"}
             </CustomTooltip>
           </div>
         </div>

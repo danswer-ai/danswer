@@ -40,7 +40,7 @@ function NewApiKeyModal({
   apiKey: string;
   onClose: () => void;
 }) {
-  const [copyClicked, setCopyClicked] = useState(false);
+  const [isCopyClicked, setIsCopyClicked] = useState(false);
 
   return (
     <div className="h-full">
@@ -56,25 +56,25 @@ function NewApiKeyModal({
             trigger={
               <Button
                 onClick={() => {
-                  setCopyClicked(true);
+                  setIsCopyClicked(true);
                   navigator.clipboard.writeText(apiKey);
                   setTimeout(() => {
-                    setCopyClicked(false);
+                    setIsCopyClicked(false);
                   }, 2000);
                 }}
                 variant="ghost"
                 size="icon"
                 className="ml-2"
               >
-                {copyClicked ? <Check size="16" /> : <Copy size="16" />}
+                {isCopyClicked ? <Check size="16" /> : <Copy size="16" />}
               </Button>
             }
             asChild
           >
-            {copyClicked ? "Copied" : "Copy"}
+            {isCopyClicked ? "Copied" : "Copy"}
           </CustomTooltip>
         </div>
-        {copyClicked && (
+        {isCopyClicked && (
           <p className="text-success text-xs font-medium pt-1">
             API Key copied!
           </p>

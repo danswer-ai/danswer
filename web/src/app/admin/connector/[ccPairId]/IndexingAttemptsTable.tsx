@@ -23,8 +23,8 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   const [indexAttemptTracePopupId, setIndexAttemptTracePopupId] = useState<
     number | null
   >(null);
-  const [copyClicked, setCopyClicked] = useState(false);
-  const [modalIsVisible, setModalIsVisible] = useState(false);
+  const [isCopyClicked, setIsCopyClicked] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const indexAttemptToDisplayTraceFor = ccPair.index_attempts.find(
     (indexAttempt) => indexAttempt.id === indexAttemptTracePopupId
@@ -32,7 +32,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
 
   const handleClose = () => {
     setIndexAttemptTracePopupId(null);
-    setModalIsVisible(false);
+    setIsModalVisible(false);
   };
 
   return (
@@ -96,7 +96,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                             <div
                               onClick={() => {
                                 setIndexAttemptTracePopupId(indexAttempt.id);
-                                setModalIsVisible(true);
+                                setIsModalVisible(true);
                               }}
                               className="mt-2 text-link cursor-pointer select-none"
                             >
@@ -104,19 +104,22 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                             </div>
                           }
                           onClose={handleClose}
-                          open={modalIsVisible}
+                          open={isModalVisible}
                           title="Full Exception Trace"
                         >
                           <div className="mb-6">
-                            {!copyClicked ? (
+                            {!isCopyClicked ? (
                               <Button
                                 onClick={() => {
                                   navigator.clipboard.writeText(
                                     indexAttemptToDisplayTraceFor?.full_exception_trace ||
                                       ""
                                   );
-                                  setCopyClicked(true);
-                                  setTimeout(() => setCopyClicked(false), 2000);
+                                  setIsCopyClicked(true);
+                                  setTimeout(
+                                    () => setIsCopyClicked(false),
+                                    2000
+                                  );
                                 }}
                               >
                                 Copy full trace

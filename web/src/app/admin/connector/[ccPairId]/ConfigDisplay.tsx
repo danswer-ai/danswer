@@ -56,19 +56,19 @@ export function ConfigDisplay({
 
   return (
     <>
-      <Title className="mb-2">Configuration</Title>
+      <h3 className="font-semibold mb-4">Configuration</h3>
       <Card>
         <CardContent>
-          <div className="flex flex-col gap-4">
+          <ul className="flex flex-col gap-4">
             {configEntries.map(([key, value]) => (
-              <div key={key} className="flex gap-10 justify-between">
+              <li key={key} className="flex gap-10 justify-between">
                 <span>{key}:</span>
                 <span className="truncate">
                   {convertObjectToString(value) || "-"}
                 </span>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </CardContent>
       </Card>
     </>
