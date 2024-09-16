@@ -15,6 +15,8 @@ import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidE
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -33,6 +35,13 @@ export const DocumentSetCreationForm = ({
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   const isUpdate = existingDocumentSet !== undefined;
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Step 3: Filter ccPairs based on the search term
+  const filteredCcPairs = ccPairs.filter((ccPair) =>
+    ccPair.name!.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div>
@@ -119,48 +128,60 @@ export const DocumentSetCreationForm = ({
 
             <Divider />
 
-            <h2 className="mb-1 font-medium text-base">
-              Pick your connectors:
-            </h2>
-            <p className="mb-3 text-xs text-subtle">
-              All documents indexed by the selected connectors will be a part of
-              this document set.
-            </p>
-            <FieldArray
-              name="cc_pair_ids"
-              render={(arrayHelpers: ArrayHelpers) => (
-                <div className="mb-3 flex gap-2 flex-wrap">
-                  {ccPairs.map((ccPair) => {
-                    const ind = values.cc_pair_ids.indexOf(ccPair.cc_pair_id);
-                    let isSelected = ind !== -1;
-                    return (
-                      <Badge
-                        key={`${ccPair.connector.id}-${ccPair.credential.id}`}
-                        variant={isSelected ? "default" : "outline"}
-                        className="cursor-pointer hover:bg-opacity-75"
-                        onClick={() => {
-                          if (isSelected) {
-                            arrayHelpers.remove(ind);
-                          } else {
-                            arrayHelpers.push(ccPair.cc_pair_id);
-                          }
-                        }}
-                      >
-                        <div className="my-auto">
-                          <ConnectorTitle
-                            connector={ccPair.connector}
-                            ccPairId={ccPair.cc_pair_id}
-                            ccPairName={ccPair.name}
-                            isLink={false}
-                            showMetadata={false}
-                          />
-                        </div>
-                      </Badge>
-                    );
-                  })}
-                </div>
-              )}
-            />
+            <div>
+              <h2 className="mb-1 font-medium text-base">
+                Pick your connectors:
+              </h2>
+              <p className="mb-3 text-xs text-subtle">
+                All documents indexed by the selected connectors will be a part
+                of this document set.
+              </p>
+
+              <Input
+                type="text"
+                placeholder="Search connectors..."
+                className="mb-3"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+
+              <FieldArray
+                name="cc_pair_ids"
+                render={(arrayHelpers: ArrayHelpers) => (
+                  <div className="mb-3 flex gap-2 flex-wrap">
+                    {filteredCcPairs.map((ccPair) => {
+                      const ind = values.cc_pair_ids.indexOf(ccPair.cc_pair_id);
+                      const isSelected = ind !== -1;
+
+                      return (
+                        <Badge
+                          key={`${ccPair.connector.id}-${ccPair.credential.id}`}
+                          variant={isSelected ? "default" : "outline"}
+                          className="cursor-pointer hover:bg-opacity-75"
+                          onClick={() => {
+                            if (isSelected) {
+                              arrayHelpers.remove(ind);
+                            } else {
+                              arrayHelpers.push(ccPair.cc_pair_id);
+                            }
+                          }}
+                        >
+                          <div className="my-auto">
+                            <ConnectorTitle
+                              connector={ccPair.connector}
+                              ccPairId={ccPair.cc_pair_id}
+                              ccPairName={ccPair.name}
+                              isLink={false}
+                              showMetadata={false}
+                            />
+                          </div>
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+              />
+            </div>
 
             {isPaidEnterpriseFeaturesEnabled &&
               teamspaces &&
