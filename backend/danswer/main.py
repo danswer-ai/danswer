@@ -125,9 +125,9 @@ from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
+from shared_configs.configs import CORS_ALLOWED_ORIGIN
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-
 
 logger = setup_logger()
 
@@ -591,7 +591,7 @@ def get_application() -> FastAPI:
 
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Change this to the list of allowed origins if needed
+        allow_origins=CORS_ALLOWED_ORIGIN,  # Configurable via environment variable
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
