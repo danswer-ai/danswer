@@ -108,7 +108,7 @@ export function WhitelabelingForm() {
                   <SubLabel>Current Custom Logo: </SubLabel>
                 </div>
                 <Image
-                  src={"/api/enterprise-settings/logo?u=" + Date.now()}
+                  src={"/api/workspace/logo?u=" + Date.now()}
                   alt="Logo"
                   style={{ objectFit: "contain" }}
                   className="w-32 h-32"

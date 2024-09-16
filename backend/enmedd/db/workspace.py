@@ -9,6 +9,33 @@ from enmedd.db.models import Workspace
 from enmedd.db.models import Workspace__Users
 
 
+# def put_workspace(
+#     workspace_id: int,
+#     db_session: Session,
+#     workspace_data: dict
+# ) -> Workspace:
+#     try:
+#         # Attempt to retrieve the existing workspace
+#         existing_workspace = db_session.scalar(select(Workspace).where(Workspace.id == workspace_id))
+
+#         if existing_workspace:
+#             # Update existing workspace
+#             for key, value in workspace_data.items():
+#                 setattr(existing_workspace, key, value)
+#             db_session.add(existing_workspace)
+#         else:
+#             # Create new workspace
+#             new_workspace = Workspace(id=workspace_id, **workspace_data)
+#             db_session.add(new_workspace)
+
+#         db_session.commit()
+#         return existing_workspace if existing_workspace else new_workspace
+
+#     except SQLAlchemyError as e:
+#         db_session.rollback()
+#         raise Exception(f"Error inserting or updating workspace: {str(e)}") from e
+
+
 def upsert_workspace(
     db_session: Session,
     id: int,
@@ -16,6 +43,9 @@ def upsert_workspace(
     workspace_name: str,
     custom_logo: str | None = None,
     custom_header_logo: str | None = None,
+    workspace_description: str | None = None,
+    use_custom_logo: bool = False,
+    custom_header_content: str | None = None,
     commit: bool = True,
 ) -> Workspace:
     try:
@@ -28,6 +58,9 @@ def upsert_workspace(
             workspace.workspace_name = workspace_name
             workspace.custom_logo = custom_logo
             workspace.custom_header_logo = custom_header_logo
+            workspace.workspace_description = workspace_description
+            workspace.use_custom_logo = use_custom_logo
+            workspace.custom_header_content = custom_header_content
         else:
             # Create new workspace
             workspace = Workspace(
@@ -36,6 +69,9 @@ def upsert_workspace(
                 workspace_name=workspace_name,
                 custom_logo=custom_logo,
                 custom_header_logo=custom_header_logo,
+                workspace_description=workspace_description,
+                use_custom_logo=use_custom_logo,
+                custom_header_content=custom_header_content,
             )
             db_session.add(workspace)
 
@@ -77,4 +113,9 @@ def get_workspace_by_id(
         stmt = stmt.join(Workspace__Users).join(User).where(User.id == user.id)
 
     workspace = db_session.scalar(stmt)
+    return workspace
+
+
+def get_workspace_settings(db_session: Session) -> Workspace | None:
+    workspace = db_session.scalar(select(Workspace))
     return workspace

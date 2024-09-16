@@ -8,6 +8,8 @@ class Workspaces(BaseModel):
 
     NOTE: don't put anything sensitive in here, as this is accessible without auth."""
 
+    id: int = 0  # Default value of 0
+    instance_id: int
     workspace_name: str | None = None
     workspace_description: str | None = None
     use_custom_logo: bool = False
@@ -18,6 +20,8 @@ class Workspaces(BaseModel):
     @classmethod
     def from_model(cls, workspace_model: WorkspaceModel) -> "Workspaces":
         return cls(
+            id=workspace_model.id,
+            instance_id=workspace_model.instance_id,
             workspace_name=workspace_model.workspace_name,
             workspace_description=workspace_model.workspace_description,
             use_custom_logo=workspace_model.use_custom_logo,

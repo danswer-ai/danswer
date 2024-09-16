@@ -8,7 +8,7 @@ class FeatureFlags(BaseModel):
     multi_teamspace: bool = False
     multi_workspace: bool = False
     query_history: bool = False
-    whitelabelling: bool = False
+    whitelabelling: bool = True
     share_chat: bool = False
     explore_assistants: bool = False
 
