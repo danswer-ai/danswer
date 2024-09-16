@@ -78,13 +78,16 @@ export const CsvSection = ({
 
   const [data, setData] = useState<CSVData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fadeIn, setFadeIn] = useState(false);
 
   const fileId = csvFileDescriptor.id;
   useEffect(() => {
     fetchCSV(fileId);
-  });
+  }, [fileId]);
 
   const fetchCSV = async (id: string) => {
+    setIsLoading(true);
     try {
       const response = await fetch(`api/chat/file/${id}`);
       if (!response.ok) {
@@ -105,8 +108,20 @@ export const CsvSection = ({
       setData(parsedData);
     } catch (error) {
       console.error("Error fetching CSV file:", error);
+    } finally {
+      // Add a slight delay before setting isLoading to false
+      setTimeout(() => setIsLoading(false), 300);
     }
   };
+
+  useEffect(() => {
+    if (!isLoading) {
+      // Trigger fade-in effect after a short delay
+      setTimeout(() => setFadeIn(true), 50);
+    } else {
+      setFadeIn(false);
+    }
+  }, [isLoading]);
 
   const downloadFile = () => {
     if (!fileId) return;
@@ -176,32 +191,56 @@ export const CsvSection = ({
       </CardHeader>
       <Card className="w-full max-h-[600px] !p-0 relative overflow-x-scroll overflow-y-scroll mx-auto">
         <CardContent className="!p-0">
-          <Table>
-            <TableHeader className="!sticky !top-0 ">
-              <TableRow className="!bg-neutral-100">
-                {headers.map((header, index) => (
-                  <TableHead className=" !sticky !top-0 " key={index}>
-                    {index == 0 ? "" : header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <div className="animate-pulse flex space-x-4">
+                <div className="rounded-full bg-slate-200 h-10 w-10"></div>
+                <div className="flex-1 space-y-6 py-1">
+                  <div className="h-2 bg-slate-200 rounded"></div>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="h-2 bg-slate-200 rounded col-span-2"></div>
+                      <div className="h-2 bg-slate-200 rounded col-span-1"></div>
+                    </div>
+                    <div className="h-2 bg-slate-200 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`transition-opacity transform duration-1000	 ease-in-out ${
+                fadeIn ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <Table>
+                <TableHeader className="!sticky !top-0 ">
+                  <TableRow className="!bg-neutral-100">
+                    {headers.map((header, index) => (
+                      <TableHead className=" !sticky !top-0 " key={index}>
+                        {index == 0 ? "" : header}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
 
-            <TableBody className="max-h-[300px] overflow-y-auto">
-              {data.map((row, rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {headers.map((header, cellIndex) => (
-                    <TableCell
-                      className={`${cellIndex == 0 && "sticky left-0 !bg-neutral-100"}`}
-                      key={cellIndex}
-                    >
-                      {row[header]}
-                    </TableCell>
+                <TableBody className="max-h-[300px] overflow-y-auto">
+                  {data.map((row, rowIndex) => (
+                    <TableRow key={rowIndex}>
+                      {headers.map((header, cellIndex) => (
+                        <TableCell
+                          className={`${cellIndex == 0 && "sticky left-0 !bg-neutral-100"}`}
+                          key={cellIndex}
+                        >
+                          {row[header]}
+                        </TableCell>
+                      ))}
+                    </TableRow>
                   ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
