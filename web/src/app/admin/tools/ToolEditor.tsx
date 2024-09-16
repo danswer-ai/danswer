@@ -206,51 +206,61 @@ function ToolForm({
         setShowAdvancedOptions={setShowAdvancedOptions}
       />
       {showAdvancedOptions && (
-        <div className="mt-4">
-          <h3 className="text-base font-semibold mb-2">Custom Headers</h3>
-          <p className="text-sm mb-4 text-text-500">
-            Specify custom headers to be sent with each request to this
-            tool&apos;s API.
+        <div>
+          <h3 className="text-xl font-bold mb-2 text-primary-600">
+            Custom Headers
+          </h3>
+          <p className="text-sm mb-6 text-gray-600 italic">
+            Specify custom headers for each request to this tool&apos;s API.
           </p>
           <FieldArray
             name="customHeaders"
             render={(arrayHelpers: ArrayHelpers) => (
-              <div>
-                {values.customHeaders &&
-                  values.customHeaders.length > 0 &&
-                  values.customHeaders.map(
-                    (header: { key: string; value: string }, index: number) => (
-                      <div key={index} className="flex items-center mb-3">
-                        <Field
-                          name={`customHeaders.${index}.key`}
-                          placeholder="Header Key"
-                          className="mr-2 p-2 border border-border rounded flex-1"
-                        />
-                        <Field
-                          name={`customHeaders.${index}.value`}
-                          placeholder="Header Value"
-                          className="mr-2 p-2 border border-border rounded flex-1"
-                        />
-                        <Button
-                          type="button"
-                          onClick={() => arrayHelpers.remove(index)}
-                          color="red"
-                          size="xs"
+              <div className="space-y-4">
+                {values.customHeaders && values.customHeaders.length > 0 && (
+                  <div className="space-y-3">
+                    {values.customHeaders.map(
+                      (
+                        header: { key: string; value: string },
+                        index: number
+                      ) => (
+                        <div
+                          key={index}
+                          className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg shadow-sm"
                         >
-                          Remove
-                        </Button>
-                      </div>
-                    )
-                  )}
+                          <Field
+                            name={`customHeaders.${index}.key`}
+                            placeholder="Header Key"
+                            className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
+                          <Field
+                            name={`customHeaders.${index}.value`}
+                            placeholder="Header Value"
+                            className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => arrayHelpers.remove(index)}
+                            color="red"
+                            size="sm"
+                            className="transition-colors duration-200 hover:bg-red-600"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
 
                 <Button
                   type="button"
                   onClick={() => arrayHelpers.push({ key: "", value: "" })}
                   color="blue"
-                  size="sm"
-                  className="mt-2"
+                  size="md"
+                  className="transition-colors duration-200"
                 >
-                  Add Header
+                  Add New Header
                 </Button>
               </div>
             )}

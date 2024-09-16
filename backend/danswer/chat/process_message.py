@@ -615,6 +615,7 @@ def stream_chat_message_objects(
                             chat_session_id=chat_session_id,
                             message_id=user_message.id if user_message else None,
                         ),
+                        custom_headers=db_tool_model.custom_headers,
                     ),
                 )
 

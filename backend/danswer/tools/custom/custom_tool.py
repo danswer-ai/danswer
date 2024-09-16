@@ -44,11 +44,10 @@ class CustomToolCallSummary(BaseModel):
 
 class CustomTool(Tool):
     def __init__(
-        
         self,
         method_spec: MethodSpec,
-        base_url: str, custom_headers: list[Header] = []
-    ,
+        base_url: str,
+        custom_headers: list[Header] = [],
     ) -> None:
         self._base_url = base_url
         self._method_spec = method_spec
@@ -57,7 +56,7 @@ class CustomTool(Tool):
         self._name = self._method_spec.name
         self._description = self._method_spec.summary
         self.headers = (
-            {header.key: header.value for header in custom_headers}
+            {header["key"]: header["value"] for header in custom_headers}
             if custom_headers
             else {}
         )
@@ -169,7 +168,7 @@ class CustomTool(Tool):
 
         url = self._method_spec.build_url(self._base_url, path_params, query_params)
         method = self._method_spec.method
-
+        # Log request details
         response = requests.request(
             method, url, json=request_body, headers=self.headers
         )
@@ -186,7 +185,8 @@ class CustomTool(Tool):
 
 
 def build_custom_tools_from_openapi_schema_and_headers(
-    openapi_schema: dict[str, Any], custom_headers: list[Header] = [],
+    openapi_schema: dict[str, Any],
+    custom_headers: list[Header] = [],
     dynamic_schema_info: DynamicSchemaInfo | None = None,
 ) -> list[CustomTool]:
     if dynamic_schema_info:

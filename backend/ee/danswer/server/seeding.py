@@ -32,9 +32,11 @@ from ee.danswer.server.enterprise_settings.store import upload_logo
 class CustomToolSeed(BaseModel):
     name: str
     description: str
-    is_public: bool
     definition_path: str
     custom_headers: Optional[List[dict]] = None
+    display_name: Optional[str] = None
+    in_code_tool_id: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 
@@ -68,16 +70,32 @@ def _seed_custom_tools(db_session: Session, tools: List[CustomToolSeed]) -> None
         logger.notice("Seeding Custom Tools")
         for tool in tools:
             try:
+                logger.debug(f"Attempting to seed tool: {tool.name}")
+                logger.debug(f"Reading definition from: {tool.definition_path}")
                 with open(tool.definition_path, "r") as file:
-                    definition = json.load(file)
+                    file_content = file.read()
+                    if not file_content.strip():
+                        raise ValueError("File is empty")
+                    openapi_schema = json.loads(file_content)
                 db_tool = Tool(
                     name=tool.name,
                     description=tool.description,
-                    is_public=tool.is_public,
-                    definition=definition,
+                    openapi_schema=openapi_schema,
                     custom_headers=tool.custom_headers,
+                    display_name=tool.display_name,
+                    in_code_tool_id=tool.in_code_tool_id,
+                    user_id=tool.user_id,
                 )
                 db_session.add(db_tool)
+                logger.debug(f"Successfully added tool: {tool.name}")
+            except FileNotFoundError:
+                logger.error(
+                    f"Definition file not found for tool {tool.name}: {tool.definition_path}"
+                )
+            except json.JSONDecodeError as e:
+                logger.error(
+                    f"Invalid JSON in definition file for tool {tool.name}: {str(e)}"
+                )
             except Exception as e:
                 logger.error(f"Failed to seed tool {tool.name}: {str(e)}")
         db_session.commit()
