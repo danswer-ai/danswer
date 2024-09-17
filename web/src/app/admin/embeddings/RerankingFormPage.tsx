@@ -254,8 +254,9 @@ const RerankingDetailsForm = forwardRef<
                       <p>
                         Local reranking models require significant computational
                         resources and may perform slowly without GPU
-                        acceleration. Consider enabling GPU support or using a
-                        cloud-based alternative for better performance.
+                        acceleration. Consider switching to GPU-enabled
+                        infrastructure or using a cloud-based alternative for
+                        better performance.
                       </p>
                       <div className="flex justify-end">
                         <Button
