@@ -88,17 +88,17 @@ def run_permission_sync_entrypoint(
 
     # If the source type is not polling, we only fetch the permissions every
     # _FULL_FETCH_PERIOD_IN_SECONDS seconds
-    if _FULL_FETCH_PERIOD_IN_SECONDS[source_type] is not None:
-        last_sync = (
-            cc_pair.last_time_perm_sync.replace(tzinfo=timezone.utc)
-            if cc_pair.last_time_perm_sync
-            else None
-        )
-        current_time = datetime.now(timezone.utc)
-        if last_sync:
-            time_since_last_sync = (current_time - last_sync).total_seconds()
-            if time_since_last_sync < _FULL_FETCH_PERIOD_IN_SECONDS[source_type]:
-                return
+    full_fetch_period = _FULL_FETCH_PERIOD_IN_SECONDS[source_type]
+    if full_fetch_period is not None:
+        last_sync = cc_pair.last_time_perm_sync
+        if (
+            last_sync
+            and (
+                datetime.now(timezone.utc) - last_sync.replace(tzinfo=timezone.utc)
+            ).total_seconds()
+            < full_fetch_period
+        ):
+            return
 
     # Here we run the connector to grab all the ids
     # this may grab ids before they are indexed but that is fine because
