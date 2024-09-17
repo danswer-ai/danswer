@@ -1,4 +1,5 @@
 # docs: https://docs.celeryq.dev/en/stable/userguide/configuration.html
+from danswer.configs.app_configs import CELERY_RESULT_EXPIRES
 from danswer.configs.app_configs import REDIS_DB_NUMBER_CELERY
 from danswer.configs.app_configs import REDIS_DB_NUMBER_CELERY_RESULT_BACKEND
 from danswer.configs.app_configs import REDIS_HOST
@@ -46,7 +47,7 @@ task_acks_late = True
 
 # It's possible we don't even need celery's result backend, in which case all of the optimization below
 # might be irrelevant
-result_expires = 86400  # 86400 seconds is the default
+result_expires = CELERY_RESULT_EXPIRES  # 86400 seconds is the default
 
 # Option 0: Defaults (json serializer, no compression)
 # about 1.5 KB per queued task. 1KB in queue, 400B for result, 100 as a child entry in generator result

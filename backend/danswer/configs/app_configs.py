@@ -167,6 +167,8 @@ REDIS_DB_NUMBER_CELERY = int(os.environ.get("REDIS_DB_NUMBER_CELERY", 15))  # br
 REDIS_SSL_CERT_REQS = os.getenv("REDIS_SSL_CERT_REQS", "CERT_NONE")
 REDIS_SSL_CA_CERTS = os.getenv("REDIS_SSL_CA_CERTS", "")
 
+CELERY_RESULT_EXPIRES = int(os.environ.get("CELERY_RESULT_EXPIRES", 86400))  # seconds
+
 #####
 # Connector Configs
 #####
