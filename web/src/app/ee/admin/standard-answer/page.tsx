@@ -85,7 +85,9 @@ const StandardAnswersTableRow = ({
           checked={standardAnswer.match_regex}
         />,
         <ReactMarkdown key={`watch_mode-${standardAnswer.id}`}>
-          {standardAnswer.apply_globally ? "All questions" : "X Assistants"}
+          {standardAnswer.apply_globally
+            ? "All questions"
+            : `${standardAnswer.personas.length} assistant(s)`}
         </ReactMarkdown>,
         <ReactMarkdown
           key={`answer-${standardAnswer.id}`}
@@ -121,7 +123,7 @@ const StandardAnswersTable = ({
     { name: "", key: "edit" },
     { name: "Keywords/Pattern", key: "keyword" },
     { name: "Match regex?", key: "match_regex" },
-    { name: "Watching for", key: "apply_globally" },
+    { name: "Watching", key: "apply_globally" },
     { name: "Answer", key: "answer" },
     { name: "", key: "delete" },
   ];

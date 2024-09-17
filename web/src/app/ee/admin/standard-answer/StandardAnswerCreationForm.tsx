@@ -16,7 +16,13 @@ import {
   MarkdownFormField,
   BooleanFormField,
   SelectorFormField,
+  Label,
+  SubLabel,
 } from "@/components/admin/connectors/Field";
+import { SearchMultiSelectDropdown } from "@/components/Dropdown";
+import { Persona } from "@/app/admin/assistants/interfaces";
+import { PersonaSearchMultiSelectDropdownField } from "@/components/persona/PersonaDropdown";
+import { useState } from "react";
 
 function mapKeywordSelectToMatchAny(keywordSelect: "any" | "all"): boolean {
   return keywordSelect == "any";
@@ -28,8 +34,10 @@ function mapMatchAnyToKeywordSelect(matchAny: boolean): "any" | "all" {
 
 export const StandardAnswerCreationForm = ({
   existingStandardAnswer,
+  existingPersonas,
 }: {
   existingStandardAnswer?: StandardAnswer;
+  existingPersonas: Persona[];
 }) => {
   const isUpdate = existingStandardAnswer !== undefined;
   const { popup, setPopup } = usePopup();
@@ -169,6 +177,15 @@ export const StandardAnswerCreationForm = ({
                   optional
                   label="Watch every message"
                   name="applyGlobally"
+                />
+              )}
+              {values.applyGlobally ? null : (
+                <PersonaSearchMultiSelectDropdownField
+                  name="personas"
+                  label="Watch for messages to these Assistants"
+                  subtext=" Select the Assistants you want this Standard Answer to apply to"
+                  existingPersonas={existingPersonas}
+                  selectedPersonas={values.personas}
                 />
               )}
               <div className="w-full">
