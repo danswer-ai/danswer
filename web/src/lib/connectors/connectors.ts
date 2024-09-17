@@ -767,30 +767,30 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     values: [
       {
         type: "text",
-        query: "Your Asana workspace ID:",
+        query: "Enter your Asana workspace ID:",
         label: "Workspace ID",
         name: "asana_workspace_id",
         optional: false,
         description:
-          "The Asana workspace ID to index. Format looks like 1234567890123. Get it at https://app.asana.com/api/1.0/workspaces.",
+          "The ID of the Asana workspace to index. You can find this at https://app.asana.com/api/1.0/workspaces. It's a number that looks like 1234567890123456.",
       },
       {
         type: "text",
-        query: "Comma-separated IDs of projects to index:",
+        query: "Enter project IDs to index (optional):",
         label: "Project IDs",
         name: "asana_project_ids",
         description:
-          "Comma-separated IDs of the Asana projects to index. Leave empty to index all projects.",
+          "IDs of specific Asana projects to index, separated by commas. Leave empty to index all projects in the workspace. Example: 1234567890123456,2345678901234567",
         optional: true,
       },
       {
         type: "text",
-        query: "Team ID of the team everyone is in:",
-        label: "'Everyone' Team ID",
+        query: "Enter the Team ID (optional):",
+        label: "Team ID",
         name: "asana_team_id",
         optional: true,
         description:
-          "Only tasks that are non-private are indexed. Set this to a team to also index tasks that this team has access to. Typically used for an 'everyone' team that everyone is a member of. Leave empty if you don't have such a team.",
+          "ID of a team to use for accessing team-visible tasks. This allows indexing of team-visible tasks in addition to public tasks. Leave empty if you don't want to use this feature.",
       },
     ],
   },

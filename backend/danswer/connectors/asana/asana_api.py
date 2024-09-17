@@ -34,16 +34,7 @@ class AsanaTask:
         self.project_name = project_name
 
     def __str__(self) -> str:
-        return (
-            "ID: "
-            + self.id
-            + "\nTitle: "
-            + self.title
-            + "\nLast modified: "
-            + str(self.last_modified)
-            + "\nText: "
-            + self.text
-        )
+        return f"ID: {self.id}\nTitle: {self.title}\nLast modified: {self.last_modified}\nText: {self.text}"
 
 
 class AsanaAPI:

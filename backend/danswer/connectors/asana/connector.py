@@ -34,9 +34,15 @@ class AsanaConnector(LoadConnector, PollConnector):
         if asana_team_id:
             self.team_id = asana_team_id
         self.batch_size = batch_size
+        self.continue_on_failure = continue_on_failure
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.api_token = credentials["asana_api_token_secret"]
+        self.asana_client = asana_api.AsanaAPI(
+            api_token=self.api_token,
+            workspace_gid=self.workspace_id,
+            team_gid=self.team_id,
+        )
         return None
 
     def poll_source(
@@ -77,24 +83,25 @@ class AsanaConnector(LoadConnector, PollConnector):
             source=DocumentSource.ASANA,
             semantic_identifier=task.title,
             metadata={
-                "project_gid": task.project_gid,
-                "project_name": task.project_name,
+                "group": task.project_gid,
+                "project": task.project_name,
             },
         )
 
 
 if __name__ == "__main__":
     import time
-    import os
 
     connector = AsanaConnector(
-        os.environ["WORKSPACE_ID"],
-        os.environ["PROJECT_IDS"],
-        os.environ["TEAM_ID"],
+        "1208336425866847",
+        # os.environ["WORKSPACE_ID"],
+        # os.environ["PROJECT_IDS"],
+        # os.environ["TEAM_ID"],
     )
     connector.load_credentials(
         {
-            "asana_api_token_secret": os.environ["API_TOKEN"],
+            "asana_api_token_secret": "2/1208336425866834/1208336451477119:d6357104d6bfa7c96aa8f99052645c14",
+            # "asana_api_token_secret": os.environ["API_TOKEN"],
         }
     )
     all_docs = connector.load_from_state()
@@ -102,4 +109,4 @@ if __name__ == "__main__":
     one_day_ago = current - 24 * 60 * 60  # 1 day
     latest_docs = connector.poll_source(one_day_ago, current)
     for doc in latest_docs:
-        pass
+        print(doc)
