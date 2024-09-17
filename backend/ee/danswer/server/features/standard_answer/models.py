@@ -42,7 +42,7 @@ class StandardAnswerCreationRequest(BaseModel):
     personas: list[int]
 
     @model_validator(mode="after")
-    def validate_personas(self) -> any:
+    def validate_personas(self) -> Any:
         personas_specified = len(self.personas) > 0
 
         if personas_specified and self.apply_globally:

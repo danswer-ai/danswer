@@ -102,10 +102,11 @@ def _handle_standard_answers(
     slack_thread_id = message_info.thread_to_respond
 
     slack_bot_persona = slack_bot_config.persona
+    filter_to_personas = [slack_bot_persona.id] if slack_bot_persona is not None else []
     applicable_standard_answer_ids = {
         standard_answer.id
         for standard_answer in get_standard_answers_for_personas_or_global(
-            [slack_bot_persona.id], db_session=db_session
+            filter_to_personas, db_session=db_session
         )
     }
 

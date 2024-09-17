@@ -31,7 +31,7 @@ def create_standard_answer(
         match_regex=standard_answer_creation_request.match_regex,
         match_any_keywords=standard_answer_creation_request.match_any_keywords,
         apply_globally=standard_answer_creation_request.apply_globally,
-        persona_ids=standard_answer_creation_request.persona_ids,
+        persona_ids=standard_answer_creation_request.personas,
         db_session=db_session,
     )
     return StandardAnswer.from_model(standard_answer_model)

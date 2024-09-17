@@ -9,6 +9,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTA
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.persona import get_persona_by_id
+from danswer.db.persona import get_personas
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
@@ -183,11 +184,14 @@ def get_answer_with_quote(
 def get_standard_answer(
     request: StandardAnswerRequest,
     db_session: Session = Depends(get_session),
-    _: User | None = Depends(current_user),
+    user: User | None = Depends(current_user),
 ) -> StandardAnswerResponse:
     try:
+        personas = get_personas(user, db_session=db_session)
+
         standard_answers = oneoff_standard_answers(
             message=request.message,
+            persona_ids=[persona.id for persona in personas],
             db_session=db_session,
         )
         return StandardAnswerResponse(standard_answers=standard_answers)
