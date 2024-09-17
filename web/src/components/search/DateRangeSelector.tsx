@@ -2,39 +2,7 @@ import { DateRangePickerValue } from "@tremor/react";
 import { FiCalendar, FiChevronDown, FiXCircle } from "react-icons/fi";
 import { CustomDropdown } from "../Dropdown";
 import { timeRangeValues } from "@/app/config/timeRange";
-import { TimeRangeSelector } from "@/components/filters/timeRangeFilter";
-function DateSelectorItem({
-  children,
-  onClick,
-  skipBottomBorder,
-}: {
-  children: string | JSX.Element;
-  onClick?: () => void;
-  skipBottomBorder?: boolean;
-}) {
-  return (
-    <div
-      className={`
-      px-3 
-      text-sm 
-      bg-background
-      hover:bg-hover 
-      py-2.5 
-      select-none 
-      cursor-pointer 
-      ${skipBottomBorder ? "" : "border-b border-border"} 
-      `}
-      onClick={onClick}
-    >
-      {children}
-    </div>
-  );
-}
-
-
-export const LAST_30_DAYS = "Last 30 days";
-export const LAST_7_DAYS = "Last 7 days";
-export const TODAY = "Today";
+import { TimeRangeSelector } from "@/components/filters/TimeRangeSelector";
 
 export function DateRangeSelector({
   value,

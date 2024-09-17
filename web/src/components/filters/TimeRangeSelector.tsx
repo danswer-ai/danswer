@@ -1,4 +1,3 @@
-import { DateRangePickerValue } from "@tremor/react";
 import { DefaultDropdownElement } from "../Dropdown";
 export function TimeRangeSelector({
   value,
