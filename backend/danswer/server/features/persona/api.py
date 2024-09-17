@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
 from fastapi import Query
 from fastapi import UploadFile
 from pydantic import BaseModel
@@ -20,6 +21,7 @@ from danswer.db.persona import get_personas
 from danswer.db.persona import mark_persona_as_deleted
 from danswer.db.persona import mark_persona_as_not_deleted
 from danswer.db.persona import update_all_personas_display_priority
+from danswer.db.persona import update_persona_public_status
 from danswer.db.persona import update_persona_shared_users
 from danswer.db.persona import update_persona_visibility
 from danswer.file_store.file_store import get_default_file_store
@@ -43,6 +45,10 @@ class IsVisibleRequest(BaseModel):
     is_visible: bool
 
 
+class IsPublicRequest(BaseModel):
+    is_public: bool
+
+
 @admin_router.patch("/{persona_id}/visible")
 def patch_persona_visibility(
     persona_id: int,
@@ -56,6 +62,25 @@ def patch_persona_visibility(
         db_session=db_session,
         user=user,
     )
+
+
+@basic_router.patch("/{persona_id}/public")
+def patch_user_presona_public_status(
+    persona_id: int,
+    is_public_request: IsPublicRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    try:
+        update_persona_public_status(
+            persona_id=persona_id,
+            is_public=is_public_request.is_public,
+            db_session=db_session,
+            user=user,
+        )
+    except ValueError as e:
+        logger.exception("Failed to update persona public status")
+        raise HTTPException(status_code=403, detail=str(e))
 
 
 @admin_router.put("/display-priority")

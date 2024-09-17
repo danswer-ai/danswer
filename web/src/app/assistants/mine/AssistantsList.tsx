@@ -6,11 +6,15 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { Divider, Text } from "@tremor/react";
 import {
   FiEdit2,
+  FiFigma,
   FiMenu,
+  FiMinus,
   FiMoreHorizontal,
   FiPlus,
   FiSearch,
+  FiShare,
   FiShare2,
+  FiToggleLeft,
   FiTrash,
   FiX,
 } from "react-icons/fi";
@@ -50,11 +54,14 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
 import { DragHandle } from "@/components/table/DragHandle";
-import { deletePersona } from "@/app/admin/assistants/lib";
+import {
+  deletePersona,
+  togglePersonaPublicStatus,
+} from "@/app/admin/assistants/lib";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
+import { MakePublicAssistantModal } from "@/app/chat/modal/MakePublicAssistantModal";
 
 function DraggableAssistantListItem(props: any) {
   const {
@@ -81,7 +88,7 @@ function DraggableAssistantListItem(props: any) {
         <DragHandle />
       </div>
       <div className="flex-grow">
-        <AssistantListItem del {...props} />
+        <AssistantListItem {...props} />
       </div>
     </div>
   );
@@ -95,6 +102,7 @@ function AssistantListItem({
   isVisible,
   setPopup,
   deleteAssistant,
+  shareAssistant,
 }: {
   assistant: Persona;
   user: User | null;
@@ -102,7 +110,7 @@ function AssistantListItem({
   allAssistantIds: string[];
   isVisible: boolean;
   deleteAssistant: Dispatch<SetStateAction<Persona | null>>;
-
+  shareAssistant: Dispatch<SetStateAction<Persona | null>>;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }) {
   const router = useRouter();
@@ -258,6 +266,18 @@ function AssistantListItem({
                   ) : (
                     <></>
                   ),
+                  isOwnedByUser ? (
+                    <div
+                      key="delete"
+                      className="flex items-center gap-x-2"
+                      onClick={() => shareAssistant(assistant)}
+                    >
+                      {assistant.is_public ? <FiMinus /> : <FiPlus />} Make{" "}
+                      {assistant.is_public ? "Private" : "Public"}
+                    </div>
+                  ) : (
+                    <></>
+                  ),
                 ]}
               </DefaultPopover>
             </div>
@@ -290,6 +310,9 @@ export function AssistantsList({
     assistant.id.toString()
   );
   const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
+  const [makePublicPersona, setMakePublicPersona] = useState<Persona | null>(
+    null
+  );
 
   const { popup, setPopup } = usePopup();
   const router = useRouter();
@@ -307,7 +330,7 @@ export function AssistantsList({
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-
+    filteredAssistants;
     if (over && active.id !== over.id) {
       setFilteredAssistants((assistants) => {
         const oldIndex = assistants.findIndex(
@@ -347,6 +370,20 @@ export function AssistantsList({
               });
             }
             setDeletingPersona(null);
+          }}
+        />
+      )}
+
+      {makePublicPersona && (
+        <MakePublicAssistantModal
+          isPublic={makePublicPersona.is_public}
+          onClose={() => setMakePublicPersona(null)}
+          onShare={async (newPublicStatus: boolean) => {
+            await togglePersonaPublicStatus(
+              makePublicPersona.id,
+              newPublicStatus
+            );
+            router.refresh();
           }}
         />
       )}
@@ -403,6 +440,7 @@ export function AssistantsList({
               {filteredAssistants.map((assistant, index) => (
                 <DraggableAssistantListItem
                   deleteAssistant={setDeletingPersona}
+                  shareAssistant={setMakePublicPersona}
                   key={assistant.id}
                   assistant={assistant}
                   user={user}
@@ -431,6 +469,7 @@ export function AssistantsList({
               {ownedButHiddenAssistants.map((assistant, index) => (
                 <AssistantListItem
                   deleteAssistant={setDeletingPersona}
+                  shareAssistant={setMakePublicPersona}
                   key={assistant.id}
                   assistant={assistant}
                   user={user}

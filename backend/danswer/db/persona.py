@@ -210,6 +210,22 @@ def update_persona_shared_users(
     )
 
 
+def update_persona_public_status(
+    persona_id: int,
+    is_public: bool,
+    db_session: Session,
+    user: User | None,
+) -> None:
+    persona = fetch_persona_by_id(
+        db_session=db_session, persona_id=persona_id, user=user, get_editable=True
+    )
+    if user and user.role != UserRole.ADMIN and persona.user_id != user.id:
+        raise ValueError("You don't have permission to modify this persona")
+
+    persona.is_public = is_public
+    db_session.commit()
+
+
 def get_prompts(
     user_id: UUID | None,
     db_session: Session,
@@ -551,6 +567,7 @@ def update_persona_visibility(
     persona = fetch_persona_by_id(
         db_session=db_session, persona_id=persona_id, user=user, get_editable=True
     )
+
     persona.is_visible = is_visible
     db_session.commit()
 
