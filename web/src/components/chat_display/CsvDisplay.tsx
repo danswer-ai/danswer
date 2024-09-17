@@ -86,7 +86,7 @@ export const CsvSection = ({
   const fileId = csvFileDescriptor.id;
   useEffect(() => {
     fetchCSV(fileId);
-  }, [fileId]);
+  }, []);
 
   const fetchCSV = async (id: string) => {
     setIsLoading(true);
@@ -124,6 +124,7 @@ export const CsvSection = ({
       setFadeIn(false);
     }
   }, [isLoading]);
+  console.log("rerendering");
 
   const downloadFile = () => {
     if (!fileId) return;
@@ -150,7 +151,7 @@ export const CsvSection = ({
 
   return (
     <div
-      className={`${!expanded ? "w-message-sm" : "w-full"}  !rounded !rounded-lg overflow-y-hidden w-full border border-border`}
+      className={`${!expanded ? "w-message-sm" : "w-full"} !rounded !rounded-lg overflow-y-hidden w-full border border-border`}
     >
       <CardHeader className="w-full !py-0  !pb-4 border-b border-border border-b-neutral-200 !pt-4 !mb-0 z-[10] top-0">
         <div className="flex justify-between items-center">
@@ -161,7 +162,7 @@ export const CsvSection = ({
             <TooltipGroup gap="gap-x-4">
               <CustomTooltip showTick line content="Download file">
                 <button onClick={() => downloadFile()}>
-                  <DownloadCSVIcon className="cursor-pointer transition-colors duration-300 hover:text-neutral-800 h-6 w-6 text-neutral-400" />
+                  <DownloadCSVIcon className="cursor-pointer transition-colors duration-300 hover:text-text-800 h-6 w-6 text-text-400" />
                 </button>
               </CustomTooltip>
               <CustomTooltip
@@ -171,15 +172,15 @@ export const CsvSection = ({
               >
                 <button onClick={() => expand()}>
                   {!expanded ? (
-                    <ExpandTwoIcon className="transition-colors duration-300 hover:text-neutral-800 h-6 w-6 cursor-pointer text-neutral-400" />
+                    <ExpandTwoIcon className="transition-colors duration-300 hover:text-text-800 h-6 w-6 cursor-pointer text-text-400" />
                   ) : (
-                    <DexpandTwoIcon className="transition-colors duration-300 hover:text-neutral-800 h-6 w-6 cursor-pointer text-neutral-400" />
+                    <DexpandTwoIcon className="transition-colors duration-300 hover:text-text-800 h-6 w-6 cursor-pointer text-text-400" />
                   )}
                 </button>
               </CustomTooltip>
               <CustomTooltip showTick line content="Hide">
                 <button onClick={() => close()}>
-                  <OpenIcon className="transition-colors duration-300 hover:text-neutral-800 h-6 w-6 cursor-pointer text-neutral-400" />
+                  <OpenIcon className="transition-colors duration-300 hover:text-text-800 h-6 w-6 cursor-pointer text-text-400" />
                 </button>
               </CustomTooltip>
             </TooltipGroup>
@@ -189,17 +190,19 @@ export const CsvSection = ({
       <Card className="!rounded-none w-full max-h-[600px] !p-0 relative overflow-x-scroll overflow-y-scroll mx-auto">
         <CardContent className="!p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <div className="animate-pulse flex space-x-4">
-                <div className="rounded-full bg-slate-200 h-10 w-10"></div>
-                <div className="flex-1 space-y-6 py-1">
-                  <div className="h-2 bg-slate-200 rounded"></div>
-                  <div className="space-y-3">
+            <div
+              className={`flex items-center justify-center ${expanded ? "h-[500px]" : "h-[300px]"}`}
+            >
+              <div className="animate-pulse w- flex space-x-4">
+                <div className="rounded-full bg-background-200 h-10 w-10"></div>
+                <div className="w-full flex-1 space-y-4 py-1">
+                  <div className="h-2 w-full bg-background-200 rounded"></div>
+                  <div className="w-full space-y-3">
                     <div className="grid grid-cols-3 gap-4">
-                      <div className="h-2 bg-slate-200 rounded col-span-2"></div>
-                      <div className="h-2 bg-slate-200 rounded col-span-1"></div>
+                      <div className="h-2 bg-background-200 rounded col-span-2"></div>
+                      <div className="h-2 bg-background-200 rounded col-span-1"></div>
                     </div>
-                    <div className="h-2 bg-slate-200 rounded"></div>
+                    <div className="h-2 bg-background-200 rounded"></div>
                   </div>
                 </div>
               </div>
