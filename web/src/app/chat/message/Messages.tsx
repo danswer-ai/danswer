@@ -263,7 +263,7 @@ export const AIMessage = ({
                 {typeof content === "string" ? (
                   <ReactMarkdown
                     key={messageId}
-                    className="max-w-full prose"
+                    className="max-w-full prose markdown"
                     components={{
                       a: (props) => {
                         const { node, ...rest } = props;

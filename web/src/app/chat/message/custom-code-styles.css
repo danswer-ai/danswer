@@ -1,3 +1,28 @@
+.markdown > * {
+  all: revert;
+}
+
+.markdown {
+  table {
+    border-collapse: collapse;
+  }
+
+  tr {
+    border-top: 1px solid #c6cbd1;
+    background: #fff;
+  }
+
+  th,
+  td {
+    padding: 6px 13px;
+    border: 1px solid #dfe2e5;
+  }
+
+  table tr:nth-child(2n) {
+    background: #f6f8fa;
+  }
+}
+
 pre[class*="language-"] {
   padding: 0px; /* Override padding */
   margin: 0px;
@@ -29,6 +54,25 @@ pre[class*="language-"] {
   ::-webkit-scrollbar-thumb:hover {
     background: #6b7280; /* Dark handle color on hover */
     box-shadow: 0 0 10px #6b7280; /* Light up effect on hover */
+  }
+
+  table {
+    margin: 16px 0px;
+  }
+
+  tr {
+    border-top: 1px solid #c6cbd1;
+    background: #fff;
+  }
+
+  th,
+  td {
+    padding: 6px 13px;
+    border: 1px solid #dfe2e5;
+  }
+
+  table tr:nth-child(2n) {
+    background: #f6f8fa;
   }
 
   scrollbar-width: thin;
