@@ -31,8 +31,7 @@ function LLMProviderUpdateModal({
     existingLlmProvider?.name ||
     "Custom LLM Provider";
   return (
-    <div className="px-4">
-      {/* <h2 className="text-2xl font-semibold pb-6">{`Setup ${providerName}`}</h2> */}
+    <div>
       {llmProviderDescriptor ? (
         <LLMProviderUpdateForm
           llmProviderDescriptor={llmProviderDescriptor}
@@ -115,7 +114,7 @@ function AddCustomLLMProvider({
       open={formIsVisible}
       title="Setup Custom LLM Provider"
     >
-      <div className="px-4">
+      <div>
         <CustomLLMProviderUpdateForm
           onClose={handleClose}
           shouldMarkAsDefault={existingLlmProviders.length === 0}
@@ -140,11 +139,11 @@ export function LLMConfiguration() {
 
   return (
     <>
-      <h3 className="pb-5 font-semibold">Enabled LLM Providers</h3>
+      <h3 className="pb-1.5">Enabled LLM Providers</h3>
 
       {existingLlmProviders.length > 0 ? (
         <>
-          <p className="pb-4">
+          <p className="pb-4 text-sm">
             If multiple LLM providers are enabled, the default provider will be
             used for all &quot;Default&quot; Assistants. For user-created
             Assistants, you can select the LLM provider/model that best fits the
@@ -161,8 +160,8 @@ export function LLMConfiguration() {
         </Callout>
       )}
 
-      <h3 className="pb-5 font-semibold">Add LLM Provider</h3>
-      <p className="pb-4">
+      <h3 className="pb-1.5">Add LLM Provider</h3>
+      <p className="pb-4 text-sm">
         Add a new LLM provider by either selecting from one of the default
         providers or by specifying your own custom LLM provider.
       </p>
@@ -179,7 +178,7 @@ export function LLMConfiguration() {
         })}
       </div>
 
-      <div className="mt-4">
+      <div className="mt-10">
         <AddCustomLLMProvider existingLlmProviders={existingLlmProviders} />
       </div>
     </>

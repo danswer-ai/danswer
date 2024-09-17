@@ -15,6 +15,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { Badge } from "@/components/ui/badge";
+import { Check, XCircle } from "lucide-react";
 
 interface StatusRowProps<ConnectorConfigType, ConnectorCredentialType> {
   connectorIndexingStatus: ConnectorIndexingStatus<
@@ -228,9 +229,9 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
                   </TableCell>
                   <TableCell>
                     {connectorIndexingStatus.public_doc ? (
-                      <FiCheck className="my-auto text-success" size="18" />
+                      <Check className="my-auto text-success" size="18" />
                     ) : (
-                      <FiXCircle className="my-auto text-error" />
+                      <XCircle className="my-auto text-error" />
                     )}
                   </TableCell>
                   {connectorIncludesCredential && (

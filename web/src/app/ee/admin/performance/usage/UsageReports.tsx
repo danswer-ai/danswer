@@ -103,7 +103,7 @@ function GenerateReportInput() {
     <div className="flex gap-4 flex-col md:flex-row justify-between md:items-center">
       <div>
         <div className="flex flex-col">
-          <h3 className="font-semibold">Generate Usage Reports</h3>
+          <h3>Generate Usage Reports</h3>
           <span className="text-subtle text-sm">
             Generate usage statistics for users in the workspace.
           </span>
@@ -157,7 +157,7 @@ function UsageReportsTable() {
 
   return (
     <div>
-      <h3 className="font-semibold pt-8 p-4">Previous Reports</h3>
+      <h3 className="pt-8 pb-4">Previous Reports</h3>
       {usageReportsIsLoading ? (
         <div className="flex justify-center w-full">
           <ThreeDotsLoader />
@@ -246,15 +246,7 @@ export default function UsageReports() {
     : 0;
 
   return (
-    <div>
-      {/* <Card>
-        <CardHeader className="border-b">
-          <GenerateReportInput />
-        </CardHeader>
-        <CardContent className="p-0">
-          <UsageReportsTable />
-        </CardContent>
-      </Card> */}
+    <div className="space-y-12">
       <div>
         <GenerateReportInput />
         <div className="p-0">
@@ -262,7 +254,7 @@ export default function UsageReports() {
         </div>
       </div>
 
-      <div className="pt-6 flex">
+      <div className="flex">
         <div className="mx-auto">
           <PageSelector
             totalPages={totalPages}

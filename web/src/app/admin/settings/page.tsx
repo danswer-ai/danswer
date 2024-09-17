@@ -11,10 +11,10 @@ export default async function Page() {
         icon={<FiSettings size={32} className="my-auto" />}
       />
 
-      <Text className="mb-8">
+      <p className="mb-8">
         Manage general enMedD AI settings applicable to all users in the
         workspace.
-      </Text>
+      </p>
 
       <SettingsForm />
     </div>

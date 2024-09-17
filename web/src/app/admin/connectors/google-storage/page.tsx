@@ -81,9 +81,9 @@ const GCSMain = () => {
 
   return (
     <>
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h3 className="mt-6 mb-2 ml-auto mr-auto">
         Step 1: Provide your GCS access info
-      </Title>
+      </h3>
       {gcsCredential ? (
         <>
           <div className="flex mb-1 text-sm">
@@ -119,17 +119,13 @@ const GCSMain = () => {
         </>
       ) : (
         <>
-          <Text>
-            <ul className="mt-2 ml-4 list-disc">
-              <li>
-                Provide your GCS Project ID, Client Email, and Private Key for
-                authentication.
-              </li>
-              <li>
-                These credentials will be used to access your GCS buckets.
-              </li>
-            </ul>
-          </Text>
+          <ul className="mt-2 ml-4 list-disc text-sm">
+            <li>
+              Provide your GCS Project ID, Client Email, and Private Key for
+              authentication.
+            </li>
+            <li>These credentials will be used to access your GCS buckets.</li>
+          </ul>
           <Card className="mt-4">
             <CardContent>
               <CredentialForm<GCSCredentialJson>
@@ -169,15 +165,13 @@ const GCSMain = () => {
         </>
       )}
 
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h3 className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Which GCS bucket do you want to make searchable?
-      </Title>
+      </h3>
 
       {gcsConnectorIndexingStatuses.length > 0 && (
         <>
-          <Title className="mt-6 mb-2 ml-auto mr-auto">
-            GCS indexing status
-          </Title>
+          <h3 className="mt-6 mb-2 ml-auto mr-auto">GCS indexing status</h3>
           <Text className="mb-2">
             The latest changes are fetched every 10 minutes.
           </Text>

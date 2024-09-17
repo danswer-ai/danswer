@@ -207,10 +207,10 @@ export function Explorer({
         </div>
       )}
       {!query && (
-        <div className="flex mt-3 ">
+        <p className="flex mt-3 text-sm">
           Search for a document above to modify it&apos;s boost or hide it from
           searches.
-        </div>
+        </p>
       )}
     </div>
   );

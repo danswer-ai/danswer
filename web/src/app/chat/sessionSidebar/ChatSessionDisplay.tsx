@@ -105,7 +105,7 @@ export function ChatSessionDisplay({
                     className="-my-px px-1 py-[1px] mr-2 w-full rounded"
                   />
                 ) : (
-                  <p className="break-all overflow-hidden whitespace-nowrap mr-3  text-ellipsis">
+                  <p className="mr-3 break-all truncate">
                     {chatName || `Chat ${chatSession.id}`}
                   </p>
                 )}

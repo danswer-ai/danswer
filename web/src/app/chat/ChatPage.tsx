@@ -80,9 +80,9 @@ import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import TopBar from "@/components/TopBar";
 import { useToast } from "@/hooks/use-toast";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { FAB } from "@/components/FAB";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1161,6 +1161,8 @@ export function ChatPage({
                   >
                     {/* <input {...getInputProps()} /> */}
 
+                    <FAB />
+
                     {liveAssistant && (
                       <div className="relative z-top-bar shrink-0">
                         <div className="flex w-full items-start p-5 justify-between">
@@ -1225,10 +1227,6 @@ export function ChatPage({
                       </div>
                     )}
 
-                    {/*  <div
-                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative scroll-smooth flex-1`}
-                      ref={scrollableDivRef}
-                    > */}
                     <div
                       className={`w-full h-full flex flex-col overflow-x-hidden relative scroll-smooth flex-1`}
                       ref={scrollableDivRef}
@@ -1276,13 +1274,8 @@ export function ChatPage({
                           </ChatIntro>
                         )}
 
-                      {/*  <div
-                        className={`pt-20 pb-10 md:pb-14 lg:py-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
-                          hasPerformedInitialScroll ? "" : " invisible"
-                        } ${messageHistory.length === 0 ? "hidden" : "block"}`}
-                      > */}
                       <div
-                        className={`pb-10 md:pb-14 lg:pb-16 px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
+                        className={`pb-10 md:pb-14 lg:pb-16 px-5 md:px-8 lg:px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full ${
                           hasPerformedInitialScroll ? "" : " invisible"
                         } ${messageHistory.length === 0 ? "hidden" : "block"}`}
                       >
@@ -1589,7 +1582,7 @@ export function ChatPage({
                           className="absolute bottom-[calc(100%_+_16px)] left-1/2 -translate-x-1/2 pointer-events-auto !rounded-full cursor-pointer bg-background"
                         />
                       )}
-                      <div className="w-full pb-4">
+                      <div className="w-full pb-4 md:pb-10 lg:pb-4">
                         <ChatInputBar
                           onSetSelectedAssistant={(
                             alternativeAssistant: Assistant | null

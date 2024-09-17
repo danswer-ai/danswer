@@ -27,24 +27,22 @@ export default async function Page() {
     <div className="py-24 md:py-32 lg:pt-16">
       <AdminPageTitle icon={<RobotIcon size={32} />} title="Assistants" />
 
-      <Text className="mb-2">
+      <p className="mb-2">
         Assistants are a way to build custom search/question-answering
         experiences for different use cases.
-      </Text>
-      <Text className="mt-2">They allow you to customize:</Text>
-      <div className="text-sm">
-        <ul className="list-disc mt-2 ml-4">
-          <li>
-            The prompt used by your LLM of choice to respond to the user query
-          </li>
-          <li>The documents that are used as context</li>
-        </ul>
-      </div>
+      </p>
+      <p className="mt-2">They allow you to customize:</p>
+      <ul className="list-disc mt-2 ml-4 text-sm">
+        <li>
+          The prompt used by your LLM of choice to respond to the user query
+        </li>
+        <li>The documents that are used as context</li>
+      </ul>
 
       <div>
         <Divider />
 
-        <Title>Create an Assistant</Title>
+        <h3>Create an Assistant</h3>
         <Link href="/admin/assistants/new" className="flex items-center">
           <Button className="mt-2">
             <SquarePlus size={16} />
@@ -54,7 +52,7 @@ export default async function Page() {
 
         <Divider />
 
-        <Title>Existing Assistants</Title>
+        <h3>Existing Assistants</h3>
         <AssistantsTable assistants={assistants} />
       </div>
     </div>

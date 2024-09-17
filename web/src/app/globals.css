@@ -104,6 +104,10 @@ body {
   color: transparent;
 }
 
+h3 {
+  font-weight: 600;
+}
+
 .line-clamp {
   -webkit-box-orient: vertical;
   display: -webkit-box;

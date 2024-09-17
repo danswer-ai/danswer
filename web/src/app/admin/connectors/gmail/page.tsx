@@ -20,7 +20,6 @@ import { gmailConnectorNameBuilder } from "./utils";
 import { GmailOAuthSection, GmailJsonUploadSection } from "./Credential";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Divider, Text, Title } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
@@ -49,16 +48,16 @@ const GmailConnectorManagement = ({
   const liveCredential = gmailPublicCredential || gmailServiceAccountCredential;
   if (!liveCredential) {
     return (
-      <Text>
+      <p className="text-sm">
         Please authenticate with Gmail as described in Step 2! Once done with
         that, you can then move on to enable this connector.
-      </Text>
+      </p>
     );
   }
 
   return (
     <div>
-      <Text>
+      <p>
         <div className="my-3">
           {gmailConnectorIndexingStatuses.length > 0 ? (
             <>
@@ -76,14 +75,13 @@ const GmailConnectorManagement = ({
             </p>
           )}
         </div>
-      </Text>
+      </p>
       {gmailConnectorIndexingStatuses.length > 0 && (
         <>
           <div className="text-sm mb-2 font-bold">Existing Connectors:</div>
           <GmailConnectorsTable
             gmailConnectorIndexingStatuses={gmailConnectorIndexingStatuses}
           />
-          <Divider />
         </>
       )}
 
@@ -224,17 +222,15 @@ const Main = () => {
 
   return (
     <>
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 1: Provide your Credentials
-      </Title>
+      <h3 className="mb-2 ml-auto mr-auto">Step 1: Provide your Credentials</h3>
       <GmailJsonUploadSection
         appCredentialData={appCredentialData}
         serviceAccountCredentialData={serviceAccountKeyData}
       />
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <h3 className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Authenticate with enMedD AI
-      </Title>
+      </h3>
       <GmailOAuthSection
         refreshCredentials={refreshCredentials}
         gmailPublicCredential={gmailPublicCredential}
@@ -244,9 +240,7 @@ const Main = () => {
         connectorExists={gmailConnectorIndexingStatuses.length > 0}
       />
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 3: Start Indexing!
-      </Title>
+      <h3 className="mb-2 mt-6 ml-auto mr-auto">Step 3: Start Indexing!</h3>
       <GmailConnectorManagement
         gmailPublicCredential={gmailPublicCredential}
         gmailServiceAccountCredential={gmailServiceAccountCredential}

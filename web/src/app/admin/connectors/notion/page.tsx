@@ -83,9 +83,9 @@ const Main = () => {
 
   return (
     <>
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h3 className="mb-2 ml-auto mr-auto">
         Step 1: Provide your authorization details
-      </Title>
+      </h3>
 
       {notionCredential ? (
         <>
@@ -117,7 +117,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <Text>
+          <p className="text-sm">
             To get started you&apos;ll need to create an internal integration in
             Notion for enMedD AI. Follow the instructions in the&nbsp;
             <a
@@ -131,8 +131,8 @@ const Main = () => {
             token and paste it below. Follow the remaining instructions on the
             Notion docs to allow enMedD AI to read Notion Databases and Pages
             using the new integration.
-          </Text>
-          <Card className="mt-2 mb-4">
+          </p>
+          <Card className="my-4">
             <CardContent>
               <CredentialForm<NotionCredentialJson>
                 formBody={
@@ -162,9 +162,7 @@ const Main = () => {
         </>
       )}
 
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
-        Step 2: Manage Connectors
-      </Title>
+      <h3 className="mt-6 mb-2 ml-auto mr-auto">Step 2: Manage Connectors</h3>
       {notionConnectorIndexingStatuses.length > 0 && (
         <>
           <Text className="mb-2">
@@ -255,11 +253,11 @@ const Main = () => {
 
       {!notionCredential && (
         <>
-          <Text className="mb-4">
+          <p className="mb-4 text-sm">
             Please provide your integration details in Step 1 first! Once done
             with that, you&apos;ll be able to start the connection then see
             indexing status.
-          </Text>
+          </p>
         </>
       )}
     </>

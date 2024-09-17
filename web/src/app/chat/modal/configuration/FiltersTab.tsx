@@ -31,7 +31,7 @@ export function FiltersTab({
       <div>
         <div>
           <div>
-            <h3 className="text-dark-900 pb-2 font-semibold">Time Range</h3>
+            <h3 className="text-dark-900 pb-2">Time Range</h3>
             <Text>
               Choose the time range we should search over. If only one date is
               selected, will only search after the specified date.
@@ -44,7 +44,7 @@ export function FiltersTab({
           <Separator className="my-8" />
 
           <div>
-            <h3 className="text-dark-900 pb-2 font-semibold">Knowledge Sets</h3>
+            <h3 className="text-dark-900 pb-2">Knowledge Sets</h3>
             <Text>
               Choose which knowledge sets we should search over. If multiple are
               selected, we will search through all of them.
@@ -78,7 +78,7 @@ export function FiltersTab({
           <Separator className="my-8" />
 
           <div>
-            <h3 className="text-dark-900 pb-2 font-semibold">Sources</h3>
+            <h3 className="text-dark-900 pb-2">Sources</h3>
             <Text>
               Choose which sources we should search over. If multiple sources
               are selected, we will search through all of them.
@@ -145,7 +145,7 @@ export function FiltersTab({
           <Separator className="my-8" />
 
           <div>
-            <h3 className="text-dark-900 pb-2 font-semibold">Tags</h3>
+            <h3 className="text-dark-900 pb-2">Tags</h3>
             <ul className="space-2 gap-2 flex flex-wrap">
               {filterManager.selectedTags.length > 0 ? (
                 filterManager.selectedTags.map((tag) => (

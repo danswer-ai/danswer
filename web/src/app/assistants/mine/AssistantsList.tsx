@@ -319,7 +319,7 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
 
       <Divider />
 
-      <h3 className="text-xl font-bold mb-4">Active Assistants</h3>
+      <h3 className="text-xl mb-4">Active Assistants</h3>
 
       <Text>
         The order the assistants appear below will be the order they appear in
@@ -346,7 +346,7 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
         <>
           <Divider />
 
-          <h3 className="text-xl font-bold mb-4">Your Hidden Assistants</h3>
+          <h3 className="text-xl mb-4">Your Hidden Assistants</h3>
 
           <Text>
             Assistants you&apos;ve created that aren&apos;t currently visible in

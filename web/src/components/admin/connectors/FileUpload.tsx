@@ -17,7 +17,7 @@ export const FileUpload: FC<FileUploadProps> = ({
   const [dragActive, setDragActive] = useState(false);
 
   return (
-    <div>
+    <div className="pb-6">
       <Dropzone
         onDrop={(acceptedFiles) => {
           setSelectedFiles(acceptedFiles);

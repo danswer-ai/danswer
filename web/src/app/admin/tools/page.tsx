@@ -29,22 +29,20 @@ export default async function Page() {
         title="Tools"
       />
 
-      <p className="mb-2">
-        Tools allow assistants to retrieve information or take actions.
-      </p>
+      <p>Tools allow assistants to retrieve information or take actions.</p>
 
-      <div className="pt-5">
-        <h3 className="font-semibold pb-2">Create a Tool</h3>
+      <div className="pt-10">
+        <h3 className="pb-2">Create a Tool</h3>
         <Link href="/admin/tools/new">
-          <Button className="mt-2">
+          <Button>
             <SquarePlus size={14} />
             New Tool
           </Button>
         </Link>
+      </div>
 
-        <Divider />
-
-        <h3 className="font-semibold pb-5">Existing Tools</h3>
+      <div className="pt-10">
+        <h3 className="pb-4">Existing Tools</h3>
         <ToolsTable tools={tools} />
       </div>
     </div>

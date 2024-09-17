@@ -23,6 +23,7 @@ import { Connector, ConnectorIndexingStatus } from "@/lib/types";
 import Link from "next/link";
 import { CustomModelForm } from "./CustomModelForm";
 import { Card, CardContent } from "@/components/ui/card";
+import { CustomModal } from "@/components/CustomModal";
 
 function Main() {
   const [tentativeNewEmbeddingModel, setTentativeNewEmbeddingModel] =
@@ -159,54 +160,26 @@ function Main() {
         </Modal>
       )}
 
-      {isCancelling && (
-        <Modal
-          onOutsideClick={() => setIsCancelling(false)}
-          title="Cancel Embedding Model Switch"
-        >
-          <div>
-            <div>
-              Are you sure you want to cancel?
-              <br />
-              <br />
-              Cancelling will revert to the previous model and all progress will
-              be lost.
-            </div>
-            <div className="flex">
-              <Button onClick={onCancel} className="mx-auto mt-3" color="green">
-                Confirm
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      <Text>
+      <p>
         Embedding models are used to generate embeddings for your documents,
         which then power enMedD AI&apos;s search.
-      </Text>
+      </p>
 
       {currentModel ? (
         <>
-          <h3 className="mt-8 font-semibold text-lg pb-4">
-            Current Embedding Model
-          </h3>
-
-          <Text>
+          <h3 className="mt-8 pb-4">Current Embedding Model</h3>
+          <p>
             <ModelOption model={currentModel} />
-          </Text>
+          </p>
         </>
       ) : (
         newModelSelection &&
         (!connectors || !connectors.length) && (
           <>
-            <h3 className="mt-8 font-semibold text-lg pb-4">
-              Current Embedding Model
-            </h3>
-
-            <Text>
+            <h3 className="mt-8 pb-4">Current Embedding Model</h3>
+            <p>
               <ModelOption model={newModelSelection} />
-            </Text>
+            </p>
           </>
         )
       )}
@@ -216,11 +189,8 @@ function Main() {
           <div>
             {currentModel ? (
               <>
-                <h3 className="mt-8 font-semibold text-lg pb-4">
-                  Switch your Embedding Model
-                </h3>
-
-                <Text className="pb-4">
+                <h3 className="mt-8 pb-4">Switch your Embedding Model</h3>
+                <p className="pb-4 text-sm">
                   If the current model is not working for you, you can update
                   your model choice below. Note that this will require a
                   complete re-indexing of all your documents across every
@@ -228,20 +198,18 @@ function Main() {
                   but depending on the size of your corpus, this could take
                   hours, day, or even weeks. You can monitor the progress of the
                   re-indexing on this page.
-                </Text>
+                </p>
               </>
             ) : (
               <>
-                <h3 className="mt-8 font-semibold text-lg pb-4">
-                  Choose your Embedding Model
-                </h3>
+                <h3 className="mt-8 pb-4">Choose your Embedding Model</h3>
               </>
             )}
 
-            <Text className="mb-4">
+            <p className="mb-4 text-sm">
               Below are a curated selection of quality models that we recommend
               you choose from.
-            </Text>
+            </p>
 
             <ModelSelector
               modelOptions={AVAILABLE_MODELS.filter(
@@ -264,7 +232,7 @@ function Main() {
               />
             )}
 
-            <Text className="mt-6">
+            <p className="mt-6 text-sm">
               Alternatively, (if you know what you&apos;re doing) you can
               specify a{" "}
               <a
@@ -288,7 +256,7 @@ function Main() {
               <b>NOTE:</b> not all models listed will work with enMedD AI, since
               some have unique interfaces or special requirements. If in doubt,
               reach out to the enMedD AI team.
-            </Text>
+            </p>
 
             <div className="flex w-full">
               <Card className="mx-auto mt-4 2xl:w-4/6">
@@ -302,24 +270,49 @@ function Main() {
           connectors &&
           connectors.length > 0 && (
             <div>
-              <Title className="mt-8">Current Upgrade Status</Title>
+              <h3 className="mt-8">Current Upgrade Status</h3>
               <div className="mt-4">
                 <div className="mb-2 text-sm italic">
                   Currently in the process of switching to:
                 </div>
                 <ModelOption model={newModelSelection} />
 
-                <Button className="mt-4" onClick={() => setIsCancelling(true)}>
-                  Cancel
-                </Button>
+                <CustomModal
+                  trigger={
+                    <Button
+                      className="mt-6"
+                      onClick={() => setIsCancelling(true)}
+                    >
+                      Cancel
+                    </Button>
+                  }
+                  onClose={() => setIsCancelling(false)}
+                  open={isCancelling}
+                  title="Cancel Embedding Model Switch"
+                >
+                  <div>
+                    <div>
+                      <p>Are you sure you want to cancel?</p>
+                      <p>
+                        Cancelling will revert to the previous model and all
+                        progress will be lost.
+                      </p>
+                    </div>
+                    <div className="flex pt-6">
+                      <Button onClick={onCancel} className="mx-auto">
+                        Confirm
+                      </Button>
+                    </div>
+                  </div>
+                </CustomModal>
 
-                <Text className="my-4">
+                <p className="my-4 text-sm">
                   The table below shows the re-indexing progress of all existing
                   connectors. Once all connectors have been re-indexed
                   successfully, the new model will be used for all search
                   queries. Until then, we will use the old model so that no
                   downtime is necessary during this transition.
-                </Text>
+                </p>
 
                 {isLoadingOngoingReIndexingStatus ? (
                   <ThreeDotsLoader />

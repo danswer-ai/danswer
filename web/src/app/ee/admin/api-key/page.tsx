@@ -126,7 +126,7 @@ function Main() {
   if (apiKeys.length === 0) {
     return (
       <div>
-        <p className="pb-5">{API_KEY_TEXT}</p>
+        <p className="pb-4">{API_KEY_TEXT}</p>
 
         <CustomModal
           trigger={newApiKeyButton}
@@ -166,7 +166,7 @@ function Main() {
 
       {keyIsGenerating && <Spinner />}
 
-      <p className="pb-5">{API_KEY_TEXT}</p>
+      <p className="pb-4">{API_KEY_TEXT}</p>
 
       <CustomModal
         trigger={newApiKeyButton}
@@ -187,7 +187,7 @@ function Main() {
 
       <Divider />
 
-      <h3 className="font-semibold pb-4">Existing API Keys</h3>
+      <h3 className="pb-4">Existing API Keys</h3>
       <Card>
         <CardContent className="p-0">
           <Table className="overflow-visible">

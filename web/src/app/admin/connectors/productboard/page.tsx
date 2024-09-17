@@ -86,16 +86,14 @@ const Main = () => {
 
   return (
     <>
-      <Text>
+      <p className="text-sm mb-6">
         This connector allows you to sync all your <i>Features</i>,{" "}
         <i>Components</i>, <i>Products</i>, and <i>Objectives</i> from
         Productboard into enMedD AI. At this time, the Productboard APIs does
         not support pulling in <i>Releases</i> or <i>Notes</i>.
-      </Text>
+      </p>
 
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
-        Step 1: Provide your Credentials
-      </Title>
+      <h3 className="mb-2 ml-auto mr-auto">Step 1: Provide your Credentials</h3>
 
       {productboardCredential ? (
         <>
@@ -130,7 +128,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <Text>
+          <p className="text-sm">
             To use the Productboard connector, first follow the guide{" "}
             <a
               className="text-link"
@@ -140,7 +138,7 @@ const Main = () => {
               here
             </a>{" "}
             to generate an Access Token.
-          </Text>
+          </p>
           <Card className="mt-4">
             <CardContent>
               <CredentialForm<ProductboardCredentialJson>
@@ -172,9 +170,7 @@ const Main = () => {
         </>
       )}
 
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
-        Step 2: Start indexing!
-      </Title>
+      <h3 className="mt-6 mb-2 ml-auto mr-auto">Step 2: Start indexing!</h3>
       {productboardCredential ? (
         !productboardConnectorIndexingStatuses.length ? (
           <>
@@ -230,11 +226,11 @@ const Main = () => {
         )
       ) : (
         <>
-          <Text>
+          <p className="text-sm">
             Please provide your access token in Step 1 first! Once done with
             that, you can then start indexing all your Productboard features,
             components, and products.
-          </Text>
+          </p>
         </>
       )}
     </>

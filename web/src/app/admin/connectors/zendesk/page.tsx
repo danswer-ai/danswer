@@ -82,9 +82,7 @@ const Main = () => {
 
   return (
     <>
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
-        Provide your API details
-      </Title>
+      <h3 className="mb-2 ml-auto mr-auto">Provide your API details</h3>
 
       {zendeskCredential ? (
         <>
@@ -116,7 +114,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <Text>
+          <p className="text-sm">
             To get started you&apos;ll need API token details for your Zendesk
             instance. You can generate this by access the Admin Center of your
             instance (e.g. https://&lt;subdomain&gt;.zendesk.com/admin/).
@@ -125,8 +123,8 @@ const Main = () => {
             with a name. You will also need to provide the e-mail address of a
             user that the system will imassistantte. This is of little
             consequence as we are only performing read actions.
-          </Text>
-          <Card className="mt-4 mb-4">
+          </p>
+          <Card className="my-4">
             <CardContent>
               <CredentialForm<ZendeskCredentialJson>
                 formBody={
@@ -176,9 +174,7 @@ const Main = () => {
 
       {zendeskConnectorIndexingStatuses.length > 0 && (
         <>
-          <Title className="mt-6 mb-2 ml-auto mr-auto">
-            Zendesk indexing status
-          </Title>
+          <h3 className="mt-6 mb-2 ml-auto mr-auto">Zendesk indexing status</h3>
           <Text className="mb-2">
             The latest article changes are fetched every 10 minutes.
           </Text>
@@ -234,11 +230,11 @@ const Main = () => {
 
       {!zendeskCredential && (
         <>
-          <Text className="mb-4">
+          <p className="mb-4 text-sm">
             Please provide your API details in Step 1 first! Once done with
             that, you&apos;ll be able to start the connection then see indexing
             status.
-          </Text>
+          </p>
         </>
       )}
     </>

@@ -85,9 +85,7 @@ const R2Main = () => {
 
   return (
     <>
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
-        Step 1: Provide your access info
-      </Title>
+      <h3 className="mb-2 ml-auto mr-auto">Step 1: Provide your access info</h3>
       {r2Credential ? (
         <>
           {" "}
@@ -124,15 +122,13 @@ const R2Main = () => {
         </>
       ) : (
         <>
-          <Text>
-            <ul className="mt-2 ml-4 list-disc">
-              <li>
-                Provide your R2 Access Key ID, Secret Access Key, and Account ID
-                for authentication.
-              </li>
-              <li>These credentials will be used to access your R2 buckets.</li>
-            </ul>
-          </Text>
+          <ul className="mt-2 ml-4 list-disc text-sm">
+            <li>
+              Provide your R2 Access Key ID, Secret Access Key, and Account ID
+              for authentication.
+            </li>
+            <li>These credentials will be used to access your R2 buckets.</li>
+          </ul>
           <Card className="mt-4">
             <CardContent>
               <CredentialForm<R2CredentialJson>
@@ -174,15 +170,13 @@ const R2Main = () => {
         </>
       )}
 
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h3 className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Which R2 bucket do you want to make searchable?
-      </Title>
+      </h3>
 
       {r2ConnectorIndexingStatuses.length > 0 && (
         <>
-          <Title className="mt-6 mb-2 ml-auto mr-auto">
-            R2 indexing status
-          </Title>
+          <h3 className="mt-6 mb-2 ml-auto mr-auto">R2 indexing status</h3>
           <Text className="mb-2">
             The latest changes are fetched every 10 minutes.
           </Text>

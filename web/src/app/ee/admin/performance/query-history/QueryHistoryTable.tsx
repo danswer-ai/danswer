@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Frown, Minus, Smile } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 const NUM_IN_PAGE = 20;
 
@@ -78,7 +79,7 @@ function SelectFeedbackType({
 }) {
   return (
     <div>
-      <p className="my-auto mr-2 font-medium mb-1">Feedback Type</p>
+      <Label className="font-semibold">Feedback Type</Label>
       <div className="max-w-sm space-y-6">
         <Select
           value={value}
@@ -161,7 +162,7 @@ export function QueryHistoryTable() {
             </CardContent>
           </Card>
 
-          <div className="pt-6 flex">
+          <div className="flex">
             <div className="mx-auto">
               <PageSelector
                 totalPages={Math.ceil(chatSessionData.length / NUM_IN_PAGE)}

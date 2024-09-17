@@ -30,7 +30,7 @@ export function DraggableRow({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={isDragging ? "invisible" : "bg-background"}
+      className={`cursor-pointer ${isDragging ? "invisible" : "bg-background"}`}
     >
       <TableCell>
         <DragHandle

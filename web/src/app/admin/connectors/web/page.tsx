@@ -54,8 +54,8 @@ export default function Web() {
 
       <AdminPageTitle icon={<GlobeIcon size={32} />} title="Web" />
 
-      <h3 className="font-semibold">Step 1: Specify which websites to index</h3>
-      <p className="text-sm pb-6">
+      <h3>Step 1: Specify which websites to index</h3>
+      <p className="text-sm pb-4 pt-2">
         We re-fetch the latest state of the website once a day.
       </p>
       <Card>
@@ -123,9 +123,7 @@ export default function Web() {
         </CardContent>
       </Card>
 
-      <h3 className="pb-6 pt-10 ml-auto mr-auto font-semibold">
-        Already Indexed Websites
-      </h3>
+      <h3 className="pb-4 pt-10 ml-auto mr-auto">Already Indexed Websites</h3>
       {isConnectorIndexingStatusesLoading ? (
         <LoadingAnimation text="Loading" />
       ) : connectorIndexingStatusesError || !connectorIndexingStatuses ? (
@@ -145,7 +143,7 @@ export default function Web() {
                 return (
                   <div className="flex w-fit">
                     <a
-                      className="text-blue-500 ml-1 my-auto flex"
+                      className="text-blue-500 ml-1 my-auto flex whitespace-normal break-all"
                       href={connectorConfig.base_url}
                     >
                       {connectorConfig.base_url}

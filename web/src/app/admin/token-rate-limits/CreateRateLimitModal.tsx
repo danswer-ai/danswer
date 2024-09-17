@@ -137,18 +137,25 @@ export const CreateRateLimitModal = ({
                   includeDefault={false}
                 />
               )}
+
+            <div className="pt-2" />
             <TextFormField
               name="period_hours"
               label="Time Window (Hours)"
               type="number"
               placeholder=""
             />
+
+            <div className="pt-2" />
             <TextFormField
               name="token_budget"
               label="Token Budget (Thousands)"
               type="number"
               placeholder=""
             />
+
+            <div className="pt-2" />
+
             <div className="flex">
               <Button
                 type="submit"

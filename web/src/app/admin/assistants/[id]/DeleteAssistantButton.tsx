@@ -31,7 +31,7 @@ export function DeleteAssistantButton({
       }}
       variant="destructive"
     >
-      <Trash size={16} /> Delete
+      <Trash size={16} /> Delete Assistant
     </Button>
   );
 }

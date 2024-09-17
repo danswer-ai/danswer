@@ -21,6 +21,16 @@ function SectionHeader({
         {icon && <FileText size={24} className="my-auto mr-2" />}
         {name}
       </p>
+      {closeHeader && (
+        <Button
+          onClick={() => closeHeader()}
+          variant="ghost"
+          size="icon"
+          className="flex xl:hidden"
+        >
+          <PanelRightClose size={24} />
+        </Button>
+      )}
     </div>
   );
 }

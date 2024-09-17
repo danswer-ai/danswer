@@ -30,9 +30,9 @@ export function ModelOption({
           {model.model_name}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="py-4">
         <div>
-          <div className="mx-1 mt-1 text-sm">
+          <div className="mx-1 text-sm">
             {model.description
               ? model.description
               : "Custom model—no description is available."}
@@ -41,7 +41,7 @@ export function ModelOption({
             <a
               target="_blank"
               href={model.link}
-              className="mx-1 mt-1 text-xs text-link"
+              className="mx-1 text-xs text-link"
             >
               See More Details
             </a>

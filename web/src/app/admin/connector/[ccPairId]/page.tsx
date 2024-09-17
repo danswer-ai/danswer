@@ -4,7 +4,6 @@ import { CCPairFullInfo } from "./types";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Divider, Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
 import { Text } from "@tremor/react";
 import { ConfigDisplay } from "./ConfigDisplay";
@@ -82,15 +81,15 @@ function Main({ ccPairId }: { ccPairId: number }) {
       <div className="text-sm pt-5">
         Total Documents Indexed: <b className="">{totalDocsIndexed}</b>
       </div>
-      <Divider />
+
       <ConfigDisplay
         connectorSpecificConfig={ccPair.connector.connector_specific_config}
         sourceType={ccPair.connector.source}
       />
       {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
         to render these conditionally.*/}
-      <div className="flex items-start justify-between sm:items-center flex-col sm:flex-row gap-2 mt-20 mb-4">
-        <h3 className="font-semibold">Indexing Attempts</h3>
+      <div className="flex items-start justify-between sm:items-center flex-col sm:flex-row gap-2 mt-12 mb-4">
+        <h3>Indexing Attempts</h3>
 
         {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
           ccPair.connector.source
@@ -104,16 +103,13 @@ function Main({ ccPairId }: { ccPairId: number }) {
         )}
       </div>
       <Card>
-        {/*    <CardHeader className="border-b sm:pb-10">
-         
-        </CardHeader> */}
         <CardContent className="p-0">
           <IndexingAttemptsTable ccPair={ccPair} />
         </CardContent>
       </Card>
-      <Divider />
-      <div className="mt-4">
-        <Title>Delete Connector</Title>
+
+      <div className="mt-12">
+        <h3>Delete Connector</h3>
         <p className="text-sm text-subtle">
           Deleting the connector will also delete all associated documents.
         </p>

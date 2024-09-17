@@ -159,7 +159,7 @@ export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
     <Card>
       <CardHeader className="border-b">
         <div className="flex flex-col">
-          <h3 className="font-semibold">Usage</h3>
+          <h3>Usage</h3>
           <SubLabel>Usage over time</SubLabel>
         </div>
       </CardHeader>

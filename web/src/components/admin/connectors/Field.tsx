@@ -39,7 +39,7 @@ export function Label({ children }: { children: string | JSX.Element }) {
 }
 
 export function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <span className="text-sm text-subtle mb-2">{children}</span>;
+  return <p className="text-sm text-subtle pb-2">{children}</p>;
 }
 
 export function ManualErrorMessage({ children }: { children: string }) {
@@ -86,16 +86,14 @@ export function TextFormField({
 
   return (
     <div className="grid pb-4">
-      <div className="grid leading-none">
+      <div className="grid leading-none pb-2">
         <ShadcnLabel
           htmlFor={label}
           className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
         >
           {label}
         </ShadcnLabel>
-        {subtext && (
-          <p className="text-sm text-muted-foreground pb-2">{subtext}</p>
-        )}
+        {subtext && <p className="text-sm text-muted-foreground">{subtext}</p>}
       </div>
       <Field name={name}>
         {({ field }: FieldProps) => {
@@ -161,8 +159,10 @@ export const BooleanFormField = ({
           onCheckedChange={handleChange}
         />
 
-        <div className="grid gap-1.5 leading-none">
-          <ShadcnLabel htmlFor={label}>{label}</ShadcnLabel>
+        <div className="grid leading-none">
+          <ShadcnLabel htmlFor={label} className="font-semibold">
+            {label}
+          </ShadcnLabel>
           {subtext && (
             <p className="text-sm text-muted-foreground">{subtext}</p>
           )}
@@ -244,7 +244,6 @@ export function TextArrayField<T extends Yup.AnyObject>({
               onClick={() => {
                 arrayHelpers.push("");
               }}
-              className="mt-3"
               type="button"
             >
               <Plus size={16} /> Add New
@@ -307,7 +306,7 @@ export function SelectorFormField({
   );
 
   return (
-    <div className="mb-4">
+    <div className="pb-4">
       {label && <ShadcnLabel>{label}</ShadcnLabel>}
       {subtext && <SubLabel>{subtext}</SubLabel>}
 

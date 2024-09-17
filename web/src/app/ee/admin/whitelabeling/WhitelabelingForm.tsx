@@ -90,6 +90,9 @@ export function WhitelabelingForm() {
               placeholder="Custom name which will replace 'enMedD AI'"
               disabled={isSubmitting}
             />
+
+            <div className="pt-2" />
+
             <TextFormField
               label="Description"
               name="workspace_description"
@@ -101,10 +104,12 @@ export function WhitelabelingForm() {
               disabled={isSubmitting}
             />
 
+            <div className="pt-2" />
+
             {values.use_custom_logo ? (
               <div className="pt-3 flex flex-col items-start gap-3">
                 <div>
-                  <h3 className="font-semibold">Custom Logo</h3>
+                  <h3>Custom Logo</h3>
                   <SubLabel>Current Custom Logo: </SubLabel>
                 </div>
                 <Image
@@ -147,6 +152,8 @@ export function WhitelabelingForm() {
               setSelectedFile={setSelectedFile}
             />
 
+            <div className="pt-2" />
+
             <div className="pt-8">
               <TextFormField
                 label="Custom Popup Header"
@@ -160,6 +167,8 @@ export function WhitelabelingForm() {
               />
             </div>
 
+            <div className="pt-2" />
+
             <div>
               <TextFormField
                 label="Custom Popup Content"
@@ -170,6 +179,8 @@ export function WhitelabelingForm() {
                 disabled={isSubmitting}
               />
             </div>
+
+            <div className="pt-2" />
 
             <Button type="submit">Update</Button>
           </Form>

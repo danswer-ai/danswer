@@ -31,13 +31,10 @@ export default async function Page({ params }: { params: { id: string } }) {
         </Card>
 
         <div className="mt-12">
-          <Title>Delete Assistant</Title>
-          <div className="flex mt-6">
-            <DeleteAssistantButton
-              assistantId={values.existingAssistant!.id}
-              redirectType={SuccessfulAssistantUpdateRedirectType.ADMIN}
-            />
-          </div>
+          <DeleteAssistantButton
+            assistantId={values.existingAssistant!.id}
+            redirectType={SuccessfulAssistantUpdateRedirectType.ADMIN}
+          />
         </div>
       </>
     );

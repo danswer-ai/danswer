@@ -81,9 +81,9 @@ const Main = () => {
 
   return (
     <>
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h3 className="mb-2 ml-auto mr-auto">
         Step 1: Provide your access token
-      </Title>
+      </h3>
       {githubCredential ? (
         <>
           {" "}
@@ -106,7 +106,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <Text>
+          <p className="text-sm">
             If you don&apos;t have an access token, read the guide{" "}
             <a
               className="text-blue-500"
@@ -116,7 +116,7 @@ const Main = () => {
               here
             </a>{" "}
             on how to get one from Github.
-          </Text>
+          </p>
           <Card className="mt-4">
             <CardContent>
               <CredentialForm<GithubCredentialJson>
@@ -148,9 +148,9 @@ const Main = () => {
         </>
       )}
 
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h3 className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Which repositories do you want to make searchable?
-      </Title>
+      </h3>
 
       {githubConnectorIndexingStatuses.length > 0 && (
         <>
@@ -232,11 +232,11 @@ const Main = () => {
           </CardContent>
         </Card>
       ) : (
-        <Text>
+        <p className="text-sm">
           Please provide your access token in Step 1 first! Once done with that,
           you can then specify which Github repositories you want to make
           searchable.
-        </Text>
+        </p>
       )}
     </>
   );

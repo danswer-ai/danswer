@@ -87,7 +87,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                   <TableCell>{indexAttempt.total_docs_indexed}</TableCell>
                   <TableCell>
                     <div>
-                      <p className="flex flex-wrap whitespace-normal">
+                      <p className="flex flex-wrap whitespace-normal break-all">
                         {indexAttempt.error_msg || "-"}
                       </p>
                       {indexAttempt.full_exception_trace && (

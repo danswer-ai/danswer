@@ -6,7 +6,7 @@ export default function Enterprise() {
     <Wrapper>
       <div className="flex flex-col w-full gap-10 pt-32">
         <div>
-          <p className="text-[#64A3FF] font-semibold">
+          <p className="text-[#64A3FF]">
             Enterprise-grade security and privacy
           </p>
           <h3 className="pt-3 text-3xl md:text-4xl font-bold text-dark-900 md:w-[600px]">

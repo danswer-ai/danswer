@@ -64,7 +64,7 @@ export const EnmeddApiKeyForm = ({
       >
         {({ isSubmitting, values, setFieldValue }) => (
           <Form>
-            <p className="mb-4 text-lg">
+            <p className="mb-4">
               Choose a memorable name for your API key. This is optional and can
               be added or changed later!
             </p>

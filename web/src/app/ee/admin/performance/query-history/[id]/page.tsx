@@ -92,7 +92,7 @@ export default function QueryPage({ params }: { params: { id: string } }) {
 
       <Card className="mt-4">
         <CardContent>
-          <Title>Chat Session Details</Title>
+          <h3>Chat Session Details</h3>
 
           <Text className="flex flex-wrap whitespace-normal mt-1 text-xs">
             {chatSessionSnapshot.user_email || "-"},{" "}

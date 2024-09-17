@@ -1,5 +1,5 @@
 import { LoadingAnimation } from "@/components/Loading";
-import { Divider, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
 import { Form, Formik } from "formik";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import {
@@ -194,7 +194,7 @@ export function LLMProviderUpdateForm({
             disabled={existingLlmProvider ? true : false}
           />
 
-          <Divider />
+          <div className="pt-2" />
 
           {llmProviderDescriptor.api_key_required && (
             <TextFormField
@@ -235,7 +235,7 @@ export function LLMProviderUpdateForm({
             </div>
           ))}
 
-          <Divider />
+          <div className="pt-2" />
 
           {llmProviderDescriptor.llm_names.length > 0 ? (
             <SelectorFormField
@@ -256,6 +256,8 @@ export function LLMProviderUpdateForm({
               placeholder="E.g. gpt-4"
             />
           )}
+
+          <div className="pt-2" />
 
           {llmProviderDescriptor.llm_names.length > 0 ? (
             <SelectorFormField
@@ -282,11 +284,13 @@ export function LLMProviderUpdateForm({
             />
           )}
 
-          <Divider />
+          <div className="pt-2" />
 
           <div>
             {/* NOTE: this is above the test button to make sure it's visible */}
-            {testError && <Text className="text-error mt-2">{testError}</Text>}
+            {testError && (
+              <p className="text-error mt-2 text-sm">{testError}</p>
+            )}
 
             <div className="flex w-full mt-4">
               <Button type="submit">

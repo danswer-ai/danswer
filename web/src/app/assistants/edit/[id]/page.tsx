@@ -1,59 +1,3 @@
-/* import { ErrorCallout } from "@/components/ErrorCallout";
-import { Text, Title } from "@tremor/react";
-import { HeaderWrapper } from "@/components/header/HeaderWrapper";
-import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
-import { SuccessfulAssistantUpdateRedirectType } from "@/app/admin/assistants/enums";
-import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchAssistantEditorInfoSS";
-import { DeleteAssistantButton } from "@/app/admin/assistants/[id]/DeleteAssistantButton";
-import { LargeBackButton } from "../../LargeBackButton";
-import { Card, CardContent } from "@/components/ui/card";
-import { BackButton } from "@/components/BackButton";
-
-export default async function Page({ params }: { params: { id: string } }) {
-  const [values, error] = await fetchAssistantEditorInfoSS(params.id);
-
-  let body;
-  if (!values) {
-    body = (
-      <div className="px-32">
-        <ErrorCallout errorTitle="Something went wrong :(" errorMsg={error} />
-      </div>
-    );
-  } else {
-    body = (
-      <div className="w-full my-16">
-        <div className="px-32">
-          <BackButton />
-          <div className="py-24 md:py-32 lg:py-16 lg:pt-10">
-            <Card>
-              <CardContent>
-                <AssistantEditor
-                  {...values}
-                  defaultPublic={false}
-                  redirectType={SuccessfulAssistantUpdateRedirectType.CHAT}
-                />
-              </CardContent>
-            </Card>
-
-            <Title className="mt-12">Delete Assistant</Title>
-            <p className="text-sm text-subtle">
-              Click the button below to permanently delete this assistant.
-            </p>
-            <div className="flex mt-6">
-              <DeleteAssistantButton
-                assistantId={values.existingAssistant!.id}
-                redirectType={SuccessfulAssistantUpdateRedirectType.CHAT}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return <div className="h-full overflow-y-auto">{body}</div>;
-} */
-
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Text, Title } from "@tremor/react";
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
@@ -119,7 +63,7 @@ export default async function Page({ params }: { params: { id: string } }) {
               </CardContent>
             </Card>
 
-            <Title className="mt-12">Delete Assistant</Title>
+            <h3 className="mt-12">Delete Assistant</h3>
             <p className="text-sm text-subtle">
               Click the button below to permanently delete this assistant.
             </p>

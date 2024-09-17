@@ -81,9 +81,9 @@ const Main = () => {
 
   return (
     <>
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h3 className="mb-2 ml-auto mr-auto">
         Step 1: Provide your access token
-      </Title>
+      </h3>
       {gitlabCredential ? (
         <>
           {" "}
@@ -106,7 +106,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <Text>
+          <p className="text-sm">
             If you don&apos;t have an access token, read the guide{" "}
             <a
               className="text-blue-500"
@@ -116,16 +116,16 @@ const Main = () => {
               here
             </a>{" "}
             on how to get one from Gitlab.
-          </Text>
+          </p>
           <Card className="mt-4">
             <CardContent>
               <CredentialForm<GitlabCredentialJson>
                 formBody={
                   <>
-                    <Text>
+                    <p className="text-sm pb-4">
                       If you are using GitLab Cloud, keep the default value
                       below
-                    </Text>
+                    </p>
                     <TextFormField
                       name="gitlab_url"
                       label="GitLab URL:"
@@ -161,9 +161,9 @@ const Main = () => {
         </>
       )}
 
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h3 className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Which repositories do you want to make searchable?
-      </Title>
+      </h3>
 
       {gitlabConnectorIndexingStatuses.length > 0 && (
         <>
@@ -245,11 +245,11 @@ const Main = () => {
           </CardContent>
         </Card>
       ) : (
-        <Text>
+        <p className="text-sm">
           Please provide your access token in Step 1 first! Once done with that,
           you can then specify which Gitlab repositories you want to make
           searchable.
-        </Text>
+        </p>
       )}
     </>
   );

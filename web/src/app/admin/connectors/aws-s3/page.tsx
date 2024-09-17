@@ -85,9 +85,7 @@ const S3Main = () => {
 
   return (
     <>
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
-        Step 1: Provide your access info
-      </Title>
+      <h3 className="mb-2 ml-auto mr-auto">Step 1: Provide your access info</h3>
       {s3Credential ? (
         <>
           {" "}
@@ -119,19 +117,17 @@ const S3Main = () => {
         </>
       ) : (
         <>
-          <Text>
-            <ul className="mt-2 ml-4 list-disc">
-              <li>
-                If AWS Access Key ID and AWS Secret Access Key are provided,
-                they will be used for authenticating the connector.
-              </li>
-              <li>Otherwise, the Profile Name will be used (if provided).</li>
-              <li>
-                If no credentials are provided, then the connector will try to
-                authenticate with any default AWS credentials available.
-              </li>
-            </ul>
-          </Text>
+          <ul className="mt-2 ml-4 list-disc text-sm">
+            <li>
+              If AWS Access Key ID and AWS Secret Access Key are provided, they
+              will be used for authenticating the connector.
+            </li>
+            <li>Otherwise, the Profile Name will be used (if provided).</li>
+            <li>
+              If no credentials are provided, then the connector will try to
+              authenticate with any default AWS credentials available.
+            </li>
+          </ul>
           <Card className="mt-4">
             <CardContent>
               <CredentialForm<S3CredentialJson>
@@ -166,15 +162,13 @@ const S3Main = () => {
         </>
       )}
 
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
+      <h3 className="mt-6 mb-2 ml-auto mr-auto">
         Step 2: Which S3 bucket do you want to make searchable?
-      </Title>
+      </h3>
 
       {s3ConnectorIndexingStatuses.length > 0 && (
         <>
-          <Title className="mt-6 mb-2 ml-auto mr-auto">
-            S3 indexing status
-          </Title>
+          <h3 className="mt-6 mb-2 ml-auto mr-auto">S3 indexing status</h3>
           <Text className="mb-2">
             The latest changes are fetched every 10 minutes.
           </Text>

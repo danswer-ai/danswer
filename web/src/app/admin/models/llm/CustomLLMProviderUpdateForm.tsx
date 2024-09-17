@@ -1,5 +1,5 @@
 import { LoadingAnimation } from "@/components/Loading";
-import { Divider, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
 import {
   ArrayHelpers,
   ErrorMessage,
@@ -190,7 +190,7 @@ export function CustomLLMProviderUpdateForm({
             placeholder="Display Name"
           />
 
-          <Divider />
+          <div className="pt-2" />
 
           <TextFormField
             name="provider"
@@ -211,7 +211,7 @@ export function CustomLLMProviderUpdateForm({
             placeholder="Name of the custom provider"
           />
 
-          <Divider />
+          <div className="pt-2" />
 
           <SubLabel>
             Fill in the following as is needed. Refer to the LiteLLM
@@ -226,17 +226,23 @@ export function CustomLLMProviderUpdateForm({
             type="password"
           />
 
+          <div className="pt-2" />
+
           <TextFormField
             name="api_base"
             label="[Optional] API Base"
             placeholder="API Base"
           />
 
+          <div className="pt-2" />
+
           <TextFormField
             name="api_version"
             label="[Optional] API Version"
             placeholder="API Version"
           />
+
+          <div className="pt-2" />
 
           <Label className="pb-1">[Optional] Custom Configs</Label>
           <SubLabel>
@@ -246,7 +252,7 @@ export function CustomLLMProviderUpdateForm({
                 passed to litellm via environment variables.
               </div>
 
-              <div className="mt-2">
+              <div className="pt-2">
                 For example, when configuring the Cloudflare provider, you would
                 need to set `CLOUDFLARE_ACCOUNT_ID` as the key and your
                 Cloudflare account ID as the value.
@@ -328,7 +334,7 @@ export function CustomLLMProviderUpdateForm({
                   onClick={() => {
                     arrayHelpers.push(["", ""]);
                   }}
-                  className="mt-3"
+                  className="mb-4"
                   type="button"
                 >
                   <Plus size={16} /> Add New
@@ -337,7 +343,7 @@ export function CustomLLMProviderUpdateForm({
             )}
           />
 
-          <Divider />
+          <div className="pt-2" />
 
           <TextArrayField
             name="model_names"
@@ -348,7 +354,7 @@ export function CustomLLMProviderUpdateForm({
             As an example, for OpenAI one model might be "gpt-4".`}
           />
 
-          <Divider />
+          <div className="pt-2" />
 
           <TextFormField
             name="default_model_name"
@@ -360,6 +366,8 @@ export function CustomLLMProviderUpdateForm({
             placeholder="E.g. gpt-4"
           />
 
+          <div className="pt-2" />
+
           <TextFormField
             name="fast_default_model_name"
             subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
@@ -369,11 +377,13 @@ export function CustomLLMProviderUpdateForm({
             placeholder="E.g. gpt-4"
           />
 
-          <Divider />
+          <div className="pt-2" />
 
           <div>
             {/* NOTE: this is above the test button to make sure it's visible */}
-            {testError && <Text className="text-error mt-2">{testError}</Text>}
+            {testError && (
+              <p className="text-error mt-2 text-sm">{testError}</p>
+            )}
 
             <div className="flex w-full mt-4">
               <Button type="submit">

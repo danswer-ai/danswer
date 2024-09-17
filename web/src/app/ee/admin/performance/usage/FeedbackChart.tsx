@@ -143,7 +143,7 @@ export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
     <Card className="h-full flex flex-col">
       <CardHeader className="border-b">
         <div className="flex flex-col">
-          <h3 className="font-semibold">Feedback</h3>
+          <h3>Feedback</h3>
           <SubLabel>Thumbs Up / Thumbs Down over time</SubLabel>
         </div>
       </CardHeader>

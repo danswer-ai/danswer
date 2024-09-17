@@ -23,7 +23,7 @@ export function ChatIntro({
   return (
     <>
       <div className="flex 2xl:justify-center w-full my-auto md:py-20">
-        <div className="max-w-full 2xl:w-searchbar px-5 2xl:px-0 mt-10 md:mt-16 lg:mt-0 2xl:mt-14">
+        <div className="max-w-full 2xl:w-searchbar px-5 md:px-8 lg:px-5 2xl:px-0 mt-10 md:mt-16 lg:mt-0 2xl:mt-14">
           <div className="flex flex-col items-center gap-4 md:pb-6">
             <Image
               src={Logo}

@@ -22,7 +22,7 @@ function LLMProviderUpdateModal({
   shouldMarkAsDefault?: boolean;
 }) {
   return (
-    <div className="px-4">
+    <div>
       {llmProviderDescriptor ? (
         <LLMProviderUpdateForm
           llmProviderDescriptor={llmProviderDescriptor}

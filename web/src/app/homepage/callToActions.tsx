@@ -5,7 +5,7 @@ export default function CallToActions() {
     <Wrapper>
       <div className="w-full py-32">
         <div className="relative flex flex-col items-center gap-6 md:p-28 overflow-hidden rounded-xl md:rounded-3xl bg-[rgb(17,_24,_39)] isolate p-10">
-          <h3 className="text-3xl font-bold text-center text-inverted md:text-4xl">
+          <h3 className="text-3xl text-center text-inverted md:text-4xl">
             A plan to fit your needs
           </h3>
 

@@ -128,14 +128,11 @@ export const DocumentSetCreationForm = ({
             <Divider />
 
             <div>
-              <h2 className="mb-1 font-medium text-base">
-                Pick your connectors:
-              </h2>
+              <h3 className="mb-1">Pick your connectors:</h3>
               <p className="mb-3 text-xs text-subtle">
                 All documents indexed by the selected connectors will be a part
                 of this document set.
               </p>
-
               <Input
                 type="text"
                 placeholder="Search connectors..."

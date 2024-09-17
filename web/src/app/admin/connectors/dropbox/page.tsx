@@ -84,9 +84,7 @@ const Main = () => {
 
   return (
     <>
-      <Title className="mt-6 mb-2 ml-auto mr-auto">
-        Provide your API details
-      </Title>
+      <h3 className="mb-2 ml-auto mr-auto">Provide your API details</h3>
 
       {dropboxCredential ? (
         <>
@@ -118,7 +116,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <Text>
+          <p className="text-sm">
             See the Dropbox connector{" "}
             <a
               className="text-blue-500"
@@ -127,7 +125,7 @@ const Main = () => {
               setup guide
             </a>{" "}
             on the enMedD AI docs to obtain a Dropbox token.
-          </Text>
+          </p>
           <Card className="mt-4 mb-4">
             <CardContent>
               <CredentialForm<DropboxCredentialJson>
@@ -162,9 +160,7 @@ const Main = () => {
 
       {dropboxConnectorIndexingStatuses.length > 0 && (
         <>
-          <Title className="mt-6 mb-2 ml-auto mr-auto">
-            Dropbox indexing status
-          </Title>
+          <h3 className="mt-6 mb-2 ml-auto mr-auto">Dropbox indexing status</h3>
           <Text className="mb-2">
             Due to Dropbox access key design, the Dropbox connector will only
             re-index files after a new access key is provided and the indexing

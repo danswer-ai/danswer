@@ -658,7 +658,7 @@ export function AssistantEditor({
                       defaultHidden
                     >
                       <>
-                        <Text>
+                        <p className="text-sm">
                           Pick which LLM to use for this Assistant. If left as
                           Default, will use{" "}
                           <b className="italic">{defaultModelName}</b>
@@ -675,7 +675,7 @@ export function AssistantEditor({
                             OpenAI docs
                           </a>
                           .
-                        </Text>
+                        </p>
 
                         <div className="flex mt-6">
                           <div className="w-96">
@@ -746,12 +746,12 @@ export function AssistantEditor({
                 >
                   <>
                     <div className="pb-4">
-                      <SubLabel>
+                      <p className="text-sm">
                         Starter Messages help guide users to use this Assistant.
                         They are shown to the user as clickable options when
                         they select this Assistant. When selected, the specified
                         message is sent to the LLM as the initial user message.
-                      </SubLabel>
+                      </p>
                     </div>
 
                     <FieldArray

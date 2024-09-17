@@ -220,7 +220,7 @@ export function SettingsForm() {
 
   return (
     <div>
-      <h3 className="mb-4 font-semibold">Page Visibility</h3>
+      <h3 className="mb-4">Page Visibility</h3>
 
       <CheckboxComponent
         label="Search Page Enabled?"
@@ -274,7 +274,7 @@ export function SettingsForm() {
 
       {isEnterpriseEnabled && (
         <>
-          <h3 className="mb-4 font-semibold">Chat Settings</h3>
+          <h3 className="mb-4">Chat Settings</h3>
           <IntegerInput
             label="Chat Retention"
             sublabel="Enter the maximum number of days you would like enMedD AI to retain chat messages. Leaving this field empty will cause enMedD AI to never delete chat messages."

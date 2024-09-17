@@ -115,7 +115,7 @@ function Main() {
         given time period. With token rate limits, you can:
       </p>
 
-      <ul className="list-disc mt-2 ml-4 mb-2">
+      <ul className="list-disc mt-2 ml-4 mb-2 text-sm">
         <li>
           Set a global rate limit to control your organization&apos;s overall
           token spend.

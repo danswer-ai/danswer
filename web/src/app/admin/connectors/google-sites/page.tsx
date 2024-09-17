@@ -71,7 +71,7 @@ export default function GoogleSites() {
         </Text>
 
         <div className="mt-4">
-          <Title className="mb-2">Upload Files</Title>
+          <h3 className="mb-2">Upload Files</h3>
           <Card>
             <CardContent>
               <div className="mx-auto w-full">

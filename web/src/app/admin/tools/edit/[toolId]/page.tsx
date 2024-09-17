@@ -23,7 +23,7 @@ export default async function Page({ params }: { params: { toolId: string } }) {
     );
   } else {
     body = (
-      <div className="w-full my-8">
+      <div className="w-full">
         <div>
           <div>
             <Card>
@@ -32,8 +32,10 @@ export default async function Page({ params }: { params: { toolId: string } }) {
               </CardContent>
             </Card>
 
-            <Title className="mt-12">Delete Tool</Title>
-            <Text>Click the button below to permanently delete this tool.</Text>
+            <h3 className="mt-10">Delete Tool</h3>
+            <p className="text-sm text-subtle">
+              Click the button below to permanently delete this tool.
+            </p>
             <div className="flex mt-6">
               <DeleteToolButton toolId={tool.id} />
             </div>

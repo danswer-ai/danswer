@@ -56,10 +56,10 @@ const GoogleDriveConnectorManagement = ({
     googleDrivePublicCredential || googleDriveServiceAccountCredential;
   if (!liveCredential) {
     return (
-      <Text>
+      <p className="text-sm">
         Please authenticate with Google Drive as described in Step 2! Once done
         with that, you can then move on to enable this connector.
-      </Text>
+      </p>
     );
   }
 
@@ -363,17 +363,15 @@ const Main = () => {
 
   return (
     <>
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 1: Provide your Credentials
-      </Title>
+      <h3 className="mb-2 ml-auto mr-auto">Step 1: Provide your Credentials</h3>
       <DriveJsonUploadSection
         appCredentialData={appCredentialData}
         serviceAccountCredentialData={serviceAccountKeyData}
       />
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
+      <h3 className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Authenticate with enMedD AI
-      </Title>
+      </h3>
       <DriveOAuthSection
         refreshCredentials={refreshCredentials}
         googleDrivePublicCredential={googleDrivePublicCredential}
@@ -385,9 +383,7 @@ const Main = () => {
         connectorExists={googleDriveConnectorIndexingStatuses.length > 0}
       />
 
-      <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 3: Start Indexing!
-      </Title>
+      <h3 className="mb-2 mt-6 ml-auto mr-auto">Step 3: Start Indexing!</h3>
       <GoogleDriveConnectorManagement
         googleDrivePublicCredential={googleDrivePublicCredential}
         googleDriveServiceAccountCredential={

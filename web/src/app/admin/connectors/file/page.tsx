@@ -60,7 +60,7 @@ const Main = () => {
   return (
     <div>
       {filesAreUploading && <Spinner />}
-      <Text className="mb-2">
+      <p className="mb-2 text-sm">
         Specify files below, click the <b>Upload</b> button, and the contents of
         these files will be searchable via enMedD AI! Currently supported file
         types include <i>.txt</i>, <i>.pdf</i>, <i>.docx</i>, <i>.pptx</i>,{" "}
@@ -68,25 +68,25 @@ const Main = () => {
         <i>.log</i>, <i>.json</i>, <i>.tsv</i>, <i>.xml</i>, <i>.yml</i>,{" "}
         <i>.yaml</i>, <i>.eml</i>, <i>.epub</i>, and finally <i>.zip</i> files
         (containing supported file types).
-      </Text>
-      <Text className="mb-3">
+      </p>
+      <p className="mb-3 text-sm">
         <b>NOTE:</b> if the original document is accessible via a link, you can
         add a line at the very beginning of the file that looks like:
-        <div className="flex my-2">
-          <div className="mx-auto font-bold">
-            #ENMEDD_METADATA={"{"}&quot;link&quot;: &quot;{"<LINK>"}&quot;{"}"}
-          </div>
-        </div>{" "}
-        where <i>{"<LINK>"}</i> is the link to the file. This will enable enMedD
-        AI to link users to the original document when they click on the search
-        result. More details on this can be found in the{" "}
+        <span className="font-bold">
+          {" "}
+          #ENMEDD_METADATA={"{"}&quot;link&quot;: &quot;{"<LINK>"}&quot;{"}"}
+        </span>
+        , where <i>{"<LINK>"}</i> is the link to the file. This will enable
+        enMedD AI to link users to the original document when they click on the
+        search result. More details on this can be found in the{" "}
         <a
           href="https://docs.danswer.dev/connectors/file"
           className="text-link"
         >
           documentation.
         </a>
-      </Text>
+      </p>
+
       <div className="flex mt-4">
         <div className="mx-auto w-full">
           <Card>
@@ -223,7 +223,7 @@ const Main = () => {
               >
                 {({ values, isSubmitting }) => (
                   <Form>
-                    <h2 className="font-bold  text-xl mb-2">Upload Files</h2>
+                    <h2 className="font-bold text-lg mb-6">Upload Files</h2>
                     <TextFormField
                       name="name"
                       label="Name:"
@@ -231,7 +231,7 @@ const Main = () => {
                       autoCompleteDisabled={true}
                     />
 
-                    <p className="pb-1.5 text-sm">Files:</p>
+                    <h3 className="pb-1.5 text-sm">Files:</h3>
                     <FileUpload
                       selectedFiles={selectedFiles}
                       setSelectedFiles={setSelectedFiles}
@@ -239,9 +239,7 @@ const Main = () => {
 
                     {isPaidEnterpriseFeaturesEnabled && (
                       <>
-                        <Divider />
                         <IsPublicField />
-                        <Divider />
                       </>
                     )}
 

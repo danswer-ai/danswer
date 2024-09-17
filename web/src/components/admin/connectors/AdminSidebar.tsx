@@ -29,7 +29,7 @@ export function AdminSidebar({ collections }: AdminSidebarProps) {
             </h2>
             {collection.items.map((item) => (
               <Link key={item.link} href={item.link}>
-                <div className="flex px-4 py-2 h-10 w-full rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 text-sm">
+                <div className="flex px-4 py-2 h-10 w-full rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 text-sm break-all truncate">
                   {item.name}
                 </div>
               </Link>
