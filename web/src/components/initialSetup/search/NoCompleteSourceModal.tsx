@@ -6,6 +6,7 @@ import { CCPairBasicInfo } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AnimatePresence, motion } from "framer-motion";
+import { FiCrosshair } from "react-icons/fi";
 
 export function NoCompleteSourcesModal({
   ccPairs,
@@ -56,32 +57,21 @@ export function NoCompleteSourcesModal({
           }}
         >
           <Alert>
-            <AlertTitle className="font-semibold pb-2">
-              ⏳ None of your connectors have finished a full sync yet
+            <AlertTitle className="font-semibold pb-2 leading-normal">
+              ⏳ None of your data sources have finished a full sync yet
             </AlertTitle>
             <AlertDescription>
               <div>
-                You&apos;ve connected some sources, but none of them have
-                finished syncing. Depending on the size of the knowledge base(s)
-                you&apos;ve connected to enMedD AI, it can take anywhere between
-                30 seconds to a few days for the initial sync to complete. So
-                far we&apos;ve synced <b>{totalDocs}</b> documents.
+                You&apos;ve connected some data sources, but none of them have
+                finished syncing.
                 <br />
                 <br />
-                To view the status of your syncing connectors, head over to the{" "}
+                To view the status of your syncing data sources, head over to
+                the{" "}
                 <Link className="text-link" href="admin/indexing/status">
-                  Existing Connectors page
+                  Existing Data Sources page
                 </Link>
                 .
-                <br />
-                <br />
-                <p
-                  className="inline cursor-pointer text-link"
-                  onClick={() => setIsVisible(false)}
-                >
-                  Or, click here to continue and ask questions on the partially
-                  synced knowledge set.
-                </p>
               </div>
             </AlertDescription>
           </Alert>

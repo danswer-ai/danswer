@@ -25,7 +25,7 @@ import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompl
 import { ChatPopup } from "../chat/ChatPopup";
 import { SearchSidebar } from "./SearchSidebar";
 import { BarLayout } from "@/components/BarLayout";
-import { FAB } from "@/components/FAB";
+import { HelperFab } from "@/components/HelperFab";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / assistant info
@@ -176,7 +176,7 @@ export default async function Home() {
           />
         </div>
       </div>
-      <FAB />
+      <HelperFab />
     </div>
   );
 }

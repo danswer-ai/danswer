@@ -82,7 +82,7 @@ import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { CustomTooltip } from "@/components/CustomTooltip";
-import { FAB } from "@/components/FAB";
+import { HelperFab } from "@/components/HelperFab";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1161,7 +1161,7 @@ export function ChatPage({
                   >
                     {/* <input {...getInputProps()} /> */}
 
-                    <FAB />
+                    <HelperFab />
 
                     {liveAssistant && (
                       <div className="relative z-top-bar shrink-0">

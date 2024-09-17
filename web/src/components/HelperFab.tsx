@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export function FAB() {
+export function HelperFab() {
   return (
     <Popover>
       <PopoverTrigger

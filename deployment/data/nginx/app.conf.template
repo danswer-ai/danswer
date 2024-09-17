@@ -33,6 +33,9 @@ server {
         # Rewrite /api prefixed matched paths
         rewrite ^/api(/.*)$ $1 break;
 
+        # Apply rate limiting to API requests
+        limit_req zone=api_limit burst=20 nodelay;
+
         # misc headers
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
