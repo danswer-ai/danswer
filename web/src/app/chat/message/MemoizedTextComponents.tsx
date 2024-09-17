@@ -1,5 +1,5 @@
 import { Citation } from "@/components/search/results/Citation";
-import React, { memo, useMemo } from "react";
+import React, { memo } from "react";
 
 export const MemoizedLink = memo((props: any) => {
   const { node, ...rest } = props;
