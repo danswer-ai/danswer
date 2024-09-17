@@ -10,6 +10,7 @@ from enmedd.server.features.assistant.models import AssistantSnapshot
 from enmedd.server.features.document_set.models import DocumentSet
 from enmedd.server.manage.models import UserInfo
 from enmedd.server.manage.models import UserPreferences
+from enmedd.server.models import MinimalWorkspaceSnapshot
 
 
 class Teamspace(BaseModel):
@@ -21,6 +22,7 @@ class Teamspace(BaseModel):
     assistants: list[AssistantSnapshot]
     is_up_to_date: bool
     is_up_for_deletion: bool
+    workspace: list[MinimalWorkspaceSnapshot]
 
     @classmethod
     def from_model(cls, teamspace_model: TeamspaceModel) -> "Teamspace":
@@ -70,6 +72,12 @@ class Teamspace(BaseModel):
             ],
             is_up_to_date=teamspace_model.is_up_to_date,
             is_up_for_deletion=teamspace_model.is_up_for_deletion,
+            workspace=[
+                MinimalWorkspaceSnapshot(
+                    id=workspace.id, workspace_name=workspace.workspace_name
+                )
+                for workspace in teamspace_model.workspace
+            ],
         )
 
 

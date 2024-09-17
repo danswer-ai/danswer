@@ -45,3 +45,14 @@ class InvitedUserSnapshot(BaseModel):
 
 class DisplayPriorityRequest(BaseModel):
     display_priority_map: dict[int, int]
+
+
+class MinimalWorkspaceSnapshot(BaseModel):
+    id: int
+    workspace_name: str | None = None
+
+
+class MinimalTeamspaceSnapshot(BaseModel):
+    id: int
+    name: str
+    workspace: list[MinimalWorkspaceSnapshot]

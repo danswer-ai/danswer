@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 
 from enmedd.db.models import Workspace as WorkspaceModel
+from enmedd.server.models import MinimalTeamspaceSnapshot
+from enmedd.server.models import MinimalWorkspaceSnapshot
 
 
 class Workspaces(BaseModel):
@@ -16,6 +18,7 @@ class Workspaces(BaseModel):
     custom_logo: str | None = None
     custom_header_logo: str | None = None
     custom_header_content: str | None = None
+    groups: list[MinimalTeamspaceSnapshot]
 
     @classmethod
     def from_model(cls, workspace_model: WorkspaceModel) -> "Workspaces":
@@ -28,6 +31,20 @@ class Workspaces(BaseModel):
             custom_logo=workspace_model.custom_logo,
             custom_header_logo=workspace_model.custom_header_logo,
             custom_header_content=workspace_model.custom_header_content,
+            groups=[
+                MinimalTeamspaceSnapshot(
+                    id=teamspace.id,
+                    name=teamspace.name,
+                    workspace=[
+                        MinimalWorkspaceSnapshot(
+                            id=workspace.id,
+                            workspace_name=workspace.workspace_name,
+                        )
+                        for workspace in teamspace.workspace
+                    ],
+                )
+                for teamspace in workspace_model.groups
+            ],
         )
 
     def check_validity(self) -> None:

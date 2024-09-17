@@ -293,6 +293,26 @@ class Workspace__Teamspace(Base):
     )
 
 
+class ChatSession__Teamspace(Base):
+    __tablename__ = "chat_session__teamspace"
+
+    chat_session_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_session.id"), primary_key=True
+    )
+    teamspace_id: Mapped[int] = mapped_column(
+        ForeignKey("teamspace.id"), primary_key=True
+    )
+
+
+class Tool__Teamspace(Base):
+    __tablename__ = "tool__teamspace"
+
+    tool_id: Mapped[int] = mapped_column(ForeignKey("tool.id"), primary_key=True)
+    teamspace_id: Mapped[int] = mapped_column(
+        ForeignKey("teamspace.id"), primary_key=True
+    )
+
+
 """
 Documents/Indexing Tables
 """
@@ -349,6 +369,11 @@ class ConnectorCredentialPair(Base):
         ),
         back_populates="connector_credential_pairs",
         overlaps="document_set",
+    )
+    groups: Mapped[list["Teamspace"]] = relationship(
+        "Teamspace",
+        secondary="teamspace__connector_credential_pair",
+        viewonly=True,
     )
 
 
@@ -1010,6 +1035,11 @@ class Tool(Base):
         secondary=Assistant__Tool.__table__,
         back_populates="tools",
     )
+    groups: Mapped[list["Teamspace"]] = relationship(
+        "Teamspace",
+        secondary="tool__teamspace",
+        viewonly=True,
+    )
 
 
 class StarterMessage(TypedDict):
@@ -1263,13 +1293,19 @@ class Teamspace(Base):
     )
     document_sets: Mapped[list[DocumentSet]] = relationship(
         "DocumentSet",
-        secondary=DocumentSet__Teamspace.__table__,
+        secondary="document_set__teamspace",
         viewonly=True,
     )
 
     workspace: Mapped[list["Workspace"]] = relationship(
         "Workspace",
-        secondary=Workspace__Teamspace.__table__,
+        secondary="workspace__teamspace",
+        viewonly=True,
+    )
+
+    tool: Mapped[list[Tool]] = relationship(
+        "Tool",
+        secondary="tool__teamspace",
         viewonly=True,
     )
 
@@ -1444,8 +1480,9 @@ class Workspace(Base):
 
     groups: Mapped[list["Teamspace"]] = relationship(
         "Teamspace",
-        secondary=Workspace__Teamspace.__table__,
+        secondary="workspace__teamspace",
         back_populates="workspace",
+        viewonly=True,
     )
 
     instance: Mapped["Instance"] = relationship("Instance", back_populates="workspaces")

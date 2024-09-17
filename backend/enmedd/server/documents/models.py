@@ -13,6 +13,7 @@ from enmedd.db.models import Credential
 from enmedd.db.models import IndexAttempt
 from enmedd.db.models import IndexingStatus
 from enmedd.db.models import TaskStatus
+from enmedd.server.models import MinimalTeamspaceSnapshot
 from enmedd.server.utils import mask_credential_dict
 
 
@@ -191,6 +192,7 @@ class ConnectorCredentialPairDescriptor(BaseModel):
     name: str | None
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
+    groups: list[MinimalTeamspaceSnapshot] | None
 
 
 class RunConnectorRequest(BaseModel):
