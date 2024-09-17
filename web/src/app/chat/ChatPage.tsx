@@ -65,7 +65,7 @@ import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
-import { AIMessage, graph, GraphChunk, HumanMessage } from "./message/Messages";
+import { AIMessage, HumanMessage } from "./message/Messages";
 import { StarterMessage } from "./StarterMessage";
 import {
   AnswerPiecePacket,
@@ -101,8 +101,6 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
-import { Button } from "@tremor/react";
-import dynamic from "next/dynamic";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -135,6 +133,7 @@ export function ChatPage({
   } = useChatContext();
 
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
+
   const { user, refreshUser, isLoadingUser } = useUser();
 
   // chat session
@@ -249,13 +248,13 @@ export function ChatPage({
     if (
       lastMessage &&
       lastMessage.type === "assistant" &&
-      lastMessage.toolCall &&
-      lastMessage.toolCall.tool_result === undefined
+      lastMessage.toolCalls[0] &&
+      lastMessage.toolCalls[0].tool_result === undefined
     ) {
       const newCompleteMessageMap = new Map(
         currentMessageMap(completeMessageDetail)
       );
-      const updatedMessage = { ...lastMessage, toolCall: null };
+      const updatedMessage = { ...lastMessage, toolCalls: [] };
       newCompleteMessageMap.set(lastMessage.messageId, updatedMessage);
       updateCompleteMessageDetail(currentSession, newCompleteMessageMap);
     }
@@ -484,7 +483,7 @@ export function ChatPage({
         message: "",
         type: "system",
         files: [],
-        toolCall: null,
+        toolCalls: [],
         parentMessageId: null,
         childrenMessageIds: [firstMessageId],
         latestChildMessageId: firstMessageId,
@@ -511,7 +510,6 @@ export function ChatPage({
       }
       newCompleteMessageMap.set(message.messageId, message);
     });
-
     // if specified, make these new message the latest of the current message chain
     if (makeLatestChildMessage) {
       const currentMessageChain = buildLatestMessageChain(
@@ -1046,6 +1044,8 @@ export function ChatPage({
     resetInputBar();
     let messageUpdates: Message[] | null = null;
 
+    let answer = "";
+
     let stopReason: StreamStopReason | null = null;
     let query: string | null = null;
     let retrievalType: RetrievalType =
@@ -1058,14 +1058,12 @@ export function ChatPage({
     let stackTrace: string | null = null;
 
     let finalMessage: BackendMessage | null = null;
-    let toolCall: ToolCallMetadata | null = null;
+    let toolCalls: ToolCallMetadata[] = [];
 
     let initialFetchDetails: null | {
       user_message_id: number;
       assistant_message_id: number;
       frozenMessageMap: Map<number, Message>;
-      initialDynamicParentMessage: Message;
-      initialDynamicAssistantMessage: Message;
     } = null;
 
     try {
@@ -1124,16 +1122,7 @@ export function ChatPage({
         return new Promise((resolve) => setTimeout(resolve, ms));
       };
 
-      let updateFn = (messages: Message[]) => {
-        return upsertToCompleteMessageMap({
-          messages: messages,
-          chatSessionId: currChatSessionId,
-        });
-      };
-
       await delay(50);
-      let dynamicParentMessage: Message | null = null;
-      let dynamicAssistantMessage: Message | null = null;
       while (!stack.isComplete || !stack.isEmpty()) {
         await delay(0.5);
 
@@ -1142,7 +1131,6 @@ export function ChatPage({
           if (!packet) {
             continue;
           }
-          console.log(packet);
 
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
@@ -1168,12 +1156,12 @@ export function ChatPage({
             messageUpdates = [
               {
                 messageId: regenerationRequest
-                  ? regenerationRequest?.messageId
+                  ? regenerationRequest?.parentMessage?.messageId!
                   : user_message_id,
                 message: currMessage,
                 type: "user",
                 files: currentMessageFiles,
-                toolCall: null,
+                toolCalls: [],
                 parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
               },
             ];
@@ -1188,109 +1176,22 @@ export function ChatPage({
               });
             }
 
-            let { messageMap: currentFrozenMessageMap } =
+            const { messageMap: currentFrozenMessageMap } =
               upsertToCompleteMessageMap({
                 messages: messageUpdates,
                 chatSessionId: currChatSessionId,
               });
 
-            let frozenMessageMap = currentFrozenMessageMap;
-            regenerationRequest?.parentMessage;
-            let initialDynamicParentMessage: Message = regenerationRequest
-              ? regenerationRequest?.parentMessage
-              : {
-                  messageId: user_message_id!,
-                  message: "",
-                  type: "user",
-                  files: currentMessageFiles,
-                  toolCall: null,
-                  parentMessageId: error ? null : lastSuccessfulMessageId,
-                  childrenMessageIds: [assistant_message_id!],
-                  latestChildMessageId: -100,
-                };
-
-            let initialDynamicAssistantMessage: Message = {
-              messageId: assistant_message_id!,
-              message: "",
-              type: "assistant",
-              retrievalType,
-              query: finalMessage?.rephrased_query || query,
-              documents: finalMessage?.context_docs?.top_documents || documents,
-              citations: finalMessage?.citations || {},
-              files: finalMessage?.files || aiMessageImages || [],
-              toolCall: finalMessage?.tool_call || toolCall,
-              parentMessageId: regenerationRequest
-                ? regenerationRequest?.parentMessage?.messageId!
-                : user_message_id,
-              alternateAssistantID: alternativeAssistant?.id,
-              stackTrace: stackTrace,
-              overridden_model: finalMessage?.overridden_model,
-              stopReason: stopReason,
-            };
-
+            const frozenMessageMap = currentFrozenMessageMap;
             initialFetchDetails = {
               frozenMessageMap,
               assistant_message_id,
               user_message_id,
-              initialDynamicParentMessage,
-              initialDynamicAssistantMessage,
             };
 
             resetRegenerationState();
           } else {
-            let {
-              initialDynamicParentMessage,
-              initialDynamicAssistantMessage,
-              user_message_id,
-              frozenMessageMap,
-            } = initialFetchDetails;
-
-            if (
-              dynamicParentMessage === null &&
-              dynamicAssistantMessage === null
-            ) {
-              dynamicParentMessage = initialDynamicParentMessage;
-              dynamicAssistantMessage = initialDynamicAssistantMessage;
-
-              dynamicParentMessage.message = currMessage;
-            }
-
-            if (!dynamicAssistantMessage || !dynamicParentMessage) {
-              return;
-            }
-
-            if (Object.hasOwn(packet, "user_message_id")) {
-              let newParentMessageId = dynamicParentMessage.messageId;
-              const messageResponseIDInfo = packet as MessageResponseIDInfo;
-
-              for (const key in dynamicAssistantMessage) {
-                (dynamicParentMessage as Record<string, any>)[key] = (
-                  dynamicAssistantMessage as Record<string, any>
-                )[key];
-              }
-
-              dynamicParentMessage.parentMessageId = newParentMessageId;
-              dynamicParentMessage.latestChildMessageId =
-                messageResponseIDInfo.reserved_assistant_message_id;
-              dynamicParentMessage.childrenMessageIds = [
-                messageResponseIDInfo.reserved_assistant_message_id,
-              ];
-
-              dynamicParentMessage.messageId =
-                messageResponseIDInfo.user_message_id!;
-              dynamicAssistantMessage = {
-                messageId: messageResponseIDInfo.reserved_assistant_message_id,
-                type: "assistant",
-                message: "",
-                documents: [],
-                retrievalType: undefined,
-                toolCall: null,
-                files: [],
-                parentMessageId: dynamicParentMessage.messageId,
-                childrenMessageIds: [],
-                latestChildMessageId: null,
-              };
-            }
+            const { user_message_id, frozenMessageMap } = initialFetchDetails;
 
             setChatState((prevState) => {
               if (prevState.get(chatSessionIdRef.current!) === "loading") {
@@ -1301,45 +1202,38 @@ export function ChatPage({
               }
               return prevState;
             });
-            if (Object.hasOwn(packet, "line_graph")) {
-              const GraphPacket = packet as GraphChunk;
-              setGraphs((graphs) => [
-                ...graphs,
-                { file_id: GraphPacket.file_id, line: GraphPacket.line_graph },
-              ]);
-            }
 
             if (Object.hasOwn(packet, "answer_piece")) {
-              dynamicAssistantMessage.message += (
-                packet as AnswerPiecePacket
-              ).answer_piece;
+              answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
-              dynamicAssistantMessage.documents = (
-                packet as DocumentsResponse
-              ).top_documents;
-              dynamicAssistantMessage.retrievalType = RetrievalType.Search;
+              documents = (packet as DocumentsResponse).top_documents;
               retrievalType = RetrievalType.Search;
-            } else if (Object.hasOwn(packet, "tool_name")) {
-              dynamicAssistantMessage.toolCall = {
-                tool_name: (packet as ToolCallMetadata).tool_name,
-                tool_args: (packet as ToolCallMetadata).tool_args,
-                tool_result: (packet as ToolCallMetadata).tool_result,
-              };
-              if (
-                dynamicAssistantMessage.toolCall.tool_name === SEARCH_TOOL_NAME
-              ) {
-                dynamicAssistantMessage.query =
-                  dynamicAssistantMessage.toolCall.tool_args.query;
+              if (documents && documents.length > 0) {
+                // point to the latest message (we don't know the messageId yet, which is why
+                // we have to use -1)
+                setSelectedMessageForDocDisplay(user_message_id);
               }
-
+            } else if (Object.hasOwn(packet, "tool_name")) {
+              toolCalls = [
+                {
+                  tool_name: (packet as ToolCallMetadata).tool_name,
+                  tool_args: (packet as ToolCallMetadata).tool_args,
+                  tool_result: (packet as ToolCallMetadata).tool_result,
+                },
+              ];
               if (
-                !dynamicAssistantMessage.toolCall ||
-                !dynamicAssistantMessage.toolCall.tool_result ||
-                dynamicAssistantMessage.toolCall.tool_result == undefined
+                !toolCalls[0].tool_result ||
+                toolCalls[0].tool_result == undefined
               ) {
                 updateChatState("toolBuilding", frozenSessionId);
               } else {
                 updateChatState("streaming", frozenSessionId);
+              }
+
+              // This will be consolidated in upcoming tool calls udpate,
+              // but for now, we need to set query as early as possible
+              if (toolCalls[0].tool_name == SEARCH_TOOL_NAME) {
+                query = toolCalls[0].tool_args["query"];
               }
             } else if (Object.hasOwn(packet, "file_ids")) {
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
@@ -1350,54 +1244,82 @@ export function ChatPage({
                   };
                 }
               );
-              dynamicAssistantMessage.files = aiMessageImages;
             } else if (Object.hasOwn(packet, "error")) {
               error = (packet as StreamingError).error;
-              dynamicAssistantMessage.stackTrace = (
-                packet as StreamingError
-              ).stack_trace;
+              stackTrace = (packet as StreamingError).stack_trace;
             } else if (Object.hasOwn(packet, "message_id")) {
               finalMessage = packet as BackendMessage;
-              dynamicAssistantMessage = {
-                ...dynamicAssistantMessage,
-                ...finalMessage,
-              };
             } else if (Object.hasOwn(packet, "stop_reason")) {
               const stop_reason = (packet as StreamStopInfo).stop_reason;
-
               if (stop_reason === StreamStopReason.CONTEXT_LENGTH) {
                 updateCanContinue(true, frozenSessionId);
               }
             }
-            if (!Object.hasOwn(packet, "stop_reason")) {
-              updateFn = (messages: Message[]) => {
-                const replacementsMap = regenerationRequest
-                  ? new Map([
-                      [
-                        regenerationRequest?.parentMessage?.messageId,
-                        regenerationRequest?.parentMessage?.messageId,
-                      ],
-                      [
-                        dynamicParentMessage?.messageId,
-                        dynamicAssistantMessage?.messageId,
-                      ],
-                    ] as [number, number][])
-                  : null;
 
-                return upsertToCompleteMessageMap({
-                  messages: messages,
-                  replacementsMap: replacementsMap,
-                  completeMessageMapOverride: frozenMessageMap,
-                  chatSessionId: frozenSessionId!,
-                });
-              };
+            // on initial message send, we insert a dummy system message
+            // set this as the parent here if no parent is set
+            parentMessage =
+              parentMessage || frozenMessageMap?.get(SYSTEM_MESSAGE_ID)!;
 
-              let { messageMap } = updateFn([
-                dynamicParentMessage,
-                dynamicAssistantMessage,
-              ]);
-              frozenMessageMap = messageMap;
-            }
+            const updateFn = (messages: Message[]) => {
+              const replacementsMap = regenerationRequest
+                ? new Map([
+                    [
+                      regenerationRequest?.parentMessage?.messageId,
+                      regenerationRequest?.parentMessage?.messageId,
+                    ],
+                    [
+                      regenerationRequest?.messageId,
+                      initialFetchDetails?.assistant_message_id,
+                    ],
+                  ] as [number, number][])
+                : null;
+
+              return upsertToCompleteMessageMap({
+                messages: messages,
+                replacementsMap: replacementsMap,
+                completeMessageMapOverride: frozenMessageMap,
+                chatSessionId: frozenSessionId!,
+              });
+            };
+
+            updateFn([
+              {
+                messageId: regenerationRequest
+                  ? regenerationRequest?.parentMessage?.messageId!
+                  : initialFetchDetails.user_message_id!,
+                message: currMessage,
+                type: "user",
+                files: currentMessageFiles,
+                toolCalls: [],
+                parentMessageId: error ? null : lastSuccessfulMessageId,
+                childrenMessageIds: [
+                  ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
+                    []),
+                  initialFetchDetails.assistant_message_id!,
+                ],
+                latestChildMessageId: initialFetchDetails.assistant_message_id,
+              },
+              {
+                messageId: initialFetchDetails.assistant_message_id!,
+                message: error || answer,
+                type: error ? "error" : "assistant",
+                retrievalType,
+                query: finalMessage?.rephrased_query || query,
+                documents:
+                  finalMessage?.context_docs?.top_documents || documents,
+                citations: finalMessage?.citations || {},
+                files: finalMessage?.files || aiMessageImages || [],
+                toolCalls: finalMessage?.tool_calls || toolCalls,
+                parentMessageId: regenerationRequest
+                  ? regenerationRequest?.parentMessage?.messageId!
+                  : initialFetchDetails.user_message_id,
+                alternateAssistantID: alternativeAssistant?.id,
+                stackTrace: stackTrace,
+                overridden_model: finalMessage?.overridden_model,
+                stopReason: stopReason,
+              },
+            ]);
           }
         }
       }
@@ -1411,7 +1333,7 @@ export function ChatPage({
             message: currMessage,
             type: "user",
             files: currentMessageFiles,
-            toolCall: null,
+            toolCalls: [],
             parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
           },
           {
@@ -1421,7 +1343,7 @@ export function ChatPage({
             message: errorMsg,
             type: "error",
             files: aiMessageImages || [],
-            toolCall: null,
+            toolCalls: [],
             parentMessageId:
               initialFetchDetails?.user_message_id || TEMP_USER_MESSAGE_ID,
           },
@@ -1762,7 +1684,6 @@ export function ChatPage({
     string | null
   >(null);
 
-  const [graphs, setGraphs] = useState<graph[]>([]);
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
   const [settingsToggled, setSettingsToggled] = useState(false);
 
@@ -2041,8 +1962,9 @@ export function ChatPage({
                                 completeMessageDetail
                               );
                               const messageReactComponentKey = `${i}-${currentSessionId()}`;
-                              const parentMessage =
-                                i > 1 ? messageHistory[i - 1] : null;
+                              const parentMessage = message.parentMessageId
+                                ? messageMap.get(message.parentMessageId)
+                                : null;
                               if (message.type === "user") {
                                 if (
                                   (currentSessionChatState == "loading" &&
@@ -2133,25 +2055,6 @@ export function ChatPage({
                                 ) {
                                   return <></>;
                                 }
-                                const mostRecentNonAIParent = messageHistory
-                                  .slice(0, i)
-                                  .reverse()
-                                  .find((msg) => msg.type !== "assistant");
-
-                                const hasChildMessage =
-                                  message.latestChildMessageId !== null &&
-                                  message.latestChildMessageId !== undefined;
-                                const childMessage = hasChildMessage
-                                  ? messageMap.get(
-                                      message.latestChildMessageId!
-                                    )
-                                  : null;
-
-                                const hasParentAI =
-                                  parentMessage?.type == "assistant";
-                                const hasChildAI =
-                                  childMessage?.type == "assistant";
-
                                 return (
                                   <div
                                     id={`message-${message.messageId}`}
@@ -2163,9 +2066,6 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
-                                      setPopup={setPopup}
-                                      hasChildAI={hasChildAI}
-                                      hasParentAI={hasParentAI}
                                       continueGenerating={
                                         i == messageHistory.length - 1 &&
                                         currentCanContinue()
@@ -2175,7 +2075,7 @@ export function ChatPage({
                                       overriddenModel={message.overridden_model}
                                       regenerate={createRegenerator({
                                         messageId: message.messageId,
-                                        parentMessage: mostRecentNonAIParent!,
+                                        parentMessage: parentMessage!,
                                       })}
                                       otherMessagesCanSwitchTo={
                                         parentMessage?.childrenMessageIds || []
@@ -2200,7 +2100,6 @@ export function ChatPage({
                                         // and so it sticks around on page reload
                                         setMessageAsLatest(messageId);
                                       }}
-                                      graphs={graphs}
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={
@@ -2213,15 +2112,18 @@ export function ChatPage({
                                       }
                                       messageId={message.messageId}
                                       content={message.message}
+                                      // content={message.message}
                                       files={message.files}
                                       query={
                                         messageHistory[i]?.query || undefined
                                       }
+                                      personaName={liveAssistant.name}
                                       citedDocuments={getCitedDocumentsFromMessage(
                                         message
                                       )}
                                       toolCall={
-                                        message.toolCall && message.toolCall
+                                        message.toolCalls &&
+                                        message.toolCalls[0]
                                       }
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
@@ -2245,6 +2147,7 @@ export function ChatPage({
                                               ])
                                       }
                                       handleSearchQueryEdit={
+                                        i === messageHistory.length - 1 &&
                                         currentSessionChatState == "input"
                                           ? (newQuery) => {
                                               if (!previousMessage) {
@@ -2328,6 +2231,7 @@ export function ChatPage({
                                     <AIMessage
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
+                                      personaName={liveAssistant.name}
                                       content={
                                         <p className="text-red-700 text-sm my-auto">
                                           {message.message}
@@ -2375,6 +2279,7 @@ export function ChatPage({
                                     alternativeAssistant
                                   }
                                   messageId={null}
+                                  personaName={liveAssistant.name}
                                   content={
                                     <div
                                       key={"Generating"}
@@ -2394,6 +2299,7 @@ export function ChatPage({
                                 <AIMessage
                                   currentPersona={liveAssistant}
                                   messageId={-1}
+                                  personaName={liveAssistant.name}
                                   content={
                                     <p className="text-red-700 text-sm my-auto">
                                       {loadingError}
