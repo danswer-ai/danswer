@@ -426,7 +426,7 @@ export function ChatPage({
   }, [existingChatSessionId]);
 
   const [message, setMessage] = useState(
-    searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
+    searchParams.get(SEARCH_PARAM_NAMES.USER_PROMPT) || ""
   );
 
   const [completeMessageDetail, setCompleteMessageDetail] = useState<
