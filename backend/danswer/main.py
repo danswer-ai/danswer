@@ -62,7 +62,6 @@ from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_secondary_search_settings
-from danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
@@ -125,9 +124,9 @@ from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
+from shared_configs.configs import CORS_ALLOWED_ORIGIN
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-
 
 logger = setup_logger()
 
@@ -185,9 +184,6 @@ def setup_postgres(db_session: Session) -> None:
     create_initial_public_credential(db_session)
     create_initial_default_connector(db_session)
     associate_default_cc_pair(db_session)
-
-    logger.notice("Verifying default standard answer category exists.")
-    create_initial_default_standard_answer_category(db_session)
 
     logger.notice("Loading default Prompts and Personas")
     delete_old_default_personas(db_session)
@@ -591,7 +587,7 @@ def get_application() -> FastAPI:
 
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Change this to the list of allowed origins if needed
+        allow_origins=CORS_ALLOWED_ORIGIN,  # Configurable via environment variable
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
