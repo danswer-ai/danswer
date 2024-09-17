@@ -110,6 +110,8 @@ from danswer.server.query_and_chat.query_backend import (
 from danswer.server.query_and_chat.query_backend import basic_router as query_router
 from danswer.server.settings.api import admin_router as settings_admin_router
 from danswer.server.settings.api import basic_router as settings_router
+from danswer.server.settings.store import load_settings
+from danswer.server.settings.store import store_settings
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
@@ -240,6 +242,12 @@ def update_default_multipass_indexing(db_session: Session) -> None:
             gpu_available or current_settings.cloud_provider is not None
         )
         update_current_search_settings(db_session, updated_settings)
+
+        # Update settings with GPU availability
+        settings = load_settings()
+        settings.gpu_enabled = gpu_available
+        store_settings(settings)
+        logger.notice(f"Updated settings with GPU availability: {gpu_available}")
 
     else:
         logger.debug(
