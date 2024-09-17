@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timezone
 from typing import Any
 
 from pydantic import BaseModel
@@ -8,6 +9,9 @@ from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import InputType
 from danswer.db.models import ConnectorCredentialPair
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
 class DocsWithAdditionalInfo(BaseModel):
@@ -30,10 +34,16 @@ def get_docs_with_additional_info(
 
     assert isinstance(runnable_connector, PollConnector)
 
-    # TODO: Find a way to do this without running the connector to
-    # retrieve every single document
+    current_time = datetime.now(timezone.utc)
+    start_time = (
+        cc_pair.last_time_perm_sync.replace(tzinfo=timezone.utc).timestamp()
+        if cc_pair.last_time_perm_sync
+        else 0
+    )
+    cc_pair.last_time_perm_sync = current_time
+
     doc_batch_generator = runnable_connector.poll_source(
-        start=0.0, end=datetime.now().timestamp()
+        start=start_time, end=current_time.timestamp()
     )
 
     docs_with_additional_info = [
@@ -41,5 +51,6 @@ def get_docs_with_additional_info(
         for doc_batch in doc_batch_generator
         for doc in doc_batch
     ]
+    logger.debug(f"Docs with additional info: {len(docs_with_additional_info)}")
 
     return docs_with_additional_info

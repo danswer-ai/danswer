@@ -25,7 +25,9 @@ def list_users(
 def get_users_by_emails(
     db_session: Session, emails: list[str]
 ) -> tuple[list[User], list[str]]:
-    found_users = db_session.query(User).filter(User.email.in_(emails)).all()  # type: ignore
+    # Use distinct to avoid duplicates
+    stmt = select(User).filter(User.email.in_(emails))
+    found_users = db_session.scalars(stmt).unique().all()
     found_users_emails = [user.email for user in found_users]
     missing_user_emails = [email for email in emails if email not in found_users_emails]
     return found_users, missing_user_emails

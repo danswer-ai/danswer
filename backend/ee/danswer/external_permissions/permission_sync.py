@@ -1,4 +1,6 @@
 from collections.abc import Callable
+from datetime import datetime
+from datetime import timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -53,6 +55,15 @@ _GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, GroupSyncFuncType] = {
 }
 
 
+# None means that the connector supports polling from last_time_perm_sync to now
+_FULL_FETCH_PERIOD_IN_SECONDS: dict[DocumentSource, int | None] = {
+    # Polling is supported
+    DocumentSource.GOOGLE_DRIVE: None,
+    # Polling is not supported so we fetch all doc permissions every 10 minutes
+    DocumentSource.CONFLUENCE: 10 * 60,
+}
+
+
 def run_permission_sync_entrypoint(
     db_session: Session,
     cc_pair_id: int,
@@ -75,12 +86,27 @@ def run_permission_sync_entrypoint(
     if sync_details is None:
         raise ValueError(f"No auto sync options found for source type: {source_type}")
 
+    # If the source type is not polling, we only fetch the permissions every
+    # _FULL_FETCH_PERIOD_IN_SECONDS seconds
+    if _FULL_FETCH_PERIOD_IN_SECONDS[source_type] is not None:
+        last_sync = (
+            cc_pair.last_time_perm_sync.replace(tzinfo=timezone.utc)
+            if cc_pair.last_time_perm_sync
+            else None
+        )
+        current_time = datetime.now(timezone.utc)
+        if last_sync:
+            time_since_last_sync = (current_time - last_sync).total_seconds()
+            if time_since_last_sync < _FULL_FETCH_PERIOD_IN_SECONDS[source_type]:
+                return
+
     # Here we run the connector to grab all the ids
     # this may grab ids before they are indexed but that is fine because
     # we create a document in postgres to hold the permissions info
     # until the indexing job has a chance to run
     docs_with_additional_info = get_docs_with_additional_info(
-        db_session=db_session, cc_pair=cc_pair
+        db_session=db_session,
+        cc_pair=cc_pair,
     )
 
     # This function updates:
