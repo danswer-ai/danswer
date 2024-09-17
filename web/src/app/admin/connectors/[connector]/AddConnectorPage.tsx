@@ -168,7 +168,8 @@ export default function AddConnector({
       (liveGmailCredential ||
         appCredentialData ||
         serviceAccountKeyData ||
-        currentCredential));
+        currentCredential)) ||
+    currentCredential;
 
   // Check if there are no credentials
   const noCredentials = credentialTemplate == null;
