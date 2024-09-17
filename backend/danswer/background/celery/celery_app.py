@@ -200,6 +200,8 @@ def try_generate_stale_document_sync_tasks(
         f"Stale documents found (at least {stale_doc_count}). Generating sync tasks by cc pair."
     )
 
+    task_logger.info("RedisConnector.generate_tasks starting by cc_pair.")
+
     # rkuo: we could technically sync all stale docs in one big pass.
     # but I feel it's more understandable to group the docs by cc_pair
     total_tasks_generated = 0
@@ -222,7 +224,7 @@ def try_generate_stale_document_sync_tasks(
         total_tasks_generated += tasks_generated
 
     task_logger.info(
-        f"All per connector generate_tasks finished. total_tasks_generated={total_tasks_generated}"
+        f"RedisConnector.generate_tasks finished for all cc_pairs. total_tasks_generated={total_tasks_generated}"
     )
 
     r.set(RedisConnectorCredentialPair.get_fence_key(), total_tasks_generated)
@@ -302,7 +304,9 @@ def try_generate_user_group_sync_tasks(
     r.delete(rug.taskset_key)
 
     # Add all documents that need to be updated into the queue
-    task_logger.info(f"generate_tasks starting. usergroup_id={usergroup.id}")
+    task_logger.info(
+        f"RedisUserGroup.generate_tasks starting. usergroup_id={usergroup.id}"
+    )
     tasks_generated = rug.generate_tasks(celery_app, db_session, r, lock_beat)
     if tasks_generated is None:
         return None
@@ -314,7 +318,7 @@ def try_generate_user_group_sync_tasks(
     #     return 0
 
     task_logger.info(
-        f"generate_tasks finished. "
+        f"RedisUserGroup.generate_tasks finished. "
         f"usergroup_id={usergroup.id} tasks_generated={tasks_generated}"
     )
 
@@ -372,7 +376,9 @@ def try_generate_document_cc_pair_cleanup_tasks(
     r.delete(rcd.taskset_key)
 
     # Add all documents that need to be updated into the queue
-    task_logger.info(f"generate_tasks starting. cc_pair_id={cc_pair.id}")
+    task_logger.info(
+        f"RedisConnectorDeletion.generate_tasks starting. cc_pair_id={cc_pair.id}"
+    )
     tasks_generated = rcd.generate_tasks(celery_app, db_session, r, lock_beat)
     if tasks_generated is None:
         return None
@@ -384,7 +390,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
     #     return 0
 
     task_logger.info(
-        f"generate_tasks finished. "
+        f"RedisConnectorDeletion.generate_tasks finished. "
         f"cc_pair_id={cc_pair.id} tasks_generated={tasks_generated}"
     )
 
@@ -878,7 +884,7 @@ def monitor_document_set_taskset(key_bytes: bytes, r: Redis) -> None:
 
     count = cast(int, r.scard(rds.taskset_key))
     task_logger.info(
-        f"document_set_id={document_set_id} remaining={count} initial={initial_count}"
+        f"Document set sync: document_set_id={document_set_id} remaining={count} initial={initial_count}"
     )
     if count > 0:
         return
@@ -909,69 +915,6 @@ def monitor_document_set_taskset(key_bytes: bytes, r: Redis) -> None:
     r.delete(rds.fence_key)
 
 
-def monitor_usergroup_taskset(key_bytes: bytes, r: Redis) -> None:
-    key = key_bytes.decode("utf-8")
-    usergroup_id = RedisUserGroup.get_id_from_fence_key(key)
-    if not usergroup_id:
-        task_logger.warning("Could not parse usergroup id from {key}")
-        return
-
-    rug = RedisUserGroup(usergroup_id)
-    fence_value = r.get(rug.fence_key)
-    if fence_value is None:
-        return
-
-    try:
-        initial_count = int(cast(int, fence_value))
-    except ValueError:
-        task_logger.error("The value is not an integer.")
-        return
-
-    count = cast(int, r.scard(rug.taskset_key))
-    task_logger.info(
-        f"usergroup_id={usergroup_id} remaining={count} initial={initial_count}"
-    )
-    if count > 0:
-        return
-
-    with Session(get_sqlalchemy_engine()) as db_session:
-        try:
-            fetch_user_group = fetch_versioned_implementation(
-                "danswer.db.user_group", "fetch_user_group"
-            )
-        except ModuleNotFoundError:
-            task_logger.exception(
-                "fetch_versioned_implementation failed to look up fetch_user_group."
-            )
-            return
-
-        user_group: UserGroup | None = fetch_user_group(
-            db_session=db_session, user_group_id=usergroup_id
-        )
-        if user_group:
-            if user_group.is_up_for_deletion:
-                delete_user_group = fetch_versioned_implementation_with_fallback(
-                    "danswer.db.user_group", "delete_user_group", noop_fallback
-                )
-
-                delete_user_group(db_session=db_session, user_group=user_group)
-                task_logger.info(f"Deleted usergroup. id='{usergroup_id}'")
-            else:
-                mark_user_group_as_synced = (
-                    fetch_versioned_implementation_with_fallback(
-                        "danswer.db.user_group",
-                        "mark_user_group_as_synced",
-                        noop_fallback,
-                    )
-                )
-
-                mark_user_group_as_synced(db_session=db_session, user_group=user_group)
-                task_logger.info(f"Synced usergroup. id='{usergroup_id}'")
-
-    r.delete(rug.taskset_key)
-    r.delete(rug.fence_key)
-
-
 def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
     fence_key = key_bytes.decode("utf-8")
     cc_pair_id = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
@@ -993,7 +936,7 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
 
     count = cast(int, r.scard(rcd.taskset_key))
     task_logger.info(
-        f"cc_pair_id={cc_pair_id} remaining={count} initial={initial_count}"
+        f"Connector deletion: cc_pair_id={cc_pair_id} remaining={count} initial={initial_count}"
     )
     if count > 0:
         return
@@ -1094,6 +1037,12 @@ def monitor_vespa_sync() -> None:
             monitor_document_set_taskset(key_bytes, r)
 
         for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
+            monitor_usergroup_taskset = fetch_versioned_implementation_with_fallback(
+                "danswer.background.celery_utils",
+                "monitor_usergroup_taskset",
+                noop_fallback,
+            )
+
             monitor_usergroup_taskset(key_bytes, r)
 
         for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
