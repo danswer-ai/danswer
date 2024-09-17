@@ -7,10 +7,8 @@ import { Button, Card, Text, Title } from "@tremor/react";
 import useSWR from "swr";
 import { ModelPreview } from "../../../../components/embedding/ModelSelector";
 import {
-  AVAILABLE_CLOUD_PROVIDERS,
   HostedEmbeddingModel,
   CloudEmbeddingModel,
-  AVAILABLE_MODELS,
 } from "@/components/embedding/interfaces";
 
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -24,10 +22,7 @@ export interface EmbeddingDetails {
 import { EmbeddingIcon } from "@/components/icons/icons";
 
 import Link from "next/link";
-import {
-  getCurrentModelCopy,
-  SavedSearchSettings,
-} from "../../embeddings/interfaces";
+import { SavedSearchSettings } from "../../embeddings/interfaces";
 import UpgradingPage from "./UpgradingPage";
 import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
