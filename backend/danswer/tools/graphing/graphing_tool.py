@@ -274,10 +274,6 @@ class GraphingTool(Tool):
         if llm is None:
             raise ValueError("This tool requires an LLM to run")
 
-        print("\n\n\n\n\n----values-----\n")
-        print("these are the values")
-        print(kwargs)
-
         file_content = kwargs["filename"]
         file_content = file_content.decode("utf-8")  # type: ignore
         csv_file = StringIO(file_content)
@@ -305,7 +301,6 @@ class GraphingTool(Tool):
         Generate the Python code to create the graph:
         """
 
-        # Get the code from the LLM
         code_response = llm.invoke(code_generation_prompt)
         code = self.preprocess_code(cast(str, code_response.content))
 

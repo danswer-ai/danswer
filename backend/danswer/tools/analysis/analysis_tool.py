@@ -122,9 +122,11 @@ class CSVAnalysisTool(Tool):
     def run(
         self, llm: LLM | None = None, **kwargs: str
     ) -> Generator[ToolResponse, None, None]:
+        if llm is not None:
+            logger.warning("LLM passed to CSVAnalysisTool.run() but not used")
+
         file_path = kwargs["file_path"]
-        print("FILE PATH")
-        print(file_path)
+
         try:
             # Read the first few rows of the CSV file
             df = pd.read_csv(file_path, nrows=5)
