@@ -20,7 +20,6 @@ DEFAULT_ASSISTANTS = [-2, -1, 0]
 
 def upgrade() -> None:
     # Step 1: Update any NULL values to the default value
-    # Step 1: Update any NULL values to the default value
     op.execute(
         f"""
         UPDATE "user"
