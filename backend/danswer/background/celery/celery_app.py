@@ -713,17 +713,20 @@ def document_by_cc_pair_cleanup_task(
             count = get_document_connector_count(db_session, document_id)
             if count == 1:
                 # count == 1 means this is the only remaining cc_pair reference to the doc
-                # delete it
+                # delete it from vespa and the db
                 document_index.delete(doc_ids=[document_id])
                 delete_documents_complete__no_commit(
                     db_session=db_session,
                     document_ids=[document_id],
                 )
             elif count > 1:
+                # count > 1 means the document still has cc_pair references
                 doc = get_document(document_id, db_session)
                 if not doc:
                     return False
 
+                # the below functions do not include cc_pairs being deleted.
+                # i.e. they will correctly omit access for the current cc_pair
                 doc_access = get_access_for_document(
                     document_id=document_id, db_session=db_session
                 )
@@ -952,7 +955,7 @@ def monitor_usergroup_taskset(key_bytes: bytes, r: Redis) -> None:
                 )
 
                 delete_user_group(db_session=db_session, user_group=user_group)
-                task_logger.info(f" Deleted usergroup. id='{usergroup_id}'")
+                task_logger.info(f"Deleted usergroup. id='{usergroup_id}'")
             else:
                 mark_user_group_as_synced = (
                     fetch_versioned_implementation_with_fallback(

@@ -385,8 +385,6 @@ class VespaIndex(DocumentIndex):
         if len(update_request.document_ids) != 1:
             raise ValueError("update_request must contain a single document id")
 
-        # logger.debug(f"Updating {len(update_requests)} documents in Vespa")
-
         # Handle Vespa character limitations
         # Mutating update_request but it's not used later anyway
         update_request.document_ids = [
