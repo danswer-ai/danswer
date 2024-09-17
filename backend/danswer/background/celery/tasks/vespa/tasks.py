@@ -44,9 +44,12 @@ redis_pool = RedisPool()
 task_logger = get_task_logger(__name__)
 
 
+# celery auto associates tasks created inside another task,
+# which bloats the result metadata considerably. trail=False prevents this.
 @shared_task(
     name="check_for_vespa_sync_task",
     soft_time_limit=JOB_TIMEOUT,
+    trail=False,
 )
 def check_for_vespa_sync_task() -> None:
     """Runs periodically to check if any document needs syncing.
