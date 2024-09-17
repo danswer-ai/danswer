@@ -26,5 +26,5 @@ export const MemoizedLink = memo((props: any) => {
 });
 
 export const MemoizedParagraph = memo(({ node, ...props }: any) => (
-  <p {...props} className="text-default zz" />
+  <p {...props} className="text-default" />
 ));
