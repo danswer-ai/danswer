@@ -21,9 +21,13 @@ DEFAULT_ASSISTANTS = [-2, -1, 0]
 def upgrade() -> None:
     # Step 1: Update any NULL values to the default value
     op.execute(
-        f"""
+        """
         UPDATE "user"
-        SET chosen_assistants = '{DEFAULT_ASSISTANTS}'
+        SET chosen_assistants = (
+            SELECT jsonb_agg(id)
+            FROM persona
+            WHERE is_visible = true
+        )
         WHERE chosen_assistants IS NULL
         OR chosen_assistants = 'null'
         OR jsonb_typeof(chosen_assistants) = 'null'
