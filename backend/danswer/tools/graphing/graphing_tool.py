@@ -8,6 +8,7 @@ from collections.abc import Generator
 from io import BytesIO
 from io import StringIO
 from typing import Any
+from typing import cast
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -186,7 +187,12 @@ class GraphingTool(Tool):
         )
 
         file_name_response = llm.invoke(prompt)
-        file_name = file_name_response.content.strip()
+        file_name = (
+            file_name_response.content
+            if isinstance(file_name_response.content, str)
+            else ""
+        )
+        file_name = file_name.strip()
 
         # Validate that the returned file name is in our list of available files
         available_files = [
@@ -228,8 +234,8 @@ class GraphingTool(Tool):
         data = []
         for line in ax.lines:
             line_data = {
-                "x": line.get_xdata().tolist(),
-                "y": line.get_ydata().tolist(),
+                "x": line.get_xdata(),  # type: ignore
+                "y": line.get_ydata(),  # type: ignore
                 "label": line.get_label(),
                 "color": line.get_color(),
             }
@@ -247,9 +253,9 @@ class GraphingTool(Tool):
         data = []
         for patch in ax.patches:
             bar_data = {
-                "x": float(patch.get_x() + patch.get_width() / 2),
-                "y": float(patch.get_height()),
-                "width": float(patch.get_width()),
+                "x": float(patch.get_bbox().x0 + patch.get_bbox().width / 2),  # type: ignore
+                "y": float(patch.get_bbox().height),  # type: ignore
+                "width": float(patch.get_bbox().width),  # type: ignore
                 "color": patch.get_facecolor(),
             }
             data.append(bar_data)
@@ -263,15 +269,13 @@ class GraphingTool(Tool):
             "xticklabels": [label.get_text() for label in ax.get_xticklabels()],
         }
 
-    def run(self, llm: LLM, **kwargs: str) -> Generator[ToolResponse, None, None]:
-        # kwargs["filename"]
-        # return
+    def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
+        llm: LLM = kwargs["llm"]  # type: ignore
         print("\n\n\n\n\n----values-----\n")
         print("these are the values")
         print(kwargs)
-        content = kwargs["filename"]
 
-        file_content = content.decode("utf-8")
+        file_content = kwargs["filename"]
         csv_file = StringIO(file_content)
         df = pd.read_csv(csv_file)
 
@@ -299,7 +303,7 @@ class GraphingTool(Tool):
 
         # Get the code from the LLM
         code_response = llm.invoke(code_generation_prompt)
-        code = self.preprocess_code(code_response.content)
+        code = self.preprocess_code(cast(str, code_response.content))
 
         # Continue with the existing code to execute and process the graph
         locals_dict = {"plt": plt, "matplotlib": matplotlib, "np": np, "df": df}
@@ -345,7 +349,7 @@ class GraphingTool(Tool):
                     )
 
             buf = BytesIO()
-            fig.savefig(buf, format="png", bbox_inches="tight")
+            fig.savefig(buf, format="png", bbox_inches="tight")  # type: ignore
             img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
             with open("aaa garp.png", "wb") as f:
                 f.write(buf.getvalue())

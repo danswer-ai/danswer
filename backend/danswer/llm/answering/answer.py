@@ -584,23 +584,11 @@ class Answer:
                     yield response
 
             elif tool.name == GraphingTool._NAME:
-                # print('this is graphing.')
-
-                # file_name = tool_runner.args["filename"]
-                # print(f"file ame is {file_name}")
-
-                # csv_file = next((file for file in self.latest_query_files if file.name == file_name), None)
-                # if csv_file is None:
-                #     raise ValueError(f"CSV file with name '{file_name}' not found in latest query files.")
-                # print('csv file found')
-                # print(csv_file.__dict__)
-                # self.ses/
                 response = tool_runner.tool_responses()
 
-                # for res in response:
-                #     print(res)
                 for response in tool_runner.tool_responses():
-                    yield response
+                    print("RESOS")
+                    print(response)
                     prompt_builder.update_user_prompt(
                         build_image_generation_user_prompt(
                             query=self.question,

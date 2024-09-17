@@ -119,7 +119,7 @@ class CSVAnalysisTool(Tool):
         graph_response = next(arg for arg in args if arg.id == CSV_ANALYSIS_RESPONSE_ID)
         return json.dumps(graph_response.response.dict())
 
-    def run(self, llm: LLM, **kwargs: str) -> Generator[ToolResponse, None, None]:
+    def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         file_path = kwargs["file_path"]
         print("FILE PATH")
         print(file_path)
