@@ -39,11 +39,11 @@ class StandardAnswerCreationRequest(BaseModel):
     match_regex: bool
     match_any_keywords: bool
     apply_globally: bool
-    personas: list[int]
+    persona_ids: list[int]
 
     @model_validator(mode="after")
     def validate_personas(self) -> Any:
-        personas_specified = len(self.personas) > 0
+        personas_specified = len(self.persona_ids) > 0
 
         if personas_specified and self.apply_globally:
             raise ValueError(

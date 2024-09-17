@@ -8,7 +8,7 @@ export interface StandardAnswerCreationRequest {
   matchRegex: boolean;
   matchAnyKeywords: boolean;
   applyGlobally: boolean;
-  personas: number[]; // ids
+  personaIds: number[]; // ids
 }
 
 const buildRequestBodyFromStandardAnswerCreationRequest = (
@@ -20,7 +20,7 @@ const buildRequestBodyFromStandardAnswerCreationRequest = (
     match_regex: request.matchRegex,
     match_any_keywords: request.matchAnyKeywords,
     apply_globally: request.applyGlobally,
-    personas: request.personas,
+    persona_ids: request.personaIds,
   });
 };
 

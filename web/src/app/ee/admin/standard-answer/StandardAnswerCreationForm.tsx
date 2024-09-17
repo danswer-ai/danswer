@@ -83,7 +83,7 @@ export const StandardAnswerCreationForm = ({
               matchAnyKeywords: mapKeywordSelectToMatchAny(
                 values.matchAnyKeywords
               ),
-              personas: values.personas.map((persona) => persona.id),
+              personaIds: values.personas.map((persona) => persona.id),
             };
 
             let response;
