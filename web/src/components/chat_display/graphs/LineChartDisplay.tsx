@@ -190,6 +190,8 @@ export function LineChartDisplay({ fileId }: { fileId: string }) {
         throw new Error("Failed to fetch plot data");
       }
       const plotDataJson: PlotData = await response.json();
+      console.log("plot data");
+      console.log(plotDataJson);
 
       const transformedData: ChartDataPoint[] = plotDataJson.data[0].x.map(
         (x, index) => ({
@@ -212,6 +214,8 @@ export function LineChartDisplay({ fileId }: { fileId: string }) {
       console.error("Error fetching plot data:", error);
     }
   };
+  console.log("chartData");
+  console.log(chartData);
 
   return (
     <div className="w-full h-full">

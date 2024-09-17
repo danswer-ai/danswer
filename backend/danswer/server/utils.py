@@ -1,19 +1,22 @@
+import base64
 import json
 from datetime import datetime
 from typing import Any
 
 
-class DateTimeEncoder(json.JSONEncoder):
-    """Custom JSON encoder that converts datetime objects to ISO format strings."""
+class DateTimeAndBytesEncoder(json.JSONEncoder):
+    """Custom JSON encoder that converts datetime objects to ISO format strings and bytes to base64."""
 
     def default(self, obj: Any) -> Any:
         if isinstance(obj, datetime):
             return obj.isoformat()
+        elif isinstance(obj, bytes):
+            return base64.b64encode(obj).decode("utf-8")
         return super().default(obj)
 
 
 def get_json_line(
-    json_dict: dict[str, Any], encoder: type[json.JSONEncoder] = DateTimeEncoder
+    json_dict: dict[str, Any], encoder: type[json.JSONEncoder] = DateTimeAndBytesEncoder
 ) -> str:
     """
     Convert a dictionary to a JSON string with datetime handling, and add a newline.

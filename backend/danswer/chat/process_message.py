@@ -709,7 +709,10 @@ def stream_chat_message_objects(
                     tool_call = ToolCall(
                         tool_id=tool_name_to_tool_id[tool_result.tool_name],
                         tool_name=tool_result.tool_name,
-                        tool_arguments=tool_result.tool_args,
+                        tool_arguments={
+                            k: v if not isinstance(v, bytes) else v.decode("utf-8")
+                            for k, v in tool_result.tool_args.items()
+                        },
                         tool_result=tool_result.tool_result,
                     )
 
@@ -814,11 +817,12 @@ def stream_chat_message_objects(
                         )
                     elif packet.id == GRAPHING_RESPONSE_ID:
                         graph_generation = cast(GraphingResponse, packet.response)
+                        yield graph_generation
 
-                        yield GraphGenerationDisplay(
-                            file_id=graph_generation.extra_graph_display.file_id,
-                            line_graph=graph_generation.extra_graph_display.line_graph,
-                        )
+                        # yield GraphGenerationDisplay(
+                        #     file_id=graph_generation.extra_graph_display.file_id,
+                        #     line_graph=graph_generation.extra_graph_display.line_graph,
+                        # )
 
                     elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                         img_generation_response = cast(

@@ -77,13 +77,6 @@ const TOOLS_WITH_CUSTOM_HANDLING = [
   INTERNET_SEARCH_TOOL_NAME,
   IMAGE_GENERATION_TOOL_NAME,
 ];
-import plotDataJson from "./linechart.json";
-import barChartDataJson from "./barchart_data.json";
-import polarChartDataJson from "./polar_plot_data.json";
-import { JSONUpload } from "./JSONUpload";
-import { ImageDisplay } from "@/components/chat_display/graphs/ImageDisplay";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
-import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
 function FileDisplay({
   files,
@@ -164,15 +157,18 @@ function FileDisplay({
     </>
   );
 }
-export interface graph {
-  file_id: string;
-  line: boolean;
+
+enum GraphType {
+  BAR_CHART = "bar_chart",
+  LINE_GRAPH = "line_graph",
 }
 
 export interface GraphChunk {
   file_id: string;
-  line_graph: boolean;
+  plot_data: Record<string, any> | null;
+  graph_type: GraphType | null;
 }
+
 export const AIMessage = ({
   hasChildAI,
   hasParentAI,
@@ -208,7 +204,7 @@ export const AIMessage = ({
   shared?: boolean;
   hasChildAI?: boolean;
   hasParentAI?: boolean;
-  graphs?: graph[];
+  graphs?: GraphChunk[];
   isActive?: boolean;
   continueGenerating?: () => void;
   otherMessagesCanSwitchTo?: number[];
@@ -236,6 +232,7 @@ export const AIMessage = ({
   regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
   setPopup?: (popupSpec: PopupSpec | null) => void;
 }) => {
+  console.log(toolCall);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const toolCallGenerating = toolCall && !toolCall.tool_result;
@@ -439,7 +436,7 @@ export const AIMessage = ({
                         </div>
                       )}
                     {graphs.map((graph, ind) => {
-                      return graph.line ? (
+                      return graph.graph_type === GraphType.LINE_GRAPH ? (
                         <ModalChartWrapper
                           key={ind}
                           chartType="line"
@@ -460,6 +457,17 @@ export const AIMessage = ({
 
                     {content || files ? (
                       <>
+                        {toolCall?.tool_name == "create_graph" && (
+                          <ModalChartWrapper
+                            key={0}
+                            chartType="line"
+                            fileId={toolCall?.tool_result?.file_id}
+                          >
+                            <LineChartDisplay
+                              fileId={toolCall?.tool_result?.file_id}
+                            />
+                          </ModalChartWrapper>
+                        )}
                         <FileDisplay files={files || []} />
 
                         {typeof content === "string" ? (

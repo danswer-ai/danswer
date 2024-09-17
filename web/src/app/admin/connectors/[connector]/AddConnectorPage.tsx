@@ -154,7 +154,6 @@ export default function AddConnector({
       initialValues={createConnectorInitialValues(connector)}
       validationSchema={createConnectorValidationSchema(connector)}
       onSubmit={async (values) => {
-        console.log(" Iam submiing the connector");
         const {
           name,
           groups,

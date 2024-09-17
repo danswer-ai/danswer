@@ -1,3 +1,4 @@
+import base64
 from collections.abc import Callable
 from collections.abc import Generator
 from typing import Any
@@ -27,6 +28,7 @@ class ToolRunner:
         if self._tool_responses is not None:
             print("prev")
             print(self._tool_responses)
+
             yield from self._tool_responses
             return
 
@@ -35,6 +37,11 @@ class ToolRunner:
         print(self.tool.name)
 
         for tool_response in self.tool.run(llm=self._llm, **self.args):
+            if isinstance(tool_response.response, bytes):
+                tool_response.response = base64.b64encode(
+                    tool_response.response
+                ).decode("utf-8")
+
             print("tool response")
             yield tool_response
             tool_responses.append(tool_response)

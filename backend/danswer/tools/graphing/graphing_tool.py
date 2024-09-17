@@ -1,4 +1,3 @@
-import base64
 import json
 import os
 import re
@@ -29,7 +28,7 @@ from danswer.prompts.chat_prompts import (
 from danswer.tools.graphing.models import GRAPHING_RESPONSE_ID
 from danswer.tools.graphing.models import GraphingError
 from danswer.tools.graphing.models import GraphingResponse
-from danswer.tools.graphing.models import GraphingResult
+from danswer.tools.graphing.models import GraphType
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
@@ -276,6 +275,7 @@ class GraphingTool(Tool):
         print(kwargs)
 
         file_content = kwargs["filename"]
+        file_content = file_content.decode("utf-8")
         csv_file = StringIO(file_content)
         df = pd.read_csv(csv_file)
 
@@ -320,13 +320,13 @@ class GraphingTool(Tool):
             ax = fig.gca()  # Get the current Axes
 
             plot_data = None
-            plot_type = None
+            plot_type: GraphType | None = None
             if self.is_line_plot(ax):
                 plot_data = self.extract_line_plot_data(ax)
-                plot_type = "line"
+                plot_type = GraphType.LINE_GRAPH
             elif self.is_bar_plot(ax):
                 plot_data = self.extract_bar_plot_data(ax)
-                plot_type = "bar"
+                plot_type = GraphType.BAR_CHART
 
             if plot_data:
                 plot_data_file = os.path.join(self.output_dir, "plot_data.json")
@@ -350,23 +350,19 @@ class GraphingTool(Tool):
 
             buf = BytesIO()
             fig.savefig(buf, format="png", bbox_inches="tight")  # type: ignore
-            img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
             with open("aaa garp.png", "wb") as f:
                 f.write(buf.getvalue())
 
-            graph_result = GraphingResult(image=img_base64, plot_data=plot_data)
-            print("da plot type iza")
-            print(plot_type)
-            print("\n\n\n")
-            print(code)
-            response = GraphingResponse(
-                graph_result=graph_result,
-                extra_graph_display={
-                    "file_id": file_id,
-                    "line_graph": plot_type == "line",
-                },
+            yield ToolResponse(
+                id=GRAPHING_RESPONSE_ID,
+                response=GraphingResponse(
+                    file_id=str(file_id),
+                    graph_type=plot_type.value
+                    if plot_type
+                    else None,  # Use .value to get the string
+                    plot_data=plot_data,  # Pass the dictionary directly, not as a JSON string
+                ),
             )
-            yield ToolResponse(id=GRAPHING_RESPONSE_ID, response=response)
 
         except Exception as e:
             error_msg = f"Error generating graph: {str(e)}\n{traceback.format_exc()}"

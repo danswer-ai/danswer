@@ -41,6 +41,7 @@ export function BarChartDisplay({ fileId }: { fileId: string }) {
   if (!barPlotData) {
     return <div>Loading...</div>;
   }
+  console.log("IN THE FUNCTION");
 
   // Transform data to match Recharts expected format
   const transformedData = barPlotData.data.map((point, index) => ({

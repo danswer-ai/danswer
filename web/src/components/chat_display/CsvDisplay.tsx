@@ -124,7 +124,6 @@ export const CsvSection = ({
       setFadeIn(false);
     }
   }, [isLoading]);
-  console.log("rerendering");
 
   const downloadFile = () => {
     if (!fileId) return;

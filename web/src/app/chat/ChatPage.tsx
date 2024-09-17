@@ -1143,6 +1143,7 @@ export function ChatPage({
             continue;
           }
 
+          console.log(packet);
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
               console.error(
