@@ -37,7 +37,7 @@ DocSyncFuncType = Callable[
 # - the user_email <-> document mapping
 # - the external_user_group_id <-> document mapping
 # in postgres without committing
-# THIS ONE IS NECESSARY
+# THIS ONE IS NECESSARY FOR AUTO SYNC TO WORK
 _DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, DocSyncFuncType] = {
     DocumentSource.GOOGLE_DRIVE: gdrive_doc_sync,
     DocumentSource.CONFLUENCE: confluence_doc_sync,
@@ -46,7 +46,7 @@ _DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, DocSyncFuncType] = {
 # These functions update:
 # - the user_email <-> external_user_group_id mapping
 # in postgres without committing
-# THIS ONE IS OPTIONAL
+# THIS ONE IS OPTIONAL ON AN APP BY APP BASIS
 _GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, GroupSyncFuncType] = {
     DocumentSource.GOOGLE_DRIVE: gdrive_group_sync,
     DocumentSource.CONFLUENCE: confluence_group_sync,

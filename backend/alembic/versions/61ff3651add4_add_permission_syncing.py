@@ -5,6 +5,8 @@ Revises: efb35676026c
 Create Date: 2024-09-05 13:57:11.770413
 
 """
+import fastapi_users_db_sqlalchemy
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -44,6 +46,10 @@ def upgrade() -> None:
             nullable=True,
         ),
     )
+    op.add_column(
+        "connector_credential_pair",
+        sa.Column("last_time_perm_sync", sa.DateTime(timezone=True), nullable=True),
+    )
     op.drop_column("connector_credential_pair", "is_public")
 
     op.add_column(
@@ -60,18 +66,15 @@ def upgrade() -> None:
         "document",
         sa.Column("is_public", sa.Boolean(), nullable=True),
     )
-    op.add_column(
-        "document",
-        sa.Column("last_time_perm_sync", sa.DateTime(timezone=True), nullable=True),
-    )
 
     op.create_table(
-        "external_user_email__external_user_group_id",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("user_email", sa.String(), nullable=False),
+        "user__external_user_group_id",
+        sa.Column(
+            "user_id", fastapi_users_db_sqlalchemy.generics.GUID(), nullable=False
+        ),
         sa.Column("external_user_group_id", sa.String(), nullable=False),
         sa.Column("cc_pair_id", sa.Integer(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
+        sa.PrimaryKeyConstraint("user_id"),
     )
 
     op.drop_column("external_permission", "user_id")
@@ -94,10 +97,10 @@ def downgrade() -> None:
 
     op.drop_column("connector_credential_pair", "auto_sync_options")
     op.drop_column("connector_credential_pair", "access_type")
+    op.drop_column("connector_credential_pair", "last_time_perm_sync")
     op.drop_column("document", "external_user_emails")
     op.drop_column("document", "external_user_group_ids")
     op.drop_column("document", "is_public")
-    op.drop_column("document", "last_time_perm_sync")
 
     op.drop_table("external_user_email__external_user_group_id")
 

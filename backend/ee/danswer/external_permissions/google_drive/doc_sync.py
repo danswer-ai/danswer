@@ -7,13 +7,13 @@ from googleapiclient.errors import HttpError  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
-from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
 from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds,
 )
 from danswer.connectors.google_drive.constants import FETCH_PERMISSIONS_SCOPES
 from danswer.db.models import ConnectorCredentialPair
+from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.document import upsert_document_external_perms__no_commit
 from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
@@ -81,6 +81,7 @@ def _fetch_permissions_paginated(
 
 
 def _fetch_google_permissions_for_document_id(
+    db_session: Session,
     drive_file_id: str,
     raw_credentials_json: dict[str, str],
     company_google_domains: list[str],
@@ -94,24 +95,26 @@ def _fetch_google_permissions_for_document_id(
 
     drive_service = build("drive", "v3", credentials=google_drive_creds)
 
-    users: set[str] = set()
-    groups: set[str] = set()
+    user_emails: set[str] = set()
+    group_emails: set[str] = set()
     public = False
     for permission in _fetch_permissions_paginated(drive_service, drive_file_id):
         permission_type = permission["type"]
         if permission_type == "user":
-            users.add(permission["emailAddress"])
+            user_emails.add(permission["emailAddress"])
         elif permission_type == "group":
-            groups.add(permission["emailAddress"])
+            group_emails.add(permission["emailAddress"])
         elif permission_type == "domain":
             if permission["domain"] in company_google_domains:
                 public = True
         elif permission_type == "anyone":
             public = True
 
+    batch_add_non_web_user_if_not_exists__no_commit(db_session, list(user_emails))
+
     return ExternalAccess(
-        external_user_emails=users,
-        external_user_group_ids=groups,
+        external_user_emails=user_emails,
+        external_user_group_ids=group_emails,
         is_public=public,
     )
 
@@ -130,7 +133,8 @@ def gdrive_doc_sync(
     """
     for doc in docs_with_additional_info:
         ext_access = _fetch_google_permissions_for_document_id(
-            drive_file_id=doc.id,
+            db_session=db_session,
+            drive_file_id=doc.additional_info,
             raw_credentials_json=cc_pair.credential.credential_json,
             company_google_domains=[
                 cast(dict[str, str], sync_details)["company_domain"]
@@ -140,5 +144,5 @@ def gdrive_doc_sync(
             db_session=db_session,
             doc_id=doc.id,
             external_access=ext_access,
-            source_type=DocumentSource.GOOGLE_DRIVE,
+            source_type=cc_pair.connector.source,
         )

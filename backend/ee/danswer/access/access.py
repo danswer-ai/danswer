@@ -90,7 +90,7 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
     ]
 
     db_external_groups = (
-        fetch_external_groups_for_user(db_session, user.email) if user else []
+        fetch_external_groups_for_user(db_session, user.id) if user else []
     )
     prefixed_external_groups = [
         prefix_external_group(db_external_group.external_user_group_id)

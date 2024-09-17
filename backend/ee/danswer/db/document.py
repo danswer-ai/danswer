@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 
-from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -55,11 +54,10 @@ def upsert_document_external_perms__no_commit(
             external_user_emails=external_access.external_user_emails,
             external_user_group_ids=prefixed_external_groups,
             is_public=external_access.is_public,
-            last_time_perm_sync=func.now(),
         )
         db_session.add(document)
+        return
 
     document.external_user_emails = list(external_access.external_user_emails)
     document.external_user_group_ids = prefixed_external_groups
     document.is_public = external_access.is_public
-    document.last_time_perm_sync = func.now()  # type: ignore

@@ -36,14 +36,10 @@ def get_docs_with_additional_info(
         start=0.0, end=datetime.now().timestamp()
     )
 
-    docs_with_additional_info: list[DocsWithAdditionalInfo] = []
-    for doc_batch in doc_batch_generator:
-        for doc in doc_batch:
-            docs_with_additional_info.append(
-                DocsWithAdditionalInfo(
-                    id=doc.id,
-                    additional_info=doc.additional_info,
-                )
-            )
+    docs_with_additional_info = [
+        DocsWithAdditionalInfo(id=doc.id, additional_info=doc.additional_info)
+        for doc_batch in doc_batch_generator
+        for doc in doc_batch
+    ]
 
     return docs_with_additional_info

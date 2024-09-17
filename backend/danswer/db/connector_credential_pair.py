@@ -25,6 +25,7 @@ from danswer.db.models import UserGroup__ConnectorCredentialPair
 from danswer.db.models import UserRole
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
+from ee.danswer.db.external_perm import delete_user__ext_group_for_cc_pair__no_commit
 
 logger = setup_logger()
 
@@ -425,6 +426,10 @@ def remove_credential_from_connector(
     )
 
     if association is not None:
+        delete_user__ext_group_for_cc_pair__no_commit(
+            db_session=db_session,
+            cc_pair_id=association.id,
+        )
         db_session.delete(association)
         db_session.commit()
         return StatusResponse(

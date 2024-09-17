@@ -393,6 +393,9 @@ class ConnectorCredentialPair(Base):
     auto_sync_options: Mapped[dict[str, Any] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
+    last_time_perm_sync: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     # Time finished, not used for calculating backend jobs which uses time started (created)
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
@@ -475,9 +478,6 @@ class Document(Base):
         postgresql.ARRAY(String), nullable=True
     )
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
-    last_time_perm_sync: Mapped[datetime.datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
 
     retrieval_feedbacks: Mapped[list["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback", back_populates="document"
@@ -1669,20 +1669,18 @@ class TokenRateLimit__UserGroup(Base):
 """Tables related to Permission Sync"""
 
 
-class ExternalUserEmail__ExternalUserGroupId(Base):
+class User__ExternalUserGroupId(Base):
     """Maps user info both internal and external to the name of the external group
     This maps the user to all of their external groups so that the external group name can be
     attached to the ACL list matching during query time. User level permissions can be handled by
     directly adding the Danswer user to the doc ACL list"""
 
-    __tablename__ = "external_user_email__external_user_group_id"
+    __tablename__ = "user__external_user_group_id"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    # Email is needed because we want to keep track of users not in Danswer to simplify process
-    # when the user joins
-    user_email: Mapped[str] = mapped_column(String)
+    # Change this line to reference the User table
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
     # These group ids have been prefixed by the source type
-    external_user_group_id: Mapped[str] = mapped_column(String)
+    external_user_group_id: Mapped[str] = mapped_column(String, primary_key=True)
     cc_pair_id: Mapped[int] = mapped_column(ForeignKey("connector_credential_pair.id"))
 
 

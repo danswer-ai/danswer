@@ -13,10 +13,10 @@ from danswer.connectors.google_drive.connector_auth import (
 )
 from danswer.connectors.google_drive.constants import FETCH_GROUPS_SCOPES
 from danswer.db.models import ConnectorCredentialPair
+from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.external_perm import (
-    replace_external_user__group_relations__no_commit,
-)
+from ee.danswer.db.external_perm import ExternalUserGroup
+from ee.danswer.db.external_perm import replace_user__ext_group_for_cc_pair__no_commit
 from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
 logger = setup_logger()
@@ -113,7 +113,7 @@ def gdrive_group_sync(
         scopes=FETCH_GROUPS_SCOPES,
     )
 
-    danswer_groups: dict[str, list[str]] = {}
+    danswer_groups: list[ExternalUserGroup] = []
     for group in _fetch_groups_paginated(
         google_drive_creds,
         identity_source=sync_details.get("identity_source"),
@@ -122,16 +122,24 @@ def gdrive_group_sync(
         # The id is the group email
         group_email = group["groupKey"]["id"]
 
-        emails: list[str] = []
+        group_member_emails: list[str] = []
         for member in _fetch_group_members_paginated(google_drive_creds, group["name"]):
             member_keys = member["preferredMemberKey"]
             member_emails = [member_key["id"] for member_key in member_keys]
-            emails.extend(member_emails)
+            for member_email in member_emails:
+                group_member_emails.append(member_email)
 
-        if emails:
-            danswer_groups[group_email] = emails
+        group_members = batch_add_non_web_user_if_not_exists__no_commit(
+            db_session=db_session, emails=group_member_emails
+        )
+        if group_members:
+            danswer_groups.append(
+                ExternalUserGroup(
+                    id=group_email, user_ids=[user.id for user in group_members]
+                )
+            )
 
-    replace_external_user__group_relations__no_commit(
+    replace_user__ext_group_for_cc_pair__no_commit(
         db_session=db_session,
         cc_pair_id=cc_pair.id,
         group_defs=danswer_groups,
