@@ -745,10 +745,18 @@ def stream_chat_message_objects(
                     tool_result = packet
                 yield cast(ChatPacket, packet)
         logger.debug("Reached end of stream")
-    except Exception as e:
-        error_msg = str(e)
-        logger.exception(f"Failed to process chat message: {error_msg}")
+    except ValueError as e:
+        logger.exception("Failed to process chat message.")
 
+        error_msg = str(e)
+        yield StreamingError(error=error_msg)
+        db_session.rollback()
+        return
+
+    except Exception as e:
+        logger.exception("Failed to process chat message.")
+
+        error_msg = str(e)
         stack_trace = traceback.format_exc()
         client_error_msg = litellm_exception_to_error_msg(e, llm)
         if llm.config.api_key and len(llm.config.api_key) > 2:
