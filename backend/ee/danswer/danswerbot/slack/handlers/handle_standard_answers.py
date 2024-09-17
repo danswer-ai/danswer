@@ -23,8 +23,8 @@ from danswer.db.models import SlackBotConfig
 from danswer.db.models import StandardAnswer as StandardAnswerModel
 from danswer.utils.logger import DanswerLoggingAdapter
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.standard_answer import fetch_standard_answers
 from ee.danswer.db.standard_answer import find_matching_standard_answers
+from ee.danswer.db.standard_answer import get_standard_answers_for_personas_or_global
 from ee.danswer.server.features.standard_answer.models import (
     StandardAnswer as PydanticStandardAnswer,
 )
@@ -50,6 +50,7 @@ def build_standard_answer_blocks(
 
 def oneoff_standard_answers(
     message: str,
+    persona_ids: list[int],
     db_session: Session,
 ) -> list[PydanticStandardAnswer]:
     """
@@ -57,10 +58,16 @@ def oneoff_standard_answers(
 
     Returns a list of matching StandardAnswers if found, otherwise None.
     """
-    # TODO provide persona parameter in this API?
+    standard_answers_for_personas = {
+        standard_answer
+        for standard_answer in get_standard_answers_for_personas_or_global(
+            persona_ids, db_session
+        )
+    }
+
     matching_standard_answers = find_matching_standard_answers(
         query=message,
-        id_in=[answer.id for answer in fetch_standard_answers(db_session=db_session)],
+        id_in=[answer.id for answer in standard_answers_for_personas],
         db_session=db_session,
     )
 
@@ -94,9 +101,14 @@ def _handle_standard_answers(
 
     slack_thread_id = message_info.thread_to_respond
 
-    TODO_REPLACE_ME_WITH_PERSONAS_all_standard_answers = set(
-        answer.id for answer in fetch_standard_answers(db_session=db_session)
-    )
+    slack_bot_persona = slack_bot_config.persona
+    applicable_standard_answer_ids = {
+        standard_answer.id
+        for standard_answer in get_standard_answers_for_personas_or_global(
+            [slack_bot_persona.id], db_session=db_session
+        )
+    }
+
     query_msg = message_info.thread_messages[-1]
 
     if slack_thread_id is None:
@@ -121,17 +133,17 @@ def _handle_standard_answers(
             ]
         )
 
-    usable_standard_answers = (
-        TODO_REPLACE_ME_WITH_PERSONAS_all_standard_answers.difference(
-            used_standard_answer_ids
-        )
+    usable_standard_answer_ids = applicable_standard_answer_ids.difference(
+        used_standard_answer_ids
     )
 
     matching_standard_answers: list[tuple[StandardAnswerModel, str]] = []
-    if usable_standard_answers:
+    if usable_standard_answer_ids:
         matching_standard_answers = find_matching_standard_answers(
             query=query_msg.message,
-            id_in=[standard_answer for standard_answer in usable_standard_answers],
+            id_in=[
+                standard_answer_id for standard_answer_id in usable_standard_answer_ids
+            ],
             db_session=db_session,
         )
 

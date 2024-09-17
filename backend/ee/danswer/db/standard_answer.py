@@ -2,9 +2,11 @@ import re
 import string
 from collections.abc import Sequence
 
+from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from danswer.db.models import Persona__StandardAnswer
 from danswer.db.models import StandardAnswer
 from danswer.db.persona import get_personas_by_ids
 from danswer.utils.logger import setup_logger
@@ -103,6 +105,22 @@ def fetch_standard_answer(
 def fetch_standard_answers(db_session: Session) -> Sequence[StandardAnswer]:
     return db_session.scalars(
         select(StandardAnswer).where(StandardAnswer.active.is_(True))
+    ).all()
+
+
+def get_standard_answers_for_personas_or_global(
+    persona_ids: list[int], db_session: Session
+) -> Sequence[StandardAnswer]:
+    answer_ids_for_persona = select(Persona__StandardAnswer.standard_answer_id).where(
+        Persona__StandardAnswer.persona_id.in_(persona_ids)
+    )
+    return db_session.scalars(
+        select(StandardAnswer).where(
+            or_(
+                StandardAnswer.apply_globally.is_(True),
+                StandardAnswer.id.in_(answer_ids_for_persona),
+            )
+        )
     ).all()
 
 
