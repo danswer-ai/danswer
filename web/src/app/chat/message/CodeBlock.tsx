@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, useCallback, useMemo } from "react";
+import React, { useState, ReactNode, useCallback, useMemo, memo } from "react";
 import { FiCheck, FiCopy } from "react-icons/fi";
 
 const CODE_BLOCK_PADDING_TYPE = { padding: "1rem" };
@@ -10,7 +10,7 @@ interface CodeBlockProps {
   [key: string]: any;
 }
 
-export const CodeBlock = React.memo(function CodeBlock({
+export const CodeBlock = memo(function CodeBlock({
   className = "",
   children,
   content,

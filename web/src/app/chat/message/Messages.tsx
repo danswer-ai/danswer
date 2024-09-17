@@ -53,7 +53,7 @@ import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
-import { MemoizedLink, MemoizedParagraph } from "./MemoizedTags";
+import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
