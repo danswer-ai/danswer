@@ -150,9 +150,9 @@ export const CsvSection = ({
 
   return (
     <div
-      className={`${!expanded ? "w-message-sm" : "w-full"}  !rounded !rounded-lg w-full border border-border`}
+      className={`${!expanded ? "w-message-sm" : "w-full"}  !rounded !rounded-lg overflow-y-hidden w-full border border-border`}
     >
-      <CardHeader className="w-full !py-0  !pb-4 border-b border-b-neutral-200 !pt-4 !mb-0 z-[10] top-0">
+      <CardHeader className="w-full !py-0  !pb-4 border-b border-border border-b-neutral-200 !pt-4 !mb-0 z-[10] top-0">
         <div className="flex justify-between items-center">
           <CardTitle className="!my-auto text-ellipsis line-clamp-1 text-xl font-semibold text-text-700 pr-4 transition-colors duration-300">
             {csvFileDescriptor.name}
