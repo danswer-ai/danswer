@@ -209,7 +209,12 @@ class InternetSearchTool(Tool):
             ],
         )
 
-    def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
+    def run(
+        self, llm: LLM | None = None, **kwargs: str
+    ) -> Generator[ToolResponse, None, None]:
+        if llm is not None:
+            logger.warning("LLM passed to InternetSearchTool.run() but not used")
+
         query = cast(str, kwargs["internet_search_query"])
 
         results = self._perform_search(query)

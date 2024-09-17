@@ -268,14 +268,18 @@ class GraphingTool(Tool):
             "xticklabels": [label.get_text() for label in ax.get_xticklabels()],
         }
 
-    def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
-        llm: LLM = kwargs["llm"]  # type: ignore
+    def run(
+        self, llm: LLM | None = None, **kwargs: str
+    ) -> Generator[ToolResponse, None, None]:
+        if llm is None:
+            raise ValueError("This tool requires an LLM to run")
+
         print("\n\n\n\n\n----values-----\n")
         print("these are the values")
         print(kwargs)
 
         file_content = kwargs["filename"]
-        file_content = file_content.decode("utf-8")
+        file_content = file_content.decode("utf-8")  # type: ignore
         csv_file = StringIO(file_content)
         df = pd.read_csv(csv_file)
 
@@ -317,7 +321,7 @@ class GraphingTool(Tool):
             if fig is None:
                 raise ValueError("The provided code did not create a 'fig' variable")
 
-            ax = fig.gca()  # Get the current Axes
+            ax = fig.gca()  # type: ignore
 
             plot_data = None
             plot_type: GraphType | None = None
@@ -357,7 +361,7 @@ class GraphingTool(Tool):
                 id=GRAPHING_RESPONSE_ID,
                 response=GraphingResponse(
                     file_id=str(file_id),
-                    graph_type=plot_type.value
+                    graph_type=plot_type.value  # type: ignore
                     if plot_type
                     else None,  # Use .value to get the string
                     plot_data=plot_data,  # Pass the dictionary directly, not as a JSON string

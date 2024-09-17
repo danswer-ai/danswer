@@ -278,7 +278,6 @@ class Answer:
                 return
 
             tool_call_requests = tool_call_chunk.tool_calls
-            print("REQUESTS")
             print(tool_call_requests)
 
             for tool_call_request in tool_call_requests:
@@ -584,8 +583,6 @@ class Answer:
                     yield response
 
             elif tool.name == GraphingTool._NAME:
-                response = tool_runner.tool_responses()
-
                 for response in tool_runner.tool_responses():
                     print("RESOS")
                     print(response)

@@ -144,7 +144,9 @@ class CustomTool(Tool):
 
     """Actual execution of the tool"""
 
-    def run(self, **kwargs: Any) -> Generator[ToolResponse, None, None]:
+    def run(
+        self, llm: None | LLM = None, **kwargs: Any
+    ) -> Generator[ToolResponse, None, None]:
         request_body = kwargs.get(REQUEST_BODY)
 
         path_params = {}

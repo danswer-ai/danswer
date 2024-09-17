@@ -25,10 +25,10 @@ import { FileDescriptor } from "@/app/chat/interfaces";
 import { WarningCircle } from "@phosphor-icons/react";
 
 export default function CsvPage({
-  csvFileDescriptor,
+  fileDescriptor,
   close,
 }: {
-  csvFileDescriptor: FileDescriptor;
+  fileDescriptor: FileDescriptor;
   close: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -48,7 +48,7 @@ export default function CsvPage({
             close={close}
             expanded={expanded}
             expand={expand}
-            csvFileDescriptor={csvFileDescriptor}
+            fileDescriptor={fileDescriptor}
           />
         </Modal>
       ) : (
@@ -56,34 +56,35 @@ export default function CsvPage({
           close={close}
           expanded={expanded}
           expand={expand}
-          csvFileDescriptor={csvFileDescriptor}
+          fileDescriptor={fileDescriptor}
         />
       )}
     </>
   );
 }
 
-export const CsvSection = ({
-  expand,
-  csvFileDescriptor,
-  expanded,
-  close,
-}: {
-  close: () => void;
+export interface InteractiveToolResult {
+  fileDescriptor: FileDescriptor;
   expanded: boolean;
   expand: () => void;
-  csvFileDescriptor: FileDescriptor;
-}) => {
+  close: () => void;
+}
+
+export const CsvSection = ({
+  fileDescriptor,
+  expanded,
+  expand,
+  close,
+}: InteractiveToolResult) => {
   interface CSVData {
     [key: string]: string;
   }
-
   const [data, setData] = useState<CSVData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fadeIn, setFadeIn] = useState(false);
 
-  const fileId = csvFileDescriptor.id;
+  const fileId = fileDescriptor.id;
   useEffect(() => {
     fetchCSV(fileId);
   }, []);
@@ -137,10 +138,7 @@ export const CsvSection = ({
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute(
-        "download",
-        `${csvFileDescriptor.name || "download"}.csv`
-      );
+      link.setAttribute("download", `${fileDescriptor.name || "download"}.csv`);
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
@@ -155,7 +153,7 @@ export const CsvSection = ({
       <CardHeader className="w-full !py-0  !pb-4 border-b border-border border-b-neutral-200 !pt-4 !mb-0 z-[10] top-0">
         <div className="flex justify-between items-center">
           <CardTitle className="!my-auto text-ellipsis line-clamp-1 text-xl font-semibold text-text-700 pr-4 transition-colors duration-300">
-            {csvFileDescriptor.name}
+            {fileDescriptor.name}
           </CardTitle>
           <div className="flex !my-auto">
             <TooltipGroup gap="gap-x-4">
@@ -251,7 +249,7 @@ export const CsvSection = ({
                             No data available
                           </p>
                           <p className="text-text-400 text-sm">
-                            The CSV file appears to be empty or couldn't be
+                            The CSV file appears to be empty or couldn&apos;t be
                             loaded properly.
                           </p>
                         </div>

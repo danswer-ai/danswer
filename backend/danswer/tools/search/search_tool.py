@@ -262,7 +262,12 @@ class SearchTool(Tool):
 
         yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS_ID, response=llm_docs)
 
-    def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
+    def run(
+        self, llm: LLM | None = None, **kwargs: str
+    ) -> Generator[ToolResponse, None, None]:
+        if llm is not None:
+            logger.warning("LLM passed to ImageGenerationTool.run() but not used")
+
         query = cast(str, kwargs["query"])
 
         if self.selected_sections:

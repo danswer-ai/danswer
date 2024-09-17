@@ -250,6 +250,7 @@ def _get_force_search_settings(
 ChatPacket = (
     StreamingError
     | QADocsResponse
+    | GraphingResponse
     | LLMRelevanceFilterResponse
     | FinalUsedContextDocsResponse
     | ChatMessageDetail

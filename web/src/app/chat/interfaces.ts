@@ -4,7 +4,7 @@ import {
   SearchDanswerDocument,
   StreamStopReason,
 } from "@/lib/search/interfaces";
-import { graph } from "./message/Messages";
+import { GraphChunk } from "./message/Messages";
 
 export enum RetrievalType {
   None = "none",
@@ -96,7 +96,7 @@ export interface Message {
   stackTrace?: string | null;
   overridden_model?: string;
   stopReason?: StreamStopReason | null;
-  graphs?: graph[];
+  graphs?: GraphChunk[];
 }
 
 export interface BackendChatSession {

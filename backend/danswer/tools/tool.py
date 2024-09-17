@@ -51,7 +51,9 @@ class Tool(abc.ABC):
     """Actual execution of the tool"""
 
     @abc.abstractmethod
-    def run(self, **kwargs: Any) -> Generator[ToolResponse, None, None]:
+    def run(
+        self, llm: LLM | None = None, **kwargs: Any
+    ) -> Generator[ToolResponse, None, None]:
         raise NotImplementedError
 
     @abc.abstractmethod

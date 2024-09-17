@@ -63,14 +63,15 @@ import { ContinueGenerating } from "./ContinueMessage";
 import DualPromptDisplay from "../tools/ImagePromptCitaiton";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Popover } from "@/components/popover/Popover";
-import CsvPage from "@/components/chat_display/CsvDisplay";
 import { DISABLED_CSV_DISPLAY } from "@/lib/constants";
 import {
   LineChartDisplay,
   ModalChartWrapper,
 } from "../../../components/chat_display/graphs/LineChartDisplay";
-import PolarChartDisplay from "@/components/chat_display/graphs/PortalChart";
 import BarChartDisplay from "@/components/chat_display/graphs/BarChart";
+import ToolResult, {
+  FileWrapper,
+} from "@/components/chat_display/InteractiveToolResult";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -121,10 +122,16 @@ function FileDisplay({
               return (
                 <div key={file.id} className="w-fit">
                   {close && !DISABLED_CSV_DISPLAY ? (
-                    <CsvPage
-                      close={() => setClose(false)}
-                      csvFileDescriptor={file}
-                    />
+                    <>
+                      {/* <CsvPage
+                        close={() => setClose(false)}
+                        csvFileDescriptor={file}
+                      /> */}
+                      <ToolResult
+                        csvFileDescriptor={file}
+                        close={() => setClose(false)}
+                      />
+                    </>
                   ) : (
                     <DocumentPreview
                       open={
