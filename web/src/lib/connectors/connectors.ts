@@ -874,7 +874,7 @@ export function createConnectorValidationSchema(
 }
 
 export const defaultPruneFreqDays = 30; // 30 days
-export const defaultRefreshFreqMinutes = 30; // 10 minutes
+export const defaultRefreshFreqMinutes = 30; // 30 minutes
 
 // CONNECTORS
 export interface ConnectorBase<T> {
