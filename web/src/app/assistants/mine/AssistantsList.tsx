@@ -306,9 +306,11 @@ export function AssistantsList({
       user?.preferences?.chosen_assistants &&
       !user?.preferences?.chosen_assistants?.includes(assistant.id)
   );
+
   const allAssistantIds = assistants.map((assistant) =>
     assistant.id.toString()
   );
+
   const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
   const [makePublicPersona, setMakePublicPersona] = useState<Persona | null>(
     null
