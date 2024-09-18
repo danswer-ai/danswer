@@ -41,7 +41,6 @@ def upgrade() -> None:
         OR chosen_assistants = 'null'
         OR jsonb_typeof(chosen_assistants) = 'null'
         OR (jsonb_typeof(chosen_assistants) = 'string' AND chosen_assistants = '"null"')
-        OR chosen_assistants = '[-2, -1, 0]'::jsonb
     """
     )
 
