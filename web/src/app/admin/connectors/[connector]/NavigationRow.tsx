@@ -39,15 +39,16 @@ const NavigationRow = ({
   return (
     <div className="mt-4 w-full grid grid-cols-3">
       <div>
-        {formStep > 0 && !noCredentials && (
-          <SquareNavigationButton
-            className="border border-text-400 mr-auto p-2.5"
-            onClick={prevFormStep}
-          >
-            <ArrowLeft />
-            Previous
-          </SquareNavigationButton>
-        )}
+        {(formStep > 0 && !noCredentials) ||
+          (formStep > 1 && !noAdvanced && (
+            <SquareNavigationButton
+              className="border border-text-400 mr-auto p-2.5"
+              onClick={prevFormStep}
+            >
+              <ArrowLeft />
+              Previous
+            </SquareNavigationButton>
+          ))}
       </div>
 
       <div className="flex justify-center">
@@ -74,7 +75,7 @@ const NavigationRow = ({
             <ArrowRight />
           </SquareNavigationButton>
         )}
-        {noAdvanced && formStep === 1 && (
+        {!noAdvanced && formStep === 1 && (
           <SquareNavigationButton
             className="text-text-600 disabled:text-text-400 py-2.5 px-3.5"
             disabled={!isValid}

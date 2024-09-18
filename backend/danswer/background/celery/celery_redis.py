@@ -134,7 +134,7 @@ class RedisDocumentSet(RedisObjectHelper):
                 last_lock_time = current_time
 
             # celery's default task id format is "dd32ded3-00aa-4884-8b21-42f8332e7fac"
-            # the actual redis key is "celery-task-meta-dd32ded3-00aa-4884-8b21-42f8332e7fac"
+            # the key for the result is "celery-task-meta-dd32ded3-00aa-4884-8b21-42f8332e7fac"
             # we prefix the task id so it's easier to keep track of who created the task
             # aka "documentset_1_6dd32ded3-00aa-4884-8b21-42f8332e7fac"
             custom_task_id = f"{self.task_id_prefix}_{uuid4()}"
@@ -189,7 +189,7 @@ class RedisUserGroup(RedisObjectHelper):
                 last_lock_time = current_time
 
             # celery's default task id format is "dd32ded3-00aa-4884-8b21-42f8332e7fac"
-            # the actual redis key is "celery-task-meta-dd32ded3-00aa-4884-8b21-42f8332e7fac"
+            # the key for the result is "celery-task-meta-dd32ded3-00aa-4884-8b21-42f8332e7fac"
             # we prefix the task id so it's easier to keep track of who created the task
             # aka "documentset_1_6dd32ded3-00aa-4884-8b21-42f8332e7fac"
             custom_task_id = f"{self.task_id_prefix}_{uuid4()}"
@@ -256,7 +256,7 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
                 last_lock_time = current_time
 
             # celery's default task id format is "dd32ded3-00aa-4884-8b21-42f8332e7fac"
-            # the actual redis key is "celery-task-meta-dd32ded3-00aa-4884-8b21-42f8332e7fac"
+            # the key for the result is "celery-task-meta-dd32ded3-00aa-4884-8b21-42f8332e7fac"
             # we prefix the task id so it's easier to keep track of who created the task
             # aka "documentset_1_6dd32ded3-00aa-4884-8b21-42f8332e7fac"
             custom_task_id = f"{self.task_id_prefix}_{uuid4()}"

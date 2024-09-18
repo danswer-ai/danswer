@@ -582,7 +582,7 @@ export function personaIncludesImage(selectedPersona: Persona) {
 
 const PARAMS_TO_SKIP = [
   SEARCH_PARAM_NAMES.SUBMIT_ON_LOAD,
-  SEARCH_PARAM_NAMES.USER_MESSAGE,
+  SEARCH_PARAM_NAMES.USER_PROMPT,
   SEARCH_PARAM_NAMES.TITLE,
   // only use these if explicitly passed in
   SEARCH_PARAM_NAMES.CHAT_ID,
@@ -698,7 +698,8 @@ export async function useScrollonStream({
       ) {
         // catch up if necessary!
         const scrollAmount = scrollDist.current + 10000;
-        if (scrollDist.current > 140) {
+        if (scrollDist.current > 300) {
+          // if (scrollDist.current > 140) {
           endDivRef.current.scrollIntoView();
         } else {
           blockActionRef.current = true;

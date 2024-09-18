@@ -43,6 +43,7 @@ def insert_standard_answer(
     answer: str,
     category_ids: list[int],
     match_regex: bool,
+    match_any_keywords: bool,
     db_session: Session,
 ) -> StandardAnswer:
     existing_categories = fetch_standard_answer_categories_by_ids(
@@ -58,6 +59,7 @@ def insert_standard_answer(
         categories=existing_categories,
         active=True,
         match_regex=match_regex,
+        match_any_keywords=match_any_keywords,
     )
     db_session.add(standard_answer)
     db_session.commit()
@@ -70,6 +72,7 @@ def update_standard_answer(
     answer: str,
     category_ids: list[int],
     match_regex: bool,
+    match_any_keywords: bool,
     db_session: Session,
 ) -> StandardAnswer:
     standard_answer = db_session.scalar(
@@ -89,6 +92,7 @@ def update_standard_answer(
     standard_answer.answer = answer
     standard_answer.categories = list(existing_categories)
     standard_answer.match_regex = match_regex
+    standard_answer.match_any_keywords = match_any_keywords
 
     db_session.commit()
 
@@ -145,17 +149,6 @@ def fetch_standard_answer_category(
     )
 
 
-def fetch_standard_answer_categories_by_names(
-    standard_answer_category_names: list[str],
-    db_session: Session,
-) -> Sequence[StandardAnswerCategory]:
-    return db_session.scalars(
-        select(StandardAnswerCategory).where(
-            StandardAnswerCategory.name.in_(standard_answer_category_names)
-        )
-    ).all()
-
-
 def fetch_standard_answer_categories_by_ids(
     standard_answer_category_ids: list[int],
     db_session: Session,
@@ -180,59 +173,6 @@ def fetch_standard_answer(
     return db_session.scalar(
         select(StandardAnswer).where(StandardAnswer.id == standard_answer_id)
     )
-
-
-def find_matching_standard_answers(
-    id_in: list[int],
-    query: str,
-    db_session: Session,
-) -> list[tuple[StandardAnswer, str]]:
-    """
-    Returns a list of tuples, where each tuple is a StandardAnswer definition matching
-    the query and a string representing the match (either the regex match group or the
-    set of keywords).
-
-    If `answer_instance.match_regex` is true, the definition is considered "matched"
-    if the query matches the `answer_instance.keyword` using `re.search`.
-
-    Otherwise, the definition is considered "matched" if each space-delimited token
-    in `keyword` exists in `query`.
-    """
-    stmt = (
-        select(StandardAnswer)
-        .where(StandardAnswer.active.is_(True))
-        .where(StandardAnswer.id.in_(id_in))
-    )
-    possible_standard_answers: Sequence[StandardAnswer] = db_session.scalars(stmt).all()
-
-    matching_standard_answers: list[tuple[StandardAnswer, str]] = []
-    for standard_answer in possible_standard_answers:
-        if standard_answer.match_regex:
-            maybe_matches = re.search(standard_answer.keyword, query, re.IGNORECASE)
-            if maybe_matches is not None:
-                match_group = maybe_matches.group(0)
-                matching_standard_answers.append((standard_answer, match_group))
-
-        else:
-            # Remove punctuation and split the keyword into individual words
-            keyword_words = "".join(
-                char
-                for char in standard_answer.keyword.lower()
-                if char not in string.punctuation
-            ).split()
-
-            # Remove punctuation and split the query into individual words
-            query_words = "".join(
-                char for char in query.lower() if char not in string.punctuation
-            ).split()
-
-            # Check if all of the keyword words are in the query words
-            if all(word in query_words for word in keyword_words):
-                matching_standard_answers.append(
-                    (standard_answer, standard_answer.keyword)
-                )
-
-    return matching_standard_answers
 
 
 def fetch_standard_answers(db_session: Session) -> Sequence[StandardAnswer]:
@@ -262,3 +202,78 @@ def create_initial_default_standard_answer_category(db_session: Session) -> None
     )
     db_session.add(standard_answer_category)
     db_session.commit()
+
+
+def fetch_standard_answer_categories_by_names(
+    standard_answer_category_names: list[str],
+    db_session: Session,
+) -> Sequence[StandardAnswerCategory]:
+    return db_session.scalars(
+        select(StandardAnswerCategory).where(
+            StandardAnswerCategory.name.in_(standard_answer_category_names)
+        )
+    ).all()
+
+
+def find_matching_standard_answers(
+    id_in: list[int],
+    query: str,
+    db_session: Session,
+) -> list[tuple[StandardAnswer, str]]:
+    """
+    Returns a list of tuples, where each tuple is a StandardAnswer definition matching
+    the query and a string representing the match (either the regex match group or the
+    set of keywords).
+
+    If `answer_instance.match_regex` is true, the definition is considered "matched"
+    if the query matches the `answer_instance.keyword` using `re.search`.
+
+    Otherwise, the definition is considered "matched" if the space-delimited tokens
+    in `keyword` exists in `query`, depending on the state of `match_any_keywords`
+    """
+    stmt = (
+        select(StandardAnswer)
+        .where(StandardAnswer.active.is_(True))
+        .where(StandardAnswer.id.in_(id_in))
+    )
+    possible_standard_answers: Sequence[StandardAnswer] = db_session.scalars(stmt).all()
+
+    matching_standard_answers: list[tuple[StandardAnswer, str]] = []
+    for standard_answer in possible_standard_answers:
+        if standard_answer.match_regex:
+            maybe_matches = re.search(standard_answer.keyword, query, re.IGNORECASE)
+            if maybe_matches is not None:
+                match_group = maybe_matches.group(0)
+                matching_standard_answers.append((standard_answer, match_group))
+
+        else:
+            # Remove punctuation and split the keyword into individual words
+            keyword_words = set(
+                "".join(
+                    char
+                    for char in standard_answer.keyword.lower()
+                    if char not in string.punctuation
+                ).split()
+            )
+
+            # Remove punctuation and split the query into individual words
+            query_words = "".join(
+                char for char in query.lower() if char not in string.punctuation
+            ).split()
+
+            # Check if all of the keyword words are in the query words
+            if standard_answer.match_any_keywords:
+                for word in query_words:
+                    if word in keyword_words:
+                        matching_standard_answers.append((standard_answer, word))
+                        break
+            else:
+                if all(word in query_words for word in keyword_words):
+                    matching_standard_answers.append(
+                        (
+                            standard_answer,
+                            re.sub(r"\s+?", ", ", standard_answer.keyword),
+                        )
+                    )
+
+    return matching_standard_answers

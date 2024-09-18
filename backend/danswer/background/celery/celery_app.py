@@ -274,6 +274,8 @@ def try_generate_document_set_sync_tasks(
         return None
 
     # don't generate sync tasks if we're up to date
+    # race condition with the monitor/cleanup function if we use a cached result!
+    db_session.refresh(document_set)
     if document_set.is_up_to_date:
         return None
 
@@ -316,6 +318,8 @@ def try_generate_user_group_sync_tasks(
     if r.exists(rug.fence_key):
         return None
 
+    # race condition with the monitor/cleanup function if we use a cached result!
+    db_session.refresh(usergroup)
     if usergroup.is_up_to_date:
         return None
 

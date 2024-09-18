@@ -123,7 +123,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     # if specified, controls the assistants that are shown to the user + their order
     # if not specified, all assistants are shown
     chosen_assistants: Mapped[list[int]] = mapped_column(
-        postgresql.JSONB(), nullable=True
+        postgresql.JSONB(), nullable=False, default=[-2, -1, 0]
     )
 
     oidc_expiry: Mapped[datetime.datetime] = mapped_column(
@@ -882,7 +882,9 @@ class ChatSession(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"))
+    persona_id: Mapped[int | None] = mapped_column(
+        ForeignKey("persona.id"), nullable=True
+    )
     description: Mapped[str] = mapped_column(Text)
     # One-shot direct answering, currently the two types of chats are not mixed
     one_shot: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -916,7 +918,6 @@ class ChatSession(Base):
     prompt_override: Mapped[PromptOverride | None] = mapped_column(
         PydanticType(PromptOverride), nullable=True
     )
-
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -925,7 +926,6 @@ class ChatSession(Base):
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-
     user: Mapped[User] = relationship("User", back_populates="chat_sessions")
     folder: Mapped["ChatFolder"] = relationship(
         "ChatFolder", back_populates="chat_sessions"
@@ -1363,54 +1363,6 @@ class ChannelConfig(TypedDict):
     follow_up_tags: NotRequired[list[str]]
 
 
-class StandardAnswerCategory(Base):
-    __tablename__ = "standard_answer_category"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True)
-    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
-        "StandardAnswer",
-        secondary=StandardAnswer__StandardAnswerCategory.__table__,
-        back_populates="categories",
-    )
-    slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
-        "SlackBotConfig",
-        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
-        back_populates="standard_answer_categories",
-    )
-
-
-class StandardAnswer(Base):
-    __tablename__ = "standard_answer"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    keyword: Mapped[str] = mapped_column(String)
-    answer: Mapped[str] = mapped_column(String)
-    active: Mapped[bool] = mapped_column(Boolean)
-    match_regex: Mapped[bool] = mapped_column(Boolean)
-
-    __table_args__ = (
-        Index(
-            "unique_keyword_active",
-            keyword,
-            active,
-            unique=True,
-            postgresql_where=(active == True),  # noqa: E712
-        ),
-    )
-
-    categories: Mapped[list[StandardAnswerCategory]] = relationship(
-        "StandardAnswerCategory",
-        secondary=StandardAnswer__StandardAnswerCategory.__table__,
-        back_populates="standard_answers",
-    )
-    chat_messages: Mapped[list[ChatMessage]] = relationship(
-        "ChatMessage",
-        secondary=ChatMessage__StandardAnswer.__table__,
-        back_populates="standard_answers",
-    )
-
-
 class SlackBotResponseType(str, PyEnum):
     QUOTES = "quotes"
     CITATIONS = "citations"
@@ -1436,7 +1388,7 @@ class SlackBotConfig(Base):
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
-    standard_answer_categories: Mapped[list[StandardAnswerCategory]] = relationship(
+    standard_answer_categories: Mapped[list["StandardAnswerCategory"]] = relationship(
         "StandardAnswerCategory",
         secondary=SlackBotConfig__StandardAnswerCategory.__table__,
         back_populates="slack_bot_configs",
@@ -1663,6 +1615,55 @@ class TokenRateLimit__UserGroup(Base):
     )
     user_group_id: Mapped[int] = mapped_column(
         ForeignKey("user_group.id"), primary_key=True
+    )
+
+
+class StandardAnswerCategory(Base):
+    __tablename__ = "standard_answer_category"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
+        "StandardAnswer",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="categories",
+    )
+    slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
+        "SlackBotConfig",
+        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        back_populates="standard_answer_categories",
+    )
+
+
+class StandardAnswer(Base):
+    __tablename__ = "standard_answer"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    keyword: Mapped[str] = mapped_column(String)
+    answer: Mapped[str] = mapped_column(String)
+    active: Mapped[bool] = mapped_column(Boolean)
+    match_regex: Mapped[bool] = mapped_column(Boolean)
+    match_any_keywords: Mapped[bool] = mapped_column(Boolean)
+
+    __table_args__ = (
+        Index(
+            "unique_keyword_active",
+            keyword,
+            active,
+            unique=True,
+            postgresql_where=(active == True),  # noqa: E712
+        ),
+    )
+
+    categories: Mapped[list[StandardAnswerCategory]] = relationship(
+        "StandardAnswerCategory",
+        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+        back_populates="standard_answers",
+    )
+    chat_messages: Mapped[list[ChatMessage]] = relationship(
+        "ChatMessage",
+        secondary=ChatMessage__StandardAnswer.__table__,
+        back_populates="standard_answers",
     )
 
 

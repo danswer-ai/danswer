@@ -3,11 +3,7 @@
 import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import {
-  DocumentSet,
-  SlackBotConfig,
-  StandardAnswerCategory,
-} from "@/lib/types";
+import { DocumentSet, SlackBotConfig } from "@/lib/types";
 import {
   BooleanFormField,
   Label,
@@ -28,16 +24,18 @@ import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import CollapsibleSection from "../assistants/CollapsibleSection";
+import { StandardAnswerCategoryResponse } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
+import { StandardAnswerCategoryDropdownField } from "@/components/standardAnswers/StandardAnswerCategoryDropdown";
 
 export const SlackBotCreationForm = ({
   documentSets,
   personas,
-  standardAnswerCategories,
+  standardAnswerCategoryResponse,
   existingSlackBotConfig,
 }: {
   documentSets: DocumentSet[];
   personas: Persona[];
-  standardAnswerCategories: StandardAnswerCategory[];
+  standardAnswerCategoryResponse: StandardAnswerCategoryResponse;
   existingSlackBotConfig?: SlackBotConfig;
 }) => {
   const isUpdate = existingSlackBotConfig !== undefined;
@@ -356,38 +354,15 @@ export const SlackBotCreationForm = ({
                       </div>
                     </div>
 
-                    <Label>Standard Answer Categories</Label>
-                    <div className="w-4/12">
-                      <MultiSelectDropdown
-                        name="standard_answer_categories"
-                        label=""
-                        onChange={(selected_options) => {
-                          const selected_categories = selected_options.map(
-                            (option) => {
-                              return {
-                                id: Number(option.value),
-                                name: option.label,
-                              };
-                            }
-                          );
-                          setFieldValue(
-                            "standard_answer_categories",
-                            selected_categories
-                          );
-                        }}
-                        creatable={false}
-                        options={standardAnswerCategories.map((category) => ({
-                          label: category.name,
-                          value: category.id.toString(),
-                        }))}
-                        initialSelectedOptions={values.standard_answer_categories.map(
-                          (category) => ({
-                            label: category.name,
-                            value: category.id.toString(),
-                          })
-                        )}
-                      />
-                    </div>
+                    <StandardAnswerCategoryDropdownField
+                      standardAnswerCategoryResponse={
+                        standardAnswerCategoryResponse
+                      }
+                      categories={values.standard_answer_categories}
+                      setCategories={(categories) =>
+                        setFieldValue("standard_answer_categories", categories)
+                      }
+                    />
                   </div>
                 )}
 

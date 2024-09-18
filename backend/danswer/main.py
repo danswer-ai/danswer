@@ -62,7 +62,6 @@ from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_secondary_search_settings
-from danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
@@ -102,7 +101,6 @@ from danswer.server.manage.llm.api import basic_router as llm_router
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.manage.search_settings import router as search_settings_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
-from danswer.server.manage.standard_answer import router as standard_answer_router
 from danswer.server.manage.users import router as user_router
 from danswer.server.middleware.latency_logging import add_latency_logging_middleware
 from danswer.server.query_and_chat.chat_backend import router as chat_router
@@ -112,6 +110,8 @@ from danswer.server.query_and_chat.query_backend import (
 from danswer.server.query_and_chat.query_backend import basic_router as query_router
 from danswer.server.settings.api import admin_router as settings_admin_router
 from danswer.server.settings.api import basic_router as settings_router
+from danswer.server.settings.store import load_settings
+from danswer.server.settings.store import store_settings
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
@@ -126,9 +126,9 @@ from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
+from shared_configs.configs import CORS_ALLOWED_ORIGIN
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-
 
 logger = setup_logger()
 
@@ -187,9 +187,6 @@ def setup_postgres(db_session: Session) -> None:
     create_initial_default_connector(db_session)
     associate_default_cc_pair(db_session)
 
-    logger.notice("Verifying default standard answer category exists.")
-    create_initial_default_standard_answer_category(db_session)
-
     logger.notice("Loading default Prompts and Personas")
     delete_old_default_personas(db_session)
     load_chat_yamls()
@@ -245,6 +242,12 @@ def update_default_multipass_indexing(db_session: Session) -> None:
             gpu_available or current_settings.cloud_provider is not None
         )
         update_current_search_settings(db_session, updated_settings)
+
+        # Update settings with GPU availability
+        settings = load_settings()
+        settings.gpu_enabled = gpu_available
+        store_settings(settings)
+        logger.notice(f"Updated settings with GPU availability: {gpu_available}")
 
     else:
         logger.debug(
@@ -503,7 +506,6 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(
         application, slack_bot_management_router
     )
-    include_router_with_global_prefix_prepended(application, standard_answer_router)
     include_router_with_global_prefix_prepended(application, persona_router)
     include_router_with_global_prefix_prepended(application, admin_persona_router)
     include_router_with_global_prefix_prepended(application, input_prompt_router)
@@ -593,7 +595,7 @@ def get_application() -> FastAPI:
 
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Change this to the list of allowed origins if needed
+        allow_origins=CORS_ALLOWED_ORIGIN,  # Configurable via environment variable
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

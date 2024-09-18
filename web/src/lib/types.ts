@@ -50,6 +50,7 @@ export type ValidStatuses =
 export type TaskStatus = "PENDING" | "STARTED" | "SUCCESS" | "FAILURE";
 export type Feedback = "like" | "dislike";
 export type AccessType = "public" | "private" | "sync";
+export type SessionType = "Chat" | "Search" | "Slack";
 
 export interface DocumentBoostStatus {
   document_id: string;
@@ -163,6 +164,7 @@ export interface StandardAnswer {
   keyword: string;
   answer: string;
   match_regex: boolean;
+  match_any_keywords: boolean;
   categories: StandardAnswerCategory[];
 }
 

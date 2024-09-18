@@ -171,8 +171,14 @@ const StandardAnswersTable = ({
   ];
 
   const filteredStandardAnswers = standardAnswers.filter((standardAnswer) => {
-    const { answer, id, categories, match_regex, ...fieldsToSearch } =
-      standardAnswer;
+    const {
+      answer,
+      id,
+      categories,
+      match_regex,
+      match_any_keywords,
+      ...fieldsToSearch
+    } = standardAnswer;
     const cleanedQuery = query.toLowerCase();
     const searchMatch = Object.values(fieldsToSearch).some((value) => {
       return value.toLowerCase().includes(cleanedQuery);

@@ -558,7 +558,15 @@ class Answer:
                         if isinstance(item, StreamStopInfo):
                             stream_stop_info = item
                             return
-                        yield cast(str, item)
+
+                        # this should never happen, but we're seeing weird behavior here so handling for now
+                        if not isinstance(item, str):
+                            logger.error(
+                                f"Received non-string item in answer stream: {item}. Skipping."
+                            )
+                            continue
+
+                        yield item
 
                 yield from process_answer_stream_fn(_stream())
 

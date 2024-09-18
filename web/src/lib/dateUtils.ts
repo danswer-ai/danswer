@@ -5,6 +5,13 @@ export function getXDaysAgo(daysAgo: number) {
   return daysAgoDate;
 }
 
+export function getXYearsAgo(yearsAgo: number) {
+  const today = new Date();
+  const yearsAgoDate = new Date(today);
+  yearsAgoDate.setFullYear(yearsAgoDate.getFullYear() - yearsAgo);
+  return yearsAgoDate;
+}
+
 export const timestampToDateString = (timestamp: string) => {
   const date = new Date(timestamp);
   const year = date.getFullYear();
