@@ -32,6 +32,7 @@ from danswer.configs.constants import AuthType
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
 from danswer.db.models import ChatFolder
+from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
 from danswer.db.models import Credential
 from danswer.db.models import DocumentSet
@@ -41,6 +42,7 @@ from danswer.db.models import ExternalPermission
 from danswer.db.models import InputPrompt
 from danswer.db.models import Notification
 from danswer.db.models import Persona
+from danswer.db.models import Persona__Prompt
 from danswer.db.models import Persona__User
 from danswer.db.models import Prompt
 from danswer.db.models import Tool
@@ -251,9 +253,20 @@ async def delete_user(
     db_session.expunge(user_to_delete)
 
     try:
+        for oauth_account in user_to_delete.oauth_accounts:
+            db_session.delete(oauth_account)
+
         db_session.query(ChatFolder).filter(
             ChatFolder.user_id == user_to_delete.id
         ).delete()
+        db_session.query(ChatMessage).filter(
+            ChatMessage.chat_session_id.in_(
+                db_session.query(ChatSession.id).filter(
+                    ChatSession.user_id == user_to_delete.id
+                )
+            )
+        ).delete(synchronize_session=False)
+
         db_session.query(ChatSession).filter(
             ChatSession.user_id == user_to_delete.id
         ).delete()
@@ -278,12 +291,23 @@ async def delete_user(
         db_session.query(Notification).filter(
             Notification.user_id == user_to_delete.id
         ).delete()
-        db_session.query(Persona).filter(Persona.user_id == user_to_delete.id).delete()
+        db_session.query(Tool).filter(Tool.user_id == user_to_delete.id).delete()
         db_session.query(Persona__User).filter(
             Persona__User.user_id == user_to_delete.id
         ).delete()
+
+        db_session.query(Persona__Prompt).filter(
+            Persona__Prompt.persona_id.in_(
+                db_session.query(Persona.id).filter(
+                    Persona.user_id == user_to_delete.id
+                )
+            )
+        ).delete(synchronize_session=False)
+
         db_session.query(Prompt).filter(Prompt.user_id == user_to_delete.id).delete()
-        db_session.query(Tool).filter(Tool.user_id == user_to_delete.id).delete()
+
+        db_session.query(Persona).filter(Persona.user_id == user_to_delete.id).delete()
+
         db_session.query(User__UserGroup).filter(
             User__UserGroup.user_id == user_to_delete.id
         ).delete()
