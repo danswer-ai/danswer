@@ -104,7 +104,6 @@ Auth/Authz (users, permissions, access) Tables
 class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
     # even an almost empty token from keycloak will not fit the default 1024 bytes
     access_token: Mapped[str] = mapped_column(Text, nullable=False)  # type: ignore
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):

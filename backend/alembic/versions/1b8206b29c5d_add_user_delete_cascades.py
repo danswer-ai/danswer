@@ -16,19 +16,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Update foreign key constraints to add ON DELETE CASCADE
-    op.drop_constraint(
-        "oauth_account_user_id_fkey", "oauth_account", type_="foreignkey"
-    )
-    op.create_foreign_key(
-        "oauth_account_user_id_fkey",
-        "oauth_account",
-        "user",
-        ["user_id"],
-        ["id"],
-        ondelete="CASCADE",
-    )
-
     op.drop_constraint("credential_user_id_fkey", "credential", type_="foreignkey")
     op.create_foreign_key(
         "credential_user_id_fkey",
@@ -86,14 +73,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Revert foreign key constraints to remove ON DELETE CASCADE
-    op.drop_constraint(
-        "oauth_account_user_id_fkey", "oauth_account", type_="foreignkey"
-    )
-    op.create_foreign_key(
-        "oauth_account_user_id_fkey", "oauth_account", "user", ["user_id"], ["id"]
-    )
-
     op.drop_constraint("credential_user_id_fkey", "credential", type_="foreignkey")
     op.create_foreign_key(
         "credential_user_id_fkey", "credential", "user", ["user_id"], ["id"]

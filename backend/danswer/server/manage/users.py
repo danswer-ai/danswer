@@ -240,6 +240,9 @@ async def delete_user(
     db_session.expunge(user_to_delete)
 
     try:
+        for oauth_account in user_to_delete.oauth_accounts:
+            db_session.delete(oauth_account)
+
         db_session.query(DocumentSet__User).filter(
             DocumentSet__User.user_id == user_to_delete.id
         ).delete()
