@@ -26,6 +26,8 @@ def run_jobs(exclude_indexing: bool) -> None:
         "--pool=threads",
         "--concurrency=6",
         "--loglevel=INFO",
+        "-Q",
+        "celery,vespa_metadata_sync",
     ]
 
     cmd_beat = [
