@@ -7,11 +7,13 @@ interface CodeBlockProps {
   className?: string | undefined;
   children?: ReactNode;
   content: string;
+  plaintextMatches: { index: number; startIndex: number }[];
   [key: string]: any;
 }
 
 export const CodeBlock = memo(function CodeBlock({
   className = "",
+  plaintextMatches,
   children,
   content,
   ...props
@@ -28,15 +30,22 @@ export const CodeBlock = memo(function CodeBlock({
 
   const codeText = useMemo(() => {
     let codeText: string | null = null;
+    const previousPlaintextMatch = plaintextMatches.filter(
+      (match) => match.startIndex < props.node?.position?.start?.offset
+    ).length;
+
     if (
-      props.node?.position?.start?.offset &&
-      props.node?.position?.end?.offset
+      props.node?.position?.start?.offset +
+        previousPlaintextMatch * "plaintext".length &&
+      props.node?.position?.end?.offset +
+        previousPlaintextMatch * "plaintext".length
     ) {
       codeText = content.slice(
-        props.node.position.start.offset,
-        props.node.position.end.offset
+        props.node.position.start.offset +
+          previousPlaintextMatch * "plaintext".length &&
+          props.node.position.end.offset +
+            previousPlaintextMatch * "plaintext".length
       );
-      codeText = codeText.trim();
 
       // Find the last occurrence of closing backticks
       const lastBackticksIndex = codeText.lastIndexOf("```");
@@ -71,6 +80,7 @@ export const CodeBlock = memo(function CodeBlock({
         );
         codeText = formattedCodeLines.join("\n");
       }
+      console.log("code text", codeText);
     }
 
     // handle unknown languages. They won't have a `node.position.start.offset`

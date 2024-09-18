@@ -167,9 +167,17 @@ export const AIMessage = ({
   regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
-  const processContent = (content: string | JSX.Element) => {
+
+  const processContent = (
+    content: string | JSX.Element
+  ): {
+    content: string | JSX.Element;
+    plaintextMatches: { index: number; startIndex: number }[];
+  } => {
+    let plaintextMatches: { index: number; startIndex: number }[] = [];
+
     if (typeof content !== "string") {
-      return content;
+      return { content, plaintextMatches };
     }
 
     const codeBlockRegex = /```(\w*)\n[\s\S]*?```|```[\s\S]*?$/g;
@@ -178,6 +186,11 @@ export const AIMessage = ({
     if (matches) {
       content = matches.reduce((acc, match) => {
         if (!match.match(/```\w+/)) {
+          plaintextMatches.push({
+            index: plaintextMatches.length,
+            startIndex:
+              match.indexOf("```") + content.toString().indexOf(match),
+          });
           return acc.replace(match, match.replace("```", "```plaintext"));
         }
         return acc;
@@ -185,14 +198,22 @@ export const AIMessage = ({
 
       const lastMatch = matches[matches.length - 1];
       if (!lastMatch.endsWith("```")) {
-        return content;
+        return {
+          content: content,
+          plaintextMatches,
+        };
       }
     }
 
-    return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
+    return {
+      content: content + (!isComplete && !toolCallGenerating ? " [*]() " : ""),
+      plaintextMatches,
+    };
   };
-  const finalContent = processContent(content as string);
 
+  const { content: finalContent, plaintextMatches } = processContent(
+    content as string
+  );
   const [isRegenerateHovered, setIsRegenerateHovered] = useState(false);
   const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
 
@@ -360,6 +381,7 @@ export const AIMessage = ({
                                 p: MemoizedParagraph,
                                 code: (props) => (
                                   <CodeBlock
+                                    plaintextMatches={plaintextMatches}
                                     className="w-full"
                                     {...props}
                                     content={content as string}
@@ -520,7 +542,7 @@ export const AIMessage = ({
                         ref={hoverElementRef}
                         className={`
                         absolute -bottom-5
-                        z-20
+                        z-10
                         invisible ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!visible"}
                         opacity-0 ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!opacity-100"}
                         translate-y-2 ${(isHovering || settings?.isMobile) && "!translate-y-0"}
