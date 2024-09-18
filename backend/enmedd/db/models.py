@@ -149,7 +149,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
 
     workspace: Mapped[list["Workspace"]] = relationship(
-        "Workspace", secondary="workspace__users", back_populates="users"
+        "Workspace", secondary="workspace__users", back_populates="users", viewonly=True
     )
 
 
@@ -764,6 +764,11 @@ class ChatSession(Base):
         "ChatMessage", back_populates="chat_session"
     )
     assistant: Mapped["Assistant"] = relationship("Assistant")
+    groups: Mapped[list["Teamspace"]] = relationship(
+        "Teamspace",
+        secondary=ChatSession__Teamspace.__table__,
+        viewonly=True,
+    )
 
 
 class ChatMessage(Base):
@@ -1308,6 +1313,11 @@ class Teamspace(Base):
         secondary="tool__teamspace",
         viewonly=True,
     )
+    chat_sessions: Mapped[list[ChatSession]] = relationship(
+        "ChatSession",
+        secondary=ChatSession__Teamspace.__table__,
+        viewonly=True,
+    )
 
 
 """Tables related to Token Rate Limiting
@@ -1475,7 +1485,7 @@ class Workspace(Base):
     custom_header_content: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     users: Mapped[list[User]] = relationship(
-        "User", secondary=Workspace__Users.__table__, back_populates="workspace"
+        "User", secondary=Workspace__Users.__table__, viewonly=True
     )
 
     groups: Mapped[list["Teamspace"]] = relationship(

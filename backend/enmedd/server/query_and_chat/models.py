@@ -17,6 +17,7 @@ from enmedd.search.models import ChunkContext
 from enmedd.search.models import RetrievalDetails
 from enmedd.search.models import SearchDoc
 from enmedd.search.models import Tag
+from enmedd.server.models import MinimalTeamspaceSnapshot
 from enmedd.tools.models import ToolCallFinalResult
 
 
@@ -152,6 +153,7 @@ class ChatSessionDetails(BaseModel):
     shared_status: ChatSessionSharedStatus
     folder_id: int | None
     current_alternate_model: str | None = None
+    groups: list[MinimalTeamspaceSnapshot] | None
 
 
 class ChatSessionsResponse(BaseModel):
@@ -205,6 +207,7 @@ class ChatSessionDetailResponse(BaseModel):
     time_created: datetime
     shared_status: ChatSessionSharedStatus
     current_alternate_model: str | None
+    groups: list[MinimalTeamspaceSnapshot] | None
 
 
 class QueryValidationResponse(BaseModel):

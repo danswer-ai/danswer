@@ -49,6 +49,8 @@ from enmedd.llm.utils import get_default_llm_tokenizer
 from enmedd.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
 )
+from enmedd.server.models import MinimalTeamspaceSnapshot
+from enmedd.server.models import MinimalWorkspaceSnapshot
 from enmedd.server.query_and_chat.models import ChatFeedbackRequest
 from enmedd.server.query_and_chat.models import ChatMessageIdentifier
 from enmedd.server.query_and_chat.models import ChatRenameRequest
@@ -90,15 +92,28 @@ def get_user_chat_sessions(
     return ChatSessionsResponse(
         sessions=[
             ChatSessionDetails(
-                id=chat.id,
-                name=chat.description,
-                assistant_id=chat.assistant_id,
-                time_created=chat.time_created.isoformat(),
-                shared_status=chat.shared_status,
-                folder_id=chat.folder_id,
-                current_alternate_model=chat.current_alternate_model,
+                id=chat_session.id,
+                name=chat_session.description,
+                assistant_id=chat_session.assistant_id,
+                time_created=chat_session.time_created.isoformat(),
+                shared_status=chat_session.shared_status,
+                folder_id=chat_session.folder_id,
+                current_alternate_model=chat_session.current_alternate_model,
+                groups=[
+                    MinimalTeamspaceSnapshot(
+                        id=teamspace.id,
+                        name=teamspace.name,
+                        workspace=[
+                            MinimalWorkspaceSnapshot(
+                                id=workspace.id, workspace_name=workspace.workspace_name
+                            )
+                            for workspace in teamspace.workspace
+                        ],
+                    )
+                    for teamspace in chat_session.groups
+                ],
             )
-            for chat in chat_sessions
+            for chat_session in chat_sessions
         ]
     )
 
@@ -171,6 +186,19 @@ def get_chat_session(
         ],
         time_created=chat_session.time_created,
         shared_status=chat_session.shared_status,
+        groups=[
+            MinimalTeamspaceSnapshot(
+                id=teamspace.id,
+                name=teamspace.name,
+                workspace=[
+                    MinimalWorkspaceSnapshot(
+                        id=workspace.id, workspace_name=workspace.workspace_name
+                    )
+                    for workspace in teamspace.workspace
+                ],
+            )
+            for teamspace in chat_session.groups
+        ],
     )
 
 
