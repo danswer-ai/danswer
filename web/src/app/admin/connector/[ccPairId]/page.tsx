@@ -103,7 +103,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
     return <ThreeDotsLoader />;
   }
 
-  if (!hasLoadedOnce && (error || !ccPair)) {
+  if (!ccPair || (!hasLoadedOnce && error)) {
     return (
       <ErrorCallout
         errorTitle={`Failed to fetch info on Connector with ID ${ccPairId}`}
