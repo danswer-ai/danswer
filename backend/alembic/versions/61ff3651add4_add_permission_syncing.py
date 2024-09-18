@@ -1,7 +1,7 @@
 """Add Permission Syncing
 
 Revision ID: 61ff3651add4
-Revises: efb35676026c
+Revises: 35e6853a51d5
 Create Date: 2024-09-05 13:57:11.770413
 
 """
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "61ff3651add4"
-down_revision = "efb35676026c"
+down_revision = "35e6853a51d5"
 branch_labels = None
 depends_on = None
 
