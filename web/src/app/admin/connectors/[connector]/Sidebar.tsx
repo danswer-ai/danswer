@@ -13,12 +13,12 @@ export default function Sidebar() {
   const { formStep, setFormStep, connector, allowAdvanced, allowCreate } =
     useFormContext();
   const combinedSettings = useContext(SettingsContext);
+  const { isLoadingUser, isAdmin } = useUser();
   if (!combinedSettings) {
     return null;
   }
   const enterpriseSettings = combinedSettings.enterpriseSettings;
   const noCredential = credentialTemplates[connector] == null;
-  const { isLoadingUser, isAdmin } = useUser();
 
   const settingSteps = [
     ...(!noCredential ? ["Credential"] : []),

@@ -102,7 +102,7 @@ def downgrade() -> None:
     op.drop_column("document", "external_user_group_ids")
     op.drop_column("document", "is_public")
 
-    op.drop_table("external_user_email__external_user_group_id")
+    op.drop_table("user__external_user_group_id")
 
     # Drop the enum type at the end of the downgrade
     op.execute("DROP TYPE accesstype")

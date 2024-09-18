@@ -1,3 +1,6 @@
+"""
+RUN THIS AFTER SEED_DUMMY_DOCS.PY
+"""
 import random
 import time
 
@@ -7,11 +10,13 @@ from danswer.db.engine import get_session_context_manager
 from danswer.db.search_settings import get_current_search_settings
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.models import IndexFilters
+from scripts.query_time_check.seed_dummy_docs import TOTAL_ACL_ENTRIES_PER_CATEGORY
+from scripts.query_time_check.seed_dummy_docs import TOTAL_DOC_SETS
 from shared_configs.model_server_models import Embedding
 
-total_doc_sets = 8
-total_user_number = 80
-number_of_acl_entries = 6
+# make sure these are smaller than TOTAL_ACL_ENTRIES_PER_CATEGORY and TOTAL_DOC_SETS, respectively
+NUMBER_OF_ACL_ENTRIES_PER_QUERY = 6
+NUMBER_OF_DOC_SETS_PER_QUERY = 2
 
 
 def get_slowest_99th_percentile(results: list[float]) -> float:
@@ -20,20 +25,33 @@ def get_slowest_99th_percentile(results: list[float]) -> float:
 
 # Generate random filters
 def _random_filters() -> IndexFilters:
-    user_number_range = random.randint(0, total_user_number - number_of_acl_entries)
-    doc_set_range = random.randint(0, total_doc_sets - number_of_acl_entries)
+    """
+    Generate random filters for the query containing:
+    - NUMBER_OF_ACL_ENTRIES_PER_QUERY user emails
+    - NUMBER_OF_ACL_ENTRIES_PER_QUERY groups
+    - NUMBER_OF_ACL_ENTRIES_PER_QUERY external groups
+    - NUMBER_OF_DOC_SETS_PER_QUERY document sets
+    """
     access_control_list = [
-        f"user_email:user_{user_number_range}@example.com",
+        f"user_email:user_{random.randint(0, TOTAL_ACL_ENTRIES_PER_CATEGORY - 1)}@example.com",
     ]
-    for i in range(number_of_acl_entries):
-        access_control_list.append(f"group:group_{user_number_range+i}")
-        access_control_list.append(
-            f"external_group:external_group_{user_number_range+i}"
-        )
+    acl_indices = random.sample(
+        range(TOTAL_ACL_ENTRIES_PER_CATEGORY), NUMBER_OF_ACL_ENTRIES_PER_QUERY
+    )
+    for i in acl_indices:
+        access_control_list.append(f"group:group_{acl_indices[i]}")
+        access_control_list.append(f"external_group:external_group_{acl_indices[i]}")
+
+    doc_sets = []
+    doc_set_indices = random.sample(
+        range(TOTAL_DOC_SETS), NUMBER_OF_ACL_ENTRIES_PER_QUERY
+    )
+    for i in doc_set_indices:
+        doc_sets.append(f"document_set:Document Set {doc_set_indices[i]}")
 
     return IndexFilters(
         source_type=[DocumentSource.GOOGLE_DRIVE],
-        document_set=[f"Document Set {doc_set_range}"],
+        document_set=doc_sets,
         tags=[],
         access_control_list=access_control_list,
     )
@@ -101,4 +119,4 @@ def test_hybrid_retrieval_times(
 
 
 if __name__ == "__main__":
-    test_hybrid_retrieval_times(1000)
+    test_hybrid_retrieval_times(number_of_queries=1000)

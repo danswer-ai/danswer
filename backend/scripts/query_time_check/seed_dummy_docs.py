@@ -1,3 +1,13 @@
+"""
+launch:
+- api server
+- postgres
+- vespa
+- model server (this is only needed so the api server can startup, no embedding is done)
+
+Run this script to seed the database with dummy documents.
+Then run test_query_times.py to test query times.
+"""
 import random
 from datetime import datetime
 
@@ -13,8 +23,9 @@ from danswer.indexing.models import IndexChunk
 from danswer.utils.timing import log_function_time
 from shared_configs.model_server_models import Embedding
 
-# from danswer.configs.app_configs import POSTGRES_DB
-# Assuming these are imported from somewhere in your project
+
+TOTAL_DOC_SETS = 8
+TOTAL_ACL_ENTRIES_PER_CATEGORY = 80
 
 
 def generate_random_embedding(dim: int) -> Embedding:
@@ -147,8 +158,8 @@ def seed_dummy_docs(
 
 if __name__ == "__main__":
     seed_dummy_docs(
-        number_of_document_sets=8,
-        number_of_acl_entries=80,
+        number_of_document_sets=TOTAL_DOC_SETS,
+        number_of_acl_entries=TOTAL_ACL_ENTRIES_PER_CATEGORY,
         num_docs=100000,
         chunks_per_doc=5,
         batch_size=1000,
