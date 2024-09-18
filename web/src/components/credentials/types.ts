@@ -1,5 +1,5 @@
 export interface dictionaryType {
-  [key: string]: string;
+  [key: string]: string | boolean;
 }
 export interface formType extends dictionaryType {
   name: string;

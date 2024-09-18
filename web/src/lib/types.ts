@@ -1,7 +1,7 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { Credential } from "./connectors/credentials";
 import { Connector } from "./connectors/connectors";
 import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/types";
-import { Credential } from "./connectors/credentials";
 
 export interface UserPreferences {
   chosen_assistants: number[] | null;
@@ -116,178 +116,10 @@ export type ConnectorSummary = {
   errors: number; // New field for error count
 };
 
-export interface GithubCredentialJson {
-  github_access_token: string;
-}
-
-export interface GitlabCredentialJson {
-  gitlab_url: string;
-  gitlab_access_token: string;
-}
-
-export interface BookstackCredentialJson {
-  bookstack_base_url: string;
-  bookstack_api_token_id: string;
-  bookstack_api_token_secret: string;
-}
-
-export interface ConfluenceCredentialJson {
-  confluence_username: string;
-  confluence_access_token: string;
-}
-
-export interface JiraCredentialJson {
-  jira_user_email: string;
-  jira_api_token: string;
-}
-
-export interface JiraServerCredentialJson {
-  jira_api_token: string;
-  is_server_8_13_or_under: boolean;
-}
-
-export interface ProductboardCredentialJson {
-  productboard_access_token: string;
-}
-
-export interface SlackCredentialJson {
-  slack_bot_token: string;
-}
-
-export interface GmailCredentialJson {
-  gmail_tokens: string;
-}
-
-export interface GoogleDriveCredentialJson {
-  google_drive_tokens: string;
-}
-
-export interface GmailServiceAccountCredentialJson {
-  gmail_service_account_key: string;
-  gmail_delegated_user: string;
-}
-
-export interface GoogleDriveServiceAccountCredentialJson {
-  google_drive_service_account_key: string;
-  google_drive_delegated_user: string;
-}
-
-export interface SlabCredentialJson {
-  slab_bot_token: string;
-}
-
-export interface NotionCredentialJson {
-  notion_integration_token: string;
-}
-
-export interface ZulipCredentialJson {
-  zuliprc_content: string;
-}
-
-export interface GuruCredentialJson {
-  guru_user: string;
-  guru_user_token: string;
-}
-
-export interface GongCredentialJson {
-  gong_access_key: string;
-  gong_access_key_secret: string;
-}
-
-export interface LoopioCredentialJson {
-  loopio_subdomain: string;
-  loopio_client_id: string;
-  loopio_client_token: string;
-}
-
-export interface LinearCredentialJson {
-  linear_api_key: string;
-}
-
-export interface HubSpotCredentialJson {
-  hubspot_access_token: string;
-}
-
-export interface RequestTrackerCredentialJson {
-  requesttracker_username: string;
-  requesttracker_password: string;
-  requesttracker_base_url: string;
-}
-
-export interface Document360CredentialJson {
-  portal_id: string;
-  document360_api_token: string;
-}
-
-export interface ClickupCredentialJson {
-  clickup_api_token: string;
-  clickup_team_id: string;
-}
-
-export interface ZendeskCredentialJson {
-  zendesk_subdomain: string;
-  zendesk_email: string;
-  zendesk_token: string;
-}
-
-export interface DropboxCredentialJson {
-  dropbox_access_token: string;
-}
-
-export interface R2CredentialJson {
-  account_id: string;
-  r2_access_key_id: string;
-  r2_secret_access_key: string;
-}
-
-export interface S3CredentialJson {
-  aws_access_key_id: string;
-  aws_secret_access_key: string;
-}
-
-export interface GCSCredentialJson {
-  access_key_id: string;
-  secret_access_key: string;
-}
-
-export interface OCICredentialJson {
-  namespace: string;
-  region: string;
-  access_key_id: string;
-  secret_access_key: string;
-}
-export interface SalesforceCredentialJson {
-  sf_username: string;
-  sf_password: string;
-  sf_security_token: string;
-}
-
-export interface SharepointCredentialJson {
-  sp_client_id: string;
-  sp_client_secret: string;
-  sp_directory_id: string;
-}
-
-export interface TeamsCredentialJson {
-  teams_client_id: string;
-  teams_client_secret: string;
-  teams_directory_id: string;
-}
-
-export interface DiscourseCredentialJson {
-  discourse_api_key: string;
-  discourse_api_username: string;
-}
-
-export interface AxeroCredentialJson {
-  base_url: string;
-  axero_api_token: string;
-}
-
-export interface MediaWikiCredentialJson {}
-export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
+export type GroupedConnectorSummaries = Record<ValidSources, ConnectorSummary>;
 
 // DELETION
+
 export interface DeletionAttemptSnapshot {
   connector_id: number;
   credential_id: number;

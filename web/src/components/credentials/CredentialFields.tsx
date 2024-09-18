@@ -130,7 +130,6 @@ interface BooleanFormFieldProps {
   small?: boolean;
   alignTop?: boolean;
   noLabel?: boolean;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const AdminBooleanFormField = ({
@@ -141,7 +140,6 @@ export const AdminBooleanFormField = ({
   small,
   checked,
   alignTop,
-  onChange,
 }: BooleanFormFieldProps) => {
   return (
     <div>

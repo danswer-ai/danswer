@@ -7,16 +7,22 @@ import {
 } from "@/lib/connectors/credentials";
 
 export function createValidationSchema(json_values: dictionaryType) {
-  const schemaFields: { [key: string]: Yup.StringSchema } = {};
+  const schemaFields: { [key: string]: Yup.Schema<any> } = {};
 
   for (const key in json_values) {
     if (Object.prototype.hasOwnProperty.call(json_values, key)) {
       if (json_values[key] === null) {
         schemaFields[key] = Yup.string().optional();
       } else {
-        schemaFields[key] = Yup.string().required(
-          `Please enter your ${getDisplayNameForCredentialKey(key)}`
-        );
+        if (typeof json_values[key] === "boolean") {
+          schemaFields[key] = Yup.boolean().required(
+            `Please select a value for ${getDisplayNameForCredentialKey(key)}`
+          );
+        } else {
+          schemaFields[key] = Yup.string().required(
+            `Please enter your ${getDisplayNameForCredentialKey(key)}`
+          );
+        }
       }
     }
   }

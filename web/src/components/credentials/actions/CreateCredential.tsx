@@ -3,7 +3,10 @@ import { Button, Card } from "@tremor/react";
 import { ValidSources } from "@/lib/types";
 import { FaAccusoft } from "react-icons/fa";
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import {
+  BooleanFormField,
+  TextFormField,
+} from "@/components/admin/connectors/Field";
 import { Form, Formik, FormikHelpers } from "formik";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
@@ -27,6 +30,8 @@ import {
   IsPublicGroupSelector,
 } from "@/components/IsPublicGroupSelector";
 import { useUser } from "@/components/user/UserProvider";
+import { bool } from "yup";
+import { AdminBooleanFormField } from "../CredentialFields";
 
 const CreateButton = ({
   onClick,
@@ -173,6 +178,7 @@ export default function CreateCredential({
   const credentialTemplate: dictionaryType = credentialTemplates[sourceType];
   const validationSchema = createValidationSchema(credentialTemplate);
 
+  console.log(validationSchema);
   return (
     <Formik
       initialValues={
@@ -207,20 +213,28 @@ export default function CreateCredential({
               placeholder="(Optional) credential name.."
               label="Name:"
             />
-            {Object.entries(credentialTemplate).map(([key, val]) => (
-              <TextFormField
-                key={key}
-                name={key}
-                placeholder={val}
-                label={getDisplayNameForCredentialKey(key)}
-                type={
-                  key.toLowerCase().includes("token") ||
-                  key.toLowerCase().includes("password")
-                    ? "password"
-                    : "text"
-                }
-              />
-            ))}
+            {Object.entries(credentialTemplate).map(([key, val]) =>
+              typeof val === "boolean" ? (
+                <AdminBooleanFormField
+                  name={key}
+                  label={getDisplayNameForCredentialKey(key)}
+                  checked={formikProps.values[key]}
+                />
+              ) : (
+                <TextFormField
+                  key={key}
+                  name={key}
+                  placeholder={val}
+                  label={getDisplayNameForCredentialKey(key)}
+                  type={
+                    key.toLowerCase().includes("token") ||
+                    key.toLowerCase().includes("password")
+                      ? "password"
+                      : "text"
+                  }
+                />
+              )
+            )}
             {!swapConnector && (
               <div className="mt-4 flex flex-col sm:flex-row justify-between items-end">
                 <div className="w-full sm:w-3/4 mb-4 sm:mb-0">

@@ -38,6 +38,7 @@ export interface ConfluenceCredentialJson {
 export interface JiraCredentialJson {
   jira_user_email: string | null;
   jira_api_token: string;
+  jira_old: boolean;
 }
 
 export interface JiraServerCredentialJson {
@@ -204,6 +205,7 @@ export const credentialTemplates: Record<ValidSources, any> = {
   jira: {
     jira_user_email: null,
     jira_api_token: "",
+    jira_old: false,
   } as JiraCredentialJson,
   productboard: { productboard_access_token: "" } as ProductboardCredentialJson,
   slab: { slab_bot_token: "" } as SlabCredentialJson,
@@ -315,6 +317,7 @@ export const credentialDisplayNames: Record<string, string> = {
   // Jira
   jira_user_email: "Jira User Email (required for Jira Cloud)",
   jira_api_token: "API or Personal Access Token",
+  jira_old: "Older Version of Jira (v8.13 or below)",
 
   // Productboard
   productboard_access_token: "Productboard Access Token",
