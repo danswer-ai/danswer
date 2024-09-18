@@ -36,6 +36,7 @@ import {
   OCIStorageIcon,
   GoogleStorageIcon,
   ColorSlackIcon,
+  XenforoIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import {
@@ -271,6 +272,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Google Storage",
     category: SourceCategory.Storage,
     docs: "https://docs.danswer.dev/connectors/google_storage",
+  },
+  xenforo: {
+    icon: XenforoIcon,
+    displayName: "Xenforo",
+    category: SourceCategory.Messaging,
   },
   ingestion_api: {
     icon: GlobeIcon,

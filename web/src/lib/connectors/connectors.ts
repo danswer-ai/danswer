@@ -1019,6 +1019,10 @@ export interface GoogleSitesConfig {
   base_url: string;
 }
 
+export interface XenforoConfig {
+  base_url: string;
+}
+
 export interface ZendeskConfig {}
 
 export interface DropboxConfig {}

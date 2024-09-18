@@ -246,6 +246,7 @@ const validSources = [
   "s3",
   "r2",
   "google_cloud_storage",
+  "xenforo",
   "oci_storage",
   "not_applicable",
   "ingestion_api",
