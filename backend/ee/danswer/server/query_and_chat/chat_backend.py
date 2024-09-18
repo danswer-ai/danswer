@@ -14,6 +14,7 @@ from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
+from danswer.chat.process_message import ChatPacketStream
 from danswer.chat.process_message import stream_chat_message_objects
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
@@ -81,6 +82,49 @@ def _get_final_context_doc_indices(
     ]
 
 
+def _convert_packet_stream_to_response(
+    packets: ChatPacketStream,
+) -> ChatBasicResponse:
+    response = ChatBasicResponse()
+    final_context_docs: list[LlmDoc] = []
+
+    answer = ""
+    for packet in packets:
+        if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
+            answer += packet.answer_piece
+        elif isinstance(packet, QADocsResponse):
+            response.top_documents = packet.top_documents
+
+            # TODO: deprecate `simple_search_docs`
+            response.simple_search_docs = _translate_doc_response_to_simple_doc(packet)
+        elif isinstance(packet, StreamingError):
+            response.error_msg = packet.error
+        elif isinstance(packet, ChatMessageDetail):
+            response.message_id = packet.message_id
+        elif isinstance(packet, LLMRelevanceFilterResponse):
+            response.llm_selected_doc_indices = packet.llm_selected_doc_indices
+
+            # TODO: deprecate `llm_chunks_indices`
+            response.llm_chunks_indices = packet.llm_selected_doc_indices
+        elif isinstance(packet, FinalUsedContextDocsResponse):
+            final_context_docs = packet.final_context_docs
+        elif isinstance(packet, AllCitations):
+            response.cited_documents = {
+                citation.citation_num: citation.document_id
+                for citation in packet.citations
+            }
+
+    response.final_context_doc_indices = _get_final_context_doc_indices(
+        final_context_docs, response.top_documents
+    )
+
+    response.answer = answer
+    if answer:
+        response.answer_citationless = remove_answer_citations(answer)
+
+    return response
+
+
 def remove_answer_citations(answer: str) -> str:
     pattern = r"\s*\[\[\d+\]\]\(http[s]?://[^\s]+\)"
 
@@ -140,37 +184,7 @@ def handle_simplified_chat_message(
         db_session=db_session,
     )
 
-    response = ChatBasicResponse()
-    final_context_docs: list[LlmDoc] = []
-
-    answer = ""
-    for packet in packets:
-        if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
-            answer += packet.answer_piece
-        elif isinstance(packet, QADocsResponse):
-            response.simple_search_docs = _translate_doc_response_to_simple_doc(packet)
-            response.top_documents = packet.top_documents
-        elif isinstance(packet, StreamingError):
-            response.error_msg = packet.error
-        elif isinstance(packet, ChatMessageDetail):
-            response.message_id = packet.message_id
-        elif isinstance(packet, FinalUsedContextDocsResponse):
-            final_context_docs = packet.final_context_docs
-        elif isinstance(packet, AllCitations):
-            response.cited_documents = {
-                citation.citation_num: citation.document_id
-                for citation in packet.citations
-            }
-
-    response.final_context_doc_indices = _get_final_context_doc_indices(
-        final_context_docs, response.top_documents
-    )
-
-    response.answer = answer
-    if answer:
-        response.answer_citationless = remove_answer_citations(answer)
-
-    return response
+    return _convert_packet_stream_to_response(packets)
 
 
 @router.post("/send-message-simple-with-history")
@@ -289,36 +303,4 @@ def handle_send_message_simple_with_history(
         db_session=db_session,
     )
 
-    response = ChatBasicResponse()
-    final_context_docs: list[LlmDoc] = []
-
-    answer = ""
-    for packet in packets:
-        if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
-            answer += packet.answer_piece
-        elif isinstance(packet, QADocsResponse):
-            response.simple_search_docs = _translate_doc_response_to_simple_doc(packet)
-            response.top_documents = packet.top_documents
-        elif isinstance(packet, StreamingError):
-            response.error_msg = packet.error
-        elif isinstance(packet, ChatMessageDetail):
-            response.message_id = packet.message_id
-        elif isinstance(packet, LLMRelevanceFilterResponse):
-            response.llm_selected_doc_indices = packet.llm_selected_doc_indices
-        elif isinstance(packet, FinalUsedContextDocsResponse):
-            final_context_docs = packet.final_context_docs
-        elif isinstance(packet, AllCitations):
-            response.cited_documents = {
-                citation.citation_num: citation.document_id
-                for citation in packet.citations
-            }
-
-    response.final_context_doc_indices = _get_final_context_doc_indices(
-        final_context_docs, response.top_documents
-    )
-
-    response.answer = answer
-    if answer:
-        response.answer_citationless = remove_answer_citations(answer)
-
-    return response
+    return _convert_packet_stream_to_response(packets)
