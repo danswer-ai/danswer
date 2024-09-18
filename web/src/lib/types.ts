@@ -49,6 +49,7 @@ export type ValidStatuses =
   | "not_started";
 export type TaskStatus = "PENDING" | "STARTED" | "SUCCESS" | "FAILURE";
 export type Feedback = "like" | "dislike";
+export type SessionType = "Chat" | "Search" | "Slack";
 
 export interface DocumentBoostStatus {
   document_id: string;

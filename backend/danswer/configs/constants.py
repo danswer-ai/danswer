@@ -133,6 +133,12 @@ class AuthType(str, Enum):
     SAML = "saml"
 
 
+class SessionType(str, Enum):
+    CHAT = "Chat"
+    SEARCH = "Search"
+    SLACK = "Slack"
+
+
 class QAFeedbackType(str, Enum):
     LIKE = "like"  # User likes the answer, used for metrics
     DISLIKE = "dislike"  # User dislikes the answer, used for metrics

@@ -14,15 +14,20 @@ export function orderAssistantsForUser(
       ])
     );
 
-    assistants = assistants.filter((assistant) =>
+    let filteredAssistants = assistants.filter((assistant) =>
       chosenAssistantsSet.has(assistant.id)
     );
 
-    assistants.sort((a, b) => {
+    if (filteredAssistants.length == 0) {
+      return assistants;
+    }
+
+    filteredAssistants.sort((a, b) => {
       const orderA = assistantOrderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
       const orderB = assistantOrderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
       return orderA - orderB;
     });
+    return filteredAssistants;
   }
 
   return assistants;
