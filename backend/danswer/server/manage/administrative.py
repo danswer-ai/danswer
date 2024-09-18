@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
+from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import KV_GEN_AI_KEY_CHECK_TIME
 from danswer.db.connector_credential_pair import get_connector_credential_pair
@@ -146,7 +147,7 @@ def create_deletion_attempt_for_connector_id(
     db_session: Session = Depends(get_session),
 ) -> None:
     from danswer.background.celery.celery_app import (
-        cleanup_connector_credential_pair_task,
+        check_for_connector_deletion_task,
     )
 
     connector_id = connector_credential_pair_identifier.connector_id
@@ -191,9 +192,10 @@ def create_deletion_attempt_for_connector_id(
         cc_pair_id=cc_pair.id,
         status=ConnectorCredentialPairStatus.DELETING,
     )
-    # actually kick off the deletion
-    cleanup_connector_credential_pair_task.apply_async(
-        kwargs=dict(connector_id=connector_id, credential_id=credential_id),
+
+    # run the beat task to pick up this deletion early
+    check_for_connector_deletion_task.apply_async(
+        priority=DanswerCeleryPriority.HIGH,
     )
 
     if cc_pair.connector.source == DocumentSource.FILE:

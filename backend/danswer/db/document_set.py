@@ -570,7 +570,7 @@ def construct_document_select_by_docset(
     return stmt
 
 
-def fetch_document_set_for_document(
+def fetch_document_sets_for_document(
     document_id: str,
     db_session: Session,
 ) -> list[str]:

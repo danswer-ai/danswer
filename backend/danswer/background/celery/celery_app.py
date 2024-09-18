@@ -21,18 +21,17 @@ from redis import Redis
 from sqlalchemy import inspect
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import ObjectDeletedError
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
+from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
-from danswer.background.celery.celery_utils import should_kick_off_deletion_of_cc_pair
 from danswer.background.celery.celery_utils import should_prune_cc_pair
-from danswer.background.connector_deletion import delete_connector_credential_pair
 from danswer.background.connector_deletion import delete_connector_credential_pair_batch
 from danswer.background.task_utils import build_celery_task_wrapper
-from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.background.task_utils import name_cc_prune_task
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -43,29 +42,42 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_APP_NAME
 from danswer.configs.constants import PostgresAdvisoryLocks
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import InputType
+from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector_credential_pair import add_deletion_failure_message
 from danswer.db.connector_credential_pair import (
-    get_connector_credential_pair,
+    delete_connector_credential_pair__no_commit,
 )
+from danswer.db.connector_credential_pair import get_connector_credential_pair
+from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
-from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import count_documents_by_needs_sync
+from danswer.db.document import delete_document_by_connector_credential_pair__no_commit
+from danswer.db.document import delete_documents_complete__no_commit
 from danswer.db.document import get_document
+from danswer.db.document import get_document_connector_count
 from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.document import mark_document_as_synced
 from danswer.db.document_set import delete_document_set
-from danswer.db.document_set import fetch_document_set_for_document
+from danswer.db.document_set import delete_document_set_cc_pair_relationship__no_commit
 from danswer.db.document_set import fetch_document_sets
+from danswer.db.document_set import fetch_document_sets_for_document
 from danswer.db.document_set import get_document_set_by_id
 from danswer.db.document_set import mark_document_set_as_synced
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
+from danswer.db.enums import ConnectorCredentialPairStatus
+from danswer.db.enums import IndexingStatus
+from danswer.db.index_attempt import delete_index_attempts
+from danswer.db.index_attempt import get_last_attempt
+from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import DocumentSet
 from danswer.db.models import UserGroup
+from danswer.db.search_settings import get_current_search_settings
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.redis.redis_pool import RedisPool
+from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
@@ -93,56 +105,6 @@ celery_app.config_from_object(
 #
 # If imports from this module are needed, use local imports to avoid circular importing
 #####
-@build_celery_task_wrapper(name_cc_cleanup_task)
-@celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def cleanup_connector_credential_pair_task(
-    connector_id: int,
-    credential_id: int,
-) -> int:
-    """Connector deletion task. This is run as an async task because it is a somewhat slow job.
-    Needs to potentially update a large number of Postgres and Vespa docs, including deleting them
-    or updating the ACL"""
-    engine = get_sqlalchemy_engine()
-
-    with Session(engine) as db_session:
-        # validate that the connector / credential pair is deletable
-        cc_pair = get_connector_credential_pair(
-            db_session=db_session,
-            connector_id=connector_id,
-            credential_id=credential_id,
-        )
-        if not cc_pair:
-            raise ValueError(
-                f"Cannot run deletion attempt - connector_credential_pair with Connector ID: "
-                f"{connector_id} and Credential ID: {credential_id} does not exist."
-            )
-        try:
-            deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(
-                connector_credential_pair=cc_pair, db_session=db_session
-            )
-            if deletion_attempt_disallowed_reason:
-                raise ValueError(deletion_attempt_disallowed_reason)
-
-            # The bulk of the work is in here, updates Postgres and Vespa
-            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-            document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
-            )
-            return delete_connector_credential_pair(
-                db_session=db_session,
-                document_index=document_index,
-                cc_pair=cc_pair,
-            )
-
-        except Exception as e:
-            stack_trace = traceback.format_exc()
-            error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
-            add_deletion_failure_message(db_session, cc_pair.id, error_message)
-            task_logger.exception(
-                f"Failed to run connector_deletion. "
-                f"connector_id={connector_id} credential_id={credential_id}"
-            )
-            raise e
 
 
 @build_celery_task_wrapper(name_cc_prune_task)
@@ -218,6 +180,11 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
 def try_generate_stale_document_sync_tasks(
     db_session: Session, r: Redis, lock_beat: redis.lock.Lock
 ) -> int | None:
+    """This picks up stale documents (typically from indexing) and queues them for sync to Vespa.
+
+    Returns an int if syncing is needed. The int represents the number of sync tasks generated.
+    Returns None if no syncing is required.
+    """
     # the fence is up, do nothing
     if r.exists(RedisConnectorCredentialPair.get_fence_key()):
         return None
@@ -232,6 +199,8 @@ def try_generate_stale_document_sync_tasks(
     task_logger.info(
         f"Stale documents found (at least {stale_doc_count}). Generating sync tasks by cc pair."
     )
+
+    task_logger.info("RedisConnector.generate_tasks starting by cc_pair.")
 
     # rkuo: we could technically sync all stale docs in one big pass.
     # but I feel it's more understandable to group the docs by cc_pair
@@ -255,7 +224,7 @@ def try_generate_stale_document_sync_tasks(
         total_tasks_generated += tasks_generated
 
     task_logger.info(
-        f"All per connector generate_tasks finished. total_tasks_generated={total_tasks_generated}"
+        f"RedisConnector.generate_tasks finished for all cc_pairs. total_tasks_generated={total_tasks_generated}"
     )
 
     r.set(RedisConnectorCredentialPair.get_fence_key(), total_tasks_generated)
@@ -265,6 +234,10 @@ def try_generate_stale_document_sync_tasks(
 def try_generate_document_set_sync_tasks(
     document_set: DocumentSet, db_session: Session, r: Redis, lock_beat: redis.lock.Lock
 ) -> int | None:
+    """Returns an int if syncing is needed. The int represents the number of sync tasks generated.
+    Note that syncing can still be required even if the number of sync tasks generated is zero.
+    Returns None if no syncing is required.
+    """
     lock_beat.reacquire()
 
     rds = RedisDocumentSet(document_set.id)
@@ -310,6 +283,10 @@ def try_generate_document_set_sync_tasks(
 def try_generate_user_group_sync_tasks(
     usergroup: UserGroup, db_session: Session, r: Redis, lock_beat: redis.lock.Lock
 ) -> int | None:
+    """Returns an int if syncing is needed. The int represents the number of sync tasks generated.
+    Note that syncing can still be required even if the number of sync tasks generated is zero.
+    Returns None if no syncing is required.
+    """
     lock_beat.reacquire()
 
     rug = RedisUserGroup(usergroup.id)
@@ -327,7 +304,9 @@ def try_generate_user_group_sync_tasks(
     r.delete(rug.taskset_key)
 
     # Add all documents that need to be updated into the queue
-    task_logger.info(f"generate_tasks starting. usergroup_id={usergroup.id}")
+    task_logger.info(
+        f"RedisUserGroup.generate_tasks starting. usergroup_id={usergroup.id}"
+    )
     tasks_generated = rug.generate_tasks(celery_app, db_session, r, lock_beat)
     if tasks_generated is None:
         return None
@@ -339,12 +318,84 @@ def try_generate_user_group_sync_tasks(
     #     return 0
 
     task_logger.info(
-        f"generate_tasks finished. "
+        f"RedisUserGroup.generate_tasks finished. "
         f"usergroup_id={usergroup.id} tasks_generated={tasks_generated}"
     )
 
     # set this only after all tasks have been added
     r.set(rug.fence_key, tasks_generated)
+    return tasks_generated
+
+
+def try_generate_document_cc_pair_cleanup_tasks(
+    cc_pair: ConnectorCredentialPair,
+    db_session: Session,
+    r: Redis,
+    lock_beat: redis.lock.Lock,
+) -> int | None:
+    """Returns an int if syncing is needed. The int represents the number of sync tasks generated.
+    Note that syncing can still be required even if the number of sync tasks generated is zero.
+    Returns None if no syncing is required.
+    """
+
+    lock_beat.reacquire()
+
+    rcd = RedisConnectorDeletion(cc_pair.id)
+
+    # don't generate sync tasks if tasks are still pending
+    if r.exists(rcd.fence_key):
+        return None
+
+    # we need to refresh the state of the object inside the fence
+    # to avoid a race condition with db.commit/fence deletion
+    # at the end of this taskset
+    try:
+        db_session.refresh(cc_pair)
+    except ObjectDeletedError:
+        return None
+
+    if cc_pair.status != ConnectorCredentialPairStatus.DELETING:
+        return None
+
+    search_settings = get_current_search_settings(db_session)
+
+    last_indexing = get_last_attempt(
+        connector_id=cc_pair.connector_id,
+        credential_id=cc_pair.credential_id,
+        search_settings_id=search_settings.id,
+        db_session=db_session,
+    )
+    if last_indexing:
+        if (
+            last_indexing.status == IndexingStatus.IN_PROGRESS
+            or last_indexing.status == IndexingStatus.NOT_STARTED
+        ):
+            return None
+
+    # add tasks to celery and build up the task set to monitor in redis
+    r.delete(rcd.taskset_key)
+
+    # Add all documents that need to be updated into the queue
+    task_logger.info(
+        f"RedisConnectorDeletion.generate_tasks starting. cc_pair_id={cc_pair.id}"
+    )
+    tasks_generated = rcd.generate_tasks(celery_app, db_session, r, lock_beat)
+    if tasks_generated is None:
+        return None
+
+    # Currently we are allowing the sync to proceed with 0 tasks.
+    # It's possible for sets/groups to be generated initially with no entries
+    # and they still need to be marked as up to date.
+    # if tasks_generated == 0:
+    #     return 0
+
+    task_logger.info(
+        f"RedisConnectorDeletion.generate_tasks finished. "
+        f"cc_pair_id={cc_pair.id} tasks_generated={tasks_generated}"
+    )
+
+    # set this only after all tasks have been added
+    r.set(rcd.fence_key, tasks_generated)
     return tasks_generated
 
 
@@ -411,26 +462,37 @@ def check_for_vespa_sync_task() -> None:
 
 
 @celery_app.task(
-    name="check_for_cc_pair_deletion_task",
+    name="check_for_connector_deletion_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_cc_pair_deletion_task() -> None:
-    """Runs periodically to check if any deletion tasks should be run"""
-    with Session(get_sqlalchemy_engine()) as db_session:
-        # check if any cc pairs are up for deletion
-        cc_pairs = get_connector_credential_pairs(db_session)
-        for cc_pair in cc_pairs:
-            if should_kick_off_deletion_of_cc_pair(cc_pair, db_session):
-                task_logger.info(
-                    f"Deleting the {cc_pair.name} connector credential pair"
-                )
+def check_for_connector_deletion_task() -> None:
+    r = redis_pool.get_client()
 
-                cleanup_connector_credential_pair_task.apply_async(
-                    kwargs=dict(
-                        connector_id=cc_pair.connector.id,
-                        credential_id=cc_pair.credential.id,
-                    ),
+    lock_beat = r.lock(
+        DanswerRedisLocks.CHECK_CONNECTOR_DELETION_BEAT_LOCK,
+        timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
+    )
+
+    try:
+        # these tasks should never overlap
+        if not lock_beat.acquire(blocking=False):
+            return
+
+        with Session(get_sqlalchemy_engine()) as db_session:
+            cc_pairs = get_connector_credential_pairs(db_session)
+            for cc_pair in cc_pairs:
+                try_generate_document_cc_pair_cleanup_tasks(
+                    cc_pair, db_session, r, lock_beat
                 )
+    except SoftTimeLimitExceeded:
+        task_logger.info(
+            "Soft time limit exceeded, task is being terminated gracefully."
+        )
+    except Exception:
+        task_logger.exception("Unexpected exception")
+    finally:
+        if lock_beat.owned():
+            lock_beat.release()
 
 
 @celery_app.task(
@@ -602,7 +664,7 @@ def vespa_metadata_sync_task(self: Task, document_id: str) -> bool:
                 return False
 
             # document set sync
-            doc_sets = fetch_document_set_for_document(document_id, db_session)
+            doc_sets = fetch_document_sets_for_document(document_id, db_session)
             update_doc_sets: set[str] = set(doc_sets)
 
             # User group sync
@@ -617,12 +679,98 @@ def vespa_metadata_sync_task(self: Task, document_id: str) -> bool:
                 hidden=doc.hidden,
             )
 
-            # update Vespa
-            document_index.update(update_requests=[update_request])
+            # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
+            document_index.update_single(update_request=update_request)
 
             # update db last. Worst case = we crash right before this and
             # the sync might repeat again later
             mark_document_as_synced(document_id, db_session)
+    except SoftTimeLimitExceeded:
+        task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
+    except Exception as e:
+        task_logger.exception("Unexpected exception")
+
+        # Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
+        countdown = 2 ** (self.request.retries + 4)
+        self.retry(exc=e, countdown=countdown)
+
+    return True
+
+
+@celery_app.task(
+    name="document_by_cc_pair_cleanup_task",
+    bind=True,
+    soft_time_limit=45,
+    time_limit=60,
+    max_retries=3,
+)
+def document_by_cc_pair_cleanup_task(
+    self: Task, document_id: str, connector_id: int, credential_id: int
+) -> bool:
+    task_logger.info(f"document_id={document_id}")
+
+    try:
+        with Session(get_sqlalchemy_engine()) as db_session:
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+            )
+
+            count = get_document_connector_count(db_session, document_id)
+            if count == 1:
+                # count == 1 means this is the only remaining cc_pair reference to the doc
+                # delete it from vespa and the db
+                document_index.delete(doc_ids=[document_id])
+                delete_documents_complete__no_commit(
+                    db_session=db_session,
+                    document_ids=[document_id],
+                )
+            elif count > 1:
+                # count > 1 means the document still has cc_pair references
+                doc = get_document(document_id, db_session)
+                if not doc:
+                    return False
+
+                # the below functions do not include cc_pairs being deleted.
+                # i.e. they will correctly omit access for the current cc_pair
+                doc_access = get_access_for_document(
+                    document_id=document_id, db_session=db_session
+                )
+
+                doc_sets = fetch_document_sets_for_document(document_id, db_session)
+                update_doc_sets: set[str] = set(doc_sets)
+
+                update_request = UpdateRequest(
+                    document_ids=[document_id],
+                    document_sets=update_doc_sets,
+                    access=doc_access,
+                    boost=doc.boost,
+                    hidden=doc.hidden,
+                )
+
+                # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
+                document_index.update_single(update_request=update_request)
+
+                # there are still other cc_pair references to the doc, so just resync to Vespa
+                delete_document_by_connector_credential_pair__no_commit(
+                    db_session=db_session,
+                    document_id=document_id,
+                    connector_credential_pair_identifier=ConnectorCredentialPairIdentifier(
+                        connector_id=connector_id,
+                        credential_id=credential_id,
+                    ),
+                )
+
+                mark_document_as_synced(document_id, db_session)
+            else:
+                pass
+
+            # update_docs_last_modified__no_commit(
+            #     db_session=db_session,
+            #     document_ids=[document_id],
+            # )
+
+            db_session.commit()
     except SoftTimeLimitExceeded:
         task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
     except Exception as e:
@@ -687,6 +835,14 @@ def celery_task_postrun(
             r.srem(rug.taskset_key, task_id)
         return
 
+    if task_id.startswith(RedisConnectorDeletion.PREFIX):
+        r = redis_pool.get_client()
+        cc_pair_id = RedisConnectorDeletion.get_id_from_task_id(task_id)
+        if cc_pair_id is not None:
+            rcd = RedisConnectorDeletion(cc_pair_id)
+            r.srem(rcd.taskset_key, task_id)
+        return
+
 
 def monitor_connector_taskset(r: Redis) -> None:
     fence_value = r.get(RedisConnectorCredentialPair.get_fence_key())
@@ -707,9 +863,7 @@ def monitor_connector_taskset(r: Redis) -> None:
         task_logger.info(f"Successfully synced stale documents. count={initial_count}")
 
 
-def monitor_document_set_taskset(
-    key_bytes: bytes, r: Redis, db_session: Session
-) -> None:
+def monitor_document_set_taskset(key_bytes: bytes, r: Redis) -> None:
     fence_key = key_bytes.decode("utf-8")
     document_set_id = RedisDocumentSet.get_id_from_fence_key(fence_key)
     if document_set_id is None:
@@ -730,41 +884,47 @@ def monitor_document_set_taskset(
 
     count = cast(int, r.scard(rds.taskset_key))
     task_logger.info(
-        f"document_set_id={document_set_id} remaining={count} initial={initial_count}"
+        f"Document set sync: document_set_id={document_set_id} remaining={count} initial={initial_count}"
     )
     if count > 0:
         return
 
-    document_set = cast(
-        DocumentSet,
-        get_document_set_by_id(db_session=db_session, document_set_id=document_set_id),
-    )  # casting since we "know" a document set with this ID exists
-    if document_set:
-        if not document_set.connector_credential_pairs:
-            # if there are no connectors, then delete the document set.
-            delete_document_set(document_set_row=document_set, db_session=db_session)
-            task_logger.info(
-                f"Successfully deleted document set with ID: '{document_set_id}'!"
-            )
-        else:
-            mark_document_set_as_synced(document_set_id, db_session)
-            task_logger.info(
-                f"Successfully synced document set with ID: '{document_set_id}'!"
-            )
+    with Session(get_sqlalchemy_engine()) as db_session:
+        document_set = cast(
+            DocumentSet,
+            get_document_set_by_id(
+                db_session=db_session, document_set_id=document_set_id
+            ),
+        )  # casting since we "know" a document set with this ID exists
+        if document_set:
+            if not document_set.connector_credential_pairs:
+                # if there are no connectors, then delete the document set.
+                delete_document_set(
+                    document_set_row=document_set, db_session=db_session
+                )
+                task_logger.info(
+                    f"Successfully deleted document set with ID: '{document_set_id}'!"
+                )
+            else:
+                mark_document_set_as_synced(document_set_id, db_session)
+                task_logger.info(
+                    f"Successfully synced document set with ID: '{document_set_id}'!"
+                )
 
     r.delete(rds.taskset_key)
     r.delete(rds.fence_key)
 
 
-def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -> None:
-    key = key_bytes.decode("utf-8")
-    usergroup_id = RedisUserGroup.get_id_from_fence_key(key)
-    if not usergroup_id:
-        task_logger.warning("Could not parse usergroup id from {key}")
+def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
+    fence_key = key_bytes.decode("utf-8")
+    cc_pair_id = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
+    if cc_pair_id is None:
+        task_logger.warning("could not parse document set id from {key}")
         return
 
-    rug = RedisUserGroup(usergroup_id)
-    fence_value = r.get(rug.fence_key)
+    rcd = RedisConnectorDeletion(cc_pair_id)
+
+    fence_value = r.get(rcd.fence_key)
     if fence_value is None:
         return
 
@@ -774,44 +934,79 @@ def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -
         task_logger.error("The value is not an integer.")
         return
 
-    count = cast(int, r.scard(rug.taskset_key))
+    count = cast(int, r.scard(rcd.taskset_key))
     task_logger.info(
-        f"usergroup_id={usergroup_id} remaining={count} initial={initial_count}"
+        f"Connector deletion: cc_pair_id={cc_pair_id} remaining={count} initial={initial_count}"
     )
     if count > 0:
         return
 
-    try:
-        fetch_user_group = fetch_versioned_implementation(
-            "danswer.db.user_group", "fetch_user_group"
-        )
-    except ModuleNotFoundError:
-        task_logger.exception(
-            "fetch_versioned_implementation failed to look up fetch_user_group."
-        )
-        return
+    with Session(get_sqlalchemy_engine()) as db_session:
+        cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+        if not cc_pair:
+            return
 
-    user_group: UserGroup | None = fetch_user_group(
-        db_session=db_session, user_group_id=usergroup_id
+        try:
+            # clean up the rest of the related Postgres entities
+            # index attempts
+            delete_index_attempts(
+                db_session=db_session,
+                cc_pair_id=cc_pair.id,
+            )
+
+            # document sets
+            delete_document_set_cc_pair_relationship__no_commit(
+                db_session=db_session,
+                connector_id=cc_pair.connector_id,
+                credential_id=cc_pair.credential_id,
+            )
+
+            # user groups
+            cleanup_user_groups = fetch_versioned_implementation_with_fallback(
+                "danswer.db.user_group",
+                "delete_user_group_cc_pair_relationship__no_commit",
+                noop_fallback,
+            )
+            cleanup_user_groups(
+                cc_pair_id=cc_pair.id,
+                db_session=db_session,
+            )
+
+            # finally, delete the cc-pair
+            delete_connector_credential_pair__no_commit(
+                db_session=db_session,
+                connector_id=cc_pair.connector_id,
+                credential_id=cc_pair.credential_id,
+            )
+            # if there are no credentials left, delete the connector
+            connector = fetch_connector_by_id(
+                db_session=db_session,
+                connector_id=cc_pair.connector_id,
+            )
+            if not connector or not len(connector.credentials):
+                task_logger.info(
+                    "Found no credentials left for connector, deleting connector"
+                )
+                db_session.delete(connector)
+            db_session.commit()
+        except Exception as e:
+            stack_trace = traceback.format_exc()
+            error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
+            add_deletion_failure_message(db_session, cc_pair.id, error_message)
+            task_logger.exception(
+                f"Failed to run connector_deletion. "
+                f"connector_id={cc_pair.connector_id} credential_id={cc_pair.credential_id}"
+            )
+            raise e
+
+    task_logger.info(
+        f"Successfully deleted connector_credential_pair with connector_id: '{cc_pair.connector_id}' "
+        f"and credential_id: '{cc_pair.credential_id}'. "
+        f"Deleted {initial_count} docs."
     )
-    if user_group:
-        if user_group.is_up_for_deletion:
-            delete_user_group = fetch_versioned_implementation_with_fallback(
-                "danswer.db.user_group", "delete_user_group", noop_fallback
-            )
 
-            delete_user_group(db_session=db_session, user_group=user_group)
-            task_logger.info(f" Deleted usergroup. id='{usergroup_id}'")
-        else:
-            mark_user_group_as_synced = fetch_versioned_implementation_with_fallback(
-                "danswer.db.user_group", "mark_user_group_as_synced", noop_fallback
-            )
-
-            mark_user_group_as_synced(db_session=db_session, user_group=user_group)
-            task_logger.info(f"Synced usergroup. id='{usergroup_id}'")
-
-    r.delete(rug.taskset_key)
-    r.delete(rug.fence_key)
+    r.delete(rcd.taskset_key)
+    r.delete(rcd.fence_key)
 
 
 @celery_app.task(name="monitor_vespa_sync", soft_time_limit=300)
@@ -835,17 +1030,24 @@ def monitor_vespa_sync() -> None:
         if not lock_beat.acquire(blocking=False):
             return
 
-        with Session(get_sqlalchemy_engine()) as db_session:
-            if r.exists(RedisConnectorCredentialPair.get_fence_key()):
-                monitor_connector_taskset(r)
+        if r.exists(RedisConnectorCredentialPair.get_fence_key()):
+            monitor_connector_taskset(r)
 
-            for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
-                monitor_document_set_taskset(key_bytes, r, db_session)
+        for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
+            monitor_document_set_taskset(key_bytes, r)
 
-            for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
-                monitor_usergroup_taskset(key_bytes, r, db_session)
+        for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
+            monitor_usergroup_taskset = fetch_versioned_implementation_with_fallback(
+                "danswer.background.celery_utils",
+                "monitor_usergroup_taskset",
+                noop_fallback,
+            )
 
-        #
+            monitor_usergroup_taskset(key_bytes, r)
+
+        for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
+            monitor_connector_deletion_taskset(key_bytes, r)
+
         # r_celery = celery_app.broker_connection().channel().client
         # length = celery_get_queue_length(DanswerCeleryQueues.VESPA_METADATA_SYNC, r_celery)
         # task_logger.warning(f"queue={DanswerCeleryQueues.VESPA_METADATA_SYNC} length={length}")
@@ -887,6 +1089,12 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         r.delete(key)
 
     for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisConnectorDeletion.TASKSET_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
         r.delete(key)
 
 
@@ -970,14 +1178,18 @@ celery_app.conf.beat_schedule = {
         "schedule": timedelta(seconds=5),
         "options": {"priority": DanswerCeleryPriority.HIGH},
     },
-    "check-for-cc-pair-deletion": {
-        "task": "check_for_cc_pair_deletion_task",
-        # don't need to check too often, since we kick off a deletion initially
-        # during the API call that actually marks the CC pair for deletion
-        "schedule": timedelta(minutes=1),
-        "options": {"priority": DanswerCeleryPriority.HIGH},
-    },
 }
+celery_app.conf.beat_schedule.update(
+    {
+        "check-for-connector-deletion-task": {
+            "task": "check_for_connector_deletion_task",
+            # don't need to check too often, since we kick off a deletion initially
+            # during the API call that actually marks the CC pair for deletion
+            "schedule": timedelta(minutes=1),
+            "options": {"priority": DanswerCeleryPriority.HIGH},
+        },
+    }
+)
 celery_app.conf.beat_schedule.update(
     {
         "check-for-prune": {
