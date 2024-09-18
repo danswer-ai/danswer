@@ -5,6 +5,7 @@ export interface Settings {
   maximum_chat_retention_days: number | null;
   notifications: Notification[];
   needs_reindexing: boolean;
+  gpu_enabled: boolean;
 }
 
 export interface Notification {

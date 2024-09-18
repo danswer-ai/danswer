@@ -1,3 +1,4 @@
+import { FullLLMProvider } from "../configuration/llm/interfaces";
 import { Persona, Prompt, StarterMessage } from "./interfaces";
 
 interface PersonaCreationRequest {
@@ -317,4 +318,51 @@ export function personaComparator(a: Persona, b: Persona) {
   }
 
   return closerToZeroNegativesFirstComparator(a.id, b.id);
+}
+
+export const togglePersonaVisibility = async (
+  personaId: number,
+  isVisible: boolean
+) => {
+  const response = await fetch(`/api/persona/${personaId}/visible`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      is_visible: !isVisible,
+    }),
+  });
+  return response;
+};
+
+export const togglePersonaPublicStatus = async (
+  personaId: number,
+  isPublic: boolean
+) => {
+  const response = await fetch(`/api/persona/${personaId}/public`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      is_public: isPublic,
+    }),
+  });
+  return response;
+};
+
+export function checkPersonaRequiresImageGeneration(persona: Persona) {
+  for (const tool of persona.tools) {
+    if (tool.name === "ImageGenerationTool") {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function providersContainImageGeneratingSupport(
+  providers: FullLLMProvider[]
+) {
+  return providers.some((provider) => provider.provider === "openai");
 }

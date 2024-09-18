@@ -1,6 +1,5 @@
 import logging
 import time
-import traceback
 from datetime import timedelta
 from typing import Any
 
@@ -16,29 +15,17 @@ from celery.signals import worker_init
 from celery.signals import worker_shutdown
 from celery.states import READY_STATES
 from celery.utils.log import get_task_logger
-from sqlalchemy.orm import Session
 
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
+from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
-from danswer.background.connector_deletion import delete_connector_credential_pair
-from danswer.background.task_utils import build_celery_task_wrapper
-from danswer.background.task_utils import name_cc_cleanup_task
-from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_PRIMARY_WORKER_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import POSTGRES_CELERY_BEAT_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_APP_NAME
-from danswer.db.connector_credential_pair import add_deletion_failure_message
-from danswer.db.connector_credential_pair import (
-    get_connector_credential_pair,
-)
-from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
-from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
-from danswer.document_index.document_index_utils import get_both_index_names
-from danswer.document_index.factory import get_default_document_index
 from danswer.redis.redis_pool import RedisPool
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
@@ -76,65 +63,6 @@ def is_celery_app_primary(sender: Any) -> bool:
 #
 # If imports from this module are needed, use local imports to avoid circular importing
 #####
-
-
-# This needs to live here temporaraily due to it being wrapped with build_celery_task_wrapper
-# if we put it in another file and call it with send_task, the wrapper doesn't work properly
-@build_celery_task_wrapper(name_cc_cleanup_task)
-@celery_app.task(
-    name="cleanup_connector_credential_pair_task",
-    soft_time_limit=JOB_TIMEOUT,
-)
-def cleanup_connector_credential_pair_task(
-    connector_id: int,
-    credential_id: int,
-) -> int:
-    """Connector deletion task. This is run as an async task because it is a somewhat slow job.
-    Needs to potentially update a large number of Postgres and Vespa docs, including deleting them
-    or updating the ACL"""
-    engine = get_sqlalchemy_engine()
-
-    with Session(engine) as db_session:
-        # validate that the connector / credential pair is deletable
-        cc_pair = get_connector_credential_pair(
-            db_session=db_session,
-            connector_id=connector_id,
-            credential_id=credential_id,
-        )
-        if not cc_pair:
-            raise ValueError(
-                f"Cannot run deletion attempt - connector_credential_pair with Connector ID: "
-                f"{connector_id} and Credential ID: {credential_id} does not exist."
-            )
-        try:
-            deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(
-                connector_credential_pair=cc_pair, db_session=db_session
-            )
-            if deletion_attempt_disallowed_reason:
-                raise ValueError(deletion_attempt_disallowed_reason)
-
-            # The bulk of the work is in here, updates Postgres and Vespa
-            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-            document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
-            )
-            return delete_connector_credential_pair(
-                db_session=db_session,
-                document_index=document_index,
-                cc_pair=cc_pair,
-            )
-
-        except Exception as e:
-            stack_trace = traceback.format_exc()
-            error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
-            add_deletion_failure_message(db_session, cc_pair.id, error_message)
-            task_logger.exception(
-                f"Failed to run connector_deletion. "
-                f"connector_id={connector_id} credential_id={credential_id}"
-            )
-            raise e
-
-
 @signals.task_postrun.connect
 def celery_task_postrun(
     sender: Any | None = None,
@@ -185,6 +113,14 @@ def celery_task_postrun(
         if usergroup_id is not None:
             rug = RedisUserGroup(usergroup_id)
             r.srem(rug.taskset_key, task_id)
+        return
+
+    if task_id.startswith(RedisConnectorDeletion.PREFIX):
+        r = redis_pool.get_client()
+        cc_pair_id = RedisConnectorDeletion.get_id_from_task_id(task_id)
+        if cc_pair_id is not None:
+            rcd = RedisConnectorDeletion(cc_pair_id)
+            r.srem(rcd.taskset_key, task_id)
         return
 
 
@@ -297,6 +233,12 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
         r.delete(key)
 
+    for key in r.scan_iter(RedisConnectorDeletion.TASKSET_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
+        r.delete(key)
+
 
 @worker_shutdown.connect
 def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
@@ -405,7 +347,7 @@ class HubPeriodicTask(bootsteps.StartStopStep):
         self.task_tref = hub.call_repeatedly(
             self.interval, self.run_periodic_task, worker
         )
-        logger.info("Scheduled periodic task with hub.")
+        task_logger.info("Scheduled periodic task with hub.")
 
     def run_periodic_task(self, worker: Any) -> None:
         try:
@@ -420,10 +362,10 @@ class HubPeriodicTask(bootsteps.StartStopStep):
             # logger.info(f"lock TTL before: {ttl_ms}ms")
 
             if lock.owned():
-                logger.debug("Reacquiring primary worker lock.")
+                task_logger.debug("Reacquiring primary worker lock.")
                 lock.reacquire()
             else:
-                logger.warning(
+                task_logger.warning(
                     "Full acquisition of primary worker lock. "
                     "Reasons could be computer sleep or a clock change."
                 )
@@ -432,14 +374,14 @@ class HubPeriodicTask(bootsteps.StartStopStep):
                     timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
                 )
 
-                logger.info("Primary worker lock: Acquire starting.")
+                task_logger.info("Primary worker lock: Acquire starting.")
                 acquired = lock.acquire(
                     blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2
                 )
                 if acquired:
-                    logger.info("Primary worker lock: Acquire succeeded.")
+                    task_logger.info("Primary worker lock: Acquire succeeded.")
                 else:
-                    logger.error("Primary worker lock: Acquire failed!")
+                    task_logger.error("Primary worker lock: Acquire failed!")
                     raise TimeoutError("Primary worker lock could not be acquired!")
 
                 worker.primary_worker_lock = lock
@@ -447,7 +389,7 @@ class HubPeriodicTask(bootsteps.StartStopStep):
             # ttl_ms = r.pttl(lock.name)
             # logger.info(f"lock TTL after: {ttl_ms}ms")
         except Exception:
-            logger.exception("HubPeriodicTask.run_periodic_task exceptioned.")
+            task_logger.exception("HubPeriodicTask.run_periodic_task exceptioned.")
 
     def stop(self, worker: Any) -> None:
         # Cancel the scheduled task when the worker stops
@@ -478,8 +420,8 @@ celery_app.conf.beat_schedule = {
 }
 celery_app.conf.beat_schedule.update(
     {
-        "check-for-cc-pair-deletion": {
-            "task": "check_for_cc_pair_deletion_task",
+        "check-for-connector-deletion-task": {
+            "task": "check_for_connector_deletion_task",
             # don't need to check too often, since we kick off a deletion initially
             # during the API call that actually marks the CC pair for deletion
             "schedule": timedelta(minutes=1),

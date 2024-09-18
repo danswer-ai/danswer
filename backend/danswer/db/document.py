@@ -126,7 +126,18 @@ def get_documents_by_ids(
     return list(documents)
 
 
-def get_document_connector_cnts(
+def get_document_connector_count(
+    db_session: Session,
+    document_id: str,
+) -> int:
+    results = get_document_connector_counts(db_session, [document_id])
+    if not results or len(results) == 0:
+        return 0
+
+    return results[0][1]
+
+
+def get_document_connector_counts(
     db_session: Session,
     document_ids: list[str],
 ) -> Sequence[tuple[str, int]]:
@@ -141,7 +152,7 @@ def get_document_connector_cnts(
     return db_session.execute(stmt).all()  # type: ignore
 
 
-def get_document_cnts_for_cc_pairs(
+def get_document_counts_for_cc_pairs(
     db_session: Session, cc_pair_identifiers: list[ConnectorCredentialPairIdentifier]
 ) -> Sequence[tuple[int, int, int]]:
     stmt = (
@@ -351,10 +362,33 @@ def upsert_documents_complete(
 
 def delete_document_by_connector_credential_pair__no_commit(
     db_session: Session,
+    document_id: str,
+    connector_credential_pair_identifier: ConnectorCredentialPairIdentifier
+    | None = None,
+) -> None:
+    """Deletes a single document by cc pair relationship entry.
+    Foreign key rows are left in place.
+    The implicit assumption is that the document itself still has other cc_pair
+    references and needs to continue existing.
+    """
+    delete_documents_by_connector_credential_pair__no_commit(
+        db_session=db_session,
+        document_ids=[document_id],
+        connector_credential_pair_identifier=connector_credential_pair_identifier,
+    )
+
+
+def delete_documents_by_connector_credential_pair__no_commit(
+    db_session: Session,
     document_ids: list[str],
     connector_credential_pair_identifier: ConnectorCredentialPairIdentifier
     | None = None,
 ) -> None:
+    """This deletes just the document by cc pair entries for a particular cc pair.
+    Foreign key rows are left in place.
+    The implicit assumption is that the document itself still has other cc_pair
+    references and needs to continue existing.
+    """
     stmt = delete(DocumentByConnectorCredentialPair).where(
         DocumentByConnectorCredentialPair.id.in_(document_ids)
     )
@@ -377,8 +411,9 @@ def delete_documents__no_commit(db_session: Session, document_ids: list[str]) ->
 def delete_documents_complete__no_commit(
     db_session: Session, document_ids: list[str]
 ) -> None:
+    """This completely deletes the documents from the db, including all foreign key relationships"""
     logger.info(f"Deleting {len(document_ids)} documents from the DB")
-    delete_document_by_connector_credential_pair__no_commit(db_session, document_ids)
+    delete_documents_by_connector_credential_pair__no_commit(db_session, document_ids)
     delete_document_feedback_for_documents__no_commit(
         document_ids=document_ids, db_session=db_session
     )

@@ -210,6 +210,22 @@ def update_persona_shared_users(
     )
 
 
+def update_persona_public_status(
+    persona_id: int,
+    is_public: bool,
+    db_session: Session,
+    user: User | None,
+) -> None:
+    persona = fetch_persona_by_id(
+        db_session=db_session, persona_id=persona_id, user=user, get_editable=True
+    )
+    if user and user.role != UserRole.ADMIN and persona.user_id != user.id:
+        raise ValueError("You don't have permission to modify this persona")
+
+    persona.is_public = is_public
+    db_session.commit()
+
+
 def get_prompts(
     user_id: UUID | None,
     db_session: Session,
@@ -551,6 +567,7 @@ def update_persona_visibility(
     persona = fetch_persona_by_id(
         db_session=db_session, persona_id=persona_id, user=user, get_editable=True
     )
+
     persona.is_visible = is_visible
     db_session.commit()
 
@@ -563,13 +580,15 @@ def validate_persona_tools(tools: list[Tool]) -> None:
             )
 
 
-def get_prompts_by_ids(prompt_ids: list[int], db_session: Session) -> Sequence[Prompt]:
+def get_prompts_by_ids(prompt_ids: list[int], db_session: Session) -> list[Prompt]:
     """Unsafe, can fetch prompts from all users"""
     if not prompt_ids:
         return []
-    prompts = db_session.scalars(select(Prompt).where(Prompt.id.in_(prompt_ids))).all()
+    prompts = db_session.scalars(
+        select(Prompt).where(Prompt.id.in_(prompt_ids)).where(Prompt.deleted.is_(False))
+    ).all()
 
-    return prompts
+    return list(prompts)
 
 
 def get_prompt_by_id(

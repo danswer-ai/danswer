@@ -27,6 +27,8 @@ import {
   connectorConfigs,
   createConnectorInitialValues,
   createConnectorValidationSchema,
+  defaultPruneFreqDays,
+  defaultRefreshFreqMinutes,
 } from "@/lib/connectors/connectors";
 import { Modal } from "@/components/Modal";
 import GDriveMain from "./pages/gdrive/GoogleDrivePage";
@@ -154,7 +156,6 @@ export default function AddConnector({
       initialValues={createConnectorInitialValues(connector)}
       validationSchema={createConnectorValidationSchema(connector)}
       onSubmit={async (values) => {
-        console.log(" Iam submiing the connector");
         const {
           name,
           groups,
@@ -189,9 +190,9 @@ export default function AddConnector({
 
         // Apply advanced configuration-specific transforms.
         const advancedConfiguration: any = {
-          pruneFreq: pruneFreq * 60 * 60 * 24,
+          pruneFreq: (pruneFreq || defaultPruneFreqDays) * 60 * 60 * 24,
           indexingStart: convertStringToDateTime(indexingStart),
-          refreshFreq: refreshFreq * 60,
+          refreshFreq: (refreshFreq || defaultRefreshFreqMinutes) * 60,
         };
 
         // Google sites-specific handling

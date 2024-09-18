@@ -10,33 +10,36 @@ are multiple connector / credential pairs that have indexed it
 connector / credential pair from the access list
 (6) delete all relevant entries from postgres
 """
+from celery import shared_task
+from celery import Task
+from celery.exceptions import SoftTimeLimitExceeded
+from celery.utils.log import get_task_logger
 from sqlalchemy.orm import Session
 
+from danswer.access.access import get_access_for_document
 from danswer.access.access import get_access_for_documents
-from danswer.db.connector import fetch_connector_by_id
-from danswer.db.connector_credential_pair import (
-    delete_connector_credential_pair__no_commit,
-)
 from danswer.db.document import delete_document_by_connector_credential_pair__no_commit
+from danswer.db.document import delete_documents_by_connector_credential_pair__no_commit
 from danswer.db.document import delete_documents_complete__no_commit
-from danswer.db.document import get_document_connector_cnts
-from danswer.db.document import get_documents_for_connector_credential_pair
+from danswer.db.document import get_document
+from danswer.db.document import get_document_connector_count
+from danswer.db.document import get_document_connector_counts
+from danswer.db.document import mark_document_as_synced
 from danswer.db.document import prepare_to_modify_documents
-from danswer.db.document_set import delete_document_set_cc_pair_relationship__no_commit
+from danswer.db.document_set import fetch_document_sets_for_document
 from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.index_attempt import delete_index_attempts
-from danswer.db.models import ConnectorCredentialPair
+from danswer.document_index.document_index_utils import get_both_index_names
+from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import (
-    fetch_versioned_implementation_with_fallback,
-)
-from danswer.utils.variable_functionality import noop_fallback
 
 logger = setup_logger()
+
+# use this within celery tasks to get celery task specific logging
+task_logger = get_task_logger(__name__)
 
 _DELETION_BATCH_SIZE = 1000
 
@@ -57,13 +60,15 @@ def delete_connector_credential_pair_batch(
         with prepare_to_modify_documents(
             db_session=db_session, document_ids=document_ids
         ):
-            document_connector_cnts = get_document_connector_cnts(
+            document_connector_counts = get_document_connector_counts(
                 db_session=db_session, document_ids=document_ids
             )
 
             # figure out which docs need to be completely deleted
             document_ids_to_delete = [
-                document_id for document_id, cnt in document_connector_cnts if cnt == 1
+                document_id
+                for document_id, cnt in document_connector_counts
+                if cnt == 1
             ]
             logger.debug(f"Deleting documents: {document_ids_to_delete}")
 
@@ -76,7 +81,7 @@ def delete_connector_credential_pair_batch(
 
             # figure out which docs need to be updated
             document_ids_to_update = [
-                document_id for document_id, cnt in document_connector_cnts if cnt > 1
+                document_id for document_id, cnt in document_connector_counts if cnt > 1
             ]
 
             # maps document id to list of document set names
@@ -109,7 +114,7 @@ def delete_connector_credential_pair_batch(
             document_index.update(update_requests=update_requests)
 
             # clean up Postgres
-            delete_document_by_connector_credential_pair__no_commit(
+            delete_documents_by_connector_credential_pair__no_commit(
                 db_session=db_session,
                 document_ids=document_ids_to_update,
                 connector_credential_pair_identifier=ConnectorCredentialPairIdentifier(
@@ -120,76 +125,87 @@ def delete_connector_credential_pair_batch(
             db_session.commit()
 
 
-def delete_connector_credential_pair(
-    db_session: Session,
-    document_index: DocumentIndex,
-    cc_pair: ConnectorCredentialPair,
-) -> int:
-    connector_id = cc_pair.connector_id
-    credential_id = cc_pair.credential_id
+@shared_task(
+    name="document_by_cc_pair_cleanup_task",
+    bind=True,
+    soft_time_limit=45,
+    time_limit=60,
+    max_retries=3,
+)
+def document_by_cc_pair_cleanup_task(
+    self: Task, document_id: str, connector_id: int, credential_id: int
+) -> bool:
+    task_logger.info(f"document_id={document_id}")
 
-    num_docs_deleted = 0
-    while True:
-        documents = get_documents_for_connector_credential_pair(
-            db_session=db_session,
-            connector_id=connector_id,
-            credential_id=credential_id,
-            limit=_DELETION_BATCH_SIZE,
-        )
-        if not documents:
-            break
+    try:
+        with Session(get_sqlalchemy_engine()) as db_session:
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+            )
 
-        delete_connector_credential_pair_batch(
-            document_ids=[document.id for document in documents],
-            connector_id=connector_id,
-            credential_id=credential_id,
-            document_index=document_index,
-        )
-        num_docs_deleted += len(documents)
+            count = get_document_connector_count(db_session, document_id)
+            if count == 1:
+                # count == 1 means this is the only remaining cc_pair reference to the doc
+                # delete it from vespa and the db
+                document_index.delete(doc_ids=[document_id])
+                delete_documents_complete__no_commit(
+                    db_session=db_session,
+                    document_ids=[document_id],
+                )
+            elif count > 1:
+                # count > 1 means the document still has cc_pair references
+                doc = get_document(document_id, db_session)
+                if not doc:
+                    return False
 
-    # clean up the rest of the related Postgres entities
-    # index attempts
-    delete_index_attempts(
-        db_session=db_session,
-        cc_pair_id=cc_pair.id,
-    )
+                # the below functions do not include cc_pairs being deleted.
+                # i.e. they will correctly omit access for the current cc_pair
+                doc_access = get_access_for_document(
+                    document_id=document_id, db_session=db_session
+                )
 
-    # document sets
-    delete_document_set_cc_pair_relationship__no_commit(
-        db_session=db_session,
-        connector_id=connector_id,
-        credential_id=credential_id,
-    )
+                doc_sets = fetch_document_sets_for_document(document_id, db_session)
+                update_doc_sets: set[str] = set(doc_sets)
 
-    # user groups
-    cleanup_user_groups = fetch_versioned_implementation_with_fallback(
-        "danswer.db.user_group",
-        "delete_user_group_cc_pair_relationship__no_commit",
-        noop_fallback,
-    )
-    cleanup_user_groups(
-        cc_pair_id=cc_pair.id,
-        db_session=db_session,
-    )
+                update_request = UpdateRequest(
+                    document_ids=[document_id],
+                    document_sets=update_doc_sets,
+                    access=doc_access,
+                    boost=doc.boost,
+                    hidden=doc.hidden,
+                )
 
-    # finally, delete the cc-pair
-    delete_connector_credential_pair__no_commit(
-        db_session=db_session,
-        connector_id=connector_id,
-        credential_id=credential_id,
-    )
-    # if there are no credentials left, delete the connector
-    connector = fetch_connector_by_id(
-        db_session=db_session,
-        connector_id=connector_id,
-    )
-    if not connector or not len(connector.credentials):
-        logger.info("Found no credentials left for connector, deleting connector")
-        db_session.delete(connector)
-    db_session.commit()
+                # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
+                document_index.update_single(update_request=update_request)
 
-    logger.notice(
-        "Successfully deleted connector_credential_pair with connector_id:"
-        f" '{connector_id}' and credential_id: '{credential_id}'. Deleted {num_docs_deleted} docs."
-    )
-    return num_docs_deleted
+                # there are still other cc_pair references to the doc, so just resync to Vespa
+                delete_document_by_connector_credential_pair__no_commit(
+                    db_session=db_session,
+                    document_id=document_id,
+                    connector_credential_pair_identifier=ConnectorCredentialPairIdentifier(
+                        connector_id=connector_id,
+                        credential_id=credential_id,
+                    ),
+                )
+
+                mark_document_as_synced(document_id, db_session)
+            else:
+                pass
+
+            # update_docs_last_modified__no_commit(
+            #     db_session=db_session,
+            #     document_ids=[document_id],
+            # )
+
+            db_session.commit()
+    except SoftTimeLimitExceeded:
+        task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
+    except Exception as e:
+        task_logger.exception("Unexpected exception")
+
+        # Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
+        countdown = 2 ** (self.request.retries + 4)
+        self.retry(exc=e, countdown=countdown)
+
+    return True

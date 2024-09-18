@@ -13,6 +13,9 @@ from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.models import Settings
 from danswer.server.settings.store import store_settings as store_base_settings
 from danswer.utils.logger import setup_logger
+from ee.danswer.db.standard_answer import (
+    create_initial_default_standard_answer_category,
+)
 from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
 from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
 from ee.danswer.server.enterprise_settings.store import store_analytics_script
@@ -20,6 +23,7 @@ from ee.danswer.server.enterprise_settings.store import (
     store_settings as store_ee_settings,
 )
 from ee.danswer.server.enterprise_settings.store import upload_logo
+
 
 logger = setup_logger()
 
@@ -146,3 +150,6 @@ def seed_db() -> None:
         _seed_logo(db_session, seed_config.seeded_logo_path)
         _seed_enterprise_settings(seed_config)
         _seed_analytics_script(seed_config)
+
+        logger.notice("Verifying default standard answer category exists.")
+        create_initial_default_standard_answer_category(db_session)

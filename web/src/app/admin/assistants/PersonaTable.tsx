@@ -8,7 +8,11 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState, useMemo, useEffect } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
-import { deletePersona, personaComparator } from "./lib";
+import {
+  deletePersona,
+  personaComparator,
+  togglePersonaVisibility,
+} from "./lib";
 import { FiEdit2 } from "react-icons/fi";
 import { TrashIcon } from "@/components/icons/icons";
 import { getCurrentUser } from "@/lib/user";
@@ -30,22 +34,6 @@ function PersonaTypeDisplay({ persona }: { persona: Persona }) {
 
   return <Text>Personal {persona.owner && <>({persona.owner.email})</>}</Text>;
 }
-
-const togglePersonaVisibility = async (
-  personaId: number,
-  isVisible: boolean
-) => {
-  const response = await fetch(`/api/admin/persona/${personaId}/visible`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      is_visible: !isVisible,
-    }),
-  });
-  return response;
-};
 
 export function PersonasTable({
   allPersonas,

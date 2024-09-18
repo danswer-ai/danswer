@@ -406,6 +406,7 @@ def update_loop(
             warm_up_bi_encoder(
                 embedding_model=embedding_model,
             )
+            logger.notice("First inference complete.")
 
     client_primary: Client | SimpleJobClient
     client_secondary: Client | SimpleJobClient
@@ -434,6 +435,7 @@ def update_loop(
 
     existing_jobs: dict[int, Future | SimpleJob] = {}
 
+    logger.notice("Startup complete. Waiting for indexing jobs...")
     while True:
         start = time.time()
         start_time_utc = datetime.utcfromtimestamp(start).strftime("%Y-%m-%d %H:%M:%S")

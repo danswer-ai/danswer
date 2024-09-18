@@ -62,7 +62,7 @@ export function getLLMProviderOverrideForPersona(
   return null;
 }
 
-const MODEL_NAMES_SUPPORTING_IMAGES = [
+const MODEL_NAMES_SUPPORTING_IMAGE_INPUT = [
   "gpt-4o",
   "gpt-4o-mini",
   "gpt-4-vision-preview",
@@ -84,8 +84,31 @@ const MODEL_NAMES_SUPPORTING_IMAGES = [
 ];
 
 export function checkLLMSupportsImageInput(model: string) {
-  return MODEL_NAMES_SUPPORTING_IMAGES.some((modelName) => modelName === model);
+  return MODEL_NAMES_SUPPORTING_IMAGE_INPUT.some(
+    (modelName) => modelName === model
+  );
 }
+
+const MODEL_PROVIDER_PAIRS_SUPPORTING_IMAGE_OUTPUT = [
+  ["openai", "gpt-4o"],
+  ["openai", "gpt-4o-mini"],
+  ["openai", "gpt-4-vision-preview"],
+  ["openai", "gpt-4-turbo"],
+  ["openai", "gpt-4-1106-vision-preview"],
+  ["azure", "gpt-4o"],
+  ["azure", "gpt-4o-mini"],
+  ["azure", "gpt-4-vision-preview"],
+  ["azure", "gpt-4-turbo"],
+  ["azure", "gpt-4-1106-vision-preview"],
+];
+
+export function checkLLMSupportsImageOutput(provider: string, model: string) {
+  return MODEL_PROVIDER_PAIRS_SUPPORTING_IMAGE_OUTPUT.some(
+    (modelProvider) =>
+      modelProvider[0] === provider && modelProvider[1] === model
+  );
+}
+
 export const structureValue = (
   name: string,
   provider: string,

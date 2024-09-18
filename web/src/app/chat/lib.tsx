@@ -582,7 +582,7 @@ export function personaIncludesImage(selectedPersona: Persona) {
 
 const PARAMS_TO_SKIP = [
   SEARCH_PARAM_NAMES.SUBMIT_ON_LOAD,
-  SEARCH_PARAM_NAMES.USER_MESSAGE,
+  SEARCH_PARAM_NAMES.USER_PROMPT,
   SEARCH_PARAM_NAMES.TITLE,
   // only use these if explicitly passed in
   SEARCH_PARAM_NAMES.CHAT_ID,

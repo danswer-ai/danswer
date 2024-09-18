@@ -1,64 +1,133 @@
+import redis
 from celery import shared_task
+from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
+from redis import Redis
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import ObjectDeletedError
 
-from danswer.background.celery.celery_app import cleanup_connector_credential_pair_task
-from danswer.background.celery.celery_utils import _get_deletion_status
+from danswer.background.celery.celery_app import celery_app
+from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.configs.app_configs import JOB_TIMEOUT
+from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
+from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
-from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.enums import ConnectorCredentialPairStatus
+from danswer.db.enums import IndexingStatus
+from danswer.db.index_attempt import get_last_attempt
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.tasks import check_task_is_live_and_not_timed_out
+from danswer.db.search_settings import get_current_search_settings
+from danswer.redis.redis_pool import RedisPool
+
+redis_pool = RedisPool()
 
 # use this within celery tasks to get celery task specific logging
 task_logger = get_task_logger(__name__)
 
 
 @shared_task(
-    name="check_for_cc_pair_deletion_task",
+    name="check_for_connector_deletion_task",
     soft_time_limit=JOB_TIMEOUT,
+    trail=False,
 )
-def check_for_cc_pair_deletion_task() -> None:
-    """Runs periodically to check if any deletion tasks should be run"""
-    with Session(get_sqlalchemy_engine()) as db_session:
-        # check if any cc pairs are up for deletion
-        cc_pairs = get_connector_credential_pairs(db_session)
-        for cc_pair in cc_pairs:
-            if should_kick_off_deletion_of_cc_pair(cc_pair, db_session):
-                task_logger.info(
-                    f"Deleting the {cc_pair.name} connector credential pair"
+def check_for_connector_deletion_task() -> None:
+    r = redis_pool.get_client()
+
+    lock_beat = r.lock(
+        DanswerRedisLocks.CHECK_CONNECTOR_DELETION_BEAT_LOCK,
+        timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
+    )
+
+    try:
+        # these tasks should never overlap
+        if not lock_beat.acquire(blocking=False):
+            return
+
+        with Session(get_sqlalchemy_engine()) as db_session:
+            cc_pairs = get_connector_credential_pairs(db_session)
+            for cc_pair in cc_pairs:
+                try_generate_document_cc_pair_cleanup_tasks(
+                    cc_pair, db_session, r, lock_beat
                 )
+    except SoftTimeLimitExceeded:
+        task_logger.info(
+            "Soft time limit exceeded, task is being terminated gracefully."
+        )
+    except Exception:
+        task_logger.exception("Unexpected exception")
+    finally:
+        if lock_beat.owned():
+            lock_beat.release()
 
-                cleanup_connector_credential_pair_task.apply_async(
-                    kwargs=dict(
-                        connector_id=cc_pair.connector.id,
-                        credential_id=cc_pair.credential.id,
-                    ),
-                )
 
+def try_generate_document_cc_pair_cleanup_tasks(
+    cc_pair: ConnectorCredentialPair,
+    db_session: Session,
+    r: Redis,
+    lock_beat: redis.lock.Lock,
+) -> int | None:
+    """Returns an int if syncing is needed. The int represents the number of sync tasks generated.
+    Note that syncing can still be required even if the number of sync tasks generated is zero.
+    Returns None if no syncing is required.
+    """
 
-def should_kick_off_deletion_of_cc_pair(
-    cc_pair: ConnectorCredentialPair, db_session: Session
-) -> bool:
+    lock_beat.reacquire()
+
+    rcd = RedisConnectorDeletion(cc_pair.id)
+
+    # don't generate sync tasks if tasks are still pending
+    if r.exists(rcd.fence_key):
+        return None
+
+    # we need to refresh the state of the object inside the fence
+    # to avoid a race condition with db.commit/fence deletion
+    # at the end of this taskset
+    try:
+        db_session.refresh(cc_pair)
+    except ObjectDeletedError:
+        return None
+
     if cc_pair.status != ConnectorCredentialPairStatus.DELETING:
-        return False
+        return None
 
-    if check_deletion_attempt_is_allowed(cc_pair, db_session):
-        return False
+    search_settings = get_current_search_settings(db_session)
 
-    deletion_task = _get_deletion_status(
+    last_indexing = get_last_attempt(
         connector_id=cc_pair.connector_id,
         credential_id=cc_pair.credential_id,
+        search_settings_id=search_settings.id,
         db_session=db_session,
     )
-    if deletion_task and check_task_is_live_and_not_timed_out(
-        deletion_task,
-        db_session,
-        # 1 hour timeout
-        timeout=60 * 60,
-    ):
-        return False
+    if last_indexing:
+        if (
+            last_indexing.status == IndexingStatus.IN_PROGRESS
+            or last_indexing.status == IndexingStatus.NOT_STARTED
+        ):
+            return None
 
-    return True
+    # add tasks to celery and build up the task set to monitor in redis
+    r.delete(rcd.taskset_key)
+
+    # Add all documents that need to be updated into the queue
+    task_logger.info(
+        f"RedisConnectorDeletion.generate_tasks starting. cc_pair_id={cc_pair.id}"
+    )
+    tasks_generated = rcd.generate_tasks(celery_app, db_session, r, lock_beat)
+    if tasks_generated is None:
+        return None
+
+    # Currently we are allowing the sync to proceed with 0 tasks.
+    # It's possible for sets/groups to be generated initially with no entries
+    # and they still need to be marked as up to date.
+    # if tasks_generated == 0:
+    #     return 0
+
+    task_logger.info(
+        f"RedisConnectorDeletion.generate_tasks finished. "
+        f"cc_pair_id={cc_pair.id} tasks_generated={tasks_generated}"
+    )
+
+    # set this only after all tasks have been added
+    r.set(rcd.fence_key, tasks_generated)
+    return tasks_generated
