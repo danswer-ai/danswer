@@ -48,27 +48,37 @@ function Main({ ccPairId }: { ccPairId: number }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { popup, setPopup } = usePopup();
+
+  const finishConnectorDeletion = () => {
+    setPopup({
+      message: "Connector deleted successfully",
+      type: "success",
+    });
+    setTimeout(() => {
+      router.push("/admin/indexing/status");
+    }, 2000);
+  };
+
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isEditing]);
 
-  // New useEffect for handling redirection when connector is deleted
   useEffect(() => {
-    if (!isLoading && ccPair && !error) {
-      setHasLoadedOnce(true); // Mark that the page has loaded successfully
+    if (isLoading) {
+      return;
+    }
+    if (ccPair && !error) {
+      setHasLoadedOnce(true);
     }
 
-    if (!isLoading && hasLoadedOnce && (error || !ccPair)) {
-      // Redirect to some other page when the connector no longer exists or there's an error
-      router.push("/admin/indexing/status");
-    } else if (
-      ccPair?.status === ConnectorCredentialPairStatus.DELETING &&
-      !ccPair.connector
+    if (
+      (hasLoadedOnce && (error || !ccPair)) ||
+      (ccPair?.status === ConnectorCredentialPairStatus.DELETING &&
+        !ccPair.connector)
     ) {
-      // Redirect if the status is DELETING and the connector is gone
-      router.push("/admin/indexing/status");
+      finishConnectorDeletion();
     }
   }, [isLoading, ccPair, error, hasLoadedOnce, router]);
 

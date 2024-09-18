@@ -192,6 +192,7 @@ def build_custom_tools_from_openapi_schema(
                 schema_str = schema_str.replace(placeholder, str(value))
 
         openapi_schema = json.loads(schema_str)
+        print(openapi_schema)
 
     url = openapi_to_url(openapi_schema)
     method_specs = openapi_to_method_specs(openapi_schema)
