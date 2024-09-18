@@ -10,8 +10,7 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-# See https://github.com/Asana/python-asana/tree/master?tab=readme-ov-file#documentation-for-api-endpoints
-# for documentation on how to use the Asana API
+# Refer to https://github.com/Asana/python-asana/tree/master?tab=readme-ov-file#documentation-for-api-endpoints
 
 
 class AsanaTask:
@@ -73,7 +72,7 @@ class AsanaAPI:
         for project_info in projects:
             project_gid = project_info["gid"]
             if project_gids is None or project_gid in project_gids:
-                # put in a list ('projects' is a generator) to avoid the "Your pagination token has expired" error later:
+                # Avoids the "Your pagination token has expired" error
                 projects_list.append(project_gid)
             else:
                 logger.info(
@@ -96,8 +95,7 @@ class AsanaAPI:
     def get_tasks_for_project(
         self, project_gid: str, start_date: str, start_seconds: int
     ) -> Iterator[AsanaTask]:
-        # Indexing logic:
-        # index everything that is not archived and that's public or private but in the team we're interested in
+        # Index all tasks that are not archived and that are available with current settings
         project = self.project_api.get_project(project_gid, opts={})
         if project["archived"]:
             logger.info(f"Skipping archived project: {project['name']} ({project_gid})")
@@ -109,7 +107,6 @@ class AsanaAPI:
             return []
         if project["privacy_setting"] == "private":
             # 'private' projects may not really be private, namely when the team_gid is set.
-            # We're assuming team_gid refers to an "everyone" team:
             if self.team_gid and project["team"]["gid"] != self.team_gid:
                 logger.info(
                     f"Skipping private project that does not have the configured team id '{self.team_gid}': "

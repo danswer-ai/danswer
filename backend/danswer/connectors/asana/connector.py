@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import datetime
 from typing import Any
 
@@ -91,17 +90,16 @@ class AsanaConnector(LoadConnector, PollConnector):
 
 if __name__ == "__main__":
     import time
+    import os
 
     connector = AsanaConnector(
-        "1208336425866847",
-        # os.environ["WORKSPACE_ID"],
-        # os.environ["PROJECT_IDS"],
-        # os.environ["TEAM_ID"],
+        os.environ["WORKSPACE_ID"],
+        os.environ["PROJECT_IDS"],
+        os.environ["TEAM_ID"],
     )
     connector.load_credentials(
         {
-            "asana_api_token_secret": "2/1208336425866834/1208336451477119:d6357104d6bfa7c96aa8f99052645c14",
-            # "asana_api_token_secret": os.environ["API_TOKEN"],
+            "asana_api_token_secret": os.environ["API_TOKEN"],
         }
     )
     all_docs = connector.load_from_state()

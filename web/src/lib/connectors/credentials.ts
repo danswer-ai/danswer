@@ -420,7 +420,7 @@ export const credentialDisplayNames: Record<string, string> = {
   sp_directory_id: "SharePoint Directory ID",
 
   // Asana
-  asana_api_token_secret: "Asana API Token Secret",
+  asana_api_token_secret: "Asana API Token",
 
   // Teams
   teams_client_id: "Microsoft Teams Client ID",
