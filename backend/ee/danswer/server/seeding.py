@@ -13,6 +13,9 @@ from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.models import Settings
 from danswer.server.settings.store import store_settings as store_base_settings
 from danswer.utils.logger import setup_logger
+from ee.danswer.db.standard_answer import (
+    create_initial_default_standard_answer_category,
+)
 from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
 from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
 from ee.danswer.server.enterprise_settings.store import store_analytics_script
@@ -20,6 +23,7 @@ from ee.danswer.server.enterprise_settings.store import (
     store_settings as store_ee_settings,
 )
 from ee.danswer.server.enterprise_settings.store import upload_logo
+
 
 logger = setup_logger()
 
@@ -51,10 +55,12 @@ def _seed_llms(
     if llm_upsert_requests:
         logger.notice("Seeding LLMs")
         seeded_providers = [
-            upsert_llm_provider(db_session, llm_upsert_request)
+            upsert_llm_provider(llm_upsert_request, db_session)
             for llm_upsert_request in llm_upsert_requests
         ]
-        update_default_provider(db_session, seeded_providers[0].id)
+        update_default_provider(
+            provider_id=seeded_providers[0].id, db_session=db_session
+        )
 
 
 def _seed_personas(db_session: Session, personas: list[CreatePersonaRequest]) -> None:
@@ -144,3 +150,6 @@ def seed_db() -> None:
         _seed_logo(db_session, seed_config.seeded_logo_path)
         _seed_enterprise_settings(seed_config)
         _seed_analytics_script(seed_config)
+
+        logger.notice("Verifying default standard answer category exists.")
+        create_initial_default_standard_answer_category(db_session)

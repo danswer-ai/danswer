@@ -1,7 +1,6 @@
 "use client";
 
 import { CCPairFullInfo, ConnectorCredentialPairStatus } from "./types";
-import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
 import { Button, Divider, Title } from "@tremor/react";
@@ -11,7 +10,6 @@ import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
 import { DeletionButton } from "./DeletionButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ReIndexButton } from "./ReIndexButton";
-import { isCurrentlyDeleting } from "@/lib/documentDeletion";
 import { ValidSources } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
@@ -24,6 +22,7 @@ import { useEffect, useRef, useState } from "react";
 import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { updateConnectorCredentialPairName } from "@/lib/connector";
+import DeletionErrorStatus from "./DeletionErrorStatus";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -86,23 +85,12 @@ function Main({ ccPairId }: { ccPairId: number }) {
     return (
       <ErrorCallout
         errorTitle={`Failed to fetch info on Connector with ID ${ccPairId}`}
-        errorMsg={error?.info?.detail || error.toString()}
+        errorMsg={error?.info?.detail || error?.toString() || "Unknown error"}
       />
     );
   }
 
-  const lastIndexAttempt = ccPair.index_attempts[0];
   const isDeleting = ccPair.status === ConnectorCredentialPairStatus.DELETING;
-
-  // figure out if we need to artificially deflate the number of docs indexed.
-  // This is required since the total number of docs indexed by a CC Pair is
-  // updated before the new docs for an indexing attempt. If we don't do this,
-  // there is a mismatch between these two numbers which may confuse users.
-  const totalDocsIndexed =
-    lastIndexAttempt?.status === "in_progress" &&
-    ccPair.index_attempts.length === 1
-      ? lastIndexAttempt.total_docs_indexed
-      : ccPair.num_docs_indexed;
 
   const refresh = () => {
     mutate(buildCCPairInfoUrl(ccPairId));
@@ -182,13 +170,13 @@ function Main({ ccPairId }: { ccPairId: number }) {
         )}
       </div>
       <CCPairStatus
-        status={lastIndexAttempt?.status || "not_started"}
+        status={ccPair.last_index_attempt_status || "not_started"}
         disabled={ccPair.status === ConnectorCredentialPairStatus.PAUSED}
         isDeleting={isDeleting}
       />
       <div className="text-sm mt-1">
         Total Documents Indexed:{" "}
-        <b className="text-emphasis">{totalDocsIndexed}</b>
+        <b className="text-emphasis">{ccPair.num_docs_indexed}</b>
       </div>
       {!ccPair.is_editable_for_current_user && (
         <div className="text-sm mt-2 text-neutral-500 italic">
@@ -197,6 +185,17 @@ function Main({ ccPairId }: { ccPairId: number }) {
             : "This connector belongs to groups where you don't have curator permissions, so it's not editable."}
         </div>
       )}
+
+      {ccPair.deletion_failure_message &&
+        ccPair.status === ConnectorCredentialPairStatus.DELETING && (
+          <>
+            <div className="mt-6" />
+            <DeletionErrorStatus
+              deletion_failure_message={ccPair.deletion_failure_message}
+            />
+          </>
+        )}
+
       {credentialTemplates[ccPair.connector.source] &&
         ccPair.is_editable_for_current_user && (
           <>

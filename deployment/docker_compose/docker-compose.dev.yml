@@ -1,4 +1,3 @@
-version: '3'
 services:
   api_server:
     image: danswer/danswer-backend:${IMAGE_TAG:-latest}
@@ -12,6 +11,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
       - inference_model_server
     restart: always
     ports:
@@ -34,6 +34,7 @@ services:
       - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET:-}
       - OPENID_CONFIG_URL=${OPENID_CONFIG_URL:-}
       - TRACK_EXTERNAL_IDP_EXPIRY=${TRACK_EXTERNAL_IDP_EXPIRY:-}
+      - CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN:-}
       # Gen AI Settings
       - GEN_AI_MAX_TOKENS=${GEN_AI_MAX_TOKENS:-}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
@@ -62,8 +63,10 @@ services:
       # Other services
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
+      - REDIS_HOST=cache
       - WEB_DOMAIN=${WEB_DOMAIN:-} # For frontend redirect auth purpose
       # Don't change the NLP model configs unless you know what you're doing
+      - EMBEDDING_BATCH_SIZE=${EMBEDDING_BATCH_SIZE:-}
       - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
       - DOC_EMBEDDING_DIM=${DOC_EMBEDDING_DIM:-}
       - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
@@ -84,12 +87,14 @@ services:
       - LOG_ENDPOINT_LATENCY=${LOG_ENDPOINT_LATENCY:-}
       - LOG_POSTGRES_LATENCY=${LOG_POSTGRES_LATENCY:-}
       - LOG_POSTGRES_CONN_COUNTS=${LOG_POSTGRES_CONN_COUNTS:-}
+
+      # Chat Configs
+      - HARD_DELETE_CHATS=${HARD_DELETE_CHATS:-}
       
       # Enterprise Edition only
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
       - API_KEY_HASH_ROUNDS=${API_KEY_HASH_ROUNDS:-}
       # Seeding configuration
-      - ENV_SEED_CONFIGURATION=${ENV_SEED_CONFIGURATION:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -107,6 +112,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
       - inference_model_server
       - indexing_model_server
     restart: always
@@ -137,6 +143,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
       - POSTGRES_DB=${POSTGRES_DB:-}
       - VESPA_HOST=index
+      - REDIS_HOST=cache
       - WEB_DOMAIN=${WEB_DOMAIN:-} # For frontend redirect auth purpose for OAuth2 connectors
       # Don't change the NLP model configs unless you know what you're doing
       - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
@@ -148,6 +155,7 @@ services:
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
       - INDEXING_MODEL_SERVER_HOST=${INDEXING_MODEL_SERVER_HOST:-indexing_model_server}
       # Indexing Configs
+      - VESPA_SEARCHER_THREADS=${VESPA_SEARCHER_THREADS:-}
       - NUM_INDEXING_WORKERS=${NUM_INDEXING_WORKERS:-}
       - ENABLED_CONNECTOR_TYPES=${ENABLED_CONNECTOR_TYPES:-}
       - DISABLE_INDEX_UPDATE_ON_SWAP=${DISABLE_INDEX_UPDATE_ON_SWAP:-}
@@ -161,6 +169,7 @@ services:
       - GONG_CONNECTOR_START_TIME=${GONG_CONNECTOR_START_TIME:-}
       - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
       - GITHUB_CONNECTOR_BASE_URL=${GITHUB_CONNECTOR_BASE_URL:-}
+
       # Danswer SlackBot Configs
       - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
       - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
@@ -220,6 +229,7 @@ services:
 
       # Enterprise Edition only
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
+      - NEXT_PUBLIC_CUSTOM_REFRESH_URL=${NEXT_PUBLIC_CUSTOM_REFRESH_URL:-}
 
   inference_model_server:
     image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
@@ -261,6 +271,7 @@ services:
       fi"
     restart: on-failure
     environment:
+      - INDEX_BATCH_SIZE=${INDEX_BATCH_SIZE:-}
       - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
       - INDEXING_ONLY=True
       # Set to debug to get more fine-grained logs
@@ -328,8 +339,17 @@ services:
     # in order to make this work on both Unix-like systems and windows
     command: > 
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
-      && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
-        
+      && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"  
+
+  cache:
+    image: redis:7.4-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    # docker silently mounts /data even without an explicit volume mount, which enables
+    # persistence. explicitly setting save and appendonly forces ephemeral behavior.
+    command: redis-server --save "" --appendonly no
+
 volumes:
   db_volume:
   vespa_volume: # Created by the container itself

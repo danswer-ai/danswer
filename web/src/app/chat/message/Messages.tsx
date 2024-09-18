@@ -8,14 +8,7 @@ import {
   FiGlobe,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
-import {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   DanswerDocument,
@@ -46,12 +39,7 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Citation } from "@/components/search/results/Citation";
 import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
-import {
-  ThumbsUpIcon,
-  ThumbsDownIcon,
-  LikeFeedback,
-  DislikeFeedback,
-} from "@/components/icons/icons";
+import { LikeFeedback, DislikeFeedback } from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
@@ -65,6 +53,7 @@ import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
+import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -367,54 +356,14 @@ export const AIMessage = ({
                               key={messageId}
                               className="prose max-w-full text-base"
                               components={{
-                                a: (props) => {
-                                  const { node, ...rest } = props;
-                                  const value = rest.children;
-
-                                  if (value?.toString().startsWith("*")) {
-                                    return (
-                                      <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
-                                    );
-                                  } else if (
-                                    value?.toString().startsWith("[")
-                                  ) {
-                                    // for some reason <a> tags cause the onClick to not apply
-                                    // and the links are unclickable
-                                    // TODO: fix the fact that you have to double click to follow link
-                                    // for the first link
-                                    return (
-                                      <Citation
-                                        link={rest?.href}
-                                        key={node?.position?.start?.offset}
-                                      >
-                                        {rest.children}
-                                      </Citation>
-                                    );
-                                  } else {
-                                    return (
-                                      <a
-                                        key={node?.position?.start?.offset}
-                                        onMouseDown={() =>
-                                          rest.href
-                                            ? window.open(rest.href, "_blank")
-                                            : undefined
-                                        }
-                                        className="cursor-pointer text-link hover:text-link-hover"
-                                      >
-                                        {rest.children}
-                                      </a>
-                                    );
-                                  }
-                                },
+                                a: MemoizedLink,
+                                p: MemoizedParagraph,
                                 code: (props) => (
                                   <CodeBlock
                                     className="w-full"
                                     {...props}
                                     content={content as string}
                                   />
-                                ),
-                                p: ({ node, ...props }) => (
-                                  <p {...props} className="text-default" />
                                 ),
                               }}
                               remarkPlugins={[remarkGfm]}
@@ -570,8 +519,8 @@ export const AIMessage = ({
                       <div
                         ref={hoverElementRef}
                         className={`
-
                         absolute -bottom-5
+                        z-20
                         invisible ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!visible"}
                         opacity-0 ${(isHovering || isRegenerateHovered || settings?.isMobile) && "!opacity-100"}
                         translate-y-2 ${(isHovering || settings?.isMobile) && "!translate-y-0"}
@@ -715,6 +664,7 @@ export const HumanMessage = ({
       // Move the cursor to the end of the text
       textareaRef.current.selectionStart = textareaRef.current.value.length;
       textareaRef.current.selectionEnd = textareaRef.current.value.length;
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [isEditing]);
 
@@ -787,6 +737,7 @@ export const HumanMessage = ({
                         style={{ scrollbarWidth: "thin" }}
                         onChange={(e) => {
                           setEditedContent(e.target.value);
+                          textareaRef.current!.style.height = "auto";
                           e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
                         onKeyDown={(e) => {
@@ -881,7 +832,7 @@ export const HumanMessage = ({
                           !isEditing &&
                           (!files || files.length === 0)
                         ) && "ml-auto"
-                      } relative   flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
+                      } relative flex-none max-w-[70%] mb-auto whitespace-break-spaces rounded-3xl bg-user px-5 py-2.5`}
                     >
                       {content}
                     </div>

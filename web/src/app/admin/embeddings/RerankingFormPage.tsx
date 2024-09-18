@@ -1,16 +1,28 @@
-import React, { Dispatch, forwardRef, SetStateAction, useState } from "react";
+import React, {
+  Dispatch,
+  forwardRef,
+  SetStateAction,
+  useContext,
+  useState,
+} from "react";
 import { Formik, Form, FormikProps } from "formik";
 import * as Yup from "yup";
 import {
   RerankerProvider,
   RerankingDetails,
+  RerankingModel,
   rerankingModels,
 } from "./interfaces";
 import { FiExternalLink } from "react-icons/fi";
-import { CohereIcon, MixedBreadIcon } from "@/components/icons/icons";
+import {
+  CohereIcon,
+  LiteLLMIcon,
+  MixedBreadIcon,
+} from "@/components/icons/icons";
 import { Modal } from "@/components/Modal";
 import { Button } from "@tremor/react";
 import { TextFormField } from "@/components/admin/connectors/Field";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 interface RerankingDetailsFormProps {
   setRerankingDetails: Dispatch<SetStateAction<RerankingDetails>>;
@@ -34,7 +46,14 @@ const RerankingDetailsForm = forwardRef<
     },
     ref
   ) => {
+    const [showGpuWarningModalModel, setShowGpuWarningModalModel] =
+      useState<RerankingModel | null>(null);
     const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+    const [showLiteLLMConfigurationModal, setShowLiteLLMConfigurationModal] =
+      useState(false);
+
+    const combinedSettings = useContext(SettingsContext);
+    const gpuEnabled = combinedSettings?.settings.gpu_enabled;
 
     return (
       <Formik
@@ -48,22 +67,20 @@ const RerankingDetailsForm = forwardRef<
             .optional(),
           api_key: Yup.string().nullable(),
           num_rerank: Yup.number().min(1, "Must be at least 1"),
+          rerank_api_url: Yup.string()
+            .url("Must be a valid URL")
+            .matches(/^https?:\/\//, "URL must start with http:// or https://")
+            .nullable(),
         })}
         onSubmit={async (_, { setSubmitting }) => {
           setSubmitting(false);
         }}
         enableReinitialize={true}
       >
-        {({ values, setFieldValue }) => {
+        {({ values, setFieldValue, resetForm }) => {
           const resetRerankingValues = () => {
-            setRerankingDetails({
-              ...values,
-              rerank_provider_type: null!,
-              rerank_model_name: null,
-            });
-            setFieldValue("rerank_provider_type", null);
-            setFieldValue("rerank_model_name", null);
-            setFieldValue("rerank_api_key", null);
+            setRerankingDetails(originalRerankingDetails);
+            resetForm();
           };
 
           return (
@@ -131,14 +148,22 @@ const RerankingDetailsForm = forwardRef<
                       )
                     : rerankingModels.filter(
                         (modelCard) =>
-                          modelCard.modelName ==
-                          originalRerankingDetails.rerank_model_name
+                          (modelCard.modelName ==
+                            originalRerankingDetails.rerank_model_name &&
+                            modelCard.rerank_provider_type ==
+                              originalRerankingDetails.rerank_provider_type) ||
+                          (modelCard.rerank_provider_type ==
+                            RerankerProvider.LITELLM &&
+                            originalRerankingDetails.rerank_provider_type ==
+                              RerankerProvider.LITELLM)
                       )
                   ).map((card) => {
                     const isSelected =
                       values.rerank_provider_type ===
                         card.rerank_provider_type &&
-                      values.rerank_model_name === card.modelName;
+                      (card.modelName == null ||
+                        values.rerank_model_name === card.modelName);
+
                     return (
                       <div
                         key={`${card.rerank_provider_type}-${card.modelName}`}
@@ -148,26 +173,45 @@ const RerankingDetailsForm = forwardRef<
                             : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
                         }`}
                         onClick={() => {
-                          if (card.rerank_provider_type) {
+                          if (
+                            card.rerank_provider_type == RerankerProvider.COHERE
+                          ) {
                             setIsApiKeyModalOpen(true);
+                          } else if (
+                            card.rerank_provider_type ==
+                            RerankerProvider.LITELLM
+                          ) {
+                            setShowLiteLLMConfigurationModal(true);
+                          } else if (
+                            !card.rerank_provider_type &&
+                            !gpuEnabled
+                          ) {
+                            setShowGpuWarningModalModel(card);
                           }
-                          setRerankingDetails({
-                            ...values,
-                            rerank_provider_type: card.rerank_provider_type!,
-                            rerank_model_name: card.modelName,
-                            rerank_api_key: null,
-                          });
-                          setFieldValue(
-                            "rerank_provider_type",
-                            card.rerank_provider_type
-                          );
-                          setFieldValue("rerank_model_name", card.modelName);
+
+                          if (!isSelected) {
+                            setRerankingDetails({
+                              ...values,
+                              rerank_provider_type: card.rerank_provider_type!,
+                              rerank_model_name: card.modelName || null,
+                              rerank_api_key: null,
+                              rerank_api_url: null,
+                            });
+                            setFieldValue(
+                              "rerank_provider_type",
+                              card.rerank_provider_type
+                            );
+                            setFieldValue("rerank_model_name", card.modelName);
+                          }
                         }}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center">
                             {card.rerank_provider_type ===
-                            RerankerProvider.COHERE ? (
+                            RerankerProvider.LITELLM ? (
+                              <LiteLLMIcon size={24} className="mr-2" />
+                            ) : card.rerank_provider_type ===
+                              RerankerProvider.COHERE ? (
                               <CohereIcon size={24} className="mr-2" />
                             ) : (
                               <MixedBreadIcon size={24} className="mr-2" />
@@ -199,6 +243,115 @@ const RerankingDetailsForm = forwardRef<
                   })}
                 </div>
 
+                {showGpuWarningModalModel && (
+                  <Modal
+                    onOutsideClick={() => setShowGpuWarningModalModel(null)}
+                    width="w-[500px] flex flex-col"
+                    title="GPU Not Enabled"
+                  >
+                    <>
+                      <p className="text-error font-semibold">Warning:</p>
+                      <p>
+                        Local reranking models require significant computational
+                        resources and may perform slowly without GPU
+                        acceleration. Consider switching to GPU-enabled
+                        infrastructure or using a cloud-based alternative for
+                        better performance.
+                      </p>
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={() => setShowGpuWarningModalModel(null)}
+                          color="blue"
+                          size="xs"
+                        >
+                          Understood
+                        </Button>
+                      </div>
+                    </>
+                  </Modal>
+                )}
+                {showLiteLLMConfigurationModal && (
+                  <Modal
+                    onOutsideClick={() => {
+                      resetForm();
+                      setShowLiteLLMConfigurationModal(false);
+                    }}
+                    width="w-[800px]"
+                    title="API Key Configuration"
+                  >
+                    <div className="w-full  flex flex-col gap-y-4 px-4">
+                      <TextFormField
+                        subtext="Set the URL at which your LiteLLM Proxy is hosted"
+                        placeholder={values.rerank_api_url || undefined}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const value = e.target.value;
+                          setRerankingDetails({
+                            ...values,
+                            rerank_api_url: value,
+                          });
+                          setFieldValue("rerank_api_url", value);
+                        }}
+                        type="text"
+                        label="LiteLLM Proxy  URL"
+                        name="rerank_api_url"
+                      />
+
+                      <TextFormField
+                        subtext="Set the key to access your LiteLLM Proxy"
+                        placeholder={
+                          values.rerank_api_key
+                            ? "*".repeat(values.rerank_api_key.length)
+                            : undefined
+                        }
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const value = e.target.value;
+                          setRerankingDetails({
+                            ...values,
+                            rerank_api_key: value,
+                          });
+                          setFieldValue("rerank_api_key", value);
+                        }}
+                        type="password"
+                        label="LiteLLM Proxy Key"
+                        name="rerank_api_key"
+                        optional
+                      />
+
+                      <TextFormField
+                        subtext="Set the model name to use for LiteLLM Proxy"
+                        placeholder={
+                          values.rerank_model_name
+                            ? "*".repeat(values.rerank_model_name.length)
+                            : undefined
+                        }
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const value = e.target.value;
+                          setRerankingDetails({
+                            ...values,
+                            rerank_model_name: value,
+                          });
+                          setFieldValue("rerank_model_name", value);
+                        }}
+                        label="LiteLLM Model Name"
+                        name="rerank_model_name"
+                        optional
+                      />
+
+                      <div className="flex w-full justify-end mt-4">
+                        <Button
+                          onClick={() => {
+                            setShowLiteLLMConfigurationModal(false);
+                          }}
+                          color="blue"
+                          size="xs"
+                        >
+                          Update
+                        </Button>
+                      </div>
+                    </div>
+                  </Modal>
+                )}
+
                 {isApiKeyModalOpen && (
                   <Modal
                     onOutsideClick={() => {
@@ -218,7 +371,11 @@ const RerankingDetailsForm = forwardRef<
                   >
                     <div className="w-full px-4">
                       <TextFormField
-                        placeholder={values.rerank_api_key || undefined}
+                        placeholder={
+                          values.rerank_api_key
+                            ? "*".repeat(values.rerank_api_key.length)
+                            : undefined
+                        }
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const value = e.target.value;
                           setRerankingDetails({
@@ -229,7 +386,7 @@ const RerankingDetailsForm = forwardRef<
                         }}
                         type="password"
                         label="Cohere API Key"
-                        name="api_key"
+                        name="rerank_api_key"
                       />
                       <div className="flex w-full justify-end mt-4">
                         <Button

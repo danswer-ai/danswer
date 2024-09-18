@@ -9,7 +9,9 @@ const eePaths = [
   "/admin/performance/query-history",
   "/admin/whitelabeling",
   "/admin/performance/custom-analytics",
+  "/admin/standard-answer",
 ];
+
 const eePathsForMatcher = eePaths.map((path) => `${path}/:path*`);
 
 export async function middleware(request: NextRequest) {

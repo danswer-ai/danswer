@@ -164,7 +164,7 @@ def get_chat_session(
         chat_session_id=session_id,
         description=chat_session.description,
         persona_id=chat_session.persona_id,
-        persona_name=chat_session.persona.name,
+        persona_name=chat_session.persona.name if chat_session.persona else None,
         current_alternate_model=chat_session.current_alternate_model,
         messages=[
             translate_db_message_to_chat_message_detail(

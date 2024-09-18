@@ -200,6 +200,7 @@ class ImageGenerationTool(Tool):
                 revised_prompt=response.data[0]["revised_prompt"],
                 url=response.data[0]["url"],
             )
+
         except Exception as e:
             logger.debug(f"Error occured during image generation: {e}")
 

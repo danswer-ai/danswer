@@ -5,6 +5,7 @@ from typing import cast
 from typing import Optional
 from typing import TypeVar
 
+from fastapi import HTTPException
 from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.models.blocks import DividerBlock
@@ -38,6 +39,7 @@ from danswer.db.models import SlackBotConfig
 from danswer.db.models import SlackBotResponseType
 from danswer.db.persona import fetch_persona_by_id
 from danswer.db.search_settings import get_current_search_settings
+from danswer.db.users import get_user_by_email
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
@@ -99,6 +101,12 @@ def handle_regular_answer(
     messages = message_info.thread_messages
     message_ts_to_respond_to = message_info.msg_to_respond
     is_bot_msg = message_info.is_bot_msg
+    user = None
+    if message_info.is_bot_dm:
+        if message_info.email:
+            engine = get_sqlalchemy_engine()
+            with Session(engine) as db_session:
+                user = get_user_by_email(message_info.email, db_session)
 
     document_set_names: list[str] | None = None
     persona = slack_bot_config.persona if slack_bot_config else None
@@ -128,7 +136,8 @@ def handle_regular_answer(
         else slack_bot_config.response_type == SlackBotResponseType.CITATIONS
     )
 
-    if not message_ts_to_respond_to:
+    if not message_ts_to_respond_to and not is_bot_msg:
+        # if the message is not "/danswer" command, then it should have a message ts to respond to
         raise RuntimeError(
             "No message timestamp to respond to in `handle_message`. This should never happen."
         )
@@ -145,15 +154,23 @@ def handle_regular_answer(
 
         with Session(get_sqlalchemy_engine()) as db_session:
             if len(new_message_request.messages) > 1:
-                persona = cast(
-                    Persona,
-                    fetch_persona_by_id(
-                        db_session,
-                        new_message_request.persona_id,
-                        user=None,
-                        get_editable=False,
-                    ),
-                )
+                if new_message_request.persona_config:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Slack bot does not support persona config",
+                    )
+
+                elif new_message_request.persona_id:
+                    persona = cast(
+                        Persona,
+                        fetch_persona_by_id(
+                            db_session,
+                            new_message_request.persona_id,
+                            user=None,
+                            get_editable=False,
+                        ),
+                    )
+
                 llm, _ = get_llms_for_persona(persona)
 
                 # In cases of threads, split the available tokens between docs and thread context
@@ -185,7 +202,7 @@ def handle_regular_answer(
             # This also handles creating the query event in postgres
             answer = get_search_answer(
                 query_req=new_message_request,
-                user=None,
+                user=user,
                 max_document_tokens=max_document_tokens,
                 max_history_tokens=max_history_tokens,
                 db_session=db_session,
@@ -412,7 +429,7 @@ def handle_regular_answer(
     )
 
     # Get the chunks fed to the LLM only, then fill with other docs
-    llm_doc_inds = answer.llm_chunks_indices or []
+    llm_doc_inds = answer.llm_selected_doc_indices or []
     llm_docs = [top_docs[i] for i in llm_doc_inds]
     remaining_docs = [
         doc for idx, doc in enumerate(top_docs) if idx not in llm_doc_inds
@@ -463,7 +480,9 @@ def handle_regular_answer(
 
         # For DM (ephemeral message), we need to create a thread via a normal message so the user can see
         # the ephemeral message. This also will give the user a notification which ephemeral message does not.
-        if receiver_ids:
+        # if there is no message_ts_to_respond_to, and we have made it this far, then this is a /danswer message
+        # so we shouldn't send_team_member_message
+        if receiver_ids and message_ts_to_respond_to is not None:
             send_team_member_message(
                 client=client,
                 channel=channel,

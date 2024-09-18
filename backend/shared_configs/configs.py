@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 
 # Used for logging
 SLACK_CHANNEL_ID = "channel_id"
@@ -16,8 +17,11 @@ INDEXING_MODEL_SERVER_PORT = int(
 )
 
 # Danswer custom Deep Learning Models
+CONNECTOR_CLASSIFIER_MODEL_REPO = "Danswer/filter-extraction-model"
+CONNECTOR_CLASSIFIER_MODEL_TAG = "1.0.0"
 INTENT_MODEL_VERSION = "danswer/hybrid-intent-token-classifier"
 INTENT_MODEL_TAG = "v1.0.3"
+
 
 # Bi-Encoder, other details
 DOC_EMBEDDING_CONTEXT_SIZE = 512
@@ -70,3 +74,18 @@ PRESERVED_SEARCH_FIELDS = [
     "passage_prefix",
     "query_prefix",
 ]
+
+
+# CORS
+def validate_cors_origin(origin: str) -> None:
+    parsed = urlparse(origin)
+    if parsed.scheme not in ["http", "https"] or not parsed.netloc:
+        raise ValueError(f"Invalid CORS origin: '{origin}'")
+
+
+CORS_ALLOWED_ORIGIN = os.environ.get("CORS_ALLOWED_ORIGIN", "*").split(",") or ["*"]
+
+# Validate non-wildcard origins
+for origin in CORS_ALLOWED_ORIGIN:
+    if origin != "*" and (stripped_origin := origin.strip()):
+        validate_cors_origin(stripped_origin)

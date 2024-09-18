@@ -5,6 +5,7 @@ export interface Settings {
   maximum_chat_retention_days: number | null;
   notifications: Notification[];
   needs_reindexing: boolean;
+  gpu_enabled: boolean;
 }
 
 export interface Notification {
@@ -35,6 +36,7 @@ export interface EnterpriseSettings {
   two_lines_for_chat_header: boolean | null;
   custom_popup_header: string | null;
   custom_popup_content: string | null;
+  enable_consent_screen: boolean | null;
 }
 
 export interface CombinedSettings {

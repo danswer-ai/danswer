@@ -8,6 +8,7 @@ from typing import cast
 import uvicorn
 from fastapi import APIRouter
 from fastapi import FastAPI
+from fastapi import HTTPException
 from fastapi import Request
 from fastapi import status
 from fastapi.exceptions import RequestValidationError
@@ -38,6 +39,9 @@ from danswer.configs.constants import AuthType
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import KV_SEARCH_SETTINGS
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
+from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
+from danswer.configs.model_configs import GEN_AI_API_KEY
+from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.connector import check_connectors_exist
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
@@ -50,12 +54,14 @@ from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
+from danswer.db.llm import fetch_default_provider
+from danswer.db.llm import update_default_provider
+from danswer.db.llm import upsert_llm_provider
 from danswer.db.persona import delete_old_default_personas
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_secondary_search_settings
-from danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
@@ -92,9 +98,9 @@ from danswer.server.manage.embedding.api import basic_router as embedding_router
 from danswer.server.manage.get_state import router as state_router
 from danswer.server.manage.llm.api import admin_router as llm_admin_router
 from danswer.server.manage.llm.api import basic_router as llm_router
+from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.manage.search_settings import router as search_settings_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
-from danswer.server.manage.standard_answer import router as standard_answer_router
 from danswer.server.manage.users import router as user_router
 from danswer.server.middleware.latency_logging import add_latency_logging_middleware
 from danswer.server.query_and_chat.chat_backend import router as chat_router
@@ -104,6 +110,8 @@ from danswer.server.query_and_chat.query_backend import (
 from danswer.server.query_and_chat.query_backend import basic_router as query_router
 from danswer.server.settings.api import admin_router as settings_admin_router
 from danswer.server.settings.api import basic_router as settings_router
+from danswer.server.settings.store import load_settings
+from danswer.server.settings.store import store_settings
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
@@ -118,9 +126,9 @@ from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
+from shared_configs.configs import CORS_ALLOWED_ORIGIN
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-
 
 logger = setup_logger()
 
@@ -179,9 +187,6 @@ def setup_postgres(db_session: Session) -> None:
     create_initial_default_connector(db_session)
     associate_default_cc_pair(db_session)
 
-    logger.notice("Verifying default standard answer category exists.")
-    create_initial_default_standard_answer_category(db_session)
-
     logger.notice("Loading default Prompts and Personas")
     delete_old_default_personas(db_session)
     load_chat_yamls()
@@ -190,6 +195,30 @@ def setup_postgres(db_session: Session) -> None:
     load_builtin_tools(db_session)
     refresh_built_in_tools_cache(db_session)
     auto_add_search_tool_to_personas(db_session)
+
+    if GEN_AI_API_KEY and fetch_default_provider(db_session) is None:
+        # Only for dev flows
+        logger.notice("Setting up default OpenAI LLM for dev.")
+        llm_model = GEN_AI_MODEL_VERSION or "gpt-4o-mini"
+        fast_model = FAST_GEN_AI_MODEL_VERSION or "gpt-4o-mini"
+        model_req = LLMProviderUpsertRequest(
+            name="DevEnvPresetOpenAI",
+            provider="openai",
+            api_key=GEN_AI_API_KEY,
+            api_base=None,
+            api_version=None,
+            custom_config=None,
+            default_model_name=llm_model,
+            fast_default_model_name=fast_model,
+            is_public=True,
+            groups=[],
+            display_model_names=[llm_model, fast_model],
+            model_names=[llm_model, fast_model],
+        )
+        new_llm_provider = upsert_llm_provider(
+            llm_provider=model_req, db_session=db_session
+        )
+        update_default_provider(provider_id=new_llm_provider.id, db_session=db_session)
 
 
 def update_default_multipass_indexing(db_session: Session) -> None:
@@ -202,7 +231,7 @@ def update_default_multipass_indexing(db_session: Session) -> None:
             "No existing docs or connectors found. Checking GPU availability for multipass indexing."
         )
         gpu_available = gpu_status_request()
-        logger.info(f"GPU availability: {gpu_available}")
+        logger.info(f"GPU available: {gpu_available}")
 
         current_settings = get_current_search_settings(db_session)
 
@@ -213,6 +242,12 @@ def update_default_multipass_indexing(db_session: Session) -> None:
             gpu_available or current_settings.cloud_provider is not None
         )
         update_current_search_settings(db_session, updated_settings)
+
+        # Update settings with GPU availability
+        settings = load_settings()
+        settings.gpu_enabled = gpu_available
+        store_settings(settings)
+        logger.notice(f"Updated settings with GPU availability: {gpu_available}")
 
     else:
         logger.debug(
@@ -288,21 +323,32 @@ def setup_vespa(
     document_index: DocumentIndex,
     index_setting: IndexingSetting,
     secondary_index_setting: IndexingSetting | None,
-) -> None:
+) -> bool:
     # Vespa startup is a bit slow, so give it a few seconds
-    wait_time = 5
-    for _ in range(5):
+    WAIT_SECONDS = 5
+    VESPA_ATTEMPTS = 5
+    for x in range(VESPA_ATTEMPTS):
         try:
+            logger.notice(f"Setting up Vespa (attempt {x+1}/{VESPA_ATTEMPTS})...")
             document_index.ensure_indices_exist(
                 index_embedding_dim=index_setting.model_dim,
                 secondary_index_embedding_dim=secondary_index_setting.model_dim
                 if secondary_index_setting
                 else None,
             )
-            break
+
+            logger.notice("Vespa setup complete.")
+            return True
         except Exception:
-            logger.notice(f"Waiting on Vespa, retrying in {wait_time} seconds...")
-            time.sleep(wait_time)
+            logger.notice(
+                f"Vespa setup did not succeed. The Vespa service may not be ready yet. Retrying in {WAIT_SECONDS} seconds."
+            )
+            time.sleep(WAIT_SECONDS)
+
+    logger.error(
+        f"Vespa setup did not succeed. Attempt limit reached. ({VESPA_ATTEMPTS})"
+    )
+    return False
 
 
 @asynccontextmanager
@@ -325,7 +371,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # fill up Postgres connection pools
     await warm_up_connections()
 
-    # We cache this at the beginning so there is no delay in the first telemtry
+    # We cache this at the beginning so there is no delay in the first telemetry
     get_or_generate_uuid()
 
     with Session(engine) as db_session:
@@ -360,8 +406,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 logger.notice(
                     f"Multilingual query expansion is enabled with {search_settings.multilingual_expansion}."
                 )
-
-        if search_settings.rerank_model_name and not search_settings.provider_type:
+        if (
+            search_settings.rerank_model_name
+            and not search_settings.provider_type
+            and not search_settings.rerank_provider_type
+        ):
             warm_up_cross_encoder(search_settings.rerank_model_name)
 
         logger.notice("Verifying query preprocessing (NLTK) data is downloaded")
@@ -384,13 +433,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             if secondary_search_settings
             else None,
         )
-        setup_vespa(
+
+        success = setup_vespa(
             document_index,
             IndexingSetting.from_db_model(search_settings),
             IndexingSetting.from_db_model(secondary_search_settings)
             if secondary_search_settings
             else None,
         )
+        if not success:
+            raise RuntimeError(
+                "Could not connect to Vespa within the specified timeout."
+            )
 
         logger.notice(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
         if search_settings.provider_type is None:
@@ -415,9 +469,11 @@ def log_http_error(_: Request, exc: Exception) -> JSONResponse:
         error_msg = f"{str(exc)}\n"
         error_msg += "".join(traceback.format_tb(exc.__traceback__))
         logger.error(error_msg)
+
+    detail = exc.detail if isinstance(exc, HTTPException) else str(exc)
     return JSONResponse(
         status_code=status_code,
-        content={"detail": str(exc)},
+        content={"detail": detail},
     )
 
 
@@ -450,7 +506,6 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(
         application, slack_bot_management_router
     )
-    include_router_with_global_prefix_prepended(application, standard_answer_router)
     include_router_with_global_prefix_prepended(application, persona_router)
     include_router_with_global_prefix_prepended(application, admin_persona_router)
     include_router_with_global_prefix_prepended(application, input_prompt_router)
@@ -540,7 +595,7 @@ def get_application() -> FastAPI:
 
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Change this to the list of allowed origins if needed
+        allow_origins=CORS_ALLOWED_ORIGIN,  # Configurable via environment variable
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

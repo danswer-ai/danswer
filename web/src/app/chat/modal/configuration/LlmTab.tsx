@@ -4,10 +4,15 @@ import React, { forwardRef, useCallback, useState } from "react";
 import { debounce } from "lodash";
 import { Text } from "@tremor/react";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { destructureValue, structureValue } from "@/lib/llm/utils";
+import {
+  checkLLMSupportsImageInput,
+  destructureValue,
+  structureValue,
+} from "@/lib/llm/utils";
 import { updateModelOverrideForChatSession } from "../../lib";
 import { GearIcon } from "@/components/icons/icons";
 import { LlmList } from "@/components/llm/LLMList";
+import { checkPersonaRequiresImageGeneration } from "@/app/admin/assistants/lib";
 
 interface LlmTabProps {
   llmOverrideManager: LlmOverrideManager;
@@ -15,13 +20,24 @@ interface LlmTabProps {
   openModelSettings: () => void;
   chatSessionId?: number;
   close: () => void;
+  currentAssistant: Persona;
 }
 
 export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
   (
-    { llmOverrideManager, chatSessionId, currentLlm, close, openModelSettings },
+    {
+      llmOverrideManager,
+      chatSessionId,
+      currentLlm,
+      close,
+      openModelSettings,
+      currentAssistant,
+    },
     ref
   ) => {
+    const requiresImageGeneration =
+      checkPersonaRequiresImageGeneration(currentAssistant);
+
     const { llmProviders } = useChatContext();
     const { setLlmOverride, temperature, setTemperature } = llmOverrideManager;
     const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
@@ -55,6 +71,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
           </button>
         </div>
         <LlmList
+          requiresImageGeneration={requiresImageGeneration}
           llmProviders={llmProviders}
           currentLlm={currentLlm}
           onSelect={(value: string | null) => {

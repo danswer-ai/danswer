@@ -7,12 +7,15 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import create_chat_chain
+from danswer.chat.models import AllCitations
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import FinalUsedContextDocsResponse
 from danswer.chat.models import ImageGenerationDisplay
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import MessageResponseIDInfo
+from danswer.chat.models import MessageSpecificCitations
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import BING_API_KEY
@@ -85,6 +88,8 @@ from danswer.tools.internet_search.internet_search_tool import (
 )
 from danswer.tools.internet_search.internet_search_tool import InternetSearchResponse
 from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
+from danswer.tools.models import DynamicSchemaInfo
+from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
@@ -100,9 +105,9 @@ from danswer.utils.timing import log_generator_function_time
 logger = setup_logger()
 
 
-def translate_citations(
+def _translate_citations(
     citations_list: list[CitationInfo], db_docs: list[DbSearchDoc]
-) -> dict[int, int]:
+) -> MessageSpecificCitations:
     """Always cites the first instance of the document_id, assumes the db_docs
     are sorted in the order displayed in the UI"""
     doc_id_to_saved_doc_id_map: dict[str, int] = {}
@@ -117,7 +122,7 @@ def translate_citations(
                 citation.citation_num
             ] = doc_id_to_saved_doc_id_map[citation.document_id]
 
-    return citation_to_saved_doc_id_map
+    return MessageSpecificCitations(citation_map=citation_to_saved_doc_id_map)
 
 
 def _handle_search_tool_response_summary(
@@ -239,11 +244,14 @@ ChatPacket = (
     StreamingError
     | QADocsResponse
     | LLMRelevanceFilterResponse
+    | FinalUsedContextDocsResponse
     | ChatMessageDetail
     | DanswerAnswerPiece
+    | AllCitations
     | CitationInfo
     | ImageGenerationDisplay
     | CustomToolResponse
+    | MessageSpecificCitations
     | MessageResponseIDInfo
 )
 ChatPacketStream = Iterator[ChatPacket]
@@ -598,7 +606,11 @@ def stream_chat_message_objects(
                 tool_dict[db_tool_model.id] = cast(
                     list[Tool],
                     build_custom_tools_from_openapi_schema(
-                        db_tool_model.openapi_schema
+                        db_tool_model.openapi_schema,
+                        dynamic_schema_info=DynamicSchemaInfo(
+                            chat_session_id=chat_session_id,
+                            message_id=user_message.id if user_message else None,
+                        ),
                     ),
                 )
 
@@ -663,9 +675,11 @@ def stream_chat_message_objects(
                         db_session=db_session,
                         selected_search_docs=selected_db_search_docs,
                         # Deduping happens at the last step to avoid harming quality by dropping content early on
-                        dedupe_docs=retrieval_options.dedupe_docs
-                        if retrieval_options
-                        else False,
+                        dedupe_docs=(
+                            retrieval_options.dedupe_docs
+                            if retrieval_options
+                            else False
+                        ),
                     )
                     yield qa_docs_response
                 elif packet.id == SECTION_RELEVANCE_LIST_ID:
@@ -688,9 +702,13 @@ def stream_chat_message_objects(
                             )
 
                         yield LLMRelevanceFilterResponse(
-                            relevant_chunk_indices=llm_indices
+                            llm_selected_doc_indices=llm_indices
                         )
 
+                elif packet.id == FINAL_CONTEXT_DOCUMENTS_ID:
+                    yield FinalUsedContextDocsResponse(
+                        final_context_docs=packet.response
+                    )
                 elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                     img_generation_response = cast(
                         list[ImageGenerationResponse], packet.response
@@ -727,10 +745,18 @@ def stream_chat_message_objects(
                     tool_result = packet
                 yield cast(ChatPacket, packet)
         logger.debug("Reached end of stream")
-    except Exception as e:
-        error_msg = str(e)
-        logger.exception(f"Failed to process chat message: {error_msg}")
+    except ValueError as e:
+        logger.exception("Failed to process chat message.")
 
+        error_msg = str(e)
+        yield StreamingError(error=error_msg)
+        db_session.rollback()
+        return
+
+    except Exception as e:
+        logger.exception("Failed to process chat message.")
+
+        error_msg = str(e)
         stack_trace = traceback.format_exc()
         client_error_msg = litellm_exception_to_error_msg(e, llm)
         if llm.config.api_key and len(llm.config.api_key) > 2:
@@ -743,12 +769,13 @@ def stream_chat_message_objects(
 
     # Post-LLM answer processing
     try:
-        db_citations = None
+        message_specific_citations: MessageSpecificCitations | None = None
         if reference_db_search_docs:
-            db_citations = translate_citations(
+            message_specific_citations = _translate_citations(
                 citations_list=answer.citations,
                 db_docs=reference_db_search_docs,
             )
+            yield AllCitations(citations=answer.citations)
 
         # Saving Gen AI answer and responding with message info
         tool_name_to_tool_id: dict[str, int] = {}
@@ -765,18 +792,22 @@ def stream_chat_message_objects(
             reference_docs=reference_db_search_docs,
             files=ai_message_files,
             token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-            citations=db_citations,
+            citations=message_specific_citations.citation_map
+            if message_specific_citations
+            else None,
             error=None,
-            tool_calls=[
-                ToolCall(
-                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                    tool_name=tool_result.tool_name,
-                    tool_arguments=tool_result.tool_args,
-                    tool_result=tool_result.tool_result,
-                )
-            ]
-            if tool_result
-            else [],
+            tool_calls=(
+                [
+                    ToolCall(
+                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                        tool_name=tool_result.tool_name,
+                        tool_arguments=tool_result.tool_args,
+                        tool_result=tool_result.tool_result,
+                    )
+                ]
+                if tool_result
+                else []
+            ),
         )
 
         logger.debug("Committing messages")

@@ -1,4 +1,3 @@
-version: '3'
 services:
   api_server:
     image: danswer/danswer-backend:${IMAGE_TAG:-latest}
@@ -12,6 +11,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
     restart: always
     ports:
       - "8080"
@@ -21,6 +21,7 @@ services:
       - AUTH_TYPE=disabled
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
+      - REDIS_HOST=cache
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
       - ENV_SEED_CONFIGURATION=${ENV_SEED_CONFIGURATION:-}
@@ -43,6 +44,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
     restart: always
     env_file:
       - .env_eval
@@ -50,6 +52,7 @@ services:
       - AUTH_TYPE=disabled
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
+      - REDIS_HOST=cache
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
       - INDEXING_MODEL_SERVER_HOST=${INDEXING_MODEL_SERVER_HOST:-indexing_model_server}
@@ -135,6 +138,7 @@ services:
       - INDEXING_ONLY=True
       - LOG_LEVEL=${LOG_LEVEL:-debug}
       - index_model_cache_huggingface:/root/.cache/huggingface/
+      - VESPA_SEARCHER_THREADS=${VESPA_SEARCHER_THREADS:-1}
     logging:
       driver: json-file
       options:
@@ -198,6 +202,16 @@ services:
     command: > 
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
+
+
+  cache:
+    image: redis:7.4-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    # docker silently mounts /data even without an explicit volume mount, which enables
+    # persistence. explicitly setting save and appendonly forces ephemeral behavior.
+    command: redis-server --save "" --appendonly no
 
 
 volumes:

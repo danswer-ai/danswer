@@ -4,9 +4,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
+from danswer.db.models import DocumentSet
 from danswer.db.models import LLMProvider as LLMProviderModel
 from danswer.db.models import LLMProvider__UserGroup
 from danswer.db.models import SearchSettings
+from danswer.db.models import Tool as ToolModel
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.server.manage.embedding.models import CloudEmbeddingProvider
@@ -60,7 +62,7 @@ def upsert_cloud_embedding_provider(
 
 
 def upsert_llm_provider(
-    db_session: Session, llm_provider: LLMProviderUpsertRequest
+    llm_provider: LLMProviderUpsertRequest, db_session: Session
 ) -> FullLLMProvider:
     existing_llm_provider = db_session.scalar(
         select(LLMProviderModel).where(LLMProviderModel.name == llm_provider.name)
@@ -101,6 +103,20 @@ def fetch_existing_embedding_providers(
     db_session: Session,
 ) -> list[CloudEmbeddingProviderModel]:
     return list(db_session.scalars(select(CloudEmbeddingProviderModel)).all())
+
+
+def fetch_existing_doc_sets(
+    db_session: Session, doc_ids: list[int]
+) -> list[DocumentSet]:
+    return list(
+        db_session.scalars(select(DocumentSet).where(DocumentSet.id.in_(doc_ids))).all()
+    )
+
+
+def fetch_existing_tools(db_session: Session, tool_ids: list[int]) -> list[ToolModel]:
+    return list(
+        db_session.scalars(select(ToolModel).where(ToolModel.id.in_(tool_ids))).all()
+    )
 
 
 def fetch_existing_llm_providers(
@@ -187,7 +203,7 @@ def remove_llm_provider(db_session: Session, provider_id: int) -> None:
     db_session.commit()
 
 
-def update_default_provider(db_session: Session, provider_id: int) -> None:
+def update_default_provider(provider_id: int, db_session: Session) -> None:
     new_default = db_session.scalar(
         select(LLMProviderModel).where(LLMProviderModel.id == provider_id)
     )

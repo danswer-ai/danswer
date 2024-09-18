@@ -126,6 +126,7 @@ try:
 except ValueError:
     INDEX_BATCH_SIZE = 16
 
+
 # Below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
 POSTGRES_USER = os.environ.get("POSTGRES_USER") or "postgres"
@@ -148,6 +149,25 @@ try:
     )
 except ValueError:
     POSTGRES_POOL_RECYCLE = POSTGRES_POOL_RECYCLE_DEFAULT
+
+REDIS_SSL = os.getenv("REDIS_SSL", "").lower() == "true"
+REDIS_HOST = os.environ.get("REDIS_HOST") or "localhost"
+REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD") or ""
+
+# Used for general redis things
+REDIS_DB_NUMBER = int(os.environ.get("REDIS_DB_NUMBER", 0))
+
+# Used by celery as broker and backend
+REDIS_DB_NUMBER_CELERY_RESULT_BACKEND = int(
+    os.environ.get("REDIS_DB_NUMBER_CELERY_RESULT_BACKEND", 14)
+)
+REDIS_DB_NUMBER_CELERY = int(os.environ.get("REDIS_DB_NUMBER_CELERY", 15))  # broker
+
+REDIS_SSL_CERT_REQS = os.getenv("REDIS_SSL_CERT_REQS", "CERT_NONE")
+REDIS_SSL_CA_CERTS = os.getenv("REDIS_SSL_CA_CERTS", "")
+
+CELERY_RESULT_EXPIRES = int(os.environ.get("CELERY_RESULT_EXPIRES", 86400))  # seconds
 
 #####
 # Connector Configs
