@@ -20,18 +20,28 @@ DEFAULT_ASSISTANTS = [-2, -1, 0]
 
 def upgrade() -> None:
     # Step 1: Update any NULL values to the default value
+    # This upgrades existing users without ordered assistant
+    # to have default assistants set to visible assistants which are
+    # accessible by them.
     op.execute(
         """
-        UPDATE "user"
+        UPDATE "user" u
         SET chosen_assistants = (
-            SELECT jsonb_agg(id)
-            FROM persona
-            WHERE is_visible = true
+            SELECT jsonb_agg(
+                p.id ORDER BY
+                    COALESCE(p.display_priority, 2147483647) ASC,
+                    p.id ASC
+            )
+            FROM persona p
+            LEFT JOIN persona__user pu ON p.id = pu.persona_id AND pu.user_id = u.id
+            WHERE p.is_visible = true
+            AND (p.is_public = true OR pu.user_id IS NOT NULL)
         )
         WHERE chosen_assistants IS NULL
         OR chosen_assistants = 'null'
         OR jsonb_typeof(chosen_assistants) = 'null'
         OR (jsonb_typeof(chosen_assistants) = 'string' AND chosen_assistants = '"null"')
+        OR chosen_assistants = '[-2, -1, 0]'::jsonb
     """
     )
 
