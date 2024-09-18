@@ -351,9 +351,9 @@ def process_text(
             [],
         ),
         (
-            "Code block with citation inside",
+            "Code block with text block",
             [
-                "Here's a code block with a citation:\n",
+                "Here's a code block with a text block:\n",
                 "```\n",
                 "# This is a comment",
                 "\n",
@@ -363,7 +363,7 @@ def process_text(
                 "\n```\n",
                 "The code demonstrates variable assignment.",
             ],
-            "Here's a code block with a citation:\n"
+            "Here's a code block with a text block:\n"
             "```plaintext\n"
             "# This is a comment\n"
             "x = 10  # This assigns 10 to x\n"
