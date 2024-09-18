@@ -85,7 +85,8 @@ export default function QueryPage({ params }: { params: { id: string } }) {
 
         <Text className="flex flex-wrap whitespace-normal mt-1 text-xs">
           {chatSessionSnapshot.user_email || "-"},{" "}
-          {timestampToReadableDate(chatSessionSnapshot.time_created)}
+          {timestampToReadableDate(chatSessionSnapshot.time_created)},{" "}
+          {chatSessionSnapshot.flow_type}
         </Text>
 
         <Divider />

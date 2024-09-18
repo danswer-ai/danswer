@@ -139,7 +139,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     WAIT_LIMIT = 60
 
     time_start = time.monotonic()
-    logger.info("Redis: Readiness check starting.")
+    task_logger.info("Redis: Readiness check starting.")
     while True:
         try:
             if r.ping():
@@ -148,7 +148,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
             pass
 
         time_elapsed = time.monotonic() - time_start
-        logger.info(
+        task_logger.info(
             f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
         )
         if time_elapsed > WAIT_LIMIT:
@@ -156,16 +156,16 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
                 f"Redis: Readiness check did not succeed within the timeout "
                 f"({WAIT_LIMIT} seconds). Exiting..."
             )
-            logger.error(msg)
+            task_logger.error(msg)
             raise WorkerShutdown(msg)
 
         time.sleep(WAIT_INTERVAL)
 
-    logger.info("Redis: Readiness check succeeded. Continuing...")
+    task_logger.info("Redis: Readiness check succeeded. Continuing...")
 
     if not is_celery_app_primary(sender):
-        logger.info("Running as a secondary celery worker.")
-        logger.info("Waiting for primary worker to be ready...")
+        task_logger.info("Running as a secondary celery worker.")
+        task_logger.info("Waiting for primary worker to be ready...")
         time_start = time.monotonic()
         while True:
             if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
@@ -173,7 +173,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
             time.monotonic()
             time_elapsed = time.monotonic() - time_start
-            logger.info(
+            task_logger.info(
                 f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
             )
             if time_elapsed > WAIT_LIMIT:
@@ -181,15 +181,17 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
                     f"Primary worker was not ready within the timeout. "
                     f"({WAIT_LIMIT} seconds). Exiting..."
                 )
-                logger.error(msg)
+                task_logger.error(msg)
                 raise WorkerShutdown(msg)
 
             time.sleep(WAIT_INTERVAL)
 
-        logger.info("Wait for primary worker completed successfully. Continuing...")
+        task_logger.info(
+            "Wait for primary worker completed successfully. Continuing..."
+        )
         return
 
-    logger.info("Running as the primary celery worker.")
+    task_logger.info("Running as the primary celery worker.")
 
     # This is singleton work that should be done on startup exactly once
     # by the primary worker
@@ -205,12 +207,12 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
     )
 
-    logger.info("Primary worker lock: Acquire starting.")
+    task_logger.info("Primary worker lock: Acquire starting.")
     acquired = lock.acquire(blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2)
     if acquired:
-        logger.info("Primary worker lock: Acquire succeeded.")
+        task_logger.info("Primary worker lock: Acquire succeeded.")
     else:
-        logger.error("Primary worker lock: Acquire failed!")
+        task_logger.error("Primary worker lock: Acquire failed!")
         raise TimeoutError("Primary worker lock could not be acquired!")
 
     sender.primary_worker_lock = lock
@@ -248,7 +250,7 @@ def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
     if not sender.primary_worker_lock:
         return
 
-    logger.info("Releasing primary worker lock.")
+    task_logger.info("Releasing primary worker lock.")
     lock = sender.primary_worker_lock
     if lock.owned():
         lock.release()
@@ -387,7 +389,7 @@ class HubPeriodicTask(bootsteps.StartStopStep):
                 worker.primary_worker_lock = lock
 
             # ttl_ms = r.pttl(lock.name)
-            # logger.info(f"lock TTL after: {ttl_ms}ms")
+            # task_logger.info(f"lock TTL after: {ttl_ms}ms")
         except Exception:
             task_logger.exception("HubPeriodicTask.run_periodic_task exceptioned.")
 

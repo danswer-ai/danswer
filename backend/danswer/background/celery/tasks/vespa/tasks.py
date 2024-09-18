@@ -323,64 +323,6 @@ def monitor_document_set_taskset(
     r.delete(rds.fence_key)
 
 
-def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -> None:
-    key = key_bytes.decode("utf-8")
-    usergroup_id = RedisUserGroup.get_id_from_fence_key(key)
-    if not usergroup_id:
-        task_logger.warning("Could not parse usergroup id from {key}")
-        return
-
-    rug = RedisUserGroup(usergroup_id)
-    fence_value = r.get(rug.fence_key)
-    if fence_value is None:
-        return
-
-    try:
-        initial_count = int(cast(int, fence_value))
-    except ValueError:
-        task_logger.error("The value is not an integer.")
-        return
-
-    count = cast(int, r.scard(rug.taskset_key))
-    task_logger.info(
-        f"User group sync progress: usergroup_id={usergroup_id} remaining={count} initial={initial_count}"
-    )
-    if count > 0:
-        return
-
-    try:
-        fetch_user_group = fetch_versioned_implementation(
-            "danswer.db.user_group", "fetch_user_group"
-        )
-    except ModuleNotFoundError:
-        task_logger.exception(
-            "fetch_versioned_implementation failed to look up fetch_user_group."
-        )
-        return
-
-    user_group: UserGroup | None = fetch_user_group(
-        db_session=db_session, user_group_id=usergroup_id
-    )
-    if user_group:
-        if user_group.is_up_for_deletion:
-            delete_user_group = fetch_versioned_implementation_with_fallback(
-                "danswer.db.user_group", "delete_user_group", noop_fallback
-            )
-
-            delete_user_group(db_session=db_session, user_group=user_group)
-            task_logger.info(f" Deleted usergroup. id='{usergroup_id}'")
-        else:
-            mark_user_group_as_synced = fetch_versioned_implementation_with_fallback(
-                "danswer.db.user_group", "mark_user_group_as_synced", noop_fallback
-            )
-
-            mark_user_group_as_synced(db_session=db_session, user_group=user_group)
-            task_logger.info(f"Synced usergroup. id='{usergroup_id}'")
-
-    r.delete(rug.taskset_key)
-    r.delete(rug.fence_key)
-
-
 def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
     fence_key = key_bytes.decode("utf-8")
     cc_pair_id = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
@@ -509,7 +451,7 @@ def monitor_vespa_sync() -> None:
             for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
                 monitor_usergroup_taskset = (
                     fetch_versioned_implementation_with_fallback(
-                        "danswer.background.celery_utils",
+                        "danswer.background.celery.tasks.vespa.tasks",
                         "monitor_usergroup_taskset",
                         noop_fallback,
                     )
