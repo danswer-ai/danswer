@@ -300,17 +300,27 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def authenticate(
         self, credentials: OAuth2PasswordRequestForm
     ) -> Optional[User]:
-        user = await super().authenticate(credentials)
-        if user is None:
-            try:
-                user = await self.get_by_email(credentials.username)
-                if not user.has_web_login:
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
-                    )
-            except exceptions.UserNotExists:
-                pass
+        try:
+            user = await self.get_by_email(credentials.username)
+        except exceptions.UserNotExists:
+            self.password_helper.hash(credentials.password)
+            return None
+
+        if not user.has_web_login:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
+            )
+
+        verified, updated_password_hash = self.password_helper.verify_and_update(
+            credentials.password, user.hashed_password
+        )
+        if not verified:
+            return None
+
+        if updated_password_hash is not None:
+            await self.user_db.update(user, {"hashed_password": updated_password_hash})
+
         return user
 
 
