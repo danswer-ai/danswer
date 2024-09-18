@@ -29,7 +29,7 @@
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
     "mdast-util-find-and-replace": "^3.0.1",
-    "next": "^14.2.3",
+    "next": "^14.2.10",
     "npm": "^10.8.0",
     "postcss": "^8.4.31",
     "prismjs": "^1.29.0",
