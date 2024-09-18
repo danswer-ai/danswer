@@ -23,6 +23,7 @@ import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { updateConnectorCredentialPairName } from "@/lib/connector";
 import DeletionErrorStatus from "./DeletionErrorStatus";
+import { useRouter } from "next/navigation";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -30,6 +31,7 @@ import DeletionErrorStatus from "./DeletionErrorStatus";
 const CONNECTOR_TYPES_THAT_CANT_REINDEX: ValidSources[] = ["file"];
 
 function Main({ ccPairId }: { ccPairId: number }) {
+  const router = useRouter(); // Initialize the router
   const {
     data: ccPair,
     isLoading,
@@ -40,6 +42,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
     { refreshInterval: 5000 } // 5 seconds
   );
 
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [editableName, setEditableName] = useState(ccPair?.name || "");
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +53,25 @@ function Main({ ccPairId }: { ccPairId: number }) {
       inputRef.current.focus();
     }
   }, [isEditing]);
+
+  // New useEffect for handling redirection when connector is deleted
+  useEffect(() => {
+    if (!isLoading && ccPair && !error) {
+      setHasLoadedOnce(true); // Mark that the page has loaded successfully
+    }
+
+    if (!isLoading && hasLoadedOnce && (error || !ccPair)) {
+      // Redirect to some other page when the connector no longer exists or there's an error
+      router.push("/admin/indexing/status");
+    } else if (
+      ccPair?.status === ConnectorCredentialPairStatus.DELETING &&
+      !ccPair.connector
+    ) {
+      // Redirect if the status is DELETING and the connector is gone
+      router.push("/admin/indexing/status");
+    }
+  }, [isLoading, ccPair, error, hasLoadedOnce, router]);
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditableName(e.target.value);
   };
@@ -81,7 +103,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
     return <ThreeDotsLoader />;
   }
 
-  if (error || !ccPair) {
+  if (!ccPair || (!hasLoadedOnce && error)) {
     return (
       <ErrorCallout
         errorTitle={`Failed to fetch info on Connector with ID ${ccPairId}`}
