@@ -258,7 +258,7 @@ def get_personas(
     stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
 
     if not include_default:
-        stmt = stmt.where(Persona.default_persona.is_(False))
+        stmt = stmt.where(Persona.built_in_persona.is_(False))
     if not include_slack_bot_personas:
         stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
     if not include_deleted:
@@ -306,7 +306,7 @@ def mark_delete_persona_by_name(
 ) -> None:
     stmt = (
         update(Persona)
-        .where(Persona.name == persona_name, Persona.default_persona == is_default)
+        .where(Persona.name == persona_name, Persona.built_in_persona == is_default)
         .values(deleted=True)
     )
 
@@ -454,7 +454,7 @@ def upsert_persona(
         validate_persona_tools(tools)
 
     if persona:
-        if not default_persona and persona.default_persona:
+        if not default_persona and persona.built_in_persona:
             raise ValueError("Cannot update default persona with non-default.")
 
         # this checks if the user has permission to edit the persona
@@ -470,7 +470,7 @@ def upsert_persona(
         persona.llm_relevance_filter = llm_relevance_filter
         persona.llm_filter_extraction = llm_filter_extraction
         persona.recency_bias = recency_bias
-        persona.default_persona = default_persona
+        persona.built_in_persona = default_persona
         persona.llm_model_provider_override = llm_model_provider_override
         persona.llm_model_version_override = llm_model_version_override
         persona.starter_messages = starter_messages
@@ -550,7 +550,7 @@ def delete_old_default_personas(
     Need a more graceful fix later or those need to never have IDs"""
     stmt = (
         update(Persona)
-        .where(Persona.default_persona, Persona.id > 0)
+        .where(Persona.built_in_persona, Persona.id > 0)
         .values(deleted=True, name=func.concat(Persona.name, "_old"))
     )
 
@@ -732,7 +732,7 @@ def delete_persona_by_name(
     persona_name: str, db_session: Session, is_default: bool = True
 ) -> None:
     stmt = delete(Persona).where(
-        Persona.name == persona_name, Persona.default_persona == is_default
+        Persona.name == persona_name, Persona.built_in_persona == is_default
     )
 
     db_session.execute(stmt)

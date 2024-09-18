@@ -93,7 +93,7 @@ class PersonaSnapshot(BaseModel):
             llm_model_provider_override=persona.llm_model_provider_override,
             llm_model_version_override=persona.llm_model_version_override,
             starter_messages=persona.starter_messages,
-            default_persona=persona.default_persona,
+            default_persona=persona.built_in_persona,
             prompts=[PromptSnapshot.from_model(prompt) for prompt in persona.prompts],
             tools=[ToolSnapshot.from_model(tool) for tool in persona.tools],
             document_sets=[

@@ -40,6 +40,7 @@ class AuthTypeResponse(BaseModel):
 
 class UserPreferences(BaseModel):
     chosen_assistants: list[int] | None = None
+
     default_model: str | None = None
 
 

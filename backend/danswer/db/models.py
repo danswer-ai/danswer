@@ -125,6 +125,12 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     chosen_assistants: Mapped[list[int]] = mapped_column(
         postgresql.JSONB(), nullable=False, default=[-2, -1, 0]
     )
+    visible_assistants: Mapped[list[int]] = mapped_column(
+        postgresql.JSONB(), nullable=False, default=[]
+    )
+    hidden_assistants: Mapped[list[int]] = mapped_column(
+        postgresql.JSONB(), nullable=False, default=[]
+    )
 
     oidc_expiry: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMPAware(timezone=True), nullable=True
@@ -1308,9 +1314,9 @@ class Persona(Base):
     starter_messages: Mapped[list[StarterMessage] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
-    # Default personas are configured via backend during deployment
+    # Built-in personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
-    default_persona: Mapped[bool] = mapped_column(Boolean, default=False)
+    built_in_persona: Mapped[bool] = mapped_column(Boolean, default=False)
     # controls whether the persona is available to be selected by users
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
     # controls the ordering of personas in the UI
@@ -1364,7 +1370,7 @@ class Persona(Base):
             "_default_persona_name_idx",
             "name",
             unique=True,
-            postgresql_where=(default_persona == True),  # noqa: E712
+            postgresql_where=(built_in_persona == True),  # noqa: E712
         ),
     )
 
