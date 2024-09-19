@@ -73,6 +73,14 @@ class LLMProviderUpsertRequest(LLMProvider):
     model_names: list[str] | None = None
 
 
+class LLMProviderCreationRequest(LLMProvider):
+    api_key_set: bool
+
+
+class LLMProviderUpdateRequest(LLMProvider):
+    pass
+
+
 class FullLLMProvider(LLMProvider):
     id: int
     is_default_provider: bool | None = None
