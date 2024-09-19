@@ -64,6 +64,12 @@ def downgrade() -> None:
     op.drop_column("user", "hidden_assistants")
     op.drop_column("user", "visible_assistants")
     op.drop_index("_builtin_persona_name_idx", table_name="persona")
+
+    op.drop_column("persona", "is_default_persona")
+    op.add_column("persona", sa.Column("default_persona", sa.Boolean(), nullable=True))
+    op.execute("UPDATE persona SET default_persona = builtin_persona")
+    op.alter_column("persona", "default_persona", nullable=False)
+    op.drop_column("persona", "builtin_persona")
     op.create_index(
         "_default_persona_name_idx",
         "persona",
@@ -71,8 +77,3 @@ def downgrade() -> None:
         unique=True,
         postgresql_where=sa.text("default_persona = true"),
     )
-    op.drop_column("persona", "is_default_persona")
-    op.add_column("persona", sa.Column("default_persona", sa.Boolean(), nullable=True))
-    op.execute("UPDATE persona SET default_persona = builtin_persona")
-    op.alter_column("persona", "default_persona", nullable=False)
-    op.drop_column("persona", "builtin_persona")
