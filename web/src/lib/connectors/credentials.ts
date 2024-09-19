@@ -282,6 +282,7 @@ export const credentialTemplates: Record<ValidSources, any> = {
     access_key_id: "",
     secret_access_key: "",
   } as OCICredentialJson,
+  xenforo: null,
   google_sites: null,
   file: null,
   wikipedia: null,
