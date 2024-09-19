@@ -76,6 +76,8 @@ class UserInfo(BaseModel):
                 UserPreferences(
                     chosen_assistants=user.chosen_assistants,
                     default_model=user.default_model,
+                    hidden_assistants=user.hidden_assistants,
+                    visible_assistants=user.visible_assistants,
                 )
             ),
             # set to None if TRACK_EXTERNAL_IDP_EXPIRY is False so that we avoid cases

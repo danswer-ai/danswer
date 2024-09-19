@@ -18,12 +18,17 @@ export function checkUserIdOwnsAssistant(
   );
 }
 
-export function getShownAssistants(user: User | null, assistants: Persona[]) {
+export function classifyAssistants(user: User | null, assistants: Persona[]) {
   if (!user) {
-    return assistants.filter((assistant) => assistant.is_default_persona);
+    return {
+      visibleAssistants: assistants.filter(
+        (assistant) => assistant.is_default_persona
+      ),
+      hiddenAssistants: [],
+    };
   }
 
-  return assistants.filter((assistant) => {
+  const visibleAssistants = assistants.filter((assistant) => {
     const isVisible = user.preferences?.visible_assistants?.includes(
       assistant.id
     );
@@ -36,6 +41,15 @@ export function getShownAssistants(user: User | null, assistants: Persona[]) {
     const isDefault = assistant.is_default_persona;
     return (isVisible && isNotHidden && isSelected) || isDefault;
   });
+
+  const hiddenAssistants = assistants.filter((assistant) => {
+    return !visibleAssistants.includes(assistant);
+  });
+
+  return {
+    visibleAssistants,
+    hiddenAssistants,
+  };
 }
 
 export function orderAssistantsForUser(

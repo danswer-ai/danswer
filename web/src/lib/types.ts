@@ -5,8 +5,8 @@ import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/
 
 export interface UserPreferences {
   chosen_assistants: number[] | null;
-  visible_assistants: number[] | null;
-  hidden_assistants: number[] | null;
+  visible_assistants: number[];
+  hidden_assistants: number[];
   default_model: string | null;
 }
 

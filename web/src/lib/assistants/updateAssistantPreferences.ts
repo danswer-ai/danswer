@@ -11,19 +11,17 @@ export async function updateUserAssistantList(
 
   return response.ok;
 }
-
 export async function updateAssistantVisibility(
   assistantId: number,
   show: boolean
 ): Promise<boolean> {
   const response = await fetch(
-    `/api/user/assistant-list/update/${assistantId}`,
+    `/api/user/assistant-list/update/${assistantId}?show=${show}`,
     {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ show }),
     }
   );
 

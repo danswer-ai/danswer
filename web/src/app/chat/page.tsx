@@ -6,6 +6,7 @@ import { ChatProvider } from "@/components/context/ChatContext";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import WrappedChat from "./WrappedChat";
 import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
+import { orderAssistantsForUser } from "@/lib/assistants/utils";
 
 export default async function Page({
   searchParams,
@@ -36,6 +37,8 @@ export default async function Page({
     userInputPrompts,
   } = data;
 
+  const filteredAssistants = orderAssistantsForUser(assistants, user);
+
   return (
     <>
       <InstantSSRAutoRefresh />
@@ -46,7 +49,7 @@ export default async function Page({
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availableAssistants: assistants,
+          availableAssistants: filteredAssistants,
           availableTags: tags,
           llmProviders,
           folders,

@@ -25,10 +25,7 @@ import { DefaultPopover } from "@/components/popover/DefaultPopover";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
-import {
-  checkUserOwnsAssistant,
-  getShownAssistants,
-} from "@/lib/assistants/checkOwnership";
+import { checkUserOwnsAssistant } from "@/lib/assistants/checkOwnership";
 import { AssistantSharingModal } from "./AssistantSharingModal";
 import { AssistantSharedStatusDisplay } from "../AssistantSharedStatus";
 import useSWR from "swr";
@@ -58,7 +55,10 @@ import {
 } from "@/app/admin/assistants/lib";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 import { MakePublicAssistantModal } from "@/app/chat/modal/MakePublicAssistantModal";
-import { orderAssistantsForUser } from "@/lib/assistants/utils";
+import {
+  classifyAssistants,
+  orderAssistantsForUser,
+} from "@/lib/assistants/utils";
 
 function DraggableAssistantListItem(props: any) {
   const {
@@ -277,16 +277,16 @@ export function AssistantsList({
   user: User | null;
   assistants: Persona[];
 }) {
-  const shownAssistants = getShownAssistants(user, assistants);
+  const { visibleAssistants, hiddenAssistants } = classifyAssistants(
+    user,
+    assistants
+  );
   const [userCreatedAssistants, setUserCreatedAssistants] = useState<Persona[]>(
     []
   );
-  console.log("---");
-  console.log(assistants);
-  console.log(shownAssistants);
 
   useEffect(() => {
-    setUserCreatedAssistants(orderAssistantsForUser(shownAssistants, user));
+    setUserCreatedAssistants(orderAssistantsForUser(assistants, user));
   }, [user, assistants, orderAssistantsForUser]);
 
   const ownedButHiddenAssistants = assistants.filter(
@@ -400,7 +400,7 @@ export function AssistantsList({
         </div>
 
         <p className="text-center text-text-500 text-lg mb-6">
-          Here you can view assistants you've created and manage them.
+          Here you can view assistants you&apos;ve created and manage them.
         </p>
 
         <h2 className="text-2xl font-semibold mb-2 text-text-900">

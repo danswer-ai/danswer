@@ -415,10 +415,7 @@ export function AssistantEditor({
               shouldAddAssistantToUserPreferences &&
               user?.preferences?.chosen_assistants
             ) {
-              const success = await addAssistantToList(
-                assistantId,
-                user.preferences.chosen_assistants
-              );
+              const success = await addAssistantToList(assistantId);
               if (success) {
                 setPopup({
                   message: `"${assistant.name}" has been added to your list.`,

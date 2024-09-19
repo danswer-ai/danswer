@@ -41,6 +41,7 @@ from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
+from danswer.server.manage.models import UserPreferences
 from danswer.server.manage.models import UserRoleResponse
 from danswer.server.manage.models import UserRoleUpdateRequest
 from danswer.server.models import FullUserSnapshot
@@ -459,25 +460,29 @@ def update_user_assistant_visibility(
             no_auth_user = fetch_no_auth_user(store)
             preferences = no_auth_user.preferences
 
-            if show:
-                if assistant_id not in preferences.chosen_assistants:
-                    preferences.chosen_assistants.append(assistant_id)
-                if assistant_id in preferences.hidden_assistants:
-                    preferences.hidden_assistants.remove(assistant_id)
-            else:
-                if assistant_id in preferences.chosen_assistants:
-                    preferences.chosen_assistants.remove(assistant_id)
-                if assistant_id not in preferences.hidden_assistants:
-                    preferences.hidden_assistants.append(assistant_id)
+            chosen_assistants = preferences.chosen_assistants or []
+            hidden_assistants = preferences.hidden_assistants or []
 
+            if show:
+                if assistant_id not in chosen_assistants:
+                    chosen_assistants.append(assistant_id)
+                if assistant_id in hidden_assistants:
+                    hidden_assistants.remove(assistant_id)
+            else:
+                if assistant_id in chosen_assistants:
+                    chosen_assistants.remove(assistant_id)
+                if assistant_id not in hidden_assistants:
+                    hidden_assistants.append(assistant_id)
+
+            preferences.chosen_assistants = chosen_assistants
+            preferences.hidden_assistants = hidden_assistants
             set_no_auth_user_preferences(store, preferences)
             return
         else:
             raise RuntimeError("This should never happen")
-
-    user_preferences = user.preferences or {}
-    chosen_assistants = user_preferences.get("chosen_assistants", [])
-    hidden_assistants = user_preferences.get("hidden_assistants", [])
+    user_preferences = UserInfo.from_model(user).preferences
+    chosen_assistants = user_preferences.chosen_assistants or []
+    hidden_assistants = user_preferences.hidden_assistants or []
 
     if show:
         if assistant_id not in chosen_assistants:
@@ -490,12 +495,19 @@ def update_user_assistant_visibility(
         if assistant_id not in hidden_assistants:
             hidden_assistants.append(assistant_id)
 
-    user_preferences["chosen_assistants"] = chosen_assistants
-    user_preferences["hidden_assistants"] = hidden_assistants
+    user_preferences.chosen_assistants = chosen_assistants
+    user_preferences.hidden_assistants = hidden_assistants
 
     db_session.execute(
         update(User)
         .where(User.id == user.id)  # type: ignore
-        .values(preferences=user_preferences)
+        .values(
+            preferences=UserPreferences(
+                chosen_assistants=chosen_assistants,
+                hidden_assistants=hidden_assistants,
+                visible_assistants=user_preferences.visible_assistants,
+                default_model=user_preferences.default_model,
+            )
+        )
     )
     db_session.commit()
