@@ -178,6 +178,7 @@ def create_update_persona(
     except ValueError as e:
         logger.exception("Failed to create persona")
         raise HTTPException(status_code=400, detail=str(e))
+
     return PersonaSnapshot.from_model(persona)
 
 

@@ -161,9 +161,10 @@ export function ChatPage({
     user,
     availableAssistants
   );
-
-  console.log(visibleAssistants);
-  console.log(_);
+  console.log("visibleAssistants", visibleAssistants.length);
+  console.log("hiddenAssistants", _.length);
+  console.log("user", availableAssistants.length);
+  console.log("------\n\n");
 
   const existingChatSessionAssistantId = selectedChatSession?.persona_id;
   const [selectedAssistant, setSelectedAssistant] = useState<

@@ -41,7 +41,6 @@ from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
-from danswer.server.manage.models import UserPreferences
 from danswer.server.manage.models import UserRoleResponse
 from danswer.server.manage.models import UserRoleUpdateRequest
 from danswer.server.models import FullUserSnapshot
@@ -462,52 +461,57 @@ def update_user_assistant_visibility(
 
             visible_assistants = preferences.visible_assistants or []
             hidden_assistants = preferences.hidden_assistants or []
+            chosen_assistants = preferences.chosen_assistants or []
 
             if show:
                 if assistant_id not in visible_assistants:
                     visible_assistants.append(assistant_id)
                 if assistant_id in hidden_assistants:
                     hidden_assistants.remove(assistant_id)
+                if assistant_id not in chosen_assistants:
+                    chosen_assistants.append(assistant_id)
             else:
                 if assistant_id in visible_assistants:
                     visible_assistants.remove(assistant_id)
                 if assistant_id not in hidden_assistants:
                     hidden_assistants.append(assistant_id)
+                if assistant_id in chosen_assistants:
+                    chosen_assistants.remove(assistant_id)
 
             preferences.visible_assistants = visible_assistants
             preferences.hidden_assistants = hidden_assistants
+            preferences.chosen_assistants = chosen_assistants
             set_no_auth_user_preferences(store, preferences)
             return
         else:
             raise RuntimeError("This should never happen")
     user_preferences = UserInfo.from_model(user).preferences
-    chosen_assistants = user_preferences.chosen_assistants or []
     hidden_assistants = user_preferences.hidden_assistants or []
+    visible_assistants = user_preferences.visible_assistants or []
+    chosen_assistants = user_preferences.chosen_assistants or []
 
     if show:
+        if assistant_id not in visible_assistants:
+            visible_assistants.append(assistant_id)
         if assistant_id not in chosen_assistants:
             chosen_assistants.append(assistant_id)
         if assistant_id in hidden_assistants:
             hidden_assistants.remove(assistant_id)
     else:
-        if assistant_id in chosen_assistants:
-            chosen_assistants.remove(assistant_id)
+        if assistant_id in visible_assistants:
+            visible_assistants.remove(assistant_id)
         if assistant_id not in hidden_assistants:
             hidden_assistants.append(assistant_id)
-
-    user_preferences.chosen_assistants = chosen_assistants
-    user_preferences.hidden_assistants = hidden_assistants
+        if assistant_id in chosen_assistants:
+            chosen_assistants.remove(assistant_id)
 
     db_session.execute(
         update(User)
         .where(User.id == user.id)  # type: ignore
         .values(
-            preferences=UserPreferences(
-                chosen_assistants=chosen_assistants,
-                hidden_assistants=hidden_assistants,
-                visible_assistants=user_preferences.visible_assistants,
-                default_model=user_preferences.default_model,
-            )
+            hidden_assistants=hidden_assistants,
+            visible_assistants=visible_assistants,
+            chosen_assistants=chosen_assistants,
         )
     )
     db_session.commit()

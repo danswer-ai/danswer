@@ -63,6 +63,7 @@ import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 import { MakePublicAssistantModal } from "@/app/chat/modal/MakePublicAssistantModal";
 import {
   classifyAssistants,
+  getUserCreatedAssistants,
   orderAssistantsForUser,
 } from "@/lib/assistants/utils";
 
@@ -163,7 +164,7 @@ function AssistantListItem({
 
               <Link
                 href={`/assistants/edit/${assistant.id}`}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                className={`p-2  rounded-full hover:bg-gray-100 transition-colors duration-200`}
               >
                 <FiEdit2 size={20} className="text-text-900" />
               </Link>
@@ -208,7 +209,7 @@ function AssistantListItem({
                         }
                       }}
                     >
-                      <FiX className="text-gray-600" />{" "}
+                      <FiX size={18} className="text-text-800" />{" "}
                       {isOwnedByUser ? "Hide" : "Remove"}
                     </button>
                   ) : (
@@ -231,7 +232,7 @@ function AssistantListItem({
                         }
                       }}
                     >
-                      <FiPlus className="text-gray-600" /> Add
+                      <FiPlus size={18} className="text-text-800" /> Add
                     </button>
                   ),
                   isOwnedByUser && (
@@ -240,7 +241,7 @@ function AssistantListItem({
                       className="flex items-center gap-x-2 px-4 py-2 hover:bg-gray-100 w-full text-left text-red-600"
                       onClick={() => deleteAssistant(assistant)}
                     >
-                      <FiTrash /> Delete
+                      <FiTrash size={18} /> Delete
                     </button>
                   ),
                   isOwnedByUser && (
@@ -249,8 +250,12 @@ function AssistantListItem({
                       className="flex items-center gap-x-2 px-4 py-2 hover:bg-gray-100 w-full text-left"
                       onClick={() => shareAssistant(assistant)}
                     >
-                      {assistant.is_public ? <FiMinus /> : <FiPlus />} Make{" "}
-                      {assistant.is_public ? "Private" : "Public"}
+                      {assistant.is_public ? (
+                        <FiMinus size={18} className="text-text-800" />
+                      ) : (
+                        <FiPlus size={18} className="text-text-800" />
+                      )}{" "}
+                      Make {assistant.is_public ? "Private" : "Public"}
                     </button>
                   ),
                   !assistant.is_public ? (
@@ -261,7 +266,7 @@ function AssistantListItem({
                         setShowSharingModal(true);
                       }}
                     >
-                      <FiShare2 size={18} className="text-text-600" /> Share
+                      <FiShare2 size={18} className="text-text-800" /> Share
                     </button>
                   ) : null,
                 ]}
@@ -284,19 +289,25 @@ export function AssistantsList({
     user,
     assistants
   );
-  const [userCreatedAssistants, setUserCreatedAssistants] = useState<Persona[]>(
-    []
-  );
+  console.log(user?.preferences);
+
+  console.log("visibleAssistants", visibleAssistants.length);
+  console.log("hiddenAssistants", hiddenAssistants.length);
+  console.log("user", assistants.length);
+  console.log("------\n\n");
+  const [currentlyVisibleAssistants, setCurrentlyVisibleAssistants] = useState<
+    Persona[]
+  >([]);
 
   useEffect(() => {
-    setUserCreatedAssistants(orderAssistantsForUser(assistants, user));
-  }, [user, assistants, orderAssistantsForUser]);
+    setCurrentlyVisibleAssistants(
+      orderAssistantsForUser(visibleAssistants, user)
+    );
+  }, [user, orderAssistantsForUser]);
 
-  const ownedButHiddenAssistants = assistants.filter(
-    (assistant) =>
-      checkUserOwnsAssistant(user, assistant) &&
-      user?.preferences?.chosen_assistants &&
-      !user?.preferences?.chosen_assistants?.includes(assistant.id)
+  const ownedButHiddenAssistants = getUserCreatedAssistants(
+    user,
+    hiddenAssistants
   );
 
   const allAssistantIds = assistants.map((assistant) =>
@@ -324,9 +335,9 @@ export function AssistantsList({
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    userCreatedAssistants;
+
     if (over && active.id !== over.id) {
-      setUserCreatedAssistants((assistants) => {
+      setCurrentlyVisibleAssistants((assistants) => {
         const oldIndex = assistants.findIndex(
           (a) => a.id.toString() === active.id
         );
@@ -419,11 +430,11 @@ export function AssistantsList({
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={userCreatedAssistants.map((a) => a.id.toString())}
+            items={currentlyVisibleAssistants.map((a) => a.id.toString())}
             strategy={verticalListSortingStrategy}
           >
             <div className="w-full items-center py-4">
-              {userCreatedAssistants.map((assistant, index) => (
+              {currentlyVisibleAssistants.map((assistant, index) => (
                 <DraggableAssistantListItem
                   deleteAssistant={setDeletingPersona}
                   shareAssistant={setMakePublicPersona}
@@ -446,10 +457,10 @@ export function AssistantsList({
 
             <h3 className="text-xl font-bold mb-4">Your Hidden Assistants</h3>
 
-            <Text>
+            <h3 className="text-lg text-text-500">
               Assistants you&apos;ve created that aren&apos;t currently visible
               in the Assistants selector.
-            </Text>
+            </h3>
 
             <div className="w-full p-4">
               {ownedButHiddenAssistants.map((assistant, index) => (

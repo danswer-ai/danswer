@@ -39,49 +39,47 @@ export function classifyAssistants(user: User | null, assistants: Persona[]) {
     const isSelected = user.preferences?.chosen_assistants?.includes(
       assistant.id
     );
+    const isBuiltIn = assistant.builtin_persona;
     const isDefault = assistant.is_default_persona;
 
     const isOwnedByUser = checkUserOwnsAssistant(user, assistant);
 
     const isShown =
       (isVisible && isNotHidden && isSelected) ||
-      (isNotHidden && (isDefault || isOwnedByUser));
+      (isNotHidden && (isBuiltIn || isDefault || isOwnedByUser));
 
-    if (!isShown) {
-      if (!isVisible) {
-        console.log(
-          `Assistant ${assistant.id} not shown: not in visible_assistants`
-        );
-      }
-      if (!isNotHidden) {
-        console.log(
-          `Assistant ${assistant.id} not shown: in hidden_assistants`
-        );
-      }
-      if (!isSelected) {
-        console.log(
-          `Assistant ${assistant.id} not shown: not in chosen_assistants`
-        );
-      }
-      if (!isDefault) {
-        console.log(
-          `Assistant ${assistant.id} not shown: not a default persona`
-        );
-      }
-    }
+    console.log(
+      "assistant",
+      assistant.name,
+      "isShown",
+      isShown,
+      "isVisible",
+      isVisible,
+      "isNotHidden",
+      isNotHidden,
+      "isSelected",
+      isSelected,
+      "isDefault",
+      isDefault,
+      "isOwnedByUser",
+      isOwnedByUser
+    );
 
     return isShown;
   });
 
   const hiddenAssistants = assistants.filter((assistant) => {
-    const isHidden = !visibleAssistants.includes(assistant);
-    if (isHidden) {
-      console.log(
-        `Assistant ${assistant.id} hidden: not in visible assistants`
-      );
-    }
-    return isHidden;
+    return !visibleAssistants.includes(assistant);
   });
+
+  console.log(
+    "ASSISTNATS",
+    assistants.length,
+    "VISIBLE",
+    visibleAssistants.length,
+    "HIDDEN",
+    hiddenAssistants.length
+  );
 
   return {
     visibleAssistants,
@@ -138,4 +136,13 @@ export function orderAssistantsForUser(
 
   // Combine ordered chosen assistants with remaining assistants
   return [...orderedAssistants, ...remainingAssistants];
+}
+
+export function getUserCreatedAssistants(
+  user: User | null,
+  assistants: Persona[]
+) {
+  return assistants.filter((assistant) =>
+    checkUserOwnsAssistant(user, assistant)
+  );
 }
