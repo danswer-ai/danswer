@@ -39,7 +39,6 @@ class CustomToolSeed(BaseModel):
     user_id: Optional[str] = None
 
 
-
 logger = setup_logger()
 
 _SEED_CONFIG_ENV_VAR_NAME = "ENV_SEED_CONFIGURATION"
