@@ -103,7 +103,6 @@ def downgrade() -> None:
     op.drop_table("user__external_user_group_id")
 
     # Drop the enum type at the end of the downgrade
-    op.execute("DROP TYPE accesstype")
     op.create_table(
         "permission_sync_run",
         sa.Column("id", sa.Integer(), nullable=False),
