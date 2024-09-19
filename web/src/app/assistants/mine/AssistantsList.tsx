@@ -3,10 +3,11 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { MinimalUserSnapshot, User } from "@/lib/types";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { Divider, Text } from "@tremor/react";
+import { Button, Divider, Text } from "@tremor/react";
 import {
   FiEdit2,
   FiFigma,
+  FiList,
   FiMenu,
   FiMinus,
   FiMoreHorizontal,
@@ -294,10 +295,12 @@ export function AssistantsList({
   user: User | null;
   assistants: Persona[];
 }) {
-  const [filteredAssistants, setFilteredAssistants] = useState<Persona[]>([]);
+  const [userCreatedAssistants, setUserCreatedAssistants] = useState<Persona[]>(
+    []
+  );
 
   useEffect(() => {
-    setFilteredAssistants(orderAssistantsForUser(assistants, user));
+    setUserCreatedAssistants(orderAssistantsForUser(assistants, user, true));
   }, [user, assistants, orderAssistantsForUser]);
 
   const ownedButHiddenAssistants = assistants.filter(
@@ -332,9 +335,9 @@ export function AssistantsList({
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    filteredAssistants;
+    userCreatedAssistants;
     if (over && active.id !== over.id) {
-      setFilteredAssistants((assistants) => {
+      setUserCreatedAssistants((assistants) => {
         const oldIndex = assistants.findIndex(
           (a) => a.id.toString() === active.id
         );
@@ -389,39 +392,35 @@ export function AssistantsList({
           }}
         />
       )}
+      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
+        <AssistantsPageTitle>Your Assistants</AssistantsPageTitle>
 
-      <div className="mx-auto mobile:w-[90%] desktop:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <AssistantsPageTitle>My Assistants</AssistantsPageTitle>
-
-        <div className="grid grid-cols-2 gap-4 mt-3">
+        <div className="grid grid-cols-2 gap-4 mt-4 mb-6">
           <Link href="/assistants/new">
-            <NavigationButton>
-              <div className="flex justify-center">
-                <FiPlus className="mr-2 my-auto" size={20} />
-                Create New Assistant
-              </div>
-            </NavigationButton>
+            <Button
+              className="w-full py-3 text-lg rounded-full bg-background-800 text-white hover:bg-background-800 transition duration-300 ease-in-out"
+              icon={FiPlus}
+            >
+              Create New Assistant
+            </Button>
           </Link>
-
           <Link href="/assistants/gallery">
-            <NavigationButton>
-              <div className="flex justify-center">
-                <FiSearch className="mr-2 my-auto" size={20} />
-                View Available Assistants
-              </div>
-            </NavigationButton>
+            <Button
+              className="w-full hover:border-border-strong py-3 text-lg rounded-full bg-white border border-border shadow text-text-700 hover:bg-background-50 transition duration-300 ease-in-out"
+              icon={FiList}
+            >
+              Assistant Gallery
+            </Button>
           </Link>
         </div>
 
-        <p className="mt-6 text-center text-base">
-          Assistants allow you to customize your experience for a specific
-          purpose. Specifically, they combine instructions, extra knowledge, and
-          any combination of tools.
+        <p className="text-center text-text-500 text-lg mb-6">
+          Here you can view assistants you've created and manage them.
         </p>
 
-        <Divider />
-
-        <h3 className="text-xl font-bold mb-4">Active Assistants</h3>
+        <h3 className="text-xl text-text-800 font-bold mb-4">
+          Active Assistants
+        </h3>
 
         <Text>
           The order the assistants appear below will be the order they appear in
@@ -435,11 +434,11 @@ export function AssistantsList({
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={filteredAssistants.map((a) => a.id.toString())}
+            items={userCreatedAssistants.map((a) => a.id.toString())}
             strategy={verticalListSortingStrategy}
           >
             <div className="w-full p-4 mt-3">
-              {filteredAssistants.map((assistant, index) => (
+              {userCreatedAssistants.map((assistant, index) => (
                 <DraggableAssistantListItem
                   deleteAssistant={setDeletingPersona}
                   shareAssistant={setMakePublicPersona}

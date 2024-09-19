@@ -6,7 +6,7 @@ import { User } from "@/lib/types";
 import { Button } from "@tremor/react";
 import Link from "next/link";
 import { useState } from "react";
-import { FiMinus, FiPlus, FiX } from "react-icons/fi";
+import { FiList, FiMinus, FiPlus, FiX } from "react-icons/fi";
 import { NavigationButton } from "../NavigationButton";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
 import {
@@ -46,34 +46,71 @@ export function AssistantsGallery({
       {popup}
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>Assistant Gallery</AssistantsPageTitle>
-        <div className="flex justify-center mb-6">
-          <Link href="/assistants/mine">
-            <NavigationButton>View Your Assistants</NavigationButton>
+
+        <div className="grid grid-cols-2 gap-4 mt-4 mb-6">
+          <Link href="/assistants/new">
+            <Button
+              className="w-full py-3 text-lg rounded-full bg-background-800 text-white hover:bg-background-800 transition duration-300 ease-in-out"
+              icon={FiPlus}
+            >
+              Create New Assistant
+            </Button>
+          </Link>
+          <Link href="/assistants/gallery">
+            <Button
+              className="w-full hover:border-border-strong py-3 text-lg rounded-full bg-white border border-border shadow text-text-700 hover:bg-background-50 transition duration-300 ease-in-out"
+              icon={FiList}
+            >
+              Your Assistants
+            </Button>
           </Link>
         </div>
 
-        <p className="text-center mb-6">
+        <p className="text-center text-text-500 text-lg mb-6">
           Discover and create custom assistants that combine instructions, extra
           knowledge, and any combination of tools.
         </p>
 
         <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search assistants..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="
-            w-full
-            p-2
-            border
-            border-gray-300
-            rounded
-            focus:outline-none
-            focus:ring-2
-            focus:ring-blue-500
-          "
-          />
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search assistants..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="
+                w-full
+                py-3
+                px-4
+                pl-10
+                text-lg
+                border-2
+                border-background-strong
+                rounded-full
+                bg-background-50
+                text-text-700
+                placeholder-text-400
+                focus:outline-none
+                focus:ring-2
+                focus:ring-primary-500
+                focus:border-transparent
+                transition duration-300 ease-in-out
+              "
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg
+                className="h-5 w-5 text-text-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+          </div>
         </div>
         <div
           className="
@@ -118,6 +155,8 @@ export function AssistantsGallery({
                         className="
                           mr-2
                           my-auto
+                          bg-background-700
+                          hover:bg-background-600
                         "
                         icon={FiMinus}
                         onClick={async () => {
@@ -151,16 +190,17 @@ export function AssistantsGallery({
                           }
                         }}
                         size="xs"
-                        color="blue"
                       >
                         Deselect
                       </Button>
                     ) : (
                       <Button
                         className="
-                      mr-2
-                      my-auto
-                    "
+                          mr-2
+                          my-auto
+                          bg-accent
+                          hover:bg-accent-hover
+                        "
                         icon={FiPlus}
                         onClick={async () => {
                           const success = await addAssistantToList(

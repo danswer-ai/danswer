@@ -1,9 +1,11 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { User } from "../types";
+import { checkUserOwnsAssistant } from "./checkOwnership";
 
 export function orderAssistantsForUser(
   assistants: Persona[],
-  user: User | null
+  user: User | null,
+  ownedByUser?: boolean
 ) {
   if (user && user.preferences && user.preferences.chosen_assistants) {
     const chosenAssistantsSet = new Set(user.preferences.chosen_assistants);
@@ -17,6 +19,11 @@ export function orderAssistantsForUser(
     let filteredAssistants = assistants.filter((assistant) =>
       chosenAssistantsSet.has(assistant.id)
     );
+    if (ownedByUser) {
+      filteredAssistants = filteredAssistants.filter((assistant) =>
+        checkUserOwnsAssistant(user, assistant)
+      );
+    }
 
     if (filteredAssistants.length == 0) {
       return assistants;

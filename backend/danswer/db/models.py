@@ -1316,7 +1316,7 @@ class Persona(Base):
     )
     # Built-in personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
-    built_in_persona: Mapped[bool] = mapped_column(Boolean, default=False)
+    builtin_persona: Mapped[bool] = mapped_column(Boolean, default=False)
     # controls whether the persona is available to be selected by users
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
     # controls the ordering of personas in the UI
@@ -1367,10 +1367,10 @@ class Persona(Base):
     # Default personas loaded via yaml cannot have the same name
     __table_args__ = (
         Index(
-            "_default_persona_name_idx",
+            "_builtin_persona_name_idx",
             "name",
             unique=True,
-            postgresql_where=(built_in_persona == True),  # noqa: E712
+            postgresql_where=(builtin_persona == True),  # noqa: E712
         ),
     )
 
