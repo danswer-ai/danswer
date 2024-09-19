@@ -149,7 +149,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
 
     workspace: Mapped[list["Workspace"]] = relationship(
-        "Workspace", secondary="workspace__users", back_populates="users", viewonly=True
+        "Workspace", secondary="workspace__users", back_populates="users", lazy="joined"
+    )
+
+    groups: Mapped[list["Teamspace"]] = relationship(
+        "Teamspace", secondary="user__teamspace", back_populates="users", lazy="joined"
     )
 
 
@@ -1251,6 +1255,11 @@ class Assistant__Teamspace(Base):
     teamspace_id: Mapped[int] = mapped_column(
         ForeignKey("teamspace.id"), primary_key=True
     )
+    is_current: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        primary_key=True,
+    )
 
 
 class DocumentSet__Teamspace(Base):
@@ -1261,6 +1270,11 @@ class DocumentSet__Teamspace(Base):
     )
     teamspace_id: Mapped[int] = mapped_column(
         ForeignKey("teamspace.id"), primary_key=True
+    )
+    is_current: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        primary_key=True,
     )
 
 
@@ -1279,6 +1293,7 @@ class Teamspace(Base):
     users: Mapped[list[User]] = relationship(
         "User",
         secondary=User__Teamspace.__table__,
+        viewonly=True,
     )
     cc_pairs: Mapped[list[ConnectorCredentialPair]] = relationship(
         "ConnectorCredentialPair",

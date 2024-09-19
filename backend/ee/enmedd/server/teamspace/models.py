@@ -1,3 +1,5 @@
+from typing import List
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -11,6 +13,7 @@ from enmedd.server.features.document_set.models import DocumentSet
 from enmedd.server.manage.models import UserInfo
 from enmedd.server.manage.models import UserPreferences
 from enmedd.server.models import MinimalWorkspaceSnapshot
+from enmedd.server.query_and_chat.models import ChatSessionDetails
 
 
 class Teamspace(BaseModel):
@@ -20,6 +23,7 @@ class Teamspace(BaseModel):
     cc_pairs: list[ConnectorCredentialPairDescriptor]
     document_sets: list[DocumentSet]
     assistants: list[AssistantSnapshot]
+    chat_sessions: list[ChatSessionDetails]
     is_up_to_date: bool
     is_up_for_deletion: bool
     workspace: list[MinimalWorkspaceSnapshot]
@@ -70,6 +74,18 @@ class Teamspace(BaseModel):
                 AssistantSnapshot.from_model(assistant)
                 for assistant in teamspace_model.assistants
             ],
+            chat_sessions=[
+                ChatSessionDetails(
+                    id=chat_session.id,
+                    description=chat_session.description,
+                    assistant_id=chat_session.assistant_id,
+                    time_created=chat_session.time_created,
+                    shared_status=chat_session.shared_status,
+                    folder_id=chat_session.folder_id,
+                    current_alternate_model=chat_session.current_alternate_model,
+                )
+                for chat_session in teamspace_model.chat_sessions
+            ],
             is_up_to_date=teamspace_model.is_up_to_date,
             is_up_for_deletion=teamspace_model.is_up_for_deletion,
             workspace=[
@@ -85,8 +101,12 @@ class TeamspaceCreate(BaseModel):
     name: str
     user_ids: list[UUID]
     cc_pair_ids: list[int]
+    document_set_ids: Optional[List[int]] = []
+    assistant_ids: Optional[List[int]] = []
 
 
 class TeamspaceUpdate(BaseModel):
     user_ids: list[UUID]
     cc_pair_ids: list[int]
+    document_set_ids: Optional[List[int]] = []
+    assistant_ids: Optional[List[int]] = []

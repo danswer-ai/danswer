@@ -8,9 +8,11 @@ from sqlalchemy.orm import Session
 
 from ee.enmedd.server.teamspace.models import TeamspaceCreate
 from ee.enmedd.server.teamspace.models import TeamspaceUpdate
+from enmedd.db.models import Assistant__Teamspace
 from enmedd.db.models import ConnectorCredentialPair
 from enmedd.db.models import Document
 from enmedd.db.models import DocumentByConnectorCredentialPair
+from enmedd.db.models import DocumentSet__Teamspace
 from enmedd.db.models import Teamspace
 from enmedd.db.models import Teamspace__ConnectorCredentialPair
 from enmedd.db.models import TokenRateLimit__Teamspace
@@ -163,6 +165,32 @@ def _add_teamspace__cc_pair_relationships__no_commit(
     return relationships
 
 
+def _add_teamspace__document_set_relationships__no_commit(
+    db_session: Session, teamspace_id: int, document_set_ids: list[int]
+) -> list[DocumentSet__Teamspace]:
+    """NOTE: does not commit the transaction."""
+    relationships = [
+        DocumentSet__Teamspace(
+            teamspace_id=teamspace_id, document_set_id=document_set_id
+        )
+        for document_set_id in document_set_ids
+    ]
+    db_session.add_all(relationships)
+    return relationships
+
+
+def _add_teamspace__assistant_relationships__no_commit(
+    db_session: Session, teamspace_id: int, assistant_ids: list[int]
+) -> list[Assistant__Teamspace]:
+    """NOTE: does not commit the transaction."""
+    relationships = [
+        Assistant__Teamspace(teamspace_id=teamspace_id, assistant_id=assistant_id)
+        for assistant_id in assistant_ids
+    ]
+    db_session.add_all(relationships)
+    return relationships
+
+
 def insert_teamspace(db_session: Session, teamspace: TeamspaceCreate) -> Teamspace:
     db_teamspace = Teamspace(name=teamspace.name)
     db_session.add(db_teamspace)
@@ -172,6 +200,16 @@ def insert_teamspace(db_session: Session, teamspace: TeamspaceCreate) -> Teamspa
         db_session=db_session,
         teamspace_id=db_teamspace.id,
         user_ids=teamspace.user_ids,
+    )
+    _add_teamspace__document_set_relationships__no_commit(
+        db_session=db_session,
+        teamspace_id=db_teamspace.id,
+        document_set_ids=teamspace.document_set_ids,
+    )
+    _add_teamspace__assistant_relationships__no_commit(
+        db_session=db_session,
+        teamspace_id=db_teamspace.id,
+        assistant_ids=teamspace.assistant_ids,
     )
     _add_teamspace__cc_pair_relationships__no_commit(
         db_session=db_session,
@@ -207,6 +245,32 @@ def _mark_teamspace__cc_pair_relationships_outdated__no_commit(
         teamspace__cc_pair_relationship.is_current = False
 
 
+def _mark_teamspace__document_set_relationships_outdated__no_commit(
+    db_session: Session, teamspace_id: int
+) -> None:
+    """NOTE: does not commit the transaction."""
+    teamspace__document_set_relationships = db_session.scalars(
+        select(DocumentSet__Teamspace).where(
+            DocumentSet__Teamspace.teamspace_id == teamspace_id
+        )
+    )
+    for teamspace__document_set_relationship in teamspace__document_set_relationships:
+        teamspace__document_set_relationship.is_current = False
+
+
+def _mark_teamspace__assistant_relationships_outdated__no_commit(
+    db_session: Session, teamspace_id: int
+) -> None:
+    """NOTE: does not commit the transaction."""
+    teamspace__assistant_relationships = db_session.scalars(
+        select(Assistant__Teamspace).where(
+            Assistant__Teamspace.teamspace_id == teamspace_id
+        )
+    )
+    for teamspace__assistant_relationship in teamspace__assistant_relationships:
+        teamspace__assistant_relationship.is_current = False
+
+
 def update_teamspace(
     db_session: Session, teamspace_id: int, teamspace: TeamspaceUpdate
 ) -> Teamspace:
@@ -217,10 +281,15 @@ def update_teamspace(
 
     _check_teamspace_is_modifiable(db_teamspace)
 
-    existing_cc_pairs = db_teamspace.cc_pairs
-    cc_pairs_updated = set([cc_pair.id for cc_pair in existing_cc_pairs]) != set(
+    cc_pairs_updated = set([cc_pair.id for cc_pair in db_teamspace.cc_pairs]) != set(
         teamspace.cc_pair_ids
     )
+    document_set_updated = set(
+        [document_set.id for document_set in db_teamspace.document_sets]
+    ) != set(teamspace.document_set_ids)
+    assistant_updated = set(
+        [assistant.id for assistant in db_teamspace.assistants]
+    ) != set(teamspace.assistant_ids)
     users_updated = set([user.id for user in db_teamspace.users]) != set(
         teamspace.user_ids
     )
@@ -242,6 +311,24 @@ def update_teamspace(
             db_session=db_session,
             teamspace_id=db_teamspace.id,
             cc_pair_ids=teamspace.cc_pair_ids,
+        )
+    if document_set_updated:
+        _mark_teamspace__document_set_relationships_outdated__no_commit(
+            db_session=db_session, teamspace_id=teamspace_id
+        )
+        _add_teamspace__document_set_relationships__no_commit(
+            db_session=db_session,
+            teamspace_id=db_teamspace.id,
+            document_set_id=teamspace.document_set_ids,
+        )
+    if assistant_updated:
+        _mark_teamspace__assistant_relationships_outdated__no_commit(
+            db_session=db_session, teamspace_id=teamspace_id
+        )
+        _add_teamspace__assistant_relationships__no_commit(
+            db_session=db_session,
+            teamspace_id=db_teamspace.id,
+            assistant_id=teamspace.assistant_ids,
         )
 
     # only needs to sync with Vespa if the cc_pairs have been updated
