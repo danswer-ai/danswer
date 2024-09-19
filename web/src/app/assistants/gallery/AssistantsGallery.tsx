@@ -71,7 +71,7 @@ export function AssistantsGallery({
           knowledge, and any combination of tools.
         </p>
 
-        <div className="mb-6">
+        <div className="mb-12">
           <div className="relative">
             <input
               type="text"
@@ -112,6 +112,15 @@ export function AssistantsGallery({
             </div>
           </div>
         </div>
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-2 text-text-900">
+            Default Assistants
+          </h2>
+
+          <h3 className="text-lg text-text-500">
+            These are assistant created by your admins are and preferred.
+          </h3>
+        </section>
         <div
           className="
           w-full
@@ -241,6 +250,15 @@ export function AssistantsGallery({
             </div>
           ))}
         </div>
+        <section className="mt-12 mb-8">
+          <h2 className="text-2xl font-semibold mb-2 text-text-900">
+            Other Assistants
+          </h2>
+
+          <h3 className="text-lg text-text-500">
+            These are assistant created by your admins are and preferred.
+          </h3>
+        </section>
       </div>
     </>
   );

@@ -65,6 +65,10 @@ def upgrade() -> None:
         nullable=False,
         server_default=sa.text("'[]'::jsonb"),
     )
+    op.drop_column("persona", "default_persona")
+    op.add_column(
+        "persona", sa.Column("is_default_persona", sa.Boolean(), nullable=True)
+    )
 
 
 def downgrade() -> None:
@@ -86,3 +90,4 @@ def downgrade() -> None:
 
     # Drop the builtin_persona column
     op.drop_column("persona", "builtin_persona")
+    op.drop_column("persona", "is_default_persona")

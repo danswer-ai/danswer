@@ -1317,6 +1317,10 @@ class Persona(Base):
     # Built-in personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     builtin_persona: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Default personas are personas created by admins and are automatically added
+    # to all users' assistants list.
+    is_default_persona: Mapped[bool] = mapped_column(Boolean, default=False)
     # controls whether the persona is available to be selected by users
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
     # controls the ordering of personas in the UI

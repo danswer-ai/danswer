@@ -383,6 +383,7 @@ export function AssistantEditor({
           } else {
             [promptResponse, personaResponse] = await createPersona({
               ...values,
+              is_default_persona: admin!,
               num_chunks: numChunks,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,

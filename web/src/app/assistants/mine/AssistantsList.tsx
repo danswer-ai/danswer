@@ -6,16 +6,11 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button, Divider, Text } from "@tremor/react";
 import {
   FiEdit2,
-  FiFigma,
   FiList,
-  FiMenu,
   FiMinus,
   FiMoreHorizontal,
   FiPlus,
-  FiSearch,
-  FiShare,
   FiShare2,
-  FiToggleLeft,
   FiTrash,
   FiX,
 } from "react-icons/fi";
@@ -30,7 +25,6 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { DefaultPopover } from "@/components/popover/DefaultPopover";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
-import { NavigationButton } from "../NavigationButton";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
 import { checkUserOwnsAssistant } from "@/lib/assistants/checkOwnership";
 import { AssistantSharingModal } from "./AssistantSharingModal";
@@ -84,12 +78,12 @@ function DraggableAssistantListItem(props: any) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center">
+    <div ref={setNodeRef} style={style} className="flex mt-2 items-center">
       <div {...attributes} {...listeners} className="mr-2 cursor-grab">
         <DragHandle />
       </div>
       <div className="flex-grow">
-        <AssistantListItem {...props} />
+        <AssistantListItem isDragging={isDragging} {...props} />
       </div>
     </div>
   );
@@ -104,6 +98,7 @@ function AssistantListItem({
   setPopup,
   deleteAssistant,
   shareAssistant,
+  isDragging,
 }: {
   assistant: Persona;
   user: User | null;
@@ -113,6 +108,7 @@ function AssistantListItem({
   deleteAssistant: Dispatch<SetStateAction<Persona | null>>;
   shareAssistant: Dispatch<SetStateAction<Persona | null>>;
   setPopup: (popupSpec: PopupSpec | null) => void;
+  isDragging?: boolean;
 }) {
   const router = useRouter();
   const [showSharingModal, setShowSharingModal] = useState(false);
@@ -134,76 +130,63 @@ function AssistantListItem({
         show={showSharingModal}
       />
       <div
-        className="flex bg-background-emphasis
-          rounded-lg
-          shadow-md
-          p-4
-          mb-4 flex-col"
+        className={`rounded-lg px-4 py-6 transition-all duration-900 hover:bg-background-125 ${isDragging && "bg-background-125"}`}
       >
-        <div
-          className="
-          flex
-          justify-between
-          items-center
-        "
-        >
-          <div className="w-3/4">
-            <div className="flex items-center">
-              <AssistantIcon assistant={assistant} />
-              <h2 className="text-xl line-clamp-2 font-semibold my-auto ml-2">
-                {assistant.name}
-              </h2>
-            </div>
+        <div className="flex justify-between items-center">
+          <AssistantIcon assistant={assistant} />
 
-            <div className="text-sm mt-2">{assistant.description}</div>
-            <div className="mt-2 flex items-start gap-y-2 flex-col gap-x-3">
-              <AssistantSharedStatusDisplay assistant={assistant} user={user} />
-              {assistant.tools.length != 0 && (
-                <AssistantTools list assistant={assistant} />
-              )}
-            </div>
-          </div>
+          <h2 className="w-3/4 ml-6 space-y-3 text-xl font-semibold line-clamp-2 text-gray-800">
+            {assistant.name}
+          </h2>
 
           {isOwnedByUser && (
-            <div className="ml-auto flex items-center">
+            <div className="flex items-center space-x-4">
+              <div className="flex flex-wrap mr-20 items-center gap-2">
+                <AssistantSharedStatusDisplay
+                  size="md"
+                  assistant={assistant}
+                  user={user}
+                />
+                {assistant.tools.length > 0 && (
+                  <AssistantTools list assistant={assistant} />
+                )}
+              </div>
               {!assistant.is_public && (
-                <div
-                  className="mr-4 rounded p-2 cursor-pointer hover:bg-hover"
+                <button
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowSharingModal(true);
                   }}
                 >
-                  <FiShare2 size={16} />
-                </div>
+                  <FiShare2 size={18} className="text-text-900" />
+                </button>
               )}
+
               <Link
                 href={`/assistants/edit/${assistant.id}`}
-                className="mr-4 rounded p-2 cursor-pointer hover:bg-hover"
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
               >
-                <FiEdit2 size={16} />
+                <FiEdit2 size={20} className="text-text-900" />
               </Link>
 
               <DefaultPopover
                 content={
-                  <div className="hover:bg-hover rounded p-2 cursor-pointer">
-                    <FiMoreHorizontal size={16} />
+                  <div className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 cursor-pointer">
+                    <FiMoreHorizontal size={20} className="text-text-900" />
                   </div>
                 }
                 side="bottom"
-                align="start"
+                align="end"
                 sideOffset={5}
               >
                 {[
                   isVisible ? (
-                    <div
+                    <button
                       key="remove"
-                      className="flex items-center gap-x-2"
+                      className="flex items-center gap-x-2 px-4 py-2 hover:bg-gray-100 w-full text-left"
                       onClick={async () => {
-                        if (
-                          currentChosenAssistants &&
-                          currentChosenAssistants.length === 1
-                        ) {
+                        if (currentChosenAssistants?.length === 1) {
                           setPopup({
                             message: `Cannot remove "${assistant.name}" - you must have at least one assistant.`,
                             type: "error",
@@ -228,12 +211,13 @@ function AssistantListItem({
                         }
                       }}
                     >
-                      <FiX /> {isOwnedByUser ? "Hide" : "Remove"}
-                    </div>
+                      <FiX className="text-gray-600" />{" "}
+                      {isOwnedByUser ? "Hide" : "Remove"}
+                    </button>
                   ) : (
-                    <div
+                    <button
                       key="add"
-                      className="flex items-center gap-x-2"
+                      className="flex items-center gap-x-2 px-4 py-2 hover:bg-gray-100 w-full text-left"
                       onClick={async () => {
                         const success = await addAssistantToList(
                           assistant.id,
@@ -253,31 +237,27 @@ function AssistantListItem({
                         }
                       }}
                     >
-                      <FiPlus /> Add
-                    </div>
+                      <FiPlus className="text-gray-600" /> Add
+                    </button>
                   ),
-                  isOwnedByUser ? (
-                    <div
+                  isOwnedByUser && (
+                    <button
                       key="delete"
-                      className="flex items-center gap-x-2"
+                      className="flex items-center gap-x-2 px-4 py-2 hover:bg-gray-100 w-full text-left text-red-600"
                       onClick={() => deleteAssistant(assistant)}
                     >
                       <FiTrash /> Delete
-                    </div>
-                  ) : (
-                    <></>
+                    </button>
                   ),
-                  isOwnedByUser ? (
-                    <div
-                      key="delete"
-                      className="flex items-center gap-x-2"
+                  isOwnedByUser && (
+                    <button
+                      key="visibility"
+                      className="flex items-center gap-x-2 px-4 py-2 hover:bg-gray-100 w-full text-left"
                       onClick={() => shareAssistant(assistant)}
                     >
                       {assistant.is_public ? <FiMinus /> : <FiPlus />} Make{" "}
                       {assistant.is_public ? "Private" : "Public"}
-                    </div>
-                  ) : (
-                    <></>
+                    </button>
                   ),
                 ]}
               </DefaultPopover>
@@ -418,15 +398,15 @@ export function AssistantsList({
           Here you can view assistants you've created and manage them.
         </p>
 
-        <h3 className="text-xl text-text-800 font-bold mb-4">
+        <h2 className="text-2xl font-semibold mb-2 text-text-900">
           Active Assistants
-        </h3>
+        </h2>
 
-        <Text>
+        <h3 className="text-lg text-text-500">
           The order the assistants appear below will be the order they appear in
           the Assistants dropdown. The first assistant listed will be your
           default assistant when you start a new chat. Drag and drop to reorder.
-        </Text>
+        </h3>
 
         <DndContext
           sensors={sensors}
@@ -437,7 +417,7 @@ export function AssistantsList({
             items={userCreatedAssistants.map((a) => a.id.toString())}
             strategy={verticalListSortingStrategy}
           >
-            <div className="w-full p-4 mt-3">
+            <div className="w-full items-center py-4 mt-3">
               {userCreatedAssistants.map((assistant, index) => (
                 <DraggableAssistantListItem
                   deleteAssistant={setDeletingPersona}
