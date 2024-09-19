@@ -73,11 +73,11 @@ class LLMProviderUpsertRequest(LLMProvider):
     model_names: list[str] | None = None
 
 
-class LLMProviderCreationRequest(LLMProvider):
+class LLMProviderUpdateRequest(LLMProvider):
     api_key_set: bool
 
 
-class LLMProviderUpdateRequest(LLMProvider):
+class LLMProviderCreationRequest(LLMProvider):
     pass
 
 
