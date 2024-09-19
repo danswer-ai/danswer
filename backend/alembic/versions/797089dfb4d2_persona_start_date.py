@@ -1,7 +1,7 @@
 """persona_start_date
 
 Revision ID: 797089dfb4d2
-Revises: 35e6853a51d5
+Revises: 61ff3651add4
 Create Date: 2024-09-11 14:51:49.785835
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "797089dfb4d2"
-down_revision = "35e6853a51d5"
+down_revision = "61ff3651add4"
 branch_labels = None
 depends_on = None
 
