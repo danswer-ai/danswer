@@ -162,6 +162,9 @@ export function ChatPage({
     availableAssistants
   );
 
+  console.log(visibleAssistants);
+  console.log(_);
+
   const existingChatSessionAssistantId = selectedChatSession?.persona_id;
   const [selectedAssistant, setSelectedAssistant] = useState<
     Persona | undefined

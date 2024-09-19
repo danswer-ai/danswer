@@ -1,6 +1,12 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, {
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useEffect,
+  useState,
+} from "react";
 import { MinimalUserSnapshot, User } from "@/lib/types";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button, Divider, Text } from "@tremor/react";
@@ -94,7 +100,6 @@ function DraggableAssistantListItem(props: any) {
 function AssistantListItem({
   assistant,
   user,
-  allAssistantIds,
   allUsers,
   isVisible,
   setPopup,
@@ -105,7 +110,6 @@ function AssistantListItem({
   assistant: Persona;
   user: User | null;
   allUsers: MinimalUserSnapshot[];
-  allAssistantIds: string[];
   isVisible: boolean;
   deleteAssistant: Dispatch<SetStateAction<Persona | null>>;
   shareAssistant: Dispatch<SetStateAction<Persona | null>>;
@@ -156,18 +160,6 @@ function AssistantListItem({
                   user={user}
                 />
               </div>
-
-              {!assistant.is_public && (
-                <button
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowSharingModal(true);
-                  }}
-                >
-                  <FiShare2 size={18} className="text-text-900" />
-                </button>
-              )}
 
               <Link
                 href={`/assistants/edit/${assistant.id}`}
@@ -261,6 +253,17 @@ function AssistantListItem({
                       {assistant.is_public ? "Private" : "Public"}
                     </button>
                   ),
+                  !assistant.is_public ? (
+                    <button
+                      key="share"
+                      className="flex items-center gap-x-2 px-4 py-2 hover:bg-gray-100 w-full text-left"
+                      onClick={(e) => {
+                        setShowSharingModal(true);
+                      }}
+                    >
+                      <FiShare2 size={18} className="text-text-600" /> Share
+                    </button>
+                  ) : null,
                 ]}
               </DefaultPopover>
             </div>
@@ -378,10 +381,11 @@ export function AssistantsList({
           }}
         />
       )}
+
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>Your Assistants</AssistantsPageTitle>
 
-        <div className="grid grid-cols-2 gap-4 mt-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mt-4 mb-8">
           <Button
             onClick={() => router.push("/assistants/new")}
             className="w-full py-3 text-lg rounded-full bg-background-800 text-white hover:bg-background-800 transition duration-300 ease-in-out"
@@ -398,10 +402,6 @@ export function AssistantsList({
             Assistant Gallery
           </Button>
         </div>
-
-        <p className="text-center text-text-500 text-lg mb-6">
-          Here you can view assistants you&apos;ve created and manage them.
-        </p>
 
         <h2 className="text-2xl font-semibold mb-2 text-text-900">
           Active Assistants
@@ -422,7 +422,7 @@ export function AssistantsList({
             items={userCreatedAssistants.map((a) => a.id.toString())}
             strategy={verticalListSortingStrategy}
           >
-            <div className="w-full items-center py-4 mt-3">
+            <div className="w-full items-center py-4">
               {userCreatedAssistants.map((assistant, index) => (
                 <DraggableAssistantListItem
                   deleteAssistant={setDeletingPersona}
@@ -459,7 +459,6 @@ export function AssistantsList({
                   key={assistant.id}
                   assistant={assistant}
                   user={user}
-                  allAssistantIds={allAssistantIds}
                   allUsers={users || []}
                   isVisible={false}
                   setPopup={setPopup}

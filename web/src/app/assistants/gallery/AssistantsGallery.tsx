@@ -163,13 +163,21 @@ export function AssistantsGallery({
     assistants
   );
 
-  const defaultAssistants = assistants.filter(
-    (assistant) => assistant.is_default_persona
-  );
+  const defaultAssistants = assistants
+    .filter((assistant) => assistant.is_default_persona)
+    .filter(
+      (assistant) =>
+        assistant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        assistant.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-  const nonDefaultAssistants = assistants.filter(
-    (assistant) => !assistant.is_default_persona
-  );
+  const nonDefaultAssistants = assistants
+    .filter((assistant) => !assistant.is_default_persona)
+    .filter(
+      (assistant) =>
+        assistant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        assistant.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <>
@@ -178,30 +186,24 @@ export function AssistantsGallery({
         <AssistantsPageTitle>Assistant Gallery</AssistantsPageTitle>
 
         <div className="grid grid-cols-2 gap-4 mt-4 mb-6">
-          <Link href="/assistants/new">
-            <Button
-              className="w-full py-3 text-lg rounded-full bg-background-800 text-white hover:bg-background-800 transition duration-300 ease-in-out"
-              icon={FiPlus}
-            >
-              Create New Assistant
-            </Button>
-          </Link>
-          <Link href="/assistants/gallery">
-            <Button
-              className="w-full hover:border-border-strong py-3 text-lg rounded-full bg-white border border-border shadow text-text-700 hover:bg-background-50 transition duration-300 ease-in-out"
-              icon={FiList}
-            >
-              Your Assistants
-            </Button>
-          </Link>
+          <Button
+            onClick={() => router.push("/assistants/new")}
+            className="w-full py-3 text-lg rounded-full bg-background-800 text-white hover:bg-background-800 transition duration-300 ease-in-out"
+            icon={FiPlus}
+          >
+            Create New Assistant
+          </Button>
+
+          <Button
+            onClick={() => router.push("/assistants/mine")}
+            className="w-full hover:border-border-strong py-3 text-lg rounded-full bg-white border border-border shadow text-text-700 hover:bg-background-50 transition duration-300 ease-in-out"
+            icon={FiList}
+          >
+            Your Assistants
+          </Button>
         </div>
 
-        <p className="text-center text-text-500 text-lg mb-6">
-          Discover and create custom assistants that combine instructions, extra
-          knowledge, and any combination of tools.
-        </p>
-
-        <div className="mb-12">
+        <div className="mt-4 mb-12">
           <div className="relative">
             <input
               type="text"
@@ -242,6 +244,15 @@ export function AssistantsGallery({
             </div>
           </div>
         </div>
+
+        {defaultAssistants.length == 0 &&
+          nonDefaultAssistants.length == 0 &&
+          assistants.length != 0 && (
+            <div className="text-text-500">
+              No assistants found for this search
+            </div>
+          )}
+
         {defaultAssistants.length > 0 && (
           <>
             <section className="mb-8">
@@ -274,15 +285,17 @@ export function AssistantsGallery({
             </div>
           </>
         )}
-        {nonDefaultAssistants.length > 0 && (
-          <section className="mt-12 mb-8">
-            <h2 className="text-2xl font-semibold mb-2 text-text-900">
-              Other Assistants
-            </h2>
 
-            <h3 className="text-lg text-text-500">
-              These are community-contributed assistants.
-            </h3>
+        {nonDefaultAssistants.length > 0 && (
+          <section className="mt-12 mb-8 flex flex-col gap-y-2">
+            <div className="flex flex-col">
+              <h2 className="text-2xl font-semibold text-text-900">
+                Other Assistants
+              </h2>
+              <h3 className="text-lg text-text-500">
+                These are community-contributed assistants.
+              </h3>
+            </div>
 
             <div
               className="

@@ -20,6 +20,7 @@ export function checkUserIdOwnsAssistant(
 
 export function classifyAssistants(user: User | null, assistants: Persona[]) {
   if (!user) {
+    console.log("No user, only showing default personas");
     return {
       visibleAssistants: assistants.filter(
         (assistant) => assistant.is_default_persona
@@ -39,11 +40,47 @@ export function classifyAssistants(user: User | null, assistants: Persona[]) {
       assistant.id
     );
     const isDefault = assistant.is_default_persona;
-    return (isVisible && isNotHidden && isSelected) || isDefault;
+
+    const isOwnedByUser = checkUserOwnsAssistant(user, assistant);
+
+    const isShown =
+      (isVisible && isNotHidden && isSelected) ||
+      (isNotHidden && (isDefault || isOwnedByUser));
+
+    if (!isShown) {
+      if (!isVisible) {
+        console.log(
+          `Assistant ${assistant.id} not shown: not in visible_assistants`
+        );
+      }
+      if (!isNotHidden) {
+        console.log(
+          `Assistant ${assistant.id} not shown: in hidden_assistants`
+        );
+      }
+      if (!isSelected) {
+        console.log(
+          `Assistant ${assistant.id} not shown: not in chosen_assistants`
+        );
+      }
+      if (!isDefault) {
+        console.log(
+          `Assistant ${assistant.id} not shown: not a default persona`
+        );
+      }
+    }
+
+    return isShown;
   });
 
   const hiddenAssistants = assistants.filter((assistant) => {
-    return !visibleAssistants.includes(assistant);
+    const isHidden = !visibleAssistants.includes(assistant);
+    if (isHidden) {
+      console.log(
+        `Assistant ${assistant.id} hidden: not in visible assistants`
+      );
+    }
+    return isHidden;
   });
 
   return {
