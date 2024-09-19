@@ -83,7 +83,10 @@ def scrape_page_posts(
     for post in soup.find_all("div", class_="message-inner"):
         post_date = parse_post_date(post)
         if initial_run or post_date > start_time:
-            post_text = post.find("div", class_="bbWrapper").get_text(strip=True) + "\n"
+            el = post.find("div", class_="bbWrapper")
+            if not el:
+                continue
+            post_text = el.get_text(strip=True) + "\n"
             author_tag = post.find("a", class_="username")
             if author_tag is None:
                 author_tag = post.find("span", class_="username")
@@ -223,7 +226,8 @@ class XenforoConnector(LoadConnector):
 
 if __name__ == "__main__":
     connector = XenforoConnector(
-        base_url="https://cassiopaea.org/forum/threads/how-to-change-your-emotional-state.41381/"
+        # base_url="https://cassiopaea.org/forum/threads/how-to-change-your-emotional-state.41381/"
+        base_url="https://xenforo.com/community/threads/whats-new-with-enhanced-search-resource-manager-and-media-gallery-in-xenforo-2-3.220935/"
     )
     document_batches = connector.load_from_state()
     print(next(document_batches))
