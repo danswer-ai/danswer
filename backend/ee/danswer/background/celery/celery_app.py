@@ -96,7 +96,7 @@ def autogenerate_usage_report_task() -> None:
 celery_app.conf.beat_schedule = {
     "sync-external-permissions": {
         "task": "check_sync_external_permissions_task",
-        "schedule": timedelta(seconds=5),
+        "schedule": timedelta(seconds=60),  # TODO: optimize this
     },
     "autogenerate_usage_report": {
         "task": "autogenerate_usage_report_task",

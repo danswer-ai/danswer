@@ -29,6 +29,7 @@ def run_permission_sync_entrypoint(
     db_session: Session,
     cc_pair_id: int,
 ) -> None:
+    # TODO: seperate out group and doc sync
     cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
     if cc_pair is None:
         raise ValueError(f"No connector credential pair found for id: {cc_pair_id}")
