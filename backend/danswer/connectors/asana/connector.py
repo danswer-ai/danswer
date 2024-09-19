@@ -26,12 +26,10 @@ class AsanaConnector(LoadConnector, PollConnector):
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
     ) -> None:
         self.workspace_id = asana_workspace_id
-        self.project_ids_to_index: list[str] | None = None
-        self.team_id: str | None = None
-        if asana_project_ids:
-            self.project_ids_to_index = asana_project_ids.split(",")
-        if asana_team_id:
-            self.team_id = asana_team_id
+        self.project_ids_to_index: list[str] | None = (
+            asana_project_ids.split(",") if asana_project_ids is not None else None
+        )
+        self.asana_team_id = asana_team_id
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
 
@@ -40,7 +38,7 @@ class AsanaConnector(LoadConnector, PollConnector):
         self.asana_client = asana_api.AsanaAPI(
             api_token=self.api_token,
             workspace_gid=self.workspace_id,
-            team_gid=self.team_id,
+            team_gid=self.asana_team_id,
         )
         return None
 
@@ -51,19 +49,22 @@ class AsanaConnector(LoadConnector, PollConnector):
         asana = asana_api.AsanaAPI(
             api_token=self.api_token,
             workspace_gid=self.workspace_id,
-            team_gid=self.team_id,
+            team_gid=self.asana_team_id,
         )
         docs_batch: list[Document] = []
         tasks = asana.get_tasks(self.project_ids_to_index, start_time)
+
         for task in tasks:
             doc = self._message_to_doc(task)
             docs_batch.append(doc)
+
             if len(docs_batch) >= self.batch_size:
                 logger.info(
                     "Yielding batch of " + str(len(docs_batch)) + " documents..."
                 )
                 yield docs_batch
                 docs_batch = []
+
         if docs_batch:
             logger.info(
                 "Yielding final batch of " + str(len(docs_batch)) + " documents..."
