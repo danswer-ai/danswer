@@ -11,9 +11,6 @@ on:
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-# YAML anchor
-platforms: &platforms linux/amd64
-
 jobs:
   integration-tests:
     runs-on: Large-Amd64
@@ -43,7 +40,7 @@ jobs:
         with:
           context: ./backend
           file: ./backend/Dockerfile
-          platforms: *platforms
+          platforms: linux/amd64
           tags: danswer/danswer-backend:it
           cache-from: type=registry,ref=danswer/danswer-backend:it
           cache-to: |
@@ -55,7 +52,7 @@ jobs:
         with:
           context: ./backend
           file: ./backend/Dockerfile.model_server
-          platforms: *platforms
+          platforms: linux/amd64
           tags: danswer/danswer-model-server:it
           cache-from: type=registry,ref=danswer/danswer-model-server:it
           cache-to: |
@@ -67,7 +64,7 @@ jobs:
         with:
           context: ./backend
           file: ./backend/tests/integration/Dockerfile
-          platforms: *platforms
+          platforms: linux/amd64
           tags: danswer/integration-test-runner:it
           cache-from: type=registry,ref=danswer/integration-test-runner:it
           cache-to: |
