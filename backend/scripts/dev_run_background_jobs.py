@@ -28,7 +28,6 @@ def run_jobs(exclude_indexing: bool) -> None:
         "--loglevel=INFO",
         "-Q",
         "celery,vespa_metadata_sync,connector_deletion",
-
     ]
 
     cmd_beat = [
