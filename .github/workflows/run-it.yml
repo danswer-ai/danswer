@@ -13,7 +13,7 @@ env:
 
 jobs:
   integration-tests:
-    runs-on: Large-Amd64
+    runs-on: Amd64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
