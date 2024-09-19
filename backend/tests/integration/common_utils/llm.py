@@ -7,6 +7,7 @@ from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.test_models import TestLLMProvider
+from tests.integration.common_utils.test_models import TestLLMProviderResponse
 from tests.integration.common_utils.test_models import TestUser
 
 
@@ -22,7 +23,7 @@ class LLMProviderManager:
         groups: list[int] | None = None,
         is_public: bool | None = None,
         user_performing_action: TestUser | None = None,
-    ) -> TestLLMProvider:
+    ) -> TestLLMProviderResponse:
         print("Seeding LLM Providers...")
 
         llm_provider = LLMProviderUpsertRequest(
@@ -49,11 +50,11 @@ class LLMProviderManager:
         )
         llm_response.raise_for_status()
         response_data = llm_response.json()
-        result_llm = TestLLMProvider(
+        result_llm = TestLLMProviderResponse(
             id=response_data["id"],
             name=response_data["name"],
             provider=response_data["provider"],
-            api_key=response_data["api_key"],
+            api_key_set=response_data["api_key_set"],
             default_model_name=response_data["default_model_name"],
             is_public=response_data["is_public"],
             groups=response_data["groups"],

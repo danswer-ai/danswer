@@ -91,6 +91,18 @@ class TestLLMProvider(BaseModel):
     api_version: str | None = None
 
 
+class TestLLMProviderResponse(BaseModel):
+    id: int
+    name: str
+    provider: str
+    api_key_set: bool
+    default_model_name: str
+    is_public: bool
+    groups: list[TestUserGroup]
+    api_base: str | None = None
+    api_version: str | None = None
+
+
 class TestDocumentSet(BaseModel):
     id: int
     name: str
