@@ -285,12 +285,17 @@ const MainSection = () => {
 
 export default function Page() {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <AdminPageTitle icon={<SalesforceIcon size={32} />} title="Salesforce" />
+        <AdminPageTitle
+          icon={<SalesforceIcon size={32} />}
+          title="Salesforce"
+        />
 
-      <MainSection />
+        <MainSection />
+      </div>
     </div>
   );
 }

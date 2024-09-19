@@ -248,13 +248,15 @@ const GCSMain = () => {
 
 export default function Page() {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
-      <AdminPageTitle
-        icon={<GoogleStorageIcon size={32} />}
-        title="Google Cloud Storage"
-      />
-      <GCSMain />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
+        <AdminPageTitle
+          icon={<GoogleStorageIcon size={32} />}
+          title="Google Cloud Storage"
+        />
+        <GCSMain />
+      </div>
     </div>
   );
 }

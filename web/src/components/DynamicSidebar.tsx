@@ -79,7 +79,7 @@ export function DynamicSidebar({
 
       <div
         className={`fixed flex-none h-full z-overlay top-0 left-0 transition-[width] ease-in-out duration-500 overflow-hidden lg:overflow-visible lg:!w-auto ${
-          openSidebar ? "w-[90vw] md:w-[75vw]" : "w-0"
+          openSidebar ? "w-[85vw] md:w-[75vw]" : "w-0"
         } ${isSearch ? "xl:relative" : "lg:relative"}`}
       >
         <div className="h-full relative flex w-full">
@@ -100,7 +100,7 @@ export function DynamicSidebar({
                   {children}
                 </div>
               </div>
-              <div className="h-full flex items-center justify-center">
+              <div className="h-full flex items-center justify-center absolute left-full">
                 <CustomTooltip
                   trigger={
                     <button

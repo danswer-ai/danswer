@@ -206,7 +206,7 @@ const AddUserButton = () => {
 
 const Page = () => {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
+    <div className="container">
       <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
       <SearchableTables />
     </div>

@@ -125,8 +125,6 @@ export const SearchResultsDisplay = ({
     searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
     defaultOverrides.forceDisplayQA;
 
-  /* console.log(documents[0].document_id); */
-  /* console.log(availableDocumentSets[0].cc_pair_descriptors[0].name); */
   console.log(selectedDocumentIds);
 
   return (

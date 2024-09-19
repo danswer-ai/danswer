@@ -95,6 +95,7 @@ export const AIMessage = ({
   currentFeedback,
   onClose,
   onSubmit,
+  isStreaming,
 }: {
   alternativeAssistant?: Assistant | null;
   currentAssistant: Assistant;
@@ -120,6 +121,7 @@ export const AIMessage = ({
     message: string;
     predefinedFeedback?: string;
   }) => void;
+  isStreaming?: boolean;
 }) => {
   const [isReady, setIsReady] = useState(false);
   const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
@@ -165,7 +167,7 @@ export const AIMessage = ({
   ) : undefined;
 
   return (
-    <div className={"flex -mr-6 w-full pb-5"}>
+    <div className={`flex -mr-6 w-full pb-5`}>
       <div className="w-full">
         <div className="">
           <div className="flex">
@@ -222,7 +224,7 @@ export const AIMessage = ({
                   query === undefined &&
                   !hasDocs &&
                   !retrievalDisabled && (
-                    <div className="my-1">
+                    <div className="pb-2">
                       <SkippedSearch handleForceSearch={handleForceSearch} />
                     </div>
                   )}
@@ -452,24 +454,38 @@ function MessageSwitcher({
   handleNext: () => void;
 }) {
   return (
-    <div className="flex items-center text-sm space-x-2">
-      <Button
-        variant="ghost"
-        size="smallIcon"
-        onClick={currentPage === 1 ? undefined : handlePrevious}
+    <div className="flex items-center text-sm space-x-2 pt-2">
+      <CustomTooltip
+        trigger={
+          <Button
+            variant="ghost"
+            size="smallIcon"
+            onClick={currentPage === 1 ? undefined : handlePrevious}
+          >
+            <ChevronLeft />
+          </Button>
+        }
+        asChild
       >
-        <ChevronLeft />
-      </Button>
-      <span className="select-none  text-medium">
+        Previous
+      </CustomTooltip>
+      <span className="select-none  text-medium min-w-8 text-center">
         {currentPage} / {totalPages}
       </span>
-      <Button
-        variant="ghost"
-        size="smallIcon"
-        onClick={currentPage === totalPages ? undefined : handleNext}
+      <CustomTooltip
+        trigger={
+          <Button
+            variant="ghost"
+            size="smallIcon"
+            onClick={currentPage === totalPages ? undefined : handleNext}
+          >
+            <ChevronRight />
+          </Button>
+        }
+        asChild
       >
-        <ChevronRight />
-      </Button>
+        Next
+      </CustomTooltip>
     </div>
   );
 }
@@ -669,7 +685,7 @@ export const HumanMessage = ({
               )}
             </div>
           </div>
-          <div className="flex flex-col md:flex-row gap-x-0.5 ml-12 mt-1">
+          <div className="flex flex-col md:flex-row gap-x-0.5 ml-12">
             {currentMessageInd !== undefined &&
               onMessageSelection &&
               otherMessagesCanSwitchTo &&

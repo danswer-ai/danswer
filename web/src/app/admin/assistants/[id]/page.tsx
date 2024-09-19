@@ -41,12 +41,14 @@ export default async function Page({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <AdminPageTitle title="Edit Assistant" icon={<RobotIcon size={32} />} />
+        <AdminPageTitle title="Edit Assistant" icon={<RobotIcon size={32} />} />
 
-      {body}
+        {body}
+      </div>
     </div>
   );
 }

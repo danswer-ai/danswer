@@ -118,6 +118,6 @@ h3 {
   overflow: hidden;
 }
 
-.line- {
-  text-wrap: balance;
+.container {
+  @apply mx-auto max-w-[1400px] px-6 lg:px-14 xl:px-10 2xl:px-24 py-24 md:py-32 lg:pt-16;
 }

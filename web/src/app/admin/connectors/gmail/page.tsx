@@ -254,12 +254,14 @@ const Main = () => {
 
 export default function Page() {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <AdminPageTitle icon={<GmailIcon size={32} />} title="Gmail" />
+        <AdminPageTitle icon={<GmailIcon size={32} />} title="Gmail" />
 
-      <Main />
+        <Main />
+      </div>
     </div>
   );
 }

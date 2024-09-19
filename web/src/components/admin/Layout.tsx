@@ -41,17 +41,13 @@ export async function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full">
       <HealthCheckBanner />
       <div className="flex h-full">
         <AdminBar user={user}>
           <SideBar />
         </AdminBar>
-        <div className="h-full overflow-y-auto w-full">
-          <div className="h-full px-6 lg:pl-24 lg:pr-14 xl:px-10 2xl:px-24 container">
-            <div className="h-full container mx-auto">{children}</div>
-          </div>
-        </div>
+        {children}
       </div>
     </div>
   );

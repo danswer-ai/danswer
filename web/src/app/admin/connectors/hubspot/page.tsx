@@ -221,12 +221,14 @@ const Main = () => {
 
 export default function Page() {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <AdminPageTitle icon={<HubSpotIcon size={32} />} title="HubSpot" />
+        <AdminPageTitle icon={<HubSpotIcon size={32} />} title="HubSpot" />
 
-      <Main />
+        <Main />
+      </div>
     </div>
   );
 }

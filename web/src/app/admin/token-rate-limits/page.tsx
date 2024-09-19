@@ -222,10 +222,12 @@ function Main() {
 
 export default function Page() {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <AdminPageTitle title="Token Rate Limits" icon={<Shield size={32} />} />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <AdminPageTitle title="Token Rate Limits" icon={<Shield size={32} />} />
 
-      <Main />
+        <Main />
+      </div>
     </div>
   );
 }

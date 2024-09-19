@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CustomSelect } from "@/components/Select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Brain } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";

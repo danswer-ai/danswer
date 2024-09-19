@@ -324,12 +324,17 @@ const Main = () => {
 
 export default function Page() {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <AdminPageTitle icon={<ConfluenceIcon size={32} />} title="Confluence" />
+        <AdminPageTitle
+          icon={<ConfluenceIcon size={32} />}
+          title="Confluence"
+        />
 
-      <Main />
+        <Main />
+      </div>
     </div>
   );
 }

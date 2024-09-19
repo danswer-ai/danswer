@@ -1,31 +1,26 @@
 import { User } from "lucide-react";
 import React from "react";
 
+const colors = ["#f9a8d4", "#8b5cf6", "#34d399", "#60a5fa", "#f472b6"];
+
+const getRandomColorPair = () => {
+  const index1 = Math.floor(Math.random() * colors.length);
+  let index2 = Math.floor(Math.random() * colors.length);
+  while (index2 === index1) {
+    index2 = Math.floor(Math.random() * colors.length);
+  }
+  return [colors[index1], colors[index2]];
+};
+
+const generateGradient = () => {
+  const [color1, color2] = getRandomColorPair();
+  return `linear-gradient(135deg, ${color1}, ${color2})`;
+};
+
 function getNameInitials(full_name: string) {
   const names = full_name.split(" ");
   return names[0][0].toUpperCase() + names[names.length - 1][0].toUpperCase();
 }
-
-const generateGradient = (initials: string) => {
-  const colors = {
-    primary: "#2039f3",
-    primaryForeground: "#b8d7ff",
-    success: "#69c57d",
-  };
-
-  const color1 =
-    initials.charCodeAt(0) % 2 === 0 ? colors.primary : colors.success;
-  const color2 =
-    initials.charCodeAt(1) % 2 === 0
-      ? colors.primaryForeground
-      : colors.success;
-  const color3 =
-    initials.charCodeAt(2) % 2 === 0
-      ? colors.primary
-      : colors.primaryForeground;
-
-  return `linear-gradient(to right, ${color1}, ${color2}, ${color3})`;
-};
 
 interface UserProfileProps {
   user?: { full_name?: string } | null;
@@ -40,10 +35,7 @@ export function UserProfile({
   size = 40,
   textSize = "text-xl",
 }: UserProfileProps) {
-  const backgroundGradient =
-    user && user.full_name
-      ? generateGradient(getNameInitials(user.full_name))
-      : "linear-gradient(to right, #e2e2e2, #ffffff)";
+  const backgroundGradient = generateGradient();
 
   return (
     <div

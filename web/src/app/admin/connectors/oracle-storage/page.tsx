@@ -255,13 +255,15 @@ const OCIMain = () => {
 
 export default function Page() {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
-      <AdminPageTitle
-        icon={<OCIStorageIcon size={32} />}
-        title="Oracle Cloud Infrastructure"
-      />
-      <OCIMain />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
+        <AdminPageTitle
+          icon={<OCIStorageIcon size={32} />}
+          title="Oracle Cloud Infrastructure"
+        />
+        <OCIMain />
+      </div>
     </div>
   );
 }

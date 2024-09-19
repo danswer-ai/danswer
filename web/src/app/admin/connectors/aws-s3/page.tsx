@@ -247,12 +247,14 @@ export default function Page() {
   const [selectedStorage, setSelectedStorage] = useState<string>("s3");
 
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <AdminPageTitle icon={<S3Icon size={32} />} title="S3 Storage" />
+        <AdminPageTitle icon={<S3Icon size={32} />} title="S3 Storage" />
 
-      <S3Main key={1} />
+        <S3Main key={1} />
+      </div>
     </div>
   );
 }

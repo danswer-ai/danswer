@@ -20,7 +20,7 @@ export default async function Page() {
     body = (
       <div className="w-full my-16">
         <div className="px-32">
-          <div className="py-24 md:py-32 lg:pt-16">
+          <div className="">
             <Card>
               <CardContent>
                 <AssistantEditor

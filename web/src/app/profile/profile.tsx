@@ -14,7 +14,7 @@ export default function Profile({
   combinedSettings: CombinedSettings | null;
 }) {
   return (
-    <div className="h-full py-24 md:py-32 lg:pt-16">
+    <div className="h-full">
       <h1 className="flex items-center font-bold text-xl md:text-[28px] text-strong gap-x-2">
         <UserRoundPen size={32} /> User Settings
       </h1>

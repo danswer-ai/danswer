@@ -333,13 +333,15 @@ function Main() {
 
 function Page() {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <AdminPageTitle
-        title="Embedding"
-        icon={<FiPackage size={32} className="my-auto" />}
-      />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <AdminPageTitle
+          title="Embedding"
+          icon={<FiPackage size={32} className="my-auto" />}
+        />
 
-      <Main />
+        <Main />
+      </div>
     </div>
   );
 }

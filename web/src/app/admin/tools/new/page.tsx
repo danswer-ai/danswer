@@ -8,19 +8,21 @@ import { FiTool } from "react-icons/fi";
 
 export default function NewToolPage() {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <AdminPageTitle
-        title="Create Tool"
-        icon={<FiTool size={32} className="my-auto" />}
-      />
+        <AdminPageTitle
+          title="Create Tool"
+          icon={<FiTool size={32} className="my-auto" />}
+        />
 
-      <Card>
-        <CardContent>
-          <ToolEditor />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardContent>
+            <ToolEditor />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

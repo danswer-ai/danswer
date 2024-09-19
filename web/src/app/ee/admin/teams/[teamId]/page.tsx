@@ -51,24 +51,26 @@ const Page = ({ params }: { params: { teamId: string } }) => {
   }
 
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <AdminPageTitle
-        title={teamspace.name || "Unknown"}
-        icon={<GroupsIcon size={32} />}
-      />
-
-      {teamspace ? (
-        <GroupDisplay
-          users={users.accepted}
-          ccPairs={ccPairs}
-          teamspace={teamspace}
-          refreshTeamspace={refreshTeamspace}
+        <AdminPageTitle
+          title={teamspace.name || "Unknown"}
+          icon={<GroupsIcon size={32} />}
         />
-      ) : (
-        <div>Unable to fetch Teamspace :(</div>
-      )}
+
+        {teamspace ? (
+          <GroupDisplay
+            users={users.accepted}
+            ccPairs={ccPairs}
+            teamspace={teamspace}
+            refreshTeamspace={refreshTeamspace}
+          />
+        ) : (
+          <div>Unable to fetch Teamspace :(</div>
+        )}
+      </div>
     </div>
   );
 };

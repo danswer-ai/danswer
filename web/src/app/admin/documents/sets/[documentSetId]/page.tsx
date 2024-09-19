@@ -98,10 +98,12 @@ export default function Page({
   const documentSetId = parseInt(params.documentSetId);
 
   return (
-    <div>
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <Main documentSetId={documentSetId} />
+        <Main documentSetId={documentSetId} />
+      </div>
     </div>
   );
 }

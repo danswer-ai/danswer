@@ -129,8 +129,10 @@ export default function Page({ params }: { params: { ccPairId: string } }) {
   const ccPairId = parseInt(params.ccPairId);
 
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <Main ccPairId={ccPairId} />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <Main ccPairId={ccPairId} />
+      </div>
     </div>
   );
 }

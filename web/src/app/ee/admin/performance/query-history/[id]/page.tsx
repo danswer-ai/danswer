@@ -87,27 +87,32 @@ export default function QueryPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <main className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <Card className="mt-4">
-        <CardContent>
-          <h3>Chat Session Details</h3>
+        <Card className="mt-4">
+          <CardContent>
+            <h3>Chat Session Details</h3>
 
-          <Text className="flex flex-wrap whitespace-normal mt-1 text-xs">
-            {chatSessionSnapshot.user_email || "-"},{" "}
-            {timestampToReadableDate(chatSessionSnapshot.time_created)}
-          </Text>
+            <Text className="flex flex-wrap whitespace-normal mt-1 text-xs">
+              {chatSessionSnapshot.user_email || "-"},{" "}
+              {timestampToReadableDate(chatSessionSnapshot.time_created)}
+            </Text>
 
-          <div className="flex flex-col pt-6">
-            {chatSessionSnapshot.messages.map((message) => {
-              return (
-                <MessageDisplay key={message.time_created} message={message} />
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-    </main>
+            <div className="flex flex-col pt-6">
+              {chatSessionSnapshot.messages.map((message) => {
+                return (
+                  <MessageDisplay
+                    key={message.time_created}
+                    message={message}
+                  />
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

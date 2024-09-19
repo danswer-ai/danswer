@@ -46,15 +46,17 @@ export default async function Page({ params }: { params: { toolId: string } }) {
   }
 
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <BackButton />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <BackButton />
 
-      <AdminPageTitle
-        title="Edit Tool"
-        icon={<FiTool size={32} className="my-auto" />}
-      />
+        <AdminPageTitle
+          title="Edit Tool"
+          icon={<FiTool size={32} className="my-auto" />}
+        />
 
-      {body}
+        {body}
+      </div>
     </div>
   );
 }

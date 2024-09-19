@@ -12,14 +12,16 @@ const Page = async ({
   const { connectors, documentSets } = await fetchValidFilterInfo();
 
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <AdminPageTitle icon={<ZoomIn size={32} />} title="Document Explorer" />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <AdminPageTitle icon={<ZoomIn size={32} />} title="Document Explorer" />
 
-      <Explorer
-        initialSearchValue={searchParams.query}
-        connectors={connectors}
-        documentSets={documentSets}
-      />
+        <Explorer
+          initialSearchValue={searchParams.query}
+          connectors={connectors}
+          documentSets={documentSets}
+        />
+      </div>
     </div>
   );
 };

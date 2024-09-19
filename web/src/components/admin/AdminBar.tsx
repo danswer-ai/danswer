@@ -30,7 +30,6 @@ export function AdminBar({
       <DynamicSidebar
         user={user}
         openSidebar={openSidebar}
-        isSearch
         toggleLeftSideBar={toggleLeftSideBar}
       >
         {children}

@@ -69,13 +69,15 @@ const Main = () => {
 
 const Page = () => {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <AdminPageTitle
-        icon={<ThumbsUpIcon size={32} />}
-        title="Document Feedback"
-      />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <AdminPageTitle
+          icon={<ThumbsUpIcon size={32} />}
+          title="Document Feedback"
+        />
 
-      <Main />
+        <Main />
+      </div>
     </div>
   );
 };

@@ -5,18 +5,20 @@ import { Text } from "@tremor/react";
 
 export default async function Page() {
   return (
-    <div className="py-24 md:py-32 lg:pt-16">
-      <AdminPageTitle
-        title="Workspace Settings"
-        icon={<FiSettings size={32} className="my-auto" />}
-      />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <AdminPageTitle
+          title="Workspace Settings"
+          icon={<FiSettings size={32} className="my-auto" />}
+        />
 
-      <p className="mb-8">
-        Manage general enMedD AI settings applicable to all users in the
-        workspace.
-      </p>
+        <p className="mb-8">
+          Manage general enMedD AI settings applicable to all users in the
+          workspace.
+        </p>
 
-      <SettingsForm />
+        <SettingsForm />
+      </div>
     </div>
   );
 }
