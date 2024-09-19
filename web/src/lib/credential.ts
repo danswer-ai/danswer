@@ -1,4 +1,5 @@
 import { CredentialBase } from "./connectors/credentials";
+import { AccessType } from "@/lib/types";
 
 export async function createCredential(credential: CredentialBase<any>) {
   return await fetch(`/api/manage/credential`, {
@@ -47,8 +48,9 @@ export function linkCredential(
   connectorId: number,
   credentialId: number,
   name?: string,
-  isPublic?: boolean,
-  groups?: number[]
+  accessType?: AccessType,
+  groups?: number[],
+  autoSyncOptions?: Record<string, any>
 ) {
   return fetch(
     `/api/manage/connector/${connectorId}/credential/${credentialId}`,
@@ -59,8 +61,9 @@ export function linkCredential(
       },
       body: JSON.stringify({
         name: name || null,
-        is_public: isPublic !== undefined ? isPublic : true,
+        access_type: accessType !== undefined ? accessType : "public",
         groups: groups || null,
+        auto_sync_options: autoSyncOptions || null,
       }),
     }
   );

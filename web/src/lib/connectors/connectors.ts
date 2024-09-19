@@ -29,6 +29,7 @@ export interface Option {
 export interface SelectOption extends Option {
   type: "select";
   options?: StringWithDescription[];
+  default?: string;
 }
 
 export interface ListOption extends Option {
@@ -599,7 +600,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
           { name: "articles", value: "articles" },
           { name: "tickets", value: "tickets" },
         ],
-        default: 0,
+        default: "articles",
       },
     ],
   },

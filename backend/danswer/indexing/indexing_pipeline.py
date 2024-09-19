@@ -265,7 +265,13 @@ def index_doc_batch(
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
 
-    no_access = DocumentAccess.build(user_ids=[], user_groups=[], is_public=False)
+    no_access = DocumentAccess.build(
+        user_emails=[],
+        user_groups=[],
+        external_user_emails=[],
+        external_user_group_ids=[],
+        is_public=False,
+    )
 
     ctx = index_doc_batch_prepare(
         document_batch=document_batch,

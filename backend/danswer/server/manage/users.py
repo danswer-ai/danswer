@@ -48,6 +48,7 @@ from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
+from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
 from ee.danswer.db.user_group import remove_curator_status__no_commit
 
 logger = setup_logger()
@@ -242,6 +243,11 @@ async def delete_user(
     try:
         for oauth_account in user_to_delete.oauth_accounts:
             db_session.delete(oauth_account)
+
+        delete_user__ext_group_for_user__no_commit(
+            db_session=db_session,
+            user_id=user_to_delete.id,
+        )
 
         db_session.query(DocumentSet__User).filter(
             DocumentSet__User.user_id == user_to_delete.id
