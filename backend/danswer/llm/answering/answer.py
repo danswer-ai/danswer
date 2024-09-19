@@ -179,6 +179,7 @@ class Answer:
                         if self.answer_style_config.citation_config
                         else False
                     ),
+                    history_message=self.single_message_history or "",
                 )
             )
         elif self.answer_style_config.quotes_config:
