@@ -17,8 +17,6 @@ from enmedd.db.models import User
 from enmedd.server.documents.models import CCPairFullInfo
 from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
 from enmedd.server.documents.models import ConnectorCredentialPairMetadata
-from enmedd.server.models import MinimalTeamspaceSnapshot
-from enmedd.server.models import MinimalWorkspaceSnapshot
 from enmedd.server.models import StatusResponse
 
 router = APIRouter(prefix="/manage")
@@ -66,28 +64,11 @@ def get_cc_pair_full_info(
         db_session=db_session,
     )
 
-    groups = (
-        [
-            MinimalTeamspaceSnapshot(
-                id=teamspace.id,
-                name=teamspace.name,
-                workspace=[
-                    MinimalWorkspaceSnapshot(
-                        id=workspace.id, workspace_name=workspace.workspace_name
-                    )
-                    for workspace in teamspace.workspace
-                ],
-            )
-            for teamspace in cc_pair.groups
-        ],
-    )
-
     return CCPairFullInfo.from_models(
         cc_pair_model=cc_pair,
         index_attempt_models=list(index_attempts),
         latest_deletion_attempt=latest_deletion_attempt,
         num_docs_indexed=documents_indexed,
-        groups=groups,
     )
 
 

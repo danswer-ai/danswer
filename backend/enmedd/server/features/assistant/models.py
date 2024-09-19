@@ -8,9 +8,7 @@ from enmedd.search.enums import RecencyBiasSetting
 from enmedd.server.features.document_set.models import DocumentSet
 from enmedd.server.features.prompt.models import PromptSnapshot
 from enmedd.server.features.tool.api import ToolSnapshot
-from enmedd.server.models import MinimalTeamspaceSnapshot
 from enmedd.server.models import MinimalUserSnapshot
-from enmedd.server.models import MinimalWorkspaceSnapshot
 from enmedd.utils.logger import setup_logger
 
 
@@ -56,7 +54,7 @@ class AssistantSnapshot(BaseModel):
     tools: list[ToolSnapshot]
     document_sets: list[DocumentSet]
     users: list[MinimalUserSnapshot]
-    groups: list[MinimalTeamspaceSnapshot]
+    groups: list[int]
 
     @classmethod
     def from_model(
@@ -98,19 +96,7 @@ class AssistantSnapshot(BaseModel):
                 MinimalUserSnapshot(id=user.id, email=user.email)
                 for user in assistant.users
             ],
-            groups=[
-                MinimalTeamspaceSnapshot(
-                    id=teamspace.id,
-                    name=teamspace.name,
-                    workspace=[
-                        MinimalWorkspaceSnapshot(
-                            id=workspace.id, workspace_name=workspace.workspace_name
-                        )
-                        for workspace in teamspace.workspace
-                    ],
-                )
-                for teamspace in assistant.groups
-            ],
+            groups=[teamspace.id for teamspace in assistant.groups],
         )
 
 

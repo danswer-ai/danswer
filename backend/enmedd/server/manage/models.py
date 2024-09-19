@@ -8,8 +8,6 @@ from enmedd.configs.constants import AuthType
 from enmedd.indexing.models import EmbeddingModelDetail
 from enmedd.server.models import FullUserSnapshot
 from enmedd.server.models import InvitedUserSnapshot
-from enmedd.server.models import MinimalTeamspaceSnapshot
-from enmedd.server.models import WorkspaceResponse
 
 if TYPE_CHECKING:
     from enmedd.db.models import User as UserModel
@@ -44,8 +42,6 @@ class UserInfo(BaseModel):
     billing_email_address: Optional[str]
     vat: Optional[str]
     preferences: UserPreferences
-    workspace: Optional[list[WorkspaceResponse]]
-    groups: Optional[list[MinimalTeamspaceSnapshot]]
 
     @classmethod
     def from_model(cls, user: "UserModel") -> "UserInfo":
@@ -63,32 +59,6 @@ class UserInfo(BaseModel):
             billing_email_address=user.billing_email_address,
             vat=user.vat,
             preferences=UserPreferences(chosen_assistants=user.chosen_assistants),
-            workspace=[
-                WorkspaceResponse(
-                    id=workspace.id,
-                    instance_id=workspace.instance_id,
-                    workspace_name=workspace.workspace_name,
-                    workspace_description=workspace.workspace_description,
-                    use_custom_logo=workspace.use_custom_logo,
-                    custom_logo=workspace.custom_logo,
-                    custom_header_content=workspace.custom_header_content,
-                )
-                for workspace in user.workspace
-            ],
-            # TODO fix /me error when new teamspace is created when this is uncommented
-            # groups=[
-            #     MinimalTeamspaceSnapshot(
-            #         id=group.id,
-            #         name=group.name,
-            #         workspace=[
-            #             MinimalWorkspaceSnapshot(
-            #                 id=workspace.id, workspace_name=workspace.workspace_name
-            #             )
-            #             for workspace in group.workspace
-            #         ],
-            #     )
-            #     for group in user.groups
-            # ],
         )
 
 

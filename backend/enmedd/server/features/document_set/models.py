@@ -6,8 +6,6 @@ from enmedd.db.models import DocumentSet as DocumentSetDBModel
 from enmedd.server.documents.models import ConnectorCredentialPairDescriptor
 from enmedd.server.documents.models import ConnectorSnapshot
 from enmedd.server.documents.models import CredentialSnapshot
-from enmedd.server.models import MinimalTeamspaceSnapshot
-from enmedd.server.models import MinimalWorkspaceSnapshot
 
 
 class DocumentSetCreationRequest(BaseModel):
@@ -52,7 +50,7 @@ class DocumentSet(BaseModel):
     is_public: bool
     # For Private Document Sets, who should be able to access these
     users: list[UUID]
-    groups: list[MinimalTeamspaceSnapshot]
+    groups: list[int]
 
     @classmethod
     def from_model(cls, document_set_model: DocumentSetDBModel) -> "DocumentSet":
@@ -82,17 +80,5 @@ class DocumentSet(BaseModel):
             is_up_to_date=document_set_model.is_up_to_date,
             is_public=document_set_model.is_public,
             users=[user.id for user in document_set_model.users],
-            groups=[
-                MinimalTeamspaceSnapshot(
-                    id=teamspace.id,
-                    name=teamspace.name,
-                    workspace=[
-                        MinimalWorkspaceSnapshot(
-                            id=workspace.id, workspace_name=workspace.workspace_name
-                        )
-                        for workspace in teamspace.workspace
-                    ],
-                )
-                for teamspace in document_set_model.groups
-            ],
+            groups=[group.id for group in document_set_model.groups],
         )

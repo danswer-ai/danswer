@@ -45,25 +45,3 @@ class InvitedUserSnapshot(BaseModel):
 
 class DisplayPriorityRequest(BaseModel):
     display_priority_map: dict[int, int]
-
-
-class MinimalWorkspaceSnapshot(BaseModel):
-    id: int
-    workspace_name: str | None = None
-
-
-class MinimalTeamspaceSnapshot(BaseModel):
-    id: int
-    name: str
-    workspace: list[MinimalWorkspaceSnapshot]
-
-
-class WorkspaceResponse(BaseModel):
-    id: int
-    instance_id: int
-    workspace_name: str | None = None
-    workspace_description: str | None = None
-    use_custom_logo: bool = False
-    custom_logo: str | None = None
-    custom_header_logo: str | None = None
-    custom_header_content: str | None = None

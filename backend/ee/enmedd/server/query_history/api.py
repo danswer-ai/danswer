@@ -23,7 +23,6 @@ from enmedd.db.chat import get_chat_session_by_id
 from enmedd.db.engine import get_session
 from enmedd.db.models import ChatMessage
 from enmedd.db.models import ChatSession
-from enmedd.server.models import MinimalTeamspaceSnapshot
 
 
 router = APIRouter()
@@ -92,7 +91,6 @@ class ChatSessionMinimal(BaseModel):
     assistant_name: str
     time_created: datetime
     feedback_type: QAFeedbackType | Literal["mixed"] | None
-    groups: list[MinimalTeamspaceSnapshot] | None
 
 
 class ChatSessionSnapshot(BaseModel):
@@ -102,7 +100,6 @@ class ChatSessionSnapshot(BaseModel):
     messages: list[MessageSnapshot]
     assistant_name: str
     time_created: datetime
-    groups: list[MinimalTeamspaceSnapshot] | None
 
 
 class QuestionAnswerPairSnapshot(BaseModel):

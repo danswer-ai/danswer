@@ -1,11 +1,9 @@
 from pydantic import BaseModel
 
 from enmedd.configs.constants import DocumentSource
-from enmedd.db.enums import ChatSessionSharedStatus
 from enmedd.search.enums import SearchType
 from enmedd.search.models import ChunkContext
 from enmedd.search.models import RetrievalDetails
-from enmedd.server.models import MinimalTeamspaceSnapshot
 
 
 class DocumentSearchRequest(ChunkContext):
@@ -50,14 +48,3 @@ class ChatBasicResponse(BaseModel):
     simple_search_docs: list[SimpleDoc] | None = None
     error_msg: str | None = None
     message_id: int | None = None
-
-
-class ChatSessionDetails(BaseModel):
-    id: int
-    description: str
-    assistant_id: int
-    time_created: str
-    shared_status: ChatSessionSharedStatus
-    folder_id: int | None
-    current_alternate_model: str | None = None
-    groups: list[MinimalTeamspaceSnapshot] | None

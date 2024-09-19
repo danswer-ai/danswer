@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-from ee.enmedd.server.teamspace.models import Teamspace
 from enmedd.db.models import Workspace as WorkspaceModel
 
 
@@ -17,7 +16,6 @@ class Workspaces(BaseModel):
     custom_logo: str | None = None
     custom_header_logo: str | None = None
     custom_header_content: str | None = None
-    groups: list[Teamspace]
 
     @classmethod
     def from_model(cls, workspace_model: WorkspaceModel) -> "Workspaces":
@@ -30,10 +28,6 @@ class Workspaces(BaseModel):
             custom_logo=workspace_model.custom_logo,
             custom_header_logo=workspace_model.custom_header_logo,
             custom_header_content=workspace_model.custom_header_content,
-            groups=[
-                Teamspace.from_model(teamspace_model)
-                for teamspace_model in workspace_model.groups
-            ],
         )
 
     def check_validity(self) -> None:
