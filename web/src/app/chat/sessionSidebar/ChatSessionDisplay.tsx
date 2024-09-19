@@ -207,7 +207,6 @@ export function ChatSessionDisplay({
                         <div
                           onClick={(e) => {
                             e.preventDefault();
-                            // e.stopPropagation();
                             setIsMoreOptionsDropdownOpen(
                               !isMoreOptionsDropdownOpen
                             );

@@ -32,10 +32,7 @@ export async function deleteCredential<T>(
   });
 }
 
-export async function forceDeleteCredential<T>(
-  credentialId: number,
-  force?: boolean
-) {
+export async function forceDeleteCredential<T>(credentialId: number) {
   return await fetch(`/api/manage/credential/force/${credentialId}`, {
     method: "DELETE",
     headers: {

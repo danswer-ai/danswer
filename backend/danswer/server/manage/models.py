@@ -40,6 +40,9 @@ class AuthTypeResponse(BaseModel):
 
 class UserPreferences(BaseModel):
     chosen_assistants: list[int] | None = None
+    hidden_assistants: list[int] = []
+    visible_assistants: list[int] = []
+
     default_model: str | None = None
 
 
@@ -73,6 +76,8 @@ class UserInfo(BaseModel):
                 UserPreferences(
                     chosen_assistants=user.chosen_assistants,
                     default_model=user.default_model,
+                    hidden_assistants=user.hidden_assistants,
+                    visible_assistants=user.visible_assistants,
                 )
             ),
             # set to None if TRACK_EXTERNAL_IDP_EXPIRY is False so that we avoid cases

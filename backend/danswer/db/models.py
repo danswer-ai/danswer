@@ -125,6 +125,12 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     chosen_assistants: Mapped[list[int]] = mapped_column(
         postgresql.JSONB(), nullable=False, default=[-2, -1, 0]
     )
+    visible_assistants: Mapped[list[int]] = mapped_column(
+        postgresql.JSONB(), nullable=False, default=[]
+    )
+    hidden_assistants: Mapped[list[int]] = mapped_column(
+        postgresql.JSONB(), nullable=False, default=[]
+    )
 
     oidc_expiry: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMPAware(timezone=True), nullable=True
@@ -1308,9 +1314,15 @@ class Persona(Base):
     starter_messages: Mapped[list[StarterMessage] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
-    # Default personas are configured via backend during deployment
+    # Built-in personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
-    default_persona: Mapped[bool] = mapped_column(Boolean, default=False)
+    builtin_persona: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Default personas are personas created by admins and are automatically added
+    # to all users' assistants list.
+    is_default_persona: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
     # controls whether the persona is available to be selected by users
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
     # controls the ordering of personas in the UI
@@ -1361,10 +1373,10 @@ class Persona(Base):
     # Default personas loaded via yaml cannot have the same name
     __table_args__ = (
         Index(
-            "_default_persona_name_idx",
+            "_builtin_persona_name_idx",
             "name",
             unique=True,
-            postgresql_where=(default_persona == True),  # noqa: E712
+            postgresql_where=(builtin_persona == True),  # noqa: E712
         ),
     )
 

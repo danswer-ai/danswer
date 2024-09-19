@@ -41,6 +41,7 @@ from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
+from danswer.server.manage.models import UserPreferences
 from danswer.server.manage.models import UserRoleResponse
 from danswer.server.manage.models import UserRoleUpdateRequest
 from danswer.server.models import FullUserSnapshot
@@ -442,5 +443,66 @@ def update_user_assistant_list(
         update(User)
         .where(User.id == user.id)  # type: ignore
         .values(chosen_assistants=request.chosen_assistants)
+    )
+    db_session.commit()
+
+
+def update_assistant_list(
+    preferences: UserPreferences, assistant_id: int, show: bool
+) -> UserPreferences:
+    visible_assistants = preferences.visible_assistants or []
+    hidden_assistants = preferences.hidden_assistants or []
+    chosen_assistants = preferences.chosen_assistants or []
+
+    if show:
+        if assistant_id not in visible_assistants:
+            visible_assistants.append(assistant_id)
+        if assistant_id in hidden_assistants:
+            hidden_assistants.remove(assistant_id)
+        if assistant_id not in chosen_assistants:
+            chosen_assistants.append(assistant_id)
+    else:
+        if assistant_id in visible_assistants:
+            visible_assistants.remove(assistant_id)
+        if assistant_id not in hidden_assistants:
+            hidden_assistants.append(assistant_id)
+        if assistant_id in chosen_assistants:
+            chosen_assistants.remove(assistant_id)
+
+    preferences.visible_assistants = visible_assistants
+    preferences.hidden_assistants = hidden_assistants
+    preferences.chosen_assistants = chosen_assistants
+    return preferences
+
+
+@router.patch("/user/assistant-list/update/{assistant_id}")
+def update_user_assistant_visibility(
+    assistant_id: int,
+    show: bool,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    if user is None:
+        if AUTH_TYPE == AuthType.DISABLED:
+            store = get_dynamic_config_store()
+            no_auth_user = fetch_no_auth_user(store)
+            preferences = no_auth_user.preferences
+            updated_preferences = update_assistant_list(preferences, assistant_id, show)
+            set_no_auth_user_preferences(store, updated_preferences)
+            return
+        else:
+            raise RuntimeError("This should never happen")
+
+    user_preferences = UserInfo.from_model(user).preferences
+    updated_preferences = update_assistant_list(user_preferences, assistant_id, show)
+
+    db_session.execute(
+        update(User)
+        .where(User.id == user.id)  # type: ignore
+        .values(
+            hidden_assistants=updated_preferences.hidden_assistants,
+            visible_assistants=updated_preferences.visible_assistants,
+            chosen_assistants=updated_preferences.chosen_assistants,
+        )
     )
     db_session.commit()
