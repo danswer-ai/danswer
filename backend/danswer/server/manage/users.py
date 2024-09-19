@@ -33,6 +33,7 @@ from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
 from danswer.db.models import DocumentSet__User
 from danswer.db.models import Persona__User
+from danswer.db.models import SamlAccount
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.db.users import get_user_by_email
@@ -239,6 +240,7 @@ async def delete_user(
 
     # Detach the user from the current session
     db_session.expunge(user_to_delete)
+    print(user_to_delete.__dict__)
 
     try:
         for oauth_account in user_to_delete.oauth_accounts:
@@ -248,7 +250,9 @@ async def delete_user(
             db_session=db_session,
             user_id=user_to_delete.id,
         )
-
+        db_session.query(SamlAccount).filter(
+            SamlAccount.user_id == user_to_delete.id
+        ).delete()
         db_session.query(DocumentSet__User).filter(
             DocumentSet__User.user_id == user_to_delete.id
         ).delete()

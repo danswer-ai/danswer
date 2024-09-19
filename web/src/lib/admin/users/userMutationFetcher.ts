@@ -12,6 +12,7 @@ const userMutationFetcher = async (
   }).then(async (res) => {
     if (res.ok) return res.json();
     const errorDetail = (await res.json()).detail;
+    console.log(typeof errorDetail);
     throw Error(errorDetail);
   });
 };
