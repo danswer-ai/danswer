@@ -669,9 +669,7 @@ def get_persona_by_id(
         result = db_session.execute(persona_stmt)
         persona = result.scalar_one_or_none()
         if persona is None:
-            raise ValueError(
-                f"Persona with ID {persona_id} does not exist or does not belong to user"
-            )
+            raise ValueError(f"Persona with ID {persona_id} does not exist")
         return persona
 
     # or check if user owns persona

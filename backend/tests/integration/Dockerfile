@@ -31,6 +31,8 @@ RUN apt-get update && \
 COPY ./requirements/default.txt /tmp/requirements.txt
 COPY ./requirements/ee.txt /tmp/ee-requirements.txt
 RUN pip install --no-cache-dir --upgrade \
+        --retries 5 \
+        --timeout 30 \
         -r /tmp/requirements.txt \
         -r /tmp/ee-requirements.txt && \
     pip uninstall -y py && \

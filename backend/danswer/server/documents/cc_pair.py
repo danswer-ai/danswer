@@ -16,7 +16,7 @@ from danswer.db.connector_credential_pair import remove_credential_from_connecto
 from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
 )
-from danswer.db.document import get_document_cnts_for_cc_pairs
+from danswer.db.document import get_document_counts_for_cc_pairs
 from danswer.db.engine import get_session
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
@@ -95,7 +95,7 @@ def get_cc_pair_full_info(
     )
 
     document_count_info_list = list(
-        get_document_cnts_for_cc_pairs(
+        get_document_counts_for_cc_pairs(
             db_session=db_session,
             cc_pair_identifiers=[cc_pair_identifier],
         )

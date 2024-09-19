@@ -62,7 +62,7 @@ from danswer.db.credentials import delete_gmail_service_account_credentials
 from danswer.db.credentials import delete_google_drive_service_account_credentials
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
-from danswer.db.document import get_document_cnts_for_cc_pairs
+from danswer.db.document import get_document_counts_for_cc_pairs
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
@@ -511,7 +511,7 @@ def get_connector_indexing_status(
         for index_attempt in latest_index_attempts
     }
 
-    document_count_info = get_document_cnts_for_cc_pairs(
+    document_count_info = get_document_counts_for_cc_pairs(
         db_session=db_session,
         cc_pair_identifiers=cc_pair_identifiers,
     )
@@ -968,7 +968,7 @@ def get_basic_connector_indexing_status(
         )
         for cc_pair in cc_pairs
     ]
-    document_count_info = get_document_cnts_for_cc_pairs(
+    document_count_info = get_document_counts_for_cc_pairs(
         db_session=db_session,
         cc_pair_identifiers=cc_pair_identifiers,
     )
