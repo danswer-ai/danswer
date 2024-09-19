@@ -232,7 +232,6 @@ def get_access_info_for_documents(
             Credential,
             DocumentByConnectorCredentialPair.credential_id == Credential.id,
         )
-        .outerjoin(User, Credential.user_id == User.id)
         .join(
             ConnectorCredentialPair,
             and_(
@@ -240,6 +239,13 @@ def get_access_info_for_documents(
                 == ConnectorCredentialPair.connector_id,
                 DocumentByConnectorCredentialPair.credential_id
                 == ConnectorCredentialPair.credential_id,
+            ),
+        )
+        .outerjoin(
+            User,
+            and_(
+                Credential.user_id == User.id,
+                ConnectorCredentialPair.access_type != AccessType.SYNC,
             ),
         )
         # don't include CC pairs that are being deleted

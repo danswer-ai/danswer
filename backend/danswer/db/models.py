@@ -474,6 +474,9 @@ class Document(Base):
         postgresql.ARRAY(String), nullable=True
     )
     # Permission sync columns
+    # Email addresses are saved at the document level for externally synced permissions
+    # This is becuase the normal flow of assigning permissions is through the cc_pair
+    # doesn't apply here
     external_user_emails: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
     )
