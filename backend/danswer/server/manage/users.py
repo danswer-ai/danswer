@@ -31,7 +31,10 @@ from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
+from danswer.db.models import DocumentSet__User
+from danswer.db.models import Persona__User
 from danswer.db.models import User
+from danswer.db.models import User__UserGroup
 from danswer.db.users import get_user_by_email
 from danswer.db.users import list_users
 from danswer.dynamic_configs.factory import get_dynamic_config_store
@@ -237,10 +240,18 @@ async def delete_user(
     db_session.expunge(user_to_delete)
 
     try:
-        # Delete related OAuthAccounts first
         for oauth_account in user_to_delete.oauth_accounts:
             db_session.delete(oauth_account)
 
+        db_session.query(DocumentSet__User).filter(
+            DocumentSet__User.user_id == user_to_delete.id
+        ).delete()
+        db_session.query(Persona__User).filter(
+            Persona__User.user_id == user_to_delete.id
+        ).delete()
+        db_session.query(User__UserGroup).filter(
+            User__UserGroup.user_id == user_to_delete.id
+        ).delete()
         db_session.delete(user_to_delete)
         db_session.commit()
 
@@ -254,6 +265,10 @@ async def delete_user(
 
         logger.info(f"Deleted user {user_to_delete.email}")
     except Exception as e:
+        import traceback
+
+        full_traceback = traceback.format_exc()
+        logger.error(f"Full stack trace:\n{full_traceback}")
         db_session.rollback()
         logger.error(f"Error deleting user {user_to_delete.email}: {str(e)}")
         raise HTTPException(status_code=500, detail="Error deleting user")
