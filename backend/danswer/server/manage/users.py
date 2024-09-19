@@ -460,21 +460,21 @@ def update_user_assistant_visibility(
             no_auth_user = fetch_no_auth_user(store)
             preferences = no_auth_user.preferences
 
-            chosen_assistants = preferences.chosen_assistants or []
+            visible_assistants = preferences.visible_assistants or []
             hidden_assistants = preferences.hidden_assistants or []
 
             if show:
-                if assistant_id not in chosen_assistants:
-                    chosen_assistants.append(assistant_id)
+                if assistant_id not in visible_assistants:
+                    visible_assistants.append(assistant_id)
                 if assistant_id in hidden_assistants:
                     hidden_assistants.remove(assistant_id)
             else:
-                if assistant_id in chosen_assistants:
-                    chosen_assistants.remove(assistant_id)
+                if assistant_id in visible_assistants:
+                    visible_assistants.remove(assistant_id)
                 if assistant_id not in hidden_assistants:
                     hidden_assistants.append(assistant_id)
 
-            preferences.chosen_assistants = chosen_assistants
+            preferences.visible_assistants = visible_assistants
             preferences.hidden_assistants = hidden_assistants
             set_no_auth_user_preferences(store, preferences)
             return

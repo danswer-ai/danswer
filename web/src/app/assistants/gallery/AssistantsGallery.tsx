@@ -6,16 +6,137 @@ import { User } from "@/lib/types";
 import { Button } from "@tremor/react";
 import Link from "next/link";
 import { useState } from "react";
-import { FiList, FiMinus, FiPlus, FiX } from "react-icons/fi";
+import { FiList, FiMinus, FiPlus } from "react-icons/fi";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
 import {
   addAssistantToList,
   removeAssistantFromList,
 } from "@/lib/assistants/updateAssistantPreferences";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { AssistantTools } from "../ToolsDisplay";
+import { classifyAssistants } from "@/lib/assistants/utils";
+export function AssistantGalleryCard({
+  assistant,
+  user,
+  setPopup,
+  selectedAssistant,
+}: {
+  assistant: Persona;
+  user: User | null;
+  setPopup: (popup: PopupSpec) => void;
+  selectedAssistant: boolean;
+}) {
+  const router = useRouter();
+  return (
+    <div
+      key={assistant.id}
+      className="
+				bg-background-emphasis
+				rounded-lg
+				shadow-md
+				p-4
+			"
+    >
+      <div className="flex items-center">
+        <AssistantIcon assistant={assistant} />
+        <h2
+          className="
+						text-xl
+						font-semibold
+						my-auto
+						ml-2
+						text-strong
+						line-clamp-2
+					"
+        >
+          {assistant.name}
+        </h2>
+        {user && (
+          <div className="ml-auto">
+            {selectedAssistant ? (
+              <Button
+                className="
+									mr-2
+									my-auto
+									bg-background-700
+									hover:bg-background-600
+								"
+                icon={FiMinus}
+                onClick={async () => {
+                  if (
+                    user.preferences?.chosen_assistants &&
+                    user.preferences?.chosen_assistants.length === 1
+                  ) {
+                    setPopup({
+                      message: `Cannot remove "${assistant.name}" - you must have at least one assistant.`,
+                      type: "error",
+                    });
+                    return;
+                  }
 
+                  const success = await removeAssistantFromList(assistant.id);
+                  if (success) {
+                    setPopup({
+                      message: `"${assistant.name}" has been removed from your list.`,
+                      type: "success",
+                    });
+                    router.refresh();
+                  } else {
+                    setPopup({
+                      message: `"${assistant.name}" could not be removed from your list.`,
+                      type: "error",
+                    });
+                  }
+                }}
+                size="xs"
+              >
+                Deselect
+              </Button>
+            ) : (
+              <Button
+                className="
+									mr-2
+									my-auto
+									bg-accent
+									hover:bg-accent-hover
+								"
+                icon={FiPlus}
+                onClick={async () => {
+                  const success = await addAssistantToList(assistant.id);
+                  if (success) {
+                    setPopup({
+                      message: `"${assistant.name}" has been added to your list.`,
+                      type: "success",
+                    });
+                    router.refresh();
+                  } else {
+                    setPopup({
+                      message: `"${assistant.name}" could not be added to your list.`,
+                      type: "error",
+                    });
+                  }
+                }}
+                size="xs"
+                color="green"
+              >
+                Add
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <p className="text-sm mt-2">{assistant.description}</p>
+      <p className="text-subtle text-sm my-2">
+        Author: {assistant.owner?.email || "Danswer"}
+      </p>
+      {assistant.tools.length > 0 && (
+        <AssistantTools list assistant={assistant} />
+      )}
+    </div>
+  );
+}
 export function AssistantsGallery({
   assistants,
   user,
@@ -37,8 +158,18 @@ export function AssistantsGallery({
   const [searchQuery, setSearchQuery] = useState("");
   const { popup, setPopup } = usePopup();
 
-  const allAssistantIds = assistants.map((assistant) => assistant.id);
-  const filteredAssistants = filterAssistants(assistants, searchQuery);
+  const { visibleAssistants, hiddenAssistants } = classifyAssistants(
+    user,
+    assistants
+  );
+
+  const defaultAssistants = assistants.filter(
+    (assistant) => assistant.is_default_persona
+  );
+
+  const nonDefaultAssistants = assistants.filter(
+    (assistant) => !assistant.is_default_persona
+  );
 
   return (
     <>
@@ -111,149 +242,69 @@ export function AssistantsGallery({
             </div>
           </div>
         </div>
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-2 text-text-900">
-            Default Assistants
-          </h2>
+        {defaultAssistants.length > 0 && (
+          <>
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold mb-2 text-text-900">
+                Default Assistants
+              </h2>
 
-          <h3 className="text-lg text-text-500">
-            These are assistant created by your admins are and preferred.
-          </h3>
-        </section>
-        <div
-          className="
-          w-full
-          grid
-          grid-cols-2
-          gap-4
-          py-2
-        "
-        >
-          {filteredAssistants.map((assistant) => (
+              <h3 className="text-lg text-text-500">
+                These are assistant created by your admins are and preferred.
+              </h3>
+            </section>
             <div
-              key={assistant.id}
               className="
-              bg-background-emphasis
-              rounded-lg
-              shadow-md
-              p-4
-            "
-            >
-              <div className="flex items-center">
-                <AssistantIcon assistant={assistant} />
-                <h2
-                  className="
-                  text-xl
-                  font-semibold
-                  my-auto
-                  ml-2
-                  text-strong
-                  line-clamp-2
+                  w-full
+                  grid
+                  grid-cols-2
+                  gap-4
+                  py-2
                 "
-                >
-                  {assistant.name}
-                </h2>
-                {user && (
-                  <div className="ml-auto">
-                    {!user.preferences?.chosen_assistants ||
-                    user.preferences?.chosen_assistants?.includes(
-                      assistant.id
-                    ) ? (
-                      <Button
-                        className="
-                          mr-2
-                          my-auto
-                          bg-background-700
-                          hover:bg-background-600
-                        "
-                        icon={FiMinus}
-                        onClick={async () => {
-                          if (
-                            user.preferences?.chosen_assistants &&
-                            user.preferences?.chosen_assistants.length === 1
-                          ) {
-                            setPopup({
-                              message: `Cannot remove "${assistant.name}" - you must have at least one assistant.`,
-                              type: "error",
-                            });
-                            return;
-                          }
-
-                          const success = await removeAssistantFromList(
-                            assistant.id
-                          );
-                          if (success) {
-                            setPopup({
-                              message: `"${assistant.name}" has been removed from your list.`,
-                              type: "success",
-                            });
-                            router.refresh();
-                          } else {
-                            setPopup({
-                              message: `"${assistant.name}" could not be removed from your list.`,
-                              type: "error",
-                            });
-                          }
-                        }}
-                        size="xs"
-                      >
-                        Deselect
-                      </Button>
-                    ) : (
-                      <Button
-                        className="
-                          mr-2
-                          my-auto
-                          bg-accent
-                          hover:bg-accent-hover
-                        "
-                        icon={FiPlus}
-                        onClick={async () => {
-                          const success = await addAssistantToList(
-                            assistant.id
-                          );
-                          if (success) {
-                            setPopup({
-                              message: `"${assistant.name}" has been added to your list.`,
-                              type: "success",
-                            });
-                            router.refresh();
-                          } else {
-                            setPopup({
-                              message: `"${assistant.name}" could not be added to your list.`,
-                              type: "error",
-                            });
-                          }
-                        }}
-                        size="xs"
-                        color="green"
-                      >
-                        Add
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <p className="text-sm mt-2">{assistant.description}</p>
-              <p className="text-subtle text-sm my-2">
-                Author: {assistant.owner?.email || "Danswer"}
-              </p>
-              {assistant.tools.length > 0 && (
-                <AssistantTools list assistant={assistant} />
-              )}
+            >
+              {defaultAssistants.map((assistant) => (
+                <AssistantGalleryCard
+                  selectedAssistant={visibleAssistants.includes(assistant)}
+                  key={assistant.id}
+                  assistant={assistant}
+                  user={user}
+                  setPopup={setPopup}
+                />
+              ))}
             </div>
-          ))}
-        </div>
-        <section className="mt-12 mb-8">
-          <h2 className="text-2xl font-semibold mb-2 text-text-900">
-            Other Assistants
-          </h2>
+          </>
+        )}
+        {nonDefaultAssistants.length > 0 && (
+          <section className="mt-12 mb-8">
+            <h2 className="text-2xl font-semibold mb-2 text-text-900">
+              Other Assistants
+            </h2>
 
-          <h3 className="text-lg text-text-500">
-            These are assistant created by your admins are and preferred.
-          </h3>
-        </section>
+            <h3 className="text-lg text-text-500">
+              These are community-contributed assistants.
+            </h3>
+
+            <div
+              className="
+                  w-full
+                  grid
+                  grid-cols-2
+                  gap-4
+                  py-2
+                "
+            >
+              {nonDefaultAssistants.map((assistant) => (
+                <AssistantGalleryCard
+                  selectedAssistant={visibleAssistants.includes(assistant)}
+                  key={assistant.id}
+                  assistant={assistant}
+                  user={user}
+                  setPopup={setPopup}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </>
   );

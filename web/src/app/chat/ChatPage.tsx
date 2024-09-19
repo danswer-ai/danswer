@@ -100,7 +100,10 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
-import { classifyAssistants } from "@/lib/assistants/utils";
+import {
+  classifyAssistants,
+  orderAssistantsForUser,
+} from "@/lib/assistants/utils";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -136,7 +139,6 @@ export function ChatPage({
 
   const { user, refreshUser, isLoadingUser } = useUser();
 
-  // chat session
   const existingChatIdRaw = searchParams.get("chatId");
   const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
 
@@ -2382,7 +2384,10 @@ export function ChatPage({
                               showDocs={() => setDocumentSelection(true)}
                               selectedDocuments={selectedDocuments}
                               // assistant stuff
-                              assistantOptions={visibleAssistants}
+                              assistantOptions={orderAssistantsForUser(
+                                visibleAssistants,
+                                user
+                              )}
                               selectedAssistant={liveAssistant}
                               setSelectedAssistant={onAssistantChange}
                               setAlternativeAssistant={setAlternativeAssistant}

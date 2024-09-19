@@ -37,8 +37,6 @@ export default async function Page({
     userInputPrompts,
   } = data;
 
-  const filteredAssistants = orderAssistantsForUser(assistants, user);
-
   return (
     <>
       <InstantSSRAutoRefresh />
@@ -49,7 +47,7 @@ export default async function Page({
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availableAssistants: filteredAssistants,
+          availableAssistants: assistants,
           availableTags: tags,
           llmProviders,
           folders,
