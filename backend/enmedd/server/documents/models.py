@@ -140,7 +140,6 @@ class CCPairFullInfo(BaseModel):
         cc_pair_model: ConnectorCredentialPair,
         index_attempt_models: list[IndexAttempt],
         latest_deletion_attempt: DeletionAttemptSnapshot | None,
-        groups: list[MinimalTeamspaceSnapshot] | None,
         num_docs_indexed: int,  # not ideal, but this must be computed separately
     ) -> "CCPairFullInfo":
         return cls(
@@ -158,7 +157,6 @@ class CCPairFullInfo(BaseModel):
                 for index_attempt_model in index_attempt_models
             ],
             latest_deletion_attempt=latest_deletion_attempt,
-            groups=groups,
         )
 
 
