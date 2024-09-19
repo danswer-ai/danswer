@@ -20,7 +20,6 @@ export function checkUserIdOwnsAssistant(
 
 export function classifyAssistants(user: User | null, assistants: Persona[]) {
   if (!user) {
-    console.log("No user, only showing default personas");
     return {
       visibleAssistants: assistants.filter(
         (assistant) => assistant.is_default_persona
@@ -47,39 +46,12 @@ export function classifyAssistants(user: User | null, assistants: Persona[]) {
     const isShown =
       (isVisible && isNotHidden && isSelected) ||
       (isNotHidden && (isBuiltIn || isDefault || isOwnedByUser));
-
-    console.log(
-      "assistant",
-      assistant.name,
-      "isShown",
-      isShown,
-      "isVisible",
-      isVisible,
-      "isNotHidden",
-      isNotHidden,
-      "isSelected",
-      isSelected,
-      "isDefault",
-      isDefault,
-      "isOwnedByUser",
-      isOwnedByUser
-    );
-
     return isShown;
   });
 
   const hiddenAssistants = assistants.filter((assistant) => {
     return !visibleAssistants.includes(assistant);
   });
-
-  console.log(
-    "ASSISTNATS",
-    assistants.length,
-    "VISIBLE",
-    visibleAssistants.length,
-    "HIDDEN",
-    hiddenAssistants.length
-  );
 
   return {
     visibleAssistants,

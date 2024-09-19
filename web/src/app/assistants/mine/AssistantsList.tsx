@@ -289,12 +289,7 @@ export function AssistantsList({
     user,
     assistants
   );
-  console.log(user?.preferences);
 
-  console.log("visibleAssistants", visibleAssistants.length);
-  console.log("hiddenAssistants", hiddenAssistants.length);
-  console.log("user", assistants.length);
-  console.log("------\n\n");
   const [currentlyVisibleAssistants, setCurrentlyVisibleAssistants] = useState<
     Persona[]
   >([]);
