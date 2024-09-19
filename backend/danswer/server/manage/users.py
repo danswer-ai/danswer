@@ -240,7 +240,6 @@ async def delete_user(
 
     # Detach the user from the current session
     db_session.expunge(user_to_delete)
-    print(user_to_delete.__dict__)
 
     try:
         for oauth_account in user_to_delete.oauth_accounts:
