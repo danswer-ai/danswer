@@ -709,6 +709,7 @@ def stream_chat_message_objects(
                     yield FinalUsedContextDocsResponse(
                         final_context_docs=packet.response
                     )
+
                 elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                     img_generation_response = cast(
                         list[ImageGenerationResponse], packet.response
