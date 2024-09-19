@@ -1,7 +1,7 @@
 """assistant_rework
 
 Revision ID: 55546a7967ee
-Revises: 35e6853a51d5
+Revises: 61ff3651add4
 Create Date: 2024-09-18 17:00:23.755399
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "55546a7967ee"
-down_revision = "35e6853a51d5"
+down_revision = "61ff3651add4"
 branch_labels = None
 depends_on = None
 
