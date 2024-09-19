@@ -109,7 +109,7 @@ class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
     oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
-        "OAuthAccount", lazy="joined"
+        "OAuthAccount", lazy="joined", cascade="all, delete-orphan"
     )
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, native_enum=False, default=UserRole.BASIC)
@@ -171,7 +171,9 @@ class InputPrompt(Base):
     active: Mapped[bool] = mapped_column(Boolean)
     user: Mapped[User | None] = relationship("User", back_populates="input_prompts")
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
 
 
 class InputPrompt__User(Base):
@@ -215,7 +217,9 @@ class Notification(Base):
     notif_type: Mapped[NotificationType] = mapped_column(
         Enum(NotificationType, native_enum=False)
     )
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
     dismissed: Mapped[bool] = mapped_column(Boolean, default=False)
     last_shown: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
     first_shown: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
@@ -250,7 +254,7 @@ class Persona__User(Base):
 
     persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"), primary_key=True)
     user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("user.id"), primary_key=True, nullable=True
+        ForeignKey("user.id", ondelete="CASCADE"), primary_key=True, nullable=True
     )
 
 
@@ -261,7 +265,7 @@ class DocumentSet__User(Base):
         ForeignKey("document_set.id"), primary_key=True
     )
     user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("user.id"), primary_key=True, nullable=True
+        ForeignKey("user.id", ondelete="CASCADE"), primary_key=True, nullable=True
     )
 
 
@@ -564,7 +568,9 @@ class Credential(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     credential_json: Mapped[dict[str, Any]] = mapped_column(EncryptedJson())
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
     # if `true`, then all Admins will have access to the credential
     admin_public: Mapped[bool] = mapped_column(Boolean, default=True)
     time_created: Mapped[datetime.datetime] = mapped_column(
@@ -888,7 +894,9 @@ class ChatSession(Base):
     __tablename__ = "chat_session"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
     persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("persona.id"), nullable=True
     )
@@ -1025,7 +1033,9 @@ class ChatFolder(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     # Only null if auth is off
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
     name: Mapped[str | None] = mapped_column(String, nullable=True)
     display_priority: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
 
@@ -1156,7 +1166,9 @@ class DocumentSet(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True)
     description: Mapped[str] = mapped_column(String)
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
     # Whether changes to the document set have been propagated
     is_up_to_date: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # If `False`, then the document set is not visible to users who are not explicitly
@@ -1200,7 +1212,9 @@ class Prompt(Base):
     __tablename__ = "prompt"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
     system_prompt: Mapped[str] = mapped_column(Text)
@@ -1237,7 +1251,9 @@ class Tool(Base):
     )
 
     # user who created / owns the tool. Will be None for built-in tools.
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
 
     user: Mapped[User | None] = relationship("User", back_populates="custom_tools")
     # Relationship to Persona through the association table
@@ -1261,7 +1277,9 @@ class Persona(Base):
     __tablename__ = "persona"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
     # Number of chunks to pass to the LLM for generation.
@@ -1457,7 +1475,9 @@ class SamlAccount(Base):
     __tablename__ = "saml"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), unique=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), unique=True
+    )
     encrypted_cookie: Mapped[str] = mapped_column(Text, unique=True)
     expires_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime.datetime] = mapped_column(
@@ -1476,7 +1496,7 @@ class User__UserGroup(Base):
         ForeignKey("user_group.id"), primary_key=True
     )
     user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("user.id"), primary_key=True, nullable=True
+        ForeignKey("user.id", ondelete="CASCADE"), primary_key=True, nullable=True
     )
 
 
@@ -1704,7 +1724,7 @@ class UsageReport(Base):
 
     # if None, report was auto-generated
     requestor_user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("user.id"), nullable=True
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
     )
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

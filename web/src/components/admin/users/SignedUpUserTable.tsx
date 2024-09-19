@@ -195,6 +195,7 @@ const DeleteUserButton = ({
           entityName={user.email}
           onClose={() => setShowDeleteModal(false)}
           onSubmit={() => trigger({ user_email: user.email, method: "DELETE" })}
+          additionalDetails="All data associated with this user will be deleted (including personas, tools and chat sessions)."
         />
       )}
 

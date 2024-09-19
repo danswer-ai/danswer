@@ -29,6 +29,9 @@ from danswer.prompts.token_counts import CITATION_REMINDER_TOKEN_CNT
 from danswer.prompts.token_counts import CITATION_STATEMENT_TOKEN_CNT
 from danswer.prompts.token_counts import LANGUAGE_HINT_TOKEN_CNT
 from danswer.search.models import InferenceChunk
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
 def get_prompt_tokens(prompt_config: PromptConfig) -> int:
@@ -156,6 +159,7 @@ def build_citations_user_message(
         user_prompt = CITATIONS_PROMPT_FOR_TOOL_CALLING.format(
             task_prompt=task_prompt_with_reminder,
             user_query=question,
+            history_block=history_message,
         )
 
     user_prompt = user_prompt.strip()
