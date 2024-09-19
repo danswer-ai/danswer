@@ -7,7 +7,6 @@ import { Button } from "@tremor/react";
 import Link from "next/link";
 import { useState } from "react";
 import { FiList, FiMinus, FiPlus, FiX } from "react-icons/fi";
-import { NavigationButton } from "../NavigationButton";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
 import {
   addAssistantToList,
@@ -15,7 +14,7 @@ import {
 } from "@/lib/assistants/updateAssistantPreferences";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
-import { AssistantTools, ToolsDisplay } from "../ToolsDisplay";
+import { AssistantTools } from "../ToolsDisplay";
 
 export function AssistantsGallery({
   assistants,

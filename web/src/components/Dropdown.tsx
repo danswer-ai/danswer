@@ -192,7 +192,7 @@ export function SearchMultiSelectDropdown({
 export const CustomDropdown = ({
   children,
   dropdown,
-  direction = "down", // Default to 'down' if not specified
+  direction = "down",
 }: {
   children: JSX.Element | string;
   dropdown: JSX.Element | string;

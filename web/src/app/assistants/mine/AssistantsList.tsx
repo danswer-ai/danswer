@@ -135,22 +135,24 @@ function AssistantListItem({
         <div className="flex justify-between items-center">
           <AssistantIcon assistant={assistant} />
 
-          <h2 className="w-3/4 ml-6 space-y-3 text-xl font-semibold line-clamp-2 text-gray-800">
+          <h2 className="ml-6 w-fit flex-grow space-y-3 text-start flex text-xl font-semibold line-clamp-2 text-gray-800">
             {assistant.name}
           </h2>
 
           {isOwnedByUser && (
             <div className="flex items-center space-x-4">
-              <div className="flex flex-wrap mr-20 items-center gap-2">
+              <p className="text-base flex w-fit text-subtle">
+                {assistant.tools.length} tools
+              </p>
+
+              <div className="flex flex-wrap mr-20 gap-x-4 items-center gap-2">
                 <AssistantSharedStatusDisplay
                   size="md"
                   assistant={assistant}
                   user={user}
                 />
-                {assistant.tools.length > 0 && (
-                  <AssistantTools list assistant={assistant} />
-                )}
               </div>
+
               {!assistant.is_public && (
                 <button
                   className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"

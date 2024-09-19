@@ -17,3 +17,16 @@ export function checkUserIdOwnsAssistant(
     !assistant.default_persona
   );
 }
+
+export function getVisibleAssistants(assistant: Persona, user: User | null) {
+  const isOwnedByUser = checkUserOwnsAssistant(user, assistant);
+
+  const assistantSharedUsersWithoutOwner = assistant.users?.filter(
+    (u) => u.id !== assistant.owner?.id
+  );
+
+  return {
+    isOwnedByUser,
+    assistantSharedUsersWithoutOwner,
+  };
+}
