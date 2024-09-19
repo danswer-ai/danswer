@@ -26,7 +26,9 @@ from danswer.db.models import UserRole
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.external_perm import delete_user__ext_group_for_cc_pair__no_commit
-from ee.danswer.external_permissions.permission_sync import check_if_valid_sync_source
+from ee.danswer.external_permissions.permission_sync_function_map import (
+    check_if_valid_sync_source,
+)
 
 logger = setup_logger()
 

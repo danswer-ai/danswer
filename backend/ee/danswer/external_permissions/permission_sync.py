@@ -1,67 +1,28 @@
-from collections.abc import Callable
 from datetime import datetime
 from datetime import timezone
-from typing import Any
 
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
-from danswer.configs.constants import DocumentSource
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
-from danswer.db.models import ConnectorCredentialPair
 from danswer.db.search_settings import get_current_search_settings
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.utils.logger import setup_logger
-from ee.danswer.external_permissions.confluence.doc_sync import confluence_doc_sync
-from ee.danswer.external_permissions.confluence.group_sync import confluence_group_sync
-from ee.danswer.external_permissions.google_drive.doc_sync import gdrive_doc_sync
-from ee.danswer.external_permissions.google_drive.group_sync import gdrive_group_sync
-from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
+from ee.danswer.external_permissions.permission_sync_function_map import (
+    DOC_PERMISSIONS_FUNC_MAP,
+)
+from ee.danswer.external_permissions.permission_sync_function_map import (
+    FULL_FETCH_PERIOD_IN_SECONDS,
+)
+from ee.danswer.external_permissions.permission_sync_function_map import (
+    GROUP_PERMISSIONS_FUNC_MAP,
+)
 from ee.danswer.external_permissions.permission_sync_utils import (
     get_docs_with_additional_info,
 )
 
 logger = setup_logger()
-
-
-GroupSyncFuncType = Callable[
-    [Session, ConnectorCredentialPair, list[DocsWithAdditionalInfo], dict[str, Any]],
-    None,
-]
-
-DocSyncFuncType = Callable[
-    [Session, ConnectorCredentialPair, list[DocsWithAdditionalInfo], dict[str, Any]],
-    None,
-]
-
-# These functions update:
-# - the user_email <-> document mapping
-# - the external_user_group_id <-> document mapping
-# in postgres without committing
-# THIS ONE IS NECESSARY FOR AUTO SYNC TO WORK
-_DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, DocSyncFuncType] = {
-    DocumentSource.GOOGLE_DRIVE: gdrive_doc_sync,
-    DocumentSource.CONFLUENCE: confluence_doc_sync,
-}
-
-# These functions update:
-# - the user_email <-> external_user_group_id mapping
-# in postgres without committing
-# THIS ONE IS OPTIONAL ON AN APP BY APP BASIS
-_GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, GroupSyncFuncType] = {
-    DocumentSource.GOOGLE_DRIVE: gdrive_group_sync,
-    DocumentSource.CONFLUENCE: confluence_group_sync,
-}
-
-
-# None means that the connector supports polling from last_time_perm_sync to now
-_FULL_FETCH_PERIOD_IN_SECONDS: dict[DocumentSource, int | None] = {
-    # Polling is supported
-    DocumentSource.GOOGLE_DRIVE: None,
-    # Polling is not supported so we fetch all doc permissions every 10 minutes
-    DocumentSource.CONFLUENCE: 10 * 60,
-}
 
 
 def run_permission_sync_entrypoint(
@@ -74,8 +35,8 @@ def run_permission_sync_entrypoint(
 
     source_type = cc_pair.connector.source
 
-    doc_sync_func = _DOC_PERMISSIONS_FUNC_MAP.get(source_type)
-    group_sync_func = _GROUP_PERMISSIONS_FUNC_MAP.get(source_type)
+    doc_sync_func = DOC_PERMISSIONS_FUNC_MAP.get(source_type)
+    group_sync_func = GROUP_PERMISSIONS_FUNC_MAP.get(source_type)
 
     if doc_sync_func is None:
         raise ValueError(
@@ -88,7 +49,7 @@ def run_permission_sync_entrypoint(
 
     # If the source type is not polling, we only fetch the permissions every
     # _FULL_FETCH_PERIOD_IN_SECONDS seconds
-    full_fetch_period = _FULL_FETCH_PERIOD_IN_SECONDS[source_type]
+    full_fetch_period = FULL_FETCH_PERIOD_IN_SECONDS[source_type]
     if full_fetch_period is not None:
         last_sync = cc_pair.last_time_perm_sync
         if (
@@ -162,7 +123,3 @@ def run_permission_sync_entrypoint(
     except Exception as e:
         logger.error(f"Error updating document index: {e}")
         db_session.rollback()
-
-
-def check_if_valid_sync_source(source_type: DocumentSource) -> bool:
-    return source_type in _DOC_PERMISSIONS_FUNC_MAP
