@@ -114,6 +114,7 @@ if __name__ == "__main__":
     one_day_ago = current - 24 * 60 * 60  # 1 day
     logger.info("Polling for documents updated in the last 24 hours")
     latest_docs = connector.poll_source(one_day_ago, current)
-    for doc in latest_docs:
-        logger.debug(f"Retrieved document: {doc.id}")
+    for docs in latest_docs:
+        for doc in docs:
+            print(doc.id)
     logger.notice("Asana connector test completed")
