@@ -145,20 +145,12 @@ export function AssistantsGallery({
 
   user: User | null;
 }) {
-  function filterAssistants(assistants: Persona[], query: string): Persona[] {
-    return assistants.filter(
-      (assistant) =>
-        assistant.name.toLowerCase().includes(query.toLowerCase()) ||
-        assistant.description.toLowerCase().includes(query.toLowerCase())
-    );
-  }
-
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState("");
   const { popup, setPopup } = usePopup();
 
-  const { visibleAssistants, hiddenAssistants } = classifyAssistants(
+  const { visibleAssistants, hiddenAssistants: _ } = classifyAssistants(
     user,
     assistants
   );
