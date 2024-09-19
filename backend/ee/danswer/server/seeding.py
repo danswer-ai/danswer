@@ -85,6 +85,7 @@ def _seed_personas(db_session: Session, personas: list[CreatePersonaRequest]) ->
                 is_public=persona.is_public,
                 db_session=db_session,
                 tool_ids=persona.tool_ids,
+                display_priority=persona.display_priority,
             )
 
 

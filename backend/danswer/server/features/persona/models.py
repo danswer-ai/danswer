@@ -39,6 +39,7 @@ class CreatePersonaRequest(BaseModel):
     uploaded_image_id: str | None = None  # New field for uploaded image
     remove_image: bool | None = None
     is_default_persona: bool = False
+    display_priority: int | None = None
 
 
 class PersonaSnapshot(BaseModel):
