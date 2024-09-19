@@ -162,3 +162,7 @@ def run_permission_sync_entrypoint(
     except Exception as e:
         logger.error(f"Error updating document index: {e}")
         db_session.rollback()
+
+
+def check_if_valid_sync_source(source_type: DocumentSource) -> bool:
+    return source_type in _DOC_PERMISSIONS_FUNC_MAP

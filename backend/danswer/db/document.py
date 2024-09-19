@@ -287,8 +287,6 @@ def upsert_documents(
             for doc in seen_documents.values()
         ]
     )
-    # for now, there are no columns to update. If more metadata is added, then this
-    # needs to change to an `on_conflict_do_update`
 
     on_conflict_stmt = insert_stmt.on_conflict_do_update(
         index_elements=["id"],  # Conflict target

@@ -1,5 +1,3 @@
-from collections.abc import Sequence
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -7,20 +5,6 @@ from danswer.access.models import ExternalAccess
 from danswer.access.utils import prefix_group_w_source
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Document as DbDocument
-
-
-def fetch_documents_from_ids(
-    db_session: Session,
-    document_ids: list[str],
-) -> Sequence[DbDocument]:
-    documents = db_session.scalars(
-        select(DbDocument).where(DbDocument.id.in_(document_ids))
-    ).all()
-
-    if not len(document_ids) == len(documents):
-        raise RuntimeError("Some documents are missing in Postgres")
-
-    return documents
 
 
 def upsert_document_external_perms__no_commit(

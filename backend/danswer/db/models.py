@@ -388,8 +388,12 @@ class ConnectorCredentialPair(Base):
     access_type: Mapped[AccessType] = mapped_column(
         Enum(AccessType, native_enum=False), nullable=False
     )
+
     # special info needed for the auto-sync feature. The exact structure depends on the
+
     # source type (defined in the connector's `source` field)
+    # E.g. for google_drive perm sync:
+    # {"customer_id": "123567", "company_domain": "@danswer.ai"}
     auto_sync_options: Mapped[dict[str, Any] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
@@ -1678,7 +1682,6 @@ class User__ExternalUserGroupId(Base):
 
     __tablename__ = "user__external_user_group_id"
 
-    # Change this line to reference the User table
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
     # These group ids have been prefixed by the source type
     external_user_group_id: Mapped[str] = mapped_column(String, primary_key=True)

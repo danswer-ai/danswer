@@ -7,8 +7,8 @@ from danswer.access.access import _get_acl_for_user as get_acl_for_user_without_
 from danswer.access.models import DocumentAccess
 from danswer.access.utils import prefix_external_group
 from danswer.access.utils import prefix_user_group
+from danswer.db.document import get_documents_by_ids
 from danswer.db.models import User
-from ee.danswer.db.document import fetch_documents_from_ids
 from ee.danswer.db.external_perm import fetch_external_groups_for_user
 from ee.danswer.db.user_group import fetch_user_groups_for_documents
 from ee.danswer.db.user_group import fetch_user_groups_for_user
@@ -46,7 +46,7 @@ def _get_access_for_documents(
             document_ids=document_ids,
         )
     }
-    documents = fetch_documents_from_ids(
+    documents = get_documents_by_ids(
         db_session=db_session,
         document_ids=document_ids,
     )

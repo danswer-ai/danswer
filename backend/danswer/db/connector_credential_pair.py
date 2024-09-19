@@ -26,6 +26,7 @@ from danswer.db.models import UserRole
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.external_perm import delete_user__ext_group_for_cc_pair__no_commit
+from ee.danswer.external_permissions.permission_sync import check_if_valid_sync_source
 
 logger = setup_logger()
 
@@ -343,6 +344,13 @@ def add_credential_to_connector(
 ) -> StatusResponse:
     connector = fetch_connector_by_id(connector_id, db_session)
     credential = fetch_credential_by_id(credential_id, user, db_session)
+
+    if access_type == AccessType.SYNC:
+        if not check_if_valid_sync_source(connector.source):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Connector of type {connector.source} does not support SYNC access type",
+            )
 
     if connector is None:
         raise HTTPException(status_code=404, detail="Connector does not exist")

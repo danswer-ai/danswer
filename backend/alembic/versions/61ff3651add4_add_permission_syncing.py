@@ -21,12 +21,11 @@ depends_on = None
 def upgrade() -> None:
     # Admin user who set up connectors will lose access to the docs temporarily
     # only way currently to give back access is to rerun from beginning
-    op.execute("CREATE TYPE accesstype AS ENUM ('PUBLIC', 'PRIVATE', 'SYNC')")
     op.add_column(
         "connector_credential_pair",
         sa.Column(
             "access_type",
-            sa.Enum("PUBLIC", "PRIVATE", "SYNC", name="accesstype", create_type=False),
+            sa.String(),
             nullable=True,
         ),
     )
@@ -79,7 +78,6 @@ def upgrade() -> None:
 
     op.drop_column("external_permission", "user_id")
     op.drop_column("email_to_external_user_cache", "user_id")
-    op.drop_column("permission_sync_run", "cc_pair_id")
     op.drop_table("permission_sync_run")
     op.drop_table("external_permission")
     op.drop_table("email_to_external_user_cache")
