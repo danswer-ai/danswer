@@ -27,6 +27,8 @@ def run_jobs(exclude_indexing: bool) -> None:
         "--pool=threads",
         "--concurrency=6",
         "--loglevel=INFO",
+        "-n",
+        "primary@%n",
         "-Q",
         "celery",
     ]
@@ -39,6 +41,8 @@ def run_jobs(exclude_indexing: bool) -> None:
         "--pool=threads",
         "--concurrency=16",
         "--loglevel=INFO",
+        "-n",
+        "light@%n",
         "-Q",
         "vespa_metadata_sync,connector_deletion",
     ]
@@ -51,6 +55,8 @@ def run_jobs(exclude_indexing: bool) -> None:
         "--pool=threads",
         "--concurrency=6",
         "--loglevel=INFO",
+        "-n",
+        "heavy@%n",
         "-Q",
         "connector_pruning",
     ]
@@ -82,13 +88,13 @@ def run_jobs(exclude_indexing: bool) -> None:
 
     # monitor threads
     worker_primary_thread = threading.Thread(
-        target=monitor_process, args=("WORKER_PRIMARY", worker_primary_process)
+        target=monitor_process, args=("PRIMARY", worker_primary_process)
     )
     worker_light_thread = threading.Thread(
-        target=monitor_process, args=("WORKER_LIGHT", worker_light_process)
+        target=monitor_process, args=("LIGHT", worker_light_process)
     )
     worker_heavy_thread = threading.Thread(
-        target=monitor_process, args=("WORKER_HEAVY", worker_heavy_process)
+        target=monitor_process, args=("HEAVY", worker_heavy_process)
     )
     beat_thread = threading.Thread(target=monitor_process, args=("BEAT", beat_process))
 
