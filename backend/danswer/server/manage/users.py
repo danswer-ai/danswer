@@ -449,7 +449,7 @@ def update_user_assistant_list(
 
 def update_assistant_list(
     preferences: UserPreferences, assistant_id: int, show: bool
-) -> None:
+) -> UserPreferences:
     visible_assistants = preferences.visible_assistants or []
     hidden_assistants = preferences.hidden_assistants or []
     chosen_assistants = preferences.chosen_assistants or []
