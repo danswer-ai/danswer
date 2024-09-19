@@ -16,7 +16,7 @@ platforms: &platforms linux/amd64
 
 jobs:
   integration-tests:
-    runs-on: Amd64
+    runs-on: Large-Amd64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
