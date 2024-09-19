@@ -180,9 +180,7 @@ export function AssistantsGallery({
                           }
 
                           const success = await removeAssistantFromList(
-                            assistant.id,
-                            user.preferences?.chosen_assistants ||
-                              allAssistantIds
+                            assistant.id
                           );
                           if (success) {
                             setPopup({
@@ -212,9 +210,7 @@ export function AssistantsGallery({
                         icon={FiPlus}
                         onClick={async () => {
                           const success = await addAssistantToList(
-                            assistant.id,
-                            user.preferences?.chosen_assistants ||
-                              allAssistantIds
+                            assistant.id
                           );
                           if (success) {
                             setPopup({

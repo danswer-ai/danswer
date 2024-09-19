@@ -12,23 +12,34 @@ export async function updateUserAssistantList(
   return response.ok;
 }
 
-export async function removeAssistantFromList(
+export async function updateAssistantVisibility(
   assistantId: number,
-  chosenAssistants: number[]
+  show: boolean
 ): Promise<boolean> {
-  const updatedAssistants = chosenAssistants.filter((id) => id !== assistantId);
-  return updateUserAssistantList(updatedAssistants);
+  const response = await fetch(
+    `/api/user/assistant-list/update/${assistantId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ show }),
+    }
+  );
+
+  return response.ok;
+}
+
+export async function removeAssistantFromList(
+  assistantId: number
+): Promise<boolean> {
+  return updateAssistantVisibility(assistantId, false);
 }
 
 export async function addAssistantToList(
-  assistantId: number,
-  chosenAssistants: number[]
+  assistantId: number
 ): Promise<boolean> {
-  if (!chosenAssistants.includes(assistantId)) {
-    const updatedAssistants = [...chosenAssistants, assistantId];
-    return updateUserAssistantList(updatedAssistants);
-  }
-  return false;
+  return updateAssistantVisibility(assistantId, true);
 }
 
 export async function moveAssistantUp(

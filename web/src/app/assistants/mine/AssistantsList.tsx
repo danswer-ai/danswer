@@ -15,7 +15,6 @@ import {
   FiX,
 } from "react-icons/fi";
 import Link from "next/link";
-import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import {
   addAssistantToList,
   removeAssistantFromList,
@@ -26,12 +25,14 @@ import { DefaultPopover } from "@/components/popover/DefaultPopover";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
-import { checkUserOwnsAssistant } from "@/lib/assistants/checkOwnership";
+import {
+  checkUserOwnsAssistant,
+  getShownAssistants,
+} from "@/lib/assistants/checkOwnership";
 import { AssistantSharingModal } from "./AssistantSharingModal";
 import { AssistantSharedStatusDisplay } from "../AssistantSharedStatus";
 import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { AssistantTools } from "../ToolsDisplay";
 
 import {
   DndContext,
@@ -57,6 +58,7 @@ import {
 } from "@/app/admin/assistants/lib";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 import { MakePublicAssistantModal } from "@/app/chat/modal/MakePublicAssistantModal";
+import { orderAssistantsForUser } from "@/lib/assistants/utils";
 
 function DraggableAssistantListItem(props: any) {
   const {
@@ -141,11 +143,13 @@ function AssistantListItem({
 
           {isOwnedByUser && (
             <div className="flex items-center space-x-4">
-              <p className="text-base flex w-fit text-subtle">
-                {assistant.tools.length} tools
-              </p>
-
-              <div className="flex flex-wrap mr-20 gap-x-4 items-center gap-2">
+              <div className="flex mr-20 flex-wrap items-center gap-x-4">
+                {assistant.tools.length > 0 && (
+                  <p className="text-base flex w-fit text-subtle">
+                    {assistant.tools.length} tool
+                    {assistant.tools.length > 1 && "s"}
+                  </p>
+                )}
                 <AssistantSharedStatusDisplay
                   size="md"
                   assistant={assistant}
@@ -196,8 +200,7 @@ function AssistantListItem({
                           return;
                         }
                         const success = await removeAssistantFromList(
-                          assistant.id,
-                          currentChosenAssistants || allAssistantIds
+                          assistant.id
                         );
                         if (success) {
                           setPopup({
@@ -221,10 +224,7 @@ function AssistantListItem({
                       key="add"
                       className="flex items-center gap-x-2 px-4 py-2 hover:bg-gray-100 w-full text-left"
                       onClick={async () => {
-                        const success = await addAssistantToList(
-                          assistant.id,
-                          currentChosenAssistants || allAssistantIds
-                        );
+                        const success = await addAssistantToList(assistant.id);
                         if (success) {
                           setPopup({
                             message: `"${assistant.name}" has been added to your list.`,
@@ -277,12 +277,16 @@ export function AssistantsList({
   user: User | null;
   assistants: Persona[];
 }) {
+  const shownAssistants = getShownAssistants(user, assistants);
   const [userCreatedAssistants, setUserCreatedAssistants] = useState<Persona[]>(
     []
   );
+  console.log("---");
+  console.log(assistants);
+  console.log(shownAssistants);
 
   useEffect(() => {
-    setUserCreatedAssistants(orderAssistantsForUser(assistants, user, true));
+    setUserCreatedAssistants(orderAssistantsForUser(shownAssistants, user));
   }, [user, assistants, orderAssistantsForUser]);
 
   const ownedButHiddenAssistants = assistants.filter(
@@ -378,22 +382,21 @@ export function AssistantsList({
         <AssistantsPageTitle>Your Assistants</AssistantsPageTitle>
 
         <div className="grid grid-cols-2 gap-4 mt-4 mb-6">
-          <Link href="/assistants/new">
-            <Button
-              className="w-full py-3 text-lg rounded-full bg-background-800 text-white hover:bg-background-800 transition duration-300 ease-in-out"
-              icon={FiPlus}
-            >
-              Create New Assistant
-            </Button>
-          </Link>
-          <Link href="/assistants/gallery">
-            <Button
-              className="w-full hover:border-border-strong py-3 text-lg rounded-full bg-white border border-border shadow text-text-700 hover:bg-background-50 transition duration-300 ease-in-out"
-              icon={FiList}
-            >
-              Assistant Gallery
-            </Button>
-          </Link>
+          <Button
+            onClick={() => router.push("/assistants/new")}
+            className="w-full py-3 text-lg rounded-full bg-background-800 text-white hover:bg-background-800 transition duration-300 ease-in-out"
+            icon={FiPlus}
+          >
+            Create New Assistant
+          </Button>
+
+          <Button
+            onClick={() => router.push("/assistants/gallery")}
+            className="w-full hover:border-border-strong py-3 text-lg rounded-full bg-white border !border-border shadow text-text-700 hover:bg-background-50 transition duration-300 ease-in-out"
+            icon={FiList}
+          >
+            Assistant Gallery
+          </Button>
         </div>
 
         <p className="text-center text-text-500 text-lg mb-6">

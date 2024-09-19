@@ -31,7 +31,9 @@ export function AssistantSharedStatusDisplay({
 
   if (assistantSharedUsersWithoutOwner.length > 0) {
     return (
-      <div className="text-subtle text-base flex items-center">
+      <div
+        className={`text-subtle ${size === "sm" ? "text-sm" : size === "md" ? "text-base" : "text-lg"} flex items-center`}
+      >
         <FiUnlock className="mr-1" />
         {isOwnedByUser ? (
           `Shared with: ${
@@ -58,7 +60,9 @@ export function AssistantSharedStatusDisplay({
   }
 
   return (
-    <div className="text-subtle text-sm flex items-center">
+    <div
+      className={`text-subtle ${size === "sm" ? "text-sm" : size === "md" ? "text-base" : "text-lg"} flex items-center`}
+    >
       <FiLock className="mr-1" />
       Private
     </div>

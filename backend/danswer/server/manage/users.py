@@ -444,3 +444,58 @@ def update_user_assistant_list(
         .values(chosen_assistants=request.chosen_assistants)
     )
     db_session.commit()
+
+
+@router.patch("/user/assistant-list/update/{assistant_id}")
+def update_user_assistant_visibility(
+    assistant_id: int,
+    show: bool,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    if user is None:
+        if AUTH_TYPE == AuthType.DISABLED:
+            store = get_dynamic_config_store()
+            no_auth_user = fetch_no_auth_user(store)
+            preferences = no_auth_user.preferences
+
+            if show:
+                if assistant_id not in preferences.chosen_assistants:
+                    preferences.chosen_assistants.append(assistant_id)
+                if assistant_id in preferences.hidden_assistants:
+                    preferences.hidden_assistants.remove(assistant_id)
+            else:
+                if assistant_id in preferences.chosen_assistants:
+                    preferences.chosen_assistants.remove(assistant_id)
+                if assistant_id not in preferences.hidden_assistants:
+                    preferences.hidden_assistants.append(assistant_id)
+
+            set_no_auth_user_preferences(store, preferences)
+            return
+        else:
+            raise RuntimeError("This should never happen")
+
+    user_preferences = user.preferences or {}
+    chosen_assistants = user_preferences.get("chosen_assistants", [])
+    hidden_assistants = user_preferences.get("hidden_assistants", [])
+
+    if show:
+        if assistant_id not in chosen_assistants:
+            chosen_assistants.append(assistant_id)
+        if assistant_id in hidden_assistants:
+            hidden_assistants.remove(assistant_id)
+    else:
+        if assistant_id in chosen_assistants:
+            chosen_assistants.remove(assistant_id)
+        if assistant_id not in hidden_assistants:
+            hidden_assistants.append(assistant_id)
+
+    user_preferences["chosen_assistants"] = chosen_assistants
+    user_preferences["hidden_assistants"] = hidden_assistants
+
+    db_session.execute(
+        update(User)
+        .where(User.id == user.id)  # type: ignore
+        .values(preferences=user_preferences)
+    )
+    db_session.commit()

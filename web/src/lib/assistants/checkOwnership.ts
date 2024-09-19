@@ -14,19 +14,38 @@ export function checkUserIdOwnsAssistant(
     (!userId ||
       checkUserIsNoAuthUser(userId) ||
       assistant.owner?.id === userId) &&
-    !assistant.default_persona
+    !assistant.is_default_persona
   );
 }
 
-export function getVisibleAssistants(assistant: Persona, user: User | null) {
-  const isOwnedByUser = checkUserOwnsAssistant(user, assistant);
+export function getShownAssistants(user: User | null, assistants: Persona[]) {
+  if (!user) {
+    return assistants.filter((assistant) => assistant.is_default_persona);
+  }
 
-  const assistantSharedUsersWithoutOwner = assistant.users?.filter(
-    (u) => u.id !== assistant.owner?.id
-  );
-
-  return {
-    isOwnedByUser,
-    assistantSharedUsersWithoutOwner,
-  };
+  return assistants.filter((assistant) => {
+    const isVisible = user.preferences?.visible_assistants?.includes(
+      assistant.id
+    );
+    const isNotHidden = !user.preferences?.hidden_assistants?.includes(
+      assistant.id
+    );
+    const isSelected =
+      user.preferences?.chosen_assistants?.includes(assistant.id) ||
+      user.preferences?.chosen_assistants?.includes(assistant.id);
+    const isDefault = assistant.is_default_persona;
+    console.log(
+      "assistant: ",
+      assistant.name,
+      " \nvisible: ",
+      isVisible,
+      " \nisNotHidden: ",
+      isNotHidden,
+      " \nisSelected: ",
+      isSelected,
+      " \nisDefault: ",
+      isDefault
+    );
+    return (isVisible && isNotHidden && isSelected) || isDefault;
+  });
 }
