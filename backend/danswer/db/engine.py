@@ -106,7 +106,8 @@ def get_db_current_time(db_session: Session) -> datetime:
 
 
 class SqlEngine:
-    """Will eventually subsume most of the standalone functions in this file.
+    """Class to manage a global sql alchemy engine (needed for proper resource control)
+    Will eventually subsume most of the standalone functions in this file.
     Sync only for now"""
 
     _engine: Engine | None = None
@@ -126,6 +127,7 @@ class SqlEngine:
 
     @classmethod
     def _init_engine(cls, **engine_kwargs: Any) -> Engine:
+        """Private helper method to create and return an Engine."""
         connection_string = build_connection_string(
             db_api=SYNC_DB_API, app_name=cls._app_name + "_sync"
         )
@@ -134,14 +136,17 @@ class SqlEngine:
 
     @classmethod
     def init_engine(cls, **engine_kwargs: Any) -> None:
+        """Allow the caller to init the engine with extra params. Different clients
+        such as the API server and different celery workers and tasks
+        need different settings."""
         with cls._lock:
             if not cls._engine:
                 cls._engine = cls._init_engine(**engine_kwargs)
 
     @classmethod
     def get_engine(cls) -> Engine:
-        """It's not actually possible to return None from this since init_engine always
-        runs. We're just making mypy happy."""
+        """Gets the sql alchemy engine. Will init a default engine if init hasn't
+        already been called. You probably want to init first!"""
         if not cls._engine:
             with cls._lock:
                 if not cls._engine:
@@ -150,7 +155,7 @@ class SqlEngine:
 
     @classmethod
     def set_app_name(cls, app_name: str) -> None:
-        """Class method to set the connection string globally."""
+        """Class method to set the app name."""
         cls._app_name = app_name
 
     @classmethod
