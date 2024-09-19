@@ -1,8 +1,10 @@
 import contextlib
+import threading
 import time
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
 from datetime import datetime
+from typing import Any
 from typing import ContextManager
 
 from sqlalchemy import event
@@ -32,14 +34,9 @@ logger = setup_logger()
 SYNC_DB_API = "psycopg2"
 ASYNC_DB_API = "asyncpg"
 
-POSTGRES_APP_NAME = (
-    POSTGRES_UNKNOWN_APP_NAME  # helps to diagnose open connections in postgres
-)
-
 # global so we don't create more than one engine per process
 # outside of being best practice, this is needed so we can properly pool
 # connections and not create a new pool on every request
-_SYNC_ENGINE: Engine | None = None
 _ASYNC_ENGINE: AsyncEngine | None = None
 
 SessionFactory: sessionmaker[Session] | None = None
@@ -108,6 +105,62 @@ def get_db_current_time(db_session: Session) -> datetime:
     return result
 
 
+class SqlEngine:
+    """Will eventually subsume most of the standalone functions in this file.
+    Sync only for now"""
+
+    _engine: Engine | None = None
+    _lock: threading.Lock = threading.Lock()
+    _app_name: str = POSTGRES_UNKNOWN_APP_NAME
+
+    # Default parameters for engine creation
+    DEFAULT_ENGINE_KWARGS = {
+        "pool_size": 40,
+        "max_overflow": 10,
+        "pool_pre_ping": POSTGRES_POOL_PRE_PING,
+        "pool_recycle": POSTGRES_POOL_RECYCLE,
+    }
+
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def _init_engine(cls, **engine_kwargs: Any) -> Engine:
+        connection_string = build_connection_string(
+            db_api=SYNC_DB_API, app_name=cls._app_name + "_sync"
+        )
+        merged_kwargs = {**cls.DEFAULT_ENGINE_KWARGS, **engine_kwargs}
+        return create_engine(connection_string, **merged_kwargs)
+
+    @classmethod
+    def init_engine(cls, **engine_kwargs: Any) -> None:
+        with cls._lock:
+            if not cls._engine:
+                cls._engine = cls._init_engine(**engine_kwargs)
+
+    @classmethod
+    def get_engine(cls) -> Engine:
+        """It's not actually possible to return None from this since init_engine always
+        runs. We're just making mypy happy."""
+        if not cls._engine:
+            with cls._lock:
+                if not cls._engine:
+                    cls._engine = cls._init_engine()
+        return cls._engine
+
+    @classmethod
+    def set_app_name(cls, app_name: str) -> None:
+        """Class method to set the connection string globally."""
+        cls._app_name = app_name
+
+    @classmethod
+    def get_app_name(cls) -> str:
+        """Class method to get current app name."""
+        if not cls._app_name:
+            return ""
+        return cls._app_name
+
+
 def build_connection_string(
     *,
     db_api: str = ASYNC_DB_API,
@@ -125,24 +178,11 @@ def build_connection_string(
 
 
 def init_sqlalchemy_engine(app_name: str) -> None:
-    global POSTGRES_APP_NAME
-    POSTGRES_APP_NAME = app_name
+    SqlEngine.set_app_name(app_name)
 
 
 def get_sqlalchemy_engine() -> Engine:
-    global _SYNC_ENGINE
-    if _SYNC_ENGINE is None:
-        connection_string = build_connection_string(
-            db_api=SYNC_DB_API, app_name=POSTGRES_APP_NAME + "_sync"
-        )
-        _SYNC_ENGINE = create_engine(
-            connection_string,
-            pool_size=40,
-            max_overflow=10,
-            pool_pre_ping=POSTGRES_POOL_PRE_PING,
-            pool_recycle=POSTGRES_POOL_RECYCLE,
-        )
-    return _SYNC_ENGINE
+    return SqlEngine.get_engine()
 
 
 def get_sqlalchemy_async_engine() -> AsyncEngine:
@@ -154,7 +194,9 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
         _ASYNC_ENGINE = create_async_engine(
             connection_string,
             connect_args={
-                "server_settings": {"application_name": POSTGRES_APP_NAME + "_async"}
+                "server_settings": {
+                    "application_name": SqlEngine.get_app_name() + "_async"
+                }
             },
             pool_size=40,
             max_overflow=10,

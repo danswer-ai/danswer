@@ -24,8 +24,10 @@ from danswer.configs.constants import CELERY_PRIMARY_WORKER_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import POSTGRES_CELERY_BEAT_APP_NAME
-from danswer.configs.constants import POSTGRES_CELERY_WORKER_APP_NAME
-from danswer.db.engine import init_sqlalchemy_engine
+from danswer.configs.constants import POSTGRES_CELERY_WORKER_HEAVY_APP_NAME
+from danswer.configs.constants import POSTGRES_CELERY_WORKER_LIGHT_APP_NAME
+from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
+from danswer.db.engine import SqlEngine
 from danswer.redis.redis_pool import RedisPool
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
@@ -126,12 +128,23 @@ def celery_task_postrun(
 
 @beat_init.connect
 def on_beat_init(sender: Any, **kwargs: Any) -> None:
-    init_sqlalchemy_engine(POSTGRES_CELERY_BEAT_APP_NAME)
+    SqlEngine.set_app_name(POSTGRES_CELERY_BEAT_APP_NAME)
+    SqlEngine.init_engine(pool_size=2, max_overflow=0)
 
 
 @worker_init.connect
 def on_worker_init(sender: Any, **kwargs: Any) -> None:
-    init_sqlalchemy_engine(POSTGRES_CELERY_WORKER_APP_NAME)
+    # check concurrency and hostname
+    hostname = sender.hostname
+    if hostname.startswith("light"):
+        SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_LIGHT_APP_NAME)
+        SqlEngine.init_engine(pool_size=32, max_overflow=8)
+    elif hostname.startswith("heavy"):
+        SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_HEAVY_APP_NAME)
+        SqlEngine.init_engine(pool_size=8, max_overflow=0)
+    else:
+        SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
+        SqlEngine.init_engine(pool_size=16, max_overflow=0)
 
     r = redis_pool.get_client()
 
@@ -213,7 +226,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         task_logger.info("Primary worker lock: Acquire succeeded.")
     else:
         task_logger.error("Primary worker lock: Acquire failed!")
-        raise TimeoutError("Primary worker lock could not be acquired!")
+        raise WorkerShutdown("Primary worker lock could not be acquired!")
 
     sender.primary_worker_lock = lock
 
@@ -354,6 +367,9 @@ class HubPeriodicTask(bootsteps.StartStopStep):
     def run_periodic_task(self, worker: Any) -> None:
         try:
             if not worker.primary_worker_lock:
+                return
+
+            if not hasattr(worker, "primary_worker_lock"):
                 return
 
             r = redis_pool.get_client()
