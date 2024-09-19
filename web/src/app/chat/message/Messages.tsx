@@ -123,10 +123,6 @@ function FileDisplay({
                 <div key={file.id} className="w-fit">
                   {close && !DISABLED_CSV_DISPLAY ? (
                     <>
-                      {/* <CsvPage
-                        close={() => setClose(false)}
-                        csvFileDescriptor={file}
-                      /> */}
                       <ToolResult
                         csvFileDescriptor={file}
                         close={() => setClose(false)}
@@ -1004,9 +1000,6 @@ export const HumanMessage = ({
               </div>
             </div>
           </div>
-
-          {/* <CSVGraph /> */}
-          {/* <CSVGraph fileId="./data.csv" /> */}
 
           <div className="flex flex-col md:flex-row gap-x-0.5 mt-1">
             {currentMessageInd !== undefined &&

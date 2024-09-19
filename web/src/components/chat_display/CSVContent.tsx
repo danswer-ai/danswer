@@ -27,7 +27,6 @@ export const CsvContent = ({
 }: ToolDisplay) => {
   const [data, setData] = useState<CSVData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
-
   useEffect(() => {
     fetchCSV(fileDescriptor.id);
   }, [fileDescriptor.id]);
@@ -38,6 +37,17 @@ export const CsvContent = ({
       if (!response.ok) {
         throw new Error("Failed to fetch CSV file");
       }
+
+      const contentLength = response.headers.get("Content-Length");
+      const fileSizeInMB = contentLength
+        ? parseInt(contentLength) / (1024 * 1024)
+        : 0;
+      const MAX_FILE_SIZE_MB = 5;
+
+      if (fileSizeInMB > MAX_FILE_SIZE_MB) {
+        throw new Error("File size exceeds the maximum limit of 5MB");
+      }
+
       const csvData = await response.text();
       const rows = csvData.trim().split("\n");
       const parsedHeaders = rows[0].split(",");
@@ -53,6 +63,8 @@ export const CsvContent = ({
       setData(parsedData);
     } catch (error) {
       console.error("Error fetching CSV file:", error);
+      setData([]);
+      setHeaders([]);
     }
   };
 
@@ -78,55 +90,63 @@ export const CsvContent = ({
 
   return (
     <div
-      className={`transition-opacity transform duration-1000 ease-in-out ${
-        fadeIn ? "opacity-100" : "opacity-0"
-      }`}
+      className={`transition-opacity transform relative duration-1000 ease-in-out ${fadeIn ? "opacity-100" : "opacity-0"}`}
     >
-      <Table>
-        <TableHeader className="!sticky !top-0 ">
-          <TableRow className="!bg-neutral-100">
-            {headers.map((header, index) => (
-              <TableHead className="!sticky !top-0 " key={index}>
-                <p className="text-text-600 line-clamp-2 my-2 font-medium">
-                  {index === 0 ? "" : header}
-                </p>
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-
-        <TableBody className="max-h-[300px] overflow-y-auto">
-          {data.length > 0 ? (
-            data.map((row, rowIndex) => (
-              <TableRow key={rowIndex}>
-                {headers.map((header, cellIndex) => (
-                  <TableCell
-                    className={`${
-                      cellIndex === 0 && "sticky left-0 !bg-neutral-100"
-                    }`}
-                    key={cellIndex}
-                  >
-                    {row[header]}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={headers.length} className="text-center py-8">
-                <div className="flex flex-col items-center justify-center space-y-2">
-                  <WarningCircle className="w-8 h-8 text-error" />
-                  <p className="text-text-600 font-medium">No data available</p>
-                  <p className="text-text-400 text-sm">
-                    The CSV file appears to be empty or couldn&apos;t be loaded
-                    properly.
+      <div className={`overflow-y-auto flex relative max-h-[400px]`}>
+        <Table className="!relative !overflow-y-scroll">
+          <TableHeader className="z-20 !sticky !top-0">
+            <TableRow className="!bg-neutral-100">
+              {headers.map((header, index) => (
+                <TableHead className=" " key={index}>
+                  <p className="text-text-600 line-clamp-2 my-2 font-medium">
+                    {index === 0 ? "" : header}
                   </p>
-                </div>
-              </TableCell>
+                </TableHead>
+              ))}
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+
+          <TableBody>
+            {data.length > 0 ? (
+              data.map((row, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {headers.map((header, cellIndex) => (
+                    <TableCell
+                      className={`${
+                        cellIndex === 0 && "sticky left-0 !bg-neutral-100"
+                      }`}
+                      key={cellIndex}
+                    >
+                      {row[header]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={headers.length}
+                  className="text-center py-8"
+                >
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <WarningCircle className="w-8 h-8 text-error" />
+                    <p className="text-text-600 font-medium">
+                      {headers.length === 0
+                        ? "Error loading CSV"
+                        : "No data available"}
+                    </p>
+                    <p className="text-text-400 text-sm">
+                      {headers.length === 0
+                        ? "The CSV file may be too large or couldn't be loaded properly."
+                        : "The CSV file appears to be empty."}
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };

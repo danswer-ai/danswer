@@ -14,7 +14,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Modal } from "@/components/Modal";
 import { FileDescriptor } from "@/app/chat/interfaces";
 import { CsvContent, ToolDisplay } from "./CSVContent";
-import { InteractiveToolResult } from "./CsvDisplay";
 
 export default function ToolResult({
   csvFileDescriptor,
