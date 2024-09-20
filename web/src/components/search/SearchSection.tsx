@@ -139,16 +139,13 @@ export const SearchSection = ({
   }, []);
   const [isFetching, setIsFetching] = useState(false);
 
-  const [validQuestionResponse, setValidQuestionResponse] =
-    useObjectState<ValidQuestionResponse>(VALID_QUESTION_RESPONSE_DEFAULT);
-
   // Search Type
-  const [selectedSearchType, setSelectedSearchType] =
-    useState<SearchType>(defaultSearchType);
+  const selectedSearchType = defaultSearchType;
 
-  const [selectedPersona, setSelectedPersona] = useState<number>(
-    assistants[0]?.id || 0
-  );
+  // If knowledge assistant exists, use it. Otherwise, use first available assistant for search.
+  const selectedPersona = assistants.find((assistant) => assistant.id === 0)
+    ? 0
+    : assistants[0]?.id;
 
   // Used for search state display
   const [analyzeStartTime, setAnalyzeStartTime] = useState<number>(0);
@@ -397,7 +394,6 @@ export const SearchSection = ({
 
     setIsFetching(true);
     setSearchResponse(initialSearchResponse);
-    setValidQuestionResponse(VALID_QUESTION_RESPONSE_DEFAULT);
     setPreviousSearch(overrideMessage || query);
     const searchFnArgs = {
       query: overrideMessage || query,
