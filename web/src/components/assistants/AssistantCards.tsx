@@ -115,3 +115,56 @@ export function DraggableAssistantCard(props: {
     </div>
   );
 }
+
+export function DisplayAssistantCard({
+  selectedPersona,
+}: {
+  selectedPersona: Persona;
+}) {
+  return (
+    <div className="mt-4 p-6 bg-white rounded-lg shadow-sm border border-border max-w-md w-full mx-auto">
+      <div className="flex items-center mb-4">
+        <AssistantIcon disableToolip size="large" assistant={selectedPersona} />
+        <h2 className="ml-4 text-2xl font-semibold text-text-900">
+          {selectedPersona.name}
+        </h2>
+      </div>
+      <p className="text-sm text-text-600 mb-4">
+        {selectedPersona.description}
+      </p>
+      {selectedPersona.tools.length > 0 ||
+      selectedPersona.llm_relevance_filter ||
+      selectedPersona.llm_filter_extraction ? (
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium text-text-800">Capabilities:</h3>
+          <ul className="space-y-1">
+            {selectedPersona.tools.map((tool, index) => (
+              <li
+                key={index}
+                className="flex items-center text-sm text-text-700"
+              >
+                <span className="mr-2 text-text-500">•</span> {tool.name}
+              </li>
+            ))}
+            {selectedPersona.llm_relevance_filter && (
+              <li className="flex items-center text-sm text-text-700">
+                <span className="mr-2 text-text-500">•</span> Advanced Relevance
+                Filtering
+              </li>
+            )}
+            {selectedPersona.llm_filter_extraction && (
+              <li className="flex items-center text-sm text-text-700">
+                <span className="mr-2 text-text-500">•</span> Smart Information
+                Extraction
+              </li>
+            )}
+          </ul>
+        </div>
+      ) : (
+        <p className="text-sm text-text-600">
+          No specific capabilities listed for this assistant.
+        </p>
+      )}
+    </div>
+  );
+}

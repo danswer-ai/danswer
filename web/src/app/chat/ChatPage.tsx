@@ -2002,7 +2002,7 @@ export function ChatPage({
                         {...getRootProps()}
                       >
                         <div
-                          className={`w-full h-full  flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
+                          className={`w-full h-full flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -2012,11 +2012,52 @@ export function ChatPage({
                             !isFetchingChatMessages &&
                             currentSessionChatState == "input" &&
                             !loadingError && (
-                              <ChatIntro
-                                availableSources={finalAvailableSources}
-                                selectedPersona={liveAssistant}
-                              />
+                              <div className="h-full flex flex-col justify-center items-center">
+                                <ChatIntro
+                                  availableSources={finalAvailableSources}
+                                  selectedPersona={liveAssistant}
+                                />
+                                {currentPersona &&
+                                  currentPersona.starter_messages &&
+                                  currentPersona.starter_messages.length > 0 &&
+                                  selectedAssistant &&
+                                  messageHistory.length === 0 &&
+                                  !isFetchingChatMessages && (
+                                    <div
+                                      key={-4}
+                                      className={`
+                                      mx-auto 
+                                      px-4 
+                                      w-[750px]
+                                      grid 
+                                      gap-4 
+                                      grid-cols-1 
+                                      grid-rows-1 
+                                      mt-4 
+                                      h-80
+                                      md:grid-cols-4
+                                      mb-6`}
+                                    >
+                                      {currentPersona.starter_messages.map(
+                                        (starterMessage, i) => (
+                                          <div key={i} className="w-full">
+                                            <StarterMessage
+                                              starterMessage={starterMessage}
+                                              onClick={() =>
+                                                onSubmit({
+                                                  messageOverride:
+                                                    starterMessage.message,
+                                                })
+                                              }
+                                            />
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  )}
+                              </div>
                             )}
+
                           <div
                             className={
                               "-ml-4 w-full mx-auto " +
@@ -2383,45 +2424,6 @@ export function ChatPage({
                                 />
                               </div>
                             )}
-                            {currentPersona &&
-                              currentPersona.starter_messages &&
-                              currentPersona.starter_messages.length > 0 &&
-                              selectedAssistant &&
-                              messageHistory.length === 0 &&
-                              !isFetchingChatMessages && (
-                                <div
-                                  key={-4}
-                                  className={`
-                                      mx-auto 
-                                      px-4 
-                                      w-searchbar-xs 
-                                      2xl:w-searchbar-sm 
-                                      3xl:w-searchbar 
-                                      grid 
-                                      gap-4 
-                                      grid-cols-1 
-                                      grid-rows-1 
-                                      mt-4 
-                                      md:grid-cols-2 
-                                      mb-6`}
-                                >
-                                  {currentPersona.starter_messages.map(
-                                    (starterMessage, i) => (
-                                      <div key={i} className="w-full">
-                                        <StarterMessage
-                                          starterMessage={starterMessage}
-                                          onClick={() =>
-                                            onSubmit({
-                                              messageOverride:
-                                                starterMessage.message,
-                                            })
-                                          }
-                                        />
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              )}
 
                             {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                             <div ref={endPaddingRef} className="h-[95px]" />
