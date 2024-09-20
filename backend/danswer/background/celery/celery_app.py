@@ -129,17 +129,18 @@ def on_beat_init(sender: Any, **kwargs: Any) -> None:
 
 @worker_init.connect
 def on_worker_init(sender: Any, **kwargs: Any) -> None:
-    # check concurrency and hostname
+    # decide some initial startup settings based on the celery worker's hostname
+    # (set at the command line)
     hostname = sender.hostname
     if hostname.startswith("light"):
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_LIGHT_APP_NAME)
-        SqlEngine.init_engine(pool_size=32, max_overflow=8)
+        SqlEngine.init_engine(pool_size=sender.concurrency, max_overflow=8)
     elif hostname.startswith("heavy"):
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_HEAVY_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
     else:
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
-        SqlEngine.init_engine(pool_size=16, max_overflow=0)
+        SqlEngine.init_engine(pool_size=8, max_overflow=0)
 
     r = redis_pool.get_client()
 
