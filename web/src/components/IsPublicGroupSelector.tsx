@@ -3,13 +3,13 @@ import React, { useState, useEffect } from "react";
 import { FormikProps, FieldArray, ArrayHelpers, ErrorMessage } from "formik";
 import { Text, Divider } from "@tremor/react";
 import { FiUsers } from "react-icons/fi";
-import { UserGroup, User, UserRole, AccessType } from "@/lib/types";
+import { UserGroup, UserRole } from "@/lib/types";
 import { useUserGroups } from "@/lib/hooks";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
 import { useUser } from "./user/UserProvider";
 
 export type IsPublicGroupSelectorFormType = {
-  access_type: AccessType;
+  is_public: boolean;
   groups: number[];
 };
 
@@ -37,12 +37,12 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
     if (user && userGroups && isPaidEnterpriseFeaturesEnabled) {
       const isUserAdmin = user.role === UserRole.ADMIN;
       if (!isUserAdmin) {
-        formikProps.setFieldValue("access_type", "public");
+        formikProps.setFieldValue("is_public", false);
       }
       if (userGroups.length === 1 && !isUserAdmin) {
         formikProps.setFieldValue("groups", [userGroups[0].id]);
         setShouldHideContent(true);
-      } else if (formikProps.values.access_type == "public") {
+      } else if (formikProps.values.is_public) {
         formikProps.setFieldValue("groups", []);
         setShouldHideContent(false);
       } else {
@@ -53,7 +53,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
     user,
     userGroups,
     formikProps.setFieldValue,
-    formikProps.values.access_type,
+    formikProps.values.is_public,
   ]);
 
   if (isLoadingUser || userGroupsIsLoading) {
@@ -102,7 +102,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         </>
       )}
 
-      {(!(formikProps.values.access_type == "public") || isCurator) &&
+      {(!formikProps.values.is_public || isCurator) &&
         userGroups &&
         userGroups?.length > 0 && (
           <>
