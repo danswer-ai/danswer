@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 class TestLLMRequest(BaseModel):
     # provider level
+    exisitng_api_key: bool = False
     provider: str
     api_key: str | None = None
     api_base: str | None = None

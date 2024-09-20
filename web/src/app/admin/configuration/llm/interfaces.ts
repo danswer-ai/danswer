@@ -34,7 +34,7 @@ export interface WellKnownLLMProviderDescriptor {
 export interface LLMProvider {
   name: string;
   provider: string;
-  api_key: string | null;
+  api_key_set: boolean;
   api_base: string | null;
   api_version: string | null;
   custom_config: { [key: string]: string } | null;

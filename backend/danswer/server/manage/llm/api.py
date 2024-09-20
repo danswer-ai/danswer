@@ -9,9 +9,12 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
+from danswer.db.llm import create_llm_provider
 from danswer.db.llm import fetch_existing_llm_providers
+from danswer.db.llm import get_llm_provider
 from danswer.db.llm import remove_llm_provider
 from danswer.db.llm import update_default_provider
+from danswer.db.llm import update_llm_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import User
 from danswer.llm.factory import get_default_llms
@@ -19,8 +22,8 @@ from danswer.llm.factory import get_llm
 from danswer.llm.llm_provider_options import fetch_available_well_known_llms
 from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
 from danswer.llm.utils import test_llm
-from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import FullLLMProviderSnapshot
+from danswer.server.manage.llm.models import LLMProviderCreationRequest
 from danswer.server.manage.llm.models import LLMProviderDescriptor
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.manage.llm.models import TestLLMRequest
@@ -38,15 +41,21 @@ basic_router = APIRouter(prefix="/llm")
 def fetch_llm_options(
     _: User | None = Depends(current_admin_user),
 ) -> list[WellKnownLLMProviderDescriptor]:
-    print("FETCHING")
     return fetch_available_well_known_llms()
 
 
 @admin_router.post("/test")
 def test_llm_configuration(
     test_llm_request: TestLLMRequest,
+    db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> None:
+    if test_llm_request.existing_api_key and not test_llm_request.api_key:
+        llm_provider = get_llm_provider(
+            test_llm_request.provider.name, db_session=db_session
+        )
+        test_llm_request.api_key = llm_provider.api_key
+
     llm = get_llm(
         provider=test_llm_request.provider,
         model=test_llm_request.default_model_name,
@@ -111,11 +120,45 @@ def test_default_provider(
 def list_llm_providers(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> list[FullLLMProvider]:
+) -> list[FullLLMProviderSnapshot]:
+    print(
+        [
+            FullLLMProviderSnapshot.from_model(llm_provider_model)
+            for llm_provider_model in fetch_existing_llm_providers(db_session)
+        ]
+    )
     return [
-        FullLLMProvider.from_model(llm_provider_model)
+        FullLLMProviderSnapshot.from_model(llm_provider_model)
         for llm_provider_model in fetch_existing_llm_providers(db_session)
     ]
+
+
+@admin_router.patch("/provider/{provider_id}")
+def patch_existing_llm_provider(
+    llm_provider: LLMProviderUpsertRequest,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> FullLLMProviderSnapshot:
+    return FullLLMProviderSnapshot.from_full_llm_provider(
+        update_llm_provider(llm_provider=llm_provider, db_session=db_session)
+    )
+
+
+@admin_router.post("/provider")
+def create_new_llm_provider(
+    llm_provider: LLMProviderCreationRequest,
+    is_creation: bool = Query(
+        True,
+        description="True if updating an existing provider, False if creating a new one",
+    ),
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> FullLLMProviderSnapshot:
+    return FullLLMProviderSnapshot.from_full_llm_provider(
+        create_llm_provider(
+            llm_provider=llm_provider, db_session=db_session, is_creation=is_creation
+        )
+    )
 
 
 @admin_router.put("/provider")
@@ -129,13 +172,17 @@ def put_llm_provider(
     db_session: Session = Depends(get_session),
 ) -> FullLLMProviderSnapshot:
     try:
-        return FullLLMProviderSnapshot.from_full_llm_provider(
+        print("hitting htis function")
+
+        value = FullLLMProviderSnapshot.from_full_llm_provider(
             upsert_llm_provider(
                 llm_provider=llm_provider,
                 db_session=db_session,
                 is_creation=is_creation,
             )
         )
+        print(value)
+        return value
     except ValueError as e:
         logger.exception("Failed to upsert LLM Provider")
         raise HTTPException(status_code=400, detail=str(e))

@@ -7,24 +7,17 @@ import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import {
   SelectorFormField,
   TextFormField,
-  BooleanFormField,
   MultiSelectField,
 } from "@/components/admin/connectors/Field";
 import { useState } from "react";
-import { Bubble } from "@/components/Bubble";
-import { GroupsIcon } from "@/components/icons/icons";
 import { useSWRConfig } from "swr";
-import {
-  defaultModelsByProvider,
-  getDisplayNameForModel,
-  useUserGroups,
-} from "@/lib/hooks";
+import { defaultModelsByProvider, getDisplayNameForModel } from "@/lib/hooks";
 import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
+import { defaultPasswordMask } from "@/lib/llm/utils";
 
 export function LLMProviderUpdateForm({
   llmProviderDescriptor,
@@ -33,6 +26,7 @@ export function LLMProviderUpdateForm({
   shouldMarkAsDefault,
   setPopup,
   hideAdvanced,
+  llmProviderFlow,
 }: {
   llmProviderDescriptor: WellKnownLLMProviderDescriptor;
   onClose: () => void;
@@ -40,13 +34,9 @@ export function LLMProviderUpdateForm({
   shouldMarkAsDefault?: boolean;
   hideAdvanced?: boolean;
   setPopup?: (popup: PopupSpec) => void;
+  llmProviderFlow: "create" | "update";
 }) {
   const { mutate } = useSWRConfig();
-
-  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
-
-  // EE only
-  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
 
   const [isTesting, setIsTesting] = useState(false);
   const [testError, setTestError] = useState<string>("");
@@ -56,7 +46,7 @@ export function LLMProviderUpdateForm({
   // Define the initial values based on the provider's requirements
   const initialValues = {
     name: existingLlmProvider?.name || (hideAdvanced ? "Default" : ""),
-    api_key: existingLlmProvider?.api_key ?? "",
+    api_key: null,
     api_base: existingLlmProvider?.api_base ?? "",
     api_version: existingLlmProvider?.api_version ?? "",
     default_model_name:
@@ -86,9 +76,10 @@ export function LLMProviderUpdateForm({
   // Setup validation schema if required
   const validationSchema = Yup.object({
     name: Yup.string().required("Display Name is required"),
-    api_key: llmProviderDescriptor.api_key_required
-      ? Yup.string().required("API Key is required")
-      : Yup.string(),
+    api_key:
+      llmProviderDescriptor.api_key_required && llmProviderFlow == "create"
+        ? Yup.string().required("API Key is required")
+        : Yup.string().nullable(),
     api_base: llmProviderDescriptor.api_base_required
       ? Yup.string().required("API Base is required")
       : Yup.string(),
@@ -119,6 +110,10 @@ export function LLMProviderUpdateForm({
     groups: Yup.array().of(Yup.number()),
     display_model_names: Yup.array().of(Yup.string()),
   });
+
+  const apiKeyDefault = existingLlmProvider?.api_key_set
+    ? defaultPasswordMask
+    : "API key";
 
   return (
     <Formik
@@ -151,7 +146,7 @@ export function LLMProviderUpdateForm({
         }
 
         const response = await fetch(LLM_PROVIDERS_ADMIN_URL, {
-          method: "PUT",
+          method: llmProviderFlow == "create" ? "POST" : "PUT",
           headers: {
             "Content-Type": "application/json",
           },
@@ -237,8 +232,8 @@ export function LLMProviderUpdateForm({
               small={hideAdvanced}
               name="api_key"
               label="API Key"
-              placeholder="API Key"
               type="password"
+              placeholder={formikProps.values.api_key ?? apiKeyDefault}
             />
           )}
 

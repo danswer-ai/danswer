@@ -71,8 +71,6 @@ def update_llm_provider(
             LLMProviderModel.name == llm_provider_update.name
         )
     )
-    # if llm_provider_update.api_key_set:
-
     if not existing_llm_provider:
         raise ValueError(
             f"LLM Provider with name {llm_provider_update.name} does not exist"
@@ -91,6 +89,23 @@ def create_llm_provider(
     db_session.commit()
     return FullLLMProviderSnapshot.from_full_llm_provider(
         FullLLMProvider.from_model(new_llm_provider)
+    )
+
+
+def get_llm_provider(
+    llm_provider_name: str, db_session: Session, user: User | None = None
+) -> FullLLMProviderSnapshot:
+    if not user or not user.is_admin:
+        raise ValueError("User does not have access to this LLM Provider")
+
+    return FullLLMProviderSnapshot.from_full_llm_provider(
+        FullLLMProvider.from_model(
+            db_session.scalar(
+                select(LLMProviderModel).where(
+                    LLMProviderModel.name == llm_provider_name
+                )
+            )
+        )
     )
 
 
