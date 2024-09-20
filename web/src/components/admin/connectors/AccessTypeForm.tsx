@@ -9,6 +9,9 @@ import { Text, Title } from "@tremor/react";
 import { useUser } from "@/components/user/UserProvider";
 import { useField } from "formik";
 import { AutoSyncOptions } from "./AutoSyncOptions";
+import { useContext } from "react";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 function isValidAutoSyncSource(
   value: ConfigurableSources
@@ -24,6 +27,8 @@ export function AccessTypeForm({
   const [access_type, meta, access_type_helpers] =
     useField<AccessType>("access_type");
 
+  const isPaidEnterpriseEnabled = usePaidEnterpriseFeaturesEnabled();
+  const settings = useContext(SettingsContext);
   const isAutoSyncSupported = isValidAutoSyncSource(connector);
   const { isLoadingUser, isAdmin } = useUser();
 
@@ -55,34 +60,42 @@ export function AccessTypeForm({
   }
 
   return (
-    <div>
-      <div className="flex gap-x-2 items-center">
-        <label className="text-text-950 font-medium">Document Access</label>
-      </div>
-      <p className="text-sm text-text-500 mb-2">
-        Control who has access to the documents indexed by this connector.
-      </p>
-
-      {isAdmin && (
+    <>
+      {isPaidEnterpriseEnabled && (
         <>
-          <DefaultDropdown
-            options={options}
-            selected={access_type.value}
-            onSelect={(selected) =>
-              access_type_helpers.setValue(selected as AccessType)
-            }
-            includeDefault={false}
-          />
-
-          {access_type.value === "sync" && isAutoSyncSupported && (
-            <div className="mt-6">
-              <AutoSyncOptions
-                connectorType={connector as ValidAutoSyncSources}
-              />
+          <div>
+            <div className="flex gap-x-2 items-center">
+              <label className="text-text-950 font-medium">
+                Document Access
+              </label>
             </div>
-          )}
+            <p className="text-sm text-text-500 mb-2">
+              Control who has access to the documents indexed by this connector.
+            </p>
+
+            {isAdmin && (
+              <>
+                <DefaultDropdown
+                  options={options}
+                  selected={access_type.value}
+                  onSelect={(selected) =>
+                    access_type_helpers.setValue(selected as AccessType)
+                  }
+                  includeDefault={false}
+                />
+
+                {access_type.value === "sync" && isAutoSyncSupported && (
+                  <div className="mt-6">
+                    <AutoSyncOptions
+                      connectorType={connector as ValidAutoSyncSources}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </>
       )}
-    </div>
+    </>
   );
 }

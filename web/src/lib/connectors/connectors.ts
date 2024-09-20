@@ -851,7 +851,7 @@ export function createConnectorInitialValues(
   return {
     name: "",
     groups: [],
-    is_public: true,
+    access_type: "public",
     ...configuration.values.reduce(
       (acc, field) => {
         if (field.type === "select") {
