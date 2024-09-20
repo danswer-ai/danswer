@@ -142,7 +142,7 @@ export const SearchSection = ({
   // Search Type
   const selectedSearchType = defaultSearchType;
 
-  // If knowledge assistant is enabled, use it. Otherwise, use first available assistant for search.
+  // If knowledge assistant exists, use it. Otherwise, use first available assistant for search.
   const selectedPersona = assistants.find((assistant) => assistant.id === 0)
     ? 0
     : assistants[0]?.id;
