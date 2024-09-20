@@ -15,6 +15,8 @@ from danswer.db.tools import delete_tool
 from danswer.db.tools import get_tool_by_id
 from danswer.db.tools import get_tools
 from danswer.db.tools import update_tool
+from danswer.server.features.tool.models import CustomToolCreate
+from danswer.server.features.tool.models import CustomToolUpdate
 from danswer.server.features.tool.models import ToolSnapshot
 from danswer.tools.custom.openapi_parsing import MethodSpec
 from danswer.tools.custom.openapi_parsing import openapi_to_method_specs
@@ -22,18 +24,6 @@ from danswer.tools.custom.openapi_parsing import validate_openapi_schema
 
 router = APIRouter(prefix="/tool")
 admin_router = APIRouter(prefix="/admin/tool")
-
-
-class CustomToolCreate(BaseModel):
-    name: str
-    description: str | None = None
-    definition: dict[str, Any]
-
-
-class CustomToolUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
-    definition: dict[str, Any] | None = None
 
 
 def _validate_tool_definition(definition: dict[str, Any]) -> None:
@@ -54,6 +44,7 @@ def create_custom_tool(
         name=tool_data.name,
         description=tool_data.description,
         openapi_schema=tool_data.definition,
+        custom_headers=tool_data.custom_headers,
         user_id=user.id if user else None,
         db_session=db_session,
     )
@@ -74,6 +65,7 @@ def update_custom_tool(
         name=tool_data.name,
         description=tool_data.description,
         openapi_schema=tool_data.definition,
+        custom_headers=tool_data.custom_headers,
         user_id=user.id if user else None,
         db_session=db_session,
     )

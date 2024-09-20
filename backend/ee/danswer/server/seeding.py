@@ -1,4 +1,7 @@
+import json
 import os
+from typing import List
+from typing import Optional
 
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -6,6 +9,7 @@ from sqlalchemy.orm import Session
 from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
+from danswer.db.models import Tool
 from danswer.db.persona import upsert_persona
 from danswer.search.enums import RecencyBiasSetting
 from danswer.server.features.persona.models import CreatePersonaRequest
@@ -25,6 +29,16 @@ from ee.danswer.server.enterprise_settings.store import (
 from ee.danswer.server.enterprise_settings.store import upload_logo
 
 
+class CustomToolSeed(BaseModel):
+    name: str
+    description: str
+    definition_path: str
+    custom_headers: Optional[List[dict]] = None
+    display_name: Optional[str] = None
+    in_code_tool_id: Optional[str] = None
+    user_id: Optional[str] = None
+
+
 logger = setup_logger()
 
 _SEED_CONFIG_ENV_VAR_NAME = "ENV_SEED_CONFIGURATION"
@@ -39,6 +53,7 @@ class SeedConfiguration(BaseModel):
     enterprise_settings: EnterpriseSettings | None = None
     # Use existing `CUSTOM_ANALYTICS_SECRET_KEY` for reference
     analytics_script_path: str | None = None
+    custom_tools: List[CustomToolSeed] | None = None
 
 
 def _parse_env() -> SeedConfiguration | None:
@@ -47,6 +62,43 @@ def _parse_env() -> SeedConfiguration | None:
         return None
     seed_config = SeedConfiguration.parse_raw(seed_config_str)
     return seed_config
+
+
+def _seed_custom_tools(db_session: Session, tools: List[CustomToolSeed]) -> None:
+    if tools:
+        logger.notice("Seeding Custom Tools")
+        for tool in tools:
+            try:
+                logger.debug(f"Attempting to seed tool: {tool.name}")
+                logger.debug(f"Reading definition from: {tool.definition_path}")
+                with open(tool.definition_path, "r") as file:
+                    file_content = file.read()
+                    if not file_content.strip():
+                        raise ValueError("File is empty")
+                    openapi_schema = json.loads(file_content)
+                db_tool = Tool(
+                    name=tool.name,
+                    description=tool.description,
+                    openapi_schema=openapi_schema,
+                    custom_headers=tool.custom_headers,
+                    display_name=tool.display_name,
+                    in_code_tool_id=tool.in_code_tool_id,
+                    user_id=tool.user_id,
+                )
+                db_session.add(db_tool)
+                logger.debug(f"Successfully added tool: {tool.name}")
+            except FileNotFoundError:
+                logger.error(
+                    f"Definition file not found for tool {tool.name}: {tool.definition_path}"
+                )
+            except json.JSONDecodeError as e:
+                logger.error(
+                    f"Invalid JSON in definition file for tool {tool.name}: {str(e)}"
+                )
+            except Exception as e:
+                logger.error(f"Failed to seed tool {tool.name}: {str(e)}")
+        db_session.commit()
+        logger.notice(f"Successfully seeded {len(tools)} Custom Tools")
 
 
 def _seed_llms(
@@ -147,6 +199,8 @@ def seed_db() -> None:
             _seed_personas(db_session, seed_config.personas)
         if seed_config.settings is not None:
             _seed_settings(seed_config.settings)
+        if seed_config.custom_tools is not None:
+            _seed_custom_tools(db_session, seed_config.custom_tools)
 
         _seed_logo(db_session, seed_config.seeded_logo_path)
         _seed_enterprise_settings(seed_config)
