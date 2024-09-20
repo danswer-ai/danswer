@@ -132,6 +132,10 @@ export function LLMProviderUpdateForm({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
+              existing_api_key:
+                llmProviderFlow == "update" &&
+                values.api_key == null &&
+                existingLlmProvider?.name != undefined,
               provider: llmProviderDescriptor.name,
               ...values,
             }),
