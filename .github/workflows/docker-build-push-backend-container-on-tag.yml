@@ -27,7 +27,7 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_TOKEN }}
 
-   - name: Install build-essential
+    - name: Install build-essential
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential
