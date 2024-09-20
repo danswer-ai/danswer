@@ -12,6 +12,7 @@ from celery import Task
 from celery.exceptions import WorkerShutdown
 from celery.signals import beat_init
 from celery.signals import worker_init
+from celery.signals import worker_ready
 from celery.signals import worker_shutdown
 from celery.states import READY_STATES
 from celery.utils.log import get_task_logger
@@ -20,6 +21,7 @@ from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
+from danswer.background.celery.celery_utils import celery_is_worker_primary
 from danswer.configs.constants import CELERY_PRIMARY_WORKER_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerRedisLocks
@@ -44,20 +46,6 @@ celery_app = Celery(__name__)
 celery_app.config_from_object(
     "danswer.background.celery.celeryconfig"
 )  # Load configuration from 'celeryconfig.py'
-
-
-def is_celery_app_primary(sender: Any) -> bool:
-    primary = False
-
-    # how to get a list of queues this worker is listening to
-    # https://stackoverflow.com/questions/29790523/how-to-determine-which-queues-a-celery-worker-is-consuming-at-runtime
-    queue_names = list(sender.app.amqp.queues.consume_from.keys())
-    for name in queue_names:
-        if name == "celery":
-            primary = True
-            break
-
-    return primary
 
 
 @signals.task_postrun.connect
@@ -148,7 +136,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     WAIT_LIMIT = 60
 
     time_start = time.monotonic()
-    task_logger.info("Redis: Readiness check starting.")
+    logger.info("Redis: Readiness check starting.")
     while True:
         try:
             if r.ping():
@@ -157,7 +145,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
             pass
 
         time_elapsed = time.monotonic() - time_start
-        task_logger.info(
+        logger.info(
             f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
         )
         if time_elapsed > WAIT_LIMIT:
@@ -165,16 +153,16 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
                 f"Redis: Readiness check did not succeed within the timeout "
                 f"({WAIT_LIMIT} seconds). Exiting..."
             )
-            task_logger.error(msg)
+            logger.error(msg)
             raise WorkerShutdown(msg)
 
         time.sleep(WAIT_INTERVAL)
 
-    task_logger.info("Redis: Readiness check succeeded. Continuing...")
+    logger.info("Redis: Readiness check succeeded. Continuing...")
 
-    if not is_celery_app_primary(sender):
-        task_logger.info("Running as a secondary celery worker.")
-        task_logger.info("Waiting for primary worker to be ready...")
+    if not celery_is_worker_primary(sender):
+        logger.info("Running as a secondary celery worker.")
+        logger.info("Waiting for primary worker to be ready...")
         time_start = time.monotonic()
         while True:
             if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
@@ -182,7 +170,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
             time.monotonic()
             time_elapsed = time.monotonic() - time_start
-            task_logger.info(
+            logger.info(
                 f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
             )
             if time_elapsed > WAIT_LIMIT:
@@ -190,17 +178,15 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
                     f"Primary worker was not ready within the timeout. "
                     f"({WAIT_LIMIT} seconds). Exiting..."
                 )
-                task_logger.error(msg)
+                logger.error(msg)
                 raise WorkerShutdown(msg)
 
             time.sleep(WAIT_INTERVAL)
 
-        task_logger.info(
-            "Wait for primary worker completed successfully. Continuing..."
-        )
+        logger.info("Wait for primary worker completed successfully. Continuing...")
         return
 
-    task_logger.info("Running as the primary celery worker.")
+    logger.info("Running as the primary celery worker.")
 
     # This is singleton work that should be done on startup exactly once
     # by the primary worker
@@ -216,12 +202,12 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
     )
 
-    task_logger.info("Primary worker lock: Acquire starting.")
+    logger.info("Primary worker lock: Acquire starting.")
     acquired = lock.acquire(blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2)
     if acquired:
-        task_logger.info("Primary worker lock: Acquire succeeded.")
+        logger.info("Primary worker lock: Acquire succeeded.")
     else:
-        task_logger.error("Primary worker lock: Acquire failed!")
+        logger.error("Primary worker lock: Acquire failed!")
         raise WorkerShutdown("Primary worker lock could not be acquired!")
 
     sender.primary_worker_lock = lock
@@ -251,15 +237,20 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         r.delete(key)
 
 
+@worker_ready.connect
+def on_worker_ready(sender: Any, **kwargs: Any) -> None:
+    task_logger.info("worker_ready signal received.")
+
+
 @worker_shutdown.connect
 def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
-    if not is_celery_app_primary(sender):
+    if not celery_is_worker_primary(sender):
         return
 
     if not sender.primary_worker_lock:
         return
 
-    task_logger.info("Releasing primary worker lock.")
+    logger.info("Releasing primary worker lock.")
     lock = sender.primary_worker_lock
     if lock.owned():
         lock.release()
@@ -338,7 +329,8 @@ def on_setup_logging(
 
 
 class HubPeriodicTask(bootsteps.StartStopStep):
-    """Regularly reacquires the primary worker lock outside of the task queue"""
+    """Regularly reacquires the primary worker lock outside of the task queue.
+    Use the task_logger in this class to avoid double logging."""
 
     # it's unclear to me whether using the hub's timer or the bootstep timer is better
     requires = {"celery.worker.components:Hub"}
@@ -348,7 +340,7 @@ class HubPeriodicTask(bootsteps.StartStopStep):
         self.task_tref = None
 
     def start(self, worker: Any) -> None:
-        if not is_celery_app_primary(worker):
+        if not celery_is_worker_primary(worker):
             return
 
         # Access the worker's event loop (hub)
@@ -374,6 +366,8 @@ class HubPeriodicTask(bootsteps.StartStopStep):
 
             # ttl_ms = r.pttl(lock.name)
             # logger.info(f"lock TTL before: {ttl_ms}ms")
+
+            task_logger.info("Reacquiring primary worker lock.")
 
             if lock.owned():
                 task_logger.debug("Reacquiring primary worker lock.")
@@ -409,6 +403,7 @@ class HubPeriodicTask(bootsteps.StartStopStep):
         # Cancel the scheduled task when the worker stops
         if self.task_tref:
             self.task_tref.cancel()
+            task_logger.info("Canceled periodic task with hub.")
 
 
 celery_app.steps["worker"].add(HubPeriodicTask)
