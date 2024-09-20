@@ -271,6 +271,7 @@ def stream_chat_message_objects(
     use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
+    enforce_chat_session_id_for_search_docs: bool = True,
 ) -> ChatPacketStream:
     """Streams in order:
     1. [conditional] Retrieved documents if a search needs to be run
@@ -442,6 +443,7 @@ def stream_chat_message_objects(
                 chat_session=chat_session,
                 user_id=user_id,
                 db_session=db_session,
+                enforce_chat_session_id_for_search_docs=enforce_chat_session_id_for_search_docs,
             )
 
             # Generates full documents currently
