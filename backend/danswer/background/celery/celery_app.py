@@ -3,6 +3,7 @@ import time
 from datetime import timedelta
 from typing import Any
 
+import httpx
 import redis
 from celery import bootsteps  # type: ignore
 from celery import Celery
@@ -30,6 +31,7 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_HEAVY_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_LIGHT_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
 from danswer.db.engine import SqlEngine
+from danswer.httpx.httpx_pool import HttpxPool
 from danswer.redis.redis_pool import RedisPool
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
@@ -117,18 +119,28 @@ def on_beat_init(sender: Any, **kwargs: Any) -> None:
 
 @worker_init.connect
 def on_worker_init(sender: Any, **kwargs: Any) -> None:
+    EXTRA_CONCURRENCY = 8  # a few extra connections for side operations
+
     # decide some initial startup settings based on the celery worker's hostname
     # (set at the command line)
     hostname = sender.hostname
     if hostname.startswith("light"):
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_LIGHT_APP_NAME)
-        SqlEngine.init_engine(pool_size=sender.concurrency, max_overflow=8)
+        SqlEngine.init_engine(
+            pool_size=sender.concurrency, max_overflow=EXTRA_CONCURRENCY
+        )
     elif hostname.startswith("heavy"):
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_HEAVY_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
     else:
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
+
+    HttpxPool.init_client(
+        limits=httpx.Limits(
+            max_keepalive_connections=sender.concurrency + EXTRA_CONCURRENCY
+        )
+    )
 
     r = redis_pool.get_client()
 

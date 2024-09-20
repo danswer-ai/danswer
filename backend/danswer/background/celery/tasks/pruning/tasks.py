@@ -16,6 +16,7 @@ from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
+from danswer.httpx.httpx_pool import HttpxPool
 
 
 # use this within celery tasks to get celery task specific logging
@@ -94,7 +95,9 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
 
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
             document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+                primary_index_name=curr_ind_name,
+                secondary_index_name=sec_ind_name,
+                httpx_client=HttpxPool.get(),
             )
 
             if len(doc_ids_to_remove) == 0:
