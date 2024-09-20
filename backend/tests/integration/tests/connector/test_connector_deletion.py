@@ -47,12 +47,12 @@ def test_connector_deletion(reset: None, vespa_client: TestVespaClient) -> None:
     )
 
     # seed documents
-    cc_pair_1 = DocumentManager.seed_and_attach_docs(
+    cc_pair_1.documents = DocumentManager.seed_dummy_docs(
         cc_pair=cc_pair_1,
         num_docs=NUM_DOCS,
         api_key=api_key,
     )
-    cc_pair_2 = DocumentManager.seed_and_attach_docs(
+    cc_pair_2.documents = DocumentManager.seed_dummy_docs(
         cc_pair=cc_pair_2,
         num_docs=NUM_DOCS,
         api_key=api_key,
@@ -197,12 +197,12 @@ def test_connector_deletion_for_overlapping_connectors(
     )
 
     doc_ids = [str(uuid4())]
-    cc_pair_1 = DocumentManager.seed_and_attach_docs(
+    cc_pair_1.documents = DocumentManager.seed_dummy_docs(
         cc_pair=cc_pair_1,
         document_ids=doc_ids,
         api_key=api_key,
     )
-    cc_pair_2 = DocumentManager.seed_and_attach_docs(
+    cc_pair_2.documents = DocumentManager.seed_dummy_docs(
         cc_pair=cc_pair_2,
         document_ids=doc_ids,
         api_key=api_key,
