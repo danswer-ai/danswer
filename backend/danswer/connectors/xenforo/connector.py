@@ -95,7 +95,7 @@ def scrape_page_posts(
                 id=f"{DocumentSource.XENFORO.value}__{title}",
                 sections=[Section(link=url, text=post_text)],
                 title=title,
-                source=DocumentSource.WEB,
+                source=DocumentSource.XENFORO,
                 semantic_identifier=title,
                 primary_owners=[BasicExpertInfo(display_name=author)],
                 metadata={
