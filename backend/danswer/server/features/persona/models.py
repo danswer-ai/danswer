@@ -38,12 +38,9 @@ class CreatePersonaRequest(BaseModel):
     icon_shape: int | None = None
     uploaded_image_id: str | None = None  # New field for uploaded image
     remove_image: bool | None = None
-<<<<<<< HEAD
     is_default_persona: bool = False
     display_priority: int | None = None
-=======
     search_start_date: datetime | None = None
->>>>>>> c64a773b1 (add start date to persona)
 
 
 class PersonaSnapshot(BaseModel):
@@ -69,11 +66,8 @@ class PersonaSnapshot(BaseModel):
     icon_color: str | None
     icon_shape: int | None
     uploaded_image_id: str | None = None
-<<<<<<< HEAD
     is_default_persona: bool
-=======
     search_start_date: datetime | None = None
->>>>>>> c64a773b1 (add start date to persona)
 
     @classmethod
     def from_model(
