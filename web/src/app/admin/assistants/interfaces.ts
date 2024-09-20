@@ -21,6 +21,7 @@ export interface Prompt {
 export interface Persona {
   id: number;
   name: string;
+  search_start_date: Date | null;
   owner: MinimalUserSnapshot | null;
   is_visible: boolean;
   is_public: boolean;
