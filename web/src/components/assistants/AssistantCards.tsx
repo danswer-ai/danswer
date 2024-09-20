@@ -122,46 +122,51 @@ export function DisplayAssistantCard({
   selectedPersona: Persona;
 }) {
   return (
-    <div className="mt-4 p-6 bg-white rounded-lg shadow-sm border border-border max-w-md w-full mx-auto">
-      <div className="flex items-center mb-4">
-        <AssistantIcon disableToolip size="large" assistant={selectedPersona} />
-        <h2 className="ml-4 text-2xl font-semibold text-text-900">
+    <div className="p-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-border/50 max-w-md w-full mx-auto transition-all duration-300 ease-in-out hover:shadow-lg">
+      <div className="flex items-center mb-3">
+        <AssistantIcon
+          disableToolip
+          size="medium"
+          assistant={selectedPersona}
+        />
+        <h2 className="ml-3 text-xl font-semibold text-text-900">
           {selectedPersona.name}
         </h2>
       </div>
-      <p className="text-sm text-text-600 mb-4">
+      <p className="text-sm text-text-600 mb-3 leading-relaxed">
         {selectedPersona.description}
       </p>
       {selectedPersona.tools.length > 0 ||
       selectedPersona.llm_relevance_filter ||
       selectedPersona.llm_filter_extraction ? (
         <div className="space-y-2">
-          <h3 className="text-lg font-medium text-text-800">Capabilities:</h3>
+          <h3 className="text-base font-medium text-text-900">Capabilities:</h3>
           <ul className="space-y-1">
             {selectedPersona.tools.map((tool, index) => (
               <li
                 key={index}
                 className="flex items-center text-sm text-text-700"
               >
-                <span className="mr-2 text-text-500">•</span> {tool.name}
+                <span className="mr-2 text-text-500 opacity-70">•</span>{" "}
+                {tool.name}
               </li>
             ))}
             {selectedPersona.llm_relevance_filter && (
               <li className="flex items-center text-sm text-text-700">
-                <span className="mr-2 text-text-500">•</span> Advanced Relevance
-                Filtering
+                <span className="mr-2 text-text-500 opacity-70">•</span>{" "}
+                Advanced Relevance Filtering
               </li>
             )}
             {selectedPersona.llm_filter_extraction && (
               <li className="flex items-center text-sm text-text-700">
-                <span className="mr-2 text-text-500">•</span> Smart Information
-                Extraction
+                <span className="mr-2 text-text-500 opacity-70">•</span> Smart
+                Information Extraction
               </li>
             )}
           </ul>
         </div>
       ) : (
-        <p className="text-sm text-text-600">
+        <p className="text-sm text-text-600 italic">
           No specific capabilities listed for this assistant.
         </p>
       )}
