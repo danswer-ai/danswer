@@ -306,7 +306,12 @@ export function AssistantsList({
 
   const [currentlyVisibleAssistants, setCurrentlyVisibleAssistants] = useState<
     Persona[]
-  >(orderAssistantsForUser(visibleAssistants, user));
+  >([]);
+
+  useEffect(() => {
+    const orderedAssistants = orderAssistantsForUser(visibleAssistants, user);
+    setCurrentlyVisibleAssistants(orderedAssistants);
+  }, [assistants, user]);
 
   const ownedButHiddenAssistants = getUserCreatedAssistants(
     user,

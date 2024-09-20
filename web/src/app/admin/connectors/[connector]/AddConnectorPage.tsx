@@ -247,7 +247,6 @@ export default function AddConnector({
           indexingStart,
           refreshFreq,
           auto_sync_options,
-          is_public,
           ...connector_specific_config
         } = values;
 
