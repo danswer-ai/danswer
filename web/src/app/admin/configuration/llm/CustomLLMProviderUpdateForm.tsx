@@ -51,11 +51,6 @@ export function CustomLLMProviderUpdateForm({
 }) {
   const { mutate } = useSWRConfig();
 
-  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
-
-  // EE only
-  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
-
   const [isTesting, setIsTesting] = useState(false);
   const [testError, setTestError] = useState<string>("");
 

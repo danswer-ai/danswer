@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { FormikProps, FieldArray, ArrayHelpers, ErrorMessage } from "formik";
 import { Text, Divider } from "@tremor/react";
 import { FiUsers } from "react-icons/fi";
-import { UserGroup, User, UserRole } from "@/lib/types";
+import { UserGroup, UserRole } from "@/lib/types";
 import { useUserGroups } from "@/lib/hooks";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
 import { useUser } from "./user/UserProvider";
