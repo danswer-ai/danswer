@@ -115,10 +115,10 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
       {newUser && isNewUserOpen && (
         <Modal
           onOutsideClick={handleCloseModal}
-          className="max-w-lg w-full p-8  bg-bg-50 rounded-lg shadow-xl"
+          className="max-w-lg w-full p-8  bg-background-150 rounded-lg shadow-xl"
         >
           <>
-            <h2 className="text-3xl font-extrabold text-text-900 mb-6 text-center">
+            <h2 className="text-3xl font-semibold text-text-900 mb-6 text-center">
               Welcome to Danswer!
             </h2>
             <div className="text-center mb-8">
@@ -276,7 +276,7 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
               Permanently delete your tenant and all associated data.
             </p>
             <div
-              className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6"
+              className="bg-red-100 border-l-4 border-red-500 text-error p-4 mb-6"
               role="alert"
             >
               <p className="font-bold">Warning:</p>
