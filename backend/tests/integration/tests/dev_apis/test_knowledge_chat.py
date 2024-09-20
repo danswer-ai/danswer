@@ -68,7 +68,8 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
     response_json = response.json()
 
     # check that the answer is correct
-    assert "blue" in response_json["answer"].lower()
+    answer_1 = response_json["answer"]
+    assert "blue" in answer_1.lower()
 
     # check that the llm selected a document
     assert 0 in response_json["llm_selected_doc_indices"]
@@ -92,9 +93,17 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
         json={
             "messages": [
                 {
+                    "message": "What is Pablo's favorite color?",
+                    "role": MessageType.USER.value,
+                },
+                {
+                    "message": answer_1,
+                    "role": MessageType.ASSISTANT.value,
+                },
+                {
                     "message": "What is Chris's favorite color?",
                     "role": MessageType.USER.value,
-                }
+                },
             ],
             "persona_id": 0,
             "prompt_id": 0,
@@ -105,7 +114,8 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
     response_json = response.json()
 
     # check that the answer is correct
-    assert "red" in response_json["answer"].lower()
+    answer_2 = response_json["answer"]
+    assert "red" in answer_2.lower()
 
     # check that the llm selected a document
     assert 0 in response_json["llm_selected_doc_indices"]
@@ -129,9 +139,25 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
         json={
             "messages": [
                 {
+                    "message": "What is Pablo's favorite color?",
+                    "role": MessageType.USER.value,
+                },
+                {
+                    "message": answer_1,
+                    "role": MessageType.ASSISTANT.value,
+                },
+                {
+                    "message": "What is Chris's favorite color?",
+                    "role": MessageType.USER.value,
+                },
+                {
+                    "message": answer_2,
+                    "role": MessageType.ASSISTANT.value,
+                },
+                {
                     "message": "What is Pika's favorite color?",
                     "role": MessageType.USER.value,
-                }
+                },
             ],
             "persona_id": 0,
             "prompt_id": 0,
@@ -142,7 +168,8 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
     response_json = response.json()
 
     # check that the answer is correct
-    assert "green" in response_json["answer"].lower()
+    answer_3 = response_json["answer"]
+    assert "green" in answer_3.lower()
 
     # check that the llm selected a document
     assert 0 in response_json["llm_selected_doc_indices"]
