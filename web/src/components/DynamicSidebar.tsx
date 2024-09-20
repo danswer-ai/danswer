@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { WorkSpaceSidebar } from "@/app/chat/sessionSidebar/WorkSpaceSidebar";
+import { GlobalSidebar } from "@/app/chat/sessionSidebar/GlobalSidebar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { User } from "@/lib/types";
 import { useContext, useEffect, useState } from "react";
@@ -83,7 +83,7 @@ export function DynamicSidebar({
         } ${isSearch ? "xl:relative" : "lg:relative"}`}
       >
         <div className="h-full relative flex w-full">
-          <WorkSpaceSidebar openSidebar={openSidebar} user={user} />
+          <GlobalSidebar openSidebar={openSidebar} user={user} />
           {children && (
             <>
               <div

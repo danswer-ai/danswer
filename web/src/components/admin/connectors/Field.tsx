@@ -61,9 +61,10 @@ export function TextFormField({
   isCode = false,
   fontSize,
   hideError,
+  fullWidth,
 }: {
   name: string;
-  label: string;
+  label?: string;
   subtext?: string | JSX.Element;
   placeholder?: string;
   onChange?: (
@@ -78,6 +79,7 @@ export function TextFormField({
   isCode?: boolean;
   fontSize?: "text-sm" | "text-base" | "text-lg";
   hideError?: boolean;
+  fullWidth?: boolean;
 }) {
   let heightString = defaultHeight || "";
   if (isTextArea && !heightString) {
@@ -85,16 +87,20 @@ export function TextFormField({
   }
 
   return (
-    <div className="grid pb-4">
-      <div className="grid leading-none pb-2">
-        <ShadcnLabel
-          htmlFor={label}
-          className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
-        >
-          {label}
-        </ShadcnLabel>
-        {subtext && <p className="text-sm text-muted-foreground">{subtext}</p>}
-      </div>
+    <div className={`grid pb-4 ${fullWidth ? "w-full" : ""}`}>
+      {(label || subtext) && (
+        <div className="grid leading-none pb-2">
+          <ShadcnLabel
+            htmlFor={label}
+            className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
+          >
+            {label}
+          </ShadcnLabel>
+          {subtext && (
+            <p className="text-sm text-muted-foreground">{subtext}</p>
+          )}
+        </div>
+      )}
       <Field name={name}>
         {({ field }: FieldProps) => {
           const Component = isTextArea ? Textarea : Input;

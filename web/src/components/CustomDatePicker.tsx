@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { Button } from "./ui/button";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 interface PredefinedRange {
@@ -25,6 +25,12 @@ interface CustomDatePickerProps {
   predefinedRanges: PredefinedRange[];
 }
 
+const normalizeToUTC = (date: Date) => {
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+};
+
 export function CustomDatePicker({
   value,
   onValueChange,
@@ -35,74 +41,59 @@ export function CustomDatePicker({
   );
 
   const getDateRange = (range: string): DateRange => {
-    const today = new Date();
-    let start: Date | undefined, end: Date | undefined;
+    const today = normalizeToUTC(new Date());
 
     switch (range) {
       case "7d":
-        start = getXDaysAgo(7);
-        end = today;
-        break;
+        return { from: normalizeToUTC(getXDaysAgo(7)), to: today };
       case "30d":
-        start = getXDaysAgo(30);
-        end = today;
-        break;
+        return { from: normalizeToUTC(getXDaysAgo(30)), to: today };
       case "today":
-        start = today;
-        end = today;
-        break;
+        return { from: today, to: today };
       case "allTime":
-        start = new Date("1970-01-01");
-        end = today;
-        break;
+        return { from: normalizeToUTC(new Date("1970-01-01")), to: today };
       case "lastYear":
-        start = new Date(
-          today.getFullYear() - 1,
-          today.getMonth(),
-          today.getDate()
-        );
-        end = today;
-        break;
+        return {
+          from: normalizeToUTC(
+            new Date(today.getFullYear() - 1, today.getMonth(), today.getDate())
+          ),
+          to: today,
+        };
       default:
-        start = undefined;
-        end = undefined;
-        break;
+        return { from: undefined, to: undefined };
     }
+  };
 
-    return { from: start, to: end };
+  useEffect(() => {
+    if (value === undefined) {
+      onValueChange(getDateRange(selectedRange));
+    }
+  }, [selectedRange, value, onValueChange]);
+
+  const handleSelectPredefinedRange = (range: string) => {
+    setSelectedRange(range);
+    onValueChange(getDateRange(range));
   };
 
   const handleSelectDateRange = (range: DateRange | undefined) => {
     if (range) {
       onValueChange(range);
-    } else {
-      const defaultRange = getDateRange(selectedRange);
-      onValueChange(defaultRange);
+      setSelectedRange("");
     }
-    setSelectedRange("");
   };
 
-  const handleSelectPredefinedRange = (range: string) => {
-    setSelectedRange(range);
-    const dateRange = getDateRange(range);
-    onValueChange(dateRange);
-  };
-
-  const calendarValue = value || getDateRange(selectedRange);
-  const displayRange = calendarValue.from
-    ? `${format(calendarValue.from, "LLL dd, y")}${
-        calendarValue.to ? ` - ${format(calendarValue.to, "LLL dd, y")}` : ""
+  const displayRange = value?.from
+    ? `${format(value.from, "LLL dd, y")}${
+        value.to ? ` - ${format(value.to, "LLL dd, y")}` : ""
       }`
     : "Select Range";
 
-  const disablePastDates = (date: Date) => {
-    return date > new Date();
-  };
+  const disablePastDates = (date: Date) => date > new Date();
 
   return (
     <div className="flex">
       <Popover>
-        <PopoverTrigger asChild className="md:w-72 items-start justify-start">
+        <PopoverTrigger asChild>
           <Button
             variant="outline"
             className="rounded-r-none items-center gap-2"
@@ -114,7 +105,7 @@ export function CustomDatePicker({
         <PopoverContent align="start">
           <Calendar
             mode="range"
-            selected={calendarValue}
+            selected={value}
             onSelect={handleSelectDateRange}
             numberOfMonths={2}
             disabled={disablePastDates}

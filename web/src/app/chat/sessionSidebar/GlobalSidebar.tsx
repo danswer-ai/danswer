@@ -1,5 +1,4 @@
 import { UserSettingsButton } from "@/components/UserSettingsButton";
-import { Ellipsis } from "lucide-react";
 import Image from "next/image";
 
 import ArnoldAi from "../../../../public/arnold_ai.png";
@@ -9,18 +8,19 @@ import { CustomTooltip } from "@/components/CustomTooltip";
 import { Logo } from "@/components/Logo";
 import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { fetchSettingsSS } from "@/components/settings/lib";
 import Link from "next/link";
+import { useTeamspaces } from "@/lib/hooks";
+import { TeamspaceBubble } from "@/components/TeamspaceBubble";
+import { Ellipsis } from "lucide-react";
 
-interface WorkSpaceSidebarProps {
+interface GlobalSidebarProps {
   openSidebar?: boolean;
   user?: User | null;
 }
 
-export const WorkSpaceSidebar = ({
-  openSidebar,
-  user,
-}: WorkSpaceSidebarProps) => {
+export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
+  const { data } = useTeamspaces();
+
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -36,7 +36,7 @@ export const WorkSpaceSidebar = ({
           openSidebar ? "opacity-100 delay-200" : "opacity-0 delay-100"
         }`}
       >
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center h-full">
           <Image
             src={ArnoldAi}
             alt="ArnoldAi Logo"
@@ -44,7 +44,7 @@ export const WorkSpaceSidebar = ({
             height={40}
             className="rounded-regular shrink-0"
           />
-          <Separator className="mt-6" />
+          <Separator className="mt-4" />
           <div className="flex flex-col items-center gap-4 pt-4">
             <CustomTooltip
               trigger={
@@ -59,6 +59,13 @@ export const WorkSpaceSidebar = ({
                 ? workspaces!.workspace_name
                 : "enMedD AI"}
             </CustomTooltip>
+          </div>
+          g
+          <Separator className="mt-4" />
+          <div className="flex flex-col gap-3 pt-4">
+            {data?.map((teamspace, i) => (
+              <TeamspaceBubble teamspace={teamspace} link={defaultPage} />
+            ))}
           </div>
         </div>
         <div className="flex flex-col items-center gap-4">

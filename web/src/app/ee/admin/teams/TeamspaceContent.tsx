@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { TeamspacesCard } from "./TeamspacesCard";
 import { Teamspace } from "@/lib/types";
+import { TeamspacesTable } from "./TeamspacesTable";
 
 export const TeamspaceContent = ({
   assistants,
@@ -87,6 +88,7 @@ export const TeamspaceContent = ({
             onClose={() => setShowForm(false)}
             open={showForm}
             title="Create a new Teamspace"
+            description="Streamline team collaboration and communication"
           >
             <TeamspaceCreationForm
               onClose={() => {
@@ -100,7 +102,7 @@ export const TeamspaceContent = ({
           </CustomModal>
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex gap-4">
           <Input
             placeholder="Type a command or search..."
             value={searchTerm}
@@ -117,7 +119,6 @@ export const TeamspaceContent = ({
         </div>
       </div>
 
-      {/* <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10 md:px-10"> */}
       <div className="grid gap-8 md:px-10 grid-cols-[repeat(auto-fit,minmax(250px,1fr))] 2xl:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
         {filteredTeamspaces.length > 0 ? (
           <TeamspacesCard
@@ -129,8 +130,7 @@ export const TeamspaceContent = ({
           <div>No teamspaces match your search.</div>
         )}
       </div>
-
-      {/* {data.length > 0 && (
+      {/*{data.length > 0 && (
         <div className="pt-5">
           <TeamspacesTable teamspaces={data} refresh={refreshTeamspaces} />
         </div>

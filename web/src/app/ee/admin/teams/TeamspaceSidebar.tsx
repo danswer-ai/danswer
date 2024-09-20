@@ -1,8 +1,9 @@
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { Teamspace } from "@/lib/types";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, PanelRightClose } from "lucide-react";
 import { TeamspaceSidebarContent } from "./TeamspaceSidebarContent";
 import { AnimatePresence, motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 interface TeamspaceSidebarProps {
   selectedTeamspace?: Teamspace;
@@ -63,16 +64,25 @@ export const TeamspaceSidebar = ({
         )}
 
         <div
-          className={`h-full bg-background border-l w-full transition-opacity duration-300 ease-in-out overflow-y-auto ${
-            isExpanded ? "lg:opacity-100 delay-200" : "lg:opacity-0"
+          className={`h-full bg-background border-l w-full transition-opacity duration-300 ease-in-out overflow-y-auto relative ${
+            isExpanded ? "lg:opacity-100 delay-300" : "lg:opacity-0"
           }`}
         >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 left-4 z-overlay lg:hidden"
+            onClick={onClose}
+          >
+            <PanelRightClose stroke="#ffffff" />
+          </Button>
           {selectedTeamspace && (
             <TeamspaceSidebarContent
               teamspace={{
                 ...selectedTeamspace,
                 gradient: generateGradient(selectedTeamspace.name),
               }}
+              selectedTeamspaceId={selectedTeamspace.id}
             />
           )}
         </div>

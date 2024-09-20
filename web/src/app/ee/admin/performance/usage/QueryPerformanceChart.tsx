@@ -15,6 +15,12 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { SubLabel } from "@/components/admin/connectors/Field";
 
+const normalizeToUTC = (date: Date) => {
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+};
+
 export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
   const {
     data: queryAnalyticsData,
@@ -46,16 +52,23 @@ export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
       </div>
     );
   } else {
-    const initialDate = timeRange.from || new Date(queryAnalyticsData[0].date);
-    const endDate = timeRange.to || new Date();
+    const initialDate = normalizeToUTC(
+      timeRange.from || new Date(queryAnalyticsData[0]?.date)
+    );
+    const endDate = normalizeToUTC(timeRange.to || new Date());
+
     const dateRange = getDatesList(initialDate, endDate);
 
     const data = dateRange.map((dateStr) => {
       const queryAnalyticsForDate = queryAnalyticsData.find(
-        (entry) => entry.date === dateStr
+        (entry) =>
+          normalizeToUTC(new Date(entry.date)).toISOString().split("T")[0] ===
+          dateStr
       );
       const userAnalyticsForDate = userAnalyticsData.find(
-        (entry) => entry.date === dateStr
+        (entry) =>
+          normalizeToUTC(new Date(entry.date)).toISOString().split("T")[0] ===
+          dateStr
       );
       return {
         date: dateStr,

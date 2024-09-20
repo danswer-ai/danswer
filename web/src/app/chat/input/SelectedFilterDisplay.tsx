@@ -3,18 +3,28 @@ import React from "react";
 import { FilterManager } from "@/lib/hooks";
 import { DateRangePickerValue } from "@tremor/react";
 import { X, Tag, Bookmark } from "lucide-react";
+import { DateRange } from "react-day-picker";
 
-const displayTimeRange = (timeRange: DateRangePickerValue) => {
-  if (timeRange.selectValue) {
-    return timeRange.selectValue;
+const displayTimeRange = (timeRange: DateRange | null) => {
+  if (!timeRange) {
+    return "No date range selected";
+  }
+
+  const today = new Date();
+  const isToday =
+    timeRange.from?.toLocaleDateString() === today.toLocaleDateString() &&
+    timeRange.to?.toLocaleDateString() === today.toLocaleDateString();
+
+  if (isToday) {
+    return `Today: ${timeRange.from!.toLocaleDateString()}`;
   }
 
   if (timeRange.from && timeRange.to) {
     return `${timeRange.from.toLocaleDateString()} to ${timeRange.to.toLocaleDateString()}`;
   } else if (timeRange.from) {
-    return `From ${timeRange.from.toLocaleDateString()}`;
+    return `${timeRange.from.toLocaleDateString()}`;
   } else if (timeRange.to) {
-    return `Until ${timeRange.to.toLocaleDateString()}`;
+    return `${timeRange.to.toLocaleDateString()}`;
   } else {
     return "No date range selected";
   }
@@ -80,12 +90,11 @@ export function SelectedFilterDisplay({
   return (
     <div className="flex mb-2">
       <div className="flex flex-wrap gap-x-2">
-        {timeRange &&
-          (timeRange.selectValue || timeRange.from || timeRange.to) && (
-            <SelectedFilter onClick={() => setTimeRange(null)}>
-              <div className="flex">{displayTimeRange(timeRange)}</div>
-            </SelectedFilter>
-          )}
+        {timeRange && (
+          <SelectedFilter onClick={() => setTimeRange(null)}>
+            <div className="flex">{displayTimeRange(timeRange)}</div>
+          </SelectedFilter>
+        )}
         {selectedSources.map((source) => (
           <SelectedFilter
             key={source.internalName}

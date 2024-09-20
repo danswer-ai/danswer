@@ -25,25 +25,26 @@ export const TeamspacesCard = ({
           return (
             <Card
               key={teamspace.id}
-              className="overflow-hidden !rounded-xl cursor-pointer"
+              className="overflow-hidden !rounded-xl cursor-pointer xl:min-w-[280px] md:max-w-[350px] justify-start items-start"
               onClick={() => onClick(teamspace.id)}
             >
               <CardHeader
                 style={{ background: teamspace.gradient }}
-                className="p-10"
+                className="p-8"
               ></CardHeader>
-              <CardContent className="flex flex-col justify-between min-h-52 relative bg-muted/50">
+              <CardContent className="flex flex-col justify-between min-h-48 relative bg-muted/50">
                 <div className="absolute top-0 -translate-y-1/2 right-4">
                   <span
                     style={{ background: teamspace.gradient }}
-                    className="text-3xl uppercase font-bold min-w-16 min-h-16 flex items-center justify-center rounded-xl text-inverted border-[5px] border-inverted"
+                    className="text-xl uppercase font-bold min-w-12 min-h-12 flex items-center justify-center rounded-lg text-inverted border-[5px] border-inverted w-full"
                   >
                     {teamspace.name.charAt(0)}
                   </span>
                 </div>
-
-                <div>
-                  <h2 className="font-bold md:text-xl">{teamspace.name}</h2>
+                <div className="pb-6">
+                  <h2 className="font-bold whitespace-normal break-all w-full">
+                    {teamspace.name}
+                  </h2>
                   <span className="text-sm text-subtle">@mrquilbot</span>
                 </div>
 

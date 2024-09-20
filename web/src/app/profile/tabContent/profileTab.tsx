@@ -25,7 +25,7 @@ export default function ProfileTab({
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center rounded-full h-[65px] w-[65px] shrink-0 aspect-square text-2xl font-normal">
             {user && user.full_name ? (
-              <UserProfile size={65} user={user} />
+              <UserProfile size={65} user={user} textSize="text-2xl" />
             ) : (
               <User size={25} className="mx-auto" />
             )}

@@ -1,19 +1,23 @@
 import { Form, Formik } from "formik";
 import * as Yup from "yup";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { ConnectorIndexingStatus, User, Teamspace } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { createTeamspace } from "./lib";
 import { UserEditor } from "./UserEditor";
 import { ConnectorEditor } from "./ConnectorEditor";
-import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useDocumentSets } from "@/app/admin/documents/sets/hooks";
-import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { Assistant } from "@/app/admin/assistants/interfaces";
-import { Badge } from "@/components/ui/badge";
-import { Assistants } from "./Assistants";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface TeamspaceCreationFormProps {
   onClose: () => void;
@@ -82,14 +86,91 @@ export const TeamspaceCreationForm = ({
       >
         {({ isSubmitting, values, setFieldValue }) => (
           <Form>
-            <div className="py-4">
-              <TextFormField
-                name="name"
-                label="Name:"
-                placeholder="A name for the Teamspace"
-                disabled={isUpdate}
-                autoCompleteDisabled={true}
-              />
+            <div className="pt-8 pb-4 space-y-2">
+              <div className="flex justify-between">
+                <p className="whitespace-nowrap w-[500px] font-semibold">
+                  Teamspace Name
+                </p>
+                <TextFormField
+                  name="name"
+                  placeholder="A name for the Teamspace"
+                  disabled={isUpdate}
+                  autoCompleteDisabled={true}
+                  fullWidth
+                />
+              </div>
+
+              <div className="flex justify-between pb-4">
+                <p className="whitespace-nowrap w-[500px] font-semibold">
+                  Teamspace Logo
+                </p>
+                <div className="flex items-center gap-4 w-full">
+                  <input className="hidden" />
+                  <Button>Upload</Button>
+                  <b className="text-emphasis text-sm md:text-base">
+                    Drag and drop a image.
+                  </b>
+                </div>
+              </div>
+
+              <div className="flex justify-between pb-4">
+                <p className="whitespace-nowrap w-[500px] font-semibold">
+                  Security Setting
+                </p>
+                <div className="flex items-center gap-4 w-full">
+                  <Switch />
+                  <p className="text-sm">
+                    Activates private mode, chat and search activities
+                    won&rsquo;t appear in the workspace admin&rsquo;s query
+                    history
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-between pb-4">
+                <p className="whitespace-nowrap w-[500px] font-semibold">
+                  Setup Storage Size
+                </p>
+                <div className="w-full">
+                  <Select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="option 1">Option 1</SelectItem>
+                      <SelectItem value="option 2">Option 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex justify-between pb-4">
+                <p className="whitespace-nowrap w-[500px] font-semibold">
+                  Set Token Rate Limit
+                </p>
+                <div className="flex items-center gap-2 w-full">
+                  <Input placeholder="Token" />
+                </div>
+              </div>
+
+              <div className="flex justify-between pb-4">
+                <p className="whitespace-nowrap w-[500px] font-semibold">
+                  Invite Users
+                </p>
+                <div className="flex items-center gap-2 w-full">
+                  <Input placeholder="Enter email" />
+                  <Select>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="member">Member</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="pb-4 pt-1">
                 <h3 className="text-sm pb-1">
                   Select which connectors this group has access to:
@@ -127,13 +208,17 @@ export const TeamspaceCreationForm = ({
                 </div>
               </div>
 
-              <div className="flex pt-4">
+              <div className="flex pt-4 justify-end">
                 <Button
-                  type="submit"
                   disabled={isSubmitting}
-                  className="mx-auto w-64"
+                  className=""
+                  onClick={onClose}
+                  variant="ghost"
                 >
-                  {isUpdate ? "Update!" : "Create!"}
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="">
+                  {isUpdate ? "Update" : "Create"}
                 </Button>
               </div>
             </div>
