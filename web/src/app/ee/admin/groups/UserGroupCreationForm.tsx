@@ -28,6 +28,11 @@ export const UserGroupCreationForm = ({
 }: UserGroupCreationFormProps) => {
   const isUpdate = existingUserGroup !== undefined;
 
+  // Filter out ccPairs that aren't access_type "private"
+  const privateCcPairs = ccPairs.filter(
+    (ccPair) => ccPair.access_type === "private"
+  );
+
   return (
     <Modal className="w-fit" onOutsideClick={onClose}>
       <div className="px-8 py-6 bg-background">
@@ -96,7 +101,7 @@ export const UserGroupCreationForm = ({
                 <Divider />
 
                 <h2 className="mb-1 font-medium">
-                  Select which connectors this group has access to:
+                  Select which private connectors this group has access to:
                 </h2>
                 <p className="mb-3 text-xs">
                   All documents indexed by the selected connectors will be
@@ -104,7 +109,7 @@ export const UserGroupCreationForm = ({
                 </p>
 
                 <ConnectorEditor
-                  allCCPairs={ccPairs}
+                  allCCPairs={privateCcPairs}
                   selectedCCPairIds={values.cc_pair_ids}
                   setSetCCPairIds={(ccPairsIds) =>
                     setFieldValue("cc_pair_ids", ccPairsIds)

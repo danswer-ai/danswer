@@ -38,6 +38,7 @@ export interface Option {
 export interface SelectOption extends Option {
   type: "select";
   options?: StringWithDescription[];
+  default?: string;
 }
 
 export interface ListOption extends Option {
@@ -608,7 +609,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
           { name: "articles", value: "articles" },
           { name: "tickets", value: "tickets" },
         ],
-        default: 0,
+        default: "articles",
       },
     ],
   },
@@ -782,6 +783,38 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         optional: false,
         description:
           "The XenForo v2.2 forum URL to index. Can be board or thread.",
+      },
+    ],
+  },
+  asana: {
+    description: "Configure Asana connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter your Asana workspace ID:",
+        label: "Workspace ID",
+        name: "asana_workspace_id",
+        optional: false,
+        description:
+          "The ID of the Asana workspace to index. You can find this at https://app.asana.com/api/1.0/workspaces. It's a number that looks like 1234567890123456.",
+      },
+      {
+        type: "text",
+        query: "Enter project IDs to index (optional):",
+        label: "Project IDs",
+        name: "asana_project_ids",
+        description:
+          "IDs of specific Asana projects to index, separated by commas. Leave empty to index all projects in the workspace. Example: 1234567890123456,2345678901234567",
+        optional: true,
+      },
+      {
+        type: "text",
+        query: "Enter the Team ID (optional):",
+        label: "Team ID",
+        name: "asana_team_id",
+        optional: true,
+        description:
+          "ID of a team to use for accessing team-visible tasks. This allows indexing of team-visible tasks in addition to public tasks. Leave empty if you don't want to use this feature.",
       },
     ],
   },
@@ -1080,6 +1113,12 @@ export interface MediaWikiBaseConfig {
   categories?: string[];
   pages?: string[];
   recurse_depth?: number;
+}
+
+export interface AsanaConfig {
+  asana_workspace_id: string;
+  asana_project_ids?: string;
+  asana_team_id?: string;
 }
 
 export interface MediaWikiConfig extends MediaWikiBaseConfig {

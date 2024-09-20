@@ -5,6 +5,8 @@ import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/
 
 export interface UserPreferences {
   chosen_assistants: number[] | null;
+  visible_assistants: number[];
+  hidden_assistants: number[];
   default_model: string | null;
 }
 
@@ -49,6 +51,7 @@ export type ValidStatuses =
   | "not_started";
 export type TaskStatus = "PENDING" | "STARTED" | "SUCCESS" | "FAILURE";
 export type Feedback = "like" | "dislike";
+export type AccessType = "public" | "private" | "sync";
 export type SessionType = "Chat" | "Search" | "Slack";
 
 export interface DocumentBoostStatus {
@@ -90,7 +93,7 @@ export interface ConnectorIndexingStatus<
   cc_pair_status: ConnectorCredentialPairStatus;
   connector: Connector<ConnectorConfigType>;
   credential: Credential<ConnectorCredentialType>;
-  public_doc: boolean;
+  access_type: AccessType;
   owner: string;
   groups: number[];
   last_finished_status: ValidStatuses | null;
@@ -244,6 +247,7 @@ const validSources = [
   "clickup",
   "wikipedia",
   "mediawiki",
+  "asana",
   "s3",
   "r2",
   "google_cloud_storage",
@@ -259,3 +263,7 @@ export type ConfigurableSources = Exclude<
   ValidSources,
   "not_applicable" | "ingestion_api"
 >;
+
+// The sources that have auto-sync support on the backend
+export const validAutoSyncSources = ["google_drive"] as const;
+export type ValidAutoSyncSources = (typeof validAutoSyncSources)[number];
