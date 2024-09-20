@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import Optional
 
 from pydantic import BaseModel
 from pydantic import Field
@@ -65,7 +66,7 @@ class PersonaSnapshot(BaseModel):
     icon_color: str | None
     icon_shape: int | None
     uploaded_image_id: str | None = None
-    is_default_persona: bool
+    is_default_persona: Optional[bool] = False
 
     @classmethod
     def from_model(
