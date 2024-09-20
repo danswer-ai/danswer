@@ -27,6 +27,11 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_TOKEN }}
 
+    - name: Install build-essential
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+        
     - name: Backend Image Docker Build and Push
       uses: docker/build-push-action@v5
       with:
