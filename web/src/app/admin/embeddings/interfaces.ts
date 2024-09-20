@@ -7,6 +7,7 @@ export interface RerankingDetails {
   rerank_provider_type: RerankerProvider | null;
   rerank_api_key: string | null;
   rerank_api_url: string | null;
+  rerank_api_key_set?: boolean;
 }
 export interface RerankingDetailsSnapshot
   extends Omit<RerankingDetails, "rerank_api_key"> {

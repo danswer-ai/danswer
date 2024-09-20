@@ -52,8 +52,8 @@ class InferenceSettings(RerankingDetails):
 
 
 class SearchSettingsCreationRequest(InferenceSettings, IndexingSetting):
-    api_key_set: bool
-    rerank_api_key_set: bool
+    api_key_set: bool = False
+    rerank_api_key_set: bool = False
 
     @classmethod
     def from_db_model(

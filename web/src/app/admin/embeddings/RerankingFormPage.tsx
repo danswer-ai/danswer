@@ -15,6 +15,7 @@ import {
 import { Modal } from "@/components/Modal";
 import { Button } from "@tremor/react";
 import { TextFormField } from "@/components/admin/connectors/Field";
+import { defaultPasswordMask } from "@/lib/llm/utils";
 
 interface RerankingDetailsFormProps {
   setRerankingDetails: Dispatch<SetStateAction<RerankingDetails>>;
@@ -38,6 +39,7 @@ const RerankingDetailsForm = forwardRef<
     },
     ref
   ) => {
+    console.log(originalRerankingDetails);
     const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
     const [showLiteLLMConfigurationModal, setShowLiteLLMConfigurationModal] =
       useState(false);
@@ -254,8 +256,8 @@ const RerankingDetailsForm = forwardRef<
                       <TextFormField
                         subtext="Set the key to access your LiteLLM Proxy"
                         placeholder={
-                          values.rerank_api_key
-                            ? "*".repeat(values.rerank_api_key.length)
+                          originalRerankingDetails.rerank_api_key_set
+                            ? defaultPasswordMask
                             : undefined
                         }
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -327,8 +329,8 @@ const RerankingDetailsForm = forwardRef<
                     <div className="w-full px-4">
                       <TextFormField
                         placeholder={
-                          values.rerank_api_key
-                            ? "*".repeat(values.rerank_api_key.length)
+                          originalRerankingDetails.rerank_api_key_set
+                            ? defaultPasswordMask
                             : undefined
                         }
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {

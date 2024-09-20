@@ -127,6 +127,7 @@ export default function EmbeddingForm() {
         rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
         rerank_api_url: searchSettings.rerank_api_url,
+        rerank_api_key_set: searchSettings.rerank_api_key_set,
       });
     }
   }, [searchSettings]);
@@ -137,12 +138,14 @@ export default function EmbeddingForm() {
         rerank_provider_type: searchSettings.rerank_provider_type,
         rerank_model_name: searchSettings.rerank_model_name,
         rerank_api_url: searchSettings.rerank_api_url,
+        rerank_api_key_set: searchSettings.rerank_api_key_set,
       }
     : {
         rerank_api_key: "",
         rerank_provider_type: null,
         rerank_model_name: "",
         rerank_api_url: null,
+        rerank_api_key_set: false,
       };
 
   useEffect(() => {
