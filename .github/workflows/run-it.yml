@@ -13,8 +13,7 @@ env:
 
 jobs:
   integration-tests:
-    runs-on: 
-      group: 'arm64-image-builders'
+    runs-on: Amd64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -41,7 +40,7 @@ jobs:
         with:
           context: ./backend
           file: ./backend/Dockerfile
-          platforms: linux/arm64
+          platforms: linux/amd64
           tags: danswer/danswer-backend:it
           cache-from: type=registry,ref=danswer/danswer-backend:it
           cache-to: |
@@ -53,7 +52,7 @@ jobs:
         with:
           context: ./backend
           file: ./backend/Dockerfile.model_server
-          platforms: linux/arm64
+          platforms: linux/amd64
           tags: danswer/danswer-model-server:it
           cache-from: type=registry,ref=danswer/danswer-model-server:it
           cache-to: |
@@ -65,7 +64,7 @@ jobs:
         with:
           context: ./backend
           file: ./backend/tests/integration/Dockerfile
-          platforms: linux/arm64
+          platforms: linux/amd64
           tags: danswer/integration-test-runner:it
           cache-from: type=registry,ref=danswer/integration-test-runner:it
           cache-to: |

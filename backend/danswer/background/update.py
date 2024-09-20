@@ -211,7 +211,6 @@ def cleanup_indexing_jobs(
     timeout_hours: int = CLEANUP_INDEXING_JOBS_TIMEOUT,
 ) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
-
     # clean up completed jobs
     with Session(get_sqlalchemy_engine()) as db_session:
         for attempt_id, job in existing_jobs.items():
@@ -312,7 +311,12 @@ def kickoff_indexing_jobs(
 
     indexing_attempt_count = 0
 
+    primary_client_full = False
+    secondary_client_full = False
     for attempt, search_settings in new_indexing_attempts:
+        if primary_client_full and secondary_client_full:
+            break
+
         use_secondary_index = (
             search_settings.status == IndexModelStatus.FUTURE
             if search_settings is not None
@@ -337,22 +341,28 @@ def kickoff_indexing_jobs(
                 )
             continue
 
-        if use_secondary_index:
-            run = secondary_client.submit(
-                run_indexing_entrypoint,
-                attempt.id,
-                attempt.connector_credential_pair_id,
-                global_version.get_is_ee_version(),
-                pure=False,
-            )
+        if not use_secondary_index:
+            if not primary_client_full:
+                run = client.submit(
+                    run_indexing_entrypoint,
+                    attempt.id,
+                    attempt.connector_credential_pair_id,
+                    global_version.get_is_ee_version(),
+                    pure=False,
+                )
+                if not run:
+                    primary_client_full = True
         else:
-            run = client.submit(
-                run_indexing_entrypoint,
-                attempt.id,
-                attempt.connector_credential_pair_id,
-                global_version.get_is_ee_version(),
-                pure=False,
-            )
+            if not secondary_client_full:
+                run = secondary_client.submit(
+                    run_indexing_entrypoint,
+                    attempt.id,
+                    attempt.connector_credential_pair_id,
+                    global_version.get_is_ee_version(),
+                    pure=False,
+                )
+                if not run:
+                    secondary_client_full = True
 
         if run:
             if indexing_attempt_count == 0:

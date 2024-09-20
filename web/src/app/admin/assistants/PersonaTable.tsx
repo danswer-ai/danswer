@@ -20,7 +20,7 @@ import { UserRole, User } from "@/lib/types";
 import { useUser } from "@/components/user/UserProvider";
 
 function PersonaTypeDisplay({ persona }: { persona: Persona }) {
-  if (persona.default_persona) {
+  if (persona.is_default_persona) {
     return <Text>Built-In</Text>;
   }
 
@@ -119,7 +119,7 @@ export function PersonasTable({
             id: persona.id.toString(),
             cells: [
               <div key="name" className="flex">
-                {!persona.default_persona && (
+                {!persona.is_default_persona && (
                   <FiEdit2
                     className="mr-1 my-auto cursor-pointer"
                     onClick={() =>
@@ -173,7 +173,7 @@ export function PersonasTable({
               </div>,
               <div key="edit" className="flex">
                 <div className="mx-auto my-auto">
-                  {!persona.default_persona && isEditable ? (
+                  {!persona.is_default_persona && isEditable ? (
                     <div
                       className="hover:bg-hover rounded p-1 cursor-pointer"
                       onClick={async () => {

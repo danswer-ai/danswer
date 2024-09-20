@@ -70,11 +70,11 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
                 return
 
             runnable_connector = instantiate_connector(
+                db_session,
                 cc_pair.connector.source,
                 InputType.PRUNE,
                 cc_pair.connector.connector_specific_config,
                 cc_pair.credential,
-                db_session,
             )
 
             all_connector_doc_ids: set[str] = extract_ids_from_runnable_connector(

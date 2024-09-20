@@ -598,6 +598,7 @@ def get_doc_query_identifiers_from_model(
     chat_session: ChatSession,
     user_id: UUID | None,
     db_session: Session,
+    enforce_chat_session_id_for_search_docs: bool,
 ) -> list[tuple[str, int]]:
     """Given a list of search_doc_ids"""
     search_docs = (
@@ -617,7 +618,8 @@ def get_doc_query_identifiers_from_model(
                 for doc in search_docs
             ]
         ):
-            raise ValueError("Invalid reference doc, not from this chat session.")
+            if enforce_chat_session_id_for_search_docs:
+                raise ValueError("Invalid reference doc, not from this chat session.")
     except IndexError:
         # This happens when the doc has no chat_messages associated with it.
         # which happens as an edge case where the chat message failed to save

@@ -18,6 +18,7 @@ from danswer.db.connector_credential_pair import (
 )
 from danswer.db.document import get_document_counts_for_cc_pairs
 from danswer.db.engine import get_session
+from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
@@ -201,7 +202,7 @@ def associate_credential_to_connector(
         db_session=db_session,
         user=user,
         target_group_ids=metadata.groups,
-        object_is_public=metadata.is_public,
+        object_is_public=metadata.access_type == AccessType.PUBLIC,
     )
 
     try:
@@ -211,7 +212,8 @@ def associate_credential_to_connector(
             connector_id=connector_id,
             credential_id=credential_id,
             cc_pair_name=metadata.name,
-            is_public=True if metadata.is_public is None else metadata.is_public,
+            access_type=metadata.access_type,
+            auto_sync_options=metadata.auto_sync_options,
             groups=metadata.groups,
         )
 

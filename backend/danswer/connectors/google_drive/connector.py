@@ -6,7 +6,6 @@ from datetime import timezone
 from enum import Enum
 from itertools import chain
 from typing import Any
-from typing import cast
 
 from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
@@ -21,19 +20,13 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
-from danswer.connectors.google_drive.connector_auth import (
-    get_google_drive_creds_for_authorized_user,
-)
-from danswer.connectors.google_drive.connector_auth import (
-    get_google_drive_creds_for_service_account,
-)
+from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
 )
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.connectors.google_drive.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -407,42 +400,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         (2) A credential which holds a service account key JSON file, which
         can then be used to impersonate any user in the workspace.
         """
-        creds: OAuthCredentials | ServiceAccountCredentials | None = None
-        new_creds_dict = None
-        if DB_CREDENTIALS_DICT_TOKEN_KEY in credentials:
-            access_token_json_str = cast(
-                str, credentials[DB_CREDENTIALS_DICT_TOKEN_KEY]
-            )
-            creds = get_google_drive_creds_for_authorized_user(
-                token_json_str=access_token_json_str
-            )
-
-            # tell caller to update token stored in DB if it has changed
-            # (e.g. the token has been refreshed)
-            new_creds_json_str = creds.to_json() if creds else ""
-            if new_creds_json_str != access_token_json_str:
-                new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
-
-        if DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY in credentials:
-            service_account_key_json_str = credentials[
-                DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
-            ]
-            creds = get_google_drive_creds_for_service_account(
-                service_account_key_json_str=service_account_key_json_str
-            )
-
-            # "Impersonate" a user if one is specified
-            delegated_user_email = cast(
-                str | None, credentials.get(DB_CREDENTIALS_DICT_DELEGATED_USER_KEY)
-            )
-            if delegated_user_email:
-                creds = creds.with_subject(delegated_user_email) if creds else None  # type: ignore
-
-        if creds is None:
-            raise PermissionError(
-                "Unable to access Google Drive - unknown credential structure."
-            )
-
+        creds, new_creds_dict = get_google_drive_creds(credentials)
         self.creds = creds
         return new_creds_dict
 
@@ -509,6 +467,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                                 file["modifiedTime"]
                             ).astimezone(timezone.utc),
                             metadata={} if text_contents else {IGNORE_FOR_QA: "True"},
+                            additional_info=file.get("id"),
                         )
                     )
                 except Exception as e:

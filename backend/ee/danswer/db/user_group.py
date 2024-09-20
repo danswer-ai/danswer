@@ -199,7 +199,7 @@ def fetch_documents_for_user_group_paginated(
 def fetch_user_groups_for_documents(
     db_session: Session,
     document_ids: list[str],
-) -> Sequence[tuple[int, list[str]]]:
+) -> Sequence[tuple[str, list[str]]]:
     stmt = (
         select(Document.id, func.array_agg(UserGroup.name))
         .join(

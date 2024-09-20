@@ -29,6 +29,7 @@ export interface Option {
 export interface SelectOption extends Option {
   type: "select";
   options?: StringWithDescription[];
+  default?: string;
 }
 
 export interface ListOption extends Option {
@@ -599,7 +600,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
           { name: "articles", value: "articles" },
           { name: "tickets", value: "tickets" },
         ],
-        default: 0,
+        default: "articles",
       },
     ],
   },
@@ -759,6 +760,38 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         description:
           "When indexing categories that have sub-categories, this will determine how may levels to index. Specify 0 to only index the category itself (i.e. no recursion). Specify -1 for unlimited recursion depth. Note, that in some rare instances, a category might contain itself in its dependencies, which will cause an infinite loop. Only use -1 if you confident that this will not happen.",
         optional: false,
+      },
+    ],
+  },
+  asana: {
+    description: "Configure Asana connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter your Asana workspace ID:",
+        label: "Workspace ID",
+        name: "asana_workspace_id",
+        optional: false,
+        description:
+          "The ID of the Asana workspace to index. You can find this at https://app.asana.com/api/1.0/workspaces. It's a number that looks like 1234567890123456.",
+      },
+      {
+        type: "text",
+        query: "Enter project IDs to index (optional):",
+        label: "Project IDs",
+        name: "asana_project_ids",
+        description:
+          "IDs of specific Asana projects to index, separated by commas. Leave empty to index all projects in the workspace. Example: 1234567890123456,2345678901234567",
+        optional: true,
+      },
+      {
+        type: "text",
+        query: "Enter the Team ID (optional):",
+        label: "Team ID",
+        name: "asana_team_id",
+        optional: true,
+        description:
+          "ID of a team to use for accessing team-visible tasks. This allows indexing of team-visible tasks in addition to public tasks. Leave empty if you don't want to use this feature.",
       },
     ],
   },
@@ -1053,6 +1086,12 @@ export interface MediaWikiBaseConfig {
   categories?: string[];
   pages?: string[];
   recurse_depth?: number;
+}
+
+export interface AsanaConfig {
+  asana_workspace_id: string;
+  asana_project_ids?: string;
+  asana_team_id?: string;
 }
 
 export interface MediaWikiConfig extends MediaWikiBaseConfig {

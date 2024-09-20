@@ -60,11 +60,6 @@ def is_celery_app_primary(sender: Any) -> bool:
     return primary
 
 
-#####
-# Tasks that need to be run in job queue, registered via APIs
-#
-# If imports from this module are needed, use local imports to avoid circular importing
-#####
 @signals.task_postrun.connect
 def celery_task_postrun(
     sender: Any | None = None,

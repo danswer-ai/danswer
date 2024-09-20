@@ -3,6 +3,7 @@ from uuid import uuid4
 import requests
 
 from danswer.configs.constants import DocumentSource
+from danswer.db.enums import AccessType
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import NUM_DOCS
@@ -22,7 +23,7 @@ def _verify_document_permissions(
 ) -> None:
     acl_keys = set(retrieved_doc["access_control_list"].keys())
     print(f"ACL keys: {acl_keys}")
-    if cc_pair.is_public:
+    if cc_pair.access_type == AccessType.PUBLIC:
         if "PUBLIC" not in acl_keys:
             raise ValueError(
                 f"Document {retrieved_doc['document_id']} is public but"
@@ -30,10 +31,10 @@ def _verify_document_permissions(
             )
 
     if doc_creating_user is not None:
-        if f"user_id:{doc_creating_user.id}" not in acl_keys:
+        if f"user_email:{doc_creating_user.email}" not in acl_keys:
             raise ValueError(
                 f"Document {retrieved_doc['document_id']} was created by user"
-                f" {doc_creating_user.id} but does not have the user_id:{doc_creating_user.id} ACL key"
+                f" {doc_creating_user.email} but does not have the user_email:{doc_creating_user.email} ACL key"
             )
 
     if group_names is not None:

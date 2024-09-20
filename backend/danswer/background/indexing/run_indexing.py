@@ -56,11 +56,11 @@ def _get_connector_runner(
 
     try:
         runnable_connector = instantiate_connector(
-            attempt.connector_credential_pair.connector.source,
-            task,
-            attempt.connector_credential_pair.connector.connector_specific_config,
-            attempt.connector_credential_pair.credential,
-            db_session,
+            db_session=db_session,
+            source=attempt.connector_credential_pair.connector.source,
+            input_type=task,
+            connector_specific_config=attempt.connector_credential_pair.connector.connector_specific_config,
+            credential=attempt.connector_credential_pair.credential,
         )
     except Exception as e:
         logger.exception(f"Unable to instantiate connector due to {e}")

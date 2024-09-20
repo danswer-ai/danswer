@@ -21,6 +21,7 @@ interface PersonaCreationRequest {
   icon_shape: number | null;
   remove_image?: boolean;
   uploaded_image: File | null;
+  is_default_persona: boolean;
 }
 
 interface PersonaUpdateRequest {
@@ -125,6 +126,11 @@ function buildPersonaAPIBody(
     remove_image,
   } = creationRequest;
 
+  const is_default_persona =
+    "is_default_persona" in creationRequest
+      ? creationRequest.is_default_persona
+      : false;
+
   return {
     name,
     description,
@@ -145,6 +151,7 @@ function buildPersonaAPIBody(
     icon_shape,
     uploaded_image_id,
     remove_image,
+    is_default_persona,
   };
 }
 
