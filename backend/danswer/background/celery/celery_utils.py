@@ -1,32 +1,31 @@
 from datetime import datetime
 from datetime import timezone
 
-from sqlalchemy.orm import Session
-
-from danswer.background.celery.celery_redis import RedisConnectorDeletion
-from danswer.background.task_utils import name_cc_prune_task
-from danswer.configs.app_configs import ALLOW_SIMULTANEOUS_PRUNING
-from danswer.configs.app_configs import MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE
-from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
+from onyx.background.celery.celery_redis import RedisConnectorDeletion
+from onyx.background.task_utils import name_cc_prune_task
+from onyx.configs.app_configs import ALLOW_SIMULTANEOUS_PRUNING
+from onyx.configs.app_configs import MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE
+from onyx.connectors.cross_connector_utils.rate_limit_wrapper import (
     rate_limit_builder,
 )
-from danswer.connectors.interfaces import BaseConnector
-from danswer.connectors.interfaces import IdConnector
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.models import Document
-from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.engine import get_db_current_time
-from danswer.db.enums import TaskStatus
-from danswer.db.models import Connector
-from danswer.db.models import Credential
-from danswer.db.models import TaskQueueState
-from danswer.db.tasks import check_task_is_live_and_not_timed_out
-from danswer.db.tasks import get_latest_task
-from danswer.db.tasks import get_latest_task_by_type
-from danswer.redis.redis_pool import RedisPool
-from danswer.server.documents.models import DeletionAttemptSnapshot
-from danswer.utils.logger import setup_logger
+from onyx.connectors.interfaces import BaseConnector
+from onyx.connectors.interfaces import IdConnector
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.models import Document
+from onyx.db.connector_credential_pair import get_connector_credential_pair
+from onyx.db.engine import get_db_current_time
+from onyx.db.enums import TaskStatus
+from onyx.db.models import Connector
+from onyx.db.models import Credential
+from onyx.db.models import TaskQueueState
+from onyx.db.tasks import check_task_is_live_and_not_timed_out
+from onyx.db.tasks import get_latest_task
+from onyx.db.tasks import get_latest_task_by_type
+from onyx.redis.redis_pool import RedisPool
+from onyx.server.documents.models import DeletionAttemptSnapshot
+from onyx.utils.logger import setup_logger
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 redis_pool = RedisPool()

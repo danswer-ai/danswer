@@ -1,10 +1,10 @@
 from typing import Any
 
+from onyx.db.models import ConnectorCredentialPair
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
-from danswer.db.models import ConnectorCredentialPair
-from danswer.utils.logger import setup_logger
-from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
+from ee.onyx.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
 
 logger = setup_logger()

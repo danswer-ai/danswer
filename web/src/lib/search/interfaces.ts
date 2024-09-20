@@ -45,7 +45,7 @@ export interface QuotesInfoPacket {
   quotes: Quote[];
 }
 
-export interface DanswerDocument {
+export interface onyxDocument {
   document_id: string;
   link: string;
   source_type: ValidSources;
@@ -63,16 +63,16 @@ export interface DanswerDocument {
   validationState?: null | "good" | "bad";
 }
 
-export interface SearchDanswerDocument extends DanswerDocument {
+export interface SearchonyxDocument extends onyxDocument {
   is_relevant: boolean;
   relevance_explanation: string;
 }
 
-export interface FilteredDanswerDocument extends DanswerDocument {
+export interface FilteredonyxDocument extends onyxDocument {
   included: boolean;
 }
 export interface DocumentInfoPacket {
-  top_documents: DanswerDocument[];
+  top_documents: onyxDocument[];
   predicted_flow: FlowType | null;
   predicted_search: SearchType | null;
   time_cutoff: string | null;
@@ -97,7 +97,7 @@ export interface SearchResponse {
   suggestedFlowType: FlowType | null;
   answer: string | null;
   quotes: Quote[] | null;
-  documents: SearchDanswerDocument[] | null;
+  documents: SearchonyxDocument[] | null;
   selectedDocIndices: number[] | null;
   error: string | null;
   messageId: number | null;
@@ -145,7 +145,7 @@ export interface SearchRequestArgs {
   updateDocumentRelevance: (relevance: any) => void;
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;
-  updateDocs: (documents: DanswerDocument[]) => void;
+  updateDocs: (documents: onyxDocument[]) => void;
   updateSelectedDocIndices: (docIndices: number[]) => void;
   updateSuggestedSearchType: (searchType: SearchType) => void;
   updateSuggestedFlowType: (flowType: FlowType) => void;

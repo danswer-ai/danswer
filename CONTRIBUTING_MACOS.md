@@ -1,5 +1,5 @@
 ## Some additional notes for Mac Users
-The base instructions to set up the development environment are located in [CONTRIBUTING.md](https://github.com/danswer-ai/danswer/blob/main/CONTRIBUTING.md).
+The base instructions to set up the development environment are located in [CONTRIBUTING.md](https://github.com/onyx-ai/onyx/blob/main/CONTRIBUTING.md).
 
 ### Setting up Python
 Ensure [Homebrew](https://brew.sh/) is already set up.

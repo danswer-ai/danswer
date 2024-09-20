@@ -1,10 +1,10 @@
 from typing import cast
 
-from danswer.configs.constants import KV_SEARCH_SETTINGS
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.search.models import SavedSearchSettings
-from danswer.utils.logger import setup_logger
+from onyx.configs.constants import KV_SEARCH_SETTINGS
+from onyx.dynamic_configs.factory import get_dynamic_config_store
+from onyx.dynamic_configs.interface import ConfigNotFoundError
+from onyx.search.models import SavedSearchSettings
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

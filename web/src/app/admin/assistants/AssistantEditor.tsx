@@ -915,8 +915,8 @@ export function AssistantEditor({
                                     {user?.role !== "admin" && (
                                       <>
                                         If this functionality would be useful,
-                                        reach out to the administrators of
-                                        Danswer for assistance.
+                                        reach out to the administrators of onyx
+                                        for assistance.
                                       </>
                                     )}
                                   </Italic>
@@ -1037,7 +1037,7 @@ export function AssistantEditor({
                           );
                         }}
                         explanationText="Learn about prompting in our docs!"
-                        explanationLink="https://docs.danswer.dev/guides/assistants"
+                        explanationLink="https://docs.onyx.dev/guides/assistants"
                       />
                     </>
                   )}

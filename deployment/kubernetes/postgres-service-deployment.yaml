@@ -33,12 +33,12 @@ spec:
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: danswer-secrets
+              name: onyx-secrets
               key: postgres_user
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: danswer-secrets
+              name: onyx-secrets
               key: postgres_password
         args: ["-c", "max_connections=150"]
         ports:

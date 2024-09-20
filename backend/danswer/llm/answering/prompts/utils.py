@@ -1,5 +1,5 @@
-from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT
-from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT_WITHOUT_CONTEXT
+from onyx.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT
+from onyx.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT_WITHOUT_CONTEXT
 
 
 def build_dummy_prompt(

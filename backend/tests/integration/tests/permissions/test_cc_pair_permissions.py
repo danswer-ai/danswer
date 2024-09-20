@@ -3,10 +3,10 @@ This file takes the happy path to adding a curator to a user group and then test
 the permissions of the curator manipulating connector-credential pairs.
 """
 import pytest
+from onyx.db.enums import AccessType
+from onyx.server.documents.models import DocumentSource
 from requests.exceptions import HTTPError
 
-from danswer.db.enums import AccessType
-from danswer.server.documents.models import DocumentSource
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.connector import ConnectorManager
 from tests.integration.common_utils.managers.credential import CredentialManager

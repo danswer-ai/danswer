@@ -1,7 +1,7 @@
 import json
 
-from danswer.natural_language_processing.utils import BaseTokenizer
-from danswer.tools.tool import Tool
+from onyx.natural_language_processing.utils import BaseTokenizer
+from onyx.tools.tool import Tool
 
 
 OPEN_AI_TOOL_CALLING_MODELS = {

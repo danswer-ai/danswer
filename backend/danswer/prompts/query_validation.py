@@ -2,10 +2,10 @@
 # system. Many new users do not understand the design/capabilities of the system and will ask
 # questions that are unanswerable such as aggregations or user specific questions that the system
 # cannot handle, this is used to identify those cases
-from danswer.prompts.constants import ANSWERABLE_PAT
-from danswer.prompts.constants import GENERAL_SEP_PAT
-from danswer.prompts.constants import QUESTION_PAT
-from danswer.prompts.constants import THOUGHT_PAT
+from onyx.prompts.constants import ANSWERABLE_PAT
+from onyx.prompts.constants import GENERAL_SEP_PAT
+from onyx.prompts.constants import QUESTION_PAT
+from onyx.prompts.constants import THOUGHT_PAT
 
 
 ANSWERABLE_PROMPT = f"""
@@ -32,10 +32,10 @@ Slack channel the user is referring to.
 {ANSWERABLE_PAT.upper()} False
 ```
 
-{QUESTION_PAT.upper()} Danswer is unreachable.
+{QUESTION_PAT.upper()} onyx is unreachable.
 ```
-{THOUGHT_PAT.upper()} The system searches documents related to Danswer being unreachable. \
-Assuming the documents from search contains situations where Danswer is not reachable and \
+{THOUGHT_PAT.upper()} The system searches documents related to onyx being unreachable. \
+Assuming the documents from search contains situations where onyx is not reachable and \
 contains a fix, the query may be answerable.
 {ANSWERABLE_PAT.upper()} True
 ```

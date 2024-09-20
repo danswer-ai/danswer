@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import ENUM
-from danswer.configs.constants import DocumentSource
+from onyx.configs.constants import DocumentSource
 
 # revision identifiers, used by Alembic.
 revision = "b156fa702355"
@@ -174,7 +174,7 @@ def upgrade() -> None:
     delete_statement = sa.text(
         """
         DELETE FROM persona
-        WHERE name = 'Danswer' AND default_persona = TRUE AND id != 0
+        WHERE name = 'onyx' AND default_persona = TRUE AND id != 0
         """
     )
 

@@ -120,9 +120,9 @@ export function _WelcomeModal({ user }: { user: User | null }) {
             </Text>
             <div>
               <Text>
-                Connectors are the way that Danswer gets data from your
+                Connectors are the way that onyx gets data from your
                 organization&apos;s various data sources. Once setup, we&apos;ll
-                automatically sync data from your apps and docs into Danswer, so
+                automatically sync data from your apps and docs into onyx, so
                 you can search through all of them in one place.
               </Text>
 
@@ -219,11 +219,11 @@ export function _WelcomeModal({ user }: { user: User | null }) {
       );
       break;
     default:
-      title = "🎉 Welcome to Danswer";
+      title = "🎉 Welcome to onyx";
       body = (
         <>
           <div>
-            <Text>How are you planning on using Danswer?</Text>
+            <Text>How are you planning on using onyx?</Text>
           </div>
           <Divider />
           <UsageTypeSection

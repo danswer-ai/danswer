@@ -6,32 +6,31 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Query
 from fastapi import UploadFile
+from onyx.auth.users import current_admin_user
+from onyx.auth.users import current_curator_or_admin_user
+from onyx.auth.users import current_user
+from onyx.configs.constants import FileOrigin
+from onyx.db.engine import get_session
+from onyx.db.models import User
+from onyx.db.persona import create_update_persona
+from onyx.db.persona import get_persona_by_id
+from onyx.db.persona import get_personas
+from onyx.db.persona import mark_persona_as_deleted
+from onyx.db.persona import mark_persona_as_not_deleted
+from onyx.db.persona import update_all_personas_display_priority
+from onyx.db.persona import update_persona_public_status
+from onyx.db.persona import update_persona_shared_users
+from onyx.db.persona import update_persona_visibility
+from onyx.file_store.file_store import get_default_file_store
+from onyx.file_store.models import ChatFileType
+from onyx.llm.answering.prompts.utils import build_dummy_prompt
+from onyx.server.features.persona.models import CreatePersonaRequest
+from onyx.server.features.persona.models import PersonaSnapshot
+from onyx.server.features.persona.models import PromptTemplateResponse
+from onyx.server.models import DisplayPriorityRequest
+from onyx.utils.logger import setup_logger
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
-from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_curator_or_admin_user
-from danswer.auth.users import current_user
-from danswer.configs.constants import FileOrigin
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from danswer.db.persona import create_update_persona
-from danswer.db.persona import get_persona_by_id
-from danswer.db.persona import get_personas
-from danswer.db.persona import mark_persona_as_deleted
-from danswer.db.persona import mark_persona_as_not_deleted
-from danswer.db.persona import update_all_personas_display_priority
-from danswer.db.persona import update_persona_public_status
-from danswer.db.persona import update_persona_shared_users
-from danswer.db.persona import update_persona_visibility
-from danswer.file_store.file_store import get_default_file_store
-from danswer.file_store.models import ChatFileType
-from danswer.llm.answering.prompts.utils import build_dummy_prompt
-from danswer.server.features.persona.models import CreatePersonaRequest
-from danswer.server.features.persona.models import PersonaSnapshot
-from danswer.server.features.persona.models import PromptTemplateResponse
-from danswer.server.models import DisplayPriorityRequest
-from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()

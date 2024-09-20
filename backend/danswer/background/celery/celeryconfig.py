@@ -1,14 +1,14 @@
 # docs: https://docs.celeryq.dev/en/stable/userguide/configuration.html
-from danswer.configs.app_configs import CELERY_RESULT_EXPIRES
-from danswer.configs.app_configs import REDIS_DB_NUMBER_CELERY
-from danswer.configs.app_configs import REDIS_DB_NUMBER_CELERY_RESULT_BACKEND
-from danswer.configs.app_configs import REDIS_HOST
-from danswer.configs.app_configs import REDIS_PASSWORD
-from danswer.configs.app_configs import REDIS_PORT
-from danswer.configs.app_configs import REDIS_SSL
-from danswer.configs.app_configs import REDIS_SSL_CA_CERTS
-from danswer.configs.app_configs import REDIS_SSL_CERT_REQS
-from danswer.configs.constants import DanswerCeleryPriority
+from onyx.configs.app_configs import CELERY_RESULT_EXPIRES
+from onyx.configs.app_configs import REDIS_DB_NUMBER_CELERY
+from onyx.configs.app_configs import REDIS_DB_NUMBER_CELERY_RESULT_BACKEND
+from onyx.configs.app_configs import REDIS_HOST
+from onyx.configs.app_configs import REDIS_PASSWORD
+from onyx.configs.app_configs import REDIS_PORT
+from onyx.configs.app_configs import REDIS_SSL
+from onyx.configs.app_configs import REDIS_SSL_CA_CERTS
+from onyx.configs.app_configs import REDIS_SSL_CERT_REQS
+from onyx.configs.constants import onyxCeleryPriority
 
 CELERY_SEPARATOR = ":"
 
@@ -37,12 +37,12 @@ result_backend = f"{REDIS_SCHEME}://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PO
 worker_prefetch_multiplier = 4
 
 broker_transport_options = {
-    "priority_steps": list(range(len(DanswerCeleryPriority))),
+    "priority_steps": list(range(len(onyxCeleryPriority))),
     "sep": CELERY_SEPARATOR,
     "queue_order_strategy": "priority",
 }
 
-task_default_priority = DanswerCeleryPriority.MEDIUM
+task_default_priority = onyxCeleryPriority.MEDIUM
 task_acks_late = True
 
 # It's possible we don't even need celery's result backend, in which case all of the optimization below

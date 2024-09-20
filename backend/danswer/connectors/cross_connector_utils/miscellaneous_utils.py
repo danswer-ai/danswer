@@ -5,10 +5,9 @@ from datetime import timezone
 from typing import TypeVar
 
 from dateutil.parser import parse
-
-from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.connectors.models import BasicExpertInfo
-from danswer.utils.text_processing import is_valid_email
+from onyx.configs.constants import IGNORE_FOR_QA
+from onyx.connectors.models import BasicExpertInfo
+from onyx.utils.text_processing import is_valid_email
 
 
 def datetime_to_utc(dt: datetime) -> datetime:

@@ -9,27 +9,27 @@ from fastapi import HTTPException
 from fastapi import Response
 from fastapi import status
 from fastapi import UploadFile
+from onyx.auth.users import current_admin_user
+from onyx.auth.users import current_user_with_expired_token
+from onyx.auth.users import get_user_manager
+from onyx.auth.users import UserManager
+from onyx.db.engine import get_session
+from onyx.db.models import User
+from onyx.file_store.file_store import get_default_file_store
+from onyx.utils.logger import setup_logger
 from pydantic import BaseModel
 from pydantic import Field
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_user_with_expired_token
-from danswer.auth.users import get_user_manager
-from danswer.auth.users import UserManager
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from danswer.file_store.file_store import get_default_file_store
-from danswer.utils.logger import setup_logger
-from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
-from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
-from ee.danswer.server.enterprise_settings.store import _LOGO_FILENAME
-from ee.danswer.server.enterprise_settings.store import _LOGOTYPE_FILENAME
-from ee.danswer.server.enterprise_settings.store import load_analytics_script
-from ee.danswer.server.enterprise_settings.store import load_settings
-from ee.danswer.server.enterprise_settings.store import store_analytics_script
-from ee.danswer.server.enterprise_settings.store import store_settings
-from ee.danswer.server.enterprise_settings.store import upload_logo
+from ee.onyx.server.enterprise_settings.models import AnalyticsScriptUpload
+from ee.onyx.server.enterprise_settings.models import EnterpriseSettings
+from ee.onyx.server.enterprise_settings.store import _LOGO_FILENAME
+from ee.onyx.server.enterprise_settings.store import _LOGOTYPE_FILENAME
+from ee.onyx.server.enterprise_settings.store import load_analytics_script
+from ee.onyx.server.enterprise_settings.store import load_settings
+from ee.onyx.server.enterprise_settings.store import store_analytics_script
+from ee.onyx.server.enterprise_settings.store import store_settings
+from ee.onyx.server.enterprise_settings.store import upload_logo
 
 admin_router = APIRouter(prefix="/admin/enterprise-settings")
 basic_router = APIRouter(prefix="/enterprise-settings")

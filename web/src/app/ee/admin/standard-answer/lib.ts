@@ -1,8 +1,8 @@
-export interface StandardAnswerCategoryCreationRequest {
+export interface StandaronyxCategoryCreationRequest {
   name: string;
 }
 
-export interface StandardAnswerCreationRequest {
+export interface StandaronyxCreationRequest {
   keyword: string;
   answer: string;
   categories: number[];
@@ -10,41 +10,41 @@ export interface StandardAnswerCreationRequest {
   matchAnyKeywords: boolean;
 }
 
-const buildRequestBodyFromStandardAnswerCategoryCreationRequest = (
-  request: StandardAnswerCategoryCreationRequest
+const buildRequestBodyFromStandaronyxCategoryCreationRequest = (
+  request: StandaronyxCategoryCreationRequest
 ) => {
   return JSON.stringify({
     name: request.name,
   });
 };
 
-export const createStandardAnswerCategory = async (
-  request: StandardAnswerCategoryCreationRequest
+export const createStandaronyxCategory = async (
+  request: StandaronyxCategoryCreationRequest
 ) => {
   return fetch("/api/manage/admin/standard-answer/category", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: buildRequestBodyFromStandardAnswerCategoryCreationRequest(request),
+    body: buildRequestBodyFromStandaronyxCategoryCreationRequest(request),
   });
 };
 
-export const updateStandardAnswerCategory = async (
+export const updateStandaronyxCategory = async (
   id: number,
-  request: StandardAnswerCategoryCreationRequest
+  request: StandaronyxCategoryCreationRequest
 ) => {
   return fetch(`/api/manage/admin/standard-answer/category/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
-    body: buildRequestBodyFromStandardAnswerCategoryCreationRequest(request),
+    body: buildRequestBodyFromStandaronyxCategoryCreationRequest(request),
   });
 };
 
-const buildRequestBodyFromStandardAnswerCreationRequest = (
-  request: StandardAnswerCreationRequest
+const buildRequestBodyFromStandaronyxCreationRequest = (
+  request: StandaronyxCreationRequest
 ) => {
   return JSON.stringify({
     keyword: request.keyword,
@@ -55,32 +55,32 @@ const buildRequestBodyFromStandardAnswerCreationRequest = (
   });
 };
 
-export const createStandardAnswer = async (
-  request: StandardAnswerCreationRequest
+export const createStandaronyx = async (
+  request: StandaronyxCreationRequest
 ) => {
   return fetch("/api/manage/admin/standard-answer", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: buildRequestBodyFromStandardAnswerCreationRequest(request),
+    body: buildRequestBodyFromStandaronyxCreationRequest(request),
   });
 };
 
-export const updateStandardAnswer = async (
+export const updateStandaronyx = async (
   id: number,
-  request: StandardAnswerCreationRequest
+  request: StandaronyxCreationRequest
 ) => {
   return fetch(`/api/manage/admin/standard-answer/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
-    body: buildRequestBodyFromStandardAnswerCreationRequest(request),
+    body: buildRequestBodyFromStandaronyxCreationRequest(request),
   });
 };
 
-export const deleteStandardAnswer = async (id: number) => {
+export const deleteStandaronyx = async (id: number) => {
   return fetch(`/api/manage/admin/standard-answer/${id}`, {
     method: "DELETE",
     headers: {

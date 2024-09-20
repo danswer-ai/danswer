@@ -3,42 +3,41 @@ from collections.abc import Generator
 from typing import Any
 from typing import cast
 
+from onyx.chat.chat_utils import llm_doc_from_inference_section
+from onyx.chat.models import LlmDoc
+from onyx.chat.models import onyxContext
+from onyx.chat.models import onyxContexts
+from onyx.chat.models import SectionRelevancePiece
+from onyx.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
+from onyx.configs.chat_configs import CONTEXT_CHUNKS_BELOW
+from onyx.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
+from onyx.db.models import Persona
+from onyx.db.models import User
+from onyx.dynamic_configs.interface import JSON_ro
+from onyx.llm.answering.models import ContextualPruningConfig
+from onyx.llm.answering.models import DocumentPruningConfig
+from onyx.llm.answering.models import PreviousMessage
+from onyx.llm.answering.models import PromptConfig
+from onyx.llm.answering.prompts.citations_prompt import compute_max_llm_input_tokens
+from onyx.llm.answering.prune_and_merge import prune_and_merge_sections
+from onyx.llm.answering.prune_and_merge import prune_sections
+from onyx.llm.interfaces import LLM
+from onyx.search.enums import LLMEvaluationType
+from onyx.search.enums import QueryFlow
+from onyx.search.enums import SearchType
+from onyx.search.models import IndexFilters
+from onyx.search.models import InferenceSection
+from onyx.search.models import RetrievalDetails
+from onyx.search.models import SearchRequest
+from onyx.search.pipeline import SearchPipeline
+from onyx.secondary_llm_flows.choose_search import check_if_need_search
+from onyx.secondary_llm_flows.query_expansion import history_based_query_rephrase
+from onyx.tools.search.search_utils import llm_doc_to_dict
+from onyx.tools.tool import Tool
+from onyx.tools.tool import ToolResponse
+from onyx.utils.logger import setup_logger
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
-from danswer.chat.chat_utils import llm_doc_from_inference_section
-from danswer.chat.models import DanswerContext
-from danswer.chat.models import DanswerContexts
-from danswer.chat.models import LlmDoc
-from danswer.chat.models import SectionRelevancePiece
-from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
-from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
-from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
-from danswer.db.models import Persona
-from danswer.db.models import User
-from danswer.dynamic_configs.interface import JSON_ro
-from danswer.llm.answering.models import ContextualPruningConfig
-from danswer.llm.answering.models import DocumentPruningConfig
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.answering.models import PromptConfig
-from danswer.llm.answering.prompts.citations_prompt import compute_max_llm_input_tokens
-from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
-from danswer.llm.answering.prune_and_merge import prune_sections
-from danswer.llm.interfaces import LLM
-from danswer.search.enums import LLMEvaluationType
-from danswer.search.enums import QueryFlow
-from danswer.search.enums import SearchType
-from danswer.search.models import IndexFilters
-from danswer.search.models import InferenceSection
-from danswer.search.models import RetrievalDetails
-from danswer.search.models import SearchRequest
-from danswer.search.pipeline import SearchPipeline
-from danswer.secondary_llm_flows.choose_search import check_if_need_search
-from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
-from danswer.tools.search.search_utils import llm_doc_to_dict
-from danswer.tools.tool import Tool
-from danswer.tools.tool import ToolResponse
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -312,9 +311,9 @@ class SearchTool(Tool):
 
         yield ToolResponse(
             id=SEARCH_DOC_CONTENT_ID,
-            response=DanswerContexts(
+            response=onyxContexts(
                 contexts=[
-                    DanswerContext(
+                    onyxContext(
                         content=section.combined_content,
                         document_id=section.center_chunk.document_id,
                         semantic_identifier=section.center_chunk.semantic_identifier,

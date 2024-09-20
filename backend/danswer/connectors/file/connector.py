@@ -6,27 +6,26 @@ from pathlib import Path
 from typing import Any
 from typing import IO
 
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.models import BasicExpertInfo
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.file_processing.extract_file_text import check_file_ext_is_valid
+from onyx.file_processing.extract_file_text import detect_encoding
+from onyx.file_processing.extract_file_text import extract_file_text
+from onyx.file_processing.extract_file_text import get_file_ext
+from onyx.file_processing.extract_file_text import is_text_file_extension
+from onyx.file_processing.extract_file_text import load_files_from_zip
+from onyx.file_processing.extract_file_text import read_pdf_file
+from onyx.file_processing.extract_file_text import read_text_file
+from onyx.file_store.file_store import get_default_file_store
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.models import BasicExpertInfo
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.file_processing.extract_file_text import check_file_ext_is_valid
-from danswer.file_processing.extract_file_text import detect_encoding
-from danswer.file_processing.extract_file_text import extract_file_text
-from danswer.file_processing.extract_file_text import get_file_ext
-from danswer.file_processing.extract_file_text import is_text_file_extension
-from danswer.file_processing.extract_file_text import load_files_from_zip
-from danswer.file_processing.extract_file_text import read_pdf_file
-from danswer.file_processing.extract_file_text import read_text_file
-from danswer.file_store.file_store import get_default_file_store
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -70,7 +69,7 @@ def _process_file(
     if is_text_file_extension(file_name):
         encoding = detect_encoding(file)
         file_content_raw, file_metadata = read_text_file(
-            file, encoding=encoding, ignore_danswer_metadata=False
+            file, encoding=encoding, ignore_onyx_metadata=False
         )
 
     # Using the PDF reader function directly to pass in password cleanly
@@ -105,7 +104,7 @@ def _process_file(
     dt_str = all_metadata.get("doc_updated_at")
     final_time_updated = time_str_to_utc(dt_str) if dt_str else time_updated
 
-    # Metadata tags separate from the Danswer specific fields
+    # Metadata tags separate from the onyx specific fields
     metadata_tags = {
         k: v
         for k, v in all_metadata.items()

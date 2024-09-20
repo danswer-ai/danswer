@@ -8,45 +8,44 @@ from typing import Any
 from typing import cast
 
 import requests
-from retry import retry
-
-from danswer.configs.app_configs import LOG_VESPA_TIMING_INFORMATION
-from danswer.document_index.interfaces import VespaChunkRequest
-from danswer.document_index.vespa.shared_utils.vespa_request_builders import (
+from onyx.configs.app_configs import LOG_VESPA_TIMING_INFORMATION
+from onyx.document_index.interfaces import VespaChunkRequest
+from onyx.document_index.vespa.shared_utils.vespa_request_builders import (
     build_vespa_filters,
 )
-from danswer.document_index.vespa.shared_utils.vespa_request_builders import (
+from onyx.document_index.vespa.shared_utils.vespa_request_builders import (
     build_vespa_id_based_retrieval_yql,
 )
-from danswer.document_index.vespa_constants import ACCESS_CONTROL_LIST
-from danswer.document_index.vespa_constants import BLURB
-from danswer.document_index.vespa_constants import BOOST
-from danswer.document_index.vespa_constants import CHUNK_ID
-from danswer.document_index.vespa_constants import CONTENT
-from danswer.document_index.vespa_constants import CONTENT_SUMMARY
-from danswer.document_index.vespa_constants import DOC_UPDATED_AT
-from danswer.document_index.vespa_constants import DOCUMENT_ID
-from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
-from danswer.document_index.vespa_constants import HIDDEN
-from danswer.document_index.vespa_constants import LARGE_CHUNK_REFERENCE_IDS
-from danswer.document_index.vespa_constants import MAX_ID_SEARCH_QUERY_SIZE
-from danswer.document_index.vespa_constants import MAX_OR_CONDITIONS
-from danswer.document_index.vespa_constants import METADATA
-from danswer.document_index.vespa_constants import METADATA_SUFFIX
-from danswer.document_index.vespa_constants import PRIMARY_OWNERS
-from danswer.document_index.vespa_constants import RECENCY_BIAS
-from danswer.document_index.vespa_constants import SEARCH_ENDPOINT
-from danswer.document_index.vespa_constants import SECONDARY_OWNERS
-from danswer.document_index.vespa_constants import SECTION_CONTINUATION
-from danswer.document_index.vespa_constants import SEMANTIC_IDENTIFIER
-from danswer.document_index.vespa_constants import SOURCE_LINKS
-from danswer.document_index.vespa_constants import SOURCE_TYPE
-from danswer.document_index.vespa_constants import TITLE
-from danswer.document_index.vespa_constants import YQL_BASE
-from danswer.search.models import IndexFilters
-from danswer.search.models import InferenceChunkUncleaned
-from danswer.utils.logger import setup_logger
-from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from onyx.document_index.vespa_constants import ACCESS_CONTROL_LIST
+from onyx.document_index.vespa_constants import BLURB
+from onyx.document_index.vespa_constants import BOOST
+from onyx.document_index.vespa_constants import CHUNK_ID
+from onyx.document_index.vespa_constants import CONTENT
+from onyx.document_index.vespa_constants import CONTENT_SUMMARY
+from onyx.document_index.vespa_constants import DOC_UPDATED_AT
+from onyx.document_index.vespa_constants import DOCUMENT_ID
+from onyx.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
+from onyx.document_index.vespa_constants import HIDDEN
+from onyx.document_index.vespa_constants import LARGE_CHUNK_REFERENCE_IDS
+from onyx.document_index.vespa_constants import MAX_ID_SEARCH_QUERY_SIZE
+from onyx.document_index.vespa_constants import MAX_OR_CONDITIONS
+from onyx.document_index.vespa_constants import METADATA
+from onyx.document_index.vespa_constants import METADATA_SUFFIX
+from onyx.document_index.vespa_constants import PRIMARY_OWNERS
+from onyx.document_index.vespa_constants import RECENCY_BIAS
+from onyx.document_index.vespa_constants import SEARCH_ENDPOINT
+from onyx.document_index.vespa_constants import SECONDARY_OWNERS
+from onyx.document_index.vespa_constants import SECTION_CONTINUATION
+from onyx.document_index.vespa_constants import SEMANTIC_IDENTIFIER
+from onyx.document_index.vespa_constants import SOURCE_LINKS
+from onyx.document_index.vespa_constants import SOURCE_TYPE
+from onyx.document_index.vespa_constants import TITLE
+from onyx.document_index.vespa_constants import YQL_BASE
+from onyx.search.models import IndexFilters
+from onyx.search.models import InferenceChunkUncleaned
+from onyx.utils.logger import setup_logger
+from onyx.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from retry import retry
 
 logger = setup_logger()
 

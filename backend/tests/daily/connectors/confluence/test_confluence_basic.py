@@ -2,8 +2,7 @@ import os
 import time
 
 import pytest
-
-from danswer.connectors.confluence.connector import ConfluenceConnector
+from onyx.connectors.confluence.connector import ConfluenceConnector
 
 
 @pytest.fixture
@@ -37,12 +36,11 @@ def test_confluence_connector_basic(confluence_connector: ConfluenceConnector) -
     assert doc.semantic_identifier == "DailyConnectorTestSpace Home"
     assert doc.metadata["labels"] == ["testlabel"]
     assert doc.primary_owners
-    assert doc.primary_owners[0].email == "chris@danswer.ai"
+    assert doc.primary_owners[0].email == "chris@onyx.ai"
     assert len(doc.sections) == 1
 
     section = doc.sections[0]
     assert section.text == "test123small"
     assert (
-        section.link
-        == "https://danswerai.atlassian.net/wiki/spaces/DailyConne/overview"
+        section.link == "https://onyxai.atlassian.net/wiki/spaces/DailyConne/overview"
     )

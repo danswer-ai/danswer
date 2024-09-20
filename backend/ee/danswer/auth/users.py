@@ -1,18 +1,18 @@
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
+from onyx.configs.app_configs import AUTH_TYPE
+from onyx.configs.constants import AuthType
+from onyx.db.engine import get_session
+from onyx.db.models import User
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.constants import AuthType
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from danswer.utils.logger import setup_logger
-from ee.danswer.auth.api_key import get_hashed_api_key_from_request
-from ee.danswer.db.api_key import fetch_user_for_api_key
-from ee.danswer.db.saml import get_saml_account
-from ee.danswer.server.seeding import get_seed_config
-from ee.danswer.utils.secrets import extract_hashed_cookie
+from ee.onyx.auth.api_key import get_hashed_api_key_from_request
+from ee.onyx.db.api_key import fetch_user_for_api_key
+from ee.onyx.db.saml import get_saml_account
+from ee.onyx.server.seeding import get_seed_config
+from ee.onyx.utils.secrets import extract_hashed_cookie
 
 logger = setup_logger()
 

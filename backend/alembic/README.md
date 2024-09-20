@@ -1,11 +1,11 @@
-<!-- DANSWER_METADATA={"link": "https://github.com/danswer-ai/danswer/blob/main/backend/alembic/README.md"} -->
+<!-- onyx_METADATA={"link": "https://github.com/onyx-ai/onyx/blob/main/backend/alembic/README.md"} -->
 
 # Alembic DB Migrations
 These files are for creating/updating the tables in the Relational DB (Postgres).
-Danswer migrations use a generic single-database configuration with an async dbapi.
+onyx migrations use a generic single-database configuration with an async dbapi.
 
 ## To generate new migrations: 
-run from danswer/backend:
+run from onyx/backend:
 `alembic revision --autogenerate -m <DESCRIPTION_OF_MIGRATION>`
 
 More info can be found here: https://alembic.sqlalchemy.org/en/latest/autogenerate.html

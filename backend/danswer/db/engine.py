@@ -5,6 +5,17 @@ from collections.abc import Generator
 from datetime import datetime
 from typing import ContextManager
 
+from onyx.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
+from onyx.configs.app_configs import LOG_POSTGRES_LATENCY
+from onyx.configs.app_configs import POSTGRES_DB
+from onyx.configs.app_configs import POSTGRES_HOST
+from onyx.configs.app_configs import POSTGRES_PASSWORD
+from onyx.configs.app_configs import POSTGRES_POOL_PRE_PING
+from onyx.configs.app_configs import POSTGRES_POOL_RECYCLE
+from onyx.configs.app_configs import POSTGRES_PORT
+from onyx.configs.app_configs import POSTGRES_USER
+from onyx.configs.constants import POSTGRES_UNKNOWN_APP_NAME
+from onyx.utils.logger import setup_logger
 from sqlalchemy import event
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
@@ -14,18 +25,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-
-from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
-from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
-from danswer.configs.app_configs import POSTGRES_DB
-from danswer.configs.app_configs import POSTGRES_HOST
-from danswer.configs.app_configs import POSTGRES_PASSWORD
-from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
-from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
-from danswer.configs.app_configs import POSTGRES_PORT
-from danswer.configs.app_configs import POSTGRES_USER
-from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

@@ -5,25 +5,24 @@ from typing import Any
 from typing import cast
 
 import httpx
-
-from danswer.chat.chat_utils import combine_message_chain
-from danswer.chat.models import LlmDoc
-from danswer.configs.constants import DocumentSource
-from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
-from danswer.dynamic_configs.interface import JSON_ro
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.interfaces import LLM
-from danswer.llm.utils import message_to_string
-from danswer.prompts.chat_prompts import INTERNET_SEARCH_QUERY_REPHRASE
-from danswer.prompts.constants import GENERAL_SEP_PAT
-from danswer.search.models import SearchDoc
-from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
-from danswer.tools.internet_search.models import InternetSearchResponse
-from danswer.tools.internet_search.models import InternetSearchResult
-from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
-from danswer.tools.tool import Tool
-from danswer.tools.tool import ToolResponse
-from danswer.utils.logger import setup_logger
+from onyx.chat.chat_utils import combine_message_chain
+from onyx.chat.models import LlmDoc
+from onyx.configs.constants import DocumentSource
+from onyx.configs.model_configs import GEN_AI_HISTORY_CUTOFF
+from onyx.dynamic_configs.interface import JSON_ro
+from onyx.llm.answering.models import PreviousMessage
+from onyx.llm.interfaces import LLM
+from onyx.llm.utils import message_to_string
+from onyx.prompts.chat_prompts import INTERNET_SEARCH_QUERY_REPHRASE
+from onyx.prompts.constants import GENERAL_SEP_PAT
+from onyx.search.models import SearchDoc
+from onyx.secondary_llm_flows.query_expansion import history_based_query_rephrase
+from onyx.tools.internet_search.models import InternetSearchResponse
+from onyx.tools.internet_search.models import InternetSearchResult
+from onyx.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
+from onyx.tools.tool import Tool
+from onyx.tools.tool import ToolResponse
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

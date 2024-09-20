@@ -1,20 +1,20 @@
 import re
 from collections.abc import Iterator
 
-from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import StreamingError
-from danswer.configs.chat_configs import DISABLE_LLM_QUERY_ANSWERABILITY
-from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llms
-from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
-from danswer.llm.utils import message_generator_to_string_generator
-from danswer.llm.utils import message_to_string
-from danswer.prompts.constants import ANSWERABLE_PAT
-from danswer.prompts.constants import THOUGHT_PAT
-from danswer.prompts.query_validation import ANSWERABLE_PROMPT
-from danswer.server.query_and_chat.models import QueryValidationResponse
-from danswer.server.utils import get_json_line
-from danswer.utils.logger import setup_logger
+from onyx.chat.models import onyxAnswerPiece
+from onyx.chat.models import StreamingError
+from onyx.configs.chat_configs import DISABLE_LLM_QUERY_ANSWERABILITY
+from onyx.llm.exceptions import GenAIDisabledException
+from onyx.llm.factory import get_default_llms
+from onyx.llm.utils import dict_based_prompt_to_langchain_prompt
+from onyx.llm.utils import message_generator_to_string_generator
+from onyx.llm.utils import message_to_string
+from onyx.prompts.constants import ANSWERABLE_PAT
+from onyx.prompts.constants import THOUGHT_PAT
+from onyx.prompts.query_validation import ANSWERABLE_PROMPT
+from onyx.server.query_and_chat.models import QueryValidationResponse
+from onyx.server.utils import get_json_line
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -107,7 +107,7 @@ def stream_query_answerability(
                 remaining = model_output[reason_ind + len(THOUGHT_PAT.upper()) :]
                 if remaining:
                     yield get_json_line(
-                        DanswerAnswerPiece(answer_piece=remaining).model_dump()
+                        onyxAnswerPiece(answer_piece=remaining).model_dump()
                     )
                 continue
 
@@ -116,7 +116,7 @@ def stream_query_answerability(
                 if hold_answerable == ANSWERABLE_PAT.upper()[: len(hold_answerable)]:
                     continue
                 yield get_json_line(
-                    DanswerAnswerPiece(answer_piece=hold_answerable).model_dump()
+                    onyxAnswerPiece(answer_piece=hold_answerable).model_dump()
                 )
                 hold_answerable = ""
 

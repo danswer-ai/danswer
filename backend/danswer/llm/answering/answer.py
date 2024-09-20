@@ -7,67 +7,66 @@ from uuid import uuid4
 from langchain.schema.messages import BaseMessage
 from langchain_core.messages import AIMessageChunk
 from langchain_core.messages import HumanMessage
-
-from danswer.chat.chat_utils import llm_doc_from_inference_section
-from danswer.chat.models import AnswerQuestionPossibleReturn
-from danswer.chat.models import CitationInfo
-from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import LlmDoc
-from danswer.chat.models import StreamStopInfo
-from danswer.chat.models import StreamStopReason
-from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
-from danswer.file_store.utils import InMemoryChatFile
-from danswer.llm.answering.models import AnswerStyleConfig
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.answering.models import PromptConfig
-from danswer.llm.answering.models import StreamProcessor
-from danswer.llm.answering.prompts.build import AnswerPromptBuilder
-from danswer.llm.answering.prompts.build import default_build_system_message
-from danswer.llm.answering.prompts.build import default_build_user_message
-from danswer.llm.answering.prompts.citations_prompt import (
+from onyx.chat.chat_utils import llm_doc_from_inference_section
+from onyx.chat.models import AnswerQuestionPossibleReturn
+from onyx.chat.models import CitationInfo
+from onyx.chat.models import LlmDoc
+from onyx.chat.models import onyxAnswerPiece
+from onyx.chat.models import StreamStopInfo
+from onyx.chat.models import StreamStopReason
+from onyx.configs.chat_configs import QA_PROMPT_OVERRIDE
+from onyx.file_store.utils import InMemoryChatFile
+from onyx.llm.answering.models import AnswerStyleConfig
+from onyx.llm.answering.models import PreviousMessage
+from onyx.llm.answering.models import PromptConfig
+from onyx.llm.answering.models import StreamProcessor
+from onyx.llm.answering.prompts.build import AnswerPromptBuilder
+from onyx.llm.answering.prompts.build import default_build_system_message
+from onyx.llm.answering.prompts.build import default_build_user_message
+from onyx.llm.answering.prompts.citations_prompt import (
     build_citations_system_message,
 )
-from danswer.llm.answering.prompts.citations_prompt import build_citations_user_message
-from danswer.llm.answering.prompts.quotes_prompt import build_quotes_user_message
-from danswer.llm.answering.stream_processing.citation_processing import (
+from onyx.llm.answering.prompts.citations_prompt import build_citations_user_message
+from onyx.llm.answering.prompts.quotes_prompt import build_quotes_user_message
+from onyx.llm.answering.stream_processing.citation_processing import (
     build_citation_processor,
 )
-from danswer.llm.answering.stream_processing.quotes_processing import (
+from onyx.llm.answering.stream_processing.quotes_processing import (
     build_quotes_processor,
 )
-from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
-from danswer.llm.answering.stream_processing.utils import map_document_id_order
-from danswer.llm.interfaces import LLM
-from danswer.llm.interfaces import ToolChoiceOptions
-from danswer.natural_language_processing.utils import get_tokenizer
-from danswer.tools.custom.custom_tool_prompt_builder import (
+from onyx.llm.answering.stream_processing.utils import DocumentIdOrderMapping
+from onyx.llm.answering.stream_processing.utils import map_document_id_order
+from onyx.llm.interfaces import LLM
+from onyx.llm.interfaces import ToolChoiceOptions
+from onyx.natural_language_processing.utils import get_tokenizer
+from onyx.tools.custom.custom_tool_prompt_builder import (
     build_user_message_for_custom_tool_for_non_tool_calling_llm,
 )
-from danswer.tools.force import filter_tools_for_force_tool_use
-from danswer.tools.force import ForceUseTool
-from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
-from danswer.tools.images.image_generation_tool import ImageGenerationResponse
-from danswer.tools.images.image_generation_tool import ImageGenerationTool
-from danswer.tools.images.prompt import build_image_generation_user_prompt
-from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
-from danswer.tools.message import build_tool_message
-from danswer.tools.message import ToolCallSummary
-from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
-from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
-from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
-from danswer.tools.search.search_tool import SearchResponseSummary
-from danswer.tools.search.search_tool import SearchTool
-from danswer.tools.tool import Tool
-from danswer.tools.tool import ToolResponse
-from danswer.tools.tool_runner import (
+from onyx.tools.force import filter_tools_for_force_tool_use
+from onyx.tools.force import ForceUseTool
+from onyx.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
+from onyx.tools.images.image_generation_tool import ImageGenerationResponse
+from onyx.tools.images.image_generation_tool import ImageGenerationTool
+from onyx.tools.images.prompt import build_image_generation_user_prompt
+from onyx.tools.internet_search.internet_search_tool import InternetSearchTool
+from onyx.tools.message import build_tool_message
+from onyx.tools.message import ToolCallSummary
+from onyx.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
+from onyx.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
+from onyx.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
+from onyx.tools.search.search_tool import SearchResponseSummary
+from onyx.tools.search.search_tool import SearchTool
+from onyx.tools.tool import Tool
+from onyx.tools.tool import ToolResponse
+from onyx.tools.tool_runner import (
     check_which_tools_should_run_for_non_tool_calling_llm,
 )
-from danswer.tools.tool_runner import ToolCallFinalResult
-from danswer.tools.tool_runner import ToolCallKickoff
-from danswer.tools.tool_runner import ToolRunner
-from danswer.tools.tool_selection import select_single_tool_for_non_tool_calling_llm
-from danswer.tools.utils import explicit_tool_calling_supported
-from danswer.utils.logger import setup_logger
+from onyx.tools.tool_runner import ToolCallFinalResult
+from onyx.tools.tool_runner import ToolCallKickoff
+from onyx.tools.tool_runner import ToolRunner
+from onyx.tools.tool_selection import select_single_tool_for_non_tool_calling_llm
+from onyx.tools.utils import explicit_tool_calling_supported
+from onyx.utils.logger import setup_logger
 
 
 logger = setup_logger()
@@ -585,7 +584,7 @@ class Answer:
     def llm_answer(self) -> str:
         answer = ""
         for packet in self.processed_streamed_output:
-            if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
+            if isinstance(packet, onyxAnswerPiece) and packet.answer_piece:
                 answer += packet.answer_piece
 
         return answer

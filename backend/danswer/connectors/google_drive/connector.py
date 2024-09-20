@@ -11,33 +11,32 @@ from google.oauth2.credentials import Credentials as OAuthCredentials  # type: i
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
-
-from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
-from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
-from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
-from danswer.configs.app_configs import GOOGLE_DRIVE_ONLY_ORG_PUBLIC
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
-from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
-from danswer.connectors.google_drive.constants import (
+from onyx.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
+from onyx.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
+from onyx.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
+from onyx.configs.app_configs import GOOGLE_DRIVE_ONLY_ORG_PUBLIC
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.constants import DocumentSource
+from onyx.configs.constants import IGNORE_FOR_QA
+from onyx.connectors.cross_connector_utils.retry_wrapper import retry_builder
+from onyx.connectors.google_drive.connector_auth import get_google_drive_creds
+from onyx.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
 )
-from danswer.connectors.google_drive.constants import (
+from onyx.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.file_processing.extract_file_text import docx_to_text
-from danswer.file_processing.extract_file_text import pptx_to_text
-from danswer.file_processing.extract_file_text import read_pdf_file
-from danswer.utils.batching import batch_generator
-from danswer.utils.logger import setup_logger
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.interfaces import SecondsSinceUnixEpoch
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.file_processing.extract_file_text import docx_to_text
+from onyx.file_processing.extract_file_text import pptx_to_text
+from onyx.file_processing.extract_file_text import read_pdf_file
+from onyx.utils.batching import batch_generator
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

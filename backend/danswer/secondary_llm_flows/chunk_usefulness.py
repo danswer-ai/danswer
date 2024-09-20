@@ -1,13 +1,13 @@
 from collections.abc import Callable
 
-from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
-from danswer.llm.interfaces import LLM
-from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
-from danswer.llm.utils import message_to_string
-from danswer.prompts.llm_chunk_filter import NONUSEFUL_PAT
-from danswer.prompts.llm_chunk_filter import SECTION_FILTER_PROMPT
-from danswer.utils.logger import setup_logger
-from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from onyx.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
+from onyx.llm.interfaces import LLM
+from onyx.llm.utils import dict_based_prompt_to_langchain_prompt
+from onyx.llm.utils import message_to_string
+from onyx.prompts.llm_chunk_filter import NONUSEFUL_PAT
+from onyx.prompts.llm_chunk_filter import SECTION_FILTER_PROMPT
+from onyx.utils.logger import setup_logger
+from onyx.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 logger = setup_logger()
 

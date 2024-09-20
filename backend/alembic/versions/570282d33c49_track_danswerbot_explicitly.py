@@ -1,4 +1,4 @@
-"""Track Danswerbot Explicitly
+"""Track onyxbot Explicitly
 
 Revision ID: 570282d33c49
 Revises: 7547d982db8f
@@ -17,11 +17,11 @@ depends_on: None = None
 
 def upgrade() -> None:
     op.add_column(
-        "chat_session", sa.Column("danswerbot_flow", sa.Boolean(), nullable=True)
+        "chat_session", sa.Column("onyxbot_flow", sa.Boolean(), nullable=True)
     )
-    op.execute("UPDATE chat_session SET danswerbot_flow = one_shot")
-    op.alter_column("chat_session", "danswerbot_flow", nullable=False)
+    op.execute("UPDATE chat_session SET onyxbot_flow = one_shot")
+    op.alter_column("chat_session", "onyxbot_flow", nullable=False)
 
 
 def downgrade() -> None:
-    op.drop_column("chat_session", "danswerbot_flow")
+    op.drop_column("chat_session", "onyxbot_flow")

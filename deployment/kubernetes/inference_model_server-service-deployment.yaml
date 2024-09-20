@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: inference-model-server
-        image: danswer/danswer-model-server:latest
+        image: onyx/onyx-model-server:latest
         imagePullPolicy: IfNotPresent
         command: [ "uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000" ]
         ports:

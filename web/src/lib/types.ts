@@ -156,18 +156,18 @@ export interface Tag {
 }
 
 // STANDARD ANSWERS
-export interface StandardAnswerCategory {
+export interface StandaronyxCategory {
   id: number;
   name: string;
 }
 
-export interface StandardAnswer {
+export interface Standaronyx {
   id: number;
   keyword: string;
   answer: string;
   match_regex: boolean;
   match_any_keywords: boolean;
-  categories: StandardAnswerCategory[];
+  categories: StandaronyxCategory[];
 }
 
 // SLACK BOT CONFIGS
@@ -192,7 +192,7 @@ export interface SlackBotConfig {
   persona: Persona | null;
   channel_config: ChannelConfig;
   response_type: SlackBotResponseType;
-  standard_answer_categories: StandardAnswerCategory[];
+  standard_answer_categories: StandaronyxCategory[];
   enable_auto_filters: boolean;
 }
 

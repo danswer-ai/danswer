@@ -7,19 +7,18 @@ from fastapi import Depends
 from fastapi_users.models import UP
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyAccessTokenDatabase
+from onyx.auth.schemas import UserRole
+from onyx.db.engine import get_async_session
+from onyx.db.engine import get_sqlalchemy_async_engine
+from onyx.db.models import AccessToken
+from onyx.db.models import OAuthAccount
+from onyx.db.models import User
+from onyx.utils.variable_functionality import (
+    fetch_versioned_implementation_with_fallback,
+)
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
-from danswer.auth.schemas import UserRole
-from danswer.db.engine import get_async_session
-from danswer.db.engine import get_sqlalchemy_async_engine
-from danswer.db.models import AccessToken
-from danswer.db.models import OAuthAccount
-from danswer.db.models import User
-from danswer.utils.variable_functionality import (
-    fetch_versioned_implementation_with_fallback,
-)
 
 
 def get_default_admin_user_emails() -> list[str]:
@@ -28,7 +27,7 @@ def get_default_admin_user_emails() -> list[str]:
     get_default_admin_user_emails_fn: Callable[
         [], list[str]
     ] = fetch_versioned_implementation_with_fallback(
-        "danswer.auth.users", "get_default_admin_user_emails_", lambda: list[str]()
+        "onyx.auth.users", "get_default_admin_user_emails_", lambda: list[str]()
     )
     return get_default_admin_user_emails_fn()
 

@@ -1,44 +1,44 @@
 from fastapi import FastAPI
 from httpx_oauth.clients.openid import OpenID
+from onyx.auth.users import auth_backend
+from onyx.auth.users import fastapi_users
+from onyx.configs.app_configs import AUTH_TYPE
+from onyx.configs.app_configs import OAUTH_CLIENT_ID
+from onyx.configs.app_configs import OAUTH_CLIENT_SECRET
+from onyx.configs.app_configs import USER_AUTH_SECRET
+from onyx.configs.app_configs import WEB_DOMAIN
+from onyx.configs.constants import AuthType
+from onyx.main import get_application as get_application_base
+from onyx.main import include_router_with_global_prefix_prepended
+from onyx.utils.logger import setup_logger
+from onyx.utils.variable_functionality import global_version
 
-from danswer.auth.users import auth_backend
-from danswer.auth.users import fastapi_users
-from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.app_configs import OAUTH_CLIENT_ID
-from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
-from danswer.configs.app_configs import USER_AUTH_SECRET
-from danswer.configs.app_configs import WEB_DOMAIN
-from danswer.configs.constants import AuthType
-from danswer.main import get_application as get_application_base
-from danswer.main import include_router_with_global_prefix_prepended
-from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import global_version
-from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
-from ee.danswer.server.analytics.api import router as analytics_router
-from ee.danswer.server.api_key.api import router as api_key_router
-from ee.danswer.server.auth_check import check_ee_router_auth
-from ee.danswer.server.enterprise_settings.api import (
+from ee.onyx.configs.app_configs import OPENID_CONFIG_URL
+from ee.onyx.server.analytics.api import router as analytics_router
+from ee.onyx.server.api_key.api import router as api_key_router
+from ee.onyx.server.auth_check import check_ee_router_auth
+from ee.onyx.server.enterprise_settings.api import (
     admin_router as enterprise_settings_admin_router,
 )
-from ee.danswer.server.enterprise_settings.api import (
+from ee.onyx.server.enterprise_settings.api import (
     basic_router as enterprise_settings_router,
 )
-from ee.danswer.server.manage.standard_answer import router as standard_answer_router
-from ee.danswer.server.query_and_chat.chat_backend import (
+from ee.onyx.server.manage.standard_answer import router as standard_answer_router
+from ee.onyx.server.query_and_chat.chat_backend import (
     router as chat_router,
 )
-from ee.danswer.server.query_and_chat.query_backend import (
+from ee.onyx.server.query_and_chat.query_backend import (
     basic_router as query_router,
 )
-from ee.danswer.server.query_history.api import router as query_history_router
-from ee.danswer.server.reporting.usage_export_api import router as usage_export_router
-from ee.danswer.server.saml import router as saml_router
-from ee.danswer.server.seeding import seed_db
-from ee.danswer.server.token_rate_limits.api import (
+from ee.onyx.server.query_history.api import router as query_history_router
+from ee.onyx.server.reporting.usage_export_api import router as usage_export_router
+from ee.onyx.server.saml import router as saml_router
+from ee.onyx.server.seeding import seed_db
+from ee.onyx.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
-from ee.danswer.server.user_group.api import router as user_group_router
-from ee.danswer.utils.encryption import test_encryption
+from ee.onyx.server.user_group.api import router as user_group_router
+from ee.onyx.utils.encryption import test_encryption
 
 logger = setup_logger()
 
@@ -102,7 +102,7 @@ def get_application() -> FastAPI:
     # Ensure all routes have auth enabled or are explicitly marked as public
     check_ee_router_auth(application)
 
-    # seed the Danswer environment with LLMs, Assistants, etc. based on an optional
+    # seed the onyx environment with LLMs, Assistants, etc. based on an optional
     # environment variable. Used to automate deployment for multiple environments.
     seed_db()
 

@@ -5,19 +5,19 @@ from google.oauth2.credentials import Credentials as OAuthCredentials  # type: i
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 from googleapiclient.discovery import build  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
-from sqlalchemy.orm import Session
-
-from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
-from danswer.connectors.google_drive.connector_auth import (
+from onyx.connectors.cross_connector_utils.retry_wrapper import retry_builder
+from onyx.connectors.google_drive.connector_auth import (
     get_google_drive_creds,
 )
-from danswer.connectors.google_drive.constants import FETCH_GROUPS_SCOPES
-from danswer.db.models import ConnectorCredentialPair
-from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
-from danswer.utils.logger import setup_logger
-from ee.danswer.db.external_perm import ExternalUserGroup
-from ee.danswer.db.external_perm import replace_user__ext_group_for_cc_pair__no_commit
-from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
+from onyx.connectors.google_drive.constants import FETCH_GROUPS_SCOPES
+from onyx.db.models import ConnectorCredentialPair
+from onyx.db.users import batch_add_non_web_user_if_not_exists__no_commit
+from onyx.utils.logger import setup_logger
+from sqlalchemy.orm import Session
+
+from ee.onyx.db.external_perm import ExternalUserGroup
+from ee.onyx.db.external_perm import replace_user__ext_group_for_cc_pair__no_commit
+from ee.onyx.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
 logger = setup_logger()
 
@@ -113,7 +113,7 @@ def gdrive_group_sync(
         scopes=FETCH_GROUPS_SCOPES,
     )
 
-    danswer_groups: list[ExternalUserGroup] = []
+    onyx_groups: list[ExternalUserGroup] = []
     for group in _fetch_groups_paginated(
         google_drive_creds,
         identity_source=sync_details.get("identity_source"),
@@ -133,7 +133,7 @@ def gdrive_group_sync(
             db_session=db_session, emails=group_member_emails
         )
         if group_members:
-            danswer_groups.append(
+            onyx_groups.append(
                 ExternalUserGroup(
                     id=group_email, user_ids=[user.id for user in group_members]
                 )
@@ -142,6 +142,6 @@ def gdrive_group_sync(
     replace_user__ext_group_for_cc_pair__no_commit(
         db_session=db_session,
         cc_pair_id=cc_pair.id,
-        group_defs=danswer_groups,
+        group_defs=onyx_groups,
         source=cc_pair.connector.source,
     )

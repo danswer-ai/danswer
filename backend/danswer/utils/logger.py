@@ -51,7 +51,7 @@ def get_log_level_from_str(log_level_str: str = LOG_LEVEL) -> int:
     return log_level_dict.get(log_level_str.upper(), logging.getLevelName("NOTICE"))
 
 
-class DanswerLoggingAdapter(logging.LoggerAdapter):
+class onyxLoggingAdapter(logging.LoggerAdapter):
     def process(
         self, msg: str, kwargs: MutableMapping[str, Any]
     ) -> tuple[str, MutableMapping[str, Any]]:
@@ -124,23 +124,23 @@ def get_standard_formatter() -> ColoredFormatter:
     )
 
 
-DANSWER_DOCKER_ENV_STR = "DANSWER_RUNNING_IN_DOCKER"
+onyx_DOCKER_ENV_STR = "onyx_RUNNING_IN_DOCKER"
 
 
 def is_running_in_container() -> bool:
-    return os.getenv(DANSWER_DOCKER_ENV_STR) == "true"
+    return os.getenv(onyx_DOCKER_ENV_STR) == "true"
 
 
 def setup_logger(
     name: str = __name__,
     log_level: int = get_log_level_from_str(),
     extra: MutableMapping[str, Any] | None = None,
-) -> DanswerLoggingAdapter:
+) -> onyxLoggingAdapter:
     logger = logging.getLogger(name)
 
     # If the logger already has handlers, assume it was already configured and return it.
     if logger.handlers:
-        return DanswerLoggingAdapter(logger, extra=extra)
+        return onyxLoggingAdapter(logger, extra=extra)
 
     logger.setLevel(log_level)
 
@@ -181,4 +181,4 @@ def setup_logger(
 
     logger.notice = lambda msg, *args, **kwargs: logger.log(logging.getLevelName("NOTICE"), msg, *args, **kwargs)  # type: ignore
 
-    return DanswerLoggingAdapter(logger, extra=extra)
+    return onyxLoggingAdapter(logger, extra=extra)

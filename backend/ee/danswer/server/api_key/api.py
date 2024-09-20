@@ -1,17 +1,17 @@
 from fastapi import APIRouter
 from fastapi import Depends
+from onyx.auth.users import current_admin_user
+from onyx.db.engine import get_session
+from onyx.db.models import User
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from ee.danswer.db.api_key import ApiKeyDescriptor
-from ee.danswer.db.api_key import fetch_api_keys
-from ee.danswer.db.api_key import insert_api_key
-from ee.danswer.db.api_key import regenerate_api_key
-from ee.danswer.db.api_key import remove_api_key
-from ee.danswer.db.api_key import update_api_key
-from ee.danswer.server.api_key.models import APIKeyArgs
+from ee.onyx.db.api_key import ApiKeyDescriptor
+from ee.onyx.db.api_key import fetch_api_keys
+from ee.onyx.db.api_key import insert_api_key
+from ee.onyx.db.api_key import regenerate_api_key
+from ee.onyx.db.api_key import remove_api_key
+from ee.onyx.db.api_key import update_api_key
+from ee.onyx.server.api_key.models import APIKeyArgs
 
 
 router = APIRouter(prefix="/admin/api-key")

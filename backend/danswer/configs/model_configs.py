@@ -98,7 +98,7 @@ if _LITELLM_EXTRA_HEADERS_RAW:
         LITELLM_EXTRA_HEADERS = json.loads(_LITELLM_EXTRA_HEADERS_RAW)
     except Exception:
         # need to import here to avoid circular imports
-        from danswer.utils.logger import setup_logger
+        from onyx.utils.logger import setup_logger
 
         logger = setup_logger()
         logger.error(
@@ -113,7 +113,7 @@ if _LITELLM_PASS_THROUGH_HEADERS_RAW:
         LITELLM_PASS_THROUGH_HEADERS = json.loads(_LITELLM_PASS_THROUGH_HEADERS_RAW)
     except Exception:
         # need to import here to avoid circular imports
-        from danswer.utils.logger import setup_logger
+        from onyx.utils.logger import setup_logger
 
         logger = setup_logger()
         logger.error(

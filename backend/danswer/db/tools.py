@@ -1,11 +1,10 @@
 from typing import Any
 from uuid import UUID
 
+from onyx.db.models import Tool
+from onyx.utils.logger import setup_logger
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-from danswer.db.models import Tool
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

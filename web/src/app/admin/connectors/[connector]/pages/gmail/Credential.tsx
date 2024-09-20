@@ -270,7 +270,7 @@ export const GmailJsonUploadSection = ({
         <a
           className="text-link"
           target="_blank"
-          href="https://docs.danswer.dev/connectors/gmail#authorization"
+          href="https://docs.onyx.dev/connectors/gmail#authorization"
         >
           here
         </a>{" "}
@@ -341,7 +341,7 @@ export const GmailOAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-2">
-          When using a Gmail Service Account, you can either have Danswer act as
+          When using a Gmail Service Account, you can either have onyx act as
           the service account itself OR you can specify an account for the
           service account to impersonate.
           <br />
@@ -396,7 +396,7 @@ export const GmailOAuthSection = ({
                 <TextFormField
                   name="gmail_delegated_user"
                   label="[Optional] User email to impersonate:"
-                  subtext="If left blank, Danswer will use the service account itself."
+                  subtext="If left blank, onyx will use the service account itself."
                 />
                 <div className="flex">
                   <button

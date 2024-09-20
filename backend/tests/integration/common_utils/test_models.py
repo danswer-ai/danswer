@@ -1,14 +1,13 @@
 from typing import Any
 from uuid import UUID
 
+from onyx.auth.schemas import UserRole
+from onyx.db.enums import AccessType
+from onyx.search.enums import RecencyBiasSetting
+from onyx.server.documents.models import DocumentSource
+from onyx.server.documents.models import InputType
 from pydantic import BaseModel
 from pydantic import Field
-
-from danswer.auth.schemas import UserRole
-from danswer.db.enums import AccessType
-from danswer.search.enums import RecencyBiasSetting
-from danswer.server.documents.models import DocumentSource
-from danswer.server.documents.models import InputType
 
 """
 These data models are used to represent the data on the testing side of things.

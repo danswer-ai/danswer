@@ -14,9 +14,9 @@ import { useRouter } from "next/navigation";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { useContext, useEffect, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
+import { onyxInitializingLoader } from "@/components/onyxInitializingLoader";
 
-function BackToDanswerButton() {
+function BackToonyxButton() {
   const router = useRouter();
   const enterpriseSettings = useContext(SettingsContext)?.enterpriseSettings;
 
@@ -24,7 +24,7 @@ function BackToDanswerButton() {
     <div className="absolute bottom-0 bg-background w-full flex border-t border-border py-4">
       <div className="mx-auto">
         <Button onClick={() => router.push("/chat")}>
-          Back to {enterpriseSettings?.application_name || "Danswer Chat"}
+          Back to {enterpriseSettings?.application_name || "onyx Chat"}
         </Button>
       </div>
       pr
@@ -52,7 +52,7 @@ export function SharedChatDisplay({
             Did not find a shared chat with the specified ID.
           </Callout>
         </div>
-        <BackToDanswerButton />
+        <BackToonyxButton />
       </div>
     );
   }
@@ -112,7 +112,7 @@ export function SharedChatDisplay({
             ) : (
               <div className="grow flex-0 h-screen w-full flex items-center justify-center">
                 <div className="mb-[33vh]">
-                  <DanswerInitializingLoader />
+                  <onyxInitializingLoader />
                 </div>
               </div>
             )}
@@ -120,7 +120,7 @@ export function SharedChatDisplay({
         </div>
       </div>
 
-      <BackToDanswerButton />
+      <BackToonyxButton />
     </div>
   );
 }

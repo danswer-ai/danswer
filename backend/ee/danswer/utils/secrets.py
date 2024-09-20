@@ -1,8 +1,7 @@
 import hashlib
 
 from fastapi import Request
-
-from danswer.configs.constants import SESSION_KEY
+from onyx.configs.constants import SESSION_KEY
 
 
 def encrypt_string(s: str) -> str:

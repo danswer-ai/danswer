@@ -1,13 +1,12 @@
+from onyx.configs.constants import DocumentSource
+from onyx.db.connector_credential_pair import get_connector_credential_pair
+from onyx.db.enums import AccessType
+from onyx.db.models import Connector
+from onyx.db.models import ConnectorCredentialPair
+from onyx.db.models import UserGroup__ConnectorCredentialPair
+from onyx.utils.logger import setup_logger
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
-
-from danswer.configs.constants import DocumentSource
-from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.enums import AccessType
-from danswer.db.models import Connector
-from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import UserGroup__ConnectorCredentialPair
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

@@ -1,7 +1,7 @@
 import {
-  DanswerDocument,
+  onyxDocument,
   Filters,
-  SearchDanswerDocument,
+  SearchonyxDocument,
   StreamStopReason,
 } from "@/lib/search/interfaces";
 
@@ -71,7 +71,7 @@ export interface ChatSession {
 
 export interface SearchSession {
   search_session_id: number;
-  documents: SearchDanswerDocument[];
+  documents: SearchonyxDocument[];
   messages: BackendMessage[];
   description: string;
 }
@@ -82,7 +82,7 @@ export interface Message {
   type: "user" | "assistant" | "system" | "error";
   retrievalType?: RetrievalType;
   query?: string | null;
-  documents?: DanswerDocument[] | null;
+  documents?: onyxDocument[] | null;
   citations?: CitationMap;
   files: FileDescriptor[];
   toolCalls: ToolCallMetadata[];
@@ -115,7 +115,7 @@ export interface BackendMessage {
   latest_child_message: number | null;
   message: string;
   rephrased_query: string | null;
-  context_docs: { top_documents: DanswerDocument[] } | null;
+  context_docs: { top_documents: onyxDocument[] } | null;
   message_type: "user" | "assistant" | "system";
   time_sent: string;
   citations: CitationMap;
@@ -131,7 +131,7 @@ export interface MessageResponseIDInfo {
 }
 
 export interface DocumentsResponse {
-  top_documents: DanswerDocument[];
+  top_documents: onyxDocument[];
   rephrased_query: string | null;
 }
 

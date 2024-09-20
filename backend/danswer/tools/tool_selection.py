@@ -1,14 +1,14 @@
 import re
 from typing import Any
 
-from danswer.chat.chat_utils import combine_message_chain
-from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.interfaces import LLM
-from danswer.llm.utils import message_to_string
-from danswer.prompts.constants import GENERAL_SEP_PAT
-from danswer.tools.tool import Tool
-from danswer.utils.logger import setup_logger
+from onyx.chat.chat_utils import combine_message_chain
+from onyx.configs.model_configs import GEN_AI_HISTORY_CUTOFF
+from onyx.llm.answering.models import PreviousMessage
+from onyx.llm.interfaces import LLM
+from onyx.llm.utils import message_to_string
+from onyx.prompts.constants import GENERAL_SEP_PAT
+from onyx.tools.tool import Tool
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "danswer-stack.fullname" . }}-api
+  name: {{ include "onyx-stack.fullname" . }}-api
   labels:
-    {{- include "danswer-stack.labels" . | nindent 4 }}
+    {{- include "onyx-stack.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "danswer-stack.fullname" . }}
+    name: {{ include "onyx-stack.fullname" . }}
   minReplicas: {{ .Values.api.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.api.autoscaling.maxReplicas }}
   metrics:

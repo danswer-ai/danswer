@@ -3,6 +3,21 @@ from operator import and_
 from uuid import UUID
 
 from fastapi import HTTPException
+from onyx.db.connector_credential_pair import get_connector_credential_pair_from_id
+from onyx.db.enums import ConnectorCredentialPairStatus
+from onyx.db.models import ConnectorCredentialPair
+from onyx.db.models import Credential__UserGroup
+from onyx.db.models import Document
+from onyx.db.models import DocumentByConnectorCredentialPair
+from onyx.db.models import LLMProvider__UserGroup
+from onyx.db.models import TokenRateLimit__UserGroup
+from onyx.db.models import User
+from onyx.db.models import User__UserGroup
+from onyx.db.models import UserGroup
+from onyx.db.models import UserGroup__ConnectorCredentialPair
+from onyx.db.models import UserRole
+from onyx.db.users import fetch_user_by_id
+from onyx.utils.logger import setup_logger
 from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import Select
@@ -10,24 +25,9 @@ from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
-from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
-from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import Credential__UserGroup
-from danswer.db.models import Document
-from danswer.db.models import DocumentByConnectorCredentialPair
-from danswer.db.models import LLMProvider__UserGroup
-from danswer.db.models import TokenRateLimit__UserGroup
-from danswer.db.models import User
-from danswer.db.models import User__UserGroup
-from danswer.db.models import UserGroup
-from danswer.db.models import UserGroup__ConnectorCredentialPair
-from danswer.db.models import UserRole
-from danswer.db.users import fetch_user_by_id
-from danswer.utils.logger import setup_logger
-from ee.danswer.server.user_group.models import SetCuratorRequest
-from ee.danswer.server.user_group.models import UserGroupCreate
-from ee.danswer.server.user_group.models import UserGroupUpdate
+from ee.onyx.server.user_group.models import SetCuratorRequest
+from ee.onyx.server.user_group.models import UserGroupCreate
+from ee.onyx.server.user_group.models import UserGroupUpdate
 
 logger = setup_logger()
 

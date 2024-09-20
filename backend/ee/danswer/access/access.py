@@ -1,17 +1,17 @@
-from sqlalchemy.orm import Session
-
-from danswer.access.access import (
+from onyx.access.access import (
     _get_access_for_documents as get_access_for_documents_without_groups,
 )
-from danswer.access.access import _get_acl_for_user as get_acl_for_user_without_groups
-from danswer.access.models import DocumentAccess
-from danswer.access.utils import prefix_external_group
-from danswer.access.utils import prefix_user_group
-from danswer.db.document import get_documents_by_ids
-from danswer.db.models import User
-from ee.danswer.db.external_perm import fetch_external_groups_for_user
-from ee.danswer.db.user_group import fetch_user_groups_for_documents
-from ee.danswer.db.user_group import fetch_user_groups_for_user
+from onyx.access.access import _get_acl_for_user as get_acl_for_user_without_groups
+from onyx.access.models import DocumentAccess
+from onyx.access.utils import prefix_external_group
+from onyx.access.utils import prefix_user_group
+from onyx.db.document import get_documents_by_ids
+from onyx.db.models import User
+from sqlalchemy.orm import Session
+
+from ee.onyx.db.external_perm import fetch_external_groups_for_user
+from ee.onyx.db.user_group import fetch_user_groups_for_documents
+from ee.onyx.db.user_group import fetch_user_groups_for_user
 
 
 def _get_access_for_document(
@@ -69,7 +69,7 @@ def _get_access_for_documents(
         )
 
         # If the document is determined to be "public" externally (through a SYNC connector)
-        # then it's given the same access level as if it were marked public within Danswer
+        # then it's given the same access level as if it were marked public within onyx
         is_public_anywhere = document.is_public or non_ee_access.is_public
 
         # To avoid collisions of group namings between connectors, they need to be prefixed
@@ -89,7 +89,7 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
     user should have access to a document if at least one entry in the document's ACL
     matches one entry in the returned set.
 
-    NOTE: is imported in danswer.access.access by `fetch_versioned_implementation`
+    NOTE: is imported in onyx.access.access by `fetch_versioned_implementation`
     DO NOT REMOVE."""
     db_user_groups = fetch_user_groups_for_user(db_session, user.id) if user else []
     prefixed_user_groups = [

@@ -7,20 +7,19 @@ from uuid import uuid4
 
 import redis
 from celery import Celery
-from redis import Redis
-from sqlalchemy.orm import Session
-
-from danswer.background.celery.celeryconfig import CELERY_SEPARATOR
-from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
-from danswer.configs.constants import DanswerCeleryPriority
-from danswer.configs.constants import DanswerCeleryQueues
-from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
-from danswer.db.document import construct_document_select_for_connector_credential_pair
-from danswer.db.document import (
+from onyx.background.celery.celeryconfig import CELERY_SEPARATOR
+from onyx.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
+from onyx.configs.constants import onyxCeleryPriority
+from onyx.configs.constants import onyxCeleryQueues
+from onyx.db.connector_credential_pair import get_connector_credential_pair_from_id
+from onyx.db.document import construct_document_select_for_connector_credential_pair
+from onyx.db.document import (
     construct_document_select_for_connector_credential_pair_by_needs_sync,
 )
-from danswer.db.document_set import construct_document_select_by_docset
-from danswer.utils.variable_functionality import fetch_versioned_implementation
+from onyx.db.document_set import construct_document_select_by_docset
+from onyx.utils.variable_functionality import fetch_versioned_implementation
+from redis import Redis
+from sqlalchemy.orm import Session
 
 
 class RedisObjectHelper(ABC):
@@ -146,9 +145,9 @@ class RedisDocumentSet(RedisObjectHelper):
             result = celery_app.send_task(
                 "vespa_metadata_sync_task",
                 kwargs=dict(document_id=doc.id),
-                queue=DanswerCeleryQueues.VESPA_METADATA_SYNC,
+                queue=onyxCeleryQueues.VESPA_METADATA_SYNC,
                 task_id=custom_task_id,
-                priority=DanswerCeleryPriority.LOW,
+                priority=onyxCeleryPriority.LOW,
             )
 
             async_results.append(result)
@@ -174,7 +173,7 @@ class RedisUserGroup(RedisObjectHelper):
 
         try:
             construct_document_select_by_usergroup = fetch_versioned_implementation(
-                "danswer.db.user_group",
+                "onyx.db.user_group",
                 "construct_document_select_by_usergroup",
             )
         except ModuleNotFoundError:
@@ -201,9 +200,9 @@ class RedisUserGroup(RedisObjectHelper):
             result = celery_app.send_task(
                 "vespa_metadata_sync_task",
                 kwargs=dict(document_id=doc.id),
-                queue=DanswerCeleryQueues.VESPA_METADATA_SYNC,
+                queue=onyxCeleryQueues.VESPA_METADATA_SYNC,
                 task_id=custom_task_id,
-                priority=DanswerCeleryPriority.LOW,
+                priority=onyxCeleryPriority.LOW,
             )
 
             async_results.append(result)
@@ -275,9 +274,9 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
             result = celery_app.send_task(
                 "vespa_metadata_sync_task",
                 kwargs=dict(document_id=doc.id),
-                queue=DanswerCeleryQueues.VESPA_METADATA_SYNC,
+                queue=onyxCeleryQueues.VESPA_METADATA_SYNC,
                 task_id=custom_task_id,
-                priority=DanswerCeleryPriority.MEDIUM,
+                priority=onyxCeleryPriority.MEDIUM,
             )
 
             async_results.append(result)
@@ -333,9 +332,9 @@ class RedisConnectorDeletion(RedisObjectHelper):
                     connector_id=cc_pair.connector_id,
                     credential_id=cc_pair.credential_id,
                 ),
-                queue=DanswerCeleryQueues.CONNECTOR_DELETION,
+                queue=onyxCeleryQueues.CONNECTOR_DELETION,
                 task_id=custom_task_id,
-                priority=DanswerCeleryPriority.MEDIUM,
+                priority=onyxCeleryPriority.MEDIUM,
             )
 
             async_results.append(result)
@@ -349,7 +348,7 @@ def celery_get_queue_length(queue: str, r: Redis) -> int:
     used to implement task prioritization.
     This operation is not atomic."""
     total_length = 0
-    for i in range(len(DanswerCeleryPriority)):
+    for i in range(len(onyxCeleryPriority)):
         queue_name = queue
         if i > 0:
             queue_name += CELERY_SEPARATOR

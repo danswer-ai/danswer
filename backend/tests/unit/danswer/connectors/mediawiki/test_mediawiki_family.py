@@ -1,11 +1,10 @@
 from typing import Final
 
 import pytest
+from onyx.connectors.mediawiki import family
 from pytest_mock import MockFixture
 from pywikibot.families.wikipedia_family import Family as WikipediaFamily  # type: ignore[import-untyped]
 from pywikibot.family import Family  # type: ignore[import-untyped]
-
-from danswer.connectors.mediawiki import family
 
 NON_BUILTIN_WIKIS: Final[list[tuple[str, str]]] = [
     ("https://fallout.fandom.com", "falloutwiki"),

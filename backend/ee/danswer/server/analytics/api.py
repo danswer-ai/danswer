@@ -3,15 +3,15 @@ from collections import defaultdict
 
 from fastapi import APIRouter
 from fastapi import Depends
+from onyx.auth.users import current_admin_user
+from onyx.db.engine import get_session
+from onyx.db.models import User
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from ee.danswer.db.analytics import fetch_danswerbot_analytics
-from ee.danswer.db.analytics import fetch_per_user_query_analytics
-from ee.danswer.db.analytics import fetch_query_analytics
+from ee.onyx.db.analytics import fetch_onyxbot_analytics
+from ee.onyx.db.analytics import fetch_per_user_query_analytics
+from ee.onyx.db.analytics import fetch_query_analytics
 
 router = APIRouter(prefix="/analytics")
 
@@ -82,20 +82,20 @@ def get_user_analytics(
     ]
 
 
-class DanswerbotAnalyticsResponse(BaseModel):
+class onyxbotAnalyticsResponse(BaseModel):
     total_queries: int
     auto_resolved: int
     date: datetime.date
 
 
-@router.get("/admin/danswerbot")
-def get_danswerbot_analytics(
+@router.get("/admin/onyxbot")
+def get_onyxbot_analytics(
     start: datetime.datetime | None = None,
     end: datetime.datetime | None = None,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> list[DanswerbotAnalyticsResponse]:
-    daily_danswerbot_info = fetch_danswerbot_analytics(
+) -> list[onyxbotAnalyticsResponse]:
+    daily_onyxbot_info = fetch_onyxbot_analytics(
         start=start
         or (
             datetime.datetime.utcnow() - datetime.timedelta(days=30)
@@ -105,13 +105,13 @@ def get_danswerbot_analytics(
     )
 
     resolution_results = [
-        DanswerbotAnalyticsResponse(
+        onyxbotAnalyticsResponse(
             total_queries=total_queries,
             # If it hits negatives, something has gone wrong...
             auto_resolved=max(0, total_queries - total_negatives),
             date=date,
         )
-        for total_queries, total_negatives, date in daily_danswerbot_info
+        for total_queries, total_negatives, date in daily_onyxbot_info
     ]
 
     return resolution_results

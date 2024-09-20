@@ -1,14 +1,13 @@
 from fastapi import APIRouter
 from fastapi import Depends
-from sqlalchemy.orm import Session
-
-from danswer.auth.users import current_admin_user
-from danswer.db.engine import get_session
-from danswer.db.index_attempt import (
+from onyx.auth.users import current_admin_user
+from onyx.db.engine import get_session
+from onyx.db.index_attempt import (
     get_index_attempt_errors,
 )
-from danswer.db.models import User
-from danswer.server.documents.models import IndexAttemptError
+from onyx.db.models import User
+from onyx.server.documents.models import IndexAttemptError
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/manage")
 

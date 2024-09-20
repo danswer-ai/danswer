@@ -6,17 +6,17 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Response
 from fastapi.responses import StreamingResponse
+from onyx.auth.users import current_admin_user
+from onyx.db.engine import get_session
+from onyx.db.models import User
+from onyx.file_store.constants import STANDARD_CHUNK_SIZE
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from danswer.file_store.constants import STANDARD_CHUNK_SIZE
-from ee.danswer.db.usage_export import get_all_usage_reports
-from ee.danswer.db.usage_export import get_usage_report_data
-from ee.danswer.db.usage_export import UsageReportMetadata
-from ee.danswer.server.reporting.usage_export_generation import create_new_usage_report
+from ee.onyx.db.usage_export import get_all_usage_reports
+from ee.onyx.db.usage_export import get_usage_report_data
+from ee.onyx.db.usage_export import UsageReportMetadata
+from ee.onyx.server.reporting.usage_export_generation import create_new_usage_report
 
 router = APIRouter()
 

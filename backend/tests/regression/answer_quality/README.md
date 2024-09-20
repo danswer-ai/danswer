@@ -20,13 +20,13 @@ This Python script automates the process of running search quality tests for a b
 4. Set up the PYTHONPATH permanently:
    Add the following line to your shell configuration file (e.g., `~/.bashrc`, `~/.zshrc`, or `~/.bash_profile`):
    ```
-   export PYTHONPATH=$PYTHONPATH:/path/to/danswer/backend
+   export PYTHONPATH=$PYTHONPATH:/path/to/onyx/backend
    ```
-   Replace `/path/to/danswer` with the actual path to your Danswer repository.
+   Replace `/path/to/onyx` with the actual path to your onyx repository.
    After adding this line, restart your terminal or run `source ~/.bashrc` (or the appropriate config file) to apply the changes.
-5. Navigate to Danswer repo:
+5. Navigate to onyx repo:
 ```
-cd path/to/danswer
+cd path/to/onyx
 ```
 6. Navigate to the answer_quality folder:
 ```

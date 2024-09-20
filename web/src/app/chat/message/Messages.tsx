@@ -10,10 +10,7 @@ import {
 import { FeedbackType } from "../types";
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import {
-  DanswerDocument,
-  FilteredDanswerDocument,
-} from "@/lib/search/interfaces";
+import { onyxDocument, FilteredonyxDocument } from "@/lib/search/interfaces";
 import { SearchSummary } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { SkippedSearch } from "./SkippedSearch";
@@ -75,7 +72,7 @@ function FileDisplay({
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
         <div
-          id="danswer-file"
+          id="onyx-file"
           className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}
         >
           <div className="flex flex-col gap-2">
@@ -95,7 +92,7 @@ function FileDisplay({
       )}
       {imageFiles && imageFiles.length > 0 && (
         <div
-          id="danswer-image"
+          id="onyx-image"
           className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}
         >
           <div className="flex flex-col gap-2">
@@ -143,9 +140,9 @@ export const AIMessage = ({
   continueGenerating?: () => void;
   otherMessagesCanSwitchTo?: number[];
   onMessageSelection?: (messageId: number) => void;
-  selectedDocuments?: DanswerDocument[] | null;
+  selectedDocuments?: onyxDocument[] | null;
   toggleDocumentSelection?: () => void;
-  docs?: DanswerDocument[] | null;
+  docs?: onyxDocument[] | null;
   alternativeAssistant?: Persona | null;
   currentPersona: Persona;
   messageId: number | null;
@@ -153,7 +150,7 @@ export const AIMessage = ({
   files?: FileDescriptor[];
   query?: string;
   personaName?: string;
-  citedDocuments?: [string, DanswerDocument][] | null;
+  citedDocuments?: [string, onyxDocument][] | null;
   toolCall?: ToolCallMetadata;
   isComplete?: boolean;
   hasDocs?: boolean;
@@ -225,7 +222,7 @@ export const AIMessage = ({
     content = trimIncompleteCodeSection(content);
   }
 
-  let filteredDocs: FilteredDanswerDocument[] = [];
+  let filteredDocs: FilteredonyxDocument[] = [];
 
   if (docs) {
     filteredDocs = docs
@@ -238,7 +235,7 @@ export const AIMessage = ({
       .filter((doc) => {
         return citedDocumentIds.includes(doc.document_id);
       })
-      .map((doc: DanswerDocument, ind: number) => {
+      .map((doc: onyxDocument, ind: number) => {
         return {
           ...doc,
           included: selectedDocumentIds.includes(doc.document_id),
@@ -261,7 +258,7 @@ export const AIMessage = ({
 
   return (
     <div
-      id="danswer-ai-message"
+      id="onyx-ai-message"
       ref={trackedElementRef}
       className={"py-5 ml-4 px-5 relative flex "}
     >
@@ -681,7 +678,7 @@ export const HumanMessage = ({
 
   return (
     <div
-      id="danswer-human-message"
+      id="onyx-human-message"
       className="pt-5 pb-1 px-2 lg:px-5 flex -mr-6 relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

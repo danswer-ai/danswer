@@ -2,9 +2,8 @@ import os
 
 import pytest
 import redis
-
-from danswer.redis.redis_pool import RedisPool
-from danswer.utils.logger import setup_logger
+from onyx.redis.redis_pool import RedisPool
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

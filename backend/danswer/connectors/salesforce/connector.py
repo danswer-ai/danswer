@@ -4,23 +4,22 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import IdConnector
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.interfaces import SecondsSinceUnixEpoch
+from onyx.connectors.models import BasicExpertInfo
+from onyx.connectors.models import ConnectorMissingCredentialError
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.connectors.salesforce.utils import extract_dict_text
+from onyx.utils.logger import setup_logger
 from simple_salesforce import Salesforce
 from simple_salesforce import SFType
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import IdConnector
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import BasicExpertInfo
-from danswer.connectors.models import ConnectorMissingCredentialError
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.connectors.salesforce.utils import extract_dict_text
-from danswer.utils.logger import setup_logger
 
 DEFAULT_PARENT_OBJECT_TYPES = ["Account"]
 MAX_QUERY_LENGTH = 10000  # max query length is 20,000 characters
@@ -80,7 +79,7 @@ class SalesforceConnector(LoadConnector, PollConnector, IdConnector):
             raise ConnectorMissingCredentialError("Salesforce")
 
         salesforce_id = object_dict["Id"]
-        danswer_salesforce_id = f"{ID_PREFIX}{salesforce_id}"
+        onyx_salesforce_id = f"{ID_PREFIX}{salesforce_id}"
         extracted_link = f"https://{self.sf_client.sf_instance}/{salesforce_id}"
         extracted_doc_updated_at = time_str_to_utc(object_dict["LastModifiedDate"])
         extracted_object_text = extract_dict_text(object_dict)
@@ -92,7 +91,7 @@ class SalesforceConnector(LoadConnector, PollConnector, IdConnector):
         ]
 
         doc = Document(
-            id=danswer_salesforce_id,
+            id=onyx_salesforce_id,
             sections=[Section(link=extracted_link, text=extracted_object_text)],
             source=DocumentSource.SALESFORCE,
             semantic_identifier=extracted_semantic_identifier,

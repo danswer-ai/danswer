@@ -6,30 +6,29 @@ from typing import Dict
 from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
-from danswer.connectors.gmail.connector_auth import (
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
+from onyx.connectors.gmail.connector_auth import (
     get_gmail_creds_for_authorized_user,
 )
-from danswer.connectors.gmail.connector_auth import (
+from onyx.connectors.gmail.connector_auth import (
     get_gmail_creds_for_service_account,
 )
-from danswer.connectors.gmail.constants import (
+from onyx.connectors.gmail.constants import (
     DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
 )
-from danswer.connectors.gmail.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
-from danswer.connectors.gmail.constants import (
+from onyx.connectors.gmail.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
+from onyx.connectors.gmail.constants import (
     GMAIL_DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.utils.logger import setup_logger
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.interfaces import SecondsSinceUnixEpoch
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

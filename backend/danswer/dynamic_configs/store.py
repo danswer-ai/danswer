@@ -6,13 +6,12 @@ from pathlib import Path
 from typing import cast
 
 from filelock import FileLock
+from onyx.db.engine import get_session_factory
+from onyx.db.models import KVStore
+from onyx.dynamic_configs.interface import ConfigNotFoundError
+from onyx.dynamic_configs.interface import DynamicConfigStore
+from onyx.dynamic_configs.interface import JSON_ro
 from sqlalchemy.orm import Session
-
-from danswer.db.engine import get_session_factory
-from danswer.db.models import KVStore
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.dynamic_configs.interface import DynamicConfigStore
-from danswer.dynamic_configs.interface import JSON_ro
 
 
 FILE_LOCK_TIMEOUT = 10

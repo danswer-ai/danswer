@@ -1,13 +1,13 @@
 services:
   api_server:
-    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
+    image: onyx/onyx-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
     command: >
       /bin/sh -c "alembic upgrade head &&
-      echo \"Starting Danswer Api Server\" &&
-      uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
+      echo \"Starting onyx Api Server\" &&
+      uvicorn onyx.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
       - index
@@ -36,7 +36,7 @@ services:
 
 
   background:
-    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
+    image: onyx/onyx-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -68,7 +68,7 @@ services:
 
 
   web_server:
-    image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
+    image: onyx/onyx-web-server:${IMAGE_TAG:-latest}
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -82,8 +82,8 @@ services:
 
         # Enterprise Edition only
         - NEXT_PUBLIC_THEME=${NEXT_PUBLIC_THEME:-}
-        # DO NOT TURN ON unless you have EXPLICIT PERMISSION from Danswer.
-        - NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED=${NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED:-false}
+        # DO NOT TURN ON unless you have EXPLICIT PERMISSION from onyx.
+        - NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_onyx_POWERED=${NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_onyx_POWERED:-false}
     depends_on:
       - api_server
     restart: always
@@ -97,7 +97,7 @@ services:
 
 
   inference_model_server:
-    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
+    image: onyx/onyx-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -121,7 +121,7 @@ services:
 
 
   indexing_model_server:
-    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
+    image: onyx/onyx-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -220,10 +220,10 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${DANSWER_POSTGRES_DATA_DIR:-./postgres_data}
+      device: ${onyx_POSTGRES_DATA_DIR:-./postgres_data}
   vespa_volume:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DANSWER_VESPA_DATA_DIR:-./vespa_data}
+      device: ${onyx_VESPA_DATA_DIR:-./vespa_data}

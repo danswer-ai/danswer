@@ -3,60 +3,60 @@ from threading import Event
 from typing import Any
 from typing import cast
 
+from onyx.configs.constants import MessageType
+from onyx.configs.onyxbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
+from onyx.configs.onyxbot_configs import onyx_BOT_REPHRASE_MESSAGE
+from onyx.configs.onyxbot_configs import onyx_BOT_RESPOND_EVERY_CHANNEL
+from onyx.connectors.slack.utils import expert_info_from_slack_id
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.db.search_settings import get_current_search_settings
+from onyx.dynamic_configs.interface import ConfigNotFoundError
+from onyx.natural_language_processing.search_nlp_models import EmbeddingModel
+from onyx.natural_language_processing.search_nlp_models import warm_up_bi_encoder
+from onyx.one_shot_answer.models import ThreadMessage
+from onyx.onyxbot.slack.config import get_slack_bot_config_for_channel
+from onyx.onyxbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
+from onyx.onyxbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
+from onyx.onyxbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
+from onyx.onyxbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
+from onyx.onyxbot.slack.constants import GENERATE_ANSWER_BUTTON_ACTION_ID
+from onyx.onyxbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
+from onyx.onyxbot.slack.constants import LIKE_BLOCK_ACTION_ID
+from onyx.onyxbot.slack.constants import VIEW_DOC_FEEDBACK_ID
+from onyx.onyxbot.slack.handlers.handle_buttons import handle_doc_feedback_button
+from onyx.onyxbot.slack.handlers.handle_buttons import handle_followup_button
+from onyx.onyxbot.slack.handlers.handle_buttons import (
+    handle_followup_resolved_button,
+)
+from onyx.onyxbot.slack.handlers.handle_buttons import (
+    handle_generate_answer_button,
+)
+from onyx.onyxbot.slack.handlers.handle_buttons import handle_slack_feedback
+from onyx.onyxbot.slack.handlers.handle_message import handle_message
+from onyx.onyxbot.slack.handlers.handle_message import (
+    remove_scheduled_feedback_reminder,
+)
+from onyx.onyxbot.slack.handlers.handle_message import schedule_feedback_reminder
+from onyx.onyxbot.slack.models import SlackMessageInfo
+from onyx.onyxbot.slack.tokens import fetch_tokens
+from onyx.onyxbot.slack.utils import check_message_limit
+from onyx.onyxbot.slack.utils import decompose_action_id
+from onyx.onyxbot.slack.utils import get_channel_name_from_id
+from onyx.onyxbot.slack.utils import get_onyx_bot_app_id
+from onyx.onyxbot.slack.utils import read_slack_thread
+from onyx.onyxbot.slack.utils import remove_onyx_bot_tag
+from onyx.onyxbot.slack.utils import rephrase_slack_message
+from onyx.onyxbot.slack.utils import respond_in_thread
+from onyx.search.retrieval.search_runner import download_nltk_data
+from onyx.server.manage.models import SlackBotTokens
+from onyx.utils.logger import setup_logger
+from onyx.utils.variable_functionality import set_is_ee_based_on_env_variable
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 from sqlalchemy.orm import Session
 
-from danswer.configs.constants import MessageType
-from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
-from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
-from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
-from danswer.connectors.slack.utils import expert_info_from_slack_id
-from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
-from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
-from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
-from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
-from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
-from danswer.danswerbot.slack.constants import GENERATE_ANSWER_BUTTON_ACTION_ID
-from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
-from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
-from danswer.danswerbot.slack.constants import VIEW_DOC_FEEDBACK_ID
-from danswer.danswerbot.slack.handlers.handle_buttons import handle_doc_feedback_button
-from danswer.danswerbot.slack.handlers.handle_buttons import handle_followup_button
-from danswer.danswerbot.slack.handlers.handle_buttons import (
-    handle_followup_resolved_button,
-)
-from danswer.danswerbot.slack.handlers.handle_buttons import (
-    handle_generate_answer_button,
-)
-from danswer.danswerbot.slack.handlers.handle_buttons import handle_slack_feedback
-from danswer.danswerbot.slack.handlers.handle_message import handle_message
-from danswer.danswerbot.slack.handlers.handle_message import (
-    remove_scheduled_feedback_reminder,
-)
-from danswer.danswerbot.slack.handlers.handle_message import schedule_feedback_reminder
-from danswer.danswerbot.slack.models import SlackMessageInfo
-from danswer.danswerbot.slack.tokens import fetch_tokens
-from danswer.danswerbot.slack.utils import check_message_limit
-from danswer.danswerbot.slack.utils import decompose_action_id
-from danswer.danswerbot.slack.utils import get_channel_name_from_id
-from danswer.danswerbot.slack.utils import get_danswer_bot_app_id
-from danswer.danswerbot.slack.utils import read_slack_thread
-from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
-from danswer.danswerbot.slack.utils import rephrase_slack_message
-from danswer.danswerbot.slack.utils import respond_in_thread
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.search_settings import get_current_search_settings
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
-from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
-from danswer.one_shot_answer.models import ThreadMessage
-from danswer.search.retrieval.search_runner import download_nltk_data
-from danswer.server.manage.models import SlackBotTokens
-from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.configs import SLACK_CHANNEL_ID
@@ -112,7 +112,7 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
 
         if (
             msg in _SLACK_GREETINGS_TO_IGNORE
-            or remove_danswer_bot_tag(msg, client=client.web_client)
+            or remove_onyx_bot_tag(msg, client=client.web_client)
             in _SLACK_GREETINGS_TO_IGNORE
         ):
             channel_specific_logger.error(
@@ -132,18 +132,18 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
             return False
 
         if event_type == "message":
-            bot_tag_id = get_danswer_bot_app_id(client.web_client)
+            bot_tag_id = get_onyx_bot_app_id(client.web_client)
 
             is_dm = event.get("channel_type") == "im"
             is_tagged = bot_tag_id and bot_tag_id in msg
-            is_danswer_bot_msg = bot_tag_id and bot_tag_id in event.get("user", "")
+            is_onyx_bot_msg = bot_tag_id and bot_tag_id in event.get("user", "")
 
-            # DanswerBot should never respond to itself
-            if is_danswer_bot_msg:
-                logger.info("Ignoring message from DanswerBot")
+            # onyxBot should never respond to itself
+            if is_onyx_bot_msg:
+                logger.info("Ignoring message from onyxBot")
                 return False
 
-            # DMs with the bot don't pick up the @DanswerBot so we have to keep the
+            # DMs with the bot don't pick up the @onyxBot so we have to keep the
             # caught events_api
             if is_tagged and not is_dm:
                 # Let the tag flow handle this case, don't reply twice
@@ -178,7 +178,7 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
         message_ts = event.get("ts")
         thread_ts = event.get("thread_ts")
         # Pick the root of the thread (if a thread exists)
-        # Can respond in thread if it's an "im" directly to Danswer or @DanswerBot is tagged
+        # Can respond in thread if it's an "im" directly to onyx or @onyxBot is tagged
         if (
             thread_ts
             and message_ts != thread_ts
@@ -202,14 +202,14 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
 
         if not channel:
             channel_specific_logger.error(
-                "Received DanswerBot command without channel - skipping"
+                "Received onyxBot command without channel - skipping"
             )
             return False
 
         sender = req.payload.get("user_id")
         if not sender:
             channel_specific_logger.error(
-                "Cannot respond to DanswerBot command without sender to respond to."
+                "Cannot respond to onyxBot command without sender to respond to."
             )
             return False
 
@@ -264,9 +264,9 @@ def build_request_details(
         )
         email = expert_info.email if expert_info else None
 
-        msg = remove_danswer_bot_tag(msg, client=client.web_client)
+        msg = remove_onyx_bot_tag(msg, client=client.web_client)
 
-        if DANSWER_BOT_REPHRASE_MESSAGE:
+        if onyx_BOT_REPHRASE_MESSAGE:
             logger.notice(f"Rephrasing Slack message. Original message: {msg}")
             try:
                 msg = rephrase_slack_message(msg)
@@ -277,7 +277,7 @@ def build_request_details(
             logger.notice(f"Received Slack message: {msg}")
 
         if tagged:
-            logger.debug("User tagged DanswerBot")
+            logger.debug("User tagged onyxBot")
 
         if thread_ts != message_ts and thread_ts is not None:
             thread_messages = read_slack_thread(
@@ -341,7 +341,7 @@ def apologize_for_fail(
 def process_message(
     req: SocketModeRequest,
     client: SocketModeClient,
-    respond_every_channel: bool = DANSWER_BOT_RESPOND_EVERY_CHANNEL,
+    respond_every_channel: bool = onyx_BOT_RESPOND_EVERY_CHANNEL,
     notify_no_answer: bool = NOTIFY_SLACKBOT_NO_ANSWER,
 ) -> None:
     logger.debug(f"Received Slack request of type: '{req.type}'")
@@ -369,7 +369,7 @@ def process_message(
             and not respond_every_channel
             # Can't have configs for DMs so don't toss them out
             and not is_dm
-            # If /DanswerBot (is_bot_msg) or @DanswerBot (bypass_filters)
+            # If /onyxBot (is_bot_msg) or @onyxBot (bypass_filters)
             # always respond with the default configs
             and not (details.is_bot_msg or details.bypass_filters)
         ):
@@ -453,7 +453,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
 
 def _get_socket_client(slack_bot_tokens: SlackBotTokens) -> SocketModeClient:
     # For more info on how to set this up, checkout the docs:
-    # https://docs.danswer.dev/slack_bot_setup
+    # https://docs.onyx.dev/slack_bot_setup
     return SocketModeClient(
         # This app-level token will be used only for establishing a connection
         app_token=slack_bot_tokens.app_token,
@@ -469,9 +469,9 @@ def _initialize_socket_client(socket_client: SocketModeClient) -> None:
     socket_client.connect()
 
 
-# Follow the guide (https://docs.danswer.dev/slack_bot_setup) to set up
+# Follow the guide (https://docs.onyx.dev/slack_bot_setup) to set up
 # the slack bot in your workspace, and then add the bot to any channels you want to
-# try and answer questions for. Running this file will setup Danswer to listen to all
+# try and answer questions for. Running this file will setup onyx to listen to all
 # messages in those channels and attempt to answer them. As of now, it will only respond
 # to messages sent directly in the channel - it will not respond to messages sent within a
 # thread.

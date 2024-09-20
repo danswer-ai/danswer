@@ -6,39 +6,38 @@ from typing import cast
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
-
-from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_curator_or_admin_user
-from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
-from danswer.configs.constants import DanswerCeleryPriority
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import KV_GEN_AI_KEY_CHECK_TIME
-from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.connector_credential_pair import (
+from onyx.auth.users import current_admin_user
+from onyx.auth.users import current_curator_or_admin_user
+from onyx.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
+from onyx.configs.constants import DocumentSource
+from onyx.configs.constants import KV_GEN_AI_KEY_CHECK_TIME
+from onyx.configs.constants import onyxCeleryPriority
+from onyx.db.connector_credential_pair import get_connector_credential_pair
+from onyx.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
 )
-from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
-from danswer.db.engine import get_session
-from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.feedback import fetch_docs_ranked_by_boost
-from danswer.db.feedback import update_document_boost
-from danswer.db.feedback import update_document_hidden
-from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
-from danswer.db.models import User
-from danswer.document_index.document_index_utils import get_both_index_names
-from danswer.document_index.factory import get_default_document_index
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.file_store.file_store import get_default_file_store
-from danswer.llm.factory import get_default_llms
-from danswer.llm.utils import test_llm
-from danswer.server.documents.models import ConnectorCredentialPairIdentifier
-from danswer.server.manage.models import BoostDoc
-from danswer.server.manage.models import BoostUpdateRequest
-from danswer.server.manage.models import HiddenUpdateRequest
-from danswer.server.models import StatusResponse
-from danswer.utils.logger import setup_logger
+from onyx.db.deletion_attempt import check_deletion_attempt_is_allowed
+from onyx.db.engine import get_session
+from onyx.db.enums import ConnectorCredentialPairStatus
+from onyx.db.feedback import fetch_docs_ranked_by_boost
+from onyx.db.feedback import update_document_boost
+from onyx.db.feedback import update_document_hidden
+from onyx.db.index_attempt import cancel_indexing_attempts_for_ccpair
+from onyx.db.models import User
+from onyx.document_index.document_index_utils import get_both_index_names
+from onyx.document_index.factory import get_default_document_index
+from onyx.dynamic_configs.factory import get_dynamic_config_store
+from onyx.dynamic_configs.interface import ConfigNotFoundError
+from onyx.file_store.file_store import get_default_file_store
+from onyx.llm.factory import get_default_llms
+from onyx.llm.utils import test_llm
+from onyx.server.documents.models import ConnectorCredentialPairIdentifier
+from onyx.server.manage.models import BoostDoc
+from onyx.server.manage.models import BoostUpdateRequest
+from onyx.server.manage.models import HiddenUpdateRequest
+from onyx.server.models import StatusResponse
+from onyx.utils.logger import setup_logger
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/manage")
 logger = setup_logger()
@@ -146,7 +145,7 @@ def create_deletion_attempt_for_connector_id(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    from danswer.background.celery.celery_app import (
+    from onyx.background.celery.celery_app import (
         check_for_connector_deletion_task,
     )
 
@@ -195,7 +194,7 @@ def create_deletion_attempt_for_connector_id(
 
     # run the beat task to pick up this deletion early
     check_for_connector_deletion_task.apply_async(
-        priority=DanswerCeleryPriority.HIGH,
+        priority=onyxCeleryPriority.HIGH,
     )
 
     if cc_pair.connector.source == DocumentSource.FILE:

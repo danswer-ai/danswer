@@ -1,20 +1,20 @@
+from onyx.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
+from onyx.db.models import DocumentSet
+from onyx.db.models import LLMProvider as LLMProviderModel
+from onyx.db.models import LLMProvider__UserGroup
+from onyx.db.models import SearchSettings
+from onyx.db.models import Tool as ToolModel
+from onyx.db.models import User
+from onyx.db.models import User__UserGroup
+from onyx.server.manage.embedding.models import CloudEmbeddingProvider
+from onyx.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
+from onyx.server.manage.llm.models import FullLLMProvider
+from onyx.server.manage.llm.models import LLMProviderUpsertRequest
 from sqlalchemy import delete
 from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
-from danswer.db.models import DocumentSet
-from danswer.db.models import LLMProvider as LLMProviderModel
-from danswer.db.models import LLMProvider__UserGroup
-from danswer.db.models import SearchSettings
-from danswer.db.models import Tool as ToolModel
-from danswer.db.models import User
-from danswer.db.models import User__UserGroup
-from danswer.server.manage.embedding.models import CloudEmbeddingProvider
-from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
-from danswer.server.manage.llm.models import FullLLMProvider
-from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from shared_configs.enums import EmbeddingProvider
 
 

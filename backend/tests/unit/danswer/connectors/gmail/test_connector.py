@@ -1,18 +1,17 @@
 import datetime
 
 import pytest
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
+from onyx.connectors.gmail.connector import GmailConnector
+from onyx.connectors.models import Document
 from pytest_mock import MockFixture
-
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
-from danswer.connectors.gmail.connector import GmailConnector
-from danswer.connectors.models import Document
 
 
 def test_email_to_document() -> None:
     connector = GmailConnector()
     email_id = "18cabedb1ea46b03"
-    email_subject = "Danswer Test Subject"
+    email_subject = "onyx Test Subject"
     email_sender = "Google <no-reply@accounts.google.com>"
     email_recipient = "test.mail@gmail.com"
     email_date = "Wed, 27 Dec 2023 15:38:49 GMT"
@@ -80,7 +79,7 @@ def test_email_to_document() -> None:
     doc = connector._email_to_document(full_email)
     assert type(doc) == Document
     assert doc.source == DocumentSource.GMAIL
-    assert doc.title == "Danswer Test Subject"
+    assert doc.title == "onyx Test Subject"
     assert doc.doc_updated_at == datetime.datetime(
         2023, 12, 27, 15, 38, 49, tzinfo=datetime.timezone.utc
     )
@@ -94,7 +93,7 @@ def test_email_to_document() -> None:
 
 
 def test_fetch_mails_from_gmail_empty(mocker: MockFixture) -> None:
-    mock_discovery = mocker.patch("danswer.connectors.gmail.connector.discovery")
+    mock_discovery = mocker.patch("onyx.connectors.gmail.connector.discovery")
     mock_discovery.build.return_value.users.return_value.messages.return_value.list.return_value.execute.return_value = {
         "messages": []
     }
@@ -105,9 +104,9 @@ def test_fetch_mails_from_gmail_empty(mocker: MockFixture) -> None:
 
 
 def test_fetch_mails_from_gmail(mocker: MockFixture) -> None:
-    mock_discovery = mocker.patch("danswer.connectors.gmail.connector.discovery")
+    mock_discovery = mocker.patch("onyx.connectors.gmail.connector.discovery")
     email_id = "18cabedb1ea46b03"
-    email_subject = "Danswer Test Subject"
+    email_subject = "onyx Test Subject"
     email_sender = "Google <no-reply@accounts.google.com>"
     email_recipient = "test.mail@gmail.com"
     mock_discovery.build.return_value.users.return_value.messages.return_value.list.return_value.execute.return_value = {

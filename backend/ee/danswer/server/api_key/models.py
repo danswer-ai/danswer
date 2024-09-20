@@ -1,6 +1,5 @@
+from onyx.auth.schemas import UserRole
 from pydantic import BaseModel
-
-from danswer.auth.schemas import UserRole
 
 
 class APIKeyArgs(BaseModel):

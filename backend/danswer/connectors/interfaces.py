@@ -2,7 +2,7 @@ import abc
 from collections.abc import Iterator
 from typing import Any
 
-from danswer.connectors.models import Document
+from onyx.connectors.models import Document
 
 
 SecondsSinceUnixEpoch = float

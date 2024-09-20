@@ -15,117 +15,117 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from httpx_oauth.clients.google import GoogleOAuth2
-from sqlalchemy.orm import Session
-
-from danswer import __version__
-from danswer.auth.schemas import UserCreate
-from danswer.auth.schemas import UserRead
-from danswer.auth.schemas import UserUpdate
-from danswer.auth.users import auth_backend
-from danswer.auth.users import fastapi_users
-from danswer.chat.load_yamls import load_chat_yamls
-from danswer.configs.app_configs import APP_API_PREFIX
-from danswer.configs.app_configs import APP_HOST
-from danswer.configs.app_configs import APP_PORT
-from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
-from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
-from danswer.configs.app_configs import LOG_ENDPOINT_LATENCY
-from danswer.configs.app_configs import OAUTH_CLIENT_ID
-from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
-from danswer.configs.app_configs import USER_AUTH_SECRET
-from danswer.configs.app_configs import WEB_DOMAIN
-from danswer.configs.constants import AuthType
-from danswer.configs.constants import KV_REINDEX_KEY
-from danswer.configs.constants import KV_SEARCH_SETTINGS
-from danswer.configs.constants import POSTGRES_WEB_APP_NAME
-from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
-from danswer.configs.model_configs import GEN_AI_API_KEY
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
-from danswer.db.connector import check_connectors_exist
-from danswer.db.connector import create_initial_default_connector
-from danswer.db.connector_credential_pair import associate_default_cc_pair
-from danswer.db.connector_credential_pair import get_connector_credential_pairs
-from danswer.db.connector_credential_pair import resync_cc_pair
-from danswer.db.credentials import create_initial_public_credential
-from danswer.db.document import check_docs_exist
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.engine import init_sqlalchemy_engine
-from danswer.db.engine import warm_up_connections
-from danswer.db.index_attempt import cancel_indexing_attempts_past_model
-from danswer.db.index_attempt import expire_index_attempts
-from danswer.db.llm import fetch_default_provider
-from danswer.db.llm import update_default_provider
-from danswer.db.llm import upsert_llm_provider
-from danswer.db.persona import delete_old_default_personas
-from danswer.db.search_settings import get_current_search_settings
-from danswer.db.search_settings import get_secondary_search_settings
-from danswer.db.search_settings import update_current_search_settings
-from danswer.db.search_settings import update_secondary_search_settings
-from danswer.db.swap_index import check_index_swap
-from danswer.document_index.factory import get_default_document_index
-from danswer.document_index.interfaces import DocumentIndex
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.indexing.models import IndexingSetting
-from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
-from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
-from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
-from danswer.search.models import SavedSearchSettings
-from danswer.search.retrieval.search_runner import download_nltk_data
-from danswer.server.auth_check import check_router_auth
-from danswer.server.danswer_api.ingestion import router as danswer_api_router
-from danswer.server.documents.cc_pair import router as cc_pair_router
-from danswer.server.documents.connector import router as connector_router
-from danswer.server.documents.credential import router as credential_router
-from danswer.server.documents.document import router as document_router
-from danswer.server.documents.indexing import router as indexing_router
-from danswer.server.features.document_set.api import router as document_set_router
-from danswer.server.features.folder.api import router as folder_router
-from danswer.server.features.input_prompt.api import (
+from onyx import __version__
+from onyx.auth.schemas import UserCreate
+from onyx.auth.schemas import UserRead
+from onyx.auth.schemas import UserUpdate
+from onyx.auth.users import auth_backend
+from onyx.auth.users import fastapi_users
+from onyx.chat.load_yamls import load_chat_yamls
+from onyx.configs.app_configs import APP_API_PREFIX
+from onyx.configs.app_configs import APP_HOST
+from onyx.configs.app_configs import APP_PORT
+from onyx.configs.app_configs import AUTH_TYPE
+from onyx.configs.app_configs import DISABLE_GENERATIVE_AI
+from onyx.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
+from onyx.configs.app_configs import LOG_ENDPOINT_LATENCY
+from onyx.configs.app_configs import OAUTH_CLIENT_ID
+from onyx.configs.app_configs import OAUTH_CLIENT_SECRET
+from onyx.configs.app_configs import USER_AUTH_SECRET
+from onyx.configs.app_configs import WEB_DOMAIN
+from onyx.configs.constants import AuthType
+from onyx.configs.constants import KV_REINDEX_KEY
+from onyx.configs.constants import KV_SEARCH_SETTINGS
+from onyx.configs.constants import POSTGRES_WEB_APP_NAME
+from onyx.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
+from onyx.configs.model_configs import GEN_AI_API_KEY
+from onyx.configs.model_configs import GEN_AI_MODEL_VERSION
+from onyx.db.connector import check_connectors_exist
+from onyx.db.connector import create_initial_default_connector
+from onyx.db.connector_credential_pair import associate_default_cc_pair
+from onyx.db.connector_credential_pair import get_connector_credential_pairs
+from onyx.db.connector_credential_pair import resync_cc_pair
+from onyx.db.credentials import create_initial_public_credential
+from onyx.db.document import check_docs_exist
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.db.engine import init_sqlalchemy_engine
+from onyx.db.engine import warm_up_connections
+from onyx.db.index_attempt import cancel_indexing_attempts_past_model
+from onyx.db.index_attempt import expire_index_attempts
+from onyx.db.llm import fetch_default_provider
+from onyx.db.llm import update_default_provider
+from onyx.db.llm import upsert_llm_provider
+from onyx.db.persona import delete_old_default_personas
+from onyx.db.search_settings import get_current_search_settings
+from onyx.db.search_settings import get_secondary_search_settings
+from onyx.db.search_settings import update_current_search_settings
+from onyx.db.search_settings import update_secondary_search_settings
+from onyx.db.swap_index import check_index_swap
+from onyx.document_index.factory import get_default_document_index
+from onyx.document_index.interfaces import DocumentIndex
+from onyx.dynamic_configs.factory import get_dynamic_config_store
+from onyx.dynamic_configs.interface import ConfigNotFoundError
+from onyx.indexing.models import IndexingSetting
+from onyx.natural_language_processing.search_nlp_models import EmbeddingModel
+from onyx.natural_language_processing.search_nlp_models import warm_up_bi_encoder
+from onyx.natural_language_processing.search_nlp_models import warm_up_cross_encoder
+from onyx.search.models import SavedSearchSettings
+from onyx.search.retrieval.search_runner import download_nltk_data
+from onyx.server.auth_check import check_router_auth
+from onyx.server.documents.cc_pair import router as cc_pair_router
+from onyx.server.documents.connector import router as connector_router
+from onyx.server.documents.credential import router as credential_router
+from onyx.server.documents.document import router as document_router
+from onyx.server.documents.indexing import router as indexing_router
+from onyx.server.features.document_set.api import router as document_set_router
+from onyx.server.features.folder.api import router as folder_router
+from onyx.server.features.input_prompt.api import (
     admin_router as admin_input_prompt_router,
 )
-from danswer.server.features.input_prompt.api import basic_router as input_prompt_router
-from danswer.server.features.persona.api import admin_router as admin_persona_router
-from danswer.server.features.persona.api import basic_router as persona_router
-from danswer.server.features.prompt.api import basic_router as prompt_router
-from danswer.server.features.tool.api import admin_router as admin_tool_router
-from danswer.server.features.tool.api import router as tool_router
-from danswer.server.gpts.api import router as gpts_router
-from danswer.server.manage.administrative import router as admin_router
-from danswer.server.manage.embedding.api import admin_router as embedding_admin_router
-from danswer.server.manage.embedding.api import basic_router as embedding_router
-from danswer.server.manage.get_state import router as state_router
-from danswer.server.manage.llm.api import admin_router as llm_admin_router
-from danswer.server.manage.llm.api import basic_router as llm_router
-from danswer.server.manage.llm.models import LLMProviderUpsertRequest
-from danswer.server.manage.search_settings import router as search_settings_router
-from danswer.server.manage.slack_bot import router as slack_bot_management_router
-from danswer.server.manage.users import router as user_router
-from danswer.server.middleware.latency_logging import add_latency_logging_middleware
-from danswer.server.query_and_chat.chat_backend import router as chat_router
-from danswer.server.query_and_chat.query_backend import (
+from onyx.server.features.input_prompt.api import basic_router as input_prompt_router
+from onyx.server.features.persona.api import admin_router as admin_persona_router
+from onyx.server.features.persona.api import basic_router as persona_router
+from onyx.server.features.prompt.api import basic_router as prompt_router
+from onyx.server.features.tool.api import admin_router as admin_tool_router
+from onyx.server.features.tool.api import router as tool_router
+from onyx.server.gpts.api import router as gpts_router
+from onyx.server.manage.administrative import router as admin_router
+from onyx.server.manage.embedding.api import admin_router as embedding_admin_router
+from onyx.server.manage.embedding.api import basic_router as embedding_router
+from onyx.server.manage.get_state import router as state_router
+from onyx.server.manage.llm.api import admin_router as llm_admin_router
+from onyx.server.manage.llm.api import basic_router as llm_router
+from onyx.server.manage.llm.models import LLMProviderUpsertRequest
+from onyx.server.manage.search_settings import router as search_settings_router
+from onyx.server.manage.slack_bot import router as slack_bot_management_router
+from onyx.server.manage.users import router as user_router
+from onyx.server.middleware.latency_logging import add_latency_logging_middleware
+from onyx.server.onyx_api.ingestion import router as onyx_api_router
+from onyx.server.query_and_chat.chat_backend import router as chat_router
+from onyx.server.query_and_chat.query_backend import (
     admin_router as admin_query_router,
 )
-from danswer.server.query_and_chat.query_backend import basic_router as query_router
-from danswer.server.settings.api import admin_router as settings_admin_router
-from danswer.server.settings.api import basic_router as settings_router
-from danswer.server.settings.store import load_settings
-from danswer.server.settings.store import store_settings
-from danswer.server.token_rate_limits.api import (
+from onyx.server.query_and_chat.query_backend import basic_router as query_router
+from onyx.server.settings.api import admin_router as settings_admin_router
+from onyx.server.settings.api import basic_router as settings_router
+from onyx.server.settings.store import load_settings
+from onyx.server.settings.store import store_settings
+from onyx.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
-from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
-from danswer.tools.built_in_tools import load_builtin_tools
-from danswer.tools.built_in_tools import refresh_built_in_tools_cache
-from danswer.utils.gpu_utils import gpu_status_request
-from danswer.utils.logger import setup_logger
-from danswer.utils.telemetry import get_or_generate_uuid
-from danswer.utils.telemetry import optional_telemetry
-from danswer.utils.telemetry import RecordType
-from danswer.utils.variable_functionality import fetch_versioned_implementation
-from danswer.utils.variable_functionality import global_version
-from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
+from onyx.tools.built_in_tools import auto_add_search_tool_to_personas
+from onyx.tools.built_in_tools import load_builtin_tools
+from onyx.tools.built_in_tools import refresh_built_in_tools_cache
+from onyx.utils.gpu_utils import gpu_status_request
+from onyx.utils.logger import setup_logger
+from onyx.utils.telemetry import get_or_generate_uuid
+from onyx.utils.telemetry import optional_telemetry
+from onyx.utils.telemetry import RecordType
+from onyx.utils.variable_functionality import fetch_versioned_implementation
+from onyx.utils.variable_functionality import global_version
+from onyx.utils.variable_functionality import set_is_ee_based_on_env_variable
+from sqlalchemy.orm import Session
+
 from shared_configs.configs import CORS_ALLOWED_ORIGIN
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
@@ -357,7 +357,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     engine = get_sqlalchemy_engine()
 
     verify_auth = fetch_versioned_implementation(
-        "danswer.auth.users", "verify_auth_setting"
+        "onyx.auth.users", "verify_auth_setting"
     )
     # Will throw exception if an issue is found
     verify_auth()
@@ -478,9 +478,7 @@ def log_http_error(_: Request, exc: Exception) -> JSONResponse:
 
 
 def get_application() -> FastAPI:
-    application = FastAPI(
-        title="Danswer Backend", version=__version__, lifespan=lifespan
-    )
+    application = FastAPI(title="onyx Backend", version=__version__, lifespan=lifespan)
 
     # Add the custom exception handler
     application.add_exception_handler(status.HTTP_400_BAD_REQUEST, log_http_error)
@@ -514,7 +512,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, tool_router)
     include_router_with_global_prefix_prepended(application, admin_tool_router)
     include_router_with_global_prefix_prepended(application, state_router)
-    include_router_with_global_prefix_prepended(application, danswer_api_router)
+    include_router_with_global_prefix_prepended(application, onyx_api_router)
     include_router_with_global_prefix_prepended(application, gpts_router)
     include_router_with_global_prefix_prepended(application, settings_router)
     include_router_with_global_prefix_prepended(application, settings_admin_router)
@@ -612,12 +610,12 @@ def get_application() -> FastAPI:
 # NOTE: needs to be outside of the `if __name__ == "__main__"` block so that the
 # app is exportable
 set_is_ee_based_on_env_variable()
-app = fetch_versioned_implementation(module="danswer.main", attribute="get_application")
+app = fetch_versioned_implementation(module="onyx.main", attribute="get_application")
 
 
 if __name__ == "__main__":
     logger.notice(
-        f"Starting Danswer Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
+        f"Starting onyx Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
     )
 
     if global_version.get_is_ee_version():

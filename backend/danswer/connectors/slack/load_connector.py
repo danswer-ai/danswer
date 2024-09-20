@@ -6,15 +6,15 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.connectors.slack.connector import filter_channels
-from danswer.connectors.slack.utils import get_message_link
-from danswer.utils.logger import setup_logger
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.connectors.slack.connector import filter_channels
+from onyx.connectors.slack.utils import get_message_link
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

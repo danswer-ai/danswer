@@ -3,43 +3,43 @@ import re
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from onyx.auth.users import current_user
+from onyx.chat.chat_utils import create_chat_chain
+from onyx.chat.models import AllCitations
+from onyx.chat.models import FinalUsedContextDocsResponse
+from onyx.chat.models import LlmDoc
+from onyx.chat.models import LLMRelevanceFilterResponse
+from onyx.chat.models import onyxAnswerPiece
+from onyx.chat.models import QADocsResponse
+from onyx.chat.models import StreamingError
+from onyx.chat.process_message import ChatPacketStream
+from onyx.chat.process_message import stream_chat_message_objects
+from onyx.configs.constants import MessageType
+from onyx.configs.onyxbot_configs import onyx_BOT_TARGET_CHUNK_PERCENTAGE
+from onyx.db.chat import create_chat_session
+from onyx.db.chat import create_new_chat_message
+from onyx.db.chat import get_or_create_root_message
+from onyx.db.engine import get_session
+from onyx.db.models import User
+from onyx.llm.factory import get_llms_for_persona
+from onyx.llm.utils import get_max_input_tokens
+from onyx.natural_language_processing.utils import get_tokenizer
+from onyx.one_shot_answer.qa_utils import combine_message_thread
+from onyx.search.models import OptionalSearchSetting
+from onyx.search.models import RetrievalDetails
+from onyx.search.models import SavedSearchDoc
+from onyx.secondary_llm_flows.query_expansion import thread_based_query_rephrase
+from onyx.server.query_and_chat.models import ChatMessageDetail
+from onyx.server.query_and_chat.models import CreateChatMessageRequest
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_user
-from danswer.chat.chat_utils import create_chat_chain
-from danswer.chat.models import AllCitations
-from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import FinalUsedContextDocsResponse
-from danswer.chat.models import LlmDoc
-from danswer.chat.models import LLMRelevanceFilterResponse
-from danswer.chat.models import QADocsResponse
-from danswer.chat.models import StreamingError
-from danswer.chat.process_message import ChatPacketStream
-from danswer.chat.process_message import stream_chat_message_objects
-from danswer.configs.constants import MessageType
-from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
-from danswer.db.chat import create_chat_session
-from danswer.db.chat import create_new_chat_message
-from danswer.db.chat import get_or_create_root_message
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from danswer.llm.factory import get_llms_for_persona
-from danswer.llm.utils import get_max_input_tokens
-from danswer.natural_language_processing.utils import get_tokenizer
-from danswer.one_shot_answer.qa_utils import combine_message_thread
-from danswer.search.models import OptionalSearchSetting
-from danswer.search.models import RetrievalDetails
-from danswer.search.models import SavedSearchDoc
-from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
-from danswer.server.query_and_chat.models import ChatMessageDetail
-from danswer.server.query_and_chat.models import CreateChatMessageRequest
-from danswer.utils.logger import setup_logger
-from ee.danswer.server.query_and_chat.models import BasicCreateChatMessageRequest
-from ee.danswer.server.query_and_chat.models import (
+from ee.onyx.server.query_and_chat.models import BasicCreateChatMessageRequest
+from ee.onyx.server.query_and_chat.models import (
     BasicCreateChatMessageWithHistoryRequest,
 )
-from ee.danswer.server.query_and_chat.models import ChatBasicResponse
-from ee.danswer.server.query_and_chat.models import SimpleDoc
+from ee.onyx.server.query_and_chat.models import ChatBasicResponse
+from ee.onyx.server.query_and_chat.models import SimpleDoc
 
 logger = setup_logger()
 
@@ -90,7 +90,7 @@ def _convert_packet_stream_to_response(
 
     answer = ""
     for packet in packets:
-        if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
+        if isinstance(packet, onyxAnswerPiece) and packet.answer_piece:
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
             response.top_documents = packet.top_documents
@@ -244,7 +244,7 @@ def handle_send_message_simple_with_history(
     input_tokens = get_max_input_tokens(
         model_name=llm.config.model_name, model_provider=llm.config.model_provider
     )
-    max_history_tokens = int(input_tokens * DANSWER_BOT_TARGET_CHUNK_PERCENTAGE)
+    max_history_tokens = int(input_tokens * onyx_BOT_TARGET_CHUNK_PERCENTAGE)
 
     # Every chat Session begins with an empty root message
     root_message = get_or_create_root_message(

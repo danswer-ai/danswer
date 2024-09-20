@@ -2,6 +2,23 @@ from collections.abc import Sequence
 from typing import cast
 from uuid import UUID
 
+from onyx.db.connector_credential_pair import get_cc_pair_groups_for_ids
+from onyx.db.connector_credential_pair import get_connector_credential_pairs
+from onyx.db.enums import AccessType
+from onyx.db.enums import ConnectorCredentialPairStatus
+from onyx.db.models import ConnectorCredentialPair
+from onyx.db.models import Document
+from onyx.db.models import DocumentByConnectorCredentialPair
+from onyx.db.models import DocumentSet as DocumentSetDBModel
+from onyx.db.models import DocumentSet__ConnectorCredentialPair
+from onyx.db.models import DocumentSet__UserGroup
+from onyx.db.models import User
+from onyx.db.models import User__UserGroup
+from onyx.db.models import UserRole
+from onyx.server.features.document_set.models import DocumentSetCreationRequest
+from onyx.server.features.document_set.models import DocumentSetUpdateRequest
+from onyx.utils.logger import setup_logger
+from onyx.utils.variable_functionality import fetch_versioned_implementation
 from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import exists
@@ -11,24 +28,6 @@ from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
-
-from danswer.db.connector_credential_pair import get_cc_pair_groups_for_ids
-from danswer.db.connector_credential_pair import get_connector_credential_pairs
-from danswer.db.enums import AccessType
-from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import Document
-from danswer.db.models import DocumentByConnectorCredentialPair
-from danswer.db.models import DocumentSet as DocumentSetDBModel
-from danswer.db.models import DocumentSet__ConnectorCredentialPair
-from danswer.db.models import DocumentSet__UserGroup
-from danswer.db.models import User
-from danswer.db.models import User__UserGroup
-from danswer.db.models import UserRole
-from danswer.server.features.document_set.models import DocumentSetCreationRequest
-from danswer.server.features.document_set.models import DocumentSetUpdateRequest
-from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
 
@@ -105,7 +104,7 @@ def _mark_document_set_cc_pairs_as_outdated__no_commit(
 def delete_document_set_privacy__no_commit(
     document_set_id: int, db_session: Session
 ) -> None:
-    """No private document sets in Danswer MIT"""
+    """No private document sets in onyx MIT"""
 
 
 def get_document_set_by_id(
@@ -146,7 +145,7 @@ def make_doc_set_private(
 ) -> None:
     # May cause error if someone switches down to MIT from EE
     if user_ids or group_ids:
-        raise NotImplementedError("Danswer MIT does not support private Document Sets")
+        raise NotImplementedError("onyx MIT does not support private Document Sets")
 
 
 def _check_if_cc_pairs_are_owned_by_groups(
@@ -225,7 +224,7 @@ def insert_document_set(
         db_session.add_all(ds_cc_pairs)
 
         versioned_private_doc_set_fn = fetch_versioned_implementation(
-            "danswer.db.document_set", "make_doc_set_private"
+            "onyx.db.document_set", "make_doc_set_private"
         )
 
         # Private Document Sets
@@ -287,7 +286,7 @@ def update_document_set(
         document_set_row.is_public = document_set_update_request.is_public
 
         versioned_private_doc_set_fn = fetch_versioned_implementation(
-            "danswer.db.document_set", "make_doc_set_private"
+            "onyx.db.document_set", "make_doc_set_private"
         )
 
         # Private Document Sets
@@ -381,7 +380,7 @@ def mark_document_set_as_to_be_deleted(
 
         # delete all private document set information
         versioned_delete_private_fn = fetch_versioned_implementation(
-            "danswer.db.document_set", "delete_document_set_privacy__no_commit"
+            "onyx.db.document_set", "delete_document_set_privacy__no_commit"
         )
         versioned_delete_private_fn(
             document_set_id=document_set_id, db_session=db_session

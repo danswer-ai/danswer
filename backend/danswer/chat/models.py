@@ -3,14 +3,13 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from onyx.configs.constants import DocumentSource
+from onyx.search.enums import QueryFlow
+from onyx.search.enums import SearchType
+from onyx.search.models import RetrievalDocs
+from onyx.search.models import SearchResponse
+from onyx.tools.custom.base_tool_types import ToolResultType
 from pydantic import BaseModel
-
-from danswer.configs.constants import DocumentSource
-from danswer.search.enums import QueryFlow
-from danswer.search.enums import SearchType
-from danswer.search.models import RetrievalDocs
-from danswer.search.models import SearchResponse
-from danswer.tools.custom.base_tool_types import ToolResultType
 
 
 class LlmDoc(BaseModel):
@@ -85,7 +84,7 @@ class DocumentRelevance(BaseModel):
     relevance_summaries: dict[str, RelevanceAnalysis]
 
 
-class DanswerAnswerPiece(BaseModel):
+class onyxAnswerPiece(BaseModel):
     # A small piece of a complete answer. Used for streaming back answers.
     answer_piece: str | None  # if None, specifies the end of an Answer
 
@@ -117,7 +116,7 @@ class StreamingError(BaseModel):
     stack_trace: str | None = None
 
 
-class DanswerQuote(BaseModel):
+class onyxQuote(BaseModel):
     # This is during inference so everything is a string by this point
     quote: str
     document_id: str
@@ -127,28 +126,28 @@ class DanswerQuote(BaseModel):
     blurb: str
 
 
-class DanswerQuotes(BaseModel):
-    quotes: list[DanswerQuote]
+class onyxQuotes(BaseModel):
+    quotes: list[onyxQuote]
 
 
-class DanswerContext(BaseModel):
+class onyxContext(BaseModel):
     content: str
     document_id: str
     semantic_identifier: str
     blurb: str
 
 
-class DanswerContexts(BaseModel):
-    contexts: list[DanswerContext]
+class onyxContexts(BaseModel):
+    contexts: list[onyxContext]
 
 
-class DanswerAnswer(BaseModel):
+class onyxAnswer(BaseModel):
     answer: str | None
 
 
-class QAResponse(SearchResponse, DanswerAnswer):
-    quotes: list[DanswerQuote] | None
-    contexts: list[DanswerContexts] | None
+class QAResponse(SearchResponse, onyxAnswer):
+    quotes: list[onyxQuote] | None
+    contexts: list[onyxContexts] | None
     predicted_flow: QueryFlow
     predicted_search: SearchType
     eval_res_valid: bool | None = None
@@ -166,10 +165,10 @@ class CustomToolResponse(BaseModel):
 
 
 AnswerQuestionPossibleReturn = (
-    DanswerAnswerPiece
-    | DanswerQuotes
+    onyxAnswerPiece
+    | onyxQuotes
     | CitationInfo
-    | DanswerContexts
+    | onyxContexts
     | ImageGenerationDisplay
     | CustomToolResponse
     | StreamingError

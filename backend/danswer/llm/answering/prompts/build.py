@@ -4,20 +4,19 @@ from typing import cast
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
-
-from danswer.file_store.models import InMemoryChatFile
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.answering.models import PromptConfig
-from danswer.llm.answering.prompts.citations_prompt import compute_max_llm_input_tokens
-from danswer.llm.interfaces import LLMConfig
-from danswer.llm.utils import build_content_with_imgs
-from danswer.llm.utils import check_message_tokens
-from danswer.llm.utils import translate_history_to_basemessages
-from danswer.natural_language_processing.utils import get_tokenizer
-from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
-from danswer.prompts.prompt_utils import add_date_time_to_prompt
-from danswer.prompts.prompt_utils import drop_messages_history_overflow
-from danswer.tools.message import ToolCallSummary
+from onyx.file_store.models import InMemoryChatFile
+from onyx.llm.answering.models import PreviousMessage
+from onyx.llm.answering.models import PromptConfig
+from onyx.llm.answering.prompts.citations_prompt import compute_max_llm_input_tokens
+from onyx.llm.interfaces import LLMConfig
+from onyx.llm.utils import build_content_with_imgs
+from onyx.llm.utils import check_message_tokens
+from onyx.llm.utils import translate_history_to_basemessages
+from onyx.natural_language_processing.utils import get_tokenizer
+from onyx.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
+from onyx.prompts.prompt_utils import add_date_time_to_prompt
+from onyx.prompts.prompt_utils import drop_messages_history_overflow
+from onyx.tools.message import ToolCallSummary
 
 
 def default_build_system_message(

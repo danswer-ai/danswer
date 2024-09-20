@@ -3,9 +3,9 @@ This file takes the happy path to adding a curator to a user group and then test
 the permissions of the curator manipulating credentials.
 """
 import pytest
+from onyx.server.documents.models import DocumentSource
 from requests.exceptions import HTTPError
 
-from danswer.server.documents.models import DocumentSource
 from tests.integration.common_utils.managers.credential import CredentialManager
 from tests.integration.common_utils.managers.user import TestUser
 from tests.integration.common_utils.managers.user import UserManager

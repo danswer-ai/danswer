@@ -27,8 +27,8 @@ export const ApiKeyModal = ({ hide }: { hide: () => void }) => {
       <div className="max-h-[75vh] overflow-y-auto flex flex-col px-4">
         <div>
           <div className="mb-5 text-sm">
-            Please provide an API Key below in order to start using
-            Danswer – you can always change this later.
+            Please provide an API Key below in order to start using onyx – you
+            can always change this later.
             <br />
             If you&apos;d rather look around first, you can
             <strong onClick={() => hide()} className="text-link cursor-pointer">

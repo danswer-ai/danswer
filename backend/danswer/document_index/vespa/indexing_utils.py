@@ -4,43 +4,42 @@ from datetime import datetime
 from datetime import timezone
 
 import httpx
-from retry import retry
-
-from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
+from onyx.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
 )
-from danswer.document_index.document_index_utils import get_uuid_from_chunk
-from danswer.document_index.vespa.shared_utils.utils import remove_invalid_unicode_chars
-from danswer.document_index.vespa.shared_utils.utils import (
+from onyx.document_index.document_index_utils import get_uuid_from_chunk
+from onyx.document_index.vespa.shared_utils.utils import remove_invalid_unicode_chars
+from onyx.document_index.vespa.shared_utils.utils import (
     replace_invalid_doc_id_characters,
 )
-from danswer.document_index.vespa_constants import ACCESS_CONTROL_LIST
-from danswer.document_index.vespa_constants import BLURB
-from danswer.document_index.vespa_constants import BOOST
-from danswer.document_index.vespa_constants import CHUNK_ID
-from danswer.document_index.vespa_constants import CONTENT
-from danswer.document_index.vespa_constants import CONTENT_SUMMARY
-from danswer.document_index.vespa_constants import DOC_UPDATED_AT
-from danswer.document_index.vespa_constants import DOCUMENT_ID
-from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
-from danswer.document_index.vespa_constants import DOCUMENT_SETS
-from danswer.document_index.vespa_constants import EMBEDDINGS
-from danswer.document_index.vespa_constants import LARGE_CHUNK_REFERENCE_IDS
-from danswer.document_index.vespa_constants import METADATA
-from danswer.document_index.vespa_constants import METADATA_LIST
-from danswer.document_index.vespa_constants import METADATA_SUFFIX
-from danswer.document_index.vespa_constants import NUM_THREADS
-from danswer.document_index.vespa_constants import PRIMARY_OWNERS
-from danswer.document_index.vespa_constants import SECONDARY_OWNERS
-from danswer.document_index.vespa_constants import SECTION_CONTINUATION
-from danswer.document_index.vespa_constants import SEMANTIC_IDENTIFIER
-from danswer.document_index.vespa_constants import SKIP_TITLE_EMBEDDING
-from danswer.document_index.vespa_constants import SOURCE_LINKS
-from danswer.document_index.vespa_constants import SOURCE_TYPE
-from danswer.document_index.vespa_constants import TITLE
-from danswer.document_index.vespa_constants import TITLE_EMBEDDING
-from danswer.indexing.models import DocMetadataAwareIndexChunk
-from danswer.utils.logger import setup_logger
+from onyx.document_index.vespa_constants import ACCESS_CONTROL_LIST
+from onyx.document_index.vespa_constants import BLURB
+from onyx.document_index.vespa_constants import BOOST
+from onyx.document_index.vespa_constants import CHUNK_ID
+from onyx.document_index.vespa_constants import CONTENT
+from onyx.document_index.vespa_constants import CONTENT_SUMMARY
+from onyx.document_index.vespa_constants import DOC_UPDATED_AT
+from onyx.document_index.vespa_constants import DOCUMENT_ID
+from onyx.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
+from onyx.document_index.vespa_constants import DOCUMENT_SETS
+from onyx.document_index.vespa_constants import EMBEDDINGS
+from onyx.document_index.vespa_constants import LARGE_CHUNK_REFERENCE_IDS
+from onyx.document_index.vespa_constants import METADATA
+from onyx.document_index.vespa_constants import METADATA_LIST
+from onyx.document_index.vespa_constants import METADATA_SUFFIX
+from onyx.document_index.vespa_constants import NUM_THREADS
+from onyx.document_index.vespa_constants import PRIMARY_OWNERS
+from onyx.document_index.vespa_constants import SECONDARY_OWNERS
+from onyx.document_index.vespa_constants import SECTION_CONTINUATION
+from onyx.document_index.vespa_constants import SEMANTIC_IDENTIFIER
+from onyx.document_index.vespa_constants import SKIP_TITLE_EMBEDDING
+from onyx.document_index.vespa_constants import SOURCE_LINKS
+from onyx.document_index.vespa_constants import SOURCE_TYPE
+from onyx.document_index.vespa_constants import TITLE
+from onyx.document_index.vespa_constants import TITLE_EMBEDDING
+from onyx.indexing.models import DocMetadataAwareIndexChunk
+from onyx.utils.logger import setup_logger
+from retry import retry
 
 logger = setup_logger()
 
@@ -52,7 +51,7 @@ def _does_document_exist(
     http_client: httpx.Client,
 ) -> bool:
     """Returns whether the document already exists and the users/group whitelists
-    Specifically in this case, document refers to a vespa document which is equivalent to a Danswer
+    Specifically in this case, document refers to a vespa document which is equivalent to a onyx
     chunk. This checks for whether the chunk exists already in the index"""
     doc_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}"
     doc_fetch_response = http_client.get(doc_url)

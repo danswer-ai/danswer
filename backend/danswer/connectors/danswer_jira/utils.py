@@ -6,8 +6,7 @@ from jira import JIRA
 from jira.resources import CustomFieldOption
 from jira.resources import Issue
 from jira.resources import User
-
-from danswer.utils.logger import setup_logger
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

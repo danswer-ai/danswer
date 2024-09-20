@@ -1,14 +1,13 @@
 import concurrent.futures
 
 import httpx
-from retry import retry
-
-from danswer.document_index.vespa.chunk_retrieval import (
+from onyx.document_index.vespa.chunk_retrieval import (
     get_all_vespa_ids_for_document_id,
 )
-from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
-from danswer.document_index.vespa_constants import NUM_THREADS
-from danswer.utils.logger import setup_logger
+from onyx.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
+from onyx.document_index.vespa_constants import NUM_THREADS
+from onyx.utils.logger import setup_logger
+from retry import retry
 
 logger = setup_logger()
 

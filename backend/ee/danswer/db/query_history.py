@@ -1,6 +1,8 @@
 import datetime
 from typing import Literal
 
+from onyx.db.models import ChatMessage
+from onyx.db.models import ChatSession
 from sqlalchemy import asc
 from sqlalchemy import BinaryExpression
 from sqlalchemy import ColumnElement
@@ -8,9 +10,6 @@ from sqlalchemy import desc
 from sqlalchemy.orm import contains_eager
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
-
-from danswer.db.models import ChatMessage
-from danswer.db.models import ChatSession
 
 SortByOptions = Literal["time_sent"]
 

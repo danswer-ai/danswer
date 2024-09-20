@@ -5,23 +5,22 @@ from typing import Any
 from typing import List
 from typing import Tuple
 
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.interfaces import SecondsSinceUnixEpoch
+from onyx.connectors.models import ConnectorMissingCredentialError
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.connectors.zulip.schemas import GetMessagesResponse
+from onyx.connectors.zulip.schemas import Message
+from onyx.connectors.zulip.utils import build_search_narrow
+from onyx.connectors.zulip.utils import call_api
+from onyx.connectors.zulip.utils import encode_zulip_narrow_operand
+from onyx.utils.logger import setup_logger
 from zulip import Client
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import ConnectorMissingCredentialError
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.connectors.zulip.schemas import GetMessagesResponse
-from danswer.connectors.zulip.schemas import Message
-from danswer.connectors.zulip.utils import build_search_narrow
-from danswer.connectors.zulip.utils import call_api
-from danswer.connectors.zulip.utils import encode_zulip_narrow_operand
-from danswer.utils.logger import setup_logger
 
 # Potential improvements
 # 1. Group documents messages into topics, make 1 document per topic per week

@@ -4,103 +4,102 @@ from collections.abc import Iterator
 from functools import partial
 from typing import cast
 
-from sqlalchemy.orm import Session
-
-from danswer.chat.chat_utils import create_chat_chain
-from danswer.chat.models import AllCitations
-from danswer.chat.models import CitationInfo
-from danswer.chat.models import CustomToolResponse
-from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import FinalUsedContextDocsResponse
-from danswer.chat.models import ImageGenerationDisplay
-from danswer.chat.models import LLMRelevanceFilterResponse
-from danswer.chat.models import MessageResponseIDInfo
-from danswer.chat.models import MessageSpecificCitations
-from danswer.chat.models import QADocsResponse
-from danswer.chat.models import StreamingError
-from danswer.configs.chat_configs import BING_API_KEY
-from danswer.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
-from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
-from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
-from danswer.configs.constants import MessageType
-from danswer.configs.model_configs import GEN_AI_TEMPERATURE
-from danswer.db.chat import attach_files_to_chat_message
-from danswer.db.chat import create_db_search_doc
-from danswer.db.chat import create_new_chat_message
-from danswer.db.chat import get_chat_message
-from danswer.db.chat import get_chat_session_by_id
-from danswer.db.chat import get_db_search_doc_by_id
-from danswer.db.chat import get_doc_query_identifiers_from_model
-from danswer.db.chat import get_or_create_root_message
-from danswer.db.chat import reserve_message_id
-from danswer.db.chat import translate_db_message_to_chat_message_detail
-from danswer.db.chat import translate_db_search_doc_to_server_search_doc
-from danswer.db.engine import get_session_context_manager
-from danswer.db.llm import fetch_existing_llm_providers
-from danswer.db.models import SearchDoc as DbSearchDoc
-from danswer.db.models import ToolCall
-from danswer.db.models import User
-from danswer.db.persona import get_persona_by_id
-from danswer.db.search_settings import get_current_search_settings
-from danswer.document_index.factory import get_default_document_index
-from danswer.file_store.models import ChatFileType
-from danswer.file_store.models import FileDescriptor
-from danswer.file_store.utils import load_all_chat_files
-from danswer.file_store.utils import save_files_from_urls
-from danswer.llm.answering.answer import Answer
-from danswer.llm.answering.models import AnswerStyleConfig
-from danswer.llm.answering.models import CitationConfig
-from danswer.llm.answering.models import DocumentPruningConfig
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.answering.models import PromptConfig
-from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_llms_for_persona
-from danswer.llm.factory import get_main_llm_from_tuple
-from danswer.llm.interfaces import LLMConfig
-from danswer.llm.utils import litellm_exception_to_error_msg
-from danswer.natural_language_processing.utils import get_tokenizer
-from danswer.search.enums import LLMEvaluationType
-from danswer.search.enums import OptionalSearchSetting
-from danswer.search.enums import QueryFlow
-from danswer.search.enums import SearchType
-from danswer.search.models import InferenceSection
-from danswer.search.retrieval.search_runner import inference_sections_from_ids
-from danswer.search.utils import chunks_or_sections_to_search_docs
-from danswer.search.utils import dedupe_documents
-from danswer.search.utils import drop_llm_indices
-from danswer.search.utils import relevant_sections_to_indices
-from danswer.server.query_and_chat.models import ChatMessageDetail
-from danswer.server.query_and_chat.models import CreateChatMessageRequest
-from danswer.server.utils import get_json_line
-from danswer.tools.built_in_tools import get_built_in_tool_by_id
-from danswer.tools.custom.custom_tool import build_custom_tools_from_openapi_schema
-from danswer.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
-from danswer.tools.custom.custom_tool import CustomToolCallSummary
-from danswer.tools.force import ForceUseTool
-from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
-from danswer.tools.images.image_generation_tool import ImageGenerationResponse
-from danswer.tools.images.image_generation_tool import ImageGenerationTool
-from danswer.tools.internet_search.internet_search_tool import (
+from onyx.chat.chat_utils import create_chat_chain
+from onyx.chat.models import AllCitations
+from onyx.chat.models import CitationInfo
+from onyx.chat.models import CustomToolResponse
+from onyx.chat.models import FinalUsedContextDocsResponse
+from onyx.chat.models import ImageGenerationDisplay
+from onyx.chat.models import LLMRelevanceFilterResponse
+from onyx.chat.models import MessageResponseIDInfo
+from onyx.chat.models import MessageSpecificCitations
+from onyx.chat.models import onyxAnswerPiece
+from onyx.chat.models import QADocsResponse
+from onyx.chat.models import StreamingError
+from onyx.configs.chat_configs import BING_API_KEY
+from onyx.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
+from onyx.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
+from onyx.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
+from onyx.configs.constants import MessageType
+from onyx.configs.model_configs import GEN_AI_TEMPERATURE
+from onyx.db.chat import attach_files_to_chat_message
+from onyx.db.chat import create_db_search_doc
+from onyx.db.chat import create_new_chat_message
+from onyx.db.chat import get_chat_message
+from onyx.db.chat import get_chat_session_by_id
+from onyx.db.chat import get_db_search_doc_by_id
+from onyx.db.chat import get_doc_query_identifiers_from_model
+from onyx.db.chat import get_or_create_root_message
+from onyx.db.chat import reserve_message_id
+from onyx.db.chat import translate_db_message_to_chat_message_detail
+from onyx.db.chat import translate_db_search_doc_to_server_search_doc
+from onyx.db.engine import get_session_context_manager
+from onyx.db.llm import fetch_existing_llm_providers
+from onyx.db.models import SearchDoc as DbSearchDoc
+from onyx.db.models import ToolCall
+from onyx.db.models import User
+from onyx.db.persona import get_persona_by_id
+from onyx.db.search_settings import get_current_search_settings
+from onyx.document_index.factory import get_default_document_index
+from onyx.file_store.models import ChatFileType
+from onyx.file_store.models import FileDescriptor
+from onyx.file_store.utils import load_all_chat_files
+from onyx.file_store.utils import save_files_from_urls
+from onyx.llm.answering.answer import Answer
+from onyx.llm.answering.models import AnswerStyleConfig
+from onyx.llm.answering.models import CitationConfig
+from onyx.llm.answering.models import DocumentPruningConfig
+from onyx.llm.answering.models import PreviousMessage
+from onyx.llm.answering.models import PromptConfig
+from onyx.llm.exceptions import GenAIDisabledException
+from onyx.llm.factory import get_llms_for_persona
+from onyx.llm.factory import get_main_llm_from_tuple
+from onyx.llm.interfaces import LLMConfig
+from onyx.llm.utils import litellm_exception_to_error_msg
+from onyx.natural_language_processing.utils import get_tokenizer
+from onyx.search.enums import LLMEvaluationType
+from onyx.search.enums import OptionalSearchSetting
+from onyx.search.enums import QueryFlow
+from onyx.search.enums import SearchType
+from onyx.search.models import InferenceSection
+from onyx.search.retrieval.search_runner import inference_sections_from_ids
+from onyx.search.utils import chunks_or_sections_to_search_docs
+from onyx.search.utils import dedupe_documents
+from onyx.search.utils import drop_llm_indices
+from onyx.search.utils import relevant_sections_to_indices
+from onyx.server.query_and_chat.models import ChatMessageDetail
+from onyx.server.query_and_chat.models import CreateChatMessageRequest
+from onyx.server.utils import get_json_line
+from onyx.tools.built_in_tools import get_built_in_tool_by_id
+from onyx.tools.custom.custom_tool import build_custom_tools_from_openapi_schema
+from onyx.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
+from onyx.tools.custom.custom_tool import CustomToolCallSummary
+from onyx.tools.force import ForceUseTool
+from onyx.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
+from onyx.tools.images.image_generation_tool import ImageGenerationResponse
+from onyx.tools.images.image_generation_tool import ImageGenerationTool
+from onyx.tools.internet_search.internet_search_tool import (
     INTERNET_SEARCH_RESPONSE_ID,
 )
-from danswer.tools.internet_search.internet_search_tool import (
+from onyx.tools.internet_search.internet_search_tool import (
     internet_search_response_to_search_docs,
 )
-from danswer.tools.internet_search.internet_search_tool import InternetSearchResponse
-from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
-from danswer.tools.models import DynamicSchemaInfo
-from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
-from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
-from danswer.tools.search.search_tool import SearchResponseSummary
-from danswer.tools.search.search_tool import SearchTool
-from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
-from danswer.tools.tool import Tool
-from danswer.tools.tool import ToolResponse
-from danswer.tools.tool_runner import ToolCallFinalResult
-from danswer.tools.utils import compute_all_tool_tokens
-from danswer.tools.utils import explicit_tool_calling_supported
-from danswer.utils.logger import setup_logger
-from danswer.utils.timing import log_generator_function_time
+from onyx.tools.internet_search.internet_search_tool import InternetSearchResponse
+from onyx.tools.internet_search.internet_search_tool import InternetSearchTool
+from onyx.tools.models import DynamicSchemaInfo
+from onyx.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
+from onyx.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
+from onyx.tools.search.search_tool import SearchResponseSummary
+from onyx.tools.search.search_tool import SearchTool
+from onyx.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
+from onyx.tools.tool import Tool
+from onyx.tools.tool import ToolResponse
+from onyx.tools.tool_runner import ToolCallFinalResult
+from onyx.tools.utils import compute_all_tool_tokens
+from onyx.tools.utils import explicit_tool_calling_supported
+from onyx.utils.logger import setup_logger
+from onyx.utils.timing import log_generator_function_time
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -246,7 +245,7 @@ ChatPacket = (
     | LLMRelevanceFilterResponse
     | FinalUsedContextDocsResponse
     | ChatMessageDetail
-    | DanswerAnswerPiece
+    | onyxAnswerPiece
     | AllCitations
     | CitationInfo
     | ImageGenerationDisplay
@@ -595,7 +594,7 @@ def stream_chat_message_objects(
                     bing_api_key = BING_API_KEY
                     if not bing_api_key:
                         raise ValueError(
-                            "Internet search tool requires a Bing API key, please contact your Danswer admin to get it added!"
+                            "Internet search tool requires a Bing API key, please contact your onyx admin to get it added!"
                         )
                     tool_dict[db_tool_model.id] = [
                         InternetSearchTool(api_key=bing_api_key)

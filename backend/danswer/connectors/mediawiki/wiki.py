@@ -7,18 +7,17 @@ from typing import Any
 from typing import ClassVar
 
 import pywikibot.time  # type: ignore[import-untyped]
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.interfaces import SecondsSinceUnixEpoch
+from onyx.connectors.mediawiki.family import family_class_dispatch
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
 from pywikibot import pagegenerators  # type: ignore[import-untyped]
 from pywikibot import textlib  # type: ignore[import-untyped]
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.mediawiki.family import family_class_dispatch
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
 
 
 def pywikibot_timestamp_to_utc_datetime(
@@ -38,7 +37,7 @@ def pywikibot_timestamp_to_utc_datetime(
 def get_doc_from_page(
     page: pywikibot.Page, site: pywikibot.Site | None, source_type: DocumentSource
 ) -> Document:
-    """Generate Danswer Document from a MediaWiki page object.
+    """Generate onyx Document from a MediaWiki page object.
 
     Args:
         page: Page from a MediaWiki site.

@@ -2,7 +2,7 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import {
   ChatSessionMinimal,
-  DanswerBotAnalytics,
+  onyxBotAnalytics,
   QueryAnalytics,
   UserAnalytics,
 } from "./usage/types";
@@ -51,16 +51,16 @@ export const useUserAnalytics = (timeRange: DateRangePickerValue) => {
   };
 };
 
-export const useDanswerBotAnalytics = (timeRange: DateRangePickerValue) => {
-  const url = buildApiPath("/api/analytics/admin/danswerbot", {
+export const useonyxBotAnalytics = (timeRange: DateRangePickerValue) => {
+  const url = buildApiPath("/api/analytics/admin/onyxbot", {
     start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
     end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
   });
-  const swrResponse = useSWR<DanswerBotAnalytics[]>(url, errorHandlingFetcher); // TODO
+  const swrResponse = useSWR<onyxBotAnalytics[]>(url, errorHandlingFetcher); // TODO
 
   return {
     ...swrResponse,
-    refreshDanswerBotAnalytics: () => mutate(url),
+    refreshonyxBotAnalytics: () => mutate(url),
   };
 };
 

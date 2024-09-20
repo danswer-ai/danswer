@@ -1,15 +1,15 @@
 import os
 from typing import cast
 
-from danswer.configs.constants import KV_SLACK_BOT_TOKENS_CONFIG_KEY
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.server.manage.models import SlackBotTokens
+from onyx.configs.constants import KV_SLACK_BOT_TOKENS_CONFIG_KEY
+from onyx.dynamic_configs.factory import get_dynamic_config_store
+from onyx.server.manage.models import SlackBotTokens
 
 
 def fetch_tokens() -> SlackBotTokens:
     # first check env variables
-    app_token = os.environ.get("DANSWER_BOT_SLACK_APP_TOKEN")
-    bot_token = os.environ.get("DANSWER_BOT_SLACK_BOT_TOKEN")
+    app_token = os.environ.get("onyx_BOT_SLACK_APP_TOKEN")
+    bot_token = os.environ.get("onyx_BOT_SLACK_BOT_TOKEN")
     if app_token and bot_token:
         return SlackBotTokens(app_token=app_token, bot_token=bot_token)
 

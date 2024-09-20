@@ -1,18 +1,17 @@
 from typing import cast
 
 from fastapi import HTTPException
+from onyx.auth.users import is_user_admin
+from onyx.db.llm import fetch_existing_doc_sets
+from onyx.db.llm import fetch_existing_tools
+from onyx.db.models import Persona
+from onyx.db.models import Prompt
+from onyx.db.models import Tool
+from onyx.db.models import User
+from onyx.db.persona import get_prompts_by_ids
+from onyx.one_shot_answer.models import PersonaConfig
+from onyx.tools.custom.custom_tool import build_custom_tools_from_openapi_schema
 from sqlalchemy.orm import Session
-
-from danswer.auth.users import is_user_admin
-from danswer.db.llm import fetch_existing_doc_sets
-from danswer.db.llm import fetch_existing_tools
-from danswer.db.models import Persona
-from danswer.db.models import Prompt
-from danswer.db.models import Tool
-from danswer.db.models import User
-from danswer.db.persona import get_prompts_by_ids
-from danswer.one_shot_answer.models import PersonaConfig
-from danswer.tools.custom.custom_tool import build_custom_tools_from_openapi_schema
 
 
 def create_temporary_persona(

@@ -6,30 +6,29 @@ from typing import cast
 import requests
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
-from pydantic import BaseModel
-
-from danswer.dynamic_configs.interface import JSON_ro
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.interfaces import LLM
-from danswer.tools.custom.base_tool_types import ToolResultType
-from danswer.tools.custom.custom_tool_prompts import (
+from onyx.dynamic_configs.interface import JSON_ro
+from onyx.llm.answering.models import PreviousMessage
+from onyx.llm.interfaces import LLM
+from onyx.tools.custom.base_tool_types import ToolResultType
+from onyx.tools.custom.custom_tool_prompts import (
     SHOULD_USE_CUSTOM_TOOL_SYSTEM_PROMPT,
 )
-from danswer.tools.custom.custom_tool_prompts import SHOULD_USE_CUSTOM_TOOL_USER_PROMPT
-from danswer.tools.custom.custom_tool_prompts import TOOL_ARG_SYSTEM_PROMPT
-from danswer.tools.custom.custom_tool_prompts import TOOL_ARG_USER_PROMPT
-from danswer.tools.custom.custom_tool_prompts import USE_TOOL
-from danswer.tools.custom.openapi_parsing import MethodSpec
-from danswer.tools.custom.openapi_parsing import openapi_to_method_specs
-from danswer.tools.custom.openapi_parsing import openapi_to_url
-from danswer.tools.custom.openapi_parsing import REQUEST_BODY
-from danswer.tools.custom.openapi_parsing import validate_openapi_schema
-from danswer.tools.models import CHAT_SESSION_ID_PLACEHOLDER
-from danswer.tools.models import DynamicSchemaInfo
-from danswer.tools.models import MESSAGE_ID_PLACEHOLDER
-from danswer.tools.tool import Tool
-from danswer.tools.tool import ToolResponse
-from danswer.utils.logger import setup_logger
+from onyx.tools.custom.custom_tool_prompts import SHOULD_USE_CUSTOM_TOOL_USER_PROMPT
+from onyx.tools.custom.custom_tool_prompts import TOOL_ARG_SYSTEM_PROMPT
+from onyx.tools.custom.custom_tool_prompts import TOOL_ARG_USER_PROMPT
+from onyx.tools.custom.custom_tool_prompts import USE_TOOL
+from onyx.tools.custom.openapi_parsing import MethodSpec
+from onyx.tools.custom.openapi_parsing import openapi_to_method_specs
+from onyx.tools.custom.openapi_parsing import openapi_to_url
+from onyx.tools.custom.openapi_parsing import REQUEST_BODY
+from onyx.tools.custom.openapi_parsing import validate_openapi_schema
+from onyx.tools.models import CHAT_SESSION_ID_PLACEHOLDER
+from onyx.tools.models import DynamicSchemaInfo
+from onyx.tools.models import MESSAGE_ID_PLACEHOLDER
+from onyx.tools.tool import Tool
+from onyx.tools.tool import ToolResponse
+from onyx.utils.logger import setup_logger
+from pydantic import BaseModel
 
 logger = setup_logger()
 

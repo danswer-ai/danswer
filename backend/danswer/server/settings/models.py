@@ -1,10 +1,9 @@
 from datetime import datetime
 from enum import Enum
 
+from onyx.configs.constants import NotificationType
+from onyx.db.models import Notification as NotificationDBModel
 from pydantic import BaseModel
-
-from danswer.configs.constants import NotificationType
-from danswer.db.models import Notification as NotificationDBModel
 
 
 class PageType(str, Enum):

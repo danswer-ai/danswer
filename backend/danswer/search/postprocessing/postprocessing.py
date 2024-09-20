@@ -3,30 +3,29 @@ from collections.abc import Iterator
 from typing import cast
 
 import numpy
-
-from danswer.chat.models import SectionRelevancePiece
-from danswer.configs.app_configs import BLURB_SIZE
-from danswer.configs.constants import RETURN_SEPARATOR
-from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
-from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
-from danswer.document_index.document_index_utils import (
+from onyx.chat.models import SectionRelevancePiece
+from onyx.configs.app_configs import BLURB_SIZE
+from onyx.configs.constants import RETURN_SEPARATOR
+from onyx.configs.model_configs import CROSS_ENCODER_RANGE_MAX
+from onyx.configs.model_configs import CROSS_ENCODER_RANGE_MIN
+from onyx.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
-from danswer.llm.interfaces import LLM
-from danswer.natural_language_processing.search_nlp_models import RerankingModel
-from danswer.search.enums import LLMEvaluationType
-from danswer.search.models import ChunkMetric
-from danswer.search.models import InferenceChunk
-from danswer.search.models import InferenceChunkUncleaned
-from danswer.search.models import InferenceSection
-from danswer.search.models import MAX_METRICS_CONTENT
-from danswer.search.models import RerankMetricsContainer
-from danswer.search.models import SearchQuery
-from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_sections
-from danswer.utils.logger import setup_logger
-from danswer.utils.threadpool_concurrency import FunctionCall
-from danswer.utils.threadpool_concurrency import run_functions_in_parallel
-from danswer.utils.timing import log_function_time
+from onyx.llm.interfaces import LLM
+from onyx.natural_language_processing.search_nlp_models import RerankingModel
+from onyx.search.enums import LLMEvaluationType
+from onyx.search.models import ChunkMetric
+from onyx.search.models import InferenceChunk
+from onyx.search.models import InferenceChunkUncleaned
+from onyx.search.models import InferenceSection
+from onyx.search.models import MAX_METRICS_CONTENT
+from onyx.search.models import RerankMetricsContainer
+from onyx.search.models import SearchQuery
+from onyx.secondary_llm_flows.chunk_usefulness import llm_batch_eval_sections
+from onyx.utils.logger import setup_logger
+from onyx.utils.threadpool_concurrency import FunctionCall
+from onyx.utils.threadpool_concurrency import run_functions_in_parallel
+from onyx.utils.timing import log_function_time
 
 
 logger = setup_logger()

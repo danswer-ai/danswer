@@ -1,15 +1,15 @@
 from collections.abc import Callable
 from typing import Any
 
+from onyx.configs.constants import DocumentSource
+from onyx.db.models import ConnectorCredentialPair
 from sqlalchemy.orm import Session
 
-from danswer.configs.constants import DocumentSource
-from danswer.db.models import ConnectorCredentialPair
-from ee.danswer.external_permissions.confluence.doc_sync import confluence_doc_sync
-from ee.danswer.external_permissions.confluence.group_sync import confluence_group_sync
-from ee.danswer.external_permissions.google_drive.doc_sync import gdrive_doc_sync
-from ee.danswer.external_permissions.google_drive.group_sync import gdrive_group_sync
-from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
+from ee.onyx.external_permissions.confluence.doc_sync import confluence_doc_sync
+from ee.onyx.external_permissions.confluence.group_sync import confluence_group_sync
+from ee.onyx.external_permissions.google_drive.doc_sync import gdrive_doc_sync
+from ee.onyx.external_permissions.google_drive.group_sync import gdrive_group_sync
+from ee.onyx.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
 GroupSyncFuncType = Callable[
     [Session, ConnectorCredentialPair, list[DocsWithAdditionalInfo], dict[str, Any]],

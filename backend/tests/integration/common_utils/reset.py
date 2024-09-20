@@ -3,23 +3,23 @@ import time
 
 import psycopg2
 import requests
+from onyx.configs.app_configs import POSTGRES_HOST
+from onyx.configs.app_configs import POSTGRES_PASSWORD
+from onyx.configs.app_configs import POSTGRES_PORT
+from onyx.configs.app_configs import POSTGRES_USER
+from onyx.db.engine import build_connection_string
+from onyx.db.engine import get_session_context_manager
+from onyx.db.engine import SYNC_DB_API
+from onyx.db.search_settings import get_current_search_settings
+from onyx.db.swap_index import check_index_swap
+from onyx.document_index.vespa.index import DOCUMENT_ID_ENDPOINT
+from onyx.document_index.vespa.index import VespaIndex
+from onyx.indexing.models import IndexingSetting
+from onyx.main import setup_postgres
+from onyx.main import setup_vespa
 
 from alembic import command
 from alembic.config import Config
-from danswer.configs.app_configs import POSTGRES_HOST
-from danswer.configs.app_configs import POSTGRES_PASSWORD
-from danswer.configs.app_configs import POSTGRES_PORT
-from danswer.configs.app_configs import POSTGRES_USER
-from danswer.db.engine import build_connection_string
-from danswer.db.engine import get_session_context_manager
-from danswer.db.engine import SYNC_DB_API
-from danswer.db.search_settings import get_current_search_settings
-from danswer.db.swap_index import check_index_swap
-from danswer.document_index.vespa.index import DOCUMENT_ID_ENDPOINT
-from danswer.document_index.vespa.index import VespaIndex
-from danswer.indexing.models import IndexingSetting
-from danswer.main import setup_postgres
-from danswer.main import setup_vespa
 
 
 def _run_migrations(
@@ -144,7 +144,7 @@ def reset_vespa() -> None:
             continuation = None
             should_continue = True
             while should_continue:
-                params = {"selection": "true", "cluster": "danswer_index"}
+                params = {"selection": "true", "cluster": "onyx_index"}
                 if continuation:
                     params = {**params, "continuation": continuation}
                 response = requests.delete(

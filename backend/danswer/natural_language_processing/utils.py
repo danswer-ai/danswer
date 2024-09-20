@@ -3,12 +3,12 @@ from abc import ABC
 from abc import abstractmethod
 from copy import copy
 
+from onyx.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
+from onyx.configs.model_configs import DOCUMENT_ENCODER_MODEL
+from onyx.search.models import InferenceChunk
+from onyx.utils.logger import setup_logger
 from transformers import logging as transformer_logging  # type:ignore
 
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.search.models import InferenceChunk
-from danswer.utils.logger import setup_logger
 from shared_configs.enums import EmbeddingProvider
 
 logger = setup_logger()

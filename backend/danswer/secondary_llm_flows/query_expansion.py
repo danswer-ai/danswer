@@ -1,20 +1,20 @@
 from collections.abc import Callable
 
-from danswer.chat.chat_utils import combine_message_chain
-from danswer.configs.chat_configs import DISABLE_LLM_QUERY_REPHRASE
-from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
-from danswer.db.models import ChatMessage
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llms
-from danswer.llm.interfaces import LLM
-from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
-from danswer.llm.utils import message_to_string
-from danswer.prompts.chat_prompts import HISTORY_QUERY_REPHRASE
-from danswer.prompts.miscellaneous_prompts import LANGUAGE_REPHRASE_PROMPT
-from danswer.utils.logger import setup_logger
-from danswer.utils.text_processing import count_punctuation
-from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from onyx.chat.chat_utils import combine_message_chain
+from onyx.configs.chat_configs import DISABLE_LLM_QUERY_REPHRASE
+from onyx.configs.model_configs import GEN_AI_HISTORY_CUTOFF
+from onyx.db.models import ChatMessage
+from onyx.llm.answering.models import PreviousMessage
+from onyx.llm.exceptions import GenAIDisabledException
+from onyx.llm.factory import get_default_llms
+from onyx.llm.interfaces import LLM
+from onyx.llm.utils import dict_based_prompt_to_langchain_prompt
+from onyx.llm.utils import message_to_string
+from onyx.prompts.chat_prompts import HISTORY_QUERY_REPHRASE
+from onyx.prompts.miscellaneous_prompts import LANGUAGE_REPHRASE_PROMPT
+from onyx.utils.logger import setup_logger
+from onyx.utils.text_processing import count_punctuation
+from onyx.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 logger = setup_logger()
 

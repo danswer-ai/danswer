@@ -1,23 +1,22 @@
 from datetime import datetime
 from typing import Any
 
+from onyx.chat.models import RetrievalDocs
+from onyx.configs.constants import DocumentSource
+from onyx.configs.constants import MessageType
+from onyx.configs.constants import SearchFeedbackType
+from onyx.db.enums import ChatSessionSharedStatus
+from onyx.file_store.models import FileDescriptor
+from onyx.llm.override_models import LLMOverride
+from onyx.llm.override_models import PromptOverride
+from onyx.search.models import BaseFilters
+from onyx.search.models import ChunkContext
+from onyx.search.models import RetrievalDetails
+from onyx.search.models import SearchDoc
+from onyx.search.models import Tag
+from onyx.tools.models import ToolCallFinalResult
 from pydantic import BaseModel
 from pydantic import model_validator
-
-from danswer.chat.models import RetrievalDocs
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import MessageType
-from danswer.configs.constants import SearchFeedbackType
-from danswer.db.enums import ChatSessionSharedStatus
-from danswer.file_store.models import FileDescriptor
-from danswer.llm.override_models import LLMOverride
-from danswer.llm.override_models import PromptOverride
-from danswer.search.models import BaseFilters
-from danswer.search.models import ChunkContext
-from danswer.search.models import RetrievalDetails
-from danswer.search.models import SearchDoc
-from danswer.search.models import Tag
-from danswer.tools.models import ToolCallFinalResult
 
 
 class SourceTag(Tag):
@@ -33,13 +32,13 @@ class SimpleQueryRequest(BaseModel):
 
 
 class UpdateChatSessionThreadRequest(BaseModel):
-    # If not specified, use Danswer default persona
+    # If not specified, use onyx default persona
     chat_session_id: int
     new_alternate_model: str
 
 
 class ChatSessionCreationRequest(BaseModel):
-    # If not specified, use Danswer default persona
+    # If not specified, use onyx default persona
     persona_id: int = 0
     description: str | None = None
 

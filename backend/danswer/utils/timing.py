@@ -7,9 +7,9 @@ from typing import Any
 from typing import cast
 from typing import TypeVar
 
-from danswer.utils.logger import setup_logger
-from danswer.utils.telemetry import optional_telemetry
-from danswer.utils.telemetry import RecordType
+from onyx.utils.logger import setup_logger
+from onyx.utils.telemetry import optional_telemetry
+from onyx.utils.telemetry import RecordType
 
 logger = setup_logger()
 

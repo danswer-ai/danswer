@@ -31,13 +31,13 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: |
-          danswer/danswer-model-server:${{ github.ref_name }}
-          danswer/danswer-model-server:latest
+          onyx/onyx-model-server:${{ github.ref_name }}
+          onyx/onyx-model-server:latest
         build-args: |
-          DANSWER_VERSION=${{ github.ref_name }}
+          onyx_VERSION=${{ github.ref_name }}
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: docker.io/danswer/danswer-model-server:${{ github.ref_name }}
+        image-ref: docker.io/onyx/onyx-model-server:${{ github.ref_name }}
         severity: 'CRITICAL,HIGH'

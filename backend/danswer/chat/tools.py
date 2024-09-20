@@ -2,13 +2,13 @@ from typing_extensions import TypedDict  # noreorder
 
 from pydantic import BaseModel
 
-from danswer.prompts.chat_tools import DANSWER_TOOL_DESCRIPTION
-from danswer.prompts.chat_tools import DANSWER_TOOL_NAME
-from danswer.prompts.chat_tools import TOOL_FOLLOWUP
-from danswer.prompts.chat_tools import TOOL_LESS_FOLLOWUP
-from danswer.prompts.chat_tools import TOOL_LESS_PROMPT
-from danswer.prompts.chat_tools import TOOL_TEMPLATE
-from danswer.prompts.chat_tools import USER_INPUT
+from onyx.prompts.chat_tools import onyx_TOOL_DESCRIPTION
+from onyx.prompts.chat_tools import onyx_TOOL_NAME
+from onyx.prompts.chat_tools import TOOL_FOLLOWUP
+from onyx.prompts.chat_tools import TOOL_LESS_FOLLOWUP
+from onyx.prompts.chat_tools import TOOL_LESS_PROMPT
+from onyx.prompts.chat_tools import TOOL_TEMPLATE
+from onyx.prompts.chat_tools import USER_INPUT
 
 
 class ToolInfo(TypedDict):
@@ -16,14 +16,14 @@ class ToolInfo(TypedDict):
     description: str
 
 
-class DanswerChatModelOut(BaseModel):
+class onyxChatModelOut(BaseModel):
     model_raw: str
     action: str
     action_input: str
 
 
 def call_tool(
-    model_actions: DanswerChatModelOut,
+    model_actions: onyxChatModelOut,
 ) -> str:
     raise NotImplementedError("There are no additional tool integrations right now")
 
@@ -54,9 +54,7 @@ def form_tool_section_text(
         return None
 
     if retrieval_enabled and tools:
-        tools.append(
-            {"name": DANSWER_TOOL_NAME, "description": DANSWER_TOOL_DESCRIPTION}
-        )
+        tools.append({"name": onyx_TOOL_NAME, "description": onyx_TOOL_DESCRIPTION})
 
     tools_intro = []
     if tools:

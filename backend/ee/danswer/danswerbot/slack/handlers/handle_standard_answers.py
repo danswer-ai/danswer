@@ -1,3 +1,21 @@
+from onyx.configs.constants import MessageType
+from onyx.configs.onyxbot_configs import onyx_REACT_EMOJI
+from onyx.db.chat import create_chat_session
+from onyx.db.chat import create_new_chat_message
+from onyx.db.chat import get_chat_messages_by_sessions
+from onyx.db.chat import get_chat_sessions_by_slack_thread_id
+from onyx.db.chat import get_or_create_root_message
+from onyx.db.models import Prompt
+from onyx.db.models import SlackBotConfig
+from onyx.db.models import Standaronyx as StandaronyxModel
+from onyx.onyxbot.slack.blocks import get_restate_blocks
+from onyx.onyxbot.slack.constants import GENERATE_ANSWER_BUTTON_ACTION_ID
+from onyx.onyxbot.slack.handlers.utils import send_team_member_message
+from onyx.onyxbot.slack.models import SlackMessageInfo
+from onyx.onyxbot.slack.utils import respond_in_thread
+from onyx.onyxbot.slack.utils import update_emote_react
+from onyx.utils.logger import onyxLoggingAdapter
+from onyx.utils.logger import setup_logger
 from slack_sdk import WebClient
 from slack_sdk.models.blocks import ActionsBlock
 from slack_sdk.models.blocks import Block
@@ -5,27 +23,9 @@ from slack_sdk.models.blocks import ButtonElement
 from slack_sdk.models.blocks import SectionBlock
 from sqlalchemy.orm import Session
 
-from danswer.configs.constants import MessageType
-from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
-from danswer.danswerbot.slack.blocks import get_restate_blocks
-from danswer.danswerbot.slack.constants import GENERATE_ANSWER_BUTTON_ACTION_ID
-from danswer.danswerbot.slack.handlers.utils import send_team_member_message
-from danswer.danswerbot.slack.models import SlackMessageInfo
-from danswer.danswerbot.slack.utils import respond_in_thread
-from danswer.danswerbot.slack.utils import update_emote_react
-from danswer.db.chat import create_chat_session
-from danswer.db.chat import create_new_chat_message
-from danswer.db.chat import get_chat_messages_by_sessions
-from danswer.db.chat import get_chat_sessions_by_slack_thread_id
-from danswer.db.chat import get_or_create_root_message
-from danswer.db.models import Prompt
-from danswer.db.models import SlackBotConfig
-from danswer.db.models import StandardAnswer as StandardAnswerModel
-from danswer.utils.logger import DanswerLoggingAdapter
-from danswer.utils.logger import setup_logger
-from ee.danswer.db.standard_answer import fetch_standard_answer_categories_by_names
-from ee.danswer.db.standard_answer import find_matching_standard_answers
-from ee.danswer.server.manage.models import StandardAnswer as PydanticStandardAnswer
+from ee.onyx.db.standard_answer import fetch_standard_answer_categories_by_names
+from ee.onyx.db.standard_answer import find_matching_standard_answers
+from ee.onyx.server.manage.models import Standaronyx as PydanticStandaronyx
 
 logger = setup_logger()
 
@@ -50,11 +50,11 @@ def oneoff_standard_answers(
     message: str,
     slack_bot_categories: list[str],
     db_session: Session,
-) -> list[PydanticStandardAnswer]:
+) -> list[PydanticStandaronyx]:
     """
     Respond to the user message if it matches any configured standard answers.
 
-    Returns a list of matching StandardAnswers if found, otherwise None.
+    Returns a list of matching Standaronyxs if found, otherwise None.
     """
     configured_standard_answers = {
         standard_answer
@@ -71,7 +71,7 @@ def oneoff_standard_answers(
     )
 
     server_standard_answers = [
-        PydanticStandardAnswer.from_model(standard_answer_model)
+        PydanticStandaronyx.from_model(standard_answer_model)
         for (standard_answer_model, _) in matching_standard_answers
     ]
     return server_standard_answers
@@ -82,7 +82,7 @@ def _handle_standard_answers(
     receiver_ids: list[str] | None,
     slack_bot_config: SlackBotConfig | None,
     prompt: Prompt | None,
-    logger: DanswerLoggingAdapter,
+    logger: onyxLoggingAdapter,
     client: WebClient,
     db_session: Session,
 ) -> bool:
@@ -137,7 +137,7 @@ def _handle_standard_answers(
         used_standard_answer_ids
     )
 
-    matching_standard_answers: list[tuple[StandardAnswerModel, str]] = []
+    matching_standard_answers: list[tuple[StandaronyxModel, str]] = []
     if usable_standard_answers:
         matching_standard_answers = find_matching_standard_answers(
             query=query_msg.message,
@@ -151,7 +151,7 @@ def _handle_standard_answers(
             description="",
             user_id=None,
             persona_id=slack_bot_config.persona.id if slack_bot_config.persona else 0,
-            danswerbot_flow=True,
+            onyxbot_flow=True,
             slack_thread_id=slack_thread_id,
             one_shot=True,
         )
@@ -194,7 +194,7 @@ def _handle_standard_answers(
         )
 
         update_emote_react(
-            emoji=DANSWER_REACT_EMOJI,
+            emoji=onyx_REACT_EMOJI,
             channel=message_info.channel_to_respond,
             message_ts=message_info.msg_to_respond,
             remove=True,
@@ -217,7 +217,7 @@ def _handle_standard_answers(
                 client=client,
                 channel=message_info.channel_to_respond,
                 receiver_ids=receiver_ids,
-                text="Hello! Danswer has some results for you!",
+                text="Hello! onyx has some results for you!",
                 blocks=all_blocks,
                 thread_ts=message_info.msg_to_respond,
                 unfurl=False,

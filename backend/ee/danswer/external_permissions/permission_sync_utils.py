@@ -2,14 +2,13 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 
+from onyx.connectors.factory import instantiate_connector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.models import InputType
+from onyx.db.models import ConnectorCredentialPair
+from onyx.utils.logger import setup_logger
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
-from danswer.connectors.factory import instantiate_connector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.models import InputType
-from danswer.db.models import ConnectorCredentialPair
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

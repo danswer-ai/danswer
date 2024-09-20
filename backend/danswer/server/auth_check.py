@@ -2,14 +2,13 @@ from typing import cast
 
 from fastapi import FastAPI
 from fastapi.dependencies.models import Dependant
+from onyx.auth.users import current_admin_user
+from onyx.auth.users import current_curator_or_admin_user
+from onyx.auth.users import current_user
+from onyx.auth.users import current_user_with_expired_token
+from onyx.configs.app_configs import APP_API_PREFIX
+from onyx.server.onyx_api.ingestion import api_key_dep
 from starlette.routing import BaseRoute
-
-from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_curator_or_admin_user
-from danswer.auth.users import current_user
-from danswer.auth.users import current_user_with_expired_token
-from danswer.configs.app_configs import APP_API_PREFIX
-from danswer.server.danswer_api.ingestion import api_key_dep
 
 
 PUBLIC_ENDPOINT_SPECS = [
@@ -25,7 +24,7 @@ PUBLIC_ENDPOINT_SPECS = [
     # just returns auth type, needs to be accessible before the user is logged
     # in to determine what flow to give the user
     ("/auth/type", {"GET"}),
-    # just gets the version of Danswer (e.g. 0.3.11)
+    # just gets the version of onyx (e.g. 0.3.11)
     ("/version", {"GET"}),
     # stuff related to basic auth
     ("/auth/register", {"POST"}),

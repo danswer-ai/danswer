@@ -8,28 +8,27 @@ from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
-from sqlalchemy.orm import Session
-
-from danswer.configs.app_configs import WEB_DOMAIN
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import KV_CRED_KEY
-from danswer.configs.constants import KV_GMAIL_CRED_KEY
-from danswer.configs.constants import KV_GMAIL_SERVICE_ACCOUNT_KEY
-from danswer.connectors.gmail.constants import (
+from onyx.configs.app_configs import WEB_DOMAIN
+from onyx.configs.constants import DocumentSource
+from onyx.configs.constants import KV_CRED_KEY
+from onyx.configs.constants import KV_GMAIL_CRED_KEY
+from onyx.configs.constants import KV_GMAIL_SERVICE_ACCOUNT_KEY
+from onyx.connectors.gmail.constants import (
     DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
 )
-from danswer.connectors.gmail.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
-from danswer.connectors.gmail.constants import (
+from onyx.connectors.gmail.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
+from onyx.connectors.gmail.constants import (
     GMAIL_DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.connectors.gmail.constants import SCOPES
-from danswer.db.credentials import update_credential_json
-from danswer.db.models import User
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.server.documents.models import CredentialBase
-from danswer.server.documents.models import GoogleAppCredentials
-from danswer.server.documents.models import GoogleServiceAccountKey
-from danswer.utils.logger import setup_logger
+from onyx.connectors.gmail.constants import SCOPES
+from onyx.db.credentials import update_credential_json
+from onyx.db.models import User
+from onyx.dynamic_configs.factory import get_dynamic_config_store
+from onyx.server.documents.models import CredentialBase
+from onyx.server.documents.models import GoogleAppCredentials
+from onyx.server.documents.models import GoogleServiceAccountKey
+from onyx.utils.logger import setup_logger
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

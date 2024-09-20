@@ -1,7 +1,6 @@
 from fastapi import FastAPI
-
-from danswer.server.auth_check import check_router_auth
-from danswer.server.auth_check import PUBLIC_ENDPOINT_SPECS
+from onyx.server.auth_check import check_router_auth
+from onyx.server.auth_check import PUBLIC_ENDPOINT_SPECS
 
 
 EE_PUBLIC_ENDPOINT_SPECS = PUBLIC_ENDPOINT_SPECS + [

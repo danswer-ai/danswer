@@ -1,9 +1,8 @@
 from datetime import datetime
 from enum import Enum
 
+from onyx.auth.schemas import UserStatus
 from pydantic import BaseModel
-
-from danswer.auth.schemas import UserStatus
 
 
 class FlowType(str, Enum):

@@ -1,27 +1,27 @@
 import { AdminPageTitle } from "@/components/admin/Title";
-import { StandardAnswerCreationForm } from "@/app/ee/admin/standard-answer/StandardAnswerCreationForm";
+import { StandaronyxCreationForm } from "@/app/ee/admin/standard-answer/StandaronyxCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { BackButton } from "@/components/BackButton";
 import { Text } from "@tremor/react";
 import { ClipboardIcon } from "@/components/icons/icons";
-import { StandardAnswerCategory } from "@/lib/types";
+import { StandaronyxCategory } from "@/lib/types";
 
 async function Page() {
-  const standardAnswerCategoriesResponse = await fetchSS(
+  const standaronyxCategoriesResponse = await fetchSS(
     "/manage/admin/standard-answer/category"
   );
 
-  if (!standardAnswerCategoriesResponse.ok) {
+  if (!standaronyxCategoriesResponse.ok) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch standard answer categories - ${await standardAnswerCategoriesResponse.text()}`}
+        errorMsg={`Failed to fetch standard answer categories - ${await standaronyxCategoriesResponse.text()}`}
       />
     );
   }
-  const standardAnswerCategories =
-    (await standardAnswerCategoriesResponse.json()) as StandardAnswerCategory[];
+  const standaronyxCategories =
+    (await standaronyxCategoriesResponse.json()) as StandaronyxCategory[];
 
   return (
     <div className="container mx-auto">
@@ -31,9 +31,7 @@ async function Page() {
         icon={<ClipboardIcon size={32} />}
       />
 
-      <StandardAnswerCreationForm
-        standardAnswerCategories={standardAnswerCategories}
-      />
+      <StandaronyxCreationForm standaronyxCategories={standaronyxCategories} />
     </div>
   );
 }

@@ -1,28 +1,28 @@
 import os
 
+from onyx.db.engine import get_session_context_manager
+from onyx.db.llm import update_default_provider
+from onyx.db.llm import upsert_llm_provider
+from onyx.db.persona import upsert_persona
+from onyx.search.enums import RecencyBiasSetting
+from onyx.server.features.persona.models import CreatePersonaRequest
+from onyx.server.manage.llm.models import LLMProviderUpsertRequest
+from onyx.server.settings.models import Settings
+from onyx.server.settings.store import store_settings as store_base_settings
+from onyx.utils.logger import setup_logger
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from danswer.db.engine import get_session_context_manager
-from danswer.db.llm import update_default_provider
-from danswer.db.llm import upsert_llm_provider
-from danswer.db.persona import upsert_persona
-from danswer.search.enums import RecencyBiasSetting
-from danswer.server.features.persona.models import CreatePersonaRequest
-from danswer.server.manage.llm.models import LLMProviderUpsertRequest
-from danswer.server.settings.models import Settings
-from danswer.server.settings.store import store_settings as store_base_settings
-from danswer.utils.logger import setup_logger
-from ee.danswer.db.standard_answer import (
+from ee.onyx.db.standard_answer import (
     create_initial_default_standard_answer_category,
 )
-from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
-from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
-from ee.danswer.server.enterprise_settings.store import store_analytics_script
-from ee.danswer.server.enterprise_settings.store import (
+from ee.onyx.server.enterprise_settings.models import AnalyticsScriptUpload
+from ee.onyx.server.enterprise_settings.models import EnterpriseSettings
+from ee.onyx.server.enterprise_settings.store import store_analytics_script
+from ee.onyx.server.enterprise_settings.store import (
     store_settings as store_ee_settings,
 )
-from ee.danswer.server.enterprise_settings.store import upload_logo
+from ee.onyx.server.enterprise_settings.store import upload_logo
 
 
 logger = setup_logger()

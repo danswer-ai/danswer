@@ -1,6 +1,6 @@
 import {
   AnswerPiecePacket,
-  DanswerDocument,
+  onyxDocument,
   Filters,
   StreamStopInfo,
 } from "@/lib/search/interfaces";
@@ -342,7 +342,7 @@ export function getCitedDocumentsFromMessage(message: Message) {
     return [];
   }
 
-  const documentsWithCitationKey: [string, DanswerDocument][] = [];
+  const documentsWithCitationKey: [string, onyxDocument][] = [];
   Object.entries(message.citations).forEach(([citationKey, documentDbId]) => {
     const matchingDocument = message.documents!.find(
       (document) => document.db_doc_id === documentDbId

@@ -1,10 +1,9 @@
+from onyx.access.models import ExternalAccess
+from onyx.access.utils import prefix_group_w_source
+from onyx.configs.constants import DocumentSource
+from onyx.db.models import Document as DbDocument
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-from danswer.access.models import ExternalAccess
-from danswer.access.utils import prefix_group_w_source
-from danswer.configs.constants import DocumentSource
-from danswer.db.models import Document as DbDocument
 
 
 def upsert_document_external_perms__no_commit(

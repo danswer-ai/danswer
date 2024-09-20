@@ -13,7 +13,7 @@ import {
   SearchRequestOverrides,
   ValidQuestionResponse,
   Relevance,
-  SearchDanswerDocument,
+  SearchonyxDocument,
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
@@ -198,7 +198,7 @@ export const SearchSection = ({
 
       if (userMessage) {
         setQuery(userMessage);
-        const danswerDocs: SearchResponse = {
+        const onyxDocs: SearchResponse = {
           documents: searchSession.documents,
           suggestedSearchType: null,
           answer: assistantMessage || "Search response not found",
@@ -212,7 +212,7 @@ export const SearchSection = ({
 
         setIsFetching(false);
         setFirstSearch(false);
-        setSearchResponse(danswerDocs);
+        setSearchResponse(onyxDocs);
         setContentEnriched(true);
       }
     }
@@ -271,7 +271,7 @@ export const SearchSection = ({
     setSearchState((searchState) => "citing");
   };
 
-  const updateDocs = (documents: SearchDanswerDocument[]) => {
+  const updateDocs = (documents: SearchonyxDocument[]) => {
     if (agentic) {
       setTimeout(() => {
         setSearchState((searchState) => newSearchState(searchState, "reading"));

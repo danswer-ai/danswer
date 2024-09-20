@@ -1,8 +1,7 @@
 from typing import Any
 
+from onyx.tools.tool import Tool
 from pydantic import BaseModel
-
-from danswer.tools.tool import Tool
 
 
 class ForceUseTool(BaseModel):

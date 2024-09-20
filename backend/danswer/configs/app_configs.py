@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
-from danswer.configs.constants import AuthType
-from danswer.configs.constants import DocumentIndexType
-from danswer.file_processing.enums import HtmlBasedConnectorTransformLinksStrategy
+from onyx.configs.constants import AuthType
+from onyx.configs.constants import DocumentIndexType
+from onyx.file_processing.enums import HtmlBasedConnectorTransformLinksStrategy
 
 #####
 # App Configs
@@ -31,7 +31,7 @@ DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "
 # Web Configs
 #####
 # WEB_DOMAIN is used to set the redirect_uri after login flows
-# NOTE: if you are having problems accessing the Danswer web UI locally (especially
+# NOTE: if you are having problems accessing the onyx web UI locally (especially
 # on Windows, try  setting this to `http://127.0.0.1:3000` instead and see if that
 # fixes it)
 WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
@@ -45,7 +45,7 @@ DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
 
 # Encryption key secret is used to encrypt connector credentials, api keys, and other sensitive
 # information. This provides an extra layer of security on top of Postgres access controls
-# and is available in Danswer EE
+# and is available in onyx EE
 ENCRYPTION_KEY_SECRET = os.environ.get("ENCRYPTION_KEY_SECRET") or ""
 
 # Turn off mask if admin users should see full credentials for data connectors.
@@ -59,8 +59,8 @@ SESSION_EXPIRE_TIME_SECONDS = int(
 )  # 7 days
 
 # set `VALID_EMAIL_DOMAINS` to a comma seperated list of domains in order to
-# restrict access to Danswer to only users with emails from those domains.
-# E.g. `VALID_EMAIL_DOMAINS=example.com,example.org` will restrict Danswer
+# restrict access to onyx to only users with emails from those domains.
+# E.g. `VALID_EMAIL_DOMAINS=example.com,example.org` will restrict onyx
 # signups to users with either an @example.com or an @example.org email.
 # NOTE: maintaining `VALID_EMAIL_DOMAIN` to keep backwards compatibility
 _VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
@@ -93,7 +93,7 @@ SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
 
-# If set, Danswer will listen to the `expires_at` returned by the identity
+# If set, onyx will listen to the `expires_at` returned by the identity
 # provider (e.g. Okta, Google, etc.) and force the user to re-authenticate
 # after this time has elapsed. Disabled since by default many auth providers
 # have very short expiry times (e.g. 1 hour) which provide a poor user experience
@@ -105,7 +105,7 @@ TRACK_EXTERNAL_IDP_EXPIRY = (
 #####
 # DB Configs
 #####
-DOCUMENT_INDEX_NAME = "danswer_index"
+DOCUMENT_INDEX_NAME = "onyx_index"
 # Vespa is now the default document index store for both keyword and vector
 DOCUMENT_INDEX_TYPE = os.environ.get(
     "DOCUMENT_INDEX_TYPE", DocumentIndexType.COMBINED.value
@@ -118,7 +118,7 @@ VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
 VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
 # The default below is for dockerized deployment
 VESPA_DEPLOYMENT_ZIP = (
-    os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
+    os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/onyx/vespa-app.zip"
 )
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
 try:
@@ -177,7 +177,7 @@ CELERY_RESULT_EXPIRES = int(os.environ.get("CELERY_RESULT_EXPIRES", 86400))  # s
 POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
 
 # View the list here:
-# https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/factory.py
+# https://github.com/onyx-ai/onyx/blob/main/backend/onyx/connectors/factory.py
 # If this is empty, all connectors are enabled, this is an option for security heavy orgs where
 # only very select connectors are enabled and admins cannot add other connector types
 ENABLED_CONNECTOR_TYPES = os.environ.get("ENABLED_CONNECTOR_TYPES") or ""
@@ -226,7 +226,7 @@ CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES = (
     os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES", "").lower() == "true"
 )
 
-# Save pages labels as Danswer metadata tags
+# Save pages labels as onyx metadata tags
 # The reason to skip this would be to reduce the number of calls to Confluence due to rate limit concerns
 CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
     os.environ.get("CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING", "").lower() == "true"
@@ -350,9 +350,9 @@ CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
 )
-# Logs Danswer only model interactions like prompts, responses, messages etc.
-LOG_DANSWER_MODEL_INTERACTIONS = (
-    os.environ.get("LOG_DANSWER_MODEL_INTERACTIONS", "").lower() == "true"
+# Logs onyx only model interactions like prompts, responses, messages etc.
+LOG_onyx_MODEL_INTERACTIONS = (
+    os.environ.get("LOG_onyx_MODEL_INTERACTIONS", "").lower() == "true"
 )
 # If set to `true` will enable additional logs about Vespa query performance
 # (time spent on finding the right docs + time spent fetching summaries from disk)
@@ -383,8 +383,8 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 #####
 # NOTE: this should only be enabled if you have purchased an enterprise license.
 # if you're interested in an enterprise license, please reach out to us at
-# founders@danswer.ai OR message Chris Weaver or Yuhong Sun in the Danswer
-# Slack community (https://join.slack.com/t/danswer/shared_invite/zt-1w76msxmd-HJHLe3KNFIAIzk_0dSOKaQ)
+# founders@onyx.ai OR message Chris Weaver or Yuhong Sun in the onyx
+# Slack community (https://join.slack.com/t/onyx/shared_invite/zt-1w76msxmd-HJHLe3KNFIAIzk_0dSOKaQ)
 ENTERPRISE_EDITION_ENABLED = (
     os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )

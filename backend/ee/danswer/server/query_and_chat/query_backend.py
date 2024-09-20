@@ -1,38 +1,38 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from onyx.auth.users import current_user
+from onyx.configs.onyxbot_configs import onyx_BOT_TARGET_CHUNK_PERCENTAGE
+from onyx.db.engine import get_session
+from onyx.db.models import User
+from onyx.db.persona import get_persona_by_id
+from onyx.llm.answering.prompts.citations_prompt import (
+    compute_max_document_tokens_for_persona,
+)
+from onyx.llm.factory import get_default_llms
+from onyx.llm.factory import get_llms_for_persona
+from onyx.llm.factory import get_main_llm_from_tuple
+from onyx.llm.utils import get_max_input_tokens
+from onyx.one_shot_answer.answer_question import get_search_answer
+from onyx.one_shot_answer.models import DirectQARequest
+from onyx.one_shot_answer.models import OneShotQAResponse
+from onyx.search.models import SavedSearchDocWithContent
+from onyx.search.models import SearchRequest
+from onyx.search.pipeline import SearchPipeline
+from onyx.search.utils import dedupe_documents
+from onyx.search.utils import drop_llm_indices
+from onyx.search.utils import relevant_sections_to_indices
+from onyx.utils.logger import setup_logger
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_user
-from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from danswer.db.persona import get_persona_by_id
-from danswer.llm.answering.prompts.citations_prompt import (
-    compute_max_document_tokens_for_persona,
-)
-from danswer.llm.factory import get_default_llms
-from danswer.llm.factory import get_llms_for_persona
-from danswer.llm.factory import get_main_llm_from_tuple
-from danswer.llm.utils import get_max_input_tokens
-from danswer.one_shot_answer.answer_question import get_search_answer
-from danswer.one_shot_answer.models import DirectQARequest
-from danswer.one_shot_answer.models import OneShotQAResponse
-from danswer.search.models import SavedSearchDocWithContent
-from danswer.search.models import SearchRequest
-from danswer.search.pipeline import SearchPipeline
-from danswer.search.utils import dedupe_documents
-from danswer.search.utils import drop_llm_indices
-from danswer.search.utils import relevant_sections_to_indices
-from danswer.utils.logger import setup_logger
-from ee.danswer.danswerbot.slack.handlers.handle_standard_answers import (
+from ee.onyx.onyxbot.slack.handlers.handle_standard_answers import (
     oneoff_standard_answers,
 )
-from ee.danswer.server.query_and_chat.models import DocumentSearchRequest
-from ee.danswer.server.query_and_chat.models import StandardAnswerRequest
-from ee.danswer.server.query_and_chat.models import StandardAnswerResponse
-from ee.danswer.server.query_and_chat.utils import create_temporary_persona
+from ee.onyx.server.query_and_chat.models import DocumentSearchRequest
+from ee.onyx.server.query_and_chat.models import StandaronyxRequest
+from ee.onyx.server.query_and_chat.models import StandaronyxResponse
+from ee.onyx.server.query_and_chat.utils import create_temporary_persona
 
 
 logger = setup_logger()
@@ -158,7 +158,7 @@ def get_answer_with_quote(
     input_tokens = get_max_input_tokens(
         model_name=llm.config.model_name, model_provider=llm.config.model_provider
     )
-    max_history_tokens = int(input_tokens * DANSWER_BOT_TARGET_CHUNK_PERCENTAGE)
+    max_history_tokens = int(input_tokens * onyx_BOT_TARGET_CHUNK_PERCENTAGE)
 
     remaining_tokens = input_tokens - max_history_tokens
 
@@ -181,17 +181,17 @@ def get_answer_with_quote(
 
 @basic_router.get("/standard-answer")
 def get_standard_answer(
-    request: StandardAnswerRequest,
+    request: StandaronyxRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_user),
-) -> StandardAnswerResponse:
+) -> StandaronyxResponse:
     try:
         standard_answers = oneoff_standard_answers(
             message=request.message,
             slack_bot_categories=request.slack_bot_categories,
             db_session=db_session,
         )
-        return StandardAnswerResponse(standard_answers=standard_answers)
+        return StandaronyxResponse(standard_answers=standard_answers)
     except Exception as e:
         logger.error(f"Error in get_standard_answer: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="An internal server error occurred")

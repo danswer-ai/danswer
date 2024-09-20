@@ -11,7 +11,7 @@ import {
   FetchAssistantsResponse,
   fetchAssistantsSS,
 } from "@/lib/assistants/fetchAssistantsSS";
-import { getStandardAnswerCategoriesIfEE } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
+import { getStandaronyxCategoriesIfEE } from "@/components/standaronyxs/getStandaronyxCategoriesIfEE";
 
 async function Page({ params }: { params: { id: string } }) {
   const tasks = [
@@ -30,8 +30,7 @@ async function Page({ params }: { params: { id: string } }) {
     FetchAssistantsResponse,
   ];
 
-  const eeStandardAnswerCategoryResponse =
-    await getStandardAnswerCategoriesIfEE();
+  const eeStandaronyxCategoryResponse = await getStandaronyxCategoriesIfEE();
 
   if (!slackBotsResponse.ok) {
     return (
@@ -86,13 +85,13 @@ async function Page({ params }: { params: { id: string } }) {
 
       <Text className="mb-8">
         Edit the existing configuration below! This config will determine how
-        DanswerBot behaves in the specified channels.
+        onyxBot behaves in the specified channels.
       </Text>
 
       <SlackBotCreationForm
         documentSets={documentSets}
         personas={assistants}
-        standardAnswerCategoryResponse={eeStandardAnswerCategoryResponse}
+        standaronyxCategoryResponse={eeStandaronyxCategoryResponse}
         existingSlackBotConfig={slackBotConfig}
       />
     </div>

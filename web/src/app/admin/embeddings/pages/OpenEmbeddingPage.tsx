@@ -48,9 +48,9 @@ export default function OpenEmbeddingPage({
         </a>
         .
         <br />
-        <b>NOTE:</b> not all models listed will work with Danswer, since some
-        have unique interfaces or special requirements. If in doubt, reach out
-        to the Danswer team.
+        <b>NOTE:</b> not all models listed will work with onyx, since some have
+        unique interfaces or special requirements. If in doubt, reach out to the
+        onyx team.
       </Text>
       {!configureModel && (
         <Button onClick={() => setConfigureModel(true)} className="mt-4">

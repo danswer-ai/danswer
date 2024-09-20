@@ -8,19 +8,18 @@ from typing import Optional
 import boto3
 from botocore.client import Config
 from mypy_boto3_s3 import S3Client
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import BlobType
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import ConnectorMissingCredentialError
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.file_processing.extract_file_text import extract_file_text
-from danswer.utils.logger import setup_logger
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.constants import BlobType
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.interfaces import SecondsSinceUnixEpoch
+from onyx.connectors.models import ConnectorMissingCredentialError
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.file_processing.extract_file_text import extract_file_text
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

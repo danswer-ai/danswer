@@ -7,10 +7,10 @@ from pathlib import Path
 import torch
 import uvicorn
 from fastapi import FastAPI
+from onyx import __version__
+from onyx.utils.logger import setup_logger
 from transformers import logging as transformer_logging  # type:ignore
 
-from danswer import __version__
-from danswer.utils.logger import setup_logger
 from model_server.custom_models import router as custom_models_router
 from model_server.custom_models import warm_up_intent_model
 from model_server.encoders import router as encoders_router
@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 def get_model_app() -> FastAPI:
     application = FastAPI(
-        title="Danswer Model Server", version=__version__, lifespan=lifespan
+        title="onyx Model Server", version=__version__, lifespan=lifespan
     )
 
     application.include_router(management_router)
@@ -94,7 +94,7 @@ app = get_model_app()
 
 if __name__ == "__main__":
     logger.notice(
-        f"Starting Danswer Model Server on http://{MODEL_SERVER_ALLOWED_HOST}:{str(MODEL_SERVER_PORT)}/"
+        f"Starting onyx Model Server on http://{MODEL_SERVER_ALLOWED_HOST}:{str(MODEL_SERVER_PORT)}/"
     )
     logger.notice(f"Model Server Version: {__version__}")
     uvicorn.run(app, host=MODEL_SERVER_ALLOWED_HOST, port=MODEL_SERVER_PORT)

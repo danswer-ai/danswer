@@ -1,11 +1,11 @@
 import json
 from datetime import datetime
 
-from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import DanswerQuotes
-from danswer.chat.models import LlmDoc
-from danswer.configs.constants import DocumentSource
-from danswer.llm.answering.stream_processing.quotes_processing import (
+from onyx.chat.models import LlmDoc
+from onyx.chat.models import onyxAnswerPiece
+from onyx.chat.models import onyxQuotes
+from onyx.configs.constants import DocumentSource
+from onyx.llm.answering.stream_processing.quotes_processing import (
     process_model_tokens,
 )
 
@@ -29,7 +29,7 @@ tokens_with_quotes = [
     "{",
     "\n  ",
     '"answer": "Yes',
-    ", Danswer allows",
+    ", onyx allows",
     " customized prompts. This",
     " feature",
     " is currently being",
@@ -61,7 +61,7 @@ tokens_with_quotes = [
     " the LLM.",
     " This enhancement",
     " aims to make",
-    " Danswer more",
+    " onyx more",
     " adaptable to",
     " different",
     " business",
@@ -77,7 +77,7 @@ tokens_with_quotes = [
     " company.",
     " Additionally",
     ",",
-    " Danswer already",
+    " onyx already",
     " supports creating",
     " custom AI",
     " Assistants with",
@@ -193,7 +193,7 @@ def test_process_model_tokens_answer() -> None:
     expected_answer = j["answer"]
     actual = ""
     for o in gen:
-        if isinstance(o, DanswerAnswerPiece):
+        if isinstance(o, onyxAnswerPiece):
             if o.answer_piece:
                 actual += o.answer_piece
 
@@ -218,9 +218,7 @@ def test_simple_json_answer() -> None:
 
     expected_answer = "This is a simple answer."
     actual = "".join(
-        o.answer_piece
-        for o in gen
-        if isinstance(o, DanswerAnswerPiece) and o.answer_piece
+        o.answer_piece for o in gen if isinstance(o, onyxAnswerPiece) and o.answer_piece
     )
 
     assert expected_answer == actual
@@ -246,9 +244,7 @@ def test_json_answer_with_quotes() -> None:
 
     expected_answer = "This is a split answer."
     actual = "".join(
-        o.answer_piece
-        for o in gen
-        if isinstance(o, DanswerAnswerPiece) and o.answer_piece
+        o.answer_piece for o in gen if isinstance(o, onyxAnswerPiece) and o.answer_piece
     )
 
     assert expected_answer == actual
@@ -275,9 +271,7 @@ def test_json_answer_split_tokens() -> None:
 
     expected_answer = "This is a split answer."
     actual = "".join(
-        o.answer_piece
-        for o in gen
-        if isinstance(o, DanswerAnswerPiece) and o.answer_piece
+        o.answer_piece for o in gen if isinstance(o, onyxAnswerPiece) and o.answer_piece
     )
 
     assert expected_answer == actual
@@ -304,12 +298,12 @@ def test_lengthy_prefixed_json_with_quotes() -> None:
     actual_answer = ""
     actual_count = 0
     for o in gen:
-        if isinstance(o, DanswerAnswerPiece):
+        if isinstance(o, onyxAnswerPiece):
             if o.answer_piece:
                 actual_answer += o.answer_piece
             continue
 
-        if isinstance(o, DanswerQuotes):
+        if isinstance(o, onyxQuotes):
             for q in o.quotes:
                 assert q.quote == "Document"
                 actual_count += 1
@@ -337,12 +331,12 @@ def test_prefixed_json_with_quotes() -> None:
     actual_answer = ""
     actual_count = 0
     for o in gen:
-        if isinstance(o, DanswerAnswerPiece):
+        if isinstance(o, onyxAnswerPiece):
             if o.answer_piece:
                 actual_answer += o.answer_piece
             continue
 
-        if isinstance(o, DanswerQuotes):
+        if isinstance(o, onyxQuotes):
             for q in o.quotes:
                 assert q.quote == "Document"
                 actual_count += 1

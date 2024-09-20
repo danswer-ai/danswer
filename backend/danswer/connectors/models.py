@@ -2,12 +2,11 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from onyx.configs.constants import DocumentSource
+from onyx.configs.constants import INDEX_SEPARATOR
+from onyx.configs.constants import RETURN_SEPARATOR
+from onyx.utils.text_processing import make_url_compatible
 from pydantic import BaseModel
-
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import INDEX_SEPARATOR
-from danswer.configs.constants import RETURN_SEPARATOR
-from danswer.utils.text_processing import make_url_compatible
 
 
 class InputType(str, Enum):
@@ -94,7 +93,7 @@ class BasicExpertInfo(BaseModel):
 
 
 class DocumentBase(BaseModel):
-    """Used for Danswer ingestion api, the ID is inferred before use if not provided"""
+    """Used for onyx ingestion api, the ID is inferred before use if not provided"""
 
     id: str | None = None
     sections: list[Section]

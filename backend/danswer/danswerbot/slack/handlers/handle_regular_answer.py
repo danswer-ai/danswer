@@ -6,54 +6,53 @@ from typing import Optional
 from typing import TypeVar
 
 from fastapi import HTTPException
+from onyx.configs.app_configs import DISABLE_GENERATIVE_AI
+from onyx.configs.onyxbot_configs import ENABLE_onyxBOT_REFLEXION
+from onyx.configs.onyxbot_configs import onyx_BOT_ANSWER_GENERATION_TIMEOUT
+from onyx.configs.onyxbot_configs import onyx_BOT_DISABLE_COT
+from onyx.configs.onyxbot_configs import onyx_BOT_DISABLE_DOCS_ONLY_ANSWER
+from onyx.configs.onyxbot_configs import onyx_BOT_DISPLAY_ERROR_MSGS
+from onyx.configs.onyxbot_configs import onyx_BOT_NUM_RETRIES
+from onyx.configs.onyxbot_configs import onyx_BOT_TARGET_CHUNK_PERCENTAGE
+from onyx.configs.onyxbot_configs import onyx_BOT_USE_QUOTES
+from onyx.configs.onyxbot_configs import onyx_FOLLOWUP_EMOJI
+from onyx.configs.onyxbot_configs import onyx_REACT_EMOJI
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.db.models import Persona
+from onyx.db.models import SlackBotConfig
+from onyx.db.models import SlackBotResponseType
+from onyx.db.persona import fetch_persona_by_id
+from onyx.db.search_settings import get_current_search_settings
+from onyx.db.users import get_user_by_email
+from onyx.llm.answering.prompts.citations_prompt import (
+    compute_max_document_tokens_for_persona,
+)
+from onyx.llm.factory import get_llms_for_persona
+from onyx.llm.utils import check_number_of_tokens
+from onyx.llm.utils import get_max_input_tokens
+from onyx.one_shot_answer.answer_question import get_search_answer
+from onyx.one_shot_answer.models import DirectQARequest
+from onyx.one_shot_answer.models import OneShotQAResponse
+from onyx.onyxbot.slack.blocks import build_documents_blocks
+from onyx.onyxbot.slack.blocks import build_follow_up_block
+from onyx.onyxbot.slack.blocks import build_qa_response_blocks
+from onyx.onyxbot.slack.blocks import build_sources_blocks
+from onyx.onyxbot.slack.blocks import get_restate_blocks
+from onyx.onyxbot.slack.handlers.utils import send_team_member_message
+from onyx.onyxbot.slack.models import SlackMessageInfo
+from onyx.onyxbot.slack.utils import respond_in_thread
+from onyx.onyxbot.slack.utils import SlackRateLimiter
+from onyx.onyxbot.slack.utils import update_emote_react
+from onyx.search.enums import OptionalSearchSetting
+from onyx.search.models import BaseFilters
+from onyx.search.models import RerankingDetails
+from onyx.search.models import RetrievalDetails
+from onyx.utils.logger import onyxLoggingAdapter
 from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.models.blocks import DividerBlock
 from slack_sdk.models.blocks import SectionBlock
 from sqlalchemy.orm import Session
-
-from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
-from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
-from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_COT
-from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
-from danswer.configs.danswerbot_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
-from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
-from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
-from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
-from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
-from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
-from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
-from danswer.danswerbot.slack.blocks import build_documents_blocks
-from danswer.danswerbot.slack.blocks import build_follow_up_block
-from danswer.danswerbot.slack.blocks import build_qa_response_blocks
-from danswer.danswerbot.slack.blocks import build_sources_blocks
-from danswer.danswerbot.slack.blocks import get_restate_blocks
-from danswer.danswerbot.slack.handlers.utils import send_team_member_message
-from danswer.danswerbot.slack.models import SlackMessageInfo
-from danswer.danswerbot.slack.utils import respond_in_thread
-from danswer.danswerbot.slack.utils import SlackRateLimiter
-from danswer.danswerbot.slack.utils import update_emote_react
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.models import Persona
-from danswer.db.models import SlackBotConfig
-from danswer.db.models import SlackBotResponseType
-from danswer.db.persona import fetch_persona_by_id
-from danswer.db.search_settings import get_current_search_settings
-from danswer.db.users import get_user_by_email
-from danswer.llm.answering.prompts.citations_prompt import (
-    compute_max_document_tokens_for_persona,
-)
-from danswer.llm.factory import get_llms_for_persona
-from danswer.llm.utils import check_number_of_tokens
-from danswer.llm.utils import get_max_input_tokens
-from danswer.one_shot_answer.answer_question import get_search_answer
-from danswer.one_shot_answer.models import DirectQARequest
-from danswer.one_shot_answer.models import OneShotQAResponse
-from danswer.search.enums import OptionalSearchSetting
-from danswer.search.models import BaseFilters
-from danswer.search.models import RerankingDetails
-from danswer.search.models import RetrievalDetails
-from danswer.utils.logger import DanswerLoggingAdapter
 
 
 srl = SlackRateLimiter()
@@ -86,15 +85,15 @@ def handle_regular_answer(
     receiver_ids: list[str] | None,
     client: WebClient,
     channel: str,
-    logger: DanswerLoggingAdapter,
+    logger: onyxLoggingAdapter,
     feedback_reminder_id: str | None,
-    num_retries: int = DANSWER_BOT_NUM_RETRIES,
-    answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
-    thread_context_percent: float = DANSWER_BOT_TARGET_CHUNK_PERCENTAGE,
-    should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
-    disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
-    disable_cot: bool = DANSWER_BOT_DISABLE_COT,
-    reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
+    num_retries: int = onyx_BOT_NUM_RETRIES,
+    answer_generation_timeout: int = onyx_BOT_ANSWER_GENERATION_TIMEOUT,
+    thread_context_percent: float = onyx_BOT_TARGET_CHUNK_PERCENTAGE,
+    should_respond_with_error_msgs: bool = onyx_BOT_DISPLAY_ERROR_MSGS,
+    disable_docs_only_answer: bool = onyx_BOT_DISABLE_DOCS_ONLY_ANSWER,
+    disable_cot: bool = onyx_BOT_DISABLE_COT,
+    reflexion: bool = ENABLE_onyxBOT_REFLEXION,
 ) -> bool:
     channel_conf = slack_bot_config.channel_config if slack_bot_config else None
 
@@ -131,13 +130,13 @@ def handle_regular_answer(
 
     # figure out if we want to use citations or quotes
     use_citations = (
-        not DANSWER_BOT_USE_QUOTES
+        not onyx_BOT_USE_QUOTES
         if slack_bot_config is None
         else slack_bot_config.response_type == SlackBotResponseType.CITATIONS
     )
 
     if not message_ts_to_respond_to and not is_bot_msg:
-        # if the message is not "/danswer" command, then it should have a message ts to respond to
+        # if the message is not "/onyx" command, then it should have a message ts to respond to
         raise RuntimeError(
             "No message timestamp to respond to in `handle_message`. This should never happen."
         )
@@ -210,7 +209,7 @@ def handle_regular_answer(
                 enable_reflexion=reflexion,
                 bypass_acl=bypass_acl,
                 use_citations=use_citations,
-                danswerbot_flow=True,
+                onyxbot_flow=True,
             )
             if not answer.error_msg:
                 return answer
@@ -283,7 +282,7 @@ def handle_regular_answer(
 
         # In case of failures, don't keep the reaction there permanently
         update_emote_react(
-            emoji=DANSWER_REACT_EMOJI,
+            emoji=onyx_REACT_EMOJI,
             channel=message_info.channel_to_respond,
             message_ts=message_info.msg_to_respond,
             remove=True,
@@ -300,10 +299,10 @@ def handle_regular_answer(
                 client=client,
                 channel=channel,
                 receiver_ids=receiver_ids,
-                text="Hello! Danswer has some results for you!",
+                text="Hello! onyx has some results for you!",
                 blocks=[
                     SectionBlock(
-                        text="Danswer is down for maintenance.\nWe're working hard on recharging the AI!"
+                        text="onyx is down for maintenance.\nWe're working hard on recharging the AI!"
                     )
                 ],
                 thread_ts=message_ts_to_respond_to,
@@ -334,7 +333,7 @@ def handle_regular_answer(
 
     # Got an answer at this point, can remove reaction and give results
     update_emote_react(
-        emoji=DANSWER_REACT_EMOJI,
+        emoji=onyx_REACT_EMOJI,
         channel=message_info.channel_to_respond,
         message_ts=message_info.msg_to_respond,
         remove=True,
@@ -346,7 +345,7 @@ def handle_regular_answer(
             "Answer was evaluated to be invalid, throwing it away without responding."
         )
         update_emote_react(
-            emoji=DANSWER_FOLLOWUP_EMOJI,
+            emoji=onyx_FOLLOWUP_EMOJI,
             channel=message_info.channel_to_respond,
             message_ts=message_info.msg_to_respond,
             remove=False,
@@ -382,7 +381,7 @@ def handle_regular_answer(
     if not answer.answer and disable_docs_only_answer:
         logger.notice(
             "Unable to find answer - not responding since the "
-            "`DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER` env variable is set"
+            "`onyx_BOT_DISABLE_DOCS_ONLY_ANSWER` env variable is set"
         )
         return True
 
@@ -411,7 +410,7 @@ def handle_regular_answer(
             )
         return True
 
-    # If called with the DanswerBot slash command, the question is lost so we have to reshow it
+    # If called with the onyxBot slash command, the question is lost so we have to reshow it
     restate_question_block = get_restate_blocks(messages[-1].message, is_bot_msg)
 
     answer_blocks = build_qa_response_blocks(
@@ -471,7 +470,7 @@ def handle_regular_answer(
             client=client,
             channel=channel,
             receiver_ids=receiver_ids,
-            text="Hello! Danswer has some results for you!",
+            text="Hello! onyx has some results for you!",
             blocks=all_blocks,
             thread_ts=message_ts_to_respond_to,
             # don't unfurl, since otherwise we will have 5+ previews which makes the message very long
@@ -480,7 +479,7 @@ def handle_regular_answer(
 
         # For DM (ephemeral message), we need to create a thread via a normal message so the user can see
         # the ephemeral message. This also will give the user a notification which ephemeral message does not.
-        # if there is no message_ts_to_respond_to, and we have made it this far, then this is a /danswer message
+        # if there is no message_ts_to_respond_to, and we have made it this far, then this is a /onyx message
         # so we shouldn't send_team_member_message
         if receiver_ids and message_ts_to_respond_to is not None:
             send_team_member_message(

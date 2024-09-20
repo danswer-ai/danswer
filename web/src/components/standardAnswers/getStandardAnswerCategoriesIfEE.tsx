@@ -1,44 +1,44 @@
 import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "@/lib/constants";
-import { StandardAnswerCategory } from "@/lib/types";
+import { StandaronyxCategory } from "@/lib/types";
 import { fetchSS } from "@/lib/utilsSS";
 
-export type StandardAnswerCategoryResponse =
-  | EEStandardAnswerCategoryResponse
+export type StandaronyxCategoryResponse =
+  | EEStandaronyxCategoryResponse
   | NoEEAvailable;
 
 interface NoEEAvailable {
   paidEnterpriseFeaturesEnabled: false;
 }
 
-interface EEStandardAnswerCategoryResponse {
+interface EEStandaronyxCategoryResponse {
   paidEnterpriseFeaturesEnabled: true;
   error?: {
     message: string;
   };
-  categories?: StandardAnswerCategory[];
+  categories?: StandaronyxCategory[];
 }
 
-export async function getStandardAnswerCategoriesIfEE(): Promise<StandardAnswerCategoryResponse> {
+export async function getStandaronyxCategoriesIfEE(): Promise<StandaronyxCategoryResponse> {
   if (!SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
     return {
       paidEnterpriseFeaturesEnabled: false,
     };
   }
 
-  const standardAnswerCategoriesResponse = await fetchSS(
+  const standaronyxCategoriesResponse = await fetchSS(
     "/manage/admin/standard-answer/category"
   );
-  if (!standardAnswerCategoriesResponse.ok) {
+  if (!standaronyxCategoriesResponse.ok) {
     return {
       paidEnterpriseFeaturesEnabled: true,
       error: {
-        message: await standardAnswerCategoriesResponse.text(),
+        message: await standaronyxCategoriesResponse.text(),
       },
     };
   }
 
   const categories =
-    (await standardAnswerCategoriesResponse.json()) as StandardAnswerCategory[];
+    (await standaronyxCategoriesResponse.json()) as StandaronyxCategory[];
 
   return {
     paidEnterpriseFeaturesEnabled: true,

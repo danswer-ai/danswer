@@ -1,24 +1,23 @@
 import json
 import random
 
-from sqlalchemy.orm import Session
-
-from danswer.configs.chat_configs import ENABLE_CONNECTOR_CLASSIFIER
-from danswer.configs.constants import DocumentSource
-from danswer.db.connector import fetch_unique_document_sources
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.llm.interfaces import LLM
-from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
-from danswer.llm.utils import message_to_string
-from danswer.natural_language_processing.search_nlp_models import (
+from onyx.configs.chat_configs import ENABLE_CONNECTOR_CLASSIFIER
+from onyx.configs.constants import DocumentSource
+from onyx.db.connector import fetch_unique_document_sources
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.llm.interfaces import LLM
+from onyx.llm.utils import dict_based_prompt_to_langchain_prompt
+from onyx.llm.utils import message_to_string
+from onyx.natural_language_processing.search_nlp_models import (
     ConnectorClassificationModel,
 )
-from danswer.prompts.constants import SOURCES_KEY
-from danswer.prompts.filter_extration import FILE_SOURCE_WARNING
-from danswer.prompts.filter_extration import SOURCE_FILTER_PROMPT
-from danswer.prompts.filter_extration import WEB_SOURCE_WARNING
-from danswer.utils.logger import setup_logger
-from danswer.utils.text_processing import extract_embedded_json
+from onyx.prompts.constants import SOURCES_KEY
+from onyx.prompts.filter_extration import FILE_SOURCE_WARNING
+from onyx.prompts.filter_extration import SOURCE_FILTER_PROMPT
+from onyx.prompts.filter_extration import WEB_SOURCE_WARNING
+from onyx.utils.logger import setup_logger
+from onyx.utils.text_processing import extract_embedded_json
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -148,7 +147,7 @@ def extract_source_filter(
             },
             {
                 "role": "user",
-                "content": "What page from Danswer contains debugging instruction on segfault",
+                "content": "What page from onyx contains debugging instruction on segfault",
             },
             {
                 "role": "assistant",
@@ -186,7 +185,7 @@ def extract_source_filter(
 
 
 if __name__ == "__main__":
-    from danswer.llm.factory import get_default_llms, get_main_llm_from_tuple
+    from onyx.llm.factory import get_default_llms, get_main_llm_from_tuple
 
     # Just for testing purposes
     with Session(get_sqlalchemy_engine()) as db_session:

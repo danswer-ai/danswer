@@ -1,34 +1,33 @@
 import { AdminPageTitle } from "@/components/admin/Title";
-import { StandardAnswerCreationForm } from "@/app/ee/admin/standard-answer/StandardAnswerCreationForm";
+import { StandaronyxCreationForm } from "@/app/ee/admin/standard-answer/StandaronyxCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { BackButton } from "@/components/BackButton";
 import { Text } from "@tremor/react";
 import { ClipboardIcon } from "@/components/icons/icons";
-import { StandardAnswer, StandardAnswerCategory } from "@/lib/types";
+import { Standaronyx, StandaronyxCategory } from "@/lib/types";
 
 async function Page({ params }: { params: { id: string } }) {
   const tasks = [
     fetchSS("/manage/admin/standard-answer"),
     fetchSS(`/manage/admin/standard-answer/category`),
   ];
-  const [standardAnswersResponse, standardAnswerCategoriesResponse] =
+  const [standaronyxsResponse, standaronyxCategoriesResponse] =
     await Promise.all(tasks);
-  if (!standardAnswersResponse.ok) {
+  if (!standaronyxsResponse.ok) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch standard answers - ${await standardAnswersResponse.text()}`}
+        errorMsg={`Failed to fetch standard answers - ${await standaronyxsResponse.text()}`}
       />
     );
   }
-  const allStandardAnswers =
-    (await standardAnswersResponse.json()) as StandardAnswer[];
-  const standardAnswer = allStandardAnswers.find(
+  const allStandaronyxs = (await standaronyxsResponse.json()) as Standaronyx[];
+  const standaronyx = allStandaronyxs.find(
     (answer) => answer.id.toString() === params.id
   );
 
-  if (!standardAnswer) {
+  if (!standaronyx) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
@@ -37,17 +36,17 @@ async function Page({ params }: { params: { id: string } }) {
     );
   }
 
-  if (!standardAnswerCategoriesResponse.ok) {
+  if (!standaronyxCategoriesResponse.ok) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch standard answer categories - ${await standardAnswerCategoriesResponse.text()}`}
+        errorMsg={`Failed to fetch standard answer categories - ${await standaronyxCategoriesResponse.text()}`}
       />
     );
   }
 
-  const standardAnswerCategories =
-    (await standardAnswerCategoriesResponse.json()) as StandardAnswerCategory[];
+  const standaronyxCategories =
+    (await standaronyxCategoriesResponse.json()) as StandaronyxCategory[];
   return (
     <div className="container mx-auto">
       <BackButton />
@@ -56,9 +55,9 @@ async function Page({ params }: { params: { id: string } }) {
         icon={<ClipboardIcon size={32} />}
       />
 
-      <StandardAnswerCreationForm
-        standardAnswerCategories={standardAnswerCategories}
-        existingStandardAnswer={standardAnswer}
+      <StandaronyxCreationForm
+        standaronyxCategories={standaronyxCategories}
+        existingStandaronyx={standaronyx}
       />
     </div>
   );

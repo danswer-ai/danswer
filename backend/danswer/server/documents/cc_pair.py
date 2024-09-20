@@ -4,36 +4,36 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Query
+from onyx.auth.users import current_curator_or_admin_user
+from onyx.auth.users import current_user
+from onyx.background.celery.celery_utils import get_deletion_attempt_snapshot
+from onyx.db.connector_credential_pair import add_credential_to_connector
+from onyx.db.connector_credential_pair import get_connector_credential_pair_from_id
+from onyx.db.connector_credential_pair import remove_credential_from_connector
+from onyx.db.connector_credential_pair import (
+    update_connector_credential_pair_from_id,
+)
+from onyx.db.document import get_document_counts_for_cc_pairs
+from onyx.db.engine import get_session
+from onyx.db.enums import AccessType
+from onyx.db.enums import ConnectorCredentialPairStatus
+from onyx.db.index_attempt import cancel_indexing_attempts_for_ccpair
+from onyx.db.index_attempt import cancel_indexing_attempts_past_model
+from onyx.db.index_attempt import count_index_attempts_for_connector
+from onyx.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
+from onyx.db.index_attempt import get_paginated_index_attempts_for_cc_pair_id
+from onyx.db.models import User
+from onyx.server.documents.models import CCPairFullInfo
+from onyx.server.documents.models import CCStatusUpdateRequest
+from onyx.server.documents.models import ConnectorCredentialPairIdentifier
+from onyx.server.documents.models import ConnectorCredentialPairMetadata
+from onyx.server.documents.models import PaginatedIndexAttempts
+from onyx.server.models import StatusResponse
+from onyx.utils.logger import setup_logger
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_curator_or_admin_user
-from danswer.auth.users import current_user
-from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
-from danswer.db.connector_credential_pair import add_credential_to_connector
-from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
-from danswer.db.connector_credential_pair import remove_credential_from_connector
-from danswer.db.connector_credential_pair import (
-    update_connector_credential_pair_from_id,
-)
-from danswer.db.document import get_document_counts_for_cc_pairs
-from danswer.db.engine import get_session
-from danswer.db.enums import AccessType
-from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
-from danswer.db.index_attempt import cancel_indexing_attempts_past_model
-from danswer.db.index_attempt import count_index_attempts_for_connector
-from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
-from danswer.db.index_attempt import get_paginated_index_attempts_for_cc_pair_id
-from danswer.db.models import User
-from danswer.server.documents.models import CCPairFullInfo
-from danswer.server.documents.models import CCStatusUpdateRequest
-from danswer.server.documents.models import ConnectorCredentialPairIdentifier
-from danswer.server.documents.models import ConnectorCredentialPairMetadata
-from danswer.server.documents.models import PaginatedIndexAttempts
-from danswer.server.models import StatusResponse
-from danswer.utils.logger import setup_logger
-from ee.danswer.db.user_group import validate_user_creation_permissions
+from ee.onyx.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
 

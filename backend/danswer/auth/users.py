@@ -30,42 +30,41 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from onyx.auth.invited_users import get_invited_users
+from onyx.auth.schemas import UserCreate
+from onyx.auth.schemas import UserRole
+from onyx.auth.schemas import UserUpdate
+from onyx.configs.app_configs import AUTH_TYPE
+from onyx.configs.app_configs import DISABLE_AUTH
+from onyx.configs.app_configs import EMAIL_FROM
+from onyx.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
+from onyx.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from onyx.configs.app_configs import SMTP_PASS
+from onyx.configs.app_configs import SMTP_PORT
+from onyx.configs.app_configs import SMTP_SERVER
+from onyx.configs.app_configs import SMTP_USER
+from onyx.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
+from onyx.configs.app_configs import USER_AUTH_SECRET
+from onyx.configs.app_configs import VALID_EMAIL_DOMAINS
+from onyx.configs.app_configs import WEB_DOMAIN
+from onyx.configs.constants import AuthType
+from onyx.configs.constants import onyx_API_KEY_DUMMY_EMAIL_DOMAIN
+from onyx.configs.constants import onyx_API_KEY_PREFIX
+from onyx.configs.constants import UNNAMED_KEY_PLACEHOLDER
+from onyx.db.auth import get_access_token_db
+from onyx.db.auth import get_default_admin_user_emails
+from onyx.db.auth import get_user_count
+from onyx.db.auth import get_user_db
+from onyx.db.engine import get_session
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.db.models import AccessToken
+from onyx.db.models import User
+from onyx.db.users import get_user_by_email
+from onyx.utils.logger import setup_logger
+from onyx.utils.telemetry import optional_telemetry
+from onyx.utils.telemetry import RecordType
+from onyx.utils.variable_functionality import fetch_versioned_implementation
 from sqlalchemy.orm import Session
-
-from danswer.auth.invited_users import get_invited_users
-from danswer.auth.schemas import UserCreate
-from danswer.auth.schemas import UserRole
-from danswer.auth.schemas import UserUpdate
-from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.app_configs import DISABLE_AUTH
-from danswer.configs.app_configs import EMAIL_FROM
-from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
-from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
-from danswer.configs.app_configs import SMTP_PASS
-from danswer.configs.app_configs import SMTP_PORT
-from danswer.configs.app_configs import SMTP_SERVER
-from danswer.configs.app_configs import SMTP_USER
-from danswer.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
-from danswer.configs.app_configs import USER_AUTH_SECRET
-from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
-from danswer.configs.app_configs import WEB_DOMAIN
-from danswer.configs.constants import AuthType
-from danswer.configs.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
-from danswer.configs.constants import DANSWER_API_KEY_PREFIX
-from danswer.configs.constants import UNNAMED_KEY_PLACEHOLDER
-from danswer.db.auth import get_access_token_db
-from danswer.db.auth import get_default_admin_user_emails
-from danswer.db.auth import get_user_count
-from danswer.db.auth import get_user_db
-from danswer.db.engine import get_session
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.models import AccessToken
-from danswer.db.models import User
-from danswer.db.users import get_user_by_email
-from danswer.utils.logger import setup_logger
-from danswer.utils.telemetry import optional_telemetry
-from danswer.utils.telemetry import RecordType
-from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
 
@@ -88,9 +87,9 @@ def verify_auth_setting() -> None:
 
 
 def get_display_email(email: str | None, space_less: bool = False) -> str:
-    if email and email.endswith(DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN):
+    if email and email.endswith(onyx_API_KEY_DUMMY_EMAIL_DOMAIN):
         name = email.split("@")[0]
-        if name == DANSWER_API_KEY_PREFIX + UNNAMED_KEY_PLACEHOLDER:
+        if name == onyx_API_KEY_PREFIX + UNNAMED_KEY_PLACEHOLDER:
             return "Unnamed API Key"
 
         if space_less:
@@ -160,7 +159,7 @@ def send_user_verification_email(
     mail_from: str = EMAIL_FROM,
 ) -> None:
     msg = MIMEMultipart()
-    msg["Subject"] = "Danswer Email Verification"
+    msg["Subject"] = "onyx Email Verification"
     msg["To"] = user_email
     if mail_from:
         msg["From"] = mail_from
@@ -417,7 +416,7 @@ async def optional_user(
     db_session: Session = Depends(get_session),
 ) -> User | None:
     versioned_fetch_user = fetch_versioned_implementation(
-        "danswer.auth.users", "optional_user_"
+        "onyx.auth.users", "optional_user_"
     )
     return await versioned_fetch_user(request, user, db_session)
 
@@ -503,5 +502,5 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
 
 
 def get_default_admin_user_emails_() -> list[str]:
-    # No default seeding available for Danswer MIT
+    # No default seeding available for onyx MIT
     return []

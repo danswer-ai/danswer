@@ -1,34 +1,34 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from onyx.auth.users import current_admin_user
+from onyx.db.engine import get_session
+from onyx.db.models import User
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from ee.danswer.db.standard_answer import fetch_standard_answer
-from ee.danswer.db.standard_answer import fetch_standard_answer_categories
-from ee.danswer.db.standard_answer import fetch_standard_answer_category
-from ee.danswer.db.standard_answer import fetch_standard_answers
-from ee.danswer.db.standard_answer import insert_standard_answer
-from ee.danswer.db.standard_answer import insert_standard_answer_category
-from ee.danswer.db.standard_answer import remove_standard_answer
-from ee.danswer.db.standard_answer import update_standard_answer
-from ee.danswer.db.standard_answer import update_standard_answer_category
-from ee.danswer.server.manage.models import StandardAnswer
-from ee.danswer.server.manage.models import StandardAnswerCategory
-from ee.danswer.server.manage.models import StandardAnswerCategoryCreationRequest
-from ee.danswer.server.manage.models import StandardAnswerCreationRequest
+from ee.onyx.db.standard_answer import fetch_standard_answer
+from ee.onyx.db.standard_answer import fetch_standard_answer_categories
+from ee.onyx.db.standard_answer import fetch_standard_answer_category
+from ee.onyx.db.standard_answer import fetch_standard_answers
+from ee.onyx.db.standard_answer import insert_standard_answer
+from ee.onyx.db.standard_answer import insert_standard_answer_category
+from ee.onyx.db.standard_answer import remove_standard_answer
+from ee.onyx.db.standard_answer import update_standard_answer
+from ee.onyx.db.standard_answer import update_standard_answer_category
+from ee.onyx.server.manage.models import Standaronyx
+from ee.onyx.server.manage.models import StandaronyxCategory
+from ee.onyx.server.manage.models import StandaronyxCategoryCreationRequest
+from ee.onyx.server.manage.models import StandaronyxCreationRequest
 
 router = APIRouter(prefix="/manage")
 
 
 @router.post("/admin/standard-answer")
 def create_standard_answer(
-    standard_answer_creation_request: StandardAnswerCreationRequest,
+    standard_answer_creation_request: StandaronyxCreationRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
-) -> StandardAnswer:
+) -> Standaronyx:
     standard_answer_model = insert_standard_answer(
         keyword=standard_answer_creation_request.keyword,
         answer=standard_answer_creation_request.answer,
@@ -37,17 +37,17 @@ def create_standard_answer(
         match_any_keywords=standard_answer_creation_request.match_any_keywords,
         db_session=db_session,
     )
-    return StandardAnswer.from_model(standard_answer_model)
+    return Standaronyx.from_model(standard_answer_model)
 
 
 @router.get("/admin/standard-answer")
 def list_standard_answers(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
-) -> list[StandardAnswer]:
+) -> list[Standaronyx]:
     standard_answer_models = fetch_standard_answers(db_session=db_session)
     return [
-        StandardAnswer.from_model(standard_answer_model)
+        Standaronyx.from_model(standard_answer_model)
         for standard_answer_model in standard_answer_models
     ]
 
@@ -55,10 +55,10 @@ def list_standard_answers(
 @router.patch("/admin/standard-answer/{standard_answer_id}")
 def patch_standard_answer(
     standard_answer_id: int,
-    standard_answer_creation_request: StandardAnswerCreationRequest,
+    standard_answer_creation_request: StandaronyxCreationRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
-) -> StandardAnswer:
+) -> Standaronyx:
     existing_standard_answer = fetch_standard_answer(
         standard_answer_id=standard_answer_id,
         db_session=db_session,
@@ -76,7 +76,7 @@ def patch_standard_answer(
         match_any_keywords=standard_answer_creation_request.match_any_keywords,
         db_session=db_session,
     )
-    return StandardAnswer.from_model(standard_answer_model)
+    return Standaronyx.from_model(standard_answer_model)
 
 
 @router.delete("/admin/standard-answer/{standard_answer_id}")
@@ -93,27 +93,27 @@ def delete_standard_answer(
 
 @router.post("/admin/standard-answer/category")
 def create_standard_answer_category(
-    standard_answer_category_creation_request: StandardAnswerCategoryCreationRequest,
+    standard_answer_category_creation_request: StandaronyxCategoryCreationRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
-) -> StandardAnswerCategory:
+) -> StandaronyxCategory:
     standard_answer_category_model = insert_standard_answer_category(
         category_name=standard_answer_category_creation_request.name,
         db_session=db_session,
     )
-    return StandardAnswerCategory.from_model(standard_answer_category_model)
+    return StandaronyxCategory.from_model(standard_answer_category_model)
 
 
 @router.get("/admin/standard-answer/category")
 def list_standard_answer_categories(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
-) -> list[StandardAnswerCategory]:
+) -> list[StandaronyxCategory]:
     standard_answer_category_models = fetch_standard_answer_categories(
         db_session=db_session
     )
     return [
-        StandardAnswerCategory.from_model(standard_answer_category_model)
+        StandaronyxCategory.from_model(standard_answer_category_model)
         for standard_answer_category_model in standard_answer_category_models
     ]
 
@@ -121,10 +121,10 @@ def list_standard_answer_categories(
 @router.patch("/admin/standard-answer/category/{standard_answer_category_id}")
 def patch_standard_answer_category(
     standard_answer_category_id: int,
-    standard_answer_category_creation_request: StandardAnswerCategoryCreationRequest,
+    standard_answer_category_creation_request: StandaronyxCategoryCreationRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
-) -> StandardAnswerCategory:
+) -> StandaronyxCategory:
     existing_standard_answer_category = fetch_standard_answer_category(
         standard_answer_category_id=standard_answer_category_id,
         db_session=db_session,
@@ -140,4 +140,4 @@ def patch_standard_answer_category(
         category_name=standard_answer_category_creation_request.name,
         db_session=db_session,
     )
-    return StandardAnswerCategory.from_model(standard_answer_category_model)
+    return StandaronyxCategory.from_model(standard_answer_category_model)

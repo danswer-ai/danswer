@@ -4,18 +4,17 @@ from enum import Enum
 from typing import cast
 
 import requests
+from onyx.configs.app_configs import DISABLE_TELEMETRY
+from onyx.configs.app_configs import ENTERPRISE_EDITION_ENABLED
+from onyx.configs.constants import KV_CUSTOMER_UUID_KEY
+from onyx.configs.constants import KV_INSTANCE_DOMAIN_KEY
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.db.models import User
+from onyx.dynamic_configs.factory import get_dynamic_config_store
+from onyx.dynamic_configs.interface import ConfigNotFoundError
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DISABLE_TELEMETRY
-from danswer.configs.app_configs import ENTERPRISE_EDITION_ENABLED
-from danswer.configs.constants import KV_CUSTOMER_UUID_KEY
-from danswer.configs.constants import KV_INSTANCE_DOMAIN_KEY
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.models import User
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-
-_DANSWER_TELEMETRY_ENDPOINT = "https://telemetry.danswer.ai/anonymous_telemetry"
+_onyx_TELEMETRY_ENDPOINT = "https://telemetry.onyx.ai/anonymous_telemetry"
 _CACHED_UUID: str | None = None
 _CACHED_INSTANCE_DOMAIN: str | None = None
 
@@ -89,7 +88,7 @@ def optional_telemetry(
                 if ENTERPRISE_EDITION_ENABLED:
                     payload["instance_domain"] = _get_or_generate_instance_domain()
                 requests.post(
-                    _DANSWER_TELEMETRY_ENDPOINT,
+                    _onyx_TELEMETRY_ENDPOINT,
                     headers={"Content-Type": "application/json"},
                     json=payload,
                 )
@@ -101,5 +100,5 @@ def optional_telemetry(
         thread = threading.Thread(target=telemetry_logic, daemon=True)
         thread.start()
     except Exception:
-        # Should never interfere with normal functions of Danswer
+        # Should never interfere with normal functions of onyx
         pass

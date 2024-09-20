@@ -35,7 +35,7 @@ spec:
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: danswer-secrets
+              name: onyx-secrets
               key: redis_password
         command: ["redis-server"]
         args:

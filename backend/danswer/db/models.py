@@ -33,30 +33,30 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
 
-from danswer.auth.schemas import UserRole
-from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
-from danswer.configs.constants import DEFAULT_BOOST
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import FileOrigin
-from danswer.configs.constants import MessageType
-from danswer.db.enums import AccessType
-from danswer.configs.constants import NotificationType
-from danswer.configs.constants import SearchFeedbackType
-from danswer.configs.constants import TokenRateLimitScope
-from danswer.connectors.models import InputType
-from danswer.db.enums import ChatSessionSharedStatus
-from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.enums import IndexingStatus
-from danswer.db.enums import IndexModelStatus
-from danswer.db.enums import TaskStatus
-from danswer.db.pydantic_type import PydanticType
-from danswer.dynamic_configs.interface import JSON_ro
-from danswer.file_store.models import FileDescriptor
-from danswer.llm.override_models import LLMOverride
-from danswer.llm.override_models import PromptOverride
-from danswer.search.enums import RecencyBiasSetting
-from danswer.utils.encryption import decrypt_bytes_to_string
-from danswer.utils.encryption import encrypt_string_to_bytes
+from onyx.auth.schemas import UserRole
+from onyx.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
+from onyx.configs.constants import DEFAULT_BOOST
+from onyx.configs.constants import DocumentSource
+from onyx.configs.constants import FileOrigin
+from onyx.configs.constants import MessageType
+from onyx.db.enums import AccessType
+from onyx.configs.constants import NotificationType
+from onyx.configs.constants import SearchFeedbackType
+from onyx.configs.constants import TokenRateLimitScope
+from onyx.connectors.models import InputType
+from onyx.db.enums import ChatSessionSharedStatus
+from onyx.db.enums import ConnectorCredentialPairStatus
+from onyx.db.enums import IndexingStatus
+from onyx.db.enums import IndexModelStatus
+from onyx.db.enums import TaskStatus
+from onyx.db.pydantic_type import PydanticType
+from onyx.dynamic_configs.interface import JSON_ro
+from onyx.file_store.models import FileDescriptor
+from onyx.llm.override_models import LLMOverride
+from onyx.llm.override_models import PromptOverride
+from onyx.search.enums import RecencyBiasSetting
+from onyx.utils.encryption import decrypt_bytes_to_string
+from onyx.utils.encryption import encrypt_string_to_bytes
 from shared_configs.enums import EmbeddingProvider
 from shared_configs.enums import RerankerProvider
 
@@ -164,7 +164,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification", back_populates="user"
     )
-    # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
+    # Whether the user has logged in via web. False if user has only used onyx through Slack bot
     has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -326,7 +326,7 @@ class Persona__Tool(Base):
     tool_id: Mapped[int] = mapped_column(ForeignKey("tool.id"), primary_key=True)
 
 
-class StandardAnswer__StandardAnswerCategory(Base):
+class Standaronyx__StandaronyxCategory(Base):
     __tablename__ = "standard_answer__standard_answer_category"
 
     standard_answer_id: Mapped[int] = mapped_column(
@@ -337,7 +337,7 @@ class StandardAnswer__StandardAnswerCategory(Base):
     )
 
 
-class SlackBotConfig__StandardAnswerCategory(Base):
+class SlackBotConfig__StandaronyxCategory(Base):
     __tablename__ = "slack_bot_config__standard_answer_category"
 
     slack_bot_config_id: Mapped[int] = mapped_column(
@@ -348,7 +348,7 @@ class SlackBotConfig__StandardAnswerCategory(Base):
     )
 
 
-class ChatMessage__StandardAnswer(Base):
+class ChatMessage__Standaronyx(Base):
     __tablename__ = "chat_message__standard_answer"
 
     chat_message_id: Mapped[int] = mapped_column(
@@ -403,7 +403,7 @@ class ConnectorCredentialPair(Base):
 
     # source type (defined in the connector's `source` field)
     # E.g. for google_drive perm sync:
-    # {"customer_id": "123567", "company_domain": "@danswer.ai"}
+    # {"customer_id": "123567", "company_domain": "@onyx.ai"}
     auto_sync_options: Mapped[dict[str, Any] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
@@ -442,7 +442,7 @@ class Document(Base):
     # NOTE: if more sensitive data is added here for display, make sure to add user/group permission
 
     # this should correspond to the ID of the document
-    # (as is passed around in Danswer)
+    # (as is passed around in onyx)
     id: Mapped[str] = mapped_column(String, primary_key=True)
     from_ingestion_api: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=True
@@ -475,7 +475,7 @@ class Document(Base):
         DateTime(timezone=True), nullable=True, index=True
     )
     # The following are not attached to User because the account/email may not be known
-    # within Danswer
+    # within onyx
     # Something like the document creator
     primary_owners: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
@@ -909,7 +909,7 @@ class ChatSession(Base):
     description: Mapped[str] = mapped_column(Text)
     # One-shot direct answering, currently the two types of chats are not mixed
     one_shot: Mapped[bool] = mapped_column(Boolean, default=False)
-    danswerbot_flow: Mapped[bool] = mapped_column(Boolean, default=False)
+    onyxbot_flow: Mapped[bool] = mapped_column(Boolean, default=False)
     # Only ever set to True if system is set to not hard-delete chats
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     # controls whether or not this conversation is viewable by others
@@ -1025,9 +1025,9 @@ class ChatMessage(Base):
         "ToolCall",
         back_populates="message",
     )
-    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
-        "StandardAnswer",
-        secondary=ChatMessage__StandardAnswer.__table__,
+    standard_answers: Mapped[list["Standaronyx"]] = relationship(
+        "Standaronyx",
+        secondary=ChatMessage__Standaronyx.__table__,
         back_populates="chat_messages",
     )
 
@@ -1384,7 +1384,7 @@ class Persona(Base):
     )
 
 
-AllowedAnswerFilters = (
+AlloweonyxFilters = (
     Literal["well_answered_postfilter"] | Literal["questionmark_prefilter"]
 )
 
@@ -1397,7 +1397,7 @@ class ChannelConfig(TypedDict):
     respond_tag_only: NotRequired[bool]  # defaults to False
     respond_to_bots: NotRequired[bool]  # defaults to False
     respond_member_group_list: NotRequired[list[str]]
-    answer_filters: NotRequired[list[AllowedAnswerFilters]]
+    answer_filters: NotRequired[list[AlloweonyxFilters]]
     # If None then no follow up
     # If empty list, follow up with no tags
     follow_up_tags: NotRequired[list[str]]
@@ -1428,9 +1428,9 @@ class SlackBotConfig(Base):
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
-    standard_answer_categories: Mapped[list["StandardAnswerCategory"]] = relationship(
-        "StandardAnswerCategory",
-        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+    standard_answer_categories: Mapped[list["StandaronyxCategory"]] = relationship(
+        "StandaronyxCategory",
+        secondary=SlackBotConfig__StandaronyxCategory.__table__,
         back_populates="slack_bot_configs",
     )
 
@@ -1478,11 +1478,11 @@ class PGFileStore(Base):
 Enterprise Edition Models
 ************************************************************************
 
-These models are only used in Enterprise Edition only features in Danswer.
+These models are only used in Enterprise Edition only features in onyx.
 They are kept here to simplify the codebase and avoid having different assumptions
-on the shape of data being passed around between the MIT and EE versions of Danswer.
+on the shape of data being passed around between the MIT and EE versions of onyx.
 
-In the MIT version of Danswer, assume these tables are always empty.
+In the MIT version of onyx, assume these tables are always empty.
 """
 
 
@@ -1660,24 +1660,24 @@ class TokenRateLimit__UserGroup(Base):
     )
 
 
-class StandardAnswerCategory(Base):
+class StandaronyxCategory(Base):
     __tablename__ = "standard_answer_category"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True)
-    standard_answers: Mapped[list["StandardAnswer"]] = relationship(
-        "StandardAnswer",
-        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+    standard_answers: Mapped[list["Standaronyx"]] = relationship(
+        "Standaronyx",
+        secondary=Standaronyx__StandaronyxCategory.__table__,
         back_populates="categories",
     )
     slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
         "SlackBotConfig",
-        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        secondary=SlackBotConfig__StandaronyxCategory.__table__,
         back_populates="standard_answer_categories",
     )
 
 
-class StandardAnswer(Base):
+class Standaronyx(Base):
     __tablename__ = "standard_answer"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -1697,14 +1697,14 @@ class StandardAnswer(Base):
         ),
     )
 
-    categories: Mapped[list[StandardAnswerCategory]] = relationship(
-        "StandardAnswerCategory",
-        secondary=StandardAnswer__StandardAnswerCategory.__table__,
+    categories: Mapped[list[StandaronyxCategory]] = relationship(
+        "StandaronyxCategory",
+        secondary=Standaronyx__StandaronyxCategory.__table__,
         back_populates="standard_answers",
     )
     chat_messages: Mapped[list[ChatMessage]] = relationship(
         "ChatMessage",
-        secondary=ChatMessage__StandardAnswer.__table__,
+        secondary=ChatMessage__Standaronyx.__table__,
         back_populates="standard_answers",
     )
 
@@ -1716,7 +1716,7 @@ class User__ExternalUserGroupId(Base):
     """Maps user info both internal and external to the name of the external group
     This maps the user to all of their external groups so that the external group name can be
     attached to the ACL list matching during query time. User level permissions can be handled by
-    directly adding the Danswer user to the doc ACL list"""
+    directly adding the onyx user to the doc ACL list"""
 
     __tablename__ = "user__external_user_group_id"
 

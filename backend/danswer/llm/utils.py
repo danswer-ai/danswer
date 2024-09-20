@@ -28,21 +28,21 @@ from litellm.exceptions import PermissionDeniedError  # type: ignore
 from litellm.exceptions import RateLimitError  # type: ignore
 from litellm.exceptions import Timeout  # type: ignore
 from litellm.exceptions import UnprocessableEntityError  # type: ignore
+from onyx.configs.constants import MessageType
+from onyx.configs.model_configs import GEN_AI_MAX_TOKENS
+from onyx.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
+from onyx.configs.model_configs import GEN_AI_NUM_RESERVED_OUTPUT_TOKENS
+from onyx.db.models import ChatMessage
+from onyx.file_store.models import ChatFileType
+from onyx.file_store.models import InMemoryChatFile
+from onyx.llm.interfaces import LLM
+from onyx.prompts.constants import CODE_BLOCK_PAT
+from onyx.utils.logger import setup_logger
 
-from danswer.configs.constants import MessageType
-from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
-from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
-from danswer.configs.model_configs import GEN_AI_NUM_RESERVED_OUTPUT_TOKENS
-from danswer.db.models import ChatMessage
-from danswer.file_store.models import ChatFileType
-from danswer.file_store.models import InMemoryChatFile
-from danswer.llm.interfaces import LLM
-from danswer.prompts.constants import CODE_BLOCK_PAT
-from danswer.utils.logger import setup_logger
 from shared_configs.configs import LOG_LEVEL
 
 if TYPE_CHECKING:
-    from danswer.llm.answering.models import PreviousMessage
+    from onyx.llm.answering.models import PreviousMessage
 
 logger = setup_logger()
 
@@ -99,7 +99,7 @@ def litellm_exception_to_error_msg(e: Exception, llm: LLM) -> str:
     return error_msg
 
 
-def translate_danswer_msg_to_langchain(
+def translate_onyx_msg_to_langchain(
     msg: Union[ChatMessage, "PreviousMessage"],
 ) -> BaseMessage:
     files: list[InMemoryChatFile] = []
@@ -125,9 +125,7 @@ def translate_history_to_basemessages(
     history: list[ChatMessage] | list["PreviousMessage"],
 ) -> tuple[list[BaseMessage], list[int]]:
     history_basemessages = [
-        translate_danswer_msg_to_langchain(msg)
-        for msg in history
-        if msg.token_count != 0
+        translate_onyx_msg_to_langchain(msg) for msg in history if msg.token_count != 0
     ]
     history_token_counts = [msg.token_count for msg in history if msg.token_count != 0]
     return history_basemessages, history_token_counts

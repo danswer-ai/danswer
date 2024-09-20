@@ -4,35 +4,34 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
+from onyx.background.indexing.checkpointing import get_time_windows_for_index_attempt
+from onyx.background.indexing.tracer import onyxTracer
+from onyx.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
+from onyx.configs.app_configs import INDEXING_TRACER_INTERVAL
+from onyx.configs.app_configs import POLL_CONNECTOR_OFFSET
+from onyx.connectors.connector_runner import ConnectorRunner
+from onyx.connectors.factory import instantiate_connector
+from onyx.connectors.models import IndexAttemptMetadata
+from onyx.db.connector_credential_pair import get_last_successful_attempt_time
+from onyx.db.connector_credential_pair import update_connector_credential_pair
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.db.enums import ConnectorCredentialPairStatus
+from onyx.db.index_attempt import get_index_attempt
+from onyx.db.index_attempt import mark_attempt_failed
+from onyx.db.index_attempt import mark_attempt_in_progress
+from onyx.db.index_attempt import mark_attempt_partially_succeeded
+from onyx.db.index_attempt import mark_attempt_succeeded
+from onyx.db.index_attempt import update_docs_indexed
+from onyx.db.models import IndexAttempt
+from onyx.db.models import IndexingStatus
+from onyx.db.models import IndexModelStatus
+from onyx.document_index.factory import get_default_document_index
+from onyx.indexing.embedder import DefaultIndexingEmbedder
+from onyx.indexing.indexing_pipeline import build_indexing_pipeline
+from onyx.utils.logger import IndexAttemptSingleton
+from onyx.utils.logger import setup_logger
+from onyx.utils.variable_functionality import global_version
 from sqlalchemy.orm import Session
-
-from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
-from danswer.background.indexing.tracer import DanswerTracer
-from danswer.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
-from danswer.configs.app_configs import INDEXING_TRACER_INTERVAL
-from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
-from danswer.connectors.connector_runner import ConnectorRunner
-from danswer.connectors.factory import instantiate_connector
-from danswer.connectors.models import IndexAttemptMetadata
-from danswer.db.connector_credential_pair import get_last_successful_attempt_time
-from danswer.db.connector_credential_pair import update_connector_credential_pair
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.index_attempt import get_index_attempt
-from danswer.db.index_attempt import mark_attempt_failed
-from danswer.db.index_attempt import mark_attempt_in_progress
-from danswer.db.index_attempt import mark_attempt_partially_succeeded
-from danswer.db.index_attempt import mark_attempt_succeeded
-from danswer.db.index_attempt import update_docs_indexed
-from danswer.db.models import IndexAttempt
-from danswer.db.models import IndexingStatus
-from danswer.db.models import IndexModelStatus
-from danswer.document_index.factory import get_default_document_index
-from danswer.indexing.embedder import DefaultIndexingEmbedder
-from danswer.indexing.indexing_pipeline import build_indexing_pipeline
-from danswer.utils.logger import IndexAttemptSingleton
-from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import global_version
 
 logger = setup_logger()
 
@@ -136,7 +135,7 @@ def _run_indexing(
 
     if INDEXING_TRACER_INTERVAL > 0:
         logger.debug(f"Memory tracer starting: interval={INDEXING_TRACER_INTERVAL}")
-        tracer = DanswerTracer()
+        tracer = onyxTracer()
         tracer.start()
         tracer.snap()
 

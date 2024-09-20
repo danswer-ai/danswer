@@ -1,8 +1,7 @@
 from typing import Any
 
+from onyx.db.models import Tool
 from pydantic import BaseModel
-
-from danswer.db.models import Tool
 
 
 class ToolSnapshot(BaseModel):

@@ -37,8 +37,8 @@ export const autoSyncConfigBySource: Record<
           <br />
           <br />
           For example, if your email provided through Google Workspace looks
-          something like chris@danswer.ai, then your company domain is{" "}
-          <b>danswer.ai</b>
+          something like chris@onyx.ai, then your company domain is{" "}
+          <b>onyx.ai</b>
         </>
       ),
     },

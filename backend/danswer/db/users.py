@@ -2,11 +2,10 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from fastapi_users.password import PasswordHelper
+from onyx.auth.schemas import UserRole
+from onyx.db.models import User
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-from danswer.auth.schemas import UserRole
-from danswer.db.models import User
 
 
 def list_users(

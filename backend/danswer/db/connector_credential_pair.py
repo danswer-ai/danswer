@@ -1,6 +1,22 @@
 from datetime import datetime
 
 from fastapi import HTTPException
+from onyx.configs.constants import DocumentSource
+from onyx.db.connector import fetch_connector_by_id
+from onyx.db.credentials import fetch_credential_by_id
+from onyx.db.enums import AccessType
+from onyx.db.enums import ConnectorCredentialPairStatus
+from onyx.db.models import ConnectorCredentialPair
+from onyx.db.models import IndexAttempt
+from onyx.db.models import IndexingStatus
+from onyx.db.models import IndexModelStatus
+from onyx.db.models import SearchSettings
+from onyx.db.models import User
+from onyx.db.models import User__UserGroup
+from onyx.db.models import UserGroup__ConnectorCredentialPair
+from onyx.db.models import UserRole
+from onyx.server.models import StatusResponse
+from onyx.utils.logger import setup_logger
 from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import exists
@@ -9,24 +25,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 
-from danswer.configs.constants import DocumentSource
-from danswer.db.connector import fetch_connector_by_id
-from danswer.db.credentials import fetch_credential_by_id
-from danswer.db.enums import AccessType
-from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import IndexAttempt
-from danswer.db.models import IndexingStatus
-from danswer.db.models import IndexModelStatus
-from danswer.db.models import SearchSettings
-from danswer.db.models import User
-from danswer.db.models import User__UserGroup
-from danswer.db.models import UserGroup__ConnectorCredentialPair
-from danswer.db.models import UserRole
-from danswer.server.models import StatusResponse
-from danswer.utils.logger import setup_logger
-from ee.danswer.db.external_perm import delete_user__ext_group_for_cc_pair__no_commit
-from ee.danswer.external_permissions.permission_sync_function_map import (
+from ee.onyx.db.external_perm import delete_user__ext_group_for_cc_pair__no_commit
+from ee.onyx.external_permissions.permission_sync_function_map import (
     check_if_valid_sync_source,
 )
 

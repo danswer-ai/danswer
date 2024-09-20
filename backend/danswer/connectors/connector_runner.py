@@ -1,11 +1,11 @@
 import sys
 from datetime import datetime
 
-from danswer.connectors.interfaces import BaseConnector
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.utils.logger import setup_logger
+from onyx.connectors.interfaces import BaseConnector
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.utils.logger import setup_logger
 
 
 logger = setup_logger()

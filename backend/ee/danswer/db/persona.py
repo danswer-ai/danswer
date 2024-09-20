@@ -1,9 +1,8 @@
 from uuid import UUID
 
+from onyx.db.models import Persona__User
+from onyx.db.models import Persona__UserGroup
 from sqlalchemy.orm import Session
-
-from danswer.db.models import Persona__User
-from danswer.db.models import Persona__UserGroup
 
 
 def make_persona_private(

@@ -3,8 +3,7 @@ import asyncio
 import psutil
 from dask.distributed import WorkerPlugin
 from distributed import Worker
-
-from danswer.utils.logger import setup_logger
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

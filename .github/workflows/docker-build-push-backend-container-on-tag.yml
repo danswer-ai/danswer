@@ -6,7 +6,7 @@ on:
       - '*'
 
 env:
-  REGISTRY_IMAGE: danswer/danswer-backend
+  REGISTRY_IMAGE: onyx/onyx-backend
 
 jobs:
   build-and-push:
@@ -43,12 +43,12 @@ jobs:
           ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}
           ${{ env.REGISTRY_IMAGE }}:latest
         build-args: |
-          DANSWER_VERSION=${{ github.ref_name }}
+          onyx_VERSION=${{ github.ref_name }}
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        # To run locally: trivy image --severity HIGH,CRITICAL danswer/danswer-backend
+        # To run locally: trivy image --severity HIGH,CRITICAL onyx/onyx-backend
         image-ref: docker.io/${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}
         severity: 'CRITICAL,HIGH'
         trivyignores: ./backend/.trivyignore

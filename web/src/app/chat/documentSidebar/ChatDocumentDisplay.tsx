@@ -1,7 +1,7 @@
 import { HoverPopup } from "@/components/HoverPopup";
 import { SourceIcon } from "@/components/SourceIcon";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { onyxDocument } from "@/lib/search/interfaces";
 import { FiInfo, FiRadio } from "react-icons/fi";
 import { DocumentSelector } from "./DocumentSelector";
 import {
@@ -11,7 +11,7 @@ import {
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 
 interface DocumentDisplayProps {
-  document: DanswerDocument;
+  document: onyxDocument;
   queryEventId: number | null;
   isAIPick: boolean;
   isSelected: boolean;

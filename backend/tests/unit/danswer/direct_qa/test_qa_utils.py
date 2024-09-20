@@ -1,15 +1,14 @@
 import textwrap
 
 import pytest
-
-from danswer.configs.constants import DocumentSource
-from danswer.llm.answering.stream_processing.quotes_processing import (
+from onyx.configs.constants import DocumentSource
+from onyx.llm.answering.stream_processing.quotes_processing import (
     match_quotes_to_docs,
 )
-from danswer.llm.answering.stream_processing.quotes_processing import (
+from onyx.llm.answering.stream_processing.quotes_processing import (
     separate_answer_quotes,
 )
-from danswer.search.models import InferenceChunk
+from onyx.search.models import InferenceChunk
 
 
 def test_passed_in_quotes() -> None:
@@ -17,29 +16,29 @@ def test_passed_in_quotes() -> None:
     test_answer = """{
         "answer": "I can assist "James" with that",
         "quotes": [
-            "Danswer can just ingest PDFs as they are. How GOOD it embeds them depends on the formatting of your PDFs.",
-            "the ` danswer. llm ` package aims to provide a comprehensive framework."
+            "onyx can just ingest PDFs as they are. How GOOD it embeds them depends on the formatting of your PDFs.",
+            "the ` onyx. llm ` package aims to provide a comprehensive framework."
         ]
     }"""
 
     answer, quotes = separate_answer_quotes(test_answer, is_json_prompt=True)
     assert answer == 'I can assist "James" with that'
     assert quotes == [
-        "Danswer can just ingest PDFs as they are. How GOOD it embeds them depends on the formatting of your PDFs.",
-        "the ` danswer. llm ` package aims to provide a comprehensive framework.",
+        "onyx can just ingest PDFs as they are. How GOOD it embeds them depends on the formatting of your PDFs.",
+        "the ` onyx. llm ` package aims to provide a comprehensive framework.",
     ]
 
     # Test case 2: Additional quotes
     test_answer = """{
         "answer": "She said the resposne was "1" and I said the reponse was "2".",
         "quotes": [
-            "Danswer can efficiently ingest PDFs, with the quality of embedding depending on the PDF's formatting."
+            "onyx can efficiently ingest PDFs, with the quality of embedding depending on the PDF's formatting."
         ]
     }"""
     answer, quotes = separate_answer_quotes(test_answer, is_json_prompt=True)
     assert answer == 'She said the resposne was "1" and I said the reponse was "2".'
     assert quotes == [
-        "Danswer can efficiently ingest PDFs, with the quality of embedding depending on the PDF's formatting.",
+        "onyx can efficiently ingest PDFs, with the quality of embedding depending on the PDF's formatting.",
     ]
 
 

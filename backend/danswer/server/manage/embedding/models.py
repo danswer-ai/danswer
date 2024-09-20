@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from shared_configs.enums import EmbeddingProvider
 
 if TYPE_CHECKING:
-    from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
+    from onyx.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
 
 
 class SearchSettingsDeleteRequest(BaseModel):

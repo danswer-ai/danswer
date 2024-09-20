@@ -1,26 +1,26 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from onyx.auth.schemas import UserRole
+from onyx.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
+from onyx.configs.constants import AuthType
+from onyx.db.models import AlloweonyxFilters
+from onyx.db.models import ChannelConfig
+from onyx.db.models import SlackBotConfig as SlackBotConfigModel
+from onyx.db.models import SlackBotResponseType
+from onyx.db.models import User
+from onyx.onyxbot.slack.config import VALID_SLACK_FILTERS
+from onyx.search.models import SavedSearchSettings
+from onyx.server.features.persona.models import PersonaSnapshot
+from onyx.server.models import FullUserSnapshot
+from onyx.server.models import InvitedUserSnapshot
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import field_validator
 from pydantic import model_validator
 
-from danswer.auth.schemas import UserRole
-from danswer.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
-from danswer.configs.constants import AuthType
-from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
-from danswer.db.models import AllowedAnswerFilters
-from danswer.db.models import ChannelConfig
-from danswer.db.models import SlackBotConfig as SlackBotConfigModel
-from danswer.db.models import SlackBotResponseType
-from danswer.db.models import User
-from danswer.search.models import SavedSearchSettings
-from danswer.server.features.persona.models import PersonaSnapshot
-from danswer.server.models import FullUserSnapshot
-from danswer.server.models import InvitedUserSnapshot
-from ee.danswer.server.manage.models import StandardAnswerCategory
+from ee.onyx.server.manage.models import StandaronyxCategory
 
 
 if TYPE_CHECKING:
@@ -142,7 +142,7 @@ class SlackBotConfigCreationRequest(BaseModel):
     enable_auto_filters: bool = False
     # If no team members, assume respond in the channel to everyone
     respond_member_group_list: list[str] = Field(default_factory=list)
-    answer_filters: list[AllowedAnswerFilters] = Field(default_factory=list)
+    answer_filters: list[AlloweonyxFilters] = Field(default_factory=list)
     # list of user emails
     follow_up_tags: list[str] | None = None
     response_type: SlackBotResponseType
@@ -172,7 +172,7 @@ class SlackBotConfig(BaseModel):
     channel_config: ChannelConfig
     response_type: SlackBotResponseType
     # XXX this is going away soon
-    standard_answer_categories: list[StandardAnswerCategory]
+    standard_answer_categories: list[StandaronyxCategory]
     enable_auto_filters: bool
 
     @classmethod
@@ -192,7 +192,7 @@ class SlackBotConfig(BaseModel):
             response_type=slack_bot_config_model.response_type,
             # XXX this is going away soon
             standard_answer_categories=[
-                StandardAnswerCategory.from_model(standard_answer_category_model)
+                StandaronyxCategory.from_model(standard_answer_category_model)
                 for standard_answer_category_model in slack_bot_config_model.standard_answer_categories
             ],
             enable_auto_filters=slack_bot_config_model.enable_auto_filters,

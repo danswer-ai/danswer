@@ -7,22 +7,21 @@ from datetime import timezone
 from typing import Any
 from typing import Optional
 
-from retry import retry
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.app_configs import NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.app_configs import NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.cross_connector_utils.rate_limit_wrapper import (
     rl_requests,
 )
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.utils.batching import batch_generator
-from danswer.utils.logger import setup_logger
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.interfaces import SecondsSinceUnixEpoch
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.utils.batching import batch_generator
+from onyx.utils.logger import setup_logger
+from retry import retry
 
 logger = setup_logger()
 
@@ -117,7 +116,7 @@ class NotionConnector(LoadConnector, PollConnector):
                 logger.error(
                     f"Unable to access block with ID '{block_id}'. "
                     f"This is likely due to the block not being shared "
-                    f"with the Danswer integration. Exact exception:\n\n{e}"
+                    f"with the onyx integration. Exact exception:\n\n{e}"
                 )
                 return None
             logger.exception(f"Error fetching blocks - {res.json()}")
@@ -164,7 +163,7 @@ class NotionConnector(LoadConnector, PollConnector):
                 logger.error(
                     f"Unable to access database with ID '{database_id}'. "
                     f"This is likely due to the database not being shared "
-                    f"with the Danswer integration. Exact exception:\n{e}"
+                    f"with the onyx integration. Exact exception:\n{e}"
                 )
                 return {"results": [], "next_cursor": None}
             logger.exception(f"Error fetching database - {res.json()}")
@@ -225,7 +224,7 @@ class NotionConnector(LoadConnector, PollConnector):
                     logger.warning(
                         f"Skipping 'ai_block' ('{result_block_id}') for base block '{base_block_id}': "
                         f"Notion API does not currently support reading AI blocks (as of 24/02/09) "
-                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1053)"
+                        f"(discussion: https://github.com/onyx-ai/onyx/issues/1053)"
                     )
                     continue
 
@@ -233,7 +232,7 @@ class NotionConnector(LoadConnector, PollConnector):
                     logger.warning(
                         f"Skipping unsupported block type '{result_type}' "
                         f"('{result_block_id}') for base block '{base_block_id}': "
-                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1230)"
+                        f"(discussion: https://github.com/onyx-ai/onyx/issues/1230)"
                     )
                     continue
 
@@ -241,7 +240,7 @@ class NotionConnector(LoadConnector, PollConnector):
                     logger.warning(
                         f"Skipping 'external_object_instance_page' ('{result_block_id}') for base block '{base_block_id}': "
                         f"Notion API does not currently support reading external blocks (as of 24/07/03) "
-                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1761)"
+                        f"(discussion: https://github.com/onyx-ai/onyx/issues/1761)"
                     )
                     continue
 

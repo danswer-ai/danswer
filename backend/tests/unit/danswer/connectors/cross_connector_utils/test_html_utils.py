@@ -1,6 +1,6 @@
 import pathlib
 
-from danswer.file_processing.html_utils import parse_html_page_basic
+from onyx.file_processing.html_utils import parse_html_page_basic
 
 
 def test_parse_table() -> None:

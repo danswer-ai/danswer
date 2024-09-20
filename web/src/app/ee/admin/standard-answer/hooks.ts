@@ -1,26 +1,23 @@
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { StandardAnswerCategory, StandardAnswer } from "@/lib/types";
+import { StandaronyxCategory, Standaronyx } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 
-export const useStandardAnswerCategories = () => {
+export const useStandaronyxCategories = () => {
   const url = "/api/manage/admin/standard-answer/category";
-  const swrResponse = useSWR<StandardAnswerCategory[]>(
-    url,
-    errorHandlingFetcher
-  );
+  const swrResponse = useSWR<StandaronyxCategory[]>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,
-    refreshStandardAnswerCategories: () => mutate(url),
+    refreshStandaronyxCategories: () => mutate(url),
   };
 };
 
-export const useStandardAnswers = () => {
+export const useStandaronyxs = () => {
   const url = "/api/manage/admin/standard-answer";
-  const swrResponse = useSWR<StandardAnswer[]>(url, errorHandlingFetcher);
+  const swrResponse = useSWR<Standaronyx[]>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,
-    refreshStandardAnswers: () => mutate(url),
+    refreshStandaronyxs: () => mutate(url),
   };
 };

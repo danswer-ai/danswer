@@ -7,18 +7,18 @@ from datetime import timedelta
 from datetime import timezone
 
 from fastapi_users_db_sqlalchemy import UUID_ID
+from onyx.auth.schemas import UserStatus
+from onyx.configs.constants import FileOrigin
+from onyx.db.users import list_users
+from onyx.file_store.constants import MAX_IN_MEMORY_SIZE
+from onyx.file_store.file_store import FileStore
+from onyx.file_store.file_store import get_default_file_store
 from sqlalchemy.orm import Session
 
-from danswer.auth.schemas import UserStatus
-from danswer.configs.constants import FileOrigin
-from danswer.db.users import list_users
-from danswer.file_store.constants import MAX_IN_MEMORY_SIZE
-from danswer.file_store.file_store import FileStore
-from danswer.file_store.file_store import get_default_file_store
-from ee.danswer.db.usage_export import get_all_empty_chat_message_entries
-from ee.danswer.db.usage_export import write_usage_report
-from ee.danswer.server.reporting.usage_export_models import UsageReportMetadata
-from ee.danswer.server.reporting.usage_export_models import UserSkeleton
+from ee.onyx.db.usage_export import get_all_empty_chat_message_entries
+from ee.onyx.db.usage_export import write_usage_report
+from ee.onyx.server.reporting.usage_export_models import UsageReportMetadata
+from ee.onyx.server.reporting.usage_export_models import UserSkeleton
 
 
 def generate_chat_messages_report(

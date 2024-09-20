@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "danswer-stack.fullname" . }}-inference-model
+  name: {{ include "onyx-stack.fullname" . }}-inference-model
   labels:
     {{- range .Values.inferenceCapability.deployment.labels }}
     {{ .key }}: {{ .value }}
@@ -31,7 +31,7 @@ spec:
         - configMapRef:
             name: {{ .Values.config.envConfigMapName }}
         env:
-          {{- include "danswer-stack.envSecrets" . | nindent 12}}
+          {{- include "onyx-stack.envSecrets" . | nindent 12}}
         volumeMounts:
         {{- range .Values.inferenceCapability.deployment.volumeMounts }}
         - name: {{ .name }}

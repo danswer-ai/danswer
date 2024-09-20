@@ -1,9 +1,8 @@
 from uuid import UUID
 
+from onyx.db.models import InputPrompt
+from onyx.utils.logger import setup_logger
 from pydantic import BaseModel
-
-from danswer.db.models import InputPrompt
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

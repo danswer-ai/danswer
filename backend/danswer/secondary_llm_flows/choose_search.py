@@ -1,22 +1,21 @@
 from langchain.schema import BaseMessage
 from langchain.schema import HumanMessage
 from langchain.schema import SystemMessage
-
-from danswer.chat.chat_utils import combine_message_chain
-from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
-from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
-from danswer.db.models import ChatMessage
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.interfaces import LLM
-from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
-from danswer.llm.utils import message_to_string
-from danswer.llm.utils import translate_danswer_msg_to_langchain
-from danswer.prompts.chat_prompts import AGGRESSIVE_SEARCH_TEMPLATE
-from danswer.prompts.chat_prompts import NO_SEARCH
-from danswer.prompts.chat_prompts import REQUIRE_SEARCH_HINT
-from danswer.prompts.chat_prompts import REQUIRE_SEARCH_SYSTEM_MSG
-from danswer.prompts.chat_prompts import SKIP_SEARCH
-from danswer.utils.logger import setup_logger
+from onyx.chat.chat_utils import combine_message_chain
+from onyx.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
+from onyx.configs.model_configs import GEN_AI_HISTORY_CUTOFF
+from onyx.db.models import ChatMessage
+from onyx.llm.answering.models import PreviousMessage
+from onyx.llm.interfaces import LLM
+from onyx.llm.utils import dict_based_prompt_to_langchain_prompt
+from onyx.llm.utils import message_to_string
+from onyx.llm.utils import translate_onyx_msg_to_langchain
+from onyx.prompts.chat_prompts import AGGRESSIVE_SEARCH_TEMPLATE
+from onyx.prompts.chat_prompts import NO_SEARCH
+from onyx.prompts.chat_prompts import REQUIRE_SEARCH_HINT
+from onyx.prompts.chat_prompts import REQUIRE_SEARCH_SYSTEM_MSG
+from onyx.prompts.chat_prompts import SKIP_SEARCH
+from onyx.utils.logger import setup_logger
 
 
 logger = setup_logger()
@@ -32,7 +31,7 @@ def check_if_need_search_multi_message(
         return True
 
     prompt_msgs: list[BaseMessage] = [SystemMessage(content=REQUIRE_SEARCH_SYSTEM_MSG)]
-    prompt_msgs.extend([translate_danswer_msg_to_langchain(msg) for msg in history])
+    prompt_msgs.extend([translate_onyx_msg_to_langchain(msg) for msg in history])
 
     last_query = query_message.message
 

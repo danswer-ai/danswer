@@ -1,42 +1,41 @@
 import re
 from typing import Any
 
+from onyx.db.models import Standaronyx as StandaronyxModel
+from onyx.db.models import StandaronyxCategory as StandaronyxCategoryModel
 from pydantic import BaseModel
 from pydantic import field_validator
 from pydantic import model_validator
 
-from danswer.db.models import StandardAnswer as StandardAnswerModel
-from danswer.db.models import StandardAnswerCategory as StandardAnswerCategoryModel
 
-
-class StandardAnswerCategoryCreationRequest(BaseModel):
+class StandaronyxCategoryCreationRequest(BaseModel):
     name: str
 
 
-class StandardAnswerCategory(BaseModel):
+class StandaronyxCategory(BaseModel):
     id: int
     name: str
 
     @classmethod
     def from_model(
-        cls, standard_answer_category: StandardAnswerCategoryModel
-    ) -> "StandardAnswerCategory":
+        cls, standard_answer_category: StandaronyxCategoryModel
+    ) -> "StandaronyxCategory":
         return cls(
             id=standard_answer_category.id,
             name=standard_answer_category.name,
         )
 
 
-class StandardAnswer(BaseModel):
+class Standaronyx(BaseModel):
     id: int
     keyword: str
     answer: str
-    categories: list[StandardAnswerCategory]
+    categories: list[StandaronyxCategory]
     match_regex: bool
     match_any_keywords: bool
 
     @classmethod
-    def from_model(cls, standard_answer_model: StandardAnswerModel) -> "StandardAnswer":
+    def from_model(cls, standard_answer_model: StandaronyxModel) -> "Standaronyx":
         return cls(
             id=standard_answer_model.id,
             keyword=standard_answer_model.keyword,
@@ -44,13 +43,13 @@ class StandardAnswer(BaseModel):
             match_regex=standard_answer_model.match_regex,
             match_any_keywords=standard_answer_model.match_any_keywords,
             categories=[
-                StandardAnswerCategory.from_model(standard_answer_category_model)
+                StandaronyxCategory.from_model(standard_answer_category_model)
                 for standard_answer_category_model in standard_answer_model.categories
             ],
         )
 
 
-class StandardAnswerCreationRequest(BaseModel):
+class StandaronyxCreationRequest(BaseModel):
     keyword: str
     answer: str
     categories: list[int]

@@ -1,16 +1,16 @@
 from typing import TYPE_CHECKING
 
+from onyx.access.models import DocumentAccess
+from onyx.connectors.models import Document
+from onyx.utils.logger import setup_logger
 from pydantic import BaseModel
 from pydantic import Field
 
-from danswer.access.models import DocumentAccess
-from danswer.connectors.models import Document
-from danswer.utils.logger import setup_logger
 from shared_configs.enums import EmbeddingProvider
 from shared_configs.model_server_models import Embedding
 
 if TYPE_CHECKING:
-    from danswer.db.models import SearchSettings
+    from onyx.db.models import SearchSettings
 
 
 logger = setup_logger()

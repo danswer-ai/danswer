@@ -10,19 +10,18 @@ are multiple connector / credential pairs that have indexed it
 connector / credential pair from the access list
 (6) delete all relevant entries from postgres
 """
+from onyx.access.access import get_access_for_documents
+from onyx.db.document import delete_documents_by_connector_credential_pair__no_commit
+from onyx.db.document import delete_documents_complete__no_commit
+from onyx.db.document import get_document_connector_counts
+from onyx.db.document import prepare_to_modify_documents
+from onyx.db.document_set import fetch_document_sets_for_documents
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.document_index.interfaces import DocumentIndex
+from onyx.document_index.interfaces import UpdateRequest
+from onyx.server.documents.models import ConnectorCredentialPairIdentifier
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
-
-from danswer.access.access import get_access_for_documents
-from danswer.db.document import delete_documents_by_connector_credential_pair__no_commit
-from danswer.db.document import delete_documents_complete__no_commit
-from danswer.db.document import get_document_connector_counts
-from danswer.db.document import prepare_to_modify_documents
-from danswer.db.document_set import fetch_document_sets_for_documents
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.document_index.interfaces import DocumentIndex
-from danswer.document_index.interfaces import UpdateRequest
-from danswer.server.documents.models import ConnectorCredentialPairIdentifier
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

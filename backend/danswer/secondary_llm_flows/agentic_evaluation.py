@@ -1,13 +1,13 @@
 import re
 
-from danswer.chat.models import SectionRelevancePiece
-from danswer.llm.interfaces import LLM
-from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
-from danswer.llm.utils import message_to_string
-from danswer.prompts.agentic_evaluation import AGENTIC_SEARCH_SYSTEM_PROMPT
-from danswer.prompts.agentic_evaluation import AGENTIC_SEARCH_USER_PROMPT
-from danswer.search.models import InferenceSection
-from danswer.utils.logger import setup_logger
+from onyx.chat.models import SectionRelevancePiece
+from onyx.llm.interfaces import LLM
+from onyx.llm.utils import dict_based_prompt_to_langchain_prompt
+from onyx.llm.utils import message_to_string
+from onyx.prompts.agentic_evaluation import AGENTIC_SEARCH_SYSTEM_PROMPT
+from onyx.prompts.agentic_evaluation import AGENTIC_SEARCH_USER_PROMPT
+from onyx.search.models import InferenceSection
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

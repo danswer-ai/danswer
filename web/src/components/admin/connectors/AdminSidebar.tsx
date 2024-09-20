@@ -3,7 +3,7 @@
 import React, { useContext } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
+import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_onyx_POWERED } from "@/lib/constants";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { BackIcon } from "@/components/icons/icons";
@@ -58,14 +58,12 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
                       <HeaderTitle>
                         {enterpriseSettings.application_name}
                       </HeaderTitle>
-                      {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                        <p className="text-xs text-subtle">
-                          Powered by Danswer
-                        </p>
+                      {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_onyx_POWERED && (
+                        <p className="text-xs text-subtle">Powered by onyx</p>
                       )}
                     </div>
                   ) : (
-                    <HeaderTitle>Danswer</HeaderTitle>
+                    <HeaderTitle>onyx</HeaderTitle>
                   )}
                 </div>
               </div>
@@ -79,7 +77,7 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
               <p className="ml-1 break-words line-clamp-2 ellipsis leading-none">
                 Back to{" "}
                 {combinedSettings.enterpriseSettings?.application_name ||
-                  "Danswer"}
+                  "onyx"}
               </p>
             </button>
           </Link>
@@ -121,10 +119,10 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
       {combinedSettings.webVersion && (
         <div
           className="flex flex-col mt-6 items-center justify-center w-full"
-          key={"danswerVersion"}
+          key={"onyxVersion"}
         >
           <h2 className="text-xs text-text w-52 font-medium pb-2">
-            Danswer version: {combinedSettings.webVersion}
+            onyx version: {combinedSettings.webVersion}
           </h2>
         </div>
       )}

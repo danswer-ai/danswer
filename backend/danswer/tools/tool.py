@@ -2,10 +2,10 @@ import abc
 from collections.abc import Generator
 from typing import Any
 
-from danswer.dynamic_configs.interface import JSON_ro
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.interfaces import LLM
-from danswer.tools.models import ToolResponse
+from onyx.dynamic_configs.interface import JSON_ro
+from onyx.llm.answering.models import PreviousMessage
+from onyx.llm.interfaces import LLM
+from onyx.tools.models import ToolResponse
 
 
 class Tool(abc.ABC):

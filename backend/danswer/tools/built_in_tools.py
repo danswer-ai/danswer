@@ -7,13 +7,13 @@ from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from danswer.db.models import Persona
-from danswer.db.models import Tool as ToolDBModel
-from danswer.tools.images.image_generation_tool import ImageGenerationTool
-from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
-from danswer.tools.search.search_tool import SearchTool
-from danswer.tools.tool import Tool
-from danswer.utils.logger import setup_logger
+from onyx.db.models import Persona
+from onyx.db.models import Tool as ToolDBModel
+from onyx.tools.images.image_generation_tool import ImageGenerationTool
+from onyx.tools.internet_search.internet_search_tool import InternetSearchTool
+from onyx.tools.search.search_tool import SearchTool
+from onyx.tools.tool import Tool
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

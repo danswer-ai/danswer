@@ -1,9 +1,9 @@
 apiVersion: v2
-name: danswer-stack
+name: onyx-stack
 description: A Helm chart for Kubernetes
-home: https://www.danswer.ai/
+home: https://www.onyx.ai/
 sources:
-  - "https://github.com/danswer-ai/danswer"
+  - "https://github.com/onyx-ai/onyx"
 type: application
 version: 0.2.0
 appVersion: "latest"
@@ -12,9 +12,9 @@ annotations:
   licenses: MIT
   images: |
     - name: webserver
-      image: docker.io/danswer/danswer-web-server:latest
+      image: docker.io/onyx/onyx-web-server:latest
     - name: background
-      image: docker.io/danswer/danswer-backend:latest
+      image: docker.io/onyx/onyx-backend:latest
     - name: vespa
       image: vespaengine/vespa:8.277.17
 dependencies:

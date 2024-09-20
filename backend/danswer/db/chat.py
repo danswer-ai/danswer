@@ -3,6 +3,29 @@ from datetime import datetime
 from datetime import timedelta
 from uuid import UUID
 
+from onyx.auth.schemas import UserRole
+from onyx.chat.models import DocumentRelevance
+from onyx.configs.chat_configs import HARD_DELETE_CHATS
+from onyx.configs.constants import MessageType
+from onyx.db.models import ChatMessage
+from onyx.db.models import ChatMessage__SearchDoc
+from onyx.db.models import ChatSession
+from onyx.db.models import ChatSessionSharedStatus
+from onyx.db.models import Prompt
+from onyx.db.models import SearchDoc
+from onyx.db.models import SearchDoc as DBSearchDoc
+from onyx.db.models import ToolCall
+from onyx.db.models import User
+from onyx.db.pg_file_store import delete_lobj_by_name
+from onyx.file_store.models import FileDescriptor
+from onyx.llm.override_models import LLMOverride
+from onyx.llm.override_models import PromptOverride
+from onyx.search.models import RetrievalDocs
+from onyx.search.models import SavedSearchDoc
+from onyx.search.models import SearchDoc as ServerSearchDoc
+from onyx.server.query_and_chat.models import ChatMessageDetail
+from onyx.tools.tool_runner import ToolCallFinalResult
+from onyx.utils.logger import setup_logger
 from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import func
@@ -13,30 +36,6 @@ from sqlalchemy import update
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
-
-from danswer.auth.schemas import UserRole
-from danswer.chat.models import DocumentRelevance
-from danswer.configs.chat_configs import HARD_DELETE_CHATS
-from danswer.configs.constants import MessageType
-from danswer.db.models import ChatMessage
-from danswer.db.models import ChatMessage__SearchDoc
-from danswer.db.models import ChatSession
-from danswer.db.models import ChatSessionSharedStatus
-from danswer.db.models import Prompt
-from danswer.db.models import SearchDoc
-from danswer.db.models import SearchDoc as DBSearchDoc
-from danswer.db.models import ToolCall
-from danswer.db.models import User
-from danswer.db.pg_file_store import delete_lobj_by_name
-from danswer.file_store.models import FileDescriptor
-from danswer.llm.override_models import LLMOverride
-from danswer.llm.override_models import PromptOverride
-from danswer.search.models import RetrievalDocs
-from danswer.search.models import SavedSearchDoc
-from danswer.search.models import SearchDoc as ServerSearchDoc
-from danswer.server.query_and_chat.models import ChatMessageDetail
-from danswer.tools.tool_runner import ToolCallFinalResult
-from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
@@ -230,7 +229,7 @@ def create_chat_session(
     llm_override: LLMOverride | None = None,
     prompt_override: PromptOverride | None = None,
     one_shot: bool = False,
-    danswerbot_flow: bool = False,
+    onyxbot_flow: bool = False,
     slack_thread_id: str | None = None,
 ) -> ChatSession:
     chat_session = ChatSession(
@@ -240,7 +239,7 @@ def create_chat_session(
         llm_override=llm_override,
         prompt_override=prompt_override,
         one_shot=one_shot,
-        danswerbot_flow=danswerbot_flow,
+        onyxbot_flow=onyxbot_flow,
         slack_thread_id=slack_thread_id,
     )
 

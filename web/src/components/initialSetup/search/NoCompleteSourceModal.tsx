@@ -42,8 +42,8 @@ export function NoCompleteSourcesModal({
           <div>
             You&apos;ve connected some sources, but none of them have finished
             syncing. Depending on the size of the knowledge base(s) you&apos;ve
-            connected to Danswer, it can take anywhere between 30 seconds to a
-            few days for the initial sync to complete. So far we&apos;ve synced{" "}
+            connected to onyx, it can take anywhere between 30 seconds to a few
+            days for the initial sync to complete. So far we&apos;ve synced{" "}
             <b>{totalDocs}</b> documents.
             <br />
             <br />

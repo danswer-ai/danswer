@@ -3,12 +3,12 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import { ClipboardIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { useStandardAnswers, useStandardAnswerCategories } from "./hooks";
+import { useStandaronyxs, useStandaronyxCategories } from "./hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Button, Divider, Text } from "@tremor/react";
 import Link from "next/link";
-import { StandardAnswer, StandardAnswerCategory } from "@/lib/types";
+import { Standaronyx, StandaronyxCategory } from "@/lib/types";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
 import {
@@ -21,7 +21,7 @@ import {
 } from "@tremor/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { deleteStandardAnswer } from "./lib";
+import { deleteStandaronyx } from "./lib";
 import { FilterDropdown } from "@/components/search/filtering/FilterDropdown";
 import { FiTag } from "react-icons/fi";
 import { SelectedBubble } from "@/components/search/filtering/Filters";
@@ -95,48 +95,48 @@ const CategoryBubble = ({
   </span>
 );
 
-const StandardAnswersTableRow = ({
-  standardAnswer,
+const StandaronyxsTableRow = ({
+  standaronyx,
   handleDelete,
 }: {
-  standardAnswer: StandardAnswer;
+  standaronyx: Standaronyx;
   handleDelete: (id: number) => void;
 }) => {
   return (
     <RowTemplate
-      id={standardAnswer.id}
+      id={standaronyx.id}
       entries={[
         <Link
-          key={`edit-${standardAnswer.id}`}
-          href={`/admin/standard-answer/${standardAnswer.id}`}
+          key={`edit-${standaronyx.id}`}
+          href={`/admin/standard-answer/${standaronyx.id}`}
         >
           <EditIcon />
         </Link>,
-        <div key={`categories-${standardAnswer.id}`}>
-          {standardAnswer.categories.map((category) => (
+        <div key={`categories-${standaronyx.id}`}>
+          {standaronyx.categories.map((category) => (
             <CategoryBubble key={category.id} name={category.name} />
           ))}
         </div>,
-        <ReactMarkdown key={`keyword-${standardAnswer.id}`}>
-          {standardAnswer.match_regex
-            ? `\`${standardAnswer.keyword}\``
-            : standardAnswer.keyword}
+        <ReactMarkdown key={`keyword-${standaronyx.id}`}>
+          {standaronyx.match_regex
+            ? `\`${standaronyx.keyword}\``
+            : standaronyx.keyword}
         </ReactMarkdown>,
         <CustomCheckbox
-          key={`match_regex-${standardAnswer.id}`}
-          checked={standardAnswer.match_regex}
+          key={`match_regex-${standaronyx.id}`}
+          checked={standaronyx.match_regex}
         />,
         <ReactMarkdown
-          key={`answer-${standardAnswer.id}`}
+          key={`answer-${standaronyx.id}`}
           className="prose"
           remarkPlugins={[remarkGfm]}
         >
-          {standardAnswer.answer}
+          {standaronyx.answer}
         </ReactMarkdown>,
         <div
-          key={`delete-${standardAnswer.id}`}
+          key={`delete-${standaronyx.id}`}
           className="cursor-pointer"
-          onClick={() => handleDelete(standardAnswer.id)}
+          onClick={() => handleDelete(standaronyx.id)}
         >
           <TrashIcon />
         </div>,
@@ -145,21 +145,21 @@ const StandardAnswersTableRow = ({
   );
 };
 
-const StandardAnswersTable = ({
-  standardAnswers,
-  standardAnswerCategories,
+const StandaronyxsTable = ({
+  standaronyxs,
+  standaronyxCategories,
   refresh,
   setPopup,
 }: {
-  standardAnswers: StandardAnswer[];
-  standardAnswerCategories: StandardAnswerCategory[];
+  standaronyxs: Standaronyx[];
+  standaronyxCategories: StandaronyxCategory[];
   refresh: () => void;
   setPopup: (popup: PopupSpec | null) => void;
 }) => {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState<
-    StandardAnswerCategory[]
+    StandaronyxCategory[]
   >([]);
   const columns = [
     { name: "", key: "edit" },
@@ -170,7 +170,7 @@ const StandardAnswersTable = ({
     { name: "", key: "delete" },
   ];
 
-  const filteredStandardAnswers = standardAnswers.filter((standardAnswer) => {
+  const filteredStandaronyxs = standaronyxs.filter((standaronyx) => {
     const {
       answer,
       id,
@@ -178,7 +178,7 @@ const StandardAnswersTable = ({
       match_regex,
       match_any_keywords,
       ...fieldsToSearch
-    } = standardAnswer;
+    } = standaronyx;
     const cleanedQuery = query.toLowerCase();
     const searchMatch = Object.values(fieldsToSearch).some((value) => {
       return value.toLowerCase().includes(cleanedQuery);
@@ -192,11 +192,11 @@ const StandardAnswersTable = ({
   });
 
   const totalPages = Math.ceil(
-    filteredStandardAnswers.length / NUM_RESULTS_PER_PAGE
+    filteredStandaronyxs.length / NUM_RESULTS_PER_PAGE
   );
   const startIndex = (currentPage - 1) * NUM_RESULTS_PER_PAGE;
   const endIndex = startIndex + NUM_RESULTS_PER_PAGE;
-  const paginatedStandardAnswers = filteredStandardAnswers.slice(
+  const paginatedStandaronyxs = filteredStandaronyxs.slice(
     startIndex,
     endIndex
   );
@@ -206,7 +206,7 @@ const StandardAnswersTable = ({
   };
 
   const handleDelete = async (id: number) => {
-    const response = await deleteStandardAnswer(id);
+    const response = await deleteStandaronyx(id);
     if (response.ok) {
       setPopup({
         message: `Standard answer ${id} deleted`,
@@ -222,8 +222,8 @@ const StandardAnswersTable = ({
     refresh();
   };
 
-  const handleCategorySelect = (category: StandardAnswerCategory) => {
-    setSelectedCategories((prev: StandardAnswerCategory[]) => {
+  const handleCategorySelect = (category: StandaronyxCategory) => {
+    setSelectedCategories((prev: StandaronyxCategory[]) => {
       const prevCategoryIds = prev.map((category) => category.id);
       if (prevCategoryIds.includes(category.id)) {
         return prev.filter((c) => c.id !== category.id);
@@ -257,7 +257,7 @@ const StandardAnswersTable = ({
       </div>
       <div className="my-4 border-b border-border">
         <FilterDropdown
-          options={standardAnswerCategories.map((category) => {
+          options={standaronyxCategories.map((category) => {
             return {
               key: category.name,
               display: category.name,
@@ -266,7 +266,7 @@ const StandardAnswersTable = ({
           selected={selectedCategories.map((category) => category.name)}
           handleSelect={(option) => {
             handleCategorySelect(
-              standardAnswerCategories.find(
+              standaronyxCategories.find(
                 (category) => category.name === option.key
               )!
             );
@@ -301,11 +301,11 @@ const StandardAnswersTable = ({
           </TableHead>
 
           <TableBody>
-            {paginatedStandardAnswers.length > 0 ? (
-              paginatedStandardAnswers.map((item) => (
-                <StandardAnswersTableRow
+            {paginatedStandaronyxs.length > 0 ? (
+              paginatedStandaronyxs.map((item) => (
+                <StandaronyxsTableRow
                   key={item.id}
-                  standardAnswer={item}
+                  standaronyx={item}
                   handleDelete={handleDelete}
                 />
               ))
@@ -314,12 +314,12 @@ const StandardAnswersTable = ({
             )}
           </TableBody>
         </Table>
-        {paginatedStandardAnswers.length === 0 && (
+        {paginatedStandaronyxs.length === 0 && (
           <div className="flex justify-center">
             <Text>No matching standard answers found...</Text>
           </div>
         )}
-        {paginatedStandardAnswers.length > 0 && (
+        {paginatedStandaronyxs.length > 0 && (
           <>
             <div className="mt-4">
               <Text>
@@ -348,40 +348,40 @@ const StandardAnswersTable = ({
 const Main = () => {
   const { popup, setPopup } = usePopup();
   const {
-    data: standardAnswers,
-    error: standardAnswersError,
-    isLoading: standardAnswersIsLoading,
-    refreshStandardAnswers,
-  } = useStandardAnswers();
+    data: standaronyxs,
+    error: standaronyxsError,
+    isLoading: standaronyxsIsLoading,
+    refreshStandaronyxs,
+  } = useStandaronyxs();
   const {
-    data: standardAnswerCategories,
-    error: standardAnswerCategoriesError,
-    isLoading: standardAnswerCategoriesIsLoading,
-  } = useStandardAnswerCategories();
+    data: standaronyxCategories,
+    error: standaronyxCategoriesError,
+    isLoading: standaronyxCategoriesIsLoading,
+  } = useStandaronyxCategories();
 
-  if (standardAnswersIsLoading || standardAnswerCategoriesIsLoading) {
+  if (standaronyxsIsLoading || standaronyxCategoriesIsLoading) {
     return <ThreeDotsLoader />;
   }
 
-  if (standardAnswersError || !standardAnswers) {
+  if (standaronyxsError || !standaronyxs) {
     return (
       <ErrorCallout
         errorTitle="Error loading standard answers"
         errorMsg={
-          standardAnswersError.info?.message ||
-          standardAnswersError.message.info?.detail
+          standaronyxsError.info?.message ||
+          standaronyxsError.message.info?.detail
         }
       />
     );
   }
 
-  if (standardAnswerCategoriesError || !standardAnswerCategories) {
+  if (standaronyxCategoriesError || !standaronyxCategories) {
     return (
       <ErrorCallout
         errorTitle="Error loading standard answer categories"
         errorMsg={
-          standardAnswerCategoriesError.info?.message ||
-          standardAnswerCategoriesError.message.info?.detail
+          standaronyxCategoriesError.info?.message ||
+          standaronyxCategoriesError.message.info?.detail
         }
       />
     );
@@ -397,7 +397,7 @@ const Main = () => {
         Note: Currently, only questions asked from Slack can receive standard
         answers.
       </Text>
-      {standardAnswers.length == 0 && (
+      {standaronyxs.length == 0 && (
         <Text className="mb-2">Add your first standard answer below!</Text>
       )}
       <div className="mb-2"></div>
@@ -411,10 +411,10 @@ const Main = () => {
       <Divider />
 
       <div>
-        <StandardAnswersTable
-          standardAnswers={standardAnswers}
-          standardAnswerCategories={standardAnswerCategories}
-          refresh={refreshStandardAnswers}
+        <StandaronyxsTable
+          standaronyxs={standaronyxs}
+          standaronyxCategories={standaronyxCategories}
+          refresh={refreshStandaronyxs}
           setPopup={setPopup}
         />
       </div>

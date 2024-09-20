@@ -1,16 +1,15 @@
 import math
 import uuid
 
+from onyx.db.search_settings import get_current_search_settings
+from onyx.db.search_settings import get_secondary_search_settings
+from onyx.indexing.models import IndexChunk
+from onyx.search.models import InferenceChunk
 from sqlalchemy.orm import Session
-
-from danswer.db.search_settings import get_current_search_settings
-from danswer.db.search_settings import get_secondary_search_settings
-from danswer.indexing.models import IndexChunk
-from danswer.search.models import InferenceChunk
 
 
 DEFAULT_BATCH_SIZE = 30
-DEFAULT_INDEX_NAME = "danswer_chunk"
+DEFAULT_INDEX_NAME = "onyx_chunk"
 
 
 def get_both_index_names(db_session: Session) -> tuple[str, str | None]:

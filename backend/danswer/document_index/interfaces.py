@@ -3,10 +3,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from danswer.access.models import DocumentAccess
-from danswer.indexing.models import DocMetadataAwareIndexChunk
-from danswer.search.models import IndexFilters
-from danswer.search.models import InferenceChunkUncleaned
+from onyx.access.models import DocumentAccess
+from onyx.indexing.models import DocMetadataAwareIndexChunk
+from onyx.search.models import IndexFilters
+from onyx.search.models import InferenceChunkUncleaned
+
 from shared_configs.model_server_models import Embedding
 
 
@@ -49,7 +50,7 @@ class DocumentMetadata:
     first_link: str
     doc_updated_at: datetime | None = None
     # Emails, not necessarily attached to users
-    # Users may not be in Danswer
+    # Users may not be in onyx
     primary_owners: list[str] | None = None
     secondary_owners: list[str] | None = None
     from_ingestion_api: bool = False
@@ -357,7 +358,7 @@ class BaseIndex(
 
 class DocumentIndex(HybridCapable, BaseIndex, abc.ABC):
     """
-    A valid document index that can plug into all Danswer flows must implement all of these
+    A valid document index that can plug into all onyx flows must implement all of these
     functionalities, though "technically" it does not need to be keyword or vector capable as
     currently all default search flows use Hybrid Search.
     """

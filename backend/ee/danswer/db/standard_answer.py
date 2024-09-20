@@ -2,12 +2,11 @@ import re
 import string
 from collections.abc import Sequence
 
+from onyx.db.models import Standaronyx
+from onyx.db.models import StandaronyxCategory
+from onyx.utils.logger import setup_logger
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-from danswer.db.models import StandardAnswer
-from danswer.db.models import StandardAnswerCategory
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -28,10 +27,10 @@ def check_category_validity(category_name: str) -> bool:
 
 def insert_standard_answer_category(
     category_name: str, db_session: Session
-) -> StandardAnswerCategory:
+) -> StandaronyxCategory:
     if not check_category_validity(category_name):
         raise ValueError(f"Invalid category name: {category_name}")
-    standard_answer_category = StandardAnswerCategory(name=category_name)
+    standard_answer_category = StandaronyxCategory(name=category_name)
     db_session.add(standard_answer_category)
     db_session.commit()
 
@@ -45,7 +44,7 @@ def insert_standard_answer(
     match_regex: bool,
     match_any_keywords: bool,
     db_session: Session,
-) -> StandardAnswer:
+) -> Standaronyx:
     existing_categories = fetch_standard_answer_categories_by_ids(
         standard_answer_category_ids=category_ids,
         db_session=db_session,
@@ -53,7 +52,7 @@ def insert_standard_answer(
     if len(existing_categories) != len(category_ids):
         raise ValueError(f"Some or all categories with ids {category_ids} do not exist")
 
-    standard_answer = StandardAnswer(
+    standard_answer = Standaronyx(
         keyword=keyword,
         answer=answer,
         categories=existing_categories,
@@ -74,9 +73,9 @@ def update_standard_answer(
     match_regex: bool,
     match_any_keywords: bool,
     db_session: Session,
-) -> StandardAnswer:
+) -> Standaronyx:
     standard_answer = db_session.scalar(
-        select(StandardAnswer).where(StandardAnswer.id == standard_answer_id)
+        select(Standaronyx).where(Standaronyx.id == standard_answer_id)
     )
     if standard_answer is None:
         raise ValueError(f"No standard answer with id {standard_answer_id}")
@@ -104,7 +103,7 @@ def remove_standard_answer(
     db_session: Session,
 ) -> None:
     standard_answer = db_session.scalar(
-        select(StandardAnswer).where(StandardAnswer.id == standard_answer_id)
+        select(Standaronyx).where(Standaronyx.id == standard_answer_id)
     )
     if standard_answer is None:
         raise ValueError(f"No standard answer with id {standard_answer_id}")
@@ -117,10 +116,10 @@ def update_standard_answer_category(
     standard_answer_category_id: int,
     category_name: str,
     db_session: Session,
-) -> StandardAnswerCategory:
+) -> StandaronyxCategory:
     standard_answer_category = db_session.scalar(
-        select(StandardAnswerCategory).where(
-            StandardAnswerCategory.id == standard_answer_category_id
+        select(StandaronyxCategory).where(
+            StandaronyxCategory.id == standard_answer_category_id
         )
     )
     if standard_answer_category is None:
@@ -141,10 +140,10 @@ def update_standard_answer_category(
 def fetch_standard_answer_category(
     standard_answer_category_id: int,
     db_session: Session,
-) -> StandardAnswerCategory | None:
+) -> StandaronyxCategory | None:
     return db_session.scalar(
-        select(StandardAnswerCategory).where(
-            StandardAnswerCategory.id == standard_answer_category_id
+        select(StandaronyxCategory).where(
+            StandaronyxCategory.id == standard_answer_category_id
         )
     )
 
@@ -152,32 +151,32 @@ def fetch_standard_answer_category(
 def fetch_standard_answer_categories_by_ids(
     standard_answer_category_ids: list[int],
     db_session: Session,
-) -> Sequence[StandardAnswerCategory]:
+) -> Sequence[StandaronyxCategory]:
     return db_session.scalars(
-        select(StandardAnswerCategory).where(
-            StandardAnswerCategory.id.in_(standard_answer_category_ids)
+        select(StandaronyxCategory).where(
+            StandaronyxCategory.id.in_(standard_answer_category_ids)
         )
     ).all()
 
 
 def fetch_standard_answer_categories(
     db_session: Session,
-) -> Sequence[StandardAnswerCategory]:
-    return db_session.scalars(select(StandardAnswerCategory)).all()
+) -> Sequence[StandaronyxCategory]:
+    return db_session.scalars(select(StandaronyxCategory)).all()
 
 
 def fetch_standard_answer(
     standard_answer_id: int,
     db_session: Session,
-) -> StandardAnswer | None:
+) -> Standaronyx | None:
     return db_session.scalar(
-        select(StandardAnswer).where(StandardAnswer.id == standard_answer_id)
+        select(Standaronyx).where(Standaronyx.id == standard_answer_id)
     )
 
 
-def fetch_standard_answers(db_session: Session) -> Sequence[StandardAnswer]:
+def fetch_standard_answers(db_session: Session) -> Sequence[Standaronyx]:
     return db_session.scalars(
-        select(StandardAnswer).where(StandardAnswer.active.is_(True))
+        select(Standaronyx).where(Standaronyx.active.is_(True))
     ).all()
 
 
@@ -196,7 +195,7 @@ def create_initial_default_standard_answer_category(db_session: Session) -> None
             )
         return
 
-    standard_answer_category = StandardAnswerCategory(
+    standard_answer_category = StandaronyxCategory(
         id=default_category_id,
         name=default_category_name,
     )
@@ -207,10 +206,10 @@ def create_initial_default_standard_answer_category(db_session: Session) -> None
 def fetch_standard_answer_categories_by_names(
     standard_answer_category_names: list[str],
     db_session: Session,
-) -> Sequence[StandardAnswerCategory]:
+) -> Sequence[StandaronyxCategory]:
     return db_session.scalars(
-        select(StandardAnswerCategory).where(
-            StandardAnswerCategory.name.in_(standard_answer_category_names)
+        select(StandaronyxCategory).where(
+            StandaronyxCategory.name.in_(standard_answer_category_names)
         )
     ).all()
 
@@ -219,9 +218,9 @@ def find_matching_standard_answers(
     id_in: list[int],
     query: str,
     db_session: Session,
-) -> list[tuple[StandardAnswer, str]]:
+) -> list[tuple[Standaronyx, str]]:
     """
-    Returns a list of tuples, where each tuple is a StandardAnswer definition matching
+    Returns a list of tuples, where each tuple is a Standaronyx definition matching
     the query and a string representing the match (either the regex match group or the
     set of keywords).
 
@@ -232,13 +231,13 @@ def find_matching_standard_answers(
     in `keyword` exists in `query`, depending on the state of `match_any_keywords`
     """
     stmt = (
-        select(StandardAnswer)
-        .where(StandardAnswer.active.is_(True))
-        .where(StandardAnswer.id.in_(id_in))
+        select(Standaronyx)
+        .where(Standaronyx.active.is_(True))
+        .where(Standaronyx.id.in_(id_in))
     )
-    possible_standard_answers: Sequence[StandardAnswer] = db_session.scalars(stmt).all()
+    possible_standard_answers: Sequence[Standaronyx] = db_session.scalars(stmt).all()
 
-    matching_standard_answers: list[tuple[StandardAnswer, str]] = []
+    matching_standard_answers: list[tuple[Standaronyx, str]] = []
     for standard_answer in possible_standard_answers:
         if standard_answer.match_regex:
             maybe_matches = re.search(standard_answer.keyword, query, re.IGNORECASE)

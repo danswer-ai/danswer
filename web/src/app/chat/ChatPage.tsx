@@ -60,7 +60,7 @@ import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { ChatState, FeedbackType, RegenerationState } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
-import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
+import { onyxInitializingLoader } from "@/components/onyxInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { FiArrowDown } from "react-icons/fi";
@@ -69,7 +69,7 @@ import { AIMessage, HumanMessage } from "./message/Messages";
 import { StarterMessage } from "./StarterMessage";
 import {
   AnswerPiecePacket,
-  DanswerDocument,
+  onyxDocument,
   StreamStopInfo,
   StreamStopReason,
 } from "@/lib/search/interfaces";
@@ -271,7 +271,7 @@ export function ChatPage({
 
   // this is used to track which assistant is being used to generate the current message
   // for example, this would come into play when:
-  // 1. default assistant is `Danswer`
+  // 1. default assistant is `onyx`
   // 2. we "@"ed the `GPT` assistant and sent a message
   // 3. while the `GPT` assistant message is generating, we "@" the `Paraphrase` assistant
   const [alternativeGeneratingAssistant, setAlternativeGeneratingAssistant] =
@@ -1057,7 +1057,7 @@ export function ChatPage({
       selectedDocuments.length > 0
         ? RetrievalType.SelectedDocs
         : RetrievalType.None;
-    let documents: DanswerDocument[] = selectedDocuments;
+    let documents: onyxDocument[] = selectedDocuments;
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let stackTrace: string | null = null;
@@ -2443,7 +2443,7 @@ export function ChatPage({
                         ${toggledSidebar ? "w-[250px] " : "w-[0px]"}`}
                   />
                   <div className="my-auto">
-                    <DanswerInitializingLoader />
+                    <onyxInitializingLoader />
                   </div>
                 </div>
               )}

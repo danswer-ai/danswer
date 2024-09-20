@@ -1,6 +1,5 @@
 from langchain_core.messages import HumanMessage
-
-from danswer.llm.utils import build_content_with_imgs
+from onyx.llm.utils import build_content_with_imgs
 
 
 IMG_GENERATION_SUMMARY_PROMPT = """

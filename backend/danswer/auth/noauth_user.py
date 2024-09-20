@@ -2,12 +2,12 @@ from collections.abc import Mapping
 from typing import Any
 from typing import cast
 
-from danswer.auth.schemas import UserRole
-from danswer.configs.constants import KV_NO_AUTH_USER_PREFERENCES_KEY
-from danswer.dynamic_configs.store import ConfigNotFoundError
-from danswer.dynamic_configs.store import DynamicConfigStore
-from danswer.server.manage.models import UserInfo
-from danswer.server.manage.models import UserPreferences
+from onyx.auth.schemas import UserRole
+from onyx.configs.constants import KV_NO_AUTH_USER_PREFERENCES_KEY
+from onyx.dynamic_configs.store import ConfigNotFoundError
+from onyx.dynamic_configs.store import DynamicConfigStore
+from onyx.server.manage.models import UserInfo
+from onyx.server.manage.models import UserPreferences
 
 
 def set_no_auth_user_preferences(
@@ -29,7 +29,7 @@ def load_no_auth_user_preferences(store: DynamicConfigStore) -> UserPreferences:
 def fetch_no_auth_user(store: DynamicConfigStore) -> UserInfo:
     return UserInfo(
         id="__no_auth_user__",
-        email="anonymous@danswer.ai",
+        email="anonymous@onyx.ai",
         is_active=True,
         is_superuser=False,
         is_verified=True,

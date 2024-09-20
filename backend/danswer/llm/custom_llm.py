@@ -5,20 +5,19 @@ import requests
 from langchain.schema.language_model import LanguageModelInput
 from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
+from onyx.configs.model_configs import GEN_AI_NUM_RESERVED_OUTPUT_TOKENS
+from onyx.llm.interfaces import LLM
+from onyx.llm.interfaces import ToolChoiceOptions
+from onyx.llm.utils import convert_lm_input_to_basic_string
+from onyx.utils.logger import setup_logger
 from requests import Timeout
-
-from danswer.configs.model_configs import GEN_AI_NUM_RESERVED_OUTPUT_TOKENS
-from danswer.llm.interfaces import LLM
-from danswer.llm.interfaces import ToolChoiceOptions
-from danswer.llm.utils import convert_lm_input_to_basic_string
-from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
 
 
 class CustomModelServer(LLM):
-    """This class is to provide an example for how to use Danswer
+    """This class is to provide an example for how to use onyx
     with any LLM, even servers with custom API definitions.
     To use with your own model server, simply implement the functions
     below to fit your model server expectation
@@ -41,7 +40,7 @@ class CustomModelServer(LLM):
     ):
         if not endpoint:
             raise ValueError(
-                "Cannot point Danswer to a custom LLM server without providing the "
+                "Cannot point onyx to a custom LLM server without providing the "
                 "endpoint for the model server."
             )
 

@@ -1,32 +1,32 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.models import Document
+from onyx.connectors.models import IndexAttemptMetadata
+from onyx.db.connector_credential_pair import get_connector_credential_pair_from_id
+from onyx.db.document import get_documents_by_cc_pair
+from onyx.db.document import get_ingestion_documents
+from onyx.db.engine import get_session
+from onyx.db.models import User
+from onyx.db.search_settings import get_current_search_settings
+from onyx.db.search_settings import get_secondary_search_settings
+from onyx.document_index.document_index_utils import get_both_index_names
+from onyx.document_index.factory import get_default_document_index
+from onyx.indexing.embedder import DefaultIndexingEmbedder
+from onyx.indexing.indexing_pipeline import build_indexing_pipeline
+from onyx.server.onyx_api.models import DocMinimalInfo
+from onyx.server.onyx_api.models import IngestionDocument
+from onyx.server.onyx_api.models import IngestionResult
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import Document
-from danswer.connectors.models import IndexAttemptMetadata
-from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
-from danswer.db.document import get_documents_by_cc_pair
-from danswer.db.document import get_ingestion_documents
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from danswer.db.search_settings import get_current_search_settings
-from danswer.db.search_settings import get_secondary_search_settings
-from danswer.document_index.document_index_utils import get_both_index_names
-from danswer.document_index.factory import get_default_document_index
-from danswer.indexing.embedder import DefaultIndexingEmbedder
-from danswer.indexing.indexing_pipeline import build_indexing_pipeline
-from danswer.server.danswer_api.models import DocMinimalInfo
-from danswer.server.danswer_api.models import IngestionDocument
-from danswer.server.danswer_api.models import IngestionResult
-from danswer.utils.logger import setup_logger
-from ee.danswer.auth.users import api_key_dep
+from ee.onyx.auth.users import api_key_dep
 
 logger = setup_logger()
 
 # not using /api to avoid confusion with nginx api path routing
-router = APIRouter(prefix="/danswer-api")
+router = APIRouter(prefix="/onyx-api")
 
 
 @router.get("/connector-docs/{cc_pair_id}")

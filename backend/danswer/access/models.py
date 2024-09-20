@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-from danswer.access.utils import prefix_external_group
-from danswer.access.utils import prefix_user_email
-from danswer.access.utils import prefix_user_group
-from danswer.configs.constants import PUBLIC_DOC_PAT
+from onyx.access.utils import prefix_external_group
+from onyx.access.utils import prefix_user_email
+from onyx.access.utils import prefix_user_group
+from onyx.configs.constants import PUBLIC_DOC_PAT
 
 
 @dataclass(frozen=True)
@@ -12,13 +12,13 @@ class ExternalAccess:
     external_user_emails: set[str]
     # Names or external IDs of groups with access to the doc
     external_user_group_ids: set[str]
-    # Whether the document is public in the external system or Danswer
+    # Whether the document is public in the external system or onyx
     is_public: bool
 
 
 @dataclass(frozen=True)
 class DocumentAccess(ExternalAccess):
-    # User emails for Danswer users, None indicates admin
+    # User emails for onyx users, None indicates admin
     user_emails: set[str | None]
     # Names of user groups associated with this document
     user_groups: set[str]

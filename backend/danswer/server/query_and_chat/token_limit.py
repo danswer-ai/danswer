@@ -7,19 +7,19 @@ from functools import lru_cache
 from dateutil import tz
 from fastapi import Depends
 from fastapi import HTTPException
+from onyx.auth.users import current_user
+from onyx.db.engine import get_session_context_manager
+from onyx.db.models import ChatMessage
+from onyx.db.models import ChatSession
+from onyx.db.models import TokenRateLimit
+from onyx.db.models import User
+from onyx.utils.logger import setup_logger
+from onyx.utils.variable_functionality import fetch_versioned_implementation
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_user
-from danswer.db.engine import get_session_context_manager
-from danswer.db.models import ChatMessage
-from danswer.db.models import ChatSession
-from danswer.db.models import TokenRateLimit
-from danswer.db.models import User
-from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import fetch_versioned_implementation
-from ee.danswer.db.token_limit import fetch_all_global_token_rate_limits
+from ee.onyx.db.token_limit import fetch_all_global_token_rate_limits
 
 
 logger = setup_logger()
@@ -37,7 +37,7 @@ def check_token_rate_limits(
         return
 
     versioned_rate_limit_strategy = fetch_versioned_implementation(
-        "danswer.server.query_and_chat.token_limit", "_check_token_rate_limits"
+        "onyx.server.query_and_chat.token_limit", "_check_token_rate_limits"
     )
     return versioned_rate_limit_strategy(user)
 

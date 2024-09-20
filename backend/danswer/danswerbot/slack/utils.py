@@ -7,6 +7,35 @@ from typing import Any
 from typing import cast
 from typing import Optional
 
+from onyx.configs.app_configs import DISABLE_TELEMETRY
+from onyx.configs.constants import ID_SEPARATOR
+from onyx.configs.constants import MessageType
+from onyx.configs.onyxbot_configs import onyx_BOT_FEEDBACK_VISIBILITY
+from onyx.configs.onyxbot_configs import onyx_BOT_MAX_QPM
+from onyx.configs.onyxbot_configs import onyx_BOT_MAX_WAIT_TIME
+from onyx.configs.onyxbot_configs import onyx_BOT_NUM_RETRIES
+from onyx.configs.onyxbot_configs import (
+    onyx_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD,
+)
+from onyx.configs.onyxbot_configs import (
+    onyx_BOT_RESPONSE_LIMIT_TIME_PERIOD_SECONDS,
+)
+from onyx.connectors.slack.utils import make_slack_api_rate_limited
+from onyx.connectors.slack.utils import SlackTextCleaner
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.db.users import get_user_by_email
+from onyx.llm.exceptions import GenAIDisabledException
+from onyx.llm.factory import get_default_llms
+from onyx.llm.utils import dict_based_prompt_to_langchain_prompt
+from onyx.llm.utils import message_to_string
+from onyx.one_shot_answer.models import ThreadMessage
+from onyx.onyxbot.slack.constants import FeedbackVisibility
+from onyx.onyxbot.slack.tokens import fetch_tokens
+from onyx.prompts.miscellaneous_prompts import SLACK_LANGUAGE_REPHRASE_PROMPT
+from onyx.utils.logger import setup_logger
+from onyx.utils.telemetry import optional_telemetry
+from onyx.utils.telemetry import RecordType
+from onyx.utils.text_processing import replace_whitespaces_w_space
 from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -14,49 +43,19 @@ from slack_sdk.models.blocks import Block
 from slack_sdk.models.metadata import Metadata
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DISABLE_TELEMETRY
-from danswer.configs.constants import ID_SEPARATOR
-from danswer.configs.constants import MessageType
-from danswer.configs.danswerbot_configs import DANSWER_BOT_FEEDBACK_VISIBILITY
-from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_QPM
-from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_WAIT_TIME
-from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
-from danswer.configs.danswerbot_configs import (
-    DANSWER_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD,
-)
-from danswer.configs.danswerbot_configs import (
-    DANSWER_BOT_RESPONSE_LIMIT_TIME_PERIOD_SECONDS,
-)
-from danswer.connectors.slack.utils import make_slack_api_rate_limited
-from danswer.connectors.slack.utils import SlackTextCleaner
-from danswer.danswerbot.slack.constants import FeedbackVisibility
-from danswer.danswerbot.slack.tokens import fetch_tokens
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.users import get_user_by_email
-from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llms
-from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
-from danswer.llm.utils import message_to_string
-from danswer.one_shot_answer.models import ThreadMessage
-from danswer.prompts.miscellaneous_prompts import SLACK_LANGUAGE_REPHRASE_PROMPT
-from danswer.utils.logger import setup_logger
-from danswer.utils.telemetry import optional_telemetry
-from danswer.utils.telemetry import RecordType
-from danswer.utils.text_processing import replace_whitespaces_w_space
-
 logger = setup_logger()
 
 
-_DANSWER_BOT_APP_ID: str | None = None
-_DANSWER_BOT_MESSAGE_COUNT: int = 0
-_DANSWER_BOT_COUNT_START_TIME: float = time.time()
+_onyx_BOT_APP_ID: str | None = None
+_onyx_BOT_MESSAGE_COUNT: int = 0
+_onyx_BOT_COUNT_START_TIME: float = time.time()
 
 
-def get_danswer_bot_app_id(web_client: WebClient) -> Any:
-    global _DANSWER_BOT_APP_ID
-    if _DANSWER_BOT_APP_ID is None:
-        _DANSWER_BOT_APP_ID = web_client.auth_test().get("user_id")
-    return _DANSWER_BOT_APP_ID
+def get_onyx_bot_app_id(web_client: WebClient) -> Any:
+    global _onyx_BOT_APP_ID
+    if _onyx_BOT_APP_ID is None:
+        _onyx_BOT_APP_ID = web_client.auth_test().get("user_id")
+    return _onyx_BOT_APP_ID
 
 
 def check_message_limit() -> bool:
@@ -65,22 +64,22 @@ def check_message_limit() -> bool:
     High traffic at the end of one period and start of another could cause
     the limit to be exceeded.
     """
-    if DANSWER_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD == 0:
+    if onyx_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD == 0:
         return True
-    global _DANSWER_BOT_MESSAGE_COUNT
-    global _DANSWER_BOT_COUNT_START_TIME
-    time_since_start = time.time() - _DANSWER_BOT_COUNT_START_TIME
-    if time_since_start > DANSWER_BOT_RESPONSE_LIMIT_TIME_PERIOD_SECONDS:
-        _DANSWER_BOT_MESSAGE_COUNT = 0
-        _DANSWER_BOT_COUNT_START_TIME = time.time()
-    if (_DANSWER_BOT_MESSAGE_COUNT + 1) > DANSWER_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD:
+    global _onyx_BOT_MESSAGE_COUNT
+    global _onyx_BOT_COUNT_START_TIME
+    time_since_start = time.time() - _onyx_BOT_COUNT_START_TIME
+    if time_since_start > onyx_BOT_RESPONSE_LIMIT_TIME_PERIOD_SECONDS:
+        _onyx_BOT_MESSAGE_COUNT = 0
+        _onyx_BOT_COUNT_START_TIME = time.time()
+    if (_onyx_BOT_MESSAGE_COUNT + 1) > onyx_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD:
         logger.error(
-            f"DanswerBot has reached the message limit {DANSWER_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD}"
-            f" for the time period {DANSWER_BOT_RESPONSE_LIMIT_TIME_PERIOD_SECONDS} seconds."
-            " These limits are configurable in backend/danswer/configs/danswerbot_configs.py"
+            f"onyxBot has reached the message limit {onyx_BOT_RESPONSE_LIMIT_PER_TIME_PERIOD}"
+            f" for the time period {onyx_BOT_RESPONSE_LIMIT_TIME_PERIOD_SECONDS} seconds."
+            " These limits are configurable in backend/onyx/configs/onyxbot_configs.py"
         )
         return False
-    _DANSWER_BOT_MESSAGE_COUNT += 1
+    _onyx_BOT_MESSAGE_COUNT += 1
     return True
 
 
@@ -136,8 +135,8 @@ def update_emote_react(
             logger.error(f"Was not able to react to user message due to: {e}")
 
 
-def remove_danswer_bot_tag(message_str: str, client: WebClient) -> str:
-    bot_tag_id = get_danswer_bot_app_id(web_client=client)
+def remove_onyx_bot_tag(message_str: str, client: WebClient) -> str:
+    bot_tag_id = get_onyx_bot_app_id(web_client=client)
     return re.sub(rf"<@{bot_tag_id}>\s", "", message_str)
 
 
@@ -147,7 +146,7 @@ def get_web_client() -> WebClient:
 
 
 @retry(
-    tries=DANSWER_BOT_NUM_RETRIES,
+    tries=onyx_BOT_NUM_RETRIES,
     delay=0.25,
     backoff=2,
     logger=cast(logging.Logger, logger),
@@ -430,13 +429,13 @@ def read_slack_thread(
     replies = cast(dict, response.data).get("messages", [])
     for reply in replies:
         if "user" in reply and "bot_id" not in reply:
-            message = remove_danswer_bot_tag(reply["text"], client=client)
+            message = remove_onyx_bot_tag(reply["text"], client=client)
             user_sem_id = fetch_user_semantic_id_from_id(reply["user"], client)
             message_type = MessageType.USER
         else:
-            self_app_id = get_danswer_bot_app_id(client)
+            self_app_id = get_onyx_bot_app_id(client)
 
-            # Only include bot messages from Danswer, other bots are not taken in as context
+            # Only include bot messages from onyx, other bots are not taken in as context
             if self_app_id != reply.get("user"):
                 continue
 
@@ -470,7 +469,7 @@ def slack_usage_report(action: str, sender_id: str | None, client: WebClient) ->
     if DISABLE_TELEMETRY:
         return
 
-    danswer_user = None
+    onyx_user = None
     sender_email = None
     try:
         sender_email = client.users_info(user=sender_id).data["user"]["profile"]["email"]  # type: ignore
@@ -479,19 +478,19 @@ def slack_usage_report(action: str, sender_id: str | None, client: WebClient) ->
 
     if sender_email is not None:
         with Session(get_sqlalchemy_engine()) as db_session:
-            danswer_user = get_user_by_email(email=sender_email, db_session=db_session)
+            onyx_user = get_user_by_email(email=sender_email, db_session=db_session)
 
     optional_telemetry(
         record_type=RecordType.USAGE,
         data={"action": action},
-        user_id=str(danswer_user.id) if danswer_user else "Non-Danswer-Or-No-Auth-User",
+        user_id=str(onyx_user.id) if onyx_user else "Non-onyx-Or-No-Auth-User",
     )
 
 
 class SlackRateLimiter:
     def __init__(self) -> None:
-        self.max_qpm: int | None = DANSWER_BOT_MAX_QPM
-        self.max_wait_time = DANSWER_BOT_MAX_WAIT_TIME
+        self.max_qpm: int | None = onyx_BOT_MAX_QPM
+        self.max_wait_time = onyx_BOT_MAX_WAIT_TIME
         self.active_question = 0
         self.last_reset_time = time.time()
         self.waiting_questions: list[int] = []
@@ -551,6 +550,6 @@ class SlackRateLimiter:
 
 def get_feedback_visibility() -> FeedbackVisibility:
     try:
-        return FeedbackVisibility(DANSWER_BOT_FEEDBACK_VISIBILITY.lower())
+        return FeedbackVisibility(onyx_BOT_FEEDBACK_VISIBILITY.lower())
     except ValueError:
         return FeedbackVisibility.PRIVATE

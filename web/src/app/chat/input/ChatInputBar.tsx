@@ -27,7 +27,7 @@ import { IconType } from "react-icons";
 import Popup from "../../../components/popup/Popup";
 import { LlmTab } from "../modal/configuration/LlmTab";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { onyxDocument } from "@/lib/search/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { Hoverable } from "@/components/Hoverable";
@@ -69,7 +69,7 @@ export function ChatInputBar({
   chatState: ChatState;
   stopGenerating: () => void;
   showDocs: () => void;
-  selectedDocuments: DanswerDocument[];
+  selectedDocuments: onyxDocument[];
   assistantOptions: Persona[];
   setAlternativeAssistant: (alternativeAssistant: Persona | null) => void;
   setSelectedAssistant: (assistant: Persona) => void;
@@ -276,7 +276,7 @@ export function ChatInputBar({
   };
 
   return (
-    <div id="danswer-chat-input">
+    <div id="onyx-chat-input">
       <div className="flex justify-center mx-auto">
         <div
           className="

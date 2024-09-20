@@ -4,7 +4,7 @@
   "idp": {
     "entityId": "<Provide This from IDP>",
     "singleSignOnService": {
-      "url": "<Replace this with your IDP URL> https://trial-1234567.okta.com/home/trial-1234567_danswer/somevalues/somevalues",
+      "url": "<Replace this with your IDP URL> https://trial-1234567.okta.com/home/trial-1234567_onyx/somevalues/somevalues",
       "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
     },
     "x509cert": "<Provide this>"

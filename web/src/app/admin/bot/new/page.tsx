@@ -3,29 +3,28 @@ import { CPUIcon } from "@/components/icons/icons";
 import { SlackBotCreationForm } from "../SlackBotConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { DocumentSet, StandardAnswerCategory } from "@/lib/types";
+import { DocumentSet, StandaronyxCategory } from "@/lib/types";
 import { BackButton } from "@/components/BackButton";
 import { Text } from "@tremor/react";
 import {
   FetchAssistantsResponse,
   fetchAssistantsSS,
 } from "@/lib/assistants/fetchAssistantsSS";
-import { getStandardAnswerCategoriesIfEE } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
+import { getStandaronyxCategoriesIfEE } from "@/components/standaronyxs/getStandaronyxCategoriesIfEE";
 
 async function Page() {
   const tasks = [fetchSS("/manage/document-set"), fetchAssistantsSS()];
   const [
     documentSetsResponse,
     [assistants, assistantsFetchError],
-    standardAnswerCategoriesResponse,
+    standaronyxCategoriesResponse,
   ] = (await Promise.all(tasks)) as [
     Response,
     FetchAssistantsResponse,
     Response,
   ];
 
-  const eeStandardAnswerCategoryResponse =
-    await getStandardAnswerCategoriesIfEE();
+  const eeStandaronyxCategoryResponse = await getStandaronyxCategoriesIfEE();
 
   if (!documentSetsResponse.ok) {
     return (
@@ -57,7 +56,7 @@ async function Page() {
       <SlackBotCreationForm
         documentSets={documentSets}
         personas={assistants}
-        standardAnswerCategoryResponse={eeStandardAnswerCategoryResponse}
+        standaronyxCategoryResponse={eeStandaronyxCategoryResponse}
       />
     </div>
   );

@@ -1,9 +1,9 @@
 from collections.abc import Generator
 
-from danswer.configs.constants import MessageType
-from danswer.natural_language_processing.utils import BaseTokenizer
-from danswer.one_shot_answer.models import ThreadMessage
-from danswer.utils.logger import setup_logger
+from onyx.configs.constants import MessageType
+from onyx.natural_language_processing.utils import BaseTokenizer
+from onyx.one_shot_answer.models import ThreadMessage
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

@@ -17,75 +17,74 @@ from celery.signals import beat_init
 from celery.signals import worker_init
 from celery.states import READY_STATES
 from celery.utils.log import get_task_logger
+from onyx.access.access import get_access_for_document
+from onyx.background.celery.celery_redis import RedisConnectorCredentialPair
+from onyx.background.celery.celery_redis import RedisConnectorDeletion
+from onyx.background.celery.celery_redis import RedisDocumentSet
+from onyx.background.celery.celery_redis import RedisUserGroup
+from onyx.background.celery.celery_utils import extract_ids_from_runnable_connector
+from onyx.background.celery.celery_utils import should_prune_cc_pair
+from onyx.background.connector_deletion import delete_connector_credential_pair_batch
+from onyx.background.task_utils import build_celery_task_wrapper
+from onyx.background.task_utils import name_cc_prune_task
+from onyx.configs.app_configs import JOB_TIMEOUT
+from onyx.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
+from onyx.configs.constants import onyxCeleryPriority
+from onyx.configs.constants import onyxRedisLocks
+from onyx.configs.constants import POSTGRES_CELERY_BEAT_APP_NAME
+from onyx.configs.constants import POSTGRES_CELERY_WORKER_APP_NAME
+from onyx.configs.constants import PostgresAdvisoryLocks
+from onyx.connectors.factory import instantiate_connector
+from onyx.connectors.models import InputType
+from onyx.db.connector import fetch_connector_by_id
+from onyx.db.connector_credential_pair import add_deletion_failure_message
+from onyx.db.connector_credential_pair import (
+    delete_connector_credential_pair__no_commit,
+)
+from onyx.db.connector_credential_pair import get_connector_credential_pair
+from onyx.db.connector_credential_pair import get_connector_credential_pair_from_id
+from onyx.db.connector_credential_pair import get_connector_credential_pairs
+from onyx.db.document import count_documents_by_needs_sync
+from onyx.db.document import delete_document_by_connector_credential_pair__no_commit
+from onyx.db.document import delete_documents_complete__no_commit
+from onyx.db.document import get_document
+from onyx.db.document import get_document_connector_count
+from onyx.db.document import get_documents_for_connector_credential_pair
+from onyx.db.document import mark_document_as_synced
+from onyx.db.document_set import delete_document_set
+from onyx.db.document_set import delete_document_set_cc_pair_relationship__no_commit
+from onyx.db.document_set import fetch_document_sets
+from onyx.db.document_set import fetch_document_sets_for_document
+from onyx.db.document_set import get_document_set_by_id
+from onyx.db.document_set import mark_document_set_as_synced
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.db.engine import init_sqlalchemy_engine
+from onyx.db.enums import ConnectorCredentialPairStatus
+from onyx.db.enums import IndexingStatus
+from onyx.db.index_attempt import delete_index_attempts
+from onyx.db.index_attempt import get_last_attempt
+from onyx.db.models import ConnectorCredentialPair
+from onyx.db.models import DocumentSet
+from onyx.db.models import UserGroup
+from onyx.db.search_settings import get_current_search_settings
+from onyx.document_index.document_index_utils import get_both_index_names
+from onyx.document_index.factory import get_default_document_index
+from onyx.document_index.interfaces import UpdateRequest
+from onyx.redis.redis_pool import RedisPool
+from onyx.server.documents.models import ConnectorCredentialPairIdentifier
+from onyx.utils.logger import ColoredFormatter
+from onyx.utils.logger import PlainFormatter
+from onyx.utils.logger import setup_logger
+from onyx.utils.variable_functionality import fetch_versioned_implementation
+from onyx.utils.variable_functionality import (
+    fetch_versioned_implementation_with_fallback,
+)
+from onyx.utils.variable_functionality import noop_fallback
 from redis import Redis
 from sqlalchemy import inspect
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
-
-from danswer.access.access import get_access_for_document
-from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
-from danswer.background.celery.celery_redis import RedisConnectorDeletion
-from danswer.background.celery.celery_redis import RedisDocumentSet
-from danswer.background.celery.celery_redis import RedisUserGroup
-from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
-from danswer.background.celery.celery_utils import should_prune_cc_pair
-from danswer.background.connector_deletion import delete_connector_credential_pair_batch
-from danswer.background.task_utils import build_celery_task_wrapper
-from danswer.background.task_utils import name_cc_prune_task
-from danswer.configs.app_configs import JOB_TIMEOUT
-from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
-from danswer.configs.constants import DanswerCeleryPriority
-from danswer.configs.constants import DanswerRedisLocks
-from danswer.configs.constants import POSTGRES_CELERY_BEAT_APP_NAME
-from danswer.configs.constants import POSTGRES_CELERY_WORKER_APP_NAME
-from danswer.configs.constants import PostgresAdvisoryLocks
-from danswer.connectors.factory import instantiate_connector
-from danswer.connectors.models import InputType
-from danswer.db.connector import fetch_connector_by_id
-from danswer.db.connector_credential_pair import add_deletion_failure_message
-from danswer.db.connector_credential_pair import (
-    delete_connector_credential_pair__no_commit,
-)
-from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
-from danswer.db.connector_credential_pair import get_connector_credential_pairs
-from danswer.db.document import count_documents_by_needs_sync
-from danswer.db.document import delete_document_by_connector_credential_pair__no_commit
-from danswer.db.document import delete_documents_complete__no_commit
-from danswer.db.document import get_document
-from danswer.db.document import get_document_connector_count
-from danswer.db.document import get_documents_for_connector_credential_pair
-from danswer.db.document import mark_document_as_synced
-from danswer.db.document_set import delete_document_set
-from danswer.db.document_set import delete_document_set_cc_pair_relationship__no_commit
-from danswer.db.document_set import fetch_document_sets
-from danswer.db.document_set import fetch_document_sets_for_document
-from danswer.db.document_set import get_document_set_by_id
-from danswer.db.document_set import mark_document_set_as_synced
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.engine import init_sqlalchemy_engine
-from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.enums import IndexingStatus
-from danswer.db.index_attempt import delete_index_attempts
-from danswer.db.index_attempt import get_last_attempt
-from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import DocumentSet
-from danswer.db.models import UserGroup
-from danswer.db.search_settings import get_current_search_settings
-from danswer.document_index.document_index_utils import get_both_index_names
-from danswer.document_index.factory import get_default_document_index
-from danswer.document_index.interfaces import UpdateRequest
-from danswer.redis.redis_pool import RedisPool
-from danswer.server.documents.models import ConnectorCredentialPairIdentifier
-from danswer.utils.logger import ColoredFormatter
-from danswer.utils.logger import PlainFormatter
-from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import fetch_versioned_implementation
-from danswer.utils.variable_functionality import (
-    fetch_versioned_implementation_with_fallback,
-)
-from danswer.utils.variable_functionality import noop_fallback
 
 logger = setup_logger()
 
@@ -96,7 +95,7 @@ redis_pool = RedisPool()
 
 celery_app = Celery(__name__)
 celery_app.config_from_object(
-    "danswer.background.celery.celeryconfig"
+    "onyx.background.celery.celeryconfig"
 )  # Load configuration from 'celeryconfig.py'
 
 
@@ -413,7 +412,7 @@ def check_for_vespa_sync_task() -> None:
     r = redis_pool.get_client()
 
     lock_beat = r.lock(
-        DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK,
+        onyxRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK,
         timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
     )
 
@@ -437,7 +436,7 @@ def check_for_vespa_sync_task() -> None:
             # check if any user groups are not synced
             try:
                 fetch_user_groups = fetch_versioned_implementation(
-                    "danswer.db.user_group", "fetch_user_groups"
+                    "onyx.db.user_group", "fetch_user_groups"
                 )
 
                 user_groups = fetch_user_groups(
@@ -469,7 +468,7 @@ def check_for_connector_deletion_task() -> None:
     r = redis_pool.get_client()
 
     lock_beat = r.lock(
-        DanswerRedisLocks.CHECK_CONNECTOR_DELETION_BEAT_LOCK,
+        onyxRedisLocks.CHECK_CONNECTOR_DELETION_BEAT_LOCK,
         timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
     )
 
@@ -963,7 +962,7 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
 
             # user groups
             cleanup_user_groups = fetch_versioned_implementation_with_fallback(
-                "danswer.db.user_group",
+                "onyx.db.user_group",
                 "delete_user_group_cc_pair_relationship__no_commit",
                 noop_fallback,
             )
@@ -1021,7 +1020,7 @@ def monitor_vespa_sync() -> None:
     r = redis_pool.get_client()
 
     lock_beat = r.lock(
-        DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK,
+        onyxRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK,
         timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
     )
 
@@ -1038,7 +1037,7 @@ def monitor_vespa_sync() -> None:
 
         for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
             monitor_usergroup_taskset = fetch_versioned_implementation_with_fallback(
-                "danswer.background.celery_utils",
+                "onyx.background.celery_utils",
                 "monitor_usergroup_taskset",
                 noop_fallback,
             )
@@ -1049,8 +1048,8 @@ def monitor_vespa_sync() -> None:
             monitor_connector_deletion_taskset(key_bytes, r)
 
         # r_celery = celery_app.broker_connection().channel().client
-        # length = celery_get_queue_length(DanswerCeleryQueues.VESPA_METADATA_SYNC, r_celery)
-        # task_logger.warning(f"queue={DanswerCeleryQueues.VESPA_METADATA_SYNC} length={length}")
+        # length = celery_get_queue_length(onyxCeleryQueues.VESPA_METADATA_SYNC, r_celery)
+        # task_logger.warning(f"queue={onyxCeleryQueues.VESPA_METADATA_SYNC} length={length}")
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."
@@ -1073,8 +1072,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     # if we run multiple workers, we'll need to centralize where this cleanup happens
     r = redis_pool.get_client()
 
-    r.delete(DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK)
-    r.delete(DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK)
+    r.delete(onyxRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK)
+    r.delete(onyxRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK)
 
     r.delete(RedisConnectorCredentialPair.get_taskset_key())
     r.delete(RedisConnectorCredentialPair.get_fence_key())
@@ -1176,7 +1175,7 @@ celery_app.conf.beat_schedule = {
     "check-for-vespa-sync": {
         "task": "check_for_vespa_sync_task",
         "schedule": timedelta(seconds=5),
-        "options": {"priority": DanswerCeleryPriority.HIGH},
+        "options": {"priority": onyxCeleryPriority.HIGH},
     },
 }
 celery_app.conf.beat_schedule.update(
@@ -1186,7 +1185,7 @@ celery_app.conf.beat_schedule.update(
             # don't need to check too often, since we kick off a deletion initially
             # during the API call that actually marks the CC pair for deletion
             "schedule": timedelta(minutes=1),
-            "options": {"priority": DanswerCeleryPriority.HIGH},
+            "options": {"priority": onyxCeleryPriority.HIGH},
         },
     }
 )
@@ -1195,7 +1194,7 @@ celery_app.conf.beat_schedule.update(
         "check-for-prune": {
             "task": "check_for_prune_task",
             "schedule": timedelta(seconds=5),
-            "options": {"priority": DanswerCeleryPriority.HIGH},
+            "options": {"priority": onyxCeleryPriority.HIGH},
         },
     }
 )
@@ -1204,7 +1203,7 @@ celery_app.conf.beat_schedule.update(
         "kombu-message-cleanup": {
             "task": "kombu_message_cleanup_task",
             "schedule": timedelta(seconds=3600),
-            "options": {"priority": DanswerCeleryPriority.LOWEST},
+            "options": {"priority": onyxCeleryPriority.LOWEST},
         },
     }
 )
@@ -1213,7 +1212,7 @@ celery_app.conf.beat_schedule.update(
         "monitor-vespa-sync": {
             "task": "monitor_vespa_sync",
             "schedule": timedelta(seconds=5),
-            "options": {"priority": DanswerCeleryPriority.HIGH},
+            "options": {"priority": onyxCeleryPriority.HIGH},
         },
     }
 )

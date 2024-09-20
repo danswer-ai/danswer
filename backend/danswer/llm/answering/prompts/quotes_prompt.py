@@ -1,17 +1,16 @@
 from langchain.schema.messages import HumanMessage
-
-from danswer.chat.models import LlmDoc
-from danswer.configs.chat_configs import LANGUAGE_HINT
-from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
-from danswer.db.search_settings import get_multilingual_expansion
-from danswer.llm.answering.models import PromptConfig
-from danswer.prompts.direct_qa_prompts import CONTEXT_BLOCK
-from danswer.prompts.direct_qa_prompts import HISTORY_BLOCK
-from danswer.prompts.direct_qa_prompts import JSON_PROMPT
-from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
-from danswer.prompts.prompt_utils import add_date_time_to_prompt
-from danswer.prompts.prompt_utils import build_complete_context_str
-from danswer.search.models import InferenceChunk
+from onyx.chat.models import LlmDoc
+from onyx.configs.chat_configs import LANGUAGE_HINT
+from onyx.configs.chat_configs import QA_PROMPT_OVERRIDE
+from onyx.db.search_settings import get_multilingual_expansion
+from onyx.llm.answering.models import PromptConfig
+from onyx.prompts.direct_qa_prompts import CONTEXT_BLOCK
+from onyx.prompts.direct_qa_prompts import HISTORY_BLOCK
+from onyx.prompts.direct_qa_prompts import JSON_PROMPT
+from onyx.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
+from onyx.prompts.prompt_utils import add_date_time_to_prompt
+from onyx.prompts.prompt_utils import build_complete_context_str
+from onyx.search.models import InferenceChunk
 
 
 def _build_weak_llm_quotes_prompt(
@@ -20,7 +19,7 @@ def _build_weak_llm_quotes_prompt(
     history_str: str,
     prompt: PromptConfig,
 ) -> HumanMessage:
-    """Since Danswer supports a variety of LLMs, this less demanding prompt is provided
+    """Since onyx supports a variety of LLMs, this less demanding prompt is provided
     as an option to use with weaker LLMs such as small version, low float precision, quantized,
     or distilled models. It only uses one context document and has very weak requirements of
     output format.

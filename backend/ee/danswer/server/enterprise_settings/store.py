@@ -6,17 +6,17 @@ from typing import IO
 
 from fastapi import HTTPException
 from fastapi import UploadFile
+from onyx.configs.constants import FileOrigin
+from onyx.configs.constants import KV_CUSTOM_ANALYTICS_SCRIPT_KEY
+from onyx.configs.constants import KV_ENTERPRISE_SETTINGS_KEY
+from onyx.dynamic_configs.factory import get_dynamic_config_store
+from onyx.dynamic_configs.interface import ConfigNotFoundError
+from onyx.file_store.file_store import get_default_file_store
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
-from danswer.configs.constants import FileOrigin
-from danswer.configs.constants import KV_CUSTOM_ANALYTICS_SCRIPT_KEY
-from danswer.configs.constants import KV_ENTERPRISE_SETTINGS_KEY
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.file_store.file_store import get_default_file_store
-from danswer.utils.logger import setup_logger
-from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
-from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
+from ee.onyx.server.enterprise_settings.models import AnalyticsScriptUpload
+from ee.onyx.server.enterprise_settings.models import EnterpriseSettings
 
 
 logger = setup_logger()

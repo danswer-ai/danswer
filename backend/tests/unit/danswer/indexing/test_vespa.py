@@ -3,11 +3,10 @@ from typing import Any
 
 import httpx
 import pytest
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.document_index.document_index_utils import get_both_index_names
+from onyx.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
 from sqlalchemy.orm import Session
-
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.document_index.document_index_utils import get_both_index_names
-from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
 
 
 @pytest.mark.skip()

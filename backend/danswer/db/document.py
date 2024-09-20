@@ -5,6 +5,20 @@ from collections.abc import Sequence
 from datetime import datetime
 from datetime import timezone
 
+from onyx.configs.constants import DEFAULT_BOOST
+from onyx.db.enums import AccessType
+from onyx.db.enums import ConnectorCredentialPairStatus
+from onyx.db.feedback import delete_document_feedback_for_documents__no_commit
+from onyx.db.models import ConnectorCredentialPair
+from onyx.db.models import Credential
+from onyx.db.models import Document as DbDocument
+from onyx.db.models import DocumentByConnectorCredentialPair
+from onyx.db.models import User
+from onyx.db.tag import delete_document_tags_for_documents__no_commit
+from onyx.db.utils import model_to_dict
+from onyx.document_index.interfaces import DocumentMetadata
+from onyx.server.documents.models import ConnectorCredentialPairIdentifier
+from onyx.utils.logger import setup_logger
 from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import exists
@@ -17,21 +31,6 @@ from sqlalchemy.engine.util import TransactionalContext
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import null
-
-from danswer.configs.constants import DEFAULT_BOOST
-from danswer.db.enums import AccessType
-from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.feedback import delete_document_feedback_for_documents__no_commit
-from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import Credential
-from danswer.db.models import Document as DbDocument
-from danswer.db.models import DocumentByConnectorCredentialPair
-from danswer.db.models import User
-from danswer.db.tag import delete_document_tags_for_documents__no_commit
-from danswer.db.utils import model_to_dict
-from danswer.document_index.interfaces import DocumentMetadata
-from danswer.server.documents.models import ConnectorCredentialPairIdentifier
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -214,7 +213,7 @@ def get_access_info_for_documents(
     of the associated cc pairs are intending to make the document globally public.
     Returns the list where each element contains:
     - Document ID (which is also the ID of the DocumentByConnectorCredentialPair)
-    - List of emails of Danswer users with direct access to the doc (includes a "None" element if
+    - List of emails of onyx users with direct access to the doc (includes a "None" element if
       the connector was set up by an admin when auth was off
     - bool for whether the document is public (the document later can also be marked public by
       automatic permission sync step)

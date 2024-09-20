@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "danswer-stack.name" -}}
+{{- define "onyx-stack.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "danswer-stack.fullname" -}}
+{{- define "onyx-stack.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "danswer-stack.chart" -}}
+{{- define "onyx-stack.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "danswer-stack.labels" -}}
-helm.sh/chart: {{ include "danswer-stack.chart" . }}
-{{ include "danswer-stack.selectorLabels" . }}
+{{- define "onyx-stack.labels" -}}
+helm.sh/chart: {{ include "onyx-stack.chart" . }}
+{{ include "onyx-stack.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "danswer-stack.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "danswer-stack.name" . }}
+{{- define "onyx-stack.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "onyx-stack.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "danswer-stack.serviceAccountName" -}}
+{{- define "onyx-stack.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "danswer-stack.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "onyx-stack.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -64,19 +64,19 @@ Create the name of the service account to use
 {{/*
 Set secret name
 */}}
-{{- define "danswer-stack.secretName" -}}
-{{- default (default "danswer-secrets" .Values.auth.secretName) .Values.auth.existingSecret }}
+{{- define "onyx-stack.secretName" -}}
+{{- default (default "onyx-secrets" .Values.auth.secretName) .Values.auth.existingSecret }}
 {{- end }}
 
 {{/*
 Create env vars from secrets
 */}}
-{{- define "danswer-stack.envSecrets" -}}
+{{- define "onyx-stack.envSecrets" -}}
     {{- range $name, $key := .Values.auth.secretKeys }}
 - name: {{ $name | upper | replace "-" "_" | quote }}
   valueFrom:
     secretKeyRef:
-      name: {{ include "danswer-stack.secretName" $ }}
+      name: {{ include "onyx-stack.secretName" $ }}
       key: {{ default $name $key }}
     {{- end }}
 {{- end }}

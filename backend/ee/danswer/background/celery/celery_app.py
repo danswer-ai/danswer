@@ -1,24 +1,24 @@
 from datetime import timedelta
 
+from onyx.background.celery.celery_app import celery_app
+from onyx.background.task_utils import build_celery_task_wrapper
+from onyx.configs.app_configs import JOB_TIMEOUT
+from onyx.db.chat import delete_chat_sessions_older_than
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.server.settings.store import load_settings
+from onyx.utils.logger import setup_logger
+from onyx.utils.variable_functionality import global_version
 from sqlalchemy.orm import Session
 
-from danswer.background.celery.celery_app import celery_app
-from danswer.background.task_utils import build_celery_task_wrapper
-from danswer.configs.app_configs import JOB_TIMEOUT
-from danswer.db.chat import delete_chat_sessions_older_than
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.server.settings.store import load_settings
-from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import global_version
-from ee.danswer.background.celery_utils import should_perform_chat_ttl_check
-from ee.danswer.background.celery_utils import should_perform_external_permissions_check
-from ee.danswer.background.task_name_builders import name_chat_ttl_task
-from ee.danswer.background.task_name_builders import name_sync_external_permissions_task
-from ee.danswer.db.connector_credential_pair import get_all_auto_sync_cc_pairs
-from ee.danswer.external_permissions.permission_sync import (
+from ee.onyx.background.celery_utils import should_perform_chat_ttl_check
+from ee.onyx.background.celery_utils import should_perform_external_permissions_check
+from ee.onyx.background.task_name_builders import name_chat_ttl_task
+from ee.onyx.background.task_name_builders import name_sync_external_permissions_task
+from ee.onyx.db.connector_credential_pair import get_all_auto_sync_cc_pairs
+from ee.onyx.external_permissions.permission_sync import (
     run_permission_sync_entrypoint,
 )
-from ee.danswer.server.reporting.usage_export_generation import create_new_usage_report
+from ee.onyx.server.reporting.usage_export_generation import create_new_usage_report
 
 logger = setup_logger()
 

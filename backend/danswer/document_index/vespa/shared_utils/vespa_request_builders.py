@@ -2,18 +2,18 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
-from danswer.configs.constants import INDEX_SEPARATOR
-from danswer.document_index.interfaces import VespaChunkRequest
-from danswer.document_index.vespa_constants import ACCESS_CONTROL_LIST
-from danswer.document_index.vespa_constants import CHUNK_ID
-from danswer.document_index.vespa_constants import DOC_UPDATED_AT
-from danswer.document_index.vespa_constants import DOCUMENT_ID
-from danswer.document_index.vespa_constants import DOCUMENT_SETS
-from danswer.document_index.vespa_constants import HIDDEN
-from danswer.document_index.vespa_constants import METADATA_LIST
-from danswer.document_index.vespa_constants import SOURCE_TYPE
-from danswer.search.models import IndexFilters
-from danswer.utils.logger import setup_logger
+from onyx.configs.constants import INDEX_SEPARATOR
+from onyx.document_index.interfaces import VespaChunkRequest
+from onyx.document_index.vespa_constants import ACCESS_CONTROL_LIST
+from onyx.document_index.vespa_constants import CHUNK_ID
+from onyx.document_index.vespa_constants import DOC_UPDATED_AT
+from onyx.document_index.vespa_constants import DOCUMENT_ID
+from onyx.document_index.vespa_constants import DOCUMENT_SETS
+from onyx.document_index.vespa_constants import HIDDEN
+from onyx.document_index.vespa_constants import METADATA_LIST
+from onyx.document_index.vespa_constants import SOURCE_TYPE
+from onyx.search.models import IndexFilters
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

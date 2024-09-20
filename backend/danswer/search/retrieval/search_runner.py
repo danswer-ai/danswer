@@ -4,30 +4,30 @@ from collections.abc import Callable
 import nltk  # type:ignore
 from nltk.corpus import stopwords  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
-from sqlalchemy.orm import Session
-
-from danswer.db.search_settings import get_current_search_settings
-from danswer.db.search_settings import get_multilingual_expansion
-from danswer.document_index.interfaces import DocumentIndex
-from danswer.document_index.interfaces import VespaChunkRequest
-from danswer.document_index.vespa.shared_utils.utils import (
+from onyx.db.search_settings import get_current_search_settings
+from onyx.db.search_settings import get_multilingual_expansion
+from onyx.document_index.interfaces import DocumentIndex
+from onyx.document_index.interfaces import VespaChunkRequest
+from onyx.document_index.vespa.shared_utils.utils import (
     replace_invalid_doc_id_characters,
 )
-from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
-from danswer.search.models import ChunkMetric
-from danswer.search.models import IndexFilters
-from danswer.search.models import InferenceChunk
-from danswer.search.models import InferenceChunkUncleaned
-from danswer.search.models import InferenceSection
-from danswer.search.models import MAX_METRICS_CONTENT
-from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.models import SearchQuery
-from danswer.search.postprocessing.postprocessing import cleanup_chunks
-from danswer.search.utils import inference_section_from_chunks
-from danswer.secondary_llm_flows.query_expansion import multilingual_query_expansion
-from danswer.utils.logger import setup_logger
-from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from danswer.utils.timing import log_function_time
+from onyx.natural_language_processing.search_nlp_models import EmbeddingModel
+from onyx.search.models import ChunkMetric
+from onyx.search.models import IndexFilters
+from onyx.search.models import InferenceChunk
+from onyx.search.models import InferenceChunkUncleaned
+from onyx.search.models import InferenceSection
+from onyx.search.models import MAX_METRICS_CONTENT
+from onyx.search.models import RetrievalMetricsContainer
+from onyx.search.models import SearchQuery
+from onyx.search.postprocessing.postprocessing import cleanup_chunks
+from onyx.search.utils import inference_section_from_chunks
+from onyx.secondary_llm_flows.query_expansion import multilingual_query_expansion
+from onyx.utils.logger import setup_logger
+from onyx.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from onyx.utils.timing import log_function_time
+from sqlalchemy.orm import Session
+
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.enums import EmbedTextType

@@ -6,7 +6,7 @@ from typing import Any
 from typing import Generic
 from typing import TypeVar
 
-from danswer.utils.logger import setup_logger
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 

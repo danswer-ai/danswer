@@ -1,9 +1,9 @@
 from typing import cast
 
-from danswer.configs.constants import KV_SETTINGS_KEY
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.server.settings.models import Settings
+from onyx.configs.constants import KV_SETTINGS_KEY
+from onyx.dynamic_configs.factory import get_dynamic_config_store
+from onyx.dynamic_configs.interface import ConfigNotFoundError
+from onyx.server.settings.models import Settings
 
 
 def load_settings() -> Settings:

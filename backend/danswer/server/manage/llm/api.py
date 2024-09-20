@@ -3,27 +3,26 @@ from collections.abc import Callable
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from onyx.auth.users import current_admin_user
+from onyx.auth.users import current_user
+from onyx.db.engine import get_session
+from onyx.db.llm import fetch_existing_llm_providers
+from onyx.db.llm import remove_llm_provider
+from onyx.db.llm import update_default_provider
+from onyx.db.llm import upsert_llm_provider
+from onyx.db.models import User
+from onyx.llm.factory import get_default_llms
+from onyx.llm.factory import get_llm
+from onyx.llm.llm_provider_options import fetch_available_well_known_llms
+from onyx.llm.llm_provider_options import WellKnownLLMProviderDescriptor
+from onyx.llm.utils import test_llm
+from onyx.server.manage.llm.models import FullLLMProvider
+from onyx.server.manage.llm.models import LLMProviderDescriptor
+from onyx.server.manage.llm.models import LLMProviderUpsertRequest
+from onyx.server.manage.llm.models import TestLLMRequest
+from onyx.utils.logger import setup_logger
+from onyx.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 from sqlalchemy.orm import Session
-
-from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_user
-from danswer.db.engine import get_session
-from danswer.db.llm import fetch_existing_llm_providers
-from danswer.db.llm import remove_llm_provider
-from danswer.db.llm import update_default_provider
-from danswer.db.llm import upsert_llm_provider
-from danswer.db.models import User
-from danswer.llm.factory import get_default_llms
-from danswer.llm.factory import get_llm
-from danswer.llm.llm_provider_options import fetch_available_well_known_llms
-from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
-from danswer.llm.utils import test_llm
-from danswer.server.manage.llm.models import FullLLMProvider
-from danswer.server.manage.llm.models import LLMProviderDescriptor
-from danswer.server.manage.llm.models import LLMProviderUpsertRequest
-from danswer.server.manage.llm.models import TestLLMRequest
-from danswer.utils.logger import setup_logger
-from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 logger = setup_logger()
 

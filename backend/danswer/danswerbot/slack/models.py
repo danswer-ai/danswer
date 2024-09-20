@@ -1,6 +1,5 @@
+from onyx.one_shot_answer.models import ThreadMessage
 from pydantic import BaseModel
-
-from danswer.one_shot_answer.models import ThreadMessage
 
 
 class SlackMessageInfo(BaseModel):
@@ -10,6 +9,6 @@ class SlackMessageInfo(BaseModel):
     thread_to_respond: str | None
     sender: str | None
     email: str | None
-    bypass_filters: bool  # User has tagged @DanswerBot
-    is_bot_msg: bool  # User is using /DanswerBot
-    is_bot_dm: bool  # User is direct messaging to DanswerBot
+    bypass_filters: bool  # User has tagged @onyxBot
+    is_bot_msg: bool  # User is using /onyxBot
+    is_bot_dm: bool  # User is direct messaging to onyxBot

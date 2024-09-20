@@ -9,31 +9,31 @@ REDIS_VOLUME=${3:-""}  # Default is empty if not provided
 
 # Stop and remove the existing containers
 echo "Stopping and removing existing containers..."
-docker stop danswer_postgres danswer_vespa danswer_redis
-docker rm danswer_postgres danswer_vespa danswer_redis
+docker stop onyx_postgres onyx_vespa onyx_redis
+docker rm onyx_postgres onyx_vespa onyx_redis
 
 # Start the PostgreSQL container with optional volume
 echo "Starting PostgreSQL container..."
 if [[ -n "$POSTGRES_VOLUME" ]]; then
-    docker run -p 5432:5432 --name danswer_postgres -e POSTGRES_PASSWORD=password -d -v $POSTGRES_VOLUME:/var/lib/postgresql/data postgres
+    docker run -p 5432:5432 --name onyx_postgres -e POSTGRES_PASSWORD=password -d -v $POSTGRES_VOLUME:/var/lib/postgresql/data postgres
 else
-    docker run -p 5432:5432 --name danswer_postgres -e POSTGRES_PASSWORD=password -d postgres
+    docker run -p 5432:5432 --name onyx_postgres -e POSTGRES_PASSWORD=password -d postgres
 fi
 
 # Start the Vespa container with optional volume
 echo "Starting Vespa container..."
 if [[ -n "$VESPA_VOLUME" ]]; then
-    docker run --detach --name danswer_vespa --hostname vespa-container --publish 8081:8081 --publish 19071:19071 -v $VESPA_VOLUME:/opt/vespa/var vespaengine/vespa:8
+    docker run --detach --name onyx_vespa --hostname vespa-container --publish 8081:8081 --publish 19071:19071 -v $VESPA_VOLUME:/opt/vespa/var vespaengine/vespa:8
 else
-    docker run --detach --name danswer_vespa --hostname vespa-container --publish 8081:8081 --publish 19071:19071 vespaengine/vespa:8
+    docker run --detach --name onyx_vespa --hostname vespa-container --publish 8081:8081 --publish 19071:19071 vespaengine/vespa:8
 fi
 
 # Start the Redis container with optional volume
 echo "Starting Redis container..."
 if [[ -n "$REDIS_VOLUME" ]]; then
-    docker run --detach --name danswer_redis --publish 6379:6379 -v $REDIS_VOLUME:/data redis
+    docker run --detach --name onyx_redis --publish 6379:6379 -v $REDIS_VOLUME:/data redis
 else
-    docker run --detach --name danswer_redis --publish 6379:6379 redis
+    docker run --detach --name onyx_redis --publish 6379:6379 redis
 fi
 
 # Ensure alembic runs in the correct directory

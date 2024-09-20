@@ -1,17 +1,16 @@
 from datetime import datetime
 from uuid import UUID
 
+from onyx.db.models import Persona
+from onyx.db.models import StarterMessage
+from onyx.search.enums import RecencyBiasSetting
+from onyx.server.features.document_set.models import DocumentSet
+from onyx.server.features.prompt.models import PromptSnapshot
+from onyx.server.features.tool.api import ToolSnapshot
+from onyx.server.models import MinimalUserSnapshot
+from onyx.utils.logger import setup_logger
 from pydantic import BaseModel
 from pydantic import Field
-
-from danswer.db.models import Persona
-from danswer.db.models import StarterMessage
-from danswer.search.enums import RecencyBiasSetting
-from danswer.server.features.document_set.models import DocumentSet
-from danswer.server.features.prompt.models import PromptSnapshot
-from danswer.server.features.tool.api import ToolSnapshot
-from danswer.server.models import MinimalUserSnapshot
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

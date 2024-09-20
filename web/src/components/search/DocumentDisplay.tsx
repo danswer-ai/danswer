@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  DanswerDocument,
+  onyxDocument,
   DocumentRelevance,
-  SearchDanswerDocument,
+  SearchonyxDocument,
 } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { useContext, useState } from "react";
@@ -122,7 +122,7 @@ export const buildDocumentSummaryDisplay = (
 export function DocumentMetadataBlock({
   document,
 }: {
-  document: DanswerDocument;
+  document: onyxDocument;
 }) {
   // don't display super long tags, as they are ugly
   const MAXIMUM_TAG_LENGTH = 40;
@@ -158,7 +158,7 @@ export function DocumentMetadataBlock({
 }
 
 interface DocumentDisplayProps {
-  document: SearchDanswerDocument;
+  document: SearchonyxDocument;
   messageId: number | null;
   documentRank: number;
   isSelected: boolean;

@@ -4,6 +4,24 @@ from re import Match
 
 import pytz
 import timeago  # type: ignore
+from onyx.chat.models import onyxQuote
+from onyx.configs.app_configs import DISABLE_GENERATIVE_AI
+from onyx.configs.constants import DocumentSource
+from onyx.configs.constants import SearchFeedbackType
+from onyx.configs.onyxbot_configs import onyx_BOT_NUM_DOCS_TO_DISPLAY
+from onyx.onyxbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
+from onyx.onyxbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
+from onyx.onyxbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
+from onyx.onyxbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
+from onyx.onyxbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
+from onyx.onyxbot.slack.constants import LIKE_BLOCK_ACTION_ID
+from onyx.onyxbot.slack.icons import source_to_github_img_link
+from onyx.onyxbot.slack.utils import build_feedback_id
+from onyx.onyxbot.slack.utils import remove_slack_text_interactions
+from onyx.onyxbot.slack.utils import translate_vespa_highlight_to_slack
+from onyx.search.models import SavedSearchDoc
+from onyx.utils.text_processing import decode_escapes
+from onyx.utils.text_processing import replace_whitespaces_w_space
 from slack_sdk.models.blocks import ActionsBlock
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.blocks import ButtonElement
@@ -15,25 +33,6 @@ from slack_sdk.models.blocks import RadioButtonsElement
 from slack_sdk.models.blocks import SectionBlock
 from slack_sdk.models.blocks.basic_components import MarkdownTextObject
 from slack_sdk.models.blocks.block_elements import ImageElement
-
-from danswer.chat.models import DanswerQuote
-from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import SearchFeedbackType
-from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
-from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
-from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
-from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
-from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
-from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
-from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
-from danswer.danswerbot.slack.icons import source_to_github_img_link
-from danswer.danswerbot.slack.utils import build_feedback_id
-from danswer.danswerbot.slack.utils import remove_slack_text_interactions
-from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
-from danswer.search.models import SavedSearchDoc
-from danswer.utils.text_processing import decode_escapes
-from danswer.utils.text_processing import replace_whitespaces_w_space
 
 _MAX_BLURB_LEN = 45
 
@@ -185,7 +184,7 @@ def get_restate_blocks(
 def build_documents_blocks(
     documents: list[SavedSearchDoc],
     message_id: int | None,
-    num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
+    num_docs_to_display: int = onyx_BOT_NUM_DOCS_TO_DISPLAY,
 ) -> list[Block]:
     header_text = (
         "Retrieved Documents" if DISABLE_GENERATIVE_AI else "Reference Documents"
@@ -243,7 +242,7 @@ def build_documents_blocks(
 
 def build_sources_blocks(
     cited_documents: list[tuple[int, SavedSearchDoc]],
-    num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
+    num_docs_to_display: int = onyx_BOT_NUM_DOCS_TO_DISPLAY,
 ) -> list[Block]:
     if not cited_documents:
         return [
@@ -318,7 +317,7 @@ def build_sources_blocks(
 
 
 def build_quotes_block(
-    quotes: list[DanswerQuote],
+    quotes: list[onyxQuote],
 ) -> list[Block]:
     quote_lines: list[str] = []
     doc_to_quotes: dict[str, list[str]] = {}
@@ -362,7 +361,7 @@ def build_quotes_block(
 def build_qa_response_blocks(
     message_id: int | None,
     answer: str | None,
-    quotes: list[DanswerQuote] | None,
+    quotes: list[onyxQuote] | None,
     source_filters: list[DocumentSource] | None,
     time_cutoff: datetime | None,
     favor_recent: bool,

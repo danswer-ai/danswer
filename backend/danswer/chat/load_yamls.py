@@ -1,21 +1,20 @@
 import yaml
+from onyx.configs.chat_configs import INPUT_PROMPT_YAML
+from onyx.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
+from onyx.configs.chat_configs import PERSONAS_YAML
+from onyx.configs.chat_configs import PROMPTS_YAML
+from onyx.db.document_set import get_or_create_document_set_by_name
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.db.input_prompt import insert_input_prompt_if_not_exists
+from onyx.db.models import DocumentSet as DocumentSetDBModel
+from onyx.db.models import Persona
+from onyx.db.models import Prompt as PromptDBModel
+from onyx.db.models import Tool as ToolDBModel
+from onyx.db.persona import get_prompt_by_name
+from onyx.db.persona import upsert_persona
+from onyx.db.persona import upsert_prompt
+from onyx.search.enums import RecencyBiasSetting
 from sqlalchemy.orm import Session
-
-from danswer.configs.chat_configs import INPUT_PROMPT_YAML
-from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
-from danswer.configs.chat_configs import PERSONAS_YAML
-from danswer.configs.chat_configs import PROMPTS_YAML
-from danswer.db.document_set import get_or_create_document_set_by_name
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.input_prompt import insert_input_prompt_if_not_exists
-from danswer.db.models import DocumentSet as DocumentSetDBModel
-from danswer.db.models import Persona
-from danswer.db.models import Prompt as PromptDBModel
-from danswer.db.models import Tool as ToolDBModel
-from danswer.db.persona import get_prompt_by_name
-from danswer.db.persona import upsert_persona
-from danswer.db.persona import upsert_prompt
-from danswer.search.enums import RecencyBiasSetting
 
 
 def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:

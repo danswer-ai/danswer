@@ -1,7 +1,7 @@
 from typing import cast
 
-from danswer.tools.custom.custom_tool import CustomToolCallSummary
-from danswer.tools.models import ToolResponse
+from onyx.tools.custom.custom_tool import CustomToolCallSummary
+from onyx.tools.models import ToolResponse
 
 
 def build_user_message_for_custom_tool_for_non_tool_calling_llm(

@@ -1,8 +1,8 @@
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.indexing.chunker import Chunker
-from danswer.indexing.embedder import DefaultIndexingEmbedder
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.indexing.chunker import Chunker
+from onyx.indexing.embedder import DefaultIndexingEmbedder
 
 
 def test_chunk_document() -> None:

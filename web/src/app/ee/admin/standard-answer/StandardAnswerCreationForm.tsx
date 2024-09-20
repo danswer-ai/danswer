@@ -1,16 +1,16 @@
 "use client";
 
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { StandardAnswerCategory, StandardAnswer } from "@/lib/types";
+import { StandaronyxCategory, Standaronyx } from "@/lib/types";
 import { Button, Card } from "@tremor/react";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
 import {
-  createStandardAnswer,
-  createStandardAnswerCategory,
-  StandardAnswerCreationRequest,
-  updateStandardAnswer,
+  createStandaronyx,
+  createStandaronyxCategory,
+  StandaronyxCreationRequest,
+  updateStandaronyx,
 } from "./lib";
 import {
   TextFormField,
@@ -28,14 +28,14 @@ function mapMatchAnyToKeywordSelect(matchAny: boolean): "any" | "all" {
   return matchAny ? "any" : "all";
 }
 
-export const StandardAnswerCreationForm = ({
-  standardAnswerCategories,
-  existingStandardAnswer,
+export const StandaronyxCreationForm = ({
+  standaronyxCategories,
+  existingStandaronyx,
 }: {
-  standardAnswerCategories: StandardAnswerCategory[];
-  existingStandardAnswer?: StandardAnswer;
+  standaronyxCategories: StandaronyxCategory[];
+  existingStandaronyx?: Standaronyx;
 }) => {
-  const isUpdate = existingStandardAnswer !== undefined;
+  const isUpdate = existingStandaronyx !== undefined;
   const { popup, setPopup } = usePopup();
   const router = useRouter();
 
@@ -45,19 +45,17 @@ export const StandardAnswerCreationForm = ({
         {popup}
         <Formik
           initialValues={{
-            keyword: existingStandardAnswer
-              ? existingStandardAnswer.keyword
-              : "",
-            answer: existingStandardAnswer ? existingStandardAnswer.answer : "",
-            categories: existingStandardAnswer
-              ? existingStandardAnswer.categories
+            keyword: existingStandaronyx ? existingStandaronyx.keyword : "",
+            answer: existingStandaronyx ? existingStandaronyx.answer : "",
+            categories: existingStandaronyx
+              ? existingStandaronyx.categories
               : [],
-            matchRegex: existingStandardAnswer
-              ? existingStandardAnswer.match_regex
+            matchRegex: existingStandaronyx
+              ? existingStandaronyx.match_regex
               : false,
-            matchAnyKeywords: existingStandardAnswer
+            matchAnyKeywords: existingStandaronyx
               ? mapMatchAnyToKeywordSelect(
-                  existingStandardAnswer.match_any_keywords
+                  existingStandaronyx.match_any_keywords
                 )
               : "all",
           }}
@@ -74,7 +72,7 @@ export const StandardAnswerCreationForm = ({
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
 
-            const cleanedValues: StandardAnswerCreationRequest = {
+            const cleanedValues: StandaronyxCreationRequest = {
               ...values,
               matchAnyKeywords: mapKeywordSelectToMatchAny(
                 values.matchAnyKeywords
@@ -84,12 +82,12 @@ export const StandardAnswerCreationForm = ({
 
             let response;
             if (isUpdate) {
-              response = await updateStandardAnswer(
-                existingStandardAnswer.id,
+              response = await updateStandaronyx(
+                existingStandaronyx.id,
                 cleanedValues
               );
             } else {
-              response = await createStandardAnswer(cleanedValues);
+              response = await createStandaronyx(cleanedValues);
             }
             formikHelpers.setSubmitting(false);
             if (response.ok) {
@@ -181,7 +179,7 @@ export const StandardAnswerCreationForm = ({
                   }}
                   creatable={true}
                   onCreate={async (created_name) => {
-                    const response = await createStandardAnswerCategory({
+                    const response = await createStandaronyxCategory({
                       name: created_name,
                     });
                     const newCategory = await response.json();
@@ -190,7 +188,7 @@ export const StandardAnswerCreationForm = ({
                       value: newCategory.id.toString(),
                     };
                   }}
-                  options={standardAnswerCategories.map((category) => ({
+                  options={standaronyxCategories.map((category) => ({
                     label: category.name,
                     value: category.id.toString(),
                   }))}

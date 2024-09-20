@@ -1,13 +1,13 @@
 services:
   api_server:
-    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
+    image: onyx/onyx-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
     command: >
       /bin/sh -c "alembic upgrade head &&
-      echo \"Starting Danswer Api Server\" &&
-      uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
+      echo \"Starting onyx Api Server\" &&
+      uvicorn onyx.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
       - index
@@ -75,12 +75,12 @@ services:
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
       # Leave this on pretty please? Nothing sensitive is collected!
-      # https://docs.danswer.dev/more/telemetry
+      # https://docs.onyx.dev/more/telemetry
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
       - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # LiteLLM Verbose Logging
-      # Log all of Danswer prompts and interactions with the LLM
-      - LOG_DANSWER_MODEL_INTERACTIONS=${LOG_DANSWER_MODEL_INTERACTIONS:-}
+      # Log all of onyx prompts and interactions with the LLM
+      - LOG_onyx_MODEL_INTERACTIONS=${LOG_onyx_MODEL_INTERACTIONS:-}
       # If set to `true` will enable additional logs about Vespa query performance
       # (time spent on finding the right docs + time spent fetching summaries from disk)
       - LOG_VESPA_TIMING_INFORMATION=${LOG_VESPA_TIMING_INFORMATION:-}
@@ -104,7 +104,7 @@ services:
         max-file: "6"
 
   background:
-    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
+    image: onyx/onyx-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -118,7 +118,7 @@ services:
     restart: always
     environment:
       - ENCRYPTION_KEY_SECRET=${ENCRYPTION_KEY_SECRET:-}
-      # Gen AI Settings (Needed by DanswerBot)
+      # Gen AI Settings (Needed by onyxBot)
       - GEN_AI_MAX_TOKENS=${GEN_AI_MAX_TOKENS:-}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
       - MAX_CHUNKS_FED_TO_CHAT=${MAX_CHUNKS_FED_TO_CHAT:-}
@@ -149,7 +149,7 @@ services:
       - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
       - DOC_EMBEDDING_DIM=${DOC_EMBEDDING_DIM:-}
       - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
-      - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-} # Needed by DanswerBot
+      - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-} # Needed by onyxBot
       - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
@@ -170,25 +170,25 @@ services:
       - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
       - GITHUB_CONNECTOR_BASE_URL=${GITHUB_CONNECTOR_BASE_URL:-}
 
-      # Danswer SlackBot Configs
-      - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
-      - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
-      - DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER=${DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER:-}
-      - DANSWER_BOT_FEEDBACK_VISIBILITY=${DANSWER_BOT_FEEDBACK_VISIBILITY:-}
-      - DANSWER_BOT_DISPLAY_ERROR_MSGS=${DANSWER_BOT_DISPLAY_ERROR_MSGS:-}
-      - DANSWER_BOT_RESPOND_EVERY_CHANNEL=${DANSWER_BOT_RESPOND_EVERY_CHANNEL:-}
-      - DANSWER_BOT_DISABLE_COT=${DANSWER_BOT_DISABLE_COT:-} # Currently unused
+      # onyx SlackBot Configs
+      - onyx_BOT_SLACK_APP_TOKEN=${onyx_BOT_SLACK_APP_TOKEN:-}
+      - onyx_BOT_SLACK_BOT_TOKEN=${onyx_BOT_SLACK_BOT_TOKEN:-}
+      - onyx_BOT_DISABLE_DOCS_ONLY_ANSWER=${onyx_BOT_DISABLE_DOCS_ONLY_ANSWER:-}
+      - onyx_BOT_FEEDBACK_VISIBILITY=${onyx_BOT_FEEDBACK_VISIBILITY:-}
+      - onyx_BOT_DISPLAY_ERROR_MSGS=${onyx_BOT_DISPLAY_ERROR_MSGS:-}
+      - onyx_BOT_RESPOND_EVERY_CHANNEL=${onyx_BOT_RESPOND_EVERY_CHANNEL:-}
+      - onyx_BOT_DISABLE_COT=${onyx_BOT_DISABLE_COT:-} # Currently unused
       - NOTIFY_SLACKBOT_NO_ANSWER=${NOTIFY_SLACKBOT_NO_ANSWER:-}
-      - DANSWER_BOT_MAX_QPM=${DANSWER_BOT_MAX_QPM:-}
-      - DANSWER_BOT_MAX_WAIT_TIME=${DANSWER_BOT_MAX_WAIT_TIME:-}
+      - onyx_BOT_MAX_QPM=${onyx_BOT_MAX_QPM:-}
+      - onyx_BOT_MAX_WAIT_TIME=${onyx_BOT_MAX_WAIT_TIME:-}
       # Logging
       # Leave this on pretty please? Nothing sensitive is collected!
-      # https://docs.danswer.dev/more/telemetry
+      # https://docs.onyx.dev/more/telemetry
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
       - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # LiteLLM Verbose Logging
-      # Log all of Danswer prompts and interactions with the LLM
-      - LOG_DANSWER_MODEL_INTERACTIONS=${LOG_DANSWER_MODEL_INTERACTIONS:-}
+      # Log all of onyx prompts and interactions with the LLM
+      - LOG_onyx_MODEL_INTERACTIONS=${LOG_onyx_MODEL_INTERACTIONS:-}
       - LOG_VESPA_TIMING_INFORMATION=${LOG_VESPA_TIMING_INFORMATION:-}
 
       # Enterprise Edition stuff
@@ -202,7 +202,7 @@ services:
         max-file: "6"
 
   web_server:
-    image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
+    image: onyx/onyx-web-server:${IMAGE_TAG:-latest}
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -216,8 +216,8 @@ services:
 
         # Enterprise Edition only
         - NEXT_PUBLIC_THEME=${NEXT_PUBLIC_THEME:-}
-        # DO NOT TURN ON unless you have EXPLICIT PERMISSION from Danswer.
-        - NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED=${NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED:-false}
+        # DO NOT TURN ON unless you have EXPLICIT PERMISSION from onyx.
+        - NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_onyx_POWERED=${NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_onyx_POWERED:-false}
     depends_on:
       - api_server
     restart: always
@@ -232,7 +232,7 @@ services:
       - NEXT_PUBLIC_CUSTOM_REFRESH_URL=${NEXT_PUBLIC_CUSTOM_REFRESH_URL:-}
 
   inference_model_server:
-    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
+    image: onyx/onyx-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -258,7 +258,7 @@ services:
         max-file: "6"
 
   indexing_model_server:
-    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
+    image: onyx/onyx-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server

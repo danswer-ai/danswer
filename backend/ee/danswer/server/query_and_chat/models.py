@@ -1,24 +1,24 @@
+from onyx.configs.constants import DocumentSource
+from onyx.one_shot_answer.models import ThreadMessage
+from onyx.search.enums import LLMEvaluationType
+from onyx.search.enums import SearchType
+from onyx.search.models import ChunkContext
+from onyx.search.models import RerankingDetails
+from onyx.search.models import RetrievalDetails
+from onyx.search.models import SavedSearchDoc
 from pydantic import BaseModel
 from pydantic import Field
 
-from danswer.configs.constants import DocumentSource
-from danswer.one_shot_answer.models import ThreadMessage
-from danswer.search.enums import LLMEvaluationType
-from danswer.search.enums import SearchType
-from danswer.search.models import ChunkContext
-from danswer.search.models import RerankingDetails
-from danswer.search.models import RetrievalDetails
-from danswer.search.models import SavedSearchDoc
-from ee.danswer.server.manage.models import StandardAnswer
+from ee.onyx.server.manage.models import Standaronyx
 
 
-class StandardAnswerRequest(BaseModel):
+class StandaronyxRequest(BaseModel):
     message: str
     slack_bot_categories: list[str]
 
 
-class StandardAnswerResponse(BaseModel):
-    standard_answers: list[StandardAnswer] = Field(default_factory=list)
+class StandaronyxResponse(BaseModel):
+    standard_answers: list[Standaronyx] = Field(default_factory=list)
 
 
 class DocumentSearchRequest(ChunkContext):

@@ -6,21 +6,20 @@ from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
+from onyx.chat.models import AnswerQuestionStreamReturn
+from onyx.configs.constants import MessageType
+from onyx.file_store.models import InMemoryChatFile
+from onyx.llm.override_models import PromptOverride
+from onyx.llm.utils import build_content_with_imgs
+from onyx.tools.models import ToolCallFinalResult
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import model_validator
 
-from danswer.chat.models import AnswerQuestionStreamReturn
-from danswer.configs.constants import MessageType
-from danswer.file_store.models import InMemoryChatFile
-from danswer.llm.override_models import PromptOverride
-from danswer.llm.utils import build_content_with_imgs
-from danswer.tools.models import ToolCallFinalResult
-
 if TYPE_CHECKING:
-    from danswer.db.models import ChatMessage
-    from danswer.db.models import Prompt
+    from onyx.db.models import ChatMessage
+    from onyx.db.models import Prompt
 
 
 StreamProcessor = Callable[[Iterator[str]], AnswerQuestionStreamReturn]

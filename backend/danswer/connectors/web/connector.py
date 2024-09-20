@@ -13,26 +13,25 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 from oauthlib.oauth2 import BackendApplicationClient
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
+from onyx.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
+from onyx.configs.app_configs import WEB_CONNECTOR_OAUTH_TOKEN_URL
+from onyx.configs.app_configs import WEB_CONNECTOR_VALIDATE_URLS
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.file_processing.extract_file_text import read_pdf_file
+from onyx.file_processing.html_utils import web_html_cleanup
+from onyx.utils.logger import setup_logger
+from onyx.utils.sitemap import list_pages_for_site
 from playwright.sync_api import BrowserContext
 from playwright.sync_api import Playwright
 from playwright.sync_api import sync_playwright
 from requests_oauthlib import OAuth2Session  # type:ignore
 from urllib3.exceptions import MaxRetryError
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
-from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
-from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_TOKEN_URL
-from danswer.configs.app_configs import WEB_CONNECTOR_VALIDATE_URLS
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.file_processing.extract_file_text import read_pdf_file
-from danswer.file_processing.html_utils import web_html_cleanup
-from danswer.utils.logger import setup_logger
-from danswer.utils.sitemap import list_pages_for_site
 
 logger = setup_logger()
 
@@ -394,6 +393,6 @@ class WebConnector(LoadConnector):
 
 
 if __name__ == "__main__":
-    connector = WebConnector("https://docs.danswer.dev/")
+    connector = WebConnector("https://docs.onyx.dev/")
     document_batches = connector.load_from_state()
     print(next(document_batches))

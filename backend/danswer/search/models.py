@@ -1,20 +1,20 @@
 from datetime import datetime
 from typing import Any
 
+from onyx.configs.chat_configs import NUM_RETURNED_HITS
+from onyx.configs.constants import DocumentSource
+from onyx.db.models import Persona
+from onyx.db.models import SearchSettings
+from onyx.indexing.models import BaseChunk
+from onyx.indexing.models import IndexingSetting
+from onyx.search.enums import LLMEvaluationType
+from onyx.search.enums import OptionalSearchSetting
+from onyx.search.enums import SearchType
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import field_validator
 
-from danswer.configs.chat_configs import NUM_RETURNED_HITS
-from danswer.configs.constants import DocumentSource
-from danswer.db.models import Persona
-from danswer.db.models import SearchSettings
-from danswer.indexing.models import BaseChunk
-from danswer.indexing.models import IndexingSetting
-from danswer.search.enums import LLMEvaluationType
-from danswer.search.enums import OptionalSearchSetting
-from danswer.search.enums import SearchType
 from shared_configs.enums import RerankerProvider
 
 
@@ -176,7 +176,7 @@ class RetrievalDetails(ChunkContext):
     # If the Persona is configured to not run search (0 chunks), this is bypassed
     # If no Prompt is configured, the only search results are shown, this is bypassed
     run_search: OptionalSearchSetting = OptionalSearchSetting.ALWAYS
-    # Is this a real-time/streaming call or a question where Danswer can take more time?
+    # Is this a real-time/streaming call or a question where onyx can take more time?
     # Used to determine reranking flow
     real_time: bool = True
     # The following have defaults in the Persona settings which can be overridden via

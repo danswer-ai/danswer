@@ -4,19 +4,19 @@ from typing import cast
 
 from googleapiclient.discovery import build  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
-from sqlalchemy.orm import Session
-
-from danswer.access.models import ExternalAccess
-from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
-from danswer.connectors.google_drive.connector_auth import (
+from onyx.access.models import ExternalAccess
+from onyx.connectors.cross_connector_utils.retry_wrapper import retry_builder
+from onyx.connectors.google_drive.connector_auth import (
     get_google_drive_creds,
 )
-from danswer.connectors.google_drive.constants import FETCH_PERMISSIONS_SCOPES
-from danswer.db.models import ConnectorCredentialPair
-from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
-from danswer.utils.logger import setup_logger
-from ee.danswer.db.document import upsert_document_external_perms__no_commit
-from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
+from onyx.connectors.google_drive.constants import FETCH_PERMISSIONS_SCOPES
+from onyx.db.models import ConnectorCredentialPair
+from onyx.db.users import batch_add_non_web_user_if_not_exists__no_commit
+from onyx.utils.logger import setup_logger
+from sqlalchemy.orm import Session
+
+from ee.onyx.db.document import upsert_document_external_perms__no_commit
+from ee.onyx.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
 # Google Drive APIs are quite flakey and may 500 for an
 # extended period of time. Trying to combat here by adding a very

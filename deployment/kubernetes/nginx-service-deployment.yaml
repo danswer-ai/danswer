@@ -10,7 +10,7 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 80
-    - name: danswer
+    - name: onyx
       protocol: TCP
       port: 3000
       targetPort: 80

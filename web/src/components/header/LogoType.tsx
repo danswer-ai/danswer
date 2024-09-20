@@ -3,7 +3,7 @@ import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 import { SettingsContext } from "../settings/SettingsProvider";
 import {
-  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED,
+  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_onyx_POWERED,
   NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
 } from "@/lib/constants";
 import { LeftToLineIcon, NewChatIcon, RightToLineIcon } from "../icons/icons";
@@ -58,12 +58,12 @@ export default function LogoType({
           {enterpriseSettings && enterpriseSettings.application_name ? (
             <div className="w-full">
               <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
-              {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                <p className="text-xs text-subtle">Powered by Danswer</p>
+              {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_onyx_POWERED && (
+                <p className="text-xs text-subtle">Powered by onyx</p>
               )}
             </div>
           ) : (
-            <HeaderTitle>Danswer</HeaderTitle>
+            <HeaderTitle>onyx</HeaderTitle>
           )}
         </div>
       </div>

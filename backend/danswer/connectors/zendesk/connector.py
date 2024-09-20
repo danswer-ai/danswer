@@ -1,25 +1,24 @@
 from typing import Any
 
 import requests
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.app_configs import ZENDESK_CONNECTOR_SKIP_ARTICLE_LABELS
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.cross_connector_utils.miscellaneous_utils import (
+    time_str_to_utc,
+)
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.interfaces import SecondsSinceUnixEpoch
+from onyx.connectors.models import BasicExpertInfo
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.file_processing.html_utils import parse_html_page_basic
 from retry import retry
 from zenpy import Zenpy  # type: ignore
 from zenpy.lib.api_objects import Ticket  # type: ignore
 from zenpy.lib.api_objects.help_centre_objects import Article  # type: ignore
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.app_configs import ZENDESK_CONNECTOR_SKIP_ARTICLE_LABELS
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
-    time_str_to_utc,
-)
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import BasicExpertInfo
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.file_processing.html_utils import parse_html_page_basic
 
 
 def _article_to_document(article: Article, content_tags: dict[str, str]) -> Document:

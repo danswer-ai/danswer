@@ -1,10 +1,9 @@
+from onyx.configs.constants import NotificationType
+from onyx.db.models import Notification
+from onyx.db.models import User
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
-
-from danswer.configs.constants import NotificationType
-from danswer.db.models import Notification
-from danswer.db.models import User
 
 
 def create_notification(

@@ -1,24 +1,24 @@
 import uuid
 
 from fastapi_users.password import PasswordHelper
+from onyx.configs.constants import onyx_API_KEY_DUMMY_EMAIL_DOMAIN
+from onyx.configs.constants import onyx_API_KEY_PREFIX
+from onyx.configs.constants import UNNAMED_KEY_PLACEHOLDER
+from onyx.db.models import ApiKey
+from onyx.db.models import User
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
-from danswer.configs.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
-from danswer.configs.constants import DANSWER_API_KEY_PREFIX
-from danswer.configs.constants import UNNAMED_KEY_PLACEHOLDER
-from danswer.db.models import ApiKey
-from danswer.db.models import User
-from ee.danswer.auth.api_key import ApiKeyDescriptor
-from ee.danswer.auth.api_key import build_displayable_api_key
-from ee.danswer.auth.api_key import generate_api_key
-from ee.danswer.auth.api_key import hash_api_key
-from ee.danswer.server.api_key.models import APIKeyArgs
+from ee.onyx.auth.api_key import ApiKeyDescriptor
+from ee.onyx.auth.api_key import build_displayable_api_key
+from ee.onyx.auth.api_key import generate_api_key
+from ee.onyx.auth.api_key import hash_api_key
+from ee.onyx.server.api_key.models import APIKeyArgs
 
 
 def is_api_key_email_address(email: str) -> bool:
-    return email.endswith(f"{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}")
+    return email.endswith(f"{onyx_API_KEY_DUMMY_EMAIL_DOMAIN}")
 
 
 def fetch_api_keys(db_session: Session) -> list[ApiKeyDescriptor]:
@@ -53,7 +53,7 @@ def get_api_key_fake_email(
     name: str,
     unique_id: str,
 ) -> str:
-    return f"{DANSWER_API_KEY_PREFIX}{name}@{unique_id}{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}"
+    return f"{onyx_API_KEY_PREFIX}{name}@{unique_id}{onyx_API_KEY_DUMMY_EMAIL_DOMAIN}"
 
 
 def insert_api_key(

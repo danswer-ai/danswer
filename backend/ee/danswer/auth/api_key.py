@@ -2,11 +2,11 @@ import secrets
 import uuid
 
 from fastapi import Request
+from onyx.auth.schemas import UserRole
 from passlib.hash import sha256_crypt
 from pydantic import BaseModel
 
-from danswer.auth.schemas import UserRole
-from ee.danswer.configs.app_configs import API_KEY_HASH_ROUNDS
+from ee.onyx.configs.app_configs import API_KEY_HASH_ROUNDS
 
 
 _API_KEY_HEADER_NAME = "Authorization"

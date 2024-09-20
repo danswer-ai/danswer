@@ -1,6 +1,6 @@
-from danswer.chat.models import LlmDoc
-from danswer.prompts.prompt_utils import clean_up_source
-from danswer.search.models import InferenceSection
+from onyx.chat.models import LlmDoc
+from onyx.prompts.prompt_utils import clean_up_source
+from onyx.search.models import InferenceSection
 
 
 def llm_doc_to_dict(llm_doc: LlmDoc, doc_num: int) -> dict:

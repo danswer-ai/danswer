@@ -2,8 +2,8 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from danswer.db.engine import build_connection_string
-from danswer.db.models import Base
+from onyx.db.engine import build_connection_string
+from onyx.db.models import Base
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine

@@ -4,15 +4,15 @@ from datetime import datetime
 from typing import IO
 
 from fastapi_users_db_sqlalchemy import UUID_ID
+from onyx.configs.constants import MessageType
+from onyx.db.models import UsageReport
+from onyx.file_store.file_store import get_default_file_store
 from sqlalchemy.orm import Session
 
-from danswer.configs.constants import MessageType
-from danswer.db.models import UsageReport
-from danswer.file_store.file_store import get_default_file_store
-from ee.danswer.db.query_history import fetch_chat_sessions_eagerly_by_time
-from ee.danswer.server.reporting.usage_export_models import ChatMessageSkeleton
-from ee.danswer.server.reporting.usage_export_models import FlowType
-from ee.danswer.server.reporting.usage_export_models import UsageReportMetadata
+from ee.onyx.db.query_history import fetch_chat_sessions_eagerly_by_time
+from ee.onyx.server.reporting.usage_export_models import ChatMessageSkeleton
+from ee.onyx.server.reporting.usage_export_models import FlowType
+from ee.onyx.server.reporting.usage_export_models import UsageReportMetadata
 
 
 # Gets skeletons of all message
@@ -30,7 +30,7 @@ def get_empty_chat_messages_entries__paginated(
     for chat_session in chat_sessions:
         if chat_session.one_shot:
             flow_type = FlowType.SEARCH
-        elif chat_session.danswerbot_flow:
+        elif chat_session.onyxbot_flow:
             flow_type = FlowType.SLACK
         else:
             flow_type = FlowType.CHAT

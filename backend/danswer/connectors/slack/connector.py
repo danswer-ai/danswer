@@ -6,28 +6,27 @@ from datetime import timezone
 from typing import Any
 from typing import cast
 
+from onyx.configs.app_configs import ENABLE_EXPENSIVE_EXPERT_CALLS
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.cross_connector_utils.retry_wrapper import retry_builder
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.interfaces import SecondsSinceUnixEpoch
+from onyx.connectors.models import BasicExpertInfo
+from onyx.connectors.models import ConnectorMissingCredentialError
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.connectors.slack.utils import expert_info_from_slack_id
+from onyx.connectors.slack.utils import get_message_link
+from onyx.connectors.slack.utils import make_slack_api_call_logged
+from onyx.connectors.slack.utils import make_slack_api_call_paginated
+from onyx.connectors.slack.utils import make_slack_api_rate_limited
+from onyx.connectors.slack.utils import SlackTextCleaner
+from onyx.utils.logger import setup_logger
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
-
-from danswer.configs.app_configs import ENABLE_EXPENSIVE_EXPERT_CALLS
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import BasicExpertInfo
-from danswer.connectors.models import ConnectorMissingCredentialError
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.connectors.slack.utils import expert_info_from_slack_id
-from danswer.connectors.slack.utils import get_message_link
-from danswer.connectors.slack.utils import make_slack_api_call_logged
-from danswer.connectors.slack.utils import make_slack_api_call_paginated
-from danswer.connectors.slack.utils import make_slack_api_rate_limited
-from danswer.connectors.slack.utils import SlackTextCleaner
-from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()

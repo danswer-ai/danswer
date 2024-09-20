@@ -1,6 +1,5 @@
+from onyx.connectors.models import DocumentBase
 from pydantic import BaseModel
-
-from danswer.connectors.models import DocumentBase
 
 
 class IngestionDocument(BaseModel):

@@ -1,14 +1,13 @@
 from uuid import UUID
 
+from onyx.db.models import ConnectorCredentialPair
+from onyx.db.models import DocumentSet
+from onyx.db.models import DocumentSet__ConnectorCredentialPair
+from onyx.db.models import DocumentSet__User
+from onyx.db.models import DocumentSet__UserGroup
+from onyx.db.models import User__UserGroup
+from onyx.db.models import UserGroup
 from sqlalchemy.orm import Session
-
-from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import DocumentSet
-from danswer.db.models import DocumentSet__ConnectorCredentialPair
-from danswer.db.models import DocumentSet__User
-from danswer.db.models import DocumentSet__UserGroup
-from danswer.db.models import User__UserGroup
-from danswer.db.models import UserGroup
 
 
 def make_doc_set_private(

@@ -2,7 +2,7 @@
 
 import {
   DocumentRelevance,
-  SearchDanswerDocument,
+  SearchonyxDocument,
   SearchDefaultOverrides,
   SearchResponse,
 } from "@/lib/search/interfaces";
@@ -17,7 +17,7 @@ import { SettingsContext } from "../settings/SettingsProvider";
 import { DISABLE_LLM_DOC_RELEVANCE } from "@/lib/constants";
 
 const getSelectedDocumentIds = (
-  documents: SearchDanswerDocument[],
+  documents: SearchonyxDocument[],
   selectedIndices: number[]
 ) => {
   const selectedDocumentIds = new Set<string>();
@@ -145,8 +145,8 @@ export const SearchResultsDisplay = ({
     : [];
 
   const getUniqueDocuments = (
-    documents: SearchDanswerDocument[]
-  ): SearchDanswerDocument[] => {
+    documents: SearchonyxDocument[]
+  ): SearchonyxDocument[] => {
     const seenIds = new Set<string>();
     return documents.filter((doc) => {
       if (!seenIds.has(doc.document_id)) {

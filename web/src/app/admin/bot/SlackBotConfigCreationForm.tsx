@@ -24,18 +24,18 @@ import MultiSelectDropdown from "@/components/MultiSelectDropdown";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import CollapsibleSection from "../assistants/CollapsibleSection";
-import { StandardAnswerCategoryResponse } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
-import { StandardAnswerCategoryDropdownField } from "@/components/standardAnswers/StandardAnswerCategoryDropdown";
+import { StandaronyxCategoryResponse } from "@/components/standaronyxs/getStandaronyxCategoriesIfEE";
+import { StandaronyxCategoryDropdownField } from "@/components/standaronyxs/StandaronyxCategoryDropdown";
 
 export const SlackBotCreationForm = ({
   documentSets,
   personas,
-  standardAnswerCategoryResponse,
+  standaronyxCategoryResponse,
   existingSlackBotConfig,
 }: {
   documentSets: DocumentSet[];
   personas: Persona[];
-  standardAnswerCategoryResponse: StandardAnswerCategoryResponse;
+  standaronyxCategoryResponse: StandaronyxCategoryResponse;
   existingSlackBotConfig?: SlackBotConfig;
 }) => {
   const isUpdate = existingSlackBotConfig !== undefined;
@@ -153,8 +153,8 @@ export const SlackBotCreationForm = ({
               const errorMsg = responseJson.detail || responseJson.message;
               setPopup({
                 message: isUpdate
-                  ? `Error updating DanswerBot config - ${errorMsg}`
-                  : `Error creating DanswerBot config - ${errorMsg}`,
+                  ? `Error updating onyxBot config - ${errorMsg}`
+                  : `Error creating onyxBot config - ${errorMsg}`,
                 type: "error",
               });
             }
@@ -168,7 +168,7 @@ export const SlackBotCreationForm = ({
                   label="Channel Names"
                   values={values}
                   subtext="The names of the Slack channels you want this configuration to apply to. 
-                  For example, #ask-danswer."
+                  For example, #ask-onyx."
                   minFields={1}
                   placeholder="Enter channel name..."
                 />
@@ -177,7 +177,7 @@ export const SlackBotCreationForm = ({
                   <Label>Knowledge Sources</Label>
 
                   <SubLabel>
-                    Controls which information DanswerBot will pull from when
+                    Controls which information onyxBot will pull from when
                     answering questions.
                   </SubLabel>
 
@@ -249,8 +249,8 @@ export const SlackBotCreationForm = ({
                             </div>
                             <div>
                               <SubLabel>
-                                Note: If left blank, DanswerBot will search
-                                through all connected documents.
+                                Note: If left blank, onyxBot will search through
+                                all connected documents.
                               </SubLabel>
                             </div>
                           </div>
@@ -273,7 +273,7 @@ export const SlackBotCreationForm = ({
                       <SelectorFormField
                         name="response_type"
                         label="Answer Type"
-                        tooltip="Controls the format of DanswerBot's responses."
+                        tooltip="Controls the format of onyxBot's responses."
                         options={[
                           { name: "Standard", value: "citations" },
                           { name: "Detailed", value: "quotes" },
@@ -286,7 +286,7 @@ export const SlackBotCreationForm = ({
                         name="still_need_help_enabled"
                         removeIndent
                         label={'Give a "Still need help?" button'}
-                        tooltip={`DanswerBot's response will include a button at the bottom 
+                        tooltip={`onyxBot's response will include a button at the bottom 
                       of the response that asks the user if they still need help.`}
                       />
                       {values.still_need_help_enabled && (
@@ -324,14 +324,14 @@ export const SlackBotCreationForm = ({
                       <BooleanFormField
                         name="respond_tag_only"
                         removeIndent
-                        label="Respond to @DanswerBot Only"
-                        tooltip="If set, DanswerBot will only respond when directly tagged"
+                        label="Respond to @onyxBot Only"
+                        tooltip="If set, onyxBot will only respond when directly tagged"
                       />
                       <BooleanFormField
                         name="respond_to_bots"
                         removeIndent
                         label="Respond to Bot messages"
-                        tooltip="If not set, DanswerBot will always ignore messages from Bots"
+                        tooltip="If not set, onyxBot will always ignore messages from Bots"
                       />
                       <BooleanFormField
                         name="enable_auto_filters"
@@ -345,7 +345,7 @@ export const SlackBotCreationForm = ({
                           name="respond_member_group_list"
                           label="(Optional) Respond to Certain Users / Groups"
                           subtext={
-                            "If specified, DanswerBot responses will only " +
+                            "If specified, onyxBot responses will only " +
                             "be visible to the members or groups in this list."
                           }
                           values={values}
@@ -354,10 +354,8 @@ export const SlackBotCreationForm = ({
                       </div>
                     </div>
 
-                    <StandardAnswerCategoryDropdownField
-                      standardAnswerCategoryResponse={
-                        standardAnswerCategoryResponse
-                      }
+                    <StandaronyxCategoryDropdownField
+                      standaronyxCategoryResponse={standaronyxCategoryResponse}
                       categories={values.standard_answer_categories}
                       setCategories={(categories) =>
                         setFieldValue("standard_answer_categories", categories)

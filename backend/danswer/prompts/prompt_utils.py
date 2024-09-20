@@ -3,20 +3,19 @@ from datetime import datetime
 from typing import cast
 
 from langchain_core.messages import BaseMessage
-
-from danswer.chat.models import LlmDoc
-from danswer.configs.chat_configs import LANGUAGE_HINT
-from danswer.configs.constants import DocumentSource
-from danswer.db.models import Prompt
-from danswer.llm.answering.models import PromptConfig
-from danswer.prompts.chat_prompts import ADDITIONAL_INFO
-from danswer.prompts.chat_prompts import CITATION_REMINDER
-from danswer.prompts.constants import CODE_BLOCK_PAT
-from danswer.search.models import InferenceChunk
+from onyx.chat.models import LlmDoc
+from onyx.configs.chat_configs import LANGUAGE_HINT
+from onyx.configs.constants import DocumentSource
+from onyx.db.models import Prompt
+from onyx.llm.answering.models import PromptConfig
+from onyx.prompts.chat_prompts import ADDITIONAL_INFO
+from onyx.prompts.chat_prompts import CITATION_REMINDER
+from onyx.prompts.constants import CODE_BLOCK_PAT
+from onyx.search.models import InferenceChunk
 
 
 MOST_BASIC_PROMPT = "You are a helpful AI assistant."
-DANSWER_DATETIME_REPLACEMENT = "DANSWER_DATETIME_REPLACEMENT"
+onyx_DATETIME_REPLACEMENT = "onyx_DATETIME_REPLACEMENT"
 BASIC_TIME_STR = "The current date is {datetime_info}."
 
 
@@ -35,9 +34,9 @@ def get_current_llm_day_time(
 
 
 def add_date_time_to_prompt(prompt_str: str) -> str:
-    if DANSWER_DATETIME_REPLACEMENT in prompt_str:
+    if onyx_DATETIME_REPLACEMENT in prompt_str:
         return prompt_str.replace(
-            DANSWER_DATETIME_REPLACEMENT,
+            onyx_DATETIME_REPLACEMENT,
             get_current_llm_day_time(full_sentence=False, include_day_of_week=True),
         )
 

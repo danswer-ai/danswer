@@ -2,32 +2,32 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import status
+from onyx.auth.users import current_admin_user
+from onyx.auth.users import current_user
+from onyx.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
+from onyx.db.connector_credential_pair import get_connector_credential_pairs
+from onyx.db.connector_credential_pair import resync_cc_pair
+from onyx.db.engine import get_session
+from onyx.db.index_attempt import expire_index_attempts
+from onyx.db.models import IndexModelStatus
+from onyx.db.models import User
+from onyx.db.search_settings import create_search_settings
+from onyx.db.search_settings import delete_search_settings
+from onyx.db.search_settings import get_current_search_settings
+from onyx.db.search_settings import get_embedding_provider_from_provider_type
+from onyx.db.search_settings import get_secondary_search_settings
+from onyx.db.search_settings import update_current_search_settings
+from onyx.db.search_settings import update_search_settings_status
+from onyx.document_index.factory import get_default_document_index
+from onyx.natural_language_processing.search_nlp_models import clean_model_name
+from onyx.search.models import SavedSearchSettings
+from onyx.search.models import SearchSettingsCreationRequest
+from onyx.server.manage.embedding.models import SearchSettingsDeleteRequest
+from onyx.server.manage.models import FullModelVersionResponse
+from onyx.server.models import IdReturn
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_user
-from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
-from danswer.db.connector_credential_pair import get_connector_credential_pairs
-from danswer.db.connector_credential_pair import resync_cc_pair
-from danswer.db.engine import get_session
-from danswer.db.index_attempt import expire_index_attempts
-from danswer.db.models import IndexModelStatus
-from danswer.db.models import User
-from danswer.db.search_settings import create_search_settings
-from danswer.db.search_settings import delete_search_settings
-from danswer.db.search_settings import get_current_search_settings
-from danswer.db.search_settings import get_embedding_provider_from_provider_type
-from danswer.db.search_settings import get_secondary_search_settings
-from danswer.db.search_settings import update_current_search_settings
-from danswer.db.search_settings import update_search_settings_status
-from danswer.document_index.factory import get_default_document_index
-from danswer.natural_language_processing.search_nlp_models import clean_model_name
-from danswer.search.models import SavedSearchSettings
-from danswer.search.models import SearchSettingsCreationRequest
-from danswer.server.manage.embedding.models import SearchSettingsDeleteRequest
-from danswer.server.manage.models import FullModelVersionResponse
-from danswer.server.models import IdReturn
-from danswer.utils.logger import setup_logger
 from shared_configs.configs import ALT_INDEX_SUFFIX
 
 
@@ -63,7 +63,7 @@ def set_new_search_settings(
 
     if search_settings_new.index_name is None:
         # We define index name here
-        index_name = f"danswer_chunk_{clean_model_name(search_settings_new.model_name)}"
+        index_name = f"onyx_chunk_{clean_model_name(search_settings_new.model_name)}"
         if (
             search_settings_new.model_name == search_settings.model_name
             and not search_settings.index_name.endswith(ALT_INDEX_SUFFIX)

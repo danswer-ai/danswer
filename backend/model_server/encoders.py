@@ -10,13 +10,13 @@ from cohere import Client as CohereClient
 from fastapi import APIRouter
 from fastapi import HTTPException
 from google.oauth2 import service_account  # type: ignore
+from onyx.utils.logger import setup_logger
 from retry import retry
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 from vertexai.language_models import TextEmbeddingInput  # type: ignore
 from vertexai.language_models import TextEmbeddingModel  # type: ignore
 
-from danswer.utils.logger import setup_logger
 from model_server.constants import DEFAULT_COHERE_MODEL
 from model_server.constants import DEFAULT_OPENAI_MODEL
 from model_server.constants import DEFAULT_VERTEX_MODEL
@@ -88,7 +88,7 @@ class CloudEmbedding:
             model = DEFAULT_OPENAI_MODEL
 
         # OpenAI does not seem to provide truncation option, however
-        # the context lengths used by Danswer currently are smaller than the max token length
+        # the context lengths used by onyx currently are smaller than the max token length
         # for OpenAI embeddings so it's not a big deal
         final_embeddings: list[Embedding] = []
         try:
@@ -116,7 +116,7 @@ class CloudEmbedding:
 
         final_embeddings: list[Embedding] = []
         for text_batch in batch_list(texts, _COHERE_MAX_INPUT_LEN):
-            # Does not use the same tokenizer as the Danswer API server but it's approximately the same
+            # Does not use the same tokenizer as the onyx API server but it's approximately the same
             # empirically it's only off by a very few tokens so it's not a big deal
             response = self.client.embed(
                 texts=text_batch,

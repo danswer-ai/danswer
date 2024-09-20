@@ -1,7 +1,7 @@
-<!-- DANSWER_METADATA={"link": "https://github.com/danswer-ai/danswer/blob/main/deployment/README.md"} -->
+<!-- onyx_METADATA={"link": "https://github.com/onyx-ai/onyx/blob/main/deployment/README.md"} -->
 
-# Deploying Danswer
-The two options provided here are the easiest ways to get Danswer up and running.
+# Deploying onyx
+The two options provided here are the easiest ways to get onyx up and running.
 
 - Docker Compose is simpler and default values are already preset to run right out of the box with a single command.
 As everything is running on a single machine, this may not be as scalable depending on your hardware, traffic and needs.
@@ -15,33 +15,33 @@ production deployment but there are a few caveats.
   deployments or services according to your setup. This may require existing Kubernetes knowledge or additional
   setup time.
 
-All the features of Danswer are fully available regardless of the deployment option.
+All the features of onyx are fully available regardless of the deployment option.
 
-For information on setting up connectors, check out https://docs.danswer.dev/connectors/overview
+For information on setting up connectors, check out https://docs.onyx.dev/connectors/overview
 
 
 ## Docker Compose:
-Docker Compose provides the easiest way to get Danswer up and running.
+Docker Compose provides the easiest way to get onyx up and running.
 
 Requirements: Docker and docker compose
 
-This section is for getting started quickly without setting up GPUs. For deployments to leverage GPU, please refer to [this](https://github.com/danswer-ai/danswer/blob/main/deployment/docker_compose/README.md) documentation.
+This section is for getting started quickly without setting up GPUs. For deployments to leverage GPU, please refer to [this](https://github.com/onyx-ai/onyx/blob/main/deployment/docker_compose/README.md) documentation.
 
-1. To run Danswer, navigate to `docker_compose` directory and run the following:
-   - `docker compose -f docker-compose.dev.yml -p danswer-stack up -d --pull always --force-recreate`
-      - or run: `docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build --force-recreate`
+1. To run onyx, navigate to `docker_compose` directory and run the following:
+   - `docker compose -f docker-compose.dev.yml -p onyx-stack up -d --pull always --force-recreate`
+      - or run: `docker compose -f docker-compose.dev.yml -p onyx-stack up -d --build --force-recreate`
 to build from source
    - Downloading images or packages/requirements may take 15+ minutes depending on your internet connection.
 
 
 2. To shut down the deployment, run:
-   - To stop the containers: `docker compose -f docker-compose.dev.yml -p danswer-stack stop`
-   - To delete the containers: `docker compose -f docker-compose.dev.yml -p danswer-stack down`
+   - To stop the containers: `docker compose -f docker-compose.dev.yml -p onyx-stack stop`
+   - To delete the containers: `docker compose -f docker-compose.dev.yml -p onyx-stack down`
 
 
-3. To completely remove Danswer run:
+3. To completely remove onyx run:
    - **WARNING, this will also erase your indexed data and users**
-   - `docker compose -f docker-compose.dev.yml -p danswer-stack down -v`
+   - `docker compose -f docker-compose.dev.yml -p onyx-stack down -v`
 
 
 Additional steps for user auth and https if you do want to use Docker Compose for production:
@@ -70,10 +70,10 @@ Requirements: a Kubernetes cluster and kubectl
 **NOTE: This setup does not explicitly enable https, the assumption is you would have this already set up for your
 prod cluster**
 
-1. To run Danswer, navigate to `kubernetes` directory and run the following:
+1. To run onyx, navigate to `kubernetes` directory and run the following:
    - `kubectl apply -f .`
 
-2. To remove Danswer, run:
+2. To remove onyx, run:
    - **WARNING, this will also erase your indexed data and users**
    - `kubectl delete -f .`
    - To not delete the persistent volumes (Document indexes and Users), specify the specific `.yaml` files instead of 

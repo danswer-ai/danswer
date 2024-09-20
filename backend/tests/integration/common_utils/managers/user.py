@@ -3,11 +3,11 @@ from urllib.parse import urlencode
 from uuid import uuid4
 
 import requests
+from onyx.db.models import UserRole
+from onyx.server.manage.models import AllUsersResponse
+from onyx.server.models import FullUserSnapshot
+from onyx.server.models import InvitedUserSnapshot
 
-from danswer.db.models import UserRole
-from danswer.server.manage.models import AllUsersResponse
-from danswer.server.models import FullUserSnapshot
-from danswer.server.models import InvitedUserSnapshot
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.test_models import TestUser

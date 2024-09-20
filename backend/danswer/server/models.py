@@ -3,10 +3,9 @@ from typing import Optional
 from typing import TypeVar
 from uuid import UUID
 
+from onyx.auth.schemas import UserRole
+from onyx.auth.schemas import UserStatus
 from pydantic import BaseModel
-
-from danswer.auth.schemas import UserRole
-from danswer.auth.schemas import UserStatus
 
 
 DataT = TypeVar("DataT")

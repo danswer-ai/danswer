@@ -7,18 +7,18 @@ from typing import Any
 
 import requests
 from httpx import HTTPError
-from retry import retry
-
-from danswer.configs.app_configs import LARGE_CHUNK_RATIO
-from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
-from danswer.configs.model_configs import (
+from onyx.configs.app_configs import LARGE_CHUNK_RATIO
+from onyx.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
+from onyx.configs.model_configs import (
     BATCH_SIZE_ENCODE_CHUNKS_FOR_API_EMBEDDING_SERVICES,
 )
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.db.models import SearchSettings
-from danswer.natural_language_processing.utils import get_tokenizer
-from danswer.natural_language_processing.utils import tokenizer_trim_content
-from danswer.utils.logger import setup_logger
+from onyx.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
+from onyx.db.models import SearchSettings
+from onyx.natural_language_processing.utils import get_tokenizer
+from onyx.natural_language_processing.utils import tokenizer_trim_content
+from onyx.utils.logger import setup_logger
+from retry import retry
+
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.enums import EmbeddingProvider
@@ -39,9 +39,9 @@ logger = setup_logger()
 
 
 WARM_UP_STRINGS = [
-    "Danswer is amazing!",
+    "onyx is amazing!",
     "Check out our easy deployment guide at",
-    "https://docs.danswer.dev/quickstart",
+    "https://docs.onyx.dev/quickstart",
 ]
 
 

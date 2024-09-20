@@ -1,20 +1,19 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from onyx.auth.users import current_user
+from onyx.db.engine import get_session
+from onyx.db.models import User
+from onyx.db.persona import get_personas_by_ids
+from onyx.db.persona import get_prompt_by_id
+from onyx.db.persona import get_prompts
+from onyx.db.persona import mark_prompt_as_deleted
+from onyx.db.persona import upsert_prompt
+from onyx.server.features.prompt.models import CreatePromptRequest
+from onyx.server.features.prompt.models import PromptSnapshot
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 from starlette import status
-
-from danswer.auth.users import current_user
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from danswer.db.persona import get_personas_by_ids
-from danswer.db.persona import get_prompt_by_id
-from danswer.db.persona import get_prompts
-from danswer.db.persona import mark_prompt_as_deleted
-from danswer.db.persona import upsert_prompt
-from danswer.server.features.prompt.models import CreatePromptRequest
-from danswer.server.features.prompt.models import PromptSnapshot
-from danswer.utils.logger import setup_logger
 
 
 # Note: As prompts are fairly innocuous/harmless, there are no protections

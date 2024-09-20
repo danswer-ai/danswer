@@ -8,8 +8,8 @@ export const INTERNAL_URL = process.env.INTERNAL_URL || "http://127.0.0.1:8080";
 export const NEXT_PUBLIC_DISABLE_STREAMING =
   process.env.NEXT_PUBLIC_DISABLE_STREAMING?.toLowerCase() === "true";
 
-export const NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED =
-  process.env.NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED?.toLowerCase() ===
+export const NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_onyx_POWERED =
+  process.env.NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_onyx_POWERED?.toLowerCase() ===
   "true";
 
 export const NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA =

@@ -2,11 +2,10 @@ from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
-from requests import HTTPError
-
-from danswer.connectors.confluence.rate_limit_handler import (
+from onyx.connectors.confluence.rate_limit_handler import (
     make_confluence_call_handle_rate_limit,
 )
+from requests import HTTPError
 
 
 @pytest.fixture

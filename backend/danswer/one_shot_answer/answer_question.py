@@ -2,66 +2,66 @@ from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 
+from onyx.chat.chat_utils import reorganize_citations
+from onyx.chat.models import CitationInfo
+from onyx.chat.models import DocumentRelevance
+from onyx.chat.models import LLMRelevanceFilterResponse
+from onyx.chat.models import onyxAnswerPiece
+from onyx.chat.models import onyxContexts
+from onyx.chat.models import onyxQuotes
+from onyx.chat.models import QADocsResponse
+from onyx.chat.models import RelevanceAnalysis
+from onyx.chat.models import StreamingError
+from onyx.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
+from onyx.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
+from onyx.configs.chat_configs import QA_TIMEOUT
+from onyx.configs.constants import MessageType
+from onyx.db.chat import create_chat_session
+from onyx.db.chat import create_db_search_doc
+from onyx.db.chat import create_new_chat_message
+from onyx.db.chat import get_or_create_root_message
+from onyx.db.chat import translate_db_message_to_chat_message_detail
+from onyx.db.chat import translate_db_search_doc_to_server_search_doc
+from onyx.db.chat import update_search_docs_table_with_relevance
+from onyx.db.engine import get_session_context_manager
+from onyx.db.models import Persona
+from onyx.db.models import User
+from onyx.db.persona import get_prompt_by_id
+from onyx.llm.answering.answer import Answer
+from onyx.llm.answering.models import AnswerStyleConfig
+from onyx.llm.answering.models import CitationConfig
+from onyx.llm.answering.models import DocumentPruningConfig
+from onyx.llm.answering.models import PromptConfig
+from onyx.llm.answering.models import QuotesConfig
+from onyx.llm.factory import get_llms_for_persona
+from onyx.llm.factory import get_main_llm_from_tuple
+from onyx.natural_language_processing.utils import get_tokenizer
+from onyx.one_shot_answer.models import DirectQARequest
+from onyx.one_shot_answer.models import OneShotQAResponse
+from onyx.one_shot_answer.models import QueryRephrase
+from onyx.one_shot_answer.qa_utils import combine_message_thread
+from onyx.search.enums import LLMEvaluationType
+from onyx.search.models import RerankMetricsContainer
+from onyx.search.models import RetrievalMetricsContainer
+from onyx.search.utils import chunks_or_sections_to_search_docs
+from onyx.search.utils import dedupe_documents
+from onyx.secondary_llm_flows.answer_validation import get_answer_validity
+from onyx.secondary_llm_flows.query_expansion import thread_based_query_rephrase
+from onyx.server.query_and_chat.models import ChatMessageDetail
+from onyx.server.utils import get_json_line
+from onyx.tools.force import ForceUseTool
+from onyx.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
+from onyx.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
+from onyx.tools.search.search_tool import SearchResponseSummary
+from onyx.tools.search.search_tool import SearchTool
+from onyx.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
+from onyx.tools.tool import ToolResponse
+from onyx.tools.tool_runner import ToolCallKickoff
+from onyx.utils.logger import setup_logger
+from onyx.utils.timing import log_generator_function_time
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_utils import reorganize_citations
-from danswer.chat.models import CitationInfo
-from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import DanswerContexts
-from danswer.chat.models import DanswerQuotes
-from danswer.chat.models import DocumentRelevance
-from danswer.chat.models import LLMRelevanceFilterResponse
-from danswer.chat.models import QADocsResponse
-from danswer.chat.models import RelevanceAnalysis
-from danswer.chat.models import StreamingError
-from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
-from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
-from danswer.configs.chat_configs import QA_TIMEOUT
-from danswer.configs.constants import MessageType
-from danswer.db.chat import create_chat_session
-from danswer.db.chat import create_db_search_doc
-from danswer.db.chat import create_new_chat_message
-from danswer.db.chat import get_or_create_root_message
-from danswer.db.chat import translate_db_message_to_chat_message_detail
-from danswer.db.chat import translate_db_search_doc_to_server_search_doc
-from danswer.db.chat import update_search_docs_table_with_relevance
-from danswer.db.engine import get_session_context_manager
-from danswer.db.models import Persona
-from danswer.db.models import User
-from danswer.db.persona import get_prompt_by_id
-from danswer.llm.answering.answer import Answer
-from danswer.llm.answering.models import AnswerStyleConfig
-from danswer.llm.answering.models import CitationConfig
-from danswer.llm.answering.models import DocumentPruningConfig
-from danswer.llm.answering.models import PromptConfig
-from danswer.llm.answering.models import QuotesConfig
-from danswer.llm.factory import get_llms_for_persona
-from danswer.llm.factory import get_main_llm_from_tuple
-from danswer.natural_language_processing.utils import get_tokenizer
-from danswer.one_shot_answer.models import DirectQARequest
-from danswer.one_shot_answer.models import OneShotQAResponse
-from danswer.one_shot_answer.models import QueryRephrase
-from danswer.one_shot_answer.qa_utils import combine_message_thread
-from danswer.search.enums import LLMEvaluationType
-from danswer.search.models import RerankMetricsContainer
-from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.utils import chunks_or_sections_to_search_docs
-from danswer.search.utils import dedupe_documents
-from danswer.secondary_llm_flows.answer_validation import get_answer_validity
-from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
-from danswer.server.query_and_chat.models import ChatMessageDetail
-from danswer.server.utils import get_json_line
-from danswer.tools.force import ForceUseTool
-from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
-from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
-from danswer.tools.search.search_tool import SearchResponseSummary
-from danswer.tools.search.search_tool import SearchTool
-from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
-from danswer.tools.tool import ToolResponse
-from danswer.tools.tool_runner import ToolCallKickoff
-from danswer.utils.logger import setup_logger
-from danswer.utils.timing import log_generator_function_time
-from ee.danswer.server.query_and_chat.utils import create_temporary_persona
+from ee.onyx.server.query_and_chat.utils import create_temporary_persona
 
 logger = setup_logger()
 
@@ -69,9 +69,9 @@ AnswerObjectIterator = Iterator[
     QueryRephrase
     | QADocsResponse
     | LLMRelevanceFilterResponse
-    | DanswerAnswerPiece
-    | DanswerQuotes
-    | DanswerContexts
+    | onyxAnswerPiece
+    | onyxQuotes
+    | onyxContexts
     | StreamingError
     | ChatMessageDetail
     | CitationInfo
@@ -94,7 +94,7 @@ def stream_answer_objects(
     timeout: int = QA_TIMEOUT,
     bypass_acl: bool = False,
     use_citations: bool = False,
-    danswerbot_flow: bool = False,
+    onyxbot_flow: bool = False,
     retrieval_metrics_callback: (
         Callable[[RetrievalMetricsContainer], None] | None
     ) = None,
@@ -103,7 +103,7 @@ def stream_answer_objects(
     """Streams in order:
     1. [always] Retrieved documents, stops flow if nothing is found
     2. [conditional] LLM selected chunk indices if LLM chunk filtering is turned on
-    3. [always] A set of streamed DanswerAnswerPiece and DanswerQuotes at the end
+    3. [always] A set of streamed onyxAnswerPiece and onyxQuotes at the end
                 or an error anywhere along the line if something fails
     4. [always] Details on the final AI response message that is created
     """
@@ -117,7 +117,7 @@ def stream_answer_objects(
         user_id=user_id,
         persona_id=query_req.persona_id,
         one_shot=True,
-        danswerbot_flow=danswerbot_flow,
+        onyxbot_flow=onyxbot_flow,
     )
 
     temporary_persona: Persona | None = None
@@ -350,7 +350,7 @@ def get_search_answer(
     enable_reflexion: bool = False,
     bypass_acl: bool = False,
     use_citations: bool = False,
-    danswerbot_flow: bool = False,
+    onyxbot_flow: bool = False,
     retrieval_metrics_callback: (
         Callable[[RetrievalMetricsContainer], None] | None
     ) = None,
@@ -367,7 +367,7 @@ def get_search_answer(
         db_session=db_session,
         bypass_acl=bypass_acl,
         use_citations=use_citations,
-        danswerbot_flow=danswerbot_flow,
+        onyxbot_flow=onyxbot_flow,
         timeout=answer_generation_timeout,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
@@ -377,20 +377,20 @@ def get_search_answer(
     for packet in results:
         if isinstance(packet, QueryRephrase):
             qa_response.rephrase = packet.rephrased_query
-        if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
+        if isinstance(packet, onyxAnswerPiece) and packet.answer_piece:
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
             qa_response.docs = packet
         elif isinstance(packet, LLMRelevanceFilterResponse):
             qa_response.llm_selected_doc_indices = packet.llm_selected_doc_indices
-        elif isinstance(packet, DanswerQuotes):
+        elif isinstance(packet, onyxQuotes):
             qa_response.quotes = packet
         elif isinstance(packet, CitationInfo):
             if qa_response.citations:
                 qa_response.citations.append(packet)
             else:
                 qa_response.citations = [packet]
-        elif isinstance(packet, DanswerContexts):
+        elif isinstance(packet, onyxContexts):
             qa_response.contexts = packet
         elif isinstance(packet, StreamingError):
             qa_response.error_msg = packet.error

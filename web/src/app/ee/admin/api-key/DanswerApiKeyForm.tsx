@@ -11,19 +11,19 @@ import { Button, Divider, Text } from "@tremor/react";
 import { UserRole } from "@/lib/types";
 import { APIKey } from "./types";
 
-interface DanswerApiKeyFormProps {
+interface onyxApiKeyFormProps {
   onClose: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
   onCreateApiKey: (apiKey: APIKey) => void;
   apiKey?: APIKey;
 }
 
-export const DanswerApiKeyForm = ({
+export const onyxApiKeyForm = ({
   onClose,
   setPopup,
   onCreateApiKey,
   apiKey,
-}: DanswerApiKeyFormProps) => {
+}: onyxApiKeyFormProps) => {
   const isUpdate = apiKey !== undefined;
 
   return (

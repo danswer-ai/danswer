@@ -2,14 +2,13 @@ import datetime
 from typing import cast
 from uuid import UUID
 
+from onyx.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from onyx.db.models import SamlAccount
+from onyx.db.models import User
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
-from danswer.db.models import SamlAccount
-from danswer.db.models import User
 
 
 def upsert_saml_account(

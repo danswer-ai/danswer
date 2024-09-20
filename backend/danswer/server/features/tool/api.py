@@ -3,22 +3,21 @@ from typing import Any
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from onyx.auth.users import current_admin_user
+from onyx.auth.users import current_user
+from onyx.db.engine import get_session
+from onyx.db.models import User
+from onyx.db.tools import create_tool
+from onyx.db.tools import delete_tool
+from onyx.db.tools import get_tool_by_id
+from onyx.db.tools import get_tools
+from onyx.db.tools import update_tool
+from onyx.server.features.tool.models import ToolSnapshot
+from onyx.tools.custom.openapi_parsing import MethodSpec
+from onyx.tools.custom.openapi_parsing import openapi_to_method_specs
+from onyx.tools.custom.openapi_parsing import validate_openapi_schema
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
-from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_user
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from danswer.db.tools import create_tool
-from danswer.db.tools import delete_tool
-from danswer.db.tools import get_tool_by_id
-from danswer.db.tools import get_tools
-from danswer.db.tools import update_tool
-from danswer.server.features.tool.models import ToolSnapshot
-from danswer.tools.custom.openapi_parsing import MethodSpec
-from danswer.tools.custom.openapi_parsing import openapi_to_method_specs
-from danswer.tools.custom.openapi_parsing import validate_openapi_schema
 
 router = APIRouter(prefix="/tool")
 admin_router = APIRouter(prefix="/admin/tool")

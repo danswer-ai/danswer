@@ -1,15 +1,15 @@
 import re
 from collections.abc import Iterator
 
-from danswer.chat.models import AnswerQuestionStreamReturn
-from danswer.chat.models import CitationInfo
-from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import LlmDoc
-from danswer.configs.chat_configs import STOP_STREAM_PAT
-from danswer.llm.answering.models import StreamProcessor
-from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
-from danswer.prompts.constants import TRIPLE_BACKTICK
-from danswer.utils.logger import setup_logger
+from onyx.chat.models import AnswerQuestionStreamReturn
+from onyx.chat.models import CitationInfo
+from onyx.chat.models import LlmDoc
+from onyx.chat.models import onyxAnswerPiece
+from onyx.configs.chat_configs import STOP_STREAM_PAT
+from onyx.llm.answering.models import StreamProcessor
+from onyx.llm.answering.stream_processing.utils import DocumentIdOrderMapping
+from onyx.prompts.constants import TRIPLE_BACKTICK
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -24,7 +24,7 @@ def extract_citations_from_stream(
     context_docs: list[LlmDoc],
     doc_id_to_rank_map: DocumentIdOrderMapping,
     stop_stream: str | None = STOP_STREAM_PAT,
-) -> Iterator[DanswerAnswerPiece | CitationInfo]:
+) -> Iterator[onyxAnswerPiece | CitationInfo]:
     """
     Key aspects:
 
@@ -48,7 +48,7 @@ def extract_citations_from_stream(
     - Skips consecutive citations of the same document to avoid redundancy.
 
     6. Output Generation:
-    - Yields DanswerAnswerPiece objects for regular text.
+    - Yields onyxAnswerPiece objects for regular text.
     - Yields CitationInfo objects for each unique citation encountered.
 
     7. Context Awareness:
@@ -198,15 +198,15 @@ def extract_citations_from_stream(
                     last_citation_end = end + length_to_add
 
             if last_citation_end > 0:
-                yield DanswerAnswerPiece(answer_piece=curr_segment[:last_citation_end])
+                yield onyxAnswerPiece(answer_piece=curr_segment[:last_citation_end])
                 curr_segment = curr_segment[last_citation_end:]
         if possible_citation_found:
             continue
-        yield DanswerAnswerPiece(answer_piece=curr_segment)
+        yield onyxAnswerPiece(answer_piece=curr_segment)
         curr_segment = ""
 
     if curr_segment:
-        yield DanswerAnswerPiece(answer_piece=curr_segment)
+        yield onyxAnswerPiece(answer_piece=curr_segment)
 
 
 def build_citation_processor(

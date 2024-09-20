@@ -1,24 +1,24 @@
 from datetime import datetime
 from datetime import timezone
 
+from onyx.access.access import get_access_for_documents
+from onyx.db.connector_credential_pair import get_connector_credential_pair_from_id
+from onyx.db.search_settings import get_current_search_settings
+from onyx.document_index.factory import get_default_document_index
+from onyx.document_index.interfaces import UpdateRequest
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
-from danswer.access.access import get_access_for_documents
-from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
-from danswer.db.search_settings import get_current_search_settings
-from danswer.document_index.factory import get_default_document_index
-from danswer.document_index.interfaces import UpdateRequest
-from danswer.utils.logger import setup_logger
-from ee.danswer.external_permissions.permission_sync_function_map import (
+from ee.onyx.external_permissions.permission_sync_function_map import (
     DOC_PERMISSIONS_FUNC_MAP,
 )
-from ee.danswer.external_permissions.permission_sync_function_map import (
+from ee.onyx.external_permissions.permission_sync_function_map import (
     FULL_FETCH_PERIOD_IN_SECONDS,
 )
-from ee.danswer.external_permissions.permission_sync_function_map import (
+from ee.onyx.external_permissions.permission_sync_function_map import (
     GROUP_PERMISSIONS_FUNC_MAP,
 )
-from ee.danswer.external_permissions.permission_sync_utils import (
+from ee.onyx.external_permissions.permission_sync_utils import (
     get_docs_with_additional_info,
 )
 

@@ -5,23 +5,22 @@ from typing import List
 from typing import Optional
 
 import requests
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
+from onyx.configs.app_configs import INDEX_BATCH_SIZE
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.cross_connector_utils.rate_limit_wrapper import (
     rate_limit_builder,
 )
-from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
-from danswer.connectors.document360.utils import flatten_child_categories
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
-from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import BasicExpertInfo
-from danswer.connectors.models import ConnectorMissingCredentialError
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.file_processing.html_utils import parse_html_page_basic
+from onyx.connectors.cross_connector_utils.retry_wrapper import retry_builder
+from onyx.connectors.document360.utils import flatten_child_categories
+from onyx.connectors.interfaces import GenerateDocumentsOutput
+from onyx.connectors.interfaces import LoadConnector
+from onyx.connectors.interfaces import PollConnector
+from onyx.connectors.interfaces import SecondsSinceUnixEpoch
+from onyx.connectors.models import BasicExpertInfo
+from onyx.connectors.models import ConnectorMissingCredentialError
+from onyx.connectors.models import Document
+from onyx.connectors.models import Section
+from onyx.file_processing.html_utils import parse_html_page_basic
 
 # Limitations and Potential Improvements
 # 1. The "Categories themselves contain potentially relevant information" but they're not pulled in

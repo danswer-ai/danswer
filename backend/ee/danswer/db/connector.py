@@ -1,9 +1,8 @@
+from onyx.configs.constants import DocumentSource
+from onyx.db.models import Connector
+from onyx.utils.logger import setup_logger
 from sqlalchemy import distinct
 from sqlalchemy.orm import Session
-
-from danswer.configs.constants import DocumentSource
-from danswer.db.models import Connector
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

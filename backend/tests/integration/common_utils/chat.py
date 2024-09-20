@@ -1,7 +1,6 @@
 import requests
+from onyx.db.models import User
 from sqlalchemy.orm import Session
-
-from danswer.db.models import User
 
 
 def test_create_chat_session_and_send_messages(db_session: Session) -> None:

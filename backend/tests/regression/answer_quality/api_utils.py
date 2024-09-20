@@ -1,16 +1,16 @@
 import requests
+from onyx.configs.constants import DocumentSource
+from onyx.configs.constants import MessageType
+from onyx.connectors.models import InputType
+from onyx.db.enums import IndexingStatus
+from onyx.one_shot_answer.models import DirectQARequest
+from onyx.one_shot_answer.models import ThreadMessage
+from onyx.search.models import IndexFilters
+from onyx.search.models import OptionalSearchSetting
+from onyx.search.models import RetrievalDetails
+from onyx.server.documents.models import ConnectorBase
 from retry import retry
 
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import MessageType
-from danswer.connectors.models import InputType
-from danswer.db.enums import IndexingStatus
-from danswer.one_shot_answer.models import DirectQARequest
-from danswer.one_shot_answer.models import ThreadMessage
-from danswer.search.models import IndexFilters
-from danswer.search.models import OptionalSearchSetting
-from danswer.search.models import RetrievalDetails
-from danswer.server.documents.models import ConnectorBase
 from tests.regression.answer_quality.cli_utils import get_api_server_host_port
 
 GENERAL_HEADERS = {"Content-Type": "application/json"}

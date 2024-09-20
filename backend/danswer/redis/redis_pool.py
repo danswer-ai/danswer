@@ -2,16 +2,15 @@ import threading
 from typing import Optional
 
 import redis
+from onyx.configs.app_configs import REDIS_DB_NUMBER
+from onyx.configs.app_configs import REDIS_HOST
+from onyx.configs.app_configs import REDIS_PASSWORD
+from onyx.configs.app_configs import REDIS_PORT
+from onyx.configs.app_configs import REDIS_SSL
+from onyx.configs.app_configs import REDIS_SSL_CA_CERTS
+from onyx.configs.app_configs import REDIS_SSL_CERT_REQS
 from redis.client import Redis
 from redis.connection import ConnectionPool
-
-from danswer.configs.app_configs import REDIS_DB_NUMBER
-from danswer.configs.app_configs import REDIS_HOST
-from danswer.configs.app_configs import REDIS_PASSWORD
-from danswer.configs.app_configs import REDIS_PORT
-from danswer.configs.app_configs import REDIS_SSL
-from danswer.configs.app_configs import REDIS_SSL_CA_CERTS
-from danswer.configs.app_configs import REDIS_SSL_CERT_REQS
 
 REDIS_POOL_MAX_CONNECTIONS = 10
 

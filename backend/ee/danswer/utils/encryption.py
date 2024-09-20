@@ -6,10 +6,9 @@ from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers import algorithms
 from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import modes
-
-from danswer.configs.app_configs import ENCRYPTION_KEY_SECRET
-from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import fetch_versioned_implementation
+from onyx.configs.app_configs import ENCRYPTION_KEY_SECRET
+from onyx.utils.logger import setup_logger
+from onyx.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
 
@@ -65,20 +64,20 @@ def _decrypt_bytes(input_bytes: bytes) -> str:
 
 def encrypt_string_to_bytes(input_str: str) -> bytes:
     versioned_encryption_fn = fetch_versioned_implementation(
-        "danswer.utils.encryption", "_encrypt_string"
+        "onyx.utils.encryption", "_encrypt_string"
     )
     return versioned_encryption_fn(input_str)
 
 
 def decrypt_bytes_to_string(input_bytes: bytes) -> str:
     versioned_decryption_fn = fetch_versioned_implementation(
-        "danswer.utils.encryption", "_decrypt_bytes"
+        "onyx.utils.encryption", "_decrypt_bytes"
     )
     return versioned_decryption_fn(input_bytes)
 
 
 def test_encryption() -> None:
-    test_string = "Danswer is the BEST!"
+    test_string = "onyx is the BEST!"
     encrypted_bytes = encrypt_string_to_bytes(test_string)
     decrypted_string = decrypt_bytes_to_string(encrypted_bytes)
     if test_string != decrypted_string:

@@ -1,21 +1,21 @@
 from typing import cast
 
+from onyx.background.celery.celery_app import task_logger
+from onyx.background.celery.celery_redis import RedisUserGroup
+from onyx.db.engine import get_sqlalchemy_engine
+from onyx.db.enums import AccessType
+from onyx.db.models import ConnectorCredentialPair
+from onyx.db.tasks import check_task_is_live_and_not_timed_out
+from onyx.db.tasks import get_latest_task
+from onyx.utils.logger import setup_logger
 from redis import Redis
 from sqlalchemy.orm import Session
 
-from danswer.background.celery.celery_app import task_logger
-from danswer.background.celery.celery_redis import RedisUserGroup
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.enums import AccessType
-from danswer.db.models import ConnectorCredentialPair
-from danswer.db.tasks import check_task_is_live_and_not_timed_out
-from danswer.db.tasks import get_latest_task
-from danswer.utils.logger import setup_logger
-from ee.danswer.background.task_name_builders import name_chat_ttl_task
-from ee.danswer.background.task_name_builders import name_sync_external_permissions_task
-from ee.danswer.db.user_group import delete_user_group
-from ee.danswer.db.user_group import fetch_user_group
-from ee.danswer.db.user_group import mark_user_group_as_synced
+from ee.onyx.background.task_name_builders import name_chat_ttl_task
+from ee.onyx.background.task_name_builders import name_sync_external_permissions_task
+from ee.onyx.db.user_group import delete_user_group
+from ee.onyx.db.user_group import fetch_user_group
+from ee.onyx.db.user_group import mark_user_group_as_synced
 
 logger = setup_logger()
 

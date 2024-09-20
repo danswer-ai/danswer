@@ -15,12 +15,11 @@ import chardet
 import docx  # type: ignore
 import openpyxl  # type: ignore
 import pptx  # type: ignore
+from onyx.configs.constants import onyx_METADATA_FILENAME
+from onyx.file_processing.html_utils import parse_html_page_basic
+from onyx.utils.logger import setup_logger
 from pypdf import PdfReader
 from pypdf.errors import PdfStreamError
-
-from danswer.configs.constants import DANSWER_METADATA_FILENAME
-from danswer.file_processing.html_utils import parse_html_page_basic
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -90,7 +89,7 @@ def is_macos_resource_fork_file(file_name: str) -> bool:
     )
 
 
-# To include additional metadata in the search index, add a .danswer_metadata.json file
+# To include additional metadata in the search index, add a .onyx_metadata.json file
 # to the zip file. This file should contain a list of objects with the following format:
 # [{ "filename": "file1.txt", "link": "https://example.com/file1.txt" }]
 def load_files_from_zip(
@@ -101,7 +100,7 @@ def load_files_from_zip(
     with zipfile.ZipFile(zip_file_io, "r") as zip_file:
         zip_metadata = {}
         try:
-            metadata_file_info = zip_file.getinfo(DANSWER_METADATA_FILENAME)
+            metadata_file_info = zip_file.getinfo(onyx_METADATA_FILENAME)
             with zip_file.open(metadata_file_info, "r") as metadata_file:
                 try:
                     zip_metadata = json.load(metadata_file)
@@ -109,9 +108,9 @@ def load_files_from_zip(
                         # convert list of dicts to dict of dicts
                         zip_metadata = {d["filename"]: d for d in zip_metadata}
                 except json.JSONDecodeError:
-                    logger.warn(f"Unable to load {DANSWER_METADATA_FILENAME}")
+                    logger.warn(f"Unable to load {onyx_METADATA_FILENAME}")
         except KeyError:
-            logger.info(f"No {DANSWER_METADATA_FILENAME} file")
+            logger.info(f"No {onyx_METADATA_FILENAME} file")
 
         for file_info in zip_file.infolist():
             with zip_file.open(file_info.filename, "r") as file:
@@ -121,14 +120,14 @@ def load_files_from_zip(
                 if (
                     ignore_macos_resource_fork_files
                     and is_macos_resource_fork_file(file_info.filename)
-                ) or file_info.filename == DANSWER_METADATA_FILENAME:
+                ) or file_info.filename == onyx_METADATA_FILENAME:
                     continue
                 yield file_info, file, zip_metadata.get(file_info.filename, {})
 
 
-def _extract_danswer_metadata(line: str) -> dict | None:
-    html_comment_pattern = r"<!--\s*DANSWER_METADATA=\{(.*?)\}\s*-->"
-    hashtag_pattern = r"#DANSWER_METADATA=\{(.*?)\}"
+def _extract_onyx_metadata(line: str) -> dict | None:
+    html_comment_pattern = r"<!--\s*onyx_METADATA=\{(.*?)\}\s*-->"
+    hashtag_pattern = r"#onyx_METADATA=\{(.*?)\}"
 
     html_comment_match = re.search(html_comment_pattern, line)
     hashtag_match = re.search(hashtag_pattern, line)
@@ -150,7 +149,7 @@ def read_text_file(
     file: IO,
     encoding: str = "utf-8",
     errors: str = "replace",
-    ignore_danswer_metadata: bool = True,
+    ignore_onyx_metadata: bool = True,
 ) -> tuple[str, dict]:
     metadata = {}
     file_content_raw = ""
@@ -166,7 +165,7 @@ def read_text_file(
 
         if ind == 0:
             metadata_or_none = (
-                None if ignore_danswer_metadata else _extract_danswer_metadata(line)
+                None if ignore_onyx_metadata else _extract_onyx_metadata(line)
             )
             if metadata_or_none is not None:
                 metadata = metadata_or_none

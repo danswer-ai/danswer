@@ -1,4 +1,4 @@
-from danswer.prompts.constants import GENERAL_SEP_PAT
+from onyx.prompts.constants import GENERAL_SEP_PAT
 
 DONT_USE_TOOL = "Don't use tool"
 USE_TOOL = "Use tool"

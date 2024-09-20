@@ -1,23 +1,22 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from onyx.auth.users import current_admin_user
+from onyx.auth.users import current_user
+from onyx.db.engine import get_session
+from onyx.db.input_prompt import fetch_input_prompt_by_id
+from onyx.db.input_prompt import fetch_input_prompts_by_user
+from onyx.db.input_prompt import fetch_public_input_prompts
+from onyx.db.input_prompt import insert_input_prompt
+from onyx.db.input_prompt import remove_input_prompt
+from onyx.db.input_prompt import remove_public_input_prompt
+from onyx.db.input_prompt import update_input_prompt
+from onyx.db.models import User
+from onyx.server.features.input_prompt.models import CreateInputPromptRequest
+from onyx.server.features.input_prompt.models import InputPromptSnapshot
+from onyx.server.features.input_prompt.models import UpdateInputPromptRequest
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
-
-from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_user
-from danswer.db.engine import get_session
-from danswer.db.input_prompt import fetch_input_prompt_by_id
-from danswer.db.input_prompt import fetch_input_prompts_by_user
-from danswer.db.input_prompt import fetch_public_input_prompts
-from danswer.db.input_prompt import insert_input_prompt
-from danswer.db.input_prompt import remove_input_prompt
-from danswer.db.input_prompt import remove_public_input_prompt
-from danswer.db.input_prompt import update_input_prompt
-from danswer.db.models import User
-from danswer.server.features.input_prompt.models import CreateInputPromptRequest
-from danswer.server.features.input_prompt.models import InputPromptSnapshot
-from danswer.server.features.input_prompt.models import UpdateInputPromptRequest
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

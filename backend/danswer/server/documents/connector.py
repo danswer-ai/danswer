@@ -9,94 +9,94 @@ from fastapi import Query
 from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
+from onyx.auth.users import current_admin_user
+from onyx.auth.users import current_curator_or_admin_user
+from onyx.auth.users import current_user
+from onyx.background.celery.celery_utils import get_deletion_attempt_snapshot
+from onyx.configs.app_configs import ENABLED_CONNECTOR_TYPES
+from onyx.configs.constants import DocumentSource
+from onyx.configs.constants import FileOrigin
+from onyx.connectors.gmail.connector_auth import delete_gmail_service_account_key
+from onyx.connectors.gmail.connector_auth import delete_google_app_gmail_cred
+from onyx.connectors.gmail.connector_auth import get_gmail_auth_url
+from onyx.connectors.gmail.connector_auth import get_gmail_service_account_key
+from onyx.connectors.gmail.connector_auth import get_google_app_gmail_cred
+from onyx.connectors.gmail.connector_auth import (
+    update_gmail_credential_access_tokens,
+)
+from onyx.connectors.gmail.connector_auth import (
+    upsert_gmail_service_account_key,
+)
+from onyx.connectors.gmail.connector_auth import upsert_google_app_gmail_cred
+from onyx.connectors.google_drive.connector_auth import build_service_account_creds
+from onyx.connectors.google_drive.connector_auth import delete_google_app_cred
+from onyx.connectors.google_drive.connector_auth import delete_service_account_key
+from onyx.connectors.google_drive.connector_auth import get_auth_url
+from onyx.connectors.google_drive.connector_auth import get_google_app_cred
+from onyx.connectors.google_drive.connector_auth import (
+    get_google_drive_creds_for_authorized_user,
+)
+from onyx.connectors.google_drive.connector_auth import get_service_account_key
+from onyx.connectors.google_drive.connector_auth import (
+    update_credential_access_tokens,
+)
+from onyx.connectors.google_drive.connector_auth import upsert_google_app_cred
+from onyx.connectors.google_drive.connector_auth import upsert_service_account_key
+from onyx.connectors.google_drive.connector_auth import verify_csrf
+from onyx.connectors.google_drive.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
+from onyx.db.connector import create_connector
+from onyx.db.connector import delete_connector
+from onyx.db.connector import fetch_connector_by_id
+from onyx.db.connector import fetch_connectors
+from onyx.db.connector import get_connector_credential_ids
+from onyx.db.connector import update_connector
+from onyx.db.connector_credential_pair import add_credential_to_connector
+from onyx.db.connector_credential_pair import get_cc_pair_groups_for_ids
+from onyx.db.connector_credential_pair import get_connector_credential_pair
+from onyx.db.connector_credential_pair import get_connector_credential_pairs
+from onyx.db.credentials import create_credential
+from onyx.db.credentials import delete_gmail_service_account_credentials
+from onyx.db.credentials import delete_google_drive_service_account_credentials
+from onyx.db.credentials import fetch_credential_by_id
+from onyx.db.deletion_attempt import check_deletion_attempt_is_allowed
+from onyx.db.document import get_document_counts_for_cc_pairs
+from onyx.db.engine import get_session
+from onyx.db.enums import AccessType
+from onyx.db.index_attempt import create_index_attempt
+from onyx.db.index_attempt import get_index_attempts_for_cc_pair
+from onyx.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
+from onyx.db.index_attempt import get_latest_index_attempts
+from onyx.db.index_attempt import get_latest_index_attempts_by_status
+from onyx.db.models import IndexingStatus
+from onyx.db.models import User
+from onyx.db.models import UserRole
+from onyx.db.search_settings import get_current_search_settings
+from onyx.dynamic_configs.interface import ConfigNotFoundError
+from onyx.file_store.file_store import get_default_file_store
+from onyx.server.documents.models import AuthStatus
+from onyx.server.documents.models import AuthUrl
+from onyx.server.documents.models import ConnectorCredentialPairIdentifier
+from onyx.server.documents.models import ConnectorIndexingStatus
+from onyx.server.documents.models import ConnectorSnapshot
+from onyx.server.documents.models import ConnectorUpdateRequest
+from onyx.server.documents.models import CredentialBase
+from onyx.server.documents.models import CredentialSnapshot
+from onyx.server.documents.models import FailedConnectorIndexingStatus
+from onyx.server.documents.models import FileUploadResponse
+from onyx.server.documents.models import GDriveCallback
+from onyx.server.documents.models import GmailCallback
+from onyx.server.documents.models import GoogleAppCredentials
+from onyx.server.documents.models import GoogleServiceAccountCredentialRequest
+from onyx.server.documents.models import GoogleServiceAccountKey
+from onyx.server.documents.models import IndexAttemptSnapshot
+from onyx.server.documents.models import ObjectCreationIdResponse
+from onyx.server.documents.models import RunConnectorRequest
+from onyx.server.models import StatusResponse
+from onyx.utils.logger import setup_logger
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_curator_or_admin_user
-from danswer.auth.users import current_user
-from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
-from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import FileOrigin
-from danswer.connectors.gmail.connector_auth import delete_gmail_service_account_key
-from danswer.connectors.gmail.connector_auth import delete_google_app_gmail_cred
-from danswer.connectors.gmail.connector_auth import get_gmail_auth_url
-from danswer.connectors.gmail.connector_auth import get_gmail_service_account_key
-from danswer.connectors.gmail.connector_auth import get_google_app_gmail_cred
-from danswer.connectors.gmail.connector_auth import (
-    update_gmail_credential_access_tokens,
-)
-from danswer.connectors.gmail.connector_auth import (
-    upsert_gmail_service_account_key,
-)
-from danswer.connectors.gmail.connector_auth import upsert_google_app_gmail_cred
-from danswer.connectors.google_drive.connector_auth import build_service_account_creds
-from danswer.connectors.google_drive.connector_auth import delete_google_app_cred
-from danswer.connectors.google_drive.connector_auth import delete_service_account_key
-from danswer.connectors.google_drive.connector_auth import get_auth_url
-from danswer.connectors.google_drive.connector_auth import get_google_app_cred
-from danswer.connectors.google_drive.connector_auth import (
-    get_google_drive_creds_for_authorized_user,
-)
-from danswer.connectors.google_drive.connector_auth import get_service_account_key
-from danswer.connectors.google_drive.connector_auth import (
-    update_credential_access_tokens,
-)
-from danswer.connectors.google_drive.connector_auth import upsert_google_app_cred
-from danswer.connectors.google_drive.connector_auth import upsert_service_account_key
-from danswer.connectors.google_drive.connector_auth import verify_csrf
-from danswer.connectors.google_drive.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
-from danswer.db.connector import create_connector
-from danswer.db.connector import delete_connector
-from danswer.db.connector import fetch_connector_by_id
-from danswer.db.connector import fetch_connectors
-from danswer.db.connector import get_connector_credential_ids
-from danswer.db.connector import update_connector
-from danswer.db.connector_credential_pair import add_credential_to_connector
-from danswer.db.connector_credential_pair import get_cc_pair_groups_for_ids
-from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.connector_credential_pair import get_connector_credential_pairs
-from danswer.db.credentials import create_credential
-from danswer.db.credentials import delete_gmail_service_account_credentials
-from danswer.db.credentials import delete_google_drive_service_account_credentials
-from danswer.db.credentials import fetch_credential_by_id
-from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
-from danswer.db.document import get_document_counts_for_cc_pairs
-from danswer.db.engine import get_session
-from danswer.db.enums import AccessType
-from danswer.db.index_attempt import create_index_attempt
-from danswer.db.index_attempt import get_index_attempts_for_cc_pair
-from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
-from danswer.db.index_attempt import get_latest_index_attempts
-from danswer.db.index_attempt import get_latest_index_attempts_by_status
-from danswer.db.models import IndexingStatus
-from danswer.db.models import User
-from danswer.db.models import UserRole
-from danswer.db.search_settings import get_current_search_settings
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.file_store.file_store import get_default_file_store
-from danswer.server.documents.models import AuthStatus
-from danswer.server.documents.models import AuthUrl
-from danswer.server.documents.models import ConnectorCredentialPairIdentifier
-from danswer.server.documents.models import ConnectorIndexingStatus
-from danswer.server.documents.models import ConnectorSnapshot
-from danswer.server.documents.models import ConnectorUpdateRequest
-from danswer.server.documents.models import CredentialBase
-from danswer.server.documents.models import CredentialSnapshot
-from danswer.server.documents.models import FailedConnectorIndexingStatus
-from danswer.server.documents.models import FileUploadResponse
-from danswer.server.documents.models import GDriveCallback
-from danswer.server.documents.models import GmailCallback
-from danswer.server.documents.models import GoogleAppCredentials
-from danswer.server.documents.models import GoogleServiceAccountCredentialRequest
-from danswer.server.documents.models import GoogleServiceAccountKey
-from danswer.server.documents.models import IndexAttemptSnapshot
-from danswer.server.documents.models import ObjectCreationIdResponse
-from danswer.server.documents.models import RunConnectorRequest
-from danswer.server.models import StatusResponse
-from danswer.utils.logger import setup_logger
-from ee.danswer.db.user_group import validate_user_creation_permissions
+from ee.onyx.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
 

@@ -55,9 +55,7 @@ const Page = async () => {
 
           <Card className="mt-4 w-96">
             <div className="flex">
-              <Title className="mb-2 mx-auto font-bold">
-                Sign Up for Danswer
-              </Title>
+              <Title className="mb-2 mx-auto font-bold">Sign Up for onyx</Title>
             </div>
             <EmailPasswordForm
               isSignup

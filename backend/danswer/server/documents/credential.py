@@ -2,31 +2,31 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Query
+from onyx.auth.users import current_admin_user
+from onyx.auth.users import current_curator_or_admin_user
+from onyx.auth.users import current_user
+from onyx.db.credentials import alter_credential
+from onyx.db.credentials import create_credential
+from onyx.db.credentials import CREDENTIAL_PERMISSIONS_TO_IGNORE
+from onyx.db.credentials import delete_credential
+from onyx.db.credentials import fetch_credential_by_id
+from onyx.db.credentials import fetch_credentials
+from onyx.db.credentials import fetch_credentials_by_source
+from onyx.db.credentials import swap_credentials_connector
+from onyx.db.credentials import update_credential
+from onyx.db.engine import get_session
+from onyx.db.models import DocumentSource
+from onyx.db.models import User
+from onyx.server.documents.models import CredentialBase
+from onyx.server.documents.models import CredentialDataUpdateRequest
+from onyx.server.documents.models import CredentialSnapshot
+from onyx.server.documents.models import CredentialSwapRequest
+from onyx.server.documents.models import ObjectCreationIdResponse
+from onyx.server.models import StatusResponse
+from onyx.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_curator_or_admin_user
-from danswer.auth.users import current_user
-from danswer.db.credentials import alter_credential
-from danswer.db.credentials import create_credential
-from danswer.db.credentials import CREDENTIAL_PERMISSIONS_TO_IGNORE
-from danswer.db.credentials import delete_credential
-from danswer.db.credentials import fetch_credential_by_id
-from danswer.db.credentials import fetch_credentials
-from danswer.db.credentials import fetch_credentials_by_source
-from danswer.db.credentials import swap_credentials_connector
-from danswer.db.credentials import update_credential
-from danswer.db.engine import get_session
-from danswer.db.models import DocumentSource
-from danswer.db.models import User
-from danswer.server.documents.models import CredentialBase
-from danswer.server.documents.models import CredentialDataUpdateRequest
-from danswer.server.documents.models import CredentialSnapshot
-from danswer.server.documents.models import CredentialSwapRequest
-from danswer.server.documents.models import ObjectCreationIdResponse
-from danswer.server.models import StatusResponse
-from danswer.utils.logger import setup_logger
-from ee.danswer.db.user_group import validate_user_creation_permissions
+from ee.onyx.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
 

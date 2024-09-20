@@ -1,7 +1,7 @@
-# Danswer Chat Bot Widget
-Note: The widget requires a Danswer API key, which is a paid (cloud/enterprise) feature.
+# onyx Chat Bot Widget
+Note: The widget requires a onyx API key, which is a paid (cloud/enterprise) feature.
 
-This is a code example for how you can use Danswer's APIs to build a chat bot widget for a website! The main code to look at can be found in `src/app/widget/Widget.tsx`.
+This is a code example for how you can use onyx's APIs to build a chat bot widget for a website! The main code to look at can be found in `src/app/widget/Widget.tsx`.
 
 ## Getting Started
 
@@ -67,4 +67,4 @@ If you need to customize the widget, you can modify the `ChatWidget` component i
 
 By following these steps, you should be able to get the chat widget working on your webpage.
 
-If you want to get fancier, then take a peek at the Chat implementation within Danswer itself [here](https://github.com/danswer-ai/danswer/blob/main/web/src/app/chat/ChatPage.tsx#L82).
+If you want to get fancier, then take a peek at the Chat implementation within onyx itself [here](https://github.com/onyx-ai/onyx/blob/main/web/src/app/chat/ChatPage.tsx#L82).

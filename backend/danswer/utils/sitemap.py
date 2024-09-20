@@ -1,9 +1,8 @@
 from datetime import datetime
 from urllib import robotparser
 
+from onyx.utils.logger import setup_logger
 from usp.tree import sitemap_tree_for_homepage  # type: ignore
-
-from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

@@ -3,13 +3,13 @@ import importlib
 from typing import Any
 from typing import TypeVar
 
-from danswer.configs.app_configs import ENTERPRISE_EDITION_ENABLED
-from danswer.utils.logger import setup_logger
+from onyx.configs.app_configs import ENTERPRISE_EDITION_ENABLED
+from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 
 
-class DanswerVersion:
+class onyxVersion:
     def __init__(self) -> None:
         self._is_ee = False
 
@@ -20,7 +20,7 @@ class DanswerVersion:
         return self._is_ee
 
 
-global_version = DanswerVersion()
+global_version = onyxVersion()
 
 
 def set_is_ee_based_on_env_variable() -> None:
@@ -68,8 +68,8 @@ def fetch_versioned_implementation(module: str, attribute: str) -> Any:
         )
 
         if is_ee:
-            if "ee.danswer" not in str(e):
-                # If it's a non Danswer related import failure, this is likely because
+            if "ee.onyx" not in str(e):
+                # If it's a non onyx related import failure, this is likely because
                 # a dependent library has not been installed. Should raise this failure
                 # instead of letting the server start up
                 raise e
