@@ -1,4 +1,5 @@
 import unittest
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -20,12 +21,12 @@ class TestCustomTool(unittest.TestCase):
     based on OpenAPI schemas.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         """
         Set up the test environment before each test method.
         Initializes an OpenAPI schema and DynamicSchemaInfo for testing.
         """
-        self.openapi_schema = {
+        self.openapi_schema: dict[str, Any] = {
             "openapi": "3.0.0",
             "info": {
                 "version": "1.0.0",
@@ -71,10 +72,12 @@ class TestCustomTool(unittest.TestCase):
             },
         }
         validate_openapi_schema(self.openapi_schema)
-        self.dynamic_schema_info = DynamicSchemaInfo(chat_session_id=10, message_id=20)
+        self.dynamic_schema_info: DynamicSchemaInfo = DynamicSchemaInfo(
+            chat_session_id=10, message_id=20
+        )
 
     @patch("danswer.tools.custom.custom_tool.requests.request")
-    def test_custom_tool_run_get(self, mock_request):
+    def test_custom_tool_run_get(self, mock_request: unittest.mock.MagicMock) -> None:
         """
         Test the GET method of a custom tool.
         Verifies that the tool correctly constructs the URL and makes the GET request.
@@ -102,7 +105,7 @@ class TestCustomTool(unittest.TestCase):
         )
 
     @patch("danswer.tools.custom.custom_tool.requests.request")
-    def test_custom_tool_run_post(self, mock_request):
+    def test_custom_tool_run_post(self, mock_request: unittest.mock.MagicMock) -> None:
         """
         Test the POST method of a custom tool.
         Verifies that the tool correctly constructs the URL and makes the POST request with the given body.
@@ -132,12 +135,14 @@ class TestCustomTool(unittest.TestCase):
         )
 
     @patch("danswer.tools.custom.custom_tool.requests.request")
-    def test_custom_tool_with_headers(self, mock_request):
+    def test_custom_tool_with_headers(
+        self, mock_request: unittest.mock.MagicMock
+    ) -> None:
         """
         Test the custom tool with custom headers.
         Verifies that the tool correctly includes the custom headers in the request.
         """
-        custom_headers = [
+        custom_headers: list[dict[str, str]] = [
             {"key": "Authorization", "value": "Bearer token123"},
             {"key": "Custom-Header", "value": "CustomValue"},
         ]
@@ -158,12 +163,14 @@ class TestCustomTool(unittest.TestCase):
         )
 
     @patch("danswer.tools.custom.custom_tool.requests.request")
-    def test_custom_tool_with_empty_headers(self, mock_request):
+    def test_custom_tool_with_empty_headers(
+        self, mock_request: unittest.mock.MagicMock
+    ) -> None:
         """
         Test the custom tool with an empty list of custom headers.
         Verifies that the tool correctly handles an empty list of headers.
         """
-        custom_headers = []
+        custom_headers: list[dict[str, str]] = []
         tools = build_custom_tools_from_openapi_schema_and_headers(
             self.openapi_schema,
             custom_headers=custom_headers,
@@ -174,11 +181,11 @@ class TestCustomTool(unittest.TestCase):
         expected_url = f"http://localhost:8080/{self.dynamic_schema_info.chat_session_id}/test/{self.dynamic_schema_info.message_id}/assistant/123"
         mock_request.assert_called_once_with("GET", expected_url, json=None, headers={})
 
-    def test_invalid_openapi_schema(self):
+    def test_invalid_openapi_schema(self) -> None:
         """
         Test that an invalid OpenAPI schema raises a ValueError.
         """
-        invalid_schema = {
+        invalid_schema: dict[str, Any] = {
             "openapi": "3.0.0",
             "info": {
                 "version": "1.0.0",
@@ -190,7 +197,7 @@ class TestCustomTool(unittest.TestCase):
         with self.assertRaises(ValueError) as _:
             validate_openapi_schema(invalid_schema)
 
-    def test_custom_tool_final_result(self):
+    def test_custom_tool_final_result(self) -> None:
         """
         Test the final_result method of a custom tool.
         Verifies that the method correctly extracts and returns the tool result.
