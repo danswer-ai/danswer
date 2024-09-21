@@ -16,6 +16,7 @@ class MethodSpec(BaseModel):
     summary: str
     path: str
     method: str
+    body_schema: dict[str, Any] = {}
     spec: dict[str, Any]
 
     def get_request_body_schema(self) -> dict[str, Any]:
@@ -87,6 +88,8 @@ class MethodSpec(BaseModel):
             tool_definition["function"]["parameters"]["properties"].update(
                 {param["name"]: param["schema"] for param in path_param_schemas}
             )
+        print(tool_definition)
+        print("")
         return tool_definition
 
     def validate_spec(self) -> None:

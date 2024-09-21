@@ -204,6 +204,7 @@ def build_custom_tools_from_openapi_schema_and_headers(
 
     url = openapi_to_url(openapi_schema)
     method_specs = openapi_to_method_specs(openapi_schema)
+
     return [
         CustomTool(method_spec, url, custom_headers) for method_spec in method_specs
     ]
