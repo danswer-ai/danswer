@@ -62,13 +62,21 @@ def upsert_cloud_embedding_provider(
 
 
 def upsert_llm_provider(
-    llm_provider: LLMProviderUpsertRequest, db_session: Session
+    llm_provider: LLMProviderUpsertRequest,
+    db_session: Session,
+    is_creation: bool = True,
 ) -> FullLLMProvider:
     existing_llm_provider = db_session.scalar(
         select(LLMProviderModel).where(LLMProviderModel.name == llm_provider.name)
     )
+    if existing_llm_provider and is_creation:
+        raise ValueError(f"LLM Provider with name {llm_provider.name} already exists")
 
     if not existing_llm_provider:
+        if not is_creation:
+            raise ValueError(
+                f"LLM Provider with name {llm_provider.name} does not exist"
+            )
         existing_llm_provider = LLMProviderModel(name=llm_provider.name)
         db_session.add(existing_llm_provider)
 
