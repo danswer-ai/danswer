@@ -152,6 +152,7 @@ export function AssistantsGallery() {
     user,
     assistants
   );
+  console.log(assistants);
 
   const defaultAssistants = assistants
     .filter((assistant) => assistant.is_default_persona)
