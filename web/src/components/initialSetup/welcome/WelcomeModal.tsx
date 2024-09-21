@@ -56,9 +56,8 @@ export function _WelcomeModal({ user }: { user: User | null }) {
     <Modal title={"Welcome to Danswer!"} width="w-full max-w-3xl">
       <div>
         <Text className="mb-4">
-          Imagine having all your company's knowledge at your fingertips, ready
-          to be tapped into at a moment's notice. That's what Danswer brings to
-          the table.
+          Danswer brings all your company&apos;s knowledge to your fingertips,
+          ready to be accessed instantly.
         </Text>
         <Text className="mb-4">
           To get started, we need to set up an API key for the Language Model
