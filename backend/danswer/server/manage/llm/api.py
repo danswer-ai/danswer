@@ -18,6 +18,7 @@ from danswer.llm.factory import get_default_llms
 from danswer.llm.factory import get_llm
 from danswer.llm.llm_provider_options import fetch_available_well_known_llms
 from danswer.llm.llm_provider_options import WellKnownLLMProviderDescriptor
+from danswer.llm.utils import litellm_exception_to_error_msg
 from danswer.llm.utils import test_llm
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderDescriptor
@@ -78,7 +79,10 @@ def test_llm_configuration(
     )
 
     if error:
-        raise HTTPException(status_code=400, detail=error)
+        client_error_msg = litellm_exception_to_error_msg(
+            error, llm, fallback_to_error_msg=True
+        )
+        raise HTTPException(status_code=400, detail=client_error_msg)
 
 
 @admin_router.post("/test/default")
