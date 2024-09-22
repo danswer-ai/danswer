@@ -27,21 +27,17 @@ export default function SSOCallback() {
             headers: {
               "Content-Type": "application/json",
             },
-            credentials: "include",
+            credentials: "include", // Ensure cookies are included in requests
           }
         );
         if (response.ok) {
-          const data = await response.json();
           setAuthStatus("Authentication successful!");
-
-          // Set the session cookie manually TODO validate safety
-          document.cookie = `fastapiusersauth=${data.session_token}; max-age=${data.max_age}; path=/; secure; samesite=lax`;
-
+        
           // Redirect to the dashboard
           router.replace("/admin/plan");
         } else {
           const errorData = await response.json();
-          console.error("Authentication failed:", errorData);
+          console.error(errorData);
           setError(errorData.detail || "Authentication failed");
         }
       } catch (error) {

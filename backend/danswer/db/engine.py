@@ -177,15 +177,61 @@ def get_session_context_manager() -> ContextManager[Session]:
     return contextlib.contextmanager(get_session)()
 
 
-def get_session(schema: str = DEFAULT_SCHEMA) -> Generator[Session, None, None]:
-    # The line below was added to monitor the latency caused by Postgres connections
-    # during API calls.
-    # with tracer.trace("db.get_session"):
+from typing import Generator
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+import jwt
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+DEFAULT_SCHEMA = "public"
+
+from fastapi import Request, Depends, HTTPException
+
+
+def get_current_tenant_id(request: Request):
+    token = request.cookies.get("fastapiusersauth")
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    try:
+        payload = jwt.decode(token, "JWT_SECRET_KEY", algorithms=["HS256"])
+        tenant_id = payload.get("tenant_id")
+        if not tenant_id:
+            raise HTTPException(status_code=400, detail="Invalid token: tenant_id missing")
+        return tenant_id
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token") from e
+
+
+
+def get_session(tenant_id: str = Depends(get_current_tenant_id)) -> Generator[Session, None, None]:
+
+    print('\n\n\n\n\ntenant_id', tenant_id)
     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
-        session.execute(text(f"SET search_path TO {schema}"))
+
+        tenant_id = "01fb5963-9ab3-4585-900a-438480857427"
+
+        session.execute(text(f'SET search_path TO "{tenant_id}"'))
         yield session
-        session.execute(text("SET search_path TO public"))
+        session.execute(text('SET search_path TO "public"'))
+
+
+    # Logic to create or retrieve a database session for the given tenant_id
+
+
+
+# def get_session(schema: str = DEFAULT_SCHEMA) -> Generator[Session, None, None]:
+#     # The line below was added to monitor the latency caused by Postgres connections
+#     # during API calls.
+#     # with tracer.trace("db.get_session"):
+
+#     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
+#         session.execute(text(f"SET search_path TO {schema}"))
+#         yield session
+#         session.execute(text("SET search_path TO public"))
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:

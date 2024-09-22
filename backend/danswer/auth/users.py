@@ -194,7 +194,6 @@ def send_user_verification_email(
         s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
 
-
 def verify_sso_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, "SSO_SECRET_KEY", algorithms=["HS256"])
@@ -207,6 +206,7 @@ def verify_sso_token(token: str) -> dict:
             )
         return payload
     except jwt.PyJWTError:
+        print("ATTEMPING TO DECODE")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
@@ -240,10 +240,23 @@ async def get_or_create_user(email: str, user_id: str, tenant_id: str) -> User:
             created_user = await user_db.create(new_user)
             return created_user
 
+from datetime import timedelta
 
-async def create_user_session(user: User, strategy: Strategy) -> str:
-    token = await strategy.write_token(user)
+async def create_user_session(user: User, tenant_id: str) -> str:
+    # Create a payload with user information and tenant_id
+    payload = {
+        "sub": str(user.id),
+        "email": user.email,
+        "tenant_id": tenant_id,
+        "exp": datetime.utcnow() + timedelta(seconds=SESSION_EXPIRE_TIME_SECONDS)
+    }
+    
+    # Encode the token
+    token = jwt.encode(payload, "JWT_SECRET_KEY", algorithm="HS256")
+
+    
     return token
+
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):

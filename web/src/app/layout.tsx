@@ -53,6 +53,16 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+// 00a89749-beab-489a-8b72-88aa3d646274
+// 01fb5963-9ab3-4585-900a-438480857427
+  // return <>{children}</>
+
+//   SELECT table_name, column_name, data_type, character_maximum_length
+// FROM information_schema.columns
+// WHERE table_schema = '00a89749-beab-489a-8b72-88aa3d646274'
+// ORDER BY table_name, ordinal_position;
+
+
   const combinedSettings = await fetchSettingsSS();
   if (!combinedSettings) {
     // Just display a simple full page error if fetching fails.
