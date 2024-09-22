@@ -377,4 +377,5 @@ STRIPE_PRICE = os.environ.get("STRIPE_PRICE", "price_1PsYoPHlhTYqRZib2t5ydpq5")
 STRIPE_WEBHOOK_SECRET = (
     "whsec_1cd766cd6bd08590aa8c46ab5c21ac32cad77c29de2e09a152a01971d6f405d3"
 )
-# STRIPE_SECRET_KEY="sk_test_51NwZq2HlhTYqRZibT2cssHV8E5QcLAUmaRLQPMjGb5aOxOWomVxOmzRgxf82ziDBuGdPP2GIDod8xe6DyqeGgUDi00KbsHPoT4"
+
+DEFAULT_SCHEMA = os.environ.get("DEFAULT_SCHEMA", "public")
