@@ -2771,7 +2771,7 @@ export const CreditCardIcon = ({
       <path
         fill="none"
         stroke="currentColor"
-        strokeLinecape="round"
+        strokeLinecap="round"
         strokeLinejoin="round"
         d="M12.5 2.25h-11a1 1 0 0 0-1 1v7.5a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-7.5a1 1 0 0 0-1-1m-12 3.5h13m-4 3.5H11"
       />
