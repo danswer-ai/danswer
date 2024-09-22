@@ -1,4 +1,5 @@
 import re
+from sqlalchemy.orm import Session
 from collections.abc import Iterator
 
 from danswer.chat.models import DanswerAnswerPiece
@@ -46,7 +47,8 @@ def extract_answerability_bool(model_raw: str) -> bool:
 
 
 def get_query_answerability(
-    user_query: str, skip_check: bool = DISABLE_LLM_QUERY_ANSWERABILITY
+    db_session: Session,
+    user_query: str, skip_check: bool = DISABLE_LLM_QUERY_ANSWERABILITY, 
 ) -> tuple[str, bool]:
     if skip_check:
         return "Query Answerability Evaluation feature is turned off", True
@@ -67,7 +69,7 @@ def get_query_answerability(
 
 
 def stream_query_answerability(
-    user_query: str, skip_check: bool = DISABLE_LLM_QUERY_ANSWERABILITY
+   db_session: Session,  user_query: str, skip_check: bool = DISABLE_LLM_QUERY_ANSWERABILITY, 
 ) -> Iterator[str]:
     if skip_check:
         yield get_json_line(

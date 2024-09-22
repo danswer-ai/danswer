@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
+from danswer.configs.app_configs import SECRET_JWT_KEY
 from danswer.configs.app_configs import DEFAULT_SCHEMA
 from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
@@ -138,57 +139,22 @@ def init_sqlalchemy_engine(app_name: str) -> None:
     global POSTGRES_APP_NAME
     POSTGRES_APP_NAME = app_name
 
-_engines = {}
-# TODO validate that this is best practice
-def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA) -> Engine:
-    if schema in _engines:
-        return _engines[schema]
+_engine = None
 
-    connection_string = build_connection_string(
-        db_api=SYNC_DB_API, app_name=POSTGRES_APP_NAME + "_sync"
-    )
-    engine = create_engine(
-        connection_string,
-        pool_size=40,
-        max_overflow=10,
-        pool_pre_ping=POSTGRES_POOL_PRE_PING,
-        pool_recycle=POSTGRES_POOL_RECYCLE,
-    )
-
-    @event.listens_for(engine, "connect")
-    def set_search_path(dbapi_connection, connection_record):
-        cursor = dbapi_connection.cursor()
-        cursor.execute(f'SET search_path TO "{schema}"')
-        cursor.close()
-        dbapi_connection.commit()
-
-    _engines[schema] = engine
-    return engine
-
-
-
-# def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA) -> Engine:
-#     global _SYNC_ENGINE
-#     if _SYNC_ENGINE is None:
-#         connection_string = build_connection_string(
-#             db_api=SYNC_DB_API, app_name=POSTGRES_APP_NAME + "_sync"
-#         )
-#         _SYNC_ENGINE = create_engine(
-#             connection_string,
-#             pool_size=40,
-#             max_overflow=10,
-#             pool_pre_ping=POSTGRES_POOL_PRE_PING,
-#             pool_recycle=POSTGRES_POOL_RECYCLE,
-#         )
-
-#         @event.listens_for(_SYNC_ENGINE, "connect")
-#         def set_search_path(dbapi_connection, connection_record):
-#             cursor = dbapi_connection.cursor()
-#             cursor.execute(f"SET search_path TO {schema}")
-#             cursor.close()
-#             dbapi_connection.commit()
-
-#     return _SYNC_ENGINE
+def get_sqlalchemy_engine() -> Engine:
+    global _engine
+    if _engine is None:
+        connection_string = build_connection_string(
+            db_api=SYNC_DB_API, app_name=POSTGRES_APP_NAME + "_sync"
+        )
+        _engine = create_engine(
+            connection_string,
+            pool_size=40,
+            max_overflow=10,
+            pool_pre_ping=POSTGRES_POOL_PRE_PING,
+            pool_recycle=POSTGRES_POOL_RECYCLE,
+        )
+    return _engine
 
 
 def get_sqlalchemy_async_engine() -> AsyncEngine:
@@ -212,21 +178,19 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
 def get_session_context_manager() -> ContextManager[Session]:
     return contextlib.contextmanager(get_session)()
 
-
-
-
 def get_current_tenant_id(request: Request) -> str:
     if not MULTI_TENANT:
         return DEFAULT_SCHEMA
 
-    token = request.cookies.get("fastapiusersauth")
+    print(request.cookies)
+    token = request.cookies.get("tenant_details")
     if not token:
         logger.warning("No token found in cookies")
         raise HTTPException(status_code=401, detail="Authentication required")
 
     try:
         logger.info(f"Attempting to decode token: {token[:10]}...")  # Log only first 10 characters for security
-        payload = jwt.decode(token, "JWT_SECRET_KEY", algorithms=["HS256"])
+        payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
         logger.info(f"Decoded payload: {payload}")
         tenant_id = payload.get("tenant_id")
         if not tenant_id:
@@ -246,29 +210,8 @@ def get_current_tenant_id(request: Request) -> str:
 
 
 def get_session(tenant_id: str | None= Depends(get_current_tenant_id)) -> Generator[Session, None, None]:
-    print("")
-    print("\n\n\n\n")
-    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
-        session.execute(text(f'SET search_path TO "{tenant_id}"'))
-        print("SEARCH PATH IS ", tenant_id)
+    with Session(get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False) as session:
         yield session
-        session.execute(text('SET search_path TO "public"'))
-
-
-    # Logic to create or retrieve a database session for the given tenant_id
-
-
-
-# def get_session(schema: str = DEFAULT_SCHEMA) -> Generator[Session, None, None]:
-#     # The line below was added to monitor the latency caused by Postgres connections
-#     # during API calls.
-#     # with tracer.trace("db.get_session"):
-
-#     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
-#         session.execute(text(f"SET search_path TO {schema}"))
-#         yield session
-#         session.execute(text("SET search_path TO public"))
-
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(

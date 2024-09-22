@@ -1,3 +1,4 @@
+from danswer.configs.app_configs import SECRET_JWT_KEY
 from datetime import timedelta
 import contextlib
 import smtplib
@@ -250,11 +251,8 @@ async def create_user_session(user: User, tenant_id: str) -> str:
         "tenant_id": tenant_id,
         "exp": datetime.utcnow() + timedelta(seconds=SESSION_EXPIRE_TIME_SECONDS)
     }
-
-    # Encode the token
-    token = jwt.encode(payload, "JWT_SECRET_KEY", algorithm="HS256")
-
-
+    
+    token = jwt.encode(payload, SECRET_JWT_KEY, algorithm="HS256")
     return token
 
 

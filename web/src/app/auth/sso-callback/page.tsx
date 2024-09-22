@@ -1,4 +1,5 @@
 "use client";
+import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, Text } from "@tremor/react";
@@ -32,7 +33,16 @@ export default function SSOCallback() {
         );
         if (response.ok) {
           setAuthStatus("Authentication successful!");
-        
+          const sessionCookie = Cookies.get('tenant_details');
+          console.log("Session cookie:", sessionCookie);
+
+          console.log("All cookies:", document.cookie);
+
+          // Log response headers
+          response.headers.forEach((value, key) => {
+            console.log(`${key}: ${value}`);
+          });
+          return;
           // Redirect to the dashboard
           router.replace("/admin/plan");
         } else {

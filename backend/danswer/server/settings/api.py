@@ -105,16 +105,15 @@ async def create_tenant_schema(tenant_id: str) -> None:
         await session.commit()
         logger.info(f"Schema created for tenant: {tenant_id}")
 
-    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
+    with Session(get_sqlalchemy_engine()) as db_session:
         try:
+            db_session.execute(text(f'Set search_path to "{tenant_id}"'))
             setup_postgres(db_session)
         except SQLAlchemyError as e:
             logger.error(f"Error while loading chat YAMLs for tenant {tenant_id}: {str(e)}")
             raise
         finally:
             db_session.execute(text('SET search_path TO "public"'))
-
-        # db_session.execute(text(f'SET search_path TO "public"'))
 
     logger.info(f"Migrations completed for tenant: {tenant_id}")
 
@@ -153,25 +152,21 @@ async def sso_callback(
     logger.info(f"Session token created for user: {user.email}")
 
     # Set the session cookie with proper flags
+    response = JSONResponse(content={"message": "Authentication successful"})
     response.set_cookie(
-        key="fastapiusersauth",
+        key="tenant_details",
         value=session_token,
         max_age=SESSION_EXPIRE_TIME_SECONDS,
         expires=SESSION_EXPIRE_TIME_SECONDS,
         path="/",
         domain=WEB_DOMAIN.split("://")[-1],
-        secure=True,
+        secure=False,  # Set to True in production with HTTPS
         httponly=True,
         samesite="lax",
     )
     logger.info("Session cookie set")
-
     logger.info("SSO callback completed successfully")
-    return JSONResponse(
-        content={"message": "Authentication successful"},
-        status_code=200
-    )
-
+    return response
 
 
 # @basic_router.post("/auth/sso-callback")

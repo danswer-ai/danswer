@@ -117,13 +117,13 @@ def get_tags(
 
 @basic_router.post("/query-validation")
 def query_validation(
-    simple_query: SimpleQueryRequest, _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest, _: User = Depends(current_user), db_session: Session = Depends(get_session)
 ) -> QueryValidationResponse:
     # Note if weak model prompt is chosen, this check does not occur and will simply return that
     # the query is valid, this is because weaker models cannot really handle this task well.
     # Additionally, some weak model servers cannot handle concurrent inferences.
     logger.notice(f"Validating query: {simple_query.query}")
-    reasoning, answerable = get_query_answerability(simple_query.query)
+    reasoning, answerable = get_query_answerability(db_session=db_session, user_query=simple_query.query)
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
 
 
@@ -226,14 +226,14 @@ def get_search_session(
 # No search responses are answered with a conversational generative AI response
 @basic_router.post("/stream-query-validation")
 def stream_query_validation(
-    simple_query: SimpleQueryRequest, _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest, _: User = Depends(current_user), db_session: Session = Depends(get_session)
 ) -> StreamingResponse:
     # Note if weak model prompt is chosen, this check does not occur and will simply return that
     # the query is valid, this is because weaker models cannot really handle this task well.
     # Additionally, some weak model servers cannot handle concurrent inferences.
     logger.notice(f"Validating query: {simple_query.query}")
     return StreamingResponse(
-        stream_query_answerability(simple_query.query), media_type="application/json"
+        stream_query_answerability(user_query=simple_query.query, db_session=db_session), media_type="application/json"
     )
 
 

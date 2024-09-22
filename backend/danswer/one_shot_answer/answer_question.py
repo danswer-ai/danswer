@@ -139,6 +139,7 @@ def stream_answer_objects(
     rephrased_query = query_req.query_override or thread_based_query_rephrase(
         user_query=query_msg.message,
         history_str=history_str,
+        db_session=db_session
     )
 
     # Given back ahead of the documents for latency reasons

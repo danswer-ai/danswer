@@ -47,3 +47,31 @@ export interface CombinedSettings {
   isMobile?: boolean;
   webVersion: string | null;
 }
+
+
+export const defaultCombinedSettings: CombinedSettings = {
+  settings: {
+    chat_page_enabled: true,
+    search_page_enabled: true,
+    default_page: "search",
+    maximum_chat_retention_days: 30,
+    notifications: [],
+    needs_reindexing: false,
+  },
+  enterpriseSettings: {
+    application_name: "Danswer",
+    use_custom_logo: false,
+    use_custom_logotype: false,
+    custom_lower_disclaimer_content: null,
+    custom_header_content: null,
+    custom_popup_header: null,
+    custom_popup_content: null,
+  },
+  cloudSettings: {
+    numberOfSeats: 0,
+    planType: BillingPlanType.FREE,
+  },
+  customAnalyticsScript: null,
+  isMobile: false,
+  webVersion: null,
+};

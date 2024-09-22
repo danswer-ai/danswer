@@ -237,7 +237,7 @@ def retrieve_chunks(
 
         # Currently only uses query expansion on multilingual use cases
         query_rephrases = multilingual_query_expansion(
-            query.query, multilingual_expansion
+            query.query, multilingual_expansion, db_session=db_session
         )
         # Just to be extra sure, add the original query.
         query_rephrases.append(query.query)
