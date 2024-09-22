@@ -2,9 +2,9 @@ import { Assistant } from "@/app/admin/assistants/interfaces";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { User } from "@/lib/types";
 import { Text } from "@tremor/react";
+import { Edit2 } from "lucide-react";
 import Link from "next/link";
 import { FaRobot } from "react-icons/fa";
-import { FiEdit2 } from "react-icons/fi";
 
 function AssistantDisplay({
   assistant,
@@ -34,10 +34,7 @@ function AssistantDisplay({
       {isEditable && (
         <div className="pl-2 my-auto">
           <Link href={`/assistants/edit/${assistant.id}`}>
-            <FiEdit2
-              className="my-auto ml-auto hover:bg-hover p-0.5"
-              size={20}
-            />
+            <Edit2 className="my-auto ml-auto hover:bg-hover p-0.5" size={20} />
           </Link>
         </div>
       )}

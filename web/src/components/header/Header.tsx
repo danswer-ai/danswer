@@ -4,16 +4,14 @@ import { User } from "@/lib/types";
 import Link from "next/link";
 import React, { useContext } from "react";
 
-import { FiMenu, FiMessageSquare, FiSearch } from "react-icons/fi";
 import { HeaderWrapper } from "./HeaderWrapper";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
 import Logo from "../../../public/logo-brand.png";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED } from "@/lib/constants";
-import { ConnectorIcon, NotebookIcon } from "../icons/icons";
-import { AdminSidebar } from "../admin/connectors/AdminSidebar";
 import { SideBar } from "../SideBar";
 import Image from "next/image";
+import { MessageSquare, Search } from "lucide-react";
 
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
   return <h1 className="flex text-2xl font-bold text-strong">{children}</h1>;
@@ -72,7 +70,7 @@ export function Header({ user }: HeaderProps) {
             >
               <div className="flex w-24 my-auto">
                 <div className={"mx-auto flex text-strong px-2"}>
-                  <FiSearch className="my-auto mr-1" />
+                  <Search className="my-auto mr-1" />
                   <h1 className="flex my-auto text-sm font-bold">Search</h1>
                 </div>
               </div>
@@ -84,7 +82,7 @@ export function Header({ user }: HeaderProps) {
             >
               <div className="flex w-24 my-auto">
                 <div className="flex px-2 mx-auto text-strong">
-                  <FiMessageSquare className="my-auto mr-1" />
+                  <MessageSquare className="my-auto mr-1" />
                   <h1 className="flex my-auto text-sm font-bold">Chat</h1>
                 </div>
               </div>

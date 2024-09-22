@@ -119,7 +119,7 @@ export function QueryHistoryTable() {
   return (
     <>
       {chatSessionData ? (
-        <div className="space-y-12">
+        <div className="space-y-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="gap-y-3 flex flex-col">
               <SelectFeedbackType

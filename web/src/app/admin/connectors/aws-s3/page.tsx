@@ -18,13 +18,14 @@ import {
   S3Config,
   S3CredentialJson,
 } from "@/lib/types";
-import { Text, Title, Button } from "@tremor/react";
+import { Text, Title } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 const S3Main = () => {
   const { toast } = useToast();
@@ -95,7 +96,6 @@ const S3Main = () => {
               {s3Credential.credential_json.aws_access_key_id}
             </p>
             <Button
-              className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 if (s3ConnectorIndexingStatuses.length > 0) {
                   toast({
@@ -109,7 +109,9 @@ const S3Main = () => {
                 await adminDeleteCredential(s3Credential.id);
                 refreshCredentials();
               }}
-              variant="light"
+              variant="ghost"
+              size="icon"
+              className="ml-2"
             >
               <TrashIcon />
             </Button>

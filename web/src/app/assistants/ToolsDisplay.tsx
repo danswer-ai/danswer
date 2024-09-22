@@ -1,6 +1,6 @@
 import { Bubble } from "@/components/Bubble";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
-import { FiImage, FiSearch } from "react-icons/fi";
+import { Image as ImageIcon, Search } from "lucide-react";
 
 export function ToolsDisplay({ tools }: { tools: ToolSnapshot[] }) {
   return (
@@ -11,10 +11,10 @@ export function ToolsDisplay({ tools }: { tools: ToolSnapshot[] }) {
 
         if (tool.name === "SearchTool") {
           toolName = "Search";
-          toolIcon = <FiSearch className="mr-1 my-auto" />;
+          toolIcon = <Search className="mr-1 my-auto" />;
         } else if (tool.name === "ImageGenerationTool") {
           toolName = "Image Generation";
-          toolIcon = <FiImage className="mr-1 my-auto" />;
+          toolIcon = <ImageIcon className="mr-1 my-auto" />;
         }
 
         return (

@@ -1,7 +1,7 @@
 import { BasicClickable } from "@/components/BasicClickable";
 import { ControlledPopup, DefaultDropdownElement } from "@/components/Dropdown";
+import { Cpu, Search } from "lucide-react";
 import { useState } from "react";
-import { FiCpu, FiFilter, FiSearch } from "react-icons/fi";
 
 export const QA = "Question Answering";
 export const SEARCH = "Search Only";
@@ -18,14 +18,14 @@ function SearchTypeSelectorContent({
       <DefaultDropdownElement
         key={QA}
         name={QA}
-        icon={FiCpu}
+        icon={<Cpu size={16} />}
         onSelect={() => setSelectedSearchType(QA)}
         isSelected={selectedSearchType === QA}
       />
       <DefaultDropdownElement
         key={SEARCH}
         name={SEARCH}
-        icon={FiSearch}
+        icon={<Search size={16} />}
         onSelect={() => setSelectedSearchType(SEARCH)}
         isSelected={selectedSearchType === SEARCH}
       />
@@ -57,11 +57,11 @@ export function SearchTypeSelector({
         <div className="flex text-xs">
           {selectedSearchType === QA ? (
             <>
-              <FiCpu className="my-auto mr-1" /> QA
+              <Cpu className="my-auto mr-1" size={16} /> QA
             </>
           ) : (
             <>
-              <FiSearch className="my-auto mr-1" /> Search
+              <Search className="my-auto mr-1" size={16} /> Search
             </>
           )}
         </div>

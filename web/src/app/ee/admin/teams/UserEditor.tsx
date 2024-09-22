@@ -1,5 +1,4 @@
 import { User } from "@/lib/types";
-import { FiX } from "react-icons/fi";
 import { SearchMultiSelectDropdown } from "@/components/Dropdown";
 import { UsersIcon } from "@/components/icons/icons";
 import { Button } from "@/components/ui/button";
@@ -27,25 +26,6 @@ export const UserEditor = ({
 
   return (
     <>
-      <div className="mb-2 flex flex-wrap gap-x-2">
-        {selectedUsers.length > 0 &&
-          selectedUsers.map((selectedUser) => (
-            <Badge
-              key={selectedUser.id}
-              onClick={() => {
-                setSelectedUserIds(
-                  selectedUserIds.filter((userId) => userId !== selectedUser.id)
-                );
-              }}
-              variant="outline"
-              className="cursor-pointer hover:bg-opacity-80"
-            >
-              {selectedUser.email}{" "}
-              <X className="ml-1 my-auto cursor-pointer" size={14} />
-            </Badge>
-          ))}
-      </div>
-
       <div className="flex">
         <SearchMultiSelectDropdown
           options={allUsers
@@ -85,6 +65,25 @@ export const UserEditor = ({
             Add Users
           </Button>
         )}
+      </div>
+
+      <div className="flex flex-wrap gap-2 pt-2">
+        {selectedUsers.length > 0 &&
+          selectedUsers.map((selectedUser) => (
+            <Badge
+              key={selectedUser.id}
+              onClick={() => {
+                setSelectedUserIds(
+                  selectedUserIds.filter((userId) => userId !== selectedUser.id)
+                );
+              }}
+              variant="outline"
+              className="cursor-pointer hover:bg-opacity-80"
+            >
+              {selectedUser.email}{" "}
+              <X className="ml-1 my-auto cursor-pointer" size={14} />
+            </Badge>
+          ))}
       </div>
     </>
   );

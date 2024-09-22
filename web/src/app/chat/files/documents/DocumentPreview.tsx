@@ -1,6 +1,6 @@
-import { FiFileText } from "react-icons/fi";
 import { useState, useRef, useEffect } from "react";
 import { Tooltip } from "@/components/tooltip/Tooltip";
+import { FileText } from "lucide-react";
 
 export function DocumentPreview({
   fileName,
@@ -46,7 +46,7 @@ export function DocumentPreview({
             rounded-xs
           "
         >
-          <FiFileText className="w-6 h-6 text-inverted" />
+          <FileText className="text-inverted" />
         </div>
       </div>
       <div className="ml-4 relative">

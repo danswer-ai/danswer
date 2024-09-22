@@ -213,7 +213,7 @@ export function DefaultDropdownElement({
   includeCheckbox = false,
 }: {
   name: string | JSX.Element;
-  icon?: React.FC<{ size?: number; className?: string }>;
+  icon?: JSX.Element;
   description?: string;
   onSelect?: () => void;
   isSelected?: boolean;
@@ -246,7 +246,7 @@ export function DefaultDropdownElement({
               onChange={() => null}
             />
           )}
-          {icon && icon({ size: 16, className: "mr-2 my-auto" })}
+          {icon && icon}
           {name}
         </div>
         {description && <div className="text-xs">{description}</div>}

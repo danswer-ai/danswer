@@ -3,8 +3,6 @@ import InvitedUserTable from "@/components/admin/users/InvitedUserTable";
 import SignedUpUserTable from "@/components/admin/users/SignedUpUserTable";
 import { SearchBar } from "@/components/search/SearchBar";
 import { useState } from "react";
-import { FiPlusSquare } from "react-icons/fi";
-
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { UsersIcon } from "@/components/icons/icons";
@@ -24,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { PlusSquare } from "lucide-react";
 
 const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   if (!validDomains.length) {
@@ -185,7 +184,7 @@ const AddUserButton = () => {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline">
-          <FiPlusSquare className="mr-2" />
+          <PlusSquare className="mr-2" />
           Invite Users
         </Button>
       </DialogTrigger>

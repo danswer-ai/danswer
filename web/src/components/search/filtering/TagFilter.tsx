@@ -1,9 +1,8 @@
 import { Input } from "@/components/ui/input";
 import { containsObject, objectsAreEquivalent } from "@/lib/contains";
 import { Tag } from "@/lib/types";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { FiX } from "react-icons/fi";
 
 export function TagFilter({
   tags,
@@ -84,7 +83,7 @@ export function TagFilter({
                 {tag.tag_key}
                 <b>=</b>
                 {tag.tag_value}
-                <FiX className="my-auto ml-1" />
+                <X className="my-auto ml-1" />
               </div>
             ))}
           </div>

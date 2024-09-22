@@ -4,7 +4,7 @@ import { ToolEditor } from "@/app/admin/tools/ToolEditor";
 import { BackButton } from "@/components/BackButton";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, CardContent } from "@/components/ui/card";
-import { FiTool } from "react-icons/fi";
+import { Wrench } from "lucide-react";
 
 export default function NewToolPage() {
   return (
@@ -14,7 +14,7 @@ export default function NewToolPage() {
 
         <AdminPageTitle
           title="Create Tool"
-          icon={<FiTool size={32} className="my-auto" />}
+          icon={<Wrench size={32} className="my-auto" />}
         />
 
         <Card>

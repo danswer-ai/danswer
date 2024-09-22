@@ -1,6 +1,6 @@
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { CustomDropdown, DefaultDropdownElement } from "../Dropdown";
-import { FiChevronDown } from "react-icons/fi";
+import { ChevronDown } from "lucide-react";
 
 export function AssistantSelector({
   assistants,
@@ -47,7 +47,7 @@ export function AssistantSelector({
     >
       <div className="select-none text-sm font-bold flex  px-2 py-1.5 cursor-pointer w-fit hover:bg-hover rounded">
         {currentlySelectedAssistant?.name || "Default"}
-        <FiChevronDown className="my-auto ml-2" />
+        <ChevronDown className="my-auto ml-2" />
       </div>
     </CustomDropdown>
   );

@@ -10,7 +10,6 @@ import {
 import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
 import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
-import { FiX } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label as ShadcnLabel } from "@/components/ui/label";
@@ -89,7 +88,7 @@ export function TextFormField({
   return (
     <div className={`grid pb-4 ${fullWidth ? "w-full" : ""}`}>
       {(label || subtext) && (
-        <div className="grid leading-none pb-2">
+        <div className="grid leading-none">
           <ShadcnLabel
             htmlFor={label}
             className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
@@ -97,7 +96,7 @@ export function TextFormField({
             {label}
           </ShadcnLabel>
           {subtext && (
-            <p className="text-sm text-muted-foreground">{subtext}</p>
+            <p className="text-sm text-muted-foreground pb-1.5">{subtext}</p>
           )}
         </div>
       )}

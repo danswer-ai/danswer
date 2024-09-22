@@ -21,11 +21,12 @@ import {
 } from "@/components/ui/select";
 import { useTeamspaces } from "@/lib/hooks";
 import { Teamspace } from "@/lib/types";
-import { Copy, Plus, EllipsisVertical, User } from "lucide-react";
+import { Copy, Plus, Trash, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 interface TeamspaceMemberProps {
   teamspace: Teamspace & { gradient: string };
@@ -57,7 +58,7 @@ export const TeamspaceMember = ({
         open={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
       >
-        <div className="space-y-4 pt-5">
+        <div className="space-y-4">
           <div>
             <Label>Share link</Label>
             <div className="flex items-center gap-2">
@@ -128,7 +129,7 @@ export const TeamspaceMember = ({
             )}
           </div>
         }
-        title="Member"
+        title="Members"
         open={isMemberModalOpen}
         onClose={() => setIsMemberModalOpen(false)}
       >
@@ -179,9 +180,16 @@ export const TeamspaceMember = ({
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.workspace?.workspace_name}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon">
-                          <EllipsisVertical size={20} />
-                        </Button>
+                        <CustomTooltip
+                          trigger={
+                            <Button variant="ghost" size="icon">
+                              <Trash size={16} />
+                            </Button>
+                          }
+                          asChild
+                        >
+                          Delete
+                        </CustomTooltip>
                       </TableCell>
                     </TableRow>
                   ))}

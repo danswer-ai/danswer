@@ -3,8 +3,6 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Text, Title } from "@tremor/react";
-import { FiPackage } from "react-icons/fi";
 import useSWR, { mutate } from "swr";
 import { ModelOption, ModelSelector } from "./ModelSelector";
 import { useState } from "react";
@@ -24,6 +22,7 @@ import Link from "next/link";
 import { CustomModelForm } from "./CustomModelForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomModal } from "@/components/CustomModal";
+import { Package } from "lucide-react";
 
 function Main() {
   const [tentativeNewEmbeddingModel, setTentativeNewEmbeddingModel] =
@@ -337,7 +336,7 @@ function Page() {
       <div className="container">
         <AdminPageTitle
           title="Embedding"
-          icon={<FiPackage size={32} className="my-auto" />}
+          icon={<Package size={32} className="my-auto" />}
         />
 
         <Main />

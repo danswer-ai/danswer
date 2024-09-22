@@ -14,7 +14,6 @@ import { Maximize2 } from "lucide-react";
 
 import Link from "next/link";
 import { useState } from "react";
-import { FiMaximize2 } from "react-icons/fi";
 
 export function ReindexingProgressTable({
   reindexingProgress,

@@ -5,8 +5,8 @@ import { FeedbackChart } from "./FeedbackChart";
 import { QueryPerformanceChart } from "./QueryPerformanceChart";
 import { useTimeRange } from "../lib";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { FiActivity } from "react-icons/fi";
 import UsageReports from "./UsageReports";
+import { Activity } from "lucide-react";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useTimeRange();
@@ -17,7 +17,7 @@ export default function AnalyticsPage() {
         {/* TODO: remove this `dark` once we have a mode selector */}
         <AdminPageTitle
           title="Usage Statistics"
-          icon={<FiActivity size={32} />}
+          icon={<Activity size={32} />}
         />
 
         <div className="mb-24 space-y-8">

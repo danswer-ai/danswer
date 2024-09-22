@@ -3,7 +3,6 @@ import { LinkBreakIcon, LinkIcon } from "@/components/icons/icons";
 import { disableConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
 import { DeleteColumn } from "./DeleteColumn";
-import { FiCheck, FiXCircle } from "react-icons/fi";
 import {
   Table,
   TableBody,

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useContext } from "react";
-import { FiSearch, FiMessageSquare, FiTool } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User as UserTypes } from "@/lib/types";
@@ -10,9 +9,8 @@ import { BasicSelectable } from "@/components/BasicClickable";
 import { Popover } from "./popover/Popover";
 import { FaBrain } from "react-icons/fa";
 import { LOGOUT_DISABLED } from "@/lib/constants";
-import { Settings } from "@/app/admin/settings/interfaces";
 import { SettingsContext } from "./settings/SettingsProvider";
-import { LogOut, User } from "lucide-react";
+import { LogOut, MessageSquare, Search, User, Wrench } from "lucide-react";
 
 export function UserDropdown({
   user,
@@ -91,7 +89,7 @@ export function UserDropdown({
                     href="/search"
                     className="flex px-4 py-3 rounded cursor-pointer hover:bg-hover-light"
                   >
-                    <FiSearch className="my-auto mr-2 text-lg" />
+                    <Search className="my-auto mr-2 text-lg" />
                     Search
                   </Link>
                 )}
@@ -101,7 +99,7 @@ export function UserDropdown({
                       href="/chat"
                       className="flex px-4 py-3 rounded cursor-pointer hover:bg-hover-light"
                     >
-                      <FiMessageSquare className="my-auto mr-2 text-lg" />
+                      <MessageSquare className="my-auto mr-2 text-lg" />
                       Chat
                     </Link>
                     <Link
@@ -124,7 +122,7 @@ export function UserDropdown({
                   href="/admin/indexing/status"
                   className="flex px-4 py-3 rounded cursor-pointer hover:bg-hover-light"
                 >
-                  <FiTool className="my-auto mr-2 text-lg" />
+                  <Wrench className="my-auto mr-2 text-lg" />
                   Admin Panel
                 </Link>
               </>

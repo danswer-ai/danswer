@@ -1,6 +1,6 @@
 import { WhitelabelingForm } from "./WhitelabelingForm";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { FiImage } from "react-icons/fi";
+import { Image as ImageIcon } from "lucide-react";
 
 export default async function Whitelabeling() {
   return (
@@ -8,7 +8,7 @@ export default async function Whitelabeling() {
       <div className="container">
         <AdminPageTitle
           title="Whitelabeling"
-          icon={<FiImage size={32} className="my-auto" />}
+          icon={<ImageIcon size={32} className="my-auto" />}
         />
 
         <WhitelabelingForm />

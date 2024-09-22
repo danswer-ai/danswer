@@ -9,8 +9,6 @@ import useSWR, { mutate } from "swr";
 import { Divider } from "@tremor/react";
 import { useState } from "react";
 import { DeleteButton } from "@/components/DeleteButton";
-import { FiCopy, FiEdit2, FiRefreshCw, FiX } from "react-icons/fi";
-import { Modal } from "@/components/Modal";
 import { Spinner } from "@/components/Spinner";
 import { deleteApiKey, regenerateApiKey } from "./lib";
 import { Button } from "@/components/ui/button";

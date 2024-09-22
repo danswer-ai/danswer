@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChatFileType, FileDescriptor } from "../interfaces";
 import { DocumentPreview } from "./documents/DocumentPreview";
 import { InputBarPreviewImage } from "./images/InputBarPreviewImage";
-import { FiX, FiLoader } from "react-icons/fi";
+import { Loader, X } from "lucide-react";
 
 function DeleteButton({ onDelete }: { onDelete: () => void }) {
   return (
@@ -20,7 +20,7 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
         z-10
       "
     >
-      <FiX />
+      <X />
     </button>
   );
 }
@@ -64,7 +64,7 @@ export function InputBarPreview({
             z-0
           "
         >
-          <FiLoader className="animate-spin text-inverted" />
+          <Loader className="animate-spin text-inverted" />
         </div>
       )}
       {renderContent()}

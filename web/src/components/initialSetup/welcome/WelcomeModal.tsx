@@ -6,7 +6,6 @@ import Link from "next/link";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { COMPLETED_WELCOME_FLOW_COOKIE } from "./constants";
-import { FiCheckCircle, FiMessageSquare, FiShare2 } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/BackButton";
 import { ApiKeyForm } from "@/components/llm/ApiKeyForm";
@@ -15,7 +14,7 @@ import { checkLlmProvider } from "./lib";
 import { User } from "@/lib/types";
 import { CustomModal } from "@/components/CustomModal";
 import { Button } from "@/components/ui/button";
-import { Share2 } from "lucide-react";
+import { CheckCircle, Share2 } from "lucide-react";
 
 function setWelcomeFlowComplete() {
   Cookies.set(COMPLETED_WELCOME_FLOW_COOKIE, "true", { expires: 365 });
@@ -30,13 +29,11 @@ function UsageTypeSection({
   title,
   description,
   callToAction,
-  icon,
   onClick,
 }: {
   title: string;
   description: string | JSX.Element;
   callToAction: string;
-  icon?: React.ElementType;
   onClick: () => void;
 }) {
   return (
@@ -92,7 +89,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
           <div className="mt-3">
             <Text className="flex font-bold">
               {apiKeyVerified && (
-                <FiCheckCircle className="my-auto mr-2 text-success" />
+                <CheckCircle className="my-auto mr-2 text-success" />
               )}
               Step 1: Setup an LLM
             </Text>
@@ -151,7 +148,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
           <div className="mt-3">
             <Text className="flex font-bold">
               {apiKeyVerified && (
-                <FiCheckCircle className="my-auto mr-2 text-success" />
+                <CheckCircle className="my-auto mr-2 text-success" />
               )}
               Step 1: Setup an LLM
             </Text>
@@ -244,7 +241,6 @@ export function _WelcomeModal({ user }: { user: User | null }) {
                 this is the option for you!
               </Text>
             }
-            icon={FiMessageSquare}
             callToAction="Get Started"
             onClick={() => {
               setSelectedFlow("chat");

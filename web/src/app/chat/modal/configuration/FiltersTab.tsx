@@ -2,13 +2,12 @@ import { useChatContext } from "@/context/ChatContext";
 import { FilterManager } from "@/lib/hooks";
 import { listSourceMetadata } from "@/lib/sources";
 import { useRef, useState } from "react";
-import { Text } from "@tremor/react";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Bubble } from "@/components/Bubble";
-import { FiX } from "react-icons/fi";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { FilterDatePicker } from "./FilterDatePicker";
+import { X } from "lucide-react";
 
 export function FiltersTab({
   filterManager,
@@ -31,11 +30,11 @@ export function FiltersTab({
       <div>
         <div>
           <div>
-            <h3 className="text-dark-900 pb-2">Time Range</h3>
-            <Text>
+            <h3 className="text-dark-900">Time Range</h3>
+            <p>
               Choose the time range we should search over. If only one date is
               selected, will only search after the specified date.
-            </Text>
+            </p>
             <div className="mt-2">
               <FilterDatePicker filterManager={filterManager} />
             </div>
@@ -44,12 +43,12 @@ export function FiltersTab({
           <Separator className="my-8" />
 
           <div>
-            <h3 className="text-dark-900 pb-2">Knowledge Sets</h3>
-            <Text>
+            <h3 className="text-dark-900">Knowledge Sets</h3>
+            <p>
               Choose which knowledge sets we should search over. If multiple are
               selected, we will search through all of them.
-            </Text>
-            <ul className="mt-3 flex gap-2 flex-wrap">
+            </p>
+            <ul className="pt-1.5 flex gap-2 flex-wrap">
               {availableDocumentSets.length > 0 ? (
                 availableDocumentSets.map((set) => {
                   const isSelected =
@@ -78,12 +77,12 @@ export function FiltersTab({
           <Separator className="my-8" />
 
           <div>
-            <h3 className="text-dark-900 pb-2">Sources</h3>
-            <Text>
+            <h3 className="text-dark-900">Sources</h3>
+            <p>
               Choose which sources we should search over. If multiple sources
               are selected, we will search through all of them.
-            </Text>
-            <ul className="mt-3 flex gap-2">
+            </p>
+            <ul className="pt-1.5 flex gap-2">
               {availableSourceMetadata.length > 0 ? (
                 availableSourceMetadata.map((sourceMetadata) => {
                   const isSelected = filterManager.selectedSources.some(
@@ -145,7 +144,7 @@ export function FiltersTab({
           <Separator className="my-8" />
 
           <div>
-            <h3 className="text-dark-900 pb-2">Tags</h3>
+            <h3 className="text-dark-900">Tags</h3>
             <ul className="space-2 gap-2 flex flex-wrap">
               {filterManager.selectedTags.length > 0 ? (
                 filterManager.selectedTags.map((tag) => (
@@ -166,7 +165,7 @@ export function FiltersTab({
                       <p>
                         {tag.tag_key}={tag.tag_value}
                       </p>{" "}
-                      <FiX />
+                      <X />
                     </div>
                   </Bubble>
                 ))
@@ -175,9 +174,9 @@ export function FiltersTab({
               )}
             </ul>
 
-            <div className="xl:w-96 mt-2">
+            <div className="xl:w-96">
               <div>
-                <div className="mb-2 pt-2">
+                <div className="mb-2 pt-1.5">
                   <Input
                     ref={inputRef}
                     placeholder="Find a tag"

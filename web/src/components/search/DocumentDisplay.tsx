@@ -2,12 +2,11 @@ import { EnmeddDocument } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { useState } from "react";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
-import { FiInfo, FiRadio, FiTag } from "react-icons/fi";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
 import { Badge } from "../ui/badge";
 import { CustomTooltip } from "../CustomTooltip";
-import { Radio } from "lucide-react";
+import { Info, Radio, Tag } from "lucide-react";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -131,7 +130,7 @@ export function DocumentMetadataBlock({
               return (
                 <MetadataBadge
                   key={key}
-                  icon={FiTag}
+                  icon={<Tag size={12} />}
                   value={`${key}=${value}`}
                 />
               );
@@ -199,7 +198,7 @@ export const DocumentDisplay = ({
                   <div className="text-xs flex">
                     <div className="flex mx-auto">
                       <div className="w-3 h-3 flex flex-col my-auto mr-1">
-                        <FiInfo className="my-auto" />
+                        <Info className="my-auto" />
                       </div>
                       <div className="my-auto">The AI liked this doc!</div>
                     </div>

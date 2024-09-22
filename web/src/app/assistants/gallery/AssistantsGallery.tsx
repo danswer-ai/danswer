@@ -5,7 +5,6 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { User } from "@/lib/types";
 import Link from "next/link";
 import { useState } from "react";
-import { FiMinus, FiPlus } from "react-icons/fi";
 import { NavigationButton } from "../NavigationButton";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
 import {

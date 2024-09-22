@@ -1,6 +1,6 @@
+import { Check, Copy } from "lucide-react";
 import React from "react";
 import { useState, ReactNode } from "react";
-import { FiCheck, FiCopy } from "react-icons/fi";
 
 const CODE_BLOCK_PADDING_TYPE = { padding: "1rem" };
 
@@ -113,12 +113,12 @@ export function CodeBlock({
           >
             {copied ? (
               <div className="flex items-center space-x-2">
-                <FiCheck size={16} />
+                <Check size={16} />
                 <span>Copied!</span>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <FiCopy size={16} />
+                <Copy size={16} />
                 <span>Copy code</span>
               </div>
             )}

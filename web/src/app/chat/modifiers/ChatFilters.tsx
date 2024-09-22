@@ -1,16 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { DocumentSet, Tag, ValidSources } from "@/lib/types";
+import { DocumentSet, Tag } from "@/lib/types";
 import { SourceMetadata } from "@/lib/search/interfaces";
-import {
-  FiBook,
-  FiBookmark,
-  FiCalendar,
-  FiFilter,
-  FiMap,
-  FiTag,
-  FiX,
-} from "react-icons/fi";
-import { DateRangePickerValue } from "@tremor/react";
+
 import { listSourceMetadata } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
 import { BasicClickable } from "@/components/BasicClickable";
@@ -18,6 +9,16 @@ import { ControlledPopup, DefaultDropdownElement } from "@/components/Dropdown";
 import { getXDaysAgo } from "@/lib/dateUtils";
 import { SourceSelectorProps } from "@/components/search/filtering/Filters";
 import { containsObject, objectsAreEquivalent } from "@/lib/contains";
+import { DateRange } from "react-day-picker";
+import {
+  Book,
+  Bookmark,
+  Calendar,
+  Filter,
+  Map,
+  Tag as TagIcon,
+  X,
+} from "lucide-react";
 
 enum FilterType {
   Source = "Source",
@@ -42,7 +43,7 @@ function SelectedBubble({
       onClick={onClick}
     >
       {children}
-      <FiX className="ml-2" size={14} />
+      <X className="ml-2" size={14} />
     </div>
   );
 }
@@ -64,7 +65,7 @@ function SelectFilterType({
         <DefaultDropdownElement
           key={FilterType.Source}
           name={FilterType.Source}
-          icon={FiMap}
+          icon={<Map size={16} />}
           onSelect={() => onSelect(FilterType.Source)}
           isSelected={false}
         />
@@ -74,7 +75,7 @@ function SelectFilterType({
         <DefaultDropdownElement
           key={FilterType.KnowledgeSet}
           name={FilterType.KnowledgeSet}
-          icon={FiBook}
+          icon={<Book size={16} />}
           onSelect={() => onSelect(FilterType.KnowledgeSet)}
           isSelected={false}
         />
@@ -84,7 +85,7 @@ function SelectFilterType({
         <DefaultDropdownElement
           key={FilterType.Tag}
           name={FilterType.Tag}
-          icon={FiTag}
+          icon={<TagIcon size={16} />}
           onSelect={() => onSelect(FilterType.Tag)}
           isSelected={false}
         />
@@ -93,7 +94,7 @@ function SelectFilterType({
       <DefaultDropdownElement
         key={FilterType.TimeRange}
         name={FilterType.TimeRange}
-        icon={FiCalendar}
+        icon={<Calendar size={16} />}
         onSelect={() => onSelect(FilterType.TimeRange)}
         isSelected={false}
       />
@@ -116,7 +117,7 @@ function SourcesSection({
         <DefaultDropdownElement
           key={source.internalName}
           name={source.displayName}
-          icon={source.icon}
+          icon={<source.icon size={16} />}
           onSelect={() => onSelect(source)}
           isSelected={selectedSources.includes(source.internalName)}
           includeCheckbox
@@ -141,7 +142,7 @@ function KnowledgeSetsSection({
         <DefaultDropdownElement
           key={documentSet.name}
           name={documentSet.name}
-          icon={FiBookmark}
+          icon={<Bookmark size={16} />}
           onSelect={() => onSelect(documentSet.name)}
           isSelected={selectedDocumentSets.includes(documentSet.name)}
           includeCheckbox
@@ -155,12 +156,16 @@ const LAST_30_DAYS = "Last 30 days";
 const LAST_7_DAYS = "Last 7 days";
 const TODAY = "Today";
 
+interface CustomDateRange extends DateRange {
+  selectValue?: string;
+}
+
 function TimeRangeSection({
   selectedTimeRange,
   onSelect,
 }: {
   selectedTimeRange: string | null;
-  onSelect: (timeRange: DateRangePickerValue) => void;
+  onSelect: (timeRange: CustomDateRange) => void;
 }) {
   return (
     <div className="w-64">
@@ -383,7 +388,7 @@ export function ChatFilters({
         <div className="flex">
           <BasicClickable onClick={() => handleFiltersToggle(!filtersOpen)}>
             <div className="flex text-xs">
-              <FiFilter className="my-auto mr-1" /> Filter
+              <Filter className="my-auto mr-1" size={16} /> Filter
             </div>
           </BasicClickable>
         </div>
@@ -421,7 +426,7 @@ export function ChatFilters({
               >
                 <>
                   <div>
-                    <FiBookmark />
+                    <Bookmark size={16} />
                   </div>
                   <span className="ml-2">{documentSetName}</span>
                 </>
@@ -436,7 +441,7 @@ export function ChatFilters({
               >
                 <>
                   <div>
-                    <FiTag />
+                    <TagIcon size={16} />
                   </div>
                   <span className="ml-1 max-w-[100px] text-ellipsis line-clamp-1 break-all">
                     {tag.tag_key}

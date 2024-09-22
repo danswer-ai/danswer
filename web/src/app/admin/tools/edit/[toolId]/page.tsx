@@ -3,10 +3,10 @@ import { Text, Title } from "@tremor/react";
 import { ToolEditor } from "@/app/admin/tools/ToolEditor";
 import { fetchToolByIdSS } from "@/lib/tools/fetchTools";
 import { DeleteToolButton } from "./DeleteToolButton";
-import { FiTool } from "react-icons/fi";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { BackButton } from "@/components/BackButton";
 import { Card, CardContent } from "@/components/ui/card";
+import { Wrench } from "lucide-react";
 
 export default async function Page({ params }: { params: { toolId: string } }) {
   const tool = await fetchToolByIdSS(params.toolId);
@@ -52,7 +52,7 @@ export default async function Page({ params }: { params: { toolId: string } }) {
 
         <AdminPageTitle
           title="Edit Tool"
-          icon={<FiTool size={32} className="my-auto" />}
+          icon={<Wrench size={32} className="my-auto" />}
         />
 
         {body}

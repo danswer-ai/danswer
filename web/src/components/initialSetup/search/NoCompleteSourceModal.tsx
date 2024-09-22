@@ -6,7 +6,6 @@ import { CCPairBasicInfo } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AnimatePresence, motion } from "framer-motion";
-import { FiCrosshair } from "react-icons/fi";
 
 export function NoCompleteSourcesModal({
   ccPairs,

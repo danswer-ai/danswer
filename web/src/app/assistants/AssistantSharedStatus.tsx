@@ -1,7 +1,7 @@
 import { User } from "@/lib/types";
 import { Assistant } from "../admin/assistants/interfaces";
 import { checkUserOwnsAssistant } from "@/lib/assistants/checkOwnership";
-import { FiLock, FiUnlock } from "react-icons/fi";
+import { Lock, Unlock } from "lucide-react";
 
 export function AssistantSharedStatusDisplay({
   assistant,
@@ -19,7 +19,7 @@ export function AssistantSharedStatusDisplay({
   if (assistant.is_public) {
     return (
       <div className="text-subtle text-sm flex items-center">
-        <FiUnlock className="mr-1" />
+        <Unlock className="mr-1" />
         Public
       </div>
     );
@@ -28,7 +28,7 @@ export function AssistantSharedStatusDisplay({
   if (assistantSharedUsersWithoutOwner.length > 0) {
     return (
       <div className="text-subtle text-sm flex items-center">
-        <FiUnlock className="mr-1" />
+        <Unlock className="mr-1" />
         {isOwnedByUser ? (
           `Shared with: ${
             assistantSharedUsersWithoutOwner.length <= 4
@@ -55,7 +55,7 @@ export function AssistantSharedStatusDisplay({
 
   return (
     <div className="text-subtle text-sm flex items-center">
-      <FiLock className="mr-1" />
+      <Lock className="mr-1" />
       Private
     </div>
   );

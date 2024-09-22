@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 
-import { FiChevronLeft } from "react-icons/fi";
 import { Button } from "./ui/button";
+import { ChevronLeft } from "lucide-react";
 
 export function BackButton({
   behaviorOverride,
@@ -24,7 +24,7 @@ export function BackButton({
       variant="ghost"
       className="mb-5"
     >
-      <FiChevronLeft className="mr-1 my-auto" />
+      <ChevronLeft className="mr-1 my-auto" size={16} />
       Back
     </Button>
   );

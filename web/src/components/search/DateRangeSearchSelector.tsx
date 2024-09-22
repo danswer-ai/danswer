@@ -1,5 +1,4 @@
 import { getXDaysAgo } from "@/lib/dateUtils";
-import { DateRangePickerValue } from "@tremor/react";
 import {
   Select,
   SelectContent,
@@ -7,25 +6,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DateRange as BaseDateRange } from "react-day-picker";
 
-type DateRangeSelectorProps = {
-  value: DateRangePickerValue | null;
-  onValueChange: (value: DateRangePickerValue | null) => void;
-  fullWidth?: boolean;
-};
+interface CustomDateRange extends BaseDateRange {
+  selectValue?: string;
+}
 
 export function DateRangeSearchSelector({
   value,
   onValueChange,
   fullWidth,
-}: DateRangeSelectorProps) {
+}: {
+  value: CustomDateRange | null;
+  onValueChange: (value: CustomDateRange | null) => void;
+  fullWidth?: boolean;
+}) {
   const formatSelectItem = (key: string, label: string, fromDate: Date) => (
     <SelectItem
       key={key}
       value={label}
       className="flex items-center"
       onClick={() =>
-        onValueChange({ to: new Date(), from: fromDate, selectValue: key })
+        onValueChange({ from: fromDate, to: new Date(), selectValue: key })
       }
     >
       {label}
@@ -43,8 +45,8 @@ export function DateRangeSearchSelector({
             TODAY: getXDaysAgo(1),
           };
           onValueChange({
-            to: new Date(),
             from: dateMappings[selectedValue],
+            to: new Date(),
             selectValue: selectedValue,
           });
         } else {

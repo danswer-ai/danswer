@@ -146,7 +146,7 @@ export function CCPairIndexingStatusTable({
                       <div className="p-4">
                         <Pencil size={16} />
                       </div>
-                      <div className="whitespace-normal break-all max-w-3xl">
+                      <div className="whitespace-normal break-all max-w-lg">
                         <ConnectorTitle
                           connector={ccPairsIndexingStatus.connector}
                           ccPairId={ccPairsIndexingStatus.cc_pair_id}

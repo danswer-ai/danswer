@@ -1,5 +1,5 @@
-import { FiCheck, FiChevronDown } from "react-icons/fi";
 import { CustomDropdown } from "../../Dropdown";
+import { Check, ChevronDown } from "lucide-react";
 
 interface Option {
   key: string;
@@ -63,7 +63,7 @@ export function FilterDropdown({
                   {option.display}
                   {isSelected && (
                     <div className="ml-auto mr-1">
-                      <FiCheck />
+                      <Check />
                     </div>
                   )}
                 </div>
@@ -91,7 +91,7 @@ export function FilterDropdown({
           ) : (
             <p className="line-clamp-1">{selected.join(", ")}</p>
           )}
-          <FiChevronDown className="my-auto ml-auto" />
+          <ChevronDown className="my-auto ml-auto" />
         </div>
       </CustomDropdown>
     </div>

@@ -7,7 +7,6 @@ import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { TrashIcon } from "@/components/icons/icons";
 import { deleteTeamspace } from "./lib";
 import { useRouter } from "next/navigation";
-import { FiEdit2, FiUser } from "react-icons/fi";
 import { User, Teamspace } from "@/lib/types";
 import Link from "next/link";
 import { DeleteButton } from "@/components/DeleteButton";
@@ -22,14 +21,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
-import { Pencil } from "lucide-react";
+import { Pencil, User as UserIcon } from "lucide-react";
 
 const MAX_USERS_TO_DISPLAY = 6;
 
 const SimpleUserDisplay = ({ user }: { user: User }) => {
   return (
     <div className="flex my-0.5">
-      <FiUser className="mr-2 my-auto" /> {user.email}
+      <UserIcon className="mr-2 my-auto" /> {user.email}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Teamspace } from "@/lib/types";
-import { Cpu, Users } from "lucide-react";
+import { Cpu, File, Shield, Users } from "lucide-react";
 
 interface TeamspaceWithGradient extends Teamspace {
   gradient?: string;
@@ -25,7 +25,7 @@ export const TeamspacesCard = ({
           return (
             <Card
               key={teamspace.id}
-              className="overflow-hidden !rounded-xl cursor-pointer xl:min-w-[280px] md:max-w-[350px] justify-start items-start"
+              className="overflow-hidden !rounded-xl cursor-pointer xl:min-w-[280px] md:max-w-[400px] justify-start items-start"
               onClick={() => onClick(teamspace.id)}
             >
               <CardHeader
@@ -43,21 +43,42 @@ export const TeamspacesCard = ({
                 </div>
                 <div className="pb-6">
                   <h2 className="font-bold whitespace-normal break-all w-full">
-                    {teamspace.name}
+                    <span className="inline">{teamspace.name}</span>
+                    <div
+                      className={`inline-block ml-2 w-2.5 h-2.5 rounded-full ${
+                        teamspace.is_up_to_date ? "bg-success" : "bg-secondary"
+                      }`}
+                    />
                   </h2>
                   <span className="text-sm text-subtle">@mrquilbot</span>
                 </div>
 
-                <div className="w-full flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2">
-                    <Users size={16} />
-                    {teamspace.users.length} People
-                  </span>
+                <div className="w-full grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] text-sm gap-y-2 gap-x-6 font-light">
+                  <div className="flex items-center gap-2">
+                    <Users size={16} className="shrink-0" />
+                    <span className="whitespace-nowrap">
+                      {teamspace.users.length} People
+                    </span>
+                  </div>
 
-                  <span className="flex items-center gap-2">
-                    <Cpu size={16} />
-                    {teamspace.cc_pairs.length} Assistant
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Cpu size={16} className="shrink-0" />
+                    <span className="whitespace-nowrap">
+                      {teamspace.assistants.length} Assistant
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <File size={16} className="shrink-0" />
+                    <span className="whitespace-nowrap">
+                      {teamspace.document_sets.length} Document Set
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Shield size={16} className="shrink-0" />
+                    <span className="whitespace-nowrap">1 Token Rate</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>

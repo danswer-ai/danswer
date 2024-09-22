@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { FC, useState } from "react";
 import React from "react";
 import Dropzone from "react-dropzone";
@@ -47,11 +48,21 @@ export const FileUpload: FC<FileUploadProps> = ({
 
       {selectedFiles.length > 0 && (
         <div className="mt-4">
-          <h2 className="font-bold">Selected Files</h2>
+          <span className="font-semibold text-sm">Uploaded image:</span>
           <ul>
             {selectedFiles.map((file) => (
-              <div key={file.name} className="flex">
-                <p className="text-sm mr-2">{file.name}</p>
+              <div key={file.name} className="flex items-center mt-2">
+                {file.type.startsWith("image/") ? (
+                  <Image
+                    src={URL.createObjectURL(file)}
+                    alt={file.name}
+                    className="object-cover"
+                    width={150}
+                    height={150}
+                  />
+                ) : (
+                  <p className="text-sm mr-2">{file.name}</p>
+                )}
               </div>
             ))}
           </ul>

@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@tremor/react";
+import { Button } from "@/components/ui/button";
+import { LogIn } from "lucide-react";
 import Link from "next/link";
-import { FiLogIn } from "react-icons/fi";
 
 const Page = () => {
   return (
@@ -11,8 +11,8 @@ const Page = () => {
         Unable to login, please try again and/or contact an administrator.
       </div>
       <Link href="/auth/login" className="w-fit">
-        <Button className="mt-4" size="xs" icon={FiLogIn}>
-          Back to login
+        <Button className="mt-4">
+          <LogIn size={16} /> Back to login
         </Button>
       </Link>
     </div>

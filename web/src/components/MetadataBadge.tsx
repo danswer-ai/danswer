@@ -4,12 +4,12 @@ export function MetadataBadge({
   icon,
   value,
 }: {
-  icon?: React.FC<{ size?: number; className?: string }>;
+  icon?: JSX.Element;
   value: string | JSX.Element;
 }) {
   return (
     <Badge variant="secondary" className="pt-2">
-      {icon && icon({ size: 12, className: "mr-0.5 my-auto" })}
+      {icon && icon}
       <div className="my-auto flex">{value}</div>
     </Badge>
   );

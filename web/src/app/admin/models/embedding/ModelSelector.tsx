@@ -2,7 +2,6 @@ import {
   EmbeddingModelDescriptor,
   FullEmbeddingModelDescriptor,
 } from "./embeddingModels";
-import { FiStar } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import {
   Card,

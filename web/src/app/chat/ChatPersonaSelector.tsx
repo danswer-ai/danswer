@@ -1,9 +1,9 @@
 import { Assistant } from "@/app/admin/assistants/interfaces";
-import { FiCheck, FiChevronDown, FiPlusSquare, FiEdit2 } from "react-icons/fi";
 import { CustomDropdown, DefaultDropdownElement } from "@/components/Dropdown";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { checkUserIdOwnsAssistant } from "@/lib/assistants/checkOwnership";
+import { Check, ChevronDown, Edit2, PlusSquare } from "lucide-react";
 
 function AssistantItem({
   id,
@@ -45,13 +45,13 @@ function AssistantItem({
         {name}
         {isSelected && (
           <div className="my-auto ml-auto mr-1">
-            <FiCheck />
+            <Check size={16} />
           </div>
         )}
       </div>
       {isOwner && (
         <Link href={`/assistants/edit/${id}`} className="mx-2 my-auto">
-          <FiEdit2 className="hover:bg-hover p-0.5 my-auto" size={20} />
+          <Edit2 className="hover:bg-hover p-0.5 my-auto" size={20} />
         </Link>
       )}
     </div>
@@ -119,7 +119,7 @@ export function ChatAssistantSelector({
             <DefaultDropdownElement
               name={
                 <div className="flex items-center">
-                  <FiPlusSquare className="mr-2" />
+                  <PlusSquare className="mr-2" size={16} />
                   New Assistant
                 </div>
               }
@@ -134,7 +134,7 @@ export function ChatAssistantSelector({
         <div className="mt-auto">
           {currentlySelectedAssistant?.name || "Default"}
         </div>
-        <FiChevronDown className="my-auto ml-1" />
+        <ChevronDown className="my-auto ml-1" size={16} />
       </div>
     </CustomDropdown>
   );

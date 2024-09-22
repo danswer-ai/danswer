@@ -1,7 +1,6 @@
 import { BasicClickable } from "@/components/BasicClickable";
 import { EnmeddDocument } from "@/lib/search/interfaces";
-import { useState } from "react";
-import { FiBook, FiFilter } from "react-icons/fi";
+import { Book } from "lucide-react";
 
 export function SelectedDocuments({
   selectedDocuments,
@@ -15,7 +14,7 @@ export function SelectedDocuments({
   return (
     <BasicClickable>
       <div className="flex text-xs max-w-md overflow-hidden">
-        <FiBook className="my-auto mr-1" />{" "}
+        <Book className="my-auto mr-1" size={16} />{" "}
         <div className="w-fit whitespace-nowrap">
           Chatting with {selectedDocuments.length} Selected Documents
         </div>

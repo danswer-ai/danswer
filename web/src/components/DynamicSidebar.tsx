@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { GlobalSidebar } from "@/app/chat/sessionSidebar/GlobalSidebar";
+import { GlobalSidebar } from "@/components/globalSidebar/GlobalSidebar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { User } from "@/lib/types";
 import { useContext, useEffect, useState } from "react";

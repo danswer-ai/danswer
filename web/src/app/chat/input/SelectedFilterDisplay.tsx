@@ -4,6 +4,7 @@ import { FilterManager } from "@/lib/hooks";
 import { DateRangePickerValue } from "@tremor/react";
 import { X, Tag, Bookmark } from "lucide-react";
 import { DateRange } from "react-day-picker";
+import { Badge } from "@/components/ui/badge";
 
 const displayTimeRange = (timeRange: DateRange | null) => {
   if (!timeRange) {
@@ -37,28 +38,10 @@ const SelectedFilter = ({
   onClick: () => void;
   children: JSX.Element | string;
 }) => (
-  <div
-    className="
-      flex 
-      text-xs 
-      cursor-pointer 
-      items-center 
-      border 
-      border-border 
-      py-1 
-      rounded-regular 
-      px-2 
-      w-fit 
-      select-none 
-      hover:bg-hover 
-      bg-background 
-      shadow-md 
-    "
-    onClick={onClick}
-  >
+  <Badge onClick={onClick} className="cursor-pointer hover:bg-opacity-75">
     {children}
     <X className="ml-2" size={14} />
-  </div>
+  </Badge>
 );
 
 export function SelectedFilterDisplay({

@@ -37,13 +37,13 @@ function Main() {
 
   if (indexAttemptData.length === 0) {
     return (
-      <Text>
+      <p>
         It looks like you don&apos;t have any connectors setup yet. Visit the{" "}
         <Link className="text-link" href="/admin/data-sources">
           Add Data Sources
         </Link>{" "}
         page to get started!
-      </Text>
+      </p>
     );
   }
 

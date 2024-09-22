@@ -9,7 +9,6 @@ import {
   Form,
   Formik,
 } from "formik";
-import { FiX } from "react-icons/fi";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import {
   SubLabel,

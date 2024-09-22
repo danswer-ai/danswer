@@ -102,11 +102,11 @@ function Main({ ccPairId }: { ccPairId: number }) {
           />
         )}
       </div>
-      <Card>
-        <CardContent className="p-0">
-          <IndexingAttemptsTable ccPair={ccPair} />
-        </CardContent>
-      </Card>
+      {/*  <Card>
+        <CardContent className="p-0"> */}
+      <IndexingAttemptsTable ccPair={ccPair} />
+      {/*      </CardContent>
+      </Card> */}
 
       <div className="mt-12">
         <h3>Delete Connector</h3>
