@@ -25,7 +25,16 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
   const cloudSettings = settings?.cloudSettings;
 
   const searchParams = useSearchParams();
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [isNewUserOpen, setIsNewUserOpen] = useState(true)
+
+  const [newSeats, setNewSeats] = useState<null | number>(null);
+  const [newPlan, setNewPlan] = useState<null | BillingPlanType>(null);
+
+
   const { popup, setPopup } = usePopup();
+
 
   useEffect(() => {
     const success = searchParams.get("success");
@@ -49,13 +58,23 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
     }
   }, []);
 
+  // Use actual data from cloudSettings
+  const currentPlan = cloudSettings?.planType;
+  const seats = cloudSettings?.numberOfSeats!;
+
+  useEffect(() => {
+    if (cloudSettings) {
+      setNewSeats(cloudSettings.numberOfSeats);
+      setNewPlan(cloudSettings.planType);
+    }
+  }, [cloudSettings]);
+  
+
   if (!cloudSettings) {
     return null;
   }
 
-  // Use actual data from cloudSettings
-  const currentPlan = cloudSettings?.planType;
-  const seats = cloudSettings?.numberOfSeats!;
+
   const features = [
     { name: "All Connector Access", included: true },
     { name: "Basic Support", included: true },
@@ -87,11 +106,6 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
     },
   ];
 
-  const [newSeats, setNewSeats] = useState(seats);
-  const [newPlan, setNewPlan] = useState(currentPlan);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isNewUserOpen, setIsNewUserOpen] = useState(true);
-
   function getBillingPlanIcon(planType: BillingPlanType) {
     switch (planType) {
       case BillingPlanType.FREE:
@@ -110,6 +124,11 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
     Cookies.set("new_auth_user", "false");
   };
 
+
+  if (newSeats === null || currentPlan === undefined) {
+    return null;
+  }
+  
   return (
     <div className="max-w-4xl mr-auto space-y-8 p-6">
       {newUser && isNewUserOpen && (
@@ -124,7 +143,7 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
             <div className="text-center mb-8">
               <Logo className="mx-auto mb-4" height={150} width={150} />
               <p className="text-lg text-text-700 leading-relaxed">
-                We're thrilled to have you on board! Here, you can manage your
+                We&apos;re thrilled to have you on board! Here, you can manage your
                 billing settings and explore your plan details.
               </p>
             </div>
@@ -133,7 +152,7 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
                 onClick={handleCloseModal}
                 className="px-8 py-3 bg-blue-600 text-white text-lg font-semibold rounded-full hover:bg-blue-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
               >
-                Let's Get Started
+                Let&apos;s Get Started
               </Button>
               <Button
                 onClick={() => window.open("mailto:support@danswer.ai")}
