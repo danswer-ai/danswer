@@ -25,6 +25,8 @@
     "@types/react-dom": "18.0.11",
     "@types/uuid": "^9.0.8",
     "autoprefixer": "^10.4.14",
+    "diff": "^7.0.0",
+    "events": "^3.3.0",
     "formik": "^2.2.9",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
@@ -52,6 +54,7 @@
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.10",
+    "@types/diff": "^5.2.2",
     "eslint": "^8.48.0",
     "eslint-config-next": "^14.1.0",
     "prettier": "2.8.8"

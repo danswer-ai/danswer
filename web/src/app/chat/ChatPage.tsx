@@ -104,6 +104,7 @@ import {
   classifyAssistants,
   orderAssistantsForUser,
 } from "@/lib/assistants/utils";
+import StreamingDiffViewer from "./message/DiffViewer";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1728,6 +1729,9 @@ export function ChatPage({
     setShowDocSidebar(false);
   };
 
+  const [text, setText] = useState(
+    "This is some text\nPlease fix this typpo.\nI love my life."
+  );
   interface RegenerationRequest {
     messageId: number;
     parentMessage: Message;
@@ -1951,6 +1955,21 @@ export function ChatPage({
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }
                           >
+                            <div className="max-w-3xl mx-auto w-full">
+                              <div className="bg-white shadow-md rounded-lg p-4">
+                                <StreamingDiffViewer
+                                  originalText={text}
+                                  aiText={
+                                    messageHistory.length > 0
+                                      ? messageHistory[
+                                          messageHistory.length - 1
+                                        ].message
+                                      : "waiting"
+                                  }
+                                />
+                              </div>
+                            </div>
+
                             {(messageHistory.length < BUFFER_COUNT
                               ? messageHistory
                               : messageHistory.slice(
