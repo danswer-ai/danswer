@@ -15,7 +15,8 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
-
+from danswer.configs.constants import AuthType
+from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DEFAULT_SCHEMA
 from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
@@ -28,6 +29,19 @@ from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.utils.logger import setup_logger
+
+
+
+from typing import Generator
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+import jwt
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+DEFAULT_SCHEMA = "public"
 
 logger = setup_logger()
 
@@ -142,8 +156,9 @@ def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA):
             pool_size=40,
             max_overflow=10,
             pool_pre_ping=POSTGRES_POOL_PRE_PING,
-            pool_recycle=POSTGRES_POOL_RECYCLE,
+            pool_recycle=POSTGRES_POOL_RECYCLE, 
         )
+
         @event.listens_for(_SYNC_ENGINE, "connect")
         def set_search_path(dbapi_connection, connection_record):
             cursor = dbapi_connection.cursor()
@@ -177,21 +192,13 @@ def get_session_context_manager() -> ContextManager[Session]:
     return contextlib.contextmanager(get_session)()
 
 
-from typing import Generator
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
-import jwt
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-DEFAULT_SCHEMA = "public"
-
 from fastapi import Request, Depends, HTTPException
 
 
 def get_current_tenant_id(request: Request):
+    if AUTH_TYPE == AuthType.DISABLED:
+        return DEFAULT_SCHEMA
+    
     token = request.cookies.get("fastapiusersauth")
     if not token:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -207,14 +214,16 @@ def get_current_tenant_id(request: Request):
 
 
 
-def get_session(tenant_id: str = Depends(get_current_tenant_id)) -> Generator[Session, None, None]:
-
-    print('\n\n\n\n\ntenant_id', tenant_id)
+def get_session(tenant_id: str | None= None) -> Generator[Session, None, None]:
+    if tenant_id is None:
+        if AUTH_TYPE == AuthType.DISABLED:
+            tenant_id = DEFAULT_SCHEMA
+        else:
+            # When AUTH is enabled, tenant_id must be provided
+            raise ValueError("Tenant ID must be provided when authentication is enabled")
     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
-
-        tenant_id = "01fb5963-9ab3-4585-900a-438480857427"
-
         session.execute(text(f'SET search_path TO "{tenant_id}"'))
+        print("SEARCH PATH IS ", tenant_id)
         yield session
         session.execute(text('SET search_path TO "public"'))
 
