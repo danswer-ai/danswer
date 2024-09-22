@@ -1,3 +1,4 @@
+from danswer.db.engine import get_sqlalchemy_engine
 from typing import cast
 
 from fastapi import APIRouter
@@ -8,6 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from danswer.chat.load_yamls import load_chat_yamls
 from danswer.auth.users import create_user_session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
@@ -20,6 +22,7 @@ from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import NotificationType
 from danswer.db.engine import get_session
+
 from danswer.db.models import User
 from danswer.db.notification import create_notification
 from danswer.db.notification import dismiss_all_notifications
@@ -97,6 +100,10 @@ async def create_tenant_schema(tenant_id: str) -> None:
         await session.commit()
         logger.info(f"Schema created for tenant: {tenant_id}")
 
+    with Session(get_sqlalchemy_engine(tenant_id)) as db_session:
+
+    # with get_session(tenant_id=tenant_id) as db_session:
+        load_chat_yamls(db_session)
 
     # Run migrations for the new schema
     logger.info(f"Running migrations for tenant: {tenant_id}")

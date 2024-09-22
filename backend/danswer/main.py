@@ -184,7 +184,7 @@ def setup_postgres(db_session: Session) -> None:
 
     logger.notice("Loading default Prompts and Personas")
     delete_old_default_personas(db_session)
-    load_chat_yamls()
+    load_chat_yamls(db_session=db_session)
 
     logger.notice("Loading built-in tools")
     load_builtin_tools(db_session)

@@ -1,3 +1,4 @@
+from fastapi import Depends
 from fastapi import Request, HTTPException
 import contextlib
 import time
@@ -16,8 +17,6 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
-from danswer.configs.constants import AuthType
-from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DEFAULT_SCHEMA
 from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
@@ -29,8 +28,8 @@ from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.utils.logger import setup_logger
-
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 
@@ -190,8 +189,10 @@ def get_session_context_manager() -> ContextManager[Session]:
 
 
 def get_current_tenant_id(request: Request) -> str:
-    if AUTH_TYPE == AuthType.DISABLED:
-        return DEFAULT_SCHEMA
+
+    if not MULTI_TENANT:
+        tenant_id = DEFAULT_SCHEMA
+
 
     token = request.cookies.get("fastapiusersauth")
     if not token:
@@ -207,14 +208,8 @@ def get_current_tenant_id(request: Request) -> str:
         raise HTTPException(status_code=401, detail="Invalid token") from e
 
 
-
-def get_session(tenant_id: str | None= None) -> Generator[Session, None, None]:
-    if tenant_id is None:
-        if AUTH_TYPE == AuthType.DISABLED:
-            tenant_id = DEFAULT_SCHEMA
-        else:
-            # When AUTH is enabled, tenant_id must be provided
-            raise ValueError("Tenant ID must be provided when authentication is enabled")
+def get_session(tenant_id: str | None= Depends(get_current_tenant_id)) -> Generator[Session, None, None]:
+    print("")
     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
         session.execute(text(f'SET search_path TO "{tenant_id}"'))
         print("SEARCH PATH IS ", tenant_id)
