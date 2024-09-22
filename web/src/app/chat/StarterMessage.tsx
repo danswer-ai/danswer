@@ -1,6 +1,6 @@
 import { StarterMessage as StarterMessageType } from "../admin/assistants/interfaces";
-import { NewChatIcon } from "@/components/icons/icons";
-import { useState, useEffect } from "react";
+import { NewChatIcon, SendIcon } from "@/components/icons/icons";
+import { useState } from "react";
 
 export function StarterMessage({
   starterMessage,
@@ -9,41 +9,31 @@ export function StarterMessage({
   starterMessage: StarterMessageType;
   onClick: () => void;
 }) {
-  const [showText, setShowText] = useState(false);
-  const [hideText, setHideText] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowText(true);
-    }, 1000); // Slightly after the showing animation
-
-    return () => clearTimeout(timer);
-  }, []);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      onMouseLeave={() => {
-        setTimeout(() => {
-          setHideText(true);
-        }, 100);
-        setTimeout(() => {
-          setHideText(false);
-        }, 600);
-      }}
-      className="group relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-background-50 to-background p-4 shadow-sm mobile:transition-none mobile:duration-0 transition-all duration-300 mobile:hover:shadow-none mobile:hover:scale-100 hover:shadow-md hover:scale-[1.02] cursor-pointer"
+      className="mx-2 group relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-white to-background p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.01] cursor-pointer"
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-purple-100 opacity-0 mobile:group-hover:opacity-0 group-hover:opacity-20 mobile:transition-none transition-opacity duration-300"></div>
-      <h3 className="text-lg font-medium	text-text-800 mobile:group-hover:text-text-800 group-hover:text-text-900 mobile:transition-none transition-colors duration-300">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-purple-100 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+      <h3
+        className="text-lg font-medium text-text-800 group-hover:text-text-900 transition-colors duration-300
+                     line-clamp-2 overflow-hidden"
+      >
         {starterMessage.name}
       </h3>
       <div
-        className={`mobile:max-h-full mobile:group-hover:max-h-full max-h-0 group-hover:max-h-[200px] overflow-hidden mobile:transition-none transition-all duration-500 ease-in-out group-hover:transition-[max-height] group-hover:duration-500 transition-[max-height] duration-200 ${hideText ? "invisible" : showText ? "opacity-100" : "opacity-0"}`}
+        className={`overflow-hidden transition-all duration-300 ${isHovered ? "max-h-20" : "max-h-0"}`}
       >
-        <p className="text-sm text-text-600">{starterMessage.description}</p>
+        <p className="text-sm text-text-600 mt-2">
+          {starterMessage.description}
+        </p>
       </div>
-      <div className="absolute bottom-0 right-0 p-2 mobile:opacity-100 opacity-0 group-hover:opacity-100 mobile:transition-none transition-opacity duration-300">
-        <NewChatIcon className="text-blue-500" />
+      <div className="absolute bottom-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <SendIcon className="text-blue-500" />
       </div>
     </div>
   );

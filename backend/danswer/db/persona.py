@@ -256,7 +256,6 @@ def get_personas(
     include_deleted: bool = False,
     joinedload_all: bool = False,
 ) -> Sequence[Persona]:
-    print("Executing query to fetch personas:")
     stmt = select(Persona).distinct()
     stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
 
@@ -266,7 +265,6 @@ def get_personas(
         stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
     if not include_deleted:
         stmt = stmt.where(Persona.deleted.is_(False))
-    print(stmt)
 
     if joinedload_all:
         stmt = stmt.options(
@@ -422,6 +420,9 @@ def upsert_persona(
     chunks_above: int = CONTEXT_CHUNKS_ABOVE,
     chunks_below: int = CONTEXT_CHUNKS_BELOW,
 ) -> Persona:
+    print("upserting with ")
+    print(starter_messages)
+    print("-----\n\n\n")
     if persona_id is not None:
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
     else:

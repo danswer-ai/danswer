@@ -2018,44 +2018,39 @@ export function ChatPage({
                                   availableSources={finalAvailableSources}
                                   selectedPersona={liveAssistant}
                                 />
-                                {currentPersona &&
-                                  currentPersona.starter_messages &&
-                                  currentPersona.starter_messages.length > 0 &&
-                                  selectedAssistant &&
-                                  messageHistory.length === 0 &&
-                                  !isFetchingChatMessages && (
-                                    <div
-                                      key={-4}
-                                      className={`
+                                <div
+                                  key={-4}
+                                  className={`
                                       mx-auto 
                                       px-4 
-                                      w-[750px]
-                                      grid 
-                                      gap-4 
-                                      grid-cols-1 
-                                      grid-rows-1 
+                                      w-full
+                                      max-w-[750px]
+                                      flex 
+                                      flex-wrap
+                                      justify-center
                                       mt-4 
-                                      h-80
-                                      md:grid-cols-4
+                                      h-40
                                       mb-6`}
-                                    >
-                                      {currentPersona.starter_messages.map(
-                                        (starterMessage, i) => (
-                                          <div key={i} className="w-full">
-                                            <StarterMessage
-                                              starterMessage={starterMessage}
-                                              onClick={() =>
-                                                onSubmit({
-                                                  messageOverride:
-                                                    starterMessage.message,
-                                                })
-                                              }
-                                            />
-                                          </div>
-                                        )
-                                      )}
-                                    </div>
-                                  )}
+                                >
+                                  {currentPersona?.starter_messages &&
+                                    currentPersona.starter_messages.length >
+                                      0 &&
+                                    currentPersona.starter_messages
+                                      .slice(0, 4)
+                                      .map((starterMessage, i) => (
+                                        <div key={i} className="w-1/4">
+                                          <StarterMessage
+                                            starterMessage={starterMessage}
+                                            onClick={() =>
+                                              onSubmit({
+                                                messageOverride:
+                                                  starterMessage.message,
+                                              })
+                                            }
+                                          />
+                                        </div>
+                                      ))}
+                                </div>
                               </div>
                             )}
 
