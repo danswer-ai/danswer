@@ -1,6 +1,7 @@
 import asyncio
 from logging.config import fileConfig
 
+from typing import Tuple
 from alembic import context
 from danswer.db.engine import build_connection_string
 from danswer.db.models import Base
@@ -30,7 +31,7 @@ if config.config_file_name is not None:
 # Add your model's MetaData object here
 target_metadata = [Base.metadata, ResultModelBase.metadata]
 
-def get_schema_options():
+def get_schema_options() -> Tuple[str, bool]:
     x_args_raw = context.get_x_argument()
     x_args = {}
     for arg in x_args_raw:
@@ -53,7 +54,7 @@ def run_migrations_offline() -> None:
 
     context.configure(
         url=url,
-        target_metadata=target_metadata,
+        target_metadata=target_metadata, # type: ignore
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         version_table_schema=schema,
@@ -76,7 +77,7 @@ def do_run_migrations(connection: Connection) -> None:
 
     context.configure(
         connection=connection,
-        target_metadata=target_metadata,
+        target_metadata=target_metadata, # type: ignore
         version_table_schema=schema,
         include_schemas=True,
         compare_type=True,

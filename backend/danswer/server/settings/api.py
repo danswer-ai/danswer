@@ -51,8 +51,8 @@ logger = setup_logger()
 from sqlalchemy import text
 
 import contextlib
-from sqlalchemy.ext.asyncio import AsyncSession
-def run_alembic_migrations(schema_name: str):
+
+def run_alembic_migrations(schema_name: str) -> None:
     # alembic -x "schema=tenant1,create_schema=true" upgrade head
 
     logger.info(f"Starting Alembic migrations for schema: {schema_name}")
@@ -85,7 +85,7 @@ async def check_schema_exists(tenant_id: str) -> bool:
         logger.info(f"Schema for tenant {tenant_id} exists: {exists}")
         return exists
 
-async def create_tenant_schema(tenant_id: str):
+async def create_tenant_schema(tenant_id: str) -> None:
     logger.info(f"Creating schema for tenant: {tenant_id}")
     # Create the schema
     get_async_session_context = contextlib.asynccontextmanager(
@@ -110,7 +110,7 @@ async def sso_callback(
     response: Response,
     sso_token: str = Query(..., alias="sso_token"),
     user_manager: UserManager = Depends(get_user_manager),
-):
+) -> JSONResponse:
     logger.info("SSO callback initiated")
     payload = verify_sso_token(sso_token)
     logger.info(f"SSO token verified for email: {payload['email']}")
@@ -237,7 +237,7 @@ def dismiss_notification_endpoint(
 def get_user_notifications(
     user: User | None, db_session: Session
 ) -> list[Notification]:
-    return []
+    return cast(list[Notification], [])
     """Get notifications for the user, currently the logic is very specific to the reindexing flag"""
     is_admin = is_user_admin(user)
     if not is_admin:

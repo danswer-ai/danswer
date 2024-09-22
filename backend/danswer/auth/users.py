@@ -237,7 +237,7 @@ async def get_or_create_user(email: str, user_id: str, tenant_id: str) -> User:
                 # "tenant_id": uuid.UUID(tenant_id),
             }
 
-            created_user = await user_db.create(new_user)
+            created_user: User = await user_db.create(new_user)
             return created_user
 
 from datetime import timedelta
@@ -268,7 +268,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         email: str,
         user_id: str,
         tenant_id: str,
-    ) -> models.UP:
+    ) -> User:
         try:
             user = await self.get_by_email(email)
 
@@ -367,30 +367,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         )
 
         send_user_verification_email(user.email, token)
-
-
-async def sso_authenticate(
-    self,
-    email: str,
-    user_id: str,
-    tenant_id: str,
-) -> models.UP:
-    user = await self.get_by_email(email)
-    if not user:
-        user_create = UserCreate(role=UserRole.BASIC)
-        user = await self.create(user_create)
-
-    # Update user with tenant information if needed
-    if user.tenant_id != tenant_id:
-        await self.user_db.update(user, {"tenant_id": tenant_id})
-
-    return user
-
-
-# async def get_user_manager(
-#     user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
-# ) -> AsyncGenerator[UserManager, None]:
-#     yield UserManager(user_db)
 
 
 async def get_user_manager(

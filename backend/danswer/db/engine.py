@@ -1,3 +1,4 @@
+from fastapi import Request, Depends, HTTPException
 import contextlib
 import time
 from collections.abc import AsyncGenerator
@@ -145,7 +146,7 @@ def init_sqlalchemy_engine(app_name: str) -> None:
     POSTGRES_APP_NAME = app_name
 
 
-def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA):
+def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA) -> Engine:
     global _SYNC_ENGINE
     if _SYNC_ENGINE is None:
         connection_string = build_connection_string(
@@ -159,12 +160,13 @@ def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA):
             pool_recycle=POSTGRES_POOL_RECYCLE, 
         )
 
-        @event.listens_for(_SYNC_ENGINE, "connect")
-        def set_search_path(dbapi_connection, connection_record):
-            cursor = dbapi_connection.cursor()
-            cursor.execute(f"SET search_path TO {schema}")
-            cursor.close()
-            dbapi_connection.commit()
+        # NOTE: Should be unnecessary
+        # @event.listens_for(_SYNC_ENGINE, "connect")
+        # def set_search_path(dbapi_connection, connection_record):
+        #     cursor = dbapi_connection.cursor()
+        #     cursor.execute(f"SET search_path TO {schema}")
+        #     cursor.close()
+        #     dbapi_connection.commit()
 
 
     return _SYNC_ENGINE
@@ -192,10 +194,9 @@ def get_session_context_manager() -> ContextManager[Session]:
     return contextlib.contextmanager(get_session)()
 
 
-from fastapi import Request, Depends, HTTPException
 
 
-def get_current_tenant_id(request: Request):
+def get_current_tenant_id(request: Request) -> str:
     if AUTH_TYPE == AuthType.DISABLED:
         return DEFAULT_SCHEMA
     

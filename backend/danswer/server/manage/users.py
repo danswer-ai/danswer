@@ -350,7 +350,7 @@ async def create_checkout_session(
     checkout_billing: CheckoutSessionUpdateBillingStatus,
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
-):
+) -> JSONResponse:
     quantity = checkout_billing.quantity
     plan = checkout_billing.plan
 
@@ -384,9 +384,6 @@ async def create_checkout_session(
         logger.info(
             f"Checkout session created successfully with id: {checkout_session.id}"
         )
-    except stripe.error.InvalidRequestError as e:
-        logger.error(f"Stripe error: {str(e)}")
-        raise HTTPException(status_code=400, detail=f"Stripe error: {str(e)}")
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
