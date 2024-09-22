@@ -10,7 +10,6 @@ from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.external_perm import ExternalUserGroup
 from ee.danswer.db.external_perm import replace_user__ext_group_for_cc_pair__no_commit
-from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
 
 logger = setup_logger()
@@ -82,7 +81,6 @@ def _get_group_members_email_paginated(
 def confluence_group_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
-    docs_with_additional_info: list[DocsWithAdditionalInfo],
     sync_details: dict[str, Any],
 ) -> None:
     confluence_client = _get_confluence_client(
