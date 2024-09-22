@@ -1,17 +1,12 @@
-// StreamingDiffViewer.tsx
-
 import React, { useState, useEffect } from "react";
 import { diffLines, Change } from "diff";
-import "./diff.css";
 
-interface StreamingDiffViewerProps {
-  originalText: string;
-  aiText: string;
-}
-
-const StreamingDiffViewer: React.FC<StreamingDiffViewerProps> = ({
+const StreamingDiffViewer = ({
   originalText,
   aiText,
+}: {
+  originalText: string;
+  aiText: string;
 }) => {
   const [diffResult, setDiffResult] = useState<Change[]>([]);
 
@@ -24,13 +19,13 @@ const StreamingDiffViewer: React.FC<StreamingDiffViewerProps> = ({
   }, [originalText, aiText]);
 
   return (
-    <div className="code-diff">
+    <div className="font-mono whitespace-pre-wrap">
       {diffResult.map((part, index) => {
         const className = part.added
-          ? "line-added"
+          ? "bg-green-100"
           : part.removed
-            ? "line-removed"
-            : "line-unchanged";
+            ? "bg-red-100 line-through"
+            : "";
 
         return (
           <pre key={index} className={className}>
