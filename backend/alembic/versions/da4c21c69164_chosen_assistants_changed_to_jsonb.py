@@ -19,7 +19,7 @@ depends_on: None = None
 
 def upgrade() -> None:
     conn = op.get_bind()
-    
+
     existing_ids_and_chosen_assistants = conn.execute(
         sa.text('SELECT id, chosen_assistants FROM "user"')
     )

@@ -1,4 +1,4 @@
-from fastapi import Request, Depends, HTTPException
+from fastapi import Request, HTTPException
 import contextlib
 import time
 from collections.abc import AsyncGenerator
@@ -31,18 +31,11 @@ from danswer.configs.app_configs import POSTGRES_USER
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.utils.logger import setup_logger
 
-
-
-from typing import Generator
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-DEFAULT_SCHEMA = "public"
 
 logger = setup_logger()
 
@@ -157,7 +150,7 @@ def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA) -> Engine:
             pool_size=40,
             max_overflow=10,
             pool_pre_ping=POSTGRES_POOL_PRE_PING,
-            pool_recycle=POSTGRES_POOL_RECYCLE, 
+            pool_recycle=POSTGRES_POOL_RECYCLE,
         )
 
         # NOTE: Should be unnecessary
@@ -199,7 +192,7 @@ def get_session_context_manager() -> ContextManager[Session]:
 def get_current_tenant_id(request: Request) -> str:
     if AUTH_TYPE == AuthType.DISABLED:
         return DEFAULT_SCHEMA
-    
+
     token = request.cookies.get("fastapiusersauth")
     if not token:
         raise HTTPException(status_code=401, detail="Authentication required")

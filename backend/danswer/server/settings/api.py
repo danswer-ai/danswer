@@ -5,15 +5,12 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Query
 from fastapi.security import OAuth2PasswordBearer
-from fastapi_users.authentication import Strategy
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import create_user_session
-from danswer.auth.users import optional_user
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.auth.users import get_database_strategy
 from danswer.auth.users import get_user_manager
 from danswer.auth.users import is_user_admin
 from danswer.auth.users import UserManager
@@ -40,17 +37,19 @@ from danswer.server.settings.store import store_settings
 from danswer.utils.logger import setup_logger
 from fastapi.responses import JSONResponse
 from fastapi.responses import Response
+from danswer.db.engine import get_async_session
+import subprocess
+import contextlib
+from sqlalchemy import text
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 admin_router = APIRouter(prefix="/admin/settings")
 basic_router = APIRouter(prefix="/settings")
-from danswer.db.engine import get_async_session
-import subprocess
-logger = setup_logger()
-from sqlalchemy import text
 
-import contextlib
+
+logger = setup_logger()
+
 
 def run_alembic_migrations(schema_name: str) -> None:
     # alembic -x "schema=tenant1,create_schema=true" upgrade head
@@ -74,7 +73,7 @@ async def check_schema_exists(tenant_id: str) -> bool:
     logger.info(f"Checking if schema exists for tenant: {tenant_id}")
     get_async_session_context = contextlib.asynccontextmanager(
         get_async_session
-    ) 
+    )
     async with get_async_session_context() as session:
         result = await session.execute(
             text("SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schema_name"),
@@ -90,7 +89,7 @@ async def create_tenant_schema(tenant_id: str) -> None:
     # Create the schema
     get_async_session_context = contextlib.asynccontextmanager(
         get_async_session
-    ) 
+    )
     async with get_async_session_context() as session:
 
 

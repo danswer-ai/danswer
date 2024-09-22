@@ -1,3 +1,4 @@
+from datetime import timedelta
 import contextlib
 import smtplib
 import uuid
@@ -240,7 +241,6 @@ async def get_or_create_user(email: str, user_id: str, tenant_id: str) -> User:
             created_user: User = await user_db.create(new_user)
             return created_user
 
-from datetime import timedelta
 
 async def create_user_session(user: User, tenant_id: str) -> str:
     # Create a payload with user information and tenant_id
@@ -250,11 +250,11 @@ async def create_user_session(user: User, tenant_id: str) -> str:
         "tenant_id": tenant_id,
         "exp": datetime.utcnow() + timedelta(seconds=SESSION_EXPIRE_TIME_SECONDS)
     }
-    
+
     # Encode the token
     token = jwt.encode(payload, "JWT_SECRET_KEY", algorithm="HS256")
 
-    
+
     return token
 
 
