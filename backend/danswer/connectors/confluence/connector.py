@@ -634,7 +634,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             attachment_text, unused_page_attachments = self._fetch_attachments(
                 self.confluence_client, page_id, files_in_used
             )
-            unused_attachments.extend(unused_page_attachments)
+            unused_page_attachments_with_id = [
+                {**attachment, "permission_base_content_id": page_id}
+                for attachment in unused_page_attachments
+            ]
+            unused_attachments.extend(unused_page_attachments_with_id)
 
             page_text += attachment_text
             comments_text = self._fetch_comments(self.confluence_client, page_id)
@@ -654,6 +658,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         [BasicExpertInfo(email=author)] if author else None
                     ),
                     metadata=doc_metadata,
+                    additional_info={
+                        "permission_base_content_id": page_id,
+                    },
                 )
             )
         return (
@@ -717,6 +724,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         else None
                     ),
                     metadata=doc_metadata,
+                    additional_info={
+                        "permission_base_content_id": attachment[
+                            "permission_base_content_id"
+                        ],
+                    },
                 )
             )
 
