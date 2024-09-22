@@ -1724,7 +1724,6 @@ export function ChatPage({
     mostVisibleMessageId: null,
   };
 
-  console.log(availableAssistants);
   useEffect(() => {
     if (noAssistants) {
       return;
