@@ -105,6 +105,7 @@ import {
   orderAssistantsForUser,
 } from "@/lib/assistants/utils";
 import StreamingDiffViewer from "./message/DiffViewer";
+import { Button } from "@tremor/react";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -136,6 +137,7 @@ export function ChatPage({
     refreshChatSessions,
   } = useChatContext();
 
+  const [highlightedLines, setHighlightedLines] = useState<number[]>([]);
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
   const { user, refreshUser, isLoadingUser } = useUser();
@@ -1392,6 +1394,47 @@ export function ChatPage({
     setAlternativeGeneratingAssistant(null);
   };
 
+  const onEdit = async (input: string) => {
+    console.log("EEEDIT");
+    const prompt = `You are an expert linguist. Please review and correct the following text, focusing on grammar, spelling, and punctuation. Provide only the corrected version without any explanations. If the text is already correct, return it unchanged:
+
+${highlightedLines.map((lineNumber) => text.split("\n")[lineNumber - 1]).join("\n")}
+
+Corrected text:`;
+    const message = prompt + input;
+
+    const controller = new AbortController();
+    setFinishedStreaming(false);
+    setAIText((prevAnswer) => "");
+    for await (const packet of sendMessage({
+      signal: controller.signal,
+      message: message,
+      regenerate: false,
+      fileDescriptors: [],
+      parentMessageId: null,
+      chatSessionId: chatSessionIdRef.current!,
+      promptId: liveAssistant?.prompts[0]?.id || 0,
+      alternateAssistantId: liveAssistant.id,
+      filters: buildFilters(
+        filterManager.selectedSources,
+        filterManager.selectedDocumentSets,
+        filterManager.timeRange,
+        filterManager.selectedTags
+      ),
+      selectedDocumentIds: [],
+      temperature: llmOverrideManager.temperature || undefined,
+    })) {
+      console.log(packet);
+      if (Object.hasOwn(packet, "answer_piece")) {
+        setAIText(
+          (prevAnswer) =>
+            prevAnswer + (packet as AnswerPiecePacket).answer_piece
+        );
+      }
+    }
+    setFinishedStreaming(true);
+  };
+
   const onFeedback = async (
     messageId: number,
     feedbackType: FeedbackType,
@@ -1732,6 +1775,8 @@ export function ChatPage({
   const [text, setText] = useState(
     "This is some text\nPlease fix this typpo.\nI love my life."
   );
+  const [AIText, setAIText] = useState<string>("null");
+  const [finishedStreaming, setFinishedStreaming] = useState<boolean>(false);
   interface RegenerationRequest {
     messageId: number;
     parentMessage: Message;
@@ -1956,18 +2001,19 @@ export function ChatPage({
                             }
                           >
                             <div className="max-w-3xl mx-auto w-full">
-                              <div className="bg-white shadow-md rounded-lg p-4">
-                                <StreamingDiffViewer
-                                  originalText={text}
-                                  aiText={
-                                    messageHistory.length > 0
-                                      ? messageHistory[
-                                          messageHistory.length - 1
-                                        ].message
-                                      : "waiting"
-                                  }
-                                />
-                              </div>
+                              <StreamingDiffViewer
+                                text={text}
+                                setText={setText}
+                                highlightedLines={highlightedLines}
+                                setHighlightedLines={setHighlightedLines}
+                                aiText={AIText}
+                                resetAIText={() => setAIText("")}
+                                finishedStreaming={finishedStreaming}
+                              />
+
+                              <Button onClick={() => onEdit("Hello!")}>
+                                CLICK ME
+                              </Button>
                             </div>
 
                             {(messageHistory.length < BUFFER_COUNT
