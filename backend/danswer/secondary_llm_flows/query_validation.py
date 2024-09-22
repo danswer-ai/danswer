@@ -52,7 +52,7 @@ def get_query_answerability(
         return "Query Answerability Evaluation feature is turned off", True
 
     try:
-        llm, _ = get_default_llms()
+        llm, _ = get_default_llms(db_session=db_session)
     except GenAIDisabledException:
         return "Generative AI is turned off - skipping check", True
 
@@ -79,7 +79,7 @@ def stream_query_answerability(
         return
 
     try:
-        llm, _ = get_default_llms()
+        llm, _ = get_default_llms(db_session=db_session)
     except GenAIDisabledException:
         yield get_json_line(
             QueryValidationResponse(

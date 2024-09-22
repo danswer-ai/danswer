@@ -53,7 +53,7 @@ def handle_search_request(
     query = search_request.message
     logger.notice(f"Received document search query: {query}")
 
-    llm, fast_llm = get_default_llms()
+    llm, fast_llm = get_default_llms(db_session=db_session)
 
     search_pipeline = SearchPipeline(
         search_request=SearchRequest(
@@ -141,7 +141,7 @@ def get_answer_with_quote(
     )
 
     llm = get_main_llm_from_tuple(
-        get_default_llms() if not persona else get_llms_for_persona(persona)
+        get_default_llms(db_session=db_session) if not persona else get_llms_for_persona(persona, db_session=db_session)
     )
     input_tokens = get_max_input_tokens(
         model_name=llm.config.model_name, model_provider=llm.config.model_provider

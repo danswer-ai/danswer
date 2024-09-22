@@ -226,7 +226,7 @@ def rename_chat_session(
 
     try:
         llm, _ = get_default_llms(
-            additional_headers=get_litellm_additional_request_headers(request.headers)
+            additional_headers=get_litellm_additional_request_headers(request.headers), db_session=db_session
         )
     except GenAIDisabledException:
         # This may be longer than what the LLM tends to produce but is the most
@@ -424,7 +424,7 @@ def get_max_document_tokens(
         raise HTTPException(status_code=404, detail="Persona not found")
 
     return MaxSelectedDocumentTokens(
-        max_tokens=compute_max_document_tokens_for_persona(persona),
+        max_tokens=compute_max_document_tokens_for_persona(persona, db_session=db_session),
     )
 
 
@@ -474,7 +474,7 @@ def seed_chat(
         root_message = get_or_create_root_message(
             chat_session_id=new_chat_session.id, db_session=db_session
         )
-        llm, fast_llm = get_llms_for_persona(persona=new_chat_session.persona)
+        llm, fast_llm = get_llms_for_persona(persona=new_chat_session.persona, db_session=db_session)
 
         tokenizer = get_tokenizer(
             model_name=llm.config.model_name,

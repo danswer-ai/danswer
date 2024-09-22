@@ -12,7 +12,6 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from httpx_oauth.clients.google import GoogleOAuth2
-from sqlalchemy.orm import Session
 
 from danswer import __version__
 from danswer.auth.schemas import UserCreate
@@ -20,7 +19,7 @@ from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
-from danswer.chat.load_yamls import load_chat_yamls
+from sqlalchemy.orm import Session
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
@@ -37,30 +36,24 @@ from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import KV_SEARCH_SETTINGS
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
 from danswer.db.connector import check_connectors_exist
-from danswer.db.connector import create_initial_default_connector
-from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
-from danswer.db.credentials import create_initial_public_credential
 from danswer.db.document import check_docs_exist
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
-from danswer.db.persona import delete_old_default_personas
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_secondary_search_settings
-from danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.models import IndexingSetting
-from danswer.llm.llm_initialization import load_llm_providers
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
@@ -106,9 +99,6 @@ from danswer.server.settings.api import basic_router as settings_router
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
-from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
-from danswer.tools.built_in_tools import load_builtin_tools
-from danswer.tools.built_in_tools import refresh_built_in_tools_cache
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -117,11 +107,11 @@ from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-
+from danswer.db_setup import setup_postgres
 
 logger = setup_logger()
 
-
+ 
 def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     if not isinstance(exc, RequestValidationError):
         logger.error(
@@ -169,27 +159,6 @@ def include_router_with_global_prefix_prepended(
 
     application.include_router(router, **final_kwargs)
 
-
-def setup_postgres(db_session: Session) -> None:
-    logger.notice("Verifying default connector/credential exist.")
-    create_initial_public_credential(db_session)
-    create_initial_default_connector(db_session)
-    associate_default_cc_pair(db_session)
-
-    logger.notice("Verifying default standard answer category exists.")
-    create_initial_default_standard_answer_category(db_session)
-
-    logger.notice("Loading LLM providers from env variables")
-    load_llm_providers(db_session)
-
-    logger.notice("Loading default Prompts and Personas")
-    delete_old_default_personas(db_session)
-    load_chat_yamls(db_session=db_session)
-
-    logger.notice("Loading built-in tools")
-    load_builtin_tools(db_session)
-    refresh_built_in_tools_cache(db_session)
-    auto_add_search_tool_to_personas(db_session)
 
 
 def translate_saved_search_settings(db_session: Session) -> None:

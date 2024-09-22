@@ -18,7 +18,7 @@ from danswer.db.swap_index import check_index_swap
 from danswer.document_index.vespa.index import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.indexing.models import IndexingSetting
-from danswer.main import setup_postgres
+from danswer.db_setup import setup_postgres
 from danswer.main import setup_vespa
 from tests.integration.common_utils.llm import seed_default_openai_provider
 

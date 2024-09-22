@@ -1,6 +1,6 @@
+from danswer.db_setup import setup_postgres
 from danswer.db.engine import get_sqlalchemy_engine
 from typing import cast
-
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -65,6 +65,8 @@ def run_alembic_migrations(schema_name: str) -> None:
         "upgrade",
         "head"
     ]
+    print("SHOULD BE RUNNING MIGRATION")
+    print(schema_name)
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
         logger.error(f"Alembic migration failed for schema {schema_name}: {result.stderr}")
@@ -93,25 +95,31 @@ async def create_tenant_schema(tenant_id: str) -> None:
     get_async_session_context = contextlib.asynccontextmanager(
         get_async_session
     )
-    async with get_async_session_context() as session:
-
-
-        await session.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{tenant_id}"'))
-        await session.commit()
-        logger.info(f"Schema created for tenant: {tenant_id}")
-
-    with Session(get_sqlalchemy_engine(tenant_id)) as db_session:
-
-    # with get_session(tenant_id=tenant_id) as db_session:
-        load_chat_yamls(db_session)
 
     # Run migrations for the new schema
     logger.info(f"Running migrations for tenant: {tenant_id}")
     run_alembic_migrations(tenant_id)
+
+    async with get_async_session_context() as session:
+        await session.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{tenant_id}"'))
+        await session.commit()
+        logger.info(f"Schema created for tenant: {tenant_id}")
+
+    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
+        try:
+            setup_postgres(db_session)
+        except SQLAlchemyError as e:
+            logger.error(f"Error while loading chat YAMLs for tenant {tenant_id}: {str(e)}")
+            raise
+        finally:
+            db_session.execute(text('SET search_path TO "public"'))
+
+        # db_session.execute(text(f'SET search_path TO "public"'))
+
     logger.info(f"Migrations completed for tenant: {tenant_id}")
 
 
-@basic_router.post("/auth/sso-callback")
+@basic_router.post("/auth/sso-callback") 
 async def sso_callback(
     response: Response,
     sso_token: str = Query(..., alias="sso_token"),
@@ -132,7 +140,7 @@ async def sso_callback(
 
 
     schema_exists = await check_schema_exists(tenant_id)
-    if not schema_exists:
+    if True:
         logger.info(f"Schema does not exist for tenant: {tenant_id}. Creating...")
         # Create schema and run migrations
         await create_tenant_schema(tenant_id)

@@ -118,7 +118,7 @@ def stream_answer_objects(
         one_shot=True,
         danswerbot_flow=danswerbot_flow,
     )
-    llm, fast_llm = get_llms_for_persona(persona=chat_session.persona)
+    llm, fast_llm = get_llms_for_persona(persona=chat_session.persona, db_session=db_session)
 
     llm_tokenizer = get_tokenizer(
         model_name=llm.config.model_name,
@@ -209,7 +209,7 @@ def stream_answer_objects(
         question=query_msg.message,
         answer_style_config=answer_config,
         prompt_config=PromptConfig.from_model(prompt),
-        llm=get_main_llm_from_tuple(get_llms_for_persona(persona=chat_session.persona)),
+        llm=get_main_llm_from_tuple(get_llms_for_persona(persona=chat_session.persona, db_session=db_session)),
         single_message_history=history_str,
         tools=[search_tool],
         force_use_tool=ForceUseTool(

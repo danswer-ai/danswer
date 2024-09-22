@@ -166,6 +166,6 @@ if __name__ == "__main__":
         while True:
             user_input = input("Query to Extract Sources: ")
             sources = extract_source_filter(
-                user_input, get_main_llm_from_tuple(get_default_llms()), db_session
+                user_input, get_main_llm_from_tuple(get_default_llms(db_session=db_session)), db_session
             )
             print(sources)

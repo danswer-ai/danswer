@@ -21,6 +21,8 @@ def load_prompts_from_yaml(
     db_session: Session,
     prompts_yaml: str = PROMPTS_YAML
 ) -> None:
+    print("Loading prompts from yaml")
+
     with open(prompts_yaml, "r") as file:
         data = yaml.safe_load(file)
 
@@ -47,9 +49,10 @@ def load_personas_from_yaml(
     personas_yaml: str = PERSONAS_YAML,
     default_chunks: float = MAX_CHUNKS_FED_TO_CHAT,
 ) -> None:
+
     with open(personas_yaml, "r") as file:
         data = yaml.safe_load(file)
-
+    
     all_personas = data.get("personas", [])
     for persona in all_personas:
         doc_set_names = persona["document_sets"]
@@ -138,6 +141,7 @@ def load_input_prompts_from_yaml(
     db_session: Session,
     input_prompts_yaml: str = INPUT_PROMPT_YAML
 ) -> None:
+    print("Loading input prompts")
     with open(input_prompts_yaml, "r") as file:
         data = yaml.safe_load(file)
 

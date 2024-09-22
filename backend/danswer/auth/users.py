@@ -213,7 +213,7 @@ def verify_sso_token(token: str) -> dict:
         )
 
 
-async def get_or_create_user(email: str, user_id: str, tenant_id: str) -> User:
+async def get_or_create_user(email: str, user_id: str) -> User:
     get_async_session_context = contextlib.asynccontextmanager(get_async_session)
     get_user_db_context = contextlib.asynccontextmanager(get_user_db)
 

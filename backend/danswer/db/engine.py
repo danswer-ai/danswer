@@ -32,6 +32,7 @@ from danswer.configs.app_configs import MULTI_TENANT
 from danswer.utils.logger import setup_logger
 from fastapi.security import OAuth2PasswordBearer
 import jwt
+from jwt.exceptions import DecodeError, InvalidTokenError
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -137,31 +138,57 @@ def init_sqlalchemy_engine(app_name: str) -> None:
     global POSTGRES_APP_NAME
     POSTGRES_APP_NAME = app_name
 
-
+_engines = {}
+# TODO validate that this is best practice
 def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA) -> Engine:
-    global _SYNC_ENGINE
-    if _SYNC_ENGINE is None:
-        connection_string = build_connection_string(
-            db_api=SYNC_DB_API, app_name=POSTGRES_APP_NAME + "_sync"
-        )
-        _SYNC_ENGINE = create_engine(
-            connection_string,
-            pool_size=40,
-            max_overflow=10,
-            pool_pre_ping=POSTGRES_POOL_PRE_PING,
-            pool_recycle=POSTGRES_POOL_RECYCLE,
-        )
+    if schema in _engines:
+        return _engines[schema]
 
-        # NOTE: Should be unnecessary
-        # @event.listens_for(_SYNC_ENGINE, "connect")
-        # def set_search_path(dbapi_connection, connection_record):
-        #     cursor = dbapi_connection.cursor()
-        #     cursor.execute(f"SET search_path TO {schema}")
-        #     cursor.close()
-        #     dbapi_connection.commit()
+    connection_string = build_connection_string(
+        db_api=SYNC_DB_API, app_name=POSTGRES_APP_NAME + "_sync"
+    )
+    engine = create_engine(
+        connection_string,
+        pool_size=40,
+        max_overflow=10,
+        pool_pre_ping=POSTGRES_POOL_PRE_PING,
+        pool_recycle=POSTGRES_POOL_RECYCLE,
+    )
+
+    @event.listens_for(engine, "connect")
+    def set_search_path(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute(f'SET search_path TO "{schema}"')
+        cursor.close()
+        dbapi_connection.commit()
+
+    _engines[schema] = engine
+    return engine
 
 
-    return _SYNC_ENGINE
+
+# def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA) -> Engine:
+#     global _SYNC_ENGINE
+#     if _SYNC_ENGINE is None:
+#         connection_string = build_connection_string(
+#             db_api=SYNC_DB_API, app_name=POSTGRES_APP_NAME + "_sync"
+#         )
+#         _SYNC_ENGINE = create_engine(
+#             connection_string,
+#             pool_size=40,
+#             max_overflow=10,
+#             pool_pre_ping=POSTGRES_POOL_PRE_PING,
+#             pool_recycle=POSTGRES_POOL_RECYCLE,
+#         )
+
+#         @event.listens_for(_SYNC_ENGINE, "connect")
+#         def set_search_path(dbapi_connection, connection_record):
+#             cursor = dbapi_connection.cursor()
+#             cursor.execute(f"SET search_path TO {schema}")
+#             cursor.close()
+#             dbapi_connection.commit()
+
+#     return _SYNC_ENGINE
 
 
 def get_sqlalchemy_async_engine() -> AsyncEngine:
@@ -189,27 +216,38 @@ def get_session_context_manager() -> ContextManager[Session]:
 
 
 def get_current_tenant_id(request: Request) -> str:
-
     if not MULTI_TENANT:
-        tenant_id = DEFAULT_SCHEMA
-
+        return DEFAULT_SCHEMA
 
     token = request.cookies.get("fastapiusersauth")
     if not token:
+        logger.warning("No token found in cookies")
         raise HTTPException(status_code=401, detail="Authentication required")
 
     try:
+        logger.info(f"Attempting to decode token: {token[:10]}...")  # Log only first 10 characters for security
         payload = jwt.decode(token, "JWT_SECRET_KEY", algorithms=["HS256"])
+        logger.info(f"Decoded payload: {payload}")
         tenant_id = payload.get("tenant_id")
         if not tenant_id:
+            logger.warning("Invalid token: tenant_id missing")
             raise HTTPException(status_code=400, detail="Invalid token: tenant_id missing")
+        logger.info(f"Valid tenant_id found: {tenant_id}")
         return tenant_id
+    except DecodeError as e:
+        logger.error(f"JWT decode error: {str(e)}")
+        raise HTTPException(status_code=401, detail="Invalid token format")
+    except InvalidTokenError as e:
+        logger.error(f"Invalid token error: {str(e)}")
+        raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid token") from e
+        logger.exception(f"Unexpected error in get_current_tenant_id: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 def get_session(tenant_id: str | None= Depends(get_current_tenant_id)) -> Generator[Session, None, None]:
     print("")
+    print("\n\n\n\n")
     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
         session.execute(text(f'SET search_path TO "{tenant_id}"'))
         print("SEARCH PATH IS ", tenant_id)

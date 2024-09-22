@@ -183,7 +183,7 @@ def handle_send_message_simple_with_history(
         one_shot=False,
     )
 
-    llm, _ = get_llms_for_persona(persona=chat_session.persona)
+    llm, _ = get_llms_for_persona(persona=chat_session.persona, db_session=db_session)
 
     llm_tokenizer = get_tokenizer(
         model_name=llm.config.model_name,

@@ -314,6 +314,7 @@ def stream_chat_message_objects(
         try:
             llm, fast_llm = get_llms_for_persona(
                 persona=persona,
+                db_session=db_session,
                 llm_override=new_msg_req.llm_override or chat_session.llm_override,
                 additional_headers=litellm_additional_headers,
             )
@@ -631,6 +632,7 @@ def stream_chat_message_objects(
                 or get_main_llm_from_tuple(
                     get_llms_for_persona(
                         persona=persona,
+                        db_session=db_session,
                         llm_override=(
                             new_msg_req.llm_override or chat_session.llm_override
                         ),

@@ -154,7 +154,7 @@ def handle_regular_answer(
                         get_editable=False,
                     ),
                 )
-                llm, _ = get_llms_for_persona(persona)
+                llm, _ = get_llms_for_persona(persona, db_session=db_session)
 
                 # In cases of threads, split the available tokens between docs and thread context
                 input_tokens = get_max_input_tokens(

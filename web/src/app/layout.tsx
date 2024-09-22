@@ -65,6 +65,7 @@ export default async function RootLayout({
 
   const combinedSettings = await fetchSettingsSS();
   if (!combinedSettings) {
+    // return <>{children}</>
     // Just display a simple full page error if fetching fails.
 
     return (

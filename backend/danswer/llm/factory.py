@@ -10,7 +10,7 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.headers import build_llm_extra_headers
 from danswer.llm.interfaces import LLM
 from danswer.llm.override_models import LLMOverride
-
+from sqlalchemy.orm import Session
 
 def get_main_llm_from_tuple(
     llms: tuple[LLM, LLM],
@@ -22,6 +22,7 @@ def get_llms_for_persona(
     persona: Persona,
     llm_override: LLMOverride | None = None,
     additional_headers: dict[str, str] | None = None,
+    db_session: Session | None = None,
 ) -> tuple[LLM, LLM]:
     model_provider_override = llm_override.model_provider if llm_override else None
     model_version_override = llm_override.model_version if llm_override else None
@@ -34,8 +35,8 @@ def get_llms_for_persona(
             additional_headers=additional_headers,
         )
 
-    with get_session_context_manager() as db_session:
-        llm_provider = fetch_provider(db_session, provider_name)
+
+    llm_provider = fetch_provider(db_session, provider_name)
 
     if not llm_provider:
         raise ValueError("No LLM provider found")
@@ -65,12 +66,12 @@ def get_default_llms(
     timeout: int = QA_TIMEOUT,
     temperature: float = GEN_AI_TEMPERATURE,
     additional_headers: dict[str, str] | None = None,
+    db_session: Session | None = None,
 ) -> tuple[LLM, LLM]:
     if DISABLE_GENERATIVE_AI:
         raise GenAIDisabledException()
 
-    with get_session_context_manager() as db_session:
-        llm_provider = fetch_default_provider(db_session)
+    llm_provider = fetch_default_provider(db_session)
 
     if not llm_provider:
         raise ValueError("No default LLM provider found")
