@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { diffLines, Change } from "diff";
+import { diffChars, Change } from "diff";
 
 const StreamingDiffViewer = ({
   originalText,
@@ -11,10 +11,7 @@ const StreamingDiffViewer = ({
   const [diffResult, setDiffResult] = useState<Change[]>([]);
 
   useEffect(() => {
-    const originalLines = originalText.split("\n");
-    const aiLines = aiText.split("\n");
-
-    const diff = diffLines(originalLines.join("\n"), aiLines.join("\n"));
+    const diff = diffChars(originalText, aiText);
     setDiffResult(diff);
   }, [originalText, aiText]);
 
@@ -28,9 +25,9 @@ const StreamingDiffViewer = ({
             : "";
 
         return (
-          <pre key={index} className={className}>
+          <span key={index} className={className}>
             {part.value}
-          </pre>
+          </span>
         );
       })}
     </div>
