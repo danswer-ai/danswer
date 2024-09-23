@@ -93,7 +93,10 @@ const Page = async ({
                 </div>
                 <p className="pt-8 text-center text-sm">
                   Don&apos;t have an account?{" "}
-                  <Link href="/auth/signup" className="font-semibold text-link">
+                  <Link
+                    href="/auth/signup"
+                    className="text-sm font-medium text-link hover:underline"
+                  >
                     Create an account
                   </Link>
                 </p>

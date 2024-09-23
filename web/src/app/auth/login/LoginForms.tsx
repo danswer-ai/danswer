@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import GmailIcon from "../../../../public/Gmail.png";
 import MicrosoftIcon from "../../../../public/microsoft.svg";
 import Image from "next/image";
+import Link from "next/link";
 
 export function LogInForms({}: {}) {
   const router = useRouter();
@@ -59,14 +60,14 @@ export function LogInForms({}: {}) {
               name="email"
               label="Email"
               type="email"
-              placeholder="email@yourcompany.com"
+              placeholder="Enter your email"
             />
 
             <TextFormField
               name="password"
               label="Password"
               type="password"
-              placeholder="**************"
+              placeholder="Enter your password"
             />
 
             <div className="flex items-center justify-between">
@@ -76,9 +77,12 @@ export function LogInForms({}: {}) {
                   Remember me
                 </Label>
               </div>
-              <Button variant="link" className="p-0 h-auto">
+              <Link
+                href="/auth/forgot-password"
+                className="text-sm font-medium text-link hover:underline"
+              >
                 Forgot password?
-              </Button>
+              </Link>
             </div>
 
             <div className="flex pt-10">

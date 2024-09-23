@@ -11,12 +11,6 @@ import Link from "next/link";
 
 import Logo from "../../../../public/logo-brand.png";
 import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import DefaultUserChart from "../../../../public/default-user-chart.png";
 import LoginImage from "../../../../public/LoginImage.png";
@@ -120,7 +114,10 @@ const Page = async () => {
 
               <p className="pt-8 text-center text-sm">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="font-semibold text-link">
+                <Link
+                  href="/auth/login"
+                  className="text-sm font-medium text-link hover:underline"
+                >
                   Sign in
                 </Link>
               </p>
