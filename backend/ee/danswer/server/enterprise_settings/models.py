@@ -6,8 +6,16 @@ from pydantic import Field
 
 class NavigationItem(BaseModel):
     link: str
-    icon: str
     title: str
+    fa_icon: str | None = None
+    svg_logo: str | None = None
+
+    @classmethod
+    def model_validate(cls, *args, **kwargs):
+        instance = super().model_validate(*args, **kwargs)
+        if bool(instance.fa_icon) == bool(instance.svg_logo):
+            raise ValueError("Exactly one of fa_icon or svg_logo must be specified")
+        return instance
 
 
 class EnterpriseSettings(BaseModel):

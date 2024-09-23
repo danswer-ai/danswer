@@ -1,5 +1,6 @@
 import json
 import os
+from copy import deepcopy
 from typing import List
 from typing import Optional
 
@@ -22,6 +23,7 @@ from ee.danswer.db.standard_answer import (
 )
 from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
 from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
+from ee.danswer.server.enterprise_settings.models import NavigationItem
 from ee.danswer.server.enterprise_settings.store import store_analytics_script
 from ee.danswer.server.enterprise_settings.store import (
     store_settings as store_ee_settings,
@@ -44,6 +46,12 @@ logger = setup_logger()
 _SEED_CONFIG_ENV_VAR_NAME = "ENV_SEED_CONFIGURATION"
 
 
+class NavigationItemSeed(BaseModel):
+    link: str
+    title: str
+    svg_path: str
+
+
 class SeedConfiguration(BaseModel):
     llms: list[LLMProviderUpsertRequest] | None = None
     admin_user_emails: list[str] | None = None
@@ -51,6 +59,10 @@ class SeedConfiguration(BaseModel):
     personas: list[CreatePersonaRequest] | None = None
     settings: Settings | None = None
     enterprise_settings: EnterpriseSettings | None = None
+
+    # allows for specifying custom navigation items that have your own custom SVG logos
+    nav_item_overrides: list[NavigationItemSeed] | None = None
+
     # Use existing `CUSTOM_ANALYTICS_SECRET_KEY` for reference
     analytics_script_path: str | None = None
     custom_tools: List[CustomToolSeed] | None = None
@@ -60,7 +72,7 @@ def _parse_env() -> SeedConfiguration | None:
     seed_config_str = os.getenv(_SEED_CONFIG_ENV_VAR_NAME)
     if not seed_config_str:
         return None
-    seed_config = SeedConfiguration.parse_raw(seed_config_str)
+    seed_config = SeedConfiguration.model_validate_json(seed_config_str)
     return seed_config
 
 
@@ -152,7 +164,28 @@ def _seed_settings(settings: Settings) -> None:
 
 
 def _seed_enterprise_settings(seed_config: SeedConfiguration) -> None:
-    if seed_config.enterprise_settings is not None:
+    if (
+        seed_config.enterprise_settings is not None
+        or seed_config.nav_item_overrides is not None
+    ):
+        final_nav_items = seed_config.enterprise_settings.custom_nav_items
+        if seed_config.nav_item_overrides is not None:
+            final_nav_items = []
+            for item in seed_config.nav_item_overrides:
+                with open(item.svg_path, "r") as file:
+                    svg_content = file.read()
+
+                final_nav_items.append(
+                    NavigationItem(
+                        link=item.link,
+                        title=item.title,
+                        svg_logo=svg_content,
+                    )
+                )
+
+        final_enterprise_settings = deepcopy(seed_config.enterprise_settings)
+        final_enterprise_settings.custom_nav_items = final_nav_items
+
         logger.notice("Seeding enterprise settings")
         store_ee_settings(seed_config.enterprise_settings)
 
