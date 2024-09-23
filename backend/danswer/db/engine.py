@@ -139,22 +139,24 @@ def init_sqlalchemy_engine(app_name: str) -> None:
     global POSTGRES_APP_NAME
     POSTGRES_APP_NAME = app_name
 
-_engine = None
+_engines = {}
 
-def get_sqlalchemy_engine() -> Engine:
-    global _engine
-    if _engine is None:
+# NOTE: this is a hack to allow for multiple postgres schemas per engine for now.
+def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA) -> Engine:
+    global _engines
+    if schema not in _engines:
         connection_string = build_connection_string(
-            db_api=SYNC_DB_API, app_name=POSTGRES_APP_NAME + "_sync"
+            db_api=SYNC_DB_API, app_name=f"{POSTGRES_APP_NAME}_{schema}_sync"
         )
-        _engine = create_engine(
+        _engines[schema] = create_engine(
             connection_string,
             pool_size=40,
             max_overflow=10,
             pool_pre_ping=POSTGRES_POOL_PRE_PING,
             pool_recycle=POSTGRES_POOL_RECYCLE,
+            connect_args={"options": f"-c search_path={schema}"}
         )
-    return _engine
+    return _engines[schema]
 
 
 def get_sqlalchemy_async_engine() -> AsyncEngine:

@@ -89,6 +89,7 @@ const Page = async ({
               />
             </>
           )}
+          
           {authTypeMetadata?.authType === "basic" && (
             <Card className="mt-4 w-96">
               <div className="flex">

@@ -86,7 +86,6 @@ def get_chat_sessions_by_slack_thread_id(
         )
     return db_session.scalars(stmt).all()
 
-
 def get_first_messages_for_chat_sessions(
     chat_session_ids: list[int], db_session: Session
 ) -> dict[int, str]:

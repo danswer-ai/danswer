@@ -108,9 +108,10 @@ def add_ngrams_to_schema(schema_content: str) -> str:
 
 
 class VespaIndex(DocumentIndex):
-    def __init__(self, index_name: str, secondary_index_name: str | None) -> None:
+    def __init__(self, index_name: str, secondary_index_name: str | None, tenant_id: str = "public") -> None:
         self.index_name = index_name
         self.secondary_index_name = secondary_index_name
+        self.tenant_id = tenant_id
 
     def ensure_indices_exist(
         self,
@@ -160,6 +161,7 @@ class VespaIndex(DocumentIndex):
 
         with open(schema_file, "r") as schema_f:
             schema_template = schema_f.read()
+
         schema = schema_template.replace(
             DANSWER_CHUNK_REPLACEMENT_PAT, self.index_name
         ).replace(VESPA_DIM_REPLACEMENT_PAT, str(index_embedding_dim))
@@ -176,6 +178,7 @@ class VespaIndex(DocumentIndex):
 
         headers = {"Content-Type": "application/zip"}
         response = requests.post(deploy_url, headers=headers, data=zip_file)
+
         if response.status_code != 200:
             raise RuntimeError(
                 f"Failed to prepare Vespa Danswer Index. Response: {response.text}"
@@ -224,7 +227,7 @@ class VespaIndex(DocumentIndex):
             for chunk_batch in batch_generator(cleaned_chunks, BATCH_SIZE):
                 batch_index_vespa_chunks(
                     chunks=chunk_batch,
-                    index_name=self.index_name,
+                    index_name=selfn.idex_name,
                     http_client=http_client,
                     executor=executor,
                 )

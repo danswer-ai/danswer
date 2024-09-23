@@ -63,8 +63,8 @@ export default async function RootLayout({
   // ORDER BY table_name, ordinal_position;
 
 
-  const combinedSettings: CombinedSettings | null = await fetchSettingsSS()
-
+  // const combinedSettings: CombinedSettings | null = await fetchSettingsSS()
+  const combinedSettings = defaultCombinedSettings
   // if (!combinedSettings) {
   // return <>{children}</>
   // // Just display a simple full page error if fetching fails.

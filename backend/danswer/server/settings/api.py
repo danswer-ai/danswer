@@ -159,11 +159,11 @@ async def sso_callback(
         max_age=SESSION_EXPIRE_TIME_SECONDS,
         expires=SESSION_EXPIRE_TIME_SECONDS,
         path="/",
-        domain=WEB_DOMAIN.split("://")[-1],
         secure=False,  # Set to True in production with HTTPS
         httponly=True,
         samesite="lax",
     )
+    print(session_token)
     logger.info("Session cookie set")
     logger.info("SSO callback completed successfully")
     return response

@@ -42,7 +42,7 @@ export default function SSOCallback() {
           response.headers.forEach((value, key) => {
             console.log(`${key}: ${value}`);
           });
-          return;
+
           // Redirect to the dashboard
           router.replace("/admin/plan");
         } else {
