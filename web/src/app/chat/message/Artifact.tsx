@@ -4,23 +4,20 @@ import * as Babel from "@babel/standalone";
 interface DynamicReactRendererProps {
   code: string;
 }
-export default function DynamicReactRenderer({
-  code,
-}: DynamicReactRendererProps) {
-  console.log("DynamicReactRenderer called with code:", code);
-  const [iframeContent, setIframeContent] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
+export const DynamicReactRenderer = React.memo(
+  ({ code }: DynamicReactRendererProps) => {
+    console.log("DynamicReactRenderer called with code:", code);
+    const [iframeContent, setIframeContent] = useState<string>("");
+    const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    try {
-      // Transpile the code
-      const transpiledCode = Babel.transform(code, {
-        presets: ["react"],
-      }).code;
+    useEffect(() => {
+      try {
+        // Transpile the code
+        const transpiledCode = Babel.transform(code, {
+          presets: ["react"],
+        }).code;
 
-      console.log("Transpiled code:", transpiledCode);
-
-      const content = `
+        const content = `
           <!DOCTYPE html>
           <html>
             <head>
@@ -51,42 +48,63 @@ export default function DynamicReactRenderer({
           </html>
         `;
 
-      console.log("Generated iframe content:", content);
-      setIframeContent(content);
-    } catch (err) {
-      console.error("Error in DynamicReactRenderer:", err);
-      setError(`Error rendering component: ${err}`);
+        console.log("Generated iframe content:", content);
+        setIframeContent(content);
+      } catch (err) {
+        console.error("Error in DynamicReactRenderer:", err);
+        setError(`Error rendering component: ${err}`);
+      }
+    }, [code]);
+
+    if (error) {
+      return <div className="text-red-500">{error}</div>;
     }
-  }, [code]);
 
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
+    return (
+      <div className=" w-full">
+        <iframe
+          srcDoc={iframeContent}
+          sandbox="allow-scripts allow-same-origin"
+          className="scale-.9  w-full h-[700px] border border-gray-300 rounded"
+          title="Dynamic React Component"
+        />
+        <div className="mt-2">
+          <button
+            onClick={() => console.log("iframe content:", iframeContent)}
+            className="px-2 py-1 bg-blue-500 text-white rounded"
+          >
+            Log iframe content
+          </button>
+        </div>
+      </div>
+    );
   }
+);
 
+export const ToggleArtifact = ({
+  showArtifact,
+  toggleArtifact,
+}: {
+  showArtifact: boolean;
+  toggleArtifact: (showArtifact: boolean) => void;
+}) => {
   return (
-    <div className=" w-full">
-      <iframe
-        srcDoc={iframeContent}
-        sandbox="allow-scripts allow-same-origin"
-        className="scale-.9  w-full h-[700px] border border-gray-300 rounded"
-        title="Dynamic React Component"
-      />
-      <div className="mt-2">
+    <div className="bg-white w-full ">
+      <div className="flex justify-between items-center">
         <button
-          onClick={() => console.log("iframe content:", iframeContent)}
-          className="px-2 py-1 bg-blue-500 text-white rounded"
+          onMouseDown={() => toggleArtifact(!showArtifact)}
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
-          Log iframe content
+          {showArtifact ? "Hide" : "Show"} React Artifact
         </button>
       </div>
     </div>
   );
-}
-
+};
 //
 
 // EXAMPLE COMPONENT
-// const Component = () => {
+// const `Component` = () => {
 //     const containerStyle = {
 //       width: '100px',
 //       height: '100px',

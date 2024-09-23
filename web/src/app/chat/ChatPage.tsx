@@ -101,6 +101,8 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
+import { DynamicReactRenderer } from "./message/Artifact";
+import { Button } from "@tremor/react";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -135,6 +137,7 @@ export function ChatPage({
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
   const { user, refreshUser, isLoadingUser } = useUser();
+  const [artifactContent, setArtifactContent] = useState<string | null>(null);
 
   // chat session
   const existingChatIdRaw = searchParams.get("chatId");
@@ -1915,12 +1918,17 @@ export function ChatPage({
                         ></div>
                       )}
 
+                      {/* {artifactContent &&
+                        <DynamicReactRenderer
+                          code={artifactContent}
+                        />
+                      } */}
                       <div
-                        className={`h-full w-full relative flex-auto transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[100px]`}
+                        className={`h-full ${artifactContent ? "ml-auto" : "mx-auto"} relative flex-auto max-w-[850px] transition-margin duration-300 overflow-x-auto mobile:pb-12 desktop:pb-[100px]`}
                         {...getRootProps()}
                       >
                         <div
-                          className={`w-full h-full  flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
+                          className={`w-full h-full items-center flex flex-col overflow-y-auto include-scrollbar overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -2066,6 +2074,8 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      setArtifactContent={setArtifactContent}
+                                      artifactContent={artifactContent}
                                       continueGenerating={
                                         i == messageHistory.length - 1 &&
                                         currentCanContinue()
@@ -2424,6 +2434,13 @@ export function ChatPage({
                           </div>
                         </div>
                       </div>
+                      {artifactContent && (
+                        <div className="mt-auto mr-auto w-[400px]">
+                          {artifactContent && (
+                            <DynamicReactRenderer code={artifactContent} />
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </Dropzone>

@@ -65,7 +65,7 @@ import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
-import DynamicReactRenderer from "./Artifact";
+import { DynamicReactRenderer, ToggleArtifact } from "./Artifact";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -122,6 +122,8 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
+  setArtifactContent,
+  artifactContent,
   regenerate,
   overriddenModel,
   continueGenerating,
@@ -150,6 +152,8 @@ export const AIMessage = ({
   otherMessagesCanSwitchTo,
   onMessageSelection,
 }: {
+  setArtifactContent?: Dispatch<SetStateAction<string | null>>;
+  artifactContent?: string | null;
   shared?: boolean;
   isActive?: boolean;
   continueGenerating?: () => void;
@@ -405,31 +409,38 @@ export const AIMessage = ({
                                 },
                                 code: (props) => {
                                   if (
-                                    props.className?.startsWith("language-jsx")
+                                    props.className?.startsWith(
+                                      "language-jsx"
+                                    ) &&
+                                    setArtifactContent
                                   ) {
                                     return (
-                                      <DynamicReactRenderer
-                                        code={content.slice(
-                                          props?.node?.position?.start
-                                            ?.offset! + 6,
-                                          props?.node?.position?.end?.offset! -
-                                            3
-                                        )}
+                                      <ToggleArtifact
+                                        showArtifact={artifactContent !== null}
+                                        toggleArtifact={(toggle: boolean) => {
+                                          setArtifactContent(
+                                            toggle
+                                              ? content.slice(
+                                                  props?.node?.position?.start
+                                                    ?.offset! + 6,
+                                                  props?.node?.position?.end
+                                                    ?.offset! - 3
+                                                )
+                                              : null
+                                          );
+                                        }}
+                                      />
+                                    );
+                                  } else {
+                                    return (
+                                      <CodeBlock
+                                        className="w-full"
+                                        {...props}
+                                        content={content as string}
                                       />
                                     );
                                   }
-                                  return (
-                                    // <p className="bg-white">
-                                    //   {props.children as string}
-                                    // </p>
-                                    <CodeBlock
-                                      className="w-full"
-                                      {...props}
-                                      content={content as string}
-                                    />
-                                  );
                                 },
-
                                 p: ({ node, ...props }) => (
                                   <p {...props} className="text-default" />
                                 ),
@@ -449,6 +460,7 @@ export const AIMessage = ({
                     ) : isComplete ? null : (
                       <></>
                     )}
+
                     {isComplete && docs && docs.length > 0 && (
                       <div className="mt-2 -mx-8 w-full mb-4 flex relative">
                         <div className="w-full">

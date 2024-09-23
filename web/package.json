@@ -54,6 +54,7 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.10",
     "@types/babel__standalone": "^7.1.7",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^8.48.0",
     "eslint-config-next": "^14.1.0",
     "prettier": "2.8.8"
