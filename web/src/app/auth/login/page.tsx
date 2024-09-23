@@ -88,10 +88,10 @@ const Page = async ({
             {authTypeMetadata?.authType === "basic" && (
               <>
                 <LoginText />
-                <div className="my-8 w-full">
+                <div className="pt-8 w-full">
                   <LogInForms />
                 </div>
-                <p className="mt-8 text-center text-sm">
+                <p className="pt-8 text-center text-sm">
                   Don&apos;t have an account?{" "}
                   <Link href="/auth/signup" className="font-semibold text-link">
                     Create an account

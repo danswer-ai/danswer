@@ -18,7 +18,10 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GmailIcon } from "@/components/icons/icons";
+import DefaultUserChart from "../../../../public/default-user-chart.png";
+import LoginImage from "../../../../public/LoginImage.png";
+import GmailIcon from "../../../../public/Gmail.png";
+import MicrosoftIcon from "../../../../public/microsoft.svg";
 import { Separator } from "@/components/ui/separator";
 
 const Page = async () => {
@@ -55,45 +58,86 @@ const Page = async () => {
   }
 
   return (
-    <main>
+    <main className="relative h-full">
       <HealthCheckBanner />
-      <div className="flex items-center justify-center min-h-screen px-6 py-12 sm:px-6 lg:px-8">
-        <div>
-          <Card className="flex flex-col items-center px-5 py-8 md:p-12 ">
-            <CardHeader className="p-0">
-              <Image src={Logo} alt="Logo" className="w-40" />
-            </CardHeader>
-            <CardContent className="w-full p-0">
-              <div className="flex flex-col mt-5">
-                <h1 className="text-2xl font-bold text-dark-900">Sign Up</h1>
-                <p className="text-sm text-dark-500 pt-2">
-                  Already have an account?{" "}
-                  <Link href="/auth/login" className="font-medium text-link">
-                    Log In
-                  </Link>
-                </p>
+      <div className="absolute top-6 w-1/2 left-10">
+        <Image src={Logo} alt="Logo" className="w-28 xl:w-32" />
+      </div>
+
+      <div className="w-screen flex h-full">
+        <div className="w-full lg:w-1/2 flex items-center justify-center px-8 lg:px-16 3xl:px-0">
+          <div className="w-full md:w-3/4 lg:w-full 3xl:w-1/2">
+            <div>
+              <h1 className="my-2 text-2xl xl:text-3xl font-bold text-center text-dark-900">
+                Create Your Account
+              </h1>
+              <p className="text-center text-sm text-subtle">
+                Welcome back! Please enter your details
+              </p>
+            </div>
+
+            <div className="py-8">
+              <div className="flex items-center gap-6 w-full">
+                <Button className="flex-1 truncate" variant="outline">
+                  <div className="truncate flex items-center gap-2">
+                    <Image
+                      src={GmailIcon}
+                      alt="gmail-icon"
+                      width={16}
+                      height={16}
+                    />{" "}
+                    Continue with Gmail
+                  </div>
+                </Button>
+                <Button
+                  className="flex-1 truncate"
+                  variant="outline"
+                  type="button"
+                >
+                  <div className="truncate flex items-center gap-2">
+                    <Image
+                      src={MicrosoftIcon}
+                      alt="microsoft-icon"
+                      width={16}
+                      height={16}
+                    />
+                    Continue with Microsoft
+                  </div>
+                </Button>
               </div>
 
-              <div className="py-8">
+              <div className="flex items-center gap-4 pt-8">
+                <Separator className="flex-1" />
+                <p className="whitespace-nowrap text-sm">OR</p>
+                <Separator className="flex-1" />
+              </div>
+
+              <div className="pt-8">
                 <SignupForms
                   shouldVerify={authTypeMetadata?.requiresVerification}
                 />
               </div>
-            </CardContent>
-            <CardFooter className="p-0">
-              <p className="text-sm text-dark-500">
-                By signing in, you agree to our{" "}
-                <Link href={"#"} className="font-medium text-link">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href={"#"} className="font-medium text-link">
-                  Privacy Policy
+
+              <p className="pt-8 text-center text-sm">
+                Already have an account?{" "}
+                <Link href="/auth/login" className="font-semibold text-link">
+                  Sign in
                 </Link>
-                .
               </p>
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
+        </div>
+        <div className="w-1/2 h-full relative rounded-l-[50px] overflow-hidden hidden lg:flex">
+          <Image
+            src={LoginImage}
+            alt="login-image"
+            className="w-full h-full object-cover"
+          />
+          <Image
+            src={DefaultUserChart}
+            alt="user-chart-image"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4"
+          />
         </div>
       </div>
     </main>
