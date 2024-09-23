@@ -11,7 +11,8 @@ class NavigationItem(BaseModel):
     # Right now must be one of the FA icons
     icon: str | None = None
     # NOTE: SVG must not have a width / height specified
-    # This is the actual SVG as a string.
+    # This is the actual SVG as a string. Done this way to reduce
+    # complexity / having to store additional "logos" in Postgres
     svg_logo: str | None = None
 
     @classmethod
