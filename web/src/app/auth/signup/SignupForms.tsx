@@ -49,8 +49,7 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
 
             let errorMsg = "Unknown error";
             if (errorDetail === "REGISTER_USER_ALREADY_EXISTS") {
-              errorMsg =
-                "An account already exwkists with the specified email.";
+              errorMsg = "An account already exists with the specified email.";
             }
             toast({
               title: "Error",
