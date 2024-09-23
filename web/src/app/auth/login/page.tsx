@@ -11,10 +11,11 @@ import { SignInButton } from "./SignInButton";
 import { LogInForms } from "./LoginForms";
 import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import Logo from "../../../../public/logo-brand.png";
 import { LoginText } from "./LoginText";
 import Image from "next/image";
-import LoginImage from "../../../../public/login_page_img.webp";
+import LoginImage from "../../../../public/LoginImage.png";
+import DefaultUserChart from "../../../../public/default-user-chart.png";
 
 const Page = async ({
   searchParams,
@@ -66,11 +67,15 @@ const Page = async ({
   }
 
   return (
-    <main>
+    <main className="relative h-full">
       <HealthCheckBanner />
-      <div className="flex justify-center">
-        <div className="flex items-center justify-center lg:justify-between w-full min-h-screen px-6 md:w-2/3 md:px-0 gap-10">
-          <div>
+      <div className="absolute top-6 w-1/2 left-10">
+        <Image src={Logo} alt="Logo" className="w-28 xl:w-32" />
+      </div>
+
+      <div className="w-screen flex h-full">
+        <div className="w-full lg:w-1/2 flex items-center justify-center px-8 lg:px-16 3xl:px-0">
+          <div className="w-full md:w-3/4 lg:w-full 3xl:w-1/2">
             {authUrl && authTypeMetadata && (
               <>
                 <LoginText />
@@ -81,26 +86,31 @@ const Page = async ({
               </>
             )}
             {authTypeMetadata?.authType === "basic" && (
-              <div className="lg:w-96">
+              <>
                 <LoginText />
-                <div className="my-6">
+                <div className="my-8 w-full">
                   <LogInForms />
                 </div>
-                <div className="flex">
-                  <Text className="mt-4">
-                    Don&apos;t have an account?{" "}
-                    <Link href="/auth/signup" className="font-medium text-link">
-                      Create an account
-                    </Link>
-                  </Text>
-                </div>
-              </div>
+                <p className="mt-8 text-center text-sm">
+                  Don&apos;t have an account?{" "}
+                  <Link href="/auth/signup" className="font-semibold text-link">
+                    Create an account
+                  </Link>
+                </p>
+              </>
             )}
           </div>
+        </div>
+        <div className="w-1/2 h-full relative rounded-l-[50px] overflow-hidden hidden lg:flex">
           <Image
             src={LoginImage}
-            alt="LoginImage"
-            className="hidden w-1/2 h-auto lg:flex"
+            alt="login-image"
+            className="w-full h-full object-cover"
+          />
+          <Image
+            src={DefaultUserChart}
+            alt="user-chart-image"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4"
           />
         </div>
       </div>
