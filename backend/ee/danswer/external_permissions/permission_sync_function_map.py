@@ -12,7 +12,7 @@ from ee.danswer.external_permissions.google_drive.group_sync import gdrive_group
 from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
 GroupSyncFuncType = Callable[
-    [Session, ConnectorCredentialPair, list[DocsWithAdditionalInfo], dict[str, Any]],
+    [Session, ConnectorCredentialPair, dict[str, Any]],
     None,
 ]
 

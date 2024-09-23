@@ -28,6 +28,9 @@ from ee.danswer.db.connector_credential_pair import get_all_auto_sync_cc_pairs
 from ee.danswer.external_permissions.permission_sync import (
     run_external_doc_permission_sync,
 )
+from ee.danswer.external_permissions.permission_sync import (
+    run_external_group_permission_sync,
+)
 from ee.danswer.server.reporting.usage_export_generation import create_new_usage_report
 
 logger = setup_logger()
@@ -38,7 +41,7 @@ global_version.set_ee()
 
 @build_celery_task_wrapper(name_sync_external_doc_permissions_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def sync_external_permissions_task(cc_pair_id: int) -> None:
+def sync_external_doc_permissions_task(cc_pair_id: int) -> None:
     with Session(get_sqlalchemy_engine()) as db_session:
         run_external_doc_permission_sync(db_session=db_session, cc_pair_id=cc_pair_id)
 
@@ -47,7 +50,7 @@ def sync_external_permissions_task(cc_pair_id: int) -> None:
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def sync_external_group_permissions_task(cc_pair_id: int) -> None:
     with Session(get_sqlalchemy_engine()) as db_session:
-        run_external_doc_permission_sync(db_session=db_session, cc_pair_id=cc_pair_id)
+        run_external_group_permission_sync(db_session=db_session, cc_pair_id=cc_pair_id)
 
 
 @build_celery_task_wrapper(name_chat_ttl_task)
@@ -72,7 +75,7 @@ def check_sync_external_doc_permissions_task() -> None:
             if should_perform_external_doc_permissions_check(
                 cc_pair=cc_pair, db_session=db_session
             ):
-                sync_external_permissions_task.apply_async(
+                sync_external_doc_permissions_task.apply_async(
                     kwargs=dict(cc_pair_id=cc_pair.id),
                 )
 
@@ -130,11 +133,11 @@ def autogenerate_usage_report_task() -> None:
 celery_app.conf.beat_schedule = {
     "sync-external-doc-permissions": {
         "task": "check_sync_external_doc_permissions_task",
-        "schedule": timedelta(seconds=60),  # TODO: optimize this
+        "schedule": timedelta(seconds=5),  # TODO: optimize this
     },
     "sync-external-group-permissions": {
         "task": "check_sync_external_group_permissions_task",
-        "schedule": timedelta(seconds=60),  # TODO: optimize this
+        "schedule": timedelta(seconds=5),  # TODO: optimize this
     },
     "autogenerate_usage_report": {
         "task": "autogenerate_usage_report_task",
