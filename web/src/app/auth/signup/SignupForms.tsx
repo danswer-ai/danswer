@@ -10,6 +10,8 @@ import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
   const router = useRouter();
@@ -84,32 +86,39 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
       >
         {({ isSubmitting, values }) => (
           <Form>
-            <TextFormField name="full_name" label="Full name" type="text" />
             <TextFormField
-              name="company_name"
-              label="Company name"
+              name="full_name"
+              label="Full name"
               type="text"
+              placeholder="Enter your full name"
             />
             <TextFormField
               name="email"
               label="Email"
               type="email"
-              placeholder="email@yourcompany.com"
+              placeholder="Enter your email"
             />
             <TextFormField
               name="password"
               label="Password"
               type="password"
-              placeholder="**************"
+              placeholder="Enter your password"
             />
             <TextFormField
-              name="confirm_password"
-              label="Confirm Password"
+              name="retype_password"
+              label="Retype Password"
               type="password"
-              placeholder="**************"
+              placeholder="Enter your password"
             />
 
-            <div className="flex">
+            <div className="flex items-center gap-2">
+              <Checkbox id="remember" />
+              <Label className="p-0" htmlFor="remember">
+                Remember me
+              </Label>
+            </div>
+
+            <div className="flex pt-8">
               <Button type="submit" disabled={isSubmitting} className="w-full">
                 Sign Up
               </Button>
