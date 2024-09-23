@@ -424,7 +424,7 @@ export function HorizontalSourceSelector({
 
   return (
     <div className="flex flex-nowrap  space-x-2">
-      <div className="w-0max-w-24">
+      <div className="max-w-24">
         <DateRangeSelector
           isHorizontal
           value={timeRange}
