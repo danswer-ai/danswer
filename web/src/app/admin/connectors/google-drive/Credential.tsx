@@ -231,6 +231,7 @@ export const DriveJsonUploadSection = ({
       <p className="text-sm mb-2">
         Follow the guide{" "}
         <a
+          rel="noopener"
           className="text-link"
           target="_blank"
           href="https://docs.danswer.dev/connectors/google_drive#authorization"

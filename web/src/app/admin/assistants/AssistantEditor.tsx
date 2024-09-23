@@ -668,6 +668,7 @@ export function AssistantEditor({
                           For more information on the different LLMs, checkout
                           the{" "}
                           <a
+                            rel="noopener"
                             href="https://platform.openai.com/docs/models"
                             target="_blank"
                             className="text-blue-500"
