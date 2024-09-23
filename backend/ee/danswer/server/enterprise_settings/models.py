@@ -8,13 +8,15 @@ from pydantic import Field
 class NavigationItem(BaseModel):
     link: str
     title: str
-    fa_icon: str | None = None
+    # Right now must be one of the FA icons
+    icon: str | None = None
+    # NOTE: SVG at this path must not have a width / height specified
     svg_logo: str | None = None
 
     @classmethod
     def model_validate(cls, *args: Any, **kwargs: Any) -> "NavigationItem":
         instance = super().model_validate(*args, **kwargs)
-        if bool(instance.fa_icon) == bool(instance.svg_logo):
+        if bool(instance.icon) == bool(instance.svg_logo):
             raise ValueError("Exactly one of fa_icon or svg_logo must be specified")
         return instance
 
