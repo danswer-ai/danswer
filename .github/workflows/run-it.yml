@@ -13,7 +13,8 @@ env:
 
 jobs:
   integration-tests:
-    runs-on: Amd64
+    # See https://runs-on.com/runners/linux/
+    runs-on: [runs-on,runner=8cpu-linux-x64,"run-id=${{ github.run_id }}"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
