@@ -77,9 +77,10 @@ class Teamspace(BaseModel):
             chat_sessions=[
                 ChatSessionDetails(
                     id=chat_session.id,
+                    name=chat_session.description,
                     description=chat_session.description,
                     assistant_id=chat_session.assistant_id,
-                    time_created=chat_session.time_created,
+                    time_created=chat_session.time_created.isoformat(),
                     shared_status=chat_session.shared_status,
                     folder_id=chat_session.folder_id,
                     current_alternate_model=chat_session.current_alternate_model,

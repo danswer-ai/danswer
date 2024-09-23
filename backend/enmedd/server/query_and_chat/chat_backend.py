@@ -216,6 +216,7 @@ def create_new_chat_session(
             or "",  # Leave the naming till later to prevent delay
             user_id=user_id,
             assistant_id=chat_session_creation_request.assistant_id,
+            teamspace_id=chat_session_creation_request.teamspace_id,
         )
     except Exception as e:
         logger.exception(e)
