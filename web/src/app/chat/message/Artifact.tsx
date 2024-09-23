@@ -93,7 +93,7 @@ export const ToggleArtifact = ({
       <div className="flex justify-between items-center">
         <button
           onMouseDown={() => toggleArtifact(!showArtifact)}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          className="bg-neutral-800 border-nuetral-900 text-white font-bold py-1 px-3 rounded transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
           {showArtifact ? "Hide" : "Show"} React Artifact
         </button>
