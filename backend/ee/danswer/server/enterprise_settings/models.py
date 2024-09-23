@@ -10,7 +10,8 @@ class NavigationItem(BaseModel):
     title: str
     # Right now must be one of the FA icons
     icon: str | None = None
-    # NOTE: SVG at this path must not have a width / height specified
+    # NOTE: SVG must not have a width / height specified
+    # This is the actual SVG as a string.
     svg_logo: str | None = None
 
     @classmethod
