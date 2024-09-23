@@ -49,6 +49,7 @@ _SEED_CONFIG_ENV_VAR_NAME = "ENV_SEED_CONFIGURATION"
 class NavigationItemSeed(BaseModel):
     link: str
     title: str
+    # NOTE: SVG at this path must not have a width / height specified
     svg_path: str
 
 
@@ -168,12 +169,18 @@ def _seed_enterprise_settings(seed_config: SeedConfiguration) -> None:
         seed_config.enterprise_settings is not None
         or seed_config.nav_item_overrides is not None
     ):
-        final_nav_items = seed_config.enterprise_settings.custom_nav_items
+        final_enterprise_settings = (
+            deepcopy(seed_config.enterprise_settings)
+            if seed_config.enterprise_settings
+            else EnterpriseSettings()
+        )
+
+        final_nav_items = final_enterprise_settings.custom_nav_items
         if seed_config.nav_item_overrides is not None:
             final_nav_items = []
             for item in seed_config.nav_item_overrides:
                 with open(item.svg_path, "r") as file:
-                    svg_content = file.read()
+                    svg_content = file.read().strip()
 
                 final_nav_items.append(
                     NavigationItem(
@@ -183,11 +190,10 @@ def _seed_enterprise_settings(seed_config: SeedConfiguration) -> None:
                     )
                 )
 
-        final_enterprise_settings = deepcopy(seed_config.enterprise_settings)
         final_enterprise_settings.custom_nav_items = final_nav_items
 
         logger.notice("Seeding enterprise settings")
-        store_ee_settings(seed_config.enterprise_settings)
+        store_ee_settings(final_enterprise_settings)
 
 
 def _seed_logo(db_session: Session, logo_path: str | None) -> None:

@@ -1,3 +1,4 @@
+from typing import Any
 from typing import List
 
 from pydantic import BaseModel
@@ -11,7 +12,7 @@ class NavigationItem(BaseModel):
     svg_logo: str | None = None
 
     @classmethod
-    def model_validate(cls, *args, **kwargs):
+    def model_validate(cls, *args: Any, **kwargs: Any) -> "NavigationItem":
         instance = super().model_validate(*args, **kwargs)
         if bool(instance.fa_icon) == bool(instance.svg_logo):
             raise ValueError("Exactly one of fa_icon or svg_logo must be specified")
