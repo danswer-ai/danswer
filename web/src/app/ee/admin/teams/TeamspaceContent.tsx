@@ -55,7 +55,7 @@ export const TeamspaceContent = ({
   }
 
   if (error || !data) {
-    return <div className="text-red-600">Error loading users</div>;
+    return <div className="text-red-600">Error loading teams</div>;
   }
 
   if (ccPairsError || !ccPairs) {
@@ -63,7 +63,7 @@ export const TeamspaceContent = ({
   }
 
   if (usersError || !users) {
-    return <div className="text-red-600">Error loading users</div>;
+    return <div className="text-red-600">Error loading teams</div>;
   }
 
   const filteredTeamspaces = data.filter((teamspace) =>

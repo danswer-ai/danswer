@@ -52,7 +52,7 @@ const PromoterButton = ({
   );
 };
 
-const DeactivaterButton = ({
+export const DeactivaterButton = ({
   user,
   deactivate,
   mutate,
