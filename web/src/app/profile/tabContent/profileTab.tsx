@@ -1,10 +1,12 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { User as UserTypes } from "@/lib/types";
-import Image from "next/image";
 import { User } from "lucide-react";
-import Logo from "../../../../public/logo.png";
 import { UserProfile } from "@/components/UserProfile";
-import { CombinedSettings, fetchSettingsSS } from "@/components/settings/lib";
+import { CombinedSettings } from "@/components/settings/lib";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
 
 export default function ProfileTab({
   user,
@@ -13,6 +15,23 @@ export default function ProfileTab({
   user: UserTypes | null;
   combinedSettings: CombinedSettings | null;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [fullName, setFullName] = useState(user?.full_name || "");
+  const [companyName, setCompanyName] = useState(user?.company_name || "");
+  const [email, setEmail] = useState(user?.email || "");
+
+  const handleSaveChanges = () => {
+    const updatedUser = {
+      full_name: fullName,
+      company_name: companyName,
+      email: email,
+    };
+
+    console.log("User info saved", updatedUser);
+    setIsEditing(false);
+  };
+
   return (
     <>
       <div className="flex py-8 border-b">
@@ -22,7 +41,7 @@ export default function ProfileTab({
           </span>
           <p className="pt-1">This will be displayed on your profile.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3 w-[500px]">
           <div className="flex items-center justify-center rounded-full h-[65px] w-[65px] shrink-0 aspect-square text-2xl font-normal">
             {user && user.full_name ? (
               <UserProfile size={65} user={user} textSize="text-2xl" />
@@ -30,12 +49,6 @@ export default function ProfileTab({
               <User size={25} className="mx-auto" />
             )}
           </div>
-          <Button variant="link" className="text-error px-2">
-            Delete
-          </Button>
-          <Button variant="link" className="px-2">
-            Update
-          </Button>
         </div>
       </div>
 
@@ -45,10 +58,16 @@ export default function ProfileTab({
             <span className="font-semibold text-inverted-inverted">Name</span>
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
-            <span className="font-semibold text-inverted-inverted">
-              {user?.full_name || "Unknown User"}
-            </span>{" "}
-            <Button variant="outline">Edit</Button>
+            {isEditing ? (
+              <Input
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+            ) : (
+              <span className="font-semibold text-inverted-inverted">
+                {fullName || "Unknown User"}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center">
@@ -58,10 +77,16 @@ export default function ProfileTab({
             </span>
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
-            <span className="font-semibold text-inverted-inverted">
-              {user?.company_name || "No Company"}
-            </span>
-            <Button variant="outline">Edit</Button>
+            {isEditing ? (
+              <Input
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+              />
+            ) : (
+              <span className="font-semibold text-inverted-inverted">
+                {companyName || "No Company"}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center">
@@ -69,15 +94,18 @@ export default function ProfileTab({
             <span className="font-semibold text-inverted-inverted">Email</span>
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
-            <span className="font-semibold text-inverted-inverted">
-              {user?.email || "anonymous@gmail.com"}
-            </span>{" "}
-            <Button variant="outline">Edit</Button>
+            {isEditing ? (
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+            ) : (
+              <span className="font-semibold text-inverted-inverted">
+                {email || "anonymous@gmail.com"}
+              </span>
+            )}
           </div>
         </div>
       </div>
 
-      {combinedSettings?.featureFlags.multi_teamspace && (
+      {/* {combinedSettings?.featureFlags.multi_teamspace && (
         <div className="flex py-8 border-b">
           <div className="w-[500px] text-sm">
             <span className="font-semibold text-inverted-inverted">
@@ -111,12 +139,25 @@ export default function ProfileTab({
             </div>
           </div>
         </div>
-      )}
+      )}  */}
 
-      <div className="flex py-8 justify-end">
-        <div className="flex gap-3">
-          <Button>Save Changes</Button>
-        </div>
+      <div className="flex gap-2 py-8 justify-end">
+        {isEditing ? (
+          <>
+            <Button
+              variant="outline"
+              className="border-destructive-foreground hover:bg-destructive-foreground"
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveChanges}>Save Changes</Button>
+          </>
+        ) : (
+          <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
+            Edit
+          </Button>
+        )}
       </div>
     </>
   );

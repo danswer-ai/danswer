@@ -1,21 +1,33 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { User as UserTypes } from "@/lib/types";
-import Image from "next/image";
-import { User } from "lucide-react";
-import Logo from "../../../../public/logo.png";
+import { useState } from "react";
 
 export default function SecurityTab({ user }: { user: UserTypes | null }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const handleSaveChanges = () => {
+    if (newPassword !== confirmPassword) {
+      console.log("Passwords do not match");
+      return;
+    }
+
+    const updatedPasswordInfo = {
+      current_password: currentPassword,
+      new_password: newPassword,
+    };
+
+    console.log("Password updated", updatedPasswordInfo);
+    setIsEditing(false);
+  };
+
   return (
     <>
-      <div className="flex py-8 border-b">
-        <div className="w-[500px] text-sm">
-          <span className="font-semibold text-inverted-inverted">Password</span>
-          <p className="pt-1">
-            Please enter your current password to change your password
-          </p>
-        </div>
-      </div>
-
       <div className="py-8 border-b flex flex-col gap-5">
         <div className="flex items-center">
           <div className="w-[500px] text-sm">
@@ -24,14 +36,22 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
             </span>
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
-            <span className="font-semibold text-inverted-inverted">
-              &#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;
-            </span>
-            <Button variant="outline">Edit</Button>
+            {isEditing ? (
+              <Input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full"
+                placeholder="Enter current password"
+              />
+            ) : (
+              <span className="font-semibold text-inverted-inverted">
+                &#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;
+              </span>
+            )}
           </div>
         </div>
-      </div>
-      <div className="py-8 border-b flex flex-col gap-5">
+
         <div className="flex items-center">
           <div className="w-[500px] text-sm">
             <span className="font-semibold text-inverted-inverted">
@@ -39,19 +59,22 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
             </span>
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
-            <div>
+            {isEditing ? (
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full"
+                placeholder="Enter new password"
+              />
+            ) : (
               <span className="font-semibold text-inverted-inverted">
                 &#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;
               </span>
-              <p className="font-medium text-xs">
-                Your new password must be more that 8 characters
-              </p>
-            </div>
-            <Button variant="outline">Edit</Button>
+            )}
           </div>
         </div>
-      </div>
-      <div className="py-8 border-b flex flex-col gap-5">
+
         <div className="flex items-center">
           <div className="w-[500px] text-sm">
             <span className="font-semibold text-inverted-inverted">
@@ -59,18 +82,40 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
             </span>
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
-            <span className="font-semibold text-inverted-inverted">
-              &#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;
-            </span>
-            <Button variant="outline">Edit</Button>
+            {isEditing ? (
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full"
+                placeholder="Confirm new password"
+              />
+            ) : (
+              <span className="font-semibold text-inverted-inverted">
+                &#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;
+              </span>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="flex py-8 justify-end">
-        <div className="flex gap-3">
-          <Button>Save Changes</Button>
-        </div>
+      <div className="flex gap-2 py-8 justify-end">
+        {isEditing ? (
+          <>
+            <Button
+              variant="outline"
+              className="border-destructive-foreground hover:bg-destructive-foreground"
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveChanges}>Save Changes</Button>
+          </>
+        ) : (
+          <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
+            Edit
+          </Button>
+        )}
       </div>
     </>
   );
