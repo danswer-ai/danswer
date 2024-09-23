@@ -29,11 +29,11 @@ export default function Profile({
           <TabsTrigger value="security">
             <Lock size={16} className="mr-2" /> Security
           </TabsTrigger>
-          {showAdminPanel && (
+          {/* {showAdminPanel && (
             <TabsTrigger value="billing">
               <CreditCard size={16} className="mr-2" /> Billing
             </TabsTrigger>
-          )}
+          )} */}
         </TabsList>
         <TabsContent value="profile">
           <ProfileTab user={user} combinedSettings={combinedSettings} />
