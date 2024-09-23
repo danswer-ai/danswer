@@ -122,6 +122,12 @@ def list_all_users(
                     status=UserStatus.LIVE
                     if user.is_active
                     else UserStatus.DEACTIVATED,
+                    full_name=user.full_name,
+                    billing_email_address=user.billing_email_address,
+                    company_billing=user.company_billing,
+                    company_email=user.company_email,
+                    company_name=user.company_name,
+                    vat=user.vat,
                 )
                 for user in users
             ],
@@ -138,6 +144,12 @@ def list_all_users(
                 email=user.email,
                 role=user.role,
                 status=UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED,
+                full_name=user.full_name,
+                billing_email_address=user.billing_email_address,
+                company_billing=user.company_billing,
+                company_email=user.company_email,
+                company_name=user.company_name,
+                vat=user.vat,
             )
             for user in users
         ][accepted_page * USERS_PAGE_SIZE : (accepted_page + 1) * USERS_PAGE_SIZE],
