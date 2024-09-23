@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { AddUserButton } from "./page";
 import {
   Table,
   TableBody,
@@ -22,6 +21,7 @@ import { User } from "lucide-react";
 export const PendingInvites = ({ q }: { q: string }) => {
   const [invitedPage, setInvitedPage] = useState(1);
   const [acceptedPage, setAcceptedPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
     `/api/manage/users?q=${encodeURI(q)}&accepted_page=${
       acceptedPage - 1
@@ -62,6 +62,12 @@ export const PendingInvites = ({ q }: { q: string }) => {
     (user) => !accepted.map((u) => u.email).includes(user.email)
   );
 
+  const filteredUsers = finalInvited.filter(
+    (user) =>
+      user.full_name!.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex gap-20 w-full">
       <div className="w-1/3">
@@ -74,7 +80,11 @@ export const PendingInvites = ({ q }: { q: string }) => {
       <div className="w-full flex-1">
         {invited.length > 0 ? (
           <>
-            <Input />
+            <Input
+              placeholder="Search user..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
             <Card className="mt-4">
               <CardContent className="p-0">
                 <Table>
@@ -87,7 +97,7 @@ export const PendingInvites = ({ q }: { q: string }) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {finalInvited.map((user) => (
+                    {filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
                           <div className="flex gap-2">
