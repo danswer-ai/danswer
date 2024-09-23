@@ -45,7 +45,7 @@ class UserCreate(schemas.BaseUserCreate):
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    role: UserRole
+    role: Optional[UserRole]
     chosen_assistants: Optional[List[int]]
     full_name: Optional[str]
     company_name: Optional[str]
