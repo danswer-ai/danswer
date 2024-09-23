@@ -7,7 +7,11 @@ import { ChevronLeft, CircleCheck, RectangleEllipsis } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
-export const SetNewPassword = () => {
+export const SetNewPassword = ({
+  goToNextStep,
+}: {
+  goToNextStep: () => void;
+}) => {
   return (
     <div className="w-full">
       <div className="flex items-center justify-center">
@@ -68,7 +72,7 @@ export const SetNewPassword = () => {
           </div>
         </div>
 
-        <Button type="submit" className="w-full mt-6">
+        <Button type="submit" className="w-full mt-6" onClick={goToNextStep}>
           Continue
         </Button>
       </form>

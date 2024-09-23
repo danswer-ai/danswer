@@ -7,7 +7,7 @@ import { Fingerprint } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
-export const EnterEmail = () => {
+export const EnterEmail = ({ goToNextStep }: { goToNextStep: () => void }) => {
   return (
     <div className="w-full">
       <div className="flex items-center justify-center">
@@ -36,7 +36,7 @@ export const EnterEmail = () => {
           />
         </div>
 
-        <Button type="submit" className="w-full mt-6">
+        <Button type="submit" className="w-full mt-6" onClick={goToNextStep}>
           Continue
         </Button>
       </form>

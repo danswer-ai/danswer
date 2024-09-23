@@ -21,10 +21,11 @@ import { Fingerprint } from "lucide-react";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
 import { Progress } from "@/components/ui/progress";
-import { EnterEmail } from "./steps/enterEmail";
+import { EnterEmail } from "./steps/EnterEmail";
 import { EnterVerification } from "./steps/EmailVerification";
 import { SetNewPassword } from "./steps/SetNewPassword";
 import { SuccessChangePassword } from "./steps/Done";
+import { ForgorPasswordSteps } from "./ForgorPasswordSteps";
 
 const Page = async () => {
   // catch cases where the backend is completely unreachable here
@@ -60,27 +61,13 @@ const Page = async () => {
   }
 
   return (
-    <main className="relative h-full">
+    <main className="relative h-full px-6 md:px-0">
       <HealthCheckBanner />
       <div className="absolute top-6 left-10">
         <Image src={Logo} alt="Logo" className="w-28 xl:w-32" />
       </div>
 
-      <div className="flex justify-center items-center h-full">
-        <div className="w-[500px]">
-          <EnterEmail />
-          {/*   <EnterVerification /> */}
-          {/* <SetNewPassword /> */}
-          {/* <SuccessChangePassword /> */}
-        </div>
-      </div>
-
-      <div className="w-[500px] flex gap-2 absolute bottom-10 left-1/2 -translate-x-1/2">
-        <Progress value={100} />
-        <Progress value={0} />
-        <Progress value={0} />
-        <Progress value={0} />
-      </div>
+      <ForgorPasswordSteps />
     </main>
   );
 };
