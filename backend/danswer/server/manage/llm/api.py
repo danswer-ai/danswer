@@ -10,6 +10,7 @@ from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
 from danswer.db.llm import fetch_existing_llm_providers
+from danswer.db.llm import fetch_provider
 from danswer.db.llm import remove_llm_provider
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
@@ -130,11 +131,20 @@ def put_llm_provider(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> FullLLMProvider:
+    # validate request (e.g. if we're intending to create but the name already exists we should throw an error)
+    # NOTE: may involve duplicate fetching to Postgres, but we're assuming SQLAlchemy is smart enough to cache
+    # the result
+    existing_provider = fetch_provider(db_session, llm_provider.name)
+    if existing_provider and is_creation:
+        raise HTTPException(
+            status_code=400,
+            detail=f"LLM Provider with name {llm_provider.name} already exists",
+        )
+
     try:
         return upsert_llm_provider(
             llm_provider=llm_provider,
             db_session=db_session,
-            is_creation=is_creation,
         )
     except ValueError as e:
         logger.exception("Failed to upsert LLM Provider")
