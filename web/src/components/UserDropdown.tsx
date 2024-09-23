@@ -61,7 +61,9 @@ export function UserDropdown({
     combinedSettings?.enterpriseSettings?.custom_nav_items || [];
 
   useEffect(() => {
-    const iconNames = customNavItems.map((item) => item.icon);
+    const iconNames = customNavItems
+      .map((item) => item.icon)
+      .filter((icon) => icon) as string[];
     preloadIcons(iconNames);
   }, [customNavItems]);
 
@@ -141,10 +143,34 @@ export function UserDropdown({
                 key={i}
                 href={item.link}
                 icon={
-                  <DynamicFaIcon
-                    name={item.icon}
-                    className="h-4 w-4 my-auto mr-2"
-                  />
+                  item.svg_logo ? (
+                    <div
+                      className="
+                        h-4
+                        w-4
+                        my-auto
+                        mr-2
+                        overflow-hidden
+                        flex
+                        items-center
+                        justify-center
+                      "
+                      aria-label={item.title}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="100%"
+                        height="100%"
+                        preserveAspectRatio="xMidYMid meet"
+                        dangerouslySetInnerHTML={{ __html: item.svg_logo }}
+                      />
+                    </div>
+                  ) : (
+                    <DynamicFaIcon
+                      name={item.icon!}
+                      className="h-4 w-4 my-auto mr-2"
+                    />
+                  )
                 }
                 label={item.title}
               />
