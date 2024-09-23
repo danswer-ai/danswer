@@ -20,7 +20,7 @@ This means the flow is:
 """
 
 
-class TestAPIKey(BaseModel):
+class DATestAPIKey(BaseModel):
     api_key_id: int
     api_key_display: str
     api_key: str | None = None  # only present on initial creation
@@ -31,14 +31,14 @@ class TestAPIKey(BaseModel):
     headers: dict
 
 
-class TestUser(BaseModel):
+class DATestUser(BaseModel):
     id: str
     email: str
     password: str
     headers: dict
 
 
-class TestCredential(BaseModel):
+class DATestCredential(BaseModel):
     id: int
     name: str
     credential_json: dict[str, Any]
@@ -48,7 +48,7 @@ class TestCredential(BaseModel):
     groups: list[int]
 
 
-class TestConnector(BaseModel):
+class DATestConnector(BaseModel):
     id: int
     name: str
     source: DocumentSource
@@ -63,7 +63,7 @@ class SimpleTestDocument(BaseModel):
     content: str
 
 
-class TestCCPair(BaseModel):
+class DATestCCPair(BaseModel):
     id: int
     name: str
     connector_id: int
@@ -73,26 +73,26 @@ class TestCCPair(BaseModel):
     documents: list[SimpleTestDocument] = Field(default_factory=list)
 
 
-class TestUserGroup(BaseModel):
+class DATestUserGroup(BaseModel):
     id: int
     name: str
     user_ids: list[str]
     cc_pair_ids: list[int]
 
 
-class TestLLMProvider(BaseModel):
+class DATestLLMProvider(BaseModel):
     id: int
     name: str
     provider: str
     api_key: str
     default_model_name: str
     is_public: bool
-    groups: list[TestUserGroup]
+    groups: list[DATestUserGroup]
     api_base: str | None = None
     api_version: str | None = None
 
 
-class TestDocumentSet(BaseModel):
+class DATestDocumentSet(BaseModel):
     id: int
     name: str
     description: str
@@ -103,7 +103,7 @@ class TestDocumentSet(BaseModel):
     groups: list[int] = Field(default_factory=list)
 
 
-class TestPersona(BaseModel):
+class DATestPersona(BaseModel):
     id: int
     name: str
     description: str
@@ -122,13 +122,13 @@ class TestPersona(BaseModel):
 
 
 #
-class TestChatSession(BaseModel):
+class DATestChatSession(BaseModel):
     id: int
     persona_id: int
     description: str
 
 
-class TestChatMessage(BaseModel):
+class DATestChatMessage(BaseModel):
     id: str | None = None
     chat_session_id: int
     parent_message_id: str | None

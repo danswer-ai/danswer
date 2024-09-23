@@ -6,8 +6,8 @@ import requests
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.test_models import TestLLMProvider
-from tests.integration.common_utils.test_models import TestUser
+from tests.integration.common_utils.test_models import DATestLLMProvider
+from tests.integration.common_utils.test_models import DATestUser
 
 
 class LLMProviderManager:
@@ -21,8 +21,8 @@ class LLMProviderManager:
         api_version: str | None = None,
         groups: list[int] | None = None,
         is_public: bool | None = None,
-        user_performing_action: TestUser | None = None,
-    ) -> TestLLMProvider:
+        user_performing_action: DATestUser | None = None,
+    ) -> DATestLLMProvider:
         print("Seeding LLM Providers...")
 
         llm_provider = LLMProviderUpsertRequest(
@@ -49,7 +49,7 @@ class LLMProviderManager:
         )
         llm_response.raise_for_status()
         response_data = llm_response.json()
-        result_llm = TestLLMProvider(
+        result_llm = DATestLLMProvider(
             id=response_data["id"],
             name=response_data["name"],
             provider=response_data["provider"],
@@ -73,8 +73,8 @@ class LLMProviderManager:
 
     @staticmethod
     def delete(
-        llm_provider: TestLLMProvider,
-        user_performing_action: TestUser | None = None,
+        llm_provider: DATestLLMProvider,
+        user_performing_action: DATestUser | None = None,
     ) -> bool:
         if not llm_provider.id:
             raise ValueError("LLM Provider ID is required to delete a provider")

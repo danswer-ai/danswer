@@ -7,18 +7,18 @@ from danswer.server.documents.models import DocumentSource
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.connector import ConnectorManager
 from tests.integration.common_utils.managers.credential import CredentialManager
-from tests.integration.common_utils.managers.user import TestUser
+from tests.integration.common_utils.managers.user import DATestUser
 from tests.integration.common_utils.managers.user import UserManager
 from tests.integration.common_utils.managers.user_group import UserGroupManager
 
 
 def test_whole_curator_flow(reset: None) -> None:
     # Creating an admin user (first user created is automatically an admin)
-    admin_user: TestUser = UserManager.create(name="admin_user")
+    admin_user: DATestUser = UserManager.create(name="admin_user")
     assert UserManager.verify_role(admin_user, UserRole.ADMIN)
 
     # Creating a curator
-    curator: TestUser = UserManager.create(name="curator")
+    curator: DATestUser = UserManager.create(name="curator")
 
     # Creating a user group
     user_group_1 = UserGroupManager.create(

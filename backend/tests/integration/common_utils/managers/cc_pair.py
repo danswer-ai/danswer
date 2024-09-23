@@ -15,8 +15,8 @@ from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
 from tests.integration.common_utils.managers.connector import ConnectorManager
 from tests.integration.common_utils.managers.credential import CredentialManager
-from tests.integration.common_utils.test_models import TestCCPair
-from tests.integration.common_utils.test_models import TestUser
+from tests.integration.common_utils.test_models import DATestCCPair
+from tests.integration.common_utils.test_models import DATestUser
 
 
 def _cc_pair_creator(
@@ -25,8 +25,8 @@ def _cc_pair_creator(
     name: str | None = None,
     access_type: AccessType = AccessType.PUBLIC,
     groups: list[int] | None = None,
-    user_performing_action: TestUser | None = None,
-) -> TestCCPair:
+    user_performing_action: DATestUser | None = None,
+) -> DATestCCPair:
     name = f"{name}-cc-pair" if name else f"test-cc-pair-{uuid4()}"
 
     request = {
@@ -43,7 +43,7 @@ def _cc_pair_creator(
         else GENERAL_HEADERS,
     )
     response.raise_for_status()
-    return TestCCPair(
+    return DATestCCPair(
         id=response.json()["data"],
         name=name,
         connector_id=connector_id,
@@ -63,8 +63,8 @@ class CCPairManager:
         input_type: InputType = InputType.LOAD_STATE,
         connector_specific_config: dict[str, Any] | None = None,
         credential_json: dict[str, Any] | None = None,
-        user_performing_action: TestUser | None = None,
-    ) -> TestCCPair:
+        user_performing_action: DATestUser | None = None,
+    ) -> DATestCCPair:
         connector = ConnectorManager.create(
             name=name,
             source=source,
@@ -98,8 +98,8 @@ class CCPairManager:
         name: str | None = None,
         access_type: AccessType = AccessType.PUBLIC,
         groups: list[int] | None = None,
-        user_performing_action: TestUser | None = None,
-    ) -> TestCCPair:
+        user_performing_action: DATestUser | None = None,
+    ) -> DATestCCPair:
         return _cc_pair_creator(
             connector_id=connector_id,
             credential_id=credential_id,
@@ -111,8 +111,8 @@ class CCPairManager:
 
     @staticmethod
     def pause_cc_pair(
-        cc_pair: TestCCPair,
-        user_performing_action: TestUser | None = None,
+        cc_pair: DATestCCPair,
+        user_performing_action: DATestUser | None = None,
     ) -> None:
         result = requests.put(
             url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/status",
@@ -125,8 +125,8 @@ class CCPairManager:
 
     @staticmethod
     def delete(
-        cc_pair: TestCCPair,
-        user_performing_action: TestUser | None = None,
+        cc_pair: DATestCCPair,
+        user_performing_action: DATestUser | None = None,
     ) -> None:
         cc_pair_identifier = ConnectorCredentialPairIdentifier(
             connector_id=cc_pair.connector_id,
@@ -143,7 +143,7 @@ class CCPairManager:
 
     @staticmethod
     def get_all(
-        user_performing_action: TestUser | None = None,
+        user_performing_action: DATestUser | None = None,
     ) -> list[ConnectorIndexingStatus]:
         response = requests.get(
             f"{API_SERVER_URL}/manage/admin/connector/indexing-status",
@@ -156,9 +156,9 @@ class CCPairManager:
 
     @staticmethod
     def verify(
-        cc_pair: TestCCPair,
+        cc_pair: DATestCCPair,
         verify_deleted: bool = False,
-        user_performing_action: TestUser | None = None,
+        user_performing_action: DATestUser | None = None,
     ) -> None:
         all_cc_pairs = CCPairManager.get_all(user_performing_action)
         for retrieved_cc_pair in all_cc_pairs:
@@ -183,7 +183,7 @@ class CCPairManager:
 
     @staticmethod
     def wait_for_deletion_completion(
-        user_performing_action: TestUser | None = None,
+        user_performing_action: DATestUser | None = None,
     ) -> None:
         start = time.time()
         while True:
