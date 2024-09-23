@@ -43,6 +43,8 @@ PUBLIC_ENDPOINT_SPECS = [
     # oauth
     ("/auth/oauth/authorize", {"GET"}),
     ("/auth/oauth/callback", {"GET"}),
+    # tenant service related (must use API key)
+    ("/settings/tenants/create", {"POST"}),
 ]
 
 
