@@ -5,12 +5,9 @@ import {
   ConfigurableSources,
   validAutoSyncSources,
 } from "@/lib/types";
-import { Text, Title } from "@tremor/react";
 import { useUser } from "@/components/user/UserProvider";
 import { useField } from "formik";
 import { AutoSyncOptions } from "./AutoSyncOptions";
-import { useContext } from "react";
-import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 function isValidAutoSyncSource(
@@ -28,7 +25,6 @@ export function AccessTypeForm({
     useField<AccessType>("access_type");
 
   const isPaidEnterpriseEnabled = usePaidEnterpriseFeaturesEnabled();
-  const settings = useContext(SettingsContext);
   const isAutoSyncSupported = isValidAutoSyncSource(connector);
   const { isLoadingUser, isAdmin } = useUser();
 
@@ -85,7 +81,7 @@ export function AccessTypeForm({
                 />
 
                 {access_type.value === "sync" && isAutoSyncSupported && (
-                  <div className="mt-6">
+                  <div>
                     <AutoSyncOptions
                       connectorType={connector as ValidAutoSyncSources}
                     />

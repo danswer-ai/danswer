@@ -41,8 +41,6 @@ def run_external_group_permission_sync(
         return
 
     sync_details = cc_pair.auto_sync_options
-    if sync_details is None:
-        raise ValueError(f"No auto sync options found for source type: {source_type}")
 
     try:
         # This function updates:
@@ -82,8 +80,6 @@ def run_external_doc_permission_sync(
         )
 
     sync_details = cc_pair.auto_sync_options
-    if sync_details is None:
-        raise ValueError(f"No auto sync options found for source type: {source_type}")
 
     # If the source type is not polling, we only fetch the permissions every
     # _FULL_FETCH_PERIOD_IN_SECONDS seconds

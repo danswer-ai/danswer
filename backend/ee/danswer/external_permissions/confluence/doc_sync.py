@@ -22,9 +22,9 @@ def _get_confluence_client(
         api_version="cloud" if is_cloud else "latest",
         url=connector_specific_config["wiki_base"].rstrip("/"),
         # passing in username causes issues for Confluence data center
-        username=raw_credentials_json["username"] if is_cloud else None,
-        password=raw_credentials_json["access_token"] if is_cloud else None,
-        token=raw_credentials_json["access_token"] if not is_cloud else None,
+        username=raw_credentials_json["confluence_username"] if is_cloud else None,
+        password=raw_credentials_json["confluence_access_token"] if is_cloud else None,
+        token=raw_credentials_json["confluence_access_token"] if not is_cloud else None,
     )
 
 
@@ -54,8 +54,8 @@ def _get_space_permissions(
         ):
             is_externally_public = True
     return ExternalAccess(
-        external_user_emails=set(),
-        external_user_group_ids=set(),
+        external_user_emails=user_emails,
+        external_user_group_ids=group_names,
         is_public=is_externally_public,
     )
 
@@ -111,7 +111,7 @@ def confluence_doc_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
     docs_with_additional_info: list[DocsWithAdditionalInfo],
-    sync_details: dict[str, Any],
+    _: dict[str, Any],
 ) -> None:
     """
     Adds the external permissions to the documents in postgres

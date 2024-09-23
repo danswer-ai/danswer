@@ -123,7 +123,7 @@ def gdrive_doc_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
     docs_with_additional_info: list[DocsWithAdditionalInfo],
-    sync_details: dict[str, Any],
+    sync_details: dict[str, Any] | None,
 ) -> None:
     """
     Adds the external permissions to the documents in postgres
@@ -131,6 +131,10 @@ def gdrive_doc_sync(
     it in postgres so that when it gets created later, the permissions are
     already populated
     """
+    if sync_details is None:
+        logger.error("Sync details not found for Google Drive")
+        raise ValueError("Sync details not found for Google Drive")
+
     for doc in docs_with_additional_info:
         ext_access = _fetch_google_permissions_for_document_id(
             db_session=db_session,

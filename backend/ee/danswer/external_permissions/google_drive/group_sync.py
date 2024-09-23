@@ -104,8 +104,12 @@ def _fetch_group_members_paginated(
 def gdrive_group_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
-    sync_details: dict[str, Any],
+    sync_details: dict[str, Any] | None,
 ) -> None:
+    if sync_details is None:
+        logger.error("Sync details not found for Google Drive")
+        raise ValueError("Sync details not found for Google Drive")
+
     google_drive_creds, _ = get_google_drive_creds(
         cc_pair.credential.credential_json,
         scopes=FETCH_GROUPS_SCOPES,
