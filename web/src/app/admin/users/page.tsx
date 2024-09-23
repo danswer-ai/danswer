@@ -23,6 +23,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { PlusSquare } from "lucide-react";
+import { AllUsers } from "./AllUsers";
+import { PendingInvites } from "./PedingInvites";
+import { Separator } from "@/components/ui/separator";
+import { CustomModal } from "@/components/CustomModal";
 
 const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   if (!validDomains.length) {
@@ -135,12 +139,11 @@ const UsersTables = ({ q }: { q: string }) => {
 };
 
 const SearchableTables = () => {
-  const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [q, setQ] = useState("");
 
   return (
-    <div>
+    <div className="pb-20">
       <div className="flex flex-col gap-y-4">
         <div className="flex flex-col gap-4 md:flex-row">
           <AddUserButton />
@@ -154,18 +157,22 @@ const SearchableTables = () => {
         </div>
         <UsersTables q={q} />
       </div>
+
+      <AllUsers q={q} />
+      <Separator className="my-10" />
+      <PendingInvites q={q} />
     </div>
   );
 };
 
-const AddUserButton = () => {
-  const [modal, setModal] = useState(false);
+export const AddUserButton = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
   const onSuccess = () => {
     mutate(
       (key) => typeof key === "string" && key.startsWith("/api/manage/users")
     );
-    setModal(false);
+    setIsModalOpen(false);
     toast({
       title: "Success",
       description: "Users invited!",
@@ -180,34 +187,33 @@ const AddUserButton = () => {
       variant: "destructive",
     });
   };
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <PlusSquare className="mr-2" />
-          Invite Users
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-full w-1/2">
-        <DialogHeader>
-          <DialogTitle>Bulk Add Users</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col gap-y-3 pt-4">
-          <Label>
-            Add the email addresses to import, separated by whitespaces.
-          </Label>
-          <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
-        </div>
-      </DialogContent>
-    </Dialog>
+    <CustomModal
+      title="Bulk Add Users"
+      onClose={() => setIsModalOpen(false)}
+      open={isModalOpen}
+      trigger={
+        <Button onClick={() => setIsModalOpen(true)}>Invite People</Button>
+      }
+    >
+      <div className="flex flex-col gap-y-3 pt-4">
+        <Label>
+          Add the email addresses to import, separated by whitespaces.
+        </Label>
+        <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
+      </div>
+    </CustomModal>
   );
 };
 
 const Page = () => {
   return (
-    <div className="container">
-      <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
-      <SearchableTables />
+    <div className="h-full w-full overflow-y-auto">
+      <div className="container">
+        <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
+        <SearchableTables />
+      </div>
     </div>
   );
 };
