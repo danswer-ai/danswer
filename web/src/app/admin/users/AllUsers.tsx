@@ -157,8 +157,8 @@ export const AllUsers = ({ q }: { q: string }) => {
   );
 
   return (
-    <div className="flex gap-20 w-full">
-      <div className="w-1/3">
+    <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
+      <div className="xl:w-1/3">
         <h2 className="text-lg md:text-2xl text-strong font-bold">Users</h2>
         <div className="text-sm pt-2 pb-4 space-y-2">
           <p>
@@ -174,7 +174,7 @@ export const AllUsers = ({ q }: { q: string }) => {
         <AddUserButton />
       </div>
 
-      <div className="w-full flex-1">
+      <div className="w-full overflow-auto">
         <Input
           placeholder="Search user..."
           value={searchQuery}

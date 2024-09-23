@@ -144,7 +144,7 @@ const SearchableTables = () => {
   const [q, setQ] = useState("");
 
   return (
-    <div className="pb-20">
+    <div className="pb-20 w-full">
       {/* <div className="flex flex-col gap-y-4">
         <div className="flex flex-col gap-4 md:flex-row">
           <AddUserButton />
