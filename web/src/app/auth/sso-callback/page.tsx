@@ -13,7 +13,11 @@ export default function SSOCallback() {
 
   useEffect(() => {
     const verifyToken = async () => {
-      const ssoToken = searchParams.get("sso_token");
+
+      const hash = window.location.hash;
+      const params = new URLSearchParams(hash.substring(1));
+      const ssoToken = params.get("sso_token");
+
       if (!ssoToken) {
         setError("No SSO token found");
         return;
@@ -33,11 +37,6 @@ export default function SSOCallback() {
         );
         if (response.ok) {
           setAuthStatus("Authentication successful!");
-          const sessionCookie = Cookies.get('tenant_details');
-          console.log("Session cookie:", sessionCookie);
-
-          console.log("All cookies:", document.cookie);
-
           // Log response headers
           response.headers.forEach((value, key) => {
             console.log(`${key}: ${value}`);
