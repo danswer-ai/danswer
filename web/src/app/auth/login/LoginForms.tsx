@@ -9,6 +9,12 @@ import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import GmailIcon from "../../../../public/Gmail.png";
+import MicrosoftIcon from "../../../../public/microsoft.svg";
+import Image from "next/image";
 
 export function LogInForms({}: {}) {
   const router = useRouter();
@@ -48,7 +54,7 @@ export function LogInForms({}: {}) {
         }}
       >
         {({ isSubmitting, values }) => (
-          <Form>
+          <Form className="w-full">
             <TextFormField
               name="email"
               label="Email"
@@ -63,9 +69,56 @@ export function LogInForms({}: {}) {
               placeholder="**************"
             />
 
-            <div className="flex">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Checkbox id="remember" />
+                <Label className="p-0" htmlFor="remember">
+                  Remember me
+                </Label>
+              </div>
+              <Button variant="link" className="p-0 h-auto">
+                Forgot password?
+              </Button>
+            </div>
+
+            <div className="flex pt-10">
               <Button type="submit" disabled={isSubmitting} className="w-full">
-                Log In
+                Sign In
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-4 pt-8">
+              <Separator className="flex-1" />
+              <p className="whitespace-nowrap text-sm">Or login with</p>
+              <Separator className="flex-1" />
+            </div>
+
+            <div className="flex items-center gap-6 pt-8 w-full">
+              <Button className="flex-1 truncate" variant="outline">
+                <div className="truncate flex items-center gap-2">
+                  <Image
+                    src={GmailIcon}
+                    alt="gmail-icon"
+                    width={16}
+                    height={16}
+                  />{" "}
+                  Continue with Gmail
+                </div>
+              </Button>
+              <Button
+                className="flex-1 truncate"
+                variant="outline"
+                type="button"
+              >
+                <div className="truncate flex items-center gap-2">
+                  <Image
+                    src={MicrosoftIcon}
+                    alt="microsoft-icon"
+                    width={16}
+                    height={16}
+                  />
+                  Continue with Microsoft
+                </div>
               </Button>
             </div>
           </Form>
