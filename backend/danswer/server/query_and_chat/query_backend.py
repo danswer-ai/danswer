@@ -18,7 +18,7 @@ from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.search_settings import get_current_search_settings
-from danswer.db.tag import get_tags_by_value_prefix_for_source_types
+from danswer.db.tag import find_tags
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.one_shot_answer.answer_question import stream_search_answer
@@ -111,7 +111,7 @@ def get_tags(
         value_prefix = EQUAL_PAT.join(split_pattern[1:])
         require_both_to_match = True
 
-    db_tags = get_tags_by_value_prefix_for_source_types(
+    db_tags = find_tags(
         tag_key_prefix=key_prefix,
         tag_value_prefix=value_prefix,
         sources=sources,

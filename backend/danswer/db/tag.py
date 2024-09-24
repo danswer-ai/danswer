@@ -108,7 +108,7 @@ def create_or_add_document_tag_list(
     return all_tags
 
 
-def get_tags_by_value_prefix_for_source_types(
+def find_tags(
     tag_key_prefix: str | None,
     tag_value_prefix: str | None,
     sources: list[DocumentSource] | None,
