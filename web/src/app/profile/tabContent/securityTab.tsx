@@ -2,10 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import { User as UserTypes } from "@/lib/types";
 import { useState } from "react";
 
 export default function SecurityTab({ user }: { user: UserTypes | null }) {
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -13,7 +15,11 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
 
   const handleSaveChanges = () => {
     if (newPassword !== confirmPassword) {
-      console.log("Passwords do not match");
+      toast({
+        title: "Your new password and confirm password does not match",
+        description: `New password and confirm password must match. Please try again`,
+        variant: "destructive",
+      });
       return;
     }
 
@@ -21,8 +27,35 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
       current_password: currentPassword,
       new_password: newPassword,
     };
-
-    console.log("Password updated", updatedPasswordInfo);
+    fetch("/api/users/change-password", {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify(updatedPasswordInfo),
+    })
+      .then((res) => {
+        if (res.status == 200) {
+          toast({
+            title: "Successfully updated your password",
+            description: "Your password has been changed. Please Log in again",
+            variant: "success",
+          });
+        } else {
+          toast({
+            title: "Something went wrong",
+            description: `Updating your password failed: ${res.status} ${res.statusText}`,
+            variant: "destructive",
+          });
+        }
+      })
+      .catch((e: Error) => {
+        toast({
+          title: "Something went wrong",
+          description: `Updating your password failed: ${e.message}`,
+          variant: "destructive",
+        });
+      });
     setIsEditing(false);
   };
 

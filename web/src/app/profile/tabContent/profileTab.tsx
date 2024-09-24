@@ -35,12 +35,19 @@ export default function ProfileTab({
       method: "PATCH",
       body: JSON.stringify(updatedUser),
     });
-
-    toast({
-      title: "Successfully edited user information",
-      description: "You have successfully updated your personal information.",
-      variant: "success",
-    });
+    if (response.status == 200) {
+      toast({
+        title: "Successfully edited user information",
+        description: "You have successfully updated your personal information.",
+        variant: "success",
+      });
+    } else {
+      toast({
+        title: "Something went wrong during update",
+        description: `Error: ${response}`,
+        variant: "destructive",
+      });
+    }
     setIsEditing(false);
   };
 
