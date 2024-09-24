@@ -52,7 +52,7 @@ def load_personas_from_yaml(
 
     with open(personas_yaml, "r") as file:
         data = yaml.safe_load(file)
-    
+
     all_personas = data.get("personas", [])
     for persona in all_personas:
         doc_set_names = persona["document_sets"]

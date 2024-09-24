@@ -1,6 +1,5 @@
 
 from sqlalchemy.orm import Session
-from danswer.chat.load_yamls import load_chat_yamls
 from danswer.llm.llm_initialization import load_llm_providers
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair

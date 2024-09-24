@@ -43,7 +43,7 @@ export default function SSOCallback() {
           });
 
           // Redirect to the dashboard
-          router.replace("/admin/plan");
+          router.replace("/admin/configuration/llm");
         } else {
           const errorData = await response.json();
           console.error(errorData);

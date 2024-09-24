@@ -142,7 +142,10 @@ def init_sqlalchemy_engine(app_name: str) -> None:
 _engines = {}
 
 # NOTE: this is a hack to allow for multiple postgres schemas per engine for now.
-def get_sqlalchemy_engine(schema: str = DEFAULT_SCHEMA) -> Engine:
+def get_sqlalchemy_engine(schema: str | None = DEFAULT_SCHEMA) -> Engine:
+    if schema is None:
+        schema = DEFAULT_SCHEMA
+    
     global _engines
     if schema not in _engines:
         connection_string = build_connection_string(
@@ -184,7 +187,6 @@ def get_current_tenant_id(request: Request) -> str:
     if not MULTI_TENANT:
         return DEFAULT_SCHEMA
 
-    print(request.cookies)
     token = request.cookies.get("tenant_details")
     if not token:
         logger.warning("No token found in cookies")

@@ -227,7 +227,7 @@ class VespaIndex(DocumentIndex):
             for chunk_batch in batch_generator(cleaned_chunks, BATCH_SIZE):
                 batch_index_vespa_chunks(
                     chunks=chunk_batch,
-                    index_name=selfn.idex_name,
+                    index_name=self.index_name,
                     http_client=http_client,
                     executor=executor,
                 )

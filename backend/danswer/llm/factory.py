@@ -1,7 +1,6 @@
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
-from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_default_provider
 from danswer.db.llm import fetch_provider
 from danswer.db.models import Persona
@@ -20,9 +19,9 @@ def get_main_llm_from_tuple(
 
 def get_llms_for_persona(
     persona: Persona,
+    db_session: Session,
     llm_override: LLMOverride | None = None,
     additional_headers: dict[str, str] | None = None,
-    db_session: Session | None = None,
 ) -> tuple[LLM, LLM]:
     model_provider_override = llm_override.model_provider if llm_override else None
     model_version_override = llm_override.model_version if llm_override else None

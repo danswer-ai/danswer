@@ -251,7 +251,7 @@ async def create_user_session(user: User, tenant_id: str) -> str:
         "tenant_id": tenant_id,
         "exp": datetime.utcnow() + timedelta(seconds=SESSION_EXPIRE_TIME_SECONDS)
     }
-    
+
     token = jwt.encode(payload, SECRET_JWT_KEY, algorithm="HS256")
     return token
 

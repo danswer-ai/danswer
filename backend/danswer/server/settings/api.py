@@ -1,16 +1,14 @@
-from danswer.db_setup import setup_postgres
 from danswer.db.engine import get_sqlalchemy_engine
 from typing import cast
 from fastapi import APIRouter
 from fastapi import Depends
-from fastapi import HTTPException
 from fastapi import Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-import asyncio
-from danswer.chat.load_yamls import load_chat_yamls
+from typing import Any
+from typing import Callable
 from danswer.auth.users import create_user_session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
@@ -19,7 +17,6 @@ from danswer.auth.users import is_user_admin
 from danswer.auth.users import UserManager
 from danswer.auth.users import verify_sso_token
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
-from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import NotificationType
 from danswer.db.engine import get_session
@@ -44,11 +41,8 @@ from fastapi.responses import Response
 from danswer.db.engine import get_async_session
 import subprocess
 import contextlib
+from fastapi import HTTPException, Request
 from sqlalchemy import text
-from fastapi import FastAPI, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy import text
-from alembic import command
 from alembic.config import Config
 import os
 from functools import wraps
@@ -70,17 +64,17 @@ def run_alembic_migrations(schema_name: str) -> None:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         root_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
         alembic_ini_path = os.path.join(root_dir, 'alembic.ini')
-        
+
         alembic_cfg = Config(alembic_ini_path)
         alembic_cfg.set_main_option('schema_name', schema_name)
-        
+
         alembic_command = f"alembic -c {alembic_ini_path} upgrade head"
         process = subprocess.Popen(alembic_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        
+
         if process.returncode != 0:
             raise Exception(f"Alembic migration failed: {stderr.decode()}")
-        
+
         logger.info(f"Alembic migrations completed successfully for schema: {schema_name}")
 
     except Exception as e:
@@ -90,11 +84,9 @@ def run_alembic_migrations(schema_name: str) -> None:
     finally:
         logger.info(f"Alembic migrations completed successfully for schema: {schema_name}")
 
-
-
-def authenticate_request(func):
+def authenticate_request(func: Callable) -> Callable:
     @wraps(func)
-    def wrapper(request: Request, *args, **kwargs):
+    def wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:
         auth_header = request.headers.get("Authorization")
         api_key = request.headers.get("X-API-KEY")
 
@@ -120,7 +112,7 @@ def authenticate_request(func):
 
 @basic_router.post("/tenants/create")
 @authenticate_request
-def create_tenant(request: Request, tenant_id: str):
+def create_tenant(request: Request, tenant_id: str) -> dict[str, str]:
     print(tenant_id)
 
     if not tenant_id:
@@ -156,7 +148,6 @@ def create_tenant(request: Request, tenant_id: str):
     logger.info(f"Tenant {tenant_id} created successfully")
     return {"status": "success", "message": f"Tenant {tenant_id} created successfully"}
 
-
 async def check_schema_exists(tenant_id: str) -> bool:
     logger.info(f"Checking if schema exists for tenant: {tenant_id}")
     get_async_session_context = contextlib.asynccontextmanager(
@@ -172,7 +163,7 @@ async def check_schema_exists(tenant_id: str) -> bool:
         logger.info(f"Schema for tenant {tenant_id} exists: {exists}")
         return exists
 
-@basic_router.post("/auth/sso-callback") 
+@basic_router.post("/auth/sso-callback")
 async def sso_callback(
     response: Response,
     sso_token: str = Query(..., alias="sso_token"),

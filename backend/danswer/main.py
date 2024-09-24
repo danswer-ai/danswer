@@ -111,7 +111,7 @@ from danswer.db_setup import setup_postgres
 
 logger = setup_logger()
 
- 
+
 def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     if not isinstance(exc, RequestValidationError):
         logger.error(
