@@ -37,8 +37,8 @@ function UsageTypeSection({
   onClick: () => void;
 }) {
   return (
-    <div>
-      <Text className="font-bold">{title}</Text>
+    <div className="pt-6">
+      <h3>{title}</h3>
       <div className="mt-1 mb-3 text-base">{description}</div>
       <Button
         onClick={(e) => {
@@ -217,7 +217,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
       body = (
         <>
           <div>
-            <Text>How are you planning on using enMedD AI?</Text>
+            <p className="pt-4">How are you planning on using enMedD AI?</p>
           </div>
           <Divider />
           <UsageTypeSection

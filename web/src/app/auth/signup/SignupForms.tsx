@@ -10,8 +10,8 @@ import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
   const router = useRouter();
@@ -51,7 +51,8 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
 
             let errorMsg = "Unknown error";
             if (errorDetail === "REGISTER_USER_ALREADY_EXISTS") {
-              errorMsg = "An account already exists with the specified email.";
+              errorMsg =
+                "An account already exwkists with the specified email.";
             }
             toast({
               title: "Error",
@@ -93,10 +94,16 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
               placeholder="Enter your full name"
             />
             <TextFormField
+              name="company_name"
+              label="Company name"
+              type="text"
+              placeholder="Enter your company name"
+            />
+            <TextFormField
               name="email"
               label="Email"
               type="email"
-              placeholder="Enter your email"
+              placeholder="email@yourcompany.com"
             />
             <TextFormField
               name="password"
@@ -105,7 +112,7 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
               placeholder="Enter your password"
             />
             <TextFormField
-              name="retype_password"
+              name="confirm_password"
               label="Retype Password"
               type="password"
               placeholder="Enter your password"
