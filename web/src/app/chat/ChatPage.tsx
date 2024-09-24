@@ -104,6 +104,7 @@ import {
   classifyAssistants,
   orderAssistantsForUser,
 } from "@/lib/assistants/utils";
+import BlurBackground from "./shared_chat_search/BlurBackground";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1833,6 +1834,7 @@ export function ChatPage({
           onClose={() => setSharingModalVisible(false)}
         />
       )}
+
       <div className="fixed inset-0 flex flex-col text-default">
         <div className="h-[100dvh] overflow-y-hidden">
           <div className="w-full">
@@ -1842,7 +1844,7 @@ export function ChatPage({
                 flex-none
                 fixed
                 left-0
-                z-30
+                z-40
                 bg-background-100
                 h-screen
                 transition-all
@@ -1875,6 +1877,10 @@ export function ChatPage({
               </div>
             </div>
           </div>
+
+          <BlurBackground
+            visible={!untoggled && (showDocSidebar || toggledSidebar)}
+          />
 
           <div
             ref={masterFlexboxRef}

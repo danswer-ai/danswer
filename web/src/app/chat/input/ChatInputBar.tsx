@@ -382,7 +382,7 @@ export function ChatInputBar({
               border
               border-[#E5E7EB]
               rounded-lg
-              bg-background-100
+              bg-background-chatbar
               [&:has(textarea:focus)]::ring-1
               [&:has(textarea:focus)]::ring-black
             "
@@ -477,7 +477,7 @@ export function ChatInputBar({
                 resize-none
                 rounded-lg
                 border-0
-                bg-background-100
+                bg-background-chatbar
                 ${
                   textAreaRef.current &&
                   textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT
@@ -634,7 +634,7 @@ export function ChatInputBar({
                 >
                   <SendIcon
                     size={28}
-                    className={`text-emphasis text-white p-1 rounded-full  ${chatState == "input" && message ? "bg-background-800" : "bg-background-400"} `}
+                    className={`text-emphasis text-white p-1 rounded-full  ${chatState == "input" && message ? "bg-submit-background" : "bg-disabled-submit-background"} `}
                   />
                 </button>
               )}

@@ -758,12 +758,10 @@ export const SearchSection = ({
                     />
 
                     <FullSearchBar
-                      setPopup={setPopup}
                       disabled={previousSearch === query}
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic
                       }
-                      previousSearch={previousSearch}
                       showingSidebar={toggledSidebar}
                       agentic={agentic}
                       query={query}
