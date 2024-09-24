@@ -1,15 +1,24 @@
 "use client";
 
+import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { Fingerprint } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 
 export const EnterEmail = () => {
+  const { toast } = useToast();
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   return (
     <div className="w-full">
+      {isLoading && <Spinner />}
       <div className="flex items-center justify-center">
         <div className="bg-primary p-5 rounded-md">
           <Fingerprint size={40} stroke="white" />
@@ -25,7 +34,33 @@ export const EnterEmail = () => {
         </p>
       </div>
 
-      <form className="w-full pt-8">
+      <form
+        onSubmit={async (e) => {
+          setIsLoading(true);
+          e.preventDefault();
+          const payload = {
+            email: email,
+          };
+          const response = await fetch("/api/auth/forgot-password", {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          if (response.status == 202) {
+            router.push("/auth/forgot-password/success");
+          } else {
+            toast({
+              title: "Something went wrong",
+              description: `Error: ${response.statusText}`,
+              variant: "destructive",
+            });
+          }
+          setIsLoading(false);
+        }}
+        className="w-full pt-8"
+      >
         <div>
           <Label htmlFor="email">Email</Label>
           <Input
@@ -33,6 +68,7 @@ export const EnterEmail = () => {
             name="email"
             type="email"
             placeholder="Enter your email"
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 

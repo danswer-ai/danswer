@@ -44,7 +44,7 @@ export default function ProfileTab({
     } else {
       toast({
         title: "Something went wrong during update",
-        description: `Error: ${response}`,
+        description: `Error: ${response.statusText}`,
         variant: "destructive",
       });
     }

@@ -3,18 +3,58 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, CircleCheck, RectangleEllipsis } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { FormEvent, useEffect, useState } from "react";
 
 export const SetNewPasswordForms = () => {
+  const { toast } = useToast();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const resetToken = searchParams.get("token");
 
   const [newPassword, setNewPassword] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
+  const handleOnSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (newPassword != confirmPassword) {
+      toast({
+        title: "Please check your new and confirm password again",
+        description: `You new password and current password must be the same`,
+        variant: "destructive",
+      });
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+    const response = await fetch("/api/auth/reset-password", {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify({
+        token: resetToken,
+        password: newPassword,
+      }),
+    });
+    if (response.status == 200) {
+      router.push("/auth/reset-password/success");
+    } else {
+      toast({
+        title: "Something went wrong",
+        description: `Error: ${response.statusText}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (resetToken == null) {
+      router.push("/");
+    }
+  }, []);
   return (
     <div className="w-full">
       <div className="flex items-center justify-center">
@@ -27,7 +67,7 @@ export const SetNewPasswordForms = () => {
         Set new password
       </h1>
 
-      <form className="w-full pt-8">
+      <form onSubmit={handleOnSubmit} className="w-full pt-8">
         <div>
           <Label
             htmlFor="password"
@@ -57,8 +97,11 @@ export const SetNewPasswordForms = () => {
             <Input
               id="confirm_password"
               name="confirm_password"
-              type="confirm_password"
+              type="password"
               placeholder="Enter your new password"
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+              }}
             />
           </div>
 

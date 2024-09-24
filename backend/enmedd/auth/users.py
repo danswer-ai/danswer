@@ -1,8 +1,5 @@
-import smtplib
 import uuid
 from collections.abc import AsyncGenerator
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from typing import Optional
 from typing import Tuple
 
@@ -29,15 +26,13 @@ from sqlalchemy.orm import Session
 from enmedd.auth.invited_users import get_invited_users
 from enmedd.auth.schemas import UserCreate
 from enmedd.auth.schemas import UserRole
+from enmedd.auth.utils import generate_password_reset_email
+from enmedd.auth.utils import send_reset_password_email
+from enmedd.auth.utils import send_user_verification_email
 from enmedd.configs.app_configs import AUTH_TYPE
 from enmedd.configs.app_configs import DISABLE_AUTH
-from enmedd.configs.app_configs import EMAIL_FROM
 from enmedd.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from enmedd.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
-from enmedd.configs.app_configs import SMTP_PASS
-from enmedd.configs.app_configs import SMTP_PORT
-from enmedd.configs.app_configs import SMTP_SERVER
-from enmedd.configs.app_configs import SMTP_USER
 from enmedd.configs.app_configs import USER_AUTH_SECRET
 from enmedd.configs.app_configs import VALID_EMAIL_DOMAINS
 from enmedd.configs.app_configs import WEB_DOMAIN
@@ -114,30 +109,6 @@ def verify_email_domain(email: str) -> None:
             )
 
 
-def send_user_verification_email(
-    user_email: str,
-    token: str,
-    mail_from: str = EMAIL_FROM,
-) -> None:
-    msg = MIMEMultipart()
-    msg["Subject"] = "enMedD AI Email Verification"
-    msg["To"] = user_email
-    if mail_from:
-        msg["From"] = mail_from
-
-    link = f"{WEB_DOMAIN}/auth/verify-email?token={token}"
-
-    body = MIMEText(f"Click the following link to verify your email address: {link}")
-    msg.attach(body)
-
-    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as s:
-        s.starttls()
-        # If credentials fails with gmail, check (You need an app password, not just the basic email password)
-        # https://support.google.com/accounts/answer/185833?sjid=8512343437447396151-NA
-        s.login(SMTP_USER, SMTP_PASS)
-        s.send_message(msg)
-
-
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = USER_AUTH_SECRET
     verification_token_secret = USER_AUTH_SECRET
@@ -200,6 +171,10 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
         logger.info(f"User {user.id} has forgot their password. Reset token: {token}")
+
+        reset_url = f"{WEB_DOMAIN}/auth/reset-password?token={token}"
+        subject, body = generate_password_reset_email(user.email, reset_url)
+        send_reset_password_email(user.email, subject, body)
 
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None

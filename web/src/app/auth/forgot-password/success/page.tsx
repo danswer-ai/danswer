@@ -7,10 +7,10 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 
-import Logo from "../../../../public/logo-brand.png";
+import Logo from "../../../../../public/logo-brand.png";
 import Image from "next/image";
 import { Progress } from "@/components/ui/progress";
-import { EnterEmail } from "./steps/EnterEmail";
+import { SuccessChangePassword } from "./Done";
 
 const Page = async () => {
   // catch cases where the backend is completely unreachable here
@@ -54,13 +54,13 @@ const Page = async () => {
 
       <div className="flex justify-center items-center h-full">
         <div className="w-[500px]">
-          <EnterEmail />
+          <SuccessChangePassword />
         </div>
       </div>
 
       <div className="w-[500px] flex gap-2 absolute bottom-10 left-1/2 -translate-x-1/2">
-        <Progress value={100} />
         <Progress value={0} />
+        <Progress value={100} />
       </div>
     </main>
   );
