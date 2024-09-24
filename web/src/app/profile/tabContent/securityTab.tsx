@@ -13,7 +13,7 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     if (newPassword !== confirmPassword) {
       toast({
         title: "Your new password and confirm password does not match",
@@ -27,35 +27,26 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
       current_password: currentPassword,
       new_password: newPassword,
     };
-    fetch("/api/users/change-password", {
+    const response = await fetch("/api/users/change-password", {
       headers: {
         "Content-Type": "application/json",
       },
       method: "POST",
       body: JSON.stringify(updatedPasswordInfo),
-    })
-      .then((res) => {
-        if (res.status == 200) {
-          toast({
-            title: "Successfully updated your password",
-            description: "Your password has been changed. Please Log in again",
-            variant: "success",
-          });
-        } else {
-          toast({
-            title: "Something went wrong",
-            description: `Updating your password failed: ${res.status} ${res.statusText}`,
-            variant: "destructive",
-          });
-        }
-      })
-      .catch((e: Error) => {
-        toast({
-          title: "Something went wrong",
-          description: `Updating your password failed: ${e.message}`,
-          variant: "destructive",
-        });
+    });
+    if (response.status == 200) {
+      toast({
+        title: "Successfully updated your password",
+        description: "Your password has been changed. Please Log in again",
+        variant: "success",
       });
+    } else {
+      toast({
+        title: "Something went wrong",
+        description: `Updating your password failed: ${response.status} ${response.statusText}`,
+        variant: "destructive",
+      });
+    }
     setIsEditing(false);
   };
 
