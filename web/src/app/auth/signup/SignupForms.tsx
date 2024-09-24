@@ -16,11 +16,11 @@ import { Label } from "@/components/ui/label";
 export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [isWorking, setIsWorking] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
     <>
-      {isWorking && <Spinner />}
+      {isLoading && <Spinner />}
       <Formik
         initialValues={{
           full_name: "",
@@ -39,7 +39,7 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             .oneOf([Yup.ref("password")], "Passwords must match"),
         })}
         onSubmit={async (values) => {
-          setIsWorking(true);
+          setIsLoading(true);
           const response = await basicSignup(
             values.full_name,
             values.company_name,
@@ -47,6 +47,7 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             values.password
           );
           if (!response.ok) {
+            setIsLoading(false);
             const errorDetail = (await response.json()).detail;
 
             let errorMsg = "Unknown error";
@@ -60,28 +61,6 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             });
             return;
           }
-          const loginResponse = await basicLogin(values.email, values.password);
-          if (loginResponse.ok) {
-            if (shouldVerify) {
-              await requestEmailVerification(values.email);
-              router.push("/auth/waiting-on-verification");
-            } else {
-              router.push("/");
-            }
-          } else {
-            setIsWorking(false);
-            const errorDetail = (await loginResponse.json()).detail;
-
-            let errorMsg = "Unknown error";
-            if (errorDetail === "LOGIN_BAD_CREDENTIALS") {
-              errorMsg = "Invalid email or password";
-            }
-            toast({
-              title: "Error",
-              description: `Failed to login - ${errorMsg}`,
-              variant: "destructive",
-            });
-          }
         }}
       >
         {({ isSubmitting, values }) => (
@@ -91,6 +70,12 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
               label="Full name"
               type="text"
               placeholder="Enter your full name"
+            />
+            <TextFormField
+              name="company_name"
+              label="Company Name"
+              type="text"
+              placeholder="Enter your company name"
             />
             <TextFormField
               name="email"
@@ -105,7 +90,7 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
               placeholder="Enter your password"
             />
             <TextFormField
-              name="retype_password"
+              name="confirm_password"
               label="Retype Password"
               type="password"
               placeholder="Enter your password"
