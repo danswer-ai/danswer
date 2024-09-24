@@ -228,7 +228,7 @@ export default function EmbeddingForm() {
 
     if (response.ok) {
       setPopup({
-        message: "Changed provider suceessfully. Redirecting to embedding page",
+        message: "Changed provider successfully. Redirecting to embedding page",
         type: "success",
       });
       mutate("/api/search-settings/get-secondary-search-settings");
