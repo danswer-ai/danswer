@@ -87,12 +87,12 @@ export function ShareChatSessionModal({
               can view the message history using the following link:
             </Text>
 
-            <div className="flex my-2">
+            <div className="flex py-2 items-center gap-2">
               <CopyButton content={shareLink} />
               <Link
                 href={shareLink}
                 target="_blank"
-                className="underline text-link mt-1 ml-1 text-sm my-auto"
+                className="underline text-link text-sm"
               >
                 {shareLink}
               </Link>

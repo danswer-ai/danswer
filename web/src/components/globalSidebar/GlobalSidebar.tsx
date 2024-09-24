@@ -30,8 +30,12 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
   const workspaces = combinedSettings.workspaces;
   const defaultPage = settings.default_page;
 
-  const displayedTeamspaces = data?.slice(0, 8);
-  const showEllipsis = data && data.length > 8;
+  const joinedTeamspaces = data?.filter((teamspace) =>
+    teamspace.users.some((teamUser) => teamUser.id === user!.id)
+  );
+
+  const displayedTeamspaces = joinedTeamspaces?.slice(0, 8);
+  const showEllipsis = joinedTeamspaces && joinedTeamspaces.length > 8;
 
   return (
     <div className={`bg-background h-full p-4 border-r border-border z-10`}>
