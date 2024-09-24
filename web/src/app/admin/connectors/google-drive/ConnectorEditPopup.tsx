@@ -8,7 +8,7 @@ import { Connector, GoogleDriveConfig } from "@/lib/types";
 import * as Yup from "yup";
 import { googleDriveConnectorNameBuilder } from "./utils";
 import { Modal } from "@/components/Modal";
-import { Divider, Text } from "@tremor/react";
+import { Divider } from "@/components/Divider";
 
 interface Props {
   existingConnector: Connector<GoogleDriveConfig>;
@@ -32,10 +32,10 @@ export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
           </div>
         </h2>
 
-        <Text>
+        <p>
           Modify the selected Google Drive connector by adjusting the values
           below!
-        </Text>
+        </p>
 
         <Divider />
 

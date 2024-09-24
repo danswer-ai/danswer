@@ -8,9 +8,11 @@ import {
   processRawChatHistory,
 } from "../../lib";
 import { AIMessage, HumanMessage } from "../../message/Messages";
-import { Button, Callout, Divider } from "@tremor/react";
+import { Callout } from "@tremor/react";
 import { useRouter } from "next/navigation";
 import { useChatContext } from "@/context/ChatContext";
+import { Button } from "@/components/ui/button";
+import { Divider } from "@/components/Divider";
 
 // TODO: replace the component name
 function BackToEnmeddButton() {

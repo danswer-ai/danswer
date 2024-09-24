@@ -19,10 +19,11 @@ import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePublicCredentials } from "@/lib/hooks";
-import { Divider, Text, Title, Button } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
+import { Button } from "@/components/ui/button";
+import { Divider } from "@/components/Divider";
 
 const Main = () => {
   const { mutate } = useSWRConfig();
@@ -98,7 +99,7 @@ const Main = () => {
                 await adminDeleteCredential(gitlabCredential.id);
                 refreshCredentials();
               }}
-              variant="light"
+              variant="destructive"
             >
               <TrashIcon />
             </Button>
@@ -167,10 +168,10 @@ const Main = () => {
 
       {gitlabConnectorIndexingStatuses.length > 0 && (
         <>
-          <Text className="mb-2">
+          <p className="mb-2">
             We pull the latest Pull Requests from each project listed below
             every <b>10</b> minutes.
-          </Text>
+          </p>
           <div className="mb-2">
             <ConnectorsTable<GitlabConfig, GitlabCredentialJson>
               connectorIndexingStatuses={gitlabConnectorIndexingStatuses}

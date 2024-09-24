@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { MinimalUserSnapshot, User } from "@/lib/types";
 import { Assistant } from "@/app/admin/assistants/interfaces";
-import { Divider, Text } from "@tremor/react";
 import Link from "next/link";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import {
@@ -42,6 +41,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { Divider } from "@/components/Divider";
 
 function AssistantListItem({
   assistant,
@@ -321,11 +321,11 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
 
       <h3 className="text-xl mb-4">Active Assistants</h3>
 
-      <Text>
+      <p>
         The order the assistants appear below will be the order they appear in
         the Assistants dropdown. The first assistant listed will be your default
         assistant when you start a new chat.
-      </Text>
+      </p>
 
       <div className="w-full py-4 mt-3">
         {filteredAssistants.map((assistant, index) => (
@@ -348,10 +348,10 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
 
           <h3 className="text-xl mb-4">Your Hidden Assistants</h3>
 
-          <Text>
+          <p>
             Assistants you&apos;ve created that aren&apos;t currently visible in
             the Assistants selector.
-          </Text>
+          </p>
 
           <div className="w-full p-4">
             {ownedButHiddenAssistants.map((assistant, index) => (

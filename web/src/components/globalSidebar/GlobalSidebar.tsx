@@ -37,6 +37,8 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
   const displayedTeamspaces = joinedTeamspaces?.slice(0, 7);
   const showEllipsis = joinedTeamspaces && joinedTeamspaces.length > 7;
 
+  console.log(data);
+
   return (
     <div className={`bg-background h-full p-4 border-r border-border z-10`}>
       <div

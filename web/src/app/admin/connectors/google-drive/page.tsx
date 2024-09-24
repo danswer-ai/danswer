@@ -24,10 +24,10 @@ import { googleDriveConnectorNameBuilder } from "./utils";
 import { DriveOAuthSection, DriveJsonUploadSection } from "./Credential";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Divider, Text, Title } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
+import { Divider } from "@/components/Divider";
 
 interface GoogleDriveConnectorManagementProps {
   googleDrivePublicCredential?: Credential<GoogleDriveCredentialJson>;
@@ -153,7 +153,7 @@ const GoogleDriveConnectorManagement = ({
 
   return (
     <div>
-      <Text>
+      <p>
         <div className="my-3">
           {googleDriveConnectorIndexingStatuses.length > 0 ? (
             <>
@@ -171,7 +171,7 @@ const GoogleDriveConnectorManagement = ({
             </p>
           )}
         </div>
-      </Text>
+      </p>
       {googleDriveConnectorIndexingStatuses.length > 0 && (
         <>
           <div className="text-sm mb-2 font-bold">Existing Connectors:</div>

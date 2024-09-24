@@ -6,7 +6,6 @@ import { KeyIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR, { mutate } from "swr";
-import { Divider } from "@tremor/react";
 import { useState } from "react";
 import { DeleteButton } from "@/components/DeleteButton";
 import { Spinner } from "@/components/Spinner";
@@ -26,6 +25,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Check, Copy, Edit2, RefreshCw } from "lucide-react";
 import { CustomModal } from "@/components/CustomModal";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { Divider } from "@/components/Divider";
 
 const API_KEY_TEXT = `
 API Keys allow you to access enMedD AI APIs programmatically. Click the button below to generate a new API Key.

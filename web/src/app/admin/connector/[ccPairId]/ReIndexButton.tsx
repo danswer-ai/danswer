@@ -2,7 +2,6 @@
 
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { runConnector } from "@/lib/connector";
-import { Divider, Text } from "@tremor/react";
 import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
 import { useState } from "react";
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Divider } from "@/components/Divider";
 
 function ReIndexPopup({
   connectorId,
@@ -63,10 +63,10 @@ function ReIndexPopup({
           Run Update
         </Button>
 
-        <Text className="mt-2">
+        <p className="mt-2">
           This will pull in and index all documents that have changed and/or
           have been added since the last successful indexing run.
-        </Text>
+        </p>
 
         <Divider />
 
@@ -80,15 +80,15 @@ function ReIndexPopup({
           Run Complete Re-Indexing
         </Button>
 
-        <Text className="mt-2">
+        <p className="mt-2">
           This will cause a complete re-indexing of all documents from the
           source.
-        </Text>
+        </p>
 
-        <Text className="mt-2">
+        <p className="mt-2">
           <b>NOTE:</b> depending on the number of documents stored in the
           source, this may take a long time.
-        </Text>
+        </p>
       </div>
     </Modal>
   );

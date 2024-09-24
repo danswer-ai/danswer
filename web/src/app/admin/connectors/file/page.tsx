@@ -21,7 +21,6 @@ import {
 } from "@/components/admin/connectors/Field";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { getNameFromPath } from "@/lib/fileUtils";
-import { Divider, Text } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import IsPublicField from "@/components/admin/connectors/IsPublicField";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
@@ -29,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
+import { Divider } from "@/components/Divider";
 
 const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
