@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from datetime import timezone
 from time import sleep
+from typing import Any
 
 from danswer.server.documents.models import DocumentSource
 from danswer.utils.logger import setup_logger
@@ -25,7 +26,7 @@ def http_server_context(
     directory: str, port: int = 8000
 ) -> Generator[http.server.HTTPServer, None, None]:
     # Create a handler that serves files from the specified directory
-    def handler_class(*args, **kwargs):
+    def handler_class(*args: Any, **kwargs: Any):
         return http.server.SimpleHTTPRequestHandler(
             *args, directory=directory, **kwargs
         )
