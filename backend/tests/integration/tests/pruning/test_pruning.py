@@ -26,13 +26,15 @@ def http_server_context(
     directory: str, port: int = 8000
 ) -> Generator[http.server.HTTPServer, None, None]:
     # Create a handler that serves files from the specified directory
-    def handler_class(*args: Any, **kwargs: Any):
+    def handler_class(
+        *args: Any, **kwargs: Any
+    ) -> http.server.SimpleHTTPRequestHandler:
         return http.server.SimpleHTTPRequestHandler(
             *args, directory=directory, **kwargs
         )
 
     # Create an HTTPServer instance
-    httpd = http.server.HTTPServer(("", port), handler_class)
+    httpd = http.server.HTTPServer(("0.0.0.0", port), handler_class)
 
     # Define a thread that runs the server in the background
     server_thread = threading.Thread(target=httpd.serve_forever)
@@ -69,8 +71,9 @@ def test_web_pruning(reset: None, vespa_client: vespa_fixture) -> None:
         with http_server_context(os.path.join(temp_dir, "website"), 8888):
             sleep(1)  # sleep a tiny bit before starting everything
 
+            hostname = os.getenv("TEST_WEB_HOSTNAME", "localhost")
             config = {
-                "base_url": "http://localhost:8888/",
+                "base_url": f"http://{hostname}:8888/",
                 "web_connector_type": "recursive",
             }
 
