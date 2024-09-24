@@ -19,8 +19,8 @@ export const EnterVerification = ({
   return (
     <div className="w-full">
       <div className="flex items-center justify-center">
-        <div className="bg-primary p-5 rounded-md">
-          <MailOpen size={40} stroke="white" />
+        <div className="bg-primary p-3 rounded-md">
+          <MailOpen size={60} stroke="white" />
         </div>
       </div>
 
