@@ -1,6 +1,6 @@
 name: Run Integration Tests
 concurrency:
-  group: Run-Integration-Tests-${{ github.head_ref }}
+  group: Run-Integration-Tests-${{ github.workflow }}-${{ github.head_ref || github.event.workflow_run.head_branch || github.run_id }}
   cancel-in-progress: true
 
 on:
