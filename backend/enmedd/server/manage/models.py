@@ -8,7 +8,7 @@ from enmedd.configs.constants import AuthType
 from enmedd.indexing.models import EmbeddingModelDetail
 from enmedd.server.models import FullUserSnapshot
 from enmedd.server.models import InvitedUserSnapshot
-from enmedd.server.models import MinimalTeamspaceSnapshot
+from enmedd.server.models import TeamspaceResponse
 from enmedd.server.models import WorkspaceResponse
 
 if TYPE_CHECKING:
@@ -45,7 +45,7 @@ class UserInfo(BaseModel):
     vat: Optional[str]
     preferences: UserPreferences
     workspace: Optional[list[WorkspaceResponse]]
-    groups: Optional[list[MinimalTeamspaceSnapshot]]
+    groups: Optional[list[TeamspaceResponse]]
 
     @classmethod
     def from_model(cls, user: "UserModel") -> "UserInfo":
@@ -76,19 +76,13 @@ class UserInfo(BaseModel):
                 for workspace in user.workspace
             ],
             # TODO fix /me error when new teamspace is created when this is uncommented
-            # groups=[
-            #     MinimalTeamspaceSnapshot(
-            #         id=group.id,
-            #         name=group.name,
-            #         workspace=[
-            #             MinimalWorkspaceSnapshot(
-            #                 id=workspace.id, workspace_name=workspace.workspace_name
-            #             )
-            #             for workspace in group.workspace
-            #         ],
-            #     )
-            #     for group in user.groups
-            # ],
+            groups=[
+                TeamspaceResponse(
+                    id=group.id,
+                    name=group.name,
+                )
+                for group in user.groups
+            ],
         )
 
 

@@ -16,6 +16,7 @@ from enmedd.configs.constants import MessageType
 from enmedd.db.models import ChatMessage
 from enmedd.db.models import ChatMessage__SearchDoc
 from enmedd.db.models import ChatSession
+from enmedd.db.models import ChatSession__Teamspace
 from enmedd.db.models import ChatSessionSharedStatus
 from enmedd.db.models import Prompt
 from enmedd.db.models import SearchDoc
@@ -141,10 +142,12 @@ def create_chat_session(
     description: str,
     user_id: UUID | None,
     assistant_id: int | None = None,
+    teamspace_id: int | None = None,  # Include teamspace_id as a parameter
     llm_override: LLMOverride | None = None,
     prompt_override: PromptOverride | None = None,
     one_shot: bool = False,
 ) -> ChatSession:
+    # Create the chat session
     chat_session = ChatSession(
         user_id=user_id,
         assistant_id=assistant_id,
@@ -154,8 +157,17 @@ def create_chat_session(
         one_shot=one_shot,
     )
 
+    # Add the chat session to the session and commit it to generate an ID
     db_session.add(chat_session)
     db_session.commit()
+
+    # Add the relationship to the ChatSession__Teamspace table if teamspace_id is provided
+    if teamspace_id:
+        chat_session_teamspace_relationship = ChatSession__Teamspace(
+            chat_session_id=chat_session.id, teamspace_id=teamspace_id
+        )
+        db_session.add(chat_session_teamspace_relationship)
+        db_session.commit()
 
     return chat_session
 

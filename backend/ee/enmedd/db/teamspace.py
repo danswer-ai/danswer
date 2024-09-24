@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from operator import and_
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import func
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from ee.enmedd.server.teamspace.models import TeamspaceCreate
 from ee.enmedd.server.teamspace.models import TeamspaceUpdate
+from enmedd.auth.schemas import UserRole
 from enmedd.db.models import Assistant__Teamspace
 from enmedd.db.models import ConnectorCredentialPair
 from enmedd.db.models import Document
@@ -18,6 +20,7 @@ from enmedd.db.models import Teamspace__ConnectorCredentialPair
 from enmedd.db.models import TokenRateLimit__Teamspace
 from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
+from enmedd.db.models import Workspace__Teamspace
 from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
 
 
@@ -140,11 +143,24 @@ def _check_teamspace_is_modifiable(teamspace: Teamspace) -> None:
 
 
 def _add_user__teamspace_relationships__no_commit(
-    db_session: Session, teamspace_id: int, user_ids: list[UUID]
+    db_session: Session,
+    teamspace_id: int,
+    user_ids: list[UUID],
+    creator_id: Optional[UUID],
 ) -> list[User__Teamspace]:
     """NOTE: does not commit the transaction."""
+    if creator_id is None:
+        return []
+
+    if user_ids and creator_id not in user_ids:
+        user_ids.append(creator_id)
+
     relationships = [
-        User__Teamspace(user_id=user_id, teamspace_id=teamspace_id)
+        User__Teamspace(
+            user_id=user_id,
+            teamspace_id=teamspace_id,
+            role=UserRole.ADMIN if user_id == creator_id else UserRole.BASIC,
+        )
         for user_id in user_ids
     ]
     db_session.add_all(relationships)
@@ -191,7 +207,20 @@ def _add_teamspace__assistant_relationships__no_commit(
     return relationships
 
 
-def insert_teamspace(db_session: Session, teamspace: TeamspaceCreate) -> Teamspace:
+def _add_workspace__teamspace_relationship(
+    db_session: Session, workspace_id: int, teamspace_id: int
+) -> Workspace__Teamspace:
+    relationship = Workspace__Teamspace(
+        workspace_id=workspace_id,
+        teamspace_id=teamspace_id,
+    )
+    db_session.add(relationship)
+    return relationship
+
+
+def insert_teamspace(
+    db_session: Session, teamspace: TeamspaceCreate, creator_id: UUID
+) -> Teamspace:
     db_teamspace = Teamspace(name=teamspace.name)
     db_session.add(db_teamspace)
     db_session.flush()  # give the group an ID
@@ -200,6 +229,7 @@ def insert_teamspace(db_session: Session, teamspace: TeamspaceCreate) -> Teamspa
         db_session=db_session,
         teamspace_id=db_teamspace.id,
         user_ids=teamspace.user_ids,
+        creator_id=creator_id,
     )
     _add_teamspace__document_set_relationships__no_commit(
         db_session=db_session,
@@ -215,6 +245,9 @@ def insert_teamspace(db_session: Session, teamspace: TeamspaceCreate) -> Teamspa
         db_session=db_session,
         teamspace_id=db_teamspace.id,
         cc_pair_ids=teamspace.cc_pair_ids,
+    )
+    _add_workspace__teamspace_relationship(
+        db_session, teamspace.workspace_id, db_teamspace.id
     )
 
     db_session.commit()

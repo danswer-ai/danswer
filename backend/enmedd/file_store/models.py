@@ -1,6 +1,5 @@
 import base64
 from enum import Enum
-from typing import NotRequired
 from typing import TypedDict
 
 from pydantic import BaseModel
@@ -21,7 +20,7 @@ class FileDescriptor(TypedDict):
 
     id: str
     type: ChatFileType
-    name: NotRequired[str | None]
+    name: str | None
 
 
 class InMemoryChatFile(BaseModel):

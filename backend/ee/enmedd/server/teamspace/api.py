@@ -45,11 +45,13 @@ def list_teamspaces(
 @router.post("/admin/teamspace")
 def create_teamspace(
     teamspace: TeamspaceCreate,
-    _: User = Depends(current_admin_user),
+    current_user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> Teamspace:
     try:
-        db_teamspace = insert_teamspace(db_session, teamspace)
+        db_teamspace = insert_teamspace(
+            db_session, teamspace, creator_id=current_user.id
+        )
     except IntegrityError:
         raise HTTPException(
             400,

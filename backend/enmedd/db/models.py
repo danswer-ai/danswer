@@ -1220,6 +1220,10 @@ class User__Teamspace(Base):
     )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
 
+    role: Mapped[UserRole] = mapped_column(
+        Enum(UserRole, native_enum=False, default=UserRole.BASIC)
+    )
+
 
 class Teamspace__ConnectorCredentialPair(Base):
     __tablename__ = "teamspace__connector_credential_pair"

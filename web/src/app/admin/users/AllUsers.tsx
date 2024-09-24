@@ -209,7 +209,6 @@ export const AllUsers = ({ q }: { q: string }) => {
                         </div>
                       </div>
                     </TableCell>
-
                     <TableCell>
                       <Select
                         onValueChange={(value) =>

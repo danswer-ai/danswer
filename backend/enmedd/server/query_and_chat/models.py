@@ -43,6 +43,7 @@ class ChatSessionCreationRequest(BaseModel):
     # If not specified, use enMedD AI default assistant
     assistant_id: int = 0
     description: str | None = None
+    teamspace_id: int | None = None
 
 
 class HelperResponse(BaseModel):

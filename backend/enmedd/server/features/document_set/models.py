@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -52,7 +53,7 @@ class DocumentSet(BaseModel):
     is_public: bool
     # For Private Document Sets, who should be able to access these
     users: list[UUID]
-    groups: list[MinimalTeamspaceSnapshot]
+    groups: Optional[list[MinimalTeamspaceSnapshot]]
 
     @classmethod
     def from_model(cls, document_set_model: DocumentSetDBModel) -> "DocumentSet":
@@ -76,6 +77,20 @@ class DocumentSet(BaseModel):
                     credential=CredentialSnapshot.from_credential_db_model(
                         cc_pair.credential
                     ),
+                    groups=[
+                        MinimalTeamspaceSnapshot(
+                            id=group.id,
+                            name=group.name,
+                            workspace=[
+                                MinimalWorkspaceSnapshot(
+                                    id=workspace.id,
+                                    workspace_name=workspace.workspace_name,
+                                )
+                                for workspace in group.workspace
+                            ],
+                        )
+                        for group in cc_pair.groups
+                    ],
                 )
                 for cc_pair in document_set_model.connector_credential_pairs
             ],

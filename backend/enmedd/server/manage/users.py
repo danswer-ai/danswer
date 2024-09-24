@@ -6,8 +6,11 @@ from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import status
+from fastapi_users.password import PasswordHelper
 from pydantic import BaseModel
+from sqlalchemy import delete
 from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from ee.enmedd.db.api_key import is_api_key_email_address
@@ -16,6 +19,7 @@ from enmedd.auth.invited_users import send_user_email_invite
 from enmedd.auth.invited_users import write_invited_users
 from enmedd.auth.noauth_user import fetch_no_auth_user
 from enmedd.auth.noauth_user import set_no_auth_user_preferences
+from enmedd.auth.schemas import ChangePassword
 from enmedd.auth.schemas import UserRole
 from enmedd.auth.schemas import UserStatus
 from enmedd.auth.users import current_admin_user
@@ -24,8 +28,11 @@ from enmedd.auth.users import optional_user
 from enmedd.configs.app_configs import AUTH_TYPE
 from enmedd.configs.app_configs import VALID_EMAIL_DOMAINS
 from enmedd.configs.constants import AuthType
+from enmedd.db.engine import get_async_session
 from enmedd.db.engine import get_session
+from enmedd.db.models import AccessToken
 from enmedd.db.models import User
+from enmedd.db.users import change_user_password
 from enmedd.db.users import get_user_by_email
 from enmedd.db.users import list_users
 from enmedd.dynamic_configs.factory import get_dynamic_config_store
@@ -44,6 +51,36 @@ router = APIRouter()
 
 
 USERS_PAGE_SIZE = 10
+
+
+@router.post("/users/change-password", tags=["users"])
+async def change_password(
+    request: ChangePassword,
+    current_user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+    async_session: AsyncSession = Depends(get_async_session),
+):
+    password_helper = PasswordHelper()
+    verified, updated_hashed_password = password_helper.verify_and_update(
+        hashed_password=current_user.hashed_password,
+        plain_password=request.current_password,
+    )
+    if not verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+    hashed_new_password = password_helper.hash(password=request.new_password)
+    change_user_password(
+        user_id=current_user.id, new_password=hashed_new_password, db_session=db_session
+    )
+    # clear all the access token for that user - automatically logging out
+    # the current user on all devices
+    await async_session.execute(
+        delete(AccessToken).where(AccessToken.user_id == current_user.id)
+    )
+    await async_session.commit()
+    logger.info("Password updated and tokens invalidated")
 
 
 @router.patch("/manage/promote-user-to-admin")

@@ -45,7 +45,7 @@ class UserCreate(schemas.BaseUserCreate):
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    role: UserRole
+    role: Optional[UserRole]
     chosen_assistants: Optional[List[int]]
     full_name: Optional[str]
     company_name: Optional[str]
@@ -53,3 +53,8 @@ class UserUpdate(schemas.BaseUserUpdate):
     company_billing: Optional[str]
     billing_email_address: Optional[EmailStr]
     vat: Optional[str]
+
+
+class ChangePassword(schemas.BaseUserUpdate):
+    new_password: str
+    current_password: str

@@ -7,6 +7,7 @@ import { UserProfile } from "@/components/UserProfile";
 import { CombinedSettings } from "@/components/settings/lib";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfileTab({
   user,
@@ -15,20 +16,38 @@ export default function ProfileTab({
   user: UserTypes | null;
   combinedSettings: CombinedSettings | null;
 }) {
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
 
   const [fullName, setFullName] = useState(user?.full_name || "");
   const [companyName, setCompanyName] = useState(user?.company_name || "");
   const [email, setEmail] = useState(user?.email || "");
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     const updatedUser = {
       full_name: fullName,
       company_name: companyName,
-      email: email,
     };
-
-    console.log("User info saved", updatedUser);
+    const response = await fetch("/api/users/me", {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "PATCH",
+      body: JSON.stringify(updatedUser),
+    });
+    if (response.status == 200) {
+      toast({
+        title: "Successfully edited user information",
+        description: "You have successfully updated your personal information.",
+        variant: "success",
+      });
+    } else {
+      toast({
+        title: "Something went wrong during update",
+        description: `Error: ${response}`,
+        variant: "destructive",
+      });
+    }
     setIsEditing(false);
   };
 
@@ -95,7 +114,11 @@ export default function ProfileTab({
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
             {isEditing ? (
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                disabled
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             ) : (
               <span className="font-semibold text-inverted-inverted">
                 {email || "anonymous@gmail.com"}
