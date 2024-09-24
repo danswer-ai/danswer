@@ -63,9 +63,9 @@ def _get_space_permissions(
     )
 
 
-def _get_restrictions_for_page_dict(
+def _get_restrictions_for_page(
     db_session: Session,
-    page_dict: dict[str, Any],
+    page: dict[str, Any],
     space_permissions: ExternalAccess,
 ) -> ExternalAccess:
     """
@@ -74,7 +74,7 @@ def _get_restrictions_for_page_dict(
     this function will leave out some users or groups.
     200 is a large amount so it is unlikely, but just be aware.
     """
-    restrictions_json = page_dict.get("restrictions", {})
+    restrictions_json = page.get("restrictions", {})
     read_access_dict = restrictions_json.get("read", {}).get("restrictions", {})
 
     read_access_user_jsons = read_access_dict.get("user", {}).get("results", [])
@@ -101,12 +101,12 @@ def _get_restrictions_for_page_dict(
     return external_access
 
 
-def _fetch_attachment_document_ids_for_page_dict_paginated(
-    confluence_client: Confluence, page_dict: dict[str, Any]
+def _fetch_attachment_document_ids_for_page_paginated(
+    confluence_client: Confluence, page: dict[str, Any]
 ) -> list[str]:
     """
     Starts by just extracting the first page of attachments from
-    the page_dict. If all attachments are in the first page, then
+    the page. If all attachments are in the first page, then
     no calls to the api are made from this function.
     """
     get_attachments_from_content = make_confluence_call_handle_rate_limit(
@@ -114,7 +114,7 @@ def _fetch_attachment_document_ids_for_page_dict_paginated(
     )
 
     attachment_doc_ids = []
-    attachments_dict = page_dict["children"]["attachment"]
+    attachments_dict = page["children"]["attachment"]
     start = 0
 
     while True:
@@ -134,7 +134,7 @@ def _fetch_attachment_document_ids_for_page_dict_paginated(
 
         start += len(attachments_list)
         attachments_dict = get_attachments_from_content(
-            page_id=page_dict["id"],
+            page_id=page["id"],
             start=start,
             limit=_REQUEST_PAGINATION_LIMIT,
         )
@@ -142,7 +142,7 @@ def _fetch_attachment_document_ids_for_page_dict_paginated(
     return attachment_doc_ids
 
 
-def _fetch_all_page_jsons_paginated(
+def _fetch_all_pages_paginated(
     confluence_client: Confluence,
     space_id: str,
 ) -> list[dict[str, Any]]:
@@ -158,23 +158,23 @@ def _fetch_all_page_jsons_paginated(
     ]
     expansion_string = ",".join(expansion_strings)
 
-    all_page_jsons = []
+    all_pages = []
     start = 0
     while True:
-        pages_json = get_all_pages_from_space(
+        pages_dict = get_all_pages_from_space(
             space=space_id,
             start=start,
             limit=_REQUEST_PAGINATION_LIMIT,
             expand=expansion_string,
         )
-        all_page_jsons.extend(pages_json)
+        all_pages.extend(pages_dict)
 
-        response_size = len(pages_json)
+        response_size = len(pages_dict)
         if response_size < _REQUEST_PAGINATION_LIMIT:
             break
         start += response_size
 
-    return all_page_jsons
+    return all_pages
 
 
 def _fetch_all_page_restrictions_for_space(
@@ -183,13 +183,13 @@ def _fetch_all_page_restrictions_for_space(
     space_id: str,
     space_permissions: ExternalAccess,
 ) -> dict[str, ExternalAccess]:
-    all_page_jsons = _fetch_all_page_jsons_paginated(
+    all_pages = _fetch_all_pages_paginated(
         confluence_client=confluence_client,
         space_id=space_id,
     )
 
     document_restrictions: dict[str, ExternalAccess] = {}
-    for page_json in all_page_jsons:
+    for page in all_pages:
         """
         This assigns the same permissions to all attachments of a page and
         the page itself.
@@ -201,17 +201,17 @@ def _fetch_all_page_restrictions_for_space(
         attachment_document_ids = [
             generate_confluence_document_id(
                 base_url=confluence_client.url,
-                content_url=page_json["_links"]["webui"],
+                content_url=page["_links"]["webui"],
             )
         ]
         attachment_document_ids.extend(
-            _fetch_attachment_document_ids_for_page_dict_paginated(
-                confluence_client=confluence_client, page_json=page_json
+            _fetch_attachment_document_ids_for_page_paginated(
+                confluence_client=confluence_client, page=page
             )
         )
-        page_permissions = _get_restrictions_for_page_dict(
+        page_permissions = _get_restrictions_for_page(
             db_session=db_session,
-            page_dict=page_json,
+            page=page,
             space_permissions=space_permissions,
         )
         for attachment_document_id in attachment_document_ids:
@@ -234,6 +234,7 @@ def confluence_doc_sync(
         cc_pair.connector.connector_specific_config, cc_pair.credential.credential_json
     )
     space_permissions = _get_space_permissions(
+        db_session=db_session,
         confluence_client=confluence_client,
         space_id=cc_pair.connector.connector_specific_config["space"],
     )

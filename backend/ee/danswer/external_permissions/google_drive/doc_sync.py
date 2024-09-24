@@ -47,7 +47,11 @@ def _get_docs_with_additional_info(
     assert isinstance(runnable_connector, PollConnector)
 
     current_time = datetime.now(timezone.utc)
-    start_time = cc_pair.last_time_perm_sync.replace(tzinfo=timezone.utc).timestamp()
+    start_time = (
+        cc_pair.last_time_perm_sync.replace(tzinfo=timezone.utc).timestamp()
+        if cc_pair.last_time_perm_sync
+        else 0.0
+    )
     cc_pair.last_time_perm_sync = current_time
 
     doc_batch_generator = runnable_connector.poll_source(

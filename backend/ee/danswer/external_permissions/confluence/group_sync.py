@@ -24,37 +24,37 @@ _PAGE_SIZE = 100
 
 def _get_confluence_group_names_paginated(
     confluence_client: Confluence,
-) -> list[str]:
+) -> Iterator[str]:
     get_all_groups = make_confluence_call_handle_rate_limit(
         confluence_client.get_all_groups
     )
 
-    all_group_names: list[str] = []
     start = 0
     while True:
         try:
             groups = get_all_groups(start=start, limit=_PAGE_SIZE)
         except HTTPError as e:
             if e.response.status_code in (403, 404):
-                return all_group_names
+                return
             raise e
-        all_group_names.extend(
-            [group.get("name") for group in groups if group.get("name")]
-        )
+
+        for group in groups:
+            if group_name := group.get("name"):
+                yield group_name
+
         if len(groups) < _PAGE_SIZE:
             break
         start += _PAGE_SIZE
-    return all_group_names
 
 
 def _get_group_members_email_paginated(
     confluence_client: Confluence,
     group_name: str,
-) -> Iterator[str]:
+) -> list[str]:
     get_group_members = make_confluence_call_handle_rate_limit(
         confluence_client.get_group_members
     )
-
+    group_member_emails: list[str] = []
     start = 0
     while True:
         try:
@@ -62,17 +62,17 @@ def _get_group_members_email_paginated(
                 group_name=group_name, start=start, limit=_PAGE_SIZE
             )
         except HTTPError as e:
-            if e.response.status_code in (403, 404):
-                return
+            if e.response.status_code == 403 or e.response.status_code == 404:
+                return group_member_emails
             raise e
 
-        for member in members:
-            if email := member.get("email"):
-                yield email
-
+        group_member_emails.extend(
+            [member.get("email") for member in members if member.get("email")]
+        )
         if len(members) < _PAGE_SIZE:
             break
         start += _PAGE_SIZE
+    return group_member_emails
 
 
 def confluence_group_sync(

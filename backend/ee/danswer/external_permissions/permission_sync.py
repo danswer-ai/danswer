@@ -92,7 +92,7 @@ def run_external_doc_permission_sync(
             ).total_seconds()
             < full_fetch_period
         ):
-            return []
+            return
 
     try:
         # This function updates:
