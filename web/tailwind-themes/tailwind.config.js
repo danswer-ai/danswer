@@ -106,9 +106,13 @@ module.exports = {
         "background-settings-sidebar": "var(--background-100)",
         "background-chatbar": "var(--background-100)",
         "text-sidebar": "var(--text-500)",
-        "text-sidebar-subtle": "var(--text-600)",
-        "text-settings-sidebar": "var(--text-800)",
-        "text-settings-sidebar": "var(--text-800)",
+
+        // Settings
+        "text-sidebar-subtle": "var(--text-500)",
+        "icon-settings-sidebar": "var(--text-600)",
+        "text-settings-sidebar": "var(--text-600)",
+        "text-settings-sidebar-strong": "var(--text-900)",
+        "background-settings-hover": "var(--background-200)",
 
         // Background for chat messages (user bubbles)
         user: "var(--user-bubble)",
