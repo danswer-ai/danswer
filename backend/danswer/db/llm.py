@@ -62,7 +62,8 @@ def upsert_cloud_embedding_provider(
 
 
 def upsert_llm_provider(
-    llm_provider: LLMProviderUpsertRequest, db_session: Session
+    llm_provider: LLMProviderUpsertRequest,
+    db_session: Session,
 ) -> FullLLMProvider:
     existing_llm_provider = db_session.scalar(
         select(LLMProviderModel).where(LLMProviderModel.name == llm_provider.name)
