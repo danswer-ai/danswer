@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
@@ -7,6 +8,8 @@ import requests
 from danswer.connectors.models import InputType
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
+from danswer.db.enums import TaskStatus
+from danswer.server.documents.models import CCPairPruningTask
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
 from danswer.server.documents.models import DocumentSource
@@ -142,6 +145,25 @@ class CCPairManager:
         result.raise_for_status()
 
     @staticmethod
+    def get_one(
+        cc_pair_id: int,
+        user_performing_action: TestUser | None = None,
+    ) -> ConnectorIndexingStatus | None:
+        response = requests.get(
+            f"{API_SERVER_URL}/manage/admin/connector/indexing-status",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        for cc_pair_json in response.json():
+            cc_pair = ConnectorIndexingStatus(**cc_pair_json)
+            if cc_pair.cc_pair_id == cc_pair_id:
+                return cc_pair
+
+        return None
+
+    @staticmethod
     def get_all(
         user_performing_action: TestUser | None = None,
     ) -> list[ConnectorIndexingStatus]:
@@ -182,10 +204,99 @@ class CCPairManager:
             raise ValueError(f"CC pair {cc_pair.id} not found")
 
     @staticmethod
+    def wait_for_indexing(
+        cc_pair_test: TestCCPair,
+        after: datetime,
+        timeout: float = MAX_DELAY,
+        user_performing_action: TestUser | None = None,
+    ) -> None:
+        """after: Wait for an indexing success time after this time"""
+        start = time.monotonic()
+        while True:
+            cc_pairs = CCPairManager.get_all(user_performing_action)
+            for cc_pair in cc_pairs:
+                if cc_pair.cc_pair_id != cc_pair_test.id:
+                    continue
+
+                if cc_pair.last_success and cc_pair.last_success > after:
+                    print(f"cc_pair {cc_pair_test.id} indexing complete.")
+                    return
+
+            elapsed = time.monotonic() - start
+            if elapsed > timeout:
+                raise TimeoutError(
+                    f"CC pair indexing was not completed within {timeout} seconds"
+                )
+
+            print(
+                f"Waiting for CC indexing to complete. elapsed={elapsed:.2f} timeout={timeout}"
+            )
+            time.sleep(5)
+
+    @staticmethod
+    def prune(
+        cc_pair: TestCCPair,
+        user_performing_action: TestUser | None = None,
+    ) -> None:
+        result = requests.post(
+            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/prune",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        result.raise_for_status()
+
+    @staticmethod
+    def get_prune_task(
+        cc_pair: TestCCPair,
+        user_performing_action: TestUser | None = None,
+    ) -> CCPairPruningTask:
+        response = requests.get(
+            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/prune",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        return CCPairPruningTask(**response.json())
+
+    @staticmethod
+    def wait_for_prune(
+        cc_pair_test: TestCCPair,
+        after: datetime,
+        timeout: float = MAX_DELAY,
+        user_performing_action: TestUser | None = None,
+    ) -> None:
+        """after: The task register time must be after this time."""
+        start = time.monotonic()
+        while True:
+            task = CCPairManager.get_prune_task(cc_pair_test, user_performing_action)
+            if not task:
+                raise ValueError("Prune task not found.")
+
+            if not task.register_time or task.register_time < after:
+                raise ValueError("Prune task register time is too early.")
+
+            if task.status == TaskStatus.SUCCESS:
+                # Pruning succeeded
+                return
+
+            elapsed = time.monotonic() - start
+            if elapsed > timeout:
+                raise TimeoutError(
+                    f"CC pair pruning was not completed within {timeout} seconds"
+                )
+
+            print(
+                f"Waiting for CC pruning to complete. elapsed={elapsed:.2f} timeout={timeout}"
+            )
+            time.sleep(5)
+
+    @staticmethod
     def wait_for_deletion_completion(
         user_performing_action: TestUser | None = None,
     ) -> None:
-        start = time.time()
+        start = time.monotonic()
         while True:
             cc_pairs = CCPairManager.get_all(user_performing_action)
             if all(
@@ -194,7 +305,7 @@ class CCPairManager:
             ):
                 return
 
-            if time.time() - start > MAX_DELAY:
+            if time.monotonic() - start > MAX_DELAY:
                 raise TimeoutError(
                     f"CC pairs deletion was not completed within the {MAX_DELAY} seconds"
                 )

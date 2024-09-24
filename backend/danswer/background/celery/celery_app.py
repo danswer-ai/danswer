@@ -627,6 +627,9 @@ def check_for_prune_task() -> None:
         all_cc_pairs = get_connector_credential_pairs(db_session)
 
         for cc_pair in all_cc_pairs:
+            if not cc_pair.connector.prune_freq:
+                continue
+
             if should_prune_cc_pair(
                 connector=cc_pair.connector,
                 credential=cc_pair.credential,
