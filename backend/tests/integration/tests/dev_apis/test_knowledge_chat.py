@@ -7,20 +7,20 @@ from tests.integration.common_utils.managers.api_key import APIKeyManager
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.document import DocumentManager
 from tests.integration.common_utils.managers.user import UserManager
-from tests.integration.common_utils.test_models import TestAPIKey
-from tests.integration.common_utils.test_models import TestCCPair
-from tests.integration.common_utils.test_models import TestUser
+from tests.integration.common_utils.test_models import DATestAPIKey
+from tests.integration.common_utils.test_models import DATestCCPair
+from tests.integration.common_utils.test_models import DATestUser
 
 
 def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
     # Creating an admin user (first user created is automatically an admin)
-    admin_user: TestUser = UserManager.create(name="admin_user")
+    admin_user: DATestUser = UserManager.create(name="admin_user")
 
     # create connector
-    cc_pair_1: TestCCPair = CCPairManager.create_from_scratch(
+    cc_pair_1: DATestCCPair = CCPairManager.create_from_scratch(
         user_performing_action=admin_user,
     )
-    api_key: TestAPIKey = APIKeyManager.create(
+    api_key: DATestAPIKey = APIKeyManager.create(
         user_performing_action=admin_user,
     )
     LLMProviderManager.create(user_performing_action=admin_user)

@@ -7,8 +7,8 @@ from ee.danswer.server.user_group.models import UserGroup
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
-from tests.integration.common_utils.test_models import TestUser
-from tests.integration.common_utils.test_models import TestUserGroup
+from tests.integration.common_utils.test_models import DATestUser
+from tests.integration.common_utils.test_models import DATestUserGroup
 
 
 class UserGroupManager:
@@ -17,8 +17,8 @@ class UserGroupManager:
         name: str | None = None,
         user_ids: list[str] | None = None,
         cc_pair_ids: list[int] | None = None,
-        user_performing_action: TestUser | None = None,
-    ) -> TestUserGroup:
+        user_performing_action: DATestUser | None = None,
+    ) -> DATestUserGroup:
         name = f"{name}-user-group" if name else f"test-user-group-{uuid4()}"
 
         request = {
@@ -34,7 +34,7 @@ class UserGroupManager:
             else GENERAL_HEADERS,
         )
         response.raise_for_status()
-        test_user_group = TestUserGroup(
+        test_user_group = DATestUserGroup(
             id=response.json()["id"],
             name=response.json()["name"],
             user_ids=[user["id"] for user in response.json()["users"]],
@@ -44,8 +44,8 @@ class UserGroupManager:
 
     @staticmethod
     def edit(
-        user_group: TestUserGroup,
-        user_performing_action: TestUser | None = None,
+        user_group: DATestUserGroup,
+        user_performing_action: DATestUser | None = None,
     ) -> None:
         if not user_group.id:
             raise ValueError("User group has no ID")
@@ -60,10 +60,10 @@ class UserGroupManager:
 
     @staticmethod
     def set_curator_status(
-        test_user_group: TestUserGroup,
-        user_to_set_as_curator: TestUser,
+        test_user_group: DATestUserGroup,
+        user_to_set_as_curator: DATestUser,
         is_curator: bool = True,
-        user_performing_action: TestUser | None = None,
+        user_performing_action: DATestUser | None = None,
     ) -> None:
         if not user_to_set_as_curator.id:
             raise ValueError("User has no ID")
@@ -82,7 +82,7 @@ class UserGroupManager:
 
     @staticmethod
     def get_all(
-        user_performing_action: TestUser | None = None,
+        user_performing_action: DATestUser | None = None,
     ) -> list[UserGroup]:
         response = requests.get(
             f"{API_SERVER_URL}/manage/admin/user-group",
@@ -95,9 +95,9 @@ class UserGroupManager:
 
     @staticmethod
     def verify(
-        user_group: TestUserGroup,
+        user_group: DATestUserGroup,
         verify_deleted: bool = False,
-        user_performing_action: TestUser | None = None,
+        user_performing_action: DATestUser | None = None,
     ) -> None:
         all_user_groups = UserGroupManager.get_all(user_performing_action)
         for fetched_user_group in all_user_groups:
@@ -120,8 +120,8 @@ class UserGroupManager:
 
     @staticmethod
     def wait_for_sync(
-        user_groups_to_check: list[TestUserGroup] | None = None,
-        user_performing_action: TestUser | None = None,
+        user_groups_to_check: list[DATestUserGroup] | None = None,
+        user_performing_action: DATestUser | None = None,
     ) -> None:
         start = time.time()
         while True:
