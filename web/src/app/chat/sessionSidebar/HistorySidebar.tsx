@@ -87,13 +87,12 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
     return (
       <>
         {popup}
-
         <div
           ref={ref}
           className={`
             flex
             flex-none
-            bg-background-100
+            bg-background-sidebar
             w-full
             border-r 
             border-border 
@@ -101,7 +100,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             flex-col relative
             h-screen
             transition-transform 
-            mt-2`}
+            pt-2`}
         >
           <LogoType
             showArrow={true}

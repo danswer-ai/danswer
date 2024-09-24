@@ -125,7 +125,7 @@ def list_llm_providers(
 def put_llm_provider(
     llm_provider: LLMProviderUpsertRequest,
     is_creation: bool = Query(
-        True,
+        False,
         description="True if updating an existing provider, False if creating a new one",
     ),
     _: User | None = Depends(current_admin_user),
