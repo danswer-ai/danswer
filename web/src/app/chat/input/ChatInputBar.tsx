@@ -382,6 +382,7 @@ export function ChatInputBar({
               border
               border-[#E5E7EB]
               rounded-lg
+              text-text-chatbar
               bg-background-chatbar
               [&:has(textarea:focus)]::ring-1
               [&:has(textarea:focus)]::ring-black
@@ -478,6 +479,7 @@ export function ChatInputBar({
                 rounded-lg
                 border-0
                 bg-background-chatbar
+                placeholder:text-text-chatbar-subtle
                 ${
                   textAreaRef.current &&
                   textAreaRef.current.scrollHeight > MAX_INPUT_HEIGHT

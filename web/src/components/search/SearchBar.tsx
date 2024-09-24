@@ -140,6 +140,7 @@ export const FullSearchBar = ({
         bg-background-chatbar
         [&:has(textarea:focus)]::ring-1
         [&:has(textarea:focus)]::ring-black
+        text-text-chatbar
         "
     >
       <textarea
@@ -164,6 +165,7 @@ export const FullSearchBar = ({
           max-h-[6em]
           py-4
           h-14
+          placeholder:text-text-chatbar-subtle
         `}
         autoFocus
         style={{ scrollbarWidth: "thin" }}
@@ -244,12 +246,12 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
   };
 
   return (
-    <div className="flex justify-center">
+    <div className="flex text-text-chatbar justify-center">
       <div className="flex items-center w-full opacity-100 border-2 border-border rounded-lg px-4 py-2 focus-within:border-accent bg-background-search">
         <MagnifyingGlass className="text-emphasis" />
         <textarea
           autoFocus
-          className="flex-grow ml-2 h-6 outline-none placeholder-default overflow-hidden whitespace-normal resize-none"
+          className="flex-grow ml-2 h-6 placeholder:text-text-chatbar-subtle outline-none placeholder-default overflow-hidden whitespace-normal resize-none"
           role="textarea"
           aria-multiline
           placeholder="Search..."

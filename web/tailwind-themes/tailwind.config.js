@@ -101,10 +101,14 @@ module.exports = {
         "background-strong": "var(--background-strong)",
         "background-search": "var(--white)",
 
-        // backgrounds for sidebar in chat, search, and manage settings
+        // colors for sidebar in chat, search, and manage settings
         "background-sidebar": "var(--background-100)",
         "background-settings-sidebar": "var(--background-100)",
         "background-chatbar": "var(--background-100)",
+        "text-sidebar": "var(--text-500)",
+        "text-sidebar-subtle": "var(--text-600)",
+        "text-settings-sidebar": "var(--text-800)",
+        "text-settings-sidebar": "var(--text-800)",
 
         // Background for chat messages (user bubbles)
         user: "var(--user-bubble)",
@@ -114,6 +118,8 @@ module.exports = {
         "background-agentic-untoggled": "var(--undo)",
         "text-agentic-toggled": "var(--text-800)",
         "text-agentic-untoggled": "var(--white)",
+        "text-chatbar-subtle": "var(--text-500)",
+        "text-chatbar": "var(--text-800)",
 
         // Color for the star indicator on high quality search results.
         "star-indicator": "var(--background-100)",
