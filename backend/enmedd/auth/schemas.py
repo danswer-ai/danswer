@@ -53,3 +53,8 @@ class UserUpdate(schemas.BaseUserUpdate):
     company_billing: Optional[str]
     billing_email_address: Optional[EmailStr]
     vat: Optional[str]
+
+
+class ChangePassword(schemas.BaseUserUpdate):
+    new_password: str
+    current_password: str
