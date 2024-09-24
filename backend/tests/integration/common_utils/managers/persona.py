@@ -6,8 +6,8 @@ from danswer.search.enums import RecencyBiasSetting
 from danswer.server.features.persona.models import PersonaSnapshot
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.test_models import TestPersona
-from tests.integration.common_utils.test_models import TestUser
+from tests.integration.common_utils.test_models import DATestPersona
+from tests.integration.common_utils.test_models import DATestUser
 
 
 class PersonaManager:
@@ -27,8 +27,8 @@ class PersonaManager:
         llm_model_version_override: str | None = None,
         users: list[str] | None = None,
         groups: list[int] | None = None,
-        user_performing_action: TestUser | None = None,
-    ) -> TestPersona:
+        user_performing_action: DATestUser | None = None,
+    ) -> DATestPersona:
         name = name or f"test-persona-{uuid4()}"
         description = description or f"Description for {name}"
 
@@ -59,7 +59,7 @@ class PersonaManager:
         response.raise_for_status()
         persona_data = response.json()
 
-        return TestPersona(
+        return DATestPersona(
             id=persona_data["id"],
             name=name,
             description=description,
@@ -79,7 +79,7 @@ class PersonaManager:
 
     @staticmethod
     def edit(
-        persona: TestPersona,
+        persona: DATestPersona,
         name: str | None = None,
         description: str | None = None,
         num_chunks: float | None = None,
@@ -94,8 +94,8 @@ class PersonaManager:
         llm_model_version_override: str | None = None,
         users: list[str] | None = None,
         groups: list[int] | None = None,
-        user_performing_action: TestUser | None = None,
-    ) -> TestPersona:
+        user_performing_action: DATestUser | None = None,
+    ) -> DATestPersona:
         persona_update_request = {
             "name": name or persona.name,
             "description": description or persona.description,
@@ -127,7 +127,7 @@ class PersonaManager:
         response.raise_for_status()
         updated_persona_data = response.json()
 
-        return TestPersona(
+        return DATestPersona(
             id=updated_persona_data["id"],
             name=updated_persona_data["name"],
             description=updated_persona_data["description"],
@@ -151,7 +151,7 @@ class PersonaManager:
 
     @staticmethod
     def get_all(
-        user_performing_action: TestUser | None = None,
+        user_performing_action: DATestUser | None = None,
     ) -> list[PersonaSnapshot]:
         response = requests.get(
             f"{API_SERVER_URL}/admin/persona",
@@ -164,8 +164,8 @@ class PersonaManager:
 
     @staticmethod
     def verify(
-        test_persona: TestPersona,
-        user_performing_action: TestUser | None = None,
+        test_persona: DATestPersona,
+        user_performing_action: DATestUser | None = None,
     ) -> bool:
         all_personas = PersonaManager.get_all(user_performing_action)
         for persona in all_personas:
@@ -194,8 +194,8 @@ class PersonaManager:
 
     @staticmethod
     def delete(
-        persona: TestPersona,
-        user_performing_action: TestUser | None = None,
+        persona: DATestPersona,
+        user_performing_action: DATestUser | None = None,
     ) -> bool:
         response = requests.delete(
             f"{API_SERVER_URL}/persona/{persona.id}",

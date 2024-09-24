@@ -14,8 +14,8 @@ from danswer.utils.logger import setup_logger
 from tests.integration.common_utils.managers.api_key import APIKeyManager
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.user import UserManager
-from tests.integration.common_utils.test_models import TestUser
-from tests.integration.common_utils.vespa import TestVespaClient
+from tests.integration.common_utils.test_models import DATestUser
+from tests.integration.common_utils.vespa import vespa_fixture
 
 
 logger = setup_logger()
@@ -51,10 +51,9 @@ def http_server_context(
         server_thread.join()
 
 
-# def test_web_pruning() -> None:
-def test_web_pruning(reset: None, vespa_client: TestVespaClient) -> None:
+def test_web_pruning(reset: None, vespa_client: vespa_fixture) -> None:
     # Creating an admin user (first user created is automatically an admin)
-    admin_user: TestUser = UserManager.create(name="admin_user")
+    admin_user: DATestUser = UserManager.create(name="admin_user")
 
     # add api key to user
     APIKeyManager.create(

@@ -10,9 +10,9 @@ env:
 
 jobs:
   build-and-push:
-    # TODO: make this a matrix build like the web containers
-    runs-on: 
-      group: amd64-image-builders
+    # TODO: investigate a matrix build like the web container 
+    # See https://runs-on.com/runners/linux/
+    runs-on: [runs-on,runner=8cpu-linux-x64,"run-id=${{ github.run_id }}"]
 
     steps:
     - name: Checkout code

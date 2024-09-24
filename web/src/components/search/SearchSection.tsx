@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext, useEffect, useRef, useState } from "react";
-import { FullSearchBar, SearchBar } from "./SearchBar";
+import { FullSearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
 import {
@@ -758,12 +758,10 @@ export const SearchSection = ({
                     />
 
                     <FullSearchBar
-                      setPopup={setPopup}
                       disabled={previousSearch === query}
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic
                       }
-                      previousSearch={previousSearch}
                       showingSidebar={toggledSidebar}
                       agentic={agentic}
                       query={query}
