@@ -16,6 +16,7 @@ from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential__UserGroup
 from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
+from danswer.db.models import DocumentSet__UserGroup
 from danswer.db.models import LLMProvider__UserGroup
 from danswer.db.models import TokenRateLimit__UserGroup
 from danswer.db.models import User
@@ -532,6 +533,17 @@ def _cleanup_user_group__cc_pair_relationships__no_commit(
         db_session.delete(user_group__cc_pair_relationship)
 
 
+def _cleanup_document_set__user_group_relationships__no_commit(
+    db_session: Session, user_group_id: int
+) -> None:
+    """NOTE: does not commit the transaction."""
+    db_session.execute(
+        delete(DocumentSet__UserGroup).where(
+            DocumentSet__UserGroup.user_group_id == user_group_id
+        )
+    )
+
+
 def mark_user_group_as_synced(db_session: Session, user_group: UserGroup) -> None:
     # cleanup outdated relationships
     _cleanup_user_group__cc_pair_relationships__no_commit(
@@ -552,6 +564,9 @@ def delete_user_group(db_session: Session, user_group: UserGroup) -> None:
         db_session=db_session,
         user_group_id=user_group.id,
         outdated_only=False,
+    )
+    _cleanup_document_set__user_group_relationships__no_commit(
+        db_session=db_session, user_group_id=user_group.id
     )
 
     # need to flush so that we don't get a foreign key error when deleting the user group row
