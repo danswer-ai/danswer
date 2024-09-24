@@ -20,6 +20,7 @@ from enmedd.db.models import Teamspace__ConnectorCredentialPair
 from enmedd.db.models import TokenRateLimit__Teamspace
 from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
+from enmedd.db.models import Workspace__Teamspace
 from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
 
 
@@ -206,6 +207,17 @@ def _add_teamspace__assistant_relationships__no_commit(
     return relationships
 
 
+def _add_workspace__teamspace_relationship(
+    db_session: Session, workspace_id: int, teamspace_id: int
+) -> Workspace__Teamspace:
+    relationship = Workspace__Teamspace(
+        workspace_id=workspace_id,
+        teamspace_id=teamspace_id,
+    )
+    db_session.add(relationship)
+    return relationship
+
+
 def insert_teamspace(
     db_session: Session, teamspace: TeamspaceCreate, creator_id: UUID
 ) -> Teamspace:
@@ -233,6 +245,9 @@ def insert_teamspace(
         db_session=db_session,
         teamspace_id=db_teamspace.id,
         cc_pair_ids=teamspace.cc_pair_ids,
+    )
+    _add_workspace__teamspace_relationship(
+        db_session, teamspace.workspace_id, db_teamspace.id
     )
 
     db_session.commit()

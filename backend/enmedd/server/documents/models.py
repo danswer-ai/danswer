@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -132,7 +133,7 @@ class CCPairFullInfo(BaseModel):
     credential: CredentialSnapshot
     index_attempts: list[IndexAttemptSnapshot]
     latest_deletion_attempt: DeletionAttemptSnapshot | None
-    groups: list[MinimalTeamspaceSnapshot] | None
+    groups: list[MinimalTeamspaceSnapshot] = []
 
     @classmethod
     def from_models(
@@ -141,6 +142,7 @@ class CCPairFullInfo(BaseModel):
         index_attempt_models: list[IndexAttempt],
         latest_deletion_attempt: DeletionAttemptSnapshot | None,
         num_docs_indexed: int,  # not ideal, but this must be computed separately
+        groups: list[MinimalTeamspaceSnapshot] = [],
     ) -> "CCPairFullInfo":
         return cls(
             id=cc_pair_model.id,
@@ -157,6 +159,7 @@ class CCPairFullInfo(BaseModel):
                 for index_attempt_model in index_attempt_models
             ],
             latest_deletion_attempt=latest_deletion_attempt,
+            groups=groups,
         )
 
 
@@ -193,7 +196,7 @@ class ConnectorCredentialPairDescriptor(BaseModel):
     name: str | None
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
-    groups: list[MinimalTeamspaceSnapshot] | None
+    groups: Optional[list[MinimalTeamspaceSnapshot]] = []
 
 
 class RunConnectorRequest(BaseModel):

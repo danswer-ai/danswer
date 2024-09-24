@@ -21,6 +21,8 @@ from enmedd.server.features.document_set.models import CheckDocSetPublicResponse
 from enmedd.server.features.document_set.models import DocumentSet
 from enmedd.server.features.document_set.models import DocumentSetCreationRequest
 from enmedd.server.features.document_set.models import DocumentSetUpdateRequest
+from enmedd.server.models import MinimalTeamspaceSnapshot
+from enmedd.server.models import MinimalWorkspaceSnapshot
 
 
 router = APIRouter(prefix="/manage")
@@ -116,7 +118,19 @@ def list_document_sets(
             is_up_to_date=document_set_db_model.is_up_to_date,
             is_public=document_set_db_model.is_public,
             users=[user.id for user in document_set_db_model.users],
-            groups=[group.id for group in document_set_db_model.groups],
+            groups=[
+                MinimalTeamspaceSnapshot(
+                    id=group.id,
+                    name=group.name,
+                    workspace=[
+                        MinimalWorkspaceSnapshot(
+                            id=workspace.id, workspace_name=workspace.workspace_name
+                        )
+                        for workspace in group.workspace
+                    ],
+                )
+                for group in document_set_db_model.groups
+            ],
         )
         for document_set_db_model, cc_pairs in document_set_info
     ]

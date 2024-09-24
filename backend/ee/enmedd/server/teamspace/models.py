@@ -12,6 +12,7 @@ from enmedd.server.features.assistant.models import AssistantSnapshot
 from enmedd.server.features.document_set.models import DocumentSet
 from enmedd.server.manage.models import UserInfo
 from enmedd.server.manage.models import UserPreferences
+from enmedd.server.models import MinimalTeamspaceSnapshot
 from enmedd.server.models import MinimalWorkspaceSnapshot
 from enmedd.server.query_and_chat.models import ChatSessionDetails
 
@@ -63,6 +64,20 @@ class Teamspace(BaseModel):
                     credential=CredentialSnapshot.from_credential_db_model(
                         cc_pair_relationship.cc_pair.credential
                     ),
+                    groups=[
+                        MinimalTeamspaceSnapshot(
+                            id=group.id,
+                            name=group.name,
+                            workspace=[
+                                MinimalWorkspaceSnapshot(
+                                    id=workspace.id,
+                                    workspace_name=workspace.workspace_name,
+                                )
+                                for workspace in group.workspace
+                            ],
+                        )
+                        for group in cc_pair_relationship.cc_pair.groups
+                    ],
                 )
                 for cc_pair_relationship in teamspace_model.cc_pair_relationships
                 if cc_pair_relationship.is_current
@@ -104,6 +119,7 @@ class TeamspaceCreate(BaseModel):
     cc_pair_ids: list[int]
     document_set_ids: Optional[List[int]] = []
     assistant_ids: Optional[List[int]] = []
+    workspace_id: Optional[int] = 0
 
 
 class TeamspaceUpdate(BaseModel):
