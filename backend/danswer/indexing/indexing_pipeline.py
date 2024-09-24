@@ -220,8 +220,8 @@ def index_doc_batch_prepare(
 
     document_ids = [document.id for document in documents]
     db_docs: list[DBDocument] = get_documents_by_ids(
-        document_ids=document_ids,
         db_session=db_session,
+        document_ids=document_ids,
     )
 
     # Skip indexing docs that don't have a newer updated at

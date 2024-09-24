@@ -1,4 +1,6 @@
 from collections.abc import Iterator
+from datetime import datetime
+from datetime import timezone
 from typing import Any
 from typing import cast
 
@@ -8,15 +10,17 @@ from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
 from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
+from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds,
 )
 from danswer.connectors.google_drive.constants import FETCH_PERMISSIONS_SCOPES
+from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.models import InputType
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.document import upsert_document_external_perms__no_commit
-from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
 # Google Drive APIs are quite flakey and may 500 for an
 # extended period of time. Trying to combat here by adding a very
@@ -25,6 +29,38 @@ add_retries = retry_builder(tries=5, delay=5, max_delay=30)
 
 
 logger = setup_logger()
+
+
+def _get_docs_with_additional_info(
+    db_session: Session,
+    cc_pair: ConnectorCredentialPair,
+) -> dict[str, Any]:
+    # Get all document ids that need their permissions updated
+    runnable_connector = instantiate_connector(
+        db_session=db_session,
+        source=cc_pair.connector.source,
+        input_type=InputType.POLL,
+        connector_specific_config=cc_pair.connector.connector_specific_config,
+        credential=cc_pair.credential,
+    )
+
+    assert isinstance(runnable_connector, PollConnector)
+
+    current_time = datetime.now(timezone.utc)
+    start_time = cc_pair.last_time_perm_sync.replace(tzinfo=timezone.utc).timestamp()
+    cc_pair.last_time_perm_sync = current_time
+
+    doc_batch_generator = runnable_connector.poll_source(
+        start=start_time, end=current_time.timestamp()
+    )
+
+    docs_with_additional_info = {
+        doc.id: doc.additional_info
+        for doc_batch in doc_batch_generator
+        for doc in doc_batch
+    }
+
+    return docs_with_additional_info
 
 
 def _fetch_permissions_paginated(
@@ -122,8 +158,6 @@ def _fetch_google_permissions_for_document_id(
 def gdrive_doc_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
-    docs_with_additional_info: list[DocsWithAdditionalInfo],
-    sync_details: dict[str, Any] | None,
 ) -> None:
     """
     Adds the external permissions to the documents in postgres
@@ -131,14 +165,24 @@ def gdrive_doc_sync(
     it in postgres so that when it gets created later, the permissions are
     already populated
     """
+    sync_details = cc_pair.auto_sync_options
     if sync_details is None:
         logger.error("Sync details not found for Google Drive")
         raise ValueError("Sync details not found for Google Drive")
 
-    for doc in docs_with_additional_info:
+    # Here we run the connector to grab all the ids
+    # this may grab ids before they are indexed but that is fine because
+    # we create a document in postgres to hold the permissions info
+    # until the indexing job has a chance to run
+    docs_with_additional_info = _get_docs_with_additional_info(
+        db_session=db_session,
+        cc_pair=cc_pair,
+    )
+
+    for doc_id, doc_additional_info in docs_with_additional_info.items():
         ext_access = _fetch_google_permissions_for_document_id(
             db_session=db_session,
-            drive_file_id=doc.additional_info,
+            drive_file_id=doc_additional_info,
             raw_credentials_json=cc_pair.credential.credential_json,
             company_google_domains=[
                 cast(dict[str, str], sync_details)["company_domain"]
@@ -146,7 +190,7 @@ def gdrive_doc_sync(
         )
         upsert_document_external_perms__no_commit(
             db_session=db_session,
-            doc_id=doc.id,
+            doc_id=doc_id,
             external_access=ext_access,
             source_type=cc_pair.connector.source,
         )

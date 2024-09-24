@@ -104,8 +104,8 @@ def _fetch_group_members_paginated(
 def gdrive_group_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
-    sync_details: dict[str, Any] | None,
 ) -> None:
+    sync_details = cc_pair.auto_sync_options
     if sync_details is None:
         logger.error("Sync details not found for Google Drive")
         raise ValueError("Sync details not found for Google Drive")

@@ -104,6 +104,18 @@ def construct_document_select_for_connector_credential_pair(
     return stmt
 
 
+def get_document_ids_for_connector_credential_pair(
+    db_session: Session, connector_id: int, credential_id: int, limit: int | None = None
+) -> Sequence[str]:
+    doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
+        and_(
+            DocumentByConnectorCredentialPair.connector_id == connector_id,
+            DocumentByConnectorCredentialPair.credential_id == credential_id,
+        )
+    )
+    return db_session.execute(doc_ids_stmt).scalars().all()
+
+
 def get_documents_for_connector_credential_pair(
     db_session: Session, connector_id: int, credential_id: int, limit: int | None = None
 ) -> Sequence[DbDocument]:
@@ -120,8 +132,8 @@ def get_documents_for_connector_credential_pair(
 
 
 def get_documents_by_ids(
-    document_ids: list[str],
     db_session: Session,
+    document_ids: list[str],
 ) -> list[DbDocument]:
     stmt = select(DbDocument).where(DbDocument.id.in_(document_ids))
     documents = db_session.execute(stmt).scalars().all()
