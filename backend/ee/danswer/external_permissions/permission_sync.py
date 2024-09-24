@@ -1,6 +1,3 @@
-from datetime import datetime
-from datetime import timezone
-
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
@@ -11,9 +8,6 @@ from danswer.document_index.interfaces import UpdateRequest
 from danswer.utils.logger import setup_logger
 from ee.danswer.external_permissions.permission_sync_function_map import (
     DOC_PERMISSIONS_FUNC_MAP,
-)
-from ee.danswer.external_permissions.permission_sync_function_map import (
-    FULL_FETCH_PERIOD_IN_SECONDS,
 )
 from ee.danswer.external_permissions.permission_sync_function_map import (
     GROUP_PERMISSIONS_FUNC_MAP,
@@ -81,20 +75,6 @@ def run_external_doc_permission_sync(
 
     sync_details = cc_pair.auto_sync_options
 
-    # If the source type is not polling, we only fetch the permissions every
-    # _FULL_FETCH_PERIOD_IN_SECONDS seconds
-    full_fetch_period = FULL_FETCH_PERIOD_IN_SECONDS[source_type]
-    if full_fetch_period is not None:
-        last_sync = cc_pair.last_time_perm_sync
-        if (
-            last_sync
-            and (
-                datetime.now(timezone.utc) - last_sync.replace(tzinfo=timezone.utc)
-            ).total_seconds()
-            < full_fetch_period
-        ):
-            return
-
     # Here we run the connector to grab all the ids
     # this may grab ids before they are indexed but that is fine because
     # we create a document in postgres to hold the permissions info
@@ -103,6 +83,10 @@ def run_external_doc_permission_sync(
         db_session=db_session,
         cc_pair=cc_pair,
     )
+
+    if len(docs_with_additional_info) == 0:
+        # No docs to sync
+        return
 
     try:
         # This function updates:

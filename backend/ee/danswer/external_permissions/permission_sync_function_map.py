@@ -11,6 +11,7 @@ from ee.danswer.external_permissions.google_drive.doc_sync import gdrive_doc_syn
 from ee.danswer.external_permissions.google_drive.group_sync import gdrive_group_sync
 from ee.danswer.external_permissions.permission_sync_utils import DocsWithAdditionalInfo
 
+# Defining the input/output types for the group sync functions
 GroupSyncFuncType = Callable[
     [
         Session,
@@ -20,6 +21,7 @@ GroupSyncFuncType = Callable[
     None,
 ]
 
+# Defining the input/output types for the doc sync functions
 DocSyncFuncType = Callable[
     [
         Session,
@@ -47,15 +49,6 @@ DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, DocSyncFuncType] = {
 GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, GroupSyncFuncType] = {
     DocumentSource.GOOGLE_DRIVE: gdrive_group_sync,
     DocumentSource.CONFLUENCE: confluence_group_sync,
-}
-
-
-# None means that the connector supports polling from last_time_perm_sync to now
-FULL_FETCH_PERIOD_IN_SECONDS: dict[DocumentSource, int | None] = {
-    # Polling is supported
-    DocumentSource.GOOGLE_DRIVE: None,
-    # Polling is not supported so we fetch all doc permissions every 10 minutes
-    DocumentSource.CONFLUENCE: 10 * 60,
 }
 
 
