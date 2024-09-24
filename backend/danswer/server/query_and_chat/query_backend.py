@@ -99,12 +99,25 @@ def get_tags(
     if not allow_prefix:
         raise NotImplementedError("Cannot disable prefix match for now")
 
+    key_prefix = match_pattern
+    value_prefix = match_pattern
+    require_both_to_match = False
+
+    # split on = to allow the user to type in "author=bob"
+    EQUAL_PAT = "="
+    if match_pattern and EQUAL_PAT in match_pattern:
+        split_pattern = match_pattern.split(EQUAL_PAT)
+        key_prefix = split_pattern[0]
+        value_prefix = EQUAL_PAT.join(split_pattern[1:])
+        require_both_to_match = True
+
     db_tags = get_tags_by_value_prefix_for_source_types(
-        tag_key_prefix=match_pattern,
-        tag_value_prefix=match_pattern,
+        tag_key_prefix=key_prefix,
+        tag_value_prefix=value_prefix,
         sources=sources,
         limit=limit,
         db_session=db_session,
+        require_both_to_match=require_both_to_match,
     )
     server_tags = [
         SourceTag(
