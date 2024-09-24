@@ -1,4 +1,4 @@
-import http
+import http.server
 import os
 import shutil
 import tempfile
@@ -16,7 +16,6 @@ from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.user import UserManager
 from tests.integration.common_utils.test_models import DATestUser
 from tests.integration.common_utils.vespa import vespa_fixture
-
 
 logger = setup_logger()
 
