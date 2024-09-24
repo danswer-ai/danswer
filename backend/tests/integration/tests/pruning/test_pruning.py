@@ -65,15 +65,17 @@ def test_web_pruning(reset: None, vespa_client: vespa_fixture) -> None:
     test_filename = os.path.realpath(__file__)
     test_directory = os.path.dirname(test_filename)
     with tempfile.TemporaryDirectory() as temp_dir:
+        port = 8888
+
         website_src = os.path.join(test_directory, "website")
         website_tgt = os.path.join(temp_dir, "website")
         shutil.copytree(website_src, website_tgt)
-        with http_server_context(os.path.join(temp_dir, "website"), 8888):
+        with http_server_context(os.path.join(temp_dir, "website"), port):
             sleep(1)  # sleep a tiny bit before starting everything
 
             hostname = os.getenv("TEST_WEB_HOSTNAME", "localhost")
             config = {
-                "base_url": f"http://{hostname}:8888/",
+                "base_url": f"http://{hostname}:{port}/",
                 "web_connector_type": "recursive",
             }
 
@@ -118,9 +120,9 @@ def test_web_pruning(reset: None, vespa_client: vespa_fixture) -> None:
             assert selected_cc_pair.docs_indexed == 13
 
             # check vespa
-            index_id = "http://localhost:8888/index.html"
-            about_id = "http://localhost:8888/about.html"
-            courses_id = "http://localhost:8888/courses.html"
+            index_id = f"http://{hostname}:{port}/index.html"
+            about_id = f"http://{hostname}:{port}/about.html"
+            courses_id = f"http://{hostname}:{port}/courses.html"
 
             doc_ids = [index_id, about_id, courses_id]
             retrieved_docs_dict = vespa_client.get_documents_by_id(doc_ids)["documents"]
