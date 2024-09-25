@@ -13,12 +13,14 @@ from danswer.access.access import get_access_for_document
 from danswer.background.celery.celery_app import celery_app
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
+from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector import fetch_connector_by_id
+from danswer.db.connector import mark_connector_as_pruned
 from danswer.db.connector_credential_pair import add_deletion_failure_message
 from danswer.db.connector_credential_pair import (
     delete_connector_credential_pair__no_commit,
@@ -280,7 +282,7 @@ def monitor_document_set_taskset(
     fence_key = key_bytes.decode("utf-8")
     document_set_id = RedisDocumentSet.get_id_from_fence_key(fence_key)
     if document_set_id is None:
-        task_logger.warning("could not parse document set id from {key}")
+        task_logger.warning(f"could not parse document set id from {fence_key}")
         return
 
     rds = RedisDocumentSet(document_set_id)
@@ -327,7 +329,7 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
     fence_key = key_bytes.decode("utf-8")
     cc_pair_id = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
     if cc_pair_id is None:
-        task_logger.warning("could not parse document set id from {key}")
+        task_logger.warning(f"could not parse cc_pair_id from {fence_key}")
         return
 
     rcd = RedisConnectorDeletion(cc_pair_id)
@@ -417,6 +419,51 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
     r.delete(rcd.fence_key)
 
 
+def monitor_connector_pruning_taskset(
+    key_bytes: bytes, r: Redis, db_session: Session
+) -> None:
+    fence_key = key_bytes.decode("utf-8")
+    cc_pair_id = RedisConnectorPruning.get_id_from_fence_key(fence_key)
+    if cc_pair_id is None:
+        task_logger.warning(
+            f"monitor_connector_pruning_taskset: could not parse cc_pair_id from {fence_key}"
+        )
+        return
+
+    rcp = RedisConnectorPruning(cc_pair_id)
+
+    fence_value = r.get(rcp.fence_key)
+    if fence_value is None:
+        return
+
+    generator_value = r.get(rcp.generator_complete_key)
+    if generator_value is None:
+        return
+
+    try:
+        initial_count = int(cast(int, generator_value))
+    except ValueError:
+        task_logger.error("The value is not an integer.")
+        return
+
+    count = cast(int, r.scard(rcp.taskset_key))
+    task_logger.info(
+        f"Connector pruning progress: cc_pair_id={cc_pair_id} remaining={count} initial={initial_count}"
+    )
+    if count > 0:
+        return
+
+    mark_connector_as_pruned(cc_pair_id, db_session)
+    task_logger.info(
+        f"Successfully pruned connector credential pair. cc_pair_id={cc_pair_id}"
+    )
+
+    r.delete(rcp.taskset_key)
+    r.delete(rcp.generator_progress_key)
+    r.delete(rcp.generator_complete_key)
+    r.delete(rcp.fence_key)
+
+
 @shared_task(name="monitor_vespa_sync", soft_time_limit=300)
 def monitor_vespa_sync() -> None:
     """This is a celery beat task that monitors and finalizes metadata sync tasksets.
@@ -457,6 +504,9 @@ def monitor_vespa_sync() -> None:
                     )
                 )
                 monitor_usergroup_taskset(key_bytes, r, db_session)
+
+            for key_bytes in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
+                monitor_connector_pruning_taskset(key_bytes, r, db_session)
 
         # uncomment for debugging if needed
         # r_celery = celery_app.broker_connection().channel().client

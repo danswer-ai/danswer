@@ -15,10 +15,10 @@ logger = setup_logger()
 
 def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -> None:
     """This function is likely to move in the worker refactor happening next."""
-    key = key_bytes.decode("utf-8")
-    usergroup_id = RedisUserGroup.get_id_from_fence_key(key)
+    fence_key = key_bytes.decode("utf-8")
+    usergroup_id = RedisUserGroup.get_id_from_fence_key(fence_key)
     if not usergroup_id:
-        task_logger.warning("Could not parse usergroup id from {key}")
+        task_logger.warning(f"Could not parse usergroup id from {fence_key}")
         return
 
     rug = RedisUserGroup(usergroup_id)

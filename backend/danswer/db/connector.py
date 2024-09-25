@@ -1,3 +1,5 @@
+from datetime import datetime
+from datetime import timezone
 from typing import cast
 
 from sqlalchemy import and_
@@ -267,4 +269,14 @@ def create_initial_default_connector(db_session: Session) -> None:
         prune_freq=None,
     )
     db_session.add(connector)
+    db_session.commit()
+
+
+def mark_connector_as_pruned(connector_id: int, db_session: Session) -> None:
+    stmt = select(Connector).where(Connector.id == connector_id)
+    connector = db_session.scalar(stmt)
+    if connector is None:
+        raise ValueError(f"No connector with ID: {connector_id}")
+
+    connector.last_pruned = datetime.now(timezone.utc)
     db_session.commit()

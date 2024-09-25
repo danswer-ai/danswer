@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.enums import IndexingStatus
+from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import create_index_attempt_error
 from danswer.db.models import IndexAttempt
 from danswer.db.search_settings import get_current_search_settings
@@ -116,6 +117,22 @@ def test_connector_deletion(reset: None, vespa_client: vespa_fixture) -> None:
         cc_pair=cc_pair_1,
         user_performing_action=admin_user,
     )
+
+    # inject an index attempt and index attempt error (exercises foreign key errors)
+    with Session(get_sqlalchemy_engine()) as db_session:
+        attempt_id = create_index_attempt(
+            connector_credential_pair_id=cc_pair_1.id,
+            search_settings_id=1,
+            db_session=db_session,
+        )
+        create_index_attempt_error(
+            index_attempt_id=attempt_id,
+            batch=1,
+            docs=[],
+            exception_msg="",
+            exception_traceback="",
+            db_session=db_session,
+        )
 
     # Update local records to match the database for later comparison
     user_group_1.cc_pair_ids = []

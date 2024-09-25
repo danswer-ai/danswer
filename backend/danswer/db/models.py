@@ -553,6 +553,14 @@ class Connector(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    # last successful prune
+    last_pruned: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+
+    # flag to trigger pruning
+    needs_pruning: Mapped[bool] = mapped_column(Boolean, default=False)
+
     credentials: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
         back_populates="connector",
