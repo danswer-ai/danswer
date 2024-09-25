@@ -46,7 +46,7 @@ const Page = async () => {
   }
 
   return (
-    <main className="relative h-full">
+    <main className="relative h-full px-6 md:px-0">
       <HealthCheckBanner />
       <div className="absolute top-6 left-10">
         <Image src={Logo} alt="Logo" className="w-28 xl:w-32" />

@@ -1,12 +1,12 @@
 "use client";
 
-import { Divider, Text } from "@tremor/react";
 import Link from "next/link";
 import { useContext, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Share2 } from "lucide-react";
 import { CustomModal } from "@/components/CustomModal";
+import { Divider } from "@/components/Divider";
 
 export function NoSourcesModal() {
   const settings = useContext(SettingsContext);
@@ -26,11 +26,11 @@ export function NoSourcesModal() {
       title="🧐 No sources connected"
     >
       <div>
-        <Text>
+        <p>
           Before using Search you&apos;ll need to connect at least one source.
           Without any connected knowledge sources, there isn&apos;t anything to
           search over.
-        </Text>
+        </p>
         <Link href="/admin/data-sources">
           <Button className="mt-3">
             <Share2 size={16} /> Connect a Source!
@@ -38,11 +38,11 @@ export function NoSourcesModal() {
         </Link>
         <Divider />
         <div>
-          <Text>
+          <p>
             Or, if you&apos;re looking for a pure ChatGPT-like experience
             without any organization specific knowledge, then you can head over
             to the Chat page and start chatting with enMedD AI right away!
-          </Text>
+          </p>
           <Link href="/chat">
             <Button className="mt-3">
               <MessageSquare size={16} /> Start Chatting!

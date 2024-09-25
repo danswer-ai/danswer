@@ -55,7 +55,6 @@ export function Modal({
                 >
                   {title}
                 </h2>
-                {/*    {!hideDividerForTitle && <Divider />} */}
               </div>
             )}
           </>

@@ -319,7 +319,7 @@ export const AIMessage = ({
                       const display = (
                         <Badge
                           variant="secondary"
-                          className="cursor-pointer hover:bg-opacity-80"
+                          className="cursor-pointer hover:bg-opacity-75"
                         >
                           <div className="my-auto mr-1">
                             <SourceIcon

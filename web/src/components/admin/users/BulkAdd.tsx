@@ -48,6 +48,7 @@ const AddUserFormRenderer = ({
             placeholder="Type your emails here."
             id="emails"
             name="emails"
+            className="max-h-96"
           />
         )}
       </Field>

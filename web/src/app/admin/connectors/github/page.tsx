@@ -19,10 +19,11 @@ import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePublicCredentials } from "@/lib/hooks";
-import { Divider, Text, Title, Button } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
+import { Divider } from "@/components/Divider";
+import { Button } from "@/components/ui/button";
 
 const Main = () => {
   const { mutate } = useSWRConfig();
@@ -93,12 +94,11 @@ const Main = () => {
               {githubCredential.credential_json.github_access_token}
             </p>{" "}
             <Button
-              className="p-1 ml-1 rounded hover:bg-hover"
               onClick={async () => {
                 await adminDeleteCredential(githubCredential.id);
                 refreshCredentials();
               }}
-              variant="light"
+              variant="destructive"
             >
               <TrashIcon />
             </Button>
@@ -154,10 +154,10 @@ const Main = () => {
 
       {githubConnectorIndexingStatuses.length > 0 && (
         <>
-          <Text className="mb-2">
+          <p className="mb-2">
             We pull the latest Pull Requests from each repository listed below
             every <b>10</b> minutes.
-          </Text>
+          </p>
           <div className="mb-2">
             <ConnectorsTable<GithubConfig, GithubCredentialJson>
               connectorIndexingStatuses={githubConnectorIndexingStatuses}

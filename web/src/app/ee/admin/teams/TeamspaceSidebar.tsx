@@ -1,6 +1,6 @@
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { Teamspace } from "@/lib/types";
-import { ChevronLeft, PanelRightClose } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelRightClose } from "lucide-react";
 import { TeamspaceSidebarContent } from "./TeamspaceSidebarContent";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ export const TeamspaceSidebar = ({
                   className="border rounded-l py-2 border-r-0 bg-background hidden lg:flex"
                   onClick={onClose}
                 >
-                  <ChevronLeft size={16} />
+                  <ChevronRight size={16} />
                 </button>
               }
               asChild

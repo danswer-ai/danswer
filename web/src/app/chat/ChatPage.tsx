@@ -1188,18 +1188,7 @@ export function ChatPage({
                                       : ChatSessionSharedStatus.Private
                                   )
                                 }
-                              >
-                                <CustomTooltip
-                                  trigger={
-                                    <Button variant="ghost" size="icon">
-                                      <Share size={20} />
-                                    </Button>
-                                  }
-                                  asChild
-                                >
-                                  Share
-                                </CustomTooltip>
-                              </ShareChatSessionModal>
+                              />
                             )}
 
                             {retrievalEnabled && (

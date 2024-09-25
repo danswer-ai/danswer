@@ -16,12 +16,15 @@ import { UsersResponse } from "@/lib/users/interfaces";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { User } from "lucide-react";
+import { User, UserIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CustomModal } from "@/components/CustomModal";
 
 export const PendingInvites = ({ q }: { q: string }) => {
   const [invitedPage, setInvitedPage] = useState(1);
   const [acceptedPage, setAcceptedPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
     `/api/manage/users?q=${encodeURI(q)}&accepted_page=${
       acceptedPage - 1
@@ -77,7 +80,7 @@ export const PendingInvites = ({ q }: { q: string }) => {
         <p className="text-sm pt-1 pb-4">Invitations awaiting a response.</p>
       </div>
 
-      <div className="w-full overflow-auto">
+      <div className="w-full overflow-x-auto">
         {invited.length > 0 ? (
           <>
             <Input
@@ -91,32 +94,61 @@ export const PendingInvites = ({ q }: { q: string }) => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>User</TableHead>
-                      <TableHead>Space</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Delete</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          <div className="flex gap-2">
+                          <div className="flex gap-4">
                             <div className="border rounded-full w-10 h-10 flex items-center justify-center">
-                              <User />
+                              <UserIcon />
                             </div>
-                            <div>
-                              <span>{user.full_name}</span>
-                              <span>{user.email}</span>
+                            <div className="flex flex-col">
+                              <span className="truncate max-w-44">
+                                {user.full_name}
+                              </span>
+                              <span className="text-sm text-subtle truncate max-w-44">
+                                {user.email}
+                              </span>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span>
-                            {user.role === "admin" ? "Admin" : "User"}
-                          </span>
+                          <div className="flex gap-2 justify-end">
+                            <Button>Resend Invite</Button>
+                            <CustomModal
+                              trigger={
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => setIsCancelModalVisible(true)}
+                                >
+                                  Cancel Invite
+                                </Button>
+                              }
+                              title="Revoke Invite"
+                              onClose={() => setIsCancelModalVisible(false)}
+                              open={isCancelModalVisible}
+                            >
+                              <div>
+                                <p>
+                                  Revoking on invite will no longer allow this
+                                  person to become a member of your space. You
+                                  can always invite the again if you change your
+                                  mind.{" "}
+                                </p>
+
+                                <div className="flex gap-2 pt-8 justify-end">
+                                  <Button>Keep Member</Button>
+                                  <Button variant="destructive">
+                                    Revoke Invite
+                                  </Button>
+                                </div>
+                              </div>
+                            </CustomModal>
+                          </div>
                         </TableCell>
-                        <TableCell>Active</TableCell>
-                        <TableCell>dd</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

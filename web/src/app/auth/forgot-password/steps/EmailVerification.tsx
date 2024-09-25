@@ -11,12 +11,16 @@ import { MailOpen } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
-export const EnterVerification = () => {
+export const EnterVerification = ({
+  goToNextStep,
+}: {
+  goToNextStep: () => void;
+}) => {
   return (
     <div className="w-full">
       <div className="flex items-center justify-center">
-        <div className="bg-primary p-5 rounded-md">
-          <MailOpen size={40} stroke="white" />
+        <div className="bg-primary p-3 rounded-md">
+          <MailOpen size={60} stroke="white" />
         </div>
       </div>
 
@@ -44,7 +48,9 @@ export const EnterVerification = () => {
           </InputOTPGroup>
         </InputOTP>
 
-        <Button className="w-full">Continue</Button>
+        <Button className="w-full" onClick={goToNextStep}>
+          Continue
+        </Button>
 
         <p className="text-center text-sm">
           Didn’t receive the email?{" "}

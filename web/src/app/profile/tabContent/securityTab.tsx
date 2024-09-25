@@ -52,6 +52,13 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
 
   return (
     <>
+      <div className="flex py-8 border-b flex-col">
+        <h3>Password</h3>
+        <p className="pt-1 text-sm">
+          Please enter your current password to change your password
+        </p>
+      </div>
+
       <div className="py-8 border-b flex flex-col gap-5">
         <div className="flex items-center">
           <div className="w-[500px] text-sm">

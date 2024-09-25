@@ -82,7 +82,7 @@ export function CCPairStatus({
     );
   } else if (status == "in_progress") {
     badge = (
-      <Badge variant="secondary">
+      <Badge>
         <CirclePause size={14} className="mr-0.5" /> In Progress
       </Badge>
     );

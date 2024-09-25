@@ -23,10 +23,11 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Divider, Text, Title, Button } from "@tremor/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
+import { Divider } from "@/components/Divider";
+import { Button } from "@/components/ui/button";
 
 // Copied from the `extract_jira_project` function
 const extractJiraProject = (url: string): string | null => {
@@ -111,7 +112,6 @@ const Main = () => {
               {jiraCredential.credential_json?.jira_api_token}
             </p>
             <Button
-              className="p-1 ml-1 rounded-full hover:bg-gray-700"
               onClick={async () => {
                 if (jiraConnectorIndexingStatuses.length > 0) {
                   toast({
@@ -139,7 +139,7 @@ const Main = () => {
                 }
                 refreshCredentials();
               }}
-              variant="light"
+              variant="destructive"
             >
               <TrashIcon />
             </Button>
@@ -232,7 +232,7 @@ const Main = () => {
       {jiraCredential ? (
         <>
           {" "}
-          <Text className="mb-4">
+          <p className="mb-4">
             Specify any link to a Jira page below and click &quot;Index&quot; to
             Index. Based on the provided link, we will index the ENTIRE PROJECT,
             not just the specified page. For example, entering{" "}
@@ -241,13 +241,13 @@ const Main = () => {
             </a>
             and clicking the Index button will index the whole <i>DAN</i> Jira
             project.
-          </Text>
+          </p>
           {jiraConnectorIndexingStatuses.length > 0 && (
             <>
-              <Text className="mb-2">
+              <p className="mb-2">
                 We pull the latest pages and comments from each space listed
                 below every <b>10</b> minutes.
-              </Text>
+              </p>
               <div className="mb-2">
                 <ConnectorsTable<
                   JiraConfig,

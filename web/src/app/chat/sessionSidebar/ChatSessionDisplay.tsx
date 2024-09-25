@@ -149,15 +149,7 @@ export function ChatSessionDisplay({
                                         existingSharedStatus={
                                           chatSession.shared_status
                                         }
-                                      >
-                                        <Button
-                                          variant="ghost"
-                                          className="w-full flex justify-start hover:bg-primary hover:text-inverted"
-                                        >
-                                          <Share2 className="mr-2" size={16} />
-                                          Share
-                                        </Button>
-                                      </ShareChatSessionModal>
+                                      />
                                     )}
                                     <Button
                                       variant="ghost"
