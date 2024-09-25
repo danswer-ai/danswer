@@ -72,12 +72,9 @@ def get_default_llms(
     if DISABLE_GENERATIVE_AI:
         raise GenAIDisabledException()
 
-    if db_session is None:
-        with get_session_context_manager() as db_session:
-            llm_provider = fetch_default_provider(db_session)
-    else:
-        llm_provider = fetch_default_provider(db_session)
 
+    with get_session_context_manager() as db_session:
+        llm_provider = fetch_default_provider(db_session)
 
     if not llm_provider:
         raise ValueError("No default LLM provider found")

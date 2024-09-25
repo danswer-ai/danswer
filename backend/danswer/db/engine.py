@@ -196,7 +196,9 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
 global_tenant_id = "650a1472-4101-497c-b5f1-5dfe1b067730"
 
 def get_session_context_manager() -> ContextManager[Session]:
-    return contextlib.contextmanager(get_session)()
+    global global_tenant_id
+    return contextlib.contextmanager(lambda: get_session(override_tenant_id=global_tenant_id))()
+
 
 def get_current_tenant_id(request: Request) -> str | None:
     if not MULTI_TENANT:
@@ -234,9 +236,9 @@ def get_current_tenant_id(request: Request) -> str | None:
         logger.exception(f"Unexpected error in get_current_tenant_id: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-def get_session(tenant_id: str | None= Depends(get_current_tenant_id)) -> Generator[Session, None, None]:
+def get_session(tenant_id: str | None= Depends(get_current_tenant_id), override_tenant_id: str | None = None) -> Generator[Session, None, None]:
 
-    with Session(get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False) as session:
+    with Session(get_sqlalchemy_engine(schema=override_tenant_id or tenant_id), expire_on_commit=False) as session:
         yield session
     # finally:
         # current_tenant_id.reset(tenant_id)
