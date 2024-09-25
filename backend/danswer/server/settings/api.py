@@ -3,7 +3,6 @@ from danswer.db.engine import get_sqlalchemy_engine
 from typing import cast
 from fastapi import APIRouter
 from fastapi import Depends
-from fastapi import Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -38,7 +37,6 @@ from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
 from danswer.utils.logger import setup_logger
 from fastapi.responses import JSONResponse
-from fastapi.responses import Response
 from danswer.db.engine import get_async_session
 import subprocess
 import contextlib

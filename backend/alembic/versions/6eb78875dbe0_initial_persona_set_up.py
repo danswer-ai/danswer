@@ -6,7 +6,6 @@ Create Date: 2024-09-25 12:47:44.877589
 
 """
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
 
@@ -17,137 +16,102 @@ branch_labels = None
 depends_on = None
 
 
+from sqlalchemy import Table, MetaData
 
+# Import tables
+metadata = MetaData()
+tool_table = Table('tool', metadata, autoload_with=op.get_bind())
+prompt_table = Table('prompt', metadata, autoload_with=op.get_bind())
+input_prompt_table = Table('inputprompt', metadata, autoload_with=op.get_bind())
+persona_table = Table('persona', metadata, autoload_with=op.get_bind())
 
+# Create a session
+session = Session(bind=op.get_bind())
 
 def upgrade() -> None:
-    # -------- Insert Tools --------
 
-    # Ensure 'ImageGenerationTool' exists in the tool table
-    image_gen_tool_name = 'ImageGenerationTool'
-    existing_tool = session.execute(
-        sa.select(tool_table.c.id).where(tool_table.c.name == image_gen_tool_name)
-    ).fetchone()
 
-    if not existing_tool:
-        result = session.execute(
-            tool_table.insert().values(
-                name=image_gen_tool_name,
-                display_name='Image Generator',
-                description='Generates images based on descriptions',
-                builtin_tool=True,
-                is_public=True,
-            )
-        )
-        image_gen_tool_id = result.inserted_primary_key[0]
-    else:
-        image_gen_tool_id = existing_tool[0]
+    # Define the new tool
+    new_tool = {
+        'name': 'YourToolName',
+        'description': 'Description of your tool',
+        'in_code_tool_id': None,  # Or provide if applicable
+        'display_name': 'Your Tool Display Name',
+        'openapi_schema': None,  # Or provide OpenAPI schema if needed
+        'user_id': None,  # Associate with a user if necessary
+    }
 
-    # -------- Insert Personas --------
+    # Insert the tool
+    session.execute(
+        tool_table.insert().values(**new_tool)
+    )
 
-    personas = personas_data.get('personas', [])
-    for persona in personas:
-        persona_id = persona.get('id')
-        # Check if persona already exists
-        existing_persona = session.execute(
-            sa.select(persona_table.c.id).where(persona_table.c.id == persona_id)
-        ).fetchone()
+    # -------- Insert Prompt --------
 
-        persona_values = {
-            'id': persona_id,
-            'name': persona['name'],
-            'description': persona.get('description', '').strip(),
-            'num_chunks': persona.get('num_chunks'),
-            'llm_relevance_filter': persona.get('llm_relevance_filter', False),
-            'llm_filter_extraction': persona.get('llm_filter_extraction', False),
-            'recency_bias': persona.get('recency_bias'),
-            'icon_shape': persona.get('icon_shape'),
-            'icon_color': persona.get('icon_color'),
-            'display_priority': persona.get('display_priority'),
-            'is_visible': persona.get('is_visible', True),
-            'builtin_persona': True,
-            'is_public': True,
-            'image_generation': persona.get('image_generation', False),
-            'llm_model_provider_override': persona.get('llm_model_provider_override'),
-            'llm_model_version_override': persona.get('llm_model_version_override'),
-        }
+    # Define the new prompt
+    new_prompt = {
+        'name': 'YourPromptName',
+        'description': 'Description of your prompt',
+        'system_prompt': 'System prompt content',
+        'task_prompt': 'Task prompt content',
+        'include_citations': True,
+        'datetime_aware': True,
+        'default_prompt': False,
+        'deleted': False,
+        'user_id': None,
+    }
 
-        if not existing_persona:
-            # Insert new persona
-            session.execute(
-                persona_table.insert().values(**persona_values)
-            )
-        else:
-            # Update existing persona
-            session.execute(
-                persona_table.update()
-                .where(persona_table.c.id == persona_id)
-                .values(**persona_values)
-            )
+    # Insert the prompt
+    session.execute(
+        prompt_table.insert().values(**new_prompt)
+    )
 
-        # -------- Associate Personas with Tools --------
+    # -------- Insert Input Prompt --------
 
-        tool_ids = []
-        if persona.get('image_generation'):
-            tool_ids.append(image_gen_tool_id)
+    # Define the new input prompt
+    new_input_prompt = {
+        'prompt': 'YourInputPrompt',
+        'content': 'Your input prompt content',
+        'active': True,
+        'is_public': True,
+        'user_id': None,
+    }
 
-        # Associate persona with tools
-        for tool_id in tool_ids:
-            # Check if association already exists
-            existing_association = session.execute(
-                sa.select(persona_tool_association_table.c.persona_id)
-                .where(
-                    (persona_tool_association_table.c.persona_id == persona_id) &
-                    (persona_tool_association_table.c.tool_id == tool_id)
-                )
-            ).fetchone()
+    # Insert the input prompt
+    session.execute(
+        input_prompt_table.insert().values(**new_input_prompt)
+    )
 
-            if not existing_association:
-                session.execute(
-                    persona_tool_association_table.insert().values(
-                        persona_id=persona_id,
-                        tool_id=tool_id,
-                    )
-                )
+    # -------- Insert Persona --------
 
-    # -------- Insert Input Prompts --------
+    # Define the new persona
+    new_persona = {
+        'name': 'YourPersonaName',
+        'description': 'Description of your persona',
+        'num_chunks': 10,
+        'llm_relevance_filter': True,
+        'llm_filter_extraction': True,
+        'recency_bias': 'auto',
+        'icon_shape': 12345,
+        'icon_color': '#FF0000',
+        'display_priority': 1,
+        'is_visible': True,
+        'default_persona': False,
+        'deleted': False,
+        'user_id': None,
+        "is_public": True,
+        "chunks_above": 0, 
+        "chunks_below": 0,
+    }
 
-    input_prompts = input_prompts_data.get('input_prompts', [])
-    for input_prompt in input_prompts:
-        input_prompt_id = input_prompt.get('id')
-        # Check if input prompt already exists
-        existing_input_prompt = session.execute(
-            sa.select(input_prompt_table.c.id).where(input_prompt_table.c.id == input_prompt_id)
-        ).fetchone()
-
-        input_prompt_values = {
-            'id': input_prompt_id,
-            'prompt': input_prompt['prompt'],
-            'content': input_prompt['content'],
-            'is_public': input_prompt.get('is_public', True),
-            'active': input_prompt.get('active', True),
-        }
-
-        if not existing_input_prompt:
-            # Insert new input prompt
-            session.execute(
-                input_prompt_table.insert().values(**input_prompt_values)
-            )
-        else:
-            # Update existing input prompt
-            session.execute(
-                input_prompt_table.update()
-                .where(input_prompt_table.c.id == input_prompt_id)
-                .values(**input_prompt_values)
-            )
+    # Insert the persona
+    session.execute(
+        persona_table.insert().values(**new_persona)
+    )
 
     # Commit the session
     session.commit()
 
-def downgrade():
-    # Optional: Implement logic to remove the inserted data if necessary
-    pass
-
-
 def downgrade() -> None:
+    # Implement logic to remove the inserted data if necessary
     pass

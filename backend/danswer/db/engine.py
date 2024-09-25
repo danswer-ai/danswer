@@ -1,7 +1,6 @@
 import contextvars
 from contextvars import ContextVar
 
-from fastapi import Depends
 from fastapi import Request, HTTPException
 import contextlib
 import time
@@ -159,7 +158,7 @@ _engines = {}
 def get_sqlalchemy_engine(schema: str | None = DEFAULT_SCHEMA) -> Engine:
     if schema is None:
         schema = DEFAULT_SCHEMA
-    
+
     global _engines
     if schema not in _engines:
         connection_string = build_connection_string(
@@ -241,12 +240,7 @@ def get_session(tenant_id: str | None = None, override_tenant_id: str | None = N
     with Session(get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False) as session:
         yield session
 
-async def get_async_session(tenant_id: str | None = None, override_tenant_id: str | None = None) -> AsyncGenerator[AsyncSession, None]:
-    if override_tenant_id:
-        tenant_id = override_tenant_id
-    else:
-        tenant_id = current_tenant_id.get()
-
+async def get_async_session(tenant_id: str | None = None) -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
@@ -259,6 +253,7 @@ async def warm_up_connections(
     connections = [
         sync_postgres_engine.connect() for _ in range(sync_connections_to_warm_up)
     ]
+
     for conn in connections:
         conn.execute(text("SELECT 1"))
     for conn in connections:
