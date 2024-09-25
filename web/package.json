@@ -73,10 +73,12 @@
     "typescript": "5.0.3",
     "use-debounce": "^10.0.2",
     "uuid": "^9.0.1",
-    "yup": "^1.1.1"
+    "yup": "^1.1.1",
+    "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
+    "@types/zxcvbn": "^4.4.5",
     "eslint": "^8.48.0",
     "eslint-config-next": "^14.1.0",
     "prettier": "^3.3.3",

@@ -61,6 +61,8 @@ export function TextFormField({
   fontSize,
   hideError,
   fullWidth,
+  onFocus,
+  onBlur,
 }: {
   name: string;
   label?: string;
@@ -79,6 +81,12 @@ export function TextFormField({
   fontSize?: "text-sm" | "text-base" | "text-lg";
   hideError?: boolean;
   fullWidth?: boolean;
+  onFocus?: (
+    e: React.FocusEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) => void;
+  onBlur?: (
+    e: React.FocusEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) => void;
 }) {
   let heightString = defaultHeight || "";
   if (isTextArea && !heightString) {
@@ -113,6 +121,8 @@ export function TextFormField({
               placeholder={placeholder}
               autoComplete={autoCompleteDisabled ? "off" : undefined}
               {...(onChange ? { onChange } : {})}
+              onFocus={onFocus}
+              onBlur={onBlur}
               className={isTextArea ? "max-h-[1000px]" : ""}
             />
           );
