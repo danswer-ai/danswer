@@ -270,7 +270,7 @@ ALLOW_SIMULTANEOUS_PRUNING = (
     os.environ.get("ALLOW_SIMULTANEOUS_PRUNING", "").lower() == "true"
 )
 
-# This is the maxiumum rate at which documents are queried for a pruning job. 0 disables the limitation.
+# This is the maximum rate at which documents are queried for a pruning job. 0 disables the limitation.
 MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE = int(
     os.environ.get("MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE", 0)
 )
