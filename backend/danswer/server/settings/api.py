@@ -1,3 +1,4 @@
+from fastapi import Body
 from danswer.db.engine import get_sqlalchemy_engine
 from typing import cast
 from fastapi import APIRouter
@@ -107,8 +108,8 @@ def authenticate_request(func: Callable) -> Callable:
             raise HTTPException(status_code=401, detail="Invalid token")
 
         return func(request, *args, **kwargs)
-
     return wrapper
+
 
 @basic_router.post("/tenants/create")
 @authenticate_request
@@ -165,8 +166,8 @@ async def check_schema_exists(tenant_id: str) -> bool:
 
 @basic_router.post("/auth/sso-callback")
 async def sso_callback(
-    response: Response,
-    sso_token: str = Query(..., alias="sso_token"),
+    request: Request,
+    sso_token: str = Body(..., embed=True),
     user_manager: UserManager = Depends(get_user_manager),
 ) -> JSONResponse:
     logger.info("SSO callback initiated")
@@ -181,12 +182,10 @@ async def sso_callback(
     tenant_id = payload["tenant_id"]
     logger.info(f"Checking schema for tenant: {tenant_id}")
     # Check if tenant schema exists
-
     schema_exists = await check_schema_exists(tenant_id)
     if not schema_exists:
         logger.info(f"Schema does not exist for tenant: {tenant_id}")
-        raise HTTPException(status_code=403, detail="Forbidden")
-
+        raise HTTPException(status_code=403, detail="Your Danswer app has not been set up yet!")
 
     session_token = await create_user_session(user, payload["tenant_id"])
     logger.info(f"Session token created for user: {user.email}")
@@ -203,32 +202,55 @@ async def sso_callback(
         httponly=True,
         samesite="lax",
     )
-    print(session_token)
     logger.info("Session cookie set")
     logger.info("SSO callback completed successfully")
     return response
-
-
 # @basic_router.post("/auth/sso-callback")
 # async def sso_callback(
+#     response: Response,
 #     sso_token: str = Query(..., alias="sso_token"),
-#     strategy: Strategy = Depends(get_database_strategy),
 #     user_manager: UserManager = Depends(get_user_manager),
-# ):
+# ) -> JSONResponse:
+#     print("I am in the sso callback")
+#     logger.info("SSO callback initiated")
 #     payload = verify_sso_token(sso_token)
+#     logger.info(f"SSO token verified for email: {payload['email']}")
 
 #     user = await user_manager.sso_authenticate(
 #         payload["email"], payload["user_id"], payload["tenant_id"]
 #     )
+#     logger.info(f"User authenticated: {user.email}")
 
-#     session_token = await create_user_session(user, payload["tenant_id"], strategy)
-#     logger.info(f"Session token created: {session_token[:10]}...")
+#     tenant_id = payload["tenant_id"]
+#     logger.info(f"Checking schema for tenant: {tenant_id}")
+#     # Check if tenant schema exists
 
-#     return {
-#         "session_token": session_token,
-#         "max_age": SESSION_EXPIRE_TIME_SECONDS,
-#         "domain": WEB_DOMAIN.split("://")[-1],
-#     }
+#     schema_exists = await check_schema_exists(tenant_id)
+#     if not schema_exists:
+#         logger.info(f"Schema does not exist for tenant: {tenant_id}")
+#         raise HTTPException(status_code=403, detail="Forbidden")
+
+
+#     session_token = await create_user_session(user, payload["tenant_id"])
+#     logger.info(f"Session token created for user: {user.email}")
+
+#     # Set the session cookie with proper flags
+#     response = JSONResponse(content={"message": "Authentication successful"})
+#     response.set_cookie(
+#         key="tenant_details",
+#         value=session_token,
+#         max_age=SESSION_EXPIRE_TIME_SECONDS,
+#         expires=SESSION_EXPIRE_TIME_SECONDS,
+#         path="/",
+#         secure=False,  # Set to True in production with HTTPS
+#         httponly=True,
+#         samesite="lax",
+#     )
+#     print(session_token)
+#     logger.info("Session cookie set")
+#     logger.info("SSO callback completed successfully")
+#     return response
+
 
 
 @admin_router.put("")

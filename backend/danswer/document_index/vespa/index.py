@@ -233,7 +233,6 @@ class VespaIndex(DocumentIndex):
                 )
 
         all_doc_ids = {chunk.source_document.id for chunk in cleaned_chunks}
-
         return {
             DocumentInsertionRecord(
                 document_id=doc_id,

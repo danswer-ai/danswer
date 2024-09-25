@@ -77,6 +77,7 @@ def do_run_migrations(connection: Connection) -> None:
         context.run_migrations()
 
 async def run_async_migrations() -> None:
+    print("Running async migrations")
     """Run migrations in 'online' mode."""
     connectable = create_async_engine(
         build_connection_string(),

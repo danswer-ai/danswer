@@ -1,5 +1,4 @@
 "use client";
-import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, Text } from "@tremor/react";
@@ -13,10 +12,7 @@ export default function SSOCallback() {
 
   useEffect(() => {
     const verifyToken = async () => {
-
-      const hash = window.location.hash;
-      const params = new URLSearchParams(hash.substring(1));
-      const ssoToken = params.get("sso_token");
+      const ssoToken = searchParams.get("sso_token");
 
       if (!ssoToken) {
         setError("No SSO token found");
@@ -26,27 +22,23 @@ export default function SSOCallback() {
       try {
         setAuthStatus("Verifying SSO token...");
         const response = await fetch(
-          `/api/settings/auth/sso-callback?sso_token=${ssoToken}`,
+          `/api/settings/auth/sso-callback`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             credentials: "include", // Ensure cookies are included in requests
+            body: JSON.stringify({ sso_token: ssoToken }),
           }
         );
         if (response.ok) {
           setAuthStatus("Authentication successful!");
-          // Log response headers
-          response.headers.forEach((value, key) => {
-            console.log(`${key}: ${value}`);
-          });
-
-          // Redirect to the dashboard
-          router.replace("/admin/configuration/llm");
+          // Redirect to the dashboard or desired page
+          router.replace("/dashboard");
         } else {
           const errorData = await response.json();
-          console.error(errorData);
+          console.log('seeting error', errorData)
           setError(errorData.detail || "Authentication failed");
         }
       } catch (error) {
@@ -57,6 +49,7 @@ export default function SSOCallback() {
 
     verifyToken();
   }, [router, searchParams]);
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-background-50 to-blue-50">
