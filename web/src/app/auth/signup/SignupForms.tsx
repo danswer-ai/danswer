@@ -11,34 +11,25 @@ import { TextFormField } from "@/components/admin/connectors/Field";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import zxcvbn from "zxcvbn";
 import { PasswordRequirements } from "./PasswordRequirements";
-
-const passwordHasUppercase = (password: string) => /[A-Z]/.test(password);
-const passwordHasNumberOrSpecialChar = (password: string) =>
-  /[0-9]/.test(password) || /[^A-Za-z0-9]/.test(password);
+import { usePasswordValidation } from "@/hooks/usePasswordValidation"; // Import the custom hook
 
 export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(0);
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const [passwordFeedback, setPasswordFeedback] = useState<string[]>([]);
-  const [passwordWarning, setPasswordWarning] = useState<string>("");
 
-  const [hasUppercase, setHasUppercase] = useState(false);
-  const [hasNumberOrSpecialChar, setHasNumberOrSpecialChar] = useState(false);
-
-  const calculatePasswordStrength = (password: string) => {
-    const result = zxcvbn(password);
-
-    setHasUppercase(passwordHasUppercase(password));
-    setHasNumberOrSpecialChar(passwordHasNumberOrSpecialChar(password));
-    setPasswordStrength(result.score);
-    setPasswordFeedback(result.feedback.suggestions || []);
-    setPasswordWarning(result.feedback.warning || "");
-  };
+  // Use the custom hook
+  const {
+    passwordStrength,
+    passwordFocused,
+    passwordFeedback,
+    passwordWarning,
+    hasUppercase,
+    hasNumberOrSpecialChar,
+    calculatePasswordStrength,
+    setPasswordFocused,
+  } = usePasswordValidation();
 
   return (
     <>
@@ -70,9 +61,8 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
           ) {
             setPasswordFocused(true);
             toast({
-              title: "Weak Password",
-              description:
-                "Please make sure the password has at least 8 characters, includes uppercase and lowercase letters, and contains either a number or a special character.",
+              title: "Password doesn't meet requirements",
+              description: "Ensure your password meets all the criteria.",
               variant: "destructive",
             });
             return;

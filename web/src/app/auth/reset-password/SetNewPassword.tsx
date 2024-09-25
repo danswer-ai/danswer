@@ -8,6 +8,7 @@ import { ChevronLeft, CircleCheck, RectangleEllipsis } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { FormEvent, useEffect, useState } from "react";
+import { usePasswordValidation } from "@/hooks/usePasswordValidation";
 
 export const SetNewPasswordForms = () => {
   const { toast } = useToast();
@@ -18,17 +19,24 @@ export const SetNewPasswordForms = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [isMinLength, setIsMinLength] = useState(false);
-  const [hasCapitalLetter, setHasCapitalLetter] = useState(false);
-  const [hasNumberOrSpecialChar, setHasNumberOrSpecialChar] = useState(false);
+  const {
+    passwordStrength,
+    hasUppercase,
+    hasNumberOrSpecialChar,
+    calculatePasswordStrength,
+    passwordFeedback,
+    passwordWarning,
+    setPasswordFocused,
+  } = usePasswordValidation();
 
   const handleOnSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!isMinLength || !hasCapitalLetter || !hasNumberOrSpecialChar) {
+    if (!(newPassword.length >= 8 && hasUppercase && hasNumberOrSpecialChar)) {
       toast({
         title: "Password doesn't meet requirements",
-        description: "Ensure your password meets all the criteria.",
+        description:
+          passwordWarning || "Ensure your password meets all the criteria.",
         variant: "destructive",
       });
       return;
@@ -74,9 +82,7 @@ export const SetNewPasswordForms = () => {
   }, []);
 
   useEffect(() => {
-    setIsMinLength(newPassword.length >= 8);
-    setHasCapitalLetter(/[A-Z]/.test(newPassword));
-    setHasNumberOrSpecialChar(/[0-9!@#$%^&*]/.test(newPassword));
+    calculatePasswordStrength(newPassword); // Calculate password strength on change
   }, [newPassword]);
 
   return (
@@ -107,6 +113,8 @@ export const SetNewPasswordForms = () => {
             onChange={(e) => {
               setNewPassword(e.target.value);
             }}
+            onFocus={() => setPasswordFocused(true)}
+            onBlur={() => setPasswordFocused(false)}
           />
         </div>
 
@@ -131,13 +139,16 @@ export const SetNewPasswordForms = () => {
 
           <div className="text-sm text-subtle pt-4">
             <div className="flex items-center gap-2">
-              <CircleCheck size={16} color={isMinLength ? "#69c57d" : "gray"} />
+              <CircleCheck
+                size={16}
+                color={newPassword.length >= 8 ? "#69c57d" : "gray"}
+              />
               <p>At least 8 characters</p>
             </div>
             <div className="flex items-center gap-2">
               <CircleCheck
                 size={16}
-                color={hasCapitalLetter ? "#69c57d" : "gray"}
+                color={hasUppercase ? "#69c57d" : "gray"}
               />
               <p>At least 1 Capital letter</p>
             </div>
@@ -148,6 +159,9 @@ export const SetNewPasswordForms = () => {
               />
               <p>At least 1 number or special character</p>
             </div>
+            {passwordWarning && (
+              <p className="text-red-500">{passwordWarning}</p>
+            )}
           </div>
         </div>
 
