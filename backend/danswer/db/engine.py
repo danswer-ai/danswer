@@ -1,3 +1,5 @@
+from contextvars import ContextVar
+
 from fastapi import Depends
 from fastapi import Request, HTTPException
 import contextlib
@@ -39,6 +41,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 logger = setup_logger()
+
+current_tenant_id: ContextVar[str] = ContextVar('current_tenant_id')
+
 
 SYNC_DB_API = "psycopg2"
 ASYNC_DB_API = "asyncpg"
@@ -201,6 +206,7 @@ def get_current_tenant_id(request: Request) -> str:
             logger.warning("Invalid token: tenant_id missing")
             raise HTTPException(status_code=400, detail="Invalid token: tenant_id missing")
         logger.info(f"Valid tenant_id found: {tenant_id}")
+        current_tenant_id.set(tenant_id)
         return tenant_id
     except DecodeError as e:
         logger.error(f"JWT decode error: {str(e)}")
@@ -212,17 +218,18 @@ def get_current_tenant_id(request: Request) -> str:
         logger.exception(f"Unexpected error in get_current_tenant_id: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-
 def get_session(tenant_id: str | None= Depends(get_current_tenant_id)) -> Generator[Session, None, None]:
+    # try:
     with Session(get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False) as session:
         yield session
+    # finally:
+        # current_tenant_id.reset(tenant_id)
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
         yield async_session
-
 
 async def warm_up_connections(
     sync_connections_to_warm_up: int = 20, async_connections_to_warm_up: int = 20
@@ -245,7 +252,6 @@ async def warm_up_connections(
         await async_conn.execute(text("SELECT 1"))
     for async_conn in async_connections:
         await async_conn.close()
-
 
 def get_session_factory() -> sessionmaker[Session]:
     global SessionFactory

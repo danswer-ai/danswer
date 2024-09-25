@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, Text } from "@tremor/react";
 import { Logo } from "@/components/Logo";
@@ -10,9 +10,26 @@ export default function SSOCallback() {
   const [error, setError] = useState<string | null>(null);
   const [authStatus, setAuthStatus] = useState<string>("Authenticating...");
 
+  const verificationStartedRef = useRef(false);
+
   useEffect(() => {
     const verifyToken = async () => {
-      const ssoToken = searchParams.get("sso_token");
+      if (verificationStartedRef.current) {
+        return;
+      }
+      verificationStartedRef.current = true;
+      // Extract the SSO token from the URL hash
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const ssoToken = hashParams.get("sso_token");
+
+      if (!ssoToken) {
+        setError("No SSO token found in URL hash");
+        return;
+      }
+
+      // Remove the SSO token from the URL for security
+      window.history.replaceState(null, '', window.location.pathname);
+      // const ssoToken = searchParams.get("sso_token");
 
       if (!ssoToken) {
         setError("No SSO token found");
@@ -31,11 +48,12 @@ export default function SSOCallback() {
             credentials: "include", // Ensure cookies are included in requests
             body: JSON.stringify({ sso_token: ssoToken }),
           }
-        );
+        )
+
         if (response.ok) {
           setAuthStatus("Authentication successful!");
           // Redirect to the dashboard or desired page
-          router.replace("/dashboard");
+          router.replace("/admin/configuration/llm");
         } else {
           const errorData = await response.json();
           console.log('seeting error', errorData)

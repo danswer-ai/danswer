@@ -147,7 +147,7 @@ function AssistantListItem({
             </div>
 
             <div className="text-sm mt-2">{assistant.description}</div>
-            <div className="mt-2 flex items-start gap-y-2 flex-col gap-x-3">
+            <div className="mt-2 flex flex-none items-start gap-y-2 flex-col gap-x-3">
               <AssistantSharedStatusDisplay assistant={assistant} user={user} />
               {assistant.tools.length != 0 && (
                 <AssistantTools list assistant={assistant} />
@@ -174,6 +174,7 @@ function AssistantListItem({
               >
                 <FiEdit2 size={16} />
               </Link>
+
 
               <DefaultPopover
                 content={

@@ -52,27 +52,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("rate_limit_id", "user_group_id"),
     )
 
-    try:
-        settings_json = cast(
-            str, get_dynamic_config_store().load("token_budget_settings")
-        )
-        settings = json.loads(settings_json)
-
-        is_enabled = settings.get("enable_token_budget", False)
-        token_budget = settings.get("token_budget", -1)
-        period_hours = settings.get("period_hours", -1)
-
-        if is_enabled and token_budget > 0 and period_hours > 0:
-            op.execute(
-                f"INSERT INTO token_rate_limit \
-                    (enabled, token_budget, period_hours, scope) VALUES \
-                        ({is_enabled}, {token_budget}, {period_hours}, 'GLOBAL')"
-            )
-
-    except Exception:
-        # Ignore if the dynamic config is not found
-        pass
-
 
 def downgrade() -> None:
     op.drop_table("token_rate_limit__user_group")
