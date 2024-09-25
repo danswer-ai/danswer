@@ -61,6 +61,8 @@ class BasicCreateChatMessageWithHistoryRequest(ChunkContext):
 
 
 class SimpleDoc(BaseModel):
+    # TODO: Depricate this class entirely
+    # Only used for the api endpoint but its entirely contained within the SavedSearchDoc
     id: str
     semantic_identifier: str
     link: str | None
