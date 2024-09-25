@@ -54,7 +54,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="h-full flex relative flex-row">
-      <div className="hidden md:flex">
+      <div className="flex">
         <BarLayout user={user} />
       </div>
       <div className="h-full container overflow-y-auto">

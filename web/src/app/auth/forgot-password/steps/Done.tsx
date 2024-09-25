@@ -5,12 +5,16 @@ import { PartyPopper } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
-export const SuccessChangePassword = () => {
+export const SuccessChangePassword = ({
+  goToNextStep,
+}: {
+  goToNextStep: () => void;
+}) => {
   return (
     <div className="w-full">
       <div className="flex items-center justify-center">
-        <div className="bg-primary p-5 rounded-md">
-          <PartyPopper size={40} stroke="white" />
+        <div className="bg-primary p-3 rounded-md">
+          <PartyPopper size={60} stroke="white" />
         </div>
       </div>
 
@@ -25,7 +29,7 @@ export const SuccessChangePassword = () => {
       </div>
 
       <Link href="/auth/login">
-        <Button type="submit" className="w-full mt-6">
+        <Button type="submit" className="w-full mt-6" onClick={goToNextStep}>
           Continue
         </Button>
       </Link>

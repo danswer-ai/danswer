@@ -1,7 +1,6 @@
 "use client";
 
 import { CCPairBasicInfo, DocumentSet, User, Teamspace } from "@/lib/types";
-import { Divider, Italic, Text } from "@tremor/react";
 import {
   ArrayHelpers,
   ErrorMessage,
@@ -47,6 +46,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { Divider } from "@/components/Divider";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -547,7 +547,7 @@ export function AssistantEditor({
                                     )}
                                   />
                                 ) : (
-                                  <Italic className="text-sm">
+                                  <i className="text-sm">
                                     No Document Sets available.{" "}
                                     {user?.role !== "admin" && (
                                       <>
@@ -556,7 +556,7 @@ export function AssistantEditor({
                                         enMedD AI for assistance.
                                       </>
                                     )}
-                                  </Italic>
+                                  </i>
                                 )}
 
                                 <>

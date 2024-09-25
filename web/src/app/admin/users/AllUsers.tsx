@@ -174,7 +174,7 @@ export const AllUsers = ({ q }: { q: string }) => {
         <AddUserButton />
       </div>
 
-      <div className="w-full overflow-auto">
+      <div className="w-full overflow-x-auto">
         <Input
           placeholder="Search user..."
           value={searchQuery}
@@ -186,9 +186,9 @@ export const AllUsers = ({ q }: { q: string }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead>Space</TableHead>
+                  {/*    <TableHead>Space</TableHead> */}
                   <TableHead>Role</TableHead>
-                  <TableHead>Deactivate</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -210,24 +210,13 @@ export const AllUsers = ({ q }: { q: string }) => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Select>
-                        <SelectTrigger className="w-36">
-                          <SelectValue placeholder="Space" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="teamspace">Teamspace</SelectItem>
-                          <SelectItem value="workspace">Workspace</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
                       <Select
                         onValueChange={(value) =>
                           handleRoleChange(user.email, value)
                         }
                         value={user.role}
                       >
-                        <SelectTrigger className="w-28">
+                        <SelectTrigger className="w-32">
                           <SelectValue>
                             {user.role === "admin" ? "Admin" : "User"}
                           </SelectValue>
@@ -239,11 +228,13 @@ export const AllUsers = ({ q }: { q: string }) => {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <DeactivaterButton
-                        user={user}
-                        deactivate={user.status === UserStatus.live}
-                        mutate={mutate}
-                      />
+                      <div className="flex justify-end">
+                        <DeactivaterButton
+                          user={user}
+                          deactivate={user.status === UserStatus.live}
+                          mutate={mutate}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

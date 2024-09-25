@@ -1,6 +1,5 @@
 import { AssistantsTable } from "./AssistantTable";
 import Link from "next/link";
-import { Divider, Text, Title } from "@tremor/react";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Assistant } from "./interfaces";
@@ -40,22 +39,16 @@ export default async function Page() {
           <li>The documents that are used as context</li>
         </ul>
 
-        <div>
-          <Divider />
+        <h3 className="pt-4">Create an Assistant</h3>
+        <Link href="/admin/assistants/new" className="flex items-center">
+          <Button className="mt-2">
+            <SquarePlus size={16} />
+            New Assistant
+          </Button>
+        </Link>
 
-          <h3>Create an Assistant</h3>
-          <Link href="/admin/assistants/new" className="flex items-center">
-            <Button className="mt-2">
-              <SquarePlus size={16} />
-              New Assistant
-            </Button>
-          </Link>
-
-          <Divider />
-
-          <h3>Existing Assistants</h3>
-          <AssistantsTable assistants={assistants} />
-        </div>
+        <h3 className="pt-6">Existing Assistants</h3>
+        <AssistantsTable assistants={assistants} />
       </div>
     </div>
   );

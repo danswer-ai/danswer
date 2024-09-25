@@ -26,7 +26,7 @@ export function CopyButton({
             setTimeout(() => setIsCopyClicked(false), 3000);
           }}
           variant="ghost"
-          size="smallIcon"
+          size="icon"
         >
           {isCopyClicked ? <Check size={16} /> : <Copy size={16} />}
         </Button>
