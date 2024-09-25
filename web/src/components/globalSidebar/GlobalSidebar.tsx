@@ -60,7 +60,7 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
               delayDuration={0}
             >
               {workspaces?.workspace_name
-                ? workspaces?.workspace_name
+                ? workspaces.workspace_name
                 : "enMedD AI"}
             </CustomTooltip>
           </div>
