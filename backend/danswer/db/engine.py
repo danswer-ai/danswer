@@ -185,17 +185,22 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
     return _ASYNC_ENGINE
 
 
-def get_session_context_manager() -> ContextManager[Session]:
-    return contextlib.contextmanager(get_session)()
+global_tenant_id = ""
 
-def get_current_tenant_id(request: Request) -> str:
+def get_session_context_manager() -> ContextManager[Session]:
+
+    global global_tenant_id
+    return contextlib.contextmanager(lambda: get_session(override_tenant_id=global_tenant_id))()
+
+def get_current_tenant_id(request: Request) -> str | None:
     if not MULTI_TENANT:
         return DEFAULT_SCHEMA
 
     token = request.cookies.get("tenant_details")
     if not token:
         logger.warning("No token found in cookies")
-        raise HTTPException(status_code=401, detail="Authentication required")
+        return None
+        # raise HTTPException(status_code=401, detail="Authentication required")
 
     try:
         logger.info(f"Attempting to decode token: {token[:10]}...")  # Log only first 10 characters for security
@@ -207,6 +212,8 @@ def get_current_tenant_id(request: Request) -> str:
             raise HTTPException(status_code=400, detail="Invalid token: tenant_id missing")
         logger.info(f"Valid tenant_id found: {tenant_id}")
         current_tenant_id.set(tenant_id)
+        global global_tenant_id
+        global_tenant_id = tenant_id
         return tenant_id
     except DecodeError as e:
         logger.error(f"JWT decode error: {str(e)}")
@@ -218,9 +225,12 @@ def get_current_tenant_id(request: Request) -> str:
         logger.exception(f"Unexpected error in get_current_tenant_id: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-def get_session(tenant_id: str | None= Depends(get_current_tenant_id)) -> Generator[Session, None, None]:
+def get_session(tenant_id: str | None= Depends(get_current_tenant_id), override_tenant_id: str | None = None) -> Generator[Session, None, None]:
     # try:
-    with Session(get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False) as session:
+    if override_tenant_id:
+        print("OVERRIDE TENANT ID")
+        print(override_tenant_id)
+    with Session(get_sqlalchemy_engine(schema=override_tenant_id or tenant_id), expire_on_commit=False) as session:
         yield session
     # finally:
         # current_tenant_id.reset(tenant_id)

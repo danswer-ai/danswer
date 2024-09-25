@@ -296,6 +296,7 @@ async def is_disconnected(request: Request) -> Callable[[], bool]:
 def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
     request: Request,
+    db_session: Session = Depends(get_session),
     user: User | None = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
     is_disconnected_func: Callable[[], bool] = Depends(is_disconnected),
