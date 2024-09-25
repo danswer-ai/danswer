@@ -18,17 +18,33 @@ export const SetNewPasswordForms = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const [isMinLength, setIsMinLength] = useState(false);
+  const [hasCapitalLetter, setHasCapitalLetter] = useState(false);
+  const [hasNumberOrSpecialChar, setHasNumberOrSpecialChar] = useState(false);
+
   const handleOnSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (newPassword != confirmPassword) {
+
+    if (!isMinLength || !hasCapitalLetter || !hasNumberOrSpecialChar) {
+      toast({
+        title: "Password doesn't meet requirements",
+        description: "Ensure your password meets all the criteria.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
       toast({
         title: "Please check your new and confirm password again",
-        description: `You new password and current password must be the same`,
+        description: `Your new password and confirm password must be the same`,
         variant: "destructive",
       });
       setNewPassword("");
       setConfirmPassword("");
+      return;
     }
+
     const response = await fetch("/api/auth/reset-password", {
       headers: {
         "Content-Type": "application/json",
@@ -39,7 +55,8 @@ export const SetNewPasswordForms = () => {
         password: newPassword,
       }),
     });
-    if (response.status == 200) {
+
+    if (response.status === 200) {
       router.push("/auth/reset-password/success");
     } else {
       toast({
@@ -55,6 +72,13 @@ export const SetNewPasswordForms = () => {
       router.push("/");
     }
   }, []);
+
+  useEffect(() => {
+    setIsMinLength(newPassword.length >= 8);
+    setHasCapitalLetter(/[A-Z]/.test(newPassword));
+    setHasNumberOrSpecialChar(/[0-9!@#$%^&*]/.test(newPassword));
+  }, [newPassword]);
+
   return (
     <div className="w-full">
       <div className="flex items-center justify-center">
@@ -107,15 +131,21 @@ export const SetNewPasswordForms = () => {
 
           <div className="text-sm text-subtle pt-4">
             <div className="flex items-center gap-2">
-              <CircleCheck size={16} />
+              <CircleCheck size={16} color={isMinLength ? "#69c57d" : "gray"} />
               <p>At least 8 characters</p>
             </div>
             <div className="flex items-center gap-2">
-              <CircleCheck size={16} />
+              <CircleCheck
+                size={16}
+                color={hasCapitalLetter ? "#69c57d" : "gray"}
+              />
               <p>At least 1 Capital letter</p>
             </div>
             <div className="flex items-center gap-2">
-              <CircleCheck size={16} />
+              <CircleCheck
+                size={16}
+                color={hasNumberOrSpecialChar ? "#69c57d" : "gray"}
+              />
               <p>At least 1 number or special character</p>
             </div>
           </div>

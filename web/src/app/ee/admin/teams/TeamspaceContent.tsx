@@ -130,11 +130,6 @@ export const TeamspaceContent = ({
           <div>No teamspaces match your search.</div>
         )}
       </div>
-      {/*{data.length > 0 && (
-        <div className="pt-5">
-          <TeamspacesTable teamspaces={data} refresh={refreshTeamspaces} />
-        </div>
-      )} */}
     </div>
   );
 };
