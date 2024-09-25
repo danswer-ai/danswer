@@ -9,7 +9,6 @@ import json
 from typing import cast
 from alembic import op
 import sqlalchemy as sa
-from danswer.dynamic_configs.factory import get_dynamic_config_store
 
 # revision identifiers, used by Alembic.
 revision = "703313b75876"
@@ -69,9 +68,6 @@ def upgrade() -> None:
                     (enabled, token_budget, period_hours, scope) VALUES \
                         ({is_enabled}, {token_budget}, {period_hours}, 'GLOBAL')"
             )
-
-        # Delete the dynamic config
-        get_dynamic_config_store().delete("token_budget_settings")
 
     except Exception:
         # Ignore if the dynamic config is not found

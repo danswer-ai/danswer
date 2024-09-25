@@ -10,8 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.sql import table
 from sqlalchemy.dialects import postgresql
 import json
-
-from danswer.utils.encryption import encrypt_string_to_bytes
+from alembic.versions.utils import encrypt_string
 
 # revision identifiers, used by Alembic.
 revision = "0a98909f2757"
@@ -57,7 +56,7 @@ def upgrade() -> None:
     # In other words, this upgrade does not apply the encryption. Porting existing sensitive data
     # and key rotation currently is not supported and will come out in the future
     for row_id, creds, _ in results:
-        creds_binary = encrypt_string_to_bytes(json.dumps(creds))
+        creds_binary = encrypt_string(json.dumps(creds))
         connection.execute(
             creds_table.update()
             .where(creds_table.c.id == row_id)
@@ -86,7 +85,7 @@ def upgrade() -> None:
     results = connection.execute(sa.select(llm_table))
 
     for row_id, api_key, _ in results:
-        llm_key = encrypt_string_to_bytes(api_key)
+        llm_key = encrypt_string(api_key)
         connection.execute(
             llm_table.update()
             .where(llm_table.c.id == row_id)

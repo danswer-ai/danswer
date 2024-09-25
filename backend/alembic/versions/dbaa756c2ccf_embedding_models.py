@@ -8,20 +8,13 @@ Create Date: 2024-01-25 17:12:31.813160
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import table, column, String, Integer, Boolean
-
-from danswer.db.search_settings import (
-    get_new_default_embedding_model,
-    get_old_default_embedding_model,
-    user_has_overridden_embedding_model,
-)
-from danswer.db.models import IndexModelStatus
+from alembic.versions.utils import IndexModelStatus
 
 # revision identifiers, used by Alembic.
 revision = "dbaa756c2ccf"
 down_revision = "7f726bad5367"
-branch_labels: None = None
-depends_on: None = None
-
+branch_labels = None
+depends_on = None
 
 def upgrade() -> None:
     op.create_table(
@@ -40,9 +33,32 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    # since all index attempts must be associated with an embedding model,
-    # need to put something in here to avoid nulls. On server startup,
-    # this value will be overriden
+
+    # Define the old default embedding model directly
+    old_embedding_model = {
+        "model_name": "sentence-transformers/all-distilroberta-v1",
+        "model_dim": 768,
+        "normalize": True,
+        "query_prefix": "",
+        "passage_prefix": "",
+        "index_name": "OPENSEARCH_INDEX_NAME",
+        "status": IndexModelStatus.PRESENT,
+    }
+
+    # Define the new default embedding model directly
+    new_embedding_model = {
+        "model_name": "sentence-transformers/all-mpnet-base-v2",
+        "model_dim": 768,
+        "normalize": False,
+        "query_prefix": "",
+        "passage_prefix": "",
+        "index_name": "OPENSEARCH_INDEX_NAME",
+        "status": IndexModelStatus.FUTURE,
+    }
+
+    # Assume the user has not overridden the embedding model
+    user_overridden_embedding_model = False
+
     EmbeddingModel = table(
         "embedding_model",
         column("id", Integer),
@@ -52,45 +68,23 @@ def upgrade() -> None:
         column("query_prefix", String),
         column("passage_prefix", String),
         column("index_name", String),
-        column(
-            "status", sa.Enum(IndexModelStatus, name="indexmodelstatus", native=False)
-        ),
+        column("status", sa.Enum(IndexModelStatus, name="indexmodelstatus", native=False)),
     )
-    # insert an embedding model row that corresponds to the embedding model
-    # the user selected via env variables before this change. This is needed since
-    # all index_attempts must be associated with an embedding model, so without this
-    # we will run into violations of non-null contraints
-    old_embedding_model = get_old_default_embedding_model()
+
+    # Insert the old embedding model
     op.bulk_insert(
         EmbeddingModel,
         [
-            {
-                "model_name": old_embedding_model.model_name,
-                "model_dim": old_embedding_model.model_dim,
-                "normalize": old_embedding_model.normalize,
-                "query_prefix": old_embedding_model.query_prefix,
-                "passage_prefix": old_embedding_model.passage_prefix,
-                "index_name": old_embedding_model.index_name,
-                "status": IndexModelStatus.PRESENT,
-            }
+            old_embedding_model
         ],
     )
-    # if the user has not overridden the default embedding model via env variables,
-    # insert the new default model into the database to auto-upgrade them
-    if not user_has_overridden_embedding_model():
-        new_embedding_model = get_new_default_embedding_model()
+
+    # If the user has not overridden the embedding model, insert the new default model
+    if not user_overridden_embedding_model:
         op.bulk_insert(
             EmbeddingModel,
             [
-                {
-                    "model_name": new_embedding_model.model_name,
-                    "model_dim": new_embedding_model.model_dim,
-                    "normalize": new_embedding_model.normalize,
-                    "query_prefix": new_embedding_model.query_prefix,
-                    "passage_prefix": new_embedding_model.passage_prefix,
-                    "index_name": new_embedding_model.index_name,
-                    "status": IndexModelStatus.FUTURE,
-                }
+                new_embedding_model
             ],
         )
 
@@ -128,7 +122,6 @@ def upgrade() -> None:
         unique=True,
         postgresql_where=sa.text("status = 'FUTURE'"),
     )
-
 
 def downgrade() -> None:
     op.drop_constraint(
