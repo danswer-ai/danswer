@@ -87,7 +87,7 @@ class PostgresBackedDynamicConfigStore(DynamicConfigStore):
                 )  # type: ignore
                 session.query(KVStore).filter_by(key=key).delete()  # just in case
                 session.add(obj)
-            session.commit()
+                session.commit()
 
     def load(self, key: str) -> JSON_ro:
         with self.get_session() as session:

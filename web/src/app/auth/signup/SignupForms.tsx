@@ -92,6 +92,13 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             setPasswordFocused(true);
             return;
           }
+          setIsLoading(false);
+          console.log(shouldVerify);
+          if (shouldVerify) {
+            router.push("/auth/waiting-on-verification");
+          } else {
+            router.push("/");
+          }
         }}
       >
         {({ isSubmitting, values, setFieldValue }) => (
