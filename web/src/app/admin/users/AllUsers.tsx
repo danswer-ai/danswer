@@ -186,7 +186,6 @@ export const AllUsers = ({ q }: { q: string }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  {/*    <TableHead>Space</TableHead> */}
                   <TableHead>Role</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
