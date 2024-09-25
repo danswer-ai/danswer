@@ -46,6 +46,7 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             values.email,
             values.password
           );
+
           if (!response.ok) {
             setIsLoading(false);
             const errorDetail = (await response.json()).detail;
@@ -62,13 +63,16 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             });
             return;
           }
-          setIsLoading(false);
-          console.log(shouldVerify);
-          if (shouldVerify) {
-            router.push("/auth/waiting-on-verification");
-          } else {
-            router.push("/");
+
+          const loginResponse = await basicLogin(values.email, values.password);
+          if (loginResponse.ok) {
+            if (shouldVerify) {
+              router.push("/auth/waiting-on-verification");
+            } else {
+              router.push("/");
+            }
           }
+          setIsLoading(false);
         }}
       >
         {({ isSubmitting, values }) => (
