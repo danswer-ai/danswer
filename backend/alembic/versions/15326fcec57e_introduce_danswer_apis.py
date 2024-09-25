@@ -8,7 +8,7 @@ Create Date: 2023-11-11 20:51:24.228999
 from alembic import op
 import sqlalchemy as sa
 
-from alembic.versions.utils import DocumentSource
+from alembic_utils import DocumentSource
 
 # revision identifiers, used by Alembic.
 revision = "15326fcec57e"

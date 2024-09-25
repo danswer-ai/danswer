@@ -10,7 +10,15 @@ import sqlalchemy as sa
 from sqlalchemy.sql import table
 from sqlalchemy.dialects import postgresql
 import json
-from alembic.versions.utils import encrypt_string
+import os
+
+print('zzzz')
+print("Current directory contents:")
+for item in os.listdir():
+    print(f"- {item}")
+
+
+from alembic_utils import encrypt_string
 
 # revision identifiers, used by Alembic.
 revision = "0a98909f2757"

@@ -8,7 +8,7 @@ Create Date: 2024-01-25 17:12:31.813160
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import table, column, String, Integer, Boolean
-from alembic.versions.utils import IndexModelStatus
+from alembic_utils import IndexModelStatus
 
 # revision identifiers, used by Alembic.
 revision = "dbaa756c2ccf"
