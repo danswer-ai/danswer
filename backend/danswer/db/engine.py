@@ -1,3 +1,4 @@
+import contextvars
 from contextvars import ContextVar
 
 from fastapi import Depends
@@ -192,30 +193,29 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
 
     return _ASYNC_ENGINE
 
-
 global_tenant_id = "650a1472-4101-497c-b5f1-5dfe1b067730"
+current_tenant_id = contextvars.ContextVar(
+    "current_tenant_id", default="650a1472-4101-497c-b5f1-5dfe1b067730"
+)
+
 
 def get_session_context_manager() -> ContextManager[Session]:
-    global global_tenant_id
-    return contextlib.contextmanager(lambda: get_session(override_tenant_id=global_tenant_id))()
-
+    tenant_id = current_tenant_id.get()
+    return contextlib.contextmanager(lambda: get_session(override_tenant_id=tenant_id))()
 
 def get_current_tenant_id(request: Request) -> str | None:
     if not MULTI_TENANT:
         return DEFAULT_SCHEMA
 
     token = request.cookies.get("tenant_details")
-    global global_tenant_id
     if not token:
-        logger.warning("zzzztoken found in cookies")
-        log_stack_trace()
-
-        print('returning', global_tenant_id)
-        return "650a1472-4101-497c-b5f1-5dfe1b067730"
-        # raise HTTPException(status_code=401, detail="Authentication required")
+        logger.warning("No token found in cookies")
+        tenant_id = current_tenant_id.get()
+        logger.info(f"Returning default tenant_id: {tenant_id}")
+        return tenant_id
 
     try:
-        logger.info(f"Attempting to decode token: {token[:10]}...")  # Log only first 10 characters for security
+        logger.info("Attempting to decode token")
         payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
         logger.info(f"Decoded payload: {payload}")
         tenant_id = payload.get("tenant_id")
@@ -224,26 +224,29 @@ def get_current_tenant_id(request: Request) -> str | None:
             raise HTTPException(status_code=400, detail="Invalid token: tenant_id missing")
         logger.info(f"Valid tenant_id found: {tenant_id}")
         current_tenant_id.set(tenant_id)
-        global_tenant_id = tenant_id
         return tenant_id
-    except DecodeError as e:
+    except (DecodeError, InvalidTokenError) as e:
         logger.error(f"JWT decode error: {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid token format")
-    except InvalidTokenError as e:
-        logger.error(f"Invalid token error: {str(e)}")
-        raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
         logger.exception(f"Unexpected error in get_current_tenant_id: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-def get_session(tenant_id: str | None= Depends(get_current_tenant_id), override_tenant_id: str | None = None) -> Generator[Session, None, None]:
+def get_session(tenant_id: str | None = None, override_tenant_id: str | None = None) -> Generator[Session, None, None]:
+    if override_tenant_id:
+        tenant_id = override_tenant_id
+    else:
+        tenant_id = current_tenant_id.get()
 
-    with Session(get_sqlalchemy_engine(schema=override_tenant_id or tenant_id), expire_on_commit=False) as session:
+    with Session(get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False) as session:
         yield session
-    # finally:
-        # current_tenant_id.reset(tenant_id)
 
-async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_async_session(tenant_id: str | None = None, override_tenant_id: str | None = None) -> AsyncGenerator[AsyncSession, None]:
+    if override_tenant_id:
+        tenant_id = override_tenant_id
+    else:
+        tenant_id = current_tenant_id.get()
+
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
