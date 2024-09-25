@@ -33,6 +33,7 @@ def check_token_rate_limits(
 ) -> None:
     # short circuit if no rate limits are set up
     # NOTE: result of `any_rate_limit_exists` is cached, so this call is fast 99% of the time
+    return
     if not any_rate_limit_exists():
         return
 

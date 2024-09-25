@@ -51,6 +51,8 @@ def get_chat_session_by_id(
     is_shared: bool = False,
 ) -> ChatSession:
     stmt = select(ChatSession).where(ChatSession.id == chat_session_id)
+    connection = db_session.connection()
+    logger.info(f"Database URL: {connection.engine.url}")
 
     if is_shared:
         stmt = stmt.where(ChatSession.shared_status == ChatSessionSharedStatus.PUBLIC)
@@ -61,6 +63,7 @@ def get_chat_session_by_id(
             stmt = stmt.where(
                 or_(ChatSession.user_id == user_id, ChatSession.user_id.is_(None))
             )
+    logger.info(f"POPOPZExecuting SQL query: {stmt}")
 
     result = db_session.execute(stmt)
     chat_session = result.scalar_one_or_none()

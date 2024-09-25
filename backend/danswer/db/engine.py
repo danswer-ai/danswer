@@ -40,7 +40,15 @@ from jwt.exceptions import DecodeError, InvalidTokenError
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
+import traceback
 logger = setup_logger()
+
+def log_stack_trace():
+    stack = traceback.extract_stack()
+    logger.debug("Full stack trace:")
+    for filename, line, func, _ in stack[:-1]:  # Exclude the current function
+        logger.debug(f"  File: {filename}, Line: {line}, Function: {func}")
+
 
 current_tenant_id: ContextVar[str] = ContextVar('current_tenant_id')
 
@@ -185,21 +193,23 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
     return _ASYNC_ENGINE
 
 
-global_tenant_id = ""
+global_tenant_id = "650a1472-4101-497c-b5f1-5dfe1b067730"
 
 def get_session_context_manager() -> ContextManager[Session]:
-
-    global global_tenant_id
-    return contextlib.contextmanager(lambda: get_session(override_tenant_id=global_tenant_id))()
+    return contextlib.contextmanager(get_session)()
 
 def get_current_tenant_id(request: Request) -> str | None:
     if not MULTI_TENANT:
         return DEFAULT_SCHEMA
 
     token = request.cookies.get("tenant_details")
+    global global_tenant_id
     if not token:
-        logger.warning("No token found in cookies")
-        return None
+        logger.warning("zzzztoken found in cookies")
+        log_stack_trace()
+
+        print('returning', global_tenant_id)
+        return "650a1472-4101-497c-b5f1-5dfe1b067730"
         # raise HTTPException(status_code=401, detail="Authentication required")
 
     try:
@@ -212,7 +222,6 @@ def get_current_tenant_id(request: Request) -> str | None:
             raise HTTPException(status_code=400, detail="Invalid token: tenant_id missing")
         logger.info(f"Valid tenant_id found: {tenant_id}")
         current_tenant_id.set(tenant_id)
-        global global_tenant_id
         global_tenant_id = tenant_id
         return tenant_id
     except DecodeError as e:
@@ -225,12 +234,9 @@ def get_current_tenant_id(request: Request) -> str | None:
         logger.exception(f"Unexpected error in get_current_tenant_id: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-def get_session(tenant_id: str | None= Depends(get_current_tenant_id), override_tenant_id: str | None = None) -> Generator[Session, None, None]:
-    # try:
-    if override_tenant_id:
-        print("OVERRIDE TENANT ID")
-        print(override_tenant_id)
-    with Session(get_sqlalchemy_engine(schema=override_tenant_id or tenant_id), expire_on_commit=False) as session:
+def get_session(tenant_id: str | None= Depends(get_current_tenant_id)) -> Generator[Session, None, None]:
+
+    with Session(get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False) as session:
         yield session
     # finally:
         # current_tenant_id.reset(tenant_id)

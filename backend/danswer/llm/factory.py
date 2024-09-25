@@ -33,6 +33,7 @@ def get_llms_for_persona(
         return get_default_llms(
             temperature=temperature_override or GEN_AI_TEMPERATURE,
             additional_headers=additional_headers,
+            db_session=db_session,
         )
 
 
@@ -71,8 +72,12 @@ def get_default_llms(
     if DISABLE_GENERATIVE_AI:
         raise GenAIDisabledException()
 
-    with get_session_context_manager() as db_session:
+    if db_session is None:
+        with get_session_context_manager() as db_session:
+            llm_provider = fetch_default_provider(db_session)
+    else:
         llm_provider = fetch_default_provider(db_session)
+
 
     if not llm_provider:
         raise ValueError("No default LLM provider found")
