@@ -67,6 +67,7 @@ def _process_file(
 
     file_metadata: dict[str, Any] = {}
 
+    # TODO update this
     if is_text_file_extension(file_name):
         encoding = detect_encoding(file)
         file_content_raw, file_metadata = read_text_file(
@@ -74,13 +75,14 @@ def _process_file(
         )
 
     # Using the PDF reader function directly to pass in password cleanly
-    elif extension == ".pdf":
+    elif extension == ".pdf" and pdf_pass:
         file_content_raw, file_metadata = read_pdf_file(file=file, pdf_pass=pdf_pass)
 
     else:
         file_content_raw = extract_file_text(
-            file_name=file_name,
             file=file,
+            file_name=file_name,
+            break_on_unprocessable=True,
         )
 
     all_metadata = {**metadata, **file_metadata} if metadata else file_metadata

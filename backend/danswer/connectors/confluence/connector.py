@@ -519,7 +519,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             return None
 
         extracted_text = extract_file_text(
-            attachment["title"], io.BytesIO(response.content), False
+            io.BytesIO(response.content),
+            file_name=attachment["title"],
+            break_on_unprocessable=False,
         )
         if len(extracted_text) > CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD:
             logger.warning(
