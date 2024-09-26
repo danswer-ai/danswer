@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useTeamspaces } from "@/lib/hooks";
 import { TeamspaceBubble } from "@/components/TeamspaceBubble";
 import Image from "next/image";
-import { GlobalSidebarModal } from "./GlobalSidebarModal";
+import { TeamspaceModal } from "./TeamspaceModal";
 
 interface GlobalSidebarProps {
   openSidebar?: boolean;
@@ -74,7 +74,7 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
                   link={defaultPage}
                 />
               ))}
-              {showEllipsis && <GlobalSidebarModal teamspace={data} />}
+              {showEllipsis && <TeamspaceModal teamspace={data} />}
             </div>
           )}
         </div>

@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { User as UserTypes } from "@/lib/types";
+import { usePasswordValidation } from "@/hooks/usePasswordValidation";
 import { useState } from "react";
+import { CircleCheck } from "lucide-react";
 
 export default function SecurityTab({ user }: { user: UserTypes | null }) {
   const { toast } = useToast();
@@ -13,11 +15,29 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const {
+    hasUppercase,
+    hasNumberOrSpecialChar,
+    passwordWarning,
+    calculatePasswordStrength,
+    setPasswordFocused,
+  } = usePasswordValidation();
+
   const handleSaveChanges = async () => {
+    if (newPassword.length < 8 || !hasUppercase || !hasNumberOrSpecialChar) {
+      toast({
+        title: "Password doesn't meet requirements",
+        description:
+          passwordWarning || "Ensure your password meets all the criteria.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Your new password and confirm password does not match",
-        description: `New password and confirm password must match. Please try again`,
+        title: "Your new password and confirm password do not match",
+        description: `New password and confirm password must match. Please try again.`,
         variant: "destructive",
       });
       return;
@@ -34,11 +54,19 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
       method: "POST",
       body: JSON.stringify(updatedPasswordInfo),
     });
-    if (response.status == 200) {
+
+    if (response.status === 200) {
       toast({
         title: "Successfully updated your password",
-        description: "Your password has been changed. Please Log in again",
+        description: "Your password has been changed. Please log in again.",
         variant: "success",
+      });
+      setIsEditing(false);
+    } else if (response.status === 400) {
+      toast({
+        title: "Incorrect current password",
+        description: "Please check your current password and try again.",
+        variant: "destructive",
       });
     } else {
       toast({
@@ -47,7 +75,6 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
         variant: "destructive",
       });
     }
-    setIsEditing(false);
   };
 
   return (
@@ -59,7 +86,7 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
         </p>
       </div>
 
-      <div className="py-8 border-b flex flex-col gap-5">
+      <div className="py-8 border-b flex flex-col gap-8">
         <div className="flex items-center">
           <div className="w-[500px] text-sm">
             <span className="font-semibold text-inverted-inverted">
@@ -83,27 +110,63 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
           </div>
         </div>
 
-        <div className="flex items-center">
-          <div className="w-[500px] text-sm">
-            <span className="font-semibold text-inverted-inverted">
-              New Password
-            </span>
-          </div>
-          <div className="w-[500px] h-10 flex items-center justify-between">
-            {isEditing ? (
-              <Input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full"
-                placeholder="Enter new password"
-              />
-            ) : (
+        <div>
+          <div className="flex items-center">
+            <div className="w-[500px] text-sm">
               <span className="font-semibold text-inverted-inverted">
-                &#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;
+                New Password
               </span>
-            )}
+            </div>
+            <div className="w-[500px] h-10 flex items-center justify-between">
+              {isEditing ? (
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    calculatePasswordStrength(e.target.value);
+                  }}
+                  className="w-full"
+                  placeholder="Enter new password"
+                />
+              ) : (
+                <span className="font-semibold text-inverted-inverted">
+                  &#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;
+                </span>
+              )}
+            </div>
           </div>
+          {isEditing && (
+            <div className="flex">
+              <div className="w-[500px]" />
+              <div className="text-sm text-subtle pt-2">
+                <div className="flex items-center gap-2">
+                  <CircleCheck
+                    size={16}
+                    color={newPassword.length >= 8 ? "#69c57d" : "gray"}
+                  />
+                  <p>At least 8 characters</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CircleCheck
+                    size={16}
+                    color={hasUppercase ? "#69c57d" : "gray"}
+                  />
+                  <p>At least 1 Capital letter</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CircleCheck
+                    size={16}
+                    color={hasNumberOrSpecialChar ? "#69c57d" : "gray"}
+                  />
+                  <p>At least 1 number or special character</p>
+                </div>
+                {passwordWarning && (
+                  <p className="text-red-500">{passwordWarning}</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center">

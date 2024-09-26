@@ -73,14 +73,14 @@ export const PendingInvites = ({ q }: { q: string }) => {
 
   return (
     <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
-      <div className="xl:w-1/3">
+      <div className="xl:w-2/5">
         <h2 className="text-lg md:text-2xl text-strong font-bold">
           Pending Invites
         </h2>
         <p className="text-sm pt-1 pb-4">Invitations awaiting a response.</p>
       </div>
 
-      <div className="w-full overflow-x-auto">
+      <div className="flex-1 overflow-x-auto">
         {invited.length > 0 ? (
           <>
             <Input

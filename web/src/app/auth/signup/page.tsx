@@ -13,7 +13,7 @@ import Logo from "../../../../public/logo-brand.png";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import DefaultUserChart from "../../../../public/default-user-chart.png";
-import LoginImage from "../../../../public/LoginImage.png";
+import SignupImage from "../../../../public/SignupImage.png";
 import GmailIcon from "../../../../public/Gmail.png";
 import MicrosoftIcon from "../../../../public/microsoft.svg";
 import { Separator } from "@/components/ui/separator";
@@ -126,14 +126,9 @@ const Page = async () => {
         </div>
         <div className="w-1/2 h-full relative rounded-l-[50px] overflow-hidden hidden lg:flex">
           <Image
-            src={LoginImage}
-            alt="login-image"
+            src={SignupImage}
+            alt="signup-image"
             className="w-full h-full object-cover"
-          />
-          <Image
-            src={DefaultUserChart}
-            alt="user-chart-image"
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4"
           />
         </div>
       </div>
