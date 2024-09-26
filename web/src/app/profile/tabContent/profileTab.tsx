@@ -54,11 +54,13 @@ export default function ProfileTab({
   return (
     <>
       <div className="flex py-8 border-b">
-        <div className="w-[500px] text-sm">
+        <div className="w-[500px]">
           <span className="font-semibold text-inverted-inverted">
             Your Photo
           </span>
-          <p className="pt-1">This will be displayed on your profile.</p>
+          <p className="pt-1 text-sm">
+            This will be displayed on your profile.
+          </p>
         </div>
         <div className="flex items-center justify-between gap-3 w-[500px]">
           <div className="flex items-center justify-center rounded-full h-[65px] w-[65px] shrink-0 aspect-square text-2xl font-normal">
@@ -71,9 +73,9 @@ export default function ProfileTab({
         </div>
       </div>
 
-      <div className="py-8 border-b flex flex-col gap-5">
+      <div className="py-8 border-b flex flex-col gap-8">
         <div className="flex items-center">
-          <div className="w-[500px] text-sm">
+          <div className="w-[500px]">
             <span className="font-semibold text-inverted-inverted">Name</span>
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
@@ -90,7 +92,7 @@ export default function ProfileTab({
           </div>
         </div>
         <div className="flex items-center">
-          <div className="w-[500px] text-sm">
+          <div className="w-[500px]">
             <span className="font-semibold text-inverted-inverted">
               Company
             </span>
@@ -109,7 +111,7 @@ export default function ProfileTab({
           </div>
         </div>
         <div className="flex items-center">
-          <div className="w-[500px] text-sm">
+          <div className="w-[500px]">
             <span className="font-semibold text-inverted-inverted">Email</span>
           </div>
           <div className="w-[500px] h-10 flex items-center justify-between">
@@ -130,7 +132,7 @@ export default function ProfileTab({
 
       {/* {combinedSettings?.featureFlags.multi_teamspace && (
         <div className="flex py-8 border-b">
-          <div className="w-[500px] text-sm">
+          <div className="w-[500px]">
             <span className="font-semibold text-inverted-inverted">
               Teamspaces Joined
             </span>

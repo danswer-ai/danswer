@@ -372,7 +372,7 @@ export const AllUsers = ({ q }: { q: string }) => {
                           <UserIcon />
                         </div>
                         <div className="flex flex-col">
-                          <span className="truncate max-w-44">
+                          <span className="truncate max-w-44 font-medium">
                             {user.full_name}
                           </span>
                           <span className="text-sm text-subtle truncate max-w-44">

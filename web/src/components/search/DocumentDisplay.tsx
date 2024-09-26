@@ -175,7 +175,7 @@ export const DocumentDisplay = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex flex-col relative gap-3">
-        <div className="flex items-center gap-[5px]">
+        <div className="flex items-center gap-1">
           <Badge variant="secondary">
             <SourceIcon sourceType={document.source_type} iconSize={16} />
             <span className="ml-1">
@@ -185,7 +185,7 @@ export const DocumentDisplay = ({
           </Badge>
           <DocumentMetadataBlock document={document} />
           {document.score !== null && (
-            <div className="flex items-center gap-[5px]">
+            <div className="flex items-center gap-1">
               <Badge variant={badgeVariant}>{score.toFixed()}%</Badge>
               {isSelected && (
                 <CustomTooltip

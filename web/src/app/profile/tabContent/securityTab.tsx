@@ -88,7 +88,7 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
 
       <div className="py-8 border-b flex flex-col gap-8">
         <div className="flex items-center">
-          <div className="w-[500px] text-sm">
+          <div className="w-[500px]">
             <span className="font-semibold text-inverted-inverted">
               Current Password
             </span>
@@ -112,7 +112,7 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
 
         <div>
           <div className="flex items-center">
-            <div className="w-[500px] text-sm">
+            <div className="w-[500px]">
               <span className="font-semibold text-inverted-inverted">
                 New Password
               </span>
@@ -170,7 +170,7 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
         </div>
 
         <div className="flex items-center">
-          <div className="w-[500px] text-sm">
+          <div className="w-[500px]">
             <span className="font-semibold text-inverted-inverted">
               Confirm Password
             </span>
