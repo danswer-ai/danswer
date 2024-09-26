@@ -116,6 +116,7 @@ export function ChatInputBar({
   const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant, null);
 
+
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showPrompts, setShowPrompts] = useState(false);

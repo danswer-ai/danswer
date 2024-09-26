@@ -309,6 +309,8 @@ def handle_new_chat_message(
     To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
     have already been set as latest"""
     logger.debug(f"Received new chat message: {chat_message_req.message}")
+    logger.debug("Messge info")
+    logger.debug(chat_message_req.__dict__)
 
     if (
         not chat_message_req.message

@@ -408,6 +408,7 @@ def update_loop(
     try:
         while True:
             tenants = get_all_tenant_ids()
+
             # tenants = [
             #     'public',
             #     '0f95cf24-c4dc-4fee-a1f2-1f190789c030',
@@ -423,6 +424,7 @@ def update_loop(
             #     'de41dfa2-1f43-417c-9763-7baea619b67c',
             #     'f53febd2-3861-495b-8b44-08840cf7f521'
             # ]
+
             valid_tenants = [tenant for tenant in tenants if not tenant.startswith('pg_')]
             logger.info(f"Found valid tenants: {valid_tenants}")
             tenants = valid_tenants
@@ -431,7 +433,7 @@ def update_loop(
                 try:
                     logger.debug(f"Processing tenant: {tenant_id}")
 
-                    # Use the existing Dask clients
+                    # Existing Dask clients
                     with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
                         try:
                             check_index_swap(db_session)
@@ -470,55 +472,7 @@ def update_loop(
         # Ensure clients are closed when the loop exits
         client_primary.close()
         client_secondary.close()
-# def update_loop(
-#     delay: int = 10,
-#     num_workers: int = NUM_INDEXING_WORKERS,
-#     num_secondary_workers: int = NUM_SECONDARY_INDEXING_WORKERS,
-# ) -> None:
-#     tenants = get_all_tenant_ids()
 
-#     # tenants = ["650a1472-4101-497c-b5f1-5dfe1b067730"]
-
-#     logger.info(f"Found tenants: {tenants}")
-
-#     # Assuming Dask clients can be shared across tenants
-#     client_primary = Client(n_workers=num_workers)
-#     client_secondary = Client(n_workers=num_secondary_workers)
-
-#     while True:
-#         for tenant_id in tenants:
-#             try:
-#                 current_tenant_id.set(tenant_id)
-#                 logger.debug(f"Processing tenant: {tenant_id}")
-#                 with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
-#                     try:
-#                         check_index_swap(db_session)
-#                     except ProgrammingError as e:
-#                         pass
-
-
-#                 # Initialize or retrieve existing jobs per tenant
-#                 existing_jobs: dict[int, Future | SimpleJob] = {}
-#                 # Perform cleanup, job creation, and kickoff for this tenant
-#                 existing_jobs = cleanup_indexing_jobs(existing_jobs=existing_jobs, tenant_id=tenant_id)
-#                 create_indexing_jobs(existing_jobs=existing_jobs, tenant_id=tenant_id)
-
-#                 logger.debug(f"Indexing Jobs are {len(existing_jobs)} many")
-
-#                 existing_jobs = kickoff_indexing_jobs(
-#                     existing_jobs=existing_jobs,
-#                     client=client_primary,
-#                     secondary_client=client_secondary,
-#                     tenant_id=tenant_id,
-#                 )
-
-
-#             except Exception as e:
-#                 pass
-#                 # logger.exception(f"Failed to process tenant {tenant_id}: {e}")
-
-#         sleep_time = delay
-#         time.sleep(sleep_time)
 
 # def update_loop(
 #     delay: int = 10,

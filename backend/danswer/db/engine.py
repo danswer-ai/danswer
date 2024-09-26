@@ -153,7 +153,7 @@ def init_sqlalchemy_engine(app_name: str) -> None:
 _engines: dict[str, Engine] = {}
 
 # NOTE: this is a hack to allow for multiple postgres schemas per engine for now.
-def get_sqlalchemy_engine(schema: str | None = DEFAULT_SCHEMA) -> Engine:
+def get_sqlalchemy_engine(*, schema: str | None = DEFAULT_SCHEMA) -> Engine:
     if schema is None:
         schema = current_tenant_id.get()
 

@@ -46,6 +46,7 @@ def _get_connector_runner(
     attempt: IndexAttempt,
     start_time: datetime,
     end_time: datetime,
+    tenant_id: str | None = None
 ) -> ConnectorRunner:
     """
     NOTE: `start_time` and `end_time` are only used for poll connectors

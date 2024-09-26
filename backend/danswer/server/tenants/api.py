@@ -63,32 +63,6 @@ def run_alembic_migrations(schema_name: str, create_schema: bool = True) -> None
         raise
 
 
-# def run_alembic_migrations(schema_name: str) -> None:
-#     logger.info(f"Starting Alembic migrations for schema: {schema_name}")
-#     try:
-#         current_dir = os.path.dirname(os.path.abspath(__file__))
-#         root_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
-#         alembic_ini_path = os.path.join(root_dir, 'alembic.ini')
-
-#         alembic_cfg = Config(alembic_ini_path)
-#         alembic_cfg.set_main_option('schema_name', schema_name)
-
-#         alembic_command = f"alembic -c {alembic_ini_path} upgrade head"
-#         process = subprocess.Popen(alembic_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#         stdout, stderr = process.communicate()
-
-#         if process.returncode != 0:
-#             raise Exception(f"Alembic migration failed: {stderr.decode()}")
-
-#         logger.info(f"Alembic migrations completed successfully for schema: {schema_name}")
-
-#     except Exception as e:
-#         logger.info(f"Alembic migration failed for schema {schema_name}: {str(e)}")
-#         logger.exception(f"Alembic migration failed for schema {schema_name}: {str(e)}")
-#         raise
-#     finally:
-#         logger.info(f"Alembic migrations completed successfully for schema: {schema_name}")
-
 def authenticate_request(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:

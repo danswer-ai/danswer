@@ -226,6 +226,7 @@ export async function fetchChatData(searchParams: {
   const openedFolders = openedFoldersCookie
     ? JSON.parse(openedFoldersCookie.value)
     : {};
+  console.log("llm providers", llmProviders);
 
   return {
     user,

@@ -335,7 +335,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                     server_port=MODEL_SERVER_PORT,
                 ),
             )
-        logger.notice("Warm up bi encoder complete")
+        logger.notice("Setup complete")
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield

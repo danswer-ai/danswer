@@ -311,6 +311,9 @@ def stream_chat_message_objects(
             )
 
         try:
+            print("LLM OVVERIDE ")
+            print(new_msg_req.llm_override)
+            print(chat_session.llm_override)
             llm, fast_llm = get_llms_for_persona(
                 persona=persona,
                 db_session=db_session,
@@ -319,6 +322,7 @@ def stream_chat_message_objects(
             )
         except GenAIDisabledException:
             raise RuntimeError("LLM is disabled. Can't use chat flow without LLM.")
+
 
         llm_provider = llm.config.model_provider
         llm_model_name = llm.config.model_name

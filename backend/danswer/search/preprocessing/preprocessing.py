@@ -121,6 +121,7 @@ def retrieval_preprocessing(
         ]
         if filter_fn
     ]
+    
     parallel_results = run_functions_in_parallel(functions_to_run)
 
     predicted_time_cutoff, predicted_favor_recent = (
@@ -157,8 +158,9 @@ def retrieval_preprocessing(
         time_cutoff=preset_filters.time_cutoff or predicted_time_cutoff,
         tags=preset_filters.tags,  # Tags are never auto-extracted
         access_control_list=user_acl_filters,
-        tenant_id="4990f0d0-8447-4476-b6a0-53f4938654c1" # TODO FIX
-    )
+        tenant_id="0a4bae55-27d4-406a-8c12-d3827af22e42"
+        # tenant_id="84d01c94-7032-4dfa-9a1e-0d80805c7826" # TODO FIX
+    ) 
 
     llm_evaluation_type = LLMEvaluationType.BASIC
     if search_request.evaluation_type is not LLMEvaluationType.UNSPECIFIED:
