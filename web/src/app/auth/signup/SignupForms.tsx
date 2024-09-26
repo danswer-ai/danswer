@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PasswordRequirements } from "./PasswordRequirements";
 import { usePasswordValidation } from "@/hooks/usePasswordValidation"; // Import the custom hook
+import { useToast } from "@/hooks/use-toast";
 
 export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
   const router = useRouter();
@@ -75,13 +76,15 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             values.email,
             values.password
           );
+
           if (!response.ok) {
             setIsLoading(false);
             const errorDetail = (await response.json()).detail;
 
             let errorMsg = "Unknown error";
             if (errorDetail === "REGISTER_USER_ALREADY_EXISTS") {
-              errorMsg = "An account already exists with the specified email.";
+              errorMsg =
+                "An account already exist with the specified email.";
             }
             toast({
               title: "Error",
@@ -92,13 +95,16 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             setPasswordFocused(true);
             return;
           }
-          setIsLoading(false);
-          console.log(shouldVerify);
-          if (shouldVerify) {
-            router.push("/auth/waiting-on-verification");
-          } else {
-            router.push("/");
+
+          const loginResponse = await basicLogin(values.email, values.password);
+          if (loginResponse.ok) {
+            if (shouldVerify) {
+              router.push("/auth/waiting-on-verification");
+            } else {
+              router.push("/");
+            }
           }
+          setIsLoading(false);
         }}
       >
         {({ isSubmitting, values, setFieldValue }) => (
