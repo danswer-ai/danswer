@@ -7,7 +7,8 @@ on:
 
 env:
   REGISTRY_IMAGE: danswer/danswer-backend
-
+  LATEST_TAG: ${{ contains(github.ref_name, 'latest') }}
+  
 jobs:
   build-and-push:
     # TODO: investigate a matrix build like the web container 
@@ -31,7 +32,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential
-        
+          
     - name: Backend Image Docker Build and Push
       uses: docker/build-push-action@v5
       with:
@@ -41,7 +42,7 @@ jobs:
         push: true
         tags: |
           ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}
-          ${{ env.REGISTRY_IMAGE }}:latest
+          ${{ env.LATEST_TAG == 'true' && format('{0}:latest', env.REGISTRY_IMAGE) || '' }}
         build-args: |
           DANSWER_VERSION=${{ github.ref_name }}
 

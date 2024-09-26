@@ -5,6 +5,10 @@ on:
     tags:
       - '*'
 
+env:
+  REGISTRY_IMAGE: danswer/danswer-model-server
+  LATEST_TAG: ${{ contains(github.ref_name, 'latest') }}
+  
 jobs:
   build-and-push:
     # See https://runs-on.com/runners/linux/
@@ -31,8 +35,8 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: |
-          danswer/danswer-model-server:${{ github.ref_name }}
-          danswer/danswer-model-server:latest
+          ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}
+          ${{ env.LATEST_TAG == 'true' && format('{0}:latest', env.REGISTRY_IMAGE) || '' }}
         build-args: |
           DANSWER_VERSION=${{ github.ref_name }}
 
