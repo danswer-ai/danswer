@@ -31,6 +31,7 @@ export function CopyButton({
           {isCopyClicked ? <Check size={16} /> : <Copy size={16} />}
         </Button>
       }
+      asChild
     >
       {isCopyClicked ? "Copied" : "Copy"}
     </CustomTooltip>

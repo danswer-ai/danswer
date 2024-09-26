@@ -173,6 +173,7 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                                   );
                                 }
                               }}
+                              asChild
                             >
                               <TrashIcon />
                             </Button>

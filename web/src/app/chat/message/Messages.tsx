@@ -396,6 +396,7 @@ export const AIMessage = ({
                     />
                   </CustomModal>
                 }
+                asChild
               >
                 Like
               </CustomTooltip>
@@ -434,6 +435,7 @@ export const AIMessage = ({
                     />
                   </CustomModal>
                 }
+                asChild
               >
                 Dislike
               </CustomTooltip>
