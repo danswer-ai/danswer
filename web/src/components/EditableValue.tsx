@@ -58,6 +58,7 @@ export function EditableValue({
               <CheckmarkIcon size={14} className="text-green-700" />
             </Button>
           }
+          asChild
         >
           Done
         </CustomTooltip>
@@ -78,6 +79,7 @@ export function EditableValue({
             <Pencil size={14} />
           </Button>
         }
+        asChild
       >
         Edit
       </CustomTooltip>

@@ -34,11 +34,12 @@ export function DeleteColumn<ConnectorConfigType, ConnectorCredentialType>({
               }
             />
           }
+          asChild
         >
           Click to delete this connector
         </CustomTooltip>
       ) : (
-        <CustomTooltip trigger={<DeleteButton disabled />}>
+        <CustomTooltip trigger={<DeleteButton disabled />} asChild>
           <div className="flex items-center gap-1">
             <InfoIcon /> In order to delete a connector it must be disabled and
             have no ongoing / planned index jobs.

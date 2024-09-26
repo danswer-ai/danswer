@@ -45,6 +45,7 @@ function SourceTile({
           </div>
         }
         delayDuration={0}
+        asChild
       >
         {sourceMetadata.displayName}
       </CustomTooltip>

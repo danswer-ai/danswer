@@ -58,6 +58,7 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
               }
               side="right"
               delayDuration={0}
+              asChild
             >
               {workspaces?.workspace_name
                 ? workspaces.workspace_name
