@@ -23,6 +23,7 @@ interface DropdownOptionProps {
   onClick?: () => void;
   icon: React.ReactNode;
   label: string;
+  openInNewTab?: boolean;
 }
 
 const DropdownOption: React.FC<DropdownOptionProps> = ({
@@ -30,6 +31,7 @@ const DropdownOption: React.FC<DropdownOptionProps> = ({
   onClick,
   icon,
   label,
+  openInNewTab,
 }) => {
   const content = (
     <div className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light">
@@ -38,11 +40,19 @@ const DropdownOption: React.FC<DropdownOptionProps> = ({
     </div>
   );
 
-  return href ? (
-    <Link href={href}>{content}</Link>
-  ) : (
-    <div onClick={onClick}>{content}</div>
-  );
+  if (href) {
+    return (
+      <Link
+        href={href}
+        target={openInNewTab ? "_blank" : undefined}
+        rel={openInNewTab ? "noopener noreferrer" : undefined}
+      >
+        {content}
+      </Link>
+    );
+  } else {
+    return <div onClick={onClick}>{content}</div>;
+  }
 };
 
 export function UserDropdown({
@@ -173,6 +183,7 @@ export function UserDropdown({
                   )
                 }
                 label={item.title}
+                openInNewTab
               />
             ))}
 
