@@ -121,6 +121,7 @@ jobs:
         run: |
           echo "Running integration tests..."
           docker run --rm --network danswer-stack_default \
+            --name test-runner \
             -e POSTGRES_HOST=relational_db \
             -e POSTGRES_USER=postgres \
             -e POSTGRES_PASSWORD=password \
@@ -129,6 +130,7 @@ jobs:
             -e REDIS_HOST=cache \
             -e API_SERVER_HOST=api_server \
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
+            -e TEST_WEB_HOSTNAME=test-runner \
             danswer/integration-test-runner:it
         continue-on-error: true
         id: run_tests
