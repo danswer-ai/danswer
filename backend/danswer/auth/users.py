@@ -208,7 +208,6 @@ def verify_sso_token(token: str) -> dict:
             )
         return payload
     except jwt.PyJWTError:
-        print("error  decodi")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
@@ -221,7 +220,6 @@ async def get_or_create_user(email: str, user_id: str) -> User:
     async with get_async_session_context() as session:
         async with get_user_db_context(session) as user_db:
             existing_user = await user_db.get_by_email(email)
-            print(email)
             if existing_user:
                 return existing_user
 
@@ -236,7 +234,6 @@ async def get_or_create_user(email: str, user_id: str) -> User:
                 "is_active": True,
                 "is_superuser": False,
                 "is_verified": True,
-                # "tenant_id": uuid.UUID(tenant_id),
             }
 
             created_user: User = await user_db.create(new_user)

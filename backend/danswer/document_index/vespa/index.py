@@ -171,8 +171,6 @@ class MultiTenantVespaIndex(DocumentIndex):
             schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
             zip_dict[f"schemas/{index_name}.sd"] = schema.encode("utf-8")
 
-        print("appenidng hte sceam")
-        print(zip_dict.keys())
         zip_file = in_memory_zip_from_file_bytes(zip_dict)
 
         headers = {"Content-Type": "application/zip"}
