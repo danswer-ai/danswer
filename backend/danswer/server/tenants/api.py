@@ -92,11 +92,10 @@ def authenticate_request(func: Callable) -> Callable:
 @basic_router.post("/create")
 @authenticate_request
 def create_tenant(request: Request, tenant_id: str) -> dict[str, str]:
-
     if not tenant_id:
         raise HTTPException(status_code=400, detail="tenant_id is required")
 
-    logger.info(f"Received request to create tenant schema: {tenant_id}")
+    logger.info(f"Creating tenant schema: {tenant_id}")
 
     with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
         with db_session.begin():
@@ -107,35 +106,29 @@ def create_tenant(request: Request, tenant_id: str) -> dict[str, str]:
             schema_exists = result.scalar() is not None
 
             if not schema_exists:
-                # Create schema
                 db_session.execute(text(f'CREATE SCHEMA "{tenant_id}"'))
                 logger.info(f"Schema {tenant_id} created")
             else:
                 logger.info(f"Schema {tenant_id} already exists")
 
     try:
-        logger.info(f"Running migrations for tenant: {tenant_id}")
         run_alembic_migrations(tenant_id)
-
         logger.info(f"Migrations completed for tenant: {tenant_id}")
     except Exception as e:
-        logger.info("error has occurred")
-        logger.exception(f"Error while running migrations for tenant {tenant_id}: {str(e)}")
+        logger.exception(f"Error running migrations for tenant {tenant_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
     try:
         with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
             setup_postgres_and_initial_settings(db_session)
     except Exception as e:
-        logger.exception(f"Error while setting up postgres for tenant {tenant_id}: {str(e)}")
+        logger.exception(f"Error setting up postgres for tenant {tenant_id}: {str(e)}")
         raise
 
     logger.info(f"Tenant {tenant_id} created successfully")
     return {"status": "success", "message": f"Tenant {tenant_id} created successfully"}
 
 async def check_schema_exists(tenant_id: str) -> bool:
-    logger.info(f"Checking if schema exists for tenant: {tenant_id}")
     get_async_session_context = contextlib.asynccontextmanager(
         get_async_session
     )
@@ -144,10 +137,7 @@ async def check_schema_exists(tenant_id: str) -> bool:
             text("SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schema_name"),
             {"schema_name": tenant_id}
         )
-        schema = result.scalar()
-        exists = schema is not None
-        logger.info(f"Schema for tenant {tenant_id} exists: {exists}")
-        return exists
+        return result.scalar() is not None
 
 @basic_router.post("/auth/sso-callback")
 async def sso_callback(
@@ -155,27 +145,18 @@ async def sso_callback(
     sso_token: str = Body(..., embed=True),
     user_manager: UserManager = Depends(get_user_manager),
 ) -> JSONResponse:
-    logger.info("SSO callback initiated")
     payload = verify_sso_token(sso_token)
-    logger.info(f"SSO token verified for email: {payload['email']}")
-
     user = await user_manager.sso_authenticate(
         payload["email"], payload["user_id"], payload["tenant_id"]
     )
-    logger.info(f"User authenticated: {user.email}")
 
     tenant_id = payload["tenant_id"]
-    logger.info(f"Checking schema for tenant: {tenant_id}")
-    # Check if tenant schema exists
     schema_exists = await check_schema_exists(tenant_id)
     if not schema_exists:
-        logger.info(f"Schema does not exist for tenant: {tenant_id}")
         raise HTTPException(status_code=403, detail="Your Danswer app has not been set up yet!")
 
     session_token = await create_user_session(user, payload["tenant_id"])
-    logger.info(f"Session token created for user: {user.email}")
 
-    # Set the session cookie with proper flags
     response = JSONResponse(content={"message": "Authentication successful"})
     response.set_cookie(
         key="tenant_details",
@@ -187,6 +168,4 @@ async def sso_callback(
         httponly=True,
         samesite="lax",
     )
-    logger.info("Session cookie set")
-    logger.info("SSO callback completed successfully")
     return response

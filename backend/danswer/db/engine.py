@@ -38,17 +38,7 @@ import traceback
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-
 logger = setup_logger()
-
-def log_stack_trace() -> None:
-    stack = traceback.extract_stack()
-    logger.debug("Full stack trace:")
-    for filename, line, func, _ in stack[:-1]:  # Exclude the current function
-        logger.debug(f"  File: {filename}, Line: {line}, Function: {func}")
-
-
-
 
 
 SYNC_DB_API = "psycopg2"
@@ -203,28 +193,18 @@ def get_current_tenant_id(request: Request) -> str | None:
 
     token = request.cookies.get("tenant_details")
     if not token:
-        logger.warning("No token found in cookies")
-        tenant_id = current_tenant_id.get()
-        logger.info(f"Returning default tenant_id: {tenant_id}")
-        return tenant_id
+        return current_tenant_id.get()
 
     try:
-        logger.info("Attempting to decode token")
         payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
-        logger.info(f"Decoded payload: {payload}")
         tenant_id = payload.get("tenant_id")
         if not tenant_id:
-            logger.warning("Invalid token: tenant_id missing")
             raise HTTPException(status_code=400, detail="Invalid token: tenant_id missing")
-        logger.info(f"Valid tenant_id found: {tenant_id}")
         current_tenant_id.set(tenant_id)
-        logger.info(f'setting current tenant id {tenant_id}')
         return tenant_id
-    except (DecodeError, InvalidTokenError) as e:
-        logger.error(f"JWT decode error: {str(e)}")
+    except (DecodeError, InvalidTokenError):
         raise HTTPException(status_code=401, detail="Invalid token format")
-    except Exception as e:
-        logger.exception(f"Unexpected error in get_current_tenant_id: {str(e)}")
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 def get_session(

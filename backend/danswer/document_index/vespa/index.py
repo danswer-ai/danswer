@@ -771,7 +771,7 @@ class VespaIndex(DocumentIndex):
             for doc_id in update_request.document_ids
         ]
 
-        # update_start = time.monotonic()
+        update_start = time.monotonic()
 
         # Fetch all chunks for each document ahead of time
         index_names = [self.index_name]
@@ -834,10 +834,10 @@ class VespaIndex(DocumentIndex):
                     json=update.update_request,
                 )
 
-        # logger.debug(
-        #     "Finished updating Vespa documents in %.2f seconds",
-        #     time.monotonic() - update_start,
-        # )
+        logger.debug(
+            "Finished updating Vespa documents in %.2f seconds",
+            time.monotonic() - update_start,
+        )
 
         return
 

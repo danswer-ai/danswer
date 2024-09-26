@@ -1,10 +1,5 @@
 import "./globals.css";
-
-import {
-  fetchEnterpriseSettingsSS,
-  fetchSettingsSS,
-  SettingsError,
-} from "@/components/settings/lib";
+import { fetchEnterpriseSettingsSS, fetchSettingsSS } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
@@ -53,47 +48,34 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 00a89749-beab-489a-8b72-88aa3d646274
-  // 01fb5963-9ab3-4585-900a-438480857427
-  // return <>{children}</>
+  const combinedSettings = await fetchSettingsSS() || defaultCombinedSettings;
 
-  //   SELECT table_name, column_name, data_type, character_maximum_length
-  // FROM information_schema.columns
-  // WHERE table_schema = '00a89749-beab-489a-8b72-88aa3d646274'
-  // ORDER BY table_name, ordinal_position;
+  if (!combinedSettings) {
+    return (
+      <html lang="en" className={`${inter.variable} font-sans`}>
+        <Head>
+          <title>Settings Unavailable | Danswer</title>
+        </Head>
+        <body className="bg-background text-default">
+          <div className="flex flex-col items-center justify-center min-h-screen">
+            <div className="mb-2 flex items-center max-w-[175px]">
+              <HeaderTitle>Danswer</HeaderTitle>
+              <Logo height={40} width={40} />
+            </div>
 
-
-  // const combinedSettings: CombinedSettings | null = await fetchSettingsSS()
-  const combinedSettings = defaultCombinedSettings
-  // if (!combinedSettings) {
-  // return <>{children}</>
-  // // Just display a simple full page error if fetching fails.
-
-  // return (
-  //   <html lang="en" className={`${inter.variable} font-sans`}>
-  //     <Head>
-  //       <title>Settings Unavailable | Danswer</title>
-  //     </Head>
-  //     <body className="bg-background text-default">
-  //       <div className="flex flex-col items-center justify-center min-h-screen">
-  //         <div className="mb-2 flex items-center max-w-[175px]">
-  //           <HeaderTitle>Danswer</HeaderTitle>
-  //           <Logo height={40} width={40} />
-  //         </div>
-
-  //         <Card className="p-8 max-w-md">
-  //           <h1 className="text-2xl font-bold mb-4 text-error">Error</h1>
-  //           <p className="text-text-500">
-  //             Your Danswer instance was not configured properly and your
-  //             settings could not be loaded. Please contact your admin to fix
-  //             this error.
-  //           </p>
-  //         </Card>
-  //       </div>
-  //     </body>
-  //   </html>
-  // );
-  // }
+            <Card className="p-8 max-w-md">
+              <h1 className="text-2xl font-bold mb-4 text-error">Error</h1>
+              <p className="text-text-500">
+                Your Danswer instance was not configured properly and your
+                settings could not be loaded. Please contact your admin to fix
+                this error.
+              </p>
+            </Card>
+          </div>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="en">
@@ -104,7 +86,7 @@ export default async function RootLayout({
         />
       </Head>
 
-      {CUSTOM_ANALYTICS_ENABLED && combinedSettings && combinedSettings.customAnalyticsScript && (
+      {CUSTOM_ANALYTICS_ENABLED && combinedSettings.customAnalyticsScript && (
         <head>
           <script
             type="text/javascript"
@@ -118,12 +100,11 @@ export default async function RootLayout({
       <body className={`relative ${inter.variable} font-sans`}>
         <div
           className={`text-default bg-background ${
-            // TODO: remove this once proper dark mode exists
             process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
-            }`}
+          }`}
         >
           <UserProvider>
-            <SettingsProvider settings={combinedSettings || defaultCombinedSettings}>
+            <SettingsProvider settings={combinedSettings}>
               {children}
             </SettingsProvider>
           </UserProvider>

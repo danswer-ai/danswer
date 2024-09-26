@@ -30,25 +30,24 @@ const nextConfig = {
     if (process.env.NODE_ENV === "production") return defaultRedirects;
 
     return defaultRedirects.concat([
-      // TODO: validate the db sesion in tenancy for loca dev
-      // {
+      {
     
-      //   source: "/api/chat/send-message:params*",
-      //   destination: "http://127.0.0.1:8080/chat/send-message:params*", // Proxy to Backend
-      //   permanent: true,
-      // },
-      // {
-      //   source: "/api/query/stream-answer-with-quote:params*",
-      //   destination:
-      //     "http://127.0.0.1:8080/query/stream-answer-with-quote:params*", // Proxy to Backend
-      //   permanent: true,
-      // },
-      // {
-      //   source: "/api/query/stream-query-validation:params*",
-      //   destination:
-      //     "http://127.0.0.1:8080/query/stream-query-validation:params*", // Proxy to Backend
-      //   permanent: true,
-      // },
+        source: "/api/chat/send-message:params*",
+        destination: "http://127.0.0.1:8080/chat/send-message:params*", // Proxy to Backend
+        permanent: true,
+      },
+      {
+        source: "/api/query/stream-answer-with-quote:params*",
+        destination:
+          "http://127.0.0.1:8080/query/stream-answer-with-quote:params*", // Proxy to Backend
+        permanent: true,
+      },
+      {
+        source: "/api/query/stream-query-validation:params*",
+        destination:
+          "http://127.0.0.1:8080/query/stream-query-validation:params*", // Proxy to Backend
+        permanent: true,
+      },
     ]);
   },
   publicRuntimeConfig: {

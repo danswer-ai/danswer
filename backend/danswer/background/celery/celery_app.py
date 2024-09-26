@@ -288,7 +288,6 @@ def check_for_document_sets_sync_task(tenant_id: str) -> None:
     soft_time_limit=JOB_TIMEOUT,
 )
 def check_for_cc_pair_deletion_task(tenant_id: str) -> None:
-    print('\n\n\n\n\n\n\n\n\n\n\nscheduling deletion task')
     """Runs periodically to check if any deletion tasks should be run"""
     with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
         # check if any document sets are not synced
@@ -463,7 +462,6 @@ def schedule_tenant_tasks():
     logger.info(f"Scheduling tasks for tenants: {valid_tenants}")
 
     for tenant_id in valid_tenants:
-        print(f"Scheduling tasks for tenant: {tenant_id}")
         # Schedule tasks specific to each tenant
         celery_app.conf.beat_schedule[f"check-for-document-set-sync-{tenant_id}"] = {
             "task": "check_for_document_sets_sync_task",
@@ -489,31 +487,3 @@ def schedule_tenant_tasks():
         }
 
 schedule_tenant_tasks()
-# celery_app.conf.beat_schedule = {
-#     "check-for-document-set-sync": {
-#         "task": "check_for_document_sets_sync_task",
-#         "schedule": timedelta(seconds=5),
-#     },
-#     "check-for-cc-pair-deletion": {
-#         "task": "check_for_cc_pair_deletion_task",
-#         # don't need to check too often, since we kick off a deletion initially
-#         # during the API call that actually marks the CC pair for deletion
-#         "schedule": timedelta(minutes=1),
-#     },
-# }
-# celery_app.conf.beat_schedule.update(
-#     {
-#         "check-for-prune": {
-#             "task": "check_for_prune_task",
-#             "schedule": timedelta(seconds=5),
-#         },
-#     }
-# )
-# celery_app.conf.beat_schedule.update(
-#     {
-#         "kombu-message-cleanup": {
-#             "task": "kombu_message_cleanup_task",
-#             "schedule": timedelta(seconds=3600),
-#         },
-#     }
-# )

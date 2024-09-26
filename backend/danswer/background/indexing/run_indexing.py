@@ -64,6 +64,7 @@ def _get_connector_runner(
             attempt.connector_credential_pair.connector.connector_specific_config,
             attempt.connector_credential_pair.credential,
             db_session,
+            
         )
     except Exception as e:
         logger.exception(f"Unable to instantiate connector due to {e}")
@@ -417,38 +418,3 @@ def run_indexing_entrypoint(index_attempt_id: int, tenant_id: str, is_ee: bool =
             )
     except Exception as e:
         logger.exception(f"Indexing job with ID '{index_attempt_id}' for tenant {tenant_id} failed due to {e}")
-
-# def run_indexing_entrypoint(index_attempt_id: int, is_ee: bool = False) -> None:
-#     """Entrypoint for indexing run when using dask distributed.
-#     Wraps the actual logic in a `try` block so that we can catch any exceptions
-#     and mark the attempt as failed."""
-#     try:
-#         if is_ee:
-#             global_version.set_ee()
-
-#         # set the indexing attempt ID so that all log messages from this process
-#         # will have it added as a prefix
-#         IndexAttemptSingleton.set_index_attempt_id(index_attempt_id)
-
-#         with Session(get_sqlalchemy_engine()) as db_session:
-#             # make sure that it is valid to run this indexing attempt + mark it
-#             # as in progress
-#             attempt = _prepare_index_attempt(db_session, index_attempt_id)
-
-#             logger.info(
-#                 f"Indexing starting: "
-#                 f"connector='{attempt.connector_credential_pair.connector.name}' "
-#                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
-#                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
-#             )
-
-#             _run_indexing(db_session, attempt)
-
-#             logger.info(
-#                 f"Indexing finished: "
-#                 f"connector='{attempt.connector_credential_pair.connector.name}' "
-#                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
-#                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
-#             )
-#     except Exception as e:
-#         logger.exception(f"Indexing job with ID '{index_attempt_id}' failed due to {e}")

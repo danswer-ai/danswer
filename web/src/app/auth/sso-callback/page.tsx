@@ -19,7 +19,6 @@ export default function SSOCallback() {
       }
       
       verificationStartedRef.current = true;
-      // Extract the SSO token from the URL hash
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const ssoToken = hashParams.get("sso_token");
 
@@ -28,9 +27,7 @@ export default function SSOCallback() {
         return;
       }
 
-      // Remove the SSO token from the URL for security
       window.history.replaceState(null, '', window.location.pathname);
-      // const ssoToken = searchParams.get("sso_token");
 
       if (!ssoToken) {
         setError("No SSO token found");
@@ -46,14 +43,13 @@ export default function SSOCallback() {
             headers: {
               "Content-Type": "application/json",
             },
-            credentials: "include", // Ensure cookies are included in requests
+            credentials: "include",
             body: JSON.stringify({ sso_token: ssoToken }),
           }
         )
 
         if (response.ok) {
           setAuthStatus("Authentication successful!");
-          // Redirect to the dashboard or desired page
           router.replace("/admin/configuration/llm");
         } else {
           const errorData = await response.json();

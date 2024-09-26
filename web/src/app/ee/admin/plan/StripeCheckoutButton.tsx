@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { buildClientUrl } from "@/lib/utilsSS";
 import { BillingPlanType } from "@/app/admin/settings/interfaces";
-// import { buildUrl } from '@/lib/utilsSS';
 
 export function StripeCheckoutButton({
   newQuantity,
@@ -53,11 +51,10 @@ export function StripeCheckoutButton({
   return (
     <button
       onClick={handleClick}
-      className={`py-2 px-4 text-white rounded ${
-        currentPlan === newPlan && currentQuantity === newQuantity
+      className={`py-2 px-4 text-white rounded ${currentPlan === newPlan && currentQuantity === newQuantity
           ? "bg-gray-400 cursor-not-allowed"
           : "bg-blue-500 hover:bg-blue-600"
-      } disabled:bg-blue-300`}
+        } disabled:bg-blue-300`}
       disabled={
         (currentPlan === newPlan && currentQuantity === newQuantity) ||
         isLoading
@@ -68,12 +65,12 @@ export function StripeCheckoutButton({
         : currentPlan === newPlan && currentQuantity === newQuantity
           ? "No Changes"
           : newPlan > currentPlan ||
-              (newPlan === currentPlan && newQuantity > currentQuantity)
+            (newPlan === currentPlan && newQuantity > currentQuantity)
             ? "Upgrade Plan"
             : newPlan == BillingPlanType.ENTERPRISE
               ? "Talk to us"
               : // : newPlan < currentPlan ||
-                newPlan === currentPlan && newQuantity < currentQuantity
+              newPlan === currentPlan && newQuantity < currentQuantity
                 ? "Upgrade Plan"
                 : "Change Plan"}
     </button>

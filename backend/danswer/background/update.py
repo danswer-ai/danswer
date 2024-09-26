@@ -402,28 +402,11 @@ def update_loop(
     num_workers: int = NUM_INDEXING_WORKERS,
     num_secondary_workers: int = NUM_SECONDARY_INDEXING_WORKERS,
 ) -> None:
-    # Initialize Dask clients outside the loop
     client_primary = Client(n_workers=num_workers)
     client_secondary = Client(n_workers=num_secondary_workers)
     try:
         while True:
             tenants = get_all_tenant_ids()
-
-            # tenants = [
-            #     'public',
-            #     '0f95cf24-c4dc-4fee-a1f2-1f190789c030',
-            #     '2e03529d-f07f-4953-b06c-0cda3ac55443',
-            #     '40d74dd5-0443-4f61-9320-50eb68a14c03',
-            #     '424fe753-f2bd-41a3-9e75-c01b463c8e17',
-            #     '801881f8-d7f5-4c79-907e-397d7d7c7862',
-            #     '8c2e79fb-94e6-48e2-b46d-462f8056c86a',
-            #     'a0fdf812-c5e7-48f7-b861-26b78a4b3a6b',
-            #     'ae865bb6-c0d1-4ecc-a42a-db6c6208dce4',
-            #     'cc0e19aa-cbf0-4a4f-84fc-e19f1551ae80',
-            #     'ce763ab4-8a0a-4366-a167-b6f882133e38',
-            #     'de41dfa2-1f43-417c-9763-7baea619b67c',
-            #     'f53febd2-3861-495b-8b44-08840cf7f521'
-            # ]
 
             valid_tenants = [tenant for tenant in tenants if not tenant.startswith('pg_')]
             logger.info(f"Found valid tenants: {valid_tenants}")
@@ -469,90 +452,8 @@ def update_loop(
             time.sleep(sleep_time)
 
     finally:
-        # Ensure clients are closed when the loop exits
         client_primary.close()
         client_secondary.close()
-
-
-# def update_loop(
-#     delay: int = 10,
-#     num_workers: int = NUM_INDEXING_WORKERS,
-#     num_secondary_workers: int = NUM_SECONDARY_INDEXING_WORKERS,
-# ) -> None:
-#     engine = get_sqlalchemy_engine()
-#     with Session(engine) as db_session:
-#         check_index_swap(db_session=db_session)
-#         search_settings = get_current_search_settings(db_session)
-
-#         # So that the first time users aren't surprised by really slow speed of first
-#         # batch of documents indexed
-
-#         if search_settings.provider_type is None:
-#             logger.notice("Running a first inference to warm up embedding model")
-#             embedding_model = EmbeddingModel.from_db_model(
-#                 search_settings=search_settings,
-#                 server_host=INDEXING_MODEL_SERVER_HOST,
-#                 server_port=MODEL_SERVER_PORT,
-#             )
-
-#             warm_up_bi_encoder(
-#                 embedding_model=embedding_model,
-#             )
-
-#     client_primary: Client | SimpleJobClient
-#     client_secondary: Client | SimpleJobClient
-#     if DASK_JOB_CLIENT_ENABLED:
-#         cluster_primary = LocalCluster(
-#             n_workers=num_workers,
-#             threads_per_worker=1,
-#             # there are warning about high memory usage + "Event loop unresponsive"
-#             # which are not relevant to us since our workers are expected to use a
-#             # lot of memory + involve CPU intensive tasks that will not relinquish
-#             # the event loop
-#             silence_logs=logging.ERROR,
-#         )
-#         cluster_secondary = LocalCluster(
-#             n_workers=num_secondary_workers,
-#             threads_per_worker=1,
-#             silence_logs=logging.ERROR,
-#         )
-#         client_primary = Client(cluster_primary)
-#         client_secondary = Client(cluster_secondary)
-#         if LOG_LEVEL.lower() == "debug":
-#             client_primary.register_worker_plugin(ResourceLogger())
-#     else:
-#         client_primary = SimpleJobClient(n_workers=num_workers)
-#         client_secondary = SimpleJobClient(n_workers=num_secondary_workers)
-
-#     existing_jobs: dict[int, Future | SimpleJob] = {}
-
-#     while True:
-#         start = time.time()
-#         start_time_utc = datetime.utcfromtimestamp(start).strftime("%Y-%m-%d %H:%M:%S")
-#         logger.debug(f"Running update, current UTC time: {start_time_utc}")
-
-#         if existing_jobs:
-#             # TODO: make this debug level once the "no jobs are being scheduled" issue is resolved
-#             logger.debug(
-#                 "Found existing indexing jobs: "
-#                 f"{[(attempt_id, job.status) for attempt_id, job in existing_jobs.items()]}"
-#             )
-
-#         try:
-#             with Session(get_sqlalchemy_engine()) as db_session:
-#                 check_index_swap(db_session)
-#             existing_jobs = cleanup_indexing_jobs(existing_jobs=existing_jobs)
-#             create_indexing_jobs(existing_jobs=existing_jobs)
-#             existing_jobs = kickoff_indexing_jobs(
-#                 existing_jobs=existing_jobs,
-#                 client=client_primary,
-#                 secondary_client=client_secondary,
-#             )
-#         except Exception as e:
-#             logger.exception(f"Failed to run update due to {e}")
-#         sleep_time = delay - (time.time() - start)
-#         if sleep_time > 0:
-#             time.sleep(sleep_time)
 
 
 def update__main() -> None:
