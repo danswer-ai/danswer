@@ -13,10 +13,10 @@ export const LoginText = () => {
 
   return (
     <div>
-      <h1 className="my-2 text-2xl xl:text-3xl font-bold text-center text-dark-900">
+      <h1 className="text-xl md:text-3xl font-bold text-center text-dark-900">
         Welcome Back to {settings.workspaces?.workspace_name || "Arnold Ai"}
       </h1>
-      <p className="text-center text-sm text-subtle">
+      <p className="text-center text-sm text-subtle md:pt-2">
         Welcome back! Please enter your details.
       </p>
     </div>

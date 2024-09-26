@@ -166,7 +166,7 @@ export default async function Home() {
       Only used in the EE version of the app. */}
         <ChatPopup />
         <InstantSSRAutoRefresh />
-        <div className="pt-20 lg:pt-14 lg:pl-24 lg:pr-14 container h-screen overflow-hidden">
+        <div className="pt-20 lg:pt-14 lg:px-14 container h-screen overflow-hidden">
           <SearchSection
             ccPairs={ccPairs}
             documentSets={documentSets}

@@ -1,7 +1,6 @@
 import React from "react";
 import { DocumentSet, Tag, ValidSources } from "@/lib/types";
 import { SourceMetadata } from "@/lib/search/interfaces";
-import { InfoIcon, defaultTailwindCSS } from "../../icons/icons";
 import { listSourceMetadata } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
 import { TagFilter } from "./TagFilter";
@@ -15,7 +14,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Book, Bookmark, Brain, Map, X } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
-import { SortSearch } from "../SortSearch";
 import { DateRangeSearchSelector } from "../DateRangeSearchSelector";
 import { Button } from "@/components/ui/button";
 
@@ -109,14 +107,14 @@ export function SourceSelector({
               .map((source, index, array) => (
                 <div
                   key={source.internalName}
-                  className={`w-full flex items-center justify-between cursor-pointer px-2 py-3 gap-2 ${
+                  className={`w-full flex items-center justify-between cursor-pointer gap-2 ${
                     index === 0 ? "lg:border-t" : ""
                   } ${index !== array.length - 1 ? "lg:border-b" : ""}`}
                   onClick={() => handleSelect(source)}
                 >
                   <label
                     htmlFor={source.internalName}
-                    className="flex items-center w-full"
+                    className="flex items-center w-full px-2 py-3"
                   >
                     <SourceIcon
                       sourceType={source.internalName}
@@ -138,11 +136,11 @@ export function SourceSelector({
             {availableDocumentSets.map((documentSet) => (
               <div
                 key={documentSet.name}
-                className={`w-full flex items-center justify-between cursor-pointer px-2 py-3 gap-2 border-t`}
+                className="w-full flex items-center justify-between cursor-pointer gap-2 border-t"
               >
                 <label
                   htmlFor={documentSet.name}
-                  className="flex items-center w-full"
+                  className="flex items-center w-full px-2 py-3"
                   onClick={() => handleDocumentSetSelect(documentSet.name)}
                 >
                   <CustomTooltip
