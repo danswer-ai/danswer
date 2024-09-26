@@ -164,7 +164,6 @@ export function ChatSessionDisplay({
                                 </PopoverContent>
                               </Popover>
                             }
-                            asChild
                           >
                             More
                           </CustomTooltip>
@@ -188,7 +187,6 @@ export function ChatSessionDisplay({
                             chatSessionName={chatSession.name}
                           />
                         }
-                        asChild
                       >
                         Delete
                       </CustomTooltip>

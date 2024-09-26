@@ -368,7 +368,7 @@ export const AIMessage = ({
                     trigger={
                       <Button
                         variant="ghost"
-                        size="smallIcon"
+                        size="icon"
                         onClick={() => {
                           handleFeedback("like");
                           setIsLikeModalOpen(true);
@@ -396,7 +396,6 @@ export const AIMessage = ({
                     />
                   </CustomModal>
                 }
-                asChild
               >
                 Like
               </CustomTooltip>
@@ -407,7 +406,7 @@ export const AIMessage = ({
                     trigger={
                       <Button
                         variant="ghost"
-                        size="smallIcon"
+                        size="icon"
                         onClick={() => {
                           handleFeedback("dislike");
                           setIsDislikeModalOpen(true);
@@ -435,7 +434,6 @@ export const AIMessage = ({
                     />
                   </CustomModal>
                 }
-                asChild
               >
                 Dislike
               </CustomTooltip>
@@ -464,7 +462,7 @@ function MessageSwitcher({
         trigger={
           <Button
             variant="ghost"
-            size="smallIcon"
+            size="icon"
             onClick={currentPage === 1 ? undefined : handlePrevious}
           >
             <ChevronLeft />
@@ -481,7 +479,7 @@ function MessageSwitcher({
         trigger={
           <Button
             variant="ghost"
-            size="smallIcon"
+            size="icon"
             onClick={currentPage === totalPages ? undefined : handleNext}
           >
             <ChevronRight />

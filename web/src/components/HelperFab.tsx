@@ -16,7 +16,7 @@ export function HelperFab() {
     <Popover>
       <PopoverTrigger
         asChild
-        className="absolute bottom-5 right-5 md:bottom-3 md:right-3 lg:bottom-5 lg:right-5 z-modal hidden md:flex"
+        className="absolute bottom-5 right-5 md:bottom-3 md:right-3 lg:bottom-5 lg:right-5 z-modal hidden md:flex cursor-pointer"
       >
         <CircleHelp size={20} />
       </PopoverTrigger>
