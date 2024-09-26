@@ -87,7 +87,7 @@ class TestLLMProvider(BaseModel):
     api_key: str
     default_model_name: str
     is_public: bool
-    groups: list[TestUserGroup]
+    groups: list[int]
     api_base: str | None = None
     api_version: str | None = None
 
