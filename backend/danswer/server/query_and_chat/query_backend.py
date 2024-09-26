@@ -242,6 +242,7 @@ def get_answer_with_quote(
     query_request: DirectQARequest,
     user: User = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
+    db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
     query = query_request.messages[0].message
 
@@ -252,5 +253,6 @@ def get_answer_with_quote(
         user=user,
         max_document_tokens=None,
         max_history_tokens=0,
+        db_session=db_session,
     )
     return StreamingResponse(packets, media_type="application/json")

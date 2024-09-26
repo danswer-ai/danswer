@@ -25,7 +25,7 @@ class ThreadMessage(BaseModel):
 
 class DirectQARequest(ChunkContext):
     messages: list[ThreadMessage]
-    prompt_id: int | None
+    prompt_id: int | None = None
     persona_id: int
     multilingual_query_expansion: list[str] | None = None
     retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)

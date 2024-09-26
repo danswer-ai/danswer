@@ -329,6 +329,7 @@ def handle_new_chat_message(
                     request.headers
                 ),
                 is_connected=is_disconnected_func,
+                db_session=db_session,
             ):
                 yield json.dumps(packet) if isinstance(packet, dict) else packet
 

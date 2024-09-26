@@ -41,7 +41,8 @@ SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY") or "JWT_SECRET_KEY"
 #####
 # Auth Configs
 #####
-MULTI_TENANT = os.environ.get("MULTI_TENANT", "false").lower() == "true"
+MULTI_TENANT = True
+# MULTI_TENANT = os.environ.get("MULTI_TENANT", "false").lower() == "true"
 
 AUTH_TYPE = AuthType((os.environ.get("AUTH_TYPE") or AuthType.DISABLED.value).lower())
 DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED

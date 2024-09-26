@@ -12,11 +12,14 @@ from danswer.llm.interfaces import LLM
 from danswer.llm.override_models import LLMOverride
 from sqlalchemy.orm import Session
 
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
+
 def get_main_llm_from_tuple(
     llms: tuple[LLM, LLM],
 ) -> LLM:
     return llms[0]
-
 
 def get_llms_for_persona(
     persona: Persona,
@@ -35,7 +38,6 @@ def get_llms_for_persona(
             additional_headers=additional_headers,
             db_session=db_session,
         )
-
 
     llm_provider = fetch_provider(db_session, provider_name)
 
@@ -59,7 +61,6 @@ def get_llms_for_persona(
             custom_config=llm_provider.custom_config,
             additional_headers=additional_headers,
         )
-
     return _create_llm(model), _create_llm(fast_model)
 
 
@@ -72,9 +73,15 @@ def get_default_llms(
     if DISABLE_GENERATIVE_AI:
         raise GenAIDisabledException()
 
-
-    with get_session_context_manager() as db_session:
+    
+    if db_session is None:  
+        logger.debug("DB SESSION IS NONE")
+        with get_session_context_manager() as db_session:
+            llm_provider = fetch_default_provider(db_session)
+    else:
+        logger.debug("DB SESSION IS NOT NONE")
         llm_provider = fetch_default_provider(db_session)
+    
 
     if not llm_provider:
         raise ValueError("No default LLM provider found")

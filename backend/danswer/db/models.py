@@ -1185,7 +1185,6 @@ class Tool(Base):
 
     # user who created / owns the tool. Will be None for built-in tools.
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-
     user: Mapped[User | None] = relationship("User", back_populates="custom_tools")
     # Relationship to Persona through the association table
     personas: Mapped[list["Persona"]] = relationship(

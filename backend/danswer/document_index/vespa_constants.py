@@ -31,7 +31,7 @@ MAX_ID_SEARCH_QUERY_SIZE = 400
 VESPA_TIMEOUT = "3s"
 BATCH_SIZE = 128  # Specific to Vespa
 
-
+TENANT_ID = "tenant_id"
 DOCUMENT_ID = "document_id"
 CHUNK_ID = "chunk_id"
 BLURB = "blurb"

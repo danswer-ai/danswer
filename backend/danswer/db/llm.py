@@ -135,7 +135,7 @@ def fetch_embedding_provider(
 
 
 def fetch_default_provider(db_session: Session) -> FullLLMProvider | None:
-    # Log all LLM providers
+
     providers = db_session.scalars(select(LLMProviderModel)).all()
     print("all the llm providers are...")
     for provider in providers:
@@ -146,8 +146,10 @@ def fetch_default_provider(db_session: Session) -> FullLLMProvider | None:
             LLMProviderModel.is_default_provider == True  # noqa: E712
         )
     )
+
     if not provider_model:
         return None
+    
     return FullLLMProvider.from_model(provider_model)
 
 

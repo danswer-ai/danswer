@@ -63,6 +63,7 @@ def get_chat_session_by_id(
             stmt = stmt.where(
                 or_(ChatSession.user_id == user_id, ChatSession.user_id.is_(None))
             )
+            
     logger.info(f"POPOPZExecuting SQL query: {stmt}")
 
     result = db_session.execute(stmt)

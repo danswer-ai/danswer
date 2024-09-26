@@ -49,6 +49,7 @@ from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
+from danswer.document_index.factory import get_default_multi_tenant_document_index
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.dynamic_configs.factory import get_dynamic_config_store
@@ -99,6 +100,7 @@ from danswer.server.settings.api import basic_router as settings_router
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
+from danswer.server.tenants.api import basic_router as tenants_router
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -107,6 +109,7 @@ from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.configs import SUPPORTED_EMBEDDING_MODELS
 from danswer.db_setup import setup_postgres
 
 logger = setup_logger()
@@ -224,26 +227,26 @@ def mark_reindex_flag(db_session: Session) -> None:
     else:
         kv_store.store(KV_REINDEX_KEY, False)
 
+from danswer.document_index.vespa.index import MultiTenantVespaIndex
+from shared_configs.configs import SupportedEmbeddingModel
+
 
 def setup_vespa(
-    document_index: DocumentIndex,
-    index_setting: IndexingSetting,
-    secondary_index_setting: IndexingSetting | None,
+    document_index: MultiTenantVespaIndex,
+    supported_embedding_models: list[SupportedEmbeddingModel]
 ) -> None:
     # Vespa startup is a bit slow, so give it a few seconds
     wait_time = 5
     for _ in range(5):
         try:
             document_index.ensure_indices_exist(
-                index_embedding_dim=index_setting.model_dim,
-                secondary_index_embedding_dim=secondary_index_setting.model_dim
-                if secondary_index_setting
-                else None,
+                embedding_dims=[model.dim for model in supported_embedding_models],
             )
             break
         except Exception:
             logger.notice(f"Waiting on Vespa, retrying in {wait_time} seconds...")
             time.sleep(wait_time)
+            logger.exception("Error ensuring multi-tenant indices exist")
 
 
 @asynccontextmanager
@@ -316,18 +319,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         # ensure Vespa is setup correctly
         logger.notice("Verifying Document Index(s) is/are available.")
-        document_index = get_default_document_index(
-            primary_index_name=search_settings.index_name,
-            secondary_index_name=secondary_search_settings.index_name
-            if secondary_search_settings
-            else None,
+        
+        document_index = get_default_multi_tenant_document_index(
+            indices=[model.index_name for model in SUPPORTED_EMBEDDING_MODELS],
         )
+
         setup_vespa(
             document_index,
-            IndexingSetting.from_db_model(search_settings),
-            IndexingSetting.from_db_model(secondary_search_settings)
-            if secondary_search_settings
-            else None,
+            SUPPORTED_EMBEDDING_MODELS
         )
 
         logger.notice(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
@@ -339,6 +338,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                     server_port=MODEL_SERVER_PORT,
                 ),
             )
+        logger.notice("Warm up bi encoder complete")
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield
@@ -383,6 +383,9 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, embedding_router)
     include_router_with_global_prefix_prepended(
         application, token_rate_limit_settings_router
+    )
+    include_router_with_global_prefix_prepended(
+        application, tenants_router
     )
     include_router_with_global_prefix_prepended(application, indexing_router)
 

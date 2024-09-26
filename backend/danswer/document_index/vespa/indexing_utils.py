@@ -21,6 +21,7 @@ from danswer.document_index.vespa_constants import CHUNK_ID
 from danswer.document_index.vespa_constants import CONTENT
 from danswer.document_index.vespa_constants import CONTENT_SUMMARY
 from danswer.document_index.vespa_constants import DOC_UPDATED_AT
+from danswer.document_index.vespa_constants import TENANT_ID
 from danswer.document_index.vespa_constants import DOCUMENT_ID
 from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa_constants import DOCUMENT_SETS
@@ -65,6 +66,8 @@ def _does_document_exist(
         raise RuntimeError(
             f"Unexpected fetch document by ID value from Vespa "
             f"with error {doc_fetch_response.status_code}"
+            f"Index name: {index_name}"
+            f"Doc chunk id: {doc_chunk_id}"
         )
     return True
 
@@ -117,7 +120,9 @@ def get_existing_documents_from_chunks(
 
 @retry(tries=3, delay=1, backoff=2)
 def _index_vespa_chunk(
-    chunk: DocMetadataAwareIndexChunk, index_name: str, http_client: httpx.Client
+    chunk: DocMetadataAwareIndexChunk,
+    index_name: str,
+    http_client: httpx.Client,
 ) -> None:
     json_header = {
         "Content-Type": "application/json",
@@ -137,6 +142,7 @@ def _index_vespa_chunk(
     title = document.get_title_for_document_index()
 
     vespa_document_fields = {
+        TENANT_ID: chunk.tenant_id,
         DOCUMENT_ID: document.id,
         CHUNK_ID: chunk.chunk_id,
         BLURB: remove_invalid_unicode_chars(chunk.blurb),

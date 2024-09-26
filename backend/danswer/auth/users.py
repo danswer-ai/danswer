@@ -208,7 +208,7 @@ def verify_sso_token(token: str) -> dict:
             )
         return payload
     except jwt.PyJWTError:
-        print("ATTEMPING TO DECODE")
+        print("error  decodi")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )

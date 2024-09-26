@@ -17,6 +17,7 @@ export default function SSOCallback() {
       if (verificationStartedRef.current) {
         return;
       }
+      
       verificationStartedRef.current = true;
       // Extract the SSO token from the URL hash
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
@@ -39,7 +40,7 @@ export default function SSOCallback() {
       try {
         setAuthStatus("Verifying SSO token...");
         const response = await fetch(
-          `/api/settings/auth/sso-callback`,
+          `/api/tenants/auth/sso-callback`,
           {
             method: "POST",
             headers: {

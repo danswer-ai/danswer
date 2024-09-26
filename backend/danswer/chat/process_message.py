@@ -333,7 +333,7 @@ def stream_chat_message_objects(
         )
 
         search_settings = get_current_search_settings(db_session)
-        document_index = get_default_document_index(
+        document_index = get_default_document_index( 
             primary_index_name=search_settings.index_name, secondary_index_name=None
         )
 
@@ -801,18 +801,19 @@ def stream_chat_message_objects(
 def stream_chat_message(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
+    db_session: Session,
     use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
 ) -> Iterator[str]:
-    with get_session_context_manager() as db_session:
-        objects = stream_chat_message_objects(
-            new_msg_req=new_msg_req,
-            user=user,
-            db_session=db_session,
-            use_existing_user_message=use_existing_user_message,
-            litellm_additional_headers=litellm_additional_headers,
-            is_connected=is_connected,
-        )
-        for obj in objects:
-            yield get_json_line(obj.model_dump())
+
+    objects = stream_chat_message_objects(
+        new_msg_req=new_msg_req,
+        user=user,
+        db_session=db_session,
+        use_existing_user_message=use_existing_user_message,
+        litellm_additional_headers=litellm_additional_headers,
+        is_connected=is_connected,
+    )
+    for obj in objects:
+        yield get_json_line(obj.model_dump())

@@ -42,18 +42,18 @@ def upgrade() -> None:
         "query_prefix": "",
         "passage_prefix": "",
         "index_name": "OPENSEARCH_INDEX_NAME",
-        "status": IndexModelStatus.PRESENT,
+        "status": IndexModelStatus.PAST,
     }
 
     # Define the new default embedding model directly
     new_embedding_model = {
-        "model_name": "sentence-transformers/all-mpnet-base-v2",
-        "model_dim": 768,
+        "model_name": "intfloat/e5-small-v2",
+        "model_dim": 384,
         "normalize": False,
-        "query_prefix": "",
-        "passage_prefix": "",
-        "index_name": "OPENSEARCH_INDEX_NAME",
-        "status": IndexModelStatus.FUTURE,
+        "query_prefix": "query: ",
+        "passage_prefix": "passage: ",
+        "index_name": "danswer_chunk_intfloat_e5_small_v2",
+        "status": IndexModelStatus.PRESENT,
     }
 
     # Assume the user has not overridden the embedding model

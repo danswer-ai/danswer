@@ -10,6 +10,7 @@ class RecencyBiasSetting(str, Enum):
     NO_DECAY = "no_decay"
     # Determine based on query if to use base_decay or favor_recent
     AUTO = "auto"
+    auto = "auto"
 
 
 class OptionalSearchSetting(str, Enum):

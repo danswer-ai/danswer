@@ -1,11 +1,14 @@
+
 import time
 import traceback
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
+from danswer.db.engine import current_tenant_id
 from sqlalchemy.orm import Session
 
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
 from danswer.background.indexing.tracer import DanswerTracer
 from danswer.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
@@ -82,6 +85,7 @@ def _get_connector_runner(
 def _run_indexing(
     db_session: Session,
     index_attempt: IndexAttempt,
+    tenant_id: str
 ) -> None:
     """
     1. Get documents which are either new or updated from specified application
@@ -101,6 +105,7 @@ def _run_indexing(
     document_index = get_default_document_index(
         primary_index_name=index_name, secondary_index_name=None
     )
+    
 
     embedding_model = DefaultIndexingEmbedder.from_db_search_settings(
         search_settings=search_settings
@@ -113,6 +118,7 @@ def _run_indexing(
         ignore_time_skip=index_attempt.from_beginning
         or (search_settings.status == IndexModelStatus.FUTURE),
         db_session=db_session,
+        tenant_id=tenant_id,
     )
 
     db_cc_pair = index_attempt.connector_credential_pair
@@ -383,38 +389,66 @@ def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexA
 
     return attempt
 
-
-def run_indexing_entrypoint(index_attempt_id: int, is_ee: bool = False) -> None:
-    """Entrypoint for indexing run when using dask distributed.
-    Wraps the actual logic in a `try` block so that we can catch any exceptions
-    and mark the attempt as failed."""
+def run_indexing_entrypoint(index_attempt_id: int, tenant_id: str, is_ee: bool = False) -> None:
     try:
         if is_ee:
             global_version.set_ee()
 
-        # set the indexing attempt ID so that all log messages from this process
-        # will have it added as a prefix
+        current_tenant_id.set(tenant_id)
         IndexAttemptSingleton.set_index_attempt_id(index_attempt_id)
 
-        with Session(get_sqlalchemy_engine()) as db_session:
-            # make sure that it is valid to run this indexing attempt + mark it
-            # as in progress
+        with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
             attempt = _prepare_index_attempt(db_session, index_attempt_id)
 
             logger.info(
-                f"Indexing starting: "
+                f"Indexing starting for tenant {tenant_id}: "
                 f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
 
-            _run_indexing(db_session, attempt)
+            _run_indexing(db_session, attempt, tenant_id)
 
             logger.info(
-                f"Indexing finished: "
+                f"Indexing finished for tenant {tenant_id}: "
                 f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
     except Exception as e:
-        logger.exception(f"Indexing job with ID '{index_attempt_id}' failed due to {e}")
+        logger.exception(f"Indexing job with ID '{index_attempt_id}' for tenant {tenant_id} failed due to {e}")
+
+# def run_indexing_entrypoint(index_attempt_id: int, is_ee: bool = False) -> None:
+#     """Entrypoint for indexing run when using dask distributed.
+#     Wraps the actual logic in a `try` block so that we can catch any exceptions
+#     and mark the attempt as failed."""
+#     try:
+#         if is_ee:
+#             global_version.set_ee()
+
+#         # set the indexing attempt ID so that all log messages from this process
+#         # will have it added as a prefix
+#         IndexAttemptSingleton.set_index_attempt_id(index_attempt_id)
+
+#         with Session(get_sqlalchemy_engine()) as db_session:
+#             # make sure that it is valid to run this indexing attempt + mark it
+#             # as in progress
+#             attempt = _prepare_index_attempt(db_session, index_attempt_id)
+
+#             logger.info(
+#                 f"Indexing starting: "
+#                 f"connector='{attempt.connector_credential_pair.connector.name}' "
+#                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
+#                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
+#             )
+
+#             _run_indexing(db_session, attempt)
+
+#             logger.info(
+#                 f"Indexing finished: "
+#                 f"connector='{attempt.connector_credential_pair.connector.name}' "
+#                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
+#                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
+#             )
+#     except Exception as e:
+#         logger.exception(f"Indexing job with ID '{index_attempt_id}' failed due to {e}")

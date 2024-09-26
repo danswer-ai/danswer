@@ -118,6 +118,7 @@ def stream_answer_objects(
         one_shot=True,
         danswerbot_flow=danswerbot_flow,
     )
+    
     llm, fast_llm = get_llms_for_persona(persona=chat_session.persona, db_session=db_session)
 
     llm_tokenizer = get_tokenizer(
@@ -317,17 +318,17 @@ def stream_search_answer(
     user: User | None,
     max_document_tokens: int | None,
     max_history_tokens: int | None,
+    db_session: Session,
 ) -> Iterator[str]:
-    with get_session_context_manager() as session:
-        objects = stream_answer_objects(
-            query_req=query_req,
-            user=user,
-            max_document_tokens=max_document_tokens,
-            max_history_tokens=max_history_tokens,
-            db_session=session,
-        )
-        for obj in objects:
-            yield get_json_line(obj.model_dump())
+    objects = stream_answer_objects(
+        query_req=query_req,
+        user=user,
+        max_document_tokens=max_document_tokens,
+        max_history_tokens=max_history_tokens,
+        db_session=db_session,
+    )
+    for obj in objects:
+        yield get_json_line(obj.model_dump())
 
 
 def get_search_answer(
