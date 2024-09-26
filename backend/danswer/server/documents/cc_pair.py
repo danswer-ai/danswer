@@ -239,7 +239,7 @@ def prune_cc_pair(
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[list[int]]:
     # avoiding circular refs
-    from danswer.background.celery.celery_app import prune_documents_task
+    from danswer.background.celery.tasks.pruning.tasks import prune_documents_task
 
     cc_pair = get_connector_credential_pair_from_id(
         cc_pair_id=cc_pair_id,
