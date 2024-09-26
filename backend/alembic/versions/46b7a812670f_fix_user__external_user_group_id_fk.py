@@ -26,7 +26,7 @@ def upgrade() -> None:
     op.create_primary_key(
         "user__external_user_group_id_pkey",
         "user__external_user_group_id",
-        ["user_id", "external_user_group_id"],
+        ["user_id", "external_user_group_id", "cc_pair_id"],
     )
 
 
@@ -37,6 +37,8 @@ def downgrade() -> None:
         "user__external_user_group_id",
         type_="primary",
     )
+    # Delete all entries from the table
+    op.execute("DELETE FROM user__external_user_group_id")
 
     # Recreate the original primary key on user_id
     op.create_primary_key(
