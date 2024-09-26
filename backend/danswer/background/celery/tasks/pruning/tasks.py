@@ -2,6 +2,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from sqlalchemy.orm import Session
 
+from danswer.background.celery.celery_app import celery_app
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
 from danswer.background.celery.celery_utils import should_prune_cc_pair
 from danswer.background.connector_deletion import delete_connector_credential_pair_batch
@@ -50,7 +51,7 @@ def check_for_prune_task() -> None:
 
 
 @build_celery_task_wrapper(name_cc_prune_task)
-@shared_task(soft_time_limit=JOB_TIMEOUT)
+@celery_app.task(name="prune_documents_task", soft_time_limit=JOB_TIMEOUT)
 def prune_documents_task(connector_id: int, credential_id: int) -> None:
     """connector pruning task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
