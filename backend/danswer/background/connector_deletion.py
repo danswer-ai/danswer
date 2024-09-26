@@ -35,6 +35,7 @@ from danswer.utils.variable_functionality import (
     fetch_versioned_implementation_with_fallback,
 )
 from danswer.utils.variable_functionality import noop_fallback
+from danswer.configs.app_configs import DEFAULT_SCHEMA
 
 logger = setup_logger()
 
@@ -46,12 +47,13 @@ def delete_connector_credential_pair_batch(
     connector_id: int,
     credential_id: int,
     document_index: DocumentIndex,
+    tenant_id: str = DEFAULT_SCHEMA,
 ) -> None:
     """
     Removes a batch of documents ids from a cc-pair. If no other cc-pair uses a document anymore
     it gets permanently deleted.
     """
-    with Session(get_sqlalchemy_engine()) as db_session:
+    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
         # acquire lock for all documents in this batch so that indexing can't
         # override the deletion
         with prepare_to_modify_documents(
@@ -124,6 +126,7 @@ def delete_connector_credential_pair(
     db_session: Session,
     document_index: DocumentIndex,
     cc_pair: ConnectorCredentialPair,
+    tenant_id: str = DEFAULT_SCHEMA,
 ) -> int:
     connector_id = cc_pair.connector_id
     credential_id = cc_pair.credential_id
@@ -135,6 +138,7 @@ def delete_connector_credential_pair(
             connector_id=connector_id,
             credential_id=credential_id,
             limit=_DELETION_BATCH_SIZE,
+            
         )
         if not documents:
             break
@@ -144,6 +148,7 @@ def delete_connector_credential_pair(
             connector_id=connector_id,
             credential_id=credential_id,
             document_index=document_index,
+            tenant_id=tenant_id,
         )
         num_docs_deleted += len(documents)
 
