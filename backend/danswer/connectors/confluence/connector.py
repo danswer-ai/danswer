@@ -23,7 +23,7 @@ from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.confluence.confluence_utils import (
-    generate_confluence_document_id,
+    build_confluence_document_id,
 )
 from danswer.connectors.confluence.confluence_utils import get_used_attachments
 from danswer.connectors.confluence.rate_limit_handler import (
@@ -611,7 +611,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 page["body"].get("storage", page["body"].get("view", {})).get("value")
             )
             # The url and the id are the same
-            page_url = generate_confluence_document_id(
+            page_url = build_confluence_document_id(
                 self.wiki_base, page["_links"]["webui"]
             )
             if not page_html:
@@ -673,7 +673,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 continue
 
             # The url and the id are the same
-            attachment_url = generate_confluence_document_id(
+            attachment_url = build_confluence_document_id(
                 self.wiki_base, attachment["_links"]["download"]
             )
             attachment_content = self._attachment_to_content(

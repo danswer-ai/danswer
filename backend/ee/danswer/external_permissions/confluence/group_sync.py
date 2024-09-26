@@ -84,6 +84,7 @@ def confluence_group_sync(
     )
 
     danswer_groups: list[ExternalUserGroup] = []
+    # Confluence enforces that group names are unique
     for group_name in _get_confluence_group_names_paginated(confluence_client):
         group_member_emails = _get_group_members_email_paginated(
             confluence_client, group_name

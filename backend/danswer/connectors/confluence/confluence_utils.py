@@ -1,7 +1,17 @@
 import bs4
 
 
-def generate_confluence_document_id(base_url: str, content_url: str) -> str:
+def build_confluence_document_id(base_url: str, content_url: str) -> str:
+    """For confluence, the document id is the page url for a page based document
+        or the attachment download url for an attachment based document
+
+    Args:
+        base_url (str): The base url of the Confluence instance
+        content_url (str): The url of the page or attachment download url
+
+    Returns:
+        str: The document id
+    """
     return f"{base_url}{content_url}"
 
 
@@ -13,7 +23,7 @@ def get_used_attachments(text: str) -> list[str]:
         text (str): The page content
 
     Returns:
-        list[str]: List of filename currently in used
+        list[str]: List of filenames currently in use by the page text
     """
     files_in_used = []
     soup = bs4.BeautifulSoup(text, "html.parser")

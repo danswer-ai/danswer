@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
 from danswer.connectors.confluence.confluence_utils import (
-    generate_confluence_document_id,
+    build_confluence_document_id,
 )
 from danswer.connectors.confluence.rate_limit_handler import (
     make_confluence_call_handle_rate_limit,
@@ -35,24 +35,25 @@ def _get_space_permissions(
 
     space_permissions = get_space_permissions(space_id).get("permissions", [])
     user_emails = set()
+    # Confluence enforces that group names are unique
     group_names = set()
     is_externally_public = False
     for permission in space_permissions:
-        subjects = permission.get("subjects", {})
-        if "user" in subjects:
-            user_email = subjects["user"]["results"][0]["email"]
-            if user_email:
-                user_emails.add(user_email)
-        elif "group" in subjects:
-            group_name = subjects["group"]["results"][0]["name"]
-            if group_name:
+        subs = permission.get("subjects")
+        if subs:
+            # If there are subjects, then there are explicit users or groups with access
+            if email := subs.get("user", {}).get("results", [{}])[0].get("email"):
+                user_emails.add(email)
+            if group_name := subs.get("group", {}).get("results", [{}])[0].get("name"):
                 group_names.add(group_name)
-        elif (
-            subjects == {}
-            and permission.get("operation", {}).get("operation") == "read"
-            and permission.get("anonymousAccess", False)
-        ):
-            is_externally_public = True
+        else:
+            # If there are no subjects, then the permission is for everyone
+            if permission.get("operation", {}).get(
+                "operation"
+            ) == "read" and permission.get("anonymousAccess", False):
+                # If the permission specifies read access for anonymous users, then
+                # the space is publicly accessible
+                is_externally_public = True
     batch_add_non_web_user_if_not_exists__no_commit(
         db_session=db_session, emails=list(user_emails)
     )
@@ -70,7 +71,7 @@ def _get_restrictions_for_page(
 ) -> ExternalAccess:
     """
     WARNING: This function includes no pagination. So if a page is private within
-    the space and has over 200 users or over 200 groups with explicity read access,
+    the space and has over 200 users or over 200 groups with explicitly read access,
     this function will leave out some users or groups.
     200 is a large amount so it is unlikely, but just be aware.
     """
@@ -121,7 +122,7 @@ def _fetch_attachment_document_ids_for_page_paginated(
         attachments_list = attachments_dict["results"]
         attachment_doc_ids.extend(
             [
-                generate_confluence_document_id(
+                build_confluence_document_id(
                     base_url=confluence_client.url,
                     content_url=attachment["_links"]["download"],
                 )
@@ -199,7 +200,7 @@ def _fetch_all_page_restrictions_for_space(
         document with just permissions.
         """
         attachment_document_ids = [
-            generate_confluence_document_id(
+            build_confluence_document_id(
                 base_url=confluence_client.url,
                 content_url=page["_links"]["webui"],
             )
