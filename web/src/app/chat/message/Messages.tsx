@@ -361,14 +361,14 @@ export const AIMessage = ({
           </div>
           {handleFeedback && (
             <div className="flex flex-row gap-x-0.5 pl-1 md:pl-12 mt-1.5">
-              <CopyButton content={content.toString()} />
+              <CopyButton content={content.toString()} smallIcon />
               <CustomTooltip
                 trigger={
                   <CustomModal
                     trigger={
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="smallIcon"
                         onClick={() => {
                           handleFeedback("like");
                           setIsLikeModalOpen(true);
@@ -406,7 +406,7 @@ export const AIMessage = ({
                     trigger={
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="smallIcon"
                         onClick={() => {
                           handleFeedback("dislike");
                           setIsDislikeModalOpen(true);

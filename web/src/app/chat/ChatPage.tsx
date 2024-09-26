@@ -1217,7 +1217,7 @@ export function ChatPage({
                     )}
 
                     <div
-                      className={`w-full h-full flex flex-col overflow-x-hidden relative scroll-smooth flex-1`}
+                      className="w-full h-full flex flex-col overflow-x-hidden relative scroll-smooth flex-1"
                       ref={scrollableDivRef}
                     >
                       {/* ChatBanner is a custom banner that displays a admin-specified message at 

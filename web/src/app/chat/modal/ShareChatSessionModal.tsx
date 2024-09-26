@@ -95,10 +95,10 @@ export function ShareChatSessionModal({
       <div className="flex mt-2">
         {shareLink ? (
           <div>
-            <Text>
+            <p>
               This chat session is currently shared. Anyone at your organization
               can view the message history using the following link:
-            </Text>
+            </p>
 
             <div className="flex py-2 items-center gap-2">
               <CopyButton content={shareLink} />
