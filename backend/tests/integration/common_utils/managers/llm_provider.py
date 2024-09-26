@@ -3,11 +3,12 @@ from uuid import uuid4
 
 import requests
 
+from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.test_models import TestLLMProvider
-from tests.integration.common_utils.test_models import TestUser
+from tests.integration.common_utils.test_models import DATestLLMProvider
+from tests.integration.common_utils.test_models import DATestUser
 
 
 class LLMProviderManager:
@@ -21,8 +22,8 @@ class LLMProviderManager:
         api_version: str | None = None,
         groups: list[int] | None = None,
         is_public: bool | None = None,
-        user_performing_action: TestUser | None = None,
-    ) -> TestLLMProvider:
+        user_performing_action: DATestUser | None = None,
+    ) -> DATestLLMProvider:
         print("Seeding LLM Providers...")
 
         llm_provider = LLMProviderUpsertRequest(
@@ -49,7 +50,10 @@ class LLMProviderManager:
         )
         llm_response.raise_for_status()
         response_data = llm_response.json()
-        result_llm = TestLLMProvider(
+        import json
+
+        print(json.dumps(response_data, indent=4))
+        result_llm = DATestLLMProvider(
             id=response_data["id"],
             name=response_data["name"],
             provider=response_data["provider"],
@@ -73,11 +77,9 @@ class LLMProviderManager:
 
     @staticmethod
     def delete(
-        llm_provider: TestLLMProvider,
-        user_performing_action: TestUser | None = None,
+        llm_provider: DATestLLMProvider,
+        user_performing_action: DATestUser | None = None,
     ) -> bool:
-        if not llm_provider.id:
-            raise ValueError("LLM Provider ID is required to delete a provider")
         response = requests.delete(
             f"{API_SERVER_URL}/admin/llm/provider/{llm_provider.id}",
             headers=user_performing_action.headers
@@ -86,3 +88,43 @@ class LLMProviderManager:
         )
         response.raise_for_status()
         return True
+
+    @staticmethod
+    def get_all(
+        user_performing_action: DATestUser | None = None,
+    ) -> list[FullLLMProvider]:
+        response = requests.get(
+            f"{API_SERVER_URL}/admin/llm/provider",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        return [FullLLMProvider(**ug) for ug in response.json()]
+
+    @staticmethod
+    def verify(
+        llm_provider: DATestLLMProvider,
+        verify_deleted: bool = False,
+        user_performing_action: DATestUser | None = None,
+    ) -> None:
+        all_llm_providers = LLMProviderManager.get_all(user_performing_action)
+        for fetched_llm_provider in all_llm_providers:
+            if llm_provider.id == fetched_llm_provider.id:
+                if verify_deleted:
+                    raise ValueError(
+                        f"User group {llm_provider.id} found but should be deleted"
+                    )
+                fetched_llm_groups = set(fetched_llm_provider.groups)
+                llm_provider_groups = set(llm_provider.groups)
+                if (
+                    fetched_llm_groups == llm_provider_groups
+                    and llm_provider.provider == fetched_llm_provider.provider
+                    and llm_provider.api_key == fetched_llm_provider.api_key
+                    and llm_provider.default_model_name
+                    == fetched_llm_provider.default_model_name
+                    and llm_provider.is_public == fetched_llm_provider.is_public
+                ):
+                    return
+        if not verify_deleted:
+            raise ValueError(f"User group {llm_provider.id} not found")

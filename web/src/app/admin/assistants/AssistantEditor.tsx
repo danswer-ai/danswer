@@ -2,7 +2,7 @@
 
 import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
-import { CCPairBasicInfo, DocumentSet, User, UserRole } from "@/lib/types";
+import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
 import { Button, Divider, Italic } from "@tremor/react";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import {
@@ -230,6 +230,9 @@ export function AssistantEditor({
       existingPersona?.document_sets?.map((documentSet) => documentSet.id) ??
       ([] as number[]),
     num_chunks: existingPersona?.num_chunks ?? null,
+    search_start_date: existingPersona?.search_start_date
+      ? existingPersona?.search_start_date.toString().split("T")[0]
+      : null,
     include_citations: existingPersona?.prompts[0]?.include_citations ?? true,
     llm_relevance_filter: existingPersona?.llm_relevance_filter ?? false,
     llm_model_provider_override:
@@ -284,6 +287,7 @@ export function AssistantEditor({
                 ),
               })
             ),
+            search_start_date: Yup.date().nullable(),
             icon_color: Yup.string(),
             icon_shape: Yup.number(),
             uploaded_image: Yup.mixed().nullable(),
@@ -373,6 +377,9 @@ export function AssistantEditor({
               id: existingPersona.id,
               existingPromptId: existingPrompt?.id,
               ...values,
+              search_start_date: values.search_start_date
+                ? new Date(values.search_start_date)
+                : null,
               num_chunks: numChunks,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
@@ -385,6 +392,9 @@ export function AssistantEditor({
               ...values,
               is_default_persona: admin!,
               num_chunks: numChunks,
+              search_start_date: values.search_start_date
+                ? new Date(values.search_start_date)
+                : null,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
@@ -912,7 +922,7 @@ export function AssistantEditor({
                                   </Italic>
                                 )}
 
-                                <div className="mt-4 flex flex-col gap-y-4">
+                                <div className="mt-4  flex flex-col gap-y-4">
                                   <TextFormField
                                     small={true}
                                     name="num_chunks"
@@ -928,6 +938,17 @@ export function AssistantEditor({
                                         setFieldValue("num_chunks", value);
                                       }
                                     }}
+                                  />
+
+                                  <TextFormField
+                                    width="max-w-xl"
+                                    type="date"
+                                    small
+                                    subtext="Documents prior to this date will not be referenced by the search tool"
+                                    optional
+                                    label="Search Start Date"
+                                    value={values.search_start_date}
+                                    name="search_start_date"
                                   />
 
                                   <BooleanFormField

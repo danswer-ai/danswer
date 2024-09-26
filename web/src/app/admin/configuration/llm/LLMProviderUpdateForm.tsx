@@ -150,18 +150,21 @@ export function LLMProviderUpdateForm({
           }
         }
 
-        const response = await fetch(LLM_PROVIDERS_ADMIN_URL, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            provider: llmProviderDescriptor.name,
-            ...values,
-            fast_default_model_name:
-              values.fast_default_model_name || values.default_model_name,
-          }),
-        });
+        const response = await fetch(
+          `${LLM_PROVIDERS_ADMIN_URL}${existingLlmProvider ? "" : "?is_creation=true"}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              provider: llmProviderDescriptor.name,
+              ...values,
+              fast_default_model_name:
+                values.fast_default_model_name || values.default_model_name,
+            }),
+          }
+        );
 
         if (!response.ok) {
           const errorMsg = (await response.json()).detail;

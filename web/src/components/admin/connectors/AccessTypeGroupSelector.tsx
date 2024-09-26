@@ -10,6 +10,12 @@ import { useUser } from "@/components/user/UserProvider";
 
 // This should be included for all forms that require groups / public access
 // to be set, and access to this / permissioning should be handled within this component itself.
+
+export type AccessTypeGroupSelectorFormType = {
+  access_type: AccessType;
+  groups: number[];
+};
+
 export function AccessTypeGroupSelector({}: {}) {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
   const { isAdmin, user, isLoadingUser, isCurator } = useUser();

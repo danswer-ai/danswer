@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from datetime import datetime
 from functools import lru_cache
 from uuid import UUID
 
@@ -414,6 +415,7 @@ def upsert_persona(
     display_priority: int | None = None,
     is_visible: bool = True,
     remove_image: bool | None = None,
+    search_start_date: datetime | None = None,
     builtin_persona: bool = False,
     is_default_persona: bool = False,
     chunks_above: int = CONTEXT_CHUNKS_ABOVE,
@@ -484,6 +486,7 @@ def upsert_persona(
             persona.uploaded_image_id = uploaded_image_id
         persona.display_priority = display_priority
         persona.is_visible = is_visible
+        persona.search_start_date = search_start_date
         persona.is_default_persona = is_default_persona
 
         # Do not delete any associations manually added unless
@@ -524,6 +527,7 @@ def upsert_persona(
             uploaded_image_id=uploaded_image_id,
             display_priority=display_priority,
             is_visible=is_visible,
+            search_start_date=search_start_date,
             is_default_persona=is_default_persona,
         )
         db_session.add(persona)

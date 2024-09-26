@@ -72,6 +72,7 @@ COPY ./danswer /app/danswer
 COPY ./shared_configs /app/shared_configs
 COPY ./alembic /app/alembic
 COPY ./alembic.ini /app/alembic.ini
+COPY ./pytest.ini /app/pytest.ini
 COPY supervisord.conf /usr/etc/supervisord.conf
 
 # Integration test stuff

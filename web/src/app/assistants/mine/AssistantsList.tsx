@@ -147,8 +147,7 @@ function AssistantListItem({
             {assistant.name}
           </h2>
 
-          {/* {isOwnedByUser && ( */}
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-none items-center space-x-4">
             <div className="flex mr-20 flex-wrap items-center gap-x-4">
               {assistant.tools.length > 0 && (
                 <p className="text-base flex w-fit text-subtle">
@@ -306,7 +305,12 @@ export function AssistantsList({
 
   const [currentlyVisibleAssistants, setCurrentlyVisibleAssistants] = useState<
     Persona[]
-  >(orderAssistantsForUser(visibleAssistants, user));
+  >([]);
+
+  useEffect(() => {
+    const orderedAssistants = orderAssistantsForUser(visibleAssistants, user);
+    setCurrentlyVisibleAssistants(orderedAssistants);
+  }, [assistants, user]);
 
   const ownedButHiddenAssistants = getUserCreatedAssistants(
     user,

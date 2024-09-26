@@ -1,6 +1,7 @@
 import * as Yup from "yup";
 import { IsPublicGroupSelectorFormType } from "@/components/IsPublicGroupSelector";
 import { ConfigurableSources, ValidInputTypes, ValidSources } from "../types";
+import { AccessTypeGroupSelectorFormType } from "@/components/admin/connectors/AccessTypeGroupSelector";
 
 export function isLoadState(connector_name: string): boolean {
   const connectors = ["web", "xenforo"];
@@ -868,13 +869,13 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
 };
 export function createConnectorInitialValues(
   connector: ConfigurableSources
-): Record<string, any> & IsPublicGroupSelectorFormType {
+): Record<string, any> & AccessTypeGroupSelectorFormType {
   const configuration = connectorConfigs[connector];
 
   return {
     name: "",
     groups: [],
-    is_public: true,
+    access_type: "public",
     ...configuration.values.reduce(
       (acc, field) => {
         if (field.type === "select") {
@@ -899,6 +900,7 @@ export function createConnectorValidationSchema(
   const configuration = connectorConfigs[connector];
 
   return Yup.object().shape({
+    access_type: Yup.string().required("Access Type is required"),
     name: Yup.string().required("Connector Name is required"),
     ...configuration.values.reduce(
       (acc, field) => {

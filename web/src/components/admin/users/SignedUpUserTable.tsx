@@ -143,7 +143,8 @@ const DeactivaterButton = ({
           type: "success",
         });
       },
-      onError: (errorMsg) => setPopup({ message: errorMsg, type: "error" }),
+      onError: (errorMsg) =>
+        setPopup({ message: errorMsg.message, type: "error" }),
     }
   );
   return (

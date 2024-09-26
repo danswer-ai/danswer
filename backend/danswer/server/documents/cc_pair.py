@@ -1,4 +1,5 @@
 import math
+from http import HTTPStatus
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -10,6 +11,8 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
+from danswer.background.celery.celery_utils import skip_cc_pair_pruning_by_task
+from danswer.background.task_utils import name_cc_prune_task
 from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.connector_credential_pair import remove_credential_from_connector
@@ -26,7 +29,9 @@ from danswer.db.index_attempt import count_index_attempts_for_connector
 from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_paginated_index_attempts_for_cc_pair_id
 from danswer.db.models import User
+from danswer.db.tasks import get_latest_task
 from danswer.server.documents.models import CCPairFullInfo
+from danswer.server.documents.models import CCPairPruningTask
 from danswer.server.documents.models import CCStatusUpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
@@ -36,7 +41,6 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
-
 router = APIRouter(prefix="/manage")
 
 
@@ -188,6 +192,92 @@ def update_cc_pair_name(
     except IntegrityError:
         db_session.rollback()
         raise HTTPException(status_code=400, detail="Name must be unique")
+
+
+@router.get("/admin/cc-pair/{cc_pair_id}/prune")
+def get_cc_pair_latest_prune(
+    cc_pair_id: int,
+    user: User = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> CCPairPruningTask:
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id,
+        db_session=db_session,
+        user=user,
+        get_editable=False,
+    )
+    if not cc_pair:
+        raise HTTPException(
+            status_code=400,
+            detail="Connection not found for current user's permissions",
+        )
+
+    # look up the last prune task for this connector (if it exists)
+    pruning_task_name = name_cc_prune_task(
+        connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
+    )
+    last_pruning_task = get_latest_task(pruning_task_name, db_session)
+    if not last_pruning_task:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="No pruning task found.",
+        )
+
+    return CCPairPruningTask(
+        id=last_pruning_task.task_id,
+        name=last_pruning_task.task_name,
+        status=last_pruning_task.status,
+        start_time=last_pruning_task.start_time,
+        register_time=last_pruning_task.register_time,
+    )
+
+
+@router.post("/admin/cc-pair/{cc_pair_id}/prune")
+def prune_cc_pair(
+    cc_pair_id: int,
+    user: User = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[list[int]]:
+    # avoiding circular refs
+    from danswer.background.celery.celery_app import prune_documents_task
+
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id,
+        db_session=db_session,
+        user=user,
+        get_editable=False,
+    )
+    if not cc_pair:
+        raise HTTPException(
+            status_code=400,
+            detail="Connection not found for current user's permissions",
+        )
+
+    pruning_task_name = name_cc_prune_task(
+        connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
+    )
+    last_pruning_task = get_latest_task(pruning_task_name, db_session)
+    if skip_cc_pair_pruning_by_task(
+        last_pruning_task,
+        db_session=db_session,
+    ):
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail="Pruning task already in progress.",
+        )
+
+    logger.info(f"Pruning the {cc_pair.connector.name} connector.")
+    prune_documents_task.apply_async(
+        kwargs=dict(
+            connector_id=cc_pair.connector.id,
+            credential_id=cc_pair.credential.id,
+        )
+    )
+
+    return StatusResponse(
+        success=True,
+        message="Successfully created the pruning task.",
+    )
 
 
 @router.put("/connector/{connector_id}/credential/{credential_id}")

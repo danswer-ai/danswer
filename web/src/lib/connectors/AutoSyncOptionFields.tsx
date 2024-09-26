@@ -11,6 +11,7 @@ export const autoSyncConfigBySource: Record<
     }
   >
 > = {
+  confluence: {},
   google_drive: {
     customer_id: {
       label: "Google Workspace Customer ID",

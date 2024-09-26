@@ -12,7 +12,9 @@ from danswer.db.models import Tool
 from danswer.db.models import User
 from danswer.db.persona import get_prompts_by_ids
 from danswer.one_shot_answer.models import PersonaConfig
-from danswer.tools.custom.custom_tool import build_custom_tools_from_openapi_schema
+from danswer.tools.custom.custom_tool import (
+    build_custom_tools_from_openapi_schema_and_headers,
+)
 
 
 def create_temporary_persona(
@@ -58,7 +60,7 @@ def create_temporary_persona(
         for schema in persona_config.custom_tools_openapi:
             tools = cast(
                 list[Tool],
-                build_custom_tools_from_openapi_schema(schema),
+                build_custom_tools_from_openapi_schema_and_headers(schema),
             )
             persona.tools.extend(tools)
 

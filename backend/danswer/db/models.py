@@ -1255,7 +1255,9 @@ class Tool(Base):
     openapi_schema: Mapped[dict[str, Any] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
-
+    custom_headers: Mapped[list[dict[str, str]] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
     # user who created / owns the tool. Will be None for built-in tools.
     user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("user.id", ondelete="CASCADE"), nullable=True
@@ -1313,6 +1315,9 @@ class Persona(Base):
     )
     starter_messages: Mapped[list[StarterMessage] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
+    )
+    search_start_date: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
     )
     # Built-in personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
@@ -1720,7 +1725,9 @@ class User__ExternalUserGroupId(Base):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
     # These group ids have been prefixed by the source type
     external_user_group_id: Mapped[str] = mapped_column(String, primary_key=True)
-    cc_pair_id: Mapped[int] = mapped_column(ForeignKey("connector_credential_pair.id"))
+    cc_pair_id: Mapped[int] = mapped_column(
+        ForeignKey("connector_credential_pair.id"), primary_key=True
+    )
 
 
 class UsageReport(Base):
