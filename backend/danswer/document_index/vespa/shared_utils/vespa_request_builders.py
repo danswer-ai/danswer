@@ -54,12 +54,12 @@ def build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> 
 
         return f"({DOC_UPDATED_AT} >= {cutoff_secs}) and "
 
-    filter_str = f"!({HIDDEN}=true) and " if not include_hidden else "" 
+    filter_str = f"!({HIDDEN}=true) and " if not include_hidden else ""
 
-    if filters.tenant_id: 
+    if filters.tenant_id:
         print("TENANT ID")
         filter_str += f'({TENANT_ID} contains "{filters.tenant_id}") and '
-    else: 
+    else:
         print("NO TENANT ID")
 
     # CAREFUL touching this one, currently there is no second ACL double-check post retrieval

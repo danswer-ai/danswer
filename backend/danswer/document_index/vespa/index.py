@@ -15,6 +15,7 @@ import requests
 
 from danswer.configs.chat_configs import DOC_TIME_DECAY
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
+from danswer.configs.chat_configs import VESPA_SEARCHER_THREADS
 from danswer.configs.chat_configs import TITLE_CONTENT_RATIO
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.document_index.interfaces import DocumentIndex
@@ -44,6 +45,8 @@ from danswer.document_index.vespa.shared_utils.vespa_request_builders import (
 from danswer.document_index.vespa_constants import ACCESS_CONTROL_LIST
 from danswer.document_index.vespa_constants import BATCH_SIZE
 from danswer.document_index.vespa_constants import BOOST
+
+from danswer.document_index.vespa_constants import SEARCH_THREAD_NUMBER_PAT
 from danswer.document_index.vespa_constants import CONTENT_SUMMARY
 from danswer.document_index.vespa_constants import DANSWER_CHUNK_REPLACEMENT_PAT
 from danswer.document_index.vespa_constants import DATE_REPLACEMENT

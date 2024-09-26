@@ -1,6 +1,5 @@
 import contextvars
 from fastapi import Depends
-from contextvars import ContextVar
 from fastapi import Request, HTTPException
 import contextlib
 import time
@@ -42,7 +41,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 logger = setup_logger()
 
-def log_stack_trace():
+def log_stack_trace() -> None:
     stack = traceback.extract_stack()
     logger.debug("Full stack trace:")
     for filename, line, func, _ in stack[:-1]:  # Exclude the current function
@@ -151,9 +150,9 @@ def init_sqlalchemy_engine(app_name: str) -> None:
     global POSTGRES_APP_NAME
     POSTGRES_APP_NAME = app_name
 
-_engines = {}
+_engines: dict[str, Engine] = {}
 
-# NOTE: this is a hack to allow for multiple postgres schemas per engine for now. 
+# NOTE: this is a hack to allow for multiple postgres schemas per engine for now.
 def get_sqlalchemy_engine(schema: str | None = DEFAULT_SCHEMA) -> Engine:
     if schema is None:
         schema = current_tenant_id.get()
@@ -228,7 +227,10 @@ def get_current_tenant_id(request: Request) -> str | None:
         logger.exception(f"Unexpected error in get_current_tenant_id: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-def get_session(tenant_id: str = Depends(get_current_tenant_id), override_tenant_id: str | None =None ) -> Generator[Session, None, None]:
+def get_session(
+    tenant_id: str = Depends(get_current_tenant_id),
+    override_tenant_id: str | None = None
+) -> Generator[Session, None, None]:
     if override_tenant_id:
         print('override tenant id set', override_tenant_id)
         tenant_id = override_tenant_id

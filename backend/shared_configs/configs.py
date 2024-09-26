@@ -76,9 +76,25 @@ class SupportedEmbeddingModel(BaseModel):
     dim: int
     index_name: str
 
-SUPPORTED_EMBEDDING_MODELS =  [
-    SupportedEmbeddingModel(name="intfloat/e5-small-v2", dim=384, index_name="danswer_chunk_intfloat_e5_small_v2"),
-    SupportedEmbeddingModel(name="intfloat/e5-large-v2", dim=1024, index_name="danswer_chunk_intfloat_e5_large_v2"),
-    SupportedEmbeddingModel(name="sentence-transformers/all-distilroberta-v1", dim=768, index_name="danswer_chunk_sentence_transformers_all_distilroberta_v1"),
-    SupportedEmbeddingModel(name="sentence-transformers/all-mpnet-base-v2", dim=768, index_name="danswer_chunk_sentence_transformers_all_mpnet_base_v2"),
+SUPPORTED_EMBEDDING_MODELS = [
+    SupportedEmbeddingModel(
+        name="intfloat/e5-small-v2",
+        dim=384,
+        index_name="danswer_chunk_intfloat_e5_small_v2"
+    ),
+    SupportedEmbeddingModel(
+        name="intfloat/e5-large-v2",
+        dim=1024,
+        index_name="danswer_chunk_intfloat_e5_large_v2"
+    ),
+    SupportedEmbeddingModel(
+        name="sentence-transformers/all-distilroberta-v1",
+        dim=768,
+        index_name="danswer_chunk_sentence_transformers_all_distilroberta_v1"
+    ),
+    SupportedEmbeddingModel(
+        name="sentence-transformers/all-mpnet-base-v2",
+        dim=768,
+        index_name="danswer_chunk_sentence_transformers_all_mpnet_base_v2"
+    ),
 ]

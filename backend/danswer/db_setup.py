@@ -1,6 +1,5 @@
 from danswer.search.retrieval.search_runner import download_nltk_data
 
-from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.db.connector_credential_pair import get_connector_credential_pairs

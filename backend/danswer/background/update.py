@@ -5,13 +5,11 @@ import dask
 from dask.distributed import Client
 from dask.distributed import Future
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import ProgrammingError
 
 from danswer.background.indexing.job_client import SimpleJob
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
-from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.app_configs import NUM_SECONDARY_INDEXING_WORKERS
@@ -35,14 +33,9 @@ from danswer.db.models import SearchSettings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
-from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
-from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
-from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
-from shared_configs.configs import LOG_LEVEL
-from shared_configs.configs import MODEL_SERVER_PORT
 from danswer.db.engine import current_tenant_id
 
 logger = setup_logger()
@@ -252,7 +245,7 @@ def cleanup_indexing_jobs(
                 )
 
         # clean up in-progress jobs that were never completed
-        try: 
+        try:
             connectors = fetch_connectors(db_session)
             logger.info(f"len(connectors): {len(connectors)}")
             for connector in connectors:
@@ -395,12 +388,6 @@ def kickoff_indexing_jobs(
     return existing_jobs_copy
 
 def get_all_tenant_ids() -> list[str]:
-    with Session(get_sqlalchemy_engine(schema='master_schema')) as session:
-        result = session.execute(text("SELECT tenant_id FROM tenants"))
-        tenant_ids = [row[0] for row in result]
-    return tenant_ids
-
-def get_all_tenant_ids() -> list[str]:
     with Session(get_sqlalchemy_engine(schema='public')) as session:
         result = session.execute(text("""
             SELECT schema_name
@@ -491,9 +478,9 @@ def update_loop(
 #     tenants = get_all_tenant_ids()
 
 #     # tenants = ["650a1472-4101-497c-b5f1-5dfe1b067730"]
-    
+
 #     logger.info(f"Found tenants: {tenants}")
-    
+
 #     # Assuming Dask clients can be shared across tenants
 #     client_primary = Client(n_workers=num_workers)
 #     client_secondary = Client(n_workers=num_secondary_workers)
@@ -508,7 +495,7 @@ def update_loop(
 #                         check_index_swap(db_session)
 #                     except ProgrammingError as e:
 #                         pass
-                
+
 
 #                 # Initialize or retrieve existing jobs per tenant
 #                 existing_jobs: dict[int, Future | SimpleJob] = {}
@@ -529,7 +516,7 @@ def update_loop(
 #             except Exception as e:
 #                 pass
 #                 # logger.exception(f"Failed to process tenant {tenant_id}: {e}")
-        
+
 #         sleep_time = delay
 #         time.sleep(sleep_time)
 

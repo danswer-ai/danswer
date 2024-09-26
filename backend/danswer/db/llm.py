@@ -149,7 +149,7 @@ def fetch_default_provider(db_session: Session) -> FullLLMProvider | None:
 
     if not provider_model:
         return None
-    
+
     return FullLLMProvider.from_model(provider_model)
 
 

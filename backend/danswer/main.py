@@ -1,3 +1,6 @@
+
+from danswer.document_index.vespa.index import MultiTenantVespaIndex
+from shared_configs.configs import SupportedEmbeddingModel
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -50,11 +53,8 @@ from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_multi_tenant_document_index
-from danswer.document_index.factory import get_default_document_index
-from danswer.document_index.interfaces import DocumentIndex
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.indexing.models import IndexingSetting
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
@@ -227,9 +227,6 @@ def mark_reindex_flag(db_session: Session) -> None:
     else:
         kv_store.store(KV_REINDEX_KEY, False)
 
-from danswer.document_index.vespa.index import MultiTenantVespaIndex
-from shared_configs.configs import SupportedEmbeddingModel
-
 
 def setup_vespa(
     document_index: MultiTenantVespaIndex,
@@ -319,7 +316,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         # ensure Vespa is setup correctly
         logger.notice("Verifying Document Index(s) is/are available.")
-        
+
         document_index = get_default_multi_tenant_document_index(
             indices=[model.index_name for model in SUPPORTED_EMBEDDING_MODELS],
         )

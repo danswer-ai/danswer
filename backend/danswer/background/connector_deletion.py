@@ -138,7 +138,7 @@ def delete_connector_credential_pair(
             connector_id=connector_id,
             credential_id=credential_id,
             limit=_DELETION_BATCH_SIZE,
-            
+
         )
         if not documents:
             break

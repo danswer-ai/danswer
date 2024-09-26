@@ -1,5 +1,3 @@
-from fastapi import Body
-from danswer.db.engine import get_sqlalchemy_engine
 from typing import cast
 from fastapi import APIRouter
 from fastapi import Depends
@@ -28,16 +26,7 @@ from danswer.server.settings.models import UserSettings
 from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
 from danswer.utils.logger import setup_logger
-from fastapi.responses import JSONResponse
-from danswer.db.engine import get_async_session
-import subprocess
-import contextlib
-from fastapi import HTTPException, Request
-from sqlalchemy import text
-from alembic.config import Config
-import os
-from functools import wraps
-import jwt
+from fastapi import HTTPException
 DATA_PLANE_SECRET = "your_shared_secret_key"
 EXPECTED_API_KEY = "your_control_plane_api_key"
 logger = setup_logger()

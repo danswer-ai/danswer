@@ -88,3 +88,4 @@ HARD_DELETE_CHATS = False
 
 # Internet Search
 BING_API_KEY = os.environ.get("BING_API_KEY") or None
+VESPA_SEARCHER_THREADS = int(os.environ.get("VESPA_SEARCHER_THREADS") or 2)

@@ -1,3 +1,6 @@
+
+from danswer.configs.app_configs import MULTI_TENANT
+from danswer.background.update import get_all_tenant_ids
 import json
 from datetime import timedelta
 from typing import Any
@@ -441,12 +444,10 @@ def check_for_prune_task(tenant_id: str) -> None:
                         connector_id=cc_pair.connector.id,
                         credential_id=cc_pair.credential.id,
                         tenant_id=tenant_id,
-                    )   
+                    )
                 )
 
 
-from danswer.configs.app_configs import MULTI_TENANT
-from danswer.background.update import get_all_tenant_ids
 #####
 # Celery Beat (Periodic Tasks) Settings
 #####

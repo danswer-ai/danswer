@@ -25,7 +25,6 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.chat import update_search_docs_table_with_relevance
-from danswer.db.engine import get_session_context_manager
 from danswer.db.models import User
 from danswer.db.persona import get_prompt_by_id
 from danswer.llm.answering.answer import Answer
@@ -118,7 +117,7 @@ def stream_answer_objects(
         one_shot=True,
         danswerbot_flow=danswerbot_flow,
     )
-    
+
     llm, fast_llm = get_llms_for_persona(persona=chat_session.persona, db_session=db_session)
 
     llm_tokenizer = get_tokenizer(

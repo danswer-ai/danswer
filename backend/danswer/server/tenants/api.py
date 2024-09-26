@@ -6,9 +6,6 @@ import os
 from danswer.db_setup import setup_postgres_and_initial_settings
 from fastapi import Body
 from danswer.db.engine import get_sqlalchemy_engine
-from fastapi import APIRouter
-from fastapi import Depends
-from sqlalchemy.orm import Session
 
 from typing import Any
 from typing import Callable
@@ -20,21 +17,19 @@ from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.utils.logger import setup_logger
 from fastapi.responses import JSONResponse
 from danswer.db.engine import get_async_session
-import subprocess
 import contextlib
 from fastapi import HTTPException, Request
 from sqlalchemy import text
+from alembic import command
+
+from danswer.db.engine import build_connection_string
+
 from alembic.config import Config
-import os
 from functools import wraps
 import jwt
 DATA_PLANE_SECRET = "your_shared_secret_key"
 EXPECTED_API_KEY = "your_control_plane_api_key"
 logger = setup_logger()
-
-from alembic import command
-
-from danswer.db.engine import build_connection_string
 
 basic_router = APIRouter(prefix="/tenants")
 
@@ -154,14 +149,14 @@ def create_tenant(request: Request, tenant_id: str) -> dict[str, str]:
         logger.info("error has occurred")
         logger.exception(f"Error while running migrations for tenant {tenant_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-    
-    
-    try: 
+
+
+    try:
         with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
             setup_postgres_and_initial_settings(db_session)
     except Exception as e:
         logger.exception(f"Error while setting up postgres for tenant {tenant_id}: {str(e)}")
-        raise 
+        raise
 
     logger.info(f"Tenant {tenant_id} created successfully")
     return {"status": "success", "message": f"Tenant {tenant_id} created successfully"}

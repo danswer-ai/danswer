@@ -32,7 +32,6 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import reserve_message_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
-from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import ToolCall
@@ -333,7 +332,7 @@ def stream_chat_message_objects(
         )
 
         search_settings = get_current_search_settings(db_session)
-        document_index = get_default_document_index( 
+        document_index = get_default_document_index(
             primary_index_name=search_settings.index_name, secondary_index_name=None
         )
 
