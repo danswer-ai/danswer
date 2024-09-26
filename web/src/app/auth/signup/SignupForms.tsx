@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useToast } from "@/hooks/use-toast";
-import { basicSignup } from "@/lib/user";
+import { basicLogin, basicSignup } from "@/lib/user";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/Spinner";
 import { TextFormField } from "@/components/admin/connectors/Field";
@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PasswordRequirements } from "./PasswordRequirements";
 import { usePasswordValidation } from "@/hooks/usePasswordValidation"; // Import the custom hook
-import { useToast } from "@/hooks/use-toast";
 
 export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
   const router = useRouter();
@@ -83,8 +82,7 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
 
             let errorMsg = "Unknown error";
             if (errorDetail === "REGISTER_USER_ALREADY_EXISTS") {
-              errorMsg =
-                "An account already exist with the specified email.";
+              errorMsg = "An account already exist with the specified email.";
             }
             toast({
               title: "Error",
