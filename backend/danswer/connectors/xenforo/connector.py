@@ -75,7 +75,11 @@ def parse_post_date(post_element: BeautifulSoup) -> datetime:
 
 
 def scrape_page_posts(
-    soup: BeautifulSoup, url: str, initial_run: bool, start_time: datetime
+    soup: BeautifulSoup,
+    page_index: int,
+    url: str,
+    initial_run: bool,
+    start_time: datetime,
 ) -> list:
     title = get_title(soup)
 
@@ -91,8 +95,15 @@ def scrape_page_posts(
             if author_tag is None:
                 author_tag = post.find("span", class_="username")
             author = author_tag.get_text(strip=True) if author_tag else "Deleted author"
+            formatted_time = post_date.strftime("%Y-%m-%d %H:%M:%S")
+
+            # TODO: if a caller calls this for each page of a thread, it may see the
+            # same post multiple times if there is a sticky post
+            # that appears on each page of a thread.
+            # it's important to generate unique doc id's, so page index is part of the
+            # id. We may want to de-dupe this stuff inside the indexing service.
             document = Document(
-                id=f"{DocumentSource.XENFORO.value}__{title}",
+                id=f"{DocumentSource.XENFORO.value}_{title}_{page_index}_{formatted_time}",
                 sections=[Section(link=url, text=post_text)],
                 title=title,
                 source=DocumentSource.XENFORO,
@@ -101,10 +112,11 @@ def scrape_page_posts(
                 metadata={
                     "type": "post",
                     "author": author,
-                    "time": post_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "time": formatted_time,
                 },
                 doc_updated_at=post_date,
             )
+            # logger.info(f"xenforo doc_id: doc_id={document.id} text={post_text}")
             documents.append(document)
     return documents
 
@@ -174,15 +186,15 @@ class XenforoConnector(LoadConnector):
                 continue
             pages = get_pages(soup, thread_url)
             # Getting all pages for all threads
-            for page_count, page in enumerate(pages, start=1):
+            for page_index, page in enumerate(pages, start=1):
                 logger.info(f"Visiting {page}")
                 logger.info(
-                    f"\x1b[KProgress: Page {page_count}/{len(pages)} - Thread {thread_count}/{len(all_threads)}\r"
+                    f"\x1b[KProgress: Page {page_index}/{len(pages)} - Thread {thread_count}/{len(all_threads)}\r"
                 )
-                soup_url = self.requestsite(page)
+                soup_page = self.requestsite(page)
                 doc_batch.extend(
                     scrape_page_posts(
-                        soup_url, thread_url, self.initial_run, self.start
+                        soup_page, page_index, thread_url, self.initial_run, self.start
                     )
                 )
             if doc_batch:
