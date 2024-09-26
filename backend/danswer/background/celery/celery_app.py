@@ -197,6 +197,10 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     # TODO: maybe check for or clean up another zombie primary worker if we detect it
     r.delete(DanswerRedisLocks.PRIMARY_WORKER)
 
+    # this process wide lock is taken to help other workers start up in order.
+    # it is planned to use this lock to enforce singleton behavior on the primary
+    # worker, since the primary worker does redis cleanup on startup, but this isn't
+    # implemented yet.
     lock = r.lock(
         DanswerRedisLocks.PRIMARY_WORKER,
         timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
@@ -364,9 +368,6 @@ class HubPeriodicTask(bootsteps.StartStopStep):
 
             lock: redis.lock.Lock = worker.primary_worker_lock
 
-            # ttl_ms = r.pttl(lock.name)
-            # logger.info(f"lock TTL before: {ttl_ms}ms")
-
             task_logger.info("Reacquiring primary worker lock.")
 
             if lock.owned():
@@ -393,9 +394,6 @@ class HubPeriodicTask(bootsteps.StartStopStep):
                     raise TimeoutError("Primary worker lock could not be acquired!")
 
                 worker.primary_worker_lock = lock
-
-            # ttl_ms = r.pttl(lock.name)
-            # task_logger.info(f"lock TTL after: {ttl_ms}ms")
         except Exception:
             task_logger.exception("HubPeriodicTask.run_periodic_task exceptioned.")
 

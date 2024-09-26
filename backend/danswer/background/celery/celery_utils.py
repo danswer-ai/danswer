@@ -158,6 +158,9 @@ def celery_is_listening_to_queue(worker: Any, name: str) -> bool:
 
 
 def celery_is_worker_primary(worker: Any) -> bool:
+    """There are multiple approaches that could be taken, but the way we do it is to
+    check the hostname set for the celery worker, either in celeryconfig.py or on the
+    command line."""
     hostname = worker.hostname
     if hostname.startswith("light"):
         return False
