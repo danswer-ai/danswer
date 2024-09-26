@@ -218,7 +218,7 @@ def get_current_tenant_id(request: Request) -> str | None:
             raise HTTPException(status_code=400, detail="Invalid token: tenant_id missing")
         logger.info(f"Valid tenant_id found: {tenant_id}")
         current_tenant_id.set(tenant_id)
-        print('current tenant id set', tenant_id)
+        logger.info(f'setting current tenant id {tenant_id}')
         return tenant_id
     except (DecodeError, InvalidTokenError) as e:
         logger.error(f"JWT decode error: {str(e)}")
@@ -232,10 +232,8 @@ def get_session(
     override_tenant_id: str | None = None
 ) -> Generator[Session, None, None]:
     if override_tenant_id:
-        print('override tenant id set', override_tenant_id)
         tenant_id = override_tenant_id
 
-    print("Tenant ID: ", tenant_id)
     with Session(get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False) as session:
         yield session
 

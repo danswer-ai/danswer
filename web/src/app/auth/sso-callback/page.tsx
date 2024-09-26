@@ -57,7 +57,6 @@ export default function SSOCallback() {
           router.replace("/admin/configuration/llm");
         } else {
           const errorData = await response.json();
-          console.log('seeting error', errorData)
           setError(errorData.detail || "Authentication failed");
         }
       } catch (error) {

@@ -118,7 +118,6 @@ def authenticate_request(func: Callable) -> Callable:
 @basic_router.post("/create")
 @authenticate_request
 def create_tenant(request: Request, tenant_id: str) -> dict[str, str]:
-    print(tenant_id)
 
     if not tenant_id:
         raise HTTPException(status_code=400, detail="tenant_id is required")

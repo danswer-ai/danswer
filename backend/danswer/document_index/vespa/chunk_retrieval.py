@@ -343,7 +343,6 @@ def _get_chunks_via_batch_search(
     filters: IndexFilters,
     get_large_chunks: bool = False,
 ) -> list[InferenceChunkUncleaned]:
-    print("GET CHUNKS")
     if not chunk_requests:
         return []
 

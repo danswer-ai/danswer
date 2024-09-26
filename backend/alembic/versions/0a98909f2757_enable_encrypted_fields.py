@@ -11,13 +11,6 @@ from sqlalchemy.sql import table
 from sqlalchemy.dialects import postgresql
 from alembic_utils import encrypt_string
 import json
-import os
-
-print('zzzz')
-print("Current directory contents:")
-for item in os.listdir():
-    print(f"- {item}")
-
 
 
 # revision identifiers, used by Alembic.

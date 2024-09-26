@@ -21,8 +21,6 @@ def load_prompts_from_yaml(
     db_session: Session,
     prompts_yaml: str = PROMPTS_YAML
 ) -> None:
-    print("Loading prompts from yaml")
-
     with open(prompts_yaml, "r") as file:
         data = yaml.safe_load(file)
 
@@ -141,7 +139,6 @@ def load_input_prompts_from_yaml(
     db_session: Session,
     input_prompts_yaml: str = INPUT_PROMPT_YAML
 ) -> None:
-    print("Loading input prompts")
     with open(input_prompts_yaml, "r") as file:
         data = yaml.safe_load(file)
 

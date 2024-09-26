@@ -29,7 +29,6 @@ export async function fetchCustomAnalyticsScriptSS() {
 }
 
 export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
-  console.log("\n\n\n\nfetch settings")
   const tasks = [fetchStandardSettingsSS()];
   if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
     tasks.push(fetchEnterpriseSettingsSS());

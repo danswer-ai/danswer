@@ -48,19 +48,6 @@ export const searchRequestStreamed = async ({
       role: "user",
     };
 
-    console.log(({
-      messages: [threadMessage],
-      persona_id: persona.id,
-      agentic,
-      prompt_id: persona.id === 0 ? null : persona.prompts[0]?.id,
-      retrieval_options: {
-        run_search: "always",
-        real_time: true,
-        filters: filters,
-        enable_auto_detect_filters: false,
-      },
-      evaluation_type: agentic ? "agentic" : "basic",
-    }))
     const response = await fetch("/api/query/stream-answer-with-quote", {
       method: "POST",
 

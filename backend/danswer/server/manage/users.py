@@ -380,7 +380,6 @@ async def create_checkout_session(
             cancel_url=cancel_url,
             metadata={"tenant_id": str("random tenant")},
         )
-        print("I am setting a tenant id in my metadata")
         logger.info(
             f"Checkout session created successfully with id: {checkout_session.id}"
         )
