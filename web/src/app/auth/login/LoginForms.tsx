@@ -37,7 +37,14 @@ export function LogInForms({}: {}) {
         onSubmit={async (values) => {
           const loginResponse = await basicLogin(values.email, values.password);
           if (loginResponse.ok) {
-            router.push("/");
+            router.push(`/auth/2factorverification`);
+            await fetch("/api/users/generate-otp", {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+            });
           } else {
             setIsWorking(false);
             const errorDetail = (await loginResponse.json()).detail;
