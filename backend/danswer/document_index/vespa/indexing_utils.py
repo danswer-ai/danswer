@@ -178,8 +178,9 @@ def _index_vespa_chunk(
         DOCUMENT_SETS: {document_set: 1 for document_set in chunk.document_sets},
     }
 
+
     vespa_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{vespa_chunk_id}"
-    logger.debug(f'Indexing to URL "{vespa_url}"')
+    logger.debug(f'Indexing to URL "{vespa_url}" with TENANT ID "{chunk.tenant_id}"')
     res = http_client.post(
         vespa_url, headers=json_header, json={"fields": vespa_document_fields}
     )

@@ -271,6 +271,7 @@ def cleanup_indexing_jobs(
                         # batch of documents indexed
                         current_db_time = get_db_current_time(db_session=db_session)
                         time_since_update = current_db_time - index_attempt.time_updated
+                        logger.info("ERRORS 1")
                         if time_since_update.total_seconds() > 60 * 60 * timeout_hours:
                             existing_jobs[index_attempt.id].cancel()
                             _mark_run_failed(
@@ -280,6 +281,8 @@ def cleanup_indexing_jobs(
                                 "The run will be re-attempted at next scheduled indexing time.",
                             )
                     else:
+                        logger.info(f"ERRORS 2 {tenant_id} {len(existing_jobs)}")
+                        continue
                         # If job isn't known, simply mark it as failed
                         _mark_run_failed(
                             db_session=db_session,

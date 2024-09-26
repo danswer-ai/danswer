@@ -29,7 +29,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
-
+from danswer.db.engine import current_tenant_id
 
 logger = setup_logger()
 
@@ -151,12 +151,15 @@ def retrieval_preprocessing(
     user_acl_filters = (
         None if bypass_acl else build_access_filters_for_user(user, db_session)
     )
+    print("building filtes")
+    print(current_tenant_id.get())
     final_filters = IndexFilters(
         source_type=preset_filters.source_type or predicted_source_filters,
         document_set=preset_filters.document_set,
         time_cutoff=preset_filters.time_cutoff or predicted_time_cutoff,
         tags=preset_filters.tags,  # Tags are never auto-extracted
         access_control_list=user_acl_filters,
+        tenant_id="4990f0d0-8447-4476-b6a0-53f4938654c1" # TODO FIX
     )
 
     llm_evaluation_type = LLMEvaluationType.BASIC

@@ -212,6 +212,7 @@ def stream_answer_objects(
         answer_style_config=answer_config,
         prompt_config=PromptConfig.from_model(prompt),
         llm=get_main_llm_from_tuple(get_llms_for_persona(persona=chat_session.persona, db_session=db_session)),
+        # TODO: change back
         single_message_history=history_str,
         tools=[search_tool],
         force_use_tool=ForceUseTool(

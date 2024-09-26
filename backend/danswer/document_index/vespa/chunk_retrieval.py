@@ -335,12 +335,15 @@ def query_vespa(
     return inference_chunks
 
 
+
+
 def _get_chunks_via_batch_search(
     index_name: str,
     chunk_requests: list[VespaChunkRequest],
     filters: IndexFilters,
     get_large_chunks: bool = False,
 ) -> list[InferenceChunkUncleaned]:
+    print("GET CHUNKS")
     if not chunk_requests:
         return []
 

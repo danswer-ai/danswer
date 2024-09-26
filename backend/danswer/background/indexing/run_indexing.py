@@ -105,7 +105,7 @@ def _run_indexing(
     document_index = get_default_document_index(
         primary_index_name=index_name, secondary_index_name=None
     )
-    
+
 
     embedding_model = DefaultIndexingEmbedder.from_db_search_settings(
         search_settings=search_settings
@@ -202,7 +202,7 @@ def _run_indexing(
                 db_session.refresh(index_attempt)
                 if index_attempt.status != IndexingStatus.IN_PROGRESS:
                     # Likely due to user manually disabling it or model swap
-                    raise RuntimeError("Index Attempt was canceled")
+                    raise RuntimeError(f"Index Attempt was canceled, status is {index_attempt.status}")
 
                 batch_description = []
                 for doc in doc_batch:

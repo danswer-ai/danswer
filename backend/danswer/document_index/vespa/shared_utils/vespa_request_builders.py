@@ -20,6 +20,8 @@ logger = setup_logger()
 
 
 def build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> str:
+    print("\n\n\n\n\nzzzzzzzzzzBUILDING VVESPA FILTESR")
+
     def _build_or_filters(key: str, vals: list[str] | None) -> str:
         if vals is None:
             return ""
@@ -55,7 +57,10 @@ def build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> 
     filter_str = f"!({HIDDEN}=true) and " if not include_hidden else "" 
 
     if filters.tenant_id: 
-        filter_str += f"({TENANT_ID} contains {filters.tenant_id}) and "
+        print("TENANT ID")
+        filter_str += f'({TENANT_ID} contains "{filters.tenant_id}") and '
+    else: 
+        print("NO TENANT ID")
 
     # CAREFUL touching this one, currently there is no second ACL double-check post retrieval
     if filters.access_control_list is not None:
