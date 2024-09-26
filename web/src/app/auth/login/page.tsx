@@ -16,6 +16,7 @@ import { LoginText } from "./LoginText";
 import Image from "next/image";
 import LoginImage from "../../../../public/LoginImage.png";
 import DefaultUserChart from "../../../../public/default-user-chart.png";
+import { WelcomeTopBar } from "@/components/TopBar";
 
 const Page = async ({
   searchParams,
@@ -69,9 +70,8 @@ const Page = async ({
   return (
     <main className="relative h-full">
       <HealthCheckBanner />
-      <div className="fixed w-full py-6 bg-background">
-        <Image src={Logo} alt="Logo" className="w-28 xl:w-32 ml-6 xl:ml-10" />
-      </div>
+
+      <WelcomeTopBar />
 
       <div className="w-screen flex h-full overflow-y-auto">
         <div className="w-full h-full xl:w-1/2 flex items-start justify-center px-6 lg:px-14 3xl:px-0 pt-28">

@@ -17,6 +17,7 @@ import SignupImage from "../../../../public/SignupImage.png";
 import GmailIcon from "../../../../public/Gmail.png";
 import MicrosoftIcon from "../../../../public/microsoft.svg";
 import { Separator } from "@/components/ui/separator";
+import { WelcomeTopBar } from "@/components/TopBar";
 
 const Page = async () => {
   // catch cases where the backend is completely unreachable here
@@ -54,9 +55,8 @@ const Page = async () => {
   return (
     <main className="relative h-full">
       <HealthCheckBanner />
-      <div className="fixed w-full py-6 bg-background">
-        <Image src={Logo} alt="Logo" className="w-28 xl:w-32 ml-6 xl:ml-10" />
-      </div>
+
+      <WelcomeTopBar />
 
       <div className="w-screen flex h-full overflow-y-auto">
         <div className="w-full h-full xl:w-1/2 flex items-start justify-center px-6 lg:px-14 3xl:px-0 pt-28">
