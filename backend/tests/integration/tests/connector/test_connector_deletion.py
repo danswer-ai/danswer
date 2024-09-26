@@ -31,7 +31,7 @@ from tests.integration.common_utils.vespa import vespa_fixture
 def test_connector_deletion(reset: None, vespa_client: vespa_fixture) -> None:
     # Creating an admin user (first user created is automatically an admin)
     admin_user: DATestUser = UserManager.create(name="admin_user")
-    # add api key to user
+    # create api key
     api_key: DATestAPIKey = APIKeyManager.create(
         user_performing_action=admin_user,
     )
@@ -181,7 +181,7 @@ def test_connector_deletion_for_overlapping_connectors(
     """
     # Creating an admin user (first user created is automatically an admin)
     admin_user: DATestUser = UserManager.create(name="admin_user")
-    # add api key to user
+    # create api key
     api_key: DATestAPIKey = APIKeyManager.create(
         user_performing_action=admin_user,
     )
