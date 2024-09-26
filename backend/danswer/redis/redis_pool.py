@@ -42,7 +42,7 @@ class RedisPool:
         db: int = REDIS_DB_NUMBER,
         password: str = REDIS_PASSWORD,
         max_connections: int = REDIS_POOL_MAX_CONNECTIONS,
-        ssl_ca_certs: str = REDIS_SSL_CA_CERTS,
+        ssl_ca_certs: str | None = REDIS_SSL_CA_CERTS,
         ssl_cert_reqs: str = REDIS_SSL_CERT_REQS,
         ssl: bool = False,
     ) -> redis.ConnectionPool:

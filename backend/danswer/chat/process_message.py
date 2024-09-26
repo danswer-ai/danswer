@@ -73,7 +73,9 @@ from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
 from danswer.tools.built_in_tools import get_built_in_tool_by_id
-from danswer.tools.custom.custom_tool import build_custom_tools_from_openapi_schema
+from danswer.tools.custom.custom_tool import (
+    build_custom_tools_from_openapi_schema_and_headers,
+)
 from danswer.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
 from danswer.tools.custom.custom_tool import CustomToolCallSummary
 from danswer.tools.force import ForceUseTool
@@ -607,12 +609,13 @@ def stream_chat_message_objects(
             if db_tool_model.openapi_schema:
                 tool_dict[db_tool_model.id] = cast(
                     list[Tool],
-                    build_custom_tools_from_openapi_schema(
+                    build_custom_tools_from_openapi_schema_and_headers(
                         db_tool_model.openapi_schema,
                         dynamic_schema_info=DynamicSchemaInfo(
                             chat_session_id=chat_session_id,
                             message_id=user_message.id if user_message else None,
                         ),
+                        custom_headers=db_tool_model.custom_headers,
                     ),
                 )
 

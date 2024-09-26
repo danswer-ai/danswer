@@ -1,6 +1,6 @@
 name: Run Integration Tests
 concurrency:
-  group: Run-Integration-Tests-${{ github.head_ref }}
+  group: Run-Integration-Tests-${{ github.workflow }}-${{ github.head_ref || github.event.workflow_run.head_branch || github.run_id }}
   cancel-in-progress: true
 
 on:
@@ -13,7 +13,8 @@ env:
 
 jobs:
   integration-tests:
-    runs-on: Amd64
+    # See https://runs-on.com/runners/linux/
+    runs-on: [runs-on,runner=8cpu-linux-x64,ram=32,"run-id=${{ github.run_id }}"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -120,6 +121,7 @@ jobs:
         run: |
           echo "Running integration tests..."
           docker run --rm --network danswer-stack_default \
+            --name test-runner \
             -e POSTGRES_HOST=relational_db \
             -e POSTGRES_USER=postgres \
             -e POSTGRES_PASSWORD=password \
@@ -128,6 +130,7 @@ jobs:
             -e REDIS_HOST=cache \
             -e API_SERVER_HOST=api_server \
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
+            -e TEST_WEB_HOSTNAME=test-runner \
             danswer/integration-test-runner:it
         continue-on-error: true
         id: run_tests

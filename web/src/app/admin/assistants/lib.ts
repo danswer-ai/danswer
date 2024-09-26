@@ -155,6 +155,7 @@ function buildPersonaAPIBody(
     uploaded_image_id,
     remove_image,
     search_start_date,
+    is_default_persona,
   };
 }
 

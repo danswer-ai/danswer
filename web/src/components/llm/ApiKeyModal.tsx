@@ -21,10 +21,10 @@ export const ApiKeyModal = ({ hide }: { hide: () => void }) => {
   return (
     <Modal
       title="Set an API Key!"
-      className="max-w-3xl"
+      width="max-w-3xl w-full"
       onOutsideClick={() => hide()}
     >
-      <div className="max-h-[75vh] overflow-y-auto flex flex-col px-4">
+      <div className="max-h-[75vh] overflow-y-auto flex flex-col">
         <div>
           <div className="mb-5 text-sm">
             Please provide an API Key below in order to start using

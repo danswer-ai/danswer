@@ -7,19 +7,19 @@ from danswer.db.enums import AccessType
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import NUM_DOCS
-from tests.integration.common_utils.managers.api_key import TestAPIKey
-from tests.integration.common_utils.managers.cc_pair import TestCCPair
+from tests.integration.common_utils.managers.api_key import DATestAPIKey
+from tests.integration.common_utils.managers.cc_pair import DATestCCPair
+from tests.integration.common_utils.test_models import DATestUser
 from tests.integration.common_utils.test_models import SimpleTestDocument
-from tests.integration.common_utils.test_models import TestUser
-from tests.integration.common_utils.vespa import TestVespaClient
+from tests.integration.common_utils.vespa import vespa_fixture
 
 
 def _verify_document_permissions(
     retrieved_doc: dict,
-    cc_pair: TestCCPair,
+    cc_pair: DATestCCPair,
     doc_set_names: list[str] | None = None,
     group_names: list[str] | None = None,
-    doc_creating_user: TestUser | None = None,
+    doc_creating_user: DATestUser | None = None,
 ) -> None:
     acl_keys = set(retrieved_doc["access_control_list"].keys())
     print(f"ACL keys: {acl_keys}")
@@ -83,10 +83,10 @@ def _generate_dummy_document(
 class DocumentManager:
     @staticmethod
     def seed_dummy_docs(
-        cc_pair: TestCCPair,
+        cc_pair: DATestCCPair,
         num_docs: int = NUM_DOCS,
         document_ids: list[str] | None = None,
-        api_key: TestAPIKey | None = None,
+        api_key: DATestAPIKey | None = None,
     ) -> list[SimpleTestDocument]:
         # Use provided document_ids if available, otherwise generate random UUIDs
         if document_ids is None:
@@ -116,10 +116,10 @@ class DocumentManager:
 
     @staticmethod
     def seed_doc_with_content(
-        cc_pair: TestCCPair,
+        cc_pair: DATestCCPair,
         content: str,
         document_id: str | None = None,
-        api_key: TestAPIKey | None = None,
+        api_key: DATestAPIKey | None = None,
     ) -> SimpleTestDocument:
         # Use provided document_ids if available, otherwise generate random UUIDs
         if document_id is None:
@@ -142,13 +142,13 @@ class DocumentManager:
 
     @staticmethod
     def verify(
-        vespa_client: TestVespaClient,
-        cc_pair: TestCCPair,
+        vespa_client: vespa_fixture,
+        cc_pair: DATestCCPair,
         # If None, will not check doc sets or groups
         # If empty list, will check for empty doc sets or groups
         doc_set_names: list[str] | None = None,
         group_names: list[str] | None = None,
-        doc_creating_user: TestUser | None = None,
+        doc_creating_user: DATestUser | None = None,
         verify_deleted: bool = False,
     ) -> None:
         doc_ids = [document.id for document in cc_pair.documents]
