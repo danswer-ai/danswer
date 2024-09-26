@@ -317,38 +317,41 @@ export const AIMessage = ({
                     .filter(([_, document]) => document.semantic_identifier)
                     .map(([citationKey, document], ind) => {
                       const display = (
-                        <Badge
-                          variant="secondary"
-                          className="cursor-pointer hover:bg-opacity-75"
-                        >
-                          <div className="my-auto mr-1">
-                            <SourceIcon
-                              sourceType={document.source_type}
-                              iconSize={16}
-                            />
-                          </div>
-                          [{citationKey}] {document!.semantic_identifier}
-                        </Badge>
+                        <div className="w-full flex gap-1.5">
+                          <SourceIcon
+                            sourceType={document.source_type}
+                            iconSize={16}
+                          />
+                          <p className="truncate">
+                            [{citationKey}] {document!.semantic_identifier}
+                          </p>
+                        </div>
                       );
                       if (document.link) {
                         return (
-                          <a
+                          <Badge
+                            variant="secondary"
+                            className="cursor-pointer hover:bg-opacity-75"
                             key={document.document_id}
-                            href={document.link}
-                            target="_blank"
-                            className="cursor-pointer"
                           >
-                            {display}
-                          </a>
+                            <a
+                              href={document.link}
+                              target="_blank"
+                              className="cursor-pointer flex truncate"
+                            >
+                              {display}
+                            </a>
+                          </Badge>
                         );
                       } else {
                         return (
-                          <div
+                          <Badge
+                            variant="secondary"
+                            className="cursor-pointer hover:bg-opacity-75"
                             key={document.document_id}
-                            className="cursor-default"
                           >
                             {display}
-                          </div>
+                          </Badge>
                         );
                       }
                     })}
