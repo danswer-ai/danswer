@@ -10,7 +10,6 @@ from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from ee.enmedd.server.workspace.models import AnalyticsScriptUpload
-from ee.enmedd.server.workspace.models import Workspaces
 from enmedd.configs.constants import FileOrigin
 from enmedd.dynamic_configs.factory import get_dynamic_config_store
 from enmedd.dynamic_configs.interface import ConfigNotFoundError
@@ -19,24 +18,7 @@ from enmedd.utils.logger import setup_logger
 
 load_dotenv()
 # TODO : replace the value name
-_WORKSPACES_KEY = "enmedd_workspaces"
 logger = setup_logger()
-
-
-def load_settings() -> Workspaces:
-    dynamic_config_store = get_dynamic_config_store()
-    try:
-        settings = Workspaces(**cast(dict, dynamic_config_store.load(_WORKSPACES_KEY)))
-    except ConfigNotFoundError:
-        settings = Workspaces()
-        dynamic_config_store.store(_WORKSPACES_KEY, settings.dict())
-
-    return settings
-
-
-def store_settings(settings: Workspaces) -> None:
-    get_dynamic_config_store().store(_WORKSPACES_KEY, settings.dict())
-
 
 _CUSTOM_ANALYTICS_SCRIPT_KEY = "__custom_analytics_script__"
 _CUSTOM_ANALYTICS_SECRET_KEY = os.environ.get("CUSTOM_ANALYTICS_SECRET_KEY")

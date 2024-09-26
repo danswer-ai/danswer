@@ -54,6 +54,16 @@ class WorkspaceCreate(BaseModel):
     user_ids: list[UUID]
 
 
+class WorkspaceUpdate(BaseModel):
+    workspace_name: Optional[str]
+    workspace_description: Optional[str]
+    use_custom_logo: bool = False
+    custom_logo: Optional[str]
+    custom_header_logo: Optional[str]
+    custom_header_content: Optional[str]
+    user_ids: Optional[list[UUID]]
+
+
 class InstanceSubscriptionPlan(str, Enum):
     ENTERPRISE = "enterprise"
     PARTNER = "partner"

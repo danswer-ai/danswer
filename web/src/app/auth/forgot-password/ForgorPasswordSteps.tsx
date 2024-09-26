@@ -5,12 +5,12 @@ import { Progress } from "@/components/ui/progress";
 import { SuccessChangePassword } from "./steps/Done";
 import { EnterVerification } from "./steps/EmailVerification";
 import { EnterEmail } from "./steps/EnterEmail";
-import { SetNewPassword } from "./steps/SetNewPassword";
+import { SetNewPasswordForms } from "./steps/SetNewPassword";
 
 const steps = [
   { component: EnterEmail },
   { component: EnterVerification },
-  { component: SetNewPassword },
+  { component: SetNewPasswordForms },
   { component: SuccessChangePassword },
 ];
 
