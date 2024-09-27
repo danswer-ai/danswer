@@ -28,6 +28,7 @@ import {
   createConnectorValidationSchema,
   defaultPruneFreqDays,
   defaultRefreshFreqMinutes,
+  isLoadState,
 } from "@/lib/connectors/connectors";
 import { Modal } from "@/components/Modal";
 import GDriveMain from "./pages/gdrive/GoogleDrivePage";
@@ -316,7 +317,7 @@ export default function AddConnector({
         const { message, isSuccess, response } = await submitConnector<any>(
           {
             connector_specific_config: transformedConnectorSpecificConfig,
-            input_type: connector == "web" ? "load_state" : "poll", // single case
+            input_type: isLoadState(connector) ? "load_state" : "poll", // single case
             name: name,
             source: connector,
             is_public: access_type == "public",

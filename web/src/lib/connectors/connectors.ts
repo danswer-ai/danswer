@@ -3,6 +3,16 @@ import { IsPublicGroupSelectorFormType } from "@/components/IsPublicGroupSelecto
 import { ConfigurableSources, ValidInputTypes, ValidSources } from "../types";
 import { AccessTypeGroupSelectorFormType } from "@/components/admin/connectors/AccessTypeGroupSelector";
 
+export function isLoadState(connector_name: string): boolean {
+  // TODO: centralize connector metadata like this somewhere instead of hardcoding it here
+  const loadStateConnectors = ["web", "xenforo"];
+  if (loadStateConnectors.includes(connector_name)) {
+    return true;
+  }
+
+  return false;
+}
+
 export type InputType =
   | "list"
   | "text"
@@ -764,6 +774,20 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
       },
     ],
   },
+  xenforo: {
+    description: "Configure Xenforo connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter forum or thread URL:",
+        label: "URL",
+        name: "base_url",
+        optional: false,
+        description:
+          "The XenForo v2.2 forum URL to index. Can be board or thread.",
+      },
+    ],
+  },
   asana: {
     description: "Configure Asana connector",
     values: [
@@ -1051,6 +1075,10 @@ export interface ClickupConfig {
 
 export interface GoogleSitesConfig {
   zip_path: string;
+  base_url: string;
+}
+
+export interface XenforoConfig {
   base_url: string;
 }
 
