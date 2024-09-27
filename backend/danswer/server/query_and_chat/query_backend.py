@@ -40,6 +40,7 @@ from danswer.server.query_and_chat.models import SourceTag
 from danswer.server.query_and_chat.models import TagResponse
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
+from danswer.db.engine import get_current_tenant_id
 
 logger = setup_logger()
 
@@ -52,6 +53,7 @@ def admin_search(
     question: AdminSearchRequest,
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> AdminSearchResponse:
     query = question.query
     logger.notice(f"Received admin search query: {query}")
@@ -62,6 +64,7 @@ def admin_search(
         time_cutoff=question.filters.time_cutoff,
         tags=question.filters.tags,
         access_control_list=user_acl_filters,
+        tenant_id=tenant_id,
     )
     search_settings = get_current_search_settings(db_session)
     document_index = get_default_document_index(

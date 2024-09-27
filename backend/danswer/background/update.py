@@ -415,8 +415,6 @@ def update_loop(
             for tenant_id in tenants:
                 try:
                     logger.debug(f"Processing tenant: {tenant_id}")
-
-                    # Existing Dask clients
                     with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
                         try:
                             check_index_swap(db_session)
