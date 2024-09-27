@@ -95,17 +95,15 @@ export const ChatSidebar = ({
 
         <div className="h-full overflow-y-auto">
           <div className="px-4 text-sm font-medium flex flex-col">
+            <Separator className="mb-4" />
             {settings.search_page_enabled && (
-              <>
-                <Separator className="mb-4" />
-                <Link
-                  href="/search"
-                  className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
-                >
-                  <Search size={16} className="shrink-0" />
-                  Search
-                </Link>
-              </>
+              <Link
+                href="/search"
+                className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
+              >
+                <Search size={16} className="shrink-0" />
+                Search
+              </Link>
             )}
             {settings.chat_page_enabled && (
               <>
