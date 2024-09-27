@@ -35,11 +35,6 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import (
-    fetch_versioned_implementation_with_fallback,
-)
-from danswer.utils.variable_functionality import noop_fallback
-from danswer.configs.app_configs import DEFAULT_SCHEMA
 
 logger = setup_logger()
 

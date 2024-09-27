@@ -129,7 +129,7 @@ class VespaIndex(DocumentIndex):
         index_embedding_dim: int | None = None,
         secondary_index_embedding_dim: int | None = None
     ) -> None:
-        
+
         if embedding_dims is None:
             if index_embedding_dim is not None:
                 embedding_dims = [index_embedding_dim]

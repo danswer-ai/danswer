@@ -27,11 +27,11 @@ task_logger = get_task_logger(__name__)
     name="check_for_prune_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_prune_task() -> None:
+def check_for_prune_task(tenant_id: str | None) -> None:
     """Runs periodically to check if any prune tasks should be run and adds them
     to the queue"""
 
-    with Session(get_sqlalchemy_engine()) as db_session:
+    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
         all_cc_pairs = get_connector_credential_pairs(db_session)
 
         for cc_pair in all_cc_pairs:
@@ -46,13 +46,14 @@ def check_for_prune_task() -> None:
                     kwargs=dict(
                         connector_id=cc_pair.connector.id,
                         credential_id=cc_pair.credential.id,
+                        tenant_id=tenant_id
                     )
                 )
 
 
 @build_celery_task_wrapper(name_cc_prune_task)
 @celery_app.task(name="prune_documents_task", soft_time_limit=JOB_TIMEOUT)
-def prune_documents_task(connector_id: int, credential_id: int) -> None:
+def prune_documents_task(connector_id: int, credential_id: int, tenant_id: str | None) -> None:
     """connector pruning task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list"""
@@ -112,6 +113,7 @@ def prune_documents_task(connector_id: int, credential_id: int) -> None:
                 connector_id=connector_id,
                 credential_id=credential_id,
                 document_index=document_index,
+                tenant_id=tenant_id
             )
         except Exception as e:
             task_logger.exception(

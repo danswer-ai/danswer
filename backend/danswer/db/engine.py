@@ -206,7 +206,7 @@ def get_sqlalchemy_engine(*, schema: str | None = DEFAULT_SCHEMA) -> Engine:
     global _engines
     if schema not in _engines:
         connection_string = build_connection_string(
-            db_api=SYNC_DB_API, app_name=f"{POSTGRES_APP_NAME}_{schema}_sync"
+            db_api=SYNC_DB_API
         )
         _engines[schema] = create_engine(
             connection_string,

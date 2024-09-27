@@ -94,6 +94,7 @@ def generate_dummy_chunk(
         ),
         document_sets={document_set for document_set in document_set_names},
         boost=random.randint(-1, 1),
+        tenant_id=None
     )
 
 
@@ -124,7 +125,7 @@ def seed_dummy_docs(
         index_name = search_settings.index_name
         embedding_dim = search_settings.model_dim
 
-    vespa_index = VespaIndex(index_name=index_name, secondary_index_name=None)
+    vespa_index = VespaIndex(indices=[index_name], secondary_index_name=None)
     print(index_name)
 
     all_chunks = []

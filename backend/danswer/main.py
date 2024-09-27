@@ -1,5 +1,5 @@
+from danswer.utils.gpu_utils import gpu_status_request
 
-from danswer.document_index.vespa.index import VespaIndex
 import time
 import traceback
 from collections.abc import AsyncGenerator
@@ -21,12 +21,14 @@ from httpx_oauth.clients.google import GoogleOAuth2
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer import __version__
+from sqlalchemy.orm import Session
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
-from sqlalchemy.orm import Session
+from danswer.server.settings.store import load_settings
+from danswer.server.settings.store import store_settings
 from danswer.indexing.models import IndexingSetting
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
@@ -43,9 +45,6 @@ from danswer.configs.constants import AuthType
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import KV_SEARCH_SETTINGS
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
-from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
-from danswer.configs.model_configs import GEN_AI_API_KEY
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.connector import check_connectors_exist
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
@@ -93,7 +92,6 @@ from danswer.server.manage.embedding.api import basic_router as embedding_router
 from danswer.server.manage.get_state import router as state_router
 from danswer.server.manage.llm.api import admin_router as llm_admin_router
 from danswer.server.manage.llm.api import basic_router as llm_router
-from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.manage.search_settings import router as search_settings_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
 from danswer.server.manage.users import router as user_router
@@ -105,8 +103,6 @@ from danswer.server.query_and_chat.query_backend import (
 from danswer.server.query_and_chat.query_backend import basic_router as query_router
 from danswer.server.settings.api import admin_router as settings_admin_router
 from danswer.server.settings.api import basic_router as settings_router
-from danswer.server.settings.store import load_settings
-from danswer.server.settings.store import store_settings
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
@@ -244,25 +240,23 @@ def setup_vespa(
     document_index: DocumentIndex,
     embedding_dims: list[int],
     secondary_embedding_dim: int | None = None
-) -> None:
+) -> bool:
     # Vespa startup is a bit slow, so give it a few seconds
-    WAIT_SECONDS = 5
+    wait_time = 5
     VESPA_ATTEMPTS = 5
     for x in range(VESPA_ATTEMPTS):
         try:
             logger.notice(f"Setting up Vespa (attempt {x+1}/{VESPA_ATTEMPTS})...")
             document_index.ensure_indices_exist(
-                index_embedding_dim=index_setting.model_dim,
-                secondary_index_embedding_dim=secondary_index_setting.model_dim
-                if secondary_index_setting
-                else None,
+                embedding_dims=embedding_dims,
+                secondary_index_embedding_dim=secondary_embedding_dim
             )
-            break
+            return True
         except Exception:
             logger.notice(f"Waiting on Vespa, retrying in {wait_time} seconds...")
             time.sleep(wait_time)
             logger.exception("Error ensuring multi-tenant indices exist")
-
+    return False
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
@@ -393,6 +387,40 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield
+
+
+def update_default_multipass_indexing(db_session: Session) -> None:
+    docs_exist = check_docs_exist(db_session)
+    connectors_exist = check_connectors_exist(db_session)
+    logger.debug(f"Docs exist: {docs_exist}, Connectors exist: {connectors_exist}")
+
+    if not docs_exist and not connectors_exist:
+        logger.info(
+            "No existing docs or connectors found. Checking GPU availability for multipass indexing."
+        )
+        gpu_available = gpu_status_request()
+        logger.info(f"GPU available: {gpu_available}")
+
+        current_settings = get_current_search_settings(db_session)
+
+        logger.notice(f"Updating multipass indexing setting to: {gpu_available}")
+        updated_settings = SavedSearchSettings.from_db_model(current_settings)
+        # Enable multipass indexing if GPU is available or if using a cloud provider
+        updated_settings.multipass_indexing = (
+            gpu_available or current_settings.cloud_provider is not None
+        )
+        update_current_search_settings(db_session, updated_settings)
+
+        # Update settings with GPU availability
+        settings = load_settings()
+        settings.gpu_enabled = gpu_available
+        store_settings(settings)
+        logger.notice(f"Updated settings with GPU availability: {gpu_available}")
+
+    else:
+        logger.debug(
+            "Existing docs or connectors found. Skipping multipass indexing update."
+        )
 
 
 def log_http_error(_: Request, exc: Exception) -> JSONResponse:

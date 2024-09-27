@@ -64,7 +64,7 @@ def test_hybrid_retrieval_times(
         search_settings = get_current_search_settings(db_session)
         index_name = search_settings.index_name
 
-    vespa_index = VespaIndex(index_name=index_name, secondary_index_name=None)
+    vespa_index = VespaIndex(indices=[index_name], secondary_index_name=None)
 
     # Generate random queries
     queries = [f"Random Query {i}" for i in range(number_of_queries)]

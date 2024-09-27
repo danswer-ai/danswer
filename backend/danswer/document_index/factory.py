@@ -14,13 +14,22 @@ def get_default_document_index(
     Secondary index is for when both the currently used index and the upcoming
     index both need to be updated, updates are applied to both indices"""
     # Currently only supporting Vespa
-    
+
     indices = [primary_index_name] if primary_index_name is not None else indices
     if not indices:
         raise ValueError("No indices provided")
-    
+
     return VespaIndex(
         indices=indices,
         secondary_index_name=secondary_index_name
     )
 
+def get_current_primary_default_document_index(db_session: Session) -> DocumentIndex:
+    """
+    TODO: Use redis to cache this or something
+    """
+    search_settings = get_current_search_settings(db_session)
+    return get_default_document_index(
+        primary_index_name=search_settings.index_name,
+        secondary_index_name=None,
+    )

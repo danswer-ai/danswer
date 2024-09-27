@@ -388,14 +388,23 @@ def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexA
 
     return attempt
 
-def run_indexing_entrypoint(index_attempt_id: int, tenant_id: str | None, is_ee: bool = False) -> None:
+def run_indexing_entrypoint(
+    index_attempt_id: int,
+    tenant_id: str | None,
+    connector_credential_pair_id: int,
+    is_ee: bool = False,
+) -> None:
+
+
     try:
         if is_ee:
             global_version.set_ee()
 
         # set the indexing attempt ID so that all log messages from this process
         # will have it added as a prefix
-        IndexAttemptSingleton.set_index_attempt_id(index_attempt_id)
+        IndexAttemptSingleton.set_cc_and_index_id(
+            index_attempt_id, connector_credential_pair_id
+        )
 
         with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
             attempt = _prepare_index_attempt(db_session, index_attempt_id)

@@ -1,7 +1,6 @@
 import asyncio
 from logging.config import fileConfig
 
-from typing import Tuple
 from alembic import context
 from danswer.db.engine import build_connection_string
 from danswer.db.models import Base
@@ -39,21 +38,6 @@ def get_schema_options() -> str:
     return schema_name
 
 EXCLUDE_TABLES = {"kombu_queue", "kombu_message"}
-
-
-def include_object(
-    object: SchemaItem,
-    name: str,
-    type_: str,
-    reflected: bool,
-    compare_to: SchemaItem | None,
-) -> bool:
-    if type_ == "table" and name in EXCLUDE_TABLES:
-        return False
-    return True
-
-EXCLUDE_TABLES = {"kombu_queue", "kombu_message"}
-
 
 def include_object(
     object: SchemaItem,

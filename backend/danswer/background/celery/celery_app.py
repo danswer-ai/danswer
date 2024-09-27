@@ -1,5 +1,4 @@
 
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.background.update import get_all_tenant_ids
 import logging
 import time
