@@ -63,6 +63,7 @@ export interface CombinedSettings {
 
 export const defaultCombinedSettings: CombinedSettings = {
   settings: {
+    gpu_enabled: false,
     chat_page_enabled: true,
     search_page_enabled: true,
     default_page: "search",
@@ -71,6 +72,7 @@ export const defaultCombinedSettings: CombinedSettings = {
     needs_reindexing: false,
   },
   enterpriseSettings: {
+    custom_nav_items: [],
     application_name: "Danswer",
     use_custom_logo: false,
     use_custom_logotype: false,
@@ -78,6 +80,8 @@ export const defaultCombinedSettings: CombinedSettings = {
     custom_header_content: null,
     custom_popup_header: null,
     custom_popup_content: null,
+    two_lines_for_chat_header: null,
+    enable_consent_screen: null,
   },
   cloudSettings: {
     numberOfSeats: 0,
