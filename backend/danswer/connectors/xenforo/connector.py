@@ -171,7 +171,7 @@ class XenforoConnector(LoadConnector):
             # Get all pages on thread_list_page
             for pre_count, thread_list_page in enumerate(pages, start=1):
                 logger.info(
-                    f"\x1b[KGetting pages from thread_list_page.. Current: {pre_count}/{len(pages)}\r"
+                    f"Getting pages from thread_list_page.. Current: {pre_count}/{len(pages)}\r"
                 )
                 all_threads += self.get_threads(thread_list_page)
         # If the URL contains "threads/", add the thread to the list.
@@ -187,9 +187,8 @@ class XenforoConnector(LoadConnector):
             pages = get_pages(soup, thread_url)
             # Getting all pages for all threads
             for page_index, page in enumerate(pages, start=1):
-                logger.info(f"Visiting {page}")
                 logger.info(
-                    f"\x1b[KProgress: Page {page_index}/{len(pages)} - Thread {thread_count}/{len(all_threads)}\r"
+                    f"Progress: Page {page_index}/{len(pages)} - Thread {thread_count}/{len(all_threads)}\r"
                 )
                 soup_page = self.requestsite(page)
                 doc_batch.extend(

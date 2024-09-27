@@ -4,8 +4,9 @@ import { ConfigurableSources, ValidInputTypes, ValidSources } from "../types";
 import { AccessTypeGroupSelectorFormType } from "@/components/admin/connectors/AccessTypeGroupSelector";
 
 export function isLoadState(connector_name: string): boolean {
-  const connectors = ["web", "xenforo"];
-  if (connectors.includes(connector_name)) {
+  // TODO: centralize connector metadata like this somewhere instead of hardcoding it here
+  const loadStateConnectors = ["web", "xenforo"];
+  if (loadStateConnectors.includes(connector_name)) {
     return true;
   }
 
