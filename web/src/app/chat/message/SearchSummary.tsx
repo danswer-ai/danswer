@@ -166,7 +166,7 @@ export function SearchSummary({
   ) : null;
 
   return (
-    <div className="flex">
+    <div className="flex pt-4">
       {isEditing ? (
         editInput
       ) : (

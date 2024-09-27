@@ -222,14 +222,14 @@ export const AIMessage = ({
               )}
           </div>
 
-          <div className="pl-1.5 md:pl-12 break-words w-full pt-4">
+          <div className="pl-1.5 md:pl-12 break-words w-full">
             {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
               <>
                 {query !== undefined &&
                   handleShowRetrieved !== undefined &&
                   isCurrentlyShowingRetrieved !== undefined &&
                   !retrievalDisabled && (
-                    <div className="mb-4">
+                    <div>
                       <SearchSummary
                         query={query}
                         hasDocs={hasDocs || false}
