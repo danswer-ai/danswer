@@ -1545,7 +1545,7 @@ export function ChatPage({
                                 messageId={null}
                                 assistantName={liveAssistant.name}
                                 content={
-                                  <div className="my-auto text-sm flex flex-col gap-1">
+                                  <div className="my-auto text-sm flex flex-col gap-1 pt-4">
                                     <Skeleton className="h-5 w-full" />
                                     <Skeleton className="h-5 w-full" />
                                     <Skeleton className="h-5 w-3/4" />
