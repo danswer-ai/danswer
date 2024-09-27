@@ -1,7 +1,5 @@
-import contextvars
-from fastapi import Depends
-from fastapi import Request, HTTPException
 import contextlib
+import contextvars
 import threading
 import time
 from collections.abc import AsyncGenerator
@@ -9,6 +7,14 @@ from collections.abc import Generator
 from datetime import datetime
 from typing import Any
 from typing import ContextManager
+
+import jwt
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import Request
+from fastapi.security import OAuth2PasswordBearer
+from jwt.exceptions import DecodeError
+from jwt.exceptions import InvalidTokenError
 from sqlalchemy import event
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
@@ -18,10 +24,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-from danswer.configs.app_configs import SECRET_JWT_KEY
+
 from danswer.configs.app_configs import DEFAULT_SCHEMA
 from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
@@ -29,12 +36,9 @@ from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
 from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
+from danswer.configs.app_configs import SECRET_JWT_KEY
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.utils.logger import setup_logger
-from fastapi.security import OAuth2PasswordBearer
-from jwt.exceptions import DecodeError, InvalidTokenError
-import jwt
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -196,7 +200,9 @@ def build_connection_string(
 def init_sqlalchemy_engine(app_name: str) -> None:
     SqlEngine.set_app_name(app_name)
 
+
 _engines: dict[str, Engine] = {}
+
 
 # NOTE: this is a hack to allow for multiple postgres schemas per engine for now.
 def get_sqlalchemy_engine(*, schema: str | None = DEFAULT_SCHEMA) -> Engine:
@@ -205,16 +211,14 @@ def get_sqlalchemy_engine(*, schema: str | None = DEFAULT_SCHEMA) -> Engine:
 
     global _engines
     if schema not in _engines:
-        connection_string = build_connection_string(
-            db_api=SYNC_DB_API
-        )
+        connection_string = build_connection_string(db_api=SYNC_DB_API)
         _engines[schema] = create_engine(
             connection_string,
             pool_size=40,
             max_overflow=10,
             pool_pre_ping=POSTGRES_POOL_PRE_PING,
             pool_recycle=POSTGRES_POOL_RECYCLE,
-            connect_args={"options": f"-c search_path={schema}"}
+            connect_args={"options": f"-c search_path={schema}"},
         )
     return _engines[schema]
 
@@ -237,13 +241,16 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
         )
     return _ASYNC_ENGINE
 
-current_tenant_id = contextvars.ContextVar(
-    "current_tenant_id", default=DEFAULT_SCHEMA
-)
+
+current_tenant_id = contextvars.ContextVar("current_tenant_id", default=DEFAULT_SCHEMA)
+
 
 def get_session_context_manager() -> ContextManager[Session]:
     tenant_id = current_tenant_id.get()
-    return contextlib.contextmanager(lambda: get_session(override_tenant_id=tenant_id))()
+    return contextlib.contextmanager(
+        lambda: get_session(override_tenant_id=tenant_id)
+    )()
+
 
 def get_current_tenant_id(request: Request) -> str | None:
     if not MULTI_TENANT:
@@ -257,7 +264,9 @@ def get_current_tenant_id(request: Request) -> str | None:
         payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
         tenant_id = payload.get("tenant_id")
         if not tenant_id:
-            raise HTTPException(status_code=400, detail="Invalid token: tenant_id missing")
+            raise HTTPException(
+                status_code=400, detail="Invalid token: tenant_id missing"
+            )
         current_tenant_id.set(tenant_id)
         return tenant_id
     except (DecodeError, InvalidTokenError):
@@ -265,21 +274,28 @@ def get_current_tenant_id(request: Request) -> str | None:
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 def get_session(
     tenant_id: str = Depends(get_current_tenant_id),
-    override_tenant_id: str | None = None
+    override_tenant_id: str | None = None,
 ) -> Generator[Session, None, None]:
     if override_tenant_id:
         tenant_id = override_tenant_id
 
-    with Session(get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False) as session:
+    with Session(
+        get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False
+    ) as session:
         yield session
 
-async def get_async_session(tenant_id: str | None = None) -> AsyncGenerator[AsyncSession, None]:
+
+async def get_async_session(
+    tenant_id: str | None = None,
+) -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
         yield async_session
+
 
 async def warm_up_connections(
     sync_connections_to_warm_up: int = 20, async_connections_to_warm_up: int = 20
@@ -303,6 +319,7 @@ async def warm_up_connections(
         await async_conn.execute(text("SELECT 1"))
     for async_conn in async_connections:
         await async_conn.close()
+
 
 def get_session_factory() -> sessionmaker[Session]:
     global SessionFactory

@@ -18,8 +18,7 @@ from danswer.search.enums import RecencyBiasSetting
 
 
 def load_prompts_from_yaml(
-    db_session: Session,
-    prompts_yaml: str = PROMPTS_YAML
+    db_session: Session, prompts_yaml: str = PROMPTS_YAML
 ) -> None:
     with open(prompts_yaml, "r") as file:
         data = yaml.safe_load(file)
@@ -47,7 +46,6 @@ def load_personas_from_yaml(
     personas_yaml: str = PERSONAS_YAML,
     default_chunks: float = MAX_CHUNKS_FED_TO_CHAT,
 ) -> None:
-
     with open(personas_yaml, "r") as file:
         data = yaml.safe_load(file)
 
@@ -100,9 +98,7 @@ def load_personas_from_yaml(
             llm_model_version_override = "gpt-4o"
 
         existing_persona = (
-            db_session.query(Persona)
-            .filter(Persona.name == persona["name"])
-            .first()
+            db_session.query(Persona).filter(Persona.name == persona["name"]).first()
         )
 
         upsert_persona(
@@ -135,9 +131,9 @@ def load_personas_from_yaml(
             db_session=db_session,
         )
 
+
 def load_input_prompts_from_yaml(
-    db_session: Session,
-    input_prompts_yaml: str = INPUT_PROMPT_YAML
+    db_session: Session, input_prompts_yaml: str = INPUT_PROMPT_YAML
 ) -> None:
     with open(input_prompts_yaml, "r") as file:
         data = yaml.safe_load(file)
@@ -157,8 +153,6 @@ def load_input_prompts_from_yaml(
             db_session=db_session,
             commit=True,
         )
-
-
 
 
 def load_chat_yamls(

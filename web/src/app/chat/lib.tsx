@@ -154,8 +154,8 @@ export async function* sendMessage({
 }): AsyncGenerator<PacketType, void, unknown> {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
-    
-  console.log("llm ovverride deatilas", modelProvider, modelVersion)
+
+  console.log("llm ovverride deatilas", modelProvider, modelVersion);
 
   const body = JSON.stringify({
     alternate_assistant_id: alternateAssistantId,
@@ -168,30 +168,30 @@ export async function* sendMessage({
     regenerate,
     retrieval_options: !documentsAreSelected
       ? {
-        run_search:
-          promptId === null ||
+          run_search:
+            promptId === null ||
             promptId === undefined ||
             queryOverride ||
             forceSearch
-            ? "always"
-            : "auto",
-        real_time: true,
-        filters: filters,
-      }
+              ? "always"
+              : "auto",
+          real_time: true,
+          filters: filters,
+        }
       : null,
     query_override: queryOverride,
     prompt_override: systemPromptOverride
       ? {
-        system_prompt: systemPromptOverride,
-      }
+          system_prompt: systemPromptOverride,
+        }
       : null,
     llm_override:
       temperature || modelVersion
         ? {
-          temperature,
-          model_provider: modelProvider,
-          model_version: modelVersion,
-        }
+            temperature,
+            model_provider: modelProvider,
+            model_version: modelVersion,
+          }
         : null,
     use_existing_user_message: useExistingUserMessage,
   });
@@ -431,11 +431,11 @@ export function processRawChatHistory(
       // this is identical to what is computed at streaming time
       ...(messageInfo.message_type === "assistant"
         ? {
-          retrievalType: retrievalType,
-          query: messageInfo.rephrased_query,
-          documents: messageInfo?.context_docs?.top_documents || [],
-          citations: messageInfo?.citations || {},
-        }
+            retrievalType: retrievalType,
+            query: messageInfo.rephrased_query,
+            documents: messageInfo?.context_docs?.top_documents || [],
+            citations: messageInfo?.citations || {},
+          }
         : {}),
       toolCalls: messageInfo.tool_calls,
       parentMessageId: messageInfo.parent_message,
@@ -600,7 +600,8 @@ export function buildChatUrl(
   const finalSearchParams: string[] = [];
   if (chatSessionId) {
     finalSearchParams.push(
-      `${search ? SEARCH_PARAM_NAMES.SEARCH_ID : SEARCH_PARAM_NAMES.CHAT_ID
+      `${
+        search ? SEARCH_PARAM_NAMES.SEARCH_ID : SEARCH_PARAM_NAMES.CHAT_ID
       }=${chatSessionId}`
     );
   }

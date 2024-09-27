@@ -46,14 +46,16 @@ def check_for_prune_task(tenant_id: str | None) -> None:
                     kwargs=dict(
                         connector_id=cc_pair.connector.id,
                         credential_id=cc_pair.credential.id,
-                        tenant_id=tenant_id
+                        tenant_id=tenant_id,
                     )
                 )
 
 
 @build_celery_task_wrapper(name_cc_prune_task)
 @celery_app.task(name="prune_documents_task", soft_time_limit=JOB_TIMEOUT)
-def prune_documents_task(connector_id: int, credential_id: int, tenant_id: str | None) -> None:
+def prune_documents_task(
+    connector_id: int, credential_id: int, tenant_id: str | None
+) -> None:
     """connector pruning task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list"""
@@ -113,7 +115,7 @@ def prune_documents_task(connector_id: int, credential_id: int, tenant_id: str |
                 connector_id=connector_id,
                 credential_id=credential_id,
                 document_index=document_index,
-                tenant_id=tenant_id
+                tenant_id=tenant_id,
             )
         except Exception as e:
             task_logger.exception(

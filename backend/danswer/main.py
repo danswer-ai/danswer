@@ -1,5 +1,3 @@
-from danswer.utils.gpu_utils import gpu_status_request
-
 import time
 import traceback
 from collections.abc import AsyncGenerator
@@ -17,19 +15,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from httpx_oauth.clients.google import GoogleOAuth2
-
-from danswer.document_index.interfaces import DocumentIndex
-from danswer.configs.app_configs import MULTI_TENANT
-from danswer import __version__
 from sqlalchemy.orm import Session
+
+from danswer import __version__
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
-from danswer.server.settings.store import load_settings
-from danswer.server.settings.store import store_settings
-from danswer.indexing.models import IndexingSetting
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
@@ -37,6 +30,7 @@ from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import LOG_ENDPOINT_LATENCY
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import USER_AUTH_SECRET
@@ -59,9 +53,12 @@ from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
+from danswer.db_setup import setup_postgres
 from danswer.document_index.factory import get_default_document_index
+from danswer.document_index.interfaces import DocumentIndex
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.indexing.models import IndexingSetting
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
@@ -103,10 +100,13 @@ from danswer.server.query_and_chat.query_backend import (
 from danswer.server.query_and_chat.query_backend import basic_router as query_router
 from danswer.server.settings.api import admin_router as settings_admin_router
 from danswer.server.settings.api import basic_router as settings_router
+from danswer.server.settings.store import load_settings
+from danswer.server.settings.store import store_settings
+from danswer.server.tenants.api import basic_router as tenants_router
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
-from danswer.server.tenants.api import basic_router as tenants_router
+from danswer.utils.gpu_utils import gpu_status_request
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import get_or_generate_uuid
 from danswer.utils.telemetry import optional_telemetry
@@ -118,7 +118,6 @@ from shared_configs.configs import CORS_ALLOWED_ORIGIN
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.configs import SUPPORTED_EMBEDDING_MODELS
-from danswer.db_setup import setup_postgres
 
 logger = setup_logger()
 
@@ -169,7 +168,6 @@ def include_router_with_global_prefix_prepended(
     }
 
     application.include_router(router, **final_kwargs)
-
 
 
 def translate_saved_search_settings(db_session: Session) -> None:
@@ -239,7 +237,7 @@ def mark_reindex_flag(db_session: Session) -> None:
 def setup_vespa(
     document_index: DocumentIndex,
     embedding_dims: list[int],
-    secondary_embedding_dim: int | None = None
+    secondary_embedding_dim: int | None = None,
 ) -> bool:
     # Vespa startup is a bit slow, so give it a few seconds
     wait_time = 5
@@ -249,7 +247,7 @@ def setup_vespa(
             logger.notice(f"Setting up Vespa (attempt {x+1}/{VESPA_ATTEMPTS})...")
             document_index.ensure_indices_exist(
                 embedding_dims=embedding_dims,
-                secondary_index_embedding_dim=secondary_embedding_dim
+                secondary_index_embedding_dim=secondary_embedding_dim,
             )
             return True
         except Exception:
@@ -257,6 +255,7 @@ def setup_vespa(
             time.sleep(wait_time)
             logger.exception("Error ensuring multi-tenant indices exist")
     return False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
@@ -288,7 +287,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         # Break bad state for thrashing indexes
         if secondary_search_settings and DISABLE_INDEX_UPDATE_ON_SWAP:
-
             expire_index_attempts(
                 search_settings_id=search_settings.id, db_session=db_session
             )
@@ -301,14 +299,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         logger.notice(f'Using Embedding model: "{search_settings.model_name}"')
         if search_settings.query_prefix or search_settings.passage_prefix:
-
             logger.notice(f'Query embedding prefix: "{search_settings.query_prefix}"')
             logger.notice(
                 f'Passage embedding prefix: "{search_settings.passage_prefix}"'
             )
 
         if search_settings:
-
             if not search_settings.disable_rerank_for_streaming:
                 logger.notice("Reranking is enabled.")
 
@@ -352,13 +348,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             setup_vespa(
                 document_index,
                 [model.dim for model in SUPPORTED_EMBEDDING_MODELS],
-                secondary_embedding_dim=secondary_search_settings.model_dim if secondary_search_settings else None
+                secondary_embedding_dim=secondary_search_settings.model_dim
+                if secondary_search_settings
+                else None,
             )
 
         else:
             document_index = get_default_document_index(
                 indices=[search_settings.index_name],
-                secondary_index_name=secondary_search_settings.index_name if secondary_search_settings else None
+                secondary_index_name=secondary_search_settings.index_name
+                if secondary_search_settings
+                else None,
             )
 
             setup_vespa(
@@ -368,7 +368,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                     IndexingSetting.from_db_model(secondary_search_settings).model_dim
                     if secondary_search_settings
                     else None
-                )
+                ),
             )
 
         logger.notice(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
@@ -485,9 +485,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(
         application, token_rate_limit_settings_router
     )
-    include_router_with_global_prefix_prepended(
-        application, tenants_router
-    )
+    include_router_with_global_prefix_prepended(application, tenants_router)
     include_router_with_global_prefix_prepended(application, indexing_router)
 
     if AUTH_TYPE == AuthType.DISABLED:

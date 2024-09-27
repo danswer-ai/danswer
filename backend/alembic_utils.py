@@ -1,11 +1,15 @@
-from cryptography.hazmat.primitives import padding
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
-from os import urandom
 import os
 from enum import Enum
+from os import urandom
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.primitives.ciphers import algorithms
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers import modes
 
 ENCRYPTION_KEY_SECRET = os.environ.get("ENCRYPTION_KEY_SECRET") or ""
+
 
 def _get_trimmed_key(key: str) -> bytes:
     encoded_key = key.encode()
@@ -19,6 +23,7 @@ def _get_trimmed_key(key: str) -> bytes:
         key = key[: min(valid_lengths, key=lambda x: abs(x - key_length))]
 
     return encoded_key
+
 
 def encrypt_string(input_str: str) -> bytes:
     if not ENCRYPTION_KEY_SECRET:
@@ -35,7 +40,9 @@ def encrypt_string(input_str: str) -> bytes:
 
     return iv + encrypted_data
 
+
 NUM_POSTPROCESSED_RESULTS = 20
+
 
 class IndexModelStatus(str, Enum):
     PAST = "PAST"
@@ -54,7 +61,6 @@ class RecencyBiasSetting(str, Enum):
 class SearchType(str, Enum):
     KEYWORD = "keyword"
     SEMANTIC = "semantic"
-
 
 
 class DocumentSource(str, Enum):

@@ -55,9 +55,11 @@ class DocAwareChunk(BaseChunk):
             f"Chunk ID: '{self.chunk_id}'; {self.source_document.to_short_descriptor()}"
         )
 
+
 class IndexChunk(DocAwareChunk):
     embeddings: ChunkEmbedding
     title_embedding: Embedding | None
+
 
 # TODO(rkuo): currently, this extra metadata sent during indexing is just for speed,
 # but full consistency happens on background sync

@@ -13,7 +13,6 @@ const eePaths = [
   "/admin/performance/custom-analytics/:path*",
   "/admin/standard-answer/:path*",
   "/admin/plan/:path*",
-
 ];
 
 // removes the "/:path*" from the end

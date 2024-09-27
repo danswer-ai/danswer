@@ -1,16 +1,20 @@
+from sqlalchemy.orm import Session
+
+from danswer.chat.load_yamls import load_chat_yamls
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.credentials import create_initial_public_credential
-from ee.danswer.db.standard_answer import create_initial_default_standard_answer_category
 from danswer.db.persona import delete_old_default_personas
-from danswer.chat.load_yamls import load_chat_yamls
 from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
 from danswer.tools.built_in_tools import load_builtin_tools
 from danswer.tools.built_in_tools import refresh_built_in_tools_cache
 from danswer.utils.logger import setup_logger
-from sqlalchemy.orm import Session
+from ee.danswer.db.standard_answer import (
+    create_initial_default_standard_answer_category,
+)
 
 logger = setup_logger()
+
 
 def setup_postgres(db_session: Session) -> None:
     logger.notice("Verifying default connector/credential exist.")

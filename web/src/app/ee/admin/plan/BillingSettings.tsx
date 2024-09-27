@@ -27,14 +27,12 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
   const searchParams = useSearchParams();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [isNewUserOpen, setIsNewUserOpen] = useState(true)
+  const [isNewUserOpen, setIsNewUserOpen] = useState(true);
 
   const [newSeats, setNewSeats] = useState<null | number>(null);
   const [newPlan, setNewPlan] = useState<null | BillingPlanType>(null);
 
-
   const { popup, setPopup } = usePopup();
-
 
   useEffect(() => {
     const success = searchParams.get("success");
@@ -68,12 +66,10 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
       setNewPlan(cloudSettings.planType);
     }
   }, [cloudSettings]);
-  
 
   if (!cloudSettings) {
     return null;
   }
-
 
   const features = [
     { name: "All Connector Access", included: true },
@@ -124,11 +120,10 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
     Cookies.set("new_auth_user", "false");
   };
 
-
   if (newSeats === null || currentPlan === undefined) {
     return null;
   }
-  
+
   return (
     <div className="max-w-4xl mr-auto space-y-8 p-6">
       {newUser && isNewUserOpen && (
@@ -143,8 +138,8 @@ export function BillingSettings({ newUser }: { newUser: boolean }) {
             <div className="text-center mb-8">
               <Logo className="mx-auto mb-4" height={150} width={150} />
               <p className="text-lg text-text-700 leading-relaxed">
-                We&apos;re thrilled to have you on board! Here, you can manage your
-                billing settings and explore your plan details.
+                We&apos;re thrilled to have you on board! Here, you can manage
+                your billing settings and explore your plan details.
               </p>
             </div>
             <div className="flex justify-center">

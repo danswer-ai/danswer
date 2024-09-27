@@ -1,4 +1,3 @@
-
 import time
 import traceback
 from datetime import datetime
@@ -6,7 +5,7 @@ from datetime import timedelta
 from datetime import timezone
 
 from sqlalchemy.orm import Session
-from danswer.db.engine import get_sqlalchemy_engine
+
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
 from danswer.background.indexing.tracer import DanswerTracer
 from danswer.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
@@ -17,6 +16,7 @@ from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
@@ -44,7 +44,7 @@ def _get_connector_runner(
     attempt: IndexAttempt,
     start_time: datetime,
     end_time: datetime,
-    tenant_id: str | None
+    tenant_id: str | None,
 ) -> ConnectorRunner:
     """
     NOTE: `start_time` and `end_time` are only used for poll connectors
@@ -81,9 +81,7 @@ def _get_connector_runner(
 
 
 def _run_indexing(
-    db_session: Session,
-    index_attempt: IndexAttempt,
-    tenant_id: str | None
+    db_session: Session, index_attempt: IndexAttempt, tenant_id: str | None
 ) -> None:
     """
     1. Get documents which are either new or updated from specified application
@@ -103,7 +101,6 @@ def _run_indexing(
     document_index = get_default_document_index(
         primary_index_name=index_name, secondary_index_name=None
     )
-
 
     embedding_model = DefaultIndexingEmbedder.from_db_search_settings(
         search_settings=search_settings
@@ -173,7 +170,7 @@ def _run_indexing(
                 attempt=index_attempt,
                 start_time=window_start,
                 end_time=window_end,
-                tenant_id=tenant_id
+                tenant_id=tenant_id,
             )
 
             all_connector_doc_ids: set[str] = set()
@@ -201,7 +198,9 @@ def _run_indexing(
                 db_session.refresh(index_attempt)
                 if index_attempt.status != IndexingStatus.IN_PROGRESS:
                     # Likely due to user manually disabling it or model swap
-                    raise RuntimeError(f"Index Attempt was canceled, status is {index_attempt.status}")
+                    raise RuntimeError(
+                        f"Index Attempt was canceled, status is {index_attempt.status}"
+                    )
 
                 batch_description = []
                 for doc in doc_batch:
@@ -388,14 +387,13 @@ def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexA
 
     return attempt
 
+
 def run_indexing_entrypoint(
     index_attempt_id: int,
     tenant_id: str | None,
     connector_credential_pair_id: int,
     is_ee: bool = False,
 ) -> None:
-
-
     try:
         if is_ee:
             global_version.set_ee()
@@ -410,8 +408,10 @@ def run_indexing_entrypoint(
             attempt = _prepare_index_attempt(db_session, index_attempt_id)
 
             logger.info(
-                f"Indexing starting for tenant {tenant_id}: " if tenant_id is not None else "" +
-                f"connector='{attempt.connector_credential_pair.connector.name}' "
+                f"Indexing starting for tenant {tenant_id}: "
+                if tenant_id is not None
+                else ""
+                + f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
@@ -419,10 +419,14 @@ def run_indexing_entrypoint(
             _run_indexing(db_session, attempt, tenant_id)
 
             logger.info(
-                f"Indexing finished for tenant {tenant_id}: " if tenant_id is not None else "" +
-                f"connector='{attempt.connector_credential_pair.connector.name}' "
+                f"Indexing finished for tenant {tenant_id}: "
+                if tenant_id is not None
+                else ""
+                + f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
     except Exception as e:
-        logger.exception(f"Indexing job with ID '{index_attempt_id}' for tenant {tenant_id} failed due to {e}")
+        logger.exception(
+            f"Indexing job with ID '{index_attempt_id}' for tenant {tenant_id} failed due to {e}"
+        )

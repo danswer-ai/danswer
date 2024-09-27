@@ -61,7 +61,6 @@ export interface CombinedSettings {
   webVersion: string | null;
 }
 
-
 export const defaultCombinedSettings: CombinedSettings = {
   settings: {
     chat_page_enabled: true,

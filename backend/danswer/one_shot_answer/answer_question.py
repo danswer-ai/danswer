@@ -128,7 +128,6 @@ def stream_answer_objects(
 
     persona = temporary_persona if temporary_persona else chat_session.persona
 
-
     llm, fast_llm = get_llms_for_persona(persona=persona, db_session=db_session)
 
     llm_tokenizer = get_tokenizer(
@@ -148,9 +147,7 @@ def stream_answer_objects(
     )
 
     rephrased_query = query_req.query_override or thread_based_query_rephrase(
-        user_query=query_msg.message,
-        history_str=history_str,
-        db_session=db_session
+        user_query=query_msg.message, history_str=history_str, db_session=db_session
     )
 
     # Given back ahead of the documents for latency reasons
@@ -219,7 +216,9 @@ def stream_answer_objects(
         question=query_msg.message,
         answer_style_config=answer_config,
         prompt_config=PromptConfig.from_model(prompt),
-        llm=get_main_llm_from_tuple(get_llms_for_persona(persona=chat_session.persona, db_session=db_session)),
+        llm=get_main_llm_from_tuple(
+            get_llms_for_persona(persona=chat_session.persona, db_session=db_session)
+        ),
         single_message_history=history_str,
         tools=[search_tool] if search_tool else [],
         force_use_tool=(

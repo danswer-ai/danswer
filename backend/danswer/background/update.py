@@ -6,9 +6,10 @@ import dask
 from dask.distributed import Client
 from dask.distributed import Future
 from distributed import LocalCluster
+from sqlalchemy import text
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import Session
 
-from sqlalchemy import text
 from danswer.background.indexing.dask_utils import ResourceLogger
 from danswer.background.indexing.job_client import SimpleJob
 from danswer.background.indexing.job_client import SimpleJobClient
@@ -16,6 +17,7 @@ from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.app_configs import NUM_SECONDARY_INDEXING_WORKERS
 from danswer.configs.constants import DocumentSource
@@ -47,8 +49,6 @@ from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import LOG_LEVEL
 from shared_configs.configs import MODEL_SERVER_PORT
-from danswer.configs.app_configs import MULTI_TENANT
-from sqlalchemy.exc import ProgrammingError
 
 logger = setup_logger()
 
@@ -150,8 +150,9 @@ def _mark_run_failed(
 """Main funcs"""
 
 
-def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob], tenant_id: str | None) -> None:
-
+def create_indexing_jobs(
+    existing_jobs: dict[int, Future | SimpleJob], tenant_id: str | None
+) -> None:
     """Creates new indexing jobs for each connector / credential pair which is:
     1. Enabled
     2. `refresh_frequency` time has passed since the last indexing run for this pair
@@ -288,9 +289,8 @@ def cleanup_indexing_jobs(
                             index_attempt=index_attempt,
                             failure_reason=_UNEXPECTED_STATE_FAILURE_REASON,
                         )
-        except ProgrammingError as _:
+        except ProgrammingError:
             logger.debug(f"No Connector Table exists for: {tenant_id}")
-            pass
     return existing_jobs_copy
 
 
@@ -300,7 +300,6 @@ def kickoff_indexing_jobs(
     secondary_client: Client | SimpleJobClient,
     tenant_id: str | None,
 ) -> dict[int, Future | SimpleJob]:
-
     existing_jobs_copy = existing_jobs.copy()
     engine = get_sqlalchemy_engine(schema=tenant_id)
 
@@ -408,14 +407,22 @@ def kickoff_indexing_jobs(
 def get_all_tenant_ids() -> list[str] | list[None]:
     if not MULTI_TENANT:
         return [None]
-    with Session(get_sqlalchemy_engine(schema='public')) as session:
-        result = session.execute(text("""
+    with Session(get_sqlalchemy_engine(schema="public")) as session:
+        result = session.execute(
+            text(
+                """
             SELECT schema_name
             FROM information_schema.schemata
             WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'public')
-        """))
+        """
+            )
+        )
         tenant_ids = [row[0] for row in result]
-    valid_tenants = [tenant for tenant in tenant_ids if tenant is None or not tenant.startswith('pg_')]
+    valid_tenants = [
+        tenant
+        for tenant in tenant_ids
+        if tenant is None or not tenant.startswith("pg_")
+    ]
 
     return valid_tenants
 
@@ -485,14 +492,18 @@ def update_loop(
 
             for tenant_id in tenants:
                 try:
-                    logger.debug(f"Processing {'index attempts' if tenant_id is None else f'tenant {tenant_id}'}")
+                    logger.debug(
+                        f"Processing {'index attempts' if tenant_id is None else f'tenant {tenant_id}'}"
+                    )
                     engine = get_sqlalchemy_engine(schema=tenant_id)
                     with Session(engine) as db_session:
                         check_index_swap(db_session=db_session)
                         if not MULTI_TENANT:
                             search_settings = get_current_search_settings(db_session)
                             if search_settings.provider_type is None:
-                                logger.notice("Running a first inference to warm up embedding model")
+                                logger.notice(
+                                    "Running a first inference to warm up embedding model"
+                                )
                                 embedding_model = EmbeddingModel.from_db_model(
                                     search_settings=search_settings,
                                     server_host=INDEXING_MODEL_SERVER_HOST,
@@ -504,13 +515,9 @@ def update_loop(
                     tenant_jobs = existing_jobs.get(tenant_id, {})
 
                     tenant_jobs = cleanup_indexing_jobs(
-                        existing_jobs=tenant_jobs,
-                        tenant_id=tenant_id
+                        existing_jobs=tenant_jobs, tenant_id=tenant_id
                     )
-                    create_indexing_jobs(
-                        existing_jobs=tenant_jobs,
-                        tenant_id=tenant_id
-                    )
+                    create_indexing_jobs(existing_jobs=tenant_jobs, tenant_id=tenant_id)
                     tenant_jobs = kickoff_indexing_jobs(
                         existing_jobs=tenant_jobs,
                         client=client_primary,
@@ -521,7 +528,9 @@ def update_loop(
                     existing_jobs[tenant_id] = tenant_jobs
 
                 except Exception as e:
-                    logger.exception(f"Failed to process tenant {tenant_id or 'default'}: {e}")
+                    logger.exception(
+                        f"Failed to process tenant {tenant_id or 'default'}: {e}"
+                    )
 
         except Exception as e:
             logger.exception(f"Failed to run update due to {e}")
@@ -529,6 +538,7 @@ def update_loop(
         sleep_time = delay - (time.time() - start)
         if sleep_time > 0:
             time.sleep(sleep_time)
+
 
 def update__main() -> None:
     set_is_ee_based_on_env_variable()

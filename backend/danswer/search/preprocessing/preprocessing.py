@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.chat_configs import BASE_RECENCY_DECAY
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
@@ -9,6 +10,7 @@ from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import HYBRID_ALPHA_KEYWORD
 from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
+from danswer.db.engine import current_tenant_id
 from danswer.db.models import User
 from danswer.db.search_settings import get_current_search_settings
 from danswer.llm.interfaces import LLM
@@ -29,10 +31,9 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
-from danswer.configs.app_configs import MULTI_TENANT
-from danswer.db.engine import current_tenant_id
 
 logger = setup_logger()
+
 
 def query_analysis(query: str) -> tuple[bool, list[str]]:
     analysis_model = QueryAnalysisModel()
@@ -155,7 +156,6 @@ def retrieval_preprocessing(
     user_acl_filters = (
         None if bypass_acl else build_access_filters_for_user(user, db_session)
     )
-
 
     final_filters = IndexFilters(
         source_type=preset_filters.source_type or predicted_source_filters,

@@ -214,8 +214,9 @@ function ConnectorRow({
 
   return (
     <TableRow
-      className={`hover:bg-hover-light ${invisible ? "invisible h-0 !-mb-10" : "border border-border !border-b"
-        }  w-full cursor-pointer relative`}
+      className={`hover:bg-hover-light ${
+        invisible ? "invisible h-0 !-mb-10" : "border border-border !border-b"
+      }  w-full cursor-pointer relative`}
       onClick={() => {
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
       }}

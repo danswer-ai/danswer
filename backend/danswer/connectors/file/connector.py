@@ -159,7 +159,7 @@ class LocalFileConnector(LoadConnector):
         self,
         file_locations: list[Path | str],
         batch_size: int = INDEX_BATCH_SIZE,
-        tenant_id: str | None = None
+        tenant_id: str | None = None,
     ) -> None:
         self.file_locations = [Path(file_location) for file_location in file_locations]
         self.batch_size = batch_size

@@ -1,16 +1,18 @@
 from typing import cast
+
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import is_user_admin
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import NotificationType
 from danswer.db.engine import get_session
-
 from danswer.db.models import User
 from danswer.db.notification import create_notification
 from danswer.db.notification import dismiss_all_notifications
@@ -26,7 +28,6 @@ from danswer.server.settings.models import UserSettings
 from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
 from danswer.utils.logger import setup_logger
-from fastapi import HTTPException
 
 logger = setup_logger()
 
@@ -34,7 +35,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 admin_router = APIRouter(prefix="/admin/settings")
 basic_router = APIRouter(prefix="/settings")
-
 
 
 @admin_router.put("")

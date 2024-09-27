@@ -1,6 +1,6 @@
-from sqlalchemy.orm import Session
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
+from sqlalchemy.orm import Session
 
 from danswer.chat.models import LlmDoc
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
@@ -105,7 +105,9 @@ def compute_max_document_tokens_for_persona(
     prompt = persona.prompts[0] if persona.prompts else get_default_prompt__read_only()
     return compute_max_document_tokens(
         prompt_config=PromptConfig.from_model(prompt),
-        llm_config=get_main_llm_from_tuple(get_llms_for_persona(persona, db_session=db_session)).config,
+        llm_config=get_main_llm_from_tuple(
+            get_llms_for_persona(persona, db_session=db_session)
+        ).config,
         actual_user_input=actual_user_input,
         max_llm_token_override=max_llm_token_override,
     )

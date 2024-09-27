@@ -24,11 +24,11 @@ def upgrade() -> None:
         sa.text('SELECT id, chosen_assistants FROM "user"')
     )
     op.drop_column(
-        'user',
+        "user",
         "chosen_assistants",
     )
     op.add_column(
-        'user',
+        "user",
         sa.Column(
             "chosen_assistants",
             postgresql.JSONB(astext_type=sa.Text()),
@@ -38,7 +38,7 @@ def upgrade() -> None:
     for id, chosen_assistants in existing_ids_and_chosen_assistants:
         conn.execute(
             sa.text(
-                'UPDATE user SET chosen_assistants = :chosen_assistants WHERE id = :id'
+                "UPDATE user SET chosen_assistants = :chosen_assistants WHERE id = :id"
             ),
             {"chosen_assistants": json.dumps(chosen_assistants), "id": id},
         )
@@ -47,20 +47,20 @@ def upgrade() -> None:
 def downgrade() -> None:
     conn = op.get_bind()
     existing_ids_and_chosen_assistants = conn.execute(
-        sa.text('SELECT id, chosen_assistants FROM user')
+        sa.text("SELECT id, chosen_assistants FROM user")
     )
     op.drop_column(
-        'user',
+        "user",
         "chosen_assistants",
     )
     op.add_column(
-        'user',
+        "user",
         sa.Column("chosen_assistants", postgresql.ARRAY(sa.Integer()), nullable=True),
     )
     for id, chosen_assistants in existing_ids_and_chosen_assistants:
         conn.execute(
             sa.text(
-                'UPDATE user SET chosen_assistants = :chosen_assistants WHERE id = :id'
+                "UPDATE user SET chosen_assistants = :chosen_assistants WHERE id = :id"
             ),
             {"chosen_assistants": chosen_assistants, "id": id},
         )

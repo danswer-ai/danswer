@@ -48,8 +48,6 @@ from danswer.document_index.vespa_constants import BATCH_SIZE
 from danswer.document_index.vespa_constants import BOOST
 from danswer.document_index.vespa_constants import CONTENT_SUMMARY
 from danswer.document_index.vespa_constants import DANSWER_CHUNK_REPLACEMENT_PAT
-from danswer.document_index.vespa_constants import TENANT_ID_PAT
-from danswer.document_index.vespa_constants import TENANT_ID_REPLACEMENT
 from danswer.document_index.vespa_constants import DATE_REPLACEMENT
 from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa_constants import DOCUMENT_REPLACEMENT_PAT
@@ -57,6 +55,8 @@ from danswer.document_index.vespa_constants import DOCUMENT_SETS
 from danswer.document_index.vespa_constants import HIDDEN
 from danswer.document_index.vespa_constants import NUM_THREADS
 from danswer.document_index.vespa_constants import SEARCH_THREAD_NUMBER_PAT
+from danswer.document_index.vespa_constants import TENANT_ID_PAT
+from danswer.document_index.vespa_constants import TENANT_ID_REPLACEMENT
 from danswer.document_index.vespa_constants import VESPA_APPLICATION_ENDPOINT
 from danswer.document_index.vespa_constants import VESPA_DIM_REPLACEMENT_PAT
 from danswer.document_index.vespa_constants import VESPA_TIMEOUT
@@ -127,9 +127,8 @@ class VespaIndex(DocumentIndex):
         self,
         embedding_dims: list[int] | None = None,
         index_embedding_dim: int | None = None,
-        secondary_index_embedding_dim: int | None = None
+        secondary_index_embedding_dim: int | None = None,
     ) -> None:
-
         if embedding_dims is None:
             if index_embedding_dim is not None:
                 embedding_dims = [index_embedding_dim]
@@ -192,23 +191,33 @@ class VespaIndex(DocumentIndex):
 
         for i, index_name in enumerate(self.indices):
             embedding_dim = embedding_dims[i]
-            logger.info(f"Creating index: {index_name} with embedding dimension: {embedding_dim}")
+            logger.info(
+                f"Creating index: {index_name} with embedding dimension: {embedding_dim}"
+            )
 
             schema = schema_template.replace(
                 DANSWER_CHUNK_REPLACEMENT_PAT, index_name
             ).replace(VESPA_DIM_REPLACEMENT_PAT, str(embedding_dim))
-            schema = schema.replace(TENANT_ID_PAT, TENANT_ID_REPLACEMENT if MULTI_TENANT else "")
+            schema = schema.replace(
+                TENANT_ID_PAT, TENANT_ID_REPLACEMENT if MULTI_TENANT else ""
+            )
             schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
             zip_dict[f"schemas/{index_name}.sd"] = schema.encode("utf-8")
 
         if self.secondary_index_name:
-            logger.info("Creating secondary index:"
-                        f"{self.secondary_index_name} with embedding dimension: {secondary_index_embedding_dim}")
+            logger.info(
+                "Creating secondary index:"
+                f"{self.secondary_index_name} with embedding dimension: {secondary_index_embedding_dim}"
+            )
             upcoming_schema = schema_template.replace(
                 DANSWER_CHUNK_REPLACEMENT_PAT, self.secondary_index_name
             ).replace(VESPA_DIM_REPLACEMENT_PAT, str(secondary_index_embedding_dim))
-            upcoming_schema = upcoming_schema.replace(TENANT_ID_PAT, TENANT_ID_REPLACEMENT if MULTI_TENANT else "")
-            zip_dict[f"schemas/{self.secondary_index_name}.sd"] = upcoming_schema.encode("utf-8")
+            upcoming_schema = upcoming_schema.replace(
+                TENANT_ID_PAT, TENANT_ID_REPLACEMENT if MULTI_TENANT else ""
+            )
+            zip_dict[
+                f"schemas/{self.secondary_index_name}.sd"
+            ] = upcoming_schema.encode("utf-8")
 
         zip_file = in_memory_zip_from_file_bytes(zip_dict)
 
@@ -219,7 +228,6 @@ class VespaIndex(DocumentIndex):
             raise RuntimeError(
                 f"Failed to prepare Vespa Danswer Indexes. Response: {response.text}"
             )
-
 
     def index(
         self,

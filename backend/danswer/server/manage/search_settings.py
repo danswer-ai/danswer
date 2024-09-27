@@ -62,7 +62,6 @@ def set_new_search_settings(
     search_settings = get_current_search_settings(db_session)
 
     if search_settings_new.index_name is None:
-
         # We define index name here
         index_name = f"danswer_chunk_{clean_model_name(search_settings_new.model_name)}"
         if (

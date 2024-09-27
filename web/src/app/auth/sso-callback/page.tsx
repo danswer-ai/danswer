@@ -17,7 +17,7 @@ export default function SSOCallback() {
       if (verificationStartedRef.current) {
         return;
       }
-      
+
       verificationStartedRef.current = true;
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const ssoToken = hashParams.get("sso_token");
@@ -27,7 +27,7 @@ export default function SSOCallback() {
         return;
       }
 
-      window.history.replaceState(null, '', window.location.pathname);
+      window.history.replaceState(null, "", window.location.pathname);
 
       if (!ssoToken) {
         setError("No SSO token found");
@@ -36,17 +36,14 @@ export default function SSOCallback() {
 
       try {
         setAuthStatus("Verifying SSO token...");
-        const response = await fetch(
-          `/api/tenants/auth/sso-callback`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ sso_token: ssoToken }),
-          }
-        )
+        const response = await fetch(`/api/tenants/auth/sso-callback`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ sso_token: ssoToken }),
+        });
 
         if (response.ok) {
           setAuthStatus("Authentication successful!");
@@ -63,7 +60,6 @@ export default function SSOCallback() {
 
     verifyToken();
   }, [router, searchParams]);
-
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-background-50 to-blue-50">

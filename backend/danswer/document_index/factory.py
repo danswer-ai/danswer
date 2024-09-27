@@ -8,7 +8,7 @@ from danswer.document_index.vespa.index import VespaIndex
 def get_default_document_index(
     primary_index_name: str | None = None,
     indices: list[str] | None = None,
-    secondary_index_name: str | None = None
+    secondary_index_name: str | None = None,
 ) -> DocumentIndex:
     """Primary index is the index that is used for querying/updating etc.
     Secondary index is for when both the currently used index and the upcoming
@@ -19,10 +19,8 @@ def get_default_document_index(
     if not indices:
         raise ValueError("No indices provided")
 
-    return VespaIndex(
-        indices=indices,
-        secondary_index_name=secondary_index_name
-    )
+    return VespaIndex(indices=indices, secondary_index_name=secondary_index_name)
+
 
 def get_current_primary_default_document_index(db_session: Session) -> DocumentIndex:
     """

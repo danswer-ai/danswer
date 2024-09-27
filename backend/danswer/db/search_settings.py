@@ -205,4 +205,3 @@ def update_search_settings_status(
 ) -> None:
     search_settings.status = new_status
     db_session.commit()
-

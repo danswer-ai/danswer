@@ -21,7 +21,6 @@ from danswer.document_index.vespa_constants import CHUNK_ID
 from danswer.document_index.vespa_constants import CONTENT
 from danswer.document_index.vespa_constants import CONTENT_SUMMARY
 from danswer.document_index.vespa_constants import DOC_UPDATED_AT
-from danswer.document_index.vespa_constants import TENANT_ID
 from danswer.document_index.vespa_constants import DOCUMENT_ID
 from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa_constants import DOCUMENT_SETS
@@ -38,6 +37,7 @@ from danswer.document_index.vespa_constants import SEMANTIC_IDENTIFIER
 from danswer.document_index.vespa_constants import SKIP_TITLE_EMBEDDING
 from danswer.document_index.vespa_constants import SOURCE_LINKS
 from danswer.document_index.vespa_constants import SOURCE_TYPE
+from danswer.document_index.vespa_constants import TENANT_ID
 from danswer.document_index.vespa_constants import TITLE
 from danswer.document_index.vespa_constants import TITLE_EMBEDDING
 from danswer.indexing.models import DocMetadataAwareIndexChunk
@@ -98,7 +98,7 @@ def get_existing_documents_from_chunks(
     try:
         chunk_existence_future = {
             executor.submit(
-                 _does_document_exist,
+                _does_document_exist,
                 str(get_uuid_from_chunk(chunk)),
                 index_name,
                 http_client,

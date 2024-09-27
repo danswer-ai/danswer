@@ -1,10 +1,9 @@
-from danswer.configs.app_configs import SECRET_JWT_KEY
-from datetime import timedelta
 import contextlib
 import smtplib
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -44,6 +43,7 @@ from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
+from danswer.configs.app_configs import SECRET_JWT_KEY
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SMTP_PASS
 from danswer.configs.app_configs import SMTP_PORT
@@ -182,6 +182,7 @@ def send_user_verification_email(
         s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
 
+
 def verify_sso_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, "SSO_SECRET_KEY", algorithms=["HS256"])
@@ -232,12 +233,11 @@ async def create_user_session(user: User, tenant_id: str) -> str:
         "sub": str(user.id),
         "email": user.email,
         "tenant_id": tenant_id,
-        "exp": datetime.utcnow() + timedelta(seconds=SESSION_EXPIRE_TIME_SECONDS)
+        "exp": datetime.utcnow() + timedelta(seconds=SESSION_EXPIRE_TIME_SECONDS),
     }
 
     token = jwt.encode(payload, SECRET_JWT_KEY, algorithm="HS256")
     return token
-
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):

@@ -1,7 +1,9 @@
-from danswer.db.engine import get_session_context_manager
+from sqlalchemy.orm import Session
+
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
+from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_default_provider
 from danswer.db.llm import fetch_provider
 from danswer.db.models import Persona
@@ -10,16 +12,16 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.headers import build_llm_extra_headers
 from danswer.llm.interfaces import LLM
 from danswer.llm.override_models import LLMOverride
-from sqlalchemy.orm import Session
-
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
 
 def get_main_llm_from_tuple(
     llms: tuple[LLM, LLM],
 ) -> LLM:
     return llms[0]
+
 
 def get_llms_for_persona(
     persona: Persona,
@@ -62,6 +64,7 @@ def get_llms_for_persona(
             custom_config=llm_provider.custom_config,
             additional_headers=additional_headers,
         )
+
     return _create_llm(model), _create_llm(fast_model)
 
 
@@ -74,13 +77,11 @@ def get_default_llms(
     if DISABLE_GENERATIVE_AI:
         raise GenAIDisabledException()
 
-
     if db_session is None:
         with get_session_context_manager() as db_session:
             llm_provider = fetch_default_provider(db_session)
     else:
         llm_provider = fetch_default_provider(db_session)
-
 
     if not llm_provider:
         raise ValueError("No default LLM provider found")

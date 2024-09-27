@@ -100,7 +100,7 @@ class Verifiable(abc.ABC):
         self,
         embedding_dims: list[int] | None = None,
         index_embedding_dim: int | None = None,
-        secondary_index_embedding_dim: int | None = None
+        secondary_index_embedding_dim: int | None = None,
     ) -> None:
         """
         Verify that the document index exists and is consistent with the expectations in the code.

@@ -16,6 +16,7 @@ down_revision = "7f726bad5367"
 branch_labels = None
 depends_on = None
 
+
 def upgrade() -> None:
     op.create_table(
         "embedding_model",
@@ -68,24 +69,22 @@ def upgrade() -> None:
         column("query_prefix", String),
         column("passage_prefix", String),
         column("index_name", String),
-        column("status", sa.Enum(IndexModelStatus, name="indexmodelstatus", native=False)),
+        column(
+            "status", sa.Enum(IndexModelStatus, name="indexmodelstatus", native=False)
+        ),
     )
 
     # Insert the old embedding model
     op.bulk_insert(
         EmbeddingModel,
-        [
-            old_embedding_model
-        ],
+        [old_embedding_model],
     )
 
     # If the user has not overridden the embedding model, insert the new default model
     if not user_overridden_embedding_model:
         op.bulk_insert(
             EmbeddingModel,
-            [
-                new_embedding_model
-            ],
+            [new_embedding_model],
         )
 
     op.add_column(
@@ -122,6 +121,7 @@ def upgrade() -> None:
         unique=True,
         postgresql_where=sa.text("status = 'FUTURE'"),
     )
+
 
 def downgrade() -> None:
     op.drop_constraint(

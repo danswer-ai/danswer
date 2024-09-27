@@ -49,7 +49,7 @@ def delete_connector_credential_pair_batch(
     connector_id: int,
     credential_id: int,
     document_index: DocumentIndex,
-    tenant_id: str | None
+    tenant_id: str | None,
 ) -> None:
     """
     Removes a batch of documents ids from a cc-pair. If no other cc-pair uses a document anymore
@@ -134,7 +134,11 @@ def delete_connector_credential_pair_batch(
     max_retries=3,
 )
 def document_by_cc_pair_cleanup_task(
-    self: Task, document_id: str, connector_id: int, credential_id: int, tenant_id: str | None
+    self: Task,
+    document_id: str,
+    connector_id: int,
+    credential_id: int,
+    tenant_id: str | None,
 ) -> bool:
     task_logger.info(f"document_id={document_id}")
 

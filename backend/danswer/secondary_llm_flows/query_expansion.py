@@ -1,5 +1,7 @@
 from collections.abc import Callable
 
+from sqlalchemy.orm import Session
+
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.configs.chat_configs import DISABLE_LLM_QUERY_REPHRASE
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
@@ -15,11 +17,13 @@ from danswer.prompts.miscellaneous_prompts import LANGUAGE_REPHRASE_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import count_punctuation
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from sqlalchemy.orm import Session
+
 logger = setup_logger()
 
 
-def llm_multilingual_query_expansion(query: str, language: str, db_session: Session) -> str:
+def llm_multilingual_query_expansion(
+    query: str, language: str, db_session: Session
+) -> str:
     def _get_rephrase_messages() -> list[dict[str, str]]:
         messages = [
             {
@@ -66,7 +70,8 @@ def multilingual_query_expansion(
 
     else:
         query_rephrases = [
-            llm_multilingual_query_expansion(query, language, db_session) for language in languages
+            llm_multilingual_query_expansion(query, language, db_session)
+            for language in languages
         ]
         return query_rephrases
 
@@ -138,7 +143,7 @@ def thread_based_query_rephrase(
     db_session: Session,
     llm: LLM | None = None,
     size_heuristic: int = 200,
-    punctuation_heuristic: int = 10
+    punctuation_heuristic: int = 10,
 ) -> str:
     if not history_str:
         return user_query

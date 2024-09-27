@@ -1,9 +1,12 @@
+import jwt
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import AUTH_TYPE
+from danswer.configs.app_configs import DATA_PLANE_SECRET
+from danswer.configs.app_configs import EXPECTED_API_KEY
 from danswer.configs.constants import AuthType
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -13,11 +16,9 @@ from ee.danswer.db.api_key import fetch_user_for_api_key
 from ee.danswer.db.saml import get_saml_account
 from ee.danswer.server.seeding import get_seed_config
 from ee.danswer.utils.secrets import extract_hashed_cookie
-import jwt
-from danswer.configs.app_configs import DATA_PLANE_SECRET
-from danswer.configs.app_configs import EXPECTED_API_KEY
 
 logger = setup_logger()
+
 
 def verify_auth_setting() -> None:
     # All the Auth flows are valid for EE version
@@ -72,7 +73,6 @@ async def optional_user_(
     return user
 
 
-
 def api_key_dep(
     request: Request, db_session: Session = Depends(get_session)
 ) -> User | None:
@@ -90,7 +90,6 @@ def api_key_dep(
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     return user
-
 
 
 def get_default_admin_user_emails_() -> list[str]:

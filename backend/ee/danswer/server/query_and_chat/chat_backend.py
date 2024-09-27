@@ -272,9 +272,7 @@ def handle_send_message_simple_with_history(
     )
 
     rephrased_query = req.query_override or thread_based_query_rephrase(
-        user_query=query,
-        history_str=history_str,
-        db_session=db_session
+        user_query=query, history_str=history_str, db_session=db_session
     )
 
     if req.retrieval_options is None and req.search_doc_ids is None:

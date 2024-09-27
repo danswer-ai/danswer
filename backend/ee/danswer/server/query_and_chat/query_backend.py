@@ -153,7 +153,9 @@ def get_answer_with_quote(
         raise KeyError("Must provide persona ID or Persona Config")
 
     llm = get_main_llm_from_tuple(
-        get_default_llms(db_session=db_session) if not persona else get_llms_for_persona(persona, db_session=db_session)
+        get_default_llms(db_session=db_session)
+        if not persona
+        else get_llms_for_persona(persona, db_session=db_session)
     )
     input_tokens = get_max_input_tokens(
         model_name=llm.config.model_name, model_provider=llm.config.model_provider

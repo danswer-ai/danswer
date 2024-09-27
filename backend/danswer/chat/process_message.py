@@ -331,7 +331,6 @@ def stream_chat_message_objects(
         except GenAIDisabledException:
             raise RuntimeError("LLM is disabled. Can't use chat flow without LLM.")
 
-
         llm_provider = llm.config.model_provider
         llm_model_name = llm.config.model_name
 
@@ -843,7 +842,6 @@ def stream_chat_message(
     litellm_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
 ) -> Iterator[str]:
-
     objects = stream_chat_message_objects(
         new_msg_req=new_msg_req,
         user=user,

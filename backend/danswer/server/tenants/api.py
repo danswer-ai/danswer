@@ -1,28 +1,32 @@
 from fastapi import APIRouter
-from fastapi import Depends
-from sqlalchemy.orm import Session
 from fastapi import Body
-from danswer.db.engine import get_sqlalchemy_engine
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+
 from danswer.auth.users import create_user_session
 from danswer.auth.users import get_user_manager
 from danswer.auth.users import UserManager
 from danswer.auth.users import verify_sso_token
-from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
-from danswer.utils.logger import setup_logger
-from fastapi.responses import JSONResponse
-from fastapi import HTTPException
-from ee.danswer.auth.users import control_plane_dep
-from danswer.server.tenants.provisioning import setup_postgres_and_initial_settings
-from danswer.server.tenants.provisioning import check_schema_exists
-from danswer.server.tenants.provisioning import run_alembic_migrations
-from danswer.server.tenants.provisioning import create_tenant_schema
 from danswer.configs.app_configs import MULTI_TENANT
+from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from danswer.db.engine import get_sqlalchemy_engine
+from danswer.server.tenants.provisioning import check_schema_exists
+from danswer.server.tenants.provisioning import create_tenant_schema
+from danswer.server.tenants.provisioning import run_alembic_migrations
+from danswer.server.tenants.provisioning import setup_postgres_and_initial_settings
+from danswer.utils.logger import setup_logger
+from ee.danswer.auth.users import control_plane_dep
 
 logger = setup_logger()
 basic_router = APIRouter(prefix="/tenants")
 
+
 @basic_router.post("/create")
-def create_tenant(tenant_id: str, _:  None=  Depends(control_plane_dep)) -> dict[str, str]:
+def create_tenant(
+    tenant_id: str, _: None = Depends(control_plane_dep)
+) -> dict[str, str]:
     if not MULTI_TENANT:
         raise HTTPException(status_code=403, detail="Multi-tenancy is not enabled")
 
@@ -47,14 +51,14 @@ async def sso_callback(
         raise HTTPException(status_code=403, detail="Multi-tenancy is not enabled")
 
     payload = verify_sso_token(sso_token)
-    user = await user_manager.sso_authenticate(
-        payload["email"], payload["tenant_id"]
-    )
+    user = await user_manager.sso_authenticate(payload["email"], payload["tenant_id"])
 
     tenant_id = payload["tenant_id"]
     schema_exists = await check_schema_exists(tenant_id)
     if not schema_exists:
-        raise HTTPException(status_code=403, detail="Your Danswer app has not been set up yet!")
+        raise HTTPException(
+            status_code=403, detail="Your Danswer app has not been set up yet!"
+        )
 
     session_token = await create_user_session(user, payload["tenant_id"])
 
