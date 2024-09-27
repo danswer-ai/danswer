@@ -70,7 +70,7 @@ _SYNC_BATCH_SIZE = 100
 def cleanup_connector_credential_pair_task(
     connector_id: int,
     credential_id: int,
-    tenant_id: str
+    tenant_id: str | None
 ) -> int:
     """Connector deletion task. This is run as an async task because it is a somewhat slow job.
     Needs to potentially update a large number of Postgres and Vespa docs, including deleting them
@@ -114,7 +114,7 @@ def cleanup_connector_credential_pair_task(
 
 @build_celery_task_wrapper(name_cc_prune_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def prune_documents_task(connector_id: int, credential_id: int, tenant_id: str) -> None:
+def prune_documents_task(connector_id: int, credential_id: int, tenant_id: str | None) -> None:
     """connector pruning task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list"""
@@ -183,7 +183,7 @@ def prune_documents_task(connector_id: int, credential_id: int, tenant_id: str) 
 
 @build_celery_task_wrapper(name_document_set_sync_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def sync_document_set_task(document_set_id: int, tenant_id: str) -> None:
+def sync_document_set_task(document_set_id: int, tenant_id: str | None) -> None:
     """For document sets marked as not up to date, sync the state from postgres
     into the datastore. Also handles deletions."""
 
@@ -267,7 +267,7 @@ def sync_document_set_task(document_set_id: int, tenant_id: str) -> None:
     name="check_for_document_sets_sync_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_document_sets_sync_task(tenant_id: str) -> None:
+def check_for_document_sets_sync_task(tenant_id: str | None) -> None:
     """Runs periodically to check if any sync tasks should be run and adds them
     to the queue"""
     with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
@@ -287,7 +287,7 @@ def check_for_document_sets_sync_task(tenant_id: str) -> None:
     name="check_for_cc_pair_deletion_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_cc_pair_deletion_task(tenant_id: str) -> None:
+def check_for_cc_pair_deletion_task(tenant_id: str | None) -> None:
     """Runs periodically to check if any deletion tasks should be run"""
     with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
         # check if any document sets are not synced
@@ -310,7 +310,7 @@ def check_for_cc_pair_deletion_task(tenant_id: str) -> None:
     bind=True,
     base=AbortableTask,
 )
-def kombu_message_cleanup_task(self: Any, tenant_id: str) -> int:
+def kombu_message_cleanup_task(self: Any, tenant_id: str | None) -> int:
     """Runs periodically to clean up the kombu_message table"""
 
     # we will select messages older than this amount to clean up
@@ -423,7 +423,7 @@ def kombu_message_cleanup_task_helper(ctx: dict, db_session: Session) -> bool:
     name="check_for_prune_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_prune_task(tenant_id: str) -> None:
+def check_for_prune_task(tenant_id: str | None) -> None:
     """Runs periodically to check if any prune tasks should be run and adds them
     to the queue"""
 
@@ -455,7 +455,7 @@ def schedule_tenant_tasks():
     if MULTI_TENANT:
         tenants = get_all_tenant_ids()
     else:
-        tenants = ['public']  # Default tenant in single-tenancy mode
+        tenants = [None]
 
     # Filter out any invalid tenants if necessary
     valid_tenants = [tenant for tenant in tenants if not tenant.startswith('pg_')]

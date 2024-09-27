@@ -241,7 +241,7 @@ async def get_or_create_user(email: str, user_id: str) -> User:
 
 
 async def create_user_session(user: User, tenant_id: str) -> str:
-    # Create a payload with user information and tenant_id
+    # Create a payload user information and tenant_id
     payload = {
         "sub": str(user.id),
         "email": user.email,
@@ -261,7 +261,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def sso_authenticate(
         self,
         email: str,
-        user_id: str,
         tenant_id: str,
     ) -> User:
         try:

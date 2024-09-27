@@ -5,9 +5,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
-from danswer.db.engine import current_tenant_id
 from sqlalchemy.orm import Session
-
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
 from danswer.background.indexing.tracer import DanswerTracer
@@ -46,7 +44,7 @@ def _get_connector_runner(
     attempt: IndexAttempt,
     start_time: datetime,
     end_time: datetime,
-    tenant_id: str | None = None
+    tenant_id: str | None
 ) -> ConnectorRunner:
     """
     NOTE: `start_time` and `end_time` are only used for poll connectors
@@ -86,7 +84,7 @@ def _get_connector_runner(
 def _run_indexing(
     db_session: Session,
     index_attempt: IndexAttempt,
-    tenant_id: str
+    tenant_id: str | None
 ) -> None:
     """
     1. Get documents which are either new or updated from specified application
@@ -176,6 +174,7 @@ def _run_indexing(
                 attempt=index_attempt,
                 start_time=window_start,
                 end_time=window_end,
+                tenant_id=tenant_id
             )
 
             all_connector_doc_ids: set[str] = set()
@@ -390,12 +389,11 @@ def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexA
 
     return attempt
 
-def run_indexing_entrypoint(index_attempt_id: int, tenant_id: str, is_ee: bool = False) -> None:
+def run_indexing_entrypoint(index_attempt_id: int, tenant_id: str | None, is_ee: bool = False) -> None:
     try:
         if is_ee:
             global_version.set_ee()
 
-        current_tenant_id.set(tenant_id)
         IndexAttemptSingleton.set_index_attempt_id(index_attempt_id)
 
         with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:

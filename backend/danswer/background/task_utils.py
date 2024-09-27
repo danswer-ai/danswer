@@ -14,8 +14,11 @@ from danswer.db.tasks import mark_task_start
 from danswer.db.tasks import register_task
 
 
-def name_cc_cleanup_task(connector_id: int, credential_id: int, tenant_id: str = "") -> str:
-    return f"cleanup_connector_credential_pair_{connector_id}_{credential_id}_{tenant_id}"
+def name_cc_cleanup_task(connector_id: int, credential_id: int, tenant_id: str | None) -> str:
+    task_name = f"cleanup_connector_credential_pair_{connector_id}_{credential_id}"
+    if tenant_id is not None:
+        task_name += f"_{tenant_id}"
+    return task_name
 
 
 def name_document_set_sync_task(document_set_id: int) -> str:

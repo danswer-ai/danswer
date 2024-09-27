@@ -273,6 +273,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         # Break bad state for thrashing indexes
         if secondary_search_settings and DISABLE_INDEX_UPDATE_ON_SWAP:
+
             expire_index_attempts(
                 search_settings_id=search_settings.id, db_session=db_session
             )
@@ -285,12 +286,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         logger.notice(f'Using Embedding model: "{search_settings.model_name}"')
         if search_settings.query_prefix or search_settings.passage_prefix:
+
             logger.notice(f'Query embedding prefix: "{search_settings.query_prefix}"')
             logger.notice(
                 f'Passage embedding prefix: "{search_settings.passage_prefix}"'
             )
 
         if search_settings:
+
             if not search_settings.disable_rerank_for_streaming:
                 logger.notice("Reranking is enabled.")
 

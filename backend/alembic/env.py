@@ -31,18 +31,15 @@ def get_schema_options() -> Tuple[str, bool]:
             if '=' in pair:
                 key, value = pair.split('=', 1)
                 x_args[key] = value
-    print(f"x_args: {x_args}")  # For debugging
-    schema_name = x_args.get('schema', 'public')  # Default schema
-    create_schema = x_args.get('create_schema', 'false').lower() == 'true'
-    return schema_name, create_schema
+    schema_name = x_args.get('schema', 'public')
+    return schema_name
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
     url = build_connection_string()
-    schema, create_schema = get_schema_options()
+    schema = get_schema_options()
 
-    if create_schema:
-        raise RuntimeError("Cannot create schema in offline mode. Please run migrations online to create the schema.")
 
     context.configure(
         url=url,
@@ -57,14 +54,11 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 def do_run_migrations(connection: Connection) -> None:
-    schema, create_schema = get_schema_options()
+    schema = get_schema_options()
 
-    if create_schema:
-            # Use text() to create a proper SQL expression
-        connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema}"'))
-        connection.execute(text('COMMIT'))
+    connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema}"'))
+    connection.execute(text('COMMIT'))
 
-    # Set the search_path to the target schema
     connection.execute(text(f'SET search_path TO "{schema}"'))
 
     context.configure(

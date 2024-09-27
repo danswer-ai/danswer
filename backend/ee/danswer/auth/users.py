@@ -13,13 +13,42 @@ from ee.danswer.db.api_key import fetch_user_for_api_key
 from ee.danswer.db.saml import get_saml_account
 from ee.danswer.server.seeding import get_seed_config
 from ee.danswer.utils.secrets import extract_hashed_cookie
+import jwt
+
+DATA_PLANE_SECRET = "your_shared_secret_key"
+EXPECTED_API_KEY = "your_control_plane_api_key"
 
 logger = setup_logger()
-
 
 def verify_auth_setting() -> None:
     # All the Auth flows are valid for EE version
     logger.notice(f"Using Auth Type: {AUTH_TYPE.value}")
+
+
+async def control_plane_dep(request: Request):
+    auth_header = request.headers.get("Authorization")
+    api_key = request.headers.get("X-API-KEY")
+
+    if api_key != EXPECTED_API_KEY:
+        logger.warning("Invalid API key")
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    if not auth_header or not auth_header.startswith("Bearer "):
+        logger.warning("Invalid authorization header")
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+
+    token = auth_header.split(" ")[1]
+    try:
+        payload = jwt.decode(token, DATA_PLANE_SECRET, algorithms=["HS256"])
+        if payload.get("scope") != "tenant:create":
+            logger.warning("Insufficient permissions")
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+    except jwt.ExpiredSignatureError:
+        logger.warning("Token has expired")
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        logger.warning("Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 async def optional_user_(
@@ -44,6 +73,7 @@ async def optional_user_(
     return user
 
 
+
 def api_key_dep(
     request: Request, db_session: Session = Depends(get_session)
 ) -> User | None:
@@ -61,6 +91,7 @@ def api_key_dep(
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     return user
+
 
 
 def get_default_admin_user_emails_() -> list[str]:

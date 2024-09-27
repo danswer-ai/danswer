@@ -42,7 +42,7 @@ PUBLIC_ENDPOINT_SPECS = [
     ("/users/{id}", {"DELETE"}),
     # oauth
     ("/auth/oauth/authorize", {"GET"}),
-    ("/auth/oaute a tsth/callback", {"GET"}),
+    ("/auth/oauth/callback", {"GET"}),
     # tenant service related (must use API key)
     ("/tenants/create", {"POST"}),
 ]
