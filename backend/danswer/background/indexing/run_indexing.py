@@ -64,7 +64,7 @@ def _get_connector_runner(
             attempt.connector_credential_pair.connector.connector_specific_config,
             attempt.connector_credential_pair.credential,
             db_session,
-            
+
         )
     except Exception as e:
         logger.exception(f"Unable to instantiate connector due to {e}")

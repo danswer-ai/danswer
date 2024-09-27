@@ -166,7 +166,7 @@ class SearchQuery(ChunkContext):
     num_hits: int = NUM_RETURNED_HITS
     offset: int = 0
     model_config = ConfigDict(frozen=True)
-    
+
 
 class RetrievalDetails(ChunkContext):
     # Use LLM to determine whether to do a retrieval or only rely on existing history

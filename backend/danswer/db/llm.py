@@ -141,7 +141,7 @@ def fetch_default_provider(db_session: Session) -> FullLLMProvider | None:
             LLMProviderModel.is_default_provider == True  # noqa: E712
         )
     )
-    
+
     if not provider_model:
         return None
 

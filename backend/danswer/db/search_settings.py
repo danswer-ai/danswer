@@ -1,22 +1,11 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
-from danswer.configs.model_configs import ASYM_QUERY_PREFIX
-from danswer.configs.model_configs import DEFAULT_DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import DOC_EMBEDDING_DIM
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
-from danswer.configs.model_configs import OLD_DEFAULT_DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import OLD_DEFAULT_MODEL_DOC_EMBEDDING_DIM
-from danswer.configs.model_configs import OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.llm import fetch_embedding_provider
 from danswer.db.models import CloudEmbeddingProvider
 from danswer.db.models import IndexModelStatus
 from danswer.db.models import SearchSettings
-from danswer.indexing.models import IndexingSetting
-from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.search.models import SavedSearchSettings
 from danswer.server.manage.embedding.models import (
     CloudEmbeddingProvider as ServerCloudEmbeddingProvider,
@@ -174,4 +163,3 @@ def update_search_settings_status(
     search_settings.status = new_status
     db_session.commit()
 
- 

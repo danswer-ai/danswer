@@ -33,7 +33,6 @@ from danswer.utils.logger import setup_logger
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import DecodeError, InvalidTokenError
 import jwt
-import traceback
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")

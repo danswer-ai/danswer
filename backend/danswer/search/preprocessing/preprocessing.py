@@ -29,10 +29,9 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
-from danswer.db.engine import current_tenant_id
+
 
 logger = setup_logger()
-
 
 def query_analysis(query: str) -> tuple[bool, list[str]]:
     analysis_model = QueryAnalysisModel()
@@ -121,7 +120,7 @@ def retrieval_preprocessing(
         ]
         if filter_fn
     ]
-    
+
     parallel_results = run_functions_in_parallel(functions_to_run)
 
     predicted_time_cutoff, predicted_favor_recent = (
@@ -152,7 +151,7 @@ def retrieval_preprocessing(
     user_acl_filters = (
         None if bypass_acl else build_access_filters_for_user(user, db_session)
     )
-    
+
     final_filters = IndexFilters(
         source_type=preset_filters.source_type or predicted_source_filters,
         document_set=preset_filters.document_set,
@@ -161,7 +160,7 @@ def retrieval_preprocessing(
         access_control_list=user_acl_filters,
         tenant_id="0a4bae55-27d4-406a-8c12-d3827af22e42"
         # tenant_id="84d01c94-7032-4dfa-9a1e-0d80805c7826" # TODO FIX
-    ) 
+    )
 
     llm_evaluation_type = LLMEvaluationType.BASIC
     if search_request.evaluation_type is not LLMEvaluationType.UNSPECIFIED:
