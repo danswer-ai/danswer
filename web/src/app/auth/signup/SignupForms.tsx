@@ -5,7 +5,7 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useToast } from "@/hooks/use-toast";
 import { basicLogin, basicSignup } from "@/lib/user";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/Spinner";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email") || "";
 
   // Use the custom hook
   const {
@@ -38,7 +40,7 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
         initialValues={{
           full_name: "",
           company_name: "",
-          email: "",
+          email: email,
           password: "",
           confirm_password: "",
         }}

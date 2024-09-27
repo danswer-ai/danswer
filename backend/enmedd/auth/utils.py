@@ -86,9 +86,6 @@ def send_user_verification_email(
     message.attach(MIMEText(body, "plain"))
 
     try:
-        print(
-            f"SMTP SERVER: {smtp_server} PORT: {smtp_port} EMAIL: {sender_email} PASSWORD: {sender_password}"
-        )
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(sender_email, sender_password)
@@ -115,9 +112,6 @@ def send_2fa_email(to_email: str, subject: str, body: str, mail_from: str = EMAI
 
     # Send email
     try:
-        print(
-            f"SMTP SERVER: {smtp_server} PORT: {smtp_port} EMAIL: {sender_email} PASSWORD: {sender_password}"
-        )
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(sender_email, sender_password)
@@ -146,9 +140,6 @@ def send_reset_password_email(
 
     # Send email
     try:
-        print(
-            f"SMTP SERVER: {smtp_server} PORT: {smtp_port} EMAIL: {sender_email} PASSWORD: {sender_password}"
-        )
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(sender_email, sender_password)

@@ -37,7 +37,7 @@ export function LogInForms({}: {}) {
         onSubmit={async (values) => {
           const loginResponse = await basicLogin(values.email, values.password);
           if (loginResponse.ok) {
-            router.push(`/auth/2factorverification`);
+            router.push(`/auth/2factorverification/?email=${values.email}`);
             await fetch("/api/users/generate-otp", {
               method: "PATCH",
               headers: {

@@ -16,11 +16,41 @@ import { UsersResponse } from "@/lib/users/interfaces";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { User, UserIcon } from "lucide-react";
+
+import { UserIcon } from "lucide-react";
+import { User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CustomModal } from "@/components/CustomModal";
+import { useToast } from "@/hooks/use-toast";
+import useSWRMutation from "swr/mutation";
+import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
+
+const RemoveUserButton = ({
+  user,
+  onSuccess,
+  onError,
+}: {
+  user: User;
+  onSuccess: () => void;
+  onError: () => void;
+}) => {
+  const { trigger } = useSWRMutation(
+    "/api/manage/admin/remove-invited-user",
+    userMutationFetcher,
+    { onSuccess, onError }
+  );
+  return (
+    <Button
+      variant="destructive"
+      onClick={() => trigger({ user_email: user.email })}
+    >
+      Uninvite User
+    </Button>
+  );
+};
 
 export const PendingInvites = ({ q }: { q: string }) => {
+  const { toast } = useToast();
   const [invitedPage, setInvitedPage] = useState(1);
   const [acceptedPage, setAcceptedPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,9 +97,28 @@ export const PendingInvites = ({ q }: { q: string }) => {
 
   const filteredUsers = finalInvited.filter(
     (user) =>
-      user.full_name!.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const onRemovalSuccess = () => {
+    toast({
+      title: "User Removed Successfully",
+      description: "The invited user has been removed from your list",
+      variant: "success",
+    });
+    setIsCancelModalVisible(false);
+  };
+
+  const onRemovalError = () => {
+    toast({
+      title: "Failed to Remove User",
+      description:
+        "We encountered an issue while attempting to remove the invited user. Please try again or contact support if the problem persists",
+      variant: "destructive",
+    });
+    setIsCancelModalVisible(false);
+  };
 
   return (
     <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
@@ -105,19 +154,16 @@ export const PendingInvites = ({ q }: { q: string }) => {
                             <div className="border rounded-full w-10 h-10 flex items-center justify-center">
                               <UserIcon />
                             </div>
-                            <div className="flex flex-col">
+                            <div className="flex flex-col justify-center">
                               <span className="truncate max-w-44">
-                                {user.full_name}
-                              </span>
-                              <span className="text-sm text-subtle truncate max-w-44">
-                                {user.email}
+                                {user.full_name || user.email}
                               </span>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2 justify-end">
-                            <Button>Resend Invite</Button>
+                            {/* <Button>Resend Invite</Button> */}
                             <CustomModal
                               trigger={
                                 <Button
@@ -141,9 +187,12 @@ export const PendingInvites = ({ q }: { q: string }) => {
 
                                 <div className="flex gap-2 pt-8 justify-end">
                                   <Button>Keep Member</Button>
-                                  <Button variant="destructive">
-                                    Revoke Invite
-                                  </Button>
+                                  <RemoveUserButton
+                                    user={user}
+                                    onSuccess={onRemovalSuccess}
+                                    onError={onRemovalError}
+                                    key={user.id}
+                                  />
                                 </div>
                               </div>
                             </CustomModal>

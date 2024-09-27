@@ -11,13 +11,17 @@ import {
 import { ShieldEllipsis } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { Spinner } from "@/components/Spinner";
 
 const Page = () => {
   const { toast } = useToast();
   const [value, setValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const user_email = searchParams.get("email");
 
   const handleContinue = async () => {
     try {
@@ -48,8 +52,34 @@ const Page = () => {
     }
   };
 
+  const handleResendOTP = async () => {
+    setIsLoading(true);
+    const response = await fetch("/api/users/generate-otp", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    if (!response.ok) {
+      toast({
+        title: "Failed to Resend OTP Code",
+        description: `We encountered an issue while trying to resend the OTP code. Please try again or contact support if the problem persists. ${response.statusText}`,
+        variant: "destructive",
+      });
+    }
+    toast({
+      title: "OTP Code Resent Successfully",
+      description:
+        "A new OTP code has been sent to your registered email/phone. Please check your inbox or messages to retrieve it.",
+      variant: "success",
+    });
+    setIsLoading(false);
+  };
+
   return (
     <main className="h-full">
+      {isLoading && <Spinner />}
       <WelcomeTopBar />
       <div className="w-full h-full flex items-center justify-center px-6">
         <div className="md:w-[500px]">
@@ -59,78 +89,69 @@ const Page = () => {
             </div>
           </div>
 
-        <div className="pt-8">
-          <h1 className="text-2xl xl:text-3xl font-bold text-center text-dark-900">
-            Setup Two-Factor Authentication
-          </h1>
-          <p className="text-center pt-2 text-sm text-subtle">
-            Please check your email a 6 digit code has been sent to your
-            registered email{" "}
-            <span className="font-semibold text-default">
-              “john.doe@gmail.com”
-            </span>
-          </p>
-        </div>
+          <div className="pt-8">
+            <h1 className="text-2xl xl:text-3xl font-bold text-center text-dark-900">
+              Setup Two-Factor Authentication
+            </h1>
+            <p className="text-center pt-2 text-sm text-subtle">
+              Please check your email a 6 digit code has been sent to your
+              registered email{" "}
+              <span className="font-semibold text-default">“{user_email}”</span>
+            </p>
+          </div>
 
-        <div className="pt-8 flex items-center flex-col gap-8 justify-center">
-          <InputOTP
-            maxLength={6}
-            value={value}
-            onChange={(value) => setValue(value)}
-          >
-            <InputOTPGroup>
-              <InputOTPSlot
-                index={0}
-                className="h-16 w-16 text-3xl font-bold"
-              />
-              <InputOTPSlot
-                index={1}
-                className="h-16 w-16 text-3xl font-bold"
-              />
-              <InputOTPSlot
-                index={2}
-                className="h-16 w-16 text-3xl font-bold"
-              />
-            </InputOTPGroup>
-            <InputOTPSeparator />
-            <InputOTPGroup>
-              <InputOTPSlot
-                index={3}
-                className="h-16 w-16 text-3xl font-bold"
-              />
-              <InputOTPSlot
-                index={4}
-                className="h-16 w-16 text-3xl font-bold"
-              />
-              <InputOTPSlot
-                index={5}
-                className="h-16 w-16 text-3xl font-bold"
-              />
-            </InputOTPGroup>
-          </InputOTP>
-
-          <Button className="w-full" onClick={handleContinue}>
-            Continue
-          </Button>
-
-          <p className="text-center text-sm">
-            Didn’t receive a code?{" "}
-            <Link
-              href=""
-              onClick={async () => {
-                await fetch("/api/users/generate-otp", {
-                  method: "PATCH",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  credentials: "include",
-                });
-              }}
-              className="text-sm font-medium text-link hover:underline"
+          <div className="pt-8 flex items-center flex-col gap-8 justify-center">
+            <InputOTP
+              maxLength={6}
+              value={value}
+              onChange={(value) => setValue(value)}
             >
-              Resend Code
-            </Link>
-          </p>
+              <InputOTPGroup>
+                <InputOTPSlot
+                  index={0}
+                  className="h-16 w-16 text-3xl font-bold"
+                />
+                <InputOTPSlot
+                  index={1}
+                  className="h-16 w-16 text-3xl font-bold"
+                />
+                <InputOTPSlot
+                  index={2}
+                  className="h-16 w-16 text-3xl font-bold"
+                />
+              </InputOTPGroup>
+              <InputOTPSeparator />
+              <InputOTPGroup>
+                <InputOTPSlot
+                  index={3}
+                  className="h-16 w-16 text-3xl font-bold"
+                />
+                <InputOTPSlot
+                  index={4}
+                  className="h-16 w-16 text-3xl font-bold"
+                />
+                <InputOTPSlot
+                  index={5}
+                  className="h-16 w-16 text-3xl font-bold"
+                />
+              </InputOTPGroup>
+            </InputOTP>
+
+            <Button className="w-full" onClick={handleContinue}>
+              Continue
+            </Button>
+
+            <p className="text-center text-sm">
+              Didn&apos;t receive a code?{" "}
+              <Link
+                href=""
+                onClick={handleResendOTP}
+                className="text-sm font-medium text-link hover:underline"
+              >
+                Resend Code
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </main>
