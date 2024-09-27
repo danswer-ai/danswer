@@ -259,9 +259,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             )
             user = await self.create(user_create)
 
-            # Update user with tenant information if needed
-        if user.tenant_id != tenant_id:
-            await self.user_db.update(user, {"tenant_id": tenant_id})
         return user
 
     async def create(

@@ -434,7 +434,7 @@ export function CCPairIndexingStatusTable({
           }}
           isEditable={false}
         />
-        <div className="flex items-center w-0 mt-4 gap-x-2">
+        <div className="flex items-center w-0 my-4 gap-x-2">
           <input
             type="text"
             ref={searchInputRef}
@@ -443,91 +443,75 @@ export function CCPairIndexingStatusTable({
             onChange={(e) => setSearchTerm(e.target.value)}
             className="ml-1 w-96 h-9 flex-none rounded-md border border-border bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
-          <div className="-mb-10" />
 
-          <TableBody>
-            <div className="flex items-center mt-4 gap-x-2">
-              <input
-                type="text"
-                ref={searchInputRef}
-                placeholder="Search connectors..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="ml-1 w-96 h-9 flex-none rounded-md border border-border bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-
-              <Button className="h-9" onClick={() => toggleSources()}>
-                {!shouldExpand ? "Collapse All" : "Expand All"}
-              </Button>
-            </div>
-
-            <TableBody>
-              {sortedSources
-                .filter(
-                  (source) =>
-                    source != "not_applicable" && source != "ingestion_api"
-                )
-                .map((source, ind) => {
-                  const sourceMatches = source
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase());
-                  const matchingConnectors = groupedStatuses[source].filter(
-                    (status) =>
-                      (status.name || "")
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase())
-                  );
-                  if (sourceMatches || matchingConnectors.length > 0) {
-                    return (
-                      <React.Fragment key={ind}>
-                        <br className="mt-4" />
-
-                        <SummaryRow
-                          source={source}
-                          summary={groupSummaries[source]}
-                          isOpen={connectorsToggled[source] || false}
-                          onToggle={() => toggleSource(source)}
-                        />
-
-                        {connectorsToggled[source] && (
-                          <>
-                            <TableRow className="border border-border">
-                              <TableHeaderCell>Name</TableHeaderCell>
-                              <TableHeaderCell>Last Indexed</TableHeaderCell>
-                              <TableHeaderCell>Activity</TableHeaderCell>
-                              {isPaidEnterpriseFeaturesEnabled && (
-                                <TableHeaderCell>Permissions</TableHeaderCell>
-                              )}
-                              <TableHeaderCell>Total Docs</TableHeaderCell>
-                              <TableHeaderCell>Last Status</TableHeaderCell>
-                              <TableHeaderCell></TableHeaderCell>
-                            </TableRow>
-                            {(sourceMatches
-                              ? groupedStatuses[source]
-                              : matchingConnectors
-                            ).map((ccPairsIndexingStatus) => (
-                              <ConnectorRow
-                                key={ccPairsIndexingStatus.cc_pair_id}
-                                ccPairsIndexingStatus={ccPairsIndexingStatus}
-                                isEditable={editableCcPairsIndexingStatuses.some(
-                                  (e) =>
-                                    e.cc_pair_id ===
-                                    ccPairsIndexingStatus.cc_pair_id
-                                )}
-                              />
-                            ))}
-                          </>
-                        )}
-                      </React.Fragment>
-                    );
-                  }
-                  return null;
-                })}
-            </TableBody>
-
-            <div className="invisible w-full pb-40" />
-          </TableBody>
+          <Button className="h-9" onClick={() => toggleSources()}>
+            {!shouldExpand ? "Collapse All" : "Expand All"}
+          </Button>
         </div>
+
+        <TableBody>
+          {sortedSources
+            .filter(
+              (source) =>
+                source != "not_applicable" && source != "ingestion_api"
+            )
+            .map((source, ind) => {
+              const sourceMatches = source
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
+              const matchingConnectors = groupedStatuses[source].filter(
+                (status) =>
+                  (status.name || "")
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())
+              );
+              if (sourceMatches || matchingConnectors.length > 0) {
+                return (
+                  <React.Fragment key={ind}>
+                    <br className="mt-4" />
+
+                    <SummaryRow
+                      source={source}
+                      summary={groupSummaries[source]}
+                      isOpen={connectorsToggled[source] || false}
+                      onToggle={() => toggleSource(source)}
+                    />
+
+                    {connectorsToggled[source] && (
+                      <>
+                        <TableRow className="border border-border">
+                          <TableHeaderCell>Name</TableHeaderCell>
+                          <TableHeaderCell>Last Indexed</TableHeaderCell>
+                          <TableHeaderCell>Activity</TableHeaderCell>
+                          {isPaidEnterpriseFeaturesEnabled && (
+                            <TableHeaderCell>Permissions</TableHeaderCell>
+                          )}
+                          <TableHeaderCell>Total Docs</TableHeaderCell>
+                          <TableHeaderCell>Last Status</TableHeaderCell>
+                          <TableHeaderCell></TableHeaderCell>
+                        </TableRow>
+                        {(sourceMatches
+                          ? groupedStatuses[source]
+                          : matchingConnectors
+                        ).map((ccPairsIndexingStatus) => (
+                          <ConnectorRow
+                            key={ccPairsIndexingStatus.cc_pair_id}
+                            ccPairsIndexingStatus={ccPairsIndexingStatus}
+                            isEditable={editableCcPairsIndexingStatuses.some(
+                              (e) =>
+                                e.cc_pair_id ===
+                                ccPairsIndexingStatus.cc_pair_id
+                            )}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </React.Fragment>
+                );
+              }
+              return null;
+            })}
+        </TableBody>
       </Table>
     </div>
   );

@@ -421,17 +421,21 @@ celery_app.autodiscover_tasks(
 #####
 
 
-#####
 def schedule_tenant_tasks() -> None:
     tenants = get_all_tenant_ids()
-    celery_app.conf.beat_schedule = {
-        "check-for-vespa-sync": {
-            "task": "check_for_vespa_sync_task",
-            "schedule": timedelta(seconds=5),
-            "options": {"priority": DanswerCeleryPriority.HIGH},
-        },
-    }
+    celery_app.conf.beat_schedule = {}
+
     for tenant_id in tenants:
+        celery_app.conf.beat_schedule.update(
+            {
+                "check-for-vespa-sync": {
+                    "task": "check_for_vespa_sync_task",
+                    "schedule": timedelta(seconds=5),
+                    "options": {"priority": DanswerCeleryPriority.HIGH},
+                    "args": (tenant_id,),
+                },
+            }
+        )
         celery_app.conf.beat_schedule.update(
             {
                 "check-for-connector-deletion-task": {
