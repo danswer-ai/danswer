@@ -4,10 +4,9 @@ import {
   fetchEnterpriseSettingsSS,
   fetchSettingsSS,
 } from "@/components/settings/lib";
-import { fetchEnterpriseSettingsSS, fetchSettingsSS } from "@/components/settings/lib";
+
 import {
   CUSTOM_ANALYTICS_ENABLED,
-  EE_ENABLED,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
 } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
@@ -15,7 +14,7 @@ import { Metadata } from "next";
 import { buildClientUrl, fetchSS } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
 import Head from "next/head";
-import { CombinedSettings, defaultCombinedSettings, EnterpriseSettings } from "./admin/settings/interfaces";
+import { EnterpriseSettings } from "./admin/settings/interfaces";
 import { Card } from "@tremor/react";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Logo } from "@/components/Logo";
