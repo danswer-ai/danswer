@@ -33,6 +33,7 @@ export function CopyButton({
           {isCopyClicked ? <Check size={16} /> : <Copy size={16} />}
         </Button>
       }
+      side="bottom"
       asChild
     >
       {isCopyClicked ? "Copied" : "Copy"}
