@@ -336,7 +336,7 @@ export const AllUsers = ({ q }: { q: string }) => {
         <div className="text-sm pt-2 pb-4 space-y-2">
           <p>
             Anyone with an email address with any of the following domains can
-            sign up: vividsolution.io,enmedd.com,arnold.io.
+            sign up: vividsolution.io, enmedd.com, arnold.io.
           </p>
           <p>
             To further restrict access you can invite users. Once a user has

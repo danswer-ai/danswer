@@ -77,7 +77,7 @@ export const PendingInvites = ({ q }: { q: string }) => {
         <h2 className="text-lg md:text-2xl text-strong font-bold">
           Pending Invites
         </h2>
-        <p className="text-sm pt-1 pb-4">Invitations awaiting a response.</p>
+        <p className="text-sm mt-2">Invitations awaiting a response.</p>
       </div>
 
       <div className="flex-1">
