@@ -98,6 +98,8 @@ def set_new_search_settings(
         primary_index_name=search_settings.index_name,
         secondary_index_name=new_search_settings.index_name,
     )
+    print("ensuring indices exist")
+
     document_index.ensure_indices_exist(
         index_embedding_dim=search_settings.model_dim,
         secondary_index_embedding_dim=new_search_settings.model_dim,

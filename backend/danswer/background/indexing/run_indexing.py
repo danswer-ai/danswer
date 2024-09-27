@@ -409,7 +409,7 @@ def run_indexing_entrypoint(index_attempt_id: int, tenant_id: str | None, is_ee:
             _run_indexing(db_session, attempt, tenant_id)
 
             logger.info(
-                f"Indexing finished for tenant {tenant_id}: "
+                f"Indexing finished for tenant {tenant_id}: " if tenant_id is not None else "" +
                 f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"

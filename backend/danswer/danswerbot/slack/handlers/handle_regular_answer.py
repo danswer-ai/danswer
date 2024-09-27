@@ -171,6 +171,7 @@ def handle_regular_answer(
                         persona=persona,
                         actual_user_input=query_text,
                         max_llm_token_override=remaining_tokens,
+                        db_session=db_session,
                     )
                 else:
                     max_document_tokens = (

@@ -38,6 +38,7 @@ from danswer.server.manage.models import BoostUpdateRequest
 from danswer.server.manage.models import HiddenUpdateRequest
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
+from danswer.db.engine import current_tenant_id
 
 router = APIRouter(prefix="/manage")
 logger = setup_logger()
@@ -195,7 +196,7 @@ def create_deletion_attempt_for_connector_id(
     )
     # actually kick off the deletion
     cleanup_connector_credential_pair_task.apply_async(
-        kwargs=dict(connector_id=connector_id, credential_id=credential_id),
+        kwargs=dict(connector_id=connector_id, credential_id=credential_id, tenant_id=current_tenant_id.get()),
     )
 
     if cc_pair.connector.source == DocumentSource.FILE:

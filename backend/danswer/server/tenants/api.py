@@ -22,7 +22,7 @@ logger = setup_logger()
 basic_router = APIRouter(prefix="/tenants")
 
 @basic_router.post("/create")
-def create_tenant(tenant_id: str, _ =  Depends(control_plane_dep)) -> dict[str, str]:
+def create_tenant(tenant_id: str, _:  None=  Depends(control_plane_dep)) -> dict[str, str]:
     if not MULTI_TENANT:
         raise HTTPException(status_code=403, detail="Multi-tenant is not enabled")
 

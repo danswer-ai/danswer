@@ -47,7 +47,7 @@ def delete_connector_credential_pair_batch(
     connector_id: int,
     credential_id: int,
     document_index: DocumentIndex,
-    tenant_id: str = DEFAULT_SCHEMA,
+    tenant_id: str | None
 ) -> None:
     """
     Removes a batch of documents ids from a cc-pair. If no other cc-pair uses a document anymore
@@ -126,7 +126,7 @@ def delete_connector_credential_pair(
     db_session: Session,
     document_index: DocumentIndex,
     cc_pair: ConnectorCredentialPair,
-    tenant_id: str = DEFAULT_SCHEMA,
+    tenant_id: str | None
 ) -> int:
     connector_id = cc_pair.connector_id
     credential_id = cc_pair.credential_id

@@ -98,7 +98,7 @@ def get_existing_documents_from_chunks(
     try:
         chunk_existence_future = {
             executor.submit(
-                _does_document_exist,
+                 _does_document_exist,
                 str(get_uuid_from_chunk(chunk)),
                 index_name,
                 http_client,
@@ -142,7 +142,6 @@ def _index_vespa_chunk(
     title = document.get_title_for_document_index()
 
     vespa_document_fields = {
-        TENANT_ID: chunk.tenant_id,
         DOCUMENT_ID: document.id,
         CHUNK_ID: chunk.chunk_id,
         BLURB: remove_invalid_unicode_chars(chunk.blurb),
@@ -178,6 +177,8 @@ def _index_vespa_chunk(
         DOCUMENT_SETS: {document_set: 1 for document_set in chunk.document_sets},
     }
 
+    if chunk.tenant_id:
+        vespa_document_fields[TENANT_ID] = chunk.tenant_id
 
     vespa_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{vespa_chunk_id}"
     logger.debug(f'Indexing to URL "{vespa_url}" with TENANT ID "{chunk.tenant_id}"')

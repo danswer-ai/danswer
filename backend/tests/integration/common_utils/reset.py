@@ -132,9 +132,9 @@ def reset_vespa() -> None:
         index_name = search_settings.index_name
 
     setup_vespa(
-        document_index=VespaIndex(index_name=index_name, secondary_index_name=None),
-        index_setting=IndexingSetting.from_db_model(search_settings),
-        secondary_index_setting=None,
+        document_index=VespaIndex(indices=[index_name], secondary_index_name=None),
+        embedding_dims=[search_settings.model_dim],
+        secondary_embedding_dim=None,
     )
 
     for _ in range(5):

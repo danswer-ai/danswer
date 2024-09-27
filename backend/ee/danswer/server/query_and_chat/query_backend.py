@@ -154,6 +154,7 @@ def get_answer_with_quote(
         persona=persona,
         actual_user_input=query,
         max_llm_token_override=remaining_tokens,
+        db_session=db_session,
     )
 
     answer_details = get_search_answer(

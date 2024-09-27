@@ -23,7 +23,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 target_metadata = [Base.metadata, ResultModelBase.metadata]
 
-def get_schema_options() -> Tuple[str, bool]:
+def get_schema_options() -> str:
     x_args_raw = context.get_x_argument()
     x_args = {}
     for arg in x_args_raw:

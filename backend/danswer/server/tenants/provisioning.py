@@ -50,7 +50,7 @@ def run_alembic_migrations(schema_name: str) -> None:
 
         # Prepare the x arguments
         x_arguments = [f"schema={schema_name}"]
-        alembic_cfg.cmd_opts.x = x_arguments
+        alembic_cfg.cmd_opts.x = x_arguments # type: ignore
 
         # Run migrations programmatically
         command.upgrade(alembic_cfg, 'head')

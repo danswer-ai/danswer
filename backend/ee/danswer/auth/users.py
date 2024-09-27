@@ -25,7 +25,7 @@ def verify_auth_setting() -> None:
     logger.notice(f"Using Auth Type: {AUTH_TYPE.value}")
 
 
-async def control_plane_dep(request: Request):
+async def control_plane_dep(request: Request) -> None:
     auth_header = request.headers.get("Authorization")
     api_key = request.headers.get("X-API-KEY")
 

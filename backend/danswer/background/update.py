@@ -183,7 +183,6 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob], tenant_id
 
         all_connector_credential_pairs = fetch_connector_credential_pairs(db_session)
         for cc_pair in all_connector_credential_pairs:
-            logger.info(f"iterating! {cc_pair.id}")
             for search_settings_instance in search_settings:
                 # Check if there is an ongoing indexing attempt for this connector credential pair
                 if (cc_pair.id, search_settings_instance.id) in ongoing:
@@ -199,9 +198,8 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob], tenant_id
                     secondary_index_building=len(search_settings) > 1,
                     db_session=db_session,
                 ):
-                    logger.info(f"Not creating new indexing job for {cc_pair.id} and {search_settings_instance.id}")
                     continue
-                logger.info(f"Creating new indexing job for {cc_pair.id} and {search_settings_instance.id}")
+
                 create_index_attempt(
                     cc_pair.id, search_settings_instance.id, db_session
                 )
@@ -391,7 +389,9 @@ def kickoff_indexing_jobs(
     return existing_jobs_copy
 
 
-def get_all_tenant_ids() -> list[str]:
+def get_all_tenant_ids() -> list[str] | list[None]:
+    if not MULTI_TENANT:
+        return [None]
     with Session(get_sqlalchemy_engine(schema='public')) as session:
         result = session.execute(text("""
             SELECT schema_name
@@ -443,10 +443,17 @@ def update_loop(
             )
 
         try:
-            tenants = get_all_tenant_ids() if MULTI_TENANT else [None]
-            tenants = [tenant for tenant in tenants if not tenant.startswith('pg_')] if MULTI_TENANT else tenants
+            tenants: list[str | None] = []
+            if MULTI_TENANT:
+                tenants = [
+                    tenant for tenant in tenants
+                    if tenant is None or not tenant.startswith('pg_')
+                ]
+            else:
+                tenants = tenants
             if MULTI_TENANT:
                 logger.info(f"Found valid tenants: {tenants}")
+
 
             for tenant_id in tenants:
                 try:

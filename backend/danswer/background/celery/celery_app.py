@@ -451,14 +451,11 @@ def check_for_prune_task(tenant_id: str | None) -> None:
 # Celery Beat (Periodic Tasks) Settings
 #####
 
-def schedule_tenant_tasks():
-    if MULTI_TENANT:
-        tenants = get_all_tenant_ids()
-    else:
-        tenants = [None]
+def schedule_tenant_tasks() -> None:
+    tenants = get_all_tenant_ids()
 
     # Filter out any invalid tenants if necessary
-    valid_tenants = [tenant for tenant in tenants if not tenant.startswith('pg_')]
+    valid_tenants = [tenant for tenant in tenants if tenant is None or not tenant.startswith('pg_')]
     logger.info(f"Scheduling tasks for tenants: {valid_tenants}")
 
     for tenant_id in valid_tenants:

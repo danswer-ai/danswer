@@ -1,6 +1,5 @@
 
-from danswer.document_index.vespa.index import MultiTenantVespaIndex
-from shared_configs.configs import SupportedEmbeddingModel
+from danswer.document_index.vespa.index import VespaIndex
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -16,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from httpx_oauth.clients.google import GoogleOAuth2
 
+from danswer.document_index.interfaces import DocumentIndex
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer import __version__
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
@@ -23,6 +24,7 @@ from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
 from sqlalchemy.orm import Session
+from danswer.indexing.models import IndexingSetting
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
@@ -52,7 +54,7 @@ from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
-from danswer.document_index.factory import get_default_multi_tenant_document_index
+from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
@@ -229,15 +231,17 @@ def mark_reindex_flag(db_session: Session) -> None:
 
 
 def setup_vespa(
-    document_index: MultiTenantVespaIndex,
-    supported_embedding_models: list[SupportedEmbeddingModel]
+    document_index: DocumentIndex,
+    embedding_dims: list[int],
+    secondary_embedding_dim: int | None = None
 ) -> None:
     # Vespa startup is a bit slow, so give it a few seconds
     wait_time = 5
     for _ in range(5):
         try:
             document_index.ensure_indices_exist(
-                embedding_dims=[model.dim for model in supported_embedding_models],
+                embedding_dims=embedding_dims,
+                secondary_index_embedding_dim=secondary_embedding_dim
             )
             break
         except Exception:
@@ -320,14 +324,38 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # ensure Vespa is setup correctly
         logger.notice("Verifying Document Index(s) is/are available.")
 
-        document_index = get_default_multi_tenant_document_index(
-            indices=[model.index_name for model in SUPPORTED_EMBEDDING_MODELS],
-        )
+        # document_index = get_default_document_index(
+        #     indices=[model.index_name for model in SUPPORTED_EMBEDDING_MODELS]
+        # ) if MULTI_TENANT else get_default_document_index(
+        #     indices=[model.index_name for model in SUPPORTED_EMBEDDING_MODELS],
+        #     secondary_index_name=secondary_search_settings.index_name if secondary_search_settings else None
+        # )
 
-        setup_vespa(
-            document_index,
-            SUPPORTED_EMBEDDING_MODELS
-        )
+        if MULTI_TENANT:
+            document_index = get_default_document_index(
+                indices=[model.index_name for model in SUPPORTED_EMBEDDING_MODELS]
+            )
+            setup_vespa(
+                document_index,
+                [model.dim for model in SUPPORTED_EMBEDDING_MODELS],
+                secondary_embedding_dim=secondary_search_settings.model_dim if secondary_search_settings else None
+            )
+
+        else:
+            document_index = get_default_document_index(
+                indices=[search_settings.index_name],
+                secondary_index_name=secondary_search_settings.index_name if secondary_search_settings else None
+            )
+
+            setup_vespa(
+                document_index,
+                [IndexingSetting.from_db_model(search_settings).model_dim],
+                secondary_embedding_dim=(
+                    IndexingSetting.from_db_model(secondary_search_settings).model_dim
+                    if secondary_search_settings
+                    else None
+                )
+            )
 
         logger.notice(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
         if search_settings.provider_type is None:
