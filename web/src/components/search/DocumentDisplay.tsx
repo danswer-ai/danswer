@@ -7,6 +7,7 @@ import { MetadataBadge } from "../MetadataBadge";
 import { Badge } from "../ui/badge";
 import { CustomTooltip } from "../CustomTooltip";
 import { Info, Radio, Tag } from "lucide-react";
+import { DocumentSet } from "@/lib/types";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -146,6 +147,7 @@ interface DocumentDisplayProps {
   messageId: number | null;
   documentRank: number;
   isSelected: boolean;
+  availableDocumentSets: DocumentSet[];
 }
 
 export const DocumentDisplay = ({
@@ -153,8 +155,19 @@ export const DocumentDisplay = ({
   messageId,
   documentRank,
   isSelected,
+  availableDocumentSets,
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
+
+  const findDocumentSets = (documentLink: string) => {
+    return availableDocumentSets.filter((set) =>
+      set.cc_pair_descriptors.some((descriptor) =>
+        documentLink.startsWith(descriptor.name!)
+      )
+    );
+  };
+
+  const knowledgeSets = findDocumentSets(document.link);
 
   // Consider reintroducing null scored docs in the future
   if (document.score === null) {
@@ -207,6 +220,14 @@ export const DocumentDisplay = ({
               )}
             </div>
           )}
+
+          {knowledgeSets
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((knowledgeSet) => (
+              <div key={knowledgeSet.id} className="flex items-center gap-1">
+                <Badge variant="secondary">{knowledgeSet.name}</Badge>
+              </div>
+            ))}
         </div>
         <a
           className={
