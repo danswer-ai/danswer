@@ -229,7 +229,7 @@ export const SearchSection = ({
   }
 
   return (
-    <div className="relative flex gap-16 lg:gap-14 xl:gap-10 2xl:gap-20 h-full max-w-full lg:pl-8 xl:pl-0 ml-auto">
+    <div className="relative flex gap-16 lg:gap-10 xl:gap-10 2xl:gap-20 h-full max-w-full ml-auto">
       <div className="w-full flex flex-col gap-5">
         <div className="flex items-center gap-2 relative">
           <SearchBar
@@ -270,7 +270,7 @@ export const SearchSection = ({
           </div>
         </div>
 
-        <div className="h-full overflow-y-auto">
+        <div className="h-full">
           <SearchResultsDisplay
             searchResponse={searchResponse}
             validQuestionResponse={validQuestionResponse}

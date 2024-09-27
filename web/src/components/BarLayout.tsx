@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { User } from "@/lib/types";
-import TopBar from "@/components/TopBar";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
+import { TopBar } from "./TopBar";
 
 interface BarLayoutProps {
   user?: User | null;
@@ -12,14 +12,9 @@ interface BarLayoutProps {
     openSidebar: boolean;
     toggleSideBar: () => void;
   }>;
-  isSearch?: boolean;
 }
 
-export function BarLayout({
-  user,
-  BarComponent,
-  isSearch = false,
-}: BarLayoutProps) {
+export function BarLayout({ user, BarComponent }: BarLayoutProps) {
   const [openSidebar, setOpenSidebar] = useState(false);
   const pathname = usePathname();
 
@@ -37,7 +32,6 @@ export function BarLayout({
       <DynamicSidebar
         user={user}
         openSidebar={openSidebar}
-        isSearch={isSearch}
         toggleLeftSideBar={toggleLeftSideBar}
       >
         {BarComponent && (

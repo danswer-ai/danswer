@@ -59,6 +59,7 @@ const EditRow = ({ documentSet }: { documentSet: DocumentSet }) => {
             {documentSet.name}
           </Button>
         }
+        asChild
       >
         <div className="flex gap-1">
           <InfoIcon /> Cannot update while syncing! Wait for the sync to finish,

@@ -3,7 +3,7 @@
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { useState } from "react";
 import { User } from "@/lib/types";
-import TopBar from "@/components/TopBar";
+import { TopBar } from "@/components/TopBar";
 
 export function AssistantsBars({
   children,
@@ -25,7 +25,6 @@ export function AssistantsBars({
       <DynamicSidebar
         user={user}
         openSidebar={openSidebar}
-        isSearch
         toggleLeftSideBar={toggleLeftSideBar}
       >
         {children}

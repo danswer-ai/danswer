@@ -44,10 +44,12 @@ export function ShareChatSessionModal({
   chatSessionId,
   existingSharedStatus,
   onShare,
+  onPopover,
 }: {
   chatSessionId: number;
   existingSharedStatus: ChatSessionSharedStatus;
   onShare?: (shared: boolean) => void;
+  onPopover?: boolean;
 }) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [linkGenerating, setLinkGenerating] = useState(false);
@@ -61,20 +63,31 @@ export function ShareChatSessionModal({
     <CustomModal
       title="Share link to Chat"
       trigger={
-        <CustomTooltip
-          trigger={
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsShareModalOpen(true)}
-            >
-              <Share size={20} />
-            </Button>
-          }
-          asChild
-        >
-          Share
-        </CustomTooltip>
+        onPopover ? (
+          <Button
+            variant="ghost"
+            onClick={() => setIsShareModalOpen(true)}
+            className="w-full hover:bg-primary hover:text-inverted justify-start"
+          >
+            <Share className="mr-2" size={16} />
+            Share
+          </Button>
+        ) : (
+          <CustomTooltip
+            trigger={
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsShareModalOpen(true)}
+              >
+                <Share size={20} />
+              </Button>
+            }
+            asChild
+          >
+            Share
+          </CustomTooltip>
+        )
       }
       onClose={() => setIsShareModalOpen(false)}
       open={isShareModalOpen}
@@ -82,10 +95,10 @@ export function ShareChatSessionModal({
       <div className="flex mt-2">
         {shareLink ? (
           <div>
-            <Text>
+            <p>
               This chat session is currently shared. Anyone at your organization
               can view the message history using the following link:
-            </Text>
+            </p>
 
             <div className="flex py-2 items-center gap-2">
               <CopyButton content={shareLink} />

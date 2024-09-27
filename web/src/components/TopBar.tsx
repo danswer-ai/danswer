@@ -4,7 +4,7 @@ import Image from "next/image";
 import Logo from "../../public/logo-brand.png";
 import React from "react";
 
-export default function TopBar({
+export function TopBar({
   children,
   toggleLeftSideBar,
 }: {
@@ -23,6 +23,14 @@ export default function TopBar({
 
         {children}
       </div>
+    </div>
+  );
+}
+
+export function WelcomeTopBar() {
+  return (
+    <div className="fixed w-full py-6 top-0 left-0 bg-background">
+      <Image src={Logo} alt="Logo" className="w-28 xl:w-32 ml-6 xl:ml-10" />
     </div>
   );
 }

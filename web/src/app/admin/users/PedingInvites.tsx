@@ -80,7 +80,7 @@ export const PendingInvites = ({ q }: { q: string }) => {
         <p className="text-sm pt-1 pb-4">Invitations awaiting a response.</p>
       </div>
 
-      <div className="flex-1 overflow-x-auto">
+      <div className="flex-1">
         {invited.length > 0 ? (
           <>
             <Input

@@ -17,6 +17,7 @@ import SignupImage from "../../../../public/SignupImage.png";
 import GmailIcon from "../../../../public/Gmail.png";
 import MicrosoftIcon from "../../../../public/microsoft.svg";
 import { Separator } from "@/components/ui/separator";
+import { WelcomeTopBar } from "@/components/TopBar";
 
 const Page = async () => {
   // catch cases where the backend is completely unreachable here
@@ -54,49 +55,44 @@ const Page = async () => {
   return (
     <main className="relative h-full">
       <HealthCheckBanner />
-      <div className="absolute top-6 w-1/2 left-10">
-        <Image src={Logo} alt="Logo" className="w-28 xl:w-32" />
-      </div>
 
-      <div className="w-screen flex h-full">
-        <div className="w-full lg:w-1/2 flex items-center justify-center px-8 lg:px-16 3xl:px-0">
-          <div className="w-full md:w-3/4 lg:w-full 3xl:w-1/2">
+      <WelcomeTopBar />
+
+      <div className="w-screen flex h-full overflow-y-auto">
+        <div className="w-full h-full xl:w-1/2 flex items-start justify-center px-6 lg:px-14 3xl:px-0 pt-28">
+          <div className="w-full md:w-3/4 lg:w-1/2 xl:w-full 3xl:w-1/2 my-auto pb-14 md:pb-20">
             <div>
-              <h1 className="my-2 text-2xl xl:text-3xl font-bold text-center text-dark-900">
+              <h1 className="text-xl md:text-3xl font-bold text-center text-dark-900">
                 Create Your Account
               </h1>
-              <p className="text-center text-sm text-subtle">
+              <p className="text-center text-sm text-subtle md:pt-2">
                 Welcome back! Please enter your details
               </p>
             </div>
 
-            <div className="py-8">
-              <div className="flex items-center gap-6 w-full">
-                <Button className="flex-1 truncate" variant="outline">
-                  <div className="truncate flex items-center gap-2">
-                    <Image
-                      src={GmailIcon}
-                      alt="gmail-icon"
-                      width={16}
-                      height={16}
-                    />{" "}
-                    Continue with Gmail
-                  </div>
+            <div className="pt-8">
+              <div className="flex items-center gap-3 md:gap-6 w-full flex-col md:flex-row">
+                <Button className="flex-1 w-full" variant="outline">
+                  <Image
+                    src={GmailIcon}
+                    alt="gmail-icon"
+                    width={16}
+                    height={16}
+                  />{" "}
+                  Continue with Gmail
                 </Button>
                 <Button
-                  className="flex-1 truncate"
+                  className="flex-1 w-full"
                   variant="outline"
                   type="button"
                 >
-                  <div className="truncate flex items-center gap-2">
-                    <Image
-                      src={MicrosoftIcon}
-                      alt="microsoft-icon"
-                      width={16}
-                      height={16}
-                    />
-                    Continue with Microsoft
-                  </div>
+                  <Image
+                    src={MicrosoftIcon}
+                    alt="microsoft-icon"
+                    width={16}
+                    height={16}
+                  />
+                  Continue with Microsoft
                 </Button>
               </div>
 
@@ -124,7 +120,7 @@ const Page = async () => {
             </div>
           </div>
         </div>
-        <div className="w-1/2 h-full relative rounded-l-[50px] overflow-hidden hidden lg:flex">
+        <div className="w-1/2 h-full relative rounded-l-[50px] overflow-hidden hidden xl:flex">
           <Image
             src={SignupImage}
             alt="signup-image"

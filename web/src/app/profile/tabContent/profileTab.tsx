@@ -54,13 +54,15 @@ export default function ProfileTab({
   return (
     <>
       <div className="flex py-8 border-b">
-        <div className="w-[500px] text-sm">
+        <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
           <span className="font-semibold text-inverted-inverted">
             Your Photo
           </span>
-          <p className="pt-1">This will be displayed on your profile.</p>
+          <p className="pt-1 text-sm">
+            This will be displayed on your profile.
+          </p>
         </div>
-        <div className="flex items-center justify-between gap-3 w-[500px]">
+        <div className="flex items-center justify-between gap-3 md:w-[500px]">
           <div className="flex items-center justify-center rounded-full h-[65px] w-[65px] shrink-0 aspect-square text-2xl font-normal">
             {user && user.full_name ? (
               <UserProfile size={65} user={user} textSize="text-2xl" />
@@ -71,48 +73,48 @@ export default function ProfileTab({
         </div>
       </div>
 
-      <div className="py-8 border-b flex flex-col gap-5">
+      <div className="py-8 border-b flex flex-col gap-8">
         <div className="flex items-center">
-          <div className="w-[500px] text-sm">
+          <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
             <span className="font-semibold text-inverted-inverted">Name</span>
           </div>
-          <div className="w-[500px] h-10 flex items-center justify-between">
+          <div className="md:w-[500px] h-10 flex items-center justify-between truncate">
             {isEditing ? (
               <Input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
               />
             ) : (
-              <span className="font-semibold text-inverted-inverted">
+              <span className="font-semibold text-inverted-inverted w-full truncate">
                 {fullName || "Unknown User"}
               </span>
             )}
           </div>
         </div>
         <div className="flex items-center">
-          <div className="w-[500px] text-sm">
+          <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
             <span className="font-semibold text-inverted-inverted">
               Company
             </span>
           </div>
-          <div className="w-[500px] h-10 flex items-center justify-between">
+          <div className="md:w-[500px] h-10 flex items-center justify-between truncate">
             {isEditing ? (
               <Input
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
               />
             ) : (
-              <span className="font-semibold text-inverted-inverted">
+              <span className="font-semibold text-inverted-inverted w-full truncate">
                 {companyName || "No Company"}
               </span>
             )}
           </div>
         </div>
         <div className="flex items-center">
-          <div className="w-[500px] text-sm">
+          <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
             <span className="font-semibold text-inverted-inverted">Email</span>
           </div>
-          <div className="w-[500px] h-10 flex items-center justify-between">
+          <div className="md:w-[500px] h-10 flex items-center justify-between truncate">
             {isEditing ? (
               <Input
                 disabled
@@ -120,49 +122,13 @@ export default function ProfileTab({
                 onChange={(e) => setEmail(e.target.value)}
               />
             ) : (
-              <span className="font-semibold text-inverted-inverted">
+              <span className="font-semibold text-inverted-inverted w-full truncate">
                 {email || "anonymous@gmail.com"}
               </span>
             )}
           </div>
         </div>
       </div>
-
-      {/* {combinedSettings?.featureFlags.multi_teamspace && (
-        <div className="flex py-8 border-b">
-          <div className="w-[500px] text-sm">
-            <span className="font-semibold text-inverted-inverted">
-              Teamspaces Joined
-            </span>
-            <p className="w-3/4 pt-1">
-              Easily switch between them and access both accounts from any
-              device.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 w-[500px]">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-3">
-                <Image src={Logo} alt="Logo" width={65} height={65} />
-                <span className="font-semibold text-inverted-inverted">
-                  Vanguard AI
-                </span>
-              </div>
-
-              <Button variant="outline">Manage Team</Button>
-            </div>
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-3">
-                <Image src={Logo} alt="Logo" width={65} height={65} />
-                <span className="font-semibold text-inverted-inverted">
-                  Vanguard AI
-                </span>
-              </div>
-
-              <Button variant="outline">Manage Team</Button>
-            </div>
-          </div>
-        </div>
-      )}  */}
 
       <div className="flex gap-2 py-8 justify-end">
         {isEditing ? (

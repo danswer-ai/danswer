@@ -1,5 +1,6 @@
 "use client";
 
+import { WelcomeTopBar } from "@/components/TopBar";
 import { Button } from "@/components/ui/button";
 import {
   InputOTP,
@@ -48,13 +49,15 @@ const Page = () => {
   };
 
   return (
-    <div className="w-full h-full flex items-center justify-center">
-      <div className="md:w-[500px]">
-        <div className="flex items-center justify-center">
-          <div className="bg-primary p-3 rounded-md">
-            <ShieldEllipsis size={60} stroke="white" />
+    <main className="h-full">
+      <WelcomeTopBar />
+      <div className="w-full h-full flex items-center justify-center px-6">
+        <div className="md:w-[500px]">
+          <div className="flex items-center justify-center">
+            <div className="bg-primary p-3 rounded-md">
+              <ShieldEllipsis size={60} stroke="white" />
+            </div>
           </div>
-        </div>
 
         <div className="pt-8">
           <h1 className="text-2xl xl:text-3xl font-bold text-center text-dark-900">
@@ -130,7 +133,7 @@ const Page = () => {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

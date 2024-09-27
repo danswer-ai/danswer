@@ -88,12 +88,12 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
 
       <div className="py-8 border-b flex flex-col gap-8">
         <div className="flex items-center">
-          <div className="w-[500px] text-sm">
+          <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
             <span className="font-semibold text-inverted-inverted">
               Current Password
             </span>
           </div>
-          <div className="w-[500px] h-10 flex items-center justify-between">
+          <div className="md:w-[500px] h-10 flex items-center justify-between truncate">
             {isEditing ? (
               <Input
                 type="password"
@@ -103,7 +103,7 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
                 placeholder="Enter current password"
               />
             ) : (
-              <span className="font-semibold text-inverted-inverted">
+              <span className="font-semibold text-inverted-inverted w-full truncate">
                 &#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;
               </span>
             )}
@@ -112,12 +112,12 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
 
         <div>
           <div className="flex items-center">
-            <div className="w-[500px] text-sm">
+            <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
               <span className="font-semibold text-inverted-inverted">
                 New Password
               </span>
             </div>
-            <div className="w-[500px] h-10 flex items-center justify-between">
+            <div className="md:w-[500px] h-10 flex items-center justify-between truncate">
               {isEditing ? (
                 <Input
                   type="password"
@@ -130,7 +130,7 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
                   placeholder="Enter new password"
                 />
               ) : (
-                <span className="font-semibold text-inverted-inverted">
+                <span className="font-semibold text-inverted-inverted truncate">
                   &#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;
                 </span>
               )}
@@ -170,12 +170,12 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
         </div>
 
         <div className="flex items-center">
-          <div className="w-[500px] text-sm">
+          <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
             <span className="font-semibold text-inverted-inverted">
               Confirm Password
             </span>
           </div>
-          <div className="w-[500px] h-10 flex items-center justify-between">
+          <div className="md:w-[500px] h-10 flex items-center justify-between truncate">
             {isEditing ? (
               <Input
                 type="password"
@@ -185,7 +185,7 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
                 placeholder="Confirm new password"
               />
             ) : (
-              <span className="font-semibold text-inverted-inverted">
+              <span className="font-semibold text-inverted-inverted truncate">
                 &#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;
               </span>
             )}

@@ -32,6 +32,7 @@ export const TeamspaceBubble = ({ teamspace, link }: TeamspaceBubbleProps) => {
       }
       side="right"
       delayDuration={0}
+      asChild
     >
       {teamspace.name}
     </CustomTooltip>

@@ -104,32 +104,24 @@ export function LogInForms({}: {}) {
               <Separator className="flex-1" />
             </div>
 
-            <div className="flex items-center gap-6 pt-8 w-full">
-              <Button className="flex-1 truncate" variant="outline">
-                <div className="truncate flex items-center gap-2">
-                  <Image
-                    src={GmailIcon}
-                    alt="gmail-icon"
-                    width={16}
-                    height={16}
-                  />{" "}
-                  Continue with Gmail
-                </div>
+            <div className="flex items-center gap-3 md:gap-6 w-full flex-col md:flex-row pt-8">
+              <Button className="flex-1 w-full" variant="outline">
+                <Image
+                  src={GmailIcon}
+                  alt="gmail-icon"
+                  width={16}
+                  height={16}
+                />{" "}
+                Continue with Gmail
               </Button>
-              <Button
-                className="flex-1 truncate"
-                variant="outline"
-                type="button"
-              >
-                <div className="truncate flex items-center gap-2">
-                  <Image
-                    src={MicrosoftIcon}
-                    alt="microsoft-icon"
-                    width={16}
-                    height={16}
-                  />
-                  Continue with Microsoft
-                </div>
+              <Button className="flex-1 w-full" variant="outline" type="button">
+                <Image
+                  src={MicrosoftIcon}
+                  alt="microsoft-icon"
+                  width={16}
+                  height={16}
+                />
+                Continue with Microsoft
               </Button>
             </div>
           </Form>

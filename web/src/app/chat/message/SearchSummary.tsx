@@ -195,6 +195,7 @@ export function SearchSummary({
                     <Pencil size={16} />
                   </Button>
                 }
+                asChild
               >
                 Edit
               </CustomTooltip>
