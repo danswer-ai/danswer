@@ -1,3 +1,6 @@
+from danswer.configs.app_configs import SECRET_JWT_KEY
+from datetime import timedelta
+import contextlib
 import smtplib
 import uuid
 from collections.abc import AsyncGenerator
@@ -8,6 +11,7 @@ from email.mime.text import MIMEText
 from typing import Optional
 from typing import Tuple
 
+import jwt
 from email_validator import EmailNotValidError
 from email_validator import validate_email
 from fastapi import APIRouter
@@ -57,6 +61,7 @@ from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_default_admin_user_emails
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
+from danswer.db.engine import get_async_session
 from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import AccessToken
@@ -177,10 +182,87 @@ def send_user_verification_email(
         s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
 
+def verify_sso_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, "SSO_SECRET_KEY", algorithms=["HS256"])
+
+        if datetime.now(timezone.utc) > datetime.fromtimestamp(
+            payload["exp"], timezone.utc
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
+            )
+        return payload
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
+
+
+async def get_or_create_user(email: str, user_id: str) -> User:
+    get_async_session_context = contextlib.asynccontextmanager(get_async_session)
+    get_user_db_context = contextlib.asynccontextmanager(get_user_db)
+
+    async with get_async_session_context() as session:
+        async with get_user_db_context(session) as user_db:
+            existing_user = await user_db.get_by_email(email)
+            if existing_user:
+                return existing_user
+
+            new_user = {
+                "email": email,
+                "id": uuid.UUID(user_id),
+                "role": UserRole.BASIC,
+                "oidc_expiry": None,
+                "default_model": None,
+                "chosen_assistants": None,
+                "hashed_password": "p",
+                "is_active": True,
+                "is_superuser": False,
+                "is_verified": True,
+            }
+
+            created_user: User = await user_db.create(new_user)
+            return created_user
+
+
+async def create_user_session(user: User, tenant_id: str) -> str:
+    # Create a payload user information and tenant_id
+    payload = {
+        "sub": str(user.id),
+        "email": user.email,
+        "tenant_id": tenant_id,
+        "exp": datetime.utcnow() + timedelta(seconds=SESSION_EXPIRE_TIME_SECONDS)
+    }
+
+    token = jwt.encode(payload, SECRET_JWT_KEY, algorithm="HS256")
+    return token
+
+
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = USER_AUTH_SECRET
     verification_token_secret = USER_AUTH_SECRET
+
+    async def sso_authenticate(
+        self,
+        email: str,
+        tenant_id: str,
+    ) -> User:
+        try:
+            user = await self.get_by_email(email)
+
+        except Exception:
+            # user_create = UserCreate(email=email, password=secrets.token_urlsafe(32))
+            user_create = UserCreate(
+                role=UserRole.BASIC, password="password", email=email, is_verified=True
+            )
+            user = await self.create(user_create)
+
+            # Update user with tenant information if needed
+        if user.tenant_id != tenant_id:
+            await self.user_db.update(user, {"tenant_id": tenant_id})
+        return user
 
     async def create(
         self,
@@ -342,7 +424,6 @@ def get_database_strategy(
     strategy = DatabaseStrategy(
         access_token_db, lifetime_seconds=SESSION_EXPIRE_TIME_SECONDS  # type: ignore
     )
-
     return strategy
 
 

@@ -226,7 +226,7 @@ def rename_chat_session(
 
     try:
         llm, _ = get_default_llms(
-            additional_headers=get_litellm_additional_request_headers(request.headers)
+            additional_headers=get_litellm_additional_request_headers(request.headers), db_session=db_session
         )
     except GenAIDisabledException:
         # This may be longer than what the LLM tends to produce but is the most
@@ -299,6 +299,7 @@ async def is_disconnected(request: Request) -> Callable[[], bool]:
 def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
     request: Request,
+    db_session: Session = Depends(get_session),
     user: User | None = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
     is_disconnected_func: Callable[[], bool] = Depends(is_disconnected),
@@ -311,6 +312,8 @@ def handle_new_chat_message(
     To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
     have already been set as latest"""
     logger.debug(f"Received new chat message: {chat_message_req.message}")
+    logger.debug("Messge info")
+    logger.debug(chat_message_req.__dict__)
 
     if (
         not chat_message_req.message
@@ -331,6 +334,7 @@ def handle_new_chat_message(
                     request.headers
                 ),
                 is_connected=is_disconnected_func,
+                db_session=db_session,
             ):
                 yield json.dumps(packet) if isinstance(packet, dict) else packet
 
@@ -427,7 +431,7 @@ def get_max_document_tokens(
         raise HTTPException(status_code=404, detail="Persona not found")
 
     return MaxSelectedDocumentTokens(
-        max_tokens=compute_max_document_tokens_for_persona(persona),
+        max_tokens=compute_max_document_tokens_for_persona(persona, db_session=db_session),
     )
 
 
@@ -477,7 +481,7 @@ def seed_chat(
         root_message = get_or_create_root_message(
             chat_session_id=new_chat_session.id, db_session=db_session
         )
-        llm, fast_llm = get_llms_for_persona(persona=new_chat_session.persona)
+        llm, fast_llm = get_llms_for_persona(persona=new_chat_session.persona, db_session=db_session)
 
         tokenizer = get_tokenizer(
             model_name=llm.config.model_name,

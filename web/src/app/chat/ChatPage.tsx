@@ -228,6 +228,11 @@ export function ChatPage({
       liveAssistant,
       llmProviders
     );
+    console.log("persona default", personaDefault);
+    console.log(
+      destructureValue(user?.preferences.default_model || "openai:gpt-4o")
+    );
+
 
     if (personaDefault) {
       llmOverrideManager.setLlmOverride(personaDefault);
@@ -954,6 +959,11 @@ export function ChatPage({
     modelOverRide?: LlmOverride;
     regenerationRequest?: RegenerationRequest | null;
   } = {}) => {
+    console.log("model override", modelOverRide);
+    console.log(modelOverRide?.name);
+    console.log(llmOverrideManager.llmOverride.name);
+    console.log("HII")
+    console.log(llmOverrideManager.globalDefault.name);
     let frozenSessionId = currentSessionId();
     updateCanContinue(false, frozenSessionId);
 

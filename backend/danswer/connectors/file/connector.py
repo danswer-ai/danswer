@@ -159,10 +159,12 @@ class LocalFileConnector(LoadConnector):
         self,
         file_locations: list[Path | str],
         batch_size: int = INDEX_BATCH_SIZE,
+        tenant_id: str | None = None
     ) -> None:
         self.file_locations = [Path(file_location) for file_location in file_locations]
         self.batch_size = batch_size
         self.pdf_pass: str | None = None
+        self.tenant_id = tenant_id
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.pdf_pass = credentials.get("pdf_password")
@@ -170,7 +172,7 @@ class LocalFileConnector(LoadConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         documents: list[Document] = []
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with Session(get_sqlalchemy_engine(schema=self.tenant_id)) as db_session:
             for file_path in self.file_locations:
                 current_datetime = datetime.now(timezone.utc)
                 files = _read_files_and_metadata(

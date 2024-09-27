@@ -25,7 +25,6 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.chat import update_search_docs_table_with_relevance
-from danswer.db.engine import get_session_context_manager
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.db.persona import get_prompt_by_id
@@ -129,7 +128,8 @@ def stream_answer_objects(
 
     persona = temporary_persona if temporary_persona else chat_session.persona
 
-    llm, fast_llm = get_llms_for_persona(persona=persona)
+
+    llm, fast_llm = get_llms_for_persona(persona=persona, db_session=db_session)
 
     llm_tokenizer = get_tokenizer(
         model_name=llm.config.model_name,
@@ -150,6 +150,7 @@ def stream_answer_objects(
     rephrased_query = query_req.query_override or thread_based_query_rephrase(
         user_query=query_msg.message,
         history_str=history_str,
+        db_session=db_session
     )
 
     # Given back ahead of the documents for latency reasons
@@ -218,7 +219,7 @@ def stream_answer_objects(
         question=query_msg.message,
         answer_style_config=answer_config,
         prompt_config=PromptConfig.from_model(prompt),
-        llm=get_main_llm_from_tuple(get_llms_for_persona(persona=persona)),
+        llm=get_main_llm_from_tuple(get_llms_for_persona(persona=chat_session.persona, db_session=db_session))
         single_message_history=history_str,
         tools=[search_tool] if search_tool else [],
         force_use_tool=(
@@ -327,17 +328,17 @@ def stream_search_answer(
     user: User | None,
     max_document_tokens: int | None,
     max_history_tokens: int | None,
+    db_session: Session,
 ) -> Iterator[str]:
-    with get_session_context_manager() as session:
-        objects = stream_answer_objects(
-            query_req=query_req,
-            user=user,
-            max_document_tokens=max_document_tokens,
-            max_history_tokens=max_history_tokens,
-            db_session=session,
-        )
-        for obj in objects:
-            yield get_json_line(obj.model_dump())
+    objects = stream_answer_objects(
+        query_req=query_req,
+        user=user,
+        max_document_tokens=max_document_tokens,
+        max_history_tokens=max_history_tokens,
+        db_session=db_session,
+    )
+    for obj in objects:
+        yield get_json_line(obj.model_dump())
 
 
 def get_search_answer(

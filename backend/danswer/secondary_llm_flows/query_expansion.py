@@ -15,11 +15,11 @@ from danswer.prompts.miscellaneous_prompts import LANGUAGE_REPHRASE_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import count_punctuation
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-
+from sqlalchemy.orm import Session
 logger = setup_logger()
 
 
-def llm_multilingual_query_expansion(query: str, language: str) -> str:
+def llm_multilingual_query_expansion(query: str, language: str, db_session: Session) -> str:
     def _get_rephrase_messages() -> list[dict[str, str]]:
         messages = [
             {
@@ -33,7 +33,7 @@ def llm_multilingual_query_expansion(query: str, language: str) -> str:
         return messages
 
     try:
-        _, fast_llm = get_default_llms(timeout=5)
+        _, fast_llm = get_default_llms(timeout=5, db_session=db_session)
     except GenAIDisabledException:
         logger.warning(
             "Unable to perform multilingual query expansion, Gen AI disabled"
@@ -51,12 +51,13 @@ def llm_multilingual_query_expansion(query: str, language: str) -> str:
 def multilingual_query_expansion(
     query: str,
     expansion_languages: list[str],
+    db_session: Session,
     use_threads: bool = True,
 ) -> list[str]:
     languages = [language.strip() for language in expansion_languages]
     if use_threads:
         functions_with_args: list[tuple[Callable, tuple]] = [
-            (llm_multilingual_query_expansion, (query, language))
+            (llm_multilingual_query_expansion, (query, language, db_session))
             for language in languages
         ]
 
@@ -65,7 +66,7 @@ def multilingual_query_expansion(
 
     else:
         query_rephrases = [
-            llm_multilingual_query_expansion(query, language) for language in languages
+            llm_multilingual_query_expansion(query, language, db_session) for language in languages
         ]
         return query_rephrases
 
@@ -134,9 +135,10 @@ def history_based_query_rephrase(
 def thread_based_query_rephrase(
     user_query: str,
     history_str: str,
+    db_session: Session,
     llm: LLM | None = None,
     size_heuristic: int = 200,
-    punctuation_heuristic: int = 10,
+    punctuation_heuristic: int = 10
 ) -> str:
     if not history_str:
         return user_query
@@ -149,7 +151,7 @@ def thread_based_query_rephrase(
 
     if llm is None:
         try:
-            llm, _ = get_default_llms()
+            llm, _ = get_default_llms(db_session=db_session)
         except GenAIDisabledException:
             # If Generative AI is turned off, just return the original query
             return user_query

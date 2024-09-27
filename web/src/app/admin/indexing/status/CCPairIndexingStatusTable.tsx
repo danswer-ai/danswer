@@ -443,6 +443,18 @@ export function CCPairIndexingStatusTable({
             onChange={(e) => setSearchTerm(e.target.value)}
             className="ml-1 w-96 h-9 flex-none rounded-md border border-border bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
+        <div className="-mb-10" />
+
+        <TableBody>
+          <div className="flex items-center mt-4 gap-x-2">
+            <input
+              type="text"
+              ref={searchInputRef}
+              placeholder="Search connectors..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="ml-1 w-96 h-9 flex-none rounded-md border border-border bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
 
           <Button className="h-9" onClick={() => toggleSources()}>
             {!shouldExpand ? "Collapse All" : "Expand All"}

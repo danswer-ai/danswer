@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 import os
 from urllib.parse import urlparse
 
@@ -56,8 +57,9 @@ LOG_FILE_NAME = os.environ.get("LOG_FILE_NAME") or "danswer"
 
 # Enable generating persistent log files for local dev environments
 DEV_LOGGING_ENABLED = os.environ.get("DEV_LOGGING_ENABLED", "").lower() == "true"
+
 # notset, debug, info, notice, warning, error, or critical
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "debug")
 
 
 # Fields which should only be set on new search setting
@@ -73,6 +75,34 @@ PRESERVED_SEARCH_FIELDS = [
     "normalize",
     "passage_prefix",
     "query_prefix",
+]
+
+class SupportedEmbeddingModel(BaseModel):
+    name: str
+    dim: int
+    index_name: str
+
+SUPPORTED_EMBEDDING_MODELS = [
+    SupportedEmbeddingModel(
+        name="intfloat/e5-small-v2",
+        dim=384,
+        index_name="danswer_chunk_intfloat_e5_small_v2"
+    ),
+    SupportedEmbeddingModel(
+        name="intfloat/e5-large-v2",
+        dim=1024,
+        index_name="danswer_chunk_intfloat_e5_large_v2"
+    ),
+    SupportedEmbeddingModel(
+        name="sentence-transformers/all-distilroberta-v1",
+        dim=768,
+        index_name="danswer_chunk_sentence_transformers_all_distilroberta_v1"
+    ),
+    SupportedEmbeddingModel(
+        name="sentence-transformers/all-mpnet-base-v2",
+        dim=768,
+        index_name="danswer_chunk_sentence_transformers_all_mpnet_base_v2"
+    ),
 ]
 
 

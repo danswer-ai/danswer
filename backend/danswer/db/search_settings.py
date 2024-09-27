@@ -3,23 +3,12 @@ from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
-from danswer.configs.model_configs import ASYM_QUERY_PREFIX
-from danswer.configs.model_configs import DEFAULT_DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import DOC_EMBEDDING_DIM
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
-from danswer.configs.model_configs import OLD_DEFAULT_DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import OLD_DEFAULT_MODEL_DOC_EMBEDDING_DIM
-from danswer.configs.model_configs import OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.llm import fetch_embedding_provider
 from danswer.db.models import CloudEmbeddingProvider
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexModelStatus
 from danswer.db.models import SearchSettings
-from danswer.indexing.models import IndexingSetting
-from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
 from danswer.search.models import SavedSearchSettings
 from danswer.server.manage.embedding.models import (
@@ -217,78 +206,3 @@ def update_search_settings_status(
     search_settings.status = new_status
     db_session.commit()
 
-
-def user_has_overridden_embedding_model() -> bool:
-    return DOCUMENT_ENCODER_MODEL != DEFAULT_DOCUMENT_ENCODER_MODEL
-
-
-def get_old_default_search_settings() -> SearchSettings:
-    is_overridden = user_has_overridden_embedding_model()
-    return SearchSettings(
-        model_name=(
-            DOCUMENT_ENCODER_MODEL
-            if is_overridden
-            else OLD_DEFAULT_DOCUMENT_ENCODER_MODEL
-        ),
-        model_dim=(
-            DOC_EMBEDDING_DIM if is_overridden else OLD_DEFAULT_MODEL_DOC_EMBEDDING_DIM
-        ),
-        normalize=(
-            NORMALIZE_EMBEDDINGS
-            if is_overridden
-            else OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS
-        ),
-        query_prefix=(ASYM_QUERY_PREFIX if is_overridden else ""),
-        passage_prefix=(ASYM_PASSAGE_PREFIX if is_overridden else ""),
-        status=IndexModelStatus.PRESENT,
-        index_name="danswer_chunk",
-    )
-
-
-def get_new_default_search_settings(is_present: bool) -> SearchSettings:
-    return SearchSettings(
-        model_name=DOCUMENT_ENCODER_MODEL,
-        model_dim=DOC_EMBEDDING_DIM,
-        normalize=NORMALIZE_EMBEDDINGS,
-        query_prefix=ASYM_QUERY_PREFIX,
-        passage_prefix=ASYM_PASSAGE_PREFIX,
-        status=IndexModelStatus.PRESENT if is_present else IndexModelStatus.FUTURE,
-        index_name=f"danswer_chunk_{clean_model_name(DOCUMENT_ENCODER_MODEL)}",
-    )
-
-
-def get_old_default_embedding_model() -> IndexingSetting:
-    is_overridden = user_has_overridden_embedding_model()
-    return IndexingSetting(
-        model_name=(
-            DOCUMENT_ENCODER_MODEL
-            if is_overridden
-            else OLD_DEFAULT_DOCUMENT_ENCODER_MODEL
-        ),
-        model_dim=(
-            DOC_EMBEDDING_DIM if is_overridden else OLD_DEFAULT_MODEL_DOC_EMBEDDING_DIM
-        ),
-        normalize=(
-            NORMALIZE_EMBEDDINGS
-            if is_overridden
-            else OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS
-        ),
-        query_prefix=(ASYM_QUERY_PREFIX if is_overridden else ""),
-        passage_prefix=(ASYM_PASSAGE_PREFIX if is_overridden else ""),
-        index_name="danswer_chunk",
-        multipass_indexing=False,
-        api_url=None,
-    )
-
-
-def get_new_default_embedding_model() -> IndexingSetting:
-    return IndexingSetting(
-        model_name=DOCUMENT_ENCODER_MODEL,
-        model_dim=DOC_EMBEDDING_DIM,
-        normalize=NORMALIZE_EMBEDDINGS,
-        query_prefix=ASYM_QUERY_PREFIX,
-        passage_prefix=ASYM_PASSAGE_PREFIX,
-        index_name=f"danswer_chunk_{clean_model_name(DOCUMENT_ENCODER_MODEL)}",
-        multipass_indexing=False,
-        api_url=None,
-    )

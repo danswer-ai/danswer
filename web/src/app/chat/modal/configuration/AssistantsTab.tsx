@@ -13,7 +13,6 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
@@ -42,6 +41,7 @@ export function AssistantsTab({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+  console.log("llm providers", llmProviders);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;

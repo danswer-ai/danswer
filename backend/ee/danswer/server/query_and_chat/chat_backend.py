@@ -234,7 +234,7 @@ def handle_send_message_simple_with_history(
         one_shot=False,
     )
 
-    llm, _ = get_llms_for_persona(persona=chat_session.persona)
+    llm, _ = get_llms_for_persona(persona=chat_session.persona, db_session=db_session)
 
     llm_tokenizer = get_tokenizer(
         model_name=llm.config.model_name,
@@ -274,6 +274,7 @@ def handle_send_message_simple_with_history(
     rephrased_query = req.query_override or thread_based_query_rephrase(
         user_query=query,
         history_str=history_str,
+        db_session=db_session
     )
 
     if req.retrieval_options is None and req.search_doc_ids is None:

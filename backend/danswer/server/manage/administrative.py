@@ -40,6 +40,7 @@ from danswer.server.manage.models import BoostUpdateRequest
 from danswer.server.manage.models import HiddenUpdateRequest
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
+from danswer.db.engine import current_tenant_id
 
 router = APIRouter(prefix="/manage")
 logger = setup_logger()

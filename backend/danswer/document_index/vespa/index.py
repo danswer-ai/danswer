@@ -13,6 +13,7 @@ from typing import cast
 import httpx
 import requests
 
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.chat_configs import DOC_TIME_DECAY
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.chat_configs import TITLE_CONTENT_RATIO
@@ -47,6 +48,8 @@ from danswer.document_index.vespa_constants import BATCH_SIZE
 from danswer.document_index.vespa_constants import BOOST
 from danswer.document_index.vespa_constants import CONTENT_SUMMARY
 from danswer.document_index.vespa_constants import DANSWER_CHUNK_REPLACEMENT_PAT
+from danswer.document_index.vespa_constants import TENANT_ID_PAT
+from danswer.document_index.vespa_constants import TENANT_ID_REPLACEMENT
 from danswer.document_index.vespa_constants import DATE_REPLACEMENT
 from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa_constants import DOCUMENT_REPLACEMENT_PAT
@@ -85,7 +88,7 @@ def in_memory_zip_from_file_bytes(file_contents: dict[str, bytes]) -> BinaryIO:
     return zip_buffer
 
 
-def _create_document_xml_lines(doc_names: list[str | None]) -> str:
+def _create_document_xml_lines(doc_names: list[str]) -> str:
     doc_lines = [
         f'<document type="{doc_name}" mode="index" />'
         for doc_name in doc_names
@@ -110,15 +113,29 @@ def add_ngrams_to_schema(schema_content: str) -> str:
 
 
 class VespaIndex(DocumentIndex):
-    def __init__(self, index_name: str, secondary_index_name: str | None) -> None:
-        self.index_name = index_name
+    def __init__(self, indices: list[str], secondary_index_name: str | None) -> None:
+        self.indices = indices
         self.secondary_index_name = secondary_index_name
+
+    @property
+    def index_name(self) -> str:
+        if len(self.indices) == 0:
+            raise ValueError("No indices provided")
+        return self.indices[0]
 
     def ensure_indices_exist(
         self,
-        index_embedding_dim: int,
-        secondary_index_embedding_dim: int | None,
+        embedding_dims: list[int] | None = None,
+        index_embedding_dim: int | None = None,
+        secondary_index_embedding_dim: int | None = None
     ) -> None:
+        
+        if embedding_dims is None:
+            if index_embedding_dim is not None:
+                embedding_dims = [index_embedding_dim]
+            else:
+                raise ValueError("No embedding dimensions provided")
+
         deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
         logger.info(f"Deploying Vespa application package to {deploy_url}")
 
@@ -132,9 +149,15 @@ class VespaIndex(DocumentIndex):
         with open(services_file, "r") as services_f:
             services_template = services_f.read()
 
-        schema_names = [self.index_name, self.secondary_index_name]
+        # Generate schema names from index settings
+        schema_names = [index_name for index_name in self.indices]
 
-        doc_lines = _create_document_xml_lines(schema_names)
+        full_schemas = schema_names
+        if self.secondary_index_name:
+            full_schemas.append(self.secondary_index_name)
+
+        doc_lines = _create_document_xml_lines(full_schemas)
+
         services = services_template.replace(DOCUMENT_REPLACEMENT_PAT, doc_lines)
         services = services.replace(
             SEARCH_THREAD_NUMBER_PAT, str(VESPA_SEARCHER_THREADS)
@@ -166,26 +189,37 @@ class VespaIndex(DocumentIndex):
 
         with open(schema_file, "r") as schema_f:
             schema_template = schema_f.read()
-        schema = schema_template.replace(
-            DANSWER_CHUNK_REPLACEMENT_PAT, self.index_name
-        ).replace(VESPA_DIM_REPLACEMENT_PAT, str(index_embedding_dim))
-        schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
-        zip_dict[f"schemas/{schema_names[0]}.sd"] = schema.encode("utf-8")
+
+        for i, index_name in enumerate(self.indices):
+            embedding_dim = embedding_dims[i]
+            logger.info(f"Creating index: {index_name} with embedding dimension: {embedding_dim}")
+
+            schema = schema_template.replace(
+                DANSWER_CHUNK_REPLACEMENT_PAT, index_name
+            ).replace(VESPA_DIM_REPLACEMENT_PAT, str(embedding_dim))
+            schema = schema.replace(TENANT_ID_PAT, TENANT_ID_REPLACEMENT if MULTI_TENANT else "")
+            schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
+            zip_dict[f"schemas/{index_name}.sd"] = schema.encode("utf-8")
 
         if self.secondary_index_name:
+            logger.info("Creating secondary index:"
+                        f"{self.secondary_index_name} with embedding dimension: {secondary_index_embedding_dim}")
             upcoming_schema = schema_template.replace(
                 DANSWER_CHUNK_REPLACEMENT_PAT, self.secondary_index_name
             ).replace(VESPA_DIM_REPLACEMENT_PAT, str(secondary_index_embedding_dim))
-            zip_dict[f"schemas/{schema_names[1]}.sd"] = upcoming_schema.encode("utf-8")
+            upcoming_schema = upcoming_schema.replace(TENANT_ID_PAT, TENANT_ID_REPLACEMENT if MULTI_TENANT else "")
+            zip_dict[f"schemas/{self.secondary_index_name}.sd"] = upcoming_schema.encode("utf-8")
 
         zip_file = in_memory_zip_from_file_bytes(zip_dict)
 
         headers = {"Content-Type": "application/zip"}
         response = requests.post(deploy_url, headers=headers, data=zip_file)
+
         if response.status_code != 200:
             raise RuntimeError(
-                f"Failed to prepare Vespa Danswer Index. Response: {response.text}"
+                f"Failed to prepare Vespa Danswer Indexes. Response: {response.text}"
             )
+
 
     def index(
         self,
@@ -236,7 +270,6 @@ class VespaIndex(DocumentIndex):
                 )
 
         all_doc_ids = {chunk.source_document.id for chunk in cleaned_chunks}
-
         return {
             DocumentInsertionRecord(
                 document_id=doc_id,
@@ -392,7 +425,7 @@ class VespaIndex(DocumentIndex):
             for doc_id in update_request.document_ids
         ]
 
-        # update_start = time.monotonic()
+        update_start = time.monotonic()
 
         # Fetch all chunks for each document ahead of time
         index_names = [self.index_name]
@@ -455,10 +488,10 @@ class VespaIndex(DocumentIndex):
                     json=update.update_request,
                 )
 
-        # logger.debug(
-        #     "Finished updating Vespa documents in %.2f seconds",
-        #     time.monotonic() - update_start,
-        # )
+        logger.debug(
+            "Finished updating Vespa documents in %.2f seconds",
+            time.monotonic() - update_start,
+        )
 
         return
 

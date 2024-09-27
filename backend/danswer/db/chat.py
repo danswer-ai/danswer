@@ -50,6 +50,7 @@ def get_chat_session_by_id(
     is_shared: bool = False,
 ) -> ChatSession:
     stmt = select(ChatSession).where(ChatSession.id == chat_session_id)
+    db_session.connection()
 
     if is_shared:
         stmt = stmt.where(ChatSession.shared_status == ChatSessionSharedStatus.PUBLIC)

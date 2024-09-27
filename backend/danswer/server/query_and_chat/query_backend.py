@@ -40,6 +40,7 @@ from danswer.server.query_and_chat.models import SourceTag
 from danswer.server.query_and_chat.models import TagResponse
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
+from danswer.db.engine import get_current_tenant_id
 
 logger = setup_logger()
 
@@ -52,6 +53,7 @@ def admin_search(
     question: AdminSearchRequest,
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> AdminSearchResponse:
     query = question.query
     logger.notice(f"Received admin search query: {query}")
@@ -62,6 +64,7 @@ def admin_search(
         time_cutoff=question.filters.time_cutoff,
         tags=question.filters.tags,
         access_control_list=user_acl_filters,
+        tenant_id=tenant_id,
     )
     search_settings = get_current_search_settings(db_session)
     document_index = get_default_document_index(
@@ -130,13 +133,13 @@ def get_tags(
 
 @basic_router.post("/query-validation")
 def query_validation(
-    simple_query: SimpleQueryRequest, _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest, _: User = Depends(current_user), db_session: Session = Depends(get_session)
 ) -> QueryValidationResponse:
     # Note if weak model prompt is chosen, this check does not occur and will simply return that
     # the query is valid, this is because weaker models cannot really handle this task well.
     # Additionally, some weak model servers cannot handle concurrent inferences.
     logger.notice(f"Validating query: {simple_query.query}")
-    reasoning, answerable = get_query_answerability(simple_query.query)
+    reasoning, answerable = get_query_answerability(db_session=db_session, user_query=simple_query.query)
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
 
 
@@ -244,14 +247,14 @@ def get_search_session(
 # No search responses are answered with a conversational generative AI response
 @basic_router.post("/stream-query-validation")
 def stream_query_validation(
-    simple_query: SimpleQueryRequest, _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest, _: User = Depends(current_user), db_session: Session = Depends(get_session)
 ) -> StreamingResponse:
     # Note if weak model prompt is chosen, this check does not occur and will simply return that
     # the query is valid, this is because weaker models cannot really handle this task well.
     # Additionally, some weak model servers cannot handle concurrent inferences.
     logger.notice(f"Validating query: {simple_query.query}")
     return StreamingResponse(
-        stream_query_answerability(simple_query.query), media_type="application/json"
+        stream_query_answerability(user_query=simple_query.query, db_session=db_session), media_type="application/json"
     )
 
 
@@ -260,6 +263,7 @@ def get_answer_with_quote(
     query_request: DirectQARequest,
     user: User = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
+    db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
     query = query_request.messages[0].message
 
@@ -270,5 +274,6 @@ def get_answer_with_quote(
         user=user,
         max_document_tokens=None,
         max_history_tokens=0,
+        db_session=db_session,
     )
     return StreamingResponse(packets, media_type="application/json")

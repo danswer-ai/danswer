@@ -1,3 +1,6 @@
+import contextvars
+from fastapi import Depends
+from fastapi import Request, HTTPException
 import contextlib
 import threading
 import time
@@ -6,7 +9,6 @@ from collections.abc import Generator
 from datetime import datetime
 from typing import Any
 from typing import ContextManager
-
 from sqlalchemy import event
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
@@ -16,7 +18,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-
+from danswer.configs.app_configs import SECRET_JWT_KEY
+from danswer.configs.app_configs import DEFAULT_SCHEMA
 from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
 from danswer.configs.app_configs import POSTGRES_DB
@@ -27,9 +30,17 @@ from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.utils.logger import setup_logger
+from fastapi.security import OAuth2PasswordBearer
+from jwt.exceptions import DecodeError, InvalidTokenError
+import jwt
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 logger = setup_logger()
+
 
 SYNC_DB_API = "psycopg2"
 ASYNC_DB_API = "asyncpg"
@@ -185,16 +196,32 @@ def build_connection_string(
 def init_sqlalchemy_engine(app_name: str) -> None:
     SqlEngine.set_app_name(app_name)
 
+_engines: dict[str, Engine] = {}
 
-def get_sqlalchemy_engine() -> Engine:
-    return SqlEngine.get_engine()
+# NOTE: this is a hack to allow for multiple postgres schemas per engine for now.
+def get_sqlalchemy_engine(*, schema: str | None = DEFAULT_SCHEMA) -> Engine:
+    if schema is None:
+        schema = current_tenant_id.get()
+
+    global _engines
+    if schema not in _engines:
+        connection_string = build_connection_string(
+            db_api=SYNC_DB_API, app_name=f"{POSTGRES_APP_NAME}_{schema}_sync"
+        )
+        _engines[schema] = create_engine(
+            connection_string,
+            pool_size=40,
+            max_overflow=10,
+            pool_pre_ping=POSTGRES_POOL_PRE_PING,
+            pool_recycle=POSTGRES_POOL_RECYCLE,
+            connect_args={"options": f"-c search_path={schema}"}
+        )
+    return _engines[schema]
 
 
 def get_sqlalchemy_async_engine() -> AsyncEngine:
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:
-        # underlying asyncpg cannot accept application_name directly in the connection string
-        # https://github.com/MagicStack/asyncpg/issues/798
         connection_string = build_connection_string()
         _ASYNC_ENGINE = create_async_engine(
             connection_string,
@@ -210,25 +237,49 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
         )
     return _ASYNC_ENGINE
 
+current_tenant_id = contextvars.ContextVar(
+    "current_tenant_id", default=DEFAULT_SCHEMA
+)
 
 def get_session_context_manager() -> ContextManager[Session]:
-    return contextlib.contextmanager(get_session)()
+    tenant_id = current_tenant_id.get()
+    return contextlib.contextmanager(lambda: get_session(override_tenant_id=tenant_id))()
 
+def get_current_tenant_id(request: Request) -> str | None:
+    if not MULTI_TENANT:
+        return DEFAULT_SCHEMA
 
-def get_session() -> Generator[Session, None, None]:
-    # The line below was added to monitor the latency caused by Postgres connections
-    # during API calls.
-    # with tracer.trace("db.get_session"):
-    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
+    token = request.cookies.get("tenant_details")
+    if not token:
+        return current_tenant_id.get()
+
+    try:
+        payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
+        tenant_id = payload.get("tenant_id")
+        if not tenant_id:
+            raise HTTPException(status_code=400, detail="Invalid token: tenant_id missing")
+        current_tenant_id.set(tenant_id)
+        return tenant_id
+    except (DecodeError, InvalidTokenError):
+        raise HTTPException(status_code=401, detail="Invalid token format")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+def get_session(
+    tenant_id: str = Depends(get_current_tenant_id),
+    override_tenant_id: str | None = None
+) -> Generator[Session, None, None]:
+    if override_tenant_id:
+        tenant_id = override_tenant_id
+
+    with Session(get_sqlalchemy_engine(schema=tenant_id), expire_on_commit=False) as session:
         yield session
 
-
-async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_async_session(tenant_id: str | None = None) -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(
         get_sqlalchemy_async_engine(), expire_on_commit=False
     ) as async_session:
         yield async_session
-
 
 async def warm_up_connections(
     sync_connections_to_warm_up: int = 20, async_connections_to_warm_up: int = 20
@@ -237,6 +288,7 @@ async def warm_up_connections(
     connections = [
         sync_postgres_engine.connect() for _ in range(sync_connections_to_warm_up)
     ]
+
     for conn in connections:
         conn.execute(text("SELECT 1"))
     for conn in connections:
@@ -251,7 +303,6 @@ async def warm_up_connections(
         await async_conn.execute(text("SELECT 1"))
     for async_conn in async_connections:
         await async_conn.close()
-
 
 def get_session_factory() -> sessionmaker[Session]:
     global SessionFactory

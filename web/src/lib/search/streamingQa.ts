@@ -50,6 +50,7 @@ export const searchRequestStreamed = async ({
 
     const response = await fetch("/api/query/stream-answer-with-quote", {
       method: "POST",
+
       body: JSON.stringify({
         messages: [threadMessage],
         persona_id: persona.id,

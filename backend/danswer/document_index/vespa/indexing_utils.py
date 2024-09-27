@@ -21,6 +21,7 @@ from danswer.document_index.vespa_constants import CHUNK_ID
 from danswer.document_index.vespa_constants import CONTENT
 from danswer.document_index.vespa_constants import CONTENT_SUMMARY
 from danswer.document_index.vespa_constants import DOC_UPDATED_AT
+from danswer.document_index.vespa_constants import TENANT_ID
 from danswer.document_index.vespa_constants import DOCUMENT_ID
 from danswer.document_index.vespa_constants import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa_constants import DOCUMENT_SETS
@@ -65,6 +66,8 @@ def _does_document_exist(
         raise RuntimeError(
             f"Unexpected fetch document by ID value from Vespa "
             f"with error {doc_fetch_response.status_code}"
+            f"Index name: {index_name}"
+            f"Doc chunk id: {doc_chunk_id}"
         )
     return True
 
@@ -95,7 +98,7 @@ def get_existing_documents_from_chunks(
     try:
         chunk_existence_future = {
             executor.submit(
-                _does_document_exist,
+                 _does_document_exist,
                 str(get_uuid_from_chunk(chunk)),
                 index_name,
                 http_client,
@@ -117,7 +120,9 @@ def get_existing_documents_from_chunks(
 
 @retry(tries=3, delay=1, backoff=2)
 def _index_vespa_chunk(
-    chunk: DocMetadataAwareIndexChunk, index_name: str, http_client: httpx.Client
+    chunk: DocMetadataAwareIndexChunk,
+    index_name: str,
+    http_client: httpx.Client,
 ) -> None:
     json_header = {
         "Content-Type": "application/json",
@@ -174,8 +179,10 @@ def _index_vespa_chunk(
         BOOST: chunk.boost,
     }
 
+    if chunk.tenant_id:
+        vespa_document_fields[TENANT_ID] = chunk.tenant_id
+
     vespa_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{vespa_chunk_id}"
-    logger.debug(f'Indexing to URL "{vespa_url}"')
     res = http_client.post(
         vespa_url, headers=json_header, json={"fields": vespa_document_fields}
     )

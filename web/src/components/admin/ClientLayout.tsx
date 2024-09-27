@@ -21,6 +21,7 @@ import {
   AssistantsIconSkeleton,
   ClosedBookIcon,
   SearchIcon,
+  CreditCardIcon,
 } from "@/components/icons/icons";
 import { UserRole } from "@/lib/types";
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
@@ -29,16 +30,17 @@ import { User } from "@/lib/types";
 import { usePathname } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { useContext } from "react";
-import { CustomTooltip } from "../tooltip/CustomTooltip";
 
 export function ClientLayout({
   user,
   children,
   enableEnterprise,
+  cloudEnabled,
 }: {
   user: User | null;
   children: React.ReactNode;
   enableEnterprise: boolean;
+  cloudEnabled: boolean;
 }) {
   const isCurator =
     user?.role === UserRole.CURATOR || user?.role === UserRole.GLOBAL_CURATOR;
@@ -378,6 +380,20 @@ export function ClientLayout({
                                   </div>
                                 ),
                                 link: "/admin/whitelabeling",
+                              },
+                            ]
+                          : []),
+
+                        ...(cloudEnabled
+                          ? [
+                              {
+                                name: (
+                                  <div className="flex">
+                                    <CreditCardIcon size={18} />
+                                    <div className="ml-1">Billing</div>
+                                  </div>
+                                ),
+                                link: "/admin/plan",
                               },
                             ]
                           : []),

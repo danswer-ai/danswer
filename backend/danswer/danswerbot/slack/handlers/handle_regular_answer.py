@@ -171,7 +171,7 @@ def handle_regular_answer(
                         ),
                     )
 
-                llm, _ = get_llms_for_persona(persona)
+                llm, _ = get_llms_for_persona(persona, db_session=db_session)
 
                 # In cases of threads, split the available tokens between docs and thread context
                 input_tokens = get_max_input_tokens(
@@ -188,6 +188,7 @@ def handle_regular_answer(
                         persona=persona,
                         actual_user_input=query_text,
                         max_llm_token_override=remaining_tokens,
+                        db_session=db_session,
                     )
                 else:
                     max_document_tokens = (

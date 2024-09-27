@@ -37,9 +37,11 @@ DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "
 WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 
 
+SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY") or "JWT_SECRET_KEY"
 #####
 # Auth Configs
 #####
+
 AUTH_TYPE = AuthType((os.environ.get("AUTH_TYPE") or AuthType.DISABLED.value).lower())
 DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
 
@@ -135,7 +137,7 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
     os.environ.get("POSTGRES_PASSWORD") or "password"
 )
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5433"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
 # defaults to False
@@ -388,3 +390,21 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 ENTERPRISE_EDITION_ENABLED = (
     os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )
+
+###
+# CLOUD CONFIGS
+###
+STRIPE_PRICE = os.environ.get("STRIPE_PRICE", "price_1PsYoPHlhTYqRZib2t5ydpq5")
+
+
+STRIPE_WEBHOOK_SECRET = os.environ.get(
+    "STRIPE_WEBHOOK_SECRET",
+    "whsec_1cd766cd6bd08590aa8c46ab5c21ac32cad77c29de2e09a152a01971d6f405d3"
+)
+
+DEFAULT_SCHEMA = os.environ.get("DEFAULT_SCHEMA", "public")
+
+DATA_PLANE_SECRET = os.environ.get("DATA_PLANE_SECRET", "your_shared_secret_key")
+EXPECTED_API_KEY = os.environ.get("EXPECTED_API_KEY", "your_control_plane_api_key")
+
+MULTI_TENANT = os.environ.get("MULTI_TENANT", "false").lower() == "true"

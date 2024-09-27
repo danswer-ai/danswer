@@ -11,7 +11,6 @@ class RecencyBiasSetting(str, Enum):
     # Determine based on query if to use base_decay or favor_recent
     AUTO = "auto"
 
-
 class OptionalSearchSetting(str, Enum):
     ALWAYS = "always"
     NEVER = "never"

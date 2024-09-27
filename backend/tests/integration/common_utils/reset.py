@@ -18,7 +18,7 @@ from danswer.db.swap_index import check_index_swap
 from danswer.document_index.vespa.index import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.indexing.models import IndexingSetting
-from danswer.main import setup_postgres
+from danswer.db_setup import setup_postgres
 from danswer.main import setup_vespa
 from danswer.utils.logger import setup_logger
 
@@ -135,9 +135,9 @@ def reset_vespa() -> None:
         index_name = search_settings.index_name
 
     success = setup_vespa(
-        document_index=VespaIndex(index_name=index_name, secondary_index_name=None),
-        index_setting=IndexingSetting.from_db_model(search_settings),
-        secondary_index_setting=None,
+        document_index=VespaIndex(indices=[index_name], secondary_index_name=None),
+        embedding_dims=[search_settings.model_dim],
+        secondary_embedding_dim=None,
     )
     if not success:
         raise RuntimeError("Could not connect to Vespa within the specified timeout.")

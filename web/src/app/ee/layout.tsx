@@ -9,7 +9,7 @@ export default async function AdminLayout({
     return (
       <div className="flex h-screen">
         <div className="mx-auto my-auto text-lg font-bold text-red-500">
-          This funcitonality is only available in the Enterprise Edition :(
+          This functionality is only available in the Enterprise Edition :(
         </div>
       </div>
     );

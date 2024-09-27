@@ -154,13 +154,16 @@ def fetch_embedding_provider(
 
 
 def fetch_default_provider(db_session: Session) -> FullLLMProvider | None:
+
     provider_model = db_session.scalar(
         select(LLMProviderModel).where(
             LLMProviderModel.is_default_provider == True  # noqa: E712
         )
     )
+
     if not provider_model:
         return None
+
     return FullLLMProvider.from_model(provider_model)
 
 

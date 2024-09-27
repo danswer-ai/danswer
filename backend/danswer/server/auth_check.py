@@ -35,6 +35,7 @@ PUBLIC_ENDPOINT_SPECS = [
     ("/auth/reset-password", {"POST"}),
     ("/auth/request-verify-token", {"POST"}),
     ("/auth/verify", {"POST"}),
+    ("/tenants/auth/sso-callback", {"POST"}),
     ("/users/me", {"GET"}),
     ("/users/me", {"PATCH"}),
     ("/users/{id}", {"GET"}),
@@ -43,6 +44,8 @@ PUBLIC_ENDPOINT_SPECS = [
     # oauth
     ("/auth/oauth/authorize", {"GET"}),
     ("/auth/oauth/callback", {"GET"}),
+    # tenant service related (must use API key)
+    ("/tenants/create", {"POST"}),
 ]
 
 

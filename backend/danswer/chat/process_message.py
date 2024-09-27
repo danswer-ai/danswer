@@ -35,7 +35,6 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import reserve_message_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
-from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import ToolCall
@@ -325,11 +324,13 @@ def stream_chat_message_objects(
         try:
             llm, fast_llm = get_llms_for_persona(
                 persona=persona,
+                db_session=db_session,
                 llm_override=new_msg_req.llm_override or chat_session.llm_override,
                 additional_headers=litellm_additional_headers,
             )
         except GenAIDisabledException:
             raise RuntimeError("LLM is disabled. Can't use chat flow without LLM.")
+
 
         llm_provider = llm.config.model_provider
         llm_model_name = llm.config.model_name
@@ -648,6 +649,7 @@ def stream_chat_message_objects(
                 or get_main_llm_from_tuple(
                     get_llms_for_persona(
                         persona=persona,
+                        db_session=db_session,
                         llm_override=(
                             new_msg_req.llm_override or chat_session.llm_override
                         ),
@@ -836,18 +838,19 @@ def stream_chat_message_objects(
 def stream_chat_message(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
+    db_session: Session,
     use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
 ) -> Iterator[str]:
-    with get_session_context_manager() as db_session:
-        objects = stream_chat_message_objects(
-            new_msg_req=new_msg_req,
-            user=user,
-            db_session=db_session,
-            use_existing_user_message=use_existing_user_message,
-            litellm_additional_headers=litellm_additional_headers,
-            is_connected=is_connected,
-        )
-        for obj in objects:
-            yield get_json_line(obj.model_dump())
+
+    objects = stream_chat_message_objects(
+        new_msg_req=new_msg_req,
+        user=user,
+        db_session=db_session,
+        use_existing_user_message=use_existing_user_message,
+        litellm_additional_headers=litellm_additional_headers,
+        is_connected=is_connected,
+    )
+    for obj in objects:
+        yield get_json_line(obj.model_dump())

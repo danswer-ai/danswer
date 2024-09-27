@@ -77,7 +77,7 @@ class Verifiable(abc.ABC):
     all valid in the schema.
 
     Parameters:
-    - index_name: The name of the primary index currently used for querying
+    - indices: The names of the primary indices currently used for querying
     - secondary_index_name: The name of the secondary index being built in the background, if it
             currently exists. Some functions on the document index act on both the primary and
             secondary index, some act on just one.
@@ -86,20 +86,21 @@ class Verifiable(abc.ABC):
     @abc.abstractmethod
     def __init__(
         self,
-        index_name: str,
+        indices: list[str],
         secondary_index_name: str | None,
         *args: Any,
         **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.index_name = index_name
+        self.indices = indices
         self.secondary_index_name = secondary_index_name
 
     @abc.abstractmethod
     def ensure_indices_exist(
         self,
-        index_embedding_dim: int,
-        secondary_index_embedding_dim: int | None,
+        embedding_dims: list[int] | None = None,
+        index_embedding_dim: int | None = None,
+        secondary_index_embedding_dim: int | None = None
     ) -> None:
         """
         Verify that the document index exists and is consistent with the expectations in the code.

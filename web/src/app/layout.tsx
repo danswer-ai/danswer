@@ -4,6 +4,7 @@ import {
   fetchEnterpriseSettingsSS,
   fetchSettingsSS,
 } from "@/components/settings/lib";
+import { fetchEnterpriseSettingsSS, fetchSettingsSS } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
   EE_ENABLED,
@@ -14,7 +15,7 @@ import { Metadata } from "next";
 import { buildClientUrl, fetchSS } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
 import Head from "next/head";
-import { EnterpriseSettings } from "./admin/settings/interfaces";
+import { CombinedSettings, defaultCombinedSettings, EnterpriseSettings } from "./admin/settings/interfaces";
 import { Card } from "@tremor/react";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Logo } from "@/components/Logo";
@@ -57,8 +58,6 @@ export default async function RootLayout({
   const combinedSettings = await fetchSettingsSS();
 
   if (!combinedSettings) {
-    // Just display a simple full page error if fetching fails.
-
     return (
       <html lang="en" className={`${inter.variable} font-sans`}>
         <Head>

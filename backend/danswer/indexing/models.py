@@ -55,11 +55,9 @@ class DocAwareChunk(BaseChunk):
             f"Chunk ID: '{self.chunk_id}'; {self.source_document.to_short_descriptor()}"
         )
 
-
 class IndexChunk(DocAwareChunk):
     embeddings: ChunkEmbedding
     title_embedding: Embedding | None
-
 
 # TODO(rkuo): currently, this extra metadata sent during indexing is just for speed,
 # but full consistency happens on background sync
@@ -75,6 +73,7 @@ class DocMetadataAwareIndexChunk(IndexChunk):
            negative -> ranked lower.
     """
 
+    tenant_id: str | None = None
     access: "DocumentAccess"
     document_sets: set[str]
     boost: int
@@ -86,6 +85,7 @@ class DocMetadataAwareIndexChunk(IndexChunk):
         access: "DocumentAccess",
         document_sets: set[str],
         boost: int,
+        tenant_id: str | None,
     ) -> "DocMetadataAwareIndexChunk":
         index_chunk_data = index_chunk.model_dump()
         return cls(
@@ -93,6 +93,7 @@ class DocMetadataAwareIndexChunk(IndexChunk):
             access=access,
             document_sets=document_sets,
             boost=boost,
+            tenant_id=tenant_id,
         )
 
 
