@@ -18,6 +18,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Add your model's MetaData object here
+# for 'autogenerate' support
+# from myapp import mymodel
+# target_metadata = mymodel.Base.metadata
 target_metadata = [Base.metadata, ResultModelBase.metadata]
 
 def get_schema_options() -> Tuple[str, bool]:
