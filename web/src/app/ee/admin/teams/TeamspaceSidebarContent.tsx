@@ -48,7 +48,7 @@ export const TeamspaceSidebarContent = ({
             <Shield size={16} />
             {tokenRate
               ? `${tokenRate.token_budget} Token Rate`
-              : "No Token Rate Data"}
+              : "No Token Rate"}
           </span>
           <p className="text-center text-subtle pt-4 text-sm">
             Lorem ipsum dolor, sit amet consectetur adipisicing elit.

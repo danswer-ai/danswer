@@ -113,7 +113,7 @@ export const TeamspaceMember = ({
                 {teamspace.users.slice(0, 8).map((teamspace) => (
                   <div
                     key={teamspace.id}
-                    className={`bg-primary w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg`}
+                    className={`bg-primary w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase`}
                   >
                     {teamspace.full_name!.charAt(0)}
                   </div>

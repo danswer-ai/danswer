@@ -85,7 +85,7 @@ export const TeamspacesCard = ({
               {" "}
               {tokenRate
                 ? `${tokenRate.token_budget} Token Rate`
-                : "No Token Rate Data"}
+                : "No Token Rate"}
             </span>
           </div>
         </div>
