@@ -17,7 +17,7 @@ from ee.enmedd.server.workspace.store import upload_logo
 from enmedd.auth.users import current_admin_user
 from enmedd.db.engine import get_session
 from enmedd.db.models import User
-from enmedd.db.workspace import get_workspace_by_id
+from enmedd.db.workspace import get_workspace_for_user_by_id
 from enmedd.db.workspace import get_workspace_settings
 from enmedd.db.workspace import insert_workspace
 from enmedd.db.workspace import upsert_workspace
@@ -112,7 +112,7 @@ def fetch_settings_by_id(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> Workspaces:
-    db_workspace = get_workspace_by_id(
+    db_workspace = get_workspace_for_user_by_id(
         workspace_id=workspace_id, db_session=db_session, user=_
     )
     if db_workspace is None:

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from ee.enmedd.server.workspace.models import InstanceSubscriptionPlan
 from ee.enmedd.server.workspace.models import WorkspaceCreate
+from ee.enmedd.server.workspace.models import WorkspaceUpdate
 from enmedd.auth.schemas import UserRole
 from enmedd.db.models import Instance
 from enmedd.db.models import User
@@ -85,6 +86,48 @@ def insert_workspace(
 #         raise Exception(f"Error inserting or updating workspace: {str(e)}") from e
 
 
+def update_workspace(
+    db_session: Session,
+    workspace: WorkspaceUpdate,
+    commit: bool = True,
+) -> Workspace:
+    try:
+        # Check if the workspace already exists
+        db_workspace = db_session.scalar(select(Workspace).where(Workspace.id == id))
+
+        if not db_workspace:
+            # If the workspace doesn't exist, raise an error
+            raise Exception(f"Workspace with ID {id} not found.")
+
+        # Update existing workspace fields
+        if workspace.workspace_name:
+            db_workspace.workspace_name = workspace.workspace_name
+        if workspace.custom_logo:
+            db_workspace.custom_logo = workspace.custom_logo
+        if workspace.custom_header_logo:
+            db_workspace.custom_header_logo = workspace.custom_header_logo
+        if workspace.workspace_description:
+            db_workspace.workspace_description = workspace.workspace_description
+        if workspace.use_custom_logo:
+            db_workspace.use_custom_logo = workspace.use_custom_logo
+        if workspace.custom_header_content:
+            db_workspace.custom_header_content = workspace.custom_header_content
+
+        # Commit or flush the session
+        if commit:
+            db_session.add(db_workspace)
+            db_session.commit()
+        else:
+            db_session.flush()
+
+        return db_workspace
+
+    except SQLAlchemyError as e:
+        # Roll back the changes in case of an error
+        db_session.rollback()
+        raise Exception(f"Error updating workspace: {str(e)}") from e
+
+
 def upsert_workspace(
     db_session: Session,
     id: int,
@@ -151,7 +194,7 @@ def get_workspaces_for_user(user_id: int, db_session: Session) -> list[Workspace
     return workspaces
 
 
-def get_workspace_by_id(
+def get_workspace_for_user_by_id(
     workspace_id: int,
     db_session: Session,
     user: User | None = None,
