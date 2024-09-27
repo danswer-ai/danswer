@@ -414,6 +414,15 @@ class ConnectorCredentialPair(Base):
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
     )
+
+    # last successful prune
+    last_pruned: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+
+    # # flag to trigger pruning
+    # needs_pruning: Mapped[bool] = mapped_column(Boolean, default=False)
+
     total_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
 
     connector: Mapped["Connector"] = relationship(
@@ -552,14 +561,6 @@ class Connector(Base):
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-
-    # last successful prune
-    last_pruned: Mapped[datetime.datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True
-    )
-
-    # flag to trigger pruning
-    needs_pruning: Mapped[bool] = mapped_column(Boolean, default=False)
 
     credentials: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
@@ -1733,7 +1734,9 @@ class User__ExternalUserGroupId(Base):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
     # These group ids have been prefixed by the source type
     external_user_group_id: Mapped[str] = mapped_column(String, primary_key=True)
-    cc_pair_id: Mapped[int] = mapped_column(ForeignKey("connector_credential_pair.id"))
+    cc_pair_id: Mapped[int] = mapped_column(
+        ForeignKey("connector_credential_pair.id"), primary_key=True
+    )
 
 
 class UsageReport(Base):

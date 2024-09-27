@@ -1,0 +1,37 @@
+name: Nightly Tag Push
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight UTC
+
+permissions:
+  contents: write  # Allows pushing tags to the repository
+
+jobs:
+  create-and-push-tag:
+    runs-on: [runs-on,runner=2cpu-linux-x64,"run-id=${{ github.run_id }}"]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Git user
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Create Nightly Tag
+      env:
+        DATE: ${{ github.run_id }}
+      run: |
+        TAG_NAME="nightly-latest-$(date +'%Y%m%d')"
+        echo "Creating tag: $TAG_NAME"
+        git tag $TAG_NAME
+
+    - name: Push Tag
+      run: |
+        TAG_NAME="nightly-latest-$(date +'%Y%m%d')"
+        git push origin $TAG_NAME
+        

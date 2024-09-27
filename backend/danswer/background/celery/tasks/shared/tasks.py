@@ -1,10 +1,10 @@
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
-from celery.utils.log import get_task_logger
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_document
+from danswer.background.celery.celery_app import task_logger
 from danswer.db.document import delete_document_by_connector_credential_pair__no_commit
 from danswer.db.document import delete_documents_complete__no_commit
 from danswer.db.document import get_document
@@ -16,10 +16,6 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
-
-
-# use this within celery tasks to get celery task specific logging
-task_logger = get_task_logger(__name__)
 
 
 @shared_task(

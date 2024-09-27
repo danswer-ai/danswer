@@ -2,10 +2,10 @@ import requests
 
 from danswer.configs.constants import MessageType
 from tests.integration.common_utils.constants import API_SERVER_URL
-from tests.integration.common_utils.llm import LLMProviderManager
 from tests.integration.common_utils.managers.api_key import APIKeyManager
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.document import DocumentManager
+from tests.integration.common_utils.managers.llm_provider import LLMProviderManager
 from tests.integration.common_utils.managers.user import UserManager
 from tests.integration.common_utils.test_models import DATestAPIKey
 from tests.integration.common_utils.test_models import DATestCCPair

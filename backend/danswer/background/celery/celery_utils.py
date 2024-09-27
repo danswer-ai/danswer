@@ -6,6 +6,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
+from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.configs.app_configs import MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE
 from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
     rate_limit_builder,
@@ -16,6 +17,7 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import Document
 from danswer.db.connector_credential_pair import get_connector_credential_pair
+from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.enums import TaskStatus
 from danswer.db.models import TaskQueueState
 from danswer.redis.redis_pool import RedisPool
@@ -24,6 +26,24 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 redis_pool = RedisPool()
+
+
+# TODO: make this a member of RedisConnectorPruning
+def cc_pair_is_pruning(cc_pair_id: int, db_session: Session) -> bool:
+    #
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id, db_session=db_session
+    )
+    if not cc_pair:
+        raise ValueError(f"cc_pair_id {cc_pair_id} does not exist.")
+
+    rcp = RedisConnectorPruning(cc_pair.id)
+
+    r = redis_pool.get_client()
+    if r.exists(rcp.fence_key):
+        return True
+
+    return False
 
 
 def _get_deletion_status(
@@ -61,45 +81,6 @@ def get_deletion_attempt_snapshot(
         credential_id=credential_id,
         status=deletion_task.status,
     )
-
-
-# def should_prune_cc_pair(
-#     connector: Connector, credential: Credential, db_session: Session
-# ) -> bool:
-#     if not connector.prune_freq:
-#         return False
-
-#     pruning_task_name = name_cc_prune_task(
-#         connector_id=connector.id, credential_id=credential.id
-#     )
-#     last_pruning_task = get_latest_task(pruning_task_name, db_session)
-#     current_db_time = get_db_current_time(db_session)
-
-#     if not last_pruning_task:
-#         time_since_initialization = current_db_time - connector.time_created
-#         if time_since_initialization.total_seconds() >= connector.prune_freq:
-#             return True
-#         return False
-
-#     if not ALLOW_SIMULTANEOUS_PRUNING:
-#         pruning_type_task_name = name_cc_prune_task()
-#         last_pruning_type_task = get_latest_task_by_type(
-#             pruning_type_task_name, db_session
-#         )
-
-#         if last_pruning_type_task and check_task_is_live_and_not_timed_out(
-#             last_pruning_type_task, db_session
-#         ):
-#             return False
-
-#     if check_task_is_live_and_not_timed_out(last_pruning_task, db_session):
-#         return False
-
-#     if not last_pruning_task.start_time:
-#         return False
-
-#     time_since_last_pruning = current_db_time - last_pruning_task.start_time
-#     return time_since_last_pruning.total_seconds() >= connector.prune_freq
 
 
 def document_batch_to_ids(doc_batch: list[Document]) -> set[str]:
@@ -158,6 +139,10 @@ def celery_is_listening_to_queue(worker: Any, name: str) -> bool:
 
 
 def celery_is_worker_primary(worker: Any) -> bool:
+    """There are multiple approaches that could be taken to determine if a celery worker
+    is 'primary', as defined by us. But the way we do it is to check the hostname set
+    for the celery worker, which can be done either in celeryconfig.py or on the
+    command line with '--hostname'."""
     hostname = worker.hostname
     if hostname.startswith("light"):
         return False

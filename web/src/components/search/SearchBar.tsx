@@ -178,9 +178,11 @@ export const FullSearchBar = ({
         suppressContentEditableWarning={true}
       />
       <div
-        className={`flex ${showingSidebar ? " 2xl:justify-between" : "2xl:justify-end"} justify-between 4xl:justify-end w-full items-center space-x-3 py-3 px-4`}
+        className={`flex flex-nowrap overflow-y-hidden ${showingSidebar ? " 2xl:justify-between" : "2xl:justify-end"} justify-between 4xl:justify-end w-full max-w-full items-center space-x-3 py-3 px-4`}
       >
-        <div className={`-my-1 4xl:hidden ${!showingSidebar && "2xl:hidden"}`}>
+        <div
+          className={`-my-1 overflow-x-scroll flex-grow 4xl:hidden ${!showingSidebar && "2xl:hidden"}`}
+        >
           {(ccPairs.length > 0 || documentSets.length > 0) && (
             <HorizontalSourceSelector
               isHorizontal
@@ -192,7 +194,7 @@ export const FullSearchBar = ({
             />
           )}
         </div>
-        <div className="flex my-auto items-center gap-x-3">
+        <div className="flex-shrink-0 flex items-center my-auto gap-x-3">
           {toggleAgentic && (
             <AnimatedToggle isOn={agentic!} handleToggle={toggleAgentic} />
           )}

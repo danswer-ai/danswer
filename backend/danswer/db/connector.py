@@ -272,11 +272,13 @@ def create_initial_default_connector(db_session: Session) -> None:
     db_session.commit()
 
 
-def mark_connector_as_pruned(connector_id: int, db_session: Session) -> None:
-    stmt = select(Connector).where(Connector.id == connector_id)
-    connector = db_session.scalar(stmt)
-    if connector is None:
-        raise ValueError(f"No connector with ID: {connector_id}")
+def mark_ccpair_as_pruned(cc_pair_id: int, db_session: Session) -> None:
+    stmt = select(ConnectorCredentialPair).where(
+        ConnectorCredentialPair.id == cc_pair_id
+    )
+    cc_pair = db_session.scalar(stmt)
+    if cc_pair is None:
+        raise ValueError(f"No cc_pair with ID: {cc_pair_id}")
 
-    connector.last_pruned = datetime.now(timezone.utc)
+    cc_pair.last_pruned = datetime.now(timezone.utc)
     db_session.commit()

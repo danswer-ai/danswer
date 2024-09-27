@@ -5,12 +5,12 @@ import redis
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
-from celery.utils.log import get_task_logger
 from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.celery_app import celery_app
+from danswer.background.celery.celery_app import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisConnectorPruning
@@ -20,7 +20,7 @@ from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector import fetch_connector_by_id
-from danswer.db.connector import mark_connector_as_pruned
+from danswer.db.connector import mark_ccpair_as_pruned
 from danswer.db.connector_credential_pair import add_deletion_failure_message
 from danswer.db.connector_credential_pair import (
     delete_connector_credential_pair__no_commit,
@@ -51,9 +51,6 @@ from danswer.utils.variable_functionality import (
 from danswer.utils.variable_functionality import noop_fallback
 
 redis_pool = RedisPool()
-
-# use this within celery tasks to get celery task specific logging
-task_logger = get_task_logger(__name__)
 
 
 # celery auto associates tasks created inside another task,
@@ -419,7 +416,7 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
     r.delete(rcd.fence_key)
 
 
-def monitor_connector_pruning_taskset(
+def monitor_ccpair_pruning_taskset(
     key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
@@ -453,7 +450,7 @@ def monitor_connector_pruning_taskset(
     if count > 0:
         return
 
-    mark_connector_as_pruned(cc_pair_id, db_session)
+    mark_ccpair_as_pruned(cc_pair_id, db_session)
     task_logger.info(
         f"Successfully pruned connector credential pair. cc_pair_id={cc_pair_id}"
     )
@@ -506,7 +503,7 @@ def monitor_vespa_sync() -> None:
                 monitor_usergroup_taskset(key_bytes, r, db_session)
 
             for key_bytes in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
-                monitor_connector_pruning_taskset(key_bytes, r, db_session)
+                monitor_ccpair_pruning_taskset(key_bytes, r, db_session)
 
         # uncomment for debugging if needed
         # r_celery = celery_app.broker_connection().channel().client

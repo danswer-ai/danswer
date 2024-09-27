@@ -345,12 +345,28 @@ class RedisConnectorDeletion(RedisObjectHelper):
 
 class RedisConnectorPruning(RedisObjectHelper):
     """Celery will kick off a long running generator task to crawl the connector and
-    find any missing docs, which will each then get a new deletion task. The progress of
-    those tasks will then be monitored to completion."""
+    find any missing docs, which will each then get a new cleanup task. The progress of
+    those tasks will then be monitored to completion.
+
+    Example rough happy path order:
+    Check connectorpruning_fence_1
+    Send generator task with id connectorpruning+generator_1_{uuid}
+
+    generator runs connector with callbacks that increment connectorpruning_generator_progress_1
+    generator creates many subtasks with id connectorpruning+sub_1_{uuid}
+      in taskset connectorpruning_taskset_1
+    on completion, generator sets connectorpruning_generator_complete_1
+
+    celery postrun removes subtasks from taskset
+    monitor beat task cleans up when taskset reaches 0 items
+    """
 
     PREFIX = "connectorpruning"
     FENCE_PREFIX = PREFIX + "_fence"  # a fence for the entire pruning process
+    GENERATOR_TASK_PREFIX = PREFIX + "+generator"
+
     TASKSET_PREFIX = PREFIX + "_taskset"  # stores a list of prune tasks id's
+    SUBTASK_PREFIX = PREFIX + "+sub"
 
     GENERATOR_PROGRESS_PREFIX = (
         PREFIX + "_generator_progress"
@@ -358,11 +374,14 @@ class RedisConnectorPruning(RedisObjectHelper):
     GENERATOR_COMPLETE_PREFIX = (
         PREFIX + "_generator_complete"
     )  # a signal that the generator has finished
-    TASK_PREFIX = PREFIX + "_cleanup"
 
     def __init__(self, id: int) -> None:
         super().__init__(id)
         self.documents_to_prune: set[str] = set()
+
+    @property
+    def generator_task_id_prefix(self) -> str:
+        return f"{self.GENERATOR_TASK_PREFIX}_{self._id}"
 
     @property
     def generator_progress_key(self) -> str:
@@ -373,6 +392,10 @@ class RedisConnectorPruning(RedisObjectHelper):
     def generator_complete_key(self) -> str:
         # example: connectorpruning_generator_complete_1
         return f"{self.GENERATOR_COMPLETE_PREFIX}_{self._id}"
+
+    @property
+    def subtask_id_prefix(self) -> str:
+        return f"{self.SUBTASK_PREFIX}_{self._id}"
 
     def generate_tasks(
         self,
@@ -400,7 +423,7 @@ class RedisConnectorPruning(RedisObjectHelper):
             # the actual redis key is "celery-task-meta-dd32ded3-00aa-4884-8b21-42f8332e7fac"
             # we prefix the task id so it's easier to keep track of who created the task
             # aka "documentset_1_6dd32ded3-00aa-4884-8b21-42f8332e7fac"
-            custom_task_id = f"{self.task_id_prefix}_{uuid4()}"
+            custom_task_id = f"{self.subtask_id_prefix}_{uuid4()}"
 
             # add to the tracking taskset in redis BEFORE creating the celery task.
             # note that for the moment we are using a single taskset key, not differentiated by cc_pair id

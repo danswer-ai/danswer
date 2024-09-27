@@ -1,4 +1,5 @@
 import math
+from http import HTTPStatus
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -9,7 +10,11 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
+from danswer.background.celery.celery_utils import cc_pair_is_pruning
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
+from danswer.background.celery.tasks.pruning.tasks import (
+    try_creating_prune_generator_task,
+)
 from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.connector_credential_pair import remove_credential_from_connector
@@ -26,6 +31,7 @@ from danswer.db.index_attempt import count_index_attempts_for_connector
 from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_paginated_index_attempts_for_cc_pair_id
 from danswer.db.models import User
+from danswer.redis.redis_pool import RedisPool
 from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import CCStatusUpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
@@ -36,8 +42,9 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
-
 router = APIRouter(prefix="/manage")
+
+redis_pool = RedisPool()
 
 
 @router.get("/admin/cc-pair/{cc_pair_id}/index-attempts")
@@ -188,6 +195,74 @@ def update_cc_pair_name(
     except IntegrityError:
         db_session.rollback()
         raise HTTPException(status_code=400, detail="Name must be unique")
+
+
+@router.get("/admin/cc-pair/{cc_pair_id}/prune")
+def get_cc_pair_latest_prune(
+    cc_pair_id: int,
+    user: User = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> bool:
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id,
+        db_session=db_session,
+        user=user,
+        get_editable=False,
+    )
+    if not cc_pair:
+        raise HTTPException(
+            status_code=400,
+            detail="Connection not found for current user's permissions",
+        )
+
+    return cc_pair_is_pruning(cc_pair.id, db_session)
+
+
+@router.post("/admin/cc-pair/{cc_pair_id}/prune")
+def prune_cc_pair(
+    cc_pair_id: int,
+    user: User = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[list[int]]:
+    """Triggers pruning on a particular cc_pair immediately"""
+
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id,
+        db_session=db_session,
+        user=user,
+        get_editable=False,
+    )
+    if not cc_pair:
+        raise HTTPException(
+            status_code=400,
+            detail="Connection not found for current user's permissions",
+        )
+
+    if cc_pair_is_pruning(cc_pair.id, db_session=db_session):
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail="Pruning task already in progress.",
+        )
+
+    logger.info(
+        f"Pruning cc_pair: cc_pair_id={cc_pair_id} "
+        f"connector_id={cc_pair.connector_id} "
+        f"credential_id={cc_pair.credential_id} "
+        f"{cc_pair.connector.name} connector."
+    )
+    tasks_created = try_creating_prune_generator_task(
+        cc_pair, db_session, redis_pool.get_client()
+    )
+    if not tasks_created:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="Pruning task creation failed.",
+        )
+
+    return StatusResponse(
+        success=True,
+        message="Successfully created the pruning task.",
+    )
 
 
 @router.put("/connector/{connector_id}/credential/{credential_id}")

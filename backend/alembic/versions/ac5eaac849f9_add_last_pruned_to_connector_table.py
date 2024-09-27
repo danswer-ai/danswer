@@ -1,4 +1,4 @@
-"""add last_pruned and needs_pruning to the connector table
+"""add last_pruned to the connector_credential_pair table
 
 Revision ID: ac5eaac849f9
 Revises: 52a219fb5233
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "ac5eaac849f9"
-down_revision = "f32615f71aeb"
+down_revision = "46b7a812670f"
 branch_labels = None
 depends_on = None
 
@@ -18,19 +18,10 @@ depends_on = None
 def upgrade() -> None:
     # last pruned represents the last time the connector was pruned
     op.add_column(
-        "connector",
+        "connector_credential_pair",
         sa.Column("last_pruned", sa.DateTime(timezone=True), nullable=True),
-    )
-
-    # a flag that can be set to trigger pruning immediately
-    op.add_column(
-        "connector",
-        sa.Column(
-            "needs_pruning", sa.Boolean(), nullable=False, server_default=sa.false()
-        ),
     )
 
 
 def downgrade() -> None:
-    op.drop_column("connector", "needs_pruning")
-    op.drop_column("connector", "last_pruned")
+    op.drop_column("connector_credential_pair", "last_pruned")

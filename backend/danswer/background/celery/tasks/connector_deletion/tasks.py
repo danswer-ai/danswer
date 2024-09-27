@@ -1,12 +1,12 @@
 import redis
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
-from celery.utils.log import get_task_logger
 from redis import Redis
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
 
 from danswer.background.celery.celery_app import celery_app
+from danswer.background.celery.celery_app import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -21,9 +21,6 @@ from danswer.db.search_settings import get_current_search_settings
 from danswer.redis.redis_pool import RedisPool
 
 redis_pool = RedisPool()
-
-# use this within celery tasks to get celery task specific logging
-task_logger = get_task_logger(__name__)
 
 
 @shared_task(
