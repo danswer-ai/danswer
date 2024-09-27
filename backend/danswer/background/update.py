@@ -399,7 +399,9 @@ def get_all_tenant_ids() -> list[str] | list[None]:
             WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'public')
         """))
         tenant_ids = [row[0] for row in result]
-    return tenant_ids
+    valid_tenants = [tenant for tenant in tenant_ids if tenant is None or not tenant.startswith('pg_')]
+
+    return valid_tenants
 
 
 def update_loop(
@@ -443,17 +445,7 @@ def update_loop(
             )
 
         try:
-            tenants: list[str | None] = []
-            if MULTI_TENANT:
-                tenants = [
-                    tenant for tenant in tenants
-                    if tenant is None or not tenant.startswith('pg_')
-                ]
-            else:
-                tenants = tenants
-            if MULTI_TENANT:
-                logger.info(f"Found valid tenants: {tenants}")
-
+            tenants = get_all_tenant_ids()
 
             for tenant_id in tenants:
                 try:

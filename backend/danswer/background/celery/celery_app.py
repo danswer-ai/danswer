@@ -454,11 +454,7 @@ def check_for_prune_task(tenant_id: str | None) -> None:
 def schedule_tenant_tasks() -> None:
     tenants = get_all_tenant_ids()
 
-    # Filter out any invalid tenants if necessary
-    valid_tenants = [tenant for tenant in tenants if tenant is None or not tenant.startswith('pg_')]
-    logger.info(f"Scheduling tasks for tenants: {valid_tenants}")
-
-    for tenant_id in valid_tenants:
+    for tenant_id in tenants:
         # Schedule tasks specific to each tenant
         celery_app.conf.beat_schedule[f"check-for-document-set-sync-{tenant_id}"] = {
             "task": "check_for_document_sets_sync_task",
