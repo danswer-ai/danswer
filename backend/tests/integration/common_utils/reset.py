@@ -15,9 +15,9 @@ from danswer.db.engine import get_session_context_manager
 from danswer.db.engine import SYNC_DB_API
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.swap_index import check_index_swap
+from danswer.db_setup import setup_postgres
 from danswer.document_index.vespa.index import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa.index import VespaIndex
-from danswer.db_setup import setup_postgres
 from danswer.main import setup_vespa
 from danswer.utils.logger import setup_logger
 
