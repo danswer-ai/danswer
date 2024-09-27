@@ -22,6 +22,10 @@ from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.confluence.confluence_utils import (
+    build_confluence_document_id,
+)
+from danswer.connectors.confluence.confluence_utils import get_used_attachments
 from danswer.connectors.confluence.rate_limit_handler import (
     make_confluence_call_handle_rate_limit,
 )
@@ -103,24 +107,6 @@ def parse_html_page(text: str, confluence_client: Confluence) -> str:
         # Include @ sign for tagging, more clear for LLM
         user.replaceWith("@" + _get_user(user_id, confluence_client))
     return format_document_soup(soup)
-
-
-def get_used_attachments(text: str, confluence_client: Confluence) -> list[str]:
-    """Parse a Confluence html page to generate a list of current
-        attachment in used
-
-    Args:
-        text (str): The page content
-        confluence_client (Confluence): Confluence client
-
-    Returns:
-        list[str]: List of filename currently in used
-    """
-    files_in_used = []
-    soup = bs4.BeautifulSoup(text, "html.parser")
-    for attachment in soup.findAll("ri:attachment"):
-        files_in_used.append(attachment.attrs["ri:filename"])
-    return files_in_used
 
 
 def _comment_dfs(
@@ -624,13 +610,16 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             page_html = (
                 page["body"].get("storage", page["body"].get("view", {})).get("value")
             )
-            page_url = self.wiki_base + page["_links"]["webui"]
+            # The url and the id are the same
+            page_url = build_confluence_document_id(
+                self.wiki_base, page["_links"]["webui"]
+            )
             if not page_html:
                 logger.debug("Page is empty, skipping: %s", page_url)
                 continue
             page_text = parse_html_page(page_html, self.confluence_client)
 
-            files_in_used = get_used_attachments(page_html, self.confluence_client)
+            files_in_used = get_used_attachments(page_html)
             attachment_text, unused_page_attachments = self._fetch_attachments(
                 self.confluence_client, page_id, files_in_used
             )
@@ -683,8 +672,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             if time_filter and not time_filter(last_updated):
                 continue
 
-            attachment_url = self._attachment_to_download_link(
-                self.confluence_client, attachment
+            # The url and the id are the same
+            attachment_url = build_confluence_document_id(
+                self.wiki_base, attachment["_links"]["download"]
             )
             attachment_content = self._attachment_to_content(
                 self.confluence_client, attachment

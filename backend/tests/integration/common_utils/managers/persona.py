@@ -164,31 +164,39 @@ class PersonaManager:
 
     @staticmethod
     def verify(
-        test_persona: DATestPersona,
+        persona: DATestPersona,
         user_performing_action: DATestUser | None = None,
     ) -> bool:
         all_personas = PersonaManager.get_all(user_performing_action)
-        for persona in all_personas:
-            if persona.id == test_persona.id:
+        for fetched_persona in all_personas:
+            if fetched_persona.id == persona.id:
                 return (
-                    persona.name == test_persona.name
-                    and persona.description == test_persona.description
-                    and persona.num_chunks == test_persona.num_chunks
-                    and persona.llm_relevance_filter
-                    == test_persona.llm_relevance_filter
-                    and persona.is_public == test_persona.is_public
-                    and persona.llm_filter_extraction
-                    == test_persona.llm_filter_extraction
-                    and persona.llm_model_provider_override
-                    == test_persona.llm_model_provider_override
-                    and persona.llm_model_version_override
-                    == test_persona.llm_model_version_override
-                    and set(persona.prompts) == set(test_persona.prompt_ids)
-                    and set(persona.document_sets) == set(test_persona.document_set_ids)
-                    and set(persona.tools) == set(test_persona.tool_ids)
-                    and set(user.email for user in persona.users)
-                    == set(test_persona.users)
-                    and set(persona.groups) == set(test_persona.groups)
+                    fetched_persona.name == persona.name
+                    and fetched_persona.description == persona.description
+                    and fetched_persona.num_chunks == persona.num_chunks
+                    and fetched_persona.llm_relevance_filter
+                    == persona.llm_relevance_filter
+                    and fetched_persona.is_public == persona.is_public
+                    and fetched_persona.llm_filter_extraction
+                    == persona.llm_filter_extraction
+                    and fetched_persona.llm_model_provider_override
+                    == persona.llm_model_provider_override
+                    and fetched_persona.llm_model_version_override
+                    == persona.llm_model_version_override
+                    and set([prompt.id for prompt in fetched_persona.prompts])
+                    == set(persona.prompt_ids)
+                    and set(
+                        [
+                            document_set.id
+                            for document_set in fetched_persona.document_sets
+                        ]
+                    )
+                    == set(persona.document_set_ids)
+                    and set([tool.id for tool in fetched_persona.tools])
+                    == set(persona.tool_ids)
+                    and set(user.email for user in fetched_persona.users)
+                    == set(persona.users)
+                    and set(fetched_persona.groups) == set(persona.groups)
                 )
         return False
 

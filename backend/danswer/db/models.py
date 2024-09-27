@@ -1725,7 +1725,9 @@ class User__ExternalUserGroupId(Base):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
     # These group ids have been prefixed by the source type
     external_user_group_id: Mapped[str] = mapped_column(String, primary_key=True)
-    cc_pair_id: Mapped[int] = mapped_column(ForeignKey("connector_credential_pair.id"))
+    cc_pair_id: Mapped[int] = mapped_column(
+        ForeignKey("connector_credential_pair.id"), primary_key=True
+    )
 
 
 class UsageReport(Base):

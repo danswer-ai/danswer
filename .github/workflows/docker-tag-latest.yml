@@ -1,3 +1,6 @@
+# This workflow is set up to be manually triggered via the GitHub Action tab.
+# Given a version, it will tag those backend and webserver images as "latest".
+
 name: Tag Latest Version
 
 on:

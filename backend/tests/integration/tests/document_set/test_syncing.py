@@ -16,7 +16,7 @@ def test_multiple_document_sets_syncing_same_connnector(
     # Creating an admin user (first user created is automatically an admin)
     admin_user: DATestUser = UserManager.create(name="admin_user")
 
-    # add api key to user
+    # create api key
     api_key: DATestAPIKey = APIKeyManager.create(
         user_performing_action=admin_user,
     )
@@ -70,7 +70,7 @@ def test_removing_connector(reset: None, vespa_client: vespa_fixture) -> None:
     # Creating an admin user (first user created is automatically an admin)
     admin_user: DATestUser = UserManager.create(name="admin_user")
 
-    # add api key to user
+    # create api key
     api_key: DATestAPIKey = APIKeyManager.create(
         user_performing_action=admin_user,
     )
