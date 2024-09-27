@@ -116,7 +116,7 @@ def scrape_page_posts(
                 },
                 doc_updated_at=post_date,
             )
-            # logger.info(f"xenforo doc_id: doc_id={document.id} text={post_text}")
+
             documents.append(document)
     return documents
 
