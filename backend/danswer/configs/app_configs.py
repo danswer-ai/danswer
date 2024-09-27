@@ -383,3 +383,6 @@ STRIPE_WEBHOOK_SECRET = (
 )
 
 DEFAULT_SCHEMA = os.environ.get("DEFAULT_SCHEMA", "public")
+
+DATA_PLANE_SECRET = os.environ.get("DATA_PLANE_SECRET", "your_shared_secret_key")
+EXPECTED_API_KEY = os.environ.get("EXPECTED_API_KEY", "your_control_plane_api_key")

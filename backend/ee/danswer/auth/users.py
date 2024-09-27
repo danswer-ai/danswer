@@ -14,9 +14,9 @@ from ee.danswer.db.saml import get_saml_account
 from ee.danswer.server.seeding import get_seed_config
 from ee.danswer.utils.secrets import extract_hashed_cookie
 import jwt
+from danswer.configs.app_configs import DATA_PLANE_SECRET
+from danswer.configs.app_configs import EXPECTED_API_KEY
 
-DATA_PLANE_SECRET = "your_shared_secret_key"
-EXPECTED_API_KEY = "your_control_plane_api_key"
 
 logger = setup_logger()
 

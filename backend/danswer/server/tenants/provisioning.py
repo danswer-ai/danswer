@@ -32,9 +32,6 @@ from danswer.db.engine import build_connection_string
 import os
 from danswer.db_setup import setup_postgres
 
-DATA_PLANE_SECRET = "your_shared_secret_key"
-EXPECTED_API_KEY = "your_control_plane_api_key"
-
 logger = setup_logger()
 
 def run_alembic_migrations(schema_name: str) -> None:
