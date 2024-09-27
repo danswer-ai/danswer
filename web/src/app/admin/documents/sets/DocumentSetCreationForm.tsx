@@ -227,10 +227,8 @@ export const DocumentSetCreationForm = ({
                                   }
                                 }}
                               >
-                                <div className="my-auto flex">
-                                  <Users className="my-auto mr-2" />{" "}
-                                  {teamspace.name}
-                                </div>
+                                <Users className="my-auto mr-2" size={14} />
+                                {teamspace.name}
                               </Badge>
                             );
                           })}

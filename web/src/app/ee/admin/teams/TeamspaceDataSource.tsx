@@ -42,44 +42,7 @@ export const TeamspaceDataSource = ({
         open={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
       >
-        <div className="space-y-4">
-          <div>
-            <Label>Share link</Label>
-            <div className="flex items-center gap-2">
-              <Input />
-              <Button variant="outline" size="icon">
-                <Copy size={16} />
-              </Button>
-            </div>
-          </div>
-
-          <div>
-            <Label>Invite user</Label>
-            <div className="flex items-center gap-2">
-              <Input placeholder="Enter email" />
-              <Select>
-                <SelectTrigger className="w-full lg:w-64">
-                  <SelectValue placeholder="Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Label className="pt-1.5">
-              We&rsquo;ll send them instructions and a magic link to join the
-              workspace via email.
-            </Label>
-          </div>
-
-          <div className="flex gap-2 justify-end pt-6">
-            <Button variant="ghost" onClick={() => setIsInviteModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button>Send Invite</Button>
-          </div>
-        </div>
+        Add
       </CustomModal>
       <div className="rounded-md bg-muted w-full p-4 min-h-32 flex flex-col justify-between">
         <h3>

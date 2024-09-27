@@ -19,10 +19,8 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { User, UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CustomModal } from "@/components/CustomModal";
-import { useToast } from "@/hooks/use-toast";
 
 export const PendingInvites = ({ q }: { q: string }) => {
-  const { toast } = useToast();
   const [invitedPage, setInvitedPage] = useState(1);
   const [acceptedPage, setAcceptedPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -69,32 +67,13 @@ export const PendingInvites = ({ q }: { q: string }) => {
 
   const filteredUsers = finalInvited.filter(
     (user) =>
-      user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.full_name!.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const onRemovalSuccess = () => {
-    toast({
-      title: "User Removed Successfully",
-      description: "The invited user has been removed from your list",
-      variant: "success",
-    });
-    setIsCancelModalVisible(false);
-  };
-
-  const onRemovalError = () => {
-    toast({
-      title: "Failed to Remove User",
-      description:
-        "We encountered an issue while attempting to remove the invited user. Please try again or contact support if the problem persists",
-      variant: "destructive",
-    });
-    setIsCancelModalVisible(false);
-  };
-
   return (
     <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
-      <div className="xl:w-2/5">
+      <div className="xl:w-1/3">
         <h2 className="text-lg md:text-2xl text-strong font-bold">
           Pending Invites
         </h2>

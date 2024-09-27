@@ -35,10 +35,15 @@ function QueryHistoryTableRow({
 }: {
   chatSessionMinimal: ChatSessionMinimal;
 }) {
+  const handleRowClick = () => {
+    window.location.href = `/admin/performance/query-history/${chatSessionMinimal.id}`;
+  };
+
   return (
     <TableRow
       key={chatSessionMinimal.id}
       className="hover:bg-hover-light cursor-pointer relative"
+      onClick={handleRowClick}
     >
       <TableCell>
         <p className="whitespace-normal line-clamp-5">
@@ -60,12 +65,6 @@ function QueryHistoryTableRow({
       <TableCell>
         {timestampToReadableDate(chatSessionMinimal.time_created)}
       </TableCell>
-      <td className="w-0 p-0">
-        <Link
-          href={`/admin/performance/query-history/${chatSessionMinimal.id}`}
-          className="absolute w-full h-full left-0"
-        ></Link>
-      </td>
     </TableRow>
   );
 }

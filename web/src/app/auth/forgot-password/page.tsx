@@ -47,7 +47,7 @@ const Page = async () => {
   }
 
   return (
-    <main className="relative h-full px-6 md:px-0">
+    <main className="relative h-full px-6">
       <HealthCheckBanner />
 
       <WelcomeTopBar />

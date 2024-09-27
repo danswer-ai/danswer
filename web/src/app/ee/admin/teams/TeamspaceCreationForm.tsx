@@ -89,7 +89,7 @@ export const TeamspaceCreationForm = ({
       >
         {({ isSubmitting, values, setFieldValue }) => (
           <Form>
-            <div className="pt-8 space-y-2">
+            <div className="pt-8 space-y-6">
               <div className="flex justify-between gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
                   Teamspace Name
@@ -103,7 +103,7 @@ export const TeamspaceCreationForm = ({
                 />
               </div>
 
-              <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
+              <div className="flex justify-between gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
                   Teamspace Logo
                 </p>
@@ -115,7 +115,7 @@ export const TeamspaceCreationForm = ({
                 </div>
               </div>
 
-              <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
+              {/*  <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
                   Security Setting
                 </p>
@@ -127,9 +127,9 @@ export const TeamspaceCreationForm = ({
                     history
                   </p>
                 </div>
-              </div>
+              </div> */}
 
-              <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
+              {/*  <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
                   Setup Storage Size
                 </p>
@@ -144,18 +144,19 @@ export const TeamspaceCreationForm = ({
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
+              </div> */}
 
               <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
                   Set Token Rate Limit
                 </p>
-                <div className="flex items-center gap-2 w-full">
-                  <Input placeholder="Token" />
+                <div className="flex items-center gap-4 w-full">
+                  <Input placeholder="Time Window (Hours)" type="number" />
+                  <Input placeholder="Token Budget (Thousands)" type="number" />
                 </div>
               </div>
 
-              <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
+              {/*               <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
                   Invite Users
                 </p>
@@ -171,7 +172,7 @@ export const TeamspaceCreationForm = ({
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
+              </div> */}
 
               <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
