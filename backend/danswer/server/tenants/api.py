@@ -24,7 +24,7 @@ basic_router = APIRouter(prefix="/tenants")
 @basic_router.post("/create")
 def create_tenant(tenant_id: str, _:  None=  Depends(control_plane_dep)) -> dict[str, str]:
     if not MULTI_TENANT:
-        raise HTTPException(status_code=403, detail="Multi-tenant is not enabled")
+        raise HTTPException(status_code=403, detail="Multi-tenancy is not enabled")
 
     if not tenant_id:
         raise HTTPException(status_code=400, detail="tenant_id is required")
@@ -44,7 +44,7 @@ async def sso_callback(
     user_manager: UserManager = Depends(get_user_manager),
 ) -> JSONResponse:
     if not MULTI_TENANT:
-        raise HTTPException(status_code=403, detail="Multi-tenant is not enabled")
+        raise HTTPException(status_code=403, detail="Multi-tenancy is not enabled")
 
     payload = verify_sso_token(sso_token)
     user = await user_manager.sso_authenticate(
