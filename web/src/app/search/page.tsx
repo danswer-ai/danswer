@@ -153,7 +153,7 @@ export default async function Home() {
     <div className="h-full">
       <HealthCheckBanner />
       <div className="relative flex h-full">
-        <BarLayout user={user} BarComponent={SearchSidebar} isSearch />
+        <BarLayout user={user} BarComponent={SearchSidebar} />
         {shouldShowWelcomeModal && <WelcomeModal user={user} />}
         {!shouldShowWelcomeModal &&
           !shouldDisplayNoSourcesModal &&
@@ -166,7 +166,7 @@ export default async function Home() {
       Only used in the EE version of the app. */}
         <ChatPopup />
         <InstantSSRAutoRefresh />
-        <div className="pt-20 lg:pt-14 lg:pl-24 lg:pr-14 container h-screen overflow-hidden">
+        <div className="pt-20 lg:pt-14 lg:px-14 container h-screen overflow-hidden">
           <SearchSection
             ccPairs={ccPairs}
             documentSets={documentSets}

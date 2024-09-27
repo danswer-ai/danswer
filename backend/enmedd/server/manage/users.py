@@ -1,4 +1,9 @@
+import random
 import re
+import string
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 
 from email_validator import validate_email
 from fastapi import APIRouter
@@ -14,8 +19,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from ee.enmedd.db.api_key import is_api_key_email_address
+from enmedd.auth.invited_users import generate_invite_email
 from enmedd.auth.invited_users import get_invited_users
-from enmedd.auth.invited_users import send_user_email_invite
+from enmedd.auth.invited_users import send_invite_user_email
 from enmedd.auth.invited_users import write_invited_users
 from enmedd.auth.noauth_user import fetch_no_auth_user
 from enmedd.auth.noauth_user import set_no_auth_user_preferences
@@ -25,18 +31,23 @@ from enmedd.auth.schemas import UserStatus
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
 from enmedd.auth.users import optional_user
+from enmedd.auth.utils import generate_2fa_email
+from enmedd.auth.utils import send_2fa_email
 from enmedd.configs.app_configs import AUTH_TYPE
 from enmedd.configs.app_configs import VALID_EMAIL_DOMAINS
+from enmedd.configs.app_configs import WEB_DOMAIN
 from enmedd.configs.constants import AuthType
 from enmedd.db.engine import get_async_session
 from enmedd.db.engine import get_session
 from enmedd.db.models import AccessToken
+from enmedd.db.models import TwofactorAuth
 from enmedd.db.models import User
 from enmedd.db.users import change_user_password
 from enmedd.db.users import get_user_by_email
 from enmedd.db.users import list_users
 from enmedd.dynamic_configs.factory import get_dynamic_config_store
 from enmedd.server.manage.models import AllUsersResponse
+from enmedd.server.manage.models import OTPVerificationRequest
 from enmedd.server.manage.models import UserByEmail
 from enmedd.server.manage.models import UserInfo
 from enmedd.server.manage.models import UserRoleResponse
@@ -51,6 +62,60 @@ router = APIRouter()
 
 
 USERS_PAGE_SIZE = 10
+
+
+@router.patch("/users/generate-otp")
+async def generate_otp(
+    current_user: User = Depends(current_user),
+    db: Session = Depends(get_session),
+):
+    otp_code = "".join(random.choices(string.digits, k=6))
+
+    subject, body = generate_2fa_email(current_user.full_name, otp_code)
+    send_2fa_email(current_user.email, subject, body)
+
+    existing_otp = (
+        db.query(TwofactorAuth).filter(TwofactorAuth.user_id == current_user.id).first()
+    )
+
+    if existing_otp:
+        existing_otp.code = otp_code
+        existing_otp.created_at = datetime.now(timezone.utc)
+    else:
+        new_otp = TwofactorAuth(user_id=current_user.id, code=otp_code)
+        db.add(new_otp)
+
+    db.commit()
+
+    return {"message": "OTP code generated and sent!"}
+
+
+@router.post("/users/verify-otp")
+async def verify_otp(
+    otp_code: OTPVerificationRequest,
+    current_user: User = Depends(current_user),
+    db: Session = Depends(get_session),
+):
+    otp_code = otp_code.otp_code
+
+    otp_entry = (
+        db.query(TwofactorAuth)
+        .filter(TwofactorAuth.user_id == current_user.id)
+        .order_by(TwofactorAuth.created_at.desc())
+        .first()
+    )
+
+    if not otp_entry:
+        raise HTTPException(status_code=400, detail="No OTP found for the user.")
+
+    if otp_entry.code != otp_code:
+        raise HTTPException(status_code=400, detail="Invalid OTP code.")
+
+    expiration_time = otp_entry.created_at + timedelta(hours=6)
+    if datetime.now(timezone.utc) > expiration_time:
+        raise HTTPException(status_code=400, detail="OTP code has expired.")
+
+    return {"message": "OTP verified successfully!"}
 
 
 @router.post("/users/change-password", tags=["users"])
@@ -213,9 +278,9 @@ def bulk_invite_users(
     normalized_emails = []
     for email in emails:
         email_info = validate_email(email)
-        logger.info(f"sent email to {email_info} + {email}")
-        send_user_email_invite(email, current_user)
-        logger.info(f"sent email to {email_info} + {email} + {email_info.email}")
+        signup_link = f"{WEB_DOMAIN}/auth/signup?email={email_info.email}"
+        subject, body = generate_invite_email(signup_link)
+        send_invite_user_email(email, subject, body)
         normalized_emails.append(email_info.normalized)
     all_emails = list(set(normalized_emails) | set(get_invited_users()))
     return write_invited_users(all_emails)
@@ -226,7 +291,9 @@ def remove_invited_user(
     user_email: UserByEmail,
     _: User | None = Depends(current_admin_user),
 ) -> int:
+    print(f"Removing user with the email: {user_email}")
     user_emails = get_invited_users()
+    print(f"Invited users: {str(user_emails)}")
     remaining_users = [user for user in user_emails if user != user_email.user_email]
     return write_invited_users(remaining_users)
 

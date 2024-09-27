@@ -7,11 +7,11 @@ import { CustomModal } from "../CustomModal";
 import { useState } from "react";
 import { Teamspace } from "@/lib/types";
 
-interface GlobalSidebarModalProps {
+interface TeamspaceModalProps {
   teamspace?: Teamspace[] | undefined;
 }
 
-export const GlobalSidebarModal = ({ teamspace }: GlobalSidebarModalProps) => {
+export const TeamspaceModal = ({ teamspace }: TeamspaceModalProps) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   if (!teamspace) return null;

@@ -128,7 +128,7 @@ export const SearchResultsDisplay = ({
   console.log(selectedDocumentIds);
 
   return (
-    <div className="px-2">
+    <div className="px-2 overflow-y-auto h-full">
       {shouldDisplayQA && (
         <Card className="p-4 relative">
           <CardHeader className="border-b p-0 pb-4">

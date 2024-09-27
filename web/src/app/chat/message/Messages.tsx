@@ -332,23 +332,29 @@ export const AIMessage = ({
                       );
                       if (document.link) {
                         return (
-                          <a
+                          <Badge
+                            variant="secondary"
+                            className="cursor-pointer hover:bg-opacity-75"
                             key={document.document_id}
-                            href={document.link}
-                            target="_blank"
-                            className="cursor-pointer"
                           >
-                            {display}
-                          </a>
+                            <a
+                              href={document.link}
+                              target="_blank"
+                              className="cursor-pointer flex truncate"
+                            >
+                              {display}
+                            </a>
+                          </Badge>
                         );
                       } else {
                         return (
-                          <div
+                          <Badge
+                            variant="secondary"
+                            className="cursor-pointer hover:bg-opacity-75"
                             key={document.document_id}
-                            className="cursor-default"
                           >
                             {display}
-                          </div>
+                          </Badge>
                         );
                       }
                     })}
@@ -358,7 +364,7 @@ export const AIMessage = ({
           </div>
           {handleFeedback && (
             <div className="flex flex-row gap-x-0.5 pl-1 md:pl-12 mt-1.5">
-              <CopyButton content={content.toString()} />
+              <CopyButton content={content.toString()} smallIcon />
               <CustomTooltip
                 trigger={
                   <CustomModal
@@ -459,7 +465,7 @@ function MessageSwitcher({
         trigger={
           <Button
             variant="ghost"
-            size="smallIcon"
+            size="icon"
             onClick={currentPage === 1 ? undefined : handlePrevious}
           >
             <ChevronLeft />
@@ -476,7 +482,7 @@ function MessageSwitcher({
         trigger={
           <Button
             variant="ghost"
-            size="smallIcon"
+            size="icon"
             onClick={currentPage === totalPages ? undefined : handleNext}
           >
             <ChevronRight />

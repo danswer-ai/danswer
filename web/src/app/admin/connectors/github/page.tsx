@@ -109,6 +109,7 @@ const Main = () => {
           <p className="text-sm">
             If you don&apos;t have an access token, read the guide{" "}
             <a
+              rel="noopener"
               className="text-blue-500"
               href="https://docs.danswer.dev/connectors/github"
               target="_blank"

@@ -27,6 +27,7 @@ from enmedd.auth.invited_users import get_invited_users
 from enmedd.auth.schemas import UserCreate
 from enmedd.auth.schemas import UserRole
 from enmedd.auth.utils import generate_password_reset_email
+from enmedd.auth.utils import generate_user_verification_email
 from enmedd.auth.utils import send_reset_password_email
 from enmedd.auth.utils import send_user_verification_email
 from enmedd.configs.app_configs import AUTH_TYPE
@@ -180,12 +181,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
         verify_email_domain(user.email)
-
         logger.info(
             f"Verification requested for user {user.id}. Verification token: {token}"
         )
-
-        send_user_verification_email(user.email, token)
+        link = f"{WEB_DOMAIN}/auth/verify-email?token={token}"
+        subject, body = generate_user_verification_email(user.full_name, link)
+        send_user_verification_email(user.email, subject, body)
 
 
 async def get_user_manager(

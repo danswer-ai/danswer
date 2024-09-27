@@ -1,22 +1,37 @@
 "use client";
 
-import { TextFormField } from "@/components/admin/connectors/Field";
-import { basicLogin, basicSignup } from "@/lib/user";
-import { Form, Formik } from "formik";
-import { useRouter } from "next/navigation";
-import * as Yup from "yup";
-import { requestEmailVerification } from "../lib";
 import { useState } from "react";
-import { Spinner } from "@/components/Spinner";
-import { Button } from "@/components/ui/button";
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
 import { useToast } from "@/hooks/use-toast";
+import { basicLogin, basicSignup } from "@/lib/user";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Spinner } from "@/components/Spinner";
+import { TextFormField } from "@/components/admin/connectors/Field";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PasswordRequirements } from "./PasswordRequirements";
+import { usePasswordValidation } from "@/hooks/usePasswordValidation"; // Import the custom hook
 
 export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email") || "";
+
+  // Use the custom hook
+  const {
+    passwordStrength,
+    passwordFocused,
+    passwordFeedback,
+    passwordWarning,
+    hasUppercase,
+    hasNumberOrSpecialChar,
+    calculatePasswordStrength,
+    setPasswordFocused,
+  } = usePasswordValidation();
 
   return (
     <>
@@ -25,7 +40,7 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
         initialValues={{
           full_name: "",
           company_name: "",
-          email: "",
+          email: email,
           password: "",
           confirm_password: "",
         }}
@@ -39,6 +54,22 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             .oneOf([Yup.ref("password")], "Passwords must match"),
         })}
         onSubmit={async (values) => {
+          if (
+            !(
+              values.password.length >= 8 &&
+              hasUppercase &&
+              hasNumberOrSpecialChar
+            )
+          ) {
+            setPasswordFocused(true);
+            toast({
+              title: "Password doesn't meet requirements",
+              description: "Ensure your password meets all the criteria.",
+              variant: "destructive",
+            });
+            return;
+          }
+
           setIsLoading(true);
           const response = await basicSignup(
             values.full_name,
@@ -46,25 +77,37 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             values.email,
             values.password
           );
+
           if (!response.ok) {
             setIsLoading(false);
             const errorDetail = (await response.json()).detail;
 
             let errorMsg = "Unknown error";
             if (errorDetail === "REGISTER_USER_ALREADY_EXISTS") {
-              errorMsg =
-                "An account already exwkists with the specified email.";
+              errorMsg = "An account already exist with the specified email.";
             }
             toast({
               title: "Error",
               description: `Failed to sign up - ${errorMsg}`,
               variant: "destructive",
             });
+
+            setPasswordFocused(true);
             return;
           }
+
+          const loginResponse = await basicLogin(values.email, values.password);
+          if (loginResponse.ok) {
+            if (shouldVerify) {
+              router.push("/auth/waiting-on-verification");
+            } else {
+              router.push("/");
+            }
+          }
+          setIsLoading(false);
         }}
       >
-        {({ isSubmitting, values }) => (
+        {({ isSubmitting, values, setFieldValue }) => (
           <Form>
             <TextFormField
               name="full_name"
@@ -84,12 +127,33 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
               type="email"
               placeholder="email@yourcompany.com"
             />
-            <TextFormField
-              name="password"
-              label="Password"
-              type="password"
-              placeholder="Enter your password"
-            />
+
+            <div className="relative">
+              <TextFormField
+                name="password"
+                label="Password"
+                type="password"
+                placeholder="Enter your password"
+                onChange={(e) => {
+                  setFieldValue("password", e.target.value);
+                  calculatePasswordStrength(e.target.value);
+                }}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
+              />
+
+              {passwordFocused && (
+                <PasswordRequirements
+                  password={values.password}
+                  hasUppercase={hasUppercase}
+                  hasNumberOrSpecialChar={hasNumberOrSpecialChar}
+                  passwordStrength={passwordStrength}
+                  passwordFeedback={passwordFeedback}
+                  passwordWarning={passwordWarning}
+                />
+              )}
+            </div>
+
             <TextFormField
               name="confirm_password"
               label="Retype Password"

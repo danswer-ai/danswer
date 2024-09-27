@@ -16,6 +16,7 @@ import { LoginText } from "./LoginText";
 import Image from "next/image";
 import LoginImage from "../../../../public/LoginImage.png";
 import DefaultUserChart from "../../../../public/default-user-chart.png";
+import { WelcomeTopBar } from "@/components/TopBar";
 
 const Page = async ({
   searchParams,
@@ -69,13 +70,12 @@ const Page = async ({
   return (
     <main className="relative h-full">
       <HealthCheckBanner />
-      <div className="absolute top-6 w-1/2 left-10">
-        <Image src={Logo} alt="Logo" className="w-28 xl:w-32" />
-      </div>
 
-      <div className="w-screen flex h-full">
-        <div className="w-full lg:w-1/2 flex items-center justify-center px-8 lg:px-16 3xl:px-0">
-          <div className="w-full md:w-3/4 lg:w-full 3xl:w-1/2">
+      <WelcomeTopBar />
+
+      <div className="w-screen flex h-full overflow-y-auto">
+        <div className="w-full h-full xl:w-1/2 flex items-start justify-center px-6 lg:px-14 3xl:px-0 pt-28">
+          <div className="w-full md:w-3/4 lg:w-1/2 xl:w-full 3xl:w-1/2 my-auto pb-14 md:pb-20">
             {authUrl && authTypeMetadata && (
               <>
                 <LoginText />
@@ -104,7 +104,7 @@ const Page = async ({
             )}
           </div>
         </div>
-        <div className="w-1/2 h-full relative rounded-l-[50px] overflow-hidden hidden lg:flex">
+        <div className="w-1/2 h-full relative rounded-l-[50px] overflow-hidden hidden xl:flex">
           <Image
             src={LoginImage}
             alt="login-image"
