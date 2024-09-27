@@ -4,12 +4,12 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ee.enmedd.server.workspace.models import Workspaces
-from ee.enmedd.server.workspace.store import store_settings
 from ee.enmedd.server.workspace.store import upload_logo
 from enmedd.db.engine import get_session_context_manager
 from enmedd.db.llm import fetch_existing_llm_providers
 from enmedd.db.llm import update_default_provider
 from enmedd.db.llm import upsert_llm_provider
+from enmedd.db.workspace import update_workspace
 from enmedd.server.manage.llm.models import LLMProviderUpsertRequest
 from enmedd.utils.logger import setup_logger
 
@@ -77,4 +77,6 @@ def seed_db() -> None:
             seeded_settings = Workspaces(
                 workspace_name=seeded_name, use_custom_logo=is_seeded_logo
             )
-            store_settings(seeded_settings)
+            update_workspace(
+                db_session=db_session, workspace=seeded_settings, commit=True
+            )

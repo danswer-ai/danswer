@@ -59,7 +59,7 @@ def get_sqlalchemy_engine() -> Engine:
     global _SYNC_ENGINE
     if _SYNC_ENGINE is None:
         connection_string = build_connection_string(db_api=SYNC_DB_API)
-        _SYNC_ENGINE = create_engine(connection_string, pool_size=40, max_overflow=10)
+        _SYNC_ENGINE = create_engine(connection_string, pool_size=50, max_overflow=25)
     return _SYNC_ENGINE
 
 
@@ -68,7 +68,7 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
     if _ASYNC_ENGINE is None:
         connection_string = build_connection_string()
         _ASYNC_ENGINE = create_async_engine(
-            connection_string, pool_size=40, max_overflow=10
+            connection_string, pool_size=50, max_overflow=25
         )
     return _ASYNC_ENGINE
 
