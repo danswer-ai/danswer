@@ -41,8 +41,6 @@ SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY") or "JWT_SECRET_KEY"
 #####
 # Auth Configs
 #####
-# MULTI_TENANT =
-MULTI_TENANT = os.environ.get("MULTI_TENANT", "false").lower() == "true"
 
 AUTH_TYPE = AuthType((os.environ.get("AUTH_TYPE") or AuthType.DISABLED.value).lower())
 DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
@@ -377,8 +375,8 @@ ENTERPRISE_EDITION_ENABLED = (
 STRIPE_PRICE = os.environ.get("STRIPE_PRICE", "price_1PsYoPHlhTYqRZib2t5ydpq5")
 
 
-# STRIPE_PRICE="price_1PsYoPHlhTYqRZib2t5ydpq5"
-STRIPE_WEBHOOK_SECRET = (
+STRIPE_WEBHOOK_SECRET = os.environ.get(
+    "STRIPE_WEBHOOK_SECRET",
     "whsec_1cd766cd6bd08590aa8c46ab5c21ac32cad77c29de2e09a152a01971d6f405d3"
 )
 
@@ -386,3 +384,5 @@ DEFAULT_SCHEMA = os.environ.get("DEFAULT_SCHEMA", "public")
 
 DATA_PLANE_SECRET = os.environ.get("DATA_PLANE_SECRET", "your_shared_secret_key")
 EXPECTED_API_KEY = os.environ.get("EXPECTED_API_KEY", "your_control_plane_api_key")
+
+MULTI_TENANT = os.environ.get("MULTI_TENANT", "false").lower() == "true"

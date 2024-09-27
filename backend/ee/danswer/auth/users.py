@@ -17,7 +17,6 @@ import jwt
 from danswer.configs.app_configs import DATA_PLANE_SECRET
 from danswer.configs.app_configs import EXPECTED_API_KEY
 
-
 logger = setup_logger()
 
 def verify_auth_setting() -> None:

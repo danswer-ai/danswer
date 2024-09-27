@@ -400,7 +400,7 @@ def run_indexing_entrypoint(index_attempt_id: int, tenant_id: str | None, is_ee:
             attempt = _prepare_index_attempt(db_session, index_attempt_id)
 
             logger.info(
-                f"Indexing starting for tenant {tenant_id}: "
+                f"Indexing starting for tenant {tenant_id}: " if tenant_id is not None else "" +
                 f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
