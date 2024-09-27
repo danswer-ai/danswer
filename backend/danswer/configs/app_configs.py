@@ -137,7 +137,7 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
     os.environ.get("POSTGRES_PASSWORD") or "password"
 )
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5433"
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
 # defaults to False
@@ -394,13 +394,6 @@ ENTERPRISE_EDITION_ENABLED = (
 ###
 # CLOUD CONFIGS
 ###
-STRIPE_PRICE = os.environ.get("STRIPE_PRICE", "price_1PsYoPHlhTYqRZib2t5ydpq5")
-
-
-STRIPE_WEBHOOK_SECRET = os.environ.get(
-    "STRIPE_WEBHOOK_SECRET",
-    "whsec_1cd766cd6bd08590aa8c46ab5c21ac32cad77c29de2e09a152a01971d6f405d3",
-)
 
 DEFAULT_SCHEMA = os.environ.get("DEFAULT_SCHEMA", "public")
 

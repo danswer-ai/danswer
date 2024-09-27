@@ -37,23 +37,23 @@ def upgrade() -> None:
 
     # Define the old default embedding model directly
     old_embedding_model = {
-        "model_name": "sentence-transformers/all-distilroberta-v1",
-        "model_dim": 768,
-        "normalize": True,
-        "query_prefix": "",
-        "passage_prefix": "",
-        "index_name": "OPENSEARCH_INDEX_NAME",
-        "status": IndexModelStatus.PAST,
-    }
-
-    # Define the new default embedding model directly
-    new_embedding_model = {
         "model_name": "intfloat/e5-small-v2",
         "model_dim": 384,
         "normalize": False,
         "query_prefix": "query: ",
         "passage_prefix": "passage: ",
         "index_name": "danswer_chunk_intfloat_e5_small_v2",
+        "status": IndexModelStatus.PAST,
+    }
+
+    # Define the new default embedding model directly
+    new_embedding_model = {
+        "model_name": "nomic-ai/nomic-embed-text-v1",
+        "model_dim": 768,
+        "normalize": True,
+        "query_prefix": "search_query: ",
+        "passage_prefix": "search_document: ",
+        "index_name": "danswer_chunk_nomic_ai_nomic_embed_text_v1__danswer_alt_index",
         "status": IndexModelStatus.PRESENT,
     }
 
