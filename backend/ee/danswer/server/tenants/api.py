@@ -2,11 +2,11 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 
+from danswer.auth.users import control_plane_dep
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.db.engine import get_session_with_tenant
 from danswer.setup import setup_danswer
 from danswer.utils.logger import setup_logger
-from ee.danswer.server.tenants.access import control_plane_dep
 from ee.danswer.server.tenants.models import CreateTenantRequest
 from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
