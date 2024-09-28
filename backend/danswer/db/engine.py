@@ -263,7 +263,7 @@ def get_current_tenant_id(request: Request) -> str:
         current_tenant_id.set(tenant_id)
         return tenant_id
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token format")
+        raise HTTPException(status_code=403, detail="Invalid token format")
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
