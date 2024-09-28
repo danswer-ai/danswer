@@ -51,7 +51,7 @@ from shared_configs.configs import MODEL_SERVER_PORT
 logger = setup_logger()
 
 
-def setup_danswer(db_session: Session):
+def setup_danswer(db_session: Session) -> None:
     check_index_swap(db_session=db_session)
     search_settings = get_current_search_settings(db_session)
     secondary_search_settings = get_secondary_search_settings(db_session)
