@@ -14,24 +14,24 @@ logger = setup_logger()
 
 def _get_group_members_email(jira_client: JIRA, group_name: str) -> list[str]:
     members = []
-    for member in jira_client.group_members(group_name):
-        members.append(member.emailAddress)
+    query_params = {"groupname": group_name, "expand": "users"}
+    group_dict = jira_client._get_json("group", params=query_params)
+    member_dicts = group_dict.get("users", {}).get("items", [])
+    for member in member_dicts:
+        if member.get("emailAddress"):
+            members.append(member.get("emailAddress"))
     return members
-
-
-def _get_jira_group_names(jira_client: JIRA, jira_project_key: str) -> list[str]:
-    groups = []
-    query = f"project = {jira_project_key}"
-    for group in jira_client.groups(query=query):
-        groups.append(group)
-    return groups
 
 
 def jira_group_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
 ) -> None:
-    jira_base, jira_project_key = extract_jira_project(
+    """
+    TODO: Combine this with confluence one to use the fact that all atlassian
+    products use the same groups
+    """
+    jira_base, _ = extract_jira_project(
         cc_pair.connector.connector_specific_config["jira_project_url"]
     )
     jira_client = build_jira_client(
@@ -39,8 +39,8 @@ def jira_group_sync(
     )
 
     danswer_groups: list[ExternalUserGroup] = []
-    # Confluence enforces that group names are unique
-    for group_name in _get_jira_group_names(jira_client, jira_project_key):
+    # Atlassian enforces that group names are unique
+    for group_name in jira_client.groups():
         group_member_emails = _get_group_members_email(jira_client, group_name)
         group_members = batch_add_non_web_user_if_not_exists__no_commit(
             db_session=db_session, emails=group_member_emails
