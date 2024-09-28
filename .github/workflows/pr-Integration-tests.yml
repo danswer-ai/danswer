@@ -28,12 +28,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      # NOTE: we don't need to build the Web Docker image since it's not used
-      # during the IT for now. We have a separate action to verify it builds 
-      # succesfully
+      # tag every docker image with "test" so that we can spin up the correct set
+      # of images during testing
+      
+      # We don't need to build the Web Docker image since it's not yet used
+      # in the integration tests. We have a separate action to verify that it builds 
+      # successfully.
       - name: Pull Web Docker image
         run: |
           docker pull danswer/danswer-web-server:latest
+          docker tag danswer/danswer-web-server:latest danswer/danswer-web-server:test
 
       # images are built and run locally for testing purposes. Not pushed.
       - name: Build Backend Docker image
