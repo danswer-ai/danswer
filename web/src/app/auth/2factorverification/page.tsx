@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Spinner } from "@/components/Spinner";
+import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 const Page = () => {
   const { toast } = useToast();
@@ -80,9 +81,10 @@ const Page = () => {
   return (
     <main className="h-full">
       {isLoading && <Spinner />}
+      <HealthCheckBanner />
       <WelcomeTopBar />
       <div className="w-full h-full flex items-center justify-center px-6">
-        <div className="md:w-[500px]">
+        <div className="md:w-[500px] w-full">
           <div className="flex items-center justify-center">
             <div className="bg-primary p-3 rounded-md">
               <ShieldEllipsis size={60} stroke="white" />
@@ -109,30 +111,30 @@ const Page = () => {
               <InputOTPGroup>
                 <InputOTPSlot
                   index={0}
-                  className="h-16 w-16 text-3xl font-bold"
+                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
                 />
                 <InputOTPSlot
                   index={1}
-                  className="h-16 w-16 text-3xl font-bold"
+                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
                 />
                 <InputOTPSlot
                   index={2}
-                  className="h-16 w-16 text-3xl font-bold"
+                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
                 />
               </InputOTPGroup>
               <InputOTPSeparator />
               <InputOTPGroup>
                 <InputOTPSlot
                   index={3}
-                  className="h-16 w-16 text-3xl font-bold"
+                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
                 />
                 <InputOTPSlot
                   index={4}
-                  className="h-16 w-16 text-3xl font-bold"
+                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
                 />
                 <InputOTPSlot
                   index={5}
-                  className="h-16 w-16 text-3xl font-bold"
+                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
                 />
               </InputOTPGroup>
             </InputOTP>

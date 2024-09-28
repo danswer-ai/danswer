@@ -1165,7 +1165,7 @@ export function ChatPage({
 
                     {liveAssistant && (
                       <div className="relative z-top-bar shrink-0">
-                        <div className="flex w-full items-start p-5 justify-between">
+                        <div className="flex w-full items-start p-4 justify-between">
                           <div className="flex lg:hidden items-center gap-2">
                             <Button
                               variant="ghost"

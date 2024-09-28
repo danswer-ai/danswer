@@ -46,16 +46,30 @@ const Page = async () => {
     return redirect("/");
   }
 
-  return (
+  /* return (
     <main className="relative h-full px-6">
       <HealthCheckBanner />
 
       <WelcomeTopBar />
 
       <div className="flex justify-center items-center h-full">
-        <div className="md:w-[500px]">
-          <EnterEmail />
-        </div>
+        <EnterEmail />
+      </div>
+
+      <div className="w-full md:w-[500px] flex gap-2 absolute bottom-10 left-1/2 -translate-x-1/2 px-6 md:px-0">
+        <Progress value={100} />
+        <Progress value={0} />
+      </div>
+    </main>
+  ); */
+  return (
+    <main className="h-full">
+      <HealthCheckBanner />
+
+      <WelcomeTopBar />
+
+      <div className="w-full h-full flex items-center justify-center px-6">
+        <EnterEmail />
       </div>
 
       <div className="w-full md:w-[500px] flex gap-2 absolute bottom-10 left-1/2 -translate-x-1/2 px-6 md:px-0">
