@@ -55,6 +55,7 @@ def test_user_group_deletion(reset: None, vespa_client: vespa_fixture) -> None:
         user_performing_action=admin_user,
     )
 
+    # Create other objects that are related to the user group
     credential: DATestCredential = CredentialManager.create(
         groups=[user_group.id],
         user_performing_action=admin_user,
@@ -81,6 +82,7 @@ def test_user_group_deletion(reset: None, vespa_client: vespa_fixture) -> None:
         user_performing_action=admin_user,
     )
 
+    # Delete the user group
     UserGroupManager.delete(
         user_group=user_group,
         user_performing_action=admin_user,
@@ -90,10 +92,13 @@ def test_user_group_deletion(reset: None, vespa_client: vespa_fixture) -> None:
         user_groups_to_check=[user_group], user_performing_action=admin_user
     )
 
+    # Set our expected local representations to empty
     credential.groups = []
     document_set.groups = []
     llm_provider.groups = []
     persona.groups = []
+
+    # Verify that the local representations were updated
     CredentialManager.verify(
         credential=credential,
         user_performing_action=admin_user,
