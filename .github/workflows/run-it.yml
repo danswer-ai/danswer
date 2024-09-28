@@ -35,13 +35,14 @@ jobs:
         run: |
           docker pull danswer/danswer-web-server:latest
 
+      # images are built and run locally for testing purposes. Not pushed.
       - name: Build Backend Docker image
         uses: ./.github/actions/custom-build-and-push
         with:
           context: ./backend
           file: ./backend/Dockerfile
           platforms: linux/amd64
-          tags: danswer/danswer-backend:it
+          tags: danswer/danswer-backend:test
           push: false
           load: true
           cache-from: type=gha,scope=backend-docker-cache
@@ -53,7 +54,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile.model_server
           platforms: linux/amd64
-          tags: danswer/danswer-model-server:it
+          tags: danswer/danswer-model-server:test
           push: false
           load: true
           cache-from: type=gha,scope=model-server-docker-cache
@@ -65,7 +66,7 @@ jobs:
           context: ./backend
           file: ./backend/tests/integration/Dockerfile
           platforms: linux/amd64
-          tags: danswer/integration-test-runner:it
+          tags: danswer/danswer-integration:test
           push: false
           load: true
           cache-from: type=gha,scope=integration-test-docker-cache
@@ -78,7 +79,7 @@ jobs:
           AUTH_TYPE=basic \
           REQUIRE_EMAIL_VERIFICATION=false \
           DISABLE_TELEMETRY=true \
-          IMAGE_TAG=it \
+          IMAGE_TAG=test \
           docker compose -f docker-compose.dev.yml -p danswer-stack up -d
         id: start_docker
 
@@ -130,7 +131,7 @@ jobs:
             -e API_SERVER_HOST=api_server \
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
             -e TEST_WEB_HOSTNAME=test-runner \
-            danswer/integration-test-runner:it
+            danswer/danswer-integration:test
         continue-on-error: true
         id: run_tests
 
