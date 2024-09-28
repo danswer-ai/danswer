@@ -151,8 +151,12 @@ def validate_user_creation_permissions(
             status_code=400,
             detail=detail,
         )
+
     user_curated_groups = fetch_user_groups_for_user(
-        db_session=db_session, user_id=user.id, only_curator_groups=True
+        db_session=db_session,
+        user_id=user.id,
+        # Global curators can curate all groups they are member of
+        only_curator_groups=user.role != UserRole.GLOBAL_CURATOR,
     )
     user_curated_group_ids = set([group.id for group in user_curated_groups])
     target_group_ids_set = set(target_group_ids)
