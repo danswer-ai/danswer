@@ -34,7 +34,6 @@ jobs:
       - name: Pull Web Docker image
         run: |
           docker pull danswer/danswer-web-server:latest
-          docker tag danswer/danswer-web-server:latest danswer/danswer-web-server:it
 
       - name: Build Backend Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -43,10 +42,10 @@ jobs:
           file: ./backend/Dockerfile
           platforms: linux/amd64
           tags: danswer/danswer-backend:it
-          cache-from: type=registry,ref=danswer/danswer-backend:it
-          cache-to: |
-            type=registry,ref=danswer/danswer-backend:it,mode=max
-            type=inline
+          push: false
+          load: true
+          cache-from: type=gha,scope=backend-docker-cache
+          cache-to: type=gha,mode=max,scope=backend-docker-cache
 
       - name: Build Model Server Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -55,10 +54,10 @@ jobs:
           file: ./backend/Dockerfile.model_server
           platforms: linux/amd64
           tags: danswer/danswer-model-server:it
-          cache-from: type=registry,ref=danswer/danswer-model-server:it
-          cache-to: |
-            type=registry,ref=danswer/danswer-model-server:it,mode=max
-            type=inline
+          push: false
+          load: true
+          cache-from: type=gha,scope=model-server-docker-cache
+          cache-to: type=gha,mode=max,scope=model-server-docker-cache
 
       - name: Build integration test Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -67,10 +66,10 @@ jobs:
           file: ./backend/tests/integration/Dockerfile
           platforms: linux/amd64
           tags: danswer/integration-test-runner:it
-          cache-from: type=registry,ref=danswer/integration-test-runner:it
-          cache-to: |
-            type=registry,ref=danswer/integration-test-runner:it,mode=max
-            type=inline
+          push: false
+          load: true
+          cache-from: type=gha,scope=integration-test-docker-cache
+          cache-to: type=gha,mode=max,scope=integration-test-docker-cache
 
       - name: Start Docker containers
         run: |
