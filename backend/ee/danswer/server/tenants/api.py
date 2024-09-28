@@ -12,10 +12,10 @@ from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
 
 logger = setup_logger()
-basic_router = APIRouter(prefix="/tenants")
+router = APIRouter(prefix="/tenants")
 
 
-@basic_router.post("/create")
+@router.post("/create")
 def create_tenant(
     create_tenant_request: CreateTenantRequest, _: None = Depends(control_plane_dep)
 ) -> dict[str, str]:
