@@ -1,4 +1,3 @@
-import contextlib
 import os
 from types import SimpleNamespace
 
@@ -9,7 +8,6 @@ from sqlalchemy.schema import CreateSchema
 from alembic import command
 from alembic.config import Config
 from danswer.db.engine import build_connection_string
-from danswer.db.engine import get_async_session
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.utils.logger import setup_logger
 
@@ -29,8 +27,8 @@ def run_alembic_migrations(schema_name: str) -> None:
         alembic_cfg.set_main_option("sqlalchemy.url", build_connection_string())
 
         # Mimic command-line options by adding 'cmd_opts' to the config
-        alembic_cfg.cmd_opts = SimpleNamespace()
-        alembic_cfg.cmd_opts.x = [f"schema={schema_name}"]
+        alembic_cfg.cmd_opts = SimpleNamespace()  # type: ignore
+        alembic_cfg.cmd_opts.x = [f"schema={schema_name}"]  # type: ignore
 
         # Run migrations programmatically
         command.upgrade(alembic_cfg, "head")
@@ -45,19 +43,18 @@ def run_alembic_migrations(schema_name: str) -> None:
         raise
 
 
-def create_tenant_schema(tenant_id: str) -> None:
+def ensure_schema_exists(tenant_id: str) -> bool:
     with Session(get_sqlalchemy_engine()) as db_session:
         with db_session.begin():
-            db_session.execute(CreateSchema(tenant_id))
-
-
-async def check_schema_exists(tenant_id: str) -> bool:
-    get_async_session_context = contextlib.asynccontextmanager(get_async_session)
-    async with get_async_session_context() as session:
-        result = await session.execute(
-            text(
-                "SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schema_name"
-            ),
-            {"schema_name": tenant_id},
-        )
-        return result.scalar() is not None
+            result = db_session.execute(
+                text(
+                    "SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schema_name"
+                ),
+                {"schema_name": tenant_id},
+            )
+            schema_exists = result.scalar() is not None
+            if not schema_exists:
+                stmt = CreateSchema(tenant_id)
+                db_session.execute(stmt)
+                return True
+            return False

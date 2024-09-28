@@ -18,8 +18,8 @@ from danswer.db.swap_index import check_index_swap
 from danswer.document_index.vespa.index import DOCUMENT_ID_ENDPOINT
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.indexing.models import IndexingSetting
-from danswer.main import setup_postgres
-from danswer.main import setup_vespa
+from danswer.setup import setup_postgres
+from danswer.setup import setup_vespa
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
