@@ -147,8 +147,6 @@ def fetch_jira_issues_batch(
             )
             continue
 
-        semantic_rep = ticket_content
-
         page_url = f"{jira_client.client_info()}/browse/{jira.key}"
 
         people = set()
@@ -191,7 +189,7 @@ def fetch_jira_issues_batch(
         doc_batch.append(
             Document(
                 id=page_url,
-                sections=[Section(link=page_url, text=semantic_rep)],
+                sections=[Section(link=page_url, text=ticket_content)],
                 source=DocumentSource.JIRA,
                 semantic_identifier=jira.fields.summary,
                 doc_updated_at=time_str_to_utc(jira.fields.updated),
