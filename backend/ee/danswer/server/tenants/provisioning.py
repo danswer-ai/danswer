@@ -19,12 +19,15 @@ def run_alembic_migrations(schema_name: str) -> None:
 
     try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        root_dir = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
+        root_dir = os.path.abspath(os.path.join(current_dir, "..", "..", "..", ".."))
         alembic_ini_path = os.path.join(root_dir, "alembic.ini")
 
         # Configure Alembic
         alembic_cfg = Config(alembic_ini_path)
         alembic_cfg.set_main_option("sqlalchemy.url", build_connection_string())
+        alembic_cfg.set_main_option(
+            "script_location", os.path.join(root_dir, "alembic")
+        )
 
         # Mimic command-line options by adding 'cmd_opts' to the config
         alembic_cfg.cmd_opts = SimpleNamespace()  # type: ignore
