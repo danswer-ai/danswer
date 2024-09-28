@@ -92,9 +92,11 @@ def test_global_curator_flow(reset: None) -> None:
     admin_user: DATestUser = UserManager.create(name="admin_user")
     assert UserManager.verify_role(admin_user, UserRole.ADMIN)
 
-    # Creating a curator
+    # Creating a user
     global_curator: DATestUser = UserManager.create(name="global_curator")
     assert UserManager.verify_role(global_curator, UserRole.BASIC)
+
+    # Set the user to a global curator
     UserManager.set_role(
         user_to_set=global_curator,
         target_role=UserRole.GLOBAL_CURATOR,
@@ -102,7 +104,7 @@ def test_global_curator_flow(reset: None) -> None:
     )
     assert UserManager.verify_role(global_curator, UserRole.GLOBAL_CURATOR)
 
-    # Creating a user group
+    # Creating a user group containing the global curator
     user_group_1 = UserGroupManager.create(
         name="user_group_1",
         user_ids=[global_curator.id],
@@ -112,15 +114,8 @@ def test_global_curator_flow(reset: None) -> None:
     UserGroupManager.wait_for_sync(
         user_groups_to_check=[user_group_1], user_performing_action=admin_user
     )
-    # Making curator a curator of user_group_1
-    UserGroupManager.set_curator_status(
-        test_user_group=user_group_1,
-        user_to_set_as_curator=global_curator,
-        user_performing_action=admin_user,
-    )
-    assert UserManager.verify_role(global_curator, UserRole.CURATOR)
 
-    # Creating a credential as curator
+    # Creating a credential as global curator
     test_credential = CredentialManager.create(
         name="curator_test_credential",
         source=DocumentSource.FILE,
@@ -129,7 +124,7 @@ def test_global_curator_flow(reset: None) -> None:
         user_performing_action=global_curator,
     )
 
-    # Creating a connector as curator
+    # Creating a connector as global curator
     test_connector = ConnectorManager.create(
         name="curator_test_connector",
         source=DocumentSource.FILE,
@@ -144,7 +139,7 @@ def test_global_curator_flow(reset: None) -> None:
         connector=test_connector, user_performing_action=global_curator
     )
 
-    # Creating a CC pair as curator
+    # Creating a CC pair as global curator
     test_cc_pair = CCPairManager.create(
         connector_id=test_connector.id,
         credential_id=test_credential.id,
