@@ -35,6 +35,7 @@ def get_schema_options() -> str:
             if "=" in pair:
                 key, value = pair.split("=", 1)
                 x_args[key] = value
+    print(x_args_raw)
     schema_name = x_args.get("schema", "public")
     return schema_name
 
@@ -74,6 +75,7 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection: Connection) -> None:
     schema = get_schema_options()
+    print("schema is", schema)
 
     connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema}"'))
     connection.execute(text("COMMIT"))

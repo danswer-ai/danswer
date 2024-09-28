@@ -244,23 +244,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = USER_AUTH_SECRET
     verification_token_secret = USER_AUTH_SECRET
 
-    async def sso_authenticate(
-        self,
-        email: str,
-        tenant_id: str,
-    ) -> User:
-        try:
-            user = await self.get_by_email(email)
-
-        except Exception:
-            # user_create = UserCreate(email=email, password=secrets.token_urlsafe(32))
-            user_create = UserCreate(
-                role=UserRole.BASIC, password="password", email=email, is_verified=True
-            )
-            user = await self.create(user_create)
-
-        return user
-
     async def create(
         self,
         user_create: schemas.UC | UserCreate,

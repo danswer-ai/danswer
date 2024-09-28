@@ -1,5 +1,6 @@
 import contextlib
 import os
+from types import SimpleNamespace
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -48,13 +49,14 @@ def run_alembic_migrations(schema_name: str) -> None:
         alembic_cfg = Config(alembic_ini_path)
         alembic_cfg.set_main_option("sqlalchemy.url", build_connection_string())
 
-        # Prepare the x arguments
-        x_arguments = [f"schema={schema_name}"]
-        alembic_cfg.cmd_opts.x = x_arguments  # type: ignore
+        # Mimic command-line options by adding 'cmd_opts' to the config
+        alembic_cfg.cmd_opts = SimpleNamespace()
+        alembic_cfg.cmd_opts.x = [f"schema={schema_name}"]
 
         # Run migrations programmatically
         command.upgrade(alembic_cfg, "head")
 
+        # Run migrations programmatically
         logger.info(
             f"Alembic migrations completed successfully for schema: {schema_name}"
         )
@@ -75,7 +77,7 @@ def create_tenant_schema(tenant_id: str) -> None:
                     WHERE schema_name = :schema_name
                 """
                 ),
-                {"schema_name": tenant_id},
+                {"schema_name": f'"{tenant_id}"'},
             )
             schema_exists = result.scalar() is not None
 
@@ -157,3 +159,7 @@ async def check_schema_exists(tenant_id: str) -> bool:
             {"schema_name": tenant_id},
         )
         return result.scalar() is not None
+
+
+def create_initial_admin_user(tenant_id: str, admin_email: str) -> None:
+    pass
