@@ -225,6 +225,38 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
     return _ASYNC_ENGINE
 
 
+# Dependency to get the current tenant ID and set the context variable
+def get_current_tenant_id(request: Request) -> str:
+    """Dependency that extracts the tenant ID from the JWT token in the request and sets the context variable."""
+    if not MULTI_TENANT:
+        tenant_id = POSTGRES_DEFAULT_SCHEMA
+        current_tenant_id.set(tenant_id)
+        return tenant_id
+
+    token = request.cookies.get("tenant_details")
+    if not token:
+        # If no token is present, use the default schema or handle accordingly
+        tenant_id = POSTGRES_DEFAULT_SCHEMA
+        current_tenant_id.set(tenant_id)
+        return tenant_id
+
+    try:
+        payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
+        tenant_id = payload.get("tenant_id")
+        if not tenant_id:
+            raise HTTPException(
+                status_code=400, detail="Invalid token: tenant_id missing"
+            )
+        if not is_valid_schema_name(tenant_id):
+            raise HTTPException(status_code=400, detail="Invalid tenant ID format")
+        current_tenant_id.set(tenant_id)
+        return tenant_id
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=403, detail="Invalid token format")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 def get_session_with_tenant(tenant_id: str | None = None) -> Session:
     if tenant_id is None:
         tenant_id = current_tenant_id.get()
