@@ -268,6 +268,23 @@ def get_current_tenant_id(request: Request) -> str:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+def get_session_with_tenant(tenant_id: str | None = None) -> Session:
+    if tenant_id is None:
+        tenant_id = current_tenant_id.get()
+
+    if not is_valid_schema_name(tenant_id):
+        raise Exception("Invalid tenant ID")
+
+    engine = SqlEngine.get_engine()
+    session = Session(engine, expire_on_commit=False)
+
+    @event.listens_for(session, "after_begin")
+    def set_search_path(session: Session, transaction: Any, connection: Any) -> None:
+        connection.execute(text("SET search_path TO :schema"), {"schema": tenant_id})
+
+    return session
+
+
 def get_session(
     tenant_id: str = Depends(get_current_tenant_id),
 ) -> Generator[Session, None, None]:
