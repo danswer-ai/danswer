@@ -20,7 +20,9 @@ jobs:
         uses: actions/checkout@v4
 
       - uses: runs-on/cache@v4
-      
+        with:
+          key: ${{ runner.os }}
+          
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
