@@ -30,6 +30,19 @@ def document_by_cc_pair_cleanup_task(
 ) -> bool:
     """A lightweight subtask used to clean up document to cc pair relationships.
     Created by connection deletion and connector pruning parent tasks."""
+
+    """
+    To delete a connector / credential pair:
+    (1) find all documents associated with connector / credential pair where there
+    this the is only connector / credential pair that has indexed it
+    (2) delete all documents from document stores
+    (3) delete all entries from postgres
+    (4) find all documents associated with connector / credential pair where there
+    are multiple connector / credential pairs that have indexed it
+    (5) update document store entries to remove access associated with the
+    connector / credential pair from the access list
+    (6) delete all relevant entries from postgres
+    """
     task_logger.info(f"document_id={document_id}")
 
     try:
