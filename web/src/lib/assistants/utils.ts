@@ -28,7 +28,6 @@ export function classifyAssistants(user: User | null, assistants: Persona[]) {
     };
   }
 
-  console.log("assistants", assistants);
   const visibleAssistants = assistants.filter((assistant) => {
     const isVisible = user.preferences?.visible_assistants?.includes(
       assistant.id
