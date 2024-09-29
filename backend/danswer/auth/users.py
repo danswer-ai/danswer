@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Any
 from typing import Optional
 from typing import Tuple
 
@@ -31,6 +32,7 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
@@ -60,10 +62,14 @@ from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_default_admin_user_emails
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
+from danswer.db.auth import SQLAlchemyUserAdminDB
+from danswer.db.engine import get_async_session_with_tenant
 from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import AccessToken
+from danswer.db.models import OAuthAccount
 from danswer.db.models import User
+from danswer.db.models import UserTenantMapping
 from danswer.db.users import get_user_by_email
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
@@ -157,6 +163,18 @@ def verify_email_domain(email: str) -> None:
             )
 
 
+def get_tenant_id_for_email(email: str) -> str:
+    # Implement logic to get tenant_id from the mapping table
+    with Session(get_sqlalchemy_engine()) as db_session:
+        result = db_session.execute(
+            select(UserTenantMapping.tenant_id).where(UserTenantMapping.email == email)
+        )
+        tenant_id = result.scalar_one_or_none()
+    if tenant_id is None:
+        raise exceptions.UserNotExists()
+    return tenant_id
+
+
 def send_user_verification_email(
     user_email: str,
     token: str,
@@ -234,45 +252,70 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
-        verify_email_in_whitelist(account_email)
-        verify_email_domain(account_email)
+        print("authenticating this user", account_email)
 
-        user = await super().oauth_callback(  # type: ignore
-            oauth_name=oauth_name,
-            access_token=access_token,
-            account_id=account_id,
-            account_email=account_email,
-            expires_at=expires_at,
-            refresh_token=refresh_token,
-            request=request,
-            associate_by_email=associate_by_email,
-            is_verified_by_default=is_verified_by_default,
-        )
+        # Get tenant_id from mapping table
+        tenant_id = get_tenant_id_for_email(account_email)
+        print("USER BELONGS OT THIS TENANT", tenant_id)
 
-        # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
-        # re-authenticate that frequently, so by default this is disabled
-        if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
-            oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
-            await self.user_db.update(user, update_dict={"oidc_expiry": oidc_expiry})
+        if not tenant_id:
+            raise HTTPException(status_code=401, detail="User not found")
 
-        # this is needed if an organization goes from `TRACK_EXTERNAL_IDP_EXPIRY=true` to `false`
-        # otherwise, the oidc expiry will always be old, and the user will never be able to login
-        if user.oidc_expiry and not TRACK_EXTERNAL_IDP_EXPIRY:
-            await self.user_db.update(user, update_dict={"oidc_expiry": None})
+        async with get_async_session_with_tenant(tenant_id) as db_session:
+            tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
+            self.user_db = tenant_user_db
+            self.database = tenant_user_db
 
-        # Handle case where user has used product outside of web and is now creating an account through web
-        if not user.has_web_login:
-            await self.user_db.update(
-                user,
-                update_dict={
-                    "is_verified": is_verified_by_default,
-                    "has_web_login": True,
-                },
+            logger.info("new db associated porpelry!")
+
+            verify_email_in_whitelist(account_email)
+            verify_email_domain(account_email)
+            logger.info("attempting oauth callback")
+
+            user = await super().oauth_callback(  # type: ignore
+                oauth_name=oauth_name,
+                access_token=access_token,
+                account_id=account_id,
+                account_email=account_email,
+                expires_at=expires_at,
+                refresh_token=refresh_token,
+                request=request,
+                associate_by_email=associate_by_email,
+                is_verified_by_default=is_verified_by_default,
             )
-            user.is_verified = is_verified_by_default
-            user.has_web_login = True
+            logger.info("post oauth callback")
+            # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
+            # re-authenticate that frequently, so by default this is disabled
+            if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
+                oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
+                await self.user_db.update(
+                    user, update_dict={"oidc_expiry": oidc_expiry}
+                )
 
-        return user
+            # this is needed if an organization goes from `TRACK_EXTERNAL_IDP_EXPIRY=true` to `false`
+            # otherwise, the oidc expiry will always be old, and the user will never be able to login
+            if user.oidc_expiry and not TRACK_EXTERNAL_IDP_EXPIRY:
+                await self.user_db.update(user, update_dict={"oidc_expiry": None})
+
+            # Handle case where user has used product outside of web and is now creating an account through web
+            if not user.has_web_login:
+                await self.user_db.update(
+                    user,
+                    update_dict={
+                        "is_verified": is_verified_by_default,
+                        "has_web_login": True,
+                    },
+                )
+                user.is_verified = is_verified_by_default
+                user.has_web_login = True
+            logger.info("USER AUTHENTICATED")
+            return user
+
+    async def get_login_response(self, user: User, response: Response) -> Any:
+        tenant_id = await get_tenant_id_for_email(user.email)
+        strategy = self.authenticator.backends["jwt"].get_strategy()
+        token = await strategy.write_token(user, {"tenant_id": tenant_id})
+        return {"access_token": token, "token_type": "bearer"}
 
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
@@ -303,28 +346,47 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def authenticate(
         self, credentials: OAuth2PasswordRequestForm
     ) -> Optional[User]:
-        try:
-            user = await self.get_by_email(credentials.username)
-        except exceptions.UserNotExists:
+        email = credentials.username
+        print("authenticating this user")
+
+        # Get tenant_id from mapping table
+        tenant_id = await get_tenant_id_for_email(email)
+        print("USER BELONGS OT THIS TENANT", tenant_id)
+        if not tenant_id:
+            # User not found in mapping
             self.password_helper.hash(credentials.password)
             return None
 
-        if not user.has_web_login:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
+        # Create a tenant-specific session
+        async with get_async_session_with_tenant(tenant_id) as tenant_session:
+            tenant_user_db = SQLAlchemyUserDatabase(tenant_session, User)
+            self.user_db = tenant_user_db
+
+            # Proceed with authentication
+            try:
+                user = await self.get_by_email(email)
+            except exceptions.UserNotExists:
+                self.password_helper.hash(credentials.password)
+                return None
+
+            if not user.has_web_login:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
+                )
+
+            verified, updated_password_hash = self.password_helper.verify_and_update(
+                credentials.password, user.hashed_password
             )
+            if not verified:
+                return None
 
-        verified, updated_password_hash = self.password_helper.verify_and_update(
-            credentials.password, user.hashed_password
-        )
-        if not verified:
-            return None
+            if updated_password_hash is not None:
+                await self.user_db.update(
+                    user, {"hashed_password": updated_password_hash}
+                )
 
-        if updated_password_hash is not None:
-            await self.user_db.update(user, {"hashed_password": updated_password_hash})
-
-        return user
+            return user
 
 
 async def get_user_manager(

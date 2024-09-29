@@ -4,6 +4,7 @@ import threading
 import time
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any
 from typing import ContextManager
@@ -244,17 +245,48 @@ def get_current_tenant_id(request: Request) -> str:
         payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
         tenant_id = payload.get("tenant_id")
         if not tenant_id:
-            raise HTTPException(
-                status_code=400, detail="Invalid token: tenant_id missing"
-            )
+            return POSTGRES_DEFAULT_SCHEMA
+            # raise HTTPException(
+            #     status_code=400, detail="Invalid token: tenant_id missing"
+            # )
         if not is_valid_schema_name(tenant_id):
             raise HTTPException(status_code=400, detail="Invalid tenant ID format")
         current_tenant_id.set(tenant_id)
         return tenant_id
     except jwt.InvalidTokenError:
+        return POSTGRES_DEFAULT_SCHEMA
         raise HTTPException(status_code=403, detail="Invalid token format")
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@asynccontextmanager
+async def get_async_session_with_tenant(
+    tenant_id: str | None = None,
+) -> AsyncGenerator[AsyncSession, None]:
+    if tenant_id is None:
+        tenant_id = current_tenant_id.get()
+
+    if not is_valid_schema_name(tenant_id):
+        logger.error(f"Invalid tenant ID: {tenant_id}")
+        raise Exception("Invalid tenant ID")
+
+    engine = get_sqlalchemy_async_engine()
+    async_session_factory = sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
+
+    async with async_session_factory() as session:
+        try:
+            # Set the search_path to the tenant's schema
+            await session.execute(text(f'SET search_path = "{tenant_id}"'))
+        except Exception as e:
+            logger.error(f"Error setting search_path: {str(e)}")
+            # You can choose to re-raise the exception or handle it
+            # Here, we'll re-raise to prevent proceeding with an incorrect session
+            raise
+        else:
+            yield session
 
 
 def get_session_with_tenant(tenant_id: str | None = None) -> Session:
