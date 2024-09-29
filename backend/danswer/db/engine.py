@@ -259,6 +259,7 @@ def get_current_tenant_id(request: Request) -> str:
         if not is_valid_schema_name(tenant_id):
             raise HTTPException(status_code=400, detail="Invalid tenant ID format")
         current_tenant_id.set(tenant_id)
+        print("setting current tennat id to ", tenant_id)
         return tenant_id
     except jwt.InvalidTokenError:
         return current_tenant_id.get()

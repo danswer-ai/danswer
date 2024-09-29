@@ -8,7 +8,9 @@ from sqlalchemy.schema import CreateSchema
 from alembic import command
 from alembic.config import Config
 from danswer.db.engine import build_connection_string
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.models import UserTenantMapping
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -61,3 +63,24 @@ def ensure_schema_exists(tenant_id: str) -> bool:
                 db_session.execute(stmt)
                 return True
             return False
+
+
+def add_users_to_tenant(emails: list[str], tenant_id: str) -> None:
+    with get_session_with_tenant("public") as db_session:
+        try:
+            for email in emails:
+                db_session.add(UserTenantMapping(email=email, tenant_id=tenant_id))
+        except Exception as e:
+            print(e)
+        db_session.commit()
+
+
+def remove_users_from_tenant(emails: list[str], tenant_id: str) -> None:
+    print("removeing", emails, tenant_id)
+    with get_session_with_tenant("public") as db_session:
+        try:
+            for email in emails:
+                db_session.delete(UserTenantMapping(email=email, tenant_id=tenant_id))
+        except Exception as e:
+            print(e)
+        db_session.commit()
