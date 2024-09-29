@@ -14,6 +14,7 @@ from danswer.connectors.models import InputType
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.document import get_documents_for_connector_credential_pair
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
@@ -31,7 +32,7 @@ def check_for_prune_task(tenant_id: str | None) -> None:
     """Runs periodically to check if any prune tasks should be run and adds them
     to the queue"""
 
-    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
+    with get_session_with_tenant(tenant_id) as db_session:
         all_cc_pairs = get_connector_credential_pairs(db_session)
 
         for cc_pair in all_cc_pairs:

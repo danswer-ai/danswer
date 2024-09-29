@@ -16,7 +16,7 @@ from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
-from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
@@ -404,7 +404,7 @@ def run_indexing_entrypoint(
             index_attempt_id, connector_credential_pair_id
         )
 
-        with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             attempt = _prepare_index_attempt(db_session, index_attempt_id)
 
             logger.info(

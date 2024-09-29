@@ -14,7 +14,6 @@ from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
-from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_document
 from danswer.access.access import get_access_for_documents
@@ -28,7 +27,7 @@ from danswer.db.document import mark_document_as_synced
 from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document_set import fetch_document_sets_for_document
 from danswer.db.document_set import fetch_document_sets_for_documents
-from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import get_session_with_tenant
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
@@ -55,7 +54,7 @@ def delete_connector_credential_pair_batch(
     Removes a batch of documents ids from a cc-pair. If no other cc-pair uses a document anymore
     it gets permanently deleted.
     """
-    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
+    with get_session_with_tenant(tenant_id) as db_session:
         # acquire lock for all documents in this batch so that indexing can't
         # override the deletion
         with prepare_to_modify_documents(
@@ -143,7 +142,7 @@ def document_by_cc_pair_cleanup_task(
     task_logger.info(f"document_id={document_id}")
 
     try:
-        with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
             document_index = get_default_document_index(
                 primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
