@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from danswer.auth.users import control_plane_dep
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.db.engine import get_session_with_tenant
+from danswer.db.models import UserTenantMapping
 from danswer.setup import setup_danswer
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.tenants.models import CreateTenantRequest
@@ -21,6 +22,7 @@ def create_tenant(
 ) -> dict[str, str]:
     try:
         tenant_id = create_tenant_request.tenant_id
+        email = create_tenant_request.initial_admin_email
 
         if not MULTI_TENANT:
             raise HTTPException(status_code=403, detail="Multi-tenancy is not enabled")
@@ -31,9 +33,16 @@ def create_tenant(
             logger.info(f"Schema already exists for tenant {tenant_id}")
 
         run_alembic_migrations(tenant_id)
+
         with get_session_with_tenant(tenant_id) as db_session:
             setup_danswer(db_session)
 
+        with get_session_with_tenant("public") as db_session:
+            try:
+                db_session.add(UserTenantMapping(email=email, tenant_id=tenant_id))
+            except Exception as e:
+                print(e)
+            db_session.commit()
         logger.info(f"Tenant {tenant_id} created successfully")
         return {
             "status": "success",
