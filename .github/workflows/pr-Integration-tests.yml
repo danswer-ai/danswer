@@ -19,11 +19,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-#       - uses: runs-on/cache@v4
-#         with:
-#           path: /tmp/dummy-cache
-#           key: ${{ runner.os }}-${{ runner.arch }}
-          
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
