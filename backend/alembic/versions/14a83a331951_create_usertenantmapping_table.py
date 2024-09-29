@@ -9,7 +9,7 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade() -> None:
     # TODO: improve implementation of this
     schema = context.get_x_argument(as_dictionary=True).get("schema", "public")
     if schema != "public":
@@ -25,7 +25,7 @@ def upgrade():
     )
 
 
-def downgrade():
+def downgrade() -> None:
     schema = context.get_x_argument(as_dictionary=True).get("schema", "public")
     if schema != "public":
         # Skip this migration for schemas other than 'public'
