@@ -25,7 +25,7 @@ from danswer.configs.constants import POSTGRES_INDEXER_APP_NAME
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
 from danswer.db.engine import get_db_current_time
-from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import SqlEngine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
@@ -164,7 +164,7 @@ def create_indexing_jobs(
     2. `refresh_frequency` time has passed since the last indexing run for this pair
     3. There is not already an ongoing indexing attempt for this pair
     """
-    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
+    with get_session_with_tenant(tenant_id) as db_session:
         ongoing: set[tuple[int | None, int]] = set()
         for attempt_id in existing_jobs:
             attempt = get_index_attempt(
@@ -224,7 +224,7 @@ def cleanup_indexing_jobs(
 ) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
     # clean up completed jobs
-    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
+    with get_session_with_tenant(tenant_id) as db_session:
         for attempt_id, job in existing_jobs.items():
             index_attempt = get_index_attempt(
                 db_session=db_session, index_attempt_id=attempt_id
@@ -307,11 +307,12 @@ def kickoff_indexing_jobs(
     tenant_id: str | None,
 ) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
-    engine = get_sqlalchemy_engine(schema=tenant_id)
+
+    current_session = get_session_with_tenant(tenant_id)
 
     # Don't include jobs waiting in the Dask queue that just haven't started running
     # Also (rarely) don't include for jobs that started but haven't updated the indexing tables yet
-    with Session(engine) as db_session:
+    with current_session as db_session:
         # get_not_started_index_attempts orders its returned results from oldest to newest
         # we must process attempts in a FIFO manner to prevent connector starvation
         new_indexing_attempts = [
@@ -342,7 +343,7 @@ def kickoff_indexing_jobs(
             logger.warning(
                 f"Skipping index attempt as Connector has been deleted: {attempt}"
             )
-            with Session(engine) as db_session:
+            with current_session as db_session:
                 mark_attempt_failed(
                     attempt, db_session, failure_reason="Connector is null"
                 )
@@ -351,7 +352,7 @@ def kickoff_indexing_jobs(
             logger.warning(
                 f"Skipping index attempt as Credential has been deleted: {attempt}"
             )
-            with Session(engine) as db_session:
+            with current_session as db_session:
                 mark_attempt_failed(
                     attempt, db_session, failure_reason="Credential is null"
                 )
@@ -413,7 +414,7 @@ def kickoff_indexing_jobs(
 def get_all_tenant_ids() -> list[str] | list[None]:
     if not MULTI_TENANT:
         return [None]
-    with Session(get_sqlalchemy_engine(schema="public")) as session:
+    with get_session_with_tenant(tenant_id="public") as session:
         result = session.execute(
             text(
                 """
@@ -438,8 +439,7 @@ def update_loop(
     num_workers: int = NUM_INDEXING_WORKERS,
     num_secondary_workers: int = NUM_SECONDARY_INDEXING_WORKERS,
 ) -> None:
-    engine = get_sqlalchemy_engine()
-    with Session(engine) as db_session:
+    with get_session_with_tenant(tenant_id="public") as db_session:
         check_index_swap(db_session=db_session)
         search_settings = get_current_search_settings(db_session)
 
@@ -501,8 +501,7 @@ def update_loop(
                     logger.debug(
                         f"Processing {'index attempts' if tenant_id is None else f'tenant {tenant_id}'}"
                     )
-                    engine = get_sqlalchemy_engine(schema=tenant_id)
-                    with Session(engine) as db_session:
+                    with get_session_with_tenant(tenant_id) as db_session:
                         check_index_swap(db_session=db_session)
                         if not MULTI_TENANT:
                             search_settings = get_current_search_settings(db_session)
