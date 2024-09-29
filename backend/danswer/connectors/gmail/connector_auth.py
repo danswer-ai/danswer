@@ -50,7 +50,7 @@ def get_gmail_creds_for_authorized_user(
         try:
             creds.refresh(Request())
             if creds.valid:
-                logger.info("Refreshed Gmail tokens.")
+                logger.notice("Refreshed Gmail tokens.")
                 return creds
         except Exception as e:
             logger.exception(f"Failed to refresh gmail access token due to: {e}")
@@ -125,7 +125,7 @@ def update_gmail_credential_access_tokens(
 ) -> OAuthCredentials | None:
     app_credentials = get_google_app_gmail_cred()
     flow = InstalledAppFlow.from_client_config(
-        app_credentials.dict(),
+        app_credentials.model_dump(),
         scopes=SCOPES,
         redirect_uri=_build_frontend_gmail_redirect(),
     )

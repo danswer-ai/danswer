@@ -31,8 +31,9 @@ FAVOR_RECENT_DECAY_MULTIPLIER = 2.0
 DISABLE_LLM_QUERY_ANSWERABILITY = QA_PROMPT_OVERRIDE == "weak"
 # For the highest matching base size chunk, how many chunks above and below do we pull in by default
 # Note this is not in any of the deployment configs yet
-CONTEXT_CHUNKS_ABOVE = int(os.environ.get("CONTEXT_CHUNKS_ABOVE") or 0)
-CONTEXT_CHUNKS_BELOW = int(os.environ.get("CONTEXT_CHUNKS_BELOW") or 0)
+# Currently only applies to search flow not chat
+CONTEXT_CHUNKS_ABOVE = int(os.environ.get("CONTEXT_CHUNKS_ABOVE") or 1)
+CONTEXT_CHUNKS_BELOW = int(os.environ.get("CONTEXT_CHUNKS_BELOW") or 1)
 # Whether the LLM should be used to decide if a search would help given the chat history
 DISABLE_LLM_CHOOSE_SEARCH = (
     os.environ.get("DISABLE_LLM_CHOOSE_SEARCH", "").lower() == "true"
@@ -44,7 +45,7 @@ DISABLE_LLM_QUERY_REPHRASE = (
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds
 # Weighting factor between Vector and Keyword Search, 1 for completely vector search
-HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.62)))
+HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.5)))
 HYBRID_ALPHA_KEYWORD = max(
     0, min(1, float(os.environ.get("HYBRID_ALPHA_KEYWORD") or 0.4))
 )
@@ -53,7 +54,7 @@ HYBRID_ALPHA_KEYWORD = max(
 # Content. This is to avoid cases where the Content is very relevant but it may not be clear
 # if the title is separated out. Title is most of a "boost" than a separate field.
 TITLE_CONTENT_RATIO = max(
-    0, min(1, float(os.environ.get("TITLE_CONTENT_RATIO") or 0.20))
+    0, min(1, float(os.environ.get("TITLE_CONTENT_RATIO") or 0.10))
 )
 
 # A list of languages passed to the LLM to rephase the query
@@ -82,8 +83,15 @@ DISABLE_LLM_DOC_RELEVANCE = (
 # Stops streaming answers back to the UI if this pattern is seen:
 STOP_STREAM_PAT = os.environ.get("STOP_STREAM_PAT") or None
 
-# The backend logic for this being True isn't fully supported yet
-HARD_DELETE_CHATS = False
+# Set this to "true" to hard delete chats
+# This will make chats unviewable by admins after a user deletes them
+# As opposed to soft deleting them, which just hides them from non-admin users
+HARD_DELETE_CHATS = os.environ.get("HARD_DELETE_CHATS", "").lower() == "true"
 
 # Internet Search
 BING_API_KEY = os.environ.get("BING_API_KEY") or None
+
+# Enable in-house model for detecting connector-based filtering in queries
+ENABLE_CONNECTOR_CLASSIFIER = os.environ.get("ENABLE_CONNECTOR_CLASSIFIER", False)
+
+VESPA_SEARCHER_THREADS = int(os.environ.get("VESPA_SEARCHER_THREADS") or 2)

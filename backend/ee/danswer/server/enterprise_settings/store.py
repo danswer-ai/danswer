@@ -30,13 +30,13 @@ def load_settings() -> EnterpriseSettings:
         )
     except ConfigNotFoundError:
         settings = EnterpriseSettings()
-        dynamic_config_store.store(KV_ENTERPRISE_SETTINGS_KEY, settings.dict())
+        dynamic_config_store.store(KV_ENTERPRISE_SETTINGS_KEY, settings.model_dump())
 
     return settings
 
 
 def store_settings(settings: EnterpriseSettings) -> None:
-    get_dynamic_config_store().store(KV_ENTERPRISE_SETTINGS_KEY, settings.dict())
+    get_dynamic_config_store().store(KV_ENTERPRISE_SETTINGS_KEY, settings.model_dump())
 
 
 _CUSTOM_ANALYTICS_SECRET_KEY = os.environ.get("CUSTOM_ANALYTICS_SECRET_KEY")
@@ -85,7 +85,7 @@ def upload_logo(
     content: IO[Any]
 
     if isinstance(file, str):
-        logger.info(f"Uploading logo from local path {file}")
+        logger.notice(f"Uploading logo from local path {file}")
         if not os.path.isfile(file) or not is_valid_file_type(file):
             logger.error(
                 "Invalid file type- only .png, .jpg, and .jpeg files are allowed"
@@ -99,7 +99,7 @@ def upload_logo(
         file_type = guess_file_type(file)
 
     else:
-        logger.info("Uploading logo from uploaded file")
+        logger.notice("Uploading logo from uploaded file")
         if not file.filename or not is_valid_file_type(file.filename):
             raise HTTPException(
                 status_code=400,

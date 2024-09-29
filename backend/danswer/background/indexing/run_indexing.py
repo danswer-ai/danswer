@@ -11,12 +11,9 @@ from danswer.background.indexing.tracer import DanswerTracer
 from danswer.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
 from danswer.configs.app_configs import INDEXING_TRACER_INTERVAL
 from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
+from danswer.connectors.connector_runner import ConnectorRunner
 from danswer.connectors.factory import instantiate_connector
-from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import IndexAttemptMetadata
-from danswer.connectors.models import InputType
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.engine import get_sqlalchemy_engine
@@ -24,6 +21,7 @@ from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import mark_attempt_in_progress
+from danswer.db.index_attempt import mark_attempt_partially_succeeded
 from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import IndexAttempt
@@ -41,12 +39,12 @@ logger = setup_logger()
 INDEXING_TRACER_NUM_PRINT_ENTRIES = 5
 
 
-def _get_document_generator(
+def _get_connector_runner(
     db_session: Session,
     attempt: IndexAttempt,
     start_time: datetime,
     end_time: datetime,
-) -> GenerateDocumentsOutput:
+) -> ConnectorRunner:
     """
     NOTE: `start_time` and `end_time` are only used for poll connectors
 
@@ -58,11 +56,11 @@ def _get_document_generator(
 
     try:
         runnable_connector = instantiate_connector(
-            attempt.connector_credential_pair.connector.source,
-            task,
-            attempt.connector_credential_pair.connector.connector_specific_config,
-            attempt.connector_credential_pair.credential,
-            db_session,
+            db_session=db_session,
+            source=attempt.connector_credential_pair.connector.source,
+            input_type=task,
+            connector_specific_config=attempt.connector_credential_pair.connector.connector_specific_config,
+            credential=attempt.connector_credential_pair.credential,
         )
     except Exception as e:
         logger.exception(f"Unable to instantiate connector due to {e}")
@@ -76,31 +74,9 @@ def _get_document_generator(
         )
         raise e
 
-    if task == InputType.LOAD_STATE:
-        assert isinstance(runnable_connector, LoadConnector)
-        doc_batch_generator = runnable_connector.load_from_state()
-
-    elif task == InputType.POLL:
-        assert isinstance(runnable_connector, PollConnector)
-        if (
-            attempt.connector_credential_pair.connector_id is None
-            or attempt.connector_credential_pair.connector_id is None
-        ):
-            raise ValueError(
-                f"Polling attempt {attempt.id} is missing connector_id or credential_id, "
-                f"can't fetch time range."
-            )
-
-        logger.info(f"Polling for updates between {start_time} and {end_time}")
-        doc_batch_generator = runnable_connector.poll_source(
-            start=start_time.timestamp(), end=end_time.timestamp()
-        )
-
-    else:
-        # Event types cannot be handled by a background type
-        raise RuntimeError(f"Invalid task type: {task}")
-
-    return doc_batch_generator
+    return ConnectorRunner(
+        connector=runnable_connector, time_range=(start_time, end_time)
+    )
 
 
 def _run_indexing(
@@ -114,55 +90,62 @@ def _run_indexing(
     """
     start_time = time.time()
 
-    db_embedding_model = index_attempt.embedding_model
-    index_name = db_embedding_model.index_name
+    search_settings = index_attempt.search_settings
+    index_name = search_settings.index_name
 
     # Only update cc-pair status for primary index jobs
     # Secondary index syncs at the end when swapping
-    is_primary = index_attempt.embedding_model.status == IndexModelStatus.PRESENT
+    is_primary = search_settings.status == IndexModelStatus.PRESENT
 
     # Indexing is only done into one index at a time
     document_index = get_default_document_index(
         primary_index_name=index_name, secondary_index_name=None
     )
 
-    embedding_model = DefaultIndexingEmbedder.from_db_embedding_model(
-        db_embedding_model
+    embedding_model = DefaultIndexingEmbedder.from_db_search_settings(
+        search_settings=search_settings
     )
 
     indexing_pipeline = build_indexing_pipeline(
+        attempt_id=index_attempt.id,
         embedder=embedding_model,
         document_index=document_index,
         ignore_time_skip=index_attempt.from_beginning
-        or (db_embedding_model.status == IndexModelStatus.FUTURE),
+        or (search_settings.status == IndexModelStatus.FUTURE),
         db_session=db_session,
     )
 
     db_cc_pair = index_attempt.connector_credential_pair
     db_connector = index_attempt.connector_credential_pair.connector
     db_credential = index_attempt.connector_credential_pair.credential
+    earliest_index_time = (
+        db_connector.indexing_start.timestamp() if db_connector.indexing_start else 0
+    )
 
     last_successful_index_time = (
-        db_connector.indexing_start.timestamp()
-        if index_attempt.from_beginning and db_connector.indexing_start is not None
-        else (
-            0.0
-            if index_attempt.from_beginning
-            else get_last_successful_attempt_time(
-                connector_id=db_connector.id,
-                credential_id=db_credential.id,
-                embedding_model=index_attempt.embedding_model,
-                db_session=db_session,
-            )
+        earliest_index_time
+        if index_attempt.from_beginning
+        else get_last_successful_attempt_time(
+            connector_id=db_connector.id,
+            credential_id=db_credential.id,
+            earliest_index=earliest_index_time,
+            search_settings=index_attempt.search_settings,
+            db_session=db_session,
         )
     )
 
     if INDEXING_TRACER_INTERVAL > 0:
-        logger.info(f"Memory tracer starting: interval={INDEXING_TRACER_INTERVAL}")
+        logger.debug(f"Memory tracer starting: interval={INDEXING_TRACER_INTERVAL}")
         tracer = DanswerTracer()
         tracer.start()
         tracer.snap()
 
+    index_attempt_md = IndexAttemptMetadata(
+        connector_id=db_connector.id,
+        credential_id=db_credential.id,
+    )
+
+    batch_num = 0
     net_doc_change = 0
     document_count = 0
     chunk_count = 0
@@ -181,7 +164,7 @@ def _run_indexing(
                 datetime(1970, 1, 1, tzinfo=timezone.utc),
             )
 
-            doc_batch_generator = _get_document_generator(
+            connector_runner = _get_connector_runner(
                 db_session=db_session,
                 attempt=index_attempt,
                 start_time=window_start,
@@ -193,15 +176,19 @@ def _run_indexing(
             tracer_counter = 0
             if INDEXING_TRACER_INTERVAL > 0:
                 tracer.snap()
-            for doc_batch in doc_batch_generator:
+            for doc_batch in connector_runner.run():
                 # Check if connector is disabled mid run and stop if so unless it's the secondary
                 # index being built. We want to populate it even for paused connectors
                 # Often paused connectors are sources that aren't updated frequently but the
                 # contents still need to be initially pulled.
                 db_session.refresh(db_connector)
                 if (
-                    db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
-                    and db_embedding_model.status != IndexModelStatus.FUTURE
+                    (
+                        db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
+                        and search_settings.status != IndexModelStatus.FUTURE
+                    )
+                    # if it's deleting, we don't care if this is a secondary index
+                    or db_cc_pair.status == ConnectorCredentialPairStatus.DELETING
                 ):
                     # let the `except` block handle this
                     raise RuntimeError("Connector was disabled mid run")
@@ -228,13 +215,13 @@ def _run_indexing(
 
                 logger.debug(f"Indexing batch of documents: {batch_description}")
 
+                index_attempt_md.batch_num = batch_num + 1  # use 1-index for this
                 new_docs, total_batch_chunks = indexing_pipeline(
                     document_batch=doc_batch,
-                    index_attempt_metadata=IndexAttemptMetadata(
-                        connector_id=db_connector.id,
-                        credential_id=db_credential.id,
-                    ),
+                    index_attempt_metadata=index_attempt_md,
                 )
+
+                batch_num += 1
                 net_doc_change += new_docs
                 chunk_count += total_batch_chunks
                 document_count += len(doc_batch)
@@ -261,7 +248,7 @@ def _run_indexing(
                     INDEXING_TRACER_INTERVAL > 0
                     and tracer_counter % INDEXING_TRACER_INTERVAL == 0
                 ):
-                    logger.info(
+                    logger.debug(
                         f"Running trace comparison for batch {tracer_counter}. interval={INDEXING_TRACER_INTERVAL}"
                     )
                     tracer.snap()
@@ -277,7 +264,7 @@ def _run_indexing(
                     run_dt=run_end_dt,
                 )
         except Exception as e:
-            logger.info(
+            logger.exception(
                 f"Connector run ran into exception after elapsed time: {time.time() - start_time} seconds"
             )
             # Only mark the attempt as a complete failure if this is the first indexing window.
@@ -289,7 +276,7 @@ def _run_indexing(
             # to give better clarity in the UI, as the next run will never happen.
             if (
                 ind == 0
-                or db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
+                or not db_cc_pair.status.is_active()
                 or index_attempt.status != IndexingStatus.IN_PROGRESS
             ):
                 mark_attempt_failed(
@@ -315,15 +302,52 @@ def _run_indexing(
             break
 
     if INDEXING_TRACER_INTERVAL > 0:
-        logger.info(
+        logger.debug(
             f"Running trace comparison between start and end of indexing. {tracer_counter} batches processed."
         )
         tracer.snap()
         tracer.log_first_diff(INDEXING_TRACER_NUM_PRINT_ENTRIES)
         tracer.stop()
-        logger.info("Memory tracer stopped.")
+        logger.debug("Memory tracer stopped.")
 
-    mark_attempt_succeeded(index_attempt, db_session)
+    if (
+        index_attempt_md.num_exceptions > 0
+        and index_attempt_md.num_exceptions >= batch_num
+    ):
+        mark_attempt_failed(
+            index_attempt,
+            db_session,
+            failure_reason="All batches exceptioned.",
+        )
+        if is_primary:
+            update_connector_credential_pair(
+                db_session=db_session,
+                connector_id=index_attempt.connector_credential_pair.connector.id,
+                credential_id=index_attempt.connector_credential_pair.credential.id,
+            )
+        raise Exception(
+            f"Connector failed - All batches exceptioned: batches={batch_num}"
+        )
+
+    elapsed_time = time.time() - start_time
+
+    if index_attempt_md.num_exceptions == 0:
+        mark_attempt_succeeded(index_attempt, db_session)
+        logger.info(
+            f"Connector succeeded: "
+            f"docs={document_count} chunks={chunk_count} elapsed={elapsed_time:.2f}s"
+        )
+    else:
+        mark_attempt_partially_succeeded(index_attempt, db_session)
+        logger.info(
+            f"Connector completed with some errors: "
+            f"exceptions={index_attempt_md.num_exceptions} "
+            f"batches={batch_num} "
+            f"docs={document_count} "
+            f"chunks={chunk_count} "
+            f"elapsed={elapsed_time:.2f}s"
+        )
+
     if is_primary:
         update_connector_credential_pair(
             db_session=db_session,
@@ -331,11 +355,6 @@ def _run_indexing(
             credential_id=db_credential.id,
             run_dt=run_end_dt,
         )
-
-    elapsed_time = time.time() - start_time
-    logger.info(
-        f"Connector succeeded: docs={document_count} chunks={chunk_count} elapsed={elapsed_time:.2f}s"
-    )
 
 
 def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexAttempt:
@@ -365,17 +384,22 @@ def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexA
     return attempt
 
 
-def run_indexing_entrypoint(index_attempt_id: int, is_ee: bool = False) -> None:
+def run_indexing_entrypoint(
+    index_attempt_id: int, connector_credential_pair_id: int, is_ee: bool = False
+) -> None:
     """Entrypoint for indexing run when using dask distributed.
     Wraps the actual logic in a `try` block so that we can catch any exceptions
     and mark the attempt as failed."""
+
     try:
         if is_ee:
             global_version.set_ee()
 
         # set the indexing attempt ID so that all log messages from this process
         # will have it added as a prefix
-        IndexAttemptSingleton.set_index_attempt_id(index_attempt_id)
+        IndexAttemptSingleton.set_cc_and_index_id(
+            index_attempt_id, connector_credential_pair_id
+        )
 
         with Session(get_sqlalchemy_engine()) as db_session:
             # make sure that it is valid to run this indexing attempt + mark it

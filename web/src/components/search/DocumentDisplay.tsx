@@ -3,7 +3,6 @@
 import {
   DanswerDocument,
   DocumentRelevance,
-  Relevance,
   SearchDanswerDocument,
 } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
@@ -12,13 +11,13 @@ import { PopupSpec } from "../admin/connectors/Popup";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
-import { BookIcon, CheckmarkIcon, LightBulbIcon, XIcon } from "../icons/icons";
+import { BookIcon, LightBulbIcon } from "../icons/icons";
 
 import { FaStar } from "react-icons/fa";
 import { FiTag } from "react-icons/fi";
-import { DISABLE_LLM_DOC_RELEVANCE } from "@/lib/constants";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { CustomTooltip, TooltipGroup } from "../tooltip/CustomTooltip";
+import { WarningCircle } from "@phosphor-icons/react";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -66,6 +65,9 @@ export const buildDocumentSummaryDisplay = (
       sections.push(["...", false, false]);
     }
   });
+  if (sections.length == 0) {
+    return;
+  }
 
   let previousIsContinuation = sections[0][2];
   let previousIsBold = sections[0][1];
@@ -204,7 +206,7 @@ export const DocumentDisplay = ({
         {!hide && (document.is_relevant || additional_relevance?.relevant) && (
           <FaStar
             size={16}
-            className="h-full text-xs text-accent rounded w-fit my-auto select-none ml-auto mr-2"
+            className="h-full text-xs text-star-indicator rounded w-fit my-auto select-none ml-auto mr-2"
           />
         )}
       </div>
@@ -227,7 +229,7 @@ export const DocumentDisplay = ({
               {document.semantic_identifier || document.document_id}
             </p>
           </a>
-          <div className="ml-auto flex gap-x-2">
+          <div className="ml-auto flex items-center">
             <TooltipGroup>
               {isHovered && messageId && (
                 <DocumentFeedbackBlock
@@ -249,7 +251,7 @@ export const DocumentDisplay = ({
                   >
                     <CustomTooltip showTick line content="Toggle content">
                       <LightBulbIcon
-                        className={`${settings?.isMobile && alternativeToggled ? "text-green-600" : "text-blue-600"} h-4 w-4 cursor-pointer`}
+                        className={`${settings?.isMobile && alternativeToggled ? "text-green-600" : "text-blue-600"} my-auto ml-2 h-4 w-4 cursor-pointer`}
                       />
                     </CustomTooltip>
                   </button>
@@ -323,31 +325,32 @@ export const AgenticDocumentDisplay = ({
             </p>
           </a>
 
-          <div className="ml-auto flex gap-x-2">
-            {isHovered && messageId && (
-              <DocumentFeedbackBlock
-                documentId={document.document_id}
-                messageId={messageId}
-                documentRank={documentRank}
-                setPopup={setPopup}
-              />
-            )}
-
-            {(contentEnriched || additional_relevance) &&
-              relevance_explanation &&
-              (isHovered || alternativeToggled) && (
-                <button
-                  onClick={() =>
-                    setAlternativeToggled(
-                      (alternativeToggled) => !alternativeToggled
-                    )
-                  }
-                >
-                  <CustomTooltip showTick line content="Toggle content">
-                    <BookIcon className="text-blue-400" />
-                  </CustomTooltip>
-                </button>
+          <div className="ml-auto items-center flex">
+            <TooltipGroup>
+              {isHovered && messageId && (
+                <DocumentFeedbackBlock
+                  documentId={document.document_id}
+                  messageId={messageId}
+                  documentRank={documentRank}
+                  setPopup={setPopup}
+                />
               )}
+
+              {(contentEnriched || additional_relevance) &&
+                (isHovered || alternativeToggled) && (
+                  <button
+                    onClick={() =>
+                      setAlternativeToggled(
+                        (alternativeToggled) => !alternativeToggled
+                      )
+                    }
+                  >
+                    <CustomTooltip showTick line content="Toggle content">
+                      <BookIcon className="ml-2 my-auto text-blue-400" />
+                    </CustomTooltip>
+                  </button>
+                )}
+            </TooltipGroup>
           </div>
         </div>
         <div className="mt-1">
@@ -364,7 +367,13 @@ export const AgenticDocumentDisplay = ({
                   document.match_highlights,
                   document.blurb
                 )
-              : relevance_explanation}
+              : relevance_explanation || (
+                  <span className="flex gap-x-1 items-center">
+                    {" "}
+                    <WarningCircle />
+                    Model failed to produce an analysis of the document
+                  </span>
+                )}
           </p>
         </div>
       </div>

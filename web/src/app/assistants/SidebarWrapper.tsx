@@ -1,7 +1,6 @@
 "use client";
 
 import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
-
 import { ChatSession } from "@/app/chat/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { User } from "@/lib/types";
@@ -42,8 +41,18 @@ export default function SidebarWrapper<T extends object>({
   size = "sm",
 }: SidebarWrapperProps<T>) {
   const [toggledSidebar, setToggledSidebar] = useState(initiallyToggled);
-
   const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
+  // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
+  const [untoggled, setUntoggled] = useState(false);
+
+  const explicitlyUntoggle = () => {
+    setShowDocSidebar(false);
+
+    setUntoggled(true);
+    setTimeout(() => {
+      setUntoggled(false);
+    }, 200);
+  };
 
   const toggleSidebar = () => {
     Cookies.set(
@@ -103,7 +112,7 @@ export default function SidebarWrapper<T extends object>({
             duration-300
             ease-in-out
             ${
-              showDocSidebar || toggledSidebar
+              !untoggled && (showDocSidebar || toggledSidebar)
                 ? "opacity-100 w-[250px] translate-x-0"
                 : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
             }`}
@@ -111,6 +120,7 @@ export default function SidebarWrapper<T extends object>({
         <div className="w-full relative">
           <HistorySidebar
             page={page}
+            explicitlyUntoggle={explicitlyUntoggle}
             ref={innerSidebarElementRef}
             toggleSidebar={toggleSidebar}
             toggled={toggledSidebar}

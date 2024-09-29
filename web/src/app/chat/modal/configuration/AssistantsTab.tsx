@@ -15,11 +15,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
+import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
 import React, { useState } from "react";
 import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
 import { DraggableAssistantCard } from "@/components/assistants/AssistantCards";
+import { orderAssistantsForUser } from "@/lib/assistants/utils";
 
 export function AssistantsTab({
   selectedAssistant,

@@ -3,11 +3,14 @@ from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import Query
 from fastapi import UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import FileOrigin
 from danswer.db.engine import get_session
@@ -18,6 +21,7 @@ from danswer.db.persona import get_personas
 from danswer.db.persona import mark_persona_as_deleted
 from danswer.db.persona import mark_persona_as_not_deleted
 from danswer.db.persona import update_all_personas_display_priority
+from danswer.db.persona import update_persona_public_status
 from danswer.db.persona import update_persona_shared_users
 from danswer.db.persona import update_persona_visibility
 from danswer.file_store.file_store import get_default_file_store
@@ -41,18 +45,42 @@ class IsVisibleRequest(BaseModel):
     is_visible: bool
 
 
+class IsPublicRequest(BaseModel):
+    is_public: bool
+
+
 @admin_router.patch("/{persona_id}/visible")
 def patch_persona_visibility(
     persona_id: int,
     is_visible_request: IsVisibleRequest,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     update_persona_visibility(
         persona_id=persona_id,
         is_visible=is_visible_request.is_visible,
         db_session=db_session,
+        user=user,
     )
+
+
+@basic_router.patch("/{persona_id}/public")
+def patch_user_presona_public_status(
+    persona_id: int,
+    is_public_request: IsPublicRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    try:
+        update_persona_public_status(
+            persona_id=persona_id,
+            is_public=is_public_request.is_public,
+            db_session=db_session,
+            user=user,
+        )
+    except ValueError as e:
+        logger.exception("Failed to update persona public status")
+        raise HTTPException(status_code=403, detail=str(e))
 
 
 @admin_router.put("/display-priority")
@@ -69,16 +97,19 @@ def patch_persona_display_priority(
 
 @admin_router.get("")
 def list_personas_admin(
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
+    get_editable: bool = Query(False, description="If true, return editable personas"),
 ) -> list[PersonaSnapshot]:
     return [
         PersonaSnapshot.from_model(persona)
         for persona in get_personas(
             db_session=db_session,
-            user_id=None,  # user_id = None -> give back all personas
+            user=user,
+            get_editable=get_editable,
             include_deleted=include_deleted,
+            joinedload_all=True,
         )
     ]
 
@@ -186,11 +217,14 @@ def list_personas(
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
 ) -> list[PersonaSnapshot]:
-    user_id = user.id if user is not None else None
     return [
         PersonaSnapshot.from_model(persona)
         for persona in get_personas(
-            user_id=user_id, include_deleted=include_deleted, db_session=db_session
+            user=user,
+            include_deleted=include_deleted,
+            db_session=db_session,
+            get_editable=False,
+            joinedload_all=True,
         )
     ]
 

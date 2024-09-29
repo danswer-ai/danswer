@@ -192,7 +192,7 @@ export function SearchMultiSelectDropdown({
 export const CustomDropdown = ({
   children,
   dropdown,
-  direction = "down", // Default to 'down' if not specified
+  direction = "down",
 }: {
   children: JSX.Element | string;
   dropdown: JSX.Element | string;
@@ -320,15 +320,15 @@ export const DefaultDropdown = forwardRef<HTMLDivElement, DefaultDropdownProps>(
     const Content = (
       <div
         className={`
-      flex 
-      text-sm 
-      bg-background 
-      px-3
-      py-1.5 
-      rounded-lg 
-      border 
-      border-border 
-      cursor-pointer`}
+          flex 
+          text-sm 
+          bg-background 
+          px-3
+          py-1.5 
+          rounded-lg 
+          border 
+          border-border 
+          cursor-pointer`}
       >
         <p className="line-clamp-1">
           {selectedOption?.name ||

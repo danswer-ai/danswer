@@ -178,6 +178,30 @@ class Updatable(abc.ABC):
     """
 
     @abc.abstractmethod
+    def update_single(self, update_request: UpdateRequest) -> None:
+        """
+        Updates some set of chunks for a document. The document and fields to update
+        are specified in the update request. Each update request in the list applies
+        its changes to a list of document ids.
+        None values mean that the field does not need an update.
+
+        The rationale for a single update function is that it allows retries and parallelism
+        to happen at a higher / more strategic level, is simpler to read, and allows
+        us to individually handle error conditions per document.
+
+        Parameters:
+        - update_request: for a list of document ids in the update request, apply the same updates
+                to all of the documents with those ids.
+
+        Return:
+        - an HTTPStatus code. The code can used to decide whether to fail immediately,
+        retry, etc.  Although this method likely hits an HTTP API behind the
+        scenes, the usage of HTTPStatus is a convenience and the interface is not
+        actually HTTP specific.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def update(self, update_requests: list[UpdateRequest]) -> None:
         """
         Updates some set of chunks. The document and fields to update are specified in the update

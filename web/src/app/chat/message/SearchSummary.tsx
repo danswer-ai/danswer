@@ -40,7 +40,6 @@ export function SearchSummary({
   hasDocs,
   finished,
   messageId,
-  isCurrentlyShowingRetrieved,
   handleShowRetrieved,
   handleSearchQueryEdit,
 }: {
@@ -48,7 +47,6 @@ export function SearchSummary({
   query: string;
   hasDocs: boolean;
   messageId: number | null;
-  isCurrentlyShowingRetrieved: boolean;
   handleShowRetrieved: (messageId: number | null) => void;
   handleSearchQueryEdit?: (query: string) => void;
 }) {

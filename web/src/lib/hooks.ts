@@ -65,18 +65,20 @@ export const useObjectState = <T>(
 const INDEXING_STATUS_URL = "/api/manage/admin/connector/indexing-status";
 
 export const useConnectorCredentialIndexingStatus = (
-  refreshInterval = 30000 // 30 seconds
+  refreshInterval = 30000, // 30 seconds
+  getEditable = false
 ) => {
   const { mutate } = useSWRConfig();
+  const url = `${INDEXING_STATUS_URL}${getEditable ? "?get_editable=true" : ""}`;
   const swrResponse = useSWR<ConnectorIndexingStatus<any, any>[]>(
-    INDEXING_STATUS_URL,
+    url,
     errorHandlingFetcher,
     { refreshInterval: refreshInterval }
   );
 
   return {
     ...swrResponse,
-    refreshIndexingStatus: () => mutate(INDEXING_STATUS_URL),
+    refreshIndexingStatus: () => mutate(url),
   };
 };
 
@@ -228,6 +230,8 @@ export const useUserGroups = (): {
 
 const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   // OpenAI models
+  "o1-mini": "O1 Mini",
+  "o1-preview": "O1 Preview",
   "gpt-4": "GPT 4",
   "gpt-4o": "GPT 4o",
   "gpt-4o-2024-08-06": "GPT 4o (Structured Outputs)",
@@ -290,7 +294,7 @@ export function getDisplayNameForModel(modelName: string): string {
 }
 
 export const defaultModelsByProvider: { [name: string]: string[] } = {
-  openai: ["gpt-4", "gpt-4o", "gpt-4o-mini"],
+  openai: ["gpt-4", "gpt-4o", "gpt-4o-mini", "o1-mini", "o1-preview"],
   bedrock: [
     "meta.llama3-1-70b-instruct-v1:0",
     "meta.llama3-1-8b-instruct-v1:0",

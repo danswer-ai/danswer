@@ -1,4 +1,3 @@
-import logging
 from typing import Any
 from typing import cast
 
@@ -12,6 +11,7 @@ from sqlalchemy.orm import Session
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
+from danswer.connectors.slack.utils import expert_info_from_slack_id
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.danswerbot.slack.blocks import build_follow_up_resolved_blocks
 from danswer.danswerbot.slack.blocks import get_document_feedback_blocks
@@ -88,6 +88,8 @@ def handle_generate_answer_button(
     message_ts = req.payload["message"]["ts"]
     thread_ts = req.payload["container"]["thread_ts"]
     user_id = req.payload["user"]["id"]
+    expert_info = expert_info_from_slack_id(user_id, client.web_client, user_cache={})
+    email = expert_info.email if expert_info else None
 
     if not thread_ts:
         raise ValueError("Missing thread_ts in the payload")
@@ -126,6 +128,7 @@ def handle_generate_answer_button(
                 msg_to_respond=cast(str, message_ts or thread_ts),
                 thread_to_respond=cast(str, thread_ts or message_ts),
                 sender=user_id or None,
+                email=email or None,
                 bypass_filters=True,
                 is_bot_msg=False,
                 is_bot_dm=False,
@@ -134,7 +137,7 @@ def handle_generate_answer_button(
             receiver_ids=None,
             client=client.web_client,
             channel=channel_id,
-            logger=cast(logging.Logger, logger),
+            logger=logger,
             feedback_reminder_id=None,
         )
 

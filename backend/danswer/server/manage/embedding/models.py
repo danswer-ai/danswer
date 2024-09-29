@@ -8,30 +8,37 @@ if TYPE_CHECKING:
     from danswer.db.models import CloudEmbeddingProvider as CloudEmbeddingProviderModel
 
 
+class SearchSettingsDeleteRequest(BaseModel):
+    search_settings_id: int
+
+
 class TestEmbeddingRequest(BaseModel):
-    provider: EmbeddingProvider
+    provider_type: EmbeddingProvider
     api_key: str | None = None
+    api_url: str | None = None
+    model_name: str | None = None
+
+    # This disables the "model_" protected namespace for pydantic
+    model_config = {"protected_namespaces": ()}
 
 
 class CloudEmbeddingProvider(BaseModel):
-    name: str
+    provider_type: EmbeddingProvider
     api_key: str | None = None
-    default_model_id: int | None = None
-    id: int
+    api_url: str | None = None
 
     @classmethod
     def from_request(
         cls, cloud_provider_model: "CloudEmbeddingProviderModel"
     ) -> "CloudEmbeddingProvider":
         return cls(
-            id=cloud_provider_model.id,
-            name=cloud_provider_model.name,
+            provider_type=cloud_provider_model.provider_type,
             api_key=cloud_provider_model.api_key,
-            default_model_id=cloud_provider_model.default_model_id,
+            api_url=cloud_provider_model.api_url,
         )
 
 
 class CloudEmbeddingProviderCreationRequest(BaseModel):
-    name: str
+    provider_type: EmbeddingProvider
     api_key: str | None = None
-    default_model_id: int | None = None
+    api_url: str | None = None

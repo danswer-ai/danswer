@@ -108,6 +108,7 @@ def create_slack_bot_config(
         persona_id=persona_id,
         channel_config=channel_config,
         response_type=slack_bot_config_creation_request.response_type,
+        # XXX this is going away soon
         standard_answer_category_ids=slack_bot_config_creation_request.standard_answer_categories,
         db_session=db_session,
         enable_auto_filters=slack_bot_config_creation_request.enable_auto_filters,
@@ -161,6 +162,7 @@ def patch_slack_bot_config(
             channel_names=channel_config["channel_names"],
             document_set_ids=slack_bot_config_creation_request.document_sets,
             existing_persona_id=existing_persona_id,
+            enable_auto_filters=slack_bot_config_creation_request.enable_auto_filters,
         ).id
 
     slack_bot_config_model = update_slack_bot_config(

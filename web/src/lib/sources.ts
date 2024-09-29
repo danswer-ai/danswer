@@ -32,10 +32,12 @@ import {
   ZulipIcon,
   MediaWikiIcon,
   WikipediaIcon,
+  AsanaIcon,
   S3Icon,
   OCIStorageIcon,
   GoogleStorageIcon,
   ColorSlackIcon,
+  XenforoIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import {
@@ -230,6 +232,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     category: SourceCategory.Wiki,
     docs: "https://docs.danswer.dev/connectors/wikipedia",
   },
+  asana: {
+    icon: AsanaIcon,
+    displayName: "Asana",
+    category: SourceCategory.ProjectManagement,
+    docs: "https://docs.danswer.dev/connectors/asana",
+  },
   mediawiki: {
     icon: MediaWikiIcon,
     displayName: "MediaWiki",
@@ -272,6 +280,16 @@ const SOURCE_METADATA_MAP: SourceMap = {
     category: SourceCategory.Storage,
     docs: "https://docs.danswer.dev/connectors/google_storage",
   },
+  xenforo: {
+    icon: XenforoIcon,
+    displayName: "Xenforo",
+    category: SourceCategory.Messaging,
+  },
+  ingestion_api: {
+    icon: GlobeIcon,
+    displayName: "Ingestion",
+    category: SourceCategory.Other,
+  },
   // currently used for the Internet Search tool docs, which is why
   // a globe is used
   not_applicable: {
@@ -302,8 +320,12 @@ export function getSourceMetadata(sourceType: ValidSources): SourceMetadata {
 }
 
 export function listSourceMetadata(): SourceMetadata[] {
+  /* This gives back all the viewable / common sources, primarily for 
+  display in the Add Connector page */
   const entries = Object.entries(SOURCE_METADATA_MAP)
-    .filter(([source, _]) => source !== "not_applicable")
+    .filter(
+      ([source, _]) => source !== "not_applicable" && source != "ingestion_api"
+    )
     .map(([source, metadata]) => {
       return fillSourceMetadata(metadata, source as ValidSources);
     });

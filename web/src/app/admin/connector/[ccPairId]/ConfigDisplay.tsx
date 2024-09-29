@@ -47,10 +47,15 @@ export function AdvancedConfigDisplay({
   refreshFreq: number | null;
   indexingStart: Date | null;
 }) {
-  const formatFrequency = (seconds: number | null): string => {
+  const formatRefreshFrequency = (seconds: number | null): string => {
     if (seconds === null) return "-";
     const minutes = Math.round(seconds / 60);
     return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
+  };
+  const formatPruneFrequency = (seconds: number | null): string => {
+    if (seconds === null) return "-";
+    const days = Math.round(seconds / (60 * 60 * 24));
+    return `${days} day${days !== 1 ? "s" : ""}`;
   };
 
   const formatDate = (date: Date | null): string => {
@@ -73,13 +78,13 @@ export function AdvancedConfigDisplay({
           {pruneFreq && (
             <ListItem key={0}>
               <span>Pruning Frequency</span>
-              <span>{formatFrequency(pruneFreq)}</span>
+              <span>{formatPruneFrequency(pruneFreq)}</span>
             </ListItem>
           )}
           {refreshFreq && (
             <ListItem key={1}>
               <span>Refresh Frequency</span>
-              <span>{formatFrequency(refreshFreq)}</span>
+              <span>{formatRefreshFrequency(refreshFreq)}</span>
             </ListItem>
           )}
           {indexingStart && (

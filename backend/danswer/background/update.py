@@ -17,15 +17,13 @@ from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.app_configs import NUM_SECONDARY_INDEXING_WORKERS
+from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import POSTGRES_INDEXER_APP_NAME
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
-from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import init_sqlalchemy_engine
-from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
@@ -33,11 +31,14 @@ from danswer.db.index_attempt import get_last_attempt_for_cc_pair
 from danswer.db.index_attempt import get_not_started_index_attempts
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
+from danswer.db.models import SearchSettings
+from danswer.db.search_settings import get_current_search_settings
+from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
+from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
@@ -60,20 +61,27 @@ _UNEXPECTED_STATE_FAILURE_REASON = (
 def _should_create_new_indexing(
     cc_pair: ConnectorCredentialPair,
     last_index: IndexAttempt | None,
-    model: EmbeddingModel,
+    search_settings_instance: SearchSettings,
     secondary_index_building: bool,
     db_session: Session,
 ) -> bool:
     connector = cc_pair.connector
 
+    # don't kick off indexing for `NOT_APPLICABLE` sources
+    if connector.source == DocumentSource.NOT_APPLICABLE:
+        return False
+
     # User can still manually create single indexing attempts via the UI for the
     # currently in use index
     if DISABLE_INDEX_UPDATE_ON_SWAP:
-        if model.status == IndexModelStatus.PRESENT and secondary_index_building:
+        if (
+            search_settings_instance.status == IndexModelStatus.PRESENT
+            and secondary_index_building
+        ):
             return False
 
     # When switching over models, always index at least once
-    if model.status == IndexModelStatus.FUTURE:
+    if search_settings_instance.status == IndexModelStatus.FUTURE:
         if last_index:
             # No new index if the last index attempt succeeded
             # Once is enough. The model will never be able to swap otherwise.
@@ -95,7 +103,7 @@ def _should_create_new_indexing(
     # If the connector is paused or is the ingestion API, don't index
     # NOTE: during an embedding model switch over, the following logic
     # is bypassed by the above check for a future model
-    if cc_pair.status == ConnectorCredentialPairStatus.PAUSED or connector.id == 0:
+    if not cc_pair.status.is_active() or connector.id == 0:
         return False
 
     if not last_index:
@@ -118,16 +126,6 @@ def _should_create_new_indexing(
     current_db_time = get_db_current_time(db_session)
     time_since_index = current_db_time - last_index.time_updated
     return time_since_index.total_seconds() >= connector.refresh_freq
-
-
-def _is_indexing_job_marked_as_finished(index_attempt: IndexAttempt | None) -> bool:
-    if index_attempt is None:
-        return False
-
-    return (
-        index_attempt.status == IndexingStatus.FAILED
-        or index_attempt.status == IndexingStatus.SUCCESS
-    )
 
 
 def _mark_run_failed(
@@ -170,35 +168,42 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
             ongoing.add(
                 (
                     attempt.connector_credential_pair_id,
-                    attempt.embedding_model_id,
+                    attempt.search_settings_id,
                 )
             )
 
-        embedding_models = [get_current_db_embedding_model(db_session)]
-        secondary_embedding_model = get_secondary_db_embedding_model(db_session)
-        if secondary_embedding_model is not None:
-            embedding_models.append(secondary_embedding_model)
+        # Get the primary search settings
+        primary_search_settings = get_current_search_settings(db_session)
+        search_settings = [primary_search_settings]
+
+        # Check for secondary search settings
+        secondary_search_settings = get_secondary_search_settings(db_session)
+        if secondary_search_settings is not None:
+            # If secondary settings exist, add them to the list
+            search_settings.append(secondary_search_settings)
 
         all_connector_credential_pairs = fetch_connector_credential_pairs(db_session)
         for cc_pair in all_connector_credential_pairs:
-            for model in embedding_models:
+            for search_settings_instance in search_settings:
                 # Check if there is an ongoing indexing attempt for this connector credential pair
-                if (cc_pair.id, model.id) in ongoing:
+                if (cc_pair.id, search_settings_instance.id) in ongoing:
                     continue
 
                 last_attempt = get_last_attempt_for_cc_pair(
-                    cc_pair.id, model.id, db_session
+                    cc_pair.id, search_settings_instance.id, db_session
                 )
                 if not _should_create_new_indexing(
                     cc_pair=cc_pair,
                     last_index=last_attempt,
-                    model=model,
-                    secondary_index_building=len(embedding_models) > 1,
+                    search_settings_instance=search_settings_instance,
+                    secondary_index_building=len(search_settings) > 1,
                     db_session=db_session,
                 ):
                     continue
 
-                create_index_attempt(cc_pair.id, model.id, db_session)
+                create_index_attempt(
+                    cc_pair.id, search_settings_instance.id, db_session
+                )
 
 
 def cleanup_indexing_jobs(
@@ -206,7 +211,6 @@ def cleanup_indexing_jobs(
     timeout_hours: int = CLEANUP_INDEXING_JOBS_TIMEOUT,
 ) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
-
     # clean up completed jobs
     with Session(get_sqlalchemy_engine()) as db_session:
         for attempt_id, job in existing_jobs.items():
@@ -215,10 +219,12 @@ def cleanup_indexing_jobs(
             )
 
             # do nothing for ongoing jobs that haven't been stopped
-            if not job.done() and not _is_indexing_job_marked_as_finished(
-                index_attempt
-            ):
-                continue
+            if not job.done():
+                if not index_attempt:
+                    continue
+
+                if not index_attempt.is_finished():
+                    continue
 
             if job.status == "error":
                 logger.error(job.exception())
@@ -293,7 +299,7 @@ def kickoff_indexing_jobs(
         # get_not_started_index_attempts orders its returned results from oldest to newest
         # we must process attempts in a FIFO manner to prevent connector starvation
         new_indexing_attempts = [
-            (attempt, attempt.embedding_model)
+            (attempt, attempt.search_settings)
             for attempt in get_not_started_index_attempts(db_session)
             if attempt.id not in existing_jobs
         ]
@@ -305,10 +311,15 @@ def kickoff_indexing_jobs(
 
     indexing_attempt_count = 0
 
-    for attempt, embedding_model in new_indexing_attempts:
+    primary_client_full = False
+    secondary_client_full = False
+    for attempt, search_settings in new_indexing_attempts:
+        if primary_client_full and secondary_client_full:
+            break
+
         use_secondary_index = (
-            embedding_model.status == IndexModelStatus.FUTURE
-            if embedding_model is not None
+            search_settings.status == IndexModelStatus.FUTURE
+            if search_settings is not None
             else False
         )
         if attempt.connector_credential_pair.connector is None:
@@ -330,20 +341,28 @@ def kickoff_indexing_jobs(
                 )
             continue
 
-        if use_secondary_index:
-            run = secondary_client.submit(
-                run_indexing_entrypoint,
-                attempt.id,
-                global_version.get_is_ee_version(),
-                pure=False,
-            )
+        if not use_secondary_index:
+            if not primary_client_full:
+                run = client.submit(
+                    run_indexing_entrypoint,
+                    attempt.id,
+                    attempt.connector_credential_pair_id,
+                    global_version.get_is_ee_version(),
+                    pure=False,
+                )
+                if not run:
+                    primary_client_full = True
         else:
-            run = client.submit(
-                run_indexing_entrypoint,
-                attempt.id,
-                global_version.get_is_ee_version(),
-                pure=False,
-            )
+            if not secondary_client_full:
+                run = secondary_client.submit(
+                    run_indexing_entrypoint,
+                    attempt.id,
+                    attempt.connector_credential_pair_id,
+                    global_version.get_is_ee_version(),
+                    pure=False,
+                )
+                if not run:
+                    secondary_client_full = True
 
         if run:
             if indexing_attempt_count == 0:
@@ -381,18 +400,23 @@ def update_loop(
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
         check_index_swap(db_session=db_session)
-        db_embedding_model = get_current_db_embedding_model(db_session)
+        search_settings = get_current_search_settings(db_session)
 
         # So that the first time users aren't surprised by really slow speed of first
         # batch of documents indexed
 
-        if db_embedding_model.cloud_provider_id is None:
-            logger.debug("Running a first inference to warm up embedding model")
-            warm_up_bi_encoder(
-                embedding_model=db_embedding_model,
-                model_server_host=INDEXING_MODEL_SERVER_HOST,
-                model_server_port=MODEL_SERVER_PORT,
+        if search_settings.provider_type is None:
+            logger.notice("Running a first inference to warm up embedding model")
+            embedding_model = EmbeddingModel.from_db_model(
+                search_settings=search_settings,
+                server_host=INDEXING_MODEL_SERVER_HOST,
+                server_port=MODEL_SERVER_PORT,
             )
+
+            warm_up_bi_encoder(
+                embedding_model=embedding_model,
+            )
+            logger.notice("First inference complete.")
 
     client_primary: Client | SimpleJobClient
     client_secondary: Client | SimpleJobClient
@@ -421,6 +445,7 @@ def update_loop(
 
     existing_jobs: dict[int, Future | SimpleJob] = {}
 
+    logger.notice("Startup complete. Waiting for indexing jobs...")
     while True:
         start = time.time()
         start_time_utc = datetime.utcfromtimestamp(start).strftime("%Y-%m-%d %H:%M:%S")
@@ -454,7 +479,7 @@ def update__main() -> None:
     set_is_ee_based_on_env_variable()
     init_sqlalchemy_engine(POSTGRES_INDEXER_APP_NAME)
 
-    logger.info("Starting indexing service")
+    logger.notice("Starting indexing service")
     update_loop()
 
 

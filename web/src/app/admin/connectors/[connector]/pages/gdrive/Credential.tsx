@@ -17,6 +17,8 @@ import {
   GoogleDriveServiceAccountCredentialJson,
 } from "@/lib/connectors/credentials";
 
+import { Button as TremorButton } from "@tremor/react";
+
 type GoogleDriveCredentialJsonTypes = "authorized_user" | "service_account";
 
 export const DriveJsonUpload = ({
@@ -147,12 +149,14 @@ interface DriveJsonUploadSectionProps {
   setPopup: (popupSpec: PopupSpec | null) => void;
   appCredentialData?: { client_id: string };
   serviceAccountCredentialData?: { service_account_email: string };
+  isAdmin: boolean;
 }
 
 export const DriveJsonUploadSection = ({
   setPopup,
   appCredentialData,
   serviceAccountCredentialData,
+  isAdmin,
 }: DriveJsonUploadSectionProps) => {
   const { mutate } = useSWRConfig();
 
@@ -165,38 +169,48 @@ export const DriveJsonUploadSection = ({
             {serviceAccountCredentialData.service_account_email}
           </p>
         </div>
-        <div className="mt-4 mb-1">
-          If you want to update these credentials, delete the existing
-          credentials through the button below, and then upload a new
-          credentials JSON.
-        </div>
-        <Button
-          onClick={async () => {
-            const response = await fetch(
-              "/api/manage/admin/connector/google-drive/service-account-key",
-              {
-                method: "DELETE",
-              }
-            );
-            if (response.ok) {
-              mutate(
-                "/api/manage/admin/connector/google-drive/service-account-key"
-              );
-              setPopup({
-                message: "Successfully deleted service account key",
-                type: "success",
-              });
-            } else {
-              const errorMsg = await response.text();
-              setPopup({
-                message: `Failed to delete service account key - ${errorMsg}`,
-                type: "error",
-              });
-            }
-          }}
-        >
-          Delete
-        </Button>
+        {isAdmin ? (
+          <>
+            <div className="mt-4 mb-1">
+              If you want to update these credentials, delete the existing
+              credentials through the button below, and then upload a new
+              credentials JSON.
+            </div>
+            <Button
+              onClick={async () => {
+                const response = await fetch(
+                  "/api/manage/admin/connector/google-drive/service-account-key",
+                  {
+                    method: "DELETE",
+                  }
+                );
+                if (response.ok) {
+                  mutate(
+                    "/api/manage/admin/connector/google-drive/service-account-key"
+                  );
+                  setPopup({
+                    message: "Successfully deleted service account key",
+                    type: "success",
+                  });
+                } else {
+                  const errorMsg = await response.text();
+                  setPopup({
+                    message: `Failed to delete service account key - ${errorMsg}`,
+                    type: "error",
+                  });
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </>
+        ) : (
+          <>
+            <div className="mt-4 mb-1">
+              To change these credentials, please contact an administrator.
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -208,36 +222,57 @@ export const DriveJsonUploadSection = ({
           Found existing app credentials with the following <b>Client ID:</b>
           <p className="italic mt-1">{appCredentialData.client_id}</p>
         </div>
-        <div className="mt-4 mb-1">
-          If you want to update these credentials, delete the existing
-          credentials through the button below, and then upload a new
-          credentials JSON.
-        </div>
-        <Button
-          onClick={async () => {
-            const response = await fetch(
-              "/api/manage/admin/connector/google-drive/app-credential",
-              {
-                method: "DELETE",
-              }
-            );
-            if (response.ok) {
-              mutate("/api/manage/admin/connector/google-drive/app-credential");
-              setPopup({
-                message: "Successfully deleted service account key",
-                type: "success",
-              });
-            } else {
-              const errorMsg = await response.text();
-              setPopup({
-                message: `Failed to delete app credential - ${errorMsg}`,
-                type: "error",
-              });
-            }
-          }}
-        >
-          Delete
-        </Button>
+        {isAdmin ? (
+          <>
+            <div className="mt-4 mb-1">
+              If you want to update these credentials, delete the existing
+              credentials through the button below, and then upload a new
+              credentials JSON.
+            </div>
+            <Button
+              onClick={async () => {
+                const response = await fetch(
+                  "/api/manage/admin/connector/google-drive/app-credential",
+                  {
+                    method: "DELETE",
+                  }
+                );
+                if (response.ok) {
+                  mutate(
+                    "/api/manage/admin/connector/google-drive/app-credential"
+                  );
+                  setPopup({
+                    message: "Successfully deleted app credentials",
+                    type: "success",
+                  });
+                } else {
+                  const errorMsg = await response.text();
+                  setPopup({
+                    message: `Failed to delete app credential - ${errorMsg}`,
+                    type: "error",
+                  });
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </>
+        ) : (
+          <div className="mt-4 mb-1">
+            To change these credentials, please contact an administrator.
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="mt-2">
+        <p className="text-sm mb-2">
+          Curators are unable to set up the google drive credentials. To add a
+          Google Drive connector, please contact an administrator.
+        </p>
       </div>
     );
   }
@@ -321,7 +356,7 @@ export const DriveOAuthSection = ({
   if (serviceAccountKeyData?.service_account_email) {
     return (
       <div>
-        <p className="text-sm mb-2">
+        <p className="text-sm mb-6">
           When using a Google Drive Service Account, you can either have Danswer
           act as the service account itself OR you can specify an account for
           the service account to impersonate.
@@ -333,70 +368,59 @@ export const DriveOAuthSection = ({
           the documents you want to index with the service account.
         </p>
 
-        <Card>
-          <Formik
-            initialValues={{
-              google_drive_delegated_user: "",
-            }}
-            validationSchema={Yup.object().shape({
-              google_drive_delegated_user: Yup.string().optional(),
-            })}
-            onSubmit={async (values, formikHelpers) => {
-              formikHelpers.setSubmitting(true);
-
-              const response = await fetch(
-                "/api/manage/admin/connector/google-drive/service-account-credential",
-                {
-                  method: "PUT",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    google_drive_delegated_user:
-                      values.google_drive_delegated_user,
-                  }),
-                }
-              );
-
-              if (response.ok) {
-                setPopup({
-                  message: "Successfully created service account credential",
-                  type: "success",
-                });
-              } else {
-                const errorMsg = await response.text();
-                setPopup({
-                  message: `Failed to create service account credential - ${errorMsg}`,
-                  type: "error",
-                });
+        <Formik
+          initialValues={{
+            google_drive_delegated_user: "",
+          }}
+          validationSchema={Yup.object().shape({
+            google_drive_delegated_user: Yup.string().optional(),
+          })}
+          onSubmit={async (values, formikHelpers) => {
+            formikHelpers.setSubmitting(true);
+            const response = await fetch(
+              "/api/manage/admin/connector/google-drive/service-account-credential",
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  google_drive_delegated_user:
+                    values.google_drive_delegated_user,
+                }),
               }
-              refreshCredentials();
-            }}
-          >
-            {({ isSubmitting }) => (
-              <Form>
-                <TextFormField
-                  name="google_drive_delegated_user"
-                  label="[Optional] User email to impersonate:"
-                  subtext="If left blank, Danswer will use the service account itself."
-                />
-                <div className="flex">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className={
-                      "bg-slate-500 hover:bg-slate-700 text-white " +
-                      "font-bold py-2 px-4 rounded focus:outline-none " +
-                      "focus:shadow-outline w-full max-w-sm mx-auto"
-                    }
-                  >
-                    Submit
-                  </button>
-                </div>
-              </Form>
-            )}
-          </Formik>
-        </Card>
+            );
+
+            if (response.ok) {
+              setPopup({
+                message: "Successfully created service account credential",
+                type: "success",
+              });
+            } else {
+              const errorMsg = await response.text();
+              setPopup({
+                message: `Failed to create service account credential - ${errorMsg}`,
+                type: "error",
+              });
+            }
+            refreshCredentials();
+          }}
+        >
+          {({ isSubmitting }) => (
+            <Form>
+              <TextFormField
+                name="google_drive_delegated_user"
+                label="[Optional] User email to impersonate:"
+                subtext="If left blank, Danswer will use the service account itself."
+              />
+              <div className="flex">
+                <TremorButton type="submit" disabled={isSubmitting}>
+                  Create Credential
+                </TremorButton>
+              </div>
+            </Form>
+          )}
+        </Formik>
       </div>
     );
   }

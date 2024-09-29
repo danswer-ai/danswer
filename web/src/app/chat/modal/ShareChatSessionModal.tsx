@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ModalWrapper } from "./ModalWrapper";
+import { ModalWrapper } from "@/components/modals/ModalWrapper";
 import { Button, Callout, Divider, Text } from "@tremor/react";
 import { Spinner } from "@/components/Spinner";
 import { ChatSessionSharedStatus } from "../interfaces";

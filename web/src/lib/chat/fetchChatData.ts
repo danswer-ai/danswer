@@ -14,10 +14,10 @@ import {
 import { ChatSession } from "@/app/chat/interfaces";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
-import { FullEmbeddingModelResponse } from "@/app/admin/models/embedding/components/types";
+import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
-import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
+import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { personaComparator } from "@/app/admin/assistants/lib";
 import { cookies } from "next/headers";
@@ -44,7 +44,6 @@ interface FetchChatDataResult {
   toggleSidebar: boolean;
   finalDocumentSidebarInitialWidth?: number;
   shouldShowWelcomeModal: boolean;
-  shouldDisplaySourcesIncompleteModal: boolean;
   userInputPrompts: InputPrompt[];
 }
 
@@ -126,6 +125,7 @@ export async function fetchChatData(searchParams: {
       `Failed to fetch chat sessions - ${chatSessionsResponse?.text()}`
     );
   }
+
   // Larger ID -> created later
   chatSessions.sort((a, b) => (a.id > b.id ? -1 : 1));
 
@@ -241,7 +241,6 @@ export async function fetchChatData(searchParams: {
     finalDocumentSidebarInitialWidth,
     toggleSidebar,
     shouldShowWelcomeModal,
-    shouldDisplaySourcesIncompleteModal,
     userInputPrompts,
   };
 }

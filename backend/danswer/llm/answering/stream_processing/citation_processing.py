@@ -11,7 +11,6 @@ from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 from danswer.prompts.constants import TRIPLE_BACKTICK
 from danswer.utils.logger import setup_logger
 
-
 logger = setup_logger()
 
 
@@ -85,6 +84,15 @@ def extract_citations_from_stream(
 
         curr_segment += token
         llm_out += token
+
+        # Handle code blocks without language tags
+        if "`" in curr_segment:
+            if curr_segment.endswith("`"):
+                continue
+            elif "```" in curr_segment:
+                piece_that_comes_after = curr_segment.split("```")[1][0]
+                if piece_that_comes_after == "\n" and in_code_block(llm_out):
+                    curr_segment = curr_segment.replace("```", "```plaintext")
 
         citation_pattern = r"\[(\d+)\]"
 
@@ -204,7 +212,9 @@ def extract_citations_from_stream(
 def build_citation_processor(
     context_docs: list[LlmDoc], doc_id_to_rank_map: DocumentIdOrderMapping
 ) -> StreamProcessor:
-    def stream_processor(tokens: Iterator[str]) -> AnswerQuestionStreamReturn:
+    def stream_processor(
+        tokens: Iterator[str],
+    ) -> AnswerQuestionStreamReturn:
         yield from extract_citations_from_stream(
             tokens=tokens,
             context_docs=context_docs,

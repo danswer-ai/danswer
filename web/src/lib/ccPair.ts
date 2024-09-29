@@ -20,22 +20,21 @@ export async function setCCPairStatus(
     );
 
     if (!response.ok) {
-      const errorMessage = (await response.json()).detail;
-      setPopup &&
-        setPopup({
-          message: "Failed to update connector status - " + errorMessage,
-          type: "error",
-        });
+      const { detail } = await response.json();
+      setPopup?.({
+        message: `Failed to update connector status - ${detail}`,
+        type: "error",
+      });
+      return;
     }
 
-    setPopup &&
-      setPopup({
-        message:
-          ccPairStatus === ConnectorCredentialPairStatus.ACTIVE
-            ? "Enabled connector!"
-            : "Paused connector!",
-        type: "success",
-      });
+    setPopup?.({
+      message:
+        ccPairStatus === ConnectorCredentialPairStatus.ACTIVE
+          ? "Enabled connector!"
+          : "Paused connector!",
+      type: "success",
+    });
 
     onUpdate && onUpdate();
   } catch (error) {

@@ -8,13 +8,17 @@ from email.mime.text import MIMEText
 from typing import Optional
 from typing import Tuple
 
+from email_validator import EmailNotValidError
+from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
 from fastapi import status
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import BaseUserManager
+from fastapi_users import exceptions
 from fastapi_users import FastAPIUsers
 from fastapi_users import models
 from fastapi_users import schemas
@@ -31,6 +35,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
+from danswer.auth.schemas import UserUpdate
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
@@ -40,6 +45,7 @@ from danswer.configs.app_configs import SMTP_PASS
 from danswer.configs.app_configs import SMTP_PORT
 from danswer.configs.app_configs import SMTP_SERVER
 from danswer.configs.app_configs import SMTP_USER
+from danswer.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.app_configs import WEB_DOMAIN
@@ -59,10 +65,7 @@ from danswer.db.users import get_user_by_email
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
-from danswer.utils.variable_functionality import (
-    fetch_versioned_implementation,
-)
-
+from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
 
@@ -81,7 +84,7 @@ def verify_auth_setting() -> None:
             "User must choose a valid user authentication method: "
             "disabled, basic, or google_oauth"
         )
-    logger.info(f"Using Auth Type: {AUTH_TYPE.value}")
+    logger.notice(f"Using Auth Type: {AUTH_TYPE.value}")
 
 
 def get_display_email(email: str | None, space_less: bool = False) -> str:
@@ -106,8 +109,28 @@ def user_needs_to_be_verified() -> bool:
 
 def verify_email_is_invited(email: str) -> None:
     whitelist = get_invited_users()
-    if (whitelist and email not in whitelist) or not email:
-        raise PermissionError("User not on allowed user whitelist")
+    if not whitelist:
+        return
+
+    if not email:
+        raise PermissionError("Email must be specified")
+
+    email_info = validate_email(email)  # can raise EmailNotValidError
+
+    for email_whitelist in whitelist:
+        try:
+            # normalized emails are now being inserted into the db
+            # we can remove this normalization on read after some time has passed
+            email_info_whitelist = validate_email(email_whitelist)
+        except EmailNotValidError:
+            continue
+
+        # oddly, normalization does not include lowercasing the user part of the
+        # email address ... which we want to allow
+        if email_info.normalized.lower() == email_info_whitelist.normalized.lower():
+            return
+
+    raise PermissionError("User not on allowed user whitelist")
 
 
 def verify_email_in_whitelist(email: str) -> None:
@@ -164,7 +187,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         user_create: schemas.UC | UserCreate,
         safe: bool = False,
         request: Optional[Request] = None,
-    ) -> models.UP:
+    ) -> User:
         verify_email_is_invited(user_create.email)
         verify_email_domain(user_create.email)
         if hasattr(user_create, "role"):
@@ -173,7 +196,27 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 user_create.role = UserRole.ADMIN
             else:
                 user_create.role = UserRole.BASIC
-        return await super().create(user_create, safe=safe, request=request)  # type: ignore
+        user = None
+        try:
+            user = await super().create(user_create, safe=safe, request=request)  # type: ignore
+        except exceptions.UserAlreadyExists:
+            user = await self.get_by_email(user_create.email)
+            # Handle case where user has used product outside of web and is now creating an account through web
+            if (
+                not user.has_web_login
+                and hasattr(user_create, "has_web_login")
+                and user_create.has_web_login
+            ):
+                user_update = UserUpdate(
+                    password=user_create.password,
+                    has_web_login=True,
+                    role=user_create.role,
+                    is_verified=user_create.is_verified,
+                )
+                user = await self.update(user_update, user)
+            else:
+                raise exceptions.UserAlreadyExists()
+        return user
 
     async def oauth_callback(
         self: "BaseUserManager[models.UOAP, models.ID]",
@@ -203,18 +246,35 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             is_verified_by_default=is_verified_by_default,
         )
 
-        # NOTE: google oauth expires after 1hr. We don't want to force the user to
-        # re-authenticate that frequently, so for now we'll just ignore this for
-        # google oauth users
-        if expires_at and AUTH_TYPE != AuthType.GOOGLE_OAUTH:
+        # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
+        # re-authenticate that frequently, so by default this is disabled
+        if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
             oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
             await self.user_db.update(user, update_dict={"oidc_expiry": oidc_expiry})
+
+        # this is needed if an organization goes from `TRACK_EXTERNAL_IDP_EXPIRY=true` to `false`
+        # otherwise, the oidc expiry will always be old, and the user will never be able to login
+        if user.oidc_expiry and not TRACK_EXTERNAL_IDP_EXPIRY:
+            await self.user_db.update(user, update_dict={"oidc_expiry": None})
+
+        # Handle case where user has used product outside of web and is now creating an account through web
+        if not user.has_web_login:
+            await self.user_db.update(
+                user,
+                update_dict={
+                    "is_verified": is_verified_by_default,
+                    "has_web_login": True,
+                },
+            )
+            user.is_verified = is_verified_by_default
+            user.has_web_login = True
+
         return user
 
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
     ) -> None:
-        logger.info(f"User {user.id} has registered.")
+        logger.notice(f"User {user.id} has registered.")
         optional_telemetry(
             record_type=RecordType.SIGN_UP,
             data={"action": "create"},
@@ -224,18 +284,44 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
-        logger.info(f"User {user.id} has forgot their password. Reset token: {token}")
+        logger.notice(f"User {user.id} has forgot their password. Reset token: {token}")
 
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
         verify_email_domain(user.email)
 
-        logger.info(
+        logger.notice(
             f"Verification requested for user {user.id}. Verification token: {token}"
         )
 
         send_user_verification_email(user.email, token)
+
+    async def authenticate(
+        self, credentials: OAuth2PasswordRequestForm
+    ) -> Optional[User]:
+        try:
+            user = await self.get_by_email(credentials.username)
+        except exceptions.UserNotExists:
+            self.password_helper.hash(credentials.password)
+            return None
+
+        if not user.has_web_login:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
+            )
+
+        verified, updated_password_hash = self.password_helper.verify_and_update(
+            credentials.password, user.hashed_password
+        )
+        if not verified:
+            return None
+
+        if updated_password_hash is not None:
+            await self.user_db.update(user, {"hashed_password": updated_password_hash})
+
+        return user
 
 
 async def get_user_manager(
@@ -339,6 +425,7 @@ async def optional_user(
 async def double_check_user(
     user: User | None,
     optional: bool = DISABLE_AUTH,
+    include_expired: bool = False,
 ) -> User | None:
     if optional:
         return None
@@ -355,7 +442,11 @@ async def double_check_user(
             detail="Access denied. User is not verified.",
         )
 
-    if user.oidc_expiry and user.oidc_expiry < datetime.now(timezone.utc):
+    if (
+        user.oidc_expiry
+        and user.oidc_expiry < datetime.now(timezone.utc)
+        and not include_expired
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. User's OIDC token has expired.",
@@ -364,10 +455,38 @@ async def double_check_user(
     return user
 
 
+async def current_user_with_expired_token(
+    user: User | None = Depends(optional_user),
+) -> User | None:
+    return await double_check_user(user, include_expired=True)
+
+
 async def current_user(
     user: User | None = Depends(optional_user),
 ) -> User | None:
     return await double_check_user(user)
+
+
+async def current_curator_or_admin_user(
+    user: User | None = Depends(current_user),
+) -> User | None:
+    if DISABLE_AUTH:
+        return None
+
+    if not user or not hasattr(user, "role"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User is not authenticated or lacks role information.",
+        )
+
+    allowed_roles = {UserRole.GLOBAL_CURATOR, UserRole.CURATOR, UserRole.ADMIN}
+    if user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User is not a curator or admin.",
+        )
+
+    return user
 
 
 async def current_admin_user(user: User | None = Depends(current_user)) -> User | None:
@@ -377,7 +496,12 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
     if not user or not hasattr(user, "role") or user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. User is not an admin.",
+            detail="Access denied. User must be an admin to perform this action.",
         )
 
     return user
+
+
+def get_default_admin_user_emails_() -> list[str]:
+    # No default seeding available for Danswer MIT
+    return []

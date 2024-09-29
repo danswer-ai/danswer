@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.server.documents.models import ConnectorCredentialPairDescriptor
@@ -14,8 +15,8 @@ class DocumentSetCreationRequest(BaseModel):
     cc_pair_ids: list[int]
     is_public: bool
     # For Private Document Sets, who should be able to access these
-    users: list[UUID] | None = None
-    groups: list[int] | None = None
+    users: list[UUID] = Field(default_factory=list)
+    groups: list[int] = Field(default_factory=list)
 
 
 class DocumentSetUpdateRequest(BaseModel):
@@ -46,7 +47,6 @@ class DocumentSet(BaseModel):
     description: str
     cc_pair_descriptors: list[ConnectorCredentialPairDescriptor]
     is_up_to_date: bool
-    contains_non_public: bool
     is_public: bool
     # For Private Document Sets, who should be able to access these
     users: list[UUID]
@@ -58,12 +58,6 @@ class DocumentSet(BaseModel):
             id=document_set_model.id,
             name=document_set_model.name,
             description=document_set_model.description,
-            contains_non_public=any(
-                [
-                    not cc_pair.is_public
-                    for cc_pair in document_set_model.connector_credential_pairs
-                ]
-            ),
             cc_pair_descriptors=[
                 ConnectorCredentialPairDescriptor(
                     id=cc_pair.id,

@@ -3,15 +3,20 @@ from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic import Field
+from pydantic import model_validator
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.models import DocumentErrorSummary
 from danswer.connectors.models import InputType
+from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
 from danswer.db.models import IndexAttempt
+from danswer.db.models import IndexAttemptError as DbIndexAttemptError
 from danswer.db.models import IndexingStatus
 from danswer.db.models import TaskStatus
 from danswer.server.utils import mask_credential_dict
@@ -38,13 +43,18 @@ class ConnectorBase(BaseModel):
     source: DocumentSource
     input_type: InputType
     connector_specific_config: dict[str, Any]
-    refresh_freq: int | None  # In seconds, None for one time index with no refresh
-    prune_freq: int | None
-    indexing_start: datetime | None
+    # In seconds, None for one time index with no refresh
+    refresh_freq: int | None = None
+    prune_freq: int | None = None
+    indexing_start: datetime | None = None
 
 
-class ConnectorCredentialBase(ConnectorBase):
-    is_public: bool
+class ConnectorUpdateRequest(ConnectorBase):
+    is_public: bool = True
+    groups: list[int] = Field(default_factory=list)
+
+    def to_connector_base(self) -> ConnectorBase:
+        return ConnectorBase(**self.model_dump(exclude={"is_public", "groups"}))
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -89,6 +99,8 @@ class CredentialBase(BaseModel):
     admin_public: bool
     source: DocumentSource
     name: str | None = None
+    curator_public: bool = False
+    groups: list[int] = Field(default_factory=list)
 
 
 class CredentialSnapshot(CredentialBase):
@@ -103,7 +115,7 @@ class CredentialSnapshot(CredentialBase):
             id=credential.id,
             credential_json=(
                 mask_credential_dict(credential.credential_json)
-                if MASK_CREDENTIAL_PREFIX
+                if MASK_CREDENTIAL_PREFIX and credential.credential_json
                 else credential.credential_json
             ),
             user_id=credential.user_id,
@@ -112,6 +124,7 @@ class CredentialSnapshot(CredentialBase):
             time_updated=credential.time_updated,
             source=credential.source or DocumentSource.NOT_APPLICABLE,
             name=credential.name,
+            curator_public=credential.curator_public,
         )
 
 
@@ -122,6 +135,7 @@ class IndexAttemptSnapshot(BaseModel):
     total_docs_indexed: int  # includes docs that are updated
     docs_removed_from_index: int
     error_msg: str | None
+    error_count: int
     full_exception_trace: str | None
     time_started: str | None
     time_updated: str
@@ -137,6 +151,7 @@ class IndexAttemptSnapshot(BaseModel):
             total_docs_indexed=index_attempt.total_docs_indexed or 0,
             docs_removed_from_index=index_attempt.docs_removed_from_index or 0,
             error_msg=index_attempt.error_msg,
+            error_count=len(index_attempt.error_rows),
             full_exception_trace=index_attempt.full_exception_trace,
             time_started=(
                 index_attempt.time_started.isoformat()
@@ -147,6 +162,53 @@ class IndexAttemptSnapshot(BaseModel):
         )
 
 
+class IndexAttemptError(BaseModel):
+    id: int
+    index_attempt_id: int | None
+    batch_number: int | None
+    doc_summaries: list[DocumentErrorSummary]
+    error_msg: str | None
+    traceback: str | None
+    time_created: str
+
+    @classmethod
+    def from_db_model(cls, error: DbIndexAttemptError) -> "IndexAttemptError":
+        doc_summaries = [
+            DocumentErrorSummary.from_dict(summary) for summary in error.doc_summaries
+        ]
+        return IndexAttemptError(
+            id=error.id,
+            index_attempt_id=error.index_attempt_id,
+            batch_number=error.batch,
+            doc_summaries=doc_summaries,
+            error_msg=error.error_msg,
+            traceback=error.traceback,
+            time_created=error.time_created.isoformat(),
+        )
+
+
+class PaginatedIndexAttempts(BaseModel):
+    index_attempts: list[IndexAttemptSnapshot]
+    page: int
+    total_pages: int
+
+    @classmethod
+    def from_models(
+        cls,
+        index_attempt_models: list[IndexAttempt],
+        page: int,
+        total_pages: int,
+    ) -> "PaginatedIndexAttempts":
+        return cls(
+            index_attempts=[
+                IndexAttemptSnapshot.from_index_attempt_db_model(index_attempt_model)
+                for index_attempt_model in index_attempt_models
+            ],
+            page=page,
+            total_pages=total_pages,
+        )
+
+
 class CCPairFullInfo(BaseModel):
     id: int
     name: str
@@ -154,17 +216,38 @@ class CCPairFullInfo(BaseModel):
     num_docs_indexed: int
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
-    index_attempts: list[IndexAttemptSnapshot]
+    number_of_index_attempts: int
+    last_index_attempt_status: IndexingStatus | None
     latest_deletion_attempt: DeletionAttemptSnapshot | None
+    access_type: AccessType
+    is_editable_for_current_user: bool
+    deletion_failure_message: str | None
 
     @classmethod
     def from_models(
         cls,
         cc_pair_model: ConnectorCredentialPair,
-        index_attempt_models: list[IndexAttempt],
         latest_deletion_attempt: DeletionAttemptSnapshot | None,
+        number_of_index_attempts: int,
+        last_index_attempt: IndexAttempt | None,
         num_docs_indexed: int,  # not ideal, but this must be computed separately
+        is_editable_for_current_user: bool,
     ) -> "CCPairFullInfo":
+        # figure out if we need to artificially deflate the number of docs indexed.
+        # This is required since the total number of docs indexed by a CC Pair is
+        # updated before the new docs for an indexing attempt. If we don't do this,
+        # there is a mismatch between these two numbers which may confuse users.
+        last_indexing_status = last_index_attempt.status if last_index_attempt else None
+        if (
+            last_indexing_status == IndexingStatus.SUCCESS
+            and number_of_index_attempts == 1
+            and last_index_attempt
+            and last_index_attempt.new_docs_indexed
+        ):
+            num_docs_indexed = (
+                last_index_attempt.new_docs_indexed if last_index_attempt else 0
+            )
+
         return cls(
             id=cc_pair_model.id,
             name=cc_pair_model.name,
@@ -176,12 +259,32 @@ class CCPairFullInfo(BaseModel):
             credential=CredentialSnapshot.from_credential_db_model(
                 cc_pair_model.credential
             ),
-            index_attempts=[
-                IndexAttemptSnapshot.from_index_attempt_db_model(index_attempt_model)
-                for index_attempt_model in index_attempt_models
-            ],
+            number_of_index_attempts=number_of_index_attempts,
+            last_index_attempt_status=last_indexing_status,
             latest_deletion_attempt=latest_deletion_attempt,
+            access_type=cc_pair_model.access_type,
+            is_editable_for_current_user=is_editable_for_current_user,
+            deletion_failure_message=cc_pair_model.deletion_failure_message,
         )
+
+
+class CCPairPruningTask(BaseModel):
+    id: str
+    name: str
+    status: TaskStatus
+    start_time: datetime | None
+    register_time: datetime | None
+
+
+class FailedConnectorIndexingStatus(BaseModel):
+    """Simplified version of ConnectorIndexingStatus for failed indexing attempts"""
+
+    cc_pair_id: int
+    name: str | None
+    error_msg: str | None
+    is_deletable: bool
+    connector_id: int
+    credential_id: int
 
 
 class ConnectorIndexingStatus(BaseModel):
@@ -193,7 +296,8 @@ class ConnectorIndexingStatus(BaseModel):
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     owner: str
-    public_doc: bool
+    groups: list[int]
+    access_type: AccessType
     last_finished_status: IndexingStatus | None
     last_status: IndexingStatus | None
     last_success: datetime | None
@@ -210,20 +314,26 @@ class ConnectorCredentialPairIdentifier(BaseModel):
 
 
 class ConnectorCredentialPairMetadata(BaseModel):
-    name: str | None
-    is_public: bool
+    name: str | None = None
+    access_type: AccessType
+    auto_sync_options: dict[str, Any] | None = None
+    groups: list[int] = Field(default_factory=list)
+
+
+class CCStatusUpdateRequest(BaseModel):
+    status: ConnectorCredentialPairStatus
 
 
 class ConnectorCredentialPairDescriptor(BaseModel):
     id: int
-    name: str | None
+    name: str | None = None
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
 
 
 class RunConnectorRequest(BaseModel):
     connector_id: int
-    credential_ids: list[int] | None
+    credential_ids: list[int] | None = None
     from_beginning: bool = False
 
 
@@ -260,8 +370,18 @@ class GoogleServiceAccountKey(BaseModel):
 
 
 class GoogleServiceAccountCredentialRequest(BaseModel):
-    google_drive_delegated_user: str | None  # email of user to impersonate
-    gmail_delegated_user: str | None  # email of user to impersonate
+    google_drive_delegated_user: str | None = None  # email of user to impersonate
+    gmail_delegated_user: str | None = None  # email of user to impersonate
+
+    @model_validator(mode="after")
+    def check_user_delegation(self) -> "GoogleServiceAccountCredentialRequest":
+        if (self.google_drive_delegated_user is None) == (
+            self.gmail_delegated_user is None
+        ):
+            raise ValueError(
+                "Exactly one of google_drive_delegated_user or gmail_delegated_user must be set"
+            )
+        return self
 
 
 class FileUploadResponse(BaseModel):

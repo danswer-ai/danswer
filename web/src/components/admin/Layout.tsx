@@ -1,4 +1,4 @@
-import { User } from "@/lib/types";
+import { User, UserRole } from "@/lib/types";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,
@@ -7,6 +7,7 @@ import {
 import { redirect } from "next/navigation";
 import { ClientLayout } from "./ClientLayout";
 import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "@/lib/constants";
+import { AnnouncementBanner } from "../header/AnnouncementBanner";
 
 export async function Layout({ children }: { children: React.ReactNode }) {
   const tasks = [getAuthTypeMetadataSS(), getCurrentUserSS()];
@@ -31,7 +32,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
     if (!user) {
       return redirect("/auth/login");
     }
-    if (user.role !== "admin") {
+    if (user.role === UserRole.BASIC) {
       return redirect("/");
     }
     if (!user.is_verified && requiresVerification) {
@@ -44,6 +45,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
       enableEnterprise={SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED}
       user={user}
     >
+      <AnnouncementBanner />
       {children}
     </ClientLayout>
   );

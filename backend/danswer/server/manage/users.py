@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from datetime import timezone
 
+from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Body
 from fastapi import Depends
@@ -21,6 +22,7 @@ from danswer.auth.noauth_user import set_no_auth_user_preferences
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserStatus
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
@@ -29,19 +31,27 @@ from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
+from danswer.db.models import DocumentSet__User
+from danswer.db.models import Persona__User
+from danswer.db.models import SamlAccount
 from danswer.db.models import User
+from danswer.db.models import User__UserGroup
 from danswer.db.users import get_user_by_email
 from danswer.db.users import list_users
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
+from danswer.server.manage.models import UserPreferences
 from danswer.server.manage.models import UserRoleResponse
+from danswer.server.manage.models import UserRoleUpdateRequest
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
+from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
+from ee.danswer.db.user_group import remove_curator_status__no_commit
 
 logger = setup_logger()
 
@@ -51,42 +61,38 @@ router = APIRouter()
 USERS_PAGE_SIZE = 10
 
 
-@router.patch("/manage/promote-user-to-admin")
-def promote_admin(
-    user_email: UserByEmail,
-    _: User = Depends(current_admin_user),
+@router.patch("/manage/set-user-role")
+def set_user_role(
+    user_role_update_request: UserRoleUpdateRequest,
+    current_user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    user_to_promote = get_user_by_email(
-        email=user_email.user_email, db_session=db_session
+    user_to_update = get_user_by_email(
+        email=user_role_update_request.user_email, db_session=db_session
     )
-    if not user_to_promote:
+    if not user_to_update:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user_to_promote.role = UserRole.ADMIN
-    db_session.add(user_to_promote)
-    db_session.commit()
-
-
-@router.patch("/manage/demote-admin-to-basic")
-async def demote_admin(
-    user_email: UserByEmail,
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> None:
-    user_to_demote = get_user_by_email(
-        email=user_email.user_email, db_session=db_session
-    )
-    if not user_to_demote:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if user_to_demote.id == user.id:
+    if user_role_update_request.new_role == UserRole.CURATOR:
         raise HTTPException(
-            status_code=400, detail="Cannot demote yourself from admin role!"
+            status_code=400,
+            detail="Curator role must be set via the User Group Menu",
         )
 
-    user_to_demote.role = UserRole.BASIC
-    db_session.add(user_to_demote)
+    if user_to_update.role == user_role_update_request.new_role:
+        return
+
+    if current_user.id == user_to_update.id:
+        raise HTTPException(
+            status_code=400,
+            detail="An admin cannot demote themselves from admin role!",
+        )
+
+    if user_to_update.role == UserRole.CURATOR:
+        remove_curator_status__no_commit(db_session, user_to_update)
+
+    user_to_update.role = user_role_update_request.new_role.value
+
     db_session.commit()
 
 
@@ -95,7 +101,7 @@ def list_all_users(
     q: str | None = None,
     accepted_page: int | None = None,
     invited_page: int | None = None,
-    _: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AllUsersResponse:
     if not q:
@@ -103,7 +109,7 @@ def list_all_users(
 
     users = [
         user
-        for user in list_users(db_session, q=q)
+        for user in list_users(db_session, email_filter_string=q, user=user)
         if not is_api_key_email_address(user.email)
     ]
     accepted_emails = {user.email for user in users}
@@ -159,12 +165,18 @@ def bulk_invite_users(
     emails: list[str] = Body(..., embed=True),
     current_user: User | None = Depends(current_admin_user),
 ) -> int:
+    """emails are string validated. If any email fails validation, no emails are
+    invited and an exception is raised."""
     if current_user is None:
         raise HTTPException(
             status_code=400, detail="Auth is disabled, cannot invite users"
         )
 
-    all_emails = list(set(emails) | set(get_invited_users()))
+    normalized_emails = []
+    for email in emails:
+        email_info = validate_email(email)  # can raise EmailNotValidError
+        normalized_emails.append(email_info.normalized)  # type: ignore
+    all_emails = list(set(normalized_emails) | set(get_invited_users()))
     return write_invited_users(all_emails)
 
 
@@ -205,6 +217,71 @@ def deactivate_user(
     user_to_deactivate.is_active = False
     db_session.add(user_to_deactivate)
     db_session.commit()
+
+
+@router.delete("/manage/admin/delete-user")
+async def delete_user(
+    user_email: UserByEmail,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    user_to_delete = get_user_by_email(
+        email=user_email.user_email, db_session=db_session
+    )
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user_to_delete.is_active is True:
+        logger.warning(
+            "{} must be deactivated before deleting".format(user_to_delete.email)
+        )
+        raise HTTPException(
+            status_code=400, detail="User must be deactivated before deleting"
+        )
+
+    # Detach the user from the current session
+    db_session.expunge(user_to_delete)
+
+    try:
+        for oauth_account in user_to_delete.oauth_accounts:
+            db_session.delete(oauth_account)
+
+        delete_user__ext_group_for_user__no_commit(
+            db_session=db_session,
+            user_id=user_to_delete.id,
+        )
+        db_session.query(SamlAccount).filter(
+            SamlAccount.user_id == user_to_delete.id
+        ).delete()
+        db_session.query(DocumentSet__User).filter(
+            DocumentSet__User.user_id == user_to_delete.id
+        ).delete()
+        db_session.query(Persona__User).filter(
+            Persona__User.user_id == user_to_delete.id
+        ).delete()
+        db_session.query(User__UserGroup).filter(
+            User__UserGroup.user_id == user_to_delete.id
+        ).delete()
+        db_session.delete(user_to_delete)
+        db_session.commit()
+
+        # NOTE: edge case may exist with race conditions
+        # with this `invited user` scheme generally.
+        user_emails = get_invited_users()
+        remaining_users = [
+            user for user in user_emails if user != user_email.user_email
+        ]
+        write_invited_users(remaining_users)
+
+        logger.info(f"Deleted user {user_to_delete.email}")
+    except Exception as e:
+        import traceback
+
+        full_traceback = traceback.format_exc()
+        logger.error(f"Full stack trace:\n{full_traceback}")
+        db_session.rollback()
+        logger.error(f"Error deleting user {user_to_delete.email}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error deleting user")
 
 
 @router.patch("/manage/admin/activate-user")
@@ -317,7 +394,7 @@ def verify_user_logged_in(
 
 
 class ChosenDefaultModelRequest(BaseModel):
-    default_model: str | None
+    default_model: str | None = None
 
 
 @router.patch("/user/default-model")
@@ -369,5 +446,66 @@ def update_user_assistant_list(
         update(User)
         .where(User.id == user.id)  # type: ignore
         .values(chosen_assistants=request.chosen_assistants)
+    )
+    db_session.commit()
+
+
+def update_assistant_list(
+    preferences: UserPreferences, assistant_id: int, show: bool
+) -> UserPreferences:
+    visible_assistants = preferences.visible_assistants or []
+    hidden_assistants = preferences.hidden_assistants or []
+    chosen_assistants = preferences.chosen_assistants or []
+
+    if show:
+        if assistant_id not in visible_assistants:
+            visible_assistants.append(assistant_id)
+        if assistant_id in hidden_assistants:
+            hidden_assistants.remove(assistant_id)
+        if assistant_id not in chosen_assistants:
+            chosen_assistants.append(assistant_id)
+    else:
+        if assistant_id in visible_assistants:
+            visible_assistants.remove(assistant_id)
+        if assistant_id not in hidden_assistants:
+            hidden_assistants.append(assistant_id)
+        if assistant_id in chosen_assistants:
+            chosen_assistants.remove(assistant_id)
+
+    preferences.visible_assistants = visible_assistants
+    preferences.hidden_assistants = hidden_assistants
+    preferences.chosen_assistants = chosen_assistants
+    return preferences
+
+
+@router.patch("/user/assistant-list/update/{assistant_id}")
+def update_user_assistant_visibility(
+    assistant_id: int,
+    show: bool,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    if user is None:
+        if AUTH_TYPE == AuthType.DISABLED:
+            store = get_dynamic_config_store()
+            no_auth_user = fetch_no_auth_user(store)
+            preferences = no_auth_user.preferences
+            updated_preferences = update_assistant_list(preferences, assistant_id, show)
+            set_no_auth_user_preferences(store, updated_preferences)
+            return
+        else:
+            raise RuntimeError("This should never happen")
+
+    user_preferences = UserInfo.from_model(user).preferences
+    updated_preferences = update_assistant_list(user_preferences, assistant_id, show)
+
+    db_session.execute(
+        update(User)
+        .where(User.id == user.id)  # type: ignore
+        .values(
+            hidden_assistants=updated_preferences.hidden_assistants,
+            visible_assistants=updated_preferences.visible_assistants,
+            chosen_assistants=updated_preferences.chosen_assistants,
+        )
     )
     db_session.commit()

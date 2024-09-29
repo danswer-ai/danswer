@@ -9,6 +9,7 @@ from jira.resources import Issue
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import JIRA_CONNECTOR_LABELS_TO_SKIP
+from danswer.configs.app_configs import JIRA_CONNECTOR_MAX_TICKET_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -45,10 +46,15 @@ def extract_jira_project(url: str) -> tuple[str, str]:
     return jira_base, jira_project
 
 
-def extract_text_from_content(content: dict) -> str:
+def extract_text_from_adf(adf: dict | None) -> str:
+    """Extracts plain text from Atlassian Document Format:
+    https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/
+
+    WARNING: This function is incomplete and will e.g. skip lists!
+    """
     texts = []
-    if "content" in content:
-        for block in content["content"]:
+    if adf is not None and "content" in adf:
+        for block in adf["content"]:
             if "content" in block:
                 for item in block["content"]:
                     if item["type"] == "text":
@@ -72,18 +78,15 @@ def _get_comment_strs(
     comment_strs = []
     for comment in jira.fields.comment.comments:
         try:
-            if hasattr(comment, "body"):
-                body_text = extract_text_from_content(comment.raw["body"])
-            elif hasattr(comment, "raw"):
-                body = comment.raw.get("body", "No body content available")
-                body_text = (
-                    extract_text_from_content(body) if isinstance(body, dict) else body
-                )
-            else:
-                body_text = "No body attribute found"
+            body_text = (
+                comment.body
+                if JIRA_API_VERSION == "2"
+                else extract_text_from_adf(comment.raw["body"])
+            )
 
             if (
                 hasattr(comment, "author")
+                and hasattr(comment.author, "emailAddress")
                 and comment.author.emailAddress in comment_email_blacklist
             ):
                 continue  # Skip adding comment if author's email is in blacklist
@@ -126,12 +129,23 @@ def fetch_jira_issues_batch(
             )
             continue
 
-        comments = _get_comment_strs(jira, comment_email_blacklist)
-        semantic_rep = (
-            f"{jira.fields.description}\n"
-            if jira.fields.description
-            else "" + "\n".join([f"Comment: {comment}" for comment in comments])
+        description = (
+            jira.fields.description
+            if JIRA_API_VERSION == "2"
+            else extract_text_from_adf(jira.raw["fields"]["description"])
         )
+        comments = _get_comment_strs(jira, comment_email_blacklist)
+        ticket_content = f"{description}\n" + "\n".join(
+            [f"Comment: {comment}" for comment in comments if comment]
+        )
+
+        # Check ticket size
+        if len(ticket_content.encode("utf-8")) > JIRA_CONNECTOR_MAX_TICKET_SIZE:
+            logger.info(
+                f"Skipping {jira.key} because it exceeds the maximum size of "
+                f"{JIRA_CONNECTOR_MAX_TICKET_SIZE} bytes."
+            )
+            continue
 
         page_url = f"{jira_client.client_info()}/browse/{jira.key}"
 
@@ -175,7 +189,7 @@ def fetch_jira_issues_batch(
         doc_batch.append(
             Document(
                 id=page_url,
-                sections=[Section(link=page_url, text=semantic_rep)],
+                sections=[Section(link=page_url, text=ticket_content)],
                 source=DocumentSource.JIRA,
                 semantic_identifier=jira.fields.summary,
                 doc_updated_at=time_str_to_utc(jira.fields.updated),

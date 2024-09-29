@@ -1,343 +1,465 @@
+import logging
+import time
 from datetime import timedelta
-from typing import cast
+from typing import Any
 
-from celery import Celery  # type: ignore
-from sqlalchemy.orm import Session
+import redis
+from celery import bootsteps  # type: ignore
+from celery import Celery
+from celery import current_task
+from celery import signals
+from celery import Task
+from celery.exceptions import WorkerShutdown
+from celery.signals import beat_init
+from celery.signals import worker_init
+from celery.signals import worker_ready
+from celery.signals import worker_shutdown
+from celery.states import READY_STATES
+from celery.utils.log import get_task_logger
 
-from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
-from danswer.background.celery.celery_utils import should_kick_off_deletion_of_cc_pair
-from danswer.background.celery.celery_utils import should_prune_cc_pair
-from danswer.background.celery.celery_utils import should_sync_doc_set
-from danswer.background.connector_deletion import delete_connector_credential_pair
-from danswer.background.connector_deletion import delete_connector_credential_pair_batch
-from danswer.background.task_utils import build_celery_task_wrapper
-from danswer.background.task_utils import name_cc_cleanup_task
-from danswer.background.task_utils import name_cc_prune_task
-from danswer.background.task_utils import name_document_set_sync_task
-from danswer.configs.app_configs import JOB_TIMEOUT
-from danswer.configs.constants import POSTGRES_CELERY_APP_NAME
-from danswer.connectors.factory import instantiate_connector
-from danswer.connectors.models import InputType
-from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.connector_credential_pair import get_connector_credential_pairs
-from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
-from danswer.db.document import get_documents_for_connector_credential_pair
-from danswer.db.document import prepare_to_modify_documents
-from danswer.db.document_set import delete_document_set
-from danswer.db.document_set import fetch_document_sets
-from danswer.db.document_set import fetch_document_sets_for_documents
-from danswer.db.document_set import fetch_documents_for_document_set_paginated
-from danswer.db.document_set import get_document_set_by_id
-from danswer.db.document_set import mark_document_set_as_synced
-from danswer.db.engine import build_connection_string
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.engine import SYNC_DB_API
-from danswer.db.models import DocumentSet
-from danswer.document_index.document_index_utils import get_both_index_names
-from danswer.document_index.factory import get_default_document_index
-from danswer.document_index.interfaces import UpdateRequest
+from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
+from danswer.background.celery.celery_redis import RedisConnectorDeletion
+from danswer.background.celery.celery_redis import RedisDocumentSet
+from danswer.background.celery.celery_redis import RedisUserGroup
+from danswer.background.celery.celery_utils import celery_is_worker_primary
+from danswer.configs.constants import CELERY_PRIMARY_WORKER_LOCK_TIMEOUT
+from danswer.configs.constants import DanswerCeleryPriority
+from danswer.configs.constants import DanswerRedisLocks
+from danswer.configs.constants import POSTGRES_CELERY_BEAT_APP_NAME
+from danswer.configs.constants import POSTGRES_CELERY_WORKER_HEAVY_APP_NAME
+from danswer.configs.constants import POSTGRES_CELERY_WORKER_LIGHT_APP_NAME
+from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
+from danswer.db.engine import SqlEngine
+from danswer.redis.redis_pool import RedisPool
+from danswer.utils.logger import ColoredFormatter
+from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-connection_string = build_connection_string(
-    db_api=SYNC_DB_API, app_name=POSTGRES_CELERY_APP_NAME
-)
-celery_broker_url = f"sqla+{connection_string}"
-celery_backend_url = f"db+{connection_string}"
-celery_app = Celery(__name__, broker=celery_broker_url, backend=celery_backend_url)
+# use this within celery tasks to get celery task specific logging
+task_logger = get_task_logger(__name__)
+
+redis_pool = RedisPool()
+
+celery_app = Celery(__name__)
+celery_app.config_from_object(
+    "danswer.background.celery.celeryconfig"
+)  # Load configuration from 'celeryconfig.py'
 
 
-_SYNC_BATCH_SIZE = 100
+@signals.task_postrun.connect
+def celery_task_postrun(
+    sender: Any | None = None,
+    task_id: str | None = None,
+    task: Task | None = None,
+    args: tuple | None = None,
+    kwargs: dict | None = None,
+    retval: Any | None = None,
+    state: str | None = None,
+    **kwds: Any,
+) -> None:
+    """We handle this signal in order to remove completed tasks
+    from their respective tasksets. This allows us to track the progress of document set
+    and user group syncs.
+
+    This function runs after any task completes (both success and failure)
+    Note that this signal does not fire on a task that failed to complete and is going
+    to be retried.
+    """
+    if not task:
+        return
+
+    task_logger.debug(f"Task {task.name} (ID: {task_id}) completed with state: {state}")
+    # logger.debug(f"Result: {retval}")
+
+    if state not in READY_STATES:
+        return
+
+    if not task_id:
+        return
+
+    if task_id.startswith(RedisConnectorCredentialPair.PREFIX):
+        r = redis_pool.get_client()
+        r.srem(RedisConnectorCredentialPair.get_taskset_key(), task_id)
+        return
+
+    if task_id.startswith(RedisDocumentSet.PREFIX):
+        r = redis_pool.get_client()
+        document_set_id = RedisDocumentSet.get_id_from_task_id(task_id)
+        if document_set_id is not None:
+            rds = RedisDocumentSet(document_set_id)
+            r.srem(rds.taskset_key, task_id)
+        return
+
+    if task_id.startswith(RedisUserGroup.PREFIX):
+        r = redis_pool.get_client()
+        usergroup_id = RedisUserGroup.get_id_from_task_id(task_id)
+        if usergroup_id is not None:
+            rug = RedisUserGroup(usergroup_id)
+            r.srem(rug.taskset_key, task_id)
+        return
+
+    if task_id.startswith(RedisConnectorDeletion.PREFIX):
+        r = redis_pool.get_client()
+        cc_pair_id = RedisConnectorDeletion.get_id_from_task_id(task_id)
+        if cc_pair_id is not None:
+            rcd = RedisConnectorDeletion(cc_pair_id)
+            r.srem(rcd.taskset_key, task_id)
+        return
 
 
-#####
-# Tasks that need to be run in job queue, registered via APIs
-#
-# If imports from this module are needed, use local imports to avoid circular importing
-#####
-@build_celery_task_wrapper(name_cc_cleanup_task)
-@celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def cleanup_connector_credential_pair_task(
-    connector_id: int,
-    credential_id: int,
-) -> int:
-    """Connector deletion task. This is run as an async task because it is a somewhat slow job.
-    Needs to potentially update a large number of Postgres and Vespa docs, including deleting them
-    or updating the ACL"""
-    engine = get_sqlalchemy_engine()
-    with Session(engine) as db_session:
-        # validate that the connector / credential pair is deletable
-        cc_pair = get_connector_credential_pair(
-            db_session=db_session,
-            connector_id=connector_id,
-            credential_id=credential_id,
-        )
-        if not cc_pair:
-            raise ValueError(
-                f"Cannot run deletion attempt - connector_credential_pair with Connector ID: "
-                f"{connector_id} and Credential ID: {credential_id} does not exist."
-            )
+@beat_init.connect
+def on_beat_init(sender: Any, **kwargs: Any) -> None:
+    SqlEngine.set_app_name(POSTGRES_CELERY_BEAT_APP_NAME)
+    SqlEngine.init_engine(pool_size=2, max_overflow=0)
 
-        deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(
-            connector_credential_pair=cc_pair, db_session=db_session
-        )
-        if deletion_attempt_disallowed_reason:
-            raise ValueError(deletion_attempt_disallowed_reason)
 
+@worker_init.connect
+def on_worker_init(sender: Any, **kwargs: Any) -> None:
+    # decide some initial startup settings based on the celery worker's hostname
+    # (set at the command line)
+    hostname = sender.hostname
+    if hostname.startswith("light"):
+        SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_LIGHT_APP_NAME)
+        SqlEngine.init_engine(pool_size=sender.concurrency, max_overflow=8)
+    elif hostname.startswith("heavy"):
+        SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_HEAVY_APP_NAME)
+        SqlEngine.init_engine(pool_size=8, max_overflow=0)
+    else:
+        SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
+        SqlEngine.init_engine(pool_size=8, max_overflow=0)
+
+    r = redis_pool.get_client()
+
+    WAIT_INTERVAL = 5
+    WAIT_LIMIT = 60
+
+    time_start = time.monotonic()
+    logger.info("Redis: Readiness check starting.")
+    while True:
         try:
-            # The bulk of the work is in here, updates Postgres and Vespa
-            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-            document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
-            )
-            return delete_connector_credential_pair(
-                db_session=db_session,
-                document_index=document_index,
-                cc_pair=cc_pair,
-            )
-        except Exception as e:
-            logger.exception(f"Failed to run connector_deletion due to {e}")
-            raise e
-
-
-@build_celery_task_wrapper(name_cc_prune_task)
-@celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def prune_documents_task(connector_id: int, credential_id: int) -> None:
-    """connector pruning task. For a cc pair, this task pulls all document IDs from the source
-    and compares those IDs to locally stored documents and deletes all locally stored IDs missing
-    from the most recently pulled document ID list"""
-    with Session(get_sqlalchemy_engine()) as db_session:
-        try:
-            cc_pair = get_connector_credential_pair(
-                db_session=db_session,
-                connector_id=connector_id,
-                credential_id=credential_id,
-            )
-
-            if not cc_pair:
-                logger.warning(f"ccpair not found for {connector_id} {credential_id}")
-                return
-
-            runnable_connector = instantiate_connector(
-                cc_pair.connector.source,
-                InputType.PRUNE,
-                cc_pair.connector.connector_specific_config,
-                cc_pair.credential,
-                db_session,
-            )
-
-            all_connector_doc_ids: set[str] = extract_ids_from_runnable_connector(
-                runnable_connector
-            )
-
-            all_indexed_document_ids = {
-                doc.id
-                for doc in get_documents_for_connector_credential_pair(
-                    db_session=db_session,
-                    connector_id=connector_id,
-                    credential_id=credential_id,
-                )
-            }
-
-            doc_ids_to_remove = list(all_indexed_document_ids - all_connector_doc_ids)
-
-            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-            document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
-            )
-
-            if len(doc_ids_to_remove) == 0:
-                logger.info(
-                    f"No docs to prune from {cc_pair.connector.source} connector"
-                )
-                return
-
-            logger.info(
-                f"pruning {len(doc_ids_to_remove)} doc(s) from {cc_pair.connector.source} connector"
-            )
-            delete_connector_credential_pair_batch(
-                document_ids=doc_ids_to_remove,
-                connector_id=connector_id,
-                credential_id=credential_id,
-                document_index=document_index,
-            )
-        except Exception as e:
-            logger.exception(
-                f"Failed to run pruning for connector id {connector_id} due to {e}"
-            )
-            raise e
-
-
-@build_celery_task_wrapper(name_document_set_sync_task)
-@celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def sync_document_set_task(document_set_id: int) -> None:
-    """For document sets marked as not up to date, sync the state from postgres
-    into the datastore. Also handles deletions."""
-
-    def _sync_document_batch(document_ids: list[str], db_session: Session) -> None:
-        logger.debug(f"Syncing document sets for: {document_ids}")
-
-        # Acquires a lock on the documents so that no other process can modify them
-        with prepare_to_modify_documents(
-            db_session=db_session, document_ids=document_ids
-        ):
-            # get current state of document sets for these documents
-            document_set_map = {
-                document_id: document_sets
-                for document_id, document_sets in fetch_document_sets_for_documents(
-                    document_ids=document_ids, db_session=db_session
-                )
-            }
-
-            # update Vespa
-            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-            document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
-            )
-            update_requests = [
-                UpdateRequest(
-                    document_ids=[document_id],
-                    document_sets=set(document_set_map.get(document_id, [])),
-                )
-                for document_id in document_ids
-            ]
-            document_index.update(update_requests=update_requests)
-
-    with Session(get_sqlalchemy_engine()) as db_session:
-        try:
-            cursor = None
-            while True:
-                document_batch, cursor = fetch_documents_for_document_set_paginated(
-                    document_set_id=document_set_id,
-                    db_session=db_session,
-                    current_only=False,
-                    last_document_id=cursor,
-                    limit=_SYNC_BATCH_SIZE,
-                )
-                _sync_document_batch(
-                    document_ids=[document.id for document in document_batch],
-                    db_session=db_session,
-                )
-                if cursor is None:
-                    break
-
-            # if there are no connectors, then delete the document set. Otherwise, just
-            # mark it as successfully synced.
-            document_set = cast(
-                DocumentSet,
-                get_document_set_by_id(
-                    db_session=db_session, document_set_id=document_set_id
-                ),
-            )  # casting since we "know" a document set with this ID exists
-            if not document_set.connector_credential_pairs:
-                delete_document_set(
-                    document_set_row=document_set, db_session=db_session
-                )
-                logger.info(
-                    f"Successfully deleted document set with ID: '{document_set_id}'!"
-                )
-            else:
-                mark_document_set_as_synced(
-                    document_set_id=document_set_id, db_session=db_session
-                )
-                logger.info(f"Document set sync for '{document_set_id}' complete!")
-
+            if r.ping():
+                break
         except Exception:
-            logger.exception("Failed to sync document set %s", document_set_id)
-            raise
+            pass
 
-
-#####
-# Periodic Tasks
-#####
-@celery_app.task(
-    name="check_for_document_sets_sync_task",
-    soft_time_limit=JOB_TIMEOUT,
-)
-def check_for_document_sets_sync_task() -> None:
-    """Runs periodically to check if any sync tasks should be run and adds them
-    to the queue"""
-    with Session(get_sqlalchemy_engine()) as db_session:
-        # check if any document sets are not synced
-        document_set_info = fetch_document_sets(
-            user_id=None, db_session=db_session, include_outdated=True
+        time_elapsed = time.monotonic() - time_start
+        logger.info(
+            f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
         )
-        for document_set, _ in document_set_info:
-            if should_sync_doc_set(document_set, db_session):
-                logger.info(f"Syncing the {document_set.name} document set")
-                sync_document_set_task.apply_async(
-                    kwargs=dict(document_set_id=document_set.id),
+        if time_elapsed > WAIT_LIMIT:
+            msg = (
+                f"Redis: Readiness check did not succeed within the timeout "
+                f"({WAIT_LIMIT} seconds). Exiting..."
+            )
+            logger.error(msg)
+            raise WorkerShutdown(msg)
+
+        time.sleep(WAIT_INTERVAL)
+
+    logger.info("Redis: Readiness check succeeded. Continuing...")
+
+    if not celery_is_worker_primary(sender):
+        logger.info("Running as a secondary celery worker.")
+        logger.info("Waiting for primary worker to be ready...")
+        time_start = time.monotonic()
+        while True:
+            if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
+                break
+
+            time.monotonic()
+            time_elapsed = time.monotonic() - time_start
+            logger.info(
+                f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+            )
+            if time_elapsed > WAIT_LIMIT:
+                msg = (
+                    f"Primary worker was not ready within the timeout. "
+                    f"({WAIT_LIMIT} seconds). Exiting..."
+                )
+                logger.error(msg)
+                raise WorkerShutdown(msg)
+
+            time.sleep(WAIT_INTERVAL)
+
+        logger.info("Wait for primary worker completed successfully. Continuing...")
+        return
+
+    logger.info("Running as the primary celery worker.")
+
+    # This is singleton work that should be done on startup exactly once
+    # by the primary worker
+    r = redis_pool.get_client()
+
+    # For the moment, we're assuming that we are the only primary worker
+    # that should be running.
+    # TODO: maybe check for or clean up another zombie primary worker if we detect it
+    r.delete(DanswerRedisLocks.PRIMARY_WORKER)
+
+    # this process wide lock is taken to help other workers start up in order.
+    # it is planned to use this lock to enforce singleton behavior on the primary
+    # worker, since the primary worker does redis cleanup on startup, but this isn't
+    # implemented yet.
+    lock = r.lock(
+        DanswerRedisLocks.PRIMARY_WORKER,
+        timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
+    )
+
+    logger.info("Primary worker lock: Acquire starting.")
+    acquired = lock.acquire(blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2)
+    if acquired:
+        logger.info("Primary worker lock: Acquire succeeded.")
+    else:
+        logger.error("Primary worker lock: Acquire failed!")
+        raise WorkerShutdown("Primary worker lock could not be acquired!")
+
+    sender.primary_worker_lock = lock
+
+    r.delete(DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK)
+    r.delete(DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK)
+
+    r.delete(RedisConnectorCredentialPair.get_taskset_key())
+    r.delete(RedisConnectorCredentialPair.get_fence_key())
+
+    for key in r.scan_iter(RedisDocumentSet.TASKSET_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisUserGroup.TASKSET_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisConnectorDeletion.TASKSET_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
+        r.delete(key)
+
+
+@worker_ready.connect
+def on_worker_ready(sender: Any, **kwargs: Any) -> None:
+    task_logger.info("worker_ready signal received.")
+
+
+@worker_shutdown.connect
+def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
+    if not celery_is_worker_primary(sender):
+        return
+
+    if not sender.primary_worker_lock:
+        return
+
+    logger.info("Releasing primary worker lock.")
+    lock = sender.primary_worker_lock
+    if lock.owned():
+        lock.release()
+        sender.primary_worker_lock = None
+
+
+class CeleryTaskPlainFormatter(PlainFormatter):
+    def format(self, record: logging.LogRecord) -> str:
+        task = current_task
+        if task and task.request:
+            record.__dict__.update(task_id=task.request.id, task_name=task.name)
+            record.msg = f"[{task.name}({task.request.id})] {record.msg}"
+
+        return super().format(record)
+
+
+class CeleryTaskColoredFormatter(ColoredFormatter):
+    def format(self, record: logging.LogRecord) -> str:
+        task = current_task
+        if task and task.request:
+            record.__dict__.update(task_id=task.request.id, task_name=task.name)
+            record.msg = f"[{task.name}({task.request.id})] {record.msg}"
+
+        return super().format(record)
+
+
+@signals.setup_logging.connect
+def on_setup_logging(
+    loglevel: Any, logfile: Any, format: Any, colorize: Any, **kwargs: Any
+) -> None:
+    # TODO: could unhardcode format and colorize and accept these as options from
+    # celery's config
+
+    # reformats celery's worker logger
+    root_logger = logging.getLogger()
+
+    root_handler = logging.StreamHandler()  # Set up a handler for the root logger
+    root_formatter = ColoredFormatter(
+        "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+    root_handler.setFormatter(root_formatter)
+    root_logger.addHandler(root_handler)  # Apply the handler to the root logger
+
+    if logfile:
+        root_file_handler = logging.FileHandler(logfile)
+        root_file_formatter = PlainFormatter(
+            "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+            datefmt="%m/%d/%Y %I:%M:%S %p",
+        )
+        root_file_handler.setFormatter(root_file_formatter)
+        root_logger.addHandler(root_file_handler)
+
+    root_logger.setLevel(loglevel)
+
+    # reformats celery's task logger
+    task_formatter = CeleryTaskColoredFormatter(
+        "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+    task_handler = logging.StreamHandler()  # Set up a handler for the task logger
+    task_handler.setFormatter(task_formatter)
+    task_logger.addHandler(task_handler)  # Apply the handler to the task logger
+
+    if logfile:
+        task_file_handler = logging.FileHandler(logfile)
+        task_file_formatter = CeleryTaskPlainFormatter(
+            "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
+            datefmt="%m/%d/%Y %I:%M:%S %p",
+        )
+        task_file_handler.setFormatter(task_file_formatter)
+        task_logger.addHandler(task_file_handler)
+
+    task_logger.setLevel(loglevel)
+    task_logger.propagate = False
+
+
+class HubPeriodicTask(bootsteps.StartStopStep):
+    """Regularly reacquires the primary worker lock outside of the task queue.
+    Use the task_logger in this class to avoid double logging."""
+
+    # it's unclear to me whether using the hub's timer or the bootstep timer is better
+    requires = {"celery.worker.components:Hub"}
+
+    def __init__(self, worker: Any, **kwargs: Any) -> None:
+        self.interval = CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 8  # Interval in seconds
+        self.task_tref = None
+
+    def start(self, worker: Any) -> None:
+        if not celery_is_worker_primary(worker):
+            return
+
+        # Access the worker's event loop (hub)
+        hub = worker.consumer.controller.hub
+
+        # Schedule the periodic task
+        self.task_tref = hub.call_repeatedly(
+            self.interval, self.run_periodic_task, worker
+        )
+        task_logger.info("Scheduled periodic task with hub.")
+
+    def run_periodic_task(self, worker: Any) -> None:
+        try:
+            if not worker.primary_worker_lock:
+                return
+
+            if not hasattr(worker, "primary_worker_lock"):
+                return
+
+            r = redis_pool.get_client()
+
+            lock: redis.lock.Lock = worker.primary_worker_lock
+
+            task_logger.info("Reacquiring primary worker lock.")
+
+            if lock.owned():
+                task_logger.debug("Reacquiring primary worker lock.")
+                lock.reacquire()
+            else:
+                task_logger.warning(
+                    "Full acquisition of primary worker lock. "
+                    "Reasons could be computer sleep or a clock change."
+                )
+                lock = r.lock(
+                    DanswerRedisLocks.PRIMARY_WORKER,
+                    timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
                 )
 
+                task_logger.info("Primary worker lock: Acquire starting.")
+                acquired = lock.acquire(
+                    blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2
+                )
+                if acquired:
+                    task_logger.info("Primary worker lock: Acquire succeeded.")
+                else:
+                    task_logger.error("Primary worker lock: Acquire failed!")
+                    raise TimeoutError("Primary worker lock could not be acquired!")
 
-@celery_app.task(
-    name="check_for_cc_pair_deletion_task",
-    soft_time_limit=JOB_TIMEOUT,
+                worker.primary_worker_lock = lock
+        except Exception:
+            task_logger.exception("HubPeriodicTask.run_periodic_task exceptioned.")
+
+    def stop(self, worker: Any) -> None:
+        # Cancel the scheduled task when the worker stops
+        if self.task_tref:
+            self.task_tref.cancel()
+            task_logger.info("Canceled periodic task with hub.")
+
+
+celery_app.steps["worker"].add(HubPeriodicTask)
+
+celery_app.autodiscover_tasks(
+    [
+        "danswer.background.celery.tasks.connector_deletion",
+        "danswer.background.celery.tasks.periodic",
+        "danswer.background.celery.tasks.pruning",
+        "danswer.background.celery.tasks.vespa",
+    ]
 )
-def check_for_cc_pair_deletion_task() -> None:
-    """Runs periodically to check if any deletion tasks should be run"""
-    with Session(get_sqlalchemy_engine()) as db_session:
-        # check if any document sets are not synced
-        cc_pairs = get_connector_credential_pairs(db_session)
-        for cc_pair in cc_pairs:
-            if should_kick_off_deletion_of_cc_pair(cc_pair, db_session):
-                logger.info(f"Deleting the {cc_pair.name} connector credential pair")
-                cleanup_connector_credential_pair_task.apply_async(
-                    kwargs=dict(
-                        connector_id=cc_pair.connector.id,
-                        credential_id=cc_pair.credential.id,
-                    ),
-                )
-
-
-@celery_app.task(
-    name="check_for_prune_task",
-    soft_time_limit=JOB_TIMEOUT,
-)
-def check_for_prune_task() -> None:
-    """Runs periodically to check if any prune tasks should be run and adds them
-    to the queue"""
-
-    with Session(get_sqlalchemy_engine()) as db_session:
-        all_cc_pairs = get_connector_credential_pairs(db_session)
-
-        for cc_pair in all_cc_pairs:
-            if should_prune_cc_pair(
-                connector=cc_pair.connector,
-                credential=cc_pair.credential,
-                db_session=db_session,
-            ):
-                logger.info(f"Pruning the {cc_pair.connector.name} connector")
-
-                prune_documents_task.apply_async(
-                    kwargs=dict(
-                        connector_id=cc_pair.connector.id,
-                        credential_id=cc_pair.credential.id,
-                    )
-                )
-
 
 #####
 # Celery Beat (Periodic Tasks) Settings
 #####
 celery_app.conf.beat_schedule = {
-    "check-for-document-set-sync": {
-        "task": "check_for_document_sets_sync_task",
+    "check-for-vespa-sync": {
+        "task": "check_for_vespa_sync_task",
         "schedule": timedelta(seconds=5),
-    },
-    "check-for-cc-pair-deletion": {
-        "task": "check_for_cc_pair_deletion_task",
-        # don't need to check too often, since we kick off a deletion initially
-        # during the API call that actually marks the CC pair for deletion
-        "schedule": timedelta(minutes=1),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
     },
 }
+celery_app.conf.beat_schedule.update(
+    {
+        "check-for-connector-deletion-task": {
+            "task": "check_for_connector_deletion_task",
+            # don't need to check too often, since we kick off a deletion initially
+            # during the API call that actually marks the CC pair for deletion
+            "schedule": timedelta(minutes=1),
+            "options": {"priority": DanswerCeleryPriority.HIGH},
+        },
+    }
+)
 celery_app.conf.beat_schedule.update(
     {
         "check-for-prune": {
             "task": "check_for_prune_task",
             "schedule": timedelta(seconds=5),
+            "options": {"priority": DanswerCeleryPriority.HIGH},
+        },
+    }
+)
+celery_app.conf.beat_schedule.update(
+    {
+        "kombu-message-cleanup": {
+            "task": "kombu_message_cleanup_task",
+            "schedule": timedelta(seconds=3600),
+            "options": {"priority": DanswerCeleryPriority.LOWEST},
+        },
+    }
+)
+celery_app.conf.beat_schedule.update(
+    {
+        "monitor-vespa-sync": {
+            "task": "monitor_vespa_sync",
+            "schedule": timedelta(seconds=5),
+            "options": {"priority": DanswerCeleryPriority.HIGH},
         },
     }
 )

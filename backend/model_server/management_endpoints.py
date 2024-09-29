@@ -11,6 +11,10 @@ def healthcheck() -> Response:
 
 
 @router.get("/gpu-status")
-def gpu_status() -> dict[str, bool]:
-    has_gpu = torch.cuda.is_available()
-    return {"gpu_available": has_gpu}
+def gpu_status() -> dict[str, bool | str]:
+    if torch.cuda.is_available():
+        return {"gpu_available": True, "type": "cuda"}
+    elif torch.backends.mps.is_available():
+        return {"gpu_available": True, "type": "mps"}
+    else:
+        return {"gpu_available": False, "type": "none"}

@@ -93,6 +93,14 @@ SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
 
+# If set, Danswer will listen to the `expires_at` returned by the identity
+# provider (e.g. Okta, Google, etc.) and force the user to re-authenticate
+# after this time has elapsed. Disabled since by default many auth providers
+# have very short expiry times (e.g. 1 hour) which provide a poor user experience
+TRACK_EXTERNAL_IDP_EXPIRY = (
+    os.environ.get("TRACK_EXTERNAL_IDP_EXPIRY", "").lower() == "true"
+)
+
 
 #####
 # DB Configs
@@ -118,6 +126,7 @@ try:
 except ValueError:
     INDEX_BATCH_SIZE = 16
 
+
 # Below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
 POSTGRES_USER = os.environ.get("POSTGRES_USER") or "postgres"
@@ -140,6 +149,27 @@ try:
     )
 except ValueError:
     POSTGRES_POOL_RECYCLE = POSTGRES_POOL_RECYCLE_DEFAULT
+
+REDIS_SSL = os.getenv("REDIS_SSL", "").lower() == "true"
+REDIS_HOST = os.environ.get("REDIS_HOST") or "localhost"
+REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD") or ""
+
+# Used for general redis things
+REDIS_DB_NUMBER = int(os.environ.get("REDIS_DB_NUMBER", 0))
+
+# Used by celery as broker and backend
+REDIS_DB_NUMBER_CELERY_RESULT_BACKEND = int(
+    os.environ.get("REDIS_DB_NUMBER_CELERY_RESULT_BACKEND", 14)
+)
+REDIS_DB_NUMBER_CELERY = int(os.environ.get("REDIS_DB_NUMBER_CELERY", 15))  # broker
+
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-settings
+# should be one of "required", "optional", or "none"
+REDIS_SSL_CERT_REQS = os.getenv("REDIS_SSL_CERT_REQS", "none")
+REDIS_SSL_CA_CERTS = os.getenv("REDIS_SSL_CA_CERTS", None)
+
+CELERY_RESULT_EXPIRES = int(os.environ.get("CELERY_RESULT_EXPIRES", 86400))  # seconds
 
 #####
 # Connector Configs
@@ -192,8 +222,8 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
 ]
 
 # Avoid to get archived pages
-CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
-    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
+CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES = (
+    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES", "").lower() == "true"
 )
 
 # Save pages labels as Danswer metadata tags
@@ -204,7 +234,12 @@ CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
 
 # Attachments exceeding this size will not be retrieved (in bytes)
 CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD = int(
-    os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD", 50 * 1024 * 1024)
+    os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD", 10 * 1024 * 1024)
+)
+# Attachments with more chars than this will not be indexed. This is to prevent extremely
+# large files from freezing indexing. 200,000 is ~100 google doc pages.
+CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD = int(
+    os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD", 200_000)
 )
 
 JIRA_CONNECTOR_LABELS_TO_SKIP = [
@@ -212,6 +247,10 @@ JIRA_CONNECTOR_LABELS_TO_SKIP = [
     for ignored_tag in os.environ.get("JIRA_CONNECTOR_LABELS_TO_SKIP", "").split(",")
     if ignored_tag
 ]
+# Maximum size for Jira tickets in bytes (default: 100KB)
+JIRA_CONNECTOR_MAX_TICKET_SIZE = int(
+    os.environ.get("JIRA_CONNECTOR_MAX_TICKET_SIZE", 100 * 1024)
+)
 
 GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
 
@@ -235,7 +274,7 @@ ALLOW_SIMULTANEOUS_PRUNING = (
     os.environ.get("ALLOW_SIMULTANEOUS_PRUNING", "").lower() == "true"
 )
 
-# This is the maxiumum rate at which documents are queried for a pruning job. 0 disables the limitation.
+# This is the maximum rate at which documents are queried for a pruning job. 0 disables the limitation.
 MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE = int(
     os.environ.get("MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE", 0)
 )
@@ -295,6 +334,10 @@ INDEXING_SIZE_WARNING_THRESHOLD = int(
 # 0 disables this behavior and is the default.
 INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL", 0))
 
+# During an indexing attempt, specifies the number of batches which are allowed to
+# exception without aborting the attempt.
+INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT", 0))
+
 #####
 # Miscellaneous
 #####
@@ -321,6 +364,10 @@ LOG_VESPA_TIMING_INFORMATION = (
     os.environ.get("LOG_VESPA_TIMING_INFORMATION", "").lower() == "true"
 )
 LOG_ENDPOINT_LATENCY = os.environ.get("LOG_ENDPOINT_LATENCY", "").lower() == "true"
+LOG_POSTGRES_LATENCY = os.environ.get("LOG_POSTGRES_LATENCY", "").lower() == "true"
+LOG_POSTGRES_CONN_COUNTS = (
+    os.environ.get("LOG_POSTGRES_CONN_COUNTS", "").lower() == "true"
+)
 # Anonymous usage telemetry
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 

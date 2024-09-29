@@ -1,3 +1,4 @@
+import { FullLLMProvider } from "../configuration/llm/interfaces";
 import { Persona, Prompt, StarterMessage } from "./interfaces";
 
 interface PersonaCreationRequest {
@@ -18,7 +19,10 @@ interface PersonaCreationRequest {
   tool_ids: number[];
   icon_color: string | null;
   icon_shape: number | null;
+  remove_image?: boolean;
   uploaded_image: File | null;
+  search_start_date: Date | null;
+  is_default_persona: boolean;
 }
 
 interface PersonaUpdateRequest {
@@ -41,7 +45,9 @@ interface PersonaUpdateRequest {
   tool_ids: number[];
   icon_color: string | null;
   icon_shape: number | null;
+  remove_image: boolean;
   uploaded_image: File | null;
+  search_start_date: Date | null;
 }
 
 function promptNameFromPersonaName(personaName: string) {
@@ -119,7 +125,14 @@ function buildPersonaAPIBody(
     tool_ids,
     icon_color,
     icon_shape,
+    remove_image,
+    search_start_date,
   } = creationRequest;
+
+  const is_default_persona =
+    "is_default_persona" in creationRequest
+      ? creationRequest.is_default_persona
+      : false;
 
   return {
     name,
@@ -140,6 +153,9 @@ function buildPersonaAPIBody(
     icon_color,
     icon_shape,
     uploaded_image_id,
+    remove_image,
+    search_start_date,
+    is_default_persona,
   };
 }
 
@@ -313,4 +329,51 @@ export function personaComparator(a: Persona, b: Persona) {
   }
 
   return closerToZeroNegativesFirstComparator(a.id, b.id);
+}
+
+export const togglePersonaVisibility = async (
+  personaId: number,
+  isVisible: boolean
+) => {
+  const response = await fetch(`/api/admin/persona/${personaId}/visible`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      is_visible: !isVisible,
+    }),
+  });
+  return response;
+};
+
+export const togglePersonaPublicStatus = async (
+  personaId: number,
+  isPublic: boolean
+) => {
+  const response = await fetch(`/api/persona/${personaId}/public`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      is_public: isPublic,
+    }),
+  });
+  return response;
+};
+
+export function checkPersonaRequiresImageGeneration(persona: Persona) {
+  for (const tool of persona.tools) {
+    if (tool.name === "ImageGenerationTool") {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function providersContainImageGeneratingSupport(
+  providers: FullLLMProvider[]
+) {
+  return providers.some((provider) => provider.provider === "openai");
 }

@@ -2,9 +2,10 @@ import {
   AnswerPiecePacket,
   DanswerDocument,
   Filters,
+  StreamStopInfo,
 } from "@/lib/search/interfaces";
-import { handleStream } from "@/lib/search/streamingUtils";
-import { FeedbackType } from "./types";
+import { handleSSEStream, handleStream } from "@/lib/search/streamingUtils";
+import { ChatState, FeedbackType } from "./types";
 import {
   Dispatch,
   MutableRefObject,
@@ -20,6 +21,7 @@ import {
   FileDescriptor,
   ImageGenerationDisplay,
   Message,
+  MessageResponseIDInfo,
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
@@ -109,9 +111,12 @@ export type PacketType =
   | AnswerPiecePacket
   | DocumentsResponse
   | ImageGenerationDisplay
-  | StreamingError;
+  | StreamingError
+  | MessageResponseIDInfo
+  | StreamStopInfo;
 
 export async function* sendMessage({
+  regenerate,
   message,
   fileDescriptors,
   parentMessageId,
@@ -127,7 +132,9 @@ export async function* sendMessage({
   systemPromptOverride,
   useExistingUserMessage,
   alternateAssistantId,
+  signal,
 }: {
+  regenerate: boolean;
   message: string;
   fileDescriptors: FileDescriptor[];
   parentMessageId: number | null;
@@ -137,70 +144,70 @@ export async function* sendMessage({
   selectedDocumentIds: number[] | null;
   queryOverride?: string;
   forceSearch?: boolean;
-  // LLM overrides
   modelProvider?: string;
   modelVersion?: string;
   temperature?: number;
-  // prompt overrides
   systemPromptOverride?: string;
-  // if specified, will use the existing latest user message
-  // and will ignore the specified `message`
   useExistingUserMessage?: boolean;
   alternateAssistantId?: number;
-}) {
+  signal?: AbortSignal;
+}): AsyncGenerator<PacketType, void, unknown> {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
 
-  const sendMessageResponse = await fetch("/api/chat/send-message", {
+  const body = JSON.stringify({
+    alternate_assistant_id: alternateAssistantId,
+    chat_session_id: chatSessionId,
+    parent_message_id: parentMessageId,
+    message: message,
+    prompt_id: promptId,
+    search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
+    file_descriptors: fileDescriptors,
+    regenerate,
+    retrieval_options: !documentsAreSelected
+      ? {
+          run_search:
+            promptId === null ||
+            promptId === undefined ||
+            queryOverride ||
+            forceSearch
+              ? "always"
+              : "auto",
+          real_time: true,
+          filters: filters,
+        }
+      : null,
+    query_override: queryOverride,
+    prompt_override: systemPromptOverride
+      ? {
+          system_prompt: systemPromptOverride,
+        }
+      : null,
+    llm_override:
+      temperature || modelVersion
+        ? {
+            temperature,
+            model_provider: modelProvider,
+            model_version: modelVersion,
+          }
+        : null,
+    use_existing_user_message: useExistingUserMessage,
+  });
+
+  const response = await fetch(`/api/chat/send-message`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      alternate_assistant_id: alternateAssistantId,
-      chat_session_id: chatSessionId,
-      parent_message_id: parentMessageId,
-      message: message,
-      prompt_id: promptId,
-      search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
-      file_descriptors: fileDescriptors,
-      retrieval_options: !documentsAreSelected
-        ? {
-            run_search:
-              promptId === null ||
-              promptId === undefined ||
-              queryOverride ||
-              forceSearch
-                ? "always"
-                : "auto",
-            real_time: true,
-            filters: filters,
-          }
-        : null,
-      query_override: queryOverride,
-      prompt_override: systemPromptOverride
-        ? {
-            system_prompt: systemPromptOverride,
-          }
-        : null,
-      llm_override:
-        temperature || modelVersion
-          ? {
-              temperature,
-              model_provider: modelProvider,
-              model_version: modelVersion,
-            }
-          : null,
-      use_existing_user_message: useExistingUserMessage,
-    }),
+    body,
+    signal,
   });
-  if (!sendMessageResponse.ok) {
-    const errorJson = await sendMessageResponse.json();
-    const errorMsg = errorJson.message || errorJson.detail || "";
-    throw Error(`Failed to send message - ${errorMsg}`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  yield* handleStream<PacketType>(sendMessageResponse);
+  yield* handleSSEStream<PacketType>(response);
 }
 
 export async function nameChatSession(chatSessionId: number, message: string) {
@@ -384,13 +391,12 @@ export function getLastSuccessfulMessageId(messageHistory: Message[]) {
     .reverse()
     .find(
       (message) =>
-        message.type === "assistant" &&
+        (message.type === "assistant" || message.type === "system") &&
         message.messageId !== -1 &&
         message.messageId !== null
     );
   return lastSuccessfulMessage ? lastSuccessfulMessage?.messageId : null;
 }
-
 export function processRawChatHistory(
   rawMessages: BackendMessage[]
 ): Map<number, Message> {
@@ -433,6 +439,7 @@ export function processRawChatHistory(
       parentMessageId: messageInfo.parent_message,
       childrenMessageIds: [],
       latestChildMessageId: messageInfo.latest_child_message,
+      overridden_model: messageInfo.overridden_model,
     };
 
     messages.set(messageInfo.message_id, message);
@@ -575,7 +582,7 @@ export function personaIncludesImage(selectedPersona: Persona) {
 
 const PARAMS_TO_SKIP = [
   SEARCH_PARAM_NAMES.SUBMIT_ON_LOAD,
-  SEARCH_PARAM_NAMES.USER_MESSAGE,
+  SEARCH_PARAM_NAMES.USER_PROMPT,
   SEARCH_PARAM_NAMES.TITLE,
   // only use these if explicitly passed in
   SEARCH_PARAM_NAMES.CHAT_ID,
@@ -635,19 +642,19 @@ export async function uploadFilesForChat(
 }
 
 export async function useScrollonStream({
-  isStreaming,
+  chatState,
   scrollableDivRef,
   scrollDist,
   endDivRef,
   distance,
-  debounce,
+  debounceNumber,
 }: {
-  isStreaming: boolean;
+  chatState: ChatState;
   scrollableDivRef: RefObject<HTMLDivElement>;
   scrollDist: MutableRefObject<number>;
   endDivRef: RefObject<HTMLDivElement>;
   distance: number;
-  debounce: number;
+  debounceNumber: number;
   mobile?: boolean;
 }) {
   const preventScrollInterference = useRef<boolean>(false);
@@ -656,7 +663,7 @@ export async function useScrollonStream({
   const previousScroll = useRef<number>(0);
 
   useEffect(() => {
-    if (isStreaming && scrollableDivRef && scrollableDivRef.current) {
+    if (chatState != "input" && scrollableDivRef && scrollableDivRef.current) {
       let newHeight: number = scrollableDivRef.current?.scrollTop!;
       const heightDifference = newHeight - previousScroll.current;
       previousScroll.current = newHeight;
@@ -691,7 +698,8 @@ export async function useScrollonStream({
       ) {
         // catch up if necessary!
         const scrollAmount = scrollDist.current + 10000;
-        if (scrollDist.current > 140) {
+        if (scrollDist.current > 300) {
+          // if (scrollDist.current > 140) {
           endDivRef.current.scrollIntoView();
         } else {
           blockActionRef.current = true;
@@ -704,7 +712,7 @@ export async function useScrollonStream({
 
           setTimeout(() => {
             blockActionRef.current = false;
-          }, debounce);
+          }, debounceNumber);
         }
       }
     }
@@ -712,7 +720,7 @@ export async function useScrollonStream({
 
   // scroll on end of stream if within distance
   useEffect(() => {
-    if (scrollableDivRef?.current && !isStreaming) {
+    if (scrollableDivRef?.current && chatState == "input") {
       if (scrollDist.current < distance - 50) {
         scrollableDivRef?.current?.scrollBy({
           left: 0,
@@ -721,5 +729,5 @@ export async function useScrollonStream({
         });
       }
     }
-  }, [isStreaming]);
+  }, [chatState]);
 }

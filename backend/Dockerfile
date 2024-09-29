@@ -9,7 +9,8 @@ founders@danswer.ai for more information. Please visit https://github.com/danswe
 
 # Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
 ARG DANSWER_VERSION=0.3-dev
-ENV DANSWER_VERSION=${DANSWER_VERSION}
+ENV DANSWER_VERSION=${DANSWER_VERSION} \
+    DANSWER_RUNNING_IN_DOCKER="true"
 
 RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 # Install system dependencies
@@ -40,6 +41,8 @@ RUN apt-get update && \
 COPY ./requirements/default.txt /tmp/requirements.txt
 COPY ./requirements/ee.txt /tmp/ee-requirements.txt
 RUN pip install --no-cache-dir --upgrade \
+        --retries 5 \
+        --timeout 30 \
         -r /tmp/requirements.txt \
         -r /tmp/ee-requirements.txt && \
     pip uninstall -y py && \
@@ -75,8 +78,8 @@ Tokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1')"
 # Pre-downloading NLTK for setups with limited egress
 RUN python -c "import nltk; \
 nltk.download('stopwords', quiet=True); \
-nltk.download('wordnet', quiet=True); \
 nltk.download('punkt', quiet=True);"
+# nltk.download('wordnet', quiet=True); introduce this back if lemmatization is needed
 
 # Set up application files
 WORKDIR /app

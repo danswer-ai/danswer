@@ -1,4 +1,17 @@
-import { ValidInputTypes, ValidSources } from "../types";
+import * as Yup from "yup";
+import { IsPublicGroupSelectorFormType } from "@/components/IsPublicGroupSelector";
+import { ConfigurableSources, ValidInputTypes, ValidSources } from "../types";
+import { AccessTypeGroupSelectorFormType } from "@/components/admin/connectors/AccessTypeGroupSelector";
+
+export function isLoadState(connector_name: string): boolean {
+  // TODO: centralize connector metadata like this somewhere instead of hardcoding it here
+  const loadStateConnectors = ["web", "xenforo"];
+  if (loadStateConnectors.includes(connector_name)) {
+    return true;
+  }
+
+  return false;
+}
 
 export type InputType =
   | "list"
@@ -26,13 +39,14 @@ export interface Option {
 
 export interface SelectOption extends Option {
   type: "select";
-  default?: number;
   options?: StringWithDescription[];
+  default?: string;
 }
 
 export interface ListOption extends Option {
   type: "list";
   default?: string[];
+  transform?: (values: string[]) => string[];
 }
 
 export interface TextOption extends Option {
@@ -75,7 +89,10 @@ export interface ConnectionConfiguration {
   overrideDefaultFreq?: number;
 }
 
-export const connectorConfigs: Record<ValidSources, ConnectionConfiguration> = {
+export const connectorConfigs: Record<
+  ConfigurableSources,
+  ConnectionConfiguration
+> = {
   web: {
     description: "Configure Web connector",
     values: [
@@ -92,7 +109,6 @@ export const connectorConfigs: Record<ValidSources, ConnectionConfiguration> = {
         query: "Select the web connector type:",
         label: "Scrape Method",
         name: "web_connector_type",
-        optional: true,
         options: [
           { name: "recursive", value: "recursive" },
           { name: "single", value: "single" },
@@ -218,29 +234,56 @@ export const connectorConfigs: Record<ValidSources, ConnectionConfiguration> = {
   },
   confluence: {
     description: "Configure Confluence connector",
-    subtext: `Specify any link to a Confluence page below and click "Index" to Index. If the provided link is for an entire space, we will index the entire space. However, if you want to index a specific page, you can do so by entering the page's URL. 
-    
-For example, entering https://danswer.atlassian.net/wiki/spaces/Engineering/overview and clicking the Index button will index the whole Engineering Confluence space, but entering https://danswer.atlassian.net/wiki/spaces/Engineering/pages/164331/example+page will index that page (and optionally the page's children). 
+    subtext: `Specify the base URL of your Confluence instance, the space name, and optionally a specific page ID to index. If no page ID is provided, the entire space will be indexed.
 
-Selecting the "Index Recursively" checkbox will index the single page's children in addition to itself.
+For example, entering "https://your-company.atlassian.net/wiki" as the Wiki Base URL, "KB" as the Space, and "164331" as the Page ID will index the specific page at https:///your-company.atlassian.net/wiki/spaces/KB/pages/164331/Page. If you leave the Page ID empty, it will index the entire KB space.
 
-We pull the latest pages and comments from each space every 10 minutes`,
+Selecting the "Index Recursively" checkbox will index the specified page and all of its children.`,
     values: [
       {
         type: "text",
-        query: "Enter the wiki page URL:",
-        label: "Wiki Page URL",
-        name: "wiki_page_url",
+        query: "Enter the wiki base URL:",
+        label: "Wiki Base URL",
+        name: "wiki_base",
         optional: false,
-        description: "Enter any link to a Confluence space or Page",
+        description:
+          "The base URL of your Confluence instance (e.g., https://your-domain.atlassian.net/wiki)",
+      },
+      {
+        type: "text",
+        query: "Enter the space:",
+        label: "Space",
+        name: "space",
+        optional: false,
+        description: "The Confluence space name to index (e.g. `KB`)",
+      },
+      {
+        type: "text",
+        query: "Enter the page ID (optional):",
+        label: "Page ID",
+        name: "page_id",
+        optional: true,
+        description:
+          "Specific page ID to index  - leave empty to index the entire space (e.g. `131368`)",
       },
       {
         type: "checkbox",
         query: "Should index pages recursively?",
-        label:
-          "Index Recursively (if this is set and the Wiki Page URL leads to a page, we will index the page and all of its children instead of just the page)",
+        label: "Index Recursively",
         name: "index_recursively",
+        description:
+          "If this is set and the Wiki Page URL leads to a page, we will index the page and all of its children instead of just the page. This is set by default for Confluence connectors without a page ID specified.",
         optional: false,
+      },
+      {
+        type: "checkbox",
+        query: "Is this a Confluence Cloud instance?",
+        label: "Is Cloud",
+        name: "is_cloud",
+        optional: false,
+        default: true,
+        description:
+          "Check if this is a Confluence Cloud instance, uncheck for Confluence Server/Data Center",
       },
     ],
   },
@@ -365,6 +408,8 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
         name: "channels",
         description: `Specify 0 or more channels to index. For example, specifying the channel "support" will cause us to only index all content within the "#support" channel. If no channels are specified, all channels in your workspace will be indexed.`,
         optional: true,
+        // Slack channels can only be lowercase
+        transform: (values) => values.map((value) => value.toLowerCase()),
       },
       {
         type: "checkbox",
@@ -555,7 +600,20 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
   },
   zendesk: {
     description: "Configure Zendesk connector",
-    values: [],
+    values: [
+      {
+        type: "select",
+        query: "Select the what content this connector will index:",
+        label: "Content Type",
+        name: "content_type",
+        optional: false,
+        options: [
+          { name: "articles", value: "articles" },
+          { name: "tickets", value: "tickets" },
+        ],
+        default: "articles",
+      },
+    ],
   },
   linear: {
     description: "Configure Dropbox connector",
@@ -716,6 +774,52 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
       },
     ],
   },
+  xenforo: {
+    description: "Configure Xenforo connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter forum or thread URL:",
+        label: "URL",
+        name: "base_url",
+        optional: false,
+        description:
+          "The XenForo v2.2 forum URL to index. Can be board or thread.",
+      },
+    ],
+  },
+  asana: {
+    description: "Configure Asana connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter your Asana workspace ID:",
+        label: "Workspace ID",
+        name: "asana_workspace_id",
+        optional: false,
+        description:
+          "The ID of the Asana workspace to index. You can find this at https://app.asana.com/api/1.0/workspaces. It's a number that looks like 1234567890123456.",
+      },
+      {
+        type: "text",
+        query: "Enter project IDs to index (optional):",
+        label: "Project IDs",
+        name: "asana_project_ids",
+        description:
+          "IDs of specific Asana projects to index, separated by commas. Leave empty to index all projects in the workspace. Example: 1234567890123456,2345678901234567",
+        optional: true,
+      },
+      {
+        type: "text",
+        query: "Enter the Team ID (optional):",
+        label: "Team ID",
+        name: "asana_team_id",
+        optional: true,
+        description:
+          "ID of a team to use for accessing team-visible tasks. This allows indexing of team-visible tasks in addition to public tasks. Leave empty if you don't want to use this feature.",
+      },
+    ],
+  },
   mediawiki: {
     description: "Configure MediaWiki connector",
     values: [
@@ -764,6 +868,72 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     ],
   },
 };
+export function createConnectorInitialValues(
+  connector: ConfigurableSources
+): Record<string, any> & AccessTypeGroupSelectorFormType {
+  const configuration = connectorConfigs[connector];
+
+  return {
+    name: "",
+    groups: [],
+    access_type: "public",
+    ...configuration.values.reduce(
+      (acc, field) => {
+        if (field.type === "select") {
+          acc[field.name] = null;
+        } else if (field.type === "list") {
+          acc[field.name] = field.default || [];
+        } else if (field.type === "checkbox") {
+          acc[field.name] = field.default || false;
+        } else if (field.default !== undefined) {
+          acc[field.name] = field.default;
+        }
+        return acc;
+      },
+      {} as { [record: string]: any }
+    ),
+  };
+}
+
+export function createConnectorValidationSchema(
+  connector: ConfigurableSources
+): Yup.ObjectSchema<Record<string, any>> {
+  const configuration = connectorConfigs[connector];
+
+  return Yup.object().shape({
+    access_type: Yup.string().required("Access Type is required"),
+    name: Yup.string().required("Connector Name is required"),
+    ...configuration.values.reduce(
+      (acc, field) => {
+        let schema: any =
+          field.type === "select"
+            ? Yup.string()
+            : field.type === "list"
+              ? Yup.array().of(Yup.string())
+              : field.type === "checkbox"
+                ? Yup.boolean()
+                : field.type === "file"
+                  ? Yup.mixed()
+                  : Yup.string();
+
+        if (!field.optional) {
+          schema = schema.required(`${field.label} is required`);
+        }
+
+        acc[field.name] = schema;
+        return acc;
+      },
+      {} as Record<string, any>
+    ),
+    // These are advanced settings
+    indexingStart: Yup.string().nullable(),
+    pruneFreq: Yup.number().min(0, "Prune frequency must be non-negative"),
+    refreshFreq: Yup.number().min(0, "Refresh frequency must be non-negative"),
+  });
+}
+
+export const defaultPruneFreqDays = 30; // 30 days
+export const defaultRefreshFreqMinutes = 30; // 30 minutes
 
 // CONNECTORS
 export interface ConnectorBase<T> {
@@ -774,6 +944,8 @@ export interface ConnectorBase<T> {
   refresh_freq: number | null;
   prune_freq: number | null;
   indexing_start: Date | null;
+  is_public?: boolean;
+  groups?: number[];
 }
 
 export interface Connector<T> extends ConnectorBase<T> {
@@ -814,7 +986,10 @@ export interface GmailConfig {}
 export interface BookstackConfig {}
 
 export interface ConfluenceConfig {
-  wiki_page_url: string;
+  wiki_base: string;
+  space: string;
+  page_id?: string;
+  is_cloud?: boolean;
   index_recursively?: boolean;
 }
 
@@ -903,6 +1078,10 @@ export interface GoogleSitesConfig {
   base_url: string;
 }
 
+export interface XenforoConfig {
+  base_url: string;
+}
+
 export interface ZendeskConfig {}
 
 export interface DropboxConfig {}
@@ -937,6 +1116,12 @@ export interface MediaWikiBaseConfig {
   categories?: string[];
   pages?: string[];
   recurse_depth?: number;
+}
+
+export interface AsanaConfig {
+  asana_workspace_id: string;
+  asana_project_ids?: string;
+  asana_team_id?: string;
 }
 
 export interface MediaWikiConfig extends MediaWikiBaseConfig {

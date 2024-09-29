@@ -24,6 +24,8 @@ class WellKnownLLMProviderDescriptor(BaseModel):
 
 OPENAI_PROVIDER_NAME = "openai"
 OPEN_AI_MODEL_NAMES = [
+    "o1-mini",
+    "o1-preview",
     "gpt-4",
     "gpt-4o",
     "gpt-4o-mini",
@@ -95,8 +97,8 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
             api_version_required=False,
             custom_config_keys=[],
             llm_names=fetch_models_for_provider(ANTHROPIC_PROVIDER_NAME),
-            default_model="claude-3-opus-20240229",
-            default_fast_model="claude-3-sonnet-20240229",
+            default_model="claude-3-5-sonnet-20240620",
+            default_fast_model="claude-3-5-sonnet-20240620",
         ),
         WellKnownLLMProviderDescriptor(
             name=AZURE_PROVIDER_NAME,
@@ -128,8 +130,8 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
                 ),
             ],
             llm_names=fetch_models_for_provider(BEDROCK_PROVIDER_NAME),
-            default_model="anthropic.claude-3-sonnet-20240229-v1:0",
-            default_fast_model="anthropic.claude-3-haiku-20240307-v1:0",
+            default_model="anthropic.claude-3-5-sonnet-20240620-v1:0",
+            default_fast_model="anthropic.claude-3-5-sonnet-20240620-v1:0",
         ),
     ]
 

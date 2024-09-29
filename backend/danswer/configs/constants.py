@@ -1,3 +1,4 @@
+from enum import auto
 from enum import Enum
 
 SOURCE_TYPE = "source_type"
@@ -11,7 +12,6 @@ PUBLIC_DOC_PAT = "PUBLIC"
 ID_SEPARATOR = ":;:"
 DEFAULT_BOOST = 0
 SESSION_KEY = "session"
-
 
 # For chunking/processing chunks
 RETURN_SEPARATOR = "\n\r\n"
@@ -34,7 +34,9 @@ POSTGRES_WEB_APP_NAME = "web"
 POSTGRES_INDEXER_APP_NAME = "indexer"
 POSTGRES_CELERY_APP_NAME = "celery"
 POSTGRES_CELERY_BEAT_APP_NAME = "celery_beat"
-POSTGRES_CELERY_WORKER_APP_NAME = "celery_worker"
+POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME = "celery_worker_primary"
+POSTGRES_CELERY_WORKER_LIGHT_APP_NAME = "celery_worker_light"
+POSTGRES_CELERY_WORKER_HEAVY_APP_NAME = "celery_worker_heavy"
 POSTGRES_PERMISSIONS_APP_NAME = "permissions"
 POSTGRES_UNKNOWN_APP_NAME = "unknown"
 
@@ -57,8 +59,12 @@ KV_SLACK_BOT_TOKENS_CONFIG_KEY = "slack_bot_tokens_config_key"
 KV_GEN_AI_KEY_CHECK_TIME = "genai_api_key_last_check_time"
 KV_SETTINGS_KEY = "danswer_settings"
 KV_CUSTOMER_UUID_KEY = "customer_uuid"
+KV_INSTANCE_DOMAIN_KEY = "instance_domain"
 KV_ENTERPRISE_SETTINGS_KEY = "danswer_enterprise_settings"
 KV_CUSTOM_ANALYTICS_SCRIPT_KEY = "__custom_analytics_script__"
+
+CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT = 60
+CELERY_PRIMARY_WORKER_LOCK_TIMEOUT = 120
 
 
 class DocumentSource(str, Enum):
@@ -96,10 +102,12 @@ class DocumentSource(str, Enum):
     CLICKUP = "clickup"
     MEDIAWIKI = "mediawiki"
     WIKIPEDIA = "wikipedia"
+    ASANA = "asana"
     S3 = "s3"
     R2 = "r2"
     GOOGLE_CLOUD_STORAGE = "google_cloud_storage"
     OCI_STORAGE = "oci_storage"
+    XENFORO = "xenforo"
     NOT_APPLICABLE = "not_applicable"
 
 
@@ -128,6 +136,12 @@ class AuthType(str, Enum):
     GOOGLE_OAUTH = "google_oauth"
     OIDC = "oidc"
     SAML = "saml"
+
+
+class SessionType(str, Enum):
+    CHAT = "Chat"
+    SEARCH = "Search"
+    SLACK = "Slack"
 
 
 class QAFeedbackType(str, Enum):
@@ -162,3 +176,30 @@ class FileOrigin(str, Enum):
     CONNECTOR = "connector"
     GENERATED_REPORT = "generated_report"
     OTHER = "other"
+
+
+class PostgresAdvisoryLocks(Enum):
+    KOMBU_MESSAGE_CLEANUP_LOCK_ID = auto()
+
+
+class DanswerCeleryQueues:
+    VESPA_DOCSET_SYNC_GENERATOR = "vespa_docset_sync_generator"
+    VESPA_USERGROUP_SYNC_GENERATOR = "vespa_usergroup_sync_generator"
+    VESPA_METADATA_SYNC = "vespa_metadata_sync"
+    CONNECTOR_DELETION = "connector_deletion"
+
+
+class DanswerRedisLocks:
+    PRIMARY_WORKER = "da_lock:primary_worker"
+    CHECK_VESPA_SYNC_BEAT_LOCK = "da_lock:check_vespa_sync_beat"
+    MONITOR_VESPA_SYNC_BEAT_LOCK = "da_lock:monitor_vespa_sync_beat"
+    CHECK_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:check_connector_deletion_beat"
+    MONITOR_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:monitor_connector_deletion_beat"
+
+
+class DanswerCeleryPriority(int, Enum):
+    HIGHEST = 0
+    HIGH = auto()
+    MEDIUM = auto()
+    LOW = auto()
+    LOWEST = auto()

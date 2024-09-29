@@ -21,6 +21,7 @@ export default function LogoType({
   toggled,
   showArrow,
   assistantId,
+  explicitlyUntoggle = () => null,
 }: {
   hideOnMobile?: boolean;
   toggleSidebar?: () => void;
@@ -29,6 +30,7 @@ export default function LogoType({
   toggled?: boolean;
   showArrow?: boolean;
   assistantId?: number;
+  explicitlyUntoggle?: () => void;
 }) {
   const combinedSettings = useContext(SettingsContext);
   const enterpriseSettings = combinedSettings?.enterpriseSettings;
@@ -40,9 +42,12 @@ export default function LogoType({
       {toggleSidebar && page == "chat" ? (
         <button
           onClick={() => toggleSidebar()}
-          className="pt-[2px] ml-4 desktop:invisible mb-auto"
+          className="pt-[2px] flex  gap-x-2 items-center ml-4 desktop:invisible mb-auto"
         >
           <FiSidebar size={20} />
+          {!showArrow && (
+            <Logo className="desktop:hidden -my-2" height={24} width={24} />
+          )}
         </button>
       ) : (
         <div className="mr-1 invisible mb-auto h-6 w-6">
@@ -50,11 +55,11 @@ export default function LogoType({
         </div>
       )}
       <div
-        className={`bg-black cursor-pointer ${showArrow ? "desktop:invisible" : "invisible"} break-words inline-block w-fit ml-2 text-text-700 text-xl`}
+        className={`cursor-pointer ${showArrow ? "desktop:invisible" : "invisible"} break-words inline-block w-fit ml-2 text-text-700 text-xl`}
       >
         <div className="max-w-[175px]">
           {enterpriseSettings && enterpriseSettings.application_name ? (
-            <div>
+            <div className="w-full">
               <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
               {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
                 <p className="text-xs text-subtle">Powered by Danswer</p>
@@ -91,12 +96,20 @@ export default function LogoType({
           </Link>
         </Tooltip>
       )}
-      {showArrow && (
+      {showArrow && toggleSidebar && (
         <Tooltip
           delayDuration={0}
           content={toggled ? `Unpin sidebar` : "Pin sidebar"}
         >
-          <button className="mr-3 my-auto ml-auto" onClick={toggleSidebar}>
+          <button
+            className="mr-3 my-auto ml-auto"
+            onClick={() => {
+              toggleSidebar();
+              if (toggled) {
+                explicitlyUntoggle();
+              }
+            }}
+          >
             {!toggled && !combinedSettings?.isMobile ? (
               <RightToLineIcon />
             ) : (

@@ -1,4 +1,5 @@
 import { CredentialBase } from "./connectors/credentials";
+import { AccessType } from "@/lib/types";
 
 export async function createCredential(credential: CredentialBase<any>) {
   return await fetch(`/api/manage/credential`, {
@@ -31,10 +32,7 @@ export async function deleteCredential<T>(
   });
 }
 
-export async function forceDeleteCredential<T>(
-  credentialId: number,
-  force?: boolean
-) {
+export async function forceDeleteCredential<T>(credentialId: number) {
   return await fetch(`/api/manage/credential/force/${credentialId}`, {
     method: "DELETE",
     headers: {
@@ -47,7 +45,9 @@ export function linkCredential(
   connectorId: number,
   credentialId: number,
   name?: string,
-  isPublic?: boolean
+  accessType?: AccessType,
+  groups?: number[],
+  autoSyncOptions?: Record<string, any>
 ) {
   return fetch(
     `/api/manage/connector/${connectorId}/credential/${credentialId}`,
@@ -58,7 +58,9 @@ export function linkCredential(
       },
       body: JSON.stringify({
         name: name || null,
-        is_public: isPublic !== undefined ? isPublic : true,
+        access_type: accessType !== undefined ? accessType : "public",
+        groups: groups || null,
+        auto_sync_options: autoSyncOptions || null,
       }),
     }
   );
@@ -71,7 +73,7 @@ export function updateCredential(credentialId: number, newDetails: any) {
       ([key, value]) => key !== "name" && value !== ""
     )
   );
-  return fetch(`/api/manage/admin/credentials/${credentialId}`, {
+  return fetch(`/api/manage/admin/credential/${credentialId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -84,7 +86,7 @@ export function updateCredential(credentialId: number, newDetails: any) {
 }
 
 export function swapCredential(newCredentialId: number, connectorId: number) {
-  return fetch(`/api/manage/admin/credentials/swap`, {
+  return fetch(`/api/manage/admin/credential/swap`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

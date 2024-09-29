@@ -1,13 +1,15 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
 from sqlalchemy.orm import Session
 
-from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.db.credentials import alter_credential
 from danswer.db.credentials import create_credential
+from danswer.db.credentials import CREDENTIAL_PERMISSIONS_TO_IGNORE
 from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
@@ -23,9 +25,17 @@ from danswer.server.documents.models import CredentialSnapshot
 from danswer.server.documents.models import CredentialSwapRequest
 from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
+from danswer.utils.logger import setup_logger
+from ee.danswer.db.user_group import validate_user_creation_permissions
+
+logger = setup_logger()
 
 
 router = APIRouter(prefix="/manage")
+
+
+def _ignore_credential_permissions(source: DocumentSource) -> bool:
+    return source in CREDENTIAL_PERMISSIONS_TO_IGNORE
 
 
 """Admin-only endpoints"""
@@ -33,11 +43,15 @@ router = APIRouter(prefix="/manage")
 
 @router.get("/admin/credential")
 def list_credentials_admin(
-    user: User = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
     """Lists all public credentials"""
-    credentials = fetch_credentials(db_session=db_session, user=user)
+    credentials = fetch_credentials(
+        db_session=db_session,
+        user=user,
+        get_editable=False,
+    )
     return [
         CredentialSnapshot.from_credential_db_model(credential)
         for credential in credentials
@@ -47,20 +61,25 @@ def list_credentials_admin(
 @router.get("/admin/similar-credentials/{source_type}")
 def get_cc_source_full_info(
     source_type: DocumentSource,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    get_editable: bool = Query(
+        False, description="If true, return editable credentials"
+    ),
 ) -> list[CredentialSnapshot]:
     credentials = fetch_credentials_by_source(
-        db_session=db_session, user=user, document_source=source_type
+        db_session=db_session,
+        user=user,
+        document_source=source_type,
+        get_editable=get_editable,
     )
-
     return [
         CredentialSnapshot.from_credential_db_model(credential)
         for credential in credentials
     ]
 
 
-@router.get("/credentials/{id}")
+@router.get("/credential/{id}")
 def list_credentials_by_id(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -85,15 +104,15 @@ def delete_credential_by_id_admin(
     )
 
 
-@router.put("/admin/credentials/swap")
+@router.put("/admin/credential/swap")
 def swap_credentials_for_connector(
-    credentail_swap_req: CredentialSwapRequest,
+    credential_swap_req: CredentialSwapRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     connector_credential_pair = swap_credentials_connector(
-        new_credential_id=credentail_swap_req.new_credential_id,
-        connector_id=credentail_swap_req.connector_id,
+        new_credential_id=credential_swap_req.new_credential_id,
+        connector_id=credential_swap_req.connector_id,
         db_session=db_session,
         user=user,
     )
@@ -102,6 +121,27 @@ def swap_credentials_for_connector(
         success=True,
         message="Credential swapped successfully",
         data=connector_credential_pair.id,
+    )
+
+
+@router.post("/credential")
+def create_credential_from_model(
+    credential_info: CredentialBase,
+    user: User | None = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> ObjectCreationIdResponse:
+    if not _ignore_credential_permissions(credential_info.source):
+        validate_user_creation_permissions(
+            db_session=db_session,
+            user=user,
+            target_group_ids=credential_info.groups,
+            object_is_public=credential_info.curator_public,
+        )
+
+    credential = create_credential(credential_info, user, db_session)
+    return ObjectCreationIdResponse(
+        id=credential.id,
+        credential=CredentialSnapshot.from_credential_db_model(credential),
     )
 
 
@@ -120,26 +160,6 @@ def list_credentials(
     ]
 
 
-@router.post("/credential")
-def create_credential_from_model(
-    credential_info: CredentialBase,
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> ObjectCreationIdResponse:
-    if user and user.role != UserRole.ADMIN and credential_info.admin_public:
-        raise HTTPException(
-            status_code=400,
-            detail="Non-admin cannot create admin credential",
-        )
-
-    credential = create_credential(credential_info, user, db_session)
-
-    return ObjectCreationIdResponse(
-        id=credential.id,
-        credential=CredentialSnapshot.from_credential_db_model(credential),
-    )
-
-
 @router.get("/credential/{credential_id}")
 def get_credential_by_id(
     credential_id: int,
@@ -156,7 +176,7 @@ def get_credential_by_id(
     return CredentialSnapshot.from_credential_db_model(credential)
 
 
-@router.put("/admin/credentials/{credential_id}")
+@router.put("/admin/credential/{credential_id}")
 def update_credential_data(
     credential_id: int,
     credential_update: CredentialDataUpdateRequest,
@@ -195,9 +215,11 @@ def update_credential_from_model(
         id=updated_credential.id,
         credential_json=updated_credential.credential_json,
         user_id=updated_credential.user_id,
+        name=updated_credential.name,
         admin_public=updated_credential.admin_public,
         time_created=updated_credential.time_created,
         time_updated=updated_credential.time_updated,
+        curator_public=updated_credential.curator_public,
     )
 
 

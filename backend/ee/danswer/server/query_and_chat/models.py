@@ -8,7 +8,8 @@ from danswer.search.enums import SearchType
 from danswer.search.models import ChunkContext
 from danswer.search.models import RerankingDetails
 from danswer.search.models import RetrievalDetails
-from danswer.server.manage.models import StandardAnswer
+from danswer.search.models import SavedSearchDoc
+from ee.danswer.server.manage.models import StandardAnswer
 
 
 class StandardAnswerRequest(BaseModel):
@@ -17,7 +18,7 @@ class StandardAnswerRequest(BaseModel):
 
 
 class StandardAnswerResponse(BaseModel):
-    standard_answers: list[StandardAnswer] = []
+    standard_answers: list[StandardAnswer] = Field(default_factory=list)
 
 
 class DocumentSearchRequest(ChunkContext):
@@ -52,9 +53,11 @@ class BasicCreateChatMessageWithHistoryRequest(ChunkContext):
     messages: list[ThreadMessage]
     prompt_id: int | None
     persona_id: int
-    retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
+    retrieval_options: RetrievalDetails | None = None
     query_override: str | None = None
     skip_rerank: bool | None = None
+    # If search_doc_ids provided, then retrieval options are unused
+    search_doc_ids: list[int] | None = None
 
 
 class SimpleDoc(BaseModel):
@@ -64,13 +67,24 @@ class SimpleDoc(BaseModel):
     blurb: str
     match_highlights: list[str]
     source_type: DocumentSource
+    metadata: dict | None
 
 
 class ChatBasicResponse(BaseModel):
     # This is built piece by piece, any of these can be None as the flow could break
     answer: str | None = None
     answer_citationless: str | None = None
-    simple_search_docs: list[SimpleDoc] | None = None
+
+    top_documents: list[SavedSearchDoc] | None = None
+
     error_msg: str | None = None
     message_id: int | None = None
+    llm_selected_doc_indices: list[int] | None = None
+    final_context_doc_indices: list[int] | None = None
+    # this is a map of the citation number to the document id
+    cited_documents: dict[int, str] | None = None
+
+    # FOR BACKWARDS COMPATIBILITY
+    # TODO: deprecate both of these
+    simple_search_docs: list[SimpleDoc] | None = None
     llm_chunks_indices: list[int] | None = None

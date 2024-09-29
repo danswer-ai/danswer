@@ -1,6 +1,8 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.db.models import Persona
 from danswer.db.models import StarterMessage
@@ -10,7 +12,6 @@ from danswer.server.features.prompt.models import PromptSnapshot
 from danswer.server.features.tool.api import ToolSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
-
 
 logger = setup_logger()
 
@@ -31,11 +32,15 @@ class CreatePersonaRequest(BaseModel):
     llm_model_version_override: str | None = None
     starter_messages: list[StarterMessage] | None = None
     # For Private Personas, who should be able to access these
-    users: list[UUID] | None = None
-    groups: list[int] | None = None
+    users: list[UUID] = Field(default_factory=list)
+    groups: list[int] = Field(default_factory=list)
     icon_color: str | None = None
     icon_shape: int | None = None
     uploaded_image_id: str | None = None  # New field for uploaded image
+    remove_image: bool | None = None
+    is_default_persona: bool = False
+    display_priority: int | None = None
+    search_start_date: datetime | None = None
 
 
 class PersonaSnapshot(BaseModel):
@@ -52,7 +57,7 @@ class PersonaSnapshot(BaseModel):
     llm_model_provider_override: str | None
     llm_model_version_override: str | None
     starter_messages: list[StarterMessage] | None
-    default_persona: bool
+    builtin_persona: bool
     prompts: list[PromptSnapshot]
     tools: list[ToolSnapshot]
     document_sets: list[DocumentSet]
@@ -61,6 +66,8 @@ class PersonaSnapshot(BaseModel):
     icon_color: str | None
     icon_shape: int | None
     uploaded_image_id: str | None = None
+    is_default_persona: bool
+    search_start_date: datetime | None = None
 
     @classmethod
     def from_model(
@@ -91,7 +98,8 @@ class PersonaSnapshot(BaseModel):
             llm_model_provider_override=persona.llm_model_provider_override,
             llm_model_version_override=persona.llm_model_version_override,
             starter_messages=persona.starter_messages,
-            default_persona=persona.default_persona,
+            builtin_persona=persona.builtin_persona,
+            is_default_persona=persona.is_default_persona,
             prompts=[PromptSnapshot.from_model(prompt) for prompt in persona.prompts],
             tools=[ToolSnapshot.from_model(tool) for tool in persona.tools],
             document_sets=[
@@ -106,6 +114,7 @@ class PersonaSnapshot(BaseModel):
             icon_color=persona.icon_color,
             icon_shape=persona.icon_shape,
             uploaded_image_id=persona.uploaded_image_id,
+            search_start_date=persona.search_start_date,
         )
 
 

@@ -48,7 +48,6 @@ export default function WrappedPrompts({
       content={(contentProps) => (
         <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
           <AssistantsPageTitle>Prompt Gallery</AssistantsPageTitle>
-          <InstantSSRAutoRefresh />
           <PromptSection
             promptLibrary={promptLibrary || []}
             isLoading={promptLibraryIsLoading}

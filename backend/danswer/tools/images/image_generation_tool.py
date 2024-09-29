@@ -200,6 +200,7 @@ class ImageGenerationTool(Tool):
                 revised_prompt=response.data[0]["revised_prompt"],
                 url=response.data[0]["url"],
             )
+
         except Exception as e:
             logger.debug(f"Error occured during image generation: {e}")
 
@@ -254,6 +255,6 @@ class ImageGenerationTool(Tool):
             list[ImageGenerationResponse], args[0].response
         )
         return [
-            image_generation_response.dict()
+            image_generation_response.model_dump()
             for image_generation_response in image_generation_responses
         ]

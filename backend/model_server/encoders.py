@@ -2,6 +2,7 @@ import json
 from typing import Any
 from typing import Optional
 
+import httpx
 import openai
 import vertexai  # type: ignore
 import voyageai  # type: ignore
@@ -83,7 +84,7 @@ class CloudEmbedding:
         self.client = _initialize_client(api_key, self.provider, model)
 
     def _embed_openai(self, texts: list[str], model: str | None) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_OPENAI_MODEL
 
         # OpenAI does not seem to provide truncation option, however
@@ -110,7 +111,7 @@ class CloudEmbedding:
     def _embed_cohere(
         self, texts: list[str], model: str | None, embedding_type: str
     ) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_COHERE_MODEL
 
         final_embeddings: list[Embedding] = []
@@ -129,7 +130,7 @@ class CloudEmbedding:
     def _embed_voyage(
         self, texts: list[str], model: str | None, embedding_type: str
     ) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_VOYAGE_MODEL
 
         # Similar to Cohere, the API server will do approximate size chunking
@@ -145,7 +146,7 @@ class CloudEmbedding:
     def _embed_vertex(
         self, texts: list[str], model: str | None, embedding_type: str
     ) -> list[Embedding]:
-        if model is None:
+        if not model:
             model = DEFAULT_VERTEX_MODEL
 
         embeddings = self.client.get_embeddings(
@@ -171,7 +172,6 @@ class CloudEmbedding:
         try:
             if self.provider == EmbeddingProvider.OPENAI:
                 return self._embed_openai(texts, model_name)
-
             embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
             if self.provider == EmbeddingProvider.COHERE:
                 return self._embed_cohere(texts, model_name, embedding_type)
@@ -207,7 +207,7 @@ def get_embedding_model(
         _GLOBAL_MODELS_DICT = {}
 
     if model_name not in _GLOBAL_MODELS_DICT:
-        logger.info(f"Loading {model_name}")
+        logger.notice(f"Loading {model_name}")
         # Some model architectures that aren't built into the Transformers or Sentence
         # Transformer need to be downloaded to be loaded locally. This does not mean
         # data is sent to remote servers for inference, however the remote code can
@@ -229,10 +229,29 @@ def get_local_reranking_model(
 ) -> CrossEncoder:
     global _RERANK_MODEL
     if _RERANK_MODEL is None:
-        logger.info(f"Loading {model_name}")
+        logger.notice(f"Loading {model_name}")
         model = CrossEncoder(model_name)
         _RERANK_MODEL = model
     return _RERANK_MODEL
+
+
+def embed_with_litellm_proxy(
+    texts: list[str], api_url: str, model_name: str, api_key: str | None
+) -> list[Embedding]:
+    headers = {} if not api_key else {"Authorization": f"Bearer {api_key}"}
+
+    with httpx.Client() as client:
+        response = client.post(
+            api_url,
+            json={
+                "model": model_name,
+                "input": texts,
+            },
+            headers=headers,
+        )
+        response.raise_for_status()
+        result = response.json()
+        return [embedding["embedding"] for embedding in result["data"]]
 
 
 @simple_log_function_time()
@@ -245,21 +264,42 @@ def embed_text(
     api_key: str | None,
     provider_type: EmbeddingProvider | None,
     prefix: str | None,
+    api_url: str | None,
 ) -> list[Embedding]:
+    logger.info(f"Embedding {len(texts)} texts with provider: {provider_type}")
+
     if not all(texts):
+        logger.error("Empty strings provided for embedding")
         raise ValueError("Empty strings are not allowed for embedding.")
 
-    # Third party API based embedding model
     if not texts:
+        logger.error("No texts provided for embedding")
         raise ValueError("No texts provided for embedding.")
+
+    if provider_type == EmbeddingProvider.LITELLM:
+        logger.debug(f"Using LiteLLM proxy for embedding with URL: {api_url}")
+        if not api_url:
+            logger.error("API URL not provided for LiteLLM proxy")
+            raise ValueError("API URL is required for LiteLLM proxy embedding.")
+        try:
+            return embed_with_litellm_proxy(
+                texts=texts,
+                api_url=api_url,
+                model_name=model_name or "",
+                api_key=api_key,
+            )
+        except Exception as e:
+            logger.exception(f"Error during LiteLLM proxy embedding: {str(e)}")
+            raise
+
     elif provider_type is not None:
-        logger.debug(f"Embedding text with provider: {provider_type}")
+        logger.debug(f"Using cloud provider {provider_type} for embedding")
         if api_key is None:
+            logger.error("API key not provided for cloud model")
             raise RuntimeError("API key not provided for cloud model")
 
         if prefix:
-            # This may change in the future if some providers require the user
-            # to manually append a prefix but this is not the case currently
+            logger.warning("Prefix provided for cloud model, which is not supported")
             raise ValueError(
                 "Prefix string is not valid for cloud models. "
                 "Cloud models take an explicit text type instead."
@@ -274,15 +314,17 @@ def embed_text(
             text_type=text_type,
         )
 
-        # Check for None values in embeddings
         if any(embedding is None for embedding in embeddings):
             error_message = "Embeddings contain None values\n"
             error_message += "Corresponding texts:\n"
             error_message += "\n".join(texts)
+            logger.error(error_message)
             raise ValueError(error_message)
 
     elif model_name is not None:
+        logger.debug(f"Using local model {model_name} for embedding")
         prefixed_texts = [f"{prefix}{text}" for text in texts] if prefix else texts
+
         local_model = get_embedding_model(
             model_name=model_name, max_context_length=max_context_length
         )
@@ -295,10 +337,12 @@ def embed_text(
         ]
 
     else:
+        logger.error("Neither model name nor provider specified for embedding")
         raise ValueError(
             "Either model name or provider must be provided to run embeddings."
         )
 
+    logger.info(f"Successfully embedded {len(texts)} texts")
     return embeddings
 
 
@@ -316,6 +360,28 @@ def cohere_rerank(
     results = response.results
     sorted_results = sorted(results, key=lambda item: item.index)
     return [result.relevance_score for result in sorted_results]
+
+
+def litellm_rerank(
+    query: str, docs: list[str], api_url: str, model_name: str, api_key: str | None
+) -> list[float]:
+    headers = {} if not api_key else {"Authorization": f"Bearer {api_key}"}
+    with httpx.Client() as client:
+        response = client.post(
+            api_url,
+            json={
+                "model": model_name,
+                "query": query,
+                "documents": docs,
+            },
+            headers=headers,
+        )
+        response.raise_for_status()
+        result = response.json()
+        return [
+            item["relevance_score"]
+            for item in sorted(result["results"], key=lambda x: x["index"])
+        ]
 
 
 @router.post("/bi-encoder-embed")
@@ -343,6 +409,7 @@ async def process_embed_request(
             api_key=embed_request.api_key,
             provider_type=embed_request.provider_type,
             text_type=embed_request.text_type,
+            api_url=embed_request.api_url,
             prefix=prefix,
         )
         return EmbedResponse(embeddings=embeddings)
@@ -373,6 +440,20 @@ async def process_rerank_request(rerank_request: RerankRequest) -> RerankRespons
                 model_name=rerank_request.model_name,
             )
             return RerankResponse(scores=sim_scores)
+        elif rerank_request.provider_type == RerankerProvider.LITELLM:
+            if rerank_request.api_url is None:
+                raise ValueError("API URL is required for LiteLLM reranking.")
+
+            sim_scores = litellm_rerank(
+                query=rerank_request.query,
+                docs=rerank_request.documents,
+                api_url=rerank_request.api_url,
+                model_name=rerank_request.model_name,
+                api_key=rerank_request.api_key,
+            )
+
+            return RerankResponse(scores=sim_scores)
+
         elif rerank_request.provider_type == RerankerProvider.COHERE:
             if rerank_request.api_key is None:
                 raise RuntimeError("Cohere Rerank Requires an API Key")

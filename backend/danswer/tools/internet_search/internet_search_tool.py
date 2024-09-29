@@ -20,7 +20,7 @@ from danswer.search.models import SearchDoc
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.tools.internet_search.models import InternetSearchResponse
 from danswer.tools.internet_search.models import InternetSearchResult
-from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS
+from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
 from danswer.utils.logger import setup_logger
@@ -187,7 +187,7 @@ class InternetSearchTool(Tool):
         self, *args: ToolResponse
     ) -> str | list[str | dict[str, Any]]:
         search_response = cast(InternetSearchResponse, args[0].response)
-        return json.dumps(search_response.dict())
+        return json.dumps(search_response.model_dump())
 
     def _perform_search(self, query: str) -> InternetSearchResponse:
         response = self.client.get(
@@ -224,10 +224,10 @@ class InternetSearchTool(Tool):
         ]
 
         yield ToolResponse(
-            id=FINAL_CONTEXT_DOCUMENTS,
+            id=FINAL_CONTEXT_DOCUMENTS_ID,
             response=llm_docs,
         )
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         search_response = cast(InternetSearchResponse, args[0].response)
-        return search_response.dict()
+        return search_response.model_dump()

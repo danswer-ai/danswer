@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { FeedbackType } from "../types";
 import { FiThumbsDown, FiThumbsUp } from "react-icons/fi";
-import { ModalWrapper } from "./ModalWrapper";
+import { ModalWrapper } from "@/components/modals/ModalWrapper";
 import {
   DislikeFeedbackIcon,
   FilledLikeIcon,

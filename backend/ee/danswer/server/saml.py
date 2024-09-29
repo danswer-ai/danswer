@@ -12,7 +12,6 @@ from fastapi_users import exceptions
 from fastapi_users.password import PasswordHelper
 from onelogin.saml2.auth import OneLogin_Saml2_Auth  # type: ignore
 from pydantic import BaseModel
-from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserCreate
@@ -50,7 +49,7 @@ async def upsert_saml_user(email: str) -> User:
                 try:
                     return await user_manager.get_by_email(email)
                 except exceptions.UserNotExists:
-                    logger.info("Creating user from SAML login")
+                    logger.notice("Creating user from SAML login")
 
                 user_count = await get_user_count()
                 role = UserRole.ADMIN if user_count == 0 else UserRole.BASIC
@@ -61,10 +60,11 @@ async def upsert_saml_user(email: str) -> User:
 
                 user: User = await user_manager.create(
                     UserCreate(
-                        email=EmailStr(email),
+                        email=email,
                         password=hashed_pass,
                         is_verified=True,
                         role=role,
+                        has_web_login=True,
                     )
                 )
 

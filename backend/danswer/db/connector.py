@@ -75,8 +75,8 @@ def fetch_ingestion_connector_by_name(
 
 
 def create_connector(
-    connector_data: ConnectorBase,
     db_session: Session,
+    connector_data: ConnectorBase,
 ) -> ObjectCreationIdResponse:
     if connector_by_name_source_exists(
         connector_data.name, connector_data.source, db_session
@@ -132,8 +132,8 @@ def update_connector(
 
 
 def delete_connector(
-    connector_id: int,
     db_session: Session,
+    connector_id: int,
 ) -> StatusResponse[int]:
     """Only used in special cases (e.g. a connector is in a bad state and we need to delete it).
     Be VERY careful using this, as it could lead to a bad state if not used correctly.

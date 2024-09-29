@@ -11,12 +11,17 @@ from danswer.chat.models import DanswerContext
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import LlmDoc
 from danswer.chat.models import SectionRelevancePiece
+from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
+from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
+from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import JSON_ro
+from danswer.llm.answering.models import ContextualPruningConfig
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.prompts.citations_prompt import compute_max_llm_input_tokens
 from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
 from danswer.llm.answering.prune_and_merge import prune_sections
 from danswer.llm.interfaces import LLM
@@ -40,7 +45,7 @@ logger = setup_logger()
 SEARCH_RESPONSE_SUMMARY_ID = "search_response_summary"
 SEARCH_DOC_CONTENT_ID = "search_doc_content"
 SECTION_RELEVANCE_LIST_ID = "section_relevance_list"
-FINAL_CONTEXT_DOCUMENTS = "final_context_documents"
+FINAL_CONTEXT_DOCUMENTS_ID = "final_context_documents"
 SEARCH_EVALUATION_ID = "llm_doc_eval"
 
 
@@ -84,8 +89,8 @@ class SearchTool(Tool):
         # if specified, will not actually run a search and will instead return these
         # sections. Used when the user selects specific docs to talk to
         selected_sections: list[InferenceSection] | None = None,
-        chunks_above: int = 0,
-        chunks_below: int = 0,
+        chunks_above: int | None = None,
+        chunks_below: int | None = None,
         full_doc: bool = False,
         bypass_acl: bool = False,
     ) -> None:
@@ -95,16 +100,47 @@ class SearchTool(Tool):
         self.prompt_config = prompt_config
         self.llm = llm
         self.fast_llm = fast_llm
-        self.pruning_config = pruning_config
         self.evaluation_type = evaluation_type
 
         self.selected_sections = selected_sections
 
-        self.chunks_above = chunks_above
-        self.chunks_below = chunks_below
         self.full_doc = full_doc
         self.bypass_acl = bypass_acl
         self.db_session = db_session
+
+        self.chunks_above = (
+            chunks_above
+            if chunks_above is not None
+            else (
+                persona.chunks_above
+                if persona.chunks_above is not None
+                else CONTEXT_CHUNKS_ABOVE
+            )
+        )
+        self.chunks_below = (
+            chunks_below
+            if chunks_below is not None
+            else (
+                persona.chunks_below
+                if persona.chunks_below is not None
+                else CONTEXT_CHUNKS_BELOW
+            )
+        )
+
+        # For small context models, don't include additional surrounding context
+        # The 3 here for at least minimum 1 above, 1 below and 1 for the middle chunk
+        max_llm_tokens = compute_max_llm_input_tokens(self.llm.config)
+        if max_llm_tokens < 3 * GEN_AI_MODEL_FALLBACK_MAX_TOKENS:
+            self.chunks_above = 0
+            self.chunks_below = 0
+
+        num_chunk_multiple = self.chunks_above + self.chunks_below + 1
+
+        self.contextual_pruning_config = (
+            ContextualPruningConfig.from_doc_pruning_config(
+                num_chunk_multiple=num_chunk_multiple, doc_pruning_config=pruning_config
+            )
+        )
 
     @property
     def name(self) -> str:
@@ -143,7 +179,7 @@ class SearchTool(Tool):
         self, *args: ToolResponse
     ) -> str | list[str | dict[str, Any]]:
         final_context_docs_response = next(
-            response for response in args if response.id == FINAL_CONTEXT_DOCUMENTS
+            response for response in args if response.id == FINAL_CONTEXT_DOCUMENTS_ID
         )
         final_context_docs = cast(list[LlmDoc], final_context_docs_response.response)
 
@@ -216,7 +252,7 @@ class SearchTool(Tool):
             prompt_config=self.prompt_config,
             llm_config=self.llm.config,
             question=query,
-            document_pruning_config=self.pruning_config,
+            contextual_pruning_config=self.contextual_pruning_config,
         )
 
         llm_docs = [
@@ -224,7 +260,7 @@ class SearchTool(Tool):
             for section in final_context_sections
         ]
 
-        yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
+        yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS_ID, response=llm_docs)
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         query = cast(str, kwargs["query"])
@@ -260,7 +296,6 @@ class SearchTool(Tool):
             bypass_acl=self.bypass_acl,
             db_session=self.db_session,
             prompt_config=self.prompt_config,
-            pruning_config=self.pruning_config,
         )
 
         yield ToolResponse(
@@ -301,19 +336,19 @@ class SearchTool(Tool):
             prompt_config=self.prompt_config,
             llm_config=self.llm.config,
             question=query,
-            document_pruning_config=self.pruning_config,
+            contextual_pruning_config=self.contextual_pruning_config,
         )
 
         llm_docs = [
             llm_doc_from_inference_section(section) for section in pruned_sections
         ]
 
-        yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS, response=llm_docs)
+        yield ToolResponse(id=FINAL_CONTEXT_DOCUMENTS_ID, response=llm_docs)
 
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         final_docs = cast(
             list[LlmDoc],
-            next(arg.response for arg in args if arg.id == FINAL_CONTEXT_DOCUMENTS),
+            next(arg.response for arg in args if arg.id == FINAL_CONTEXT_DOCUMENTS_ID),
         )
         # NOTE: need to do this json.loads(doc.json()) stuff because there are some
         # subfields that are not serializable by default (datetime)

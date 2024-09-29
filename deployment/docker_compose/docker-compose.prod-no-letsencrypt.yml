@@ -1,7 +1,6 @@
-version: '3'
 services:
   api_server:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -12,6 +11,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
       - inference_model_server
     restart: always
     env_file:
@@ -20,6 +20,7 @@ services:
       - AUTH_TYPE=${AUTH_TYPE:-oidc}
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
+      - REDIS_HOST=cache
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -31,7 +32,7 @@ services:
 
 
   background:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -39,6 +40,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - cache
       - inference_model_server
       - indexing_model_server
     restart: always
@@ -48,6 +50,7 @@ services:
       - AUTH_TYPE=${AUTH_TYPE:-oidc}
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
+      - REDIS_HOST=cache
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
       - INDEXING_MODEL_SERVER_HOST=${INDEXING_MODEL_SERVER_HOST:-indexing_model_server}
     extra_hosts:
@@ -60,7 +63,7 @@ services:
 
 
   web_server:
-    image: danswer/danswer-web-server:latest
+    image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -87,7 +90,7 @@ services:
 
 
   inference_model_server:
-    image: danswer/danswer-model-server:latest
+    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -114,7 +117,7 @@ services:
 
 
   indexing_model_server:
-    image: danswer/danswer-model-server:latest
+    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -131,6 +134,7 @@ services:
       - INDEXING_ONLY=True
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - VESPA_SEARCHER_THREADS=${VESPA_SEARCHER_THREADS:-1}
     volumes:
       # Not necessary, this is just to reduce download time during startup
       - indexing_huggingface_model_cache:/root/.cache/huggingface/
@@ -202,6 +206,16 @@ services:
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.no-letsencrypt"
     env_file:
       - .env.nginx
+
+
+  cache:
+    image: redis:7.4-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    # docker silently mounts /data even without an explicit volume mount, which enables
+    # persistence. explicitly setting save and appendonly forces ephemeral behavior.
+    command: redis-server --save "" --appendonly no
 
 
 volumes:

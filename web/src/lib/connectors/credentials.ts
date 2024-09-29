@@ -5,11 +5,12 @@ export interface CredentialBase<T> {
   admin_public: boolean;
   source: ValidSources;
   name?: string;
+  curator_public?: boolean;
+  groups?: number[];
 }
 
 export interface Credential<T> extends CredentialBase<T> {
   id: number;
-  name?: string;
   user_id: string | null;
   time_created: string;
   time_updated: string;
@@ -35,7 +36,7 @@ export interface ConfluenceCredentialJson {
 }
 
 export interface JiraCredentialJson {
-  jira_user_email: string;
+  jira_user_email: string | null;
   jira_api_token: string;
 }
 
@@ -165,6 +166,10 @@ export interface SharepointCredentialJson {
   sp_directory_id: string;
 }
 
+export interface AsanaCredentialJson {
+  asana_api_token_secret: string;
+}
+
 export interface TeamsCredentialJson {
   teams_client_id: string;
   teams_client_secret: string;
@@ -201,7 +206,7 @@ export const credentialTemplates: Record<ValidSources, any> = {
     confluence_access_token: "",
   } as ConfluenceCredentialJson,
   jira: {
-    jira_user_email: "",
+    jira_user_email: null,
     jira_api_token: "",
   } as JiraCredentialJson,
   productboard: { productboard_access_token: "" } as ProductboardCredentialJson,
@@ -240,6 +245,9 @@ export const credentialTemplates: Record<ValidSources, any> = {
     sp_client_secret: "",
     sp_directory_id: "",
   } as SharepointCredentialJson,
+  asana: {
+    asana_api_token_secret: "",
+  } as AsanaCredentialJson,
   teams: {
     teams_client_id: "",
     teams_client_secret: "",
@@ -281,12 +289,14 @@ export const credentialTemplates: Record<ValidSources, any> = {
     access_key_id: "",
     secret_access_key: "",
   } as OCICredentialJson,
+  xenforo: null,
   google_sites: null,
   file: null,
   wikipedia: null,
   mediawiki: null,
   web: null,
   not_applicable: null,
+  ingestion_api: null,
 
   // NOTE: These are Special Cases
   google_drive: { google_drive_tokens: "" } as GoogleDriveCredentialJson,
@@ -311,8 +321,8 @@ export const credentialDisplayNames: Record<string, string> = {
   confluence_access_token: "Confluence Access Token",
 
   // Jira
-  jira_user_email: "Jira User Email",
-  jira_api_token: "Jira API Token",
+  jira_user_email: "Jira User Email (required for Jira Cloud)",
+  jira_api_token: "API or Personal Access Token",
 
   // Productboard
   productboard_access_token: "Productboard Access Token",
@@ -409,6 +419,9 @@ export const credentialDisplayNames: Record<string, string> = {
   sp_client_id: "SharePoint Client ID",
   sp_client_secret: "SharePoint Client Secret",
   sp_directory_id: "SharePoint Directory ID",
+
+  // Asana
+  asana_api_token_secret: "Asana API Token",
 
   // Teams
   teams_client_id: "Microsoft Teams Client ID",

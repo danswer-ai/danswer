@@ -1,6 +1,4 @@
 import datetime
-import logging
-from typing import cast
 
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -9,7 +7,6 @@ from sqlalchemy.orm import Session
 from danswer.configs.danswerbot_configs import DANSWER_BOT_FEEDBACK_REMINDER
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.danswerbot.slack.blocks import get_feedback_reminder_blocks
-from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.handlers.handle_regular_answer import (
     handle_regular_answer,
 )
@@ -17,7 +14,6 @@ from danswer.danswerbot.slack.handlers.handle_standard_answers import (
     handle_standard_answers,
 )
 from danswer.danswerbot.slack.models import SlackMessageInfo
-from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import fetch_user_ids_from_emails
 from danswer.danswerbot.slack.utils import fetch_user_ids_from_groups
 from danswer.danswerbot.slack.utils import respond_in_thread
@@ -25,7 +21,9 @@ from danswer.danswerbot.slack.utils import slack_usage_report
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
+from danswer.db.users import add_non_web_user_if_not_exists
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import SLACK_CHANNEL_ID
 
 logger_base = setup_logger()
 
@@ -53,12 +51,8 @@ def send_msg_ack_to_user(details: SlackMessageInfo, client: WebClient) -> None:
 def schedule_feedback_reminder(
     details: SlackMessageInfo, include_followup: bool, client: WebClient
 ) -> str | None:
-    logger = cast(
-        logging.Logger,
-        ChannelIdAdapter(
-            logger_base, extra={SLACK_CHANNEL_ID: details.channel_to_respond}
-        ),
-    )
+    logger = setup_logger(extra={SLACK_CHANNEL_ID: details.channel_to_respond})
+
     if not DANSWER_BOT_FEEDBACK_REMINDER:
         logger.info("Scheduled feedback reminder disabled...")
         return None
@@ -97,10 +91,7 @@ def schedule_feedback_reminder(
 def remove_scheduled_feedback_reminder(
     client: WebClient, channel: str | None, msg_id: str
 ) -> None:
-    logger = cast(
-        logging.Logger,
-        ChannelIdAdapter(logger_base, extra={SLACK_CHANNEL_ID: channel}),
-    )
+    logger = setup_logger(extra={SLACK_CHANNEL_ID: channel})
 
     try:
         client.chat_deleteScheduledMessage(
@@ -129,10 +120,7 @@ def handle_message(
     """
     channel = message_info.channel_to_respond
 
-    logger = cast(
-        logging.Logger,
-        ChannelIdAdapter(logger_base, extra={SLACK_CHANNEL_ID: channel}),
-    )
+    logger = setup_logger(extra={SLACK_CHANNEL_ID: channel})
 
     messages = message_info.thread_messages
     sender_id = message_info.sender
@@ -222,6 +210,9 @@ def handle_message(
         logger.error(f"Was not able to react to user message due to: {e}")
 
     with Session(get_sqlalchemy_engine()) as db_session:
+        if message_info.email:
+            add_non_web_user_if_not_exists(db_session, message_info.email)
+
         # first check if we need to respond with a standard answer
         used_standard_answer = handle_standard_answers(
             message_info=message_info,

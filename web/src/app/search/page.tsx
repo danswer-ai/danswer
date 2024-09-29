@@ -3,10 +3,8 @@ import {
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
-import { getSecondsUntilExpiration } from "@/lib/time";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { fetchSS } from "@/lib/utilsSS";
 import { CCPairBasicInfo, DocumentSet, Tag, User } from "@/lib/types";
 import { cookies } from "next/headers";
@@ -19,7 +17,7 @@ import {
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { personaComparator } from "../admin/assistants/lib";
-import { FullEmbeddingModelResponse } from "../admin/models/embedding/components/types";
+import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "../chat/ChatPopup";
@@ -27,16 +25,16 @@ import {
   FetchAssistantsResponse,
   fetchAssistantsSS,
 } from "@/lib/assistants/fetchAssistantsSS";
-import FunctionalWrapper from "../chat/shared_chat_search/FunctionalWrapper";
 import { ChatSession } from "../chat/interfaces";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
-import ToggleSearch from "./WrappedSearch";
 import {
   AGENTIC_SEARCH_TYPE_COOKIE_NAME,
   NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN,
   DISABLE_LLM_DOC_RELEVANCE,
 } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
+import { SearchProvider } from "@/components/context/SearchContext";
+import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -51,7 +49,7 @@ export default async function Home() {
     fetchSS("/manage/document-set"),
     fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
-    fetchSS("/search-settings/get-embedding-models"),
+    fetchSS("/search-settings/get-all-search-settings"),
     fetchSS("/query/user-searches"),
   ];
 
@@ -181,16 +179,12 @@ export default async function Home() {
   const agenticSearchEnabled = agenticSearchToggle
     ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || false
     : false;
-  const secondsUntilExpiration = getSecondsUntilExpiration(user);
 
   return (
     <>
-      <HealthCheckBanner secondsUntilExpiration={secondsUntilExpiration} />
+      <HealthCheckBanner />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-
-      {!shouldShowWelcomeModal &&
-        !shouldDisplayNoSourcesModal &&
-        !shouldDisplaySourcesIncompleteModal && <ApiKeyModal user={user} />}
+      <InstantSSRAutoRefresh />
 
       {shouldDisplayNoSourcesModal && <NoSourcesModal />}
 
@@ -202,19 +196,25 @@ export default async function Home() {
       Only used in the EE version of the app. */}
       <ChatPopup />
 
-      <InstantSSRAutoRefresh />
-      <WrappedSearch
-        disabledAgentic={DISABLE_LLM_DOC_RELEVANCE}
-        initiallyToggled={toggleSidebar}
-        querySessions={querySessions}
-        user={user}
-        ccPairs={ccPairs}
-        documentSets={documentSets}
-        personas={assistants}
-        tags={tags}
-        searchTypeDefault={searchTypeDefault}
-        agenticSearchEnabled={agenticSearchEnabled}
-      />
+      <SearchProvider
+        value={{
+          querySessions,
+          ccPairs,
+          documentSets,
+          assistants,
+          tags,
+          agenticSearchEnabled,
+          disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
+          initiallyToggled: toggleSidebar,
+          shouldShowWelcomeModal,
+          shouldDisplayNoSources: shouldDisplayNoSourcesModal,
+        }}
+      >
+        <WrappedSearch
+          initiallyToggled={toggleSidebar}
+          searchTypeDefault={searchTypeDefault}
+        />
+      </SearchProvider>
     </>
   );
 }

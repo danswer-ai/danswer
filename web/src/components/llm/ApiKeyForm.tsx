@@ -1,16 +1,18 @@
 import { Popup } from "../admin/connectors/Popup";
 import { useState } from "react";
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@tremor/react";
-import { WellKnownLLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
-import { LLMProviderUpdateForm } from "@/app/admin/models/llm/LLMProviderUpdateForm";
-import { CustomLLMProviderUpdateForm } from "@/app/admin/models/llm/CustomLLMProviderUpdateForm";
+import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
+import { LLMProviderUpdateForm } from "@/app/admin/configuration/llm/LLMProviderUpdateForm";
+import { CustomLLMProviderUpdateForm } from "@/app/admin/configuration/llm/CustomLLMProviderUpdateForm";
 
 export const ApiKeyForm = ({
   onSuccess,
   providerOptions,
+  hidePopup,
 }: {
   onSuccess: () => void;
   providerOptions: WellKnownLLMProviderDescriptor[];
+  hidePopup?: boolean;
 }) => {
   const [popup, setPopup] = useState<{
     message: string;
@@ -33,7 +35,10 @@ export const ApiKeyForm = ({
 
   return (
     <div>
-      {popup && <Popup message={popup.message} type={popup.type} />}
+      {!hidePopup && popup && (
+        <Popup message={popup.message} type={popup.type} />
+      )}
+
       <TabGroup
         index={providerNameToIndexMap.get(providerName) || 0}
         onIndexChange={(index) =>
@@ -55,6 +60,7 @@ export const ApiKeyForm = ({
             return (
               <TabPanel key={provider.name}>
                 <LLMProviderUpdateForm
+                  hideAdvanced
                   llmProviderDescriptor={provider}
                   onClose={() => onSuccess()}
                   shouldMarkAsDefault

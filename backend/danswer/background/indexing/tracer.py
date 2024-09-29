@@ -48,9 +48,9 @@ class DanswerTracer:
 
         stats = self.snapshot.statistics("traceback")
         for s in stats[:numEntries]:
-            logger.info(f"Tracer snap: {s}")
+            logger.debug(f"Tracer snap: {s}")
             for line in s.traceback:
-                logger.info(f"* {line}")
+                logger.debug(f"* {line}")
 
     @staticmethod
     def log_diff(
@@ -60,9 +60,9 @@ class DanswerTracer:
     ) -> None:
         stats = snap_current.compare_to(snap_previous, "traceback")
         for s in stats[:numEntries]:
-            logger.info(f"Tracer diff: {s}")
+            logger.debug(f"Tracer diff: {s}")
             for line in s.traceback.format():
-                logger.info(f"* {line}")
+                logger.debug(f"* {line}")
 
     def log_previous_diff(self, numEntries: int) -> None:
         if not self.snapshot or not self.snapshot_prev:

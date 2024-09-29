@@ -2,13 +2,11 @@ import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
-import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
-import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatProvider } from "@/components/context/ChatContext";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
-import FunctionalWrapper from "./shared_chat_search/FunctionalWrapper";
-import { ChatPage } from "./ChatPage";
 import WrappedChat from "./WrappedChat";
+import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
+import { orderAssistantsForUser } from "@/lib/assistants/utils";
 
 export default async function Page({
   searchParams,
@@ -26,7 +24,6 @@ export default async function Page({
   const {
     user,
     chatSessions,
-    ccPairs,
     availableSources,
     documentSets,
     assistants,
@@ -36,9 +33,7 @@ export default async function Page({
     toggleSidebar,
     openedFolders,
     defaultAssistantId,
-    finalDocumentSidebarInitialWidth,
     shouldShowWelcomeModal,
-    shouldDisplaySourcesIncompleteModal,
     userInputPrompts,
   } = data;
 
@@ -46,12 +41,9 @@ export default async function Page({
     <>
       <InstantSSRAutoRefresh />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-      {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
-        <ApiKeyModal user={user} />
-      )}
+
       <ChatProvider
         value={{
-          user,
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
@@ -61,12 +53,11 @@ export default async function Page({
           folders,
           openedFolders,
           userInputPrompts,
+          shouldShowWelcomeModal,
+          defaultAssistantId,
         }}
       >
-        <WrappedChat
-          defaultAssistantId={defaultAssistantId}
-          initiallyToggled={toggleSidebar}
-        />
+        <WrappedChat initiallyToggled={toggleSidebar} />
       </ChatProvider>
     </>
   );
