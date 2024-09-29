@@ -105,6 +105,7 @@ export function orderAssistantsForUser(
     const priorityB = b.display_priority ?? Number.MAX_SAFE_INTEGER;
     return priorityA - priorityB;
   });
+
   // Combine ordered chosen assistants with remaining assistants
   return [...orderedAssistants, ...remainingAssistants];
 }
