@@ -67,7 +67,6 @@ def _process_file(
 
     file_metadata: dict[str, Any] = {}
 
-    # TODO update this
     if is_text_file_extension(file_name):
         encoding = detect_encoding(file)
         file_content_raw, file_metadata = read_text_file(

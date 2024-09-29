@@ -1,12 +1,12 @@
 from typing import Any
 from typing import IO
 
-from backend.danswer.configs.app_configs import UNSTRUCTURED_API_KEY
 from unstructured.staging.base import dict_to_elements
-from unstructured_client import UnstructuredClient
-from unstructured_client.models import operations
+from unstructured_client import UnstructuredClient  # type: ignore
+from unstructured_client.models import operations  # type: ignore
 from unstructured_client.models import shared
 
+from danswer.configs.app_configs import UNSTRUCTURED_API_KEY
 from danswer.utils.logger import setup_logger
 
 
@@ -15,7 +15,7 @@ unstructured_client = UnstructuredClient(api_key_auth=UNSTRUCTURED_API_KEY)
 
 
 def _sdk_partition_request(
-    file: IO[Any], file_name: str, **kwargs
+    file: IO[Any], file_name: str, **kwargs: Any
 ) -> operations.PartitionRequest:
     try:
         request = operations.PartitionRequest(

@@ -17,6 +17,7 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import GOOGLE_DRIVE_ONLY_ORG_PUBLIC
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
+from danswer.configs.app_configs import UNSTRUCTURED_API_KEY
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
@@ -36,6 +37,7 @@ from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import docx_to_text
 from danswer.file_processing.extract_file_text import pptx_to_text
 from danswer.file_processing.extract_file_text import read_pdf_file
+from danswer.file_processing.unstructured import unstructured_to_text
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
@@ -327,16 +329,24 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         GDriveMimeType.MARKDOWN.value,
     ]:
         return service.files().get_media(fileId=file["id"]).execute().decode("utf-8")
-    elif mime_type == GDriveMimeType.WORD_DOC.value:
+    if mime_type in [
+        GDriveMimeType.WORD_DOC.value,
+        GDriveMimeType.POWERPOINT.value,
+        GDriveMimeType.PDF.value,
+    ]:
         response = service.files().get_media(fileId=file["id"]).execute()
-        return docx_to_text(file=io.BytesIO(response))
-    elif mime_type == GDriveMimeType.PDF.value:
-        response = service.files().get_media(fileId=file["id"]).execute()
-        text, _ = read_pdf_file(file=io.BytesIO(response))
-        return text
-    elif mime_type == GDriveMimeType.POWERPOINT.value:
-        response = service.files().get_media(fileId=file["id"]).execute()
-        return pptx_to_text(file=io.BytesIO(response))
+        if UNSTRUCTURED_API_KEY:
+            return unstructured_to_text(
+                file=io.BytesIO(response), file_name=file.get("name", file["id"])
+            )
+
+        if mime_type == GDriveMimeType.WORD_DOC.value:
+            return docx_to_text(file=io.BytesIO(response))
+        elif mime_type == GDriveMimeType.PDF.value:
+            text, _ = read_pdf_file(file=io.BytesIO(response))
+            return text
+        elif mime_type == GDriveMimeType.POWERPOINT.value:
+            return pptx_to_text(file=io.BytesIO(response))
 
     return UNSUPPORTED_FILE_TYPE_CONTENT
 

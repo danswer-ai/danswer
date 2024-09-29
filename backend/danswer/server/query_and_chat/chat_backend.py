@@ -590,7 +590,7 @@ def upload_files_for_chat(
         if file_type == ChatFileType.DOC:
             extracted_text = extract_file_text(
                 file=file.file,
-                file_name=file.filename,
+                file_name=file.filename or "",
             )
             text_file_id = str(uuid.uuid4())
             file_store.save_file(

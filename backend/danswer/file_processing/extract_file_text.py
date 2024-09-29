@@ -15,13 +15,13 @@ import chardet
 import docx  # type: ignore
 import openpyxl  # type: ignore
 import pptx  # type: ignore
-from backend.danswer.configs.app_configs import UNSTRUCTURED_API_KEY
-from backend.danswer.file_processing.unstructured import unstructured_to_text
 from pypdf import PdfReader
 from pypdf.errors import PdfStreamError
 
+from danswer.configs.app_configs import UNSTRUCTURED_API_KEY
 from danswer.configs.constants import DANSWER_METADATA_FILENAME
 from danswer.file_processing.html_utils import parse_html_page_basic
+from danswer.file_processing.unstructured import unstructured_to_text
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
