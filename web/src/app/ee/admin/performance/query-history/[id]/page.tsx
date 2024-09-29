@@ -45,7 +45,9 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
         <div className="mt-2">
           <Bold className="font-bold text-xs">Feedback</Bold>
           {message.feedback_text && <Text>{message.feedback_text}</Text>}
-          <FeedbackBadge feedback={message.feedback_type} />
+          <div className="mt-1">
+            <FeedbackBadge feedback={message.feedback_type} />
+          </div>
         </div>
       )}
       <Divider />
@@ -84,7 +86,8 @@ export default function QueryPage({ params }: { params: { id: string } }) {
         <Title>Chat Session Details</Title>
 
         <Text className="flex flex-wrap whitespace-normal mt-1 text-xs">
-          {chatSessionSnapshot.user_email || "-"},{" "}
+          {chatSessionSnapshot.user_email &&
+            `${chatSessionSnapshot.user_email}, `}
           {timestampToReadableDate(chatSessionSnapshot.time_created)},{" "}
           {chatSessionSnapshot.flow_type}
         </Text>
