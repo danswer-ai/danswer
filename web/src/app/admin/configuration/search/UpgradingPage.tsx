@@ -6,7 +6,7 @@ import {
   FailedConnectorIndexingStatus,
   ValidStatuses,
 } from "@/lib/types";
-import { Button, Card, Text, Title } from "@tremor/react";
+import { Button, Text, Title } from "@tremor/react";
 import { useMemo, useState } from "react";
 import useSWR, { mutate } from "swr";
 import { ReindexingProgressTable } from "../../../../components/embedding/ReindexingProgressTable";
@@ -17,8 +17,7 @@ import {
 } from "../../../../components/embedding/interfaces";
 import { Connector } from "@/lib/connectors/connectors";
 import { FailedReIndexAttempts } from "@/components/embedding/FailedReIndexAttempts";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { EmbeddingIcon } from "@/components/icons/icons";
+import { usePopup } from "@/components/admin/connectors/Popup";
 
 export default function UpgradingPage({
   futureEmbeddingModel,
