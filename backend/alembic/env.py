@@ -1,3 +1,4 @@
+from typing import Any
 import asyncio
 from logging.config import fileConfig
 
@@ -41,7 +42,9 @@ def get_schema_options() -> tuple[str, bool]:
 EXCLUDE_TABLES = {"kombu_queue", "kombu_message"}
 
 
-def include_object(object, name, type_, reflected, compare_to) -> bool:
+def include_object(
+    object: Any, name: str, type_: str, reflected: bool, compare_to: Any
+) -> bool:
     if type_ == "table" and name in EXCLUDE_TABLES:
         return False
     return True
@@ -53,7 +56,7 @@ def run_migrations_offline() -> None:
 
     context.configure(
         url=url,
-        target_metadata=target_metadata,
+        target_metadata=target_metadata,  # type: ignore
         literal_binds=True,
         include_object=include_object,
         version_table_schema=schema_name,
@@ -77,7 +80,7 @@ def do_run_migrations(connection: Connection) -> None:
 
     context.configure(
         connection=connection,
-        target_metadata=target_metadata,
+        target_metadata=target_metadata,  # type: ignore
         include_object=include_object,
         version_table_schema=schema_name,
         include_schemas=True,
