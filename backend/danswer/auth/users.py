@@ -65,7 +65,6 @@ from danswer.db.auth import get_default_admin_user_emails
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
 from danswer.db.auth import SQLAlchemyUserAdminDB
-from danswer.db.engine import current_tenant_id
 from danswer.db.engine import get_async_session_with_tenant
 from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_engine
@@ -283,8 +282,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         if not tenant_id:
             raise HTTPException(status_code=401, detail="User not found")
-
-        current_tenant_id.set(tenant_id)
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
             tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
