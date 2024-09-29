@@ -1,6 +1,5 @@
 import asyncio
 from logging.config import fileConfig
-import os
 
 from alembic import context
 from sqlalchemy import pool
@@ -26,7 +25,7 @@ if config.config_file_name is not None and config.attributes.get(
 target_metadata = [Base.metadata, ResultModelBase.metadata]
 
 
-def get_schema_options():
+def get_schema_options() -> tuple[str, bool]:
     x_args_raw = context.get_x_argument()
     x_args = {}
     for arg in x_args_raw:
@@ -39,34 +38,17 @@ def get_schema_options():
     return schema_name, create_schema
 
 
-schema_name, create_schema = get_schema_options()
-
-
-this_dir = os.path.dirname(os.path.abspath(__file__))
-
-if schema_name == "public":
-    print("USING PUBLIC VERSIONS")
-    # Set script_location to the public_versions directory
-    script_location = os.path.join(this_dir, "public_versions")
-else:
-    print("USING VERSIONS")
-    # Set script_location to the versions directory
-    script_location = os.path.join(this_dir, "versions")
-
-# Update the config with the new script_location
-config.set_main_option("script_location", script_location)
-
-
 EXCLUDE_TABLES = {"kombu_queue", "kombu_message"}
 
 
-def include_object(object, name, type_, reflected, compare_to):
+def include_object(object, name, type_, reflected, compare_to) -> bool:
     if type_ == "table" and name in EXCLUDE_TABLES:
         return False
     return True
 
 
-def run_migrations_offline():
+def run_migrations_offline() -> None:
+    schema_name, _ = get_schema_options()
     url = build_connection_string()
 
     context.configure(
@@ -84,7 +66,8 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-def do_run_migrations(connection: Connection):
+def do_run_migrations(connection: Connection) -> None:
+    schema_name, create_schema = get_schema_options()
     if create_schema:
         connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema_name}"'))
         connection.execute(text("COMMIT"))
@@ -105,10 +88,9 @@ def do_run_migrations(connection: Connection):
 
     with context.begin_transaction():
         context.run_migrations()
-    print(f"Finished migrations for schema: {schema_name}")
 
 
-async def run_async_migrations():
+async def run_async_migrations() -> None:
     connectable = create_async_engine(
         build_connection_string(),
         poolclass=pool.NullPool,
@@ -120,7 +102,7 @@ async def run_async_migrations():
     await connectable.dispose()
 
 
-def run_migrations_online():
+def run_migrations_online() -> None:
     asyncio.run(run_async_migrations())
 
 
