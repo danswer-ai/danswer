@@ -280,8 +280,9 @@ async def get_async_session_with_tenant(
 
     engine = get_sqlalchemy_async_engine()
     async_session_factory = sessionmaker(
-        engine, expire_on_commit=False, class_=AsyncSession
-    )
+        bind=engine, expire_on_commit=False, class_=AsyncSession
+    )  # type: ignore
+    # TODO validate the typing above
 
     async with async_session_factory() as session:
         try:
