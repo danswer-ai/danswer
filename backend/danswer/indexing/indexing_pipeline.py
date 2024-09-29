@@ -136,6 +136,7 @@ def index_doc_batch_with_handler(
     attempt_id: int | None,
     db_session: Session,
     ignore_time_skip: bool = False,
+    tenant_id: str | None = None,
 ) -> tuple[int, int]:
     r = (0, 0)
     try:
@@ -147,6 +148,7 @@ def index_doc_batch_with_handler(
             index_attempt_metadata=index_attempt_metadata,
             db_session=db_session,
             ignore_time_skip=ignore_time_skip,
+            tenant_id=tenant_id,
         )
     except Exception as e:
         if INDEXING_EXCEPTION_LIMIT == 0:
@@ -260,6 +262,7 @@ def index_doc_batch(
     index_attempt_metadata: IndexAttemptMetadata,
     db_session: Session,
     ignore_time_skip: bool = False,
+    tenant_id: str | None = None,
 ) -> tuple[int, int]:
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
@@ -331,6 +334,7 @@ def index_doc_batch(
                     if chunk.source_document.id in ctx.id_to_db_doc_map
                     else DEFAULT_BOOST
                 ),
+                tenant_id=tenant_id,
             )
             for chunk in chunks_with_embeddings
         ]
@@ -380,6 +384,7 @@ def build_indexing_pipeline(
     chunker: Chunker | None = None,
     ignore_time_skip: bool = False,
     attempt_id: int | None = None,
+    tenant_id: str | None = None,
 ) -> IndexingPipelineProtocol:
     """Builds a pipeline which takes in a list (batch) of docs and indexes them."""
     search_settings = get_current_search_settings(db_session)
@@ -416,4 +421,5 @@ def build_indexing_pipeline(
         ignore_time_skip=ignore_time_skip,
         attempt_id=attempt_id,
         db_session=db_session,
+        tenant_id=tenant_id,
     )

@@ -6,6 +6,8 @@ import dask
 from dask.distributed import Client
 from dask.distributed import Future
 from distributed import LocalCluster
+from sqlalchemy import text
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import Session
 
 from danswer.background.indexing.dask_utils import ResourceLogger
@@ -15,6 +17,7 @@ from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.app_configs import NUM_SECONDARY_INDEXING_WORKERS
 from danswer.configs.constants import DocumentSource
@@ -147,13 +150,15 @@ def _mark_run_failed(
 """Main funcs"""
 
 
-def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
+def create_indexing_jobs(
+    existing_jobs: dict[int, Future | SimpleJob], tenant_id: str | None
+) -> None:
     """Creates new indexing jobs for each connector / credential pair which is:
     1. Enabled
     2. `refresh_frequency` time has passed since the last indexing run for this pair
     3. There is not already an ongoing indexing attempt for this pair
     """
-    with Session(get_sqlalchemy_engine()) as db_session:
+    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
         ongoing: set[tuple[int | None, int]] = set()
         for attempt_id in existing_jobs:
             attempt = get_index_attempt(
@@ -208,11 +213,12 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
 
 def cleanup_indexing_jobs(
     existing_jobs: dict[int, Future | SimpleJob],
+    tenant_id: str | None,
     timeout_hours: int = CLEANUP_INDEXING_JOBS_TIMEOUT,
 ) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
     # clean up completed jobs
-    with Session(get_sqlalchemy_engine()) as db_session:
+    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
         for attempt_id, job in existing_jobs.items():
             index_attempt = get_index_attempt(
                 db_session=db_session, index_attempt_id=attempt_id
@@ -250,38 +256,41 @@ def cleanup_indexing_jobs(
                 )
 
         # clean up in-progress jobs that were never completed
-        connectors = fetch_connectors(db_session)
-        for connector in connectors:
-            in_progress_indexing_attempts = get_inprogress_index_attempts(
-                connector.id, db_session
-            )
-            for index_attempt in in_progress_indexing_attempts:
-                if index_attempt.id in existing_jobs:
-                    # If index attempt is canceled, stop the run
-                    if index_attempt.status == IndexingStatus.FAILED:
-                        existing_jobs[index_attempt.id].cancel()
-                    # check to see if the job has been updated in last `timeout_hours` hours, if not
-                    # assume it to frozen in some bad state and just mark it as failed. Note: this relies
-                    # on the fact that the `time_updated` field is constantly updated every
-                    # batch of documents indexed
-                    current_db_time = get_db_current_time(db_session=db_session)
-                    time_since_update = current_db_time - index_attempt.time_updated
-                    if time_since_update.total_seconds() > 60 * 60 * timeout_hours:
-                        existing_jobs[index_attempt.id].cancel()
+        try:
+            connectors = fetch_connectors(db_session)
+            for connector in connectors:
+                in_progress_indexing_attempts = get_inprogress_index_attempts(
+                    connector.id, db_session
+                )
+
+                for index_attempt in in_progress_indexing_attempts:
+                    if index_attempt.id in existing_jobs:
+                        # If index attempt is canceled, stop the run
+                        if index_attempt.status == IndexingStatus.FAILED:
+                            existing_jobs[index_attempt.id].cancel()
+                        # check to see if the job has been updated in last `timeout_hours` hours, if not
+                        # assume it to frozen in some bad state and just mark it as failed. Note: this relies
+                        # on the fact that the `time_updated` field is constantly updated every
+                        # batch of documents indexed
+                        current_db_time = get_db_current_time(db_session=db_session)
+                        time_since_update = current_db_time - index_attempt.time_updated
+                        if time_since_update.total_seconds() > 60 * 60 * timeout_hours:
+                            existing_jobs[index_attempt.id].cancel()
+                            _mark_run_failed(
+                                db_session=db_session,
+                                index_attempt=index_attempt,
+                                failure_reason="Indexing run frozen - no updates in the last three hours. "
+                                "The run will be re-attempted at next scheduled indexing time.",
+                            )
+                    else:
+                        # If job isn't known, simply mark it as failed
                         _mark_run_failed(
                             db_session=db_session,
                             index_attempt=index_attempt,
-                            failure_reason="Indexing run frozen - no updates in the last three hours. "
-                            "The run will be re-attempted at next scheduled indexing time.",
+                            failure_reason=_UNEXPECTED_STATE_FAILURE_REASON,
                         )
-                else:
-                    # If job isn't known, simply mark it as failed
-                    _mark_run_failed(
-                        db_session=db_session,
-                        index_attempt=index_attempt,
-                        failure_reason=_UNEXPECTED_STATE_FAILURE_REASON,
-                    )
-
+        except ProgrammingError:
+            logger.debug(f"No Connector Table exists for: {tenant_id}")
     return existing_jobs_copy
 
 
@@ -289,9 +298,10 @@ def kickoff_indexing_jobs(
     existing_jobs: dict[int, Future | SimpleJob],
     client: Client | SimpleJobClient,
     secondary_client: Client | SimpleJobClient,
+    tenant_id: str | None,
 ) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
-    engine = get_sqlalchemy_engine()
+    engine = get_sqlalchemy_engine(schema=tenant_id)
 
     # Don't include jobs waiting in the Dask queue that just haven't started running
     # Also (rarely) don't include for jobs that started but haven't updated the indexing tables yet
@@ -346,6 +356,7 @@ def kickoff_indexing_jobs(
                 run = client.submit(
                     run_indexing_entrypoint,
                     attempt.id,
+                    tenant_id,
                     attempt.connector_credential_pair_id,
                     global_version.get_is_ee_version(),
                     pure=False,
@@ -357,6 +368,7 @@ def kickoff_indexing_jobs(
                 run = secondary_client.submit(
                     run_indexing_entrypoint,
                     attempt.id,
+                    tenant_id,
                     attempt.connector_credential_pair_id,
                     global_version.get_is_ee_version(),
                     pure=False,
@@ -392,6 +404,29 @@ def kickoff_indexing_jobs(
     return existing_jobs_copy
 
 
+def get_all_tenant_ids() -> list[str] | list[None]:
+    if not MULTI_TENANT:
+        return [None]
+    with Session(get_sqlalchemy_engine(schema="public")) as session:
+        result = session.execute(
+            text(
+                """
+            SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'public')"""
+            )
+        )
+
+        tenant_ids = [row[0] for row in result]
+    valid_tenants = [
+        tenant
+        for tenant in tenant_ids
+        if tenant is None or not tenant.startswith("pg_")
+    ]
+
+    return valid_tenants
+
+
 def update_loop(
     delay: int = 10,
     num_workers: int = NUM_INDEXING_WORKERS,
@@ -416,7 +451,6 @@ def update_loop(
             warm_up_bi_encoder(
                 embedding_model=embedding_model,
             )
-            logger.notice("First inference complete.")
 
     client_primary: Client | SimpleJobClient
     client_secondary: Client | SimpleJobClient
@@ -424,10 +458,6 @@ def update_loop(
         cluster_primary = LocalCluster(
             n_workers=num_workers,
             threads_per_worker=1,
-            # there are warning about high memory usage + "Event loop unresponsive"
-            # which are not relevant to us since our workers are expected to use a
-            # lot of memory + involve CPU intensive tasks that will not relinquish
-            # the event loop
             silence_logs=logging.ERROR,
         )
         cluster_secondary = LocalCluster(
@@ -443,7 +473,7 @@ def update_loop(
         client_primary = SimpleJobClient(n_workers=num_workers)
         client_secondary = SimpleJobClient(n_workers=num_secondary_workers)
 
-    existing_jobs: dict[int, Future | SimpleJob] = {}
+    existing_jobs: dict[str | None, dict[int, Future | SimpleJob]] = {}
 
     logger.notice("Startup complete. Waiting for indexing jobs...")
     while True:
@@ -452,24 +482,59 @@ def update_loop(
         logger.debug(f"Running update, current UTC time: {start_time_utc}")
 
         if existing_jobs:
-            # TODO: make this debug level once the "no jobs are being scheduled" issue is resolved
             logger.debug(
                 "Found existing indexing jobs: "
-                f"{[(attempt_id, job.status) for attempt_id, job in existing_jobs.items()]}"
+                f"{[(tenant_id, list(jobs.keys())) for tenant_id, jobs in existing_jobs.items()]}"
             )
 
         try:
-            with Session(get_sqlalchemy_engine()) as db_session:
-                check_index_swap(db_session)
-            existing_jobs = cleanup_indexing_jobs(existing_jobs=existing_jobs)
-            create_indexing_jobs(existing_jobs=existing_jobs)
-            existing_jobs = kickoff_indexing_jobs(
-                existing_jobs=existing_jobs,
-                client=client_primary,
-                secondary_client=client_secondary,
-            )
+            tenants = get_all_tenant_ids()
+
+            for tenant_id in tenants:
+                try:
+                    logger.debug(
+                        f"Processing {'index attempts' if tenant_id is None else f'tenant {tenant_id}'}"
+                    )
+                    engine = get_sqlalchemy_engine(schema=tenant_id)
+                    with Session(engine) as db_session:
+                        check_index_swap(db_session=db_session)
+                        if not MULTI_TENANT:
+                            search_settings = get_current_search_settings(db_session)
+                            if search_settings.provider_type is None:
+                                logger.notice(
+                                    "Running a first inference to warm up embedding model"
+                                )
+                                embedding_model = EmbeddingModel.from_db_model(
+                                    search_settings=search_settings,
+                                    server_host=INDEXING_MODEL_SERVER_HOST,
+                                    server_port=MODEL_SERVER_PORT,
+                                )
+                                warm_up_bi_encoder(embedding_model=embedding_model)
+                                logger.notice("First inference complete.")
+
+                    tenant_jobs = existing_jobs.get(tenant_id, {})
+
+                    tenant_jobs = cleanup_indexing_jobs(
+                        existing_jobs=tenant_jobs, tenant_id=tenant_id
+                    )
+                    create_indexing_jobs(existing_jobs=tenant_jobs, tenant_id=tenant_id)
+                    tenant_jobs = kickoff_indexing_jobs(
+                        existing_jobs=tenant_jobs,
+                        client=client_primary,
+                        secondary_client=client_secondary,
+                        tenant_id=tenant_id,
+                    )
+
+                    existing_jobs[tenant_id] = tenant_jobs
+
+                except Exception as e:
+                    logger.exception(
+                        f"Failed to process tenant {tenant_id or 'default'}: {e}"
+                    )
+
         except Exception as e:
             logger.exception(f"Failed to run update due to {e}")
+
         sleep_time = delay - (time.time() - start)
         if sleep_time > 0:
             time.sleep(sleep_time)
