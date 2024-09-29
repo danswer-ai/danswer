@@ -29,6 +29,7 @@ from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
+from danswer.db.engine import current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
 from danswer.db.models import DocumentSet__User
@@ -52,6 +53,8 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
 from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
 from ee.danswer.db.user_group import remove_curator_status__no_commit
+from ee.danswer.server.tenants.provisioning import add_users_to_tenant
+from ee.danswer.server.tenants.provisioning import remove_users_from_tenant
 
 logger = setup_logger()
 
@@ -164,6 +167,7 @@ def list_all_users(
 def bulk_invite_users(
     emails: list[str] = Body(..., embed=True),
     current_user: User | None = Depends(current_admin_user),
+    _: Session = Depends(get_session),
 ) -> int:
     """emails are string validated. If any email fails validation, no emails are
     invited and an exception is raised."""
@@ -171,11 +175,14 @@ def bulk_invite_users(
         raise HTTPException(
             status_code=400, detail="Auth is disabled, cannot invite users"
         )
+    tenant_id = current_tenant_id.get()
 
     normalized_emails = []
     for email in emails:
         email_info = validate_email(email)  # can raise EmailNotValidError
         normalized_emails.append(email_info.normalized)  # type: ignore
+
+    add_users_to_tenant(normalized_emails, tenant_id)
     all_emails = list(set(normalized_emails) | set(get_invited_users()))
     return write_invited_users(all_emails)
 
@@ -184,9 +191,14 @@ def bulk_invite_users(
 def remove_invited_user(
     user_email: UserByEmail,
     _: User | None = Depends(current_admin_user),
+    __: Session = Depends(get_session),
 ) -> int:
     user_emails = get_invited_users()
     remaining_users = [user for user in user_emails if user != user_email.user_email]
+
+    tenant_id = current_tenant_id.get()
+    remove_users_from_tenant([user_email.user_email], tenant_id)
+
     return write_invited_users(remaining_users)
 
 

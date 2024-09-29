@@ -21,6 +21,7 @@ def upgrade() -> None:
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("tenant_id", sa.String(), nullable=False),
         sa.UniqueConstraint("email", "tenant_id", name="uq_user_tenant"),
+        sa.UniqueConstraint("email", name="uq_email"),  # Add this line
         schema="public",
     )
 
