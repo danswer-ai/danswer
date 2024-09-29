@@ -60,17 +60,8 @@ jobs:
           tags: danswer/danswer-backend:test
           push: false
           load: true
-          cache-from: >
-            type=s3,
-            prefix=cache/${{ github.repository }}/integration-tests/backend/,
-            region=${{ env.RUNS_ON_AWS_REGION }},
-            bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
-          cache-to: >
-            type=s3,
-            prefix=cache/${{ github.repository }}/integration-tests/backend/,
-            region=${{ env.RUNS_ON_AWS_REGION }},
-            bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},
-            mode=max
+          cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/backend/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
+          cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/backend/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
       - name: Build Model Server Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -81,17 +72,8 @@ jobs:
           tags: danswer/danswer-model-server:test
           push: false
           load: true
-          cache-from: >
-            type=s3,
-            prefix=cache/${{ github.repository }}/integration-tests/model-server/,
-            region=${{ env.RUNS_ON_AWS_REGION }},
-            bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
-          cache-to: >
-            type=s3,
-            prefix=cache/${{ github.repository }}/integration-tests/model-server/,
-            region=${{ env.RUNS_ON_AWS_REGION }},
-            bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},
-            mode=max
+          cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
+          cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
       - name: Build integration test Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -102,18 +84,8 @@ jobs:
           tags: danswer/danswer-integration:test
           push: false
           load: true
-          cache-from: >
-            type=s3,
-            prefix=cache/${{ github.repository }}/integration-tests/integration/,
-            region=${{ env.RUNS_ON_AWS_REGION }},
-            bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
-          cache-to: >
-            type=s3,
-            prefix=cache/${{ github.repository }}/integration-tests/integration/,
-            region=${{ env.RUNS_ON_AWS_REGION }},
-            bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},
-            mode=max
-
+          cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
+          cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
       - name: Start Docker containers
         run: |
