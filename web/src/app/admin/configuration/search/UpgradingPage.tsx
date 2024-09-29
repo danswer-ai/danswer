@@ -163,9 +163,9 @@ export default function UpgradingPage({
                   Switching Embedding Models
                 </h3>
                 <p className="mb-4 text-text-800">
-                  You're currently switching embedding models, but there are no
-                  connectors to re-index. This means the transition will be
-                  quick and seamless!
+                  You&apos;re currently switching embedding models, but there
+                  are no connectors to re-index. This means the transition will
+                  be quick and seamless!
                 </p>
                 <p className="text-text-600">
                   The new model will be active soon.
