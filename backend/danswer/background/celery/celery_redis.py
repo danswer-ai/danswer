@@ -106,6 +106,7 @@ class RedisObjectHelper(ABC):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock,
+        tenant_id: str | None,
     ) -> int | None:
         pass
 
@@ -121,6 +122,7 @@ class RedisDocumentSet(RedisObjectHelper):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock,
+        tenant_id: str | None,
     ) -> int | None:
         last_lock_time = time.monotonic()
 
@@ -145,7 +147,7 @@ class RedisDocumentSet(RedisObjectHelper):
 
             result = celery_app.send_task(
                 "vespa_metadata_sync_task",
-                kwargs=dict(document_id=doc.id),
+                kwargs=dict(document_id=doc.id, tenant_id=tenant_id),
                 queue=DanswerCeleryQueues.VESPA_METADATA_SYNC,
                 task_id=custom_task_id,
                 priority=DanswerCeleryPriority.LOW,
@@ -167,6 +169,7 @@ class RedisUserGroup(RedisObjectHelper):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock,
+        tenant_id: str | None,
     ) -> int | None:
         last_lock_time = time.monotonic()
 
@@ -200,7 +203,7 @@ class RedisUserGroup(RedisObjectHelper):
 
             result = celery_app.send_task(
                 "vespa_metadata_sync_task",
-                kwargs=dict(document_id=doc.id),
+                kwargs=dict(document_id=doc.id, tenant_id=tenant_id),
                 queue=DanswerCeleryQueues.VESPA_METADATA_SYNC,
                 task_id=custom_task_id,
                 priority=DanswerCeleryPriority.LOW,
@@ -240,6 +243,7 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock,
+        tenant_id: str | None,
     ) -> int | None:
         last_lock_time = time.monotonic()
 
@@ -274,7 +278,7 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
             # Priority on sync's triggered by new indexing should be medium
             result = celery_app.send_task(
                 "vespa_metadata_sync_task",
-                kwargs=dict(document_id=doc.id),
+                kwargs=dict(document_id=doc.id, tenant_id=tenant_id),
                 queue=DanswerCeleryQueues.VESPA_METADATA_SYNC,
                 task_id=custom_task_id,
                 priority=DanswerCeleryPriority.MEDIUM,
@@ -296,6 +300,7 @@ class RedisConnectorDeletion(RedisObjectHelper):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock,
+        tenant_id: str | None,
     ) -> int | None:
         last_lock_time = time.monotonic()
 
@@ -332,6 +337,7 @@ class RedisConnectorDeletion(RedisObjectHelper):
                     document_id=doc.id,
                     connector_id=cc_pair.connector_id,
                     credential_id=cc_pair.credential_id,
+                    tenant_id=tenant_id,
                 ),
                 queue=DanswerCeleryQueues.CONNECTOR_DELETION,
                 task_id=custom_task_id,

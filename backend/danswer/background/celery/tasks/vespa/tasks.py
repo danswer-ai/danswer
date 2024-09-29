@@ -62,7 +62,7 @@ task_logger = get_task_logger(__name__)
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
 )
-def check_for_vespa_sync_task(tenant_id: str) -> None:
+def check_for_vespa_sync_task(tenant_id: str | None) -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
 
@@ -79,7 +79,7 @@ def check_for_vespa_sync_task(tenant_id: str) -> None:
             return
 
         with get_session_with_tenant(tenant_id) as db_session:
-            try_generate_stale_document_sync_tasks(db_session, r, lock_beat)
+            try_generate_stale_document_sync_tasks(db_session, r, lock_beat, tenant_id)
 
             # check if any document sets are not synced
             document_set_info = fetch_document_sets(
@@ -87,7 +87,7 @@ def check_for_vespa_sync_task(tenant_id: str) -> None:
             )
             for document_set, _ in document_set_info:
                 try_generate_document_set_sync_tasks(
-                    document_set, db_session, r, lock_beat
+                    document_set, db_session, r, lock_beat, tenant_id
                 )
 
             # check if any user groups are not synced
@@ -101,7 +101,7 @@ def check_for_vespa_sync_task(tenant_id: str) -> None:
                 )
                 for usergroup in user_groups:
                     try_generate_user_group_sync_tasks(
-                        usergroup, db_session, r, lock_beat
+                        usergroup, db_session, r, lock_beat, tenant_id
                     )
             except ModuleNotFoundError:
                 # Always exceptions on the MIT version, which is expected
@@ -118,7 +118,7 @@ def check_for_vespa_sync_task(tenant_id: str) -> None:
 
 
 def try_generate_stale_document_sync_tasks(
-    db_session: Session, r: Redis, lock_beat: redis.lock.Lock
+    db_session: Session, r: Redis, lock_beat: redis.lock.Lock, tenant_id: str | None
 ) -> int | None:
     # the fence is up, do nothing
     if r.exists(RedisConnectorCredentialPair.get_fence_key()):
@@ -143,7 +143,9 @@ def try_generate_stale_document_sync_tasks(
     cc_pairs = get_connector_credential_pairs(db_session)
     for cc_pair in cc_pairs:
         rc = RedisConnectorCredentialPair(cc_pair.id)
-        tasks_generated = rc.generate_tasks(celery_app, db_session, r, lock_beat)
+        tasks_generated = rc.generate_tasks(
+            celery_app, db_session, r, lock_beat, tenant_id
+        )
 
         if tasks_generated is None:
             continue
@@ -167,7 +169,11 @@ def try_generate_stale_document_sync_tasks(
 
 
 def try_generate_document_set_sync_tasks(
-    document_set: DocumentSet, db_session: Session, r: Redis, lock_beat: redis.lock.Lock
+    document_set: DocumentSet,
+    db_session: Session,
+    r: Redis,
+    lock_beat: redis.lock.Lock,
+    tenant_id: str | None,
 ) -> int | None:
     lock_beat.reacquire()
 
@@ -191,7 +197,9 @@ def try_generate_document_set_sync_tasks(
     )
 
     # Add all documents that need to be updated into the queue
-    tasks_generated = rds.generate_tasks(celery_app, db_session, r, lock_beat)
+    tasks_generated = rds.generate_tasks(
+        celery_app, db_session, r, lock_beat, tenant_id
+    )
     if tasks_generated is None:
         return None
 
@@ -212,7 +220,11 @@ def try_generate_document_set_sync_tasks(
 
 
 def try_generate_user_group_sync_tasks(
-    usergroup: UserGroup, db_session: Session, r: Redis, lock_beat: redis.lock.Lock
+    usergroup: UserGroup,
+    db_session: Session,
+    r: Redis,
+    lock_beat: redis.lock.Lock,
+    tenant_id: str | None,
 ) -> int | None:
     lock_beat.reacquire()
 
@@ -234,7 +246,9 @@ def try_generate_user_group_sync_tasks(
     task_logger.info(
         f"RedisUserGroup.generate_tasks starting. usergroup_id={usergroup.id}"
     )
-    tasks_generated = rug.generate_tasks(celery_app, db_session, r, lock_beat)
+    tasks_generated = rug.generate_tasks(
+        celery_app, db_session, r, lock_beat, tenant_id
+    )
     if tasks_generated is None:
         return None
 
@@ -479,11 +493,13 @@ def monitor_vespa_sync(tenant_id: str | None) -> None:
     time_limit=60,
     max_retries=3,
 )
-def vespa_metadata_sync_task(self: Task, document_id: str) -> bool:
+def vespa_metadata_sync_task(
+    self: Task, document_id: str, tenant_id: str | None
+) -> bool:
     task_logger.info(f"document_id={document_id}")
 
     try:
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
             document_index = get_default_document_index(
                 primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
