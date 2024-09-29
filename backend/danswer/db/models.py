@@ -420,9 +420,6 @@ class ConnectorCredentialPair(Base):
         DateTime(timezone=True), nullable=True, index=True
     )
 
-    # # flag to trigger pruning
-    # needs_pruning: Mapped[bool] = mapped_column(Boolean, default=False)
-
     total_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
 
     connector: Mapped["Connector"] = relationship(

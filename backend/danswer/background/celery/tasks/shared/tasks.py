@@ -28,6 +28,8 @@ from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 def document_by_cc_pair_cleanup_task(
     self: Task, document_id: str, connector_id: int, credential_id: int
 ) -> bool:
+    """A lightweight subtask used to clean up document to cc pair relationships.
+    Created by connection deletion and connector pruning parent tasks."""
     task_logger.info(f"document_id={document_id}")
 
     try:
