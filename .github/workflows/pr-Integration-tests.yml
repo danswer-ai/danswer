@@ -1,4 +1,4 @@
-name: Run Integration Tests
+name: Run Integration Tests v2
 concurrency:
   group: Run-Integration-Tests-${{ github.workflow }}-${{ github.head_ref || github.event.workflow_run.head_branch || github.run_id }}
   cancel-in-progress: true
@@ -14,7 +14,7 @@ env:
 jobs:
   integration-tests:
     # See https://runs-on.com/runners/linux/
-    runs-on: [runs-on,runner=8cpu-linux-x64,ram=32,"run-id=${{ github.run_id }}"]
+    runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
