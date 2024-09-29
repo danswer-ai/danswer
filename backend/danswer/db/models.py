@@ -104,16 +104,13 @@ Multi-tenancy related tables
 
 class UserTenantMapping(Base):
     __tablename__ = "user_tenant_mapping"
-    __table_args__ = {"schema": "public"}  # or any other shared schema name
-
-    email: Mapped[str] = mapped_column(String, nullable=False, primary_key=True)
-    tenant_id: Mapped[str] = mapped_column(String, nullable=False)
-
-    # Add a unique constraint to ensure a user is only mapped once per tenant
     __table_args__ = (
         UniqueConstraint("email", "tenant_id", name="uq_user_tenant"),
         {"schema": "public"},
     )
+
+    email: Mapped[str] = mapped_column(String, nullable=False, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String, nullable=False)
 
 
 """

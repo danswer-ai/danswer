@@ -5,7 +5,6 @@ from datetime import datetime
 from datetime import timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Any
 from typing import Optional
 from typing import Tuple
 
@@ -244,8 +243,14 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         return user
 
     async def on_after_login(
-        self, user: User, request: Request, response: Response
+        self,
+        user: User,
+        request: Request | None = None,
+        response: Response | None = None,
     ) -> None:
+        if response is None or not MULTI_TENANT:
+            return
+
         tenant_id = get_tenant_id_for_email(user.email)
 
         tenant_token = jwt.encode(
@@ -330,12 +335,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
             return user
 
-    async def get_login_response(self, user: User, response: Response) -> Any:
-        tenant_id = await get_tenant_id_for_email(user.email)
-        strategy = self.authenticator.backends["jwt"].get_strategy()
-        token = await strategy.write_token(user, {"tenant_id": tenant_id})
-        return {"access_token": token, "token_type": "bearer"}
-
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
     ) -> None:
@@ -368,7 +367,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         email = credentials.username
 
         # Get tenant_id from mapping table
-        tenant_id = await get_tenant_id_for_email(email)
+        tenant_id = get_tenant_id_for_email(email)
         if not tenant_id:
             # User not found in mapping
             self.password_helper.hash(credentials.password)
@@ -376,12 +375,15 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         # Create a tenant-specific session
         async with get_async_session_with_tenant(tenant_id) as tenant_session:
-            tenant_user_db = SQLAlchemyUserDatabase(tenant_session, User)
+            tenant_user_db: SQLAlchemyUserDatabase = SQLAlchemyUserDatabase(
+                tenant_session, User
+            )
             self.user_db = tenant_user_db
 
             # Proceed with authentication
             try:
                 user = await self.get_by_email(email)
+
             except exceptions.UserNotExists:
                 self.password_helper.hash(credentials.password)
                 return None
@@ -418,7 +420,7 @@ cookie_transport = CookieTransport(
 )
 
 
-def get_auth_strategy():
+def get_auth_strategy() -> JWTStrategy | DatabaseStrategy:
     if MULTI_TENANT:
         return get_jwt_strategy()
     else:
