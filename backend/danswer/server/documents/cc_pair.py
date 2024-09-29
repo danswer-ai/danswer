@@ -46,6 +46,7 @@ from ee.danswer.background.task_name_builders import (
     name_sync_external_doc_permissions_task,
 )
 from ee.danswer.db.user_group import validate_user_creation_permissions
+from danswer.db.engine import current_tenant_id
 
 logger = setup_logger()
 router = APIRouter(prefix="/manage")
@@ -257,7 +258,7 @@ def prune_cc_pair(
         f"credential_id={cc_pair.credential_id} "
         f"{cc_pair.connector.name} connector."
     )
-    tasks_created = try_creating_prune_generator_task(cc_pair, db_session, r)
+    tasks_created = try_creating_prune_generator_task(cc_pair, db_session, r, current_tenant_id.get())
     if not tasks_created:
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,

@@ -24,7 +24,6 @@ from danswer.connectors.models import InputType
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.document import get_documents_for_connector_credential_pair
-from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
@@ -103,14 +102,14 @@ def ccpair_pruning_generator_task_creation_helper(
     if datetime.now(timezone.utc) < next_prune:
         return None
 
-    return try_creating_prune_generator_task(cc_pair, db_session, tenant_id, r)
+    return try_creating_prune_generator_task(cc_pair, db_session, r, tenant_id)
 
 
 def try_creating_prune_generator_task(
     cc_pair: ConnectorCredentialPair,
     db_session: Session,
-    tenant_id: str | None,
     r: Redis,
+    tenant_id: str | None,
 ) -> int | None:
     """Checks for any conditions that should block the pruning generator task from being
     created, then creates the task.
@@ -153,7 +152,6 @@ def try_creating_prune_generator_task(
     # set this only after all tasks have been added
     r.set(rcp.fence_key, 1)
     return 1
-
 
 @shared_task(name="connector_pruning_generator_task", soft_time_limit=JOB_TIMEOUT)
 def connector_pruning_generator_task(connector_id: int, credential_id: int, tenant_id: str | None) -> None:

@@ -38,6 +38,7 @@ from danswer.db.document_set import fetch_document_sets
 from danswer.db.document_set import fetch_document_sets_for_document
 from danswer.db.document_set import get_document_set_by_id
 from danswer.db.document_set import mark_document_set_as_synced
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import delete_index_attempts
 from danswer.db.models import DocumentSet
@@ -77,7 +78,7 @@ def check_for_vespa_sync_task(tenant_id: str) -> None:
         if not lock_beat.acquire(blocking=False):
             return
 
-        with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             try_generate_stale_document_sync_tasks(db_session, r, lock_beat)
 
             # check if any document sets are not synced
@@ -516,7 +517,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> None:
         for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
             monitor_connector_deletion_taskset(key_bytes, r)
 
-        with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             lock_beat.reacquire()
             for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
                 monitor_document_set_taskset(key_bytes, r, db_session)
