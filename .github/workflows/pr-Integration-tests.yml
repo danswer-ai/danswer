@@ -19,6 +19,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - uses: runs-on/cache@v4
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
