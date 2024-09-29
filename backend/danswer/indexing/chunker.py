@@ -258,7 +258,7 @@ class Chunker:
         # If the chunk does not have any useable content, it will not be indexed
         return chunks
 
-    def _chunk_single_document(self, document: Document) -> list[DocAwareChunk]:
+    def _handle_single_document(self, document: Document) -> list[DocAwareChunk]:
         # Specifically for reproducing an issue with gmail
         if document.source == DocumentSource.GMAIL:
             logger.debug(f"Chunking {document.semantic_identifier}")
@@ -309,7 +309,7 @@ class Chunker:
     def chunk(self, documents: list[Document]) -> list[DocAwareChunk]:
         final_chunks: list[DocAwareChunk] = []
         for document in documents:
-            final_chunks.extend(self._chunk_single_document(document))
+            final_chunks.extend(self._handle_single_document(document))
 
             if self.heartbeat:
                 self.heartbeat.heartbeat()
