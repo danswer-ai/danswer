@@ -28,6 +28,7 @@ export function classifyAssistants(user: User | null, assistants: Persona[]) {
     };
   }
 
+  console.log("assistants", assistants);
   const visibleAssistants = assistants.filter((assistant) => {
     const isVisible = user.preferences?.visible_assistants?.includes(
       assistant.id
@@ -105,7 +106,6 @@ export function orderAssistantsForUser(
     const priorityB = b.display_priority ?? Number.MAX_SAFE_INTEGER;
     return priorityA - priorityB;
   });
-
   // Combine ordered chosen assistants with remaining assistants
   return [...orderedAssistants, ...remainingAssistants];
 }
