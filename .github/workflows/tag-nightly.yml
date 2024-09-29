@@ -25,7 +25,20 @@ jobs:
         git config user.name "Richard Kuo [bot]"
         git config user.email "rkuo[bot]@danswer.ai"
 
+    - name: Check for existing nightly tag
+      id: check_tag
+      run: |
+        if git tag --points-at HEAD --list "nightly-latest*" | grep -q .; then
+          echo "A tag starting with 'nightly-latest' already exists on HEAD."
+          echo "tag_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "No tag starting with 'nightly-latest' exists on HEAD."
+          echo "tag_exists=false" >> $GITHUB_OUTPUT
+        fi
+        
+    # don't tag again if HEAD already has a nightly-latest tag on it
     - name: Create Nightly Tag
+      if: steps.check_tag.outputs.tag_exists == 'false'
       env:
         DATE: ${{ github.run_id }}
       run: |
@@ -34,6 +47,7 @@ jobs:
         git tag $TAG_NAME
 
     - name: Push Tag
+      if: steps.check_tag.outputs.tag_exists == 'false'
       run: |
         TAG_NAME="nightly-latest-$(date +'%Y%m%d')"
         git push origin $TAG_NAME
