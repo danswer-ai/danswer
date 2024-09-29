@@ -273,11 +273,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
-        print("authenticating this user", account_email)
-
         # Get tenant_id from mapping table
         tenant_id = get_tenant_id_for_email(account_email)
-        print("USER BELONGS OT THIS TENANT", tenant_id)
 
         if not tenant_id:
             raise HTTPException(status_code=401, detail="User not found")
