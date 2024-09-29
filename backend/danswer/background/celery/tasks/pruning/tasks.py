@@ -219,7 +219,7 @@ def connector_pruning_generator_task(connector_id: int, credential_id: int, tena
             task_logger.info(
                 f"RedisConnectorPruning.generate_tasks starting. cc_pair_id={cc_pair.id}"
             )
-            tasks_generated = rcp.generate_tasks(celery_app, db_session, r, None)
+            tasks_generated = rcp.generate_tasks(celery_app, db_session, r, None, tenant_id)
             if tasks_generated is None:
                 return None
 
