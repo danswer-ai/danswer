@@ -12,17 +12,33 @@ jobs:
     runs-on: [runs-on,runner=2cpu-linux-x64,"run-id=${{ github.run_id }}"]
 
     steps:
+    # actions using GITHUB_TOKEN cannot trigger another workflow, but we do want this to trigger docker pushes
+    # see https://github.com/orgs/community/discussions/27028#discussioncomment-3254367 for the workaround we
+    # implement here which needs an actual user's deploy key
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        ssh-key: "${{ secrets.RKUO_DEPLOY_KEY }}"
 
     - name: Set up Git user
       run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git config user.name "Richard Kuo [bot]"
+        git config user.email "rkuo[bot]@danswer.ai"
 
+    - name: Check for existing nightly tag
+      id: check_tag
+      run: |
+        if git tag --points-at HEAD --list "nightly-latest*" | grep -q .; then
+          echo "A tag starting with 'nightly-latest' already exists on HEAD."
+          echo "tag_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "No tag starting with 'nightly-latest' exists on HEAD."
+          echo "tag_exists=false" >> $GITHUB_OUTPUT
+        fi
+        
+    # don't tag again if HEAD already has a nightly-latest tag on it
     - name: Create Nightly Tag
+      if: steps.check_tag.outputs.tag_exists == 'false'
       env:
         DATE: ${{ github.run_id }}
       run: |
@@ -31,6 +47,7 @@ jobs:
         git tag $TAG_NAME
 
     - name: Push Tag
+      if: steps.check_tag.outputs.tag_exists == 'false'
       run: |
         TAG_NAME="nightly-latest-$(date +'%Y%m%d')"
         git push origin $TAG_NAME

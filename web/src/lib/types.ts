@@ -23,6 +23,13 @@ export enum UserRole {
   GLOBAL_CURATOR = "global_curator",
 }
 
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  [UserRole.BASIC]: "Basic",
+  [UserRole.ADMIN]: "Admin",
+  [UserRole.GLOBAL_CURATOR]: "Global Curator",
+  [UserRole.CURATOR]: "Curator",
+};
+
 export interface User {
   id: string;
   email: string;
@@ -251,6 +258,7 @@ const validSources = [
   "s3",
   "r2",
   "google_cloud_storage",
+  "xenforo",
   "oci_storage",
   "not_applicable",
   "ingestion_api",
