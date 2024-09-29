@@ -5,10 +5,10 @@ from fastapi import HTTPException
 from danswer.auth.users import control_plane_dep
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.db.engine import get_session_with_tenant
-from danswer.db.models import UserTenantMapping
 from danswer.setup import setup_danswer
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.tenants.models import CreateTenantRequest
+from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
 
@@ -37,13 +37,8 @@ def create_tenant(
         with get_session_with_tenant(tenant_id) as db_session:
             setup_danswer(db_session)
 
-        with get_session_with_tenant("public") as db_session:
-            try:
-                db_session.add(UserTenantMapping(email=email, tenant_id=tenant_id))
-            except Exception as e:
-                print(e)
-            db_session.commit()
         logger.info(f"Tenant {tenant_id} created successfully")
+        add_users_to_tenant([email], tenant_id)
         return {
             "status": "success",
             "message": f"Tenant {tenant_id} created successfully",
