@@ -264,9 +264,6 @@ def get_current_tenant_id(request: Request) -> str:
         tenant_id = payload.get("tenant_id")
         if not tenant_id:
             return current_tenant_id.get()
-            # raise HTTPException(
-            #     status_code=400, detail="Invalid token: tenant_id missing"
-            # )
         print(f"Validating tenant ID: {tenant_id}")
         if not is_valid_schema_name(tenant_id):
             print(f"Invalid tenant ID format: {tenant_id}")
