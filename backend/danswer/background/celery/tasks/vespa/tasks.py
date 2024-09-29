@@ -60,7 +60,7 @@ task_logger = get_task_logger(__name__)
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
 )
-def check_for_vespa_sync_task() -> None:
+def check_for_vespa_sync_task(tenant_id: str) -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
 
@@ -76,7 +76,7 @@ def check_for_vespa_sync_task() -> None:
         if not lock_beat.acquire(blocking=False):
             return
 
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
             try_generate_stale_document_sync_tasks(db_session, r, lock_beat)
 
             # check if any document sets are not synced
@@ -417,7 +417,7 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
 
 
 @shared_task(name="monitor_vespa_sync", soft_time_limit=300)
-def monitor_vespa_sync() -> None:
+def monitor_vespa_sync(tenant_id: str | None) -> None:
     """This is a celery beat task that monitors and finalizes metadata sync tasksets.
     It scans for fence values and then gets the counts of any associated tasksets.
     If the count is 0, that means all tasks finished and we should clean up.
@@ -443,7 +443,7 @@ def monitor_vespa_sync() -> None:
         for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
             monitor_connector_deletion_taskset(key_bytes, r)
 
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
             for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
                 monitor_document_set_taskset(key_bytes, r, db_session)
 

@@ -50,12 +50,13 @@ def delete_connector_credential_pair_batch(
     connector_id: int,
     credential_id: int,
     document_index: DocumentIndex,
+    tenant_id: str | None,
 ) -> None:
     """
     Removes a batch of documents ids from a cc-pair. If no other cc-pair uses a document anymore
     it gets permanently deleted.
     """
-    with Session(get_sqlalchemy_engine()) as db_session:
+    with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
         # acquire lock for all documents in this batch so that indexing can't
         # override the deletion
         with prepare_to_modify_documents(
@@ -134,12 +135,16 @@ def delete_connector_credential_pair_batch(
     max_retries=3,
 )
 def document_by_cc_pair_cleanup_task(
-    self: Task, document_id: str, connector_id: int, credential_id: int
+    self: Task,
+    document_id: str,
+    connector_id: int,
+    credential_id: int,
+    tenant_id: str | None,
 ) -> bool:
     task_logger.info(f"document_id={document_id}")
 
     try:
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
             document_index = get_default_document_index(
                 primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
