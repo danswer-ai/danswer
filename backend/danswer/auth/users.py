@@ -27,6 +27,7 @@ from fastapi_users import schemas
 from fastapi_users import UUIDIDMixin
 from fastapi_users.authentication import AuthenticationBackend
 from fastapi_users.authentication import CookieTransport
+from fastapi_users.authentication import JWTStrategy
 from fastapi_users.authentication import Strategy
 from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
@@ -44,6 +45,7 @@ from danswer.configs.app_configs import DATA_PLANE_SECRET
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import EXPECTED_API_KEY
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SMTP_PASS
@@ -63,6 +65,7 @@ from danswer.db.auth import get_default_admin_user_emails
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
 from danswer.db.auth import SQLAlchemyUserAdminDB
+from danswer.db.engine import current_tenant_id
 from danswer.db.engine import get_async_session_with_tenant
 from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_engine
@@ -261,6 +264,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         if not tenant_id:
             raise HTTPException(status_code=401, detail="User not found")
 
+        current_tenant_id.set(tenant_id)
+
         async with get_async_session_with_tenant(tenant_id) as db_session:
             tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
             self.user_db = tenant_user_db
@@ -283,7 +288,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 associate_by_email=associate_by_email,
                 is_verified_by_default=is_verified_by_default,
             )
-            logger.info("post oauth callback")
             # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
             # re-authenticate that frequently, so by default this is disabled
             if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
@@ -308,7 +312,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 )
                 user.is_verified = is_verified_by_default
                 user.has_web_login = True
-            logger.info("USER AUTHENTICATED")
+
             return user
 
     async def get_login_response(self, user: User, response: Response) -> Any:
@@ -347,11 +351,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         self, credentials: OAuth2PasswordRequestForm
     ) -> Optional[User]:
         email = credentials.username
-        print("authenticating this user")
 
         # Get tenant_id from mapping table
         tenant_id = await get_tenant_id_for_email(email)
-        print("USER BELONGS OT THIS TENANT", tenant_id)
         if not tenant_id:
             # User not found in mapping
             self.password_helper.hash(credentials.password)
@@ -401,6 +403,20 @@ cookie_transport = CookieTransport(
 )
 
 
+def get_auth_strategy():
+    if MULTI_TENANT:
+        return get_jwt_strategy()
+    else:
+        return get_database_strategy()
+
+
+def get_jwt_strategy() -> JWTStrategy:
+    return JWTStrategy(
+        secret=USER_AUTH_SECRET,
+        lifetime_seconds=SESSION_EXPIRE_TIME_SECONDS,
+    )
+
+
 def get_database_strategy(
     access_token_db: AccessTokenDatabase[AccessToken] = Depends(get_access_token_db),
 ) -> DatabaseStrategy:
@@ -412,9 +428,9 @@ def get_database_strategy(
 
 
 auth_backend = AuthenticationBackend(
-    name="database",
+    name="jwt" if MULTI_TENANT else "database",
     transport=cookie_transport,
-    get_strategy=get_database_strategy,
+    get_strategy=get_auth_strategy,
 )
 
 

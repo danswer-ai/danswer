@@ -63,4 +63,5 @@ async def get_user_db(
 async def get_access_token_db(
     session: AsyncSession = Depends(get_async_session),
 ) -> AsyncGenerator[SQLAlchemyAccessTokenDatabase, None]:
+    print("yielding access token db")
     yield SQLAlchemyAccessTokenDatabase(session, AccessToken)  # type: ignore

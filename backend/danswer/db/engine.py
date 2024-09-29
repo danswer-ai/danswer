@@ -239,35 +239,47 @@ current_tenant_id = contextvars.ContextVar(
 
 # Dependency to get the current tenant ID and set the context variable
 def get_current_tenant_id(request: Request) -> str:
+    print("GETTING THE TENANT ID")
+    print(f"Request: {request}")
     """Dependency that extracts the tenant ID from the JWT token in the request and sets the context variable."""
     if not MULTI_TENANT:
+        print("Not multi-tenant")
         tenant_id = POSTGRES_DEFAULT_SCHEMA
         current_tenant_id.set(tenant_id)
+        print(f"Setting default tenant ID: {tenant_id}")
         return tenant_id
 
+    print("Checking for tenant_details cookie")
     token = request.cookies.get("tenant_details")
     if not token:
+        print("No token found in cookies")
+        print("RETURNING THE TOKEN THAT WAS SET")
+        current_value = current_tenant_id.get()
+        print(f"Current tenant ID: {current_value}")
         # If no token is present, use the default schema or handle accordingly
-        tenant_id = POSTGRES_DEFAULT_SCHEMA
-        current_tenant_id.set(tenant_id)
-        return tenant_id
+        return current_value
 
     try:
         payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
         tenant_id = payload.get("tenant_id")
         if not tenant_id:
-            return POSTGRES_DEFAULT_SCHEMA
+            return current_tenant_id.get()
             # raise HTTPException(
             #     status_code=400, detail="Invalid token: tenant_id missing"
             # )
+        print(f"Validating tenant ID: {tenant_id}")
         if not is_valid_schema_name(tenant_id):
+            print(f"Invalid tenant ID format: {tenant_id}")
             raise HTTPException(status_code=400, detail="Invalid tenant ID format")
+        print(f"Setting current tenant ID: {tenant_id}")
         current_tenant_id.set(tenant_id)
         return tenant_id
     except jwt.InvalidTokenError:
-        return POSTGRES_DEFAULT_SCHEMA
-        raise HTTPException(status_code=403, detail="Invalid token format")
-    except Exception:
+        print("Invalid JWT token")
+        print("but current tenant id is still set to:", current_tenant_id.get())
+        return current_tenant_id.get()
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
