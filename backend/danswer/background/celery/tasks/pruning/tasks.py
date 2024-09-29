@@ -25,6 +25,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.redis.redis_pool import get_redis_client
@@ -34,7 +35,7 @@ from danswer.redis.redis_pool import get_redis_client
     name="check_for_prune_task_2",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_prune_task_2() -> None:
+def check_for_prune_task_2(tenant_id: str | None) -> None:
     r = get_redis_client()
 
     lock_beat = r.lock(
@@ -47,11 +48,11 @@ def check_for_prune_task_2() -> None:
         if not lock_beat.acquire(blocking=False):
             return
 
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             cc_pairs = get_connector_credential_pairs(db_session)
             for cc_pair in cc_pairs:
                 tasks_created = ccpair_pruning_generator_task_creation_helper(
-                    cc_pair, db_session, r, lock_beat
+                    cc_pair, db_session, tenant_id, r, lock_beat
                 )
                 if not tasks_created:
                     continue
@@ -71,6 +72,7 @@ def check_for_prune_task_2() -> None:
 def ccpair_pruning_generator_task_creation_helper(
     cc_pair: ConnectorCredentialPair,
     db_session: Session,
+    tenant_id: str | None,
     r: Redis,
     lock_beat: redis.lock.Lock,
 ) -> int | None:
@@ -101,12 +103,13 @@ def ccpair_pruning_generator_task_creation_helper(
     if datetime.now(timezone.utc) < next_prune:
         return None
 
-    return try_creating_prune_generator_task(cc_pair, db_session, r)
+    return try_creating_prune_generator_task(cc_pair, db_session, tenant_id, r)
 
 
 def try_creating_prune_generator_task(
     cc_pair: ConnectorCredentialPair,
     db_session: Session,
+    tenant_id: str | None,
     r: Redis,
 ) -> int | None:
     """Checks for any conditions that should block the pruning generator task from being
@@ -140,7 +143,7 @@ def try_creating_prune_generator_task(
     celery_app.send_task(
         "connector_pruning_generator_task",
         kwargs=dict(
-            connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
+            connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id, tenant_id=tenant_id
         ),
         queue=DanswerCeleryQueues.CONNECTOR_PRUNING,
         task_id=custom_task_id,
@@ -153,14 +156,14 @@ def try_creating_prune_generator_task(
 
 
 @shared_task(name="connector_pruning_generator_task", soft_time_limit=JOB_TIMEOUT)
-def connector_pruning_generator_task(connector_id: int, credential_id: int) -> None:
+def connector_pruning_generator_task(connector_id: int, credential_id: int, tenant_id: str | None) -> None:
     """connector pruning task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list"""
 
     r = get_redis_client()
 
-    with Session(get_sqlalchemy_engine()) as db_session:
+    with get_session_with_tenant(tenant_id) as db_session:
         try:
             cc_pair = get_connector_credential_pair(
                 db_session=db_session,

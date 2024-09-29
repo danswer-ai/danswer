@@ -46,6 +46,7 @@ def _get_connector_runner(
     attempt: IndexAttempt,
     start_time: datetime,
     end_time: datetime,
+    tenant_id: str | None,
 ) -> ConnectorRunner:
     """
     NOTE: `start_time` and `end_time` are only used for poll connectors
@@ -87,8 +88,7 @@ def _get_connector_runner(
 
 
 def _run_indexing(
-    db_session: Session,
-    index_attempt: IndexAttempt,
+    db_session: Session, index_attempt: IndexAttempt, tenant_id: str | None
 ) -> None:
     """
     1. Get documents which are either new or updated from specified application
@@ -129,6 +129,7 @@ def _run_indexing(
             or (search_settings.status == IndexModelStatus.FUTURE)
         ),
         db_session=db_session,
+        tenant_id=tenant_id,
     )
 
     db_cc_pair = index_attempt.connector_credential_pair
@@ -185,6 +186,7 @@ def _run_indexing(
                 attempt=index_attempt,
                 start_time=window_start,
                 end_time=window_end,
+                tenant_id=tenant_id,
             )
 
             all_connector_doc_ids: set[str] = set()
@@ -212,7 +214,9 @@ def _run_indexing(
                 db_session.refresh(index_attempt)
                 if index_attempt.status != IndexingStatus.IN_PROGRESS:
                     # Likely due to user manually disabling it or model swap
-                    raise RuntimeError("Index Attempt was canceled")
+                    raise RuntimeError(
+                        f"Index Attempt was canceled, status is {index_attempt.status}"
+                    )
 
                 batch_description = []
                 for doc in doc_batch:
@@ -401,12 +405,11 @@ def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexA
 
 
 def run_indexing_entrypoint(
-    index_attempt_id: int, connector_credential_pair_id: int, is_ee: bool = False
+    index_attempt_id: int,
+    tenant_id: str | None,
+    connector_credential_pair_id: int,
+    is_ee: bool = False,
 ) -> None:
-    """Entrypoint for indexing run when using dask distributed.
-    Wraps the actual logic in a `try` block so that we can catch any exceptions
-    and mark the attempt as failed."""
-
     try:
         if is_ee:
             global_version.set_ee()
@@ -417,25 +420,29 @@ def run_indexing_entrypoint(
             index_attempt_id, connector_credential_pair_id
         )
 
-        with Session(get_sqlalchemy_engine()) as db_session:
-            # make sure that it is valid to run this indexing attempt + mark it
-            # as in progress
+        with Session(get_sqlalchemy_engine(schema=tenant_id)) as db_session:
             attempt = _prepare_index_attempt(db_session, index_attempt_id)
 
             logger.info(
-                f"Indexing starting: "
-                f"connector='{attempt.connector_credential_pair.connector.name}' "
+                f"Indexing starting for tenant {tenant_id}: "
+                if tenant_id is not None
+                else ""
+                + f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
 
-            _run_indexing(db_session, attempt)
+            _run_indexing(db_session, attempt, tenant_id)
 
             logger.info(
-                f"Indexing finished: "
-                f"connector='{attempt.connector_credential_pair.connector.name}' "
+                f"Indexing finished for tenant {tenant_id}: "
+                if tenant_id is not None
+                else ""
+                + f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
     except Exception as e:
-        logger.exception(f"Indexing job with ID '{index_attempt_id}' failed due to {e}")
+        logger.exception(
+            f"Indexing job with ID '{index_attempt_id}' for tenant {tenant_id} failed due to {e}"
+        )
