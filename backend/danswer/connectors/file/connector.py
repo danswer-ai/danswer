@@ -74,7 +74,7 @@ def _process_file(
         )
 
     # Using the PDF reader function directly to pass in password cleanly
-    elif extension == ".pdf" and pdf_pass:
+    elif extension == ".pdf" and pdf_pass is not None:
         file_content_raw, file_metadata = read_pdf_file(file=file, pdf_pass=pdf_pass)
 
     else:
