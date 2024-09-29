@@ -9,7 +9,7 @@ from tests.unit.danswer.indexing.conftest import MockHeartbeat
 
 
 @pytest.fixture
-def embedder():
+def embedder() -> DefaultIndexingEmbedder:
     return DefaultIndexingEmbedder(
         model_name="intfloat/e5-base-v2",
         normalize=True,
