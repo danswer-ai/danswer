@@ -22,7 +22,10 @@ if config.config_file_name is not None and config.attributes.get(
 ):
     fileConfig(config.config_file_name)
 
-# Combine your models' metadata
+# Add your model's MetaData object here
+# for 'autogenerate' support
+# from myapp import mymodel
+# target_metadata = mymodel.Base.metadata
 target_metadata = [Base.metadata, ResultModelBase.metadata]
 
 
@@ -51,6 +54,14 @@ def include_object(
 
 
 def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode.
+    This configures the context with just a URL
+    and not an Engine, though an Engine is acceptable
+    here as well.  By skipping the Engine creation
+    we don't even need a DBAPI to be available.
+    Calls to context.execute() here emit the given string to the
+    script output.
+    """
     schema_name, _ = get_schema_options()
     url = build_connection_string()
 
