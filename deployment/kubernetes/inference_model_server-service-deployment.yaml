@@ -54,3 +54,18 @@ spec:
   resources:
     requests:
       storage: 3Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: inference-model-server-volume
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 3Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+  persistentVolumeReclaimPolicy: Delete

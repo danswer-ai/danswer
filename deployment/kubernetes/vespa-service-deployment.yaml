@@ -49,15 +49,31 @@ spec:
             port: 19071
             scheme: HTTP
         volumeMounts:
-        - name: vespa-storage
+        - name: vespa-volume
           mountPath: /opt/vespa/var/
   volumeClaimTemplates:
   - metadata:
-      name: vespa-storage
+      name: vespa-volume
     spec:
-      accessModes:
-      - ReadWriteOnce
+      accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
           # Adjust the storage request size as needed.
           storage: 5Gi
+      storageClassName: vespa-storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: vespa-pv
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/vespa"
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: vespa-storage
