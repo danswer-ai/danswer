@@ -23,6 +23,12 @@ export interface GitlabCredentialJson {
   gitlab_url: string;
   gitlab_access_token: string;
 }
+export interface ExchangeCredentialJson {
+  aad_app_id: string;
+  aad_app_secret: string;
+  aad_tenant_id: string;
+  aad_user_id: string;
+}
 
 export interface BookstackCredentialJson {
   bookstack_base_url: string;
@@ -258,6 +264,12 @@ export const credentialTemplates: Record<ValidSources, any> = {
     zendesk_email: "",
     zendesk_token: "",
   } as ZendeskCredentialJson,
+  exchange: {
+    aad_app_id: "",
+    aad_app_secret: "",
+    aad_tenant_id: "",
+    aad_user_id: "",
+  } as ExchangeCredentialJson,
   discourse: {
     discourse_api_key: "",
     discourse_api_username: "",
@@ -414,6 +426,12 @@ export const credentialDisplayNames: Record<string, string> = {
   sf_username: "Salesforce Username",
   sf_password: "Salesforce Password",
   sf_security_token: "Salesforce Security Token",
+
+  // Exchange
+  aad_app_id: "Azure AD App ID",
+  aad_app_secret: "Azure AD App Secret",
+  aad_tenant_id: "Azure AD Tenant ID",
+  aad_user_id: "Azure AD User ID",
 
   // Sharepoint
   sp_client_id: "SharePoint Client ID",

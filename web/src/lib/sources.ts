@@ -38,6 +38,7 @@ import {
   GoogleStorageIcon,
   ColorSlackIcon,
   XenforoIcon,
+  ExchangeIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import {
@@ -59,6 +60,12 @@ type SourceMap = {
 };
 
 const SOURCE_METADATA_MAP: SourceMap = {
+  exchange: {
+    icon: ExchangeIcon,
+    displayName: "Exchange",
+    category: SourceCategory.Messaging,
+    docs: "https://docs.danswer.dev/connectors/exchange",
+  },
   web: {
     icon: GlobeIcon,
     displayName: "Web",

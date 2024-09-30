@@ -19,7 +19,6 @@ from O365.message import MessageAttachment  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -28,6 +27,7 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.file_processing.extract_file_text import read_pdf_file
 from danswer.utils.logger import setup_logger
 
 UNSUPPORTED_FILE_TYPE_CONTENT = ""  # idea copied from the google drive side of thingsy
