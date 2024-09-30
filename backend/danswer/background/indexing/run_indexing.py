@@ -29,6 +29,7 @@ from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.embedder import DefaultIndexingEmbedder
+from danswer.indexing.indexing_heartbeat import IndexingHeartbeat
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
@@ -103,15 +104,24 @@ def _run_indexing(
     )
 
     embedding_model = DefaultIndexingEmbedder.from_db_search_settings(
-        search_settings=search_settings
+        search_settings=search_settings,
+        heartbeat=IndexingHeartbeat(
+            index_attempt_id=index_attempt.id,
+            db_session=db_session,
+            # let the world know we're still making progress after
+            # every 10 batches
+            freq=10,
+        ),
     )
 
     indexing_pipeline = build_indexing_pipeline(
         attempt_id=index_attempt.id,
         embedder=embedding_model,
         document_index=document_index,
-        ignore_time_skip=index_attempt.from_beginning
-        or (search_settings.status == IndexModelStatus.FUTURE),
+        ignore_time_skip=(
+            index_attempt.from_beginning
+            or (search_settings.status == IndexModelStatus.FUTURE)
+        ),
         db_session=db_session,
     )
 
