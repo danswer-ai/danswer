@@ -56,4 +56,3 @@ spec:
         requests:
           # Adjust the storage request size as needed.
           storage: 10Gi
-          
