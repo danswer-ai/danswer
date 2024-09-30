@@ -44,4 +44,5 @@ export const autoSyncConfigBySource: Record<
       ),
     },
   },
+  slack: {},
 };
