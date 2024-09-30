@@ -1,65 +1,69 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Card } from "@tremor/react";
-import { AdminPageTitle } from "@/components/admin/Title";
-import { DocumentSetIconSkeleton } from "@/components/icons/icons";
+import { DocumentIcon2 } from "@/components/icons/icons";
 import useSWR from "swr";
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { ThreeDotsLoader } from "@/components/Loading";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { Lock } from "@phosphor-icons/react";
 
 function Main() {
-  const { data, error, mutate } = useSWR<{
+  const {
+    data: isApiKeySet,
+    error,
+    mutate,
+    isLoading,
+  } = useSWR<{
     unstructured_api_key: string | null;
-  }>("/api/admin/get-unstructured-api-key", fetcher);
+  }>("/api/search-settings/unstructured-api-key-set", (url: string) =>
+    fetch(url).then((res) => res.json())
+  );
 
-  const [apiKey, setApiKey] = useState(data?.unstructured_api_key || "");
-  const [isApiKeySet, setIsApiKeySet] = useState(!!data?.unstructured_api_key);
-
-  useEffect(() => {
-    if (data) {
-      setApiKey(data.unstructured_api_key || "");
-      setIsApiKeySet(!!data.unstructured_api_key);
-    }
-  }, [data]);
+  const [apiKey, setApiKey] = useState("");
 
   const handleSave = async () => {
     try {
-      await fetch("/api/admin/upsert-unstructured-api-key", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ unstructured_api_key: apiKey }),
-      });
-      setIsApiKeySet(true);
+      await fetch(
+        `/api/search-settings/upsert-unstructured-api-key?unstructured_api_key=${apiKey}`,
+        {
+          method: "PUT",
+        }
+      );
     } catch (error) {
       console.error("Failed to save API key:", error);
     }
+    mutate();
   };
 
   const handleDelete = async () => {
     try {
-      await fetch("/api/admin/delete-unstructured-api-key", {
+      await fetch("/api/search-settings/delete-unstructured-api-key", {
         method: "DELETE",
       });
       setApiKey("");
-      setIsApiKeySet(false);
     } catch (error) {
       console.error("Failed to delete API key:", error);
     }
+    mutate();
   };
 
+  if (isLoading) {
+    return <ThreeDotsLoader />;
+  }
   return (
     <div className="container mx-auto p-4">
-      <Card className="mb-8 max-w-2xl bg-background-50 text-text shadow-lg rounded-lg">
-        <h3 className="text-2xl font-bold mb-4 text-text border-b border-b-border pb-2">
+      <Card className="mb-8 max-w-2xl bg-white text-text shadow-lg rounded-lg">
+        <h3 className="text-2xl text-text-800 font-bold mb-4 text-text border-b border-b-border pb-2">
           Unstructured API Integration
         </h3>
 
         <div className="space-y-4">
           <p className="text-text-600">
-            Enter an API key for unstructured document processing. If not set,
-            document processing will continue as normal.
+            Unstructured effortlessly extracts and transforms complex data from
+            difficult-to-use formats like HTML, PDF, CSV, PNG, PPTX, and more.
+            Enter an API key to enable this powerful document processing. If not
+            set, standard document processing will be used.
           </p>
           <p className="text-text-600">
             Learn more about Unstructured{" "}
@@ -74,29 +78,42 @@ function Main() {
             .
           </p>
           <div className="mt-4">
-            <input
-              type="text"
-              placeholder="Enter API Key"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="w-full p-3 border rounded-md bg-background text-text focus:ring-2 focus:ring-blue-500 transition duration-200"
-            />
+            {isApiKeySet ? (
+              <div className="w-full p-3 border rounded-md bg-background text-text flex items-center">
+                <span className="flex-grow">••••••••••••••••</span>
+                <Lock className="h-5 w-5 text-gray-400" />
+              </div>
+            ) : (
+              <input
+                type="text"
+                placeholder="Enter API Key"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="w-full p-3 border rounded-md bg-background text-text focus:ring-2 focus:ring-blue-500 transition duration-200"
+              />
+            )}
           </div>
           <div className="flex space-x-4 mt-6">
-            <Button
-              onClick={handleSave}
-              className="bg-blue-500 text-white hover:bg-blue-600 transition duration-200"
-            >
-              {isApiKeySet ? "Update API Key" : "Save API Key"}
-            </Button>
-            {isApiKeySet && (
+            {isApiKeySet ? (
+              <>
+                <Button
+                  color="red"
+                  onClick={handleDelete}
+                  variant="secondary"
+                  className="bg-red-100 text-red-600 hover:bg-red-400 transition duration-200"
+                >
+                  Delete API Key
+                </Button>
+                <p className="text-text-600 my-auto">
+                  Delete the current API key before updating.
+                </p>
+              </>
+            ) : (
               <Button
-                color="red"
-                onClick={handleDelete}
-                variant="secondary"
-                className="bg-red-100 text-red-600 hover:bg-red-400 transition duration-200"
+                onClick={handleSave}
+                className="bg-blue-500 text-white hover:bg-blue-600 transition duration-200"
               >
-                Delete API Key
+                Save API Key
               </Button>
             )}
           </div>
@@ -111,7 +128,7 @@ function Page() {
     <div className="mx-auto container">
       <AdminPageTitle
         title="Document Processing"
-        icon={<DocumentSetIconSkeleton size={32} className="my-auto" />}
+        icon={<DocumentIcon2 size={32} className="my-auto" />}
       />
       <Main />
     </div>

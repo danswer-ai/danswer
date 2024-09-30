@@ -21,7 +21,7 @@ import {
   AssistantsIconSkeleton,
   ClosedBookIcon,
   SearchIcon,
-  DocumentSetIcon,
+  DocumentIcon2,
 } from "@/components/icons/icons";
 import { UserRole } from "@/lib/types";
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
@@ -30,7 +30,6 @@ import { User } from "@/lib/types";
 import { usePathname } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { useContext } from "react";
-import { CustomTooltip } from "../tooltip/CustomTooltip";
 
 export function ClientLayout({
   user,
@@ -250,7 +249,7 @@ export function ClientLayout({
                         {
                           name: (
                             <div className="flex">
-                              <DocumentSetIconSkeleton className="text-icon-settings-sidebar" />
+                              <DocumentIcon2 className="text-icon-settings-sidebar" />
                               <div className="ml-1">Document Processing</div>
                             </div>
                           ),

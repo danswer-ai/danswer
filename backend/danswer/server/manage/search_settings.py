@@ -204,7 +204,9 @@ def update_saved_search_settings(
 def unstructured_api_key_set(
     _: User | None = Depends(current_admin_user),
 ) -> bool:
-    return bool(get_unstructured_api_key())
+    api_key = get_unstructured_api_key()
+    print(api_key)
+    return api_key is not None
 
 
 @router.put("/upsert-unstructured-api-key")
