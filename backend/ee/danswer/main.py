@@ -4,6 +4,7 @@ from httpx_oauth.clients.openid import OpenID
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import AUTH_TYPE
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import USER_AUTH_SECRET
@@ -24,6 +25,7 @@ from ee.danswer.server.enterprise_settings.api import (
     basic_router as enterprise_settings_router,
 )
 from ee.danswer.server.manage.standard_answer import router as standard_answer_router
+from ee.danswer.server.middleware.tenant_tracking import add_tenant_id_middleware
 from ee.danswer.server.query_and_chat.chat_backend import (
     router as chat_router,
 )
@@ -52,6 +54,9 @@ def get_application() -> FastAPI:
     test_encryption()
 
     application = get_application_base()
+
+    if MULTI_TENANT:
+        add_tenant_id_middleware(application, logger)
 
     if AUTH_TYPE == AuthType.OIDC:
         include_router_with_global_prefix_prepended(

@@ -20,7 +20,6 @@ from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
 )
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
-from danswer.db.engine import current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.feedback import fetch_docs_ranked_by_boost
@@ -41,6 +40,7 @@ from danswer.server.manage.models import BoostUpdateRequest
 from danswer.server.manage.models import HiddenUpdateRequest
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import current_tenant_id
 
 router = APIRouter(prefix="/manage")
 logger = setup_logger()
