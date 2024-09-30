@@ -28,6 +28,7 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import LOG_ENDPOINT_LATENCY
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import USER_AUTH_SECRET
@@ -77,6 +78,7 @@ from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
 from danswer.setup import setup_danswer
+from danswer.setup import setup_multitenant_danswer
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import get_or_generate_uuid
 from danswer.utils.telemetry import optional_telemetry
@@ -163,7 +165,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # If we are multi-tenant, we need to only set up initial public tables
     with Session(engine) as db_session:
-        setup_danswer(db_session)
+        if MULTI_TENANT:
+            setup_multitenant_danswer()
+        else:
+            setup_danswer(db_session)
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield
