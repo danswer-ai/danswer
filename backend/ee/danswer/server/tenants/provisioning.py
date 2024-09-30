@@ -71,7 +71,7 @@ def add_users_to_tenant(emails: list[str], tenant_id: str) -> None:
             for email in emails:
                 db_session.add(UserTenantMapping(email=email, tenant_id=tenant_id))
         except Exception as e:
-            print(e)
+            logger.exception(f"Failed to add users to tenant {tenant_id}: {str(e)}")
         db_session.commit()
 
 
@@ -82,5 +82,7 @@ def remove_users_from_tenant(emails: list[str], tenant_id: str) -> None:
             for email in emails:
                 db_session.delete(UserTenantMapping(email=email, tenant_id=tenant_id))
         except Exception as e:
-            print(e)
+            logger.exception(
+                f"Failed to remove users from tenant {tenant_id}: {str(e)}"
+            )
         db_session.commit()
