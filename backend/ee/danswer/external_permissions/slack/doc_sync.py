@@ -94,7 +94,7 @@ def _fetch_channel_permissions(
         get_private=False,
     )
     public_channel_ids = [
-        channel.get("id") for channel in public_channels.get("channels", [])
+        channel["id"] for channel in public_channels if "id" in channel
     ]
     for channel_id in public_channel_ids:
         channel_permissions[channel_id] = workspace_permissions
@@ -105,11 +105,11 @@ def _fetch_channel_permissions(
         get_private=True,
     )
     private_channel_ids = [
-        channel.get("id") for channel in private_channels.get("channels", [])
+        channel["id"] for channel in private_channels if "id" in channel
     ]
 
     for channel_id in private_channel_ids:
-        member_emails = set()
+        # Collect all member ids for the channel pagination calls
         member_ids = []
         for result in make_paginated_slack_api_call_w_retries(
             slack_client.conversations_members,
@@ -117,14 +117,17 @@ def _fetch_channel_permissions(
         ):
             member_ids.extend(result.get("members", []))
 
+        # Collect all member emails for the channel
+        member_emails = set()
         for member_id in member_ids:
             member_email = user_id_to_email_map.get(member_id)
 
             if not member_email:
                 # If the user is an external user, they wont get returned from the
                 # conversations_members call so we need to make a separate call to users_info
+                # and add them to the user_id_to_email_map
                 member_info = slack_client.users_info(user=member_id)
-                member_email = member_info.get("user", {}).get("email")
+                member_email = member_info["user"]["profile"].get("email")
                 if not member_email:
                     # If no email is found, we skip the user
                     continue

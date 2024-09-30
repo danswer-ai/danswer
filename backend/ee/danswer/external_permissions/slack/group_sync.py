@@ -44,9 +44,10 @@ def _get_slack_group_members_email(
                 # If the user is an external user, they wont get returned from the
                 # conversations_members call so we need to make a separate call to users_info
                 member_info = slack_client.users_info(user=member_id)
-                member_email = (
-                    member_info.get("user", {}).get("profile", {}).get("email")
-                )
+                member_email = member_info["user"]["profile"].get("email")
+                if not member_email:
+                    # If no email is found, we skip the user
+                    continue
                 user_id_to_email_map[member_id] = member_email
                 batch_add_non_web_user_if_not_exists__no_commit(
                     db_session, [member_email]
