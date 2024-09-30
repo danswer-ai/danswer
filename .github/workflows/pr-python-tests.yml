@@ -3,7 +3,9 @@ name: Python Unit Tests
 on:
   merge_group:
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - 'release/**'
 
 jobs:
   backend-check:
