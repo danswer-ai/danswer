@@ -351,6 +351,9 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
     with Session(get_sqlalchemy_engine()) as db_session:
         cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
         if not cc_pair:
+            task_logger.warning(
+                f"monitor_connector_deletion_taskset - cc_pair_id not found: cc_pair_id={cc_pair_id}"
+            )
             return
 
         try:
@@ -407,9 +410,11 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
             raise e
 
     task_logger.info(
-        f"Successfully deleted connector_credential_pair with connector_id: '{cc_pair.connector_id}' "
-        f"and credential_id: '{cc_pair.credential_id}'. "
-        f"Deleted {initial_count} docs."
+        f"Successfully deleted cc_pair: "
+        f"cc_pair_id={cc_pair_id} "
+        f"connector_id={cc_pair.connector_id} "
+        f"credential_id={cc_pair.credential_id} "
+        f"docs_deleted={initial_count}"
     )
 
     r.delete(rcd.taskset_key)
