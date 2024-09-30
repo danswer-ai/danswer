@@ -459,9 +459,11 @@ class FastAPIUserWithLogoutRouter(FastAPIUsers[models.UP, models.ID]):
         This way the login router does not need to be included
         """
         router = APIRouter()
+
         get_current_user_token = self.authenticator.current_user_token(
             active=True, verified=requires_verification
         )
+
         logout_responses: OpenAPIResponseType = {
             **{
                 status.HTTP_401_UNAUTHORIZED: {
