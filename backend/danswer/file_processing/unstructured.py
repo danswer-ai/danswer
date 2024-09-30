@@ -1,4 +1,5 @@
 from typing import Any
+from typing import cast
 from typing import IO
 
 from unstructured.staging.base import dict_to_elements
@@ -6,12 +7,31 @@ from unstructured_client import UnstructuredClient  # type: ignore
 from unstructured_client.models import operations  # type: ignore
 from unstructured_client.models import shared
 
-from danswer.configs.app_configs import UNSTRUCTURED_API_KEY
+from danswer.configs.constants import KV_UNSTRUCTURED_API_KEY
+from danswer.dynamic_configs.factory import get_dynamic_config_store
+from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
-unstructured_client = UnstructuredClient(api_key_auth=UNSTRUCTURED_API_KEY)
+
+
+def get_unstructured_api_key() -> str | None:
+    kv_store = get_dynamic_config_store()
+    try:
+        return cast(str, kv_store.load(KV_UNSTRUCTURED_API_KEY))
+    except ConfigNotFoundError:
+        return None
+
+
+def update_unstructured_api_key(api_key: str) -> None:
+    kv_store = get_dynamic_config_store()
+    kv_store.store(KV_UNSTRUCTURED_API_KEY, api_key)
+
+
+def delete_unstructured_api_key() -> None:
+    kv_store = get_dynamic_config_store()
+    kv_store.delete(KV_UNSTRUCTURED_API_KEY)
 
 
 def _sdk_partition_request(
@@ -24,7 +44,6 @@ def _sdk_partition_request(
                 **kwargs,
             ),
         )
-        logger.debug(f"Partition request created successfully for file: {file_name}")
         return request
     except Exception as e:
         logger.error(f"Error creating partition request for file {file_name}: {str(e)}")
@@ -34,6 +53,8 @@ def _sdk_partition_request(
 def unstructured_to_text(file: IO[Any], file_name: str) -> str:
     logger.debug(f"Starting to read file: {file_name}")
     req = _sdk_partition_request(file, file_name, strategy="auto")
+
+    unstructured_client = UnstructuredClient(api_key_auth=get_unstructured_api_key())
 
     response = unstructured_client.general.partition(req)  # type: ignore
     elements = dict_to_elements(response.elements)

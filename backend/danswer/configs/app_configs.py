@@ -338,10 +338,6 @@ INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL", 0))
 # exception without aborting the attempt.
 INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT", 0))
 
-# Use Unstructured serverless API to process files. Default is not set and all data is processed locally.
-# Note that setting this to true means a potentially high number of documents will be sent over to the
-# Unstructured services.
-UNSTRUCTURED_API_KEY = os.environ.get("UNSTRUCTURED_API_KEY")
 
 #####
 # Miscellaneous

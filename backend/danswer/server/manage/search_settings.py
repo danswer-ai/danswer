@@ -21,6 +21,8 @@ from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_search_settings_status
 from danswer.document_index.factory import get_default_document_index
+from danswer.file_processing.unstructured import delete_unstructured_api_key
+from danswer.file_processing.unstructured import update_unstructured_api_key
 from danswer.natural_language_processing.search_nlp_models import clean_model_name
 from danswer.search.models import SavedSearchSettings
 from danswer.search.models import SearchSettingsCreationRequest
@@ -196,3 +198,18 @@ def update_saved_search_settings(
     update_current_search_settings(
         search_settings=search_settings, db_session=db_session
     )
+
+
+@router.put("/upsert-unstructured-api-key")
+def upsert_unstructured_api_key(
+    unstructured_api_key: str,
+    _: User | None = Depends(current_admin_user),
+) -> None:
+    update_unstructured_api_key(unstructured_api_key)
+
+
+@router.delete("/delete-unstructured-api-key")
+def delete_unstructured_api_key_endpoint(
+    _: User | None = Depends(current_admin_user),
+) -> None:
+    delete_unstructured_api_key()

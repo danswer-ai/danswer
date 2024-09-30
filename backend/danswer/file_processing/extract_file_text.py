@@ -18,9 +18,9 @@ import pptx  # type: ignore
 from pypdf import PdfReader
 from pypdf.errors import PdfStreamError
 
-from danswer.configs.app_configs import UNSTRUCTURED_API_KEY
 from danswer.configs.constants import DANSWER_METADATA_FILENAME
 from danswer.file_processing.html_utils import parse_html_page_basic
+from danswer.file_processing.unstructured import get_unstructured_api_key
 from danswer.file_processing.unstructured import unstructured_to_text
 from danswer.utils.logger import setup_logger
 
@@ -349,7 +349,7 @@ def extract_file_text(
     }
 
     try:
-        if UNSTRUCTURED_API_KEY:
+        if get_unstructured_api_key():
             return unstructured_to_text(file, file_name)
 
         if file_name or extension:
