@@ -295,17 +295,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             self.user_db = tenant_user_db
             self.database = tenant_user_db
 
-            try:
-                result = await self.user_db.session.execute(select(User))
-                users = result.scalars().all()
-                print("Users fetched using self.user_db.session:")
-                for user in users:
-                    print(f"User ID: {user.id}, Email: {user.email}")
-            except Exception as e:
-                print(f"Error while querying users with self.user_db.session: {str(e)}")
-                import traceback
-
-                traceback.print_exc()
             # verify_email_in_whitelist(account_email)
             # verify_email_domain(account_email)
 
