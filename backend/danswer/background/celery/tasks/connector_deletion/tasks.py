@@ -14,10 +14,7 @@ from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.enums import IndexingStatus
-from danswer.db.index_attempt import get_last_attempt
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.search_settings import get_current_search_settings
 from danswer.redis.redis_pool import RedisPool
 
 redis_pool = RedisPool()
@@ -87,21 +84,6 @@ def try_generate_document_cc_pair_cleanup_tasks(
 
     if cc_pair.status != ConnectorCredentialPairStatus.DELETING:
         return None
-
-    search_settings = get_current_search_settings(db_session)
-
-    last_indexing = get_last_attempt(
-        connector_id=cc_pair.connector_id,
-        credential_id=cc_pair.credential_id,
-        search_settings_id=search_settings.id,
-        db_session=db_session,
-    )
-    if last_indexing:
-        if (
-            last_indexing.status == IndexingStatus.IN_PROGRESS
-            or last_indexing.status == IndexingStatus.NOT_STARTED
-        ):
-            return None
 
     # add tasks to celery and build up the task set to monitor in redis
     r.delete(rcd.taskset_key)
