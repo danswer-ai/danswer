@@ -11,10 +11,12 @@ export const DocumentSets: React.FC<DocumentSetsProps> = ({
   documentSets = [],
   setSelectedDocumentSetIds,
 }) => {
-  const items = documentSets.map((docSet) => ({
-    value: docSet.id.toString(),
-    label: docSet.name,
-  }));
+  const items = documentSets
+    .filter((docSet) => docSet.is_public)
+    .map((docSet) => ({
+      value: docSet.id.toString(),
+      label: docSet.name,
+    }));
 
   const handleSelect = (selectedValues: string[]) => {
     const selectedIds = selectedValues.map((value) => parseInt(value));

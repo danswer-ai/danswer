@@ -13,10 +13,12 @@ export const ConnectorEditor: React.FC<ConnectorEditorProps> = ({
   selectedCCPairIds,
   setSetCCPairIds,
 }) => {
-  const items = allCCPairs.map((ccPair) => ({
-    value: ccPair.cc_pair_id.toString(),
-    label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,
-  }));
+  const items = allCCPairs
+    .filter((ccPair) => ccPair.public_doc)
+    .map((ccPair) => ({
+      value: ccPair.cc_pair_id.toString(),
+      label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,
+    }));
 
   const handleSelect = (selectedValues: string[]) => {
     const selectedIds = selectedValues.map((value) => parseInt(value));
