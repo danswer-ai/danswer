@@ -26,6 +26,7 @@ _RESTRICTED_FETCH_PERIOD: dict[DocumentSource, int | None] = {
     DocumentSource.GOOGLE_DRIVE: None,
     # Polling is not supported so we fetch all doc permissions every 5 minutes
     DocumentSource.CONFLUENCE: 5 * 60,
+    DocumentSource.SLACK: 60,
 }
 
 

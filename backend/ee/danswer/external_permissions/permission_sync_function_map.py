@@ -8,7 +8,7 @@ from ee.danswer.external_permissions.confluence.doc_sync import confluence_doc_s
 from ee.danswer.external_permissions.confluence.group_sync import confluence_group_sync
 from ee.danswer.external_permissions.google_drive.doc_sync import gdrive_doc_sync
 from ee.danswer.external_permissions.google_drive.group_sync import gdrive_group_sync
-
+from ee.danswer.external_permissions.slack.doc_sync import slack_doc_sync
 
 # Defining the input/output types for the sync functions
 SyncFuncType = Callable[
@@ -27,6 +27,7 @@ SyncFuncType = Callable[
 DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, SyncFuncType] = {
     DocumentSource.GOOGLE_DRIVE: gdrive_doc_sync,
     DocumentSource.CONFLUENCE: confluence_doc_sync,
+    DocumentSource.SLACK: slack_doc_sync,
 }
 
 # These functions update:
