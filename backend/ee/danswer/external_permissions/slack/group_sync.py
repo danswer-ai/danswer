@@ -61,7 +61,9 @@ def slack_group_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
 ) -> None:
-    slack_client = WebClient(token=cc_pair.credential.credential_json["bot_token"])
+    slack_client = WebClient(
+        token=cc_pair.credential.credential_json["slack_bot_token"]
+    )
     user_id_to_email_map = fetch_user_id_to_email_map(slack_client)
 
     danswer_groups: list[ExternalUserGroup] = []

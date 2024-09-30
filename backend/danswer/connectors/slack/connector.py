@@ -37,7 +37,7 @@ MessageType = dict[str, Any]
 ThreadType = list[MessageType]
 
 
-def _get_channels(
+def _collect_paginated_channels(
     client: WebClient,
     exclude_archived: bool,
     channel_types: list[str],
@@ -69,7 +69,7 @@ def get_channels(
         channel_types.append("private_channel")
     # try getting private channels as well at first
     try:
-        channels = _get_channels(
+        channels = _collect_paginated_channels(
             client=client,
             exclude_archived=exclude_archived,
             channel_types=channel_types,
@@ -82,7 +82,7 @@ def get_channels(
         else:
             logger.warning("No channels to fetch")
             return []
-        channels = _get_channels(
+        channels = _collect_paginated_channels(
             client=client,
             exclude_archived=exclude_archived,
             channel_types=channel_types,

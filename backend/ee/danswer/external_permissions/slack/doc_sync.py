@@ -159,7 +159,9 @@ def slack_doc_sync(
     it in postgres so that when it gets created later, the permissions are
     already populated
     """
-    slack_client = WebClient(token=cc_pair.credential.credential_json["bot_token"])
+    slack_client = WebClient(
+        token=cc_pair.credential.credential_json["slack_bot_token"]
+    )
     user_id_to_email_map = fetch_user_id_to_email_map(slack_client)
     channel_doc_map = _get_slack_document_ids_and_channels(
         db_session=db_session,
