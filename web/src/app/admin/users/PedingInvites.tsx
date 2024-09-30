@@ -117,7 +117,7 @@ export const PendingInvites = ({ q }: { q: string }) => {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2 justify-end">
-                            <Button>Resend Invite</Button>
+                            {/* <Button>Resend Invite</Button> */}
                             <CustomModal
                               trigger={
                                 <Button
