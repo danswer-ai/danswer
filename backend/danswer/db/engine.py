@@ -117,6 +117,7 @@ SCHEMA_NAME_REGEX = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 def is_valid_schema_name(name: str) -> bool:
+    print("value is", name)
     return SCHEMA_NAME_REGEX.match(name) is not None
 
 
