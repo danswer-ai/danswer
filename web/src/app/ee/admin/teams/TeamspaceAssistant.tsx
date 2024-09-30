@@ -65,9 +65,9 @@ export const TeamspaceAssistant = ({ teamspace }: TeamspaceAssistantProps) => {
                     {teamspaceAssistant.name!.charAt(0)}
                   </div>
                 ))}
-                {teamspace.users.length > 8 && (
+                {teamspace.assistants.length > 8 && (
                   <div className="bg-background w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold">
-                    +{teamspace.users.length - 8}
+                    +{teamspace.assistants.length - 8}
                   </div>
                 )}
               </div>
