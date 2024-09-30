@@ -14,6 +14,7 @@ from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.discourse.connector import DiscourseConnector
 from danswer.connectors.document360.connector import Document360Connector
 from danswer.connectors.dropbox.connector import DropboxConnector
+from danswer.connectors.exchange.connector import ExchangeConnector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.gitlab.connector import GitlabConnector
@@ -65,6 +66,7 @@ def identify_connector_class(
             InputType.POLL: SlackPollConnector,
             InputType.PRUNE: SlackPollConnector,
         },
+        DocumentSource.EXCHANGE: ExchangeConnector,
         DocumentSource.GITHUB: GithubConnector,
         DocumentSource.GMAIL: GmailConnector,
         DocumentSource.GITLAB: GitlabConnector,

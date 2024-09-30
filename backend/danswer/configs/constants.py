@@ -86,6 +86,7 @@ class DocumentSource(str, Enum):
     FILE = "file"
     NOTION = "notion"
     ZULIP = "zulip"
+    EXCHANGE = "exchange"
     LINEAR = "linear"
     HUBSPOT = "hubspot"
     DOCUMENT360 = "document360"
