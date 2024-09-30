@@ -6,7 +6,7 @@ import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
 import { buildClientUrl } from "@/lib/utilsSS";
 import { Toaster } from "@/components/ui/toaster";
-import PageSwitcher from "./chat/PageSwitcher";
+import PageSwitcher from "@/components/PageSwitcher";
 
 const fontSans = FontSans({
   subsets: ["latin"],

@@ -8,10 +8,10 @@ const PageSwitcher: React.FC = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.altKey || event.metaKey) && event.key === "ArrowRight") {
+      if (event.ctrlKey && event.key === "s") {
         event.preventDefault();
         window.location.href = "/search";
-      } else if ((event.altKey || event.metaKey) && event.key === "ArrowLeft") {
+      } else if (event.ctrlKey && event.key === "d") {
         event.preventDefault();
         window.location.href = "/chat";
       }
