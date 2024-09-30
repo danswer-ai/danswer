@@ -21,6 +21,7 @@ import {
   AssistantsIconSkeleton,
   ClosedBookIcon,
   SearchIcon,
+  DocumentSetIcon,
 } from "@/components/icons/icons";
 import { UserRole } from "@/lib/types";
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
@@ -245,6 +246,15 @@ export function ClientLayout({
                             </div>
                           ),
                           link: "/admin/configuration/search",
+                        },
+                        {
+                          name: (
+                            <div className="flex">
+                              <DocumentSetIconSkeleton className="text-icon-settings-sidebar" />
+                              <div className="ml-1">Document Processing</div>
+                            </div>
+                          ),
+                          link: "/admin/configuration/document-processing",
                         },
                       ],
                     },
