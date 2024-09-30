@@ -268,7 +268,7 @@ class CCPairFullInfo(BaseModel):
         )
 
 
-class CCPairPruningTask(BaseModel):
+class CeleryTaskStatus(BaseModel):
     id: str
     name: str
     status: TaskStatus
