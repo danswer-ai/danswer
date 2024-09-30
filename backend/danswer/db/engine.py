@@ -115,7 +115,6 @@ SCHEMA_NAME_REGEX = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 def is_valid_schema_name(name: str) -> bool:
-    print("value is", name)
     return SCHEMA_NAME_REGEX.match(name) is not None
 
 
@@ -249,7 +248,7 @@ def get_current_tenant_id(request: Request) -> str:
         if not is_valid_schema_name(tenant_id):
             raise HTTPException(status_code=400, detail="Invalid tenant ID format")
         current_tenant_id.set(tenant_id)
-        print("setting current tennat id to ", tenant_id)
+
         return tenant_id
     except jwt.InvalidTokenError:
         return current_tenant_id.get()
@@ -273,7 +272,6 @@ async def get_async_session_with_tenant(
     async_session_factory = sessionmaker(
         bind=engine, expire_on_commit=False, class_=AsyncSession
     )  # type: ignore
-    # TODO validate the typing above
 
     async with async_session_factory() as session:
         try:
@@ -306,9 +304,24 @@ def get_session_with_tenant(tenant_id: str | None = None) -> Session:
     return session
 
 
+def get_session_generator_with_tenant(
+    tenant_id: str | None = None,
+) -> Generator[Session, None, None]:
+    with get_session_with_tenant(tenant_id) as session:
+        yield session
+
+
+def get_session_generator_with_tenant(
+    tenant_id: str | None = None,
+) -> Generator[Session, None, None]:
+    with get_session_with_tenant(tenant_id) as session:
+        yield session
+
+
 def get_session() -> Generator[Session, None, None]:
     """Generate a database session with the appropriate tenant schema set."""
     tenant_id = current_tenant_id.get()
+
     engine = get_sqlalchemy_engine()
     with Session(engine, expire_on_commit=False) as session:
         if MULTI_TENANT:
@@ -334,7 +347,7 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 def get_session_context_manager() -> ContextManager[Session]:
     """Context manager for database sessions."""
-    return contextlib.contextmanager(get_session)()
+    return contextlib.contextmanager(get_session_generator_with_tenant)()
 
 
 def get_session_factory() -> sessionmaker[Session]:
