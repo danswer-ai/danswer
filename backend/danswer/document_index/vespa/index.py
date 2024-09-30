@@ -123,6 +123,12 @@ class VespaIndex(DocumentIndex):
         index_embedding_dim: int,
         secondary_index_embedding_dim: int | None,
     ) -> None:
+        if MULTI_TENANT:
+            logger.info(
+                "Skipping Vespa index seup for multitenant (would wipe all indices)"
+            )
+            return None
+
         deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
         logger.info(f"Deploying Vespa application package to {deploy_url}")
 
