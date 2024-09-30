@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { TeamspacesCard } from "./TeamspacesCard";
 import { Teamspace } from "@/lib/types";
+import { useDocumentSets } from "@/app/admin/documents/sets/hooks";
 
 export const TeamspaceContent = ({
   assistants,
@@ -48,6 +49,13 @@ export const TeamspaceContent = ({
     isLoading: userIsLoading,
     error: usersError,
   } = useUsers();
+
+  const {
+    data: documentSets,
+    isLoading: isDocumentSetsLoading,
+    error: documentSetsError,
+    refreshDocumentSets,
+  } = useDocumentSets();
 
   if (isLoading || isCCPairsLoading || userIsLoading) {
     return <ThreeDotsLoader />;
@@ -87,7 +95,7 @@ export const TeamspaceContent = ({
             onClose={() => setShowForm(false)}
             open={showForm}
             title="Create a new Teamspace"
-            description="Streamline team collaboration and communication"
+            description="Streamline team collaboration and communication."
           >
             <TeamspaceCreationForm
               onClose={() => {
@@ -97,6 +105,7 @@ export const TeamspaceContent = ({
               users={users.accepted}
               ccPairs={ccPairs}
               assistants={assistants}
+              documentSets={documentSets}
             />
           </CustomModal>
         </div>

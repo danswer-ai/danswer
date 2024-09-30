@@ -176,7 +176,6 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                                   );
                                 }
                               }}
-                              asChild
                             >
                               <Trash size={16} />
                             </Button>

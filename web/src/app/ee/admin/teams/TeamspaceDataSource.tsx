@@ -51,7 +51,7 @@ export const TeamspaceDataSource = ({
         </h3>
 
         {teamspace.document_sets.length > 0 ? (
-          <div className="pt-4 flex flex-wrap gap-2">
+          <div className="pt-8 flex flex-wrap gap-2">
             {teamspace.cc_pairs.map((cc_pair) => {
               return (
                 <Badge key={cc_pair.id} className="truncate whitespace-nowrap">

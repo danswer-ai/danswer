@@ -58,7 +58,7 @@ export const TeamspaceDocumentSet = ({
             </h3>
 
             {teamspace.document_sets.length > 0 ? (
-              <div className="pt-4 flex flex-wrap gap-2">
+              <div className="pt-8 flex flex-wrap gap-2">
                 {teamspace.document_sets.map((documentSet) => {
                   return (
                     <Badge key={documentSet.id}>

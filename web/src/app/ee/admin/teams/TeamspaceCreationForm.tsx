@@ -1,6 +1,11 @@
 import { Form, Formik } from "formik";
 import * as Yup from "yup";
-import { ConnectorIndexingStatus, User, Teamspace } from "@/lib/types";
+import {
+  ConnectorIndexingStatus,
+  User,
+  Teamspace,
+  DocumentSet,
+} from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { createTeamspace } from "./lib";
 import { UserEditor } from "./UserEditor";
@@ -20,6 +25,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { useState } from "react";
+import { DocumentSets } from "./DocumentSets";
+import { Assistants } from "./Assistants";
 
 interface TeamspaceCreationFormProps {
   onClose: () => void;
@@ -27,6 +34,7 @@ interface TeamspaceCreationFormProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
   existingTeamspace?: Teamspace;
   assistants: Assistant[];
+  documentSets: DocumentSet[] | undefined;
 }
 
 export const TeamspaceCreationForm = ({
@@ -35,17 +43,11 @@ export const TeamspaceCreationForm = ({
   ccPairs,
   existingTeamspace,
   assistants,
+  documentSets,
 }: TeamspaceCreationFormProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const isUpdate = existingTeamspace !== undefined;
   const { toast } = useToast();
-
-  const {
-    data: documentSets,
-    isLoading: isDocumentSetsLoading,
-    error: documentSetsError,
-    refreshDocumentSets,
-  } = useDocumentSets();
 
   return (
     <div>
@@ -54,14 +56,21 @@ export const TeamspaceCreationForm = ({
           name: existingTeamspace ? existingTeamspace.name : "",
           user_ids: [] as string[],
           cc_pair_ids: [] as number[],
+          document_set_ids: [] as number[],
+          assistant_ids: [] as string[],
         }}
         validationSchema={Yup.object().shape({
           name: Yup.string().required("Please enter a name for the group"),
           user_ids: Yup.array().of(Yup.string().required()),
           cc_pair_ids: Yup.array().of(Yup.number().required()),
+          document_set_ids: Yup.array().of(Yup.number().required()),
+          assistant_ids: Yup.array().of(Yup.number().required()),
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
+
+          console.log("Submitted values:", values);
+
           let response;
           response = await createTeamspace(values);
           formikHelpers.setSubmitting(false);
@@ -116,6 +125,36 @@ export const TeamspaceCreationForm = ({
                 </div>
               </div>
 
+              <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
+                <p className="whitespace-nowrap w-1/2 font-semibold">
+                  Select Users
+                </p>
+                <div className="w-full">
+                  <UserEditor
+                    selectedUserIds={values.user_ids}
+                    setSelectedUserIds={(userIds) =>
+                      setFieldValue("user_ids", userIds)
+                    }
+                    allUsers={users}
+                    existingUsers={[]}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
+                <p className="whitespace-nowrap w-1/2 font-semibold">
+                  Select assistants
+                </p>
+                <div className="w-full">
+                  <Assistants
+                    assistants={assistants}
+                    onSelect={(selectedAssistantIds) => {
+                      setFieldValue("assistant_ids", selectedAssistantIds);
+                    }}
+                  />
+                </div>
+              </div>
+
               {/*  <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
                   Security Setting
@@ -147,16 +186,6 @@ export const TeamspaceCreationForm = ({
                 </div>
               </div> */}
 
-              <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
-                <p className="whitespace-nowrap w-1/2 font-semibold">
-                  Set Token Rate Limit
-                </p>
-                <div className="flex items-center gap-4 w-full">
-                  <Input placeholder="Time Window (Hours)" type="number" />
-                  <Input placeholder="Token Budget (Thousands)" type="number" />
-                </div>
-              </div>
-
               {/*               <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
                   Invite Users
@@ -177,6 +206,20 @@ export const TeamspaceCreationForm = ({
 
               <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
+                  Select document sets
+                </p>
+                <div className="w-full">
+                  <DocumentSets
+                    documentSets={documentSets}
+                    setSelectedDocumentSetIds={(documentSetIds) =>
+                      setFieldValue("document_set_ids", documentSetIds)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
+                <p className="whitespace-nowrap w-1/2 font-semibold">
                   Select connectors
                 </p>
                 <div className="w-full">
@@ -192,17 +235,11 @@ export const TeamspaceCreationForm = ({
 
               <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
-                  Select Users
+                  Set Token Rate Limit
                 </p>
-                <div className="w-full">
-                  <UserEditor
-                    selectedUserIds={values.user_ids}
-                    setSelectedUserIds={(userIds) =>
-                      setFieldValue("user_ids", userIds)
-                    }
-                    allUsers={users}
-                    existingUsers={[]}
-                  />
+                <div className="flex items-center gap-4 w-full">
+                  <Input placeholder="Time Window (Hours)" type="number" />
+                  <Input placeholder="Token Budget (Thousands)" type="number" />
                 </div>
               </div>
 

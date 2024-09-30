@@ -1,26 +1,68 @@
-import { ConnectorIndexingStatus } from "@/lib/types";
-import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
-import { Badge } from "@/components/ui/badge";
+/* import React from "react";
+import { Combobox } from "@/components/Combobox";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 
 interface AssistantsProps {
   assistants: Assistant[];
+  setSelectedAssistantIds: (ids: number[]) => void;
 }
 
-export const Assistants = ({ assistants }: AssistantsProps) => {
+export const Assistants: React.FC<AssistantsProps> = ({
+  assistants,
+  setSelectedAssistantIds,
+}) => {
+  const items = assistants.map((assistant) => ({
+    value: assistant.id.toString(),
+    label: assistant.name,
+  }));
+
+  const handleSelect = (selectedValues: string[]) => {
+    const selectedIds = selectedValues.map((value) => parseInt(value));
+    setSelectedAssistantIds(selectedIds);
+  };
+
   return (
-    <div className="mb-3 flex gap-2 flex-wrap">
-      {assistants.map((assistant, i) => {
-        return (
-          <Badge
-            key={i}
-            className="cursor-pointer hover:bg-opacity-80"
-            variant="outline"
-          >
-            {assistant.name}
-          </Badge>
-        );
-      })}
+    <div>
+      <Combobox
+        items={items}
+        onSelect={handleSelect}
+        placeholder="Select document sets"
+        label="Select document sets"
+      />
+    </div>
+  );
+}; */
+import React from "react";
+import { Combobox } from "@/components/Combobox";
+import { Assistant } from "@/app/admin/assistants/interfaces";
+
+interface AssistantsProps {
+  assistants: Assistant[]; // Accept assistants as a prop
+  onSelect: (selectedValues: string[]) => void; // Accept an onSelect prop
+}
+
+export const Assistants: React.FC<AssistantsProps> = ({
+  assistants,
+  onSelect,
+}) => {
+  // Map the assistants to the expected structure
+  const items = assistants.map((assistant) => ({
+    value: assistant.id.toString(), // Ensure value is a string
+    label: assistant.name,
+  }));
+
+  const handleSelect = (selectedValues: string[]) => {
+    onSelect(selectedValues); // Call the onSelect prop with selected values
+  };
+
+  return (
+    <div>
+      <Combobox
+        items={items}
+        onSelect={handleSelect}
+        placeholder="Select assistants"
+        label="Select assistants"
+      />
     </div>
   );
 };

@@ -27,10 +27,15 @@ export const UserEditor = ({
       label: user.email,
     }));
 
+  const handleSelect = (selectedValues: string[]) => {
+    const selectedIds = selectedValues.map((value) => value);
+    setSelectedUserIds(selectedIds); // Update selected user IDs
+  };
+
   return (
     <Combobox
       items={availableUsers}
-      onSelect={(selectedValues) => setSelectedUserIds(selectedValues)}
+      onSelect={handleSelect} // Updated onSelect
       placeholder="user"
       label="Select user"
     />
