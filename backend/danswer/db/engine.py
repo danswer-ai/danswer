@@ -1,5 +1,4 @@
 import contextlib
-import contextvars
 import re
 import threading
 import time
@@ -9,10 +8,7 @@ from datetime import datetime
 from typing import Any
 from typing import ContextManager
 
-import jwt
-from fastapi import Depends
 from fastapi import HTTPException
-from fastapi import Request
 from sqlalchemy import event
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
@@ -33,10 +29,9 @@ from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
 from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
-from danswer.configs.app_configs import SECRET_JWT_KEY
-from danswer.configs.constants import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import current_tenant_id
 
 
 logger = setup_logger()
@@ -230,44 +225,6 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
     return _ASYNC_ENGINE
 
 
-# Context variable to store the current tenant ID
-current_tenant_id = contextvars.ContextVar(
-    "current_tenant_id", default=POSTGRES_DEFAULT_SCHEMA
-)
-
-
-# Dependency to get the current tenant ID and set the context variable
-def get_current_tenant_id(request: Request) -> str:
-    """Dependency that extracts the tenant ID from the JWT token in the request and sets the context variable."""
-    if not MULTI_TENANT:
-        tenant_id = POSTGRES_DEFAULT_SCHEMA
-        current_tenant_id.set(tenant_id)
-        return tenant_id
-
-    token = request.cookies.get("tenant_details")
-    if not token:
-        # If no token is present, use the default schema or handle accordingly
-        tenant_id = POSTGRES_DEFAULT_SCHEMA
-        current_tenant_id.set(tenant_id)
-        return tenant_id
-
-    try:
-        payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
-        tenant_id = payload.get("tenant_id")
-        if not tenant_id:
-            raise HTTPException(
-                status_code=400, detail="Invalid token: tenant_id missing"
-            )
-        if not is_valid_schema_name(tenant_id):
-            raise HTTPException(status_code=400, detail="Invalid tenant ID format")
-        current_tenant_id.set(tenant_id)
-        return tenant_id
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token format")
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
 def get_session_with_tenant(tenant_id: str | None = None) -> Session:
     if tenant_id is None:
         tenant_id = current_tenant_id.get()
@@ -286,10 +243,9 @@ def get_session_with_tenant(tenant_id: str | None = None) -> Session:
     return session
 
 
-def get_session(
-    tenant_id: str = Depends(get_current_tenant_id),
-) -> Generator[Session, None, None]:
+def get_session() -> Generator[Session, None, None]:
     """Generate a database session with the appropriate tenant schema set."""
+    tenant_id = current_tenant_id.get()
     engine = get_sqlalchemy_engine()
     with Session(engine, expire_on_commit=False) as session:
         if MULTI_TENANT:
@@ -300,10 +256,9 @@ def get_session(
         yield session
 
 
-async def get_async_session(
-    tenant_id: str = Depends(get_current_tenant_id),
-) -> AsyncGenerator[AsyncSession, None]:
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """Generate an async database session with the appropriate tenant schema set."""
+    tenant_id = current_tenant_id.get()
     engine = get_sqlalchemy_async_engine()
     async with AsyncSession(engine, expire_on_commit=False) as async_session:
         if MULTI_TENANT:

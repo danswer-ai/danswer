@@ -1,5 +1,8 @@
+import contextvars
 import os
 from urllib.parse import urlparse
+
+from danswer.configs.constants import POSTGRES_DEFAULT_SCHEMA
 
 # Used for logging
 SLACK_CHANNEL_ID = "channel_id"
@@ -89,3 +92,8 @@ CORS_ALLOWED_ORIGIN = os.environ.get("CORS_ALLOWED_ORIGIN", "*").split(",") or [
 for origin in CORS_ALLOWED_ORIGIN:
     if origin != "*" and (stripped_origin := origin.strip()):
         validate_cors_origin(stripped_origin)
+
+
+current_tenant_id = contextvars.ContextVar(
+    "current_tenant_id", default=POSTGRES_DEFAULT_SCHEMA
+)
