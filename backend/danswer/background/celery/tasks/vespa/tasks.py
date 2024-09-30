@@ -402,7 +402,7 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
             add_deletion_failure_message(db_session, cc_pair.id, error_message)
             task_logger.exception(
                 f"Failed to run connector_deletion. "
-                f"connector_id={cc_pair.connector_id} credential_id={cc_pair.credential_id}"
+                f"cc_pair_id={cc_pair_id} connector_id={cc_pair.connector_id} credential_id={cc_pair.credential_id}"
             )
             raise e
 
