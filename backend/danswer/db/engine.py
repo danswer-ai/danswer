@@ -231,6 +231,11 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
 
 
 # Context variable to store the current tenant ID
+# This allows us to maintain tenant-specific context throughout the request lifecycle
+# The default value is set to POSTGRES_DEFAULT_SCHEMA for non-multi-tenant setups
+# This context variable works in both synchronous and asynchronous contexts
+# In async code, it's automatically carried across coroutines
+# In sync code, it's managed per thread
 current_tenant_id = contextvars.ContextVar(
     "current_tenant_id", default=POSTGRES_DEFAULT_SCHEMA
 )
@@ -259,11 +264,14 @@ def get_current_tenant_id(request: Request) -> str:
                 status_code=400, detail="Invalid token: tenant_id missing"
             )
         if not is_valid_schema_name(tenant_id):
-            raise HTTPException(status_code=400, detail="Invalid tenant ID format")
+            raise ValueError("Invalid tenant ID format")
         current_tenant_id.set(tenant_id)
         return tenant_id
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token format")
+    except ValueError as e:
+        # Let the 400 error bubble up
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
