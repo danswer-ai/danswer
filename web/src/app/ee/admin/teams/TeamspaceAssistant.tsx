@@ -56,7 +56,7 @@ export const TeamspaceAssistant = ({ teamspace }: TeamspaceAssistantProps) => {
               {teamspace.assistants.length}
             </h3>
             {teamspace.assistants.length > 0 ? (
-              <div className="pt-4 flex flex-wrap -space-x-3">
+              <div className="pt-8 flex flex-wrap -space-x-3">
                 {teamspace.assistants.slice(0, 8).map((teamspaceAssistant) => (
                   <div
                     key={teamspaceAssistant.id}

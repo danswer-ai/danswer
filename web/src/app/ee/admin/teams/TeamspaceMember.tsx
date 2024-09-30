@@ -109,7 +109,7 @@ export const TeamspaceMember = ({
             </h3>
 
             {teamspace.users.length > 0 ? (
-              <div className="pt-4 flex flex-wrap -space-x-3">
+              <div className="pt-8 flex flex-wrap -space-x-3">
                 {teamspace.users.slice(0, 8).map((teamspace) => (
                   <div
                     key={teamspace.id}
