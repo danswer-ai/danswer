@@ -272,5 +272,9 @@ export type ConfigurableSources = Exclude<
 >;
 
 // The sources that have auto-sync support on the backend
-export const validAutoSyncSources = ["confluence", "google_drive"] as const;
+export const validAutoSyncSources = [
+  "confluence",
+  "google_drive",
+  "slack",
+] as const;
 export type ValidAutoSyncSources = (typeof validAutoSyncSources)[number];
