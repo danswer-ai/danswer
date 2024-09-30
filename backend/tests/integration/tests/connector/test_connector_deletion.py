@@ -142,7 +142,9 @@ def test_connector_deletion(reset: None, vespa_client: vespa_fixture) -> None:
     cc_pair_1.groups = []
     cc_pair_2.groups = [user_group_2.id]
 
-    CCPairManager.wait_for_deletion_completion(user_performing_action=admin_user)
+    CCPairManager.wait_for_deletion_completion(
+        cc_pair_id=cc_pair_1.id, user_performing_action=admin_user
+    )
 
     # validate vespa documents
     DocumentManager.verify(
@@ -320,7 +322,9 @@ def test_connector_deletion_for_overlapping_connectors(
     )
 
     # wait for deletion to finish
-    CCPairManager.wait_for_deletion_completion(user_performing_action=admin_user)
+    CCPairManager.wait_for_deletion_completion(
+        cc_pair_id=cc_pair_1.id, user_performing_action=admin_user
+    )
 
     print("Connector 1 deleted")
 

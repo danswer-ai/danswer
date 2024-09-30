@@ -171,7 +171,9 @@ def test_cc_pair_permissions(reset: None) -> None:
 
     # Test deleting the cc pair
     CCPairManager.delete(valid_cc_pair, user_performing_action=curator)
-    CCPairManager.wait_for_deletion_completion(user_performing_action=curator)
+    CCPairManager.wait_for_deletion_completion(
+        cc_pair_id=valid_cc_pair.id, user_performing_action=curator
+    )
 
     CCPairManager.verify(
         cc_pair=valid_cc_pair,

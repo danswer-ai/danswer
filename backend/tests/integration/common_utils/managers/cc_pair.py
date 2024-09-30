@@ -286,16 +286,31 @@ class CCPairManager:
 
     @staticmethod
     def wait_for_deletion_completion(
+        cc_pair_id: int | None = None,
         user_performing_action: DATestUser | None = None,
     ) -> None:
+        """if cc_pair_id is not specified, just waits until no connectors are in the deleting state.
+        if cc_pair_id is specified, checks to ensure the specific cc_pair_id is gone.
+        We had a bug where the connector was paused in the middle of deleting, so specifying the
+        cc_pair_id is good to do."""
         start = time.monotonic()
         while True:
             cc_pairs = CCPairManager.get_all(user_performing_action)
-            if all(
-                cc_pair.cc_pair_status != ConnectorCredentialPairStatus.DELETING
-                for cc_pair in cc_pairs
-            ):
-                return
+            if cc_pair_id:
+                found = False
+                for cc_pair in cc_pairs:
+                    if cc_pair.cc_pair_id == cc_pair_id:
+                        found = True
+                        break
+
+                if not found:
+                    return
+            else:
+                if all(
+                    cc_pair.cc_pair_status != ConnectorCredentialPairStatus.DELETING
+                    for cc_pair in cc_pairs
+                ):
+                    return
 
             if time.monotonic() - start > MAX_DELAY:
                 raise TimeoutError(
