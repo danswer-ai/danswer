@@ -29,3 +29,5 @@ After installing pre-commit, run the following command:
 ```bash
 sudo xattr -r -d com.apple.quarantine ~/.cache/pre-commit
 ```
+
+doc version 0.1
