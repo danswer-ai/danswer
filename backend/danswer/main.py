@@ -28,6 +28,7 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import LOG_ENDPOINT_LATENCY
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import USER_AUTH_SECRET
@@ -158,12 +159,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # fill up Postgres connection pools
     await warm_up_connections()
 
-    # We cache this at the beginning so there is no delay in the first telemetry
-    get_or_generate_uuid()
+    if not MULTI_TENANT:
+        # We cache this at the beginning so there is no delay in the first telemetry
+        get_or_generate_uuid()
 
-    # If we are multi-tenant, we need to only set up initial public tables
-    with Session(engine) as db_session:
-        setup_danswer(db_session)
+        # If we are multi-tenant, we need to only set up initial public tables
+        with Session(engine) as db_session:
+            setup_danswer(db_session)
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield

@@ -166,8 +166,10 @@ def verify_email_domain(email: str) -> None:
 
 
 def get_tenant_id_for_email(email: str) -> str:
+    print("GETTING TENANT ID FOR EMAIL")
     # Implement logic to get tenant_id from the mapping table
     with Session(get_sqlalchemy_engine()) as db_session:
+        print("SESSION OBTAINED")
         result = db_session.execute(
             select(UserTenantMapping.tenant_id).where(UserTenantMapping.email == email)
         )
@@ -277,34 +279,117 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
+        print("oauth callback initiated")
         # Get tenant_id from mapping table
         tenant_id = get_tenant_id_for_email(account_email)
+        print("GETTING TENANT ID")
 
         if not tenant_id:
+            print("TENANT ID NOT FOUND")
             raise HTTPException(status_code=401, detail="User not found")
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
+            # Print a list of tables in the current database session
+
             tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
             self.user_db = tenant_user_db
             self.database = tenant_user_db
 
-            logger.info("new db associated porpelry!")
+            try:
+                result = await self.user_db.session.execute(select(User))
+                users = result.scalars().all()
+                print("Users fetched using self.user_db.session:")
+                for user in users:
+                    print(f"User ID: {user.id}, Email: {user.email}")
+            except Exception as e:
+                print(f"Error while querying users with self.user_db.session: {str(e)}")
+                import traceback
 
-            verify_email_in_whitelist(account_email)
-            verify_email_domain(account_email)
-            logger.info("attempting oauth callback")
+                traceback.print_exc()
+            # verify_email_in_whitelist(account_email)
+            # verify_email_domain(account_email)
 
-            user = await super().oauth_callback(  # type: ignore
-                oauth_name=oauth_name,
-                access_token=access_token,
-                account_id=account_id,
-                account_email=account_email,
-                expires_at=expires_at,
-                refresh_token=refresh_token,
-                request=request,
-                associate_by_email=associate_by_email,
-                is_verified_by_default=is_verified_by_default,
-            )
+            try:
+                logger.info(
+                    f"Starting OAuth callback process for email: {account_email}"
+                )
+                oauth_account_dict = {
+                    "oauth_name": oauth_name,
+                    "access_token": access_token,
+                    "account_id": account_id,
+                    "account_email": account_email,
+                    "expires_at": expires_at,
+                    "refresh_token": refresh_token,
+                }
+                logger.debug(f"OAuth account dict created: {oauth_account_dict}")
+
+                try:
+                    logger.info(
+                        f"Attempting to get user by OAuth account: {oauth_name}, {account_id}"
+                    )
+                    user = await self.get_by_oauth_account(oauth_name, account_id)
+                    logger.info(f"User found by OAuth account: {user.id}")
+                except exceptions.UserNotExists:
+                    logger.info(
+                        f"User not found by OAuth account, attempting to get by email: {account_email}"
+                    )
+                    try:
+                        # Associate account
+                        user = await self.get_by_email(account_email)
+                        logger.info(f"User found by email: {user.id}")
+                        if not associate_by_email:
+                            logger.warning(
+                                f"User already exists but associate_by_email is False: {account_email}"
+                            )
+                            raise exceptions.UserAlreadyExists()
+                        logger.info(f"Adding OAuth account to existing user: {user.id}")
+                        user = await self.user_db.add_oauth_account(
+                            user, oauth_account_dict
+                        )
+                        logger.info(f"OAuth account added to user: {user.id}")
+                    except exceptions.UserNotExists:
+                        logger.info(
+                            f"User not found, creating new account for: {account_email}"
+                        )
+                        # Create account
+                        password = self.password_helper.generate()
+                        user_dict = {
+                            "email": account_email,
+                            "hashed_password": self.password_helper.hash(password),
+                            "is_verified": is_verified_by_default,
+                        }
+                        logger.debug(f"Creating new user with dict: {user_dict}")
+                        user = await self.user_db.create(user_dict)
+                        logger.info(f"New user created: {user.id}")
+                        logger.info(f"Adding OAuth account to new user: {user.id}")
+                        user = await self.user_db.add_oauth_account(
+                            user, oauth_account_dict
+                        )
+                        logger.info(f"OAuth account added to new user: {user.id}")
+                        logger.info(
+                            f"Calling on_after_register for new user: {user.id}"
+                        )
+                        await self.on_after_register(user, request)
+                else:
+                    # Update oauth
+                    logger.info(f"Updating OAuth account for existing user: {user.id}")
+                    for existing_oauth_account in user.oauth_accounts:
+                        if (
+                            existing_oauth_account.account_id == account_id
+                            and existing_oauth_account.oauth_name == oauth_name
+                        ):
+                            logger.info(
+                                f"Updating OAuth account: {oauth_name}, {account_id}"
+                            )
+                            user = await self.user_db.update_oauth_account(
+                                user, existing_oauth_account, oauth_account_dict
+                            )
+                            logger.info(f"OAuth account updated for user: {user.id}")
+
+            except Exception as e:
+                logger.exception(f"Error in oauth_callback: {str(e)}")
+
+            print("OAUTH CALLBACK COMPLETED")
             # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
             # re-authenticate that frequently, so by default this is disabled
             if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:

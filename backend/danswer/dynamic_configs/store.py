@@ -5,15 +5,19 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import cast
 
+from fastapi import HTTPException
 from filelock import FileLock
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from danswer.db.engine import get_session_factory
+from danswer.configs.app_configs import MULTI_TENANT
+from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import is_valid_schema_name
 from danswer.db.models import KVStore
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.dynamic_configs.interface import DynamicConfigStore
 from danswer.dynamic_configs.interface import JSON_ro
-
+from shared_configs.configs import current_tenant_id
 
 FILE_LOCK_TIMEOUT = 10
 
@@ -56,12 +60,15 @@ class FileSystemBackedDynamicConfigStore(DynamicConfigStore):
 class PostgresBackedDynamicConfigStore(DynamicConfigStore):
     @contextmanager
     def get_session(self) -> Iterator[Session]:
-        factory = get_session_factory()
-        session: Session = factory()
-        try:
+        engine = get_sqlalchemy_engine()
+        with Session(engine, expire_on_commit=False) as session:
+            if MULTI_TENANT:
+                tenant_id = current_tenant_id.get()
+                if not is_valid_schema_name(tenant_id):
+                    raise HTTPException(status_code=400, detail="Invalid tenant ID")
+                # Set the search_path to the tenant's schema
+                session.execute(text(f'SET search_path = "{tenant_id}"'))
             yield session
-        finally:
-            session.close()
 
     def store(self, key: str, val: JSON_ro, encrypt: bool = False) -> None:
         # The actual encryption/decryption is done in Postgres, we just need to choose
