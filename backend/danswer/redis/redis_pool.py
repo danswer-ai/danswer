@@ -69,6 +69,13 @@ class RedisPool:
         )
 
 
+redis_pool = RedisPool()
+
+
+def get_redis_client() -> Redis:
+    return redis_pool.get_client()
+
+
 # # Usage example
 # redis_pool = RedisPool()
 # redis_client = redis_pool.get_client()
