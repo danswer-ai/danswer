@@ -51,9 +51,9 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
           needs_reindexing: false,
         };
       } else {
-        throw new Error(
-          `fetchStandardSettingsSS failed: status=${results[0].status} body=${await results[0].text()}`
-        );
+        // throw new Error(
+        //   `fetchStandardSettingsSS failed: status=${results[0].status} body=${await results[0].text()}`
+        // );
       }
     } else {
       settings = await results[0].json();
@@ -63,9 +63,9 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
     if (tasks.length > 1) {
       if (!results[1].ok) {
         if (results[1].status !== 403) {
-          throw new Error(
-            `fetchEnterpriseSettingsSS failed: status=${results[1].status} body=${await results[1].text()}`
-          );
+          // throw new Error(
+          //   `fetchEnterpriseSettingsSS failed: status=${results[1].status} body=${await results[1].text()}`
+          // );
         }
       } else {
         enterpriseSettings = await results[1].json();

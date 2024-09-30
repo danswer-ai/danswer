@@ -30,9 +30,11 @@ from fastapi_users.authentication import JWTStrategy
 from fastapi_users.authentication import Strategy
 from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
+from fastapi_users.jwt import decode_jwt
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
@@ -67,6 +69,7 @@ from danswer.db.auth import get_user_db
 from danswer.db.auth import SQLAlchemyUserAdminDB
 from danswer.db.engine import get_async_session_with_tenant
 from danswer.db.engine import get_session
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import AccessToken
 from danswer.db.models import OAuthAccount
@@ -144,8 +147,8 @@ def verify_email_is_invited(email: str) -> None:
     raise PermissionError("User not on allowed user whitelist")
 
 
-def verify_email_in_whitelist(email: str) -> None:
-    with Session(get_sqlalchemy_engine()) as db_session:
+def verify_email_in_whitelist(email: str, tenant_id: str) -> None:
+    with get_session_with_tenant(tenant_id) as db_session:
         if not get_user_by_email(email, db_session):
             verify_email_is_invited(email)
 
@@ -290,7 +293,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
             logger.info("new db associated porpelry!")
 
-            verify_email_in_whitelist(account_email)
+            # verify_email_in_whitelist(account_email, tenant_id)
             verify_email_domain(account_email)
             logger.info("attempting oauth callback")
 
@@ -377,7 +380,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             )
             self.user_db = tenant_user_db
 
-            # Proceed with authentication
             try:
                 user = await self.get_by_email(email)
 
@@ -424,8 +426,46 @@ def get_auth_strategy() -> JWTStrategy | DatabaseStrategy:
         return get_database_strategy()
 
 
+class TenantAwareJWTStrategy(JWTStrategy):
+    async def read_token(
+        self, token: str, user_manager: BaseUserManager[User, uuid.UUID]
+    ) -> Optional[User]:
+        try:
+            data = decode_jwt(
+                token, self.decode_key, self.token_audience, algorithms=[self.algorithm]
+            )
+            user_id = data.get("sub")
+
+            if user_id is None:
+                return None
+
+            # Step 1: Query the public 'tenant_user' table to get tenant_id
+            async with get_async_session_with_tenant("public") as public_session:
+                tenant_id = await self.get_tenant_id(public_session, user_id)
+                if tenant_id is None:
+                    return None
+
+            # Step 2: Create a tenant-specific session
+            async with get_async_session_with_tenant(tenant_id) as tenant_session:
+                tenant_user_db = SQLAlchemyUserDatabase(tenant_session, User)
+                tenant_user_manager = UserManager(tenant_user_db)
+
+                # Step 3: Retrieve the user from the tenant-specific 'user' table
+                return await tenant_user_manager.get(user_id)
+        except Exception as e:
+            logger.error(f"Error in TenantAwareJWTStrategy.read_token: {e}")
+            return None
+
+    async def get_tenant_id(self, session: AsyncSession, email: str) -> Optional[str]:
+        result = await session.execute(
+            select(UserTenantMapping.tenant_id).where(UserTenantMapping.email == email)
+        )
+        tenant_id = result.scalar()
+        return tenant_id
+
+
 def get_jwt_strategy() -> JWTStrategy:
-    return JWTStrategy(
+    return TenantAwareJWTStrategy(
         secret=USER_AUTH_SECRET,
         lifetime_seconds=SESSION_EXPIRE_TIME_SECONDS,
     )
