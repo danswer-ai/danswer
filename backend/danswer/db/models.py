@@ -98,22 +98,6 @@ class EncryptedJson(TypeDecorator):
 
 
 """
-Multi-tenancy related tables
-"""
-
-
-class UserTenantMapping(Base):
-    __tablename__ = "user_tenant_mapping"
-    __table_args__ = (
-        UniqueConstraint("email", "tenant_id", name="uq_user_tenant"),
-        {"schema": "public"},
-    )
-
-    email: Mapped[str] = mapped_column(String, nullable=False, primary_key=True)
-    tenant_id: Mapped[str] = mapped_column(String, nullable=False)
-
-
-"""
 Auth/Authz (users, permissions, access) Tables
 """
 
@@ -1771,3 +1755,23 @@ class UsageReport(Base):
 
     requestor = relationship("User")
     file = relationship("PGFileStore")
+
+
+"""
+Multi-tenancy related tables
+"""
+
+
+class PublicBase(DeclarativeBase):
+    __abstract__ = True
+
+
+class UserTenantMapping(Base):
+    __tablename__ = "user_tenant_mapping"
+    __table_args__ = (
+        UniqueConstraint("email", "tenant_id", name="uq_user_tenant"),
+        {"schema": "public"},
+    )
+
+    email: Mapped[str] = mapped_column(String, nullable=False, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String, nullable=False)

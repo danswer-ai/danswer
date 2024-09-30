@@ -150,6 +150,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     verify_auth = fetch_versioned_implementation(
         "danswer.auth.users", "verify_auth_setting"
     )
+
     # Will throw exception if an issue is found
     verify_auth()
 
@@ -165,6 +166,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # We cache this at the beginning so there is no delay in the first telemetry
     get_or_generate_uuid()
 
+    # If we are multi-tenant, we need to only set up initial public tables
     with Session(engine) as db_session:
         setup_danswer(db_session)
 
