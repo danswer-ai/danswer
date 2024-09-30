@@ -4,15 +4,6 @@ import { CustomModal } from "@/components/CustomModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Teamspace } from "@/lib/types";
 import { BookmarkIcon, Copy, Globe, Plus } from "lucide-react";
 import { useState } from "react";
@@ -84,10 +75,10 @@ export const TeamspaceDocumentSet = ({
                 key={document.id}
                 className="border rounded-md flex p-4 gap-4"
               >
-                <Globe />
+                <Globe className="shrink-0" />
                 <div className="w-full">
                   <div className="flex items-center justify-between w-full">
-                    <h3>{document.name}</h3>
+                    <h3 className="line-clamp">{document.name}</h3>
                     <Checkbox />
                   </div>
                   <p className="text-sm pt-2 line-clamp">
