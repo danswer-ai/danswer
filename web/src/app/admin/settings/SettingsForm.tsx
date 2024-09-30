@@ -1,6 +1,6 @@
 "use client";
 
-import { Label, SubLabel } from "@/components/admin/connectors/Field";
+import { SubLabel } from "@/components/admin/connectors/Field";
 import { Settings } from "./interfaces";
 import { useRouter } from "next/navigation";
 import { Option } from "@/components/Dropdown";
@@ -63,8 +63,15 @@ function Selector({
 }) {
   return (
     <div className="mb-8">
-      {label && <Label>{label}</Label>}
-      {subtext && <SubLabel>{subtext}</SubLabel>}
+      {label && (
+        <ShadcnLabel
+          htmlFor={label}
+          className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          {label}
+        </ShadcnLabel>
+      )}
+      {subtext && <p className="text-sm text-muted-foreground">{subtext}</p>}
 
       <div className="mt-2 w-full max-w-96">
         <Select value={selected} onValueChange={onSelect}>

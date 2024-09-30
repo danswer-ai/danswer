@@ -1,7 +1,7 @@
-import { Modal } from "@/components/Modal";
 import { Text, Callout } from "@tremor/react";
 import { EmbeddingModelDescriptor } from "./embeddingModels";
 import { Button } from "@/components/ui/button";
+import { CustomModal } from "@/components/CustomModal";
 
 export function ModelSelectionConfirmaion({
   selectedModel,
@@ -62,14 +62,17 @@ export function ModelSelectionConfirmaionModal({
   onCancel: () => void;
 }) {
   return (
-    <Modal title="Update Embedding Model" onOutsideClick={onCancel}>
-      <div>
-        <ModelSelectionConfirmaion
-          selectedModel={selectedModel}
-          isCustom={isCustom}
-          onConfirm={onConfirm}
-        />
-      </div>
-    </Modal>
+    <CustomModal
+      open={!!selectedModel}
+      onClose={onCancel}
+      title="Update Embedding Model"
+      trigger={null}
+    >
+      <ModelSelectionConfirmaion
+        selectedModel={selectedModel}
+        isCustom={isCustom}
+        onConfirm={onConfirm}
+      />
+    </CustomModal>
   );
 }

@@ -59,7 +59,7 @@ export function SharedChatDisplay({
     <div className="w-full overflow-y-auto">
       <div className="container">
         <div>
-          <h1 className="text-3xl text-strong font-bold">
+          <h1 className="text-2xl xl:text-3xl text-strong font-bold">
             {chatSession.description || `Chat ${chatSession.chat_session_id}`}
           </h1>
           <p className="pt-2">
