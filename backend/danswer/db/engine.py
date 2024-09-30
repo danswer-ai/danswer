@@ -9,7 +9,9 @@ from datetime import datetime
 from typing import Any
 from typing import ContextManager
 
+import jwt
 from fastapi import HTTPException
+from fastapi import Request
 from sqlalchemy import event
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
@@ -30,10 +32,11 @@ from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
 from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
+from danswer.configs.app_configs import SECRET_JWT_KEY
+from danswer.configs.constants import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import current_tenant_id
-
 
 logger = setup_logger()
 
@@ -302,13 +305,6 @@ def get_session_with_tenant(tenant_id: str | None = None) -> Session:
         connection.execute(text("SET search_path TO :schema"), {"schema": tenant_id})
 
     return session
-
-
-def get_session_generator_with_tenant(
-    tenant_id: str | None = None,
-) -> Generator[Session, None, None]:
-    with get_session_with_tenant(tenant_id) as session:
-        yield session
 
 
 def get_session_generator_with_tenant(
