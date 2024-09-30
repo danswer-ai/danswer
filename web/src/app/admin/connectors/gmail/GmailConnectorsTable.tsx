@@ -17,7 +17,6 @@ import {
   TableBody,
   TableCell,
 } from "@tremor/react";
-import { useToast } from "@/hooks/use-toast";
 
 interface TableProps {
   gmailConnectorIndexingStatuses: ConnectorIndexingStatus<
@@ -30,7 +29,6 @@ export const GmailConnectorsTable = ({
   gmailConnectorIndexingStatuses: gmailConnectorIndexingStatuses,
 }: TableProps) => {
   const { mutate } = useSWRConfig();
-  const { toast } = useToast();
 
   // Sorting to maintain a consistent ordering
   const sortedGmailConnectorIndexingStatuses = [

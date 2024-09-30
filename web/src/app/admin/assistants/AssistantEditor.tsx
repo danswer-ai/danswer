@@ -255,8 +255,9 @@ export function AssistantEditor({
         onSubmit={async (values, formikHelpers) => {
           if (finalPromptError) {
             toast({
-              title: "Error",
-              description: "Cannot submit while there are errors in the form!",
+              title: "Submission Blocked",
+              description:
+                "Please resolve the errors in the form before submitting.",
               variant: "destructive",
             });
             return;
@@ -267,9 +268,9 @@ export function AssistantEditor({
             !values.llm_model_version_override
           ) {
             toast({
-              title: "Error",
+              title: "Model Selection Required",
               description:
-                "Must select a model if a non-default LLM provider is chosen.",
+                "Please select a model when choosing a non-default LLM provider.",
               variant: "destructive",
             });
             return;
@@ -347,7 +348,7 @@ export function AssistantEditor({
 
           if (error || !assistantResponse) {
             toast({
-              title: "Error",
+              title: "Assistant Creation Failed",
               description: `Failed to create Assistant - ${error}`,
               variant: "destructive",
             });
@@ -365,7 +366,7 @@ export function AssistantEditor({
               );
               if (success) {
                 toast({
-                  title: "Success",
+                  title: "Assistant Added",
                   description: `"${assistant.name}" has been added to your list.`,
                   variant: "success",
                 });
@@ -373,7 +374,7 @@ export function AssistantEditor({
                 router.refresh();
               } else {
                 toast({
-                  title: "Error",
+                  title: "Failed to Add Assistant",
                   description: `"${assistant.name}" could not be added to your list.`,
                   variant: "destructive",
                 });

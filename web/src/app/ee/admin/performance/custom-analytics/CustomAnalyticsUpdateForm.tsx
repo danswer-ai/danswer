@@ -41,15 +41,16 @@ export function CustomAnalyticsUpdateForm() {
           );
           if (response.ok) {
             toast({
-              title: "Success",
-              description: "Custom analytics script updated successfully!",
+              title: "Update Successful",
+              description:
+                "Custom analytics script has been updated successfully!",
               variant: "success",
             });
           } else {
             const errorMsg = (await response.json()).detail;
             toast({
-              title: "Error",
-              description: `Failed to update custom analytics script: "${errorMsg}"`,
+              title: "Update Failed",
+              description: `Unable to update the custom analytics script: "${errorMsg}". Please try again.`,
               variant: "destructive",
             });
           }

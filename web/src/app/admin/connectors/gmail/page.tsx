@@ -22,7 +22,6 @@ import { usePublicCredentials } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, CardContent } from "@/components/ui/card";
 import { BackButton } from "@/components/BackButton";
-import { useToast } from "@/hooks/use-toast";
 
 interface GmailConnectorManagementProps {
   gmailPublicCredential?: Credential<GmailCredentialJson>;
@@ -137,8 +136,6 @@ const Main = () => {
     error: credentialsError,
     refreshCredentials,
   } = usePublicCredentials();
-
-  const { toast } = useToast();
 
   const appCredentialSuccessfullyFetched =
     appCredentialData ||

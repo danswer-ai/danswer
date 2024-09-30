@@ -66,18 +66,23 @@ const DocumentDisplay = ({
         </Badge>
         <Badge
           onClick={async () => {
+            const newHiddenStatus = !document.hidden;
             const response = await updateHiddenStatus(
               document.document_id,
               !document.hidden
             );
             if (response.ok) {
+              toast({
+                title: "Status Updated",
+                description: `Document is now ${newHiddenStatus ? "Hidden" : "Visible"}.`,
+                variant: "success",
+              });
+
               refresh();
             } else {
               toast({
-                title: "Error",
-                description: `Failed to update document - ${getErrorMsg(
-                  response
-                )}}`,
+                title: "Update Failed",
+                description: `Unable to update document status - ${getErrorMsg(response)}`,
                 variant: "destructive",
               });
             }

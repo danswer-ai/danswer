@@ -56,7 +56,7 @@ export function LogInForms({}: {}) {
               errorMsg = "Invalid email or password";
             }
             toast({
-              title: "Error",
+              title: "Login Failed",
               description: `Failed to login - ${errorMsg}`,
               variant: "destructive",
             });

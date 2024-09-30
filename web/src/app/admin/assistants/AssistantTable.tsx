@@ -69,8 +69,8 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
     });
     if (!response.ok) {
       toast({
-        title: "Error",
-        description: `Failed to update assistant order - ${await response.text()}`,
+        title: "Failed to Update Assistant Order",
+        description: `There was an issue updating the assistant order. Details: ${await response.text()}`,
         variant: "destructive",
       });
       router.refresh();
@@ -130,11 +130,17 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                         }
                       );
                       if (response.ok) {
+                        toast({
+                          title: "Visibility Updated",
+                          description: `The visibility of "${assistant.name}" has been successfully updated.`,
+                          variant: "success",
+                        });
+
                         router.refresh();
                       } else {
                         toast({
-                          title: "Error",
-                          description: `Failed to update assistant - ${await response.text()}`,
+                          title: "Failed to Update Assistant Visibility",
+                          description: `Unable to update visibility for "${assistant.name}". Details: ${await response.text()}`,
                           variant: "destructive",
                         });
                       }

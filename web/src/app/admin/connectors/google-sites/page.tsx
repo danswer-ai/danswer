@@ -98,8 +98,8 @@ export default function GoogleSites() {
                         const responseJson = await response.json();
                         if (!response.ok) {
                           toast({
-                            title: "Error",
-                            description: `Unable to upload files - ${responseJson.detail}`,
+                            title: "File Upload Failed",
+                            description: `Unable to upload files: ${responseJson.detail}`,
                             variant: "destructive",
                           });
                           return;
@@ -121,8 +121,8 @@ export default function GoogleSites() {
                           });
                         if (connectorErrorMsg || !connector) {
                           toast({
-                            title: "Error",
-                            description: `Unable to create connector - ${connectorErrorMsg}`,
+                            title: "Connector Creation Failed",
+                            description: `Unable to create connector: ${connectorErrorMsg}`,
                             variant: "destructive",
                           });
                           return;
@@ -137,8 +137,8 @@ export default function GoogleSites() {
                           const credentialResponseJson =
                             await credentialResponse.json();
                           toast({
-                            title: "Error",
-                            description: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
+                            title: "Credential Linking Failed",
+                            description: `Unable to link connector to credential: ${credentialResponseJson.detail}`,
                             variant: "destructive",
                           });
                           return;
@@ -150,8 +150,8 @@ export default function GoogleSites() {
                         );
                         if (runConnectorErrorMsg) {
                           toast({
-                            title: "Error",
-                            description: `Unable to run connector - ${runConnectorErrorMsg}`,
+                            title: "Connector Execution Failed",
+                            description: `Unable to run connector: ${runConnectorErrorMsg}`,
                             variant: "destructive",
                           });
                           return;
@@ -161,8 +161,9 @@ export default function GoogleSites() {
                         setSelectedFiles([]);
                         formikHelpers.resetForm();
                         toast({
-                          title: "Success",
-                          description: "Successfully uploaded files!",
+                          title: "Files Uploaded Successfully",
+                          description:
+                            "All files uploaded and connector activated successfully!",
                           variant: "success",
                         });
                       };

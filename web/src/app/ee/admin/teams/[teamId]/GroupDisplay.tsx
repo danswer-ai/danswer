@@ -101,9 +101,9 @@ export const GroupDisplay = ({
                                 );
                                 if (response.ok) {
                                   toast({
-                                    title: "Success",
+                                    title: "User Removed Successfully!",
                                     description:
-                                      "Successfully removed user from group",
+                                      "The user has been successfully removed from the group.",
                                     variant: "success",
                                   });
                                 } else {
@@ -111,8 +111,8 @@ export const GroupDisplay = ({
                                   const errorMsg =
                                     responseJson.detail || responseJson.message;
                                   toast({
-                                    title: "Error",
-                                    description: `Error removing user from group - ${errorMsg}`,
+                                    title: "Removal Failed",
+                                    description: `Unable to remove user from the group: ${errorMsg}. Please try again.`,
                                     variant: "destructive",
                                   });
                                 }
@@ -204,9 +204,9 @@ export const GroupDisplay = ({
                                 );
                                 if (response.ok) {
                                   toast({
-                                    title: "Success",
+                                    title: "Connector Removed Successfully!",
                                     description:
-                                      "Successfully removed connector from group",
+                                      "The connector has been successfully removed from the group.",
                                     variant: "success",
                                   });
                                 } else {
@@ -214,8 +214,8 @@ export const GroupDisplay = ({
                                   const errorMsg =
                                     responseJson.detail || responseJson.message;
                                   toast({
-                                    title: "Error",
-                                    description: `Error removing connector from group - ${errorMsg}`,
+                                    title: "Removal Failed",
+                                    description: `Unable to remove connector from the group: ${errorMsg}. Please try again.`,
                                     variant: "destructive",
                                   });
                                 }

@@ -42,8 +42,9 @@ const QAFeedback = ({ messageId, feedbackType }: QAFeedbackIconProps) => {
             const isSuccessful = await giveFeedback(messageId, feedbackType);
             if (isSuccessful) {
               toast({
-                title: "Success",
-                description: "Thanks for your feedback!",
+                title: "Feedback Submitted!",
+                description:
+                  "Thank you for your feedback! We appreciate your input.",
                 variant: "success",
               });
             }

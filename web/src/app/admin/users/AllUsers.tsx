@@ -48,15 +48,15 @@ export const DeactivaterButton = ({
       onSuccess: () => {
         mutate();
         toast({
-          title: "Success",
-          description: `User ${deactivate ? "deactivated" : "activated"}!`,
+          title: "User Status Updated",
+          description: `User has been successfully ${deactivate ? "deactivated" : "activated"}.`,
           variant: "success",
         });
       },
       onError: (errorMsg) =>
         toast({
-          title: "Error",
-          description: errorMsg,
+          title: "Operation Failed",
+          description: `Unable to ${deactivate ? "deactivate" : "activate"} user: ${errorMsg}`,
           variant: "destructive",
         }),
     }
@@ -90,15 +90,15 @@ export const AllUsers = ({ q }: { q: string }) => {
       onSuccess: () => {
         mutate();
         toast({
-          title: "Success",
-          description: "User promoted to admin!",
+          title: "User Promotion Successful",
+          description: "The user has been successfully promoted to admin.",
           variant: "success",
         });
       },
       onError: (errorMsg) => {
         toast({
-          title: "Error",
-          description: `Unable to promote user - ${errorMsg}`,
+          title: "Promotion Failed",
+          description: `Failed to promote the user: ${errorMsg}`,
           variant: "destructive",
         });
       },
@@ -112,15 +112,16 @@ export const AllUsers = ({ q }: { q: string }) => {
       onSuccess: () => {
         mutate();
         toast({
-          title: "Success",
-          description: "User demoted to basic user!",
+          title: "Demotion Successful",
+          description:
+            "The user has been successfully demoted to a basic user.",
           variant: "success",
         });
       },
       onError: (errorMsg) => {
         toast({
-          title: "Error",
-          description: `Unable to demote user - ${errorMsg}`,
+          title: "Demotion Failed",
+          description: `Unable to demote the user: ${errorMsg}`,
           variant: "destructive",
         });
       },

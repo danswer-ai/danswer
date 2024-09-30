@@ -115,9 +115,9 @@ const Main = () => {
               onClick={async () => {
                 if (jiraConnectorIndexingStatuses.length > 0) {
                   toast({
-                    title: "Error",
+                    title: "Cannot Delete Credentials",
                     description:
-                      "Must delete all connectors before deleting credentials",
+                      "Please delete all connectors associated with these credentials before proceeding.",
                     variant: "destructive",
                   });
                   return;
@@ -125,15 +125,16 @@ const Main = () => {
                 const response = await adminDeleteCredential(jiraCredential.id);
                 if (response.ok) {
                   toast({
-                    title: "Success",
-                    description: "Successfully deleted credential!",
+                    title: "Credential Deleted",
+                    description:
+                      "The credential has been successfully deleted.",
                     variant: "success",
                   });
                 } else {
                   const errorMsg = await response.text();
                   toast({
-                    title: "Error",
-                    description: `Failed to delete credential - ${errorMsg}`,
+                    title: "Credential Deletion Failed",
+                    description: `Unable to delete credential: ${errorMsg}`,
                     variant: "destructive",
                   });
                 }

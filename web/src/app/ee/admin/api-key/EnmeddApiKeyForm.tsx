@@ -39,10 +39,10 @@ export const EnmeddApiKeyForm = ({
           formikHelpers.setSubmitting(false);
           if (response.ok) {
             toast({
-              title: "Success",
+              title: "API Key Operation Successful",
               description: isUpdate
-                ? "Successfully updated API key!"
-                : "Successfully created API key!",
+                ? "API key updated successfully!"
+                : "API key created successfully!",
               variant: "success",
             });
             if (!isUpdate) {
@@ -53,10 +53,10 @@ export const EnmeddApiKeyForm = ({
             const responseJson = await response.json();
             const errorMsg = responseJson.detail || responseJson.message;
             toast({
-              title: "Error",
+              title: "API Key Operation Failed",
               description: isUpdate
-                ? `Error updating API key - ${errorMsg}`
-                : `Error creating API key - ${errorMsg}`,
+                ? `Error updating API key: ${errorMsg}`
+                : `Error creating API key: ${errorMsg}`,
               variant: "destructive",
             });
           }

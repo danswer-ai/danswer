@@ -155,8 +155,8 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           });
           if (errorMsg) {
             toast({
-              title: "Error",
-              description: `Unable to delete existing connector - ${errorMsg}`,
+              title: "Deletion Failed",
+              description: `Unable to delete the existing connector: ${errorMsg}. Please try again.`,
               variant: "destructive",
             });
             return;
@@ -173,8 +173,9 @@ export function ConnectorForm<T extends Yup.AnyObject>({
 
           if (!isSuccess || !response) {
             toast({
-              title: "Error",
-              description: message,
+              title: "Operation Failed",
+              description:
+                message || "An unexpected error occurred. Please try again.",
               variant: "destructive",
             });
             formikHelpers.setSubmitting(false);
@@ -194,8 +195,8 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             if (!createCredentialResponse.ok) {
               const errorMsg = await createCredentialResponse.text();
               toast({
-                title: "Error",
-                description: `Error creating credential for CC Pair - ${errorMsg}`,
+                title: "Credential Creation Failed",
+                description: `Unable to create credential for CC Pair: ${errorMsg}. Please check your input and try again.`,
                 variant: "destructive",
               });
               formikHelpers.setSubmitting(false);
@@ -219,8 +220,8 @@ export function ConnectorForm<T extends Yup.AnyObject>({
                 await linkCredentialResponse.text();
 
               toast({
-                title: "Error",
-                description: `Error linking credential - ${linkCredentialErrorMsg}`,
+                title: "Linking Failed",
+                description: `Unable to link credential: ${linkCredentialErrorMsg}. Please try again.`,
                 variant: "destructive",
               });
               formikHelpers.setSubmitting(false);
@@ -230,8 +231,10 @@ export function ConnectorForm<T extends Yup.AnyObject>({
 
           mutate("/api/manage/admin/connector/indexing-status");
           toast({
-            title: isSuccess ? "Success" : "Error",
-            description: message,
+            title: isSuccess ? "Operation Successful!" : "Operation Failed",
+            description: isSuccess
+              ? message
+              : `An error occurred: ${message}. Please check your input and try again.`,
             variant: isSuccess ? "success" : "destructive",
           });
 
@@ -323,8 +326,12 @@ export function UpdateConnectorForm<T extends Yup.AnyObject>({
             existingConnector.id
           );
           toast({
-            title: isSuccess ? "Success" : "Error",
-            description: message,
+            title: isSuccess
+              ? "Connector Submitted Successfully!"
+              : "Submission Failed",
+            description: isSuccess
+              ? message
+              : `An error occurred: ${message}. Please check your input and try again.`,
             variant: isSuccess ? "success" : "destructive",
           });
 

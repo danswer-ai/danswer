@@ -84,8 +84,8 @@ const FolderItem = ({
       router.refresh(); // Refresh values to update the sidebar
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save folder name",
+        title: "Folder Name Update Failed",
+        description: "Unable to save the folder name. Please try again.",
         variant: "destructive",
       });
     }
@@ -100,8 +100,9 @@ const FolderItem = ({
       router.refresh(); // Refresh values to update the sidebar
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete folder",
+        title: "Chat Session Addition Failed",
+        description:
+          "Unable to add the chat session to the folder. Please try again.",
         variant: "destructive",
       });
     }

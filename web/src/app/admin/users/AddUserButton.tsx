@@ -17,16 +17,16 @@ export const AddUserButton = () => {
     );
     setIsModalOpen(false);
     toast({
-      title: "Success",
-      description: "Users invited!",
+      title: "Users Invited",
+      description: "The users have been successfully invited.",
       variant: "success",
     });
   };
   const onFailure = async (res: Response) => {
     const error = (await res.json()).detail;
     toast({
-      title: "Error",
-      description: `Failed to invite users - ${error}`,
+      title: "Invitation Failed",
+      description: `Unable to invite users: ${error}`,
       variant: "destructive",
     });
   };

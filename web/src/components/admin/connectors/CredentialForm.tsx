@@ -50,8 +50,12 @@ export function CredentialForm<T extends Yup.AnyObject>({
           admin_public: true,
         }).then(({ message, isSuccess }) => {
           toast({
-            title: isSuccess ? "Success" : "Error",
-            description: message,
+            title: isSuccess
+              ? "Credential Updated Successfully!"
+              : "Update Failed",
+            description: isSuccess
+              ? "Your credential has been updated."
+              : `An error occurred: ${message}. Please check your input and try again.`,
             variant: isSuccess ? "success" : "destructive",
           });
           formikHelpers.setSubmitting(false);

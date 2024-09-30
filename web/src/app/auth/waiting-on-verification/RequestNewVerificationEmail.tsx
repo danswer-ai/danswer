@@ -26,16 +26,17 @@ export function RequestNewVerificationEmail({
 
         if (response.ok) {
           toast({
-            title: "Success",
-            description: "A new verification email has been sent!",
+            title: "Verification Email Sent",
+            description:
+              "We've sent a new verification email to your inbox. Please check your email.",
             variant: "success",
           });
         } else {
           const errorDetail = (await response.json()).detail;
 
           toast({
-            title: "Error",
-            description: `Failed to send a new verification email - ${errorDetail}`,
+            title: "Email Verification Failed",
+            description: `Unable to send verification email: ${errorDetail}. Please try again later.`,
             variant: "destructive",
           });
         }

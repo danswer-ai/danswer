@@ -218,8 +218,8 @@ function Main() {
                         if (!response.ok) {
                           const errorMsg = await response.text();
                           toast({
-                            title: "Error",
-                            description: `Failed to regenerate API Key: ${errorMsg}`,
+                            title: "Regeneration Failed",
+                            description: `Could not regenerate the API Key: ${errorMsg}. Please check your request and try again.`,
                             variant: "destructive",
                           });
                           return;
@@ -241,8 +241,8 @@ function Main() {
                         if (!response.ok) {
                           const errorMsg = await response.text();
                           toast({
-                            title: "Error",
-                            description: `Failed to delete API Key: ${errorMsg}`,
+                            title: "Deletion Failed",
+                            description: `Unable to remove the API Key: ${errorMsg}. Please try again.`,
                             variant: "destructive",
                           });
                           return;

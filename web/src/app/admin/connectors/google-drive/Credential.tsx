@@ -65,23 +65,24 @@ const DriveJsonUpload = () => {
 
         if (response.ok) {
           toast({
-            title: "Success",
-            description: "Successfully uploaded app credentials",
+            title: "Credentials Uploaded Successfully",
+            description:
+              "Your app credentials have been uploaded successfully and are ready for use.",
             variant: "success",
           });
         } else {
           const errorMsg = await response.text();
           toast({
-            title: "Error",
-            description: `Failed to upload app credentials - ${errorMsg}`,
+            title: "Upload Failed",
+            description: `Failed to upload app credentials: ${errorMsg}`,
             variant: "destructive",
           });
         }
         mutate(endpoint);
       } catch (e) {
         toast({
-          title: "Error",
-          description: `Invalid file provided - ${e}`,
+          title: "Invalid File",
+          description: `Error processing the provided file: ${e}`,
           variant: "destructive",
         });
       }
@@ -163,15 +164,16 @@ export const DriveJsonUploadSection = ({
                 "/api/manage/admin/connector/google-drive/service-account-key"
               );
               toast({
-                title: "Success",
-                description: "Successfully deleted service account key",
+                title: "Service Account Key Deleted",
+                description:
+                  "The existing service account key has been successfully deleted. You can now upload new credentials.",
                 variant: "success",
               });
             } else {
               const errorMsg = await response.text();
               toast({
-                title: "Error",
-                description: `Failed to delete service account key - ${errorMsg}`,
+                title: "Deletion Failed",
+                description: `An error occurred while trying to delete the app credential. Details: ${errorMsg}`,
                 variant: "destructive",
               });
             }
@@ -206,15 +208,16 @@ export const DriveJsonUploadSection = ({
             if (response.ok) {
               mutate("/api/manage/admin/connector/google-drive/app-credential");
               toast({
-                title: "Success",
-                description: "Successfully deleted service account key",
+                title: "App Credentials Deleted",
+                description:
+                  "The app credentials have been successfully deleted. You can now upload new credentials.",
                 variant: "success",
               });
             } else {
               const errorMsg = await response.text();
               toast({
-                title: "Error",
-                description: `Failed to delete app credential - ${errorMsg}`,
+                title: "Deletion Failed",
+                description: `An error occurred while deleting the app credentials. Please check the details: ${errorMsg}`,
                 variant: "destructive",
               });
             }
@@ -282,17 +285,18 @@ export const DriveOAuthSection = ({
           onClick={async () => {
             if (connectorExists) {
               toast({
-                title: "Error",
+                title: "Access Revocation Error",
                 description:
-                  "Cannot revoke access to Google Drive while any connector is still setup. Please delete all connectors, then try again.",
+                  "You cannot revoke access to Google Drive while there are existing connectors. Please remove all connectors first, then try again.",
                 variant: "destructive",
               });
               return;
             }
             await adminDeleteCredential(existingCredential.id);
             toast({
-              title: "Success",
-              description: "Successfully revoked access to Google Drive!",
+              title: "Access Revoked",
+              description:
+                "You have successfully revoked access to Google Drive.",
               variant: "success",
             });
             refreshCredentials();
@@ -347,16 +351,16 @@ export const DriveOAuthSection = ({
 
                 if (response.ok) {
                   toast({
-                    title: "Success",
+                    title: "Service Account Credential Created",
                     description:
-                      "Successfully created service account credential",
+                      "The service account credential has been successfully created.",
                     variant: "success",
                   });
                 } else {
                   const errorMsg = await response.text();
                   toast({
-                    title: "Error",
-                    description: `Failed to create service account credential - ${errorMsg}`,
+                    title: "Credential Creation Failed",
+                    description: `An error occurred while creating the service account credential. Details: ${errorMsg}`,
                     variant: "destructive",
                   });
                 }
@@ -414,8 +418,8 @@ export const DriveOAuthSection = ({
             }
 
             toast({
-              title: "Error",
-              description: errorMsg,
+              title: "Authentication Error",
+              description: `An error occurred while setting up Google Drive authentication: ${errorMsg}`,
               variant: "destructive",
             });
           }}

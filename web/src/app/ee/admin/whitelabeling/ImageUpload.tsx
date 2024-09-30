@@ -30,8 +30,8 @@ export function ImageUpload({
       onDrop={(acceptedFiles) => {
         if (acceptedFiles.length !== 1) {
           toast({
-            title: "Error",
-            description: "Only one file can be uploaded at a time",
+            title: "Upload Error",
+            description: "Please upload only one file at a time.",
             variant: "destructive",
           });
         }

@@ -177,8 +177,8 @@ export function SettingsForm() {
 
       router.refresh();
       toast({
-        title: "Success",
-        description: "Settings updated successfully!",
+        title: "Settings Updated",
+        description: "Your settings have been successfully updated!",
         variant: "success",
       });
     } catch (error) {
@@ -186,8 +186,8 @@ export function SettingsForm() {
       setSettings(settings);
       console.error("Error updating settings:", error);
       toast({
-        title: "Error",
-        description: `Failed to update settings`,
+        title: "Update Failed",
+        description: `Unable to update settings. Reason: ${error}`,
         variant: "destructive",
       });
     }

@@ -177,8 +177,8 @@ export const ChatSidebar = ({
                       .catch((error) => {
                         console.error("Failed to create folder:", error);
                         toast({
-                          title: "Error",
-                          description: `Failed to create folder: ${error.message}`,
+                          title: "Folder Creation Failed",
+                          description: `Unable to create the folder: ${error.message}. Please try again.`,
                           variant: "destructive",
                         });
                       })

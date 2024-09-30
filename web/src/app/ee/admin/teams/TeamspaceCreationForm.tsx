@@ -67,21 +67,22 @@ export const TeamspaceCreationForm = ({
           formikHelpers.setSubmitting(false);
           if (response.ok) {
             toast({
-              title: "Success",
+              title: isUpdate ? "Teamspace Updated!" : "Teamspace Created!",
               description: isUpdate
-                ? "Successfully updated teamspace!"
-                : "Successfully created teamspace!",
+                ? "Your teamspace has been updated successfully."
+                : "Your new teamspace has been created successfully.",
               variant: "success",
             });
+
             onClose();
           } else {
             const responseJson = await response.json();
             const errorMsg = responseJson.detail || responseJson.message;
             toast({
-              title: "Error",
+              title: "Operation Failed",
               description: isUpdate
-                ? `Error updating teamspace - ${errorMsg}`
-                : `Error creating teamspace - ${errorMsg}`,
+                ? `Could not update the teamspace: ${errorMsg}`
+                : `Could not create the teamspace: ${errorMsg}`,
               variant: "destructive",
             });
           }

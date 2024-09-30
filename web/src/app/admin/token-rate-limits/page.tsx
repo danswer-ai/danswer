@@ -93,16 +93,17 @@ function Main() {
       .then(() => {
         setModalIsOpen(false);
         toast({
-          title: "Success",
-          description: "Token rate limit created!",
+          title: "Token Rate Limit Created",
+          description:
+            "The token rate limit has been successfully established.",
           variant: "success",
         });
         updateTable(target_scope);
       })
       .catch((error) => {
         toast({
-          title: "Error",
-          description: error.message,
+          title: "Creation Failed",
+          description: `Unable to create token rate limit: ${error.message}`,
           variant: "destructive",
         });
       });

@@ -179,15 +179,15 @@ const DocumentSetTable = ({
                             );
                             if (response.ok) {
                               toast({
-                                title: "Success",
-                                description: `Document set "${documentSet.name}" scheduled for deletion`,
+                                title: "Deletion Scheduled",
+                                description: `The document set "${documentSet.name}" has been successfully scheduled for deletion.`,
                                 variant: "success",
                               });
                             } else {
                               const errorMsg = (await response.json()).detail;
                               toast({
-                                title: "Error",
-                                description: `Failed to schedule document set for deletion - ${errorMsg}`,
+                                title: "Deletion Failed",
+                                description: `Unable to schedule deletion for "${documentSet.name}": ${errorMsg}`,
                                 variant: "destructive",
                               });
                             }
