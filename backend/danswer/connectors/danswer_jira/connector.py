@@ -245,10 +245,12 @@ class JiraConnector(LoadConnector, PollConnector):
         if self.jira_client is None:
             raise ConnectorMissingCredentialError("Jira")
 
+        # Quote the project name to handle reserved words
+        quoted_project = f'"{self.jira_project}"'
         start_ind = 0
         while True:
             doc_batch, fetched_batch_size = fetch_jira_issues_batch(
-                jql=f"project = {self.jira_project}",
+                jql=f"project = {quoted_project}",
                 start_index=start_ind,
                 jira_client=self.jira_client,
                 batch_size=self.batch_size,
@@ -276,8 +278,10 @@ class JiraConnector(LoadConnector, PollConnector):
             "%Y-%m-%d %H:%M"
         )
 
+        # Quote the project name to handle reserved words
+        quoted_project = f'"{self.jira_project}"'
         jql = (
-            f"project = {self.jira_project} AND "
+            f"project = {quoted_project} AND "
             f"updated >= '{start_date_str}' AND "
             f"updated <= '{end_date_str}'"
         )
