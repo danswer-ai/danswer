@@ -68,6 +68,7 @@ from danswer.db.auth import get_user_db
 from danswer.db.auth import SQLAlchemyUserAdminDB
 from danswer.db.engine import get_async_session_with_tenant
 from danswer.db.engine import get_session
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import AccessToken
 from danswer.db.models import OAuthAccount
@@ -78,6 +79,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from shared_configs.configs import current_tenant_id
 
 logger = setup_logger()
 
@@ -145,8 +147,8 @@ def verify_email_is_invited(email: str) -> None:
     raise PermissionError("User not on allowed user whitelist")
 
 
-def verify_email_in_whitelist(email: str) -> None:
-    with Session(get_sqlalchemy_engine()) as db_session:
+def verify_email_in_whitelist(email: str, tenant_id: str | None = None) -> None:
+    with get_session_with_tenant(tenant_id) as db_session:
         if not get_user_by_email(email, db_session):
             verify_email_is_invited(email)
 
@@ -176,6 +178,7 @@ def get_tenant_id_for_email(email: str) -> str:
         )
         tenant_id = result.scalar_one_or_none()
     if tenant_id is None:
+        print("USER DOESN'T EXIST")
         raise exceptions.UserNotExists()
     return tenant_id
 
@@ -291,9 +294,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         if not tenant_id:
             print("TENANT ID NOT FOUND")
             raise HTTPException(status_code=401, detail="User not found")
-
+        token = None
         async with get_async_session_with_tenant(tenant_id) as db_session:
+            token = current_tenant_id.set(tenant_id)
             # Print a list of tables in the current database session
+            verify_email_in_whitelist(account_email, tenant_id)
+            verify_email_domain(account_email)
 
             tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
             self.user_db = tenant_user_db
@@ -395,6 +401,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
             except Exception as e:
                 logger.exception(f"Error in oauth_callback: {str(e)}")
+            finally:
+                if token:
+                    current_tenant_id.reset(token)
 
             return user
 
