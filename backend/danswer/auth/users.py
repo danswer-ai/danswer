@@ -281,7 +281,10 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     ) -> models.UOAP:
         print("oauth callback initiated")
         # Get tenant_id from mapping table
-        tenant_id = get_tenant_id_for_email(account_email)
+        try:
+            tenant_id = get_tenant_id_for_email(account_email)
+        except exceptions.UserNotExists:
+            raise HTTPException(status_code=401, detail="User not found")
         print("GETTING TENANT ID")
 
         if not tenant_id:

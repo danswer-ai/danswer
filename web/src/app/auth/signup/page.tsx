@@ -10,6 +10,7 @@ import { EmailPasswordForm } from "../login/EmailPasswordForm";
 import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { CLOUD_ENABLED } from "@/lib/constants";
 
 const Page = async () => {
   // catch cases where the backend is completely unreachable here
@@ -24,6 +25,9 @@ const Page = async () => {
     ]);
   } catch (e) {
     console.log(`Some fetch failed for the login page - ${e}`);
+  }
+  if (CLOUD_ENABLED) {
+    return redirect("/auth/login");
   }
 
   // simply take the user to the home page if Auth is disabled
