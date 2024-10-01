@@ -249,7 +249,7 @@ export const AIMessage = ({
                   query === undefined &&
                   !hasDocs &&
                   !retrievalDisabled && (
-                    <div className="pb-2">
+                    <div className="pt-2">
                       <SkippedSearch handleForceSearch={handleForceSearch} />
                     </div>
                   )}
@@ -706,7 +706,7 @@ export const HumanMessage = ({
                 </div>
               ) : typeof content === "string" ? (
                 <div className="relative">
-                  <div className="flex flex-col max-w-full prose preserve-lines">
+                  <div className="relative flex-none whitespace-break-spaces max-w-full prose preserve-lines">
                     {content}
                   </div>
 
