@@ -21,6 +21,7 @@ import {
   AssistantsIconSkeleton,
   ClosedBookIcon,
   SearchIcon,
+  DocumentIcon2,
 } from "@/components/icons/icons";
 import { UserRole } from "@/lib/types";
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
@@ -29,7 +30,6 @@ import { User } from "@/lib/types";
 import { usePathname } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { useContext } from "react";
-import { CustomTooltip } from "../tooltip/CustomTooltip";
 
 export function ClientLayout({
   user,
@@ -245,6 +245,15 @@ export function ClientLayout({
                             </div>
                           ),
                           link: "/admin/configuration/search",
+                        },
+                        {
+                          name: (
+                            <div className="flex">
+                              <DocumentIcon2 className="text-icon-settings-sidebar" />
+                              <div className="ml-1">Document Processing</div>
+                            </div>
+                          ),
+                          link: "/admin/configuration/document-processing",
                         },
                       ],
                     },
