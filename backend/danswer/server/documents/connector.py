@@ -792,6 +792,7 @@ def connector_run_once(
             ),
             only_current=True,
             db_session=db_session,
+            disinclude_finished=True,
         )
     ]
 
