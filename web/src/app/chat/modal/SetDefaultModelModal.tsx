@@ -7,6 +7,7 @@ import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces"
 import { destructureValue, structureValue } from "@/lib/llm/utils";
 import { setUserDefaultModel } from "@/lib/users/UserSettings";
 import { useRouter } from "next/navigation";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 
 export function SetDefaultModelModal({
   setPopup,
@@ -16,7 +17,7 @@ export function SetDefaultModelModal({
   defaultModel,
   refreshUser,
 }: {
-  setPopup: Dispatch<SetStateAction<Popup>>;
+  setPopup: Dispatch<SetStateAction<PopupSpec>>;
   llmProviders: LLMProviderDescriptor[];
   setLlmOverride: Dispatch<SetStateAction<LlmOverride>>;
   onClose: () => void;
