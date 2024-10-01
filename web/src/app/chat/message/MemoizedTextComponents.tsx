@@ -1,11 +1,7 @@
 import { Citation } from "@/components/search/results/Citation";
-import React, { memo, useRef } from "react";
+import React, { memo } from "react";
 
 export const MemoizedLink = memo((props: any) => {
-  const count = useRef(0);
-  console.log("link", count.current);
-  count.current++;
-
   const { node, ...rest } = props;
   const value = rest.children;
 
@@ -30,10 +26,6 @@ export const MemoizedLink = memo((props: any) => {
 });
 
 export const MemoizedParagraph = memo(({ content }: { content: string }) => {
-  const count = useRef(0);
-  console.log("paragraph", count.current);
-  count.current++;
-
   return <p className="text-default">{content}</p>;
 });
 

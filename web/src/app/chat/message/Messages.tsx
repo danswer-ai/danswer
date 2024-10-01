@@ -54,6 +54,7 @@ import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
 import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
+import { extractCodeText } from "./codeUtils";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -260,19 +261,11 @@ export const AIMessage = ({
         <MemoizedParagraph content={children?.toString() || ""} />
       ),
       code: ({ node, inline, className, children, ...props }: any) => {
-        // Extract code text from the node
-        let codeText = "";
-        if (
-          node?.position?.start?.offset != null &&
-          node?.position?.end?.offset != null
-        ) {
-          codeText = (content as string)
-            .slice(node.position.start.offset, node.position.end.offset)
-            .trim();
-        } else {
-          // Fallback if position offsets are not available
-          codeText = children?.toString() || "";
-        }
+        const codeText = extractCodeText(
+          node,
+          finalContent as string,
+          children
+        );
 
         return (
           <CodeBlock
