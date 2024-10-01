@@ -11,6 +11,7 @@ from ee.danswer.server.tenants.models import CreateTenantRequest
 from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
+from ee.danswer.server.tenants.provisioning import user_owns_a_tenant
 from shared_configs.configs import current_tenant_id
 
 logger = setup_logger()
@@ -24,6 +25,8 @@ def create_tenant(
     tenant_id = create_tenant_request.tenant_id
     email = create_tenant_request.initial_admin_email
     token = None
+    if user_owns_a_tenant(email):
+        raise HTTPException(status_code=409, detail="User already owns a tenant")
 
     try:
         if not MULTI_TENANT:
@@ -48,6 +51,8 @@ def create_tenant(
             "message": f"Tenant {tenant_id} created successfully",
         }
     except Exception as e:
+        print(e)
+        print(type(e))
         logger.exception(f"Failed to create tenant {tenant_id}: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Failed to create tenant: {str(e)}"

@@ -65,6 +65,16 @@ def ensure_schema_exists(tenant_id: str) -> bool:
             return False
 
 
+def user_owns_a_tenant(email: str) -> bool:
+    with get_session_with_tenant("public") as db_session:
+        result = (
+            db_session.query(UserTenantMapping)
+            .filter(UserTenantMapping.email == email)
+            .first()
+        )
+        return result is not None
+
+
 def add_users_to_tenant(emails: list[str], tenant_id: str) -> None:
     with get_session_with_tenant("public") as db_session:
         try:
