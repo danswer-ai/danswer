@@ -20,6 +20,33 @@ import { UserIcon } from "lucide-react";
 import { User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CustomModal } from "@/components/CustomModal";
+import { useToast } from "@/hooks/use-toast";
+import useSWRMutation from "swr/mutation";
+import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
+
+const RemoveUserButton = ({
+  user,
+  onSuccess,
+  onError,
+}: {
+  user: User;
+  onSuccess: () => void;
+  onError: () => void;
+}) => {
+  const { trigger } = useSWRMutation(
+    "/api/manage/admin/remove-invited-user",
+    userMutationFetcher,
+    { onSuccess, onError }
+  );
+  return (
+    <Button
+      variant="destructive"
+      onClick={() => trigger({ user_email: user.email })}
+    >
+      Uninvite User
+    </Button>
+  );
+};
 
 export const PendingInvites = ({ q }: { q: string }) => {
   const { toast } = useToast();
@@ -70,7 +97,7 @@ export const PendingInvites = ({ q }: { q: string }) => {
 
   const filteredUsers = finalInvited.filter(
     (user) =>
-      user.full_name!.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const onRemovalSuccess = () => {
