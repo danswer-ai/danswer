@@ -127,26 +127,24 @@ export const TeamspaceContent = ({
         </div>
       </div>
 
-      <div className="grid gap-8 grid-cols-[repeat(auto-fit,minmax(250px,1fr))] 2xl:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
-        {filteredTeamspaces.length > 0 ? (
-          <>
-            {filteredTeamspaces
-              .filter((teamspace) => !teamspace.is_up_for_deletion)
-              .map((teamspace) => {
-                return (
-                  <TeamspacesCard
-                    key={teamspace.id}
-                    onClick={onClick}
-                    teamspace={teamspace}
-                    refresh={refreshTeamspaces}
-                  />
-                );
-              })}
-          </>
-        ) : (
-          <div>No teamspaces match your search.</div>
-        )}
-      </div>
+      {filteredTeamspaces.length > 0 ? (
+        <div className="grid gap-8 grid-cols-[repeat(auto-fit,minmax(250px,1fr))] 2xl:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
+          {filteredTeamspaces
+            .filter((teamspace) => !teamspace.is_up_for_deletion)
+            .map((teamspace) => {
+              return (
+                <TeamspacesCard
+                  key={teamspace.id}
+                  onClick={onClick}
+                  teamspace={teamspace}
+                  refresh={refreshTeamspaces}
+                />
+              );
+            })}
+        </div>
+      ) : (
+        <div>No teamspaces match your search.</div>
+      )}
     </div>
   );
 };

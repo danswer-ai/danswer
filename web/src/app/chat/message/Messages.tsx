@@ -2,6 +2,7 @@
 
 import { FeedbackType } from "../types";
 import { useEffect, useRef, useState } from "react";
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import { EnmeddDocument } from "@/lib/search/interfaces";
 import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
