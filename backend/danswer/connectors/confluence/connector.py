@@ -627,7 +627,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             )
             unused_attachments.extend(unused_page_attachments)
 
-            page_text += attachment_text
+            page_text += "\n" + attachment_text if attachment_text else ""
             comments_text = self._fetch_comments(self.confluence_client, page_id)
             page_text += comments_text
             doc_metadata: dict[str, str | list[str]] = {"Wiki Space Name": self.space}

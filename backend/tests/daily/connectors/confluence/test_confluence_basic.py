@@ -41,7 +41,7 @@ def test_confluence_connector_basic(confluence_connector: ConfluenceConnector) -
     assert len(doc.sections) == 1
 
     section = doc.sections[0]
-    assert section.text == "test123small"
+    assert section.text == "test123\nsmall"
     assert (
         section.link
         == "https://danswerai.atlassian.net/wiki/spaces/DailyConne/overview"
