@@ -158,25 +158,16 @@ export function ChatPage({
   // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
   const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
 
-  // Assistants
-  const { visibleAssistants, hiddenAssistants: _ } = classifyAssistants(
-    user,
-    availableAssistants
-  );
-
-  const [finalAssistants, setFinalAssistants] = useState(visibleAssistants);
-
-  useEffect(() => {
-    const { visibleAssistants: updatedVisibleAssistants } = classifyAssistants(
+  // Assistants in order
+  const { finalAssistants } = useMemo(() => {
+    const { visibleAssistants, hiddenAssistants: _ } = classifyAssistants(
       user,
       availableAssistants
     );
-    setFinalAssistants(
-      user
-        ? orderAssistantsForUser(updatedVisibleAssistants, user)
-        : updatedVisibleAssistants
-    );
-    console.log(orderAssistantsForUser(updatedVisibleAssistants, user));
+    const finalAssistants = user
+      ? orderAssistantsForUser(visibleAssistants, user)
+      : visibleAssistants;
+    return { finalAssistants };
   }, [user, availableAssistants]);
 
   const existingChatSessionAssistantId = selectedChatSession?.persona_id;
