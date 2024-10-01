@@ -583,8 +583,8 @@ async def optional_user_(
 
 async def optional_user(
     request: Request,
-    user: User | None = Depends(optional_fastapi_current_user),
     db_session: Session = Depends(get_session),
+    user: User | None = Depends(optional_fastapi_current_user),
 ) -> User | None:
     versioned_fetch_user = fetch_versioned_implementation(
         "danswer.auth.users", "optional_user_"

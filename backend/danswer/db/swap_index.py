@@ -27,6 +27,7 @@ def check_index_swap(db_session: Session) -> None:
     search_settings = get_secondary_search_settings(db_session)
 
     if not search_settings:
+        print("No search settings found")
         return
 
     unique_cc_indexings = count_unique_cc_pairs_with_successful_index_attempts(
@@ -37,10 +38,13 @@ def check_index_swap(db_session: Session) -> None:
     # function is correct. The unique_cc_indexings are specifically for the existing cc-pairs
     if unique_cc_indexings > cc_pair_count:
         logger.error("More unique indexings than cc pairs, should not occur")
-
+    print("IN THIS FUNCTION")
+    print(cc_pair_count)
+    print(unique_cc_indexings)
     if cc_pair_count == 0 or cc_pair_count == unique_cc_indexings:
         # Swap indices
         now_old_search_settings = get_current_search_settings(db_session)
+        print("UPDATING SEARCH SETTINGS")
         update_search_settings_status(
             search_settings=now_old_search_settings,
             new_status=IndexModelStatus.PAST,
