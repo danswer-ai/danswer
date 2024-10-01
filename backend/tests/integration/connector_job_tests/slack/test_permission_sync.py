@@ -11,7 +11,6 @@ from danswer.search.enums import SearchType
 from danswer.search.models import RetrievalDetails
 from danswer.server.documents.models import DocumentSource
 from ee.danswer.server.query_and_chat.models import DocumentSearchRequest
-from tests.daily.connectors.slack.slack_api_utils import SlackManager
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.connector import ConnectorManager
@@ -23,6 +22,7 @@ from tests.integration.common_utils.test_models import DATestConnector
 from tests.integration.common_utils.test_models import DATestCredential
 from tests.integration.common_utils.test_models import DATestUser
 from tests.integration.common_utils.vespa import vespa_fixture
+from tests.integration.connector_job_tests.slack.slack_api_utils import SlackManager
 
 
 def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None:
