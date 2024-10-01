@@ -26,7 +26,11 @@ export async function fetchCustomAnalyticsScriptSS() {
   return fetchSS("/enterprise-settings/custom-analytics-script");
 }
 
-export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
+export async function fetchSettingsSS(): Promise<
+  | CombinedSettings
+  | { redirect: { destination: string; permanent: boolean } }
+  | null
+> {
   const tasks = [fetchStandardSettingsSS()];
   if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
     tasks.push(fetchEnterpriseSettingsSS());
@@ -40,6 +44,14 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
 
     let settings: Settings;
     if (!results[0].ok) {
+      if (results[0].status === 401) {
+        return {
+          redirect: {
+            destination: "/auth/login",
+            permanent: false,
+          },
+        };
+      }
       if (results[0].status === 403) {
         settings = {
           gpu_enabled: false,

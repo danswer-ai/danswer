@@ -38,6 +38,8 @@ const Page = async ({
 
   // simply take the user to the home page if Auth is disabled
   if (authTypeMetadata?.authType === "disabled") {
+    console.log("redirecting to /");
+    return <></>;
     return redirect("/");
   }
 
@@ -52,6 +54,8 @@ const Page = async ({
       return redirect("/auth/waiting-on-verification");
     }
 
+    console.log("redirecting to /");
+    return <></>;
     return redirect("/");
   }
 

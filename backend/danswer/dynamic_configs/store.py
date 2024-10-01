@@ -64,6 +64,10 @@ class PostgresBackedDynamicConfigStore(DynamicConfigStore):
         with Session(engine, expire_on_commit=False) as session:
             if MULTI_TENANT:
                 tenant_id = current_tenant_id.get()
+                if tenant_id == "public":
+                    raise HTTPException(
+                        status_code=401, detail="User must authenticate"
+                    )
                 if not is_valid_schema_name(tenant_id):
                     raise HTTPException(status_code=400, detail="Invalid tenant ID")
                 # Set the search_path to the tenant's schema
