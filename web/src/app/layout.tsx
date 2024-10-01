@@ -6,6 +6,7 @@ import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
 import { buildClientUrl } from "@/lib/utilsSS";
 import { Toaster } from "@/components/ui/toaster";
+import PageSwitcher from "@/components/PageSwitcher";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -59,6 +60,7 @@ export default async function RootLayout({
         <SettingsProvider settings={combinedSettings}>
           {children}
           <Toaster />
+          <PageSwitcher />
         </SettingsProvider>
       </body>
     </html>

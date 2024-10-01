@@ -1,7 +1,7 @@
-import { Modal } from "@/components/Modal";
-import { Text, Callout } from "@tremor/react";
+import { Callout } from "@tremor/react";
 import { EmbeddingModelDescriptor } from "./embeddingModels";
 import { Button } from "@/components/ui/button";
+import { CustomModal } from "@/components/CustomModal";
 
 export function ModelSelectionConfirmaion({
   selectedModel,
@@ -13,22 +13,22 @@ export function ModelSelectionConfirmaion({
   onConfirm: () => void;
 }) {
   return (
-    <div className="mb-4">
-      <Text className="text-lg mb-4">
+    <div className="space-y-2.5 pt-2">
+      <p>
         You have selected: <b>{selectedModel.model_name}</b>. Are you sure you
         want to update to this new embedding model?
-      </Text>
-      <Text className="text-lg mb-2">
+      </p>
+      <p>
         We will re-index all your documents in the background so you will be
         able to continue to use enMedD AI as normal with the old model in the
         meantime. Depending on how many documents you have indexed, this may
         take a while.
-      </Text>
-      <Text className="text-lg mb-2">
+      </p>
+      <p>
         <i>NOTE:</i> this re-indexing process will consume more resources than
         normal. If you are self-hosting, we recommend that you allocate at least
         16GB of RAM to enMedD AI during this process.
-      </Text>
+      </p>
 
       {isCustom && (
         <Callout title="IMPORTANT" color="yellow" className="mt-4">
@@ -41,7 +41,7 @@ export function ModelSelectionConfirmaion({
         </Callout>
       )}
 
-      <div className="flex mt-8">
+      <div className="flex pt-6">
         <Button className="mx-auto" onClick={onConfirm}>
           Confirm
         </Button>
@@ -62,14 +62,17 @@ export function ModelSelectionConfirmaionModal({
   onCancel: () => void;
 }) {
   return (
-    <Modal title="Update Embedding Model" onOutsideClick={onCancel}>
-      <div>
-        <ModelSelectionConfirmaion
-          selectedModel={selectedModel}
-          isCustom={isCustom}
-          onConfirm={onConfirm}
-        />
-      </div>
-    </Modal>
+    <CustomModal
+      open={!!selectedModel}
+      onClose={onCancel}
+      title="Update Embedding Model"
+      trigger={null}
+    >
+      <ModelSelectionConfirmaion
+        selectedModel={selectedModel}
+        isCustom={isCustom}
+        onConfirm={onConfirm}
+      />
+    </CustomModal>
   );
 }

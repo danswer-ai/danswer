@@ -230,8 +230,8 @@ export function ToolEditor({ tool }: { tool?: ToolSnapshot }) {
         }
         if (response.error) {
           toast({
-            title: "Error",
-            description: "Failed to create tool - " + response.error,
+            title: "Tool Creation Failed",
+            description: `Unable to create the tool: ${response.error}`,
             variant: "destructive",
           });
           return;

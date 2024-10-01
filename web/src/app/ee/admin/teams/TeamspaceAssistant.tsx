@@ -43,44 +43,7 @@ export const TeamspaceAssistant = ({ teamspace }: TeamspaceAssistantProps) => {
         open={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
       >
-        <div className="space-y-4">
-          <div>
-            <Label>Share link</Label>
-            <div className="flex items-center gap-2">
-              <Input />
-              <Button variant="outline" size="icon">
-                <Copy size={16} />
-              </Button>
-            </div>
-          </div>
-
-          <div>
-            <Label>Invite user</Label>
-            <div className="flex items-center gap-2">
-              <Input placeholder="Enter email" />
-              <Select>
-                <SelectTrigger className="w-full lg:w-64">
-                  <SelectValue placeholder="Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Label className="pt-1.5">
-              We&rsquo;ll send them instructions and a magic link to join the
-              workspace via email.
-            </Label>
-          </div>
-
-          <div className="flex gap-2 justify-end pt-6">
-            <Button variant="ghost" onClick={() => setIsInviteModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button>Send Invite</Button>
-          </div>
-        </div>
+        Add
       </CustomModal>
       <CustomModal
         trigger={
@@ -93,17 +56,20 @@ export const TeamspaceAssistant = ({ teamspace }: TeamspaceAssistantProps) => {
               {teamspace.assistants.length}
             </h3>
             {teamspace.assistants.length > 0 ? (
-              <div className="pt-4 flex flex-wrap -space-x-3">
-                {teamspace.assistants.map((assistant) => {
-                  return (
-                    <div
-                      key={assistant.id}
-                      className={`bg-primary w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg`}
-                    >
-                      {assistant.name!.charAt(0)}
-                    </div>
-                  );
-                })}
+              <div className="pt-8 flex flex-wrap -space-x-3">
+                {teamspace.assistants.slice(0, 8).map((teamspaceAssistant) => (
+                  <div
+                    key={teamspaceAssistant.id}
+                    className={`bg-primary w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase`}
+                  >
+                    {teamspaceAssistant.name!.charAt(0)}
+                  </div>
+                ))}
+                {teamspace.assistants.length > 8 && (
+                  <div className="bg-background w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold">
+                    +{teamspace.assistants.length - 8}
+                  </div>
+                )}
               </div>
             ) : (
               <p>There are no asssitant.</p>

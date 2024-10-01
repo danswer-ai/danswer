@@ -36,14 +36,14 @@ function ReIndexPopup({
     );
     if (errorMsg) {
       toast({
-        title: "Error",
-        description: errorMsg,
+        title: "Connector Run Failed",
+        description: `An error occurred while triggering the connector: ${errorMsg}`,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Success",
-        description: "Triggered connector run",
+        title: "Connector Run Successful",
+        description: "The connector has been triggered successfully.",
         variant: "success",
       });
     }

@@ -50,15 +50,17 @@ export const FeedbackModal = ({
   const handleSubmit = () => {
     if (onSubmit) {
       onSubmit({ message, predefinedFeedback });
+      setMessage("");
+      setPredefinedFeedback(undefined);
+      onModalClose();
+      if (onClose) {
+        onClose();
+      }
     }
-    if (onClose) {
-      onClose();
-    }
-    onModalClose();
   };
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <Textarea
         autoFocus
         role="textarea"

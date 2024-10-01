@@ -17,7 +17,7 @@ export const EnterEmail = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   return (
-    <div className="w-full">
+    <div className="md:w-[500px] w-full">
       {isLoading && <Spinner />}
       <div className="flex items-center justify-center">
         <div className="bg-primary p-3 rounded-md">

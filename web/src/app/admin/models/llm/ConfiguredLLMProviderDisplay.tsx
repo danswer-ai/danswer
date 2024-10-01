@@ -81,8 +81,8 @@ function LLMProviderDisplay({
               if (!response.ok) {
                 const errorMsg = (await response.json()).detail;
                 toast({
-                  title: "Error",
-                  description: `Failed to set provider as default: ${errorMsg}`,
+                  title: "Failed to Set Default Provider",
+                  description: `Unable to set "${existingLlmProvider.name}" as the default provider: ${errorMsg}`,
                   variant: "destructive",
                 });
                 return;
@@ -90,8 +90,8 @@ function LLMProviderDisplay({
 
               mutate(LLM_PROVIDERS_ADMIN_URL);
               toast({
-                title: "Success",
-                description: "Provider set as default successfully!",
+                title: "Default Provider Set",
+                description: `"${existingLlmProvider.name}" is now the default provider!`,
                 variant: "success",
               });
             }}

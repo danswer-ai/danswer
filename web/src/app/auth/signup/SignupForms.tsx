@@ -87,7 +87,7 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
               errorMsg = "An account already exist with the specified email.";
             }
             toast({
-              title: "Error",
+              title: "Sign Up Failed",
               description: `Failed to sign up - ${errorMsg}`,
               variant: "destructive",
             });

@@ -7,6 +7,7 @@ import {
   FolderPlus,
   Plus,
   PanelLeftClose,
+  Command,
 } from "lucide-react";
 import { useContext, useEffect } from "react";
 import Link from "next/link";
@@ -95,30 +96,39 @@ export const ChatSidebar = ({
 
         <div className="h-full overflow-y-auto">
           <div className="px-4 text-sm font-medium flex flex-col">
+            <Separator className="mb-4" />
             {settings.search_page_enabled && (
-              <>
-                <Separator className="mb-4" />
-                <Link
-                  href="/search"
-                  className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
-                >
+              <Link
+                href="/search"
+                className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 justify-between"
+              >
+                <div className="flex items-center gap-2">
                   <Search size={16} className="shrink-0" />
                   Search
-                </Link>
-              </>
+                </div>
+                <div className="flex items-center gap-1 font-normal">
+                  <Command size={14} />S
+                </div>
+              </Link>
             )}
             {settings.chat_page_enabled && (
               <>
                 <Link
                   href="/chat"
-                  className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
+                  className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 justify-between ${
                     !isAssistant
                       ? "bg-primary text-white"
                       : "hover:bg-hover-light"
                   }`}
                 >
-                  <MessageCircleMore size={16} className="shrink-0" />
-                  Chat
+                  <div className="flex items-center gap-2">
+                    <MessageCircleMore size={16} className="shrink-0" />
+                    Chat
+                  </div>
+
+                  <div className="flex items-center gap-1 font-normal">
+                    <Command size={14} />D
+                  </div>
                 </Link>
                 {combinedSettings.featureFlags.explore_assistants && (
                   <Link
@@ -179,8 +189,8 @@ export const ChatSidebar = ({
                       .catch((error) => {
                         console.error("Failed to create folder:", error);
                         toast({
-                          title: "Error",
-                          description: `Failed to create folder: ${error.message}`,
+                          title: "Folder Creation Failed",
+                          description: `Unable to create the folder: ${error.message}. Please try again.`,
                           variant: "destructive",
                         });
                       })

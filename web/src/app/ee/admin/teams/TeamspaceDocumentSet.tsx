@@ -4,15 +4,6 @@ import { CustomModal } from "@/components/CustomModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Teamspace } from "@/lib/types";
 import { BookmarkIcon, Copy, Globe, Plus } from "lucide-react";
 import { useState } from "react";
@@ -44,44 +35,7 @@ export const TeamspaceDocumentSet = ({
         open={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
       >
-        <div className="space-y-4">
-          <div>
-            <Label>Share link</Label>
-            <div className="flex items-center gap-2">
-              <Input />
-              <Button variant="outline" size="icon">
-                <Copy size={16} />
-              </Button>
-            </div>
-          </div>
-
-          <div>
-            <Label>Invite user</Label>
-            <div className="flex items-center gap-2">
-              <Input placeholder="Enter email" />
-              <Select>
-                <SelectTrigger className="w-full lg:w-64">
-                  <SelectValue placeholder="Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Label className="pt-1.5">
-              We&rsquo;ll send them instructions and a magic link to join the
-              workspace via email.
-            </Label>
-          </div>
-
-          <div className="flex gap-2 justify-end pt-6">
-            <Button variant="ghost" onClick={() => setIsInviteModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button>Send Invite</Button>
-          </div>
-        </div>
+        Add
       </CustomModal>
       <CustomModal
         trigger={
@@ -95,7 +49,7 @@ export const TeamspaceDocumentSet = ({
             </h3>
 
             {teamspace.document_sets.length > 0 ? (
-              <div className="pt-4 flex flex-wrap gap-2">
+              <div className="pt-8 flex flex-wrap gap-2">
                 {teamspace.document_sets.map((documentSet) => {
                   return (
                     <Badge key={documentSet.id}>
@@ -121,10 +75,10 @@ export const TeamspaceDocumentSet = ({
                 key={document.id}
                 className="border rounded-md flex p-4 gap-4"
               >
-                <Globe />
+                <Globe className="shrink-0" />
                 <div className="w-full">
                   <div className="flex items-center justify-between w-full">
-                    <h3>{document.name}</h3>
+                    <h3 className="line-clamp">{document.name}</h3>
                     <Checkbox />
                   </div>
                   <p className="text-sm pt-2 line-clamp">

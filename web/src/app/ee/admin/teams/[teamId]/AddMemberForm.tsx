@@ -41,8 +41,9 @@ export const AddMemberForm: React.FC<AddMemberFormProps> = ({
           });
           if (response.ok) {
             toast({
-              title: "Success",
-              description: "Successfully added users to group",
+              title: "Users Added Successfully!",
+              description:
+                "The selected users have been successfully added to the group.",
               variant: "success",
             });
             onClose();
@@ -50,8 +51,8 @@ export const AddMemberForm: React.FC<AddMemberFormProps> = ({
             const responseJson = await response.json();
             const errorMsg = responseJson.detail || responseJson.message;
             toast({
-              title: "Error",
-              description: `Failed to add users to group - ${errorMsg}`,
+              title: "Operation Failed",
+              description: `Unable to add users to the group: ${errorMsg}. Please try again.`,
               variant: "destructive",
             });
             onClose();

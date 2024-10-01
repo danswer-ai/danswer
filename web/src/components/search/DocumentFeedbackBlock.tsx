@@ -76,14 +76,15 @@ const DocumentFeedback = ({
         );
         if (!errorMsg) {
           toast({
-            title: "Success",
-            description: "Thanks for your feedback!",
+            title: "Feedback Submitted!",
+            description:
+              "Thank you for your feedback! We appreciate your input.",
             variant: "success",
           });
         } else {
           toast({
-            title: "Error",
-            description: `Error giving feedback - ${errorMsg}`,
+            title: "Feedback Submission Failed",
+            description: `Unable to submit feedback: ${errorMsg}. Please try again.`,
             variant: "destructive",
           });
         }

@@ -90,7 +90,7 @@ export function CustomLLMProviderUpdateForm({
         if (values.model_names.length === 0) {
           const fullErrorMsg = "At least one model name is required";
           toast({
-            title: "Error",
+            title: "Model Name Required",
             description: fullErrorMsg,
             variant: "destructive",
           });
@@ -135,10 +135,11 @@ export function CustomLLMProviderUpdateForm({
         if (!response.ok) {
           const errorMsg = (await response.json()).detail;
           const fullErrorMsg = existingLlmProvider
-            ? `Failed to update provider: ${errorMsg}`
-            : `Failed to enable provider: ${errorMsg}`;
+            ? `Error updating provider: ${errorMsg}`
+            : `Error enabling provider: ${errorMsg}`;
+
           toast({
-            title: "Error",
+            title: "Operation Failed",
             description: fullErrorMsg,
             variant: "destructive",
           });
@@ -155,9 +156,9 @@ export function CustomLLMProviderUpdateForm({
           );
           if (!setDefaultResponse.ok) {
             const errorMsg = (await setDefaultResponse.json()).detail;
-            const fullErrorMsg = `Failed to set provider as default: ${errorMsg}`;
+            const fullErrorMsg = `Could not set "${newLlmProvider.name}" as the default provider: ${errorMsg}`;
             toast({
-              title: "Error",
+              title: "Default Provider Update Failed",
               description: fullErrorMsg,
               variant: "destructive",
             });
@@ -172,7 +173,7 @@ export function CustomLLMProviderUpdateForm({
           ? "Provider updated successfully!"
           : "Provider enabled successfully!";
         toast({
-          title: "Success",
+          title: "Operation Successful",
           description: successMsg,
           variant: "success",
         });

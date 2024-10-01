@@ -19,8 +19,8 @@ export const ScoreSection = ({
     const numericScore = Number(value);
     if (isNaN(numericScore)) {
       toast({
-        title: "Error",
-        description: "Score must be a number",
+        title: "Invalid Input",
+        description: "Please enter a valid number for the score.",
         variant: "destructive",
       });
       return false;
@@ -29,15 +29,15 @@ export const ScoreSection = ({
     const errorMsg = await updateBoost(documentId, numericScore);
     if (errorMsg) {
       toast({
-        title: "Error",
+        title: "Update Failed",
         description: errorMsg,
         variant: "destructive",
       });
       return false;
     } else {
       toast({
-        title: "Success",
-        description: "Updated score!",
+        title: "Score Updated",
+        description: "The score has been successfully updated.",
         variant: "success",
       });
       refresh();

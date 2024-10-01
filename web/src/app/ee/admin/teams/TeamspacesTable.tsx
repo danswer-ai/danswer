@@ -169,15 +169,15 @@ export const TeamspacesTable = ({
                           const response = await deleteTeamspace(teamspace.id);
                           if (response.ok) {
                             toast({
-                              title: "Success",
-                              description: `Teamspace "${teamspace.name}" deleted`,
+                              title: "Teamspace Deleted!",
+                              description: `Successfully deleted the teamspace: "${teamspace.name}".`,
                               variant: "success",
                             });
                           } else {
                             const errorMsg = (await response.json()).detail;
                             toast({
-                              title: "Error",
-                              description: `Failed to delete Teamspace - ${errorMsg}`,
+                              title: "Deletion Error",
+                              description: `Failed to delete the teamspace: ${errorMsg}. Please try again.`,
                               variant: "destructive",
                             });
                           }

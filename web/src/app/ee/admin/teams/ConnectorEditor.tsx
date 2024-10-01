@@ -1,100 +1,38 @@
-/* import { ConnectorIndexingStatus } from "@/lib/types";
-import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
-import { Badge } from "@/components/ui/badge";
-
-interface ConnectorEditorProps {
-  selectedCCPairIds: number[];
-  setSetCCPairIds: (ccPairId: number[]) => void;
-  allCCPairs: ConnectorIndexingStatus<any, any>[];
-}
-
-export const ConnectorEditor = ({
-  selectedCCPairIds,
-  setSetCCPairIds,
-  allCCPairs,
-}: ConnectorEditorProps) => {
-  return (
-    <div className="flex gap-2 flex-wrap">
-      {allCCPairs.map((ccPair) => {
-        const ind = selectedCCPairIds.indexOf(ccPair.cc_pair_id);
-        let isSelected = ind !== -1;
-        return (
-          <Badge
-            key={`${ccPair.connector.id}-${ccPair.credential.id}`}
-            className="cursor-pointer hover:bg-opacity-80"
-            variant={isSelected ? "default" : "outline"}
-            onClick={() => {
-              if (isSelected) {
-                setSetCCPairIds(
-                  selectedCCPairIds.filter(
-                    (ccPairId) => ccPairId !== ccPair.cc_pair_id
-                  )
-                );
-              } else {
-                setSetCCPairIds([...selectedCCPairIds, ccPair.cc_pair_id]);
-              }
-            }}
-          >
-            <ConnectorTitle
-              connector={ccPair.connector}
-              ccPairId={ccPair.cc_pair_id}
-              ccPairName={ccPair.name}
-              isLink={false}
-              showMetadata={false}
-            />
-          </Badge>
-        );
-      })}
-    </div>
-  );
-}; */
+import React from "react";
 import { ConnectorIndexingStatus } from "@/lib/types";
-import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
-import { Badge } from "@/components/ui/badge";
+import { Combobox } from "@/components/Combobox";
 
 interface ConnectorEditorProps {
-  selectedCCPairIds: number[];
-  setSetCCPairIds: (ccPairId: number[]) => void;
   allCCPairs: ConnectorIndexingStatus<any, any>[];
+  selectedCCPairIds: number[];
+  setSetCCPairIds: (ccPairIds: number[]) => void;
 }
 
-export const ConnectorEditor = ({
+export const ConnectorEditor: React.FC<ConnectorEditorProps> = ({
+  allCCPairs,
   selectedCCPairIds,
   setSetCCPairIds,
-  allCCPairs,
-}: ConnectorEditorProps) => {
+}) => {
+  const items = allCCPairs
+    .filter((ccPair) => ccPair.public_doc)
+    .map((ccPair) => ({
+      value: ccPair.cc_pair_id.toString(),
+      label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,
+    }));
+
+  const handleSelect = (selectedValues: string[]) => {
+    const selectedIds = selectedValues.map((value) => parseInt(value));
+    setSetCCPairIds(selectedIds);
+  };
+
   return (
-    <div className="flex gap-2 flex-wrap">
-      {allCCPairs.map((ccPair) => {
-        const ind = selectedCCPairIds.indexOf(ccPair.cc_pair_id);
-        let isSelected = ind !== -1;
-        return (
-          <Badge
-            key={`${ccPair.connector.id}-${ccPair.credential.id}`}
-            className="cursor-pointer hover:bg-opacity-80 max-w-[200px]"
-            variant={isSelected ? "default" : "outline"}
-            onClick={() => {
-              if (isSelected) {
-                setSetCCPairIds(
-                  selectedCCPairIds.filter(
-                    (ccPairId) => ccPairId !== ccPair.cc_pair_id
-                  )
-                );
-              } else {
-                setSetCCPairIds([...selectedCCPairIds, ccPair.cc_pair_id]);
-              }
-            }}
-          >
-            <ConnectorTitle
-              connector={ccPair.connector}
-              ccPairId={ccPair.cc_pair_id}
-              ccPairName={ccPair.name}
-              isLink={false}
-              showMetadata={false}
-            />
-          </Badge>
-        );
-      })}
+    <div>
+      <Combobox
+        items={items}
+        onSelect={handleSelect}
+        placeholder="Select connectors"
+        label="Select Connectors"
+      />
     </div>
   );
 };

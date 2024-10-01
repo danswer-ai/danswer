@@ -95,11 +95,17 @@ export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
                             onClick={async () => {
                               const response = await deleteCustomTool(tool.id);
                               if (response.data) {
+                                toast({
+                                  title: "Tool Deleted",
+                                  description:
+                                    "The custom tool has been successfully deleted.",
+                                  variant: "success",
+                                });
                                 router.refresh();
                               } else {
                                 toast({
-                                  title: "Error",
-                                  description: `Failed to delete tool - ${response.error}`,
+                                  title: "Deletion Failed",
+                                  description: `Unable to delete the tool: ${response.error}`,
                                   variant: "destructive",
                                 });
                               }

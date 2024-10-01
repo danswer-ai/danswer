@@ -7,7 +7,7 @@ import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
 import { deleteAssistant, assistantComparator } from "./lib";
 import { TrashIcon } from "@/components/icons/icons";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -69,8 +69,8 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
     });
     if (!response.ok) {
       toast({
-        title: "Error",
-        description: `Failed to update assistant order - ${await response.text()}`,
+        title: "Failed to Update Assistant Order",
+        description: `There was an issue updating the assistant order. Details: ${await response.text()}`,
         variant: "destructive",
       });
       router.refresh();
@@ -107,10 +107,7 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                       {assistant.name}
                     </p>
                   </div>,
-                  <p
-                    key="description"
-                    className="whitespace-normal break-all max-w-2xl"
-                  >
+                  <p key="description" className="whitespace-normal max-w-2xl">
                     {assistant.description}
                   </p>,
                   <AssistantTypeDisplay
@@ -133,11 +130,17 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                         }
                       );
                       if (response.ok) {
+                        toast({
+                          title: "Visibility Updated",
+                          description: `The visibility of "${assistant.name}" has been successfully updated.`,
+                          variant: "success",
+                        });
+
                         router.refresh();
                       } else {
                         toast({
-                          title: "Error",
-                          description: `Failed to update assistant - ${await response.text()}`,
+                          title: "Failed to Update Assistant Visibility",
+                          description: `Unable to update visibility for "${assistant.name}". Details: ${await response.text()}`,
                           variant: "destructive",
                         });
                       }
@@ -173,9 +176,8 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                                   );
                                 }
                               }}
-                              asChild
                             >
-                              <TrashIcon />
+                              <Trash size={16} />
                             </Button>
                           }
                           asChild

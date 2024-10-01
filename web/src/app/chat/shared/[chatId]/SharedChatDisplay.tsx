@@ -19,7 +19,7 @@ function BackToEnmeddButton() {
   const router = useRouter();
 
   return (
-    <div className="absolute bottom-4 w-full flex border-t border-border pt-4">
+    <div className="fixed bottom-0 w-full flex border-t border-border py-4 bg-background">
       <div className="mx-auto">
         <Button onClick={() => router.push("/chat")}>Back to Chat</Button>
       </div>
@@ -56,47 +56,41 @@ export function SharedChatDisplay({
   );
 
   return (
-    <div className="w-full overflow-hidden">
-      <div className="flex max-h-full overflow-hidden pb-[72px]">
-        <div className="flex w-full overflow-hidden overflow-y-scroll">
-          <div className="mx-auto">
-            <div className="px-5 pt-8">
-              <h1 className="text-3xl text-strong font-bold">
-                {chatSession.description ||
-                  `Chat ${chatSession.chat_session_id}`}
-              </h1>
-              <p className="">
-                {humanReadableFormat(chatSession.time_created)}
-              </p>
+    <div className="w-full overflow-y-auto">
+      <div className="container">
+        <div>
+          <h1 className="text-2xl xl:text-3xl text-strong font-bold">
+            {chatSession.description || `Chat ${chatSession.chat_session_id}`}
+          </h1>
+          <p className="pt-2">
+            {humanReadableFormat(chatSession.time_created)}
+          </p>
+          <Divider />
+        </div>
 
-              <Divider />
-            </div>
-
-            <div className="pb-16">
-              {messages.map((message) => {
-                if (message.type === "user") {
-                  return (
-                    <HumanMessage
-                      key={message.messageId}
-                      content={message.message}
-                    />
-                  );
-                } else {
-                  return (
-                    <AIMessage
-                      currentAssistant={currentAssistant!}
-                      key={message.messageId}
-                      messageId={message.messageId}
-                      content={message.message}
-                      assistantName={chatSession.assistant_name}
-                      citedDocuments={getCitedDocumentsFromMessage(message)}
-                      isComplete
-                    />
-                  );
-                }
-              })}
-            </div>
-          </div>
+        <div className="pb-16">
+          {messages.map((message) => {
+            if (message.type === "user") {
+              return (
+                <HumanMessage
+                  key={message.messageId}
+                  content={message.message}
+                />
+              );
+            } else {
+              return (
+                <AIMessage
+                  currentAssistant={currentAssistant!}
+                  key={message.messageId}
+                  messageId={message.messageId}
+                  content={message.message}
+                  assistantName={chatSession.assistant_name}
+                  citedDocuments={getCitedDocumentsFromMessage(message)}
+                  isComplete
+                />
+              );
+            }
+          })}
         </div>
       </div>
 

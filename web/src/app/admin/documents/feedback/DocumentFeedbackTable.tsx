@@ -122,13 +122,17 @@ export const DocumentFeedbackTable = ({
                           document={document}
                           onUpdate={async (response) => {
                             if (response.ok) {
+                              toast({
+                                title: "Status Updated",
+                                description:
+                                  "The visibility status has been successfully updated.",
+                                variant: "success",
+                              });
                               refresh();
                             } else {
                               toast({
-                                title: "Error",
-                                description: `Error updating hidden status - ${getErrorMsg(
-                                  response
-                                )}`,
+                                title: "Update Failed",
+                                description: `Unable to update hidden status - ${getErrorMsg(response)}`,
                                 variant: "destructive",
                               });
                             }

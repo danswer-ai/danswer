@@ -140,16 +140,15 @@ export function SingleUseConnectorsTable<
                         );
                       if (deletionScheduleError) {
                         toast({
-                          title: "Error",
-                          description:
-                            "Failed to schedule deletion of connector - " +
-                            deletionScheduleError,
+                          title: "Deletion Scheduling Failed",
+                          description: `Unable to schedule deletion of the connector: ${deletionScheduleError}. Please try again.`,
                           variant: "destructive",
                         });
                       } else {
                         toast({
-                          title: "Success",
-                          description: "Scheduled deletion of connector!",
+                          title: "Deletion Scheduled Successfully!",
+                          description:
+                            "The connector has been scheduled for deletion.",
                           variant: "success",
                         });
                       }

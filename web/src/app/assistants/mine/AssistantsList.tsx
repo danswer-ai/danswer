@@ -154,15 +154,15 @@ function AssistantListItem({
                   );
                   if (success) {
                     toast({
-                      title: "Success",
-                      description: `"${assistant.name}" has been moved up.`,
+                      title: "Move Successful",
+                      description: `"${assistant.name}" has been successfully moved up the list.`,
                       variant: "success",
                     });
                     router.refresh();
                   } else {
                     toast({
-                      title: "Error",
-                      description: `"${assistant.name}" could not be moved up.`,
+                      title: "Move Failed",
+                      description: `Unable to move "${assistant.name}" up the list. Please try again.`,
                       variant: "destructive",
                     });
                   }
@@ -180,15 +180,15 @@ function AssistantListItem({
                   );
                   if (success) {
                     toast({
-                      title: "Success",
-                      description: `"${assistant.name}" has been moved down.`,
+                      title: "Move Successful",
+                      description: `"${assistant.name}" has been successfully moved down the list.`,
                       variant: "success",
                     });
                     router.refresh();
                   } else {
                     toast({
-                      title: "Error",
-                      description: `"${assistant.name}" could not be moved down.`,
+                      title: "Move Failed",
+                      description: `Unable to move "${assistant.name}" down the list. Please try again.`,
                       variant: "destructive",
                     });
                   }
@@ -205,8 +205,8 @@ function AssistantListItem({
                     currentChosenAssistants.length === 1
                   ) {
                     toast({
-                      title: "Error",
-                      description: `Cannot remove "${assistant.name}" - you must have at least one assistant.`,
+                      title: "Removal Error",
+                      description: `You need at least one assistant in your list. Cannot remove "${assistant.name}".`,
                       variant: "destructive",
                     });
                     return;
@@ -218,15 +218,15 @@ function AssistantListItem({
                   );
                   if (success) {
                     toast({
-                      title: "Success",
-                      description: `"${assistant.name}" has been removed from your list.`,
+                      title: "Removal Successful",
+                      description: `"${assistant.name}" has been successfully removed from your list.`,
                       variant: "success",
                     });
                     router.refresh();
                   } else {
                     toast({
-                      title: "Error",
-                      description: `"${assistant.name}" could not be removed from your list.`,
+                      title: "Removal Failed",
+                      description: `Unable to remove "${assistant.name}" from your list. Please try again.`,
                       variant: "destructive",
                     });
                   }
@@ -243,15 +243,15 @@ function AssistantListItem({
                   );
                   if (success) {
                     toast({
-                      title: "Success",
-                      description: `"${assistant.name}" has been added to your list.`,
+                      title: "Addition Successful",
+                      description: `"${assistant.name}" has been successfully added to your list.`,
                       variant: "success",
                     });
                     router.refresh();
                   } else {
                     toast({
-                      title: "Error",
-                      description: `"${assistant.name}" could not be added to your list.`,
+                      title: "Addition Failed",
+                      description: `Unable to add "${assistant.name}" to your list. Please try again.`,
                       variant: "destructive",
                     });
                   }

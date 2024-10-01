@@ -45,8 +45,9 @@ export function ChatTab({
         router.refresh(); // Refresh the page to reflect the changes
       } catch (error) {
         toast({
-          title: "Error",
-          description: "Failed to remove chat from folder",
+          title: "Removal Failed",
+          description:
+            "Unable to remove the chat from the folder. Please try again.",
           variant: "destructive",
         });
       }

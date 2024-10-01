@@ -133,33 +133,35 @@ export function SourceSelector({
         <div className="lg:border rounded-[8px] w-full px-2.5">
           <SectionTitle>Knowledge Sets</SectionTitle>
           <div>
-            {availableDocumentSets.map((documentSet) => (
-              <div
-                key={documentSet.name}
-                className="w-full flex items-center justify-between cursor-pointer gap-2 border-t"
-              >
-                <label
-                  htmlFor={documentSet.name}
-                  className="flex items-center w-full px-2 py-3"
-                  onClick={() => handleDocumentSetSelect(documentSet.name)}
+            {availableDocumentSets
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((documentSet) => (
+                <div
+                  key={documentSet.name}
+                  className="w-full flex items-center justify-between cursor-pointer gap-2 border-t"
                 >
-                  <CustomTooltip
-                    trigger={
-                      <div className="flex my-auto mr-3">
-                        <Brain size={18} />
-                      </div>
-                    }
+                  <label
+                    htmlFor={documentSet.name}
+                    className="flex items-center w-full px-2 py-3"
+                    onClick={() => handleDocumentSetSelect(documentSet.name)}
                   >
-                    <div className="text-sm">
-                      <div className="flex font-medium">Description</div>
-                      <div className="mt-1">{documentSet.description}</div>
-                    </div>
-                  </CustomTooltip>
-                  <span className="text-sm">{documentSet.name}</span>
-                </label>
-                <Checkbox id={documentSet.name} />
-              </div>
-            ))}
+                    <CustomTooltip
+                      trigger={
+                        <div className="flex my-auto mr-3">
+                          <Brain size={18} />
+                        </div>
+                      }
+                    >
+                      <div className="text-sm">
+                        <div className="flex font-medium">Description</div>
+                        <div className="mt-1">{documentSet.description}</div>
+                      </div>
+                    </CustomTooltip>
+                    <span className="text-sm">{documentSet.name}</span>
+                  </label>
+                  <Checkbox id={documentSet.name} />
+                </div>
+              ))}
           </div>
         </div>
       )}

@@ -4,6 +4,8 @@ import { TeamspaceAssistant } from "./TeamspaceAssistant";
 import { TeamspaceDocumentSet } from "./TeamspaceDocumentSet";
 import { TeamspaceDataSource } from "./TeamspaceDataSource";
 import { Shield } from "lucide-react";
+import useSWR from "swr";
+import { errorHandlingFetcher } from "@/lib/fetcher";
 
 interface TeamspaceSidebarContentProps {
   teamspace: Teamspace & { gradient: string };
@@ -14,6 +16,13 @@ export const TeamspaceSidebarContent = ({
   teamspace,
   selectedTeamspaceId,
 }: TeamspaceSidebarContentProps) => {
+  const { data, isLoading, error } = useSWR(
+    `/api/admin/token-rate-limits/teamspace/${teamspace.id}`,
+    errorHandlingFetcher
+  );
+
+  const tokenRate = data && data.length > 0 ? data[0] : null;
+
   return (
     <>
       <div style={{ background: teamspace.gradient }} className="h-40 relative">
@@ -37,7 +46,9 @@ export const TeamspaceSidebarContent = ({
           </span>
           <span className="text-center pt-4 font-bold text-sm flex items-center gap-1">
             <Shield size={16} />
-            10231 Token rate
+            {tokenRate
+              ? `${tokenRate.token_budget} Token Rate`
+              : "No Token Rate"}
           </span>
           <p className="text-center text-subtle pt-4 text-sm">
             Lorem ipsum dolor, sit amet consectetur adipisicing elit.

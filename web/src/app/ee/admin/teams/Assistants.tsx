@@ -1,26 +1,35 @@
-import { ConnectorIndexingStatus } from "@/lib/types";
-import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
-import { Badge } from "@/components/ui/badge";
+import React from "react";
+import { Combobox } from "@/components/Combobox";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 
 interface AssistantsProps {
   assistants: Assistant[];
+  onSelect: (selectedValues: string[]) => void;
 }
 
-export const Assistants = ({ assistants }: AssistantsProps) => {
+export const Assistants: React.FC<AssistantsProps> = ({
+  assistants,
+  onSelect,
+}) => {
+  const items = assistants
+    .filter((assistant) => assistant.is_public)
+    .map((assistant) => ({
+      value: assistant.id.toString(),
+      label: assistant.name,
+    }));
+
+  const handleSelect = (selectedValues: string[]) => {
+    onSelect(selectedValues);
+  };
+
   return (
-    <div className="mb-3 flex gap-2 flex-wrap">
-      {assistants.map((assistant, i) => {
-        return (
-          <Badge
-            key={i}
-            className="cursor-pointer hover:bg-opacity-80"
-            variant="outline"
-          >
-            {assistant.name}
-          </Badge>
-        );
-      })}
+    <div>
+      <Combobox
+        items={items}
+        onSelect={handleSelect}
+        placeholder="Select assistants"
+        label="Select assistants"
+      />
     </div>
   );
 };

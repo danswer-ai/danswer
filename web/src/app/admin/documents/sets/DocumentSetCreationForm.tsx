@@ -90,20 +90,22 @@ export const DocumentSetCreationForm = ({
           formikHelpers.setSubmitting(false);
           if (response.ok) {
             toast({
-              title: isUpdate ? "Update Successful" : "Creation Successful",
+              title: isUpdate
+                ? "Document Set Updated"
+                : "New Document Set Created",
               description: isUpdate
-                ? "Successfully updated document set!"
-                : "Successfully created document set!",
+                ? "Your document set has been updated successfully."
+                : "Your new document set has been created successfully.",
               variant: "success",
             });
             onClose();
           } else {
             const errorMsg = await response.text();
             toast({
-              title: "Error",
+              title: "Action Failed",
               description: isUpdate
-                ? `Error updating document set - ${errorMsg}`
-                : `Error creating document set - ${errorMsg}`,
+                ? `Failed to update document set: ${errorMsg}`
+                : `Failed to create document set: ${errorMsg}`,
               variant: "destructive",
             });
           }
@@ -227,10 +229,8 @@ export const DocumentSetCreationForm = ({
                                   }
                                 }}
                               >
-                                <div className="my-auto flex">
-                                  <Users className="my-auto mr-2" />{" "}
-                                  {teamspace.name}
-                                </div>
+                                <Users className="my-auto mr-2" size={14} />
+                                {teamspace.name}
                               </Badge>
                             );
                           })}

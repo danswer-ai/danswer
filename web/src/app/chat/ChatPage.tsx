@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
@@ -682,7 +683,7 @@ export function ChatPage({
       : null;
     if (!messageToResend && messageIdToResend !== undefined) {
       toast({
-        title: "Error",
+        title: "Message Resend Failed",
         description:
           "Failed to re-send message - please refresh the page and try again.",
         variant: "destructive",
@@ -967,16 +968,16 @@ export function ChatPage({
 
     if (response.ok) {
       toast({
-        title: "Success",
-        description: "Thanks for your feedback!",
+        title: "Feedback Submitted",
+        description: "Thank you for sharing your thoughts with us!",
         variant: "success",
       });
     } else {
       const responseJson = await response.json();
       const errorMsg = responseJson.detail || responseJson.message;
       toast({
-        title: "Error",
-        description: `Failed to submit feedback - ${errorMsg}`,
+        title: "Submission Failed",
+        description: `We're sorry, but we couldn't submit your feedback: ${errorMsg}`,
         variant: "destructive",
       });
     }
@@ -1005,9 +1006,9 @@ export function ChatPage({
     );
     if (imageFiles.length > 0 && !llmAcceptsImages) {
       toast({
-        title: "Error",
+        title: "Unsupported Input",
         description:
-          "The current Assistant does not support image input. Please select an assistant with Vision support.",
+          "The current Assistant does not support image input. Please choose an assistant that has Vision capabilities.",
         variant: "destructive",
       });
       return;
@@ -1037,8 +1038,8 @@ export function ChatPage({
       if (error) {
         setCurrentMessageFiles((prev) => removeTempFiles(prev));
         toast({
-          title: "Error",
-          description: error,
+          title: "Upload Failed",
+          description: `Unable to upload files: ${error}`,
           variant: "destructive",
         });
       } else {
@@ -1165,7 +1166,7 @@ export function ChatPage({
 
                     {liveAssistant && (
                       <div className="relative z-top-bar shrink-0">
-                        <div className="flex w-full items-start p-5 justify-between">
+                        <div className="flex w-full items-start p-4 justify-between">
                           <div className="flex lg:hidden items-center gap-2">
                             <Button
                               variant="ghost"
@@ -1408,9 +1409,9 @@ export function ChatPage({
                                       ? (newQuery) => {
                                           if (!previousMessage) {
                                             toast({
-                                              title: "Error",
+                                              title: "Editing Error",
                                               description:
-                                                "Cannot edit query of first message - please refresh the page and try again.",
+                                                "You cannot edit the query of the first message. Please refresh the page and try again.",
                                               variant: "destructive",
                                             });
                                             return;
@@ -1420,9 +1421,9 @@ export function ChatPage({
                                             previousMessage.messageId === null
                                           ) {
                                             toast({
-                                              title: "Error",
+                                              title: "Pending Message",
                                               description:
-                                                "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                                "You cannot edit the query of a pending message. Please wait a few seconds and try again.",
                                               variant: "destructive",
                                             });
                                             return;
@@ -1481,9 +1482,9 @@ export function ChatPage({
                                       });
                                     } else {
                                       toast({
-                                        title: "Error",
+                                        title: "Force Search Failed",
                                         description:
-                                          "Failed to force search - please refresh the page and try again.",
+                                          "Unable to initiate the force search. Please refresh the page and try again.",
                                         variant: "destructive",
                                       });
                                     }
@@ -1545,7 +1546,7 @@ export function ChatPage({
                                 messageId={null}
                                 assistantName={liveAssistant.name}
                                 content={
-                                  <div className="my-auto text-sm flex flex-col gap-1">
+                                  <div className="my-auto text-sm flex flex-col gap-1 pt-4">
                                     <Skeleton className="h-5 w-full" />
                                     <Skeleton className="h-5 w-full" />
                                     <Skeleton className="h-5 w-3/4" />

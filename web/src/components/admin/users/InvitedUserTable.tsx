@@ -58,15 +58,15 @@ const InvitedUserTable = ({
   const onRemovalSuccess = () => {
     mutate();
     toast({
-      title: "Success",
-      description: "User uninvited!",
+      title: "User Uninvited Successfully!",
+      description: "The user has been successfully uninvited.",
       variant: "success",
     });
   };
   const onRemovalError = (errorMsg: string) => {
     toast({
-      title: "Error",
-      description: `Unable to uninvite user - ${errorMsg}`,
+      title: "Uninvitation Failed",
+      description: `Unable to uninvite the user: ${errorMsg}. Please try again.`,
       variant: "destructive",
     });
   };

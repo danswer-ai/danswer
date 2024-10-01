@@ -187,6 +187,7 @@ export const SearchResultsDisplay = ({
                   documentRank={ind + 1}
                   messageId={messageId}
                   isSelected={selectedDocumentIds.has(document.document_id)}
+                  availableDocumentSets={availableDocumentSets}
                 />
               </div>
             ))}

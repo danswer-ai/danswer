@@ -20,11 +20,11 @@ import Link from "next/link";
 export function LogInForms({}: {}) {
   const router = useRouter();
   const { toast } = useToast();
-  const [isWorking, setIsWorking] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
     <>
-      {isWorking && <Spinner />}
+      {isLoading && <Spinner />}
       <Formik
         initialValues={{
           email: "",
@@ -35,6 +35,8 @@ export function LogInForms({}: {}) {
           password: Yup.string().required(),
         })}
         onSubmit={async (values) => {
+          setIsLoading(true);
+
           const loginResponse = await basicLogin(values.email, values.password);
           if (loginResponse.ok) {
             router.push(`/auth/2factorverification/?email=${values.email}`);
@@ -46,7 +48,7 @@ export function LogInForms({}: {}) {
               credentials: "include",
             });
           } else {
-            setIsWorking(false);
+            setIsLoading(false);
             const errorDetail = (await loginResponse.json()).detail;
 
             let errorMsg = "Unknown error";
@@ -54,11 +56,13 @@ export function LogInForms({}: {}) {
               errorMsg = "Invalid email or password";
             }
             toast({
-              title: "Error",
+              title: "Login Failed",
               description: `Failed to login - ${errorMsg}`,
               variant: "destructive",
             });
           }
+
+          setIsLoading(false);
         }}
       >
         {({ isSubmitting, values }) => (

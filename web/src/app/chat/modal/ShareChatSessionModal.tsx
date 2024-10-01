@@ -10,7 +10,7 @@ import { CustomTooltip } from "@/components/CustomTooltip";
 
 function buildShareLink(chatSessionId: number) {
   const baseUrl = `${window.location.protocol}//${window.location.host}`;
-  return `${baseUrl}/chat?chatId=${chatSessionId}`;
+  return `${baseUrl}/chat/shared/${chatSessionId}`;
 }
 
 async function generateShareLink(chatSessionId: number) {

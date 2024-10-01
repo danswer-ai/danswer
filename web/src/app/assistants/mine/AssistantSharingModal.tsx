@@ -63,9 +63,15 @@ export function AssistantSharingModal({
       setIsUpdating(false);
       if (error) {
         toast({
-          title: "Error",
-          description: `Failed to share assistant - ${error}`,
+          title: "Sharing Failed",
+          description: `We encountered an issue while trying to share "${assistant.name}". Please try again later.`,
           variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Assistant Shared",
+          description: `"${assistant.name}" has been successfully shared with the selected users!`,
+          variant: "success",
         });
       }
     }, remainingTime);
@@ -102,9 +108,15 @@ export function AssistantSharingModal({
                   setIsUpdating(false);
                   if (error) {
                     toast({
-                      title: "Error",
-                      description: `Failed to remove assistant - ${error}`,
+                      title: "Removal Failed",
+                      description: `Unable to remove "${u.email}" from the assistant's shared list. Please try again later.`,
                       variant: "destructive",
+                    });
+                  } else {
+                    toast({
+                      title: "User Removed",
+                      description: `"${u.email}" has been successfully removed from the assistant's shared list.`,
+                      variant: "success",
                     });
                   }
                 }, remainingTime);

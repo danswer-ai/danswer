@@ -124,8 +124,8 @@ export function AssistantsGallery({
                               user.preferences?.chosen_assistants.length === 1
                             ) {
                               toast({
-                                title: "Error",
-                                description: `Cannot remove "${assistant.name}" - you must have at least one assistant.`,
+                                title: "Action Denied",
+                                description: `You cannot remove "${assistant.name}" because at least one assistant is required.`,
                                 variant: "destructive",
                               });
                               return;
@@ -138,15 +138,15 @@ export function AssistantsGallery({
                             );
                             if (success) {
                               toast({
-                                title: "Success",
-                                description: `"${assistant.name}" has been removed from your list.`,
+                                title: "Assistant Removed",
+                                description: `"${assistant.name}" has been successfully removed from your list of assistants.`,
                                 variant: "success",
                               });
                               router.refresh();
                             } else {
                               toast({
-                                title: "Error",
-                                description: `"${assistant.name}" could not be removed from your list.`,
+                                title: "Removal Failed",
+                                description: `Failed to remove "${assistant.name}" from your list. Please try again.`,
                                 variant: "destructive",
                               });
                             }
@@ -173,15 +173,15 @@ export function AssistantsGallery({
                             );
                             if (success) {
                               toast({
-                                title: "Success",
-                                description: `"${assistant.name}" has been added to your list.`,
+                                title: "Assistant Added",
+                                description: `"${assistant.name}" has been successfully added to your list of assistants.`,
                                 variant: "success",
                               });
                               router.refresh();
                             } else {
                               toast({
-                                title: "Error",
-                                description: `"${assistant.name}" could not be added to your list.`,
+                                title: "Addition Failed",
+                                description: `Unable to add "${assistant.name}" to your list. Please try again.`,
                                 variant: "destructive",
                               });
                             }

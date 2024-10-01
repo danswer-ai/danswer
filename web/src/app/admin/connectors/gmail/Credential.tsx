@@ -65,23 +65,24 @@ const DriveJsonUpload = () => {
 
         if (response.ok) {
           toast({
-            title: "Success",
-            description: "Successfully uploaded app credentials",
+            title: "App Credentials Uploaded Successfully",
+            description:
+              "Your app credentials have been uploaded successfully!",
             variant: "success",
           });
         } else {
           const errorMsg = await response.text();
           toast({
-            title: "Error",
-            description: `Failed to upload app credentials - ${errorMsg}`,
+            title: "Failed to Upload App Credentials",
+            description: `An error occurred while uploading your app credentials: ${errorMsg}`,
             variant: "destructive",
           });
         }
         mutate(endpoint);
       } catch (e) {
         toast({
-          title: "Error",
-          description: `Invalid file provided - ${e}`,
+          title: "Invalid File Error",
+          description: `The file you provided is invalid: ${e}`,
           variant: "destructive",
         });
       }
@@ -162,15 +163,16 @@ export const GmailJsonUploadSection = ({
               mutate("/api/manage/admin/connector/gmail/service-account-key");
 
               toast({
-                title: "Success",
-                description: "Successfully deleted service account key",
+                title: "Service Account Key Deleted",
+                description:
+                  "The service account key has been successfully deleted.",
                 variant: "success",
               });
             } else {
               const errorMsg = await response.text();
               toast({
-                title: "Error",
-                description: `Failed to delete service account key - ${errorMsg}`,
+                title: "Failed to Delete Service Account Key",
+                description: `An error occurred while trying to delete the service account key: ${errorMsg}`,
                 variant: "destructive",
               });
             }
@@ -205,15 +207,16 @@ export const GmailJsonUploadSection = ({
             if (response.ok) {
               mutate("/api/manage/admin/connector/gmail/app-credential");
               toast({
-                title: "Success",
-                description: "Successfully deleted service account key",
+                title: "App Credential Deleted",
+                description:
+                  "The app credential has been successfully deleted.",
                 variant: "success",
               });
             } else {
               const errorMsg = await response.text();
               toast({
-                title: "Error",
-                description: `Failed to delete app credential - ${errorMsg}`,
+                title: "Failed to Delete App Credential",
+                description: `An error occurred while trying to delete the app credential: ${errorMsg}`,
                 variant: "destructive",
               });
             }
@@ -278,17 +281,17 @@ export const GmailOAuthSection = ({
           onClick={async () => {
             if (connectorExists) {
               toast({
-                title: "Error",
+                title: "Access Revocation Error",
                 description:
-                  "Cannot revoke access to Gmail while any connector is still setup. Please delete all connectors, then try again.",
+                  "Please delete all connectors before revoking access to Gmail.",
                 variant: "destructive",
               });
               return;
             }
             await adminDeleteCredential(existingCredential.id);
             toast({
-              title: "Success",
-              description: "Successfully revoked access to Gmail!",
+              title: "Access Revoked",
+              description: "You have successfully revoked access to Gmail!",
               variant: "success",
             });
             refreshCredentials();
@@ -342,19 +345,20 @@ export const GmailOAuthSection = ({
 
                 if (response.ok) {
                   toast({
-                    title: "Success",
+                    title: "Credential Created",
                     description:
-                      "Successfully created service account credential",
+                      "Service account credential has been successfully created.",
                     variant: "success",
                   });
                 } else {
                   const errorMsg = await response.text();
                   toast({
-                    title: "Error",
-                    description: `Failed to create service account credential - ${errorMsg}`,
+                    title: "Credential Creation Error",
+                    description: `Unable to create service account credential: ${errorMsg}`,
                     variant: "destructive",
                   });
                 }
+
                 refreshCredentials();
               }}
             >
@@ -409,8 +413,8 @@ export const GmailOAuthSection = ({
             }
 
             toast({
-              title: "Error",
-              description: errorMsg,
+              title: "OAuth Authentication Error",
+              description: `Unable to initiate Gmail authentication: ${errorMsg}`,
               variant: "destructive",
             });
           }}

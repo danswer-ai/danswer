@@ -52,8 +52,8 @@ export const CreateRateLimitModal = ({
         setShouldFetchTeamspaces(false);
       } catch (error) {
         toast({
-          title: "Error",
-          description: `Failed to fetch user teamspaces: ${error}`,
+          title: "Fetch Failed",
+          description: `Unable to retrieve user teamspaces. Reason: ${error}`,
           variant: "destructive",
         });
       }
