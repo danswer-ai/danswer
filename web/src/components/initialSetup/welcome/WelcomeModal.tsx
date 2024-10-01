@@ -2,13 +2,10 @@
 
 import { Button, Divider, Text } from "@tremor/react";
 import { Modal } from "../../Modal";
-import Link from "next/link";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { COMPLETED_WELCOME_FLOW_COOKIE } from "./constants";
-import { FiCheckCircle, FiMessageSquare, FiShare2 } from "react-icons/fi";
 import { useEffect, useState } from "react";
-import { BackButton } from "@/components/BackButton";
 import { ApiKeyForm } from "@/components/llm/ApiKeyForm";
 import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { checkLlmProvider } from "./lib";
@@ -26,14 +23,12 @@ export function _CompletedWelcomeFlowDummyComponent() {
 
 export function _WelcomeModal({ user }: { user: User | null }) {
   const router = useRouter();
-  const [selectedFlow, setSelectedFlow] = useState<null | "search" | "chat">(
-    null
-  );
   const [canBegin, setCanBegin] = useState(false);
   const [apiKeyVerified, setApiKeyVerified] = useState<boolean>(false);
   const [providerOptions, setProviderOptions] = useState<
     WellKnownLLMProviderDescriptor[]
   >([]);
+
   const { refreshProviderInfo } = useProviderStatus();
   const clientSetWelcomeFlowComplete = async () => {
     setWelcomeFlowComplete();
