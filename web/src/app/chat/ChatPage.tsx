@@ -1783,7 +1783,6 @@ export function ChatPage({
 
       {settingsToggled && (
         <SetDefaultModelModal
-          setPopup={setPopup}
           setLlmOverride={llmOverrideManager.setGlobalDefault}
           defaultModel={user?.preferences.default_model!}
           refreshUser={refreshUser}
