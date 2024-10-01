@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/SearchInput";
 
 const NUM_IN_PAGE = 20;
 
@@ -132,15 +133,10 @@ export function CCPairIndexingStatusTable({
   return (
     <div>
       <div className="relative md:w-[500px] mb-6">
-        <Input
-          className="pl-9"
+        <SearchInput
           placeholder="Search existing connectors..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2"
-          size={15}
+          onChange={setSearchTerm}
         />
       </div>
 

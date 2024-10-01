@@ -2,6 +2,7 @@
 
 import { BackButton } from "@/components/BackButton";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { SearchInput } from "@/components/SearchInput";
 import { SourceIcon } from "@/components/SourceIcon";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Input } from "@/components/ui/input";
@@ -120,17 +121,12 @@ export default function Page() {
         </p>
 
         <div className="relative md:w-[500px] mt-6">
-          <Input
-            className="pl-9"
+          <SearchInput
             ref={searchInputRef}
-            placeholder="Search connectors..."
+            placeholder="Search existing connectors..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={setSearchTerm}
             onKeyDown={handleKeyPress}
-          />
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2"
-            size={15}
           />
         </div>
 

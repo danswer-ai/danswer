@@ -96,7 +96,7 @@ const UsersTables = ({ q }: { q: string }) => {
 
   return (
     <>
-      <HidableSection sectionTitle="Invited Users" defaultOpen>
+      <HidableSection sectionTitle="Invited Users">
         {invited.length > 0 ? (
           finalInvited.length > 0 ? (
             <InvitedUserTable
