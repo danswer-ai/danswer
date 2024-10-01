@@ -96,14 +96,20 @@ def _should_create_new_indexing(
             if last_index.status == IndexingStatus.IN_PROGRESS:
                 return False
         else:
-            if connector.id == 0:  # Ingestion API
+            if (
+                connector.id == 0 or connector.source == DocumentSource.INGESTION_API
+            ):  # Ingestion API
                 return False
         return True
 
     # If the connector is paused or is the ingestion API, don't index
     # NOTE: during an embedding model switch over, the following logic
     # is bypassed by the above check for a future model
-    if not cc_pair.status.is_active() or connector.id == 0:
+    if (
+        not cc_pair.status.is_active()
+        or connector.id == 0
+        or connector.source == DocumentSource.INGESTION_API
+    ):
         return False
 
     if not last_index:

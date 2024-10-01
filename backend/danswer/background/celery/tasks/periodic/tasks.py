@@ -7,17 +7,14 @@ from typing import Any
 from celery import shared_task
 from celery.contrib.abortable import AbortableTask  # type: ignore
 from celery.exceptions import TaskRevokedError
-from celery.utils.log import get_task_logger
 from sqlalchemy import inspect
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from danswer.background.celery.celery_app import task_logger
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import PostgresAdvisoryLocks
 from danswer.db.engine import get_sqlalchemy_engine  # type: ignore
-
-# use this within celery tasks to get celery task specific logging
-task_logger = get_task_logger(__name__)
 
 
 @shared_task(

@@ -603,7 +603,7 @@ def delete_user_group_cc_pair_relationship__no_commit(
 
     if cc_pair.status != ConnectorCredentialPairStatus.DELETING:
         raise ValueError(
-            f"Connector Credential Pair '{cc_pair_id}' is not in the DELETING state"
+            f"Connector Credential Pair '{cc_pair_id}' is not in the DELETING state. status={cc_pair.status}"
         )
 
     delete_stmt = delete(UserGroup__ConnectorCredentialPair).where(

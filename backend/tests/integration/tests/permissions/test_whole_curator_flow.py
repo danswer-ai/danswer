@@ -77,7 +77,9 @@ def test_whole_curator_flow(reset: None) -> None:
 
     # Verify that the curator can delete the CC pair
     CCPairManager.delete(cc_pair=test_cc_pair, user_performing_action=curator)
-    CCPairManager.wait_for_deletion_completion(user_performing_action=curator)
+    CCPairManager.wait_for_deletion_completion(
+        cc_pair_id=test_cc_pair.id, user_performing_action=curator
+    )
 
     # Verify that the CC pair has been deleted
     CCPairManager.verify(
@@ -158,7 +160,9 @@ def test_global_curator_flow(reset: None) -> None:
 
     # Verify that the curator can delete the CC pair
     CCPairManager.delete(cc_pair=test_cc_pair, user_performing_action=global_curator)
-    CCPairManager.wait_for_deletion_completion(user_performing_action=global_curator)
+    CCPairManager.wait_for_deletion_completion(
+        cc_pair_id=test_cc_pair.id, user_performing_action=global_curator
+    )
 
     # Verify that the CC pair has been deleted
     CCPairManager.verify(
