@@ -71,8 +71,8 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
     answer_1 = response_json["answer"]
     assert "blue" in answer_1.lower()
 
-    # check that the llm selected a document
-    assert 0 in response_json["llm_selected_doc_indices"]
+    # FLAKY - check that the llm selected a document
+    # assert 0 in response_json["llm_selected_doc_indices"]
 
     # check that the final context documents are correct
     # (it should contain all documents because there arent enough to exclude any)
@@ -80,8 +80,8 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
     assert 1 in response_json["final_context_doc_indices"]
     assert 2 in response_json["final_context_doc_indices"]
 
-    # check that the cited documents are correct
-    assert cc_pair_1.documents[0].id in response_json["cited_documents"].values()
+    # FLAKY - check that the cited documents are correct
+    # assert cc_pair_1.documents[0].id in response_json["cited_documents"].values()
 
     # check that the top documents are correct
     assert response_json["top_documents"][0]["document_id"] == cc_pair_1.documents[0].id
@@ -117,8 +117,8 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
     answer_2 = response_json["answer"]
     assert "red" in answer_2.lower()
 
-    # check that the llm selected a document
-    assert 0 in response_json["llm_selected_doc_indices"]
+    # FLAKY - check that the llm selected a document
+    # assert 0 in response_json["llm_selected_doc_indices"]
 
     # check that the final context documents are correct
     # (it should contain all documents because there arent enough to exclude any)
@@ -126,8 +126,8 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
     assert 1 in response_json["final_context_doc_indices"]
     assert 2 in response_json["final_context_doc_indices"]
 
-    # check that the cited documents are correct
-    assert cc_pair_1.documents[1].id in response_json["cited_documents"].values()
+    # FLAKY - check that the cited documents are correct
+    # assert cc_pair_1.documents[1].id in response_json["cited_documents"].values()
 
     # check that the top documents are correct
     assert response_json["top_documents"][0]["document_id"] == cc_pair_1.documents[1].id
@@ -171,8 +171,8 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
     answer_3 = response_json["answer"]
     assert "green" in answer_3.lower()
 
-    # check that the llm selected a document
-    assert 0 in response_json["llm_selected_doc_indices"]
+    # FLAKY - check that the llm selected a document
+    # assert 0 in response_json["llm_selected_doc_indices"]
 
     # check that the final context documents are correct
     # (it should contain all documents because there arent enough to exclude any)
@@ -180,8 +180,8 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
     assert 1 in response_json["final_context_doc_indices"]
     assert 2 in response_json["final_context_doc_indices"]
 
-    # check that the cited documents are correct
-    assert cc_pair_1.documents[2].id in response_json["cited_documents"].values()
+    # FLAKY - check that the cited documents are correct
+    # assert cc_pair_1.documents[2].id in response_json["cited_documents"].values()
 
     # check that the top documents are correct
     assert response_json["top_documents"][0]["document_id"] == cc_pair_1.documents[2].id

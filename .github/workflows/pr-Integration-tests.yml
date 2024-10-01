@@ -1,4 +1,4 @@
-name: Run Integration Tests
+name: Run Integration Tests v2
 concurrency:
   group: Run-Integration-Tests-${{ github.workflow }}-${{ github.head_ref || github.event.workflow_run.head_branch || github.run_id }}
   cancel-in-progress: true
@@ -14,7 +14,7 @@ env:
 jobs:
   integration-tests:
     # See https://runs-on.com/runners/linux/
-    runs-on: [runs-on,runner=8cpu-linux-x64,ram=32,"run-id=${{ github.run_id }}"]
+    runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,25 +28,35 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      # NOTE: we don't need to build the Web Docker image since it's not used
-      # during the IT for now. We have a separate action to verify it builds 
-      # succesfully
+      # tag every docker image with "test" so that we can spin up the correct set
+      # of images during testing
+      
+      # We don't need to build the Web Docker image since it's not yet used
+      # in the integration tests. We have a separate action to verify that it builds 
+      # successfully.
       - name: Pull Web Docker image
         run: |
           docker pull danswer/danswer-web-server:latest
-          docker tag danswer/danswer-web-server:latest danswer/danswer-web-server:it
+          docker tag danswer/danswer-web-server:latest danswer/danswer-web-server:test
 
+      # we use the runs-on cache for docker builds
+      # in conjunction with runs-on runners, it has better speed and unlimited caching
+      # https://runs-on.com/caching/s3-cache-for-github-actions/
+      # https://runs-on.com/caching/docker/
+      # https://github.com/moby/buildkit#s3-cache-experimental
+      
+      # images are built and run locally for testing purposes. Not pushed.
       - name: Build Backend Docker image
         uses: ./.github/actions/custom-build-and-push
         with:
           context: ./backend
           file: ./backend/Dockerfile
           platforms: linux/amd64
-          tags: danswer/danswer-backend:it
-          cache-from: type=registry,ref=danswer/danswer-backend:it
-          cache-to: |
-            type=registry,ref=danswer/danswer-backend:it,mode=max
-            type=inline
+          tags: danswer/danswer-backend:test
+          push: false
+          load: true
+          cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/backend/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
+          cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/backend/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
       - name: Build Model Server Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -54,11 +64,11 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile.model_server
           platforms: linux/amd64
-          tags: danswer/danswer-model-server:it
-          cache-from: type=registry,ref=danswer/danswer-model-server:it
-          cache-to: |
-            type=registry,ref=danswer/danswer-model-server:it,mode=max
-            type=inline
+          tags: danswer/danswer-model-server:test
+          push: false
+          load: true
+          cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
+          cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
       - name: Build integration test Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -66,11 +76,11 @@ jobs:
           context: ./backend
           file: ./backend/tests/integration/Dockerfile
           platforms: linux/amd64
-          tags: danswer/integration-test-runner:it
-          cache-from: type=registry,ref=danswer/integration-test-runner:it
-          cache-to: |
-            type=registry,ref=danswer/integration-test-runner:it,mode=max
-            type=inline
+          tags: danswer/danswer-integration:test
+          push: false
+          load: true
+          cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
+          cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
       - name: Start Docker containers
         run: |
@@ -79,7 +89,7 @@ jobs:
           AUTH_TYPE=basic \
           REQUIRE_EMAIL_VERIFICATION=false \
           DISABLE_TELEMETRY=true \
-          IMAGE_TAG=it \
+          IMAGE_TAG=test \
           docker compose -f docker-compose.dev.yml -p danswer-stack up -d
         id: start_docker
 
@@ -131,7 +141,7 @@ jobs:
             -e API_SERVER_HOST=api_server \
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
             -e TEST_WEB_HOSTNAME=test-runner \
-            danswer/integration-test-runner:it
+            danswer/danswer-integration:test
         continue-on-error: true
         id: run_tests
 
