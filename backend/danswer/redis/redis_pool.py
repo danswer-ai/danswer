@@ -45,7 +45,9 @@ class RedisPool:
         ssl_cert_reqs: str = REDIS_SSL_CERT_REQS,
         ssl: bool = False,
     ) -> redis.BlockingConnectionPool:
-        """We use BlockingConnectionPool because it will block rather than error if max_connections is reached."""
+        """We use BlockingConnectionPool because it will block and wait for a connection
+        rather than error if max_connections is reached. This is far more deterministic
+        behavior and aligned with how we want to use Redis."""
 
         # Using ConnectionPool is not well documented.
         # Useful examples: https://github.com/redis/redis-py/issues/780
