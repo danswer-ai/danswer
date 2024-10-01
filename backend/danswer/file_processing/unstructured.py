@@ -8,8 +8,8 @@ from unstructured_client.models import operations  # type: ignore
 from unstructured_client.models import shared
 
 from danswer.configs.constants import KV_UNSTRUCTURED_API_KEY
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.key_value_store.factory import get_kv_store
+from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.utils.logger import setup_logger
 
 
@@ -17,20 +17,20 @@ logger = setup_logger()
 
 
 def get_unstructured_api_key() -> str | None:
-    kv_store = get_dynamic_config_store()
+    kv_store = get_kv_store()
     try:
         return cast(str, kv_store.load(KV_UNSTRUCTURED_API_KEY))
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         return None
 
 
 def update_unstructured_api_key(api_key: str) -> None:
-    kv_store = get_dynamic_config_store()
+    kv_store = get_kv_store()
     kv_store.store(KV_UNSTRUCTURED_API_KEY, api_key)
 
 
 def delete_unstructured_api_key() -> None:
-    kv_store = get_dynamic_config_store()
+    kv_store = get_kv_store()
     kv_store.delete(KV_UNSTRUCTURED_API_KEY)
 
 
