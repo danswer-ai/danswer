@@ -66,6 +66,7 @@ from danswer.db.document import get_document_counts_for_cc_pairs
 from danswer.db.engine import get_session
 from danswer.db.enums import AccessType
 from danswer.db.index_attempt import create_index_attempt
+from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.index_attempt import get_latest_index_attempts_by_status
@@ -780,25 +781,26 @@ def connector_run_once(
             detail="Connector has no valid credentials, cannot create index attempts.",
         )
 
-    # skipped_credentials = [
-    #     credential_id
-    #     for credential_id in credential_ids
-    #     if get_index_attempts_for_cc_pair(
-    #         cc_pair_identifier=ConnectorCredentialPairIdentifier(
-    #             connector_id=run_info.connector_id,
-    #             credential_id=credential_id,
-    #         ),
-    #         only_current=True,
-    #         db_session=db_session,
-    #     )
-    # ]
+    # Prevents index attempts for cc pairs that already have an index attempt currently running
+    skipped_credentials = [
+        credential_id
+        for credential_id in credential_ids
+        if get_index_attempts_for_cc_pair(
+            cc_pair_identifier=ConnectorCredentialPairIdentifier(
+                connector_id=run_info.connector_id,
+                credential_id=credential_id,
+            ),
+            only_current=True,
+            db_session=db_session,
+        )
+    ]
 
     search_settings = get_current_search_settings(db_session)
 
     connector_credential_pairs = [
         get_connector_credential_pair(connector_id, credential_id, db_session)
         for credential_id in credential_ids
-        # if credential_id not in skipped_credentials
+        if credential_id not in skipped_credentials
     ]
 
     index_attempt_ids = [

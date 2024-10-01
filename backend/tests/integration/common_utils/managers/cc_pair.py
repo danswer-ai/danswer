@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+from datetime import timezone
 from typing import Any
 from uuid import uuid4
 
@@ -85,7 +86,8 @@ class CCPairManager:
             groups=groups,
             user_performing_action=user_performing_action,
         )
-        return _cc_pair_creator(
+        before = datetime.now(timezone.utc)
+        cc_pair = _cc_pair_creator(
             connector_id=connector.id,
             credential_id=credential.id,
             name=name,
@@ -93,6 +95,12 @@ class CCPairManager:
             groups=groups,
             user_performing_action=user_performing_action,
         )
+        CCPairManager.wait_for_indexing(
+            cc_pair=cc_pair,
+            after=before,
+            user_performing_action=user_performing_action,
+        )
+        return cc_pair
 
     @staticmethod
     def create(
@@ -103,7 +111,8 @@ class CCPairManager:
         groups: list[int] | None = None,
         user_performing_action: DATestUser | None = None,
     ) -> DATestCCPair:
-        return _cc_pair_creator(
+        before = datetime.now(timezone.utc)
+        cc_pair = _cc_pair_creator(
             connector_id=connector_id,
             credential_id=credential_id,
             name=name,
@@ -111,6 +120,12 @@ class CCPairManager:
             groups=groups,
             user_performing_action=user_performing_action,
         )
+        CCPairManager.wait_for_indexing(
+            cc_pair=cc_pair,
+            after=before,
+            user_performing_action=user_performing_action,
+        )
+        return cc_pair
 
     @staticmethod
     def pause_cc_pair(
