@@ -12,10 +12,12 @@ import docx  # type: ignore
 import openpyxl  # type: ignore
 import pptx  # type: ignore
 from bs4 import BeautifulSoup
-from O365 import Account  # type: ignore
+from O365 import Account
+from O365 import MSGraphProtocol
 from O365.mailbox import MailBox  # type: ignore
 from O365.message import Message  # type: ignore
 from O365.message import MessageAttachment  # type: ignore
+from O365.utils import ApiComponent
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -143,8 +145,35 @@ class ExchangeConnector(LoadConnector, PollConnector):
         if not account.is_authenticated:
             account.authenticate()
 
+        # Validate the connection by fetching user profile
+        try:
+            user = account.get_current_user()
+            user_info = user.get()
+            if user_info:
+                logger.info(f"Successfully connected as user: {user_info.display_name}")
+            else:
+                raise ValueError("Unable to fetch user information")
+
+            # Log permissions and scopes
+            self._log_permissions(account)
+
+        except Exception as e:
+            error_message = (
+                f"Failed to validate connection: {e.__class__.__name__}: {str(e)}"
+            )
+            logger.error(error_message)
+            raise ConnectorMissingCredentialError(f"Exchange: {error_message}")
+
         self.account = account
         return None
+
+    def _log_permissions(self, account):
+        if isinstance(account, ApiComponent):
+            logger.info(f"Scopes: {account.con.scopes}")
+            logger.info(f"Auth flow type: {account.con.auth_flow_type}")
+            logger.info(f"Resource: {account.main_resource}")
+        else:
+            logger.warning("Account not properly initialized for permission logging")
 
     def _prune_email_list_by_time(
         self, email_list: list, start: datetime, end: datetime
@@ -163,7 +192,14 @@ class ExchangeConnector(LoadConnector, PollConnector):
     ) -> list:
         emails: Message = []
         mailbox = self.account.mailbox()
-        # Todo: Add support for pagination
+        try:
+            mailbox = self.account.mailbox()
+            # Try to fetch a single message to validate the mailbox
+            next(mailbox.get_messages(limit=1), None)
+            logger.info("Mailbox validated successfully.")
+        except Exception as e:
+            logger.error(f"Failed to validate mailbox: {str(e)}")
+            raise ConnectorMissingCredentialError(f"Exchange: {str(e)}")
 
         # Only download at max N x Folder x Category most recently modified emails
         # We use Modified because setting catagory updates the modified date to now.
@@ -195,6 +231,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
             # No categories but has folders - Tested
             if len(categories) == 0:
                 for folder_path in folders:
+                    print(folders, folder_path)
                     folder_id = self.get_folder_id(mailbox, folder_path)
                     if folder_id:
                         logger.info(f"Fetching Folder: {folder_path}")
@@ -224,6 +261,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
         if folder_path is None:
             folder = mailbox
         else:
+            print(folder_path)
             folder_id = self.get_folder_id(mailbox, folder_path)
             folder = mailbox.get_folder(folder_id=folder_id)
 
@@ -269,6 +307,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
         if self.account is None:
             raise ConnectorMissingCredentialError("Exchange")
 
+        print(self.exchange_categories, self.exchange_folders)
         email_object_list = self.get_all_email_objects(
             self.exchange_max_poll_size, self.exchange_categories, self.exchange_folders
         )
@@ -436,19 +475,52 @@ class ExchangeConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
-    connector = ExchangeConnector(
-        exchange_max_poll_size=os.environ["EXCHANGE_MAX_POLL_SIZE"],
-        exchange_categories=[os.environ["EXCHANGE_CATEGORIES"]],
-        exchange_folders=[os.environ["EXCHANGE_FOLDERS"]],
+    # connector = ExchangeConnector(
+    #     exchange_max_poll_size=os.environ.get("EXCHANGE_MAX_POLL_SIZE", "1000"),
+    #     # exchange_categories=[os.environ.get("EXCHANGE_CATEGORIES")],
+    #     # exchange_folders=[os.environ.get("EXCHANGE_FOLDERS")],
+    # )
+
+    # connector.load_credentials(
+    #     {
+    #         "aad_app_id": os.environ.get("AAD_APP_ID"),
+    #         "aad_app_secret": os.environ.get("AAD_APP_SECRET"),
+    #         "aad_tenant_id": os.environ.get("AAD_TENANT_ID"),
+    #         "aad_user_id": os.environ.get("AAD_USER_ID"),
+    #     }
+    # )
+
+    # Test authentication using O365 Accountn
+    print("HI")
+    credentials = (
+        os.getenv("AAD_APP_ID"),
+        os.getenv("AAD_APP_SECRET"),
+    )
+    tenant_id = os.getenv("AAD_TENANT_ID")
+    user_email = os.getenv("AAD_USER_ID")  # e.g., user@yourdomain.com
+
+    protocol = MSGraphProtocol()  # Initialize without resource
+
+    account = Account(
+        credentials=credentials,
+        auth_flow_type="credentials",
+        tenant_id=tenant_id,
+        protocol=protocol,
     )
 
-    connector.load_credentials(
-        {
-            "aad_app_id": os.environ["AAD_APP_ID"],
-            "aad_app_secret": os.environ["AAD_APP_SECRET"],
-            "aad_tenant_id": os.environ["AAD_TENANT_ID"],
-            "aad_user_id": os.environ["AAD_USER_ID"],
-        }
-    )
-    document_batches = connector.load_from_state()
-    logger.info(next(document_batches))
+    if not account.is_authenticated:
+        if account.authenticate(scopes=["https://graph.microsoft.com/.default"]):
+            logger.info("Authentication successful")
+        else:
+            logger.error("Authentication failed")
+
+    try:
+        mailbox = account.mailbox()
+        messages = mailbox.get_messages(limit=1)
+        first_message = next(messages, None)
+        if first_message:
+            logger.info(f"Successfully accessed mailbox for user: {user_email}")
+        else:
+            logger.warning(f"Mailbox for user {user_email} is empty or inaccessible.")
+    except Exception as e:
+        logger.error(f"Failed to access mailbox: {e}")
