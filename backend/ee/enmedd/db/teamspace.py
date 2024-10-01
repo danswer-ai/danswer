@@ -152,8 +152,8 @@ def _add_user__teamspace_relationships__no_commit(
     if creator_id is None:
         return []
 
-    if user_ids and creator_id not in user_ids:
-        user_ids.append(creator_id)
+    # if creator_id not in user_ids:
+    #     user_ids.append(creator_id)
 
     relationships = [
         User__Teamspace(

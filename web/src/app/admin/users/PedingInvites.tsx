@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { CustomModal } from "@/components/CustomModal";
 
 export const PendingInvites = ({ q }: { q: string }) => {
+  const { toast } = useToast();
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [invitedPage, setInvitedPage] = useState(1);
   const [acceptedPage, setAcceptedPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,7 +72,25 @@ export const PendingInvites = ({ q }: { q: string }) => {
       user.full_name!.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const onRemovalSuccess = () => {
+    toast({
+      title: "User Removed Successfully",
+      description: "The invited user has been removed from your list",
+      variant: "success",
+    });
+    mutate();
+    setIsCancelModalVisible(false);
+  };
 
+  const onRemovalError = () => {
+    toast({
+      title: "Failed to Remove User",
+      description:
+        "We encountered an issue while attempting to remove the invited user. Please try again or contact support if the problem persists",
+      variant: "destructive",
+    });
+    setIsCancelModalVisible(false);
+  };
   return (
     <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
       <div className="xl:w-2/5">
@@ -117,33 +137,48 @@ export const PendingInvites = ({ q }: { q: string }) => {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2 justify-end">
-                            {/* <Button>Resend Invite</Button> */}
                             <CustomModal
                               trigger={
                                 <Button
                                   variant="destructive"
-                                  onClick={() => setIsCancelModalVisible(true)}
+                                  onClick={() => {
+                                    setIsCancelModalVisible(true);
+                                    setSelectedUser(user);
+                                  }}
                                 >
                                   Cancel Invite
                                 </Button>
                               }
                               title="Revoke Invite"
-                              onClose={() => setIsCancelModalVisible(false)}
+                              onClose={() => {
+                                setIsCancelModalVisible(false);
+                                setSelectedUser(null);
+                              }}
                               open={isCancelModalVisible}
                             >
                               <div>
                                 <p>
-                                  Revoking on invite will no longer allow this
+                                  Revoking an invite will no longer allow this
                                   person to become a member of your space. You
-                                  can always invite the again if you change your
-                                  mind.{" "}
+                                  can always invite them again if you change
+                                  your mind.
                                 </p>
 
                                 <div className="flex gap-2 pt-8 justify-end">
-                                  <Button>Keep Member</Button>
-                                  <Button variant="destructive">
-                                    Revoke Invite
+                                  <Button
+                                    onClick={() =>
+                                      setIsCancelModalVisible(false)
+                                    }
+                                  >
+                                    Keep Member
                                   </Button>
+                                  {selectedUser && (
+                                    <RemoveUserButton
+                                      user={selectedUser}
+                                      onSuccess={onRemovalSuccess}
+                                      onError={onRemovalError}
+                                    />
+                                  )}
                                 </div>
                               </div>
                             </CustomModal>

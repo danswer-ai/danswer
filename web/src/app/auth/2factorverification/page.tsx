@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/input-otp";
 import { ShieldEllipsis } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Spinner } from "@/components/Spinner";
@@ -23,6 +23,28 @@ const Page = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user_email = searchParams.get("email");
+
+  const handleBackButton = async () => {
+    const response = await fetch("/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+    router.push("/auth/login");
+    return response;
+  };
+
+  useEffect(() => {
+    const handleUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      handleBackButton();
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, []);
 
   const handleContinue = async () => {
     try {
