@@ -50,6 +50,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -162,9 +163,21 @@ export function ChatPage({
     user,
     availableAssistants
   );
-  const finalAssistants = user
-    ? orderAssistantsForUser(visibleAssistants, user)
-    : visibleAssistants;
+
+  const [finalAssistants, setFinalAssistants] = useState(visibleAssistants);
+
+  useEffect(() => {
+    const { visibleAssistants: updatedVisibleAssistants } = classifyAssistants(
+      user,
+      availableAssistants
+    );
+    setFinalAssistants(
+      user
+        ? orderAssistantsForUser(updatedVisibleAssistants, user)
+        : updatedVisibleAssistants
+    );
+    console.log(orderAssistantsForUser(updatedVisibleAssistants, user));
+  }, [user, availableAssistants]);
 
   const existingChatSessionAssistantId = selectedChatSession?.persona_id;
   const [selectedAssistant, setSelectedAssistant] = useState<
@@ -208,7 +221,7 @@ export function ChatPage({
   };
 
   const llmOverrideManager = useLlmOverride(
-    user?.preferences.default_model,
+    user?.preferences.default_model ?? null,
     selectedChatSession,
     defaultTemperature
   );
@@ -1779,6 +1792,7 @@ export function ChatPage({
 
       {settingsToggled && (
         <SetDefaultModelModal
+          setPopup={setPopup}
           setLlmOverride={llmOverrideManager.setGlobalDefault}
           defaultModel={user?.preferences.default_model!}
           refreshUser={refreshUser}
@@ -2409,6 +2423,7 @@ export function ChatPage({
                               handleFileUpload={handleImageUpload}
                               textAreaRef={textAreaRef}
                               chatSessionId={chatSessionIdRef.current!}
+                              refreshUser={refreshUser}
                             />
 
                             {enterpriseSettings &&

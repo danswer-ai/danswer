@@ -13,25 +13,26 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
 import React, { useState } from "react";
 import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
 import { DraggableAssistantCard } from "@/components/assistants/AssistantCards";
-import { orderAssistantsForUser } from "@/lib/assistants/utils";
+import { useRouter } from "next/navigation";
 
 export function AssistantsTab({
   selectedAssistant,
   availableAssistants,
   llmProviders,
   onSelect,
+  refreshUser,
 }: {
   selectedAssistant: Persona;
   availableAssistants: Persona[];
   llmProviders: LLMProviderDescriptor[];
   onSelect: (assistant: Persona) => void;
+  refreshUser: () => void;
 }) {
   const [_, llmName] = getFinalLLM(llmProviders, null, null);
   const [assistants, setAssistants] = useState(availableAssistants);
@@ -61,6 +62,7 @@ export function AssistantsTab({
         return updatedAssistants;
       });
     }
+    refreshUser();
   }
 
   return (

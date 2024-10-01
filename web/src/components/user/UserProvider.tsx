@@ -22,6 +22,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUser = async () => {
     try {
+      console.log("FETCHING USER");
       const user = await getCurrentUser();
       setUser(user);
       setIsAdmin(user?.role === UserRole.ADMIN);
@@ -40,7 +41,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshUser = async () => {
-    setIsLoadingUser(true);
     await fetchUser();
   };
 
