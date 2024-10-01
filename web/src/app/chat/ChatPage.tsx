@@ -162,9 +162,6 @@ export function ChatPage({
     user,
     availableAssistants
   );
-  const finalAssistants = user
-    ? orderAssistantsForUser(visibleAssistants, user)
-    : visibleAssistants;
 
   const existingChatSessionAssistantId = selectedChatSession?.persona_id;
   const [selectedAssistant, setSelectedAssistant] = useState<
@@ -219,7 +216,7 @@ export function ChatPage({
   const liveAssistant =
     alternativeAssistant ||
     selectedAssistant ||
-    finalAssistants[0] ||
+    visibleAssistants[0] ||
     availableAssistants[0];
 
   useEffect(() => {
@@ -689,7 +686,7 @@ export function ChatPage({
   useEffect(() => {
     if (messageHistory.length === 0 && chatSessionIdRef.current === null) {
       setSelectedAssistant(
-        finalAssistants.find((persona) => persona.id === defaultAssistantId)
+        visibleAssistants.find((persona) => persona.id === defaultAssistantId)
       );
     }
   }, [defaultAssistantId]);
@@ -2393,7 +2390,10 @@ export function ChatPage({
                               showDocs={() => setDocumentSelection(true)}
                               selectedDocuments={selectedDocuments}
                               // assistant stuff
-                              assistantOptions={finalAssistants}
+                              assistantOptions={orderAssistantsForUser(
+                                visibleAssistants,
+                                user
+                              )}
                               selectedAssistant={liveAssistant}
                               setSelectedAssistant={onAssistantChange}
                               setAlternativeAssistant={setAlternativeAssistant}

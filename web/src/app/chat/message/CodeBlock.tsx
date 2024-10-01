@@ -1,7 +1,61 @@
-import React, { useState, ReactNode, useCallback, useMemo, memo } from "react";
+// CodeBlock.tsx
+import React, {
+  useState,
+  ReactNode,
+  useCallback,
+  useMemo,
+  memo,
+  useEffect,
+  CSSProperties,
+  useRef,
+} from "react";
+import { isEqual } from "lodash";
 import { FiCheck, FiCopy } from "react-icons/fi";
 
-const CODE_BLOCK_PADDING_TYPE = { padding: "1rem" };
+const CODE_BLOCK_PADDING_TYPE: CSSProperties = { padding: "1rem" };
+
+interface CodeBlockProps {
+  className?: string;
+  children?: ReactNode;
+  content: string;
+  style?: CSSProperties;
+  // Add any other specific props you need to handle explicitly
+  // Example:
+  // onClick?: (event: React.MouseEvent) => void;
+  // title?: string;
+}
+
+const arePropsEqual = (
+  prevProps: CodeBlockProps,
+  nextProps: CodeBlockProps
+) => {
+  const prevContent =
+    typeof prevProps.children === "string"
+      ? prevProps.children
+      : prevProps.content;
+  const nextContent =
+    typeof nextProps.children === "string"
+      ? nextProps.children
+      : nextProps.content;
+
+  const isContentEqual = prevContent === nextContent;
+  const isClassNameEqual = prevProps.className === nextProps.className;
+  const isStyleEqual = isEqual(prevProps.style, nextProps.style);
+  // Compare other explicit props here if added
+  // Example:
+  // const isOnClickEqual = prevProps.onClick === nextProps.onClick;
+
+  const areEqual = isContentEqual && isClassNameEqual && isStyleEqual;
+
+  // console.log("Props comparison:", {
+  //   isContentEqual,
+  //   isClassNameEqual,
+  //   isStyleEqual,
+  //   areEqual,
+  // });
+
+  return areEqual;
+};
 
 interface CodeBlockProps {
   className?: string | undefined;
@@ -10,12 +64,15 @@ interface CodeBlockProps {
   [key: string]: any;
 }
 
-export const CodeBlock = memo(function CodeBlock({
+export const CodeBlockComponent = memo(function CodeBlock({
   className = "",
   children,
   content,
   ...props
 }: CodeBlockProps) {
+  const renderCount = useRef(0);
+  renderCount.current += 1;
+  console.log("CodeBlockComponent render count:", renderCount.current);
   const [copied, setCopied] = useState(false);
 
   const language = useMemo(() => {
@@ -155,3 +212,4 @@ export const CodeBlock = memo(function CodeBlock({
     </div>
   );
 });
+export const CodeBlock = memo(CodeBlockComponent, arePropsEqual);
