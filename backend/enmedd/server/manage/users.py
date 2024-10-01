@@ -10,7 +10,9 @@ from fastapi import APIRouter
 from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Response
 from fastapi import status
+from fastapi import UploadFile
 from fastapi_users.password import PasswordHelper
 from pydantic import BaseModel
 from sqlalchemy import delete
@@ -19,6 +21,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from ee.enmedd.db.api_key import is_api_key_email_address
+from ee.enmedd.server.workspace.store import _PROFILE_FILENAME
+from ee.enmedd.server.workspace.store import upload_profile
 from enmedd.auth.invited_users import generate_invite_email
 from enmedd.auth.invited_users import get_invited_users
 from enmedd.auth.invited_users import send_invite_user_email
@@ -46,6 +50,7 @@ from enmedd.db.users import change_user_password
 from enmedd.db.users import get_user_by_email
 from enmedd.db.users import list_users
 from enmedd.dynamic_configs.factory import get_dynamic_config_store
+from enmedd.file_store.file_store import get_default_file_store
 from enmedd.server.manage.models import AllUsersResponse
 from enmedd.server.manage.models import OTPVerificationRequest
 from enmedd.server.manage.models import UserByEmail
@@ -293,7 +298,6 @@ def remove_invited_user(
 ) -> int:
     print(f"Removing user with the email: {user_email}")
     user_emails = get_invited_users()
-    print(f"Invited users: {str(user_emails)}")
     remaining_users = [user for user in user_emails if user != user_email.user_email]
     return write_invited_users(remaining_users)
 
@@ -371,6 +375,28 @@ async def get_user_role(user: User = Depends(current_user)) -> UserRoleResponse:
     if user is None:
         raise ValueError("Invalid or missing user.")
     return UserRoleResponse(role=user.role)
+
+
+@router.put("/me/profile")
+def put_profile(
+    file: UploadFile,
+    db_session: Session = Depends(get_session),
+    _: User | None = Depends(current_user),
+) -> None:
+    upload_profile(file=file, db_session=db_session)
+
+
+@router.get("/me/profile")
+def fetch_profile(
+    db_session: Session = Depends(get_session),
+    _: User | None = Depends(current_user),  # Ensure that the user is authenticated
+) -> Response:
+    try:
+        file_store = get_default_file_store(db_session)
+        file_io = file_store.read_file(_PROFILE_FILENAME, mode="b")
+        return Response(content=file_io.read(), media_type="image/jpeg")
+    except Exception:
+        raise HTTPException(status_code=404, detail="No logo file found")
 
 
 @router.get("/me")

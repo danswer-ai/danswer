@@ -2,12 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { User as UserTypes } from "@/lib/types";
-import { User } from "lucide-react";
+import { Upload, User } from "lucide-react";
 import { UserProfile } from "@/components/UserProfile";
 import { CombinedSettings } from "@/components/settings/lib";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
 
 export default function ProfileTab({
   user,
@@ -22,6 +23,7 @@ export default function ProfileTab({
   const [fullName, setFullName] = useState(user?.full_name || "");
   const [companyName, setCompanyName] = useState(user?.company_name || "");
   const [email, setEmail] = useState(user?.email || "");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleSaveChanges = async () => {
     const updatedUser = {
@@ -48,7 +50,38 @@ export default function ProfileTab({
         variant: "destructive",
       });
     }
+
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      setSelectedFile(null);
+      const response = await fetch("/api/me/profile", {
+        method: "PUT",
+        body: formData,
+      });
+      if (!response.ok) {
+        const errorMsg = (await response.json()).detail;
+        alert(`Failed to upload logo. ${errorMsg}`);
+        return;
+      }
+    }
     setIsEditing(false);
+  };
+
+  const UploadProfilePhoto = () => {
+    setIsEditing(true);
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files) {
+        const file = target.files[0];
+        setSelectedFile(file);
+      }
+    };
+    input.click();
   };
 
   return (
@@ -62,10 +95,27 @@ export default function ProfileTab({
             This will be displayed on your profile.
           </p>
         </div>
-        <div className="flex items-center justify-between gap-3 md:w-[500px]">
+        <div
+          className="flex items-center justify-between gap-3 md:w-[100px] cursor-pointer"
+          onClick={UploadProfilePhoto}
+        >
           <div className="flex items-center justify-center rounded-full h-[65px] w-[65px] shrink-0 aspect-square text-2xl font-normal">
-            {user && user.full_name ? (
-              <UserProfile size={65} user={user} textSize="text-2xl" />
+            {selectedFile ? (
+              <Image
+                src={URL.createObjectURL(selectedFile)}
+                alt="Profile"
+                className="rounded-full object-cover"
+                width={65}
+                height={65}
+              />
+            ) : user && user.full_name ? (
+              <Image
+                src={"/api/me/profile"}
+                alt="Profile"
+                className="rounded-full object-cover"
+                width={65}
+                height={65}
+              />
             ) : (
               <User size={25} className="mx-auto" />
             )}
