@@ -58,8 +58,8 @@ from danswer.document_index.vespa_constants import VESPA_APPLICATION_ENDPOINT
 from danswer.document_index.vespa_constants import VESPA_DIM_REPLACEMENT_PAT
 from danswer.document_index.vespa_constants import VESPA_TIMEOUT
 from danswer.document_index.vespa_constants import YQL_BASE
-from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.indexing.models import DocMetadataAwareIndexChunk
+from danswer.key_value_store.factory import get_kv_store
 from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceChunkUncleaned
 from danswer.utils.batching import batch_generator
@@ -140,7 +140,7 @@ class VespaIndex(DocumentIndex):
             SEARCH_THREAD_NUMBER_PAT, str(VESPA_SEARCHER_THREADS)
         )
 
-        kv_store = get_dynamic_config_store()
+        kv_store = get_kv_store()
 
         needs_reindexing = False
         try:

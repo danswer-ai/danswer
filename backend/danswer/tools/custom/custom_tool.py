@@ -8,7 +8,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
 from pydantic import BaseModel
 
-from danswer.dynamic_configs.interface import JSON_ro
+from danswer.key_value_store.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
 from danswer.tools.custom.base_tool_types import ToolResultType

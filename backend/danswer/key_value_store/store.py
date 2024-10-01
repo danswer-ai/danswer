@@ -7,13 +7,15 @@ from sqlalchemy.orm import Session
 
 from danswer.db.engine import get_session_factory
 from danswer.db.models import KVStore
-from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.dynamic_configs.interface import DynamicConfigStore
-from danswer.dynamic_configs.interface import JSON_ro
+from danswer.key_value_store.interface import JSON_ro
+from danswer.key_value_store.interface import KeyValueStore
+from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.redis.redis_pool import get_redis_client
 
+REDIS_KEY_PREFIX = "danswer_kv_store:"
 
-class PostgresBackedDynamicConfigStore(DynamicConfigStore):
+
+class PgRedisKVStore(KeyValueStore):
     def __init__(self) -> None:
         self.redis_client = get_redis_client()
 
@@ -28,7 +30,7 @@ class PostgresBackedDynamicConfigStore(DynamicConfigStore):
 
     def store(self, key: str, val: JSON_ro, encrypt: bool = False) -> None:
         # Not encrypted in Redis, but encrypted in Postgres
-        self.redis_client.set(key, json.dumps(val))
+        self.redis_client.set(REDIS_KEY_PREFIX + key, json.dumps(val))
 
         encrypted_val = val if encrypt else None
         plain_val = val if not encrypt else None
@@ -46,21 +48,15 @@ class PostgresBackedDynamicConfigStore(DynamicConfigStore):
             session.commit()
 
     def load(self, key: str) -> JSON_ro:
-        redis_value = self.redis_client.get(key)
+        redis_value = self.redis_client.get(REDIS_KEY_PREFIX + key)
         if redis_value:
-            if isinstance(redis_value, bytes):
-                return json.loads(redis_value.decode("utf-8"))
-            elif isinstance(redis_value, str):
-                return json.loads(redis_value)
-            else:
-                raise ValueError(
-                    f"Unsupported type for Redis value: {type(redis_value)}"
-                )
+            assert isinstance(redis_value, bytes)
+            return json.loads(redis_value.decode("utf-8"))
 
         with self.get_session() as session:
             obj = session.query(KVStore).filter_by(key=key).first()
             if not obj:
-                raise ConfigNotFoundError
+                raise KvKeyNotFoundError
 
             if obj.value is not None:
                 value = obj.value
@@ -69,15 +65,15 @@ class PostgresBackedDynamicConfigStore(DynamicConfigStore):
             else:
                 value = None
 
-            self.redis_client.set(key, json.dumps(value))
+            self.redis_client.set(REDIS_KEY_PREFIX + key, json.dumps(value))
 
             return cast(JSON_ro, value)
 
     def delete(self, key: str) -> None:
-        self.redis_client.delete(key)
+        self.redis_client.delete(REDIS_KEY_PREFIX + key)
 
         with self.get_session() as session:
             result = session.query(KVStore).filter_by(key=key).delete()  # type: ignore
             if result == 0:
-                raise ConfigNotFoundError
+                raise KvKeyNotFoundError
             session.commit()
