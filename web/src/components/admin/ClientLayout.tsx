@@ -253,7 +253,7 @@ export function ClientLayout({
                               <div className="ml-1">Document Processing</div>
                             </div>
                           ),
-                          link: "/admin/configuration/document_processing",
+                          link: "/admin/configuration/document-processing",
                         },
                       ],
                     },
