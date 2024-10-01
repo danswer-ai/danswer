@@ -25,8 +25,8 @@ export const MemoizedLink = memo((props: any) => {
   }
 });
 
-export const MemoizedParagraph = memo(({ content }: { content: string }) => {
-  return <p className="text-default">{content}</p>;
+export const MemoizedParagraph = memo(({ ...props }: any) => {
+  return <p {...props} className="text-default" />;
 });
 
 MemoizedLink.displayName = "MemoizedLink";

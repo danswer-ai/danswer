@@ -54,6 +54,7 @@ export const CodeBlock = memo(function CodeBlock({
       )}
     </div>
   ));
+  CopyButton.displayName = "CopyButton";
 
   const CodeContent = memo(() => {
     if (!language) {
@@ -72,6 +73,8 @@ export const CodeBlock = memo(function CodeBlock({
         </pre>
       );
     }
+    CodeContent.displayName = "CodeContent";
+
     return (
       <pre className="overflow-x-scroll" style={CODE_BLOCK_PADDING}>
         <code className="text-xs overflow-x-auto">
@@ -95,3 +98,6 @@ export const CodeBlock = memo(function CodeBlock({
     </div>
   );
 });
+
+CodeBlock.displayName = "CodeBlock";
+MemoizedCodeLine.displayName = "MemoizedCodeLine";

@@ -257,9 +257,7 @@ export const AIMessage = ({
   const markdownComponents = useMemo(
     () => ({
       a: MemoizedLink,
-      p: ({ children }: any) => (
-        <MemoizedParagraph content={children?.toString() || ""} />
-      ),
+      p: MemoizedParagraph,
       code: ({ node, inline, className, children, ...props }: any) => {
         const codeText = extractCodeText(
           node,
@@ -268,11 +266,9 @@ export const AIMessage = ({
         );
 
         return (
-          <CodeBlock
-            className={className}
-            codeText={codeText}
-            children={children}
-          />
+          <CodeBlock className={className} codeText={codeText}>
+            {children}
+          </CodeBlock>
         );
       },
     }),

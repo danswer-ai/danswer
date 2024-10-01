@@ -15,5 +15,12 @@ export function extractCodeText(
     // Fallback if position offsets are not available
     codeText = children?.toString() || "";
   }
+
+  // Remove backticks and language identifier if present
+  const codeBlockRegex = /^```(\w+)?\n([\s\S]*)\n```$/;
+  const match = codeText.match(codeBlockRegex);
+  if (match) {
+    codeText = match[2].trim(); // Extract the code content without backticks and language identifier
+  }
   return codeText;
 }
