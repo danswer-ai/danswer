@@ -15,14 +15,20 @@ const Page = () => {
         <p className="text-text-700 text-center">
           We encountered an issue while attempting to log you in.
         </p>
-        <div className="border border-border shadow p-4 rounded-lg">
-          <ul className="list-disc text-left text-text-700 pl-6">
-            <li>Your login credentials may be incorrect or outdated</li>
-            <li>
-              Our system might be experiencing temporary technical difficulties
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-sm">
+          <h3 className="text-red-800 font-semibold mb-2">Possible Issues:</h3>
+          <ul className="space-y-2">
+            <li className="flex items-center text-red-700">
+              <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+              Incorrect or expired login credentials
             </li>
-            <li>
-              There could be an issue with your account's access permissions
+            <li className="flex items-center text-red-700">
+              <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+              Temporary authentication system disruption
+            </li>
+            <li className="flex items-center text-red-700">
+              <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+              Account access restrictions or permissions
             </li>
           </ul>
         </div>
