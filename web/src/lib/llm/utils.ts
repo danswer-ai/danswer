@@ -30,6 +30,14 @@ export function getFinalLLM(
     provider = llmOverride.provider || provider;
     model = llmOverride.modelName || model;
   }
+  // Default to the first LLM provider if any of provider/model are null
+  // if (!provider || !model) {
+  //   const firstProvider = llmProviders[0];
+  //   if (firstProvider) {
+  //     provider = provider || firstProvider.provider;
+  //     model = model || firstProvider.default_model_name;
+  //   }
+  // }
 
   return [provider, model];
 }

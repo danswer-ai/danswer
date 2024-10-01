@@ -26,11 +26,7 @@ export async function fetchCustomAnalyticsScriptSS() {
   return fetchSS("/enterprise-settings/custom-analytics-script");
 }
 
-export async function fetchSettingsSS(): Promise<
-  | CombinedSettings
-  | { redirect: { destination: string; permanent: boolean } }
-  | null
-> {
+export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
   const tasks = [fetchStandardSettingsSS()];
   if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
     tasks.push(fetchEnterpriseSettingsSS());
@@ -44,15 +40,7 @@ export async function fetchSettingsSS(): Promise<
 
     let settings: Settings;
     if (!results[0].ok) {
-      if (results[0].status === 401) {
-        return {
-          redirect: {
-            destination: "/auth/login",
-            permanent: false,
-          },
-        };
-      }
-      if (results[0].status === 403) {
+      if (results[0].status === 403 || results[0].status === 401) {
         settings = {
           gpu_enabled: false,
           chat_page_enabled: true,
@@ -74,7 +62,7 @@ export async function fetchSettingsSS(): Promise<
     let enterpriseSettings: EnterpriseSettings | null = null;
     if (tasks.length > 1) {
       if (!results[1].ok) {
-        if (results[1].status !== 403) {
+        if (results[1].status !== 403 && results[1].status !== 401) {
           throw new Error(
             `fetchEnterpriseSettingsSS failed: status=${results[1].status} body=${await results[1].text()}`
           );
