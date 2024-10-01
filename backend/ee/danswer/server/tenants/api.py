@@ -26,7 +26,9 @@ def create_tenant(
     email = create_tenant_request.initial_admin_email
     token = None
     if user_owns_a_tenant(email):
-        raise HTTPException(status_code=409, detail="User already owns a tenant")
+        raise HTTPException(
+            status_code=409, detail="User already belongs to an organization"
+        )
 
     try:
         if not MULTI_TENANT:

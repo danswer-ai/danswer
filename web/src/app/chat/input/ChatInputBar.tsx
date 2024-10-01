@@ -122,6 +122,8 @@ export function ChatInputBar({
   const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant, null);
 
+  console.log(llmProviders);
+  console.log(llmName);
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showPrompts, setShowPrompts] = useState(false);
@@ -276,6 +278,19 @@ export function ChatInputBar({
       );
     }
   };
+
+  console.log(llmOverrideManager.llmOverride);
+  console.log(selectedAssistant.llm_model_version_override);
+  console.log(llmOverrideManager.globalDefault.modelName);
+  console.log(llmName);
+  console.log(
+    llmOverrideManager.llmOverride.modelName ||
+      (selectedAssistant
+        ? selectedAssistant.llm_model_version_override ||
+          llmOverrideManager.globalDefault.modelName ||
+          llmName
+        : llmName)
+  );
 
   return (
     <div id="danswer-chat-input">
