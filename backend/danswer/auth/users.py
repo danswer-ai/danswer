@@ -33,6 +33,7 @@ from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy import select
+from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
@@ -298,114 +299,102 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             self.user_db = tenant_user_db
             self.database = tenant_user_db
 
-            # verify_email_in_whitelist(account_email)
-            # verify_email_domain(account_email)
+            logger.info(f"Starting OAuth callback process for email: {account_email}")
+            oauth_account_dict = {
+                "oauth_name": oauth_name,
+                "access_token": access_token,
+                "account_id": account_id,
+                "account_email": account_email,
+                "expires_at": expires_at,
+                "refresh_token": refresh_token,
+            }
+            logger.debug(f"OAuth account dict created: {oauth_account_dict}")
 
             try:
                 logger.info(
-                    f"Starting OAuth callback process for email: {account_email}"
+                    f"Attempting to get user by OAuth account: {oauth_name}, {account_id}"
                 )
-                oauth_account_dict = {
-                    "oauth_name": oauth_name,
-                    "access_token": access_token,
-                    "account_id": account_id,
-                    "account_email": account_email,
-                    "expires_at": expires_at,
-                    "refresh_token": refresh_token,
-                }
-                logger.debug(f"OAuth account dict created: {oauth_account_dict}")
-
+                user = await self.get_by_oauth_account(oauth_name, account_id)
+                logger.info(f"User found by OAuth account: {user.id}")
+            except exceptions.UserNotExists:
+                logger.info(
+                    f"User not found by OAuth account, attempting to get by email: {account_email}"
+                )
                 try:
-                    logger.info(
-                        f"Attempting to get user by OAuth account: {oauth_name}, {account_id}"
+                    user = await self.get_by_email(account_email)
+                    logger.info(f"User found by email: {user.id}")
+                    if not associate_by_email:
+                        logger.warning(
+                            f"User already exists but associate_by_email is False: {account_email}"
+                        )
+                        raise exceptions.UserAlreadyExists()
+                    logger.info(f"Adding OAuth account to existing user: {user.id}")
+                    user = await self.user_db.add_oauth_account(
+                        user, oauth_account_dict
                     )
-                    user = await self.get_by_oauth_account(oauth_name, account_id)
-                    logger.info(f"User found by OAuth account: {user.id}")
+                    logger.info(f"OAuth account added to user: {user.id}")
                 except exceptions.UserNotExists:
                     logger.info(
-                        f"User not found by OAuth account, attempting to get by email: {account_email}"
+                        f"User not found, creating new account for: {account_email}"
                     )
-                    try:
-                        # Associate account
-                        user = await self.get_by_email(account_email)
-                        logger.info(f"User found by email: {user.id}")
-                        if not associate_by_email:
-                            logger.warning(
-                                f"User already exists but associate_by_email is False: {account_email}"
-                            )
-                            raise exceptions.UserAlreadyExists()
-                        logger.info(f"Adding OAuth account to existing user: {user.id}")
-                        user = await self.user_db.add_oauth_account(
-                            user, oauth_account_dict
-                        )
-                        logger.info(f"OAuth account added to user: {user.id}")
-                    except exceptions.UserNotExists:
+                    password = self.password_helper.generate()
+                    user_dict = {
+                        "email": account_email,
+                        "hashed_password": self.password_helper.hash(password),
+                        "is_verified": is_verified_by_default,
+                    }
+                    logger.debug(f"Creating new user with dict: {user_dict}")
+                    user = await self.user_db.create(user_dict)
+                    logger.info(f"New user created: {user.id}")
+                    user = await self.user_db.add_oauth_account(
+                        user, oauth_account_dict
+                    )
+                    logger.info(f"OAuth account added to new user: {user.id}")
+                    await self.on_after_register(user, request)
+            else:
+                logger.info(f"Updating OAuth account for existing user: {user.id}")
+                for existing_oauth_account in user.oauth_accounts:
+                    if (
+                        existing_oauth_account.account_id == account_id
+                        and existing_oauth_account.oauth_name == oauth_name
+                    ):
                         logger.info(
-                            f"User not found, creating new account for: {account_email}"
+                            f"Updating OAuth account: {oauth_name}, {account_id}"
                         )
-                        # Create account
-                        password = self.password_helper.generate()
-                        user_dict = {
-                            "email": account_email,
-                            "hashed_password": self.password_helper.hash(password),
-                            "is_verified": is_verified_by_default,
-                        }
-                        logger.debug(f"Creating new user with dict: {user_dict}")
-                        user = await self.user_db.create(user_dict)
-                        logger.info(f"New user created: {user.id}")
-                        logger.info(f"Adding OAuth account to new user: {user.id}")
-                        user = await self.user_db.add_oauth_account(
-                            user, oauth_account_dict
+                        user = await self.user_db.update_oauth_account(
+                            user, existing_oauth_account, oauth_account_dict
                         )
-                        logger.info(f"OAuth account added to new user: {user.id}")
-                        logger.info(
-                            f"Calling on_after_register for new user: {user.id}"
-                        )
-                        await self.on_after_register(user, request)
-                else:
-                    # Update oauth
-                    logger.info(f"Updating OAuth account for existing user: {user.id}")
-                    for existing_oauth_account in user.oauth_accounts:
-                        if (
-                            existing_oauth_account.account_id == account_id
-                            and existing_oauth_account.oauth_name == oauth_name
-                        ):
-                            logger.info(
-                                f"Updating OAuth account: {oauth_name}, {account_id}"
-                            )
-                            user = await self.user_db.update_oauth_account(
-                                user, existing_oauth_account, oauth_account_dict
-                            )
-                            logger.info(f"OAuth account updated for user: {user.id}")
+                        logger.info(f"OAuth account updated for user: {user.id}")
+
+            logger.info("OAuth callback completed")
+
+            try:
+                if not user.has_web_login:
+                    update_dict = {
+                        "is_verified": is_verified_by_default,
+                        "has_web_login": True,
+                    }
+                    await self.user_db.update(user, update_dict)
+                    user.is_verified = is_verified_by_default
+                    user.has_web_login = True
+
+                if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
+                    oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
+                    await self.user_db.update(
+                        user, update_dict={"oidc_expiry": oidc_expiry}
+                    )
+
+                if (
+                    hasattr(user, "oidc_expiry")
+                    and user.oidc_expiry is not None
+                    and not TRACK_EXTERNAL_IDP_EXPIRY
+                ):
+                    update_dict = {"oidc_expiry": None}
+                    await self.user_db.update(user, update_dict)
+                    user.oidc_expiry = None
 
             except Exception as e:
                 logger.exception(f"Error in oauth_callback: {str(e)}")
-
-            print("OAUTH CALLBACK COMPLETED")
-            # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
-            # re-authenticate that frequently, so by default this is disabled
-            if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
-                oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
-                await self.user_db.update(
-                    user, update_dict={"oidc_expiry": oidc_expiry}
-                )
-
-            # this is needed if an organization goes from `TRACK_EXTERNAL_IDP_EXPIRY=true` to `false`
-            # otherwise, the oidc expiry will always be old, and the user will never be able to login
-            if user.oidc_expiry and not TRACK_EXTERNAL_IDP_EXPIRY:
-                await self.user_db.update(user, update_dict={"oidc_expiry": None})
-
-            # Handle case where user has used product outside of web and is now creating an account through web
-            if not user.has_web_login:
-                await self.user_db.update(
-                    user,
-                    update_dict={
-                        "is_verified": is_verified_by_default,
-                        "has_web_login": True,
-                    },
-                )
-                user.is_verified = is_verified_by_default
-                user.has_web_login = True
 
             return user
 
@@ -462,7 +451,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 self.password_helper.hash(credentials.password)
                 return None
 
-            if not user.has_web_login:
+            has_web_login = attributes.get_attribute(user, "has_web_login")
+
+            if not has_web_login:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
