@@ -87,20 +87,18 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
         user_ids=[email_id_map[user.email] for user in desired_channel_members],
     )
 
-    public_message = "Steve's favorite number is 8097524"
-    private_message = "Rebeccas favorite number is 753468"
+    public_message = "Steve's favorite number is 809752"
+    private_message = "Sara's favorite number is 346794"
 
     SlackManager.add_message_to_channel(
-        slack_client,
-        channel_name_map["public_channel_1"],
-        public_message,
-        "admin@onyx-test.com",
+        slack_client=slack_client,
+        channel=channel_name_map["public_channel_1"],
+        message=public_message,
     )
     SlackManager.add_message_to_channel(
-        slack_client,
-        channel_name_map["private_channel_1"],
-        private_message,
-        "admin@onyx-test.com",
+        slack_client=slack_client,
+        channel=channel_name_map["private_channel_1"],
+        message=private_message,
     )
 
     # Run indexing
@@ -161,6 +159,10 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
     result.raise_for_status()
     found_docs = result.json()["top_documents"]
     danswer_doc_message_strings = [doc["content"] for doc in found_docs]
+    print(
+        "\ntop_documents content before removing from private channel for test_user_2: ",
+        danswer_doc_message_strings,
+    )
 
     # Ensure test_user_2 can only see messages from the public channel
     assert public_message in danswer_doc_message_strings
@@ -182,11 +184,16 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
     result.raise_for_status()
     found_docs = result.json()["top_documents"]
     danswer_doc_message_strings = [doc["content"] for doc in found_docs]
+    print(
+        "\ntop_documents content before removing from private channel for test_user_1: ",
+        danswer_doc_message_strings,
+    )
 
     # Ensure test_user_1 can see messages from both channels
     assert public_message in danswer_doc_message_strings
     assert private_message in danswer_doc_message_strings
 
+    print("\nRemoving test_user_1 from the private channel")
     # Remove test_user_1 from the private channel
     desired_channel_members = [admin_user]
     SlackManager.set_channel_members(
@@ -223,6 +230,10 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
     result.raise_for_status()
     found_docs = result.json()["top_documents"]
     danswer_doc_message_strings = [doc["content"] for doc in found_docs]
+    print(
+        "\ntop_documents content after removing from private channel for test_user_1: ",
+        danswer_doc_message_strings,
+    )
 
     # Ensure test_user_1 can only see messages from the public channel
     assert public_message in danswer_doc_message_strings

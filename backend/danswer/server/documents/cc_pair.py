@@ -346,9 +346,13 @@ def sync_cc_pair(
     sync_task_name = name_sync_external_doc_permissions_task(cc_pair_id=cc_pair_id)
     last_sync_task = get_latest_task(sync_task_name, db_session)
 
-    if check_task_is_live_and_not_timed_out(last_sync_task, db_session):
-        logger.debug(f"{sync_task_name} is already being performed. Skipping.")
-        return False
+    if last_sync_task and check_task_is_live_and_not_timed_out(
+        last_sync_task, db_session
+    ):
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail="Sync task already in progress.",
+        )
     if skip_cc_pair_pruning_by_task(
         last_sync_task,
         db_session=db_session,
