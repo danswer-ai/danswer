@@ -1204,7 +1204,6 @@ class PGFileStore(Base):
     file_type: Mapped[str] = mapped_column(String, default="text/plain")
     file_metadata: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=True)
     lobj_oid: Mapped[int] = mapped_column(Integer, nullable=False)
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
 
 
 # EE features
