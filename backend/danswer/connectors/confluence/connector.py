@@ -519,7 +519,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             return None
 
         extracted_text = extract_file_text(
-            attachment["title"], io.BytesIO(response.content), False
+            io.BytesIO(response.content),
+            file_name=attachment["title"],
+            break_on_unprocessable=False,
         )
         if len(extracted_text) > CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD:
             logger.warning(
@@ -625,7 +627,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             )
             unused_attachments.extend(unused_page_attachments)
 
-            page_text += attachment_text
+            page_text += "\n" + attachment_text if attachment_text else ""
             comments_text = self._fetch_comments(self.confluence_client, page_id)
             page_text += comments_text
             doc_metadata: dict[str, str | list[str]] = {"Wiki Space Name": self.space}
