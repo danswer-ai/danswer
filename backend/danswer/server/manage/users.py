@@ -10,11 +10,13 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
 from fastapi import status
+from psycopg2.errors import UniqueViolation
 from pydantic import BaseModel
 from sqlalchemy import Column
 from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy import update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
@@ -185,7 +187,17 @@ def bulk_invite_users(
         email_info = validate_email(email)  # can raise EmailNotValidError
         normalized_emails.append(email_info.normalized)  # type: ignore
 
-    add_users_to_tenant(normalized_emails, tenant_id)
+    if MULTI_TENANT:
+        try:
+            add_users_to_tenant(normalized_emails, tenant_id)
+        except IntegrityError as e:
+            if isinstance(e.orig, UniqueViolation):
+                raise HTTPException(
+                    status_code=400,
+                    detail="User has already been invited to a Danswer organization",
+                )
+            raise
+
     all_emails = list(set(normalized_emails) | set(get_invited_users()))
     return write_invited_users(all_emails)
 
