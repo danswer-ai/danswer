@@ -392,17 +392,6 @@ export const AIMessage = ({
                         {typeof content === "string" ? (
                           <div className="overflow-x-visible max-w-content-max">
                             {renderedMarkdown}
-                            {/* <ReactMarkdown
-                              key={messageId}
-                              className="prose max-w-full text-base"
-                              components={markdownComponents}
-                              remarkPlugins={[remarkGfm]}
-                              rehypePlugins={[
-                                [rehypePrism, { ignoreMissing: true }],
-                              ]}
-                            >
-                              {finalContent as string}
-                            </ReactMarkdown> */}
                           </div>
                         ) : (
                           content
