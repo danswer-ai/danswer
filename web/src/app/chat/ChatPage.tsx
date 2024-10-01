@@ -208,7 +208,7 @@ export function ChatPage({
   };
 
   const llmOverrideManager = useLlmOverride(
-    user?.preferences.default_model,
+    user?.preferences.default_model ?? null,
     selectedChatSession,
     defaultTemperature
   );
@@ -1779,6 +1779,7 @@ export function ChatPage({
 
       {settingsToggled && (
         <SetDefaultModelModal
+          setPopup={setPopup}
           setLlmOverride={llmOverrideManager.setGlobalDefault}
           defaultModel={user?.preferences.default_model!}
           refreshUser={refreshUser}

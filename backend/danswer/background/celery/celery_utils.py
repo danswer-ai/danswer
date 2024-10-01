@@ -25,12 +25,12 @@ from danswer.db.models import TaskQueueState
 from danswer.db.tasks import check_task_is_live_and_not_timed_out
 from danswer.db.tasks import get_latest_task
 from danswer.db.tasks import get_latest_task_by_type
-from danswer.redis.redis_pool import RedisPool
+from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import DeletionAttemptSnapshot
 from danswer.utils.logger import setup_logger
 
+
 logger = setup_logger()
-redis_pool = RedisPool()
 
 
 def _get_deletion_status(
@@ -47,7 +47,7 @@ def _get_deletion_status(
 
     rcd = RedisConnectorDeletion(cc_pair.id)
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
     if not r.exists(rcd.fence_key):
         return None
 

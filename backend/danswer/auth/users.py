@@ -342,7 +342,6 @@ def get_database_strategy(
     strategy = DatabaseStrategy(
         access_token_db, lifetime_seconds=SESSION_EXPIRE_TIME_SECONDS  # type: ignore
     )
-
     return strategy
 
 

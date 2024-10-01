@@ -29,9 +29,9 @@ from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
 from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.file_store.file_store import get_default_file_store
+from danswer.key_value_store.factory import get_kv_store
+from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.llm.factory import get_default_llms
 from danswer.llm.utils import test_llm
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
@@ -114,7 +114,7 @@ def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     # Only validate every so often
-    kv_store = get_dynamic_config_store()
+    kv_store = get_kv_store()
     curr_time = datetime.now(tz=timezone.utc)
     try:
         last_check = datetime.fromtimestamp(
@@ -123,7 +123,7 @@ def validate_existing_genai_api_key(
         check_freq_sec = timedelta(seconds=GENERATIVE_MODEL_ACCESS_CHECK_FREQ)
         if curr_time - last_check < check_freq_sec:
             return
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         # First time checking the key, nothing unusual
         pass
 
