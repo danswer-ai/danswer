@@ -45,7 +45,6 @@ export async function checkLlmProvider(user: User | null) {
   if (optionsResponse?.ok) {
     options = await optionsResponse.json();
   }
-  console.log(options);
 
   let defaultCheckSuccessful =
     !checkDefault || defaultCheckResponse?.ok || false;
