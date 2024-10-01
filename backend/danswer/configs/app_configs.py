@@ -135,7 +135,7 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
     os.environ.get("POSTGRES_PASSWORD") or "password"
 )
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5433"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
 # defaults to False

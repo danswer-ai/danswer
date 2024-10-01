@@ -253,6 +253,52 @@ export const AIMessage = ({
     new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
 
+  const markdownComponents = useMemo(
+    () => ({
+      a: MemoizedLink,
+      p: ({ children }: any) => (
+        <MemoizedParagraph content={children?.toString() || ""} />
+      ),
+      code: ({ node, inline, className, children, ...props }: any) => {
+        // Extract code text from the node
+        let codeText = "";
+        if (
+          node?.position?.start?.offset != null &&
+          node?.position?.end?.offset != null
+        ) {
+          codeText = (content as string)
+            .slice(node.position.start.offset, node.position.end.offset)
+            .trim();
+        } else {
+          // Fallback if position offsets are not available
+          codeText = children?.toString() || "";
+        }
+
+        return (
+          <CodeBlock
+            className={className}
+            codeText={codeText}
+            children={children}
+          />
+        );
+      },
+    }),
+    [messageId, content]
+  );
+
+  const renderedMarkdown = useMemo(() => {
+    return (
+      <ReactMarkdown
+        className="prose max-w-full text-base"
+        components={markdownComponents}
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+      >
+        {finalContent as string}
+      </ReactMarkdown>
+    );
+  }, [finalContent]);
+
   const includeMessageSwitcher =
     currentMessageInd !== undefined &&
     onMessageSelection &&
@@ -352,27 +398,18 @@ export const AIMessage = ({
 
                         {typeof content === "string" ? (
                           <div className="overflow-x-visible max-w-content-max">
-                            <ReactMarkdown
+                            {renderedMarkdown}
+                            {/* <ReactMarkdown
                               key={messageId}
                               className="prose max-w-full text-base"
-                              components={{
-                                a: MemoizedLink,
-                                p: MemoizedParagraph,
-                                code: (props) => (
-                                  <CodeBlock
-                                    className="w-full"
-                                    {...props}
-                                    content={content as string}
-                                  />
-                                ),
-                              }}
+                              components={markdownComponents}
                               remarkPlugins={[remarkGfm]}
                               rehypePlugins={[
                                 [rehypePrism, { ignoreMissing: true }],
                               ]}
                             >
                               {finalContent as string}
-                            </ReactMarkdown>
+                            </ReactMarkdown> */}
                           </div>
                         ) : (
                           content
