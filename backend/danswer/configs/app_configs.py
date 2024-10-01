@@ -342,9 +342,6 @@ INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT", 0))
 #####
 # Miscellaneous
 #####
-# File based Key Value store no longer used
-DYNAMIC_CONFIG_STORE = "PostgresBackedDynamicConfigStore"
-
 JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 # used to allow the background indexing jobs to use a different embedding
 # model server than the API server
