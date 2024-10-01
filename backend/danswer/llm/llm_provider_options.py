@@ -18,7 +18,7 @@ class WellKnownLLMProviderDescriptor(BaseModel):
     custom_config_keys: list[CustomConfigKey] | None = None
 
     llm_names: list[str]
-    default_model: str | None = None
+    default_model: str
     default_fast_model: str | None = None
 
 
@@ -108,6 +108,7 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
             api_version_required=True,
             custom_config_keys=[],
             llm_names=fetch_models_for_provider(AZURE_PROVIDER_NAME),
+            default_model="gpt-4",
         ),
         WellKnownLLMProviderDescriptor(
             name=BEDROCK_PROVIDER_NAME,
