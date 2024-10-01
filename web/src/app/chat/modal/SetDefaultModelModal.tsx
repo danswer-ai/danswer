@@ -17,7 +17,7 @@ export function SetDefaultModelModal({
   defaultModel,
   refreshUser,
 }: {
-  setPopup: Dispatch<SetStateAction<PopupSpec>>;
+  setPopup: (popupSpec: PopupSpec | null) => void;
   llmProviders: LLMProviderDescriptor[];
   setLlmOverride: Dispatch<SetStateAction<LlmOverride>>;
   onClose: () => void;
