@@ -202,7 +202,7 @@ export const PromptLibraryTable = ({
           ))}
         </div>
       </div>
-      <div className="mx-auto">
+      <div className="mx-auto overflow-x-auto">
         <Table>
           <TableHead>
             <TableRow>
@@ -220,7 +220,16 @@ export const PromptLibraryTable = ({
                 .map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.prompt}</TableCell>
-                    <TableCell>{item.content}</TableCell>
+                    <TableCell
+                      className="
+                      max-w-xs
+                      overflow-hidden
+                      text-ellipsis
+                      break-words
+                    "
+                    >
+                      {item.content}
+                    </TableCell>
                     <TableCell>{item.active ? "Active" : "Inactive"}</TableCell>
                     <TableCell>
                       <button

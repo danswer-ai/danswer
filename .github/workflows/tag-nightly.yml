@@ -2,7 +2,7 @@ name: Nightly Tag Push
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs every day at midnight UTC
+    - cron: '0 10 * * *' # Runs every day at 2 AM PST / 3 AM PDT / 10 AM UTC
 
 permissions:
   contents: write  # Allows pushing tags to the repository

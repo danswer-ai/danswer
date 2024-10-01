@@ -4,29 +4,38 @@ from datetime import timezone
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
-from danswer.configs.constants import DocumentSource
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.document import get_document_ids_for_connector_credential_pair
+from danswer.db.models import ConnectorCredentialPair
 from danswer.document_index.factory import get_current_primary_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.utils.logger import setup_logger
-from ee.danswer.external_permissions.permission_sync_function_map import (
-    DOC_PERMISSIONS_FUNC_MAP,
-)
-from ee.danswer.external_permissions.permission_sync_function_map import (
-    GROUP_PERMISSIONS_FUNC_MAP,
-)
+from ee.danswer.external_permissions.sync_params import DOC_PERMISSIONS_FUNC_MAP
+from ee.danswer.external_permissions.sync_params import GROUP_PERMISSIONS_FUNC_MAP
+from ee.danswer.external_permissions.sync_params import PERMISSION_SYNC_PERIODS
 
 logger = setup_logger()
 
 
-# None means that the connector runs every time
-_RESTRICTED_FETCH_PERIOD: dict[DocumentSource, int | None] = {
-    # Polling is supported
-    DocumentSource.GOOGLE_DRIVE: None,
-    # Polling is not supported so we fetch all doc permissions every 5 minutes
-    DocumentSource.CONFLUENCE: 5 * 60,
-}
+def _is_time_to_run_sync(cc_pair: ConnectorCredentialPair) -> bool:
+    source_sync_period = PERMISSION_SYNC_PERIODS.get(cc_pair.connector.source)
+
+    # If RESTRICTED_FETCH_PERIOD[source] is None, we always run the sync.
+    if not source_sync_period:
+        return True
+
+    # If the last sync is None, it has never been run so we run the sync
+    if cc_pair.last_time_perm_sync is None:
+        return True
+
+    last_sync = cc_pair.last_time_perm_sync.replace(tzinfo=timezone.utc)
+    current_time = datetime.now(timezone.utc)
+
+    # If the last sync is greater than the full fetch period, we run the sync
+    if (current_time - last_sync).total_seconds() > source_sync_period:
+        return True
+
+    return False
 
 
 def run_external_group_permission_sync(
@@ -42,6 +51,9 @@ def run_external_group_permission_sync(
 
     if group_sync_func is None:
         # Not all sync connectors support group permissions so this is fine
+        return
+
+    if not _is_time_to_run_sync(cc_pair):
         return
 
     try:
@@ -79,20 +91,8 @@ def run_external_doc_permission_sync(
             f"No permission sync function found for source type: {source_type}"
         )
 
-    # If RESTRICTED_FETCH_PERIOD[source] is None, we always run the sync.
-    # If RESTRICTED_FETCH_PERIOD is not None, we only run sync if the
-    # last sync was more than RESTRICTED_FETCH_PERIOD seconds ago.
-    full_fetch_period = _RESTRICTED_FETCH_PERIOD[cc_pair.connector.source]
-    if full_fetch_period is not None:
-        last_sync = cc_pair.last_time_perm_sync
-        if (
-            last_sync
-            and (
-                datetime.now(timezone.utc) - last_sync.replace(tzinfo=timezone.utc)
-            ).total_seconds()
-            < full_fetch_period
-        ):
-            return
+    if not _is_time_to_run_sync(cc_pair):
+        return
 
     try:
         # This function updates:
@@ -131,6 +131,9 @@ def run_external_doc_permission_sync(
 
         # update vespa
         document_index.update(update_reqs)
+
+        cc_pair.last_time_perm_sync = datetime.now(timezone.utc)
+
         # update postgres
         db_session.commit()
     except Exception as e:
