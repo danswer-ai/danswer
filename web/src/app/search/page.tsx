@@ -65,7 +65,7 @@ export default async function Home() {
     | FetchAssistantsResponse
     | LLMProviderDescriptor[]
     | null
-  )[] = [null, null, null, null, null, null, null, null, null];
+  )[] = [null, null, null, null, null, null, null, null];
   try {
     results = await Promise.all(tasks);
   } catch (e) {
@@ -143,6 +143,7 @@ export default async function Home() {
       : SearchType.SEMANTIC; // default to semantic
 
   const hasAnyConnectors = ccPairs.length > 0;
+
   const shouldShowWelcomeModal =
     !llmProviders.length &&
     !hasCompletedWelcomeFlowSS() &&
