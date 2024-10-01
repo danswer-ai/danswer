@@ -616,7 +616,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     ],
   },
   linear: {
-    description: "Configure Dropbox connector",
+    description: "Configure Linear connector",
     values: [],
   },
   dropbox: {
