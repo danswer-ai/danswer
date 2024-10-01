@@ -7,22 +7,22 @@ import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces"
 import { destructureValue, structureValue } from "@/lib/llm/utils";
 import { setUserDefaultModel } from "@/lib/users/UserSettings";
 import { useRouter } from "next/navigation";
-import { usePopup } from "@/components/admin/connectors/Popup";
 
 export function SetDefaultModelModal({
+  setPopup,
   llmProviders,
   onClose,
   setLlmOverride,
   defaultModel,
   refreshUser,
 }: {
+  setPopup: Dispatch<SetStateAction<Popup>>;
   llmProviders: LLMProviderDescriptor[];
   setLlmOverride: Dispatch<SetStateAction<LlmOverride>>;
   onClose: () => void;
   defaultModel: string | null;
   refreshUser: () => void;
 }) {
-  const { popup, setPopup } = usePopup();
   const containerRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
 
@@ -127,7 +127,6 @@ export function SetDefaultModelModal({
       modalClassName="rounded-lg  bg-white max-w-xl"
     >
       <>
-        {popup}
         <div className="flex mb-4">
           <h2 className="text-2xl text-emphasis font-bold flex my-auto">
             Set Default Model

@@ -119,7 +119,7 @@ export function PersonasTable({
             id: persona.id.toString(),
             cells: [
               <div key="name" className="flex">
-                {!persona.is_default_persona && (
+                {!persona.builtin_persona && (
                   <FiEdit2
                     className="mr-1 my-auto cursor-pointer"
                     onClick={() =>

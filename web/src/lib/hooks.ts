@@ -146,12 +146,12 @@ export interface LlmOverrideManager {
   updateModelOverrideForChatSession: (chatSession?: ChatSession) => void;
 }
 export function useLlmOverride(
-  globalModel?: string | null,
+  globalModel: string | null,
   currentChatSession?: ChatSession,
   defaultTemperature?: number
 ): LlmOverrideManager {
   const [globalDefault, setGlobalDefault] = useState<LlmOverride>(
-    globalModel
+    globalModel != null
       ? destructureValue(globalModel)
       : {
           name: "",
@@ -181,6 +181,18 @@ export function useLlmOverride(
   const [temperature, setTemperature] = useState<number | null>(
     defaultTemperature != undefined ? defaultTemperature : 0
   );
+
+  useEffect(() => {
+    setGlobalDefault(
+      globalModel != null
+        ? destructureValue(globalModel)
+        : {
+            name: "",
+            provider: "",
+            modelName: "",
+          }
+    );
+  }, [globalModel]);
 
   useEffect(() => {
     setTemperature(defaultTemperature !== undefined ? defaultTemperature : 0);
