@@ -1,6 +1,7 @@
 "use client";
 
 import { CustomModal } from "@/components/CustomModal";
+import { SearchInput } from "@/components/SearchInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Teamspace } from "@/lib/types";
@@ -17,6 +18,11 @@ export const TeamspaceDataSource = ({
 }: TeamspaceDataSourceProps) => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isDataSourceModalOpen, setIsDataSourceModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredCCPairs = teamspace.cc_pairs.filter((cc_pair) =>
+    cc_pair.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="relative">
@@ -72,19 +78,28 @@ export const TeamspaceDataSource = ({
         onClose={() => setIsDataSourceModalOpen(false)}
       >
         {teamspace.cc_pairs.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-3">
-            {teamspace.cc_pairs.map((cc_pair) => (
-              <div
-                key={cc_pair.id}
-                className="border rounded-md flex p-4 gap-4"
-              >
-                <Globe className="shrink-0" />
-                <div className="w-full truncate">
-                  <h3 className="truncate">{cc_pair.name}</h3>
+          <>
+            <div className="w-1/2 ml-auto mb-4">
+              <SearchInput
+                placeholder="Search data source..."
+                value={searchTerm}
+                onChange={setSearchTerm}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {filteredCCPairs.map((cc_pair) => (
+                <div
+                  key={cc_pair.id}
+                  className="border rounded-md flex p-4 gap-4"
+                >
+                  <Globe className="shrink-0" />
+                  <div className="w-full truncate">
+                    <h3 className="truncate">{cc_pair.name}</h3>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         ) : (
           "There are no data source"
         )}

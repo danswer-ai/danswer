@@ -98,8 +98,10 @@ export const PendingInvites = ({ q }: { q: string }) => {
   const filteredUsers = finalInvited.filter(
     (user) =>
       user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.full_name!.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
   const onRemovalSuccess = () => {
     toast({
       title: "User Removed Successfully",
@@ -119,6 +121,7 @@ export const PendingInvites = ({ q }: { q: string }) => {
     });
     setIsCancelModalVisible(false);
   };
+
   return (
     <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
       <div className="xl:w-2/5">

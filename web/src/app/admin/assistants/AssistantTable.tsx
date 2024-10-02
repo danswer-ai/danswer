@@ -169,11 +169,19 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                                   assistant.id
                                 );
                                 if (response.ok) {
+                                  toast({
+                                    title: "Assistant deleted",
+                                    description:
+                                      "The assistant has been successfully deleted.",
+                                    variant: "success",
+                                  });
                                   router.refresh();
                                 } else {
-                                  alert(
-                                    `Failed to delete assistant - ${await response.text()}`
-                                  );
+                                  toast({
+                                    title: "Failed to delete assistant",
+                                    description: `There was an issue deleting the assistant. Details: ${await response.text()}`,
+                                    variant: "destructive",
+                                  });
                                 }
                               }}
                             >

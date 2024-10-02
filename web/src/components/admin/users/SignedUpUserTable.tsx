@@ -134,7 +134,7 @@ const SignedUpUserTable = ({
   };
 
   return (
-    <HidableSection sectionTitle="Current Users" defaultOpen>
+    <HidableSection sectionTitle="Current Users">
       <>
         {totalPages > 1 ? (
           <CenteredPageSelector

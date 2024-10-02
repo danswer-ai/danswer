@@ -27,27 +27,18 @@ export function SectionHeader({
 export function HidableSection({
   children,
   sectionTitle,
-  defaultHidden = false,
-  defaultOpen,
 }: {
   children: string | JSX.Element;
   sectionTitle: string | JSX.Element;
-  defaultHidden?: boolean;
-  defaultOpen?: boolean;
 }) {
-  const [isHidden, setIsHidden] = useState(defaultHidden);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Collapsible defaultOpen={defaultOpen}>
-      <CollapsibleTrigger
-        className="flex items-center justify-between hover:bg-hover-light rounded-regular cursor-pointer p-2 w-full"
-        onClick={() => setIsHidden(!isHidden)}
-      >
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="flex items-center justify-between hover:bg-hover-light rounded-regular cursor-pointer p-2 w-full">
         <SectionHeader includeMargin={false}>{sectionTitle}</SectionHeader>
-
-        {isHidden ? <ChevronRight size={24} /> : <ChevronDown size={24} />}
+        {isOpen ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
       </CollapsibleTrigger>
-
       <CollapsibleContent className="mx-2 mt-2">{children}</CollapsibleContent>
     </Collapsible>
   );

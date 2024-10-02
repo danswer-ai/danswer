@@ -61,7 +61,11 @@ export default function ProfileTab({
       });
       if (!response.ok) {
         const errorMsg = (await response.json()).detail;
-        alert(`Failed to upload logo. ${errorMsg}`);
+        toast({
+          title: "Failed to upload logo.",
+          description: errorMsg,
+          variant: "destructive",
+        });
         return;
       }
     }
@@ -84,6 +88,27 @@ export default function ProfileTab({
     input.click();
   };
 
+  const handleRemovePhoto = async () => {
+    setSelectedFile(null);
+    const response = await fetch("/api/me/profile", {
+      method: "DELETE",
+    });
+    if (response.ok) {
+      toast({
+        title: "Profile photo removed",
+        description: "Your profile photo has been successfully removed.",
+        variant: "success",
+      });
+    } else {
+      const errorMsg = (await response.json()).detail;
+      toast({
+        title: "Failed to remove profile photo.",
+        description: errorMsg,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <div className="flex py-8 border-b">
@@ -95,31 +120,39 @@ export default function ProfileTab({
             This will be displayed on your profile.
           </p>
         </div>
-        <div
-          className="flex items-center justify-between gap-3 md:w-[100px] cursor-pointer"
-          onClick={UploadProfilePhoto}
-        >
-          <div className="flex items-center justify-center rounded-full h-[65px] w-[65px] shrink-0 aspect-square text-2xl font-normal">
+        <div className="flex items-center justify-between gap-3 md:w-[100px] cursor-pointer">
+          <div
+            className="flex items-center justify-center rounded-full h-[65px] w-[65px] shrink-0 aspect-square text-2xl font-normal"
+            onClick={UploadProfilePhoto}
+          >
             {selectedFile ? (
-              <Image
+              <img
                 src={URL.createObjectURL(selectedFile)}
                 alt="Profile"
-                className="rounded-full object-cover"
-                width={65}
-                height={65}
+                className="rounded-full object-cover object-center h-[65px] w-[65px]"
               />
             ) : user && user.full_name ? (
-              <Image
+              <img
                 src={"/api/me/profile"}
                 alt="Profile"
-                className="rounded-full object-cover"
-                width={65}
-                height={65}
+                className="rounded-full object-cover object-center h-[65px] w-[65px]"
               />
             ) : (
               <User size={25} className="mx-auto" />
             )}
           </div>
+
+          {(selectedFile || (user && user.full_name)) && (
+            <div className="py-4">
+              <Button
+                variant="link"
+                className="text-destructive"
+                onClick={handleRemovePhoto}
+              >
+                Remove
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

@@ -2,21 +2,13 @@
 
 import { CustomModal } from "@/components/CustomModal";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Teamspace } from "@/lib/types";
-import { Copy, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import Logo from "../../../../../public/logo.png";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SearchInput } from "@/components/SearchInput";
 
 interface TeamspaceAssistantProps {
   teamspace: Teamspace & { gradient: string };
@@ -25,6 +17,11 @@ interface TeamspaceAssistantProps {
 export const TeamspaceAssistant = ({ teamspace }: TeamspaceAssistantProps) => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAssistantModalOpen, setIsAssistantModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredAssistants = teamspace.assistants.filter((assistant) =>
+    assistant.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="relative">
@@ -81,29 +78,38 @@ export const TeamspaceAssistant = ({ teamspace }: TeamspaceAssistantProps) => {
         onClose={() => setIsAssistantModalOpen(false)}
       >
         {teamspace.assistants.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {teamspace.assistants.map((assistant) => (
-              <div key={assistant.id} className="border rounded-md flex">
-                <div className="rounded-l-md flex items-center justify-center p-4 border-r">
-                  <Image
-                    src={Logo}
-                    alt={assistant.name}
-                    width={150}
-                    height={150}
-                  />
-                </div>
-                <div className="w-full p-4">
-                  <div className="flex items-center justify-between w-full">
-                    <h3>{assistant.name}</h3>
-                    <Checkbox />
+          <>
+            <div className="w-1/2 ml-auto mb-4">
+              <SearchInput
+                placeholder="Search assistants..."
+                value={searchTerm}
+                onChange={setSearchTerm}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {filteredAssistants.map((assistant) => (
+                <div key={assistant.id} className="border rounded-md flex">
+                  <div className="rounded-l-md flex items-center justify-center p-4 border-r">
+                    <Image
+                      src={Logo}
+                      alt={assistant.name}
+                      width={150}
+                      height={150}
+                    />
                   </div>
-                  <p className="text-sm pt-2 line-clamp">
-                    {assistant.description}
-                  </p>
+                  <div className="w-full p-4">
+                    <div className="flex items-center justify-between w-full">
+                      <h3>{assistant.name}</h3>
+                      <Checkbox />
+                    </div>
+                    <p className="text-sm pt-2 line-clamp">
+                      {assistant.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         ) : (
           "There are no assistants."
         )}

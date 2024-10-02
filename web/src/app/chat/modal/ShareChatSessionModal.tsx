@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CustomModal } from "@/components/CustomModal";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { useToast } from "@/hooks/use-toast";
 
 function buildShareLink(chatSessionId: number) {
   const baseUrl = `${window.location.protocol}//${window.location.host}`;
@@ -58,6 +59,7 @@ export function ShareChatSessionModal({
       ? buildShareLink(chatSessionId)
       : ""
   );
+  const { toast } = useToast();
 
   return (
     <CustomModal
@@ -123,8 +125,18 @@ export function ShareChatSessionModal({
                 if (success) {
                   setShareLink("");
                   onShare && onShare(false);
+                  toast({
+                    title: "Share link deleted",
+                    description:
+                      "The share link has been successfully deleted.",
+                    variant: "success",
+                  });
                 } else {
-                  alert("Failed to delete share link");
+                  toast({
+                    title: "Failed to delete share link",
+                    description: "There was an issue deleting the share link.",
+                    variant: "destructive",
+                  });
                 }
 
                 setLinkGenerating(false);
@@ -155,14 +167,31 @@ export function ShareChatSessionModal({
                 try {
                   const shareLink = await generateShareLink(chatSessionId);
                   if (!shareLink) {
-                    alert("Failed to generate share link");
+                    toast({
+                      title: "Failed to generate share link",
+                      description:
+                        "There was an issue generating the share link.",
+                      variant: "destructive",
+                    });
                   } else {
                     setShareLink(shareLink);
                     onShare && onShare(true);
                     navigator.clipboard.writeText(shareLink);
+                    toast({
+                      title: "Share link generated and copied",
+                      description:
+                        "The share link has been successfully copied to the clipboard.",
+                      variant: "success",
+                    });
                   }
                 } catch (e) {
                   console.error(e);
+                  toast({
+                    title: "Error",
+                    description:
+                      "An unexpected error occurred while generating the share link.",
+                    variant: "destructive",
+                  });
                 }
 
                 setLinkGenerating(false);

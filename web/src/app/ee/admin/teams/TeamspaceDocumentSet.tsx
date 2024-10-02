@@ -1,6 +1,7 @@
 "use client";
 
 import { CustomModal } from "@/components/CustomModal";
+import { SearchInput } from "@/components/SearchInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,6 +18,11 @@ export const TeamspaceDocumentSet = ({
 }: TeamspaceDocumentSetProps) => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isDocumentSetModalOpen, setIsDocumentSetModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredDocumentSets = teamspace.document_sets.filter((docSet) =>
+    docSet.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="relative">
@@ -69,25 +75,34 @@ export const TeamspaceDocumentSet = ({
         onClose={() => setIsDocumentSetModalOpen(false)}
       >
         {teamspace.document_sets.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-3">
-            {teamspace.document_sets.map((document) => (
-              <div
-                key={document.id}
-                className="border rounded-md flex p-4 gap-4"
-              >
-                <Globe className="shrink-0" />
-                <div className="w-full">
-                  <div className="flex items-center justify-between w-full">
-                    <h3 className="line-clamp">{document.name}</h3>
-                    <Checkbox />
+          <>
+            <div className="w-1/2 ml-auto mb-4">
+              <SearchInput
+                placeholder="Search document sets..."
+                value={searchTerm}
+                onChange={setSearchTerm}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {filteredDocumentSets.map((document) => (
+                <div
+                  key={document.id}
+                  className="border rounded-md flex p-4 gap-4"
+                >
+                  <Globe className="shrink-0" />
+                  <div className="w-full">
+                    <div className="flex items-center justify-between w-full">
+                      <h3 className="line-clamp">{document.name}</h3>
+                      <Checkbox />
+                    </div>
+                    <p className="text-sm pt-2 line-clamp">
+                      {document.description}
+                    </p>
                   </div>
-                  <p className="text-sm pt-2 line-clamp">
-                    {document.description}
-                  </p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         ) : (
           "There are no document sets."
         )}

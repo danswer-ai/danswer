@@ -27,6 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { SearchInput } from "@/components/SearchInput";
 
 interface TeamspaceMemberProps {
   teamspace: Teamspace & { gradient: string };
@@ -40,6 +41,12 @@ export const TeamspaceMember = ({
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const { isLoading, error, data, refreshTeamspaces } = useTeamspaces();
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredUsers = teamspace.users.filter((user) =>
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="relative">
@@ -134,69 +141,80 @@ export const TeamspaceMember = ({
         onClose={() => setIsMemberModalOpen(false)}
       >
         {teamspace.users.length > 0 ? (
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>
-                      <Checkbox />
-                    </TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Email Address</TableHead>
-                    <TableHead>Teams</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teamspace.users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
+          <>
+            <div className="w-1/2 ml-auto mb-4">
+              <SearchInput
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={setSearchTerm}
+              />
+            </div>
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>
                         <Checkbox />
-                      </TableCell>
-                      <TableCell className="flex items-center gap-2">
-                        <div className="border rounded-full h-10 w-10 flex items-center justify-center">
-                          <User />
-                        </div>
-                        <div className="grid">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold whitespace-nowrap">
-                              {user.full_name}
-                            </span>
-                            <Badge
-                              variant={
-                                user.role === "admin" ? "success" : "secondary"
-                              }
-                            >
-                              {user.role.charAt(0).toUpperCase() +
-                                user.role.slice(1)}
-                            </Badge>
-                          </div>
-                          <span className="text-xs">@username</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{user.status}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.workspace?.workspace_name}</TableCell>
-                      <TableCell>
-                        <CustomTooltip
-                          trigger={
-                            <Button variant="ghost" size="icon">
-                              <Trash size={16} />
-                            </Button>
-                          }
-                          asChild
-                        >
-                          Delete
-                        </CustomTooltip>
-                      </TableCell>
+                      </TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Email Address</TableHead>
+                      <TableHead>Teams</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <Checkbox />
+                        </TableCell>
+                        <TableCell className="flex items-center gap-2">
+                          <div className="border rounded-full h-10 w-10 flex items-center justify-center">
+                            <User />
+                          </div>
+                          <div className="grid">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold whitespace-nowrap">
+                                {user.full_name}
+                              </span>
+                              <Badge
+                                variant={
+                                  user.role === "admin"
+                                    ? "success"
+                                    : "secondary"
+                                }
+                              >
+                                {user.role.charAt(0).toUpperCase() +
+                                  user.role.slice(1)}
+                              </Badge>
+                            </div>
+                            <span className="text-xs">@username</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{user.status}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{user.workspace?.workspace_name}</TableCell>
+                        <TableCell>
+                          <CustomTooltip
+                            trigger={
+                              <Button variant="ghost" size="icon">
+                                <Trash size={16} />
+                              </Button>
+                            }
+                            asChild
+                          >
+                            Delete
+                          </CustomTooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </>
         ) : (
           "There are no member."
         )}
