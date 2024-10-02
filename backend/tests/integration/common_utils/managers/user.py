@@ -17,11 +17,14 @@ class UserManager:
     @staticmethod
     def create(
         name: str | None = None,
+        email: str | None = None,
     ) -> DATestUser:
         if name is None:
             name = f"test{str(uuid4())}"
 
-        email = f"{name}@test.com"
+        if email is None:
+            email = f"{name}@test.com"
+
         password = "test"
 
         body = {
@@ -44,12 +47,10 @@ class UserManager:
         )
         print(f"Created user {test_user.email}")
 
-        test_user.headers["Cookie"] = UserManager.login_as_user(test_user)
-
-        return test_user
+        return UserManager.login_as_user(test_user)
 
     @staticmethod
-    def login_as_user(test_user: DATestUser) -> str:
+    def login_as_user(test_user: DATestUser) -> DATestUser:
         data = urlencode(
             {
                 "username": test_user.email,
@@ -71,7 +72,9 @@ class UserManager:
             raise Exception("Failed to login")
 
         print(f"Logged in as {test_user.email}")
-        return f"{result_cookie.name}={result_cookie.value}"
+        cookie = f"{result_cookie.name}={result_cookie.value}"
+        test_user.headers["Cookie"] = cookie
+        return test_user
 
     @staticmethod
     def verify_role(user_to_verify: DATestUser, target_role: UserRole) -> bool:

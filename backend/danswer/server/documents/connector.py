@@ -781,6 +781,7 @@ def connector_run_once(
             detail="Connector has no valid credentials, cannot create index attempts.",
         )
 
+    # Prevents index attempts for cc pairs that already have an index attempt currently running
     skipped_credentials = [
         credential_id
         for credential_id in credential_ids
@@ -790,15 +791,15 @@ def connector_run_once(
                 credential_id=credential_id,
             ),
             only_current=True,
-            disinclude_finished=True,
             db_session=db_session,
+            disinclude_finished=True,
         )
     ]
 
     search_settings = get_current_search_settings(db_session)
 
     connector_credential_pairs = [
-        get_connector_credential_pair(run_info.connector_id, credential_id, db_session)
+        get_connector_credential_pair(connector_id, credential_id, db_session)
         for credential_id in credential_ids
         if credential_id not in skipped_credentials
     ]
