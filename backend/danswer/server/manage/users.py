@@ -1,6 +1,9 @@
 import re
+import smtplib
 from datetime import datetime
 from datetime import timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 import jwt
 from email_validator import validate_email
@@ -32,7 +35,12 @@ from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from danswer.configs.app_configs import SMTP_PASS
+from danswer.configs.app_configs import SMTP_PORT
+from danswer.configs.app_configs import SMTP_SERVER
+from danswer.configs.app_configs import SMTP_USER
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
+from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
 from danswer.db.engine import current_tenant_id
 from danswer.db.engine import get_session
@@ -168,11 +176,35 @@ def list_all_users(
     )
 
 
+def send_user_email_invite(user_email: str, current_user: User) -> None:
+    msg = MIMEMultipart()
+    msg["Subject"] = "Invitation to Join Danswer Workspace"
+    msg["To"] = user_email
+    msg["From"] = current_user.email
+
+    email_body = f"""
+Hello,
+
+You have been invited to join a workspace on Danswer.
+
+To join the workspace, please do so at the following link:
+{WEB_DOMAIN}/auth/login
+
+Best regards,
+The Danswer Team"""
+
+    msg.attach(MIMEText(email_body, "plain"))
+
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp_server:
+        smtp_server.starttls()
+        smtp_server.login(SMTP_USER, SMTP_PASS)
+        smtp_server.send_message(msg)
+
+
 @router.put("/manage/admin/users")
 def bulk_invite_users(
     emails: list[str] = Body(..., embed=True),
     current_user: User | None = Depends(current_admin_user),
-    _: Session = Depends(get_session),
 ) -> int:
     """emails are string validated. If any email fails validation, no emails are
     invited and an exception is raised."""
@@ -199,6 +231,8 @@ def bulk_invite_users(
             raise
 
     all_emails = list(set(normalized_emails) | set(get_invited_users()))
+    for email in all_emails:
+        send_user_email_invite(email, current_user)
     return write_invited_users(all_emails)
 
 
@@ -206,7 +240,6 @@ def bulk_invite_users(
 def remove_invited_user(
     user_email: UserByEmail,
     _: User | None = Depends(current_admin_user),
-    __: Session = Depends(get_session),
 ) -> int:
     user_emails = get_invited_users()
     remaining_users = [user for user in user_emails if user != user_email.user_email]
