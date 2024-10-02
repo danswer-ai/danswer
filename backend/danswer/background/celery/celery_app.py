@@ -32,7 +32,7 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_LIGHT_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
 from danswer.db.engine import SqlEngine
 from danswer.httpx.httpx_pool import HttpxPool
-from danswer.redis.redis_pool import RedisPool
+from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
@@ -41,8 +41,6 @@ logger = setup_logger()
 
 # use this within celery tasks to get celery task specific logging
 task_logger = get_task_logger(__name__)
-
-redis_pool = RedisPool()
 
 celery_app = Celery(__name__)
 celery_app.config_from_object(
@@ -81,13 +79,13 @@ def celery_task_postrun(
     if not task_id:
         return
 
+    r = get_redis_client()
+
     if task_id.startswith(RedisConnectorCredentialPair.PREFIX):
-        r = redis_pool.get_client()
         r.srem(RedisConnectorCredentialPair.get_taskset_key(), task_id)
         return
 
     if task_id.startswith(RedisDocumentSet.PREFIX):
-        r = redis_pool.get_client()
         document_set_id = RedisDocumentSet.get_id_from_task_id(task_id)
         if document_set_id is not None:
             rds = RedisDocumentSet(document_set_id)
@@ -95,7 +93,6 @@ def celery_task_postrun(
         return
 
     if task_id.startswith(RedisUserGroup.PREFIX):
-        r = redis_pool.get_client()
         usergroup_id = RedisUserGroup.get_id_from_task_id(task_id)
         if usergroup_id is not None:
             rug = RedisUserGroup(usergroup_id)
@@ -103,7 +100,6 @@ def celery_task_postrun(
         return
 
     if task_id.startswith(RedisConnectorDeletion.PREFIX):
-        r = redis_pool.get_client()
         cc_pair_id = RedisConnectorDeletion.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
             rcd = RedisConnectorDeletion(cc_pair_id)
@@ -142,7 +138,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         )
     )
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
@@ -202,7 +198,91 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
     # This is singleton work that should be done on startup exactly once
     # by the primary worker
-    r = redis_pool.get_client()
+    r = get_redis_client()
+
+    # For the moment, we're assuming that we are the only primary worker
+    # that should be running.
+    # TODO: maybe check for or clean up another zombie primary worker if we detect it
+    r.delete(DanswerRedisLocks.PRIMARY_WORKER)
+
+    # this process wide lock is taken to help other workers start up in order.
+    # it is planned to use this lock to enforce singleton behavior on the primary
+    # worker, since the primary worker does redis cleanup on startup, but this isn't
+    # implemented yet.
+    lock = r.lock(
+        DanswerRedisLocks.PRIMARY_WORKER,
+        timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
+    )
+
+    logger.info("Primary worker lock: Acquire starting.")
+    acquired = lock.acquire(blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2)
+    if acquired:
+        logger.info("Primary worker lock: Acquire succeeded.")
+    else:
+        logger.error("Primary worker lock: Acquire failed!")
+        raise WorkerShutdown("Primary worker lock could not be acquired!")
+
+    sender.primary_worker_lock = lock
+
+    WAIT_INTERVAL = 5
+    WAIT_LIMIT = 60
+
+    time_start = time.monotonic()
+    logger.info("Redis: Readiness check starting.")
+    while True:
+        try:
+            if r.ping():
+                break
+        except Exception:
+            pass
+
+        time_elapsed = time.monotonic() - time_start
+        logger.info(
+            f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+        )
+        if time_elapsed > WAIT_LIMIT:
+            msg = (
+                f"Redis: Readiness check did not succeed within the timeout "
+                f"({WAIT_LIMIT} seconds). Exiting..."
+            )
+            logger.error(msg)
+            raise WorkerShutdown(msg)
+
+        time.sleep(WAIT_INTERVAL)
+
+    logger.info("Redis: Readiness check succeeded. Continuing...")
+
+    if not celery_is_worker_primary(sender):
+        logger.info("Running as a secondary celery worker.")
+        logger.info("Waiting for primary worker to be ready...")
+        time_start = time.monotonic()
+        while True:
+            if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
+                break
+
+            time.monotonic()
+            time_elapsed = time.monotonic() - time_start
+            logger.info(
+                f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+            )
+            if time_elapsed > WAIT_LIMIT:
+                msg = (
+                    f"Primary worker was not ready within the timeout. "
+                    f"({WAIT_LIMIT} seconds). Exiting..."
+                )
+                logger.error(msg)
+                raise WorkerShutdown(msg)
+
+            time.sleep(WAIT_INTERVAL)
+
+        logger.info("Wait for primary worker completed successfully. Continuing...")
+        return
+
+    logger.info("Running as the primary celery worker.")
+
+    # This is singleton work that should be done on startup exactly once
+    # by the primary worker
+    r = get_redis_client()
 
     # For the moment, we're assuming that we are the only primary worker
     # that should be running.
@@ -372,12 +452,9 @@ class HubPeriodicTask(bootsteps.StartStopStep):
             if not hasattr(worker, "primary_worker_lock"):
                 return
 
-            r = redis_pool.get_client()
+            r = get_redis_client()
 
             lock: redis.lock.Lock = worker.primary_worker_lock
-
-            # ttl_ms = r.pttl(lock.name)
-            # logger.info(f"lock TTL before: {ttl_ms}ms")
 
             task_logger.info("Reacquiring primary worker lock.")
 
@@ -405,9 +482,6 @@ class HubPeriodicTask(bootsteps.StartStopStep):
                     raise TimeoutError("Primary worker lock could not be acquired!")
 
                 worker.primary_worker_lock = lock
-
-            # ttl_ms = r.pttl(lock.name)
-            # task_logger.info(f"lock TTL after: {ttl_ms}ms")
         except Exception:
             task_logger.exception("HubPeriodicTask.run_periodic_task exceptioned.")
 

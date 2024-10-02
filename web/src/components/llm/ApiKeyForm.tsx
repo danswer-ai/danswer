@@ -8,9 +8,11 @@ import { CustomLLMProviderUpdateForm } from "@/app/admin/configuration/llm/Custo
 export const ApiKeyForm = ({
   onSuccess,
   providerOptions,
+  hidePopup,
 }: {
   onSuccess: () => void;
   providerOptions: WellKnownLLMProviderDescriptor[];
+  hidePopup?: boolean;
 }) => {
   const [popup, setPopup] = useState<{
     message: string;
@@ -33,7 +35,10 @@ export const ApiKeyForm = ({
 
   return (
     <div>
-      {popup && <Popup message={popup.message} type={popup.type} />}
+      {!hidePopup && popup && (
+        <Popup message={popup.message} type={popup.type} />
+      )}
+
       <TabGroup
         index={providerNameToIndexMap.get(providerName) || 0}
         onIndexChange={(index) =>

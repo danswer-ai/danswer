@@ -18,7 +18,8 @@ export interface Notification {
 
 export interface NavigationItem {
   link: string;
-  icon: string;
+  icon?: string;
+  svg_logo?: string;
   title: string;
 }
 

@@ -10,14 +10,14 @@ from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.test_models import TestUser
+from tests.integration.common_utils.test_models import DATestUser
 
 
 class UserManager:
     @staticmethod
     def create(
         name: str | None = None,
-    ) -> TestUser:
+    ) -> DATestUser:
         if name is None:
             name = f"test{str(uuid4())}"
 
@@ -36,7 +36,7 @@ class UserManager:
         )
         response.raise_for_status()
 
-        test_user = TestUser(
+        test_user = DATestUser(
             id=response.json()["id"],
             email=email,
             password=password,
@@ -49,7 +49,7 @@ class UserManager:
         return test_user
 
     @staticmethod
-    def login_as_user(test_user: TestUser) -> str:
+    def login_as_user(test_user: DATestUser) -> str:
         data = urlencode(
             {
                 "username": test_user.email,
@@ -74,7 +74,7 @@ class UserManager:
         return f"{result_cookie.name}={result_cookie.value}"
 
     @staticmethod
-    def verify_role(user_to_verify: TestUser, target_role: UserRole) -> bool:
+    def verify_role(user_to_verify: DATestUser, target_role: UserRole) -> bool:
         response = requests.get(
             url=f"{API_SERVER_URL}/me",
             headers=user_to_verify.headers,
@@ -84,9 +84,9 @@ class UserManager:
 
     @staticmethod
     def set_role(
-        user_to_set: TestUser,
+        user_to_set: DATestUser,
         target_role: UserRole,
-        user_to_perform_action: TestUser | None = None,
+        user_to_perform_action: DATestUser | None = None,
     ) -> None:
         if user_to_perform_action is None:
             user_to_perform_action = user_to_set
@@ -98,7 +98,9 @@ class UserManager:
         response.raise_for_status()
 
     @staticmethod
-    def verify(user: TestUser, user_to_perform_action: TestUser | None = None) -> None:
+    def verify(
+        user: DATestUser, user_to_perform_action: DATestUser | None = None
+    ) -> None:
         if user_to_perform_action is None:
             user_to_perform_action = user
         response = requests.get(

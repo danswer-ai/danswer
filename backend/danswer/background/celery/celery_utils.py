@@ -25,12 +25,12 @@ from danswer.db.models import TaskQueueState
 from danswer.db.tasks import check_task_is_live_and_not_timed_out
 from danswer.db.tasks import get_latest_task
 from danswer.db.tasks import get_latest_task_by_type
-from danswer.redis.redis_pool import RedisPool
+from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import DeletionAttemptSnapshot
 from danswer.utils.logger import setup_logger
 
+
 logger = setup_logger()
-redis_pool = RedisPool()
 
 
 def _get_deletion_status(
@@ -47,7 +47,7 @@ def _get_deletion_status(
 
     rcd = RedisConnectorDeletion(cc_pair.id)
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
     if not r.exists(rcd.fence_key):
         return None
 
@@ -70,6 +70,30 @@ def get_deletion_attempt_snapshot(
     )
 
 
+def skip_cc_pair_pruning_by_task(
+    pruning_task: TaskQueueState | None, db_session: Session
+) -> bool:
+    """task should be the latest prune task for this cc_pair"""
+    if not ALLOW_SIMULTANEOUS_PRUNING:
+        # if only one prune is allowed at any time, then check to see if any prune
+        # is active
+        pruning_type_task_name = name_cc_prune_task()
+        last_pruning_type_task = get_latest_task_by_type(
+            pruning_type_task_name, db_session
+        )
+
+        if last_pruning_type_task and check_task_is_live_and_not_timed_out(
+            last_pruning_type_task, db_session
+        ):
+            return True
+
+    if pruning_task and check_task_is_live_and_not_timed_out(pruning_task, db_session):
+        # if the last task is live right now, we shouldn't start a new one
+        return True
+
+    return False
+
+
 def should_prune_cc_pair(
     connector: Connector, credential: Credential, db_session: Session
 ) -> bool:
@@ -80,31 +104,26 @@ def should_prune_cc_pair(
         connector_id=connector.id, credential_id=credential.id
     )
     last_pruning_task = get_latest_task(pruning_task_name, db_session)
+
+    if skip_cc_pair_pruning_by_task(last_pruning_task, db_session):
+        return False
+
     current_db_time = get_db_current_time(db_session)
 
     if not last_pruning_task:
+        # If the connector has never been pruned, then compare vs when the connector
+        # was created
         time_since_initialization = current_db_time - connector.time_created
         if time_since_initialization.total_seconds() >= connector.prune_freq:
             return True
         return False
 
-    if not ALLOW_SIMULTANEOUS_PRUNING:
-        pruning_type_task_name = name_cc_prune_task()
-        last_pruning_type_task = get_latest_task_by_type(
-            pruning_type_task_name, db_session
-        )
-
-        if last_pruning_type_task and check_task_is_live_and_not_timed_out(
-            last_pruning_type_task, db_session
-        ):
-            return False
-
-    if check_task_is_live_and_not_timed_out(last_pruning_task, db_session):
-        return False
-
     if not last_pruning_task.start_time:
+        # if the last prune task hasn't started, we shouldn't start a new one
         return False
 
+    # if the last prune task has a start time, then compare against it to determine
+    # if we should start
     time_since_last_pruning = current_db_time - last_pruning_task.start_time
     return time_since_last_pruning.total_seconds() >= connector.prune_freq
 
@@ -158,6 +177,9 @@ def celery_is_listening_to_queue(worker: Any, name: str) -> bool:
 
 
 def celery_is_worker_primary(worker: Any) -> bool:
+    """There are multiple approaches that could be taken, but the way we do it is to
+    check the hostname set for the celery worker, either in celeryconfig.py or on the
+    command line."""
     hostname = worker.hostname
     if hostname.startswith("light"):
         return False

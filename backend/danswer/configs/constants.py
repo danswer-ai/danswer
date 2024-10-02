@@ -48,6 +48,7 @@ UNNAMED_KEY_PLACEHOLDER = "Unnamed"
 # Key-Value store keys
 KV_REINDEX_KEY = "needs_reindexing"
 KV_SEARCH_SETTINGS = "search_settings"
+KV_UNSTRUCTURED_API_KEY = "unstructured_api_key"
 KV_USER_STORE_KEY = "INVITED_USERS"
 KV_NO_AUTH_USER_PREFERENCES_KEY = "no_auth_user_preferences"
 KV_CRED_KEY = "credential_id_{}"
@@ -107,6 +108,7 @@ class DocumentSource(str, Enum):
     R2 = "r2"
     GOOGLE_CLOUD_STORAGE = "google_cloud_storage"
     OCI_STORAGE = "oci_storage"
+    XENFORO = "xenforo"
     NOT_APPLICABLE = "not_applicable"
 
 

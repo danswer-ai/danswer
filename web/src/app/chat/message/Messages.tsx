@@ -54,6 +54,7 @@ import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
 import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
+import { extractCodeText } from "./codeUtils";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -253,6 +254,40 @@ export const AIMessage = ({
     new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
 
+  const markdownComponents = useMemo(
+    () => ({
+      a: MemoizedLink,
+      p: MemoizedParagraph,
+      code: ({ node, inline, className, children, ...props }: any) => {
+        const codeText = extractCodeText(
+          node,
+          finalContent as string,
+          children
+        );
+
+        return (
+          <CodeBlock className={className} codeText={codeText}>
+            {children}
+          </CodeBlock>
+        );
+      },
+    }),
+    [messageId, content]
+  );
+
+  const renderedMarkdown = useMemo(() => {
+    return (
+      <ReactMarkdown
+        className="prose max-w-full text-base"
+        components={markdownComponents}
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+      >
+        {finalContent as string}
+      </ReactMarkdown>
+    );
+  }, [finalContent]);
+
   const includeMessageSwitcher =
     currentMessageInd !== undefined &&
     onMessageSelection &&
@@ -352,27 +387,7 @@ export const AIMessage = ({
 
                         {typeof content === "string" ? (
                           <div className="overflow-x-visible max-w-content-max">
-                            <ReactMarkdown
-                              key={messageId}
-                              className="prose max-w-full text-base"
-                              components={{
-                                a: MemoizedLink,
-                                p: MemoizedParagraph,
-                                code: (props) => (
-                                  <CodeBlock
-                                    className="w-full"
-                                    {...props}
-                                    content={content as string}
-                                  />
-                                ),
-                              }}
-                              remarkPlugins={[remarkGfm]}
-                              rehypePlugins={[
-                                [rehypePrism, { ignoreMissing: true }],
-                              ]}
-                            >
-                              {finalContent as string}
-                            </ReactMarkdown>
+                            {renderedMarkdown}
                           </div>
                         ) : (
                           content
@@ -686,7 +701,9 @@ export const HumanMessage = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-[790px]`}>
+      <div
+        className={`text-user-text mx-auto ${shared ? "w-full" : "w-[90%]"} max-w-[790px]`}
+      >
         <div className="xl:ml-8">
           <div className="flex flex-col mr-4">
             <FileDisplay alignBubble files={files || []} />
@@ -704,7 +721,7 @@ export const HumanMessage = ({
                       border 
                       border-border 
                       rounded-lg 
-                      bg-background-emphasis 
+                      bg-background-emphasis
                       pb-2
                       [&:has(textarea:focus)]::ring-1
                       [&:has(textarea:focus)]::ring-black

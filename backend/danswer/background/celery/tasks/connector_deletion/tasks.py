@@ -18,9 +18,8 @@ from danswer.db.enums import IndexingStatus
 from danswer.db.index_attempt import get_last_attempt
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.search_settings import get_current_search_settings
-from danswer.redis.redis_pool import RedisPool
+from danswer.redis.redis_pool import get_redis_client
 
-redis_pool = RedisPool()
 
 # use this within celery tasks to get celery task specific logging
 task_logger = get_task_logger(__name__)
@@ -32,7 +31,7 @@ task_logger = get_task_logger(__name__)
     trail=False,
 )
 def check_for_connector_deletion_task() -> None:
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     lock_beat = r.lock(
         DanswerRedisLocks.CHECK_CONNECTOR_DELETION_BEAT_LOCK,

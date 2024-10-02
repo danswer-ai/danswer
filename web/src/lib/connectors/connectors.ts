@@ -3,6 +3,16 @@ import { IsPublicGroupSelectorFormType } from "@/components/IsPublicGroupSelecto
 import { ConfigurableSources, ValidInputTypes, ValidSources } from "../types";
 import { AccessTypeGroupSelectorFormType } from "@/components/admin/connectors/AccessTypeGroupSelector";
 
+export function isLoadState(connector_name: string): boolean {
+  // TODO: centralize connector metadata like this somewhere instead of hardcoding it here
+  const loadStateConnectors = ["web", "xenforo"];
+  if (loadStateConnectors.includes(connector_name)) {
+    return true;
+  }
+
+  return false;
+}
+
 export type InputType =
   | "list"
   | "text"
@@ -606,7 +616,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     ],
   },
   linear: {
-    description: "Configure Dropbox connector",
+    description: "Configure Linear connector",
     values: [],
   },
   dropbox: {
@@ -761,6 +771,20 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         description:
           "When indexing categories that have sub-categories, this will determine how may levels to index. Specify 0 to only index the category itself (i.e. no recursion). Specify -1 for unlimited recursion depth. Note, that in some rare instances, a category might contain itself in its dependencies, which will cause an infinite loop. Only use -1 if you confident that this will not happen.",
         optional: false,
+      },
+    ],
+  },
+  xenforo: {
+    description: "Configure Xenforo connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter forum or thread URL:",
+        label: "URL",
+        name: "base_url",
+        optional: false,
+        description:
+          "The XenForo v2.2 forum URL to index. Can be board or thread.",
       },
     ],
   },
@@ -1051,6 +1075,10 @@ export interface ClickupConfig {
 
 export interface GoogleSitesConfig {
   zip_path: string;
+  base_url: string;
+}
+
+export interface XenforoConfig {
   base_url: string;
 }
 

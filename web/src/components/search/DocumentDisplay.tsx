@@ -206,7 +206,7 @@ export const DocumentDisplay = ({
         {!hide && (document.is_relevant || additional_relevance?.relevant) && (
           <FaStar
             size={16}
-            className="h-full text-xs text-accent rounded w-fit my-auto select-none ml-auto mr-2"
+            className="h-full text-xs text-star-indicator rounded w-fit my-auto select-none ml-auto mr-2"
           />
         )}
       </div>
