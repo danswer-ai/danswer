@@ -1,7 +1,6 @@
 """
 Assumptions:
 - The test users have already been created
-- General is the only channel
 - General is empty of messages
 - In addition to the normal slack oauth permissions, the following scopes are needed:
     - channels:manage
@@ -10,13 +9,14 @@ Assumptions:
     - chat:write.public
 """
 from typing import Any
+from uuid import uuid4
 
 from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
 from danswer.connectors.slack.connector import ChannelType
 from danswer.connectors.slack.connector import default_msg_filter
 from danswer.connectors.slack.connector import get_channel_messages
-from tests.integration.common_utils.test_models import DATestCredential
 
 
 def _get_slack_channel_id(channel: dict[str, Any]) -> str:
@@ -25,13 +25,42 @@ def _get_slack_channel_id(channel: dict[str, Any]) -> str:
     return channel_id
 
 
+def _get_non_general_channels(
+    slack_client: WebClient,
+    get_private: bool,
+    get_public: bool,
+    only_get_done: bool = False,
+) -> list[dict[str, Any]]:
+    channel_types = []
+    if get_private:
+        channel_types.append("private_channel")
+    if get_public:
+        channel_types.append("public_channel")
+    conversations_results = slack_client.conversations_list(
+        exclude_archived=False, types=channel_types
+    )
+    conversations: list[ChannelType] = conversations_results.get("channels", [])
+    filtered_conversations = []
+    for conversation in conversations:
+        if conversation.get("is_general", False):
+            continue
+        if only_get_done and "done" not in conversation.get("name", ""):
+            continue
+        filtered_conversations.append(conversation)
+    return filtered_conversations
+
+
 def _clear_slack_conversation_members(
-    slack_client: WebClient, channel: dict[str, Any]
+    slack_client: WebClient,
+    admin_user_id: str,
+    channel: dict[str, Any],
 ) -> None:
     channel_id = _get_slack_channel_id(channel)
     members_results = slack_client.conversations_members(channel=channel_id)
     member_ids: list[str] = members_results.get("members", [])
     for member_id in member_ids:
+        if member_id == admin_user_id:
+            continue
         try:
             slack_client.conversations_kick(channel=channel_id, user=member_id)
             print(f"Kicked member: {member_id}")
@@ -53,7 +82,13 @@ def _add_slack_conversation_members(
 ) -> None:
     channel_id = _get_slack_channel_id(channel)
     for user_id in member_ids:
-        slack_client.conversations_invite(channel=channel_id, users=user_id)
+        try:
+            slack_client.conversations_invite(channel=channel_id, users=user_id)
+        except Exception as e:
+            if "already_in_channel" in str(e):
+                continue
+            print(f"Error inviting member: {e}")
+            print(user_id)
 
 
 def _delete_slack_conversation_messages(
@@ -70,65 +105,97 @@ def _delete_slack_conversation_messages(
 
             if message_to_delete and message.get("text") != message_to_delete:
                 continue
+            print(" trying to remove message: ", message.get("text"))
 
             try:
                 if not (ts := message.get("ts")):
                     raise ValueError("Message timestamp is missing")
-                slack_client.chat_delete(channel=channel_id, ts=ts, as_user=True)
+                slack_client.chat_delete(channel=channel_id, ts=ts)
             except Exception as e:
                 print(f"Error deleting message: {e}")
                 print(message)
 
 
+def _build_slack_channel_from_name(
+    slack_client: WebClient,
+    admin_user_id: str,
+    suffix: str,
+    is_private: bool,
+    channel: dict[str, Any] | None,
+) -> dict[str, Any]:
+    base = "public_channel" if not is_private else "private_channel"
+    channel_name = f"{base}-{suffix}"
+    if channel:
+        # If channel is provided, we rename it
+        channel_id = _get_slack_channel_id(channel)
+        channel_response = slack_client.conversations_rename(
+            channel=channel_id, name=channel_name
+        )
+    else:
+        # Otherwise, we create a new channel
+        channel_response = slack_client.conversations_create(
+            name=channel_name, is_private=is_private
+        )
+
+    try:
+        channel_response = slack_client.conversations_unarchive(
+            channel=channel_response.get("channel", {}).get("id")
+        )
+    except Exception:
+        # Channel is already unarchived
+        pass
+    try:
+        channel_response = slack_client.conversations_invite(
+            channel=channel_response.get("channel", {}).get("id"), users=[admin_user_id]
+        )
+    except Exception:
+        pass
+
+    channel = channel_response.get("channel")
+    print(channel)
+    return channel
+
+
 class SlackManager:
     @staticmethod
-    def get_slack_client(credential: DATestCredential) -> WebClient:
-        return WebClient(token=credential.credential_json["slack_bot_token"])
+    def get_slack_client(token: str) -> WebClient:
+        return WebClient(token=token)
 
     @staticmethod
-    def reset_slack_workspace(slack_client: WebClient) -> list[dict[str, Any]]:
-        # Remove all users from all channels
-        channel_types = ["private_channel", "public_channel"]
-        conversations_results = slack_client.conversations_list(
-            exclude_archived=False, types=channel_types
+    def get_and_provision_available_slack_channels(
+        slack_client: WebClient, admin_user_id: str
+    ) -> tuple[dict[str, Any], dict[str, Any], str]:
+        run_id = str(uuid4())
+        public_channels = _get_non_general_channels(
+            slack_client, get_private=False, get_public=True, only_get_done=True
         )
-        conversations: list[ChannelType] = conversations_results.get("channels", [])
-        for conversation in conversations:
-            _delete_slack_conversation_messages(slack_client, conversation)
-            if not conversation.get("is_general", False):
-                _clear_slack_conversation_members(slack_client, conversation)
 
-        return conversations
+        first_available_channel = (
+            None if len(public_channels) < 1 else public_channels[0]
+        )
+        public_channel = _build_slack_channel_from_name(
+            slack_client=slack_client,
+            admin_user_id=admin_user_id,
+            suffix=run_id,
+            is_private=False,
+            channel=first_available_channel,
+        )
 
-    @staticmethod
-    def seed_channel(
-        slack_client: WebClient, channel_name: str, channels: list[dict[str, Any]]
-    ) -> dict[str, Any]:
-        for channel in channels:
-            if channel_name in channel["name"]:
-                if channel_name != channel["name"]:
-                    channel_id = _get_slack_channel_id(channel)
-                    slack_client.conversations_rename(
-                        channel=channel_id, name=channel_name
-                    )
-                    channel["name"] = channel_name
-                print(f"Channel {channel_name} already exists")
-                return channel
+        private_channels = _get_non_general_channels(
+            slack_client, get_private=True, get_public=False, only_get_done=True
+        )
+        second_available_channel = (
+            None if len(private_channels) < 1 else private_channels[0]
+        )
+        private_channel = _build_slack_channel_from_name(
+            slack_client=slack_client,
+            admin_user_id=admin_user_id,
+            suffix=run_id,
+            is_private=True,
+            channel=second_available_channel,
+        )
 
-        print(f"Channel {channel_name} not found")
-        if "public" in channel_name:
-            created_channel = slack_client.conversations_create(
-                name=channel_name, is_private=False
-            )
-        elif "private" in channel_name:
-            created_channel = slack_client.conversations_create(
-                name=channel_name, is_private=True
-            )
-        else:
-            raise Exception(
-                f"Channel name must contain 'public' or 'private': {channel_name}"
-            )
-        return created_channel["channel"]
+        return public_channel, private_channel, run_id
 
     @staticmethod
     def build_slack_user_email_id_map(slack_client: WebClient) -> dict[str, str]:
@@ -145,10 +212,19 @@ class SlackManager:
 
     @staticmethod
     def set_channel_members(
-        slack_client: WebClient, channel: dict[str, Any], user_ids: list[str]
+        slack_client: WebClient,
+        admin_user_id: str,
+        channel: dict[str, Any],
+        user_ids: list[str],
     ) -> None:
-        _clear_slack_conversation_members(slack_client, channel)
-        _add_slack_conversation_members(slack_client, channel, user_ids)
+        _clear_slack_conversation_members(
+            slack_client=slack_client,
+            channel=channel,
+            admin_user_id=admin_user_id,
+        )
+        _add_slack_conversation_members(
+            slack_client=slack_client, channel=channel, member_ids=user_ids
+        )
 
     @staticmethod
     def add_message_to_channel(
@@ -161,4 +237,26 @@ class SlackManager:
     def remove_message_from_channel(
         slack_client: WebClient, channel: dict[str, Any], message: str
     ) -> None:
-        _delete_slack_conversation_messages(slack_client, channel, message)
+        _delete_slack_conversation_messages(
+            slack_client=slack_client, channel=channel, message_to_delete=message
+        )
+
+    @staticmethod
+    def cleanup_after_test(
+        slack_client: WebClient,
+        test_id: str,
+    ) -> None:
+        channel_types = ["private_channel", "public_channel"]
+        conversations_response = slack_client.conversations_list(
+            exclude_archived=False, types=channel_types
+        )
+        conversations = conversations_response.get("channels", [])
+        for channel in conversations:
+            if test_id not in channel.get("name", ""):
+                continue
+            # "done" in the channel name indicates that this channel is free to be used for a new test
+            new_name = f"done_{str(uuid4())}"
+            try:
+                slack_client.conversations_rename(channel=channel["id"], name=new_name)
+            except SlackApiError as e:
+                print(f"Error renaming channel {channel['id']}: {e}")

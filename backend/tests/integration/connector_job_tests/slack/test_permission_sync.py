@@ -30,6 +30,28 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
     admin_user: DATestUser = UserManager.create(
         email="admin@onyx-test.com",
     )
+
+    # Creating a non-admin user
+    test_user_1: DATestUser = UserManager.create(
+        email="test_user_1@onyx-test.com",
+    )
+
+    # Creating a non-admin user
+    test_user_2: DATestUser = UserManager.create(
+        email="test_user_2@onyx-test.com",
+    )
+
+    slack_client = SlackManager.get_slack_client(os.environ["SLACK_BOT_TOKEN"])
+    email_id_map = SlackManager.build_slack_user_email_id_map(slack_client)
+    admin_user_id = email_id_map[admin_user.email]
+    (
+        public_channel,
+        private_channel,
+        run_id,
+    ) = SlackManager.get_and_provision_available_slack_channels(
+        slack_client=slack_client, admin_user_id=admin_user_id
+    )
+
     LLMProviderManager.create(user_performing_action=admin_user)
 
     credential: DATestCredential = CredentialManager.create(
@@ -45,6 +67,7 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
         source=DocumentSource.SLACK,
         connector_specific_config={
             "workspace": "onyx-test-workspace",
+            "channels": [public_channel["name"], private_channel["name"]],
         },
         is_public=True,
         groups=[],
@@ -57,33 +80,12 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
         user_performing_action=admin_user,
     )
 
-    # Creating a non-admin user
-    test_user_1: DATestUser = UserManager.create(
-        email="test_user_1@onyx-test.com",
-    )
-
-    # Creating a non-admin user
-    test_user_2: DATestUser = UserManager.create(
-        email="test_user_2@onyx-test.com",
-    )
-
-    slack_client = SlackManager.get_slack_client(credential)
-    channels = SlackManager.reset_slack_workspace(slack_client)
-    email_id_map = SlackManager.build_slack_user_email_id_map(slack_client)
-
-    # Make sure public and private channels are created
-    channel_names = ["public_channel_1", "private_channel_1"]
-    channel_name_map = {}
-    for channel_name in channel_names:
-        channel_name_map[channel_name] = SlackManager.seed_channel(
-            slack_client=slack_client, channel_name=channel_name, channels=channels
-        )
-
     # Add test_user_1 and admin_user to the private channel
     desired_channel_members = [admin_user, test_user_1]
     SlackManager.set_channel_members(
         slack_client=slack_client,
-        channel=channel_name_map["private_channel_1"],
+        admin_user_id=admin_user_id,
+        channel=private_channel,
         user_ids=[email_id_map[user.email] for user in desired_channel_members],
     )
 
@@ -92,12 +94,12 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
 
     SlackManager.add_message_to_channel(
         slack_client=slack_client,
-        channel=channel_name_map["public_channel_1"],
+        channel=public_channel,
         message=public_message,
     )
     SlackManager.add_message_to_channel(
         slack_client=slack_client,
-        channel=channel_name_map["private_channel_1"],
+        channel=private_channel,
         message=private_message,
     )
 
@@ -193,12 +195,14 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
     assert public_message in danswer_doc_message_strings
     assert private_message in danswer_doc_message_strings
 
+    # ----------------------MAKE THE CHANGES--------------------------
     print("\nRemoving test_user_1 from the private channel")
     # Remove test_user_1 from the private channel
     desired_channel_members = [admin_user]
     SlackManager.set_channel_members(
         slack_client=slack_client,
-        channel=channel_name_map["private_channel_1"],
+        admin_user_id=admin_user_id,
+        channel=private_channel,
         user_ids=[email_id_map[user.email] for user in desired_channel_members],
     )
 
@@ -213,6 +217,7 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
         user_performing_action=admin_user,
     )
 
+    # ----------------------------VERIFY THE CHANGES---------------------------
     # Ensure test_user_1 can no longer see messages from the private channel
     # Search as test_user_1 with access to only the public channel
     search_request = DocumentSearchRequest(
@@ -238,3 +243,5 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
     # Ensure test_user_1 can only see messages from the public channel
     assert public_message in danswer_doc_message_strings
     assert private_message not in danswer_doc_message_strings
+
+    SlackManager.cleanup_after_test(slack_client=slack_client, test_id=run_id)
