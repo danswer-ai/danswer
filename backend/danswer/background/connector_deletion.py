@@ -10,6 +10,8 @@ are multiple connector / credential pairs that have indexed it
 connector / credential pair from the access list
 (6) delete all relevant entries from postgres
 """
+import time
+
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
@@ -137,6 +139,8 @@ def document_by_cc_pair_cleanup_task(
 ) -> bool:
     task_logger.info(f"document_id={document_id}")
 
+    timing = {}
+    timing["start"] = time.monotonic()
     try:
         with Session(get_sqlalchemy_engine()) as db_session:
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
@@ -148,11 +152,14 @@ def document_by_cc_pair_cleanup_task(
             if count == 1:
                 # count == 1 means this is the only remaining cc_pair reference to the doc
                 # delete it from vespa and the db
+                timing["db_read"] = time.monotonic()
                 document_index.delete(doc_ids=[document_id])
+                timing["indexed"] = time.monotonic()
                 delete_documents_complete__no_commit(
                     db_session=db_session,
                     document_ids=[document_id],
                 )
+                time.monotonic()
             elif count > 1:
                 # count > 1 means the document still has cc_pair references
                 doc = get_document(document_id, db_session)
@@ -176,8 +183,12 @@ def document_by_cc_pair_cleanup_task(
                     hidden=doc.hidden,
                 )
 
+                timing["db_read"] = time.monotonic()
+
                 # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
                 document_index.update_single(update_request=update_request)
+
+                timing["indexed"] = time.monotonic()
 
                 # there are still other cc_pair references to the doc, so just resync to Vespa
                 delete_document_by_connector_credential_pair__no_commit(
@@ -208,4 +219,13 @@ def document_by_cc_pair_cleanup_task(
         countdown = 2 ** (self.request.retries + 4)
         self.retry(exc=e, countdown=countdown)
 
+    timing["end"] = time.monotonic()
+
+    db_read_s = timing["db_read"] - timing["start"]
+    index_s = timing["indexed"] - timing["db_read"]
+    db_write_s = timing["end"] - timing["indexed"]
+    all_s = timing["end"] - timing["start"]
+    task_logger.info(
+        f"db_read={db_read_s:.2f} index={index_s:.2f} db_write={db_write_s:.2f} all={all_s:.2f}"
+    )
     return True

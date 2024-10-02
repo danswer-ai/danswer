@@ -382,6 +382,9 @@ class VespaIndex(DocumentIndex):
         function will complete with no errors or exceptions.
         Handle other exceptions if you wish to implement retry behavior
         """
+        timing = {}
+        timing["start"] = time.monotonic()
+
         if len(update_request.document_ids) != 1:
             raise ValueError("update_request must contain a single document id")
 
@@ -399,7 +402,8 @@ class VespaIndex(DocumentIndex):
         if self.secondary_index_name:
             index_names.append(self.secondary_index_name)
 
-        chunk_id_start_time = time.monotonic()
+        # chunk_id_start_time = time.monotonic()
+        timing["chunk_fetch_start"] = time.monotonic()
         all_doc_chunk_ids: list[str] = []
         for index_name in index_names:
             for document_id in update_request.document_ids:
@@ -411,8 +415,10 @@ class VespaIndex(DocumentIndex):
                     get_large_chunks=True,
                 )
                 all_doc_chunk_ids.extend(doc_chunk_ids)
+        timing["chunk_fetch_end"] = time.monotonic()
+        timing_chunk_fetch = timing["chunk_fetch_end"] - timing["chunk_fetch_start"]
         logger.debug(
-            f"Took {time.monotonic() - chunk_id_start_time:.2f} seconds to fetch all Vespa chunk IDs"
+            f"Took {timing_chunk_fetch:.2f} seconds to fetch all Vespa chunk IDs"
         )
 
         # Build the _VespaUpdateRequest objects
@@ -454,16 +460,29 @@ class VespaIndex(DocumentIndex):
                     headers={"Content-Type": "application/json"},
                     json=update.update_request,
                 )
+        timing["end"] = time.monotonic()
 
         # logger.debug(
         #     "Finished updating Vespa documents in %.2f seconds",
         #     time.monotonic() - update_start,
         # )
 
+        t_setup = timing["chunk_fetch_start"] - timing["start"]
+        t_chunk_fetch = timing["chunk_fetch_end"] - timing["chunk_fetch_start"]
+        t_update = timing["chunk_fetch_end"] - timing["chunk_fetch_start"]
+        t_all = timing["end"] - timing["start"]
+        logger.info(
+            f"VespaIndex.update_single: setup={t_setup:.2f}"
+            f"chunk_fetch={t_chunk_fetch:.2f} "
+            f"update={t_update:.2f} "
+            f"all={t_all:.2f}"
+        )
         return
 
     def delete(self, doc_ids: list[str]) -> None:
         logger.info(f"Deleting {len(doc_ids)} documents from Vespa")
+
+        time_start = time.monotonic()
 
         doc_ids = [replace_invalid_doc_id_characters(doc_id) for doc_id in doc_ids]
 
@@ -478,6 +497,9 @@ class VespaIndex(DocumentIndex):
                 delete_vespa_docs(
                     document_ids=doc_ids, index_name=index_name, http_client=http_client
                 )
+
+        t_all = time.monotonic() - time_start
+        logger.info(f"VespaIndex.delete: all={t_all:.2f}")
 
     def id_based_retrieval(
         self,

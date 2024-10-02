@@ -1,4 +1,5 @@
 import concurrent.futures
+import time
 
 import httpx
 from retry import retry
@@ -20,11 +21,15 @@ CONTENT_SUMMARY = "content_summary"
 def _delete_vespa_doc_chunks(
     document_id: str, index_name: str, http_client: httpx.Client
 ) -> None:
+    t = {}
+    t["start"] = time.monotonic()
     doc_chunk_ids = get_all_vespa_ids_for_document_id(
         document_id=document_id,
         index_name=index_name,
         get_large_chunks=True,
     )
+
+    t["chunks_fetched"] = time.monotonic()
 
     for chunk_id in doc_chunk_ids:
         try:
@@ -35,6 +40,15 @@ def _delete_vespa_doc_chunks(
         except httpx.HTTPStatusError as e:
             logger.error(f"Failed to delete chunk, details: {e.response.text}")
             raise
+
+    t["end"] = time.monotonic()
+
+    t_chunk_fetch = t["chunks_fetched"] - t["start"]
+    t_delete = t["end"] - t["chunks_fetched"]
+    t_all = t["end"] - t["start"]
+    logger.info(
+        f"chunk_fetch={t_chunk_fetch:.2f} delete={t_delete:.2f} all={t_all:.2f}"
+    )
 
 
 def delete_vespa_docs(
