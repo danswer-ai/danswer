@@ -12,6 +12,7 @@ on:
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
 jobs:
   integration-tests:

@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from datetime import timezone
+from typing import Any
 
 import requests
 
@@ -25,7 +26,13 @@ from tests.integration.common_utils.vespa import vespa_fixture
 from tests.integration.connector_job_tests.slack.slack_api_utils import SlackManager
 
 
-def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None:
+def test_slack_permission_sync(
+    reset: None,
+    vespa_client: vespa_fixture,
+    slack_test_setup: tuple[dict[str, Any], dict[str, Any]],
+) -> None:
+    public_channel, private_channel = slack_test_setup
+
     # Creating an admin user (first user created is automatically an admin)
     admin_user: DATestUser = UserManager.create(
         email="admin@onyx-test.com",
@@ -44,16 +51,10 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
     slack_client = SlackManager.get_slack_client(os.environ["SLACK_BOT_TOKEN"])
     email_id_map = SlackManager.build_slack_user_email_id_map(slack_client)
     admin_user_id = email_id_map[admin_user.email]
-    (
-        public_channel,
-        private_channel,
-        run_id,
-    ) = SlackManager.get_and_provision_available_slack_channels(
-        slack_client=slack_client, admin_user_id=admin_user_id
-    )
 
     LLMProviderManager.create(user_performing_action=admin_user)
 
+    before = datetime.now(timezone.utc)
     credential: DATestCredential = CredentialManager.create(
         source=DocumentSource.SLACK,
         credential_json={
@@ -77,6 +78,11 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
         credential_id=credential.id,
         connector_id=connector.id,
         access_type=AccessType.SYNC,
+        user_performing_action=admin_user,
+    )
+    CCPairManager.wait_for_indexing(
+        cc_pair=cc_pair,
+        after=before,
         user_performing_action=admin_user,
     )
 
@@ -243,5 +249,3 @@ def test_slack_permission_sync(reset: None, vespa_client: vespa_fixture) -> None
     # Ensure test_user_1 can only see messages from the public channel
     assert public_message in danswer_doc_message_strings
     assert private_message not in danswer_doc_message_strings
-
-    SlackManager.cleanup_after_test(slack_client=slack_client, test_id=run_id)

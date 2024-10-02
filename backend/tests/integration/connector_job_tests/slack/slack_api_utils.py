@@ -96,16 +96,16 @@ def _delete_slack_conversation_messages(
     channel: dict[str, Any],
     message_to_delete: str | None = None,
 ) -> None:
+    """deletes all messages from a channel if message_to_delete is None"""
     channel_id = _get_slack_channel_id(channel)
-    message_batches = get_channel_messages(slack_client, channel)
-    for message_batch in message_batches:
+    for message_batch in get_channel_messages(slack_client, channel):
         for message in message_batch:
             if default_msg_filter(message):
                 continue
 
             if message_to_delete and message.get("text") != message_to_delete:
                 continue
-            print(" trying to remove message: ", message.get("text"))
+            print(" removing message: ", message.get("text"))
 
             try:
                 if not (ts := message.get("ts")):
@@ -139,21 +139,20 @@ def _build_slack_channel_from_name(
 
     try:
         channel_response = slack_client.conversations_unarchive(
-            channel=channel_response.get("channel", {}).get("id")
+            channel=channel_response["channel"]["id"]
         )
     except Exception:
         # Channel is already unarchived
         pass
     try:
         channel_response = slack_client.conversations_invite(
-            channel=channel_response.get("channel", {}).get("id"), users=[admin_user_id]
+            channel=channel_response["channel"]["id"], users=[admin_user_id]
         )
     except Exception:
         pass
 
-    channel = channel_response.get("channel")
-    print(channel)
-    return channel
+    final_channel = channel_response["channel"] if channel_response else {}
+    return final_channel
 
 
 class SlackManager:
@@ -180,6 +179,9 @@ class SlackManager:
             is_private=False,
             channel=first_available_channel,
         )
+        _delete_slack_conversation_messages(
+            slack_client=slack_client, channel=public_channel
+        )
 
         private_channels = _get_non_general_channels(
             slack_client, get_private=True, get_public=False, only_get_done=True
@@ -193,6 +195,9 @@ class SlackManager:
             suffix=run_id,
             is_private=True,
             channel=second_available_channel,
+        )
+        _delete_slack_conversation_messages(
+            slack_client=slack_client, channel=private_channel
         )
 
         return public_channel, private_channel, run_id
@@ -250,7 +255,7 @@ class SlackManager:
         conversations_response = slack_client.conversations_list(
             exclude_archived=False, types=channel_types
         )
-        conversations = conversations_response.get("channels", [])
+        conversations = conversations_response["channels"]
         for channel in conversations:
             if test_id not in channel.get("name", ""):
                 continue
