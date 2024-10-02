@@ -164,11 +164,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # We cache this at the beginning so there is no delay in the first telemetry
         get_or_generate_uuid()
 
-    # If we are multi-tenant, we need to only set up initial public tables
-    with Session(engine) as db_session:
-        setup_danswer(db_session) if not MULTI_TENANT else setup_multitenant_danswer(
-            db_session
-        )
+        with Session(engine) as db_session:
+            setup_danswer(db_session)
+
+    else:
+        setup_multitenant_danswer()
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield
