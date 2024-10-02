@@ -296,7 +296,6 @@ def get_session_with_tenant(
     tenant_id: str | None = None,
 ) -> Generator[Session, None, None]:
     """Generate a database session with the appropriate tenant schema set."""
-
     engine = get_sqlalchemy_engine()
     if tenant_id is None:
         tenant_id = current_tenant_id.get()
