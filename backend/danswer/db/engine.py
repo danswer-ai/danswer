@@ -308,7 +308,7 @@ def get_session_with_tenant(
         dbapi_connection = connection.connection
 
         # Execute SET search_path outside of any transaction
-        with dbapi_connection.cursor() as cursor:
+        with dbapi_connection.cursor() as cursor:  # type: ignore
             cursor.execute(f'SET search_path TO "{tenant_id}"')
             # Optionally verify the search_path was set correctly
             cursor.execute("SHOW search_path")
@@ -321,7 +321,7 @@ def get_session_with_tenant(
             finally:
                 # Reset search_path to default after the session is used
                 if MULTI_TENANT:
-                    with dbapi_connection.cursor() as cursor:
+                    with dbapi_connection.cursor() as cursor:  # type: ignore
                         cursor.execute('SET search_path TO "$user", public')
 
 

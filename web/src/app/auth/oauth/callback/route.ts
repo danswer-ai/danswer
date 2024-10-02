@@ -16,6 +16,7 @@ export const GET = async (request: NextRequest) => {
       new URL("/auth/create-account", getDomain(request))
     );
   }
+  console.log(response);
 
   if (!setCookieHeader) {
     return NextResponse.redirect(new URL("/auth/error", getDomain(request)));
