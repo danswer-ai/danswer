@@ -549,6 +549,16 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 page_id, start=0, limit=500, expand=expand
             )
             for attachment in attachments_container["results"]:
+                if attachment["metadata"]["mediaType"] in [
+                    "image/jpeg",
+                    "image/png",
+                    "image/gif",
+                    "image/svg+xml",
+                    "video/mp4",
+                    "video/quicktime",
+                ]:
+                    continue
+
                 if attachment["title"] not in files_in_used:
                     unused_attachments.append(attachment)
                     continue
@@ -558,7 +568,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 )
                 if attachment_content:
                     files_attachment_content.append(attachment_content)
-
         except Exception as e:
             if isinstance(
                 e, HTTPError
