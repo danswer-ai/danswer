@@ -40,8 +40,12 @@ jobs:
         build-args: |
           DANSWER_VERSION=${{ github.ref_name }}
 
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: docker.io/danswer/danswer-model-server:${{ github.ref_name }}
-        severity: 'CRITICAL,HIGH'
+    # disabled due to trivy project db download issues
+    # can re-enable when they figure it out
+    # https://github.com/aquasecurity/trivy/discussions/7538
+    # https://github.com/aquasecurity/trivy-action/issues/389
+#     - name: Run Trivy vulnerability scanner
+#       uses: aquasecurity/trivy-action@master
+#       with:
+#         image-ref: docker.io/danswer/danswer-model-server:${{ github.ref_name }}
+#         severity: 'CRITICAL,HIGH'
