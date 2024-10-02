@@ -46,3 +46,27 @@ export function Logo({
     </div>
   );
 }
+
+/* export function Logo({
+  height,
+  width,
+  className,
+}: {
+  height?: number;
+  width?: number;
+  className?: string;
+}) {
+  height = height || 40;
+  width = width || 40;
+
+  return (
+    <div style={{ height, width }} className={`relative ${className}`}>
+      <img
+        src={`/api/workspace/logo?u=${Date.now()}`}
+        alt="Logo"
+        style={{ objectFit: "contain", height, width, borderRadius: "8px" }}
+      />
+    </div>
+  );
+}
+ */
