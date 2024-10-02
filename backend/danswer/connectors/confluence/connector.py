@@ -558,6 +558,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 )
                 if attachment_content:
                     files_attachment_content.append(attachment_content)
+
         except Exception as e:
             if isinstance(
                 e, HTTPError
