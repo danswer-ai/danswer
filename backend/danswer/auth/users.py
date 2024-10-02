@@ -282,7 +282,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     ) -> models.UOAP:
         # Get tenant_id from mapping table
         try:
-            tenant_id = get_tenant_id_for_email(account_email)
+            tenant_id = (
+                get_tenant_id_for_email(account_email) if MULTI_TENANT else "public"
+            )
         except exceptions.UserNotExists:
             raise HTTPException(status_code=401, detail="User not found")
 
@@ -295,10 +297,10 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             # Print a list of tables in the current database session
             verify_email_in_whitelist(account_email, tenant_id)
             verify_email_domain(account_email)
-
-            tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
-            self.user_db = tenant_user_db
-            self.database = tenant_user_db
+            if MULTI_TENANT:
+                tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
+                self.user_db = tenant_user_db
+                self.database = tenant_user_db
 
             logger.info(f"Starting OAuth callback process for email: {account_email}")
             oauth_account_dict = {
@@ -370,7 +372,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             logger.info("OAuth callback completed")
 
             try:
-                if not user.has_web_login:
+                if not user.has_web_login:  # type: ignore
                     await self.user_db.update(
                         user,
                         {
@@ -379,7 +381,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                         },
                     )
                     user.is_verified = is_verified_by_default
-                    user.has_web_login = True
+                    user.has_web_login = True  # type: ignore
 
                 if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
                     oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
@@ -400,7 +402,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             finally:
                 if token:
                     current_tenant_id.reset(token)
-
+            logger.info("oauth callback compleed")
             return user
 
     async def on_after_register(
@@ -490,13 +492,6 @@ cookie_transport = CookieTransport(
 )
 
 
-def get_auth_strategy() -> JWTStrategy | DatabaseStrategy:
-    if MULTI_TENANT:
-        return get_jwt_strategy()
-    else:
-        return get_database_strategy()
-
-
 def get_jwt_strategy() -> JWTStrategy:
     return JWTStrategy(
         secret=USER_AUTH_SECRET,
@@ -507,18 +502,16 @@ def get_jwt_strategy() -> JWTStrategy:
 def get_database_strategy(
     access_token_db: AccessTokenDatabase[AccessToken] = Depends(get_access_token_db),
 ) -> DatabaseStrategy:
-    strategy = DatabaseStrategy(
+    return DatabaseStrategy(
         access_token_db, lifetime_seconds=SESSION_EXPIRE_TIME_SECONDS  # type: ignore
     )
-
-    return strategy
 
 
 auth_backend = AuthenticationBackend(
     name="jwt" if MULTI_TENANT else "database",
     transport=cookie_transport,
-    get_strategy=get_auth_strategy,
-)
+    get_strategy=get_database_strategy if not MULTI_TENANT else get_jwt_strategy,  # type: ignore
+)  # type: ignore
 
 
 class FastAPIUserWithLogoutRouter(FastAPIUsers[models.UP, models.ID]):
