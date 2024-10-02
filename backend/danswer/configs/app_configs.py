@@ -239,7 +239,7 @@ CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD = int(
 # Attachments with more chars than this will not be indexed. This is to prevent extremely
 # large files from freezing indexing. 200,000 is ~100 google doc pages.
 CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD = int(
-    os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD", 200_000)
+    os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD", 200_000_000)
 )
 
 JIRA_CONNECTOR_LABELS_TO_SKIP = [

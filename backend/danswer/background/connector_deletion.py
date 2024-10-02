@@ -154,6 +154,7 @@ def document_by_cc_pair_cleanup_task(
                 # delete it from vespa and the db
                 timing["db_read"] = time.monotonic()
                 document_index.delete(doc_ids=[document_id])
+                # document_index.delete_single(doc_id=document_id)
                 timing["indexed"] = time.monotonic()
                 delete_documents_complete__no_commit(
                     db_session=db_session,
@@ -202,7 +203,8 @@ def document_by_cc_pair_cleanup_task(
 
                 mark_document_as_synced(document_id, db_session)
             else:
-                pass
+                timing["db_read"] = time.monotonic()
+                timing["indexed"] = time.monotonic()
 
             # update_docs_last_modified__no_commit(
             #     db_session=db_session,

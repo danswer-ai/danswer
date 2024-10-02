@@ -26,6 +26,7 @@ def _delete_vespa_doc_chunks(
     doc_chunk_ids = get_all_vespa_ids_for_document_id(
         document_id=document_id,
         index_name=index_name,
+        http_client=http_client,
         get_large_chunks=True,
     )
 
@@ -47,7 +48,11 @@ def _delete_vespa_doc_chunks(
     t_delete = t["end"] - t["chunks_fetched"]
     t_all = t["end"] - t["start"]
     logger.info(
-        f"chunk_fetch={t_chunk_fetch:.2f} delete={t_delete:.2f} all={t_all:.2f}"
+        f"_delete_vespa_doc_chunks: "
+        f"len={len(doc_chunk_ids)} "
+        f"chunk_fetch={t_chunk_fetch:.2f} "
+        f"delete={t_delete:.2f} "
+        f"all={t_all:.2f}"
     )
 
 

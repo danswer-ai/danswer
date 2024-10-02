@@ -34,7 +34,7 @@ def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -
 
     count = cast(int, r.scard(rug.taskset_key))
     task_logger.info(
-        f"User group sync: usergroup_id={usergroup_id} remaining={count} initial={initial_count}"
+        f"User group sync progress: usergroup_id={usergroup_id} remaining={count} initial={initial_count}"
     )
     if count > 0:
         return

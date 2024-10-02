@@ -13,6 +13,7 @@ from typing import cast
 import httpx
 import requests
 
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.chat_configs import DOC_TIME_DECAY
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.chat_configs import TITLE_CONTENT_RATIO
@@ -110,9 +111,15 @@ def add_ngrams_to_schema(schema_content: str) -> str:
 
 
 class VespaIndex(DocumentIndex):
-    def __init__(self, index_name: str, secondary_index_name: str | None) -> None:
+    def __init__(
+        self,
+        index_name: str,
+        secondary_index_name: str | None,
+        httpx_client: httpx.Client | None = None,
+    ) -> None:
         self.index_name = index_name
         self.secondary_index_name = secondary_index_name
+        self.httpx_client = httpx_client or httpx.Client(http2=True)
 
     def ensure_indices_exist(
         self,
@@ -204,8 +211,12 @@ class VespaIndex(DocumentIndex):
         # indexing / updates / deletes since we have to make a large volume of requests.
         with (
             concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor,
-            httpx.Client(http2=True) as http_client,
+            httpx.Client(http2=True) as http_temp_client,
         ):
+            httpx_client = self.httpx_client
+            if not httpx_client:
+                httpx_client = http_temp_client
+
             # Check for existing documents, existing documents need to have all of their chunks deleted
             # prior to indexing as the document size (num chunks) may have shrunk
             first_chunks = [chunk for chunk in cleaned_chunks if chunk.chunk_id == 0]
@@ -214,7 +225,7 @@ class VespaIndex(DocumentIndex):
                     get_existing_documents_from_chunks(
                         chunks=chunk_batch,
                         index_name=self.index_name,
-                        http_client=http_client,
+                        http_client=httpx_client,
                         executor=executor,
                     )
                 )
@@ -223,7 +234,7 @@ class VespaIndex(DocumentIndex):
                 delete_vespa_docs(
                     document_ids=doc_id_batch,
                     index_name=self.index_name,
-                    http_client=http_client,
+                    http_client=httpx_client,
                     executor=executor,
                 )
 
@@ -231,7 +242,7 @@ class VespaIndex(DocumentIndex):
                 batch_index_vespa_chunks(
                     chunks=chunk_batch,
                     index_name=self.index_name,
-                    http_client=http_client,
+                    http_client=httpx_client,
                     executor=executor,
                 )
 
@@ -248,6 +259,7 @@ class VespaIndex(DocumentIndex):
     @staticmethod
     def _apply_updates_batched(
         updates: list[_VespaUpdateRequest],
+        http_client: httpx.Client,
         batch_size: int = BATCH_SIZE,
     ) -> None:
         """Runs a batch of updates in parallel via the ThreadPoolExecutor."""
@@ -266,10 +278,7 @@ class VespaIndex(DocumentIndex):
 
         # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficient for
         # indexing / updates / deletes since we have to make a large volume of requests.
-        with (
-            concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor,
-            httpx.Client(http2=True) as http_client,
-        ):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
             for update_batch in batch_generator(updates, batch_size):
                 future_to_document_id = {
                     executor.submit(
@@ -309,12 +318,20 @@ class VespaIndex(DocumentIndex):
             index_names.append(self.secondary_index_name)
 
         chunk_id_start_time = time.monotonic()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+        with (
+            concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor,
+            httpx.Client(http2=True) as http_temp_client,
+        ):
+            httpx_client = self.httpx_client
+            if not httpx_client:
+                httpx_client = http_temp_client
+
             future_to_doc_chunk_ids = {
                 executor.submit(
                     get_all_vespa_ids_for_document_id,
                     document_id=document_id,
                     index_name=index_name,
+                    http_client=httpx_client,
                     filters=None,
                     get_large_chunks=True,
                 ): (document_id, index_name)
@@ -370,8 +387,15 @@ class VespaIndex(DocumentIndex):
                             update_request=update_dict,
                         )
                     )
+        with httpx.Client(http2=True) as http_temp_client:
+            httpx_client = self.httpx_client
+            if not httpx_client:
+                httpx_client = http_temp_client
 
-        self._apply_updates_batched(processed_updates_requests)
+            self._apply_updates_batched(
+                processed_updates_requests, http_client=httpx_client
+            )
+
         logger.debug(
             "Finished updating Vespa documents in %.2f seconds",
             time.monotonic() - update_start,
@@ -402,24 +426,26 @@ class VespaIndex(DocumentIndex):
         if self.secondary_index_name:
             index_names.append(self.secondary_index_name)
 
-        # chunk_id_start_time = time.monotonic()
         timing["chunk_fetch_start"] = time.monotonic()
-        all_doc_chunk_ids: list[str] = []
-        for index_name in index_names:
-            for document_id in update_request.document_ids:
-                # this calls vespa and can raise http exceptions
-                doc_chunk_ids = get_all_vespa_ids_for_document_id(
-                    document_id=document_id,
-                    index_name=index_name,
-                    filters=None,
-                    get_large_chunks=True,
-                )
-                all_doc_chunk_ids.extend(doc_chunk_ids)
+        with httpx.Client(http2=True) as http_temp_client:
+            httpx_client = self.httpx_client
+            if not httpx_client:
+                httpx_client = http_temp_client
+
+            all_doc_chunk_ids: list[str] = []
+            for index_name in index_names:
+                for document_id in update_request.document_ids:
+                    # this calls vespa and can raise http exceptions
+                    doc_chunk_ids = get_all_vespa_ids_for_document_id(
+                        document_id=document_id,
+                        index_name=index_name,
+                        http_client=httpx_client,
+                        filters=None,
+                        get_large_chunks=True,
+                    )
+                    all_doc_chunk_ids.extend(doc_chunk_ids)
+
         timing["chunk_fetch_end"] = time.monotonic()
-        timing_chunk_fetch = timing["chunk_fetch_end"] - timing["chunk_fetch_start"]
-        logger.debug(
-            f"Took {timing_chunk_fetch:.2f} seconds to fetch all Vespa chunk IDs"
-        )
 
         # Build the _VespaUpdateRequest objects
         update_dict: dict[str, dict] = {"fields": {}}
@@ -453,9 +479,13 @@ class VespaIndex(DocumentIndex):
                     )
                 )
 
-        with httpx.Client(http2=True) as http_client:
+        with httpx.Client(http2=True) as http_temp_client:
+            httpx_client = self.httpx_client
+            if not httpx_client:
+                httpx_client = http_temp_client
+
             for update in processed_update_requests:
-                http_client.put(
+                httpx_client.put(
                     update.url,
                     headers={"Content-Type": "application/json"},
                     json=update.update_request,
@@ -488,18 +518,80 @@ class VespaIndex(DocumentIndex):
 
         # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficial for
         # indexing / updates / deletes since we have to make a large volume of requests.
-        with httpx.Client(http2=True) as http_client:
-            index_names = [self.index_name]
-            if self.secondary_index_name:
-                index_names.append(self.secondary_index_name)
+        index_names = [self.index_name]
+        if self.secondary_index_name:
+            index_names.append(self.secondary_index_name)
+
+        with httpx.Client(http2=True) as http_temp_client:
+            httpx_client = self.httpx_client
+            if not httpx_client:
+                httpx_client = http_temp_client
 
             for index_name in index_names:
                 delete_vespa_docs(
-                    document_ids=doc_ids, index_name=index_name, http_client=http_client
+                    document_ids=doc_ids,
+                    index_name=index_name,
+                    http_client=httpx_client,
                 )
 
         t_all = time.monotonic() - time_start
         logger.info(f"VespaIndex.delete: all={t_all:.2f}")
+
+    def delete_single(self, doc_id: str) -> None:
+        # Vespa deletion is poorly documented ... luckily we found this
+        # https://docs.vespa.ai/en/operations/batch-delete.html#example
+
+        time_start = time.monotonic()
+
+        doc_id = replace_invalid_doc_id_characters(doc_id)
+
+        # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficial for
+        # indexing / updates / deletes since we have to make a large volume of requests.
+        index_names = [self.index_name]
+        if self.secondary_index_name:
+            index_names.append(self.secondary_index_name)
+
+        # if self.httpx_client:
+        #     for index_name in index_names:
+        #         _delete_vespa_doc_chunks(document_id=doc_id, index_name=index_name, http_client=self.httpx_client)
+        # else:
+        #     with httpx.Client(http2=True) as httpx_client:
+        #         for index_name in index_names:
+        #             _delete_vespa_doc_chunks(document_id=doc_id, index_name=index_name, http_client=httpx_client)
+
+        for index_name in index_names:
+            params = httpx.QueryParams(
+                {
+                    "selection": f"{index_name}.document_id=='{doc_id}'",
+                    "cluster": DOCUMENT_INDEX_NAME,
+                }
+            )
+
+            while True:
+                try:
+                    resp = self.httpx_client.delete(
+                        f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}",
+                        params=params,
+                    )
+                    resp.raise_for_status()
+                except httpx.HTTPStatusError as e:
+                    logger.error(f"Failed to delete chunk, details: {e.response.text}")
+                    raise
+
+                resp_data = resp.json()
+                if "documentCount" in resp_data:
+                    count = resp_data["documentCount"]
+                    logger.info(f"VespaIndex.delete_single: chunks_deleted={count}")
+
+                # Check for continuation token to handle pagination
+                if "continuation" not in resp_data:
+                    break  # Exit loop if no continuation token
+
+                if not resp_data["continuation"]:
+                    break  # Exit loop if continuation token is empty
+
+        t_all = time.monotonic() - time_start
+        logger.info(f"VespaIndex.delete_single: all={t_all:.2f}")
 
     def id_based_retrieval(
         self,
