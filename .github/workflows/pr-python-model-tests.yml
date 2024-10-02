@@ -11,6 +11,9 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION_NAME: ${{ secrets.AWS_REGION_NAME }}
 
+  # OpenAI
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
 jobs:
   connectors-check:
     # See https://runs-on.com/runners/linux/
