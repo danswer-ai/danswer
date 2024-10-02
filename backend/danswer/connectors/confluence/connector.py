@@ -809,4 +809,5 @@ if __name__ == "__main__":
         }
     )
     document_batches = connector.load_from_state()
+    #added comment
     print(next(document_batches))
