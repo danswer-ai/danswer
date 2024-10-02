@@ -265,7 +265,7 @@ export function LLMProviderUpdateForm({
             </div>
           ))}
 
-          {!hideAdvanced && (
+          {!(hideAdvanced && llmProviderDescriptor.name != "azure") && (
             <>
               <Divider />
 
@@ -371,7 +371,7 @@ export function LLMProviderUpdateForm({
                 ) : existingLlmProvider ? (
                   "Update"
                 ) : (
-                  "Enableasdf"
+                  "Enable"
                 )}
               </Button>
               {existingLlmProvider && (
