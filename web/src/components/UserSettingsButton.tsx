@@ -66,7 +66,7 @@ export function UserSettingsButton({
           <div className="w-full">
             <>
               <div className="flex py-3 px-4 rounded-regular items-center gap-3 group">
-                <UserProfile user={user} textSize="text-base" />
+                <UserProfile user={user} />
                 <div className="flex flex-col w-[160px]">
                   <span className="truncate">
                     {user?.full_name || "Unknown User"}
