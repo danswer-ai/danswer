@@ -46,8 +46,16 @@ jobs:
         build-args: |
           DANSWER_VERSION=${{ github.ref_name }}
 
+    # trivy has their own rate limiting issues causing this action to flake
+    # we worked around it by hardcoding to different db repos in env
+    # can re-enable when they figure it out
+    # https://github.com/aquasecurity/trivy/discussions/7538
+    # https://github.com/aquasecurity/trivy-action/issues/389
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
+      env:
+        TRIVY_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
+        TRIVY_JAVA_DB_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-java-db:1'
       with:
         # To run locally: trivy image --severity HIGH,CRITICAL danswer/danswer-backend
         image-ref: docker.io/${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}
