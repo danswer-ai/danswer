@@ -1,6 +1,8 @@
 from collections.abc import Callable
 from collections.abc import Iterator
 from typing import Any
+from typing import Dict
+from typing import Optional
 from typing import TYPE_CHECKING
 
 from langchain.schema.messages import AIMessage
@@ -9,7 +11,7 @@ from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from pydantic import BaseModel
 from pydantic import Field
-from pydantic import root_validator
+from pydantic import model_validator
 
 from enmedd.chat.models import AnswerQuestionStreamReturn
 from enmedd.configs.constants import MessageType
@@ -89,14 +91,14 @@ class QuotesConfig(BaseModel):
 
 
 class AnswerStyleConfig(BaseModel):
-    citation_config: CitationConfig | None = None
-    quotes_config: QuotesConfig | None = None
+    citation_config: Optional[CitationConfig] = None
+    quotes_config: Optional[QuotesConfig] = None
     document_pruning_config: DocumentPruningConfig = Field(
         default_factory=DocumentPruningConfig
     )
 
-    @root_validator
-    def check_quotes_and_citation(cls, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="before")
+    def check_quotes_and_citation(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         citation_config = values.get("citation_config")
         quotes_config = values.get("quotes_config")
 

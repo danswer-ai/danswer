@@ -31,8 +31,8 @@ logger = setup_logger()
 
 @dataclass
 class SiteData:
-    url: str | None
-    folder: Optional[str]
+    url: Optional[str] = None
+    folder: Optional[str] = None
     sites: list = field(default_factory=list)
     driveitems: list = field(default_factory=list)
 

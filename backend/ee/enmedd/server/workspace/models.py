@@ -14,14 +14,14 @@ class Workspaces(BaseModel):
     NOTE: don't put anything sensitive in here, as this is accessible without auth."""
 
     id: int = 0  # Default value of 0
-    instance_id: Optional[int]
+    instance_id: Optional[int] = None
     workspace_name: str
-    workspace_description: Optional[str]
+    workspace_description: Optional[str] = None
     use_custom_logo: bool = False
-    custom_logo: Optional[str]
-    custom_header_logo: Optional[str]
-    custom_header_content: Optional[str]
-    groups: Optional[list[Teamspace]]
+    custom_logo: Optional[str] = None
+    custom_header_logo: Optional[str] = None
+    custom_header_content: Optional[str] = None
+    groups: Optional[list[Teamspace]] = None
 
     @classmethod
     def from_model(cls, workspace_model: WorkspaceModel) -> "Workspaces":
@@ -46,22 +46,22 @@ class Workspaces(BaseModel):
 
 class WorkspaceCreate(BaseModel):
     workspace_name: str
-    workspace_description: Optional[str]
+    workspace_description: Optional[str] = None
     use_custom_logo: bool = False
-    custom_logo: Optional[str]
-    custom_header_logo: Optional[str]
-    custom_header_content: Optional[str]
+    custom_logo: Optional[str] = None
+    custom_header_logo: Optional[str] = None
+    custom_header_content: Optional[str] = None
     user_ids: list[UUID]
 
 
 class WorkspaceUpdate(BaseModel):
-    workspace_name: Optional[str]
-    workspace_description: Optional[str]
+    workspace_name: Optional[str] = None
+    workspace_description: Optional[str] = None
     use_custom_logo: bool = False
-    custom_logo: Optional[str]
-    custom_header_logo: Optional[str]
-    custom_header_content: Optional[str]
-    user_ids: Optional[list[UUID]]
+    custom_logo: Optional[str] = None
+    custom_header_logo: Optional[str] = None
+    custom_header_content: Optional[str] = None
+    user_ids: Optional[list[UUID]] = None
 
 
 class InstanceSubscriptionPlan(str, Enum):
@@ -70,7 +70,7 @@ class InstanceSubscriptionPlan(str, Enum):
 
 
 class Instance(BaseModel):
-    instance_name: Optional[str]
+    instance_name: Optional[str] = None
     subscription_plan: InstanceSubscriptionPlan
     owner_id: UUID
 

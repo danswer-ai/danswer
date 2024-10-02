@@ -187,11 +187,6 @@ class DefaultMultiLLM(LLM):
     """Uses Litellm library to allow easy configuration to use a multitude of LLMs
     See https://python.langchain.com/docs/integrations/chat/litellm"""
 
-    DEFAULT_MODEL_PARAMS: dict[str, Any] = {
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-    }
-
     def __init__(
         self,
         api_key: str | None,
@@ -200,8 +195,8 @@ class DefaultMultiLLM(LLM):
         model_name: str,
         api_base: str | None = GEN_AI_API_ENDPOINT,
         api_version: str | None = GEN_AI_API_VERSION,
+        max_output_tokens: int | None = GEN_AI_MAX_OUTPUT_TOKENS,
         custom_llm_provider: str | None = GEN_AI_LLM_PROVIDER_TYPE,
-        max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
         temperature: float = GEN_AI_TEMPERATURE,
         custom_config: dict[str, str] | None = None,
         extra_headers: dict[str, str] | None = None,
@@ -214,7 +209,17 @@ class DefaultMultiLLM(LLM):
         self._api_base = api_base
         self._api_version = api_version
         self._custom_llm_provider = custom_llm_provider
-        self._max_output_tokens = max_output_tokens
+
+        # This can be used to store the maximum output tokens for this model.
+        # self._max_output_tokens = (
+        #     max_output_tokens
+        #     if max_output_tokens is not None
+        #     else get_llm_max_output_tokens(
+        #         model_map=litellm.model_cost,
+        #         model_name=model_name,
+        #         model_provider=model_provider,
+        #     )
+        # )
         self._custom_config = custom_config
 
         # NOTE: have to set these as environment variables for Litellm since
@@ -224,42 +229,38 @@ class DefaultMultiLLM(LLM):
             for k, v in custom_config.items():
                 os.environ[k] = v
 
-        model_kwargs = (
-            DefaultMultiLLM.DEFAULT_MODEL_PARAMS if model_provider == "openai" else {}
-        )
+        model_kwargs: dict[str, Any] = {}
         if extra_headers:
             model_kwargs.update({"extra_headers": extra_headers})
 
         self._model_kwargs = model_kwargs
 
-    @staticmethod
-    def _log_prompt(prompt: LanguageModelInput) -> None:
-        if isinstance(prompt, list):
-            for ind, msg in enumerate(prompt):
-                if isinstance(msg, AIMessageChunk):
-                    if msg.content:
-                        log_msg = msg.content
-                    elif msg.tool_call_chunks:
-                        log_msg = "Tool Calls: " + str(
-                            [
-                                {
-                                    key: value
-                                    for key, value in tool_call.items()
-                                    if key != "index"
-                                }
-                                for tool_call in msg.tool_call_chunks
-                            ]
-                        )
-                    else:
-                        log_msg = ""
-                    logger.debug(f"Message {ind}:\n{log_msg}")
-                else:
-                    logger.debug(f"Message {ind}:\n{msg.content}")
-        if isinstance(prompt, str):
-            logger.debug(f"Prompt:\n{prompt}")
-
     def log_model_configs(self) -> None:
-        logger.info(f"Config: {self.config}")
+        logger.debug(f"Config: {self.config}")
+
+    # def _calculate_max_output_tokens(self, prompt: LanguageModelInput) -> int:
+    #     # NOTE: This method can be used for calculating the maximum tokens for the stream,
+    #     # but it isn't used in practice due to the computational cost of counting tokens
+    #     # and because LLM providers automatically cut off at the maximum output.
+    #     # The implementation is kept for potential future use or debugging purposes.
+
+    #     # Get max input tokens for the model
+    #     max_context_tokens = get_max_input_tokens(
+    #         model_name=self.config.model_name, model_provider=self.config.model_provider
+    #     )
+
+    #     llm_tokenizer = get_tokenizer(
+    #         model_name=self.config.model_name,
+    #         provider_type=self.config.model_provider,
+    #     )
+    #     # Calculate tokens in the input prompt
+    #     input_tokens = sum(len(llm_tokenizer.encode(str(m))) for m in prompt)
+
+    #     # Calculate available tokens for output
+    #     available_output_tokens = max_context_tokens - input_tokens
+
+    #     # Return the lesser of available tokens or configured max
+    #     return min(self._max_output_tokens, available_output_tokens)
 
     def _completion(
         self,
@@ -292,8 +293,11 @@ class DefaultMultiLLM(LLM):
                 stream=stream,
                 # model params
                 temperature=self._temperature,
-                max_tokens=self._max_output_tokens,
                 timeout=self._timeout,
+                # For now, we don't support parallel tool calls
+                # NOTE: we can't pass this in if tools are not specified
+                # or else OpenAI throws an error
+                **({"parallel_tool_calls": False} if tools else {}),
                 **self._model_kwargs,
             )
         except Exception as e:
@@ -307,9 +311,11 @@ class DefaultMultiLLM(LLM):
             model_name=self._model_version,
             temperature=self._temperature,
             api_key=self._api_key,
+            api_base=self._api_base,
+            api_version=self._api_version,
         )
 
-    def invoke(
+    def _invoke_implementation(
         self,
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
@@ -317,16 +323,17 @@ class DefaultMultiLLM(LLM):
     ) -> BaseMessage:
         if LOG_ALL_MODEL_INTERACTIONS:
             self.log_model_configs()
-            self._log_prompt(prompt)
 
         response = cast(
             litellm.ModelResponse, self._completion(prompt, tools, tool_choice, False)
         )
-        return _convert_litellm_message_to_langchain_message(
-            response.choices[0].message
-        )
+        choice = response.choices[0]
+        if hasattr(choice, "message"):
+            return _convert_litellm_message_to_langchain_message(choice.message)
+        else:
+            raise ValueError("Unexpected response choice type")
 
-    def stream(
+    def _stream_implementation(
         self,
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
@@ -334,20 +341,28 @@ class DefaultMultiLLM(LLM):
     ) -> Iterator[BaseMessage]:
         if LOG_ALL_MODEL_INTERACTIONS:
             self.log_model_configs()
-            self._log_prompt(prompt)
 
         if DISABLE_LITELLM_STREAMING:
             yield self.invoke(prompt)
             return
 
         output = None
-        response = self._completion(prompt, tools, tool_choice, True)
+        response = cast(
+            litellm.CustomStreamWrapper,
+            self._completion(prompt, tools, tool_choice, True),
+        )
         try:
             for part in response:
-                if len(part["choices"]) == 0:
+                if not part["choices"]:
                     continue
-                delta = part["choices"][0]["delta"]
-                message_chunk = _convert_delta_to_message_chunk(delta, output)
+
+                choice = part["choices"][0]
+                message_chunk = _convert_delta_to_message_chunk(
+                    choice["delta"],
+                    output,
+                    stop_reason=choice["finish_reason"],
+                )
+
                 if output is None:
                     output = message_chunk
                 else:

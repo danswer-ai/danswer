@@ -1,8 +1,11 @@
 from datetime import datetime
 from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 from pydantic import BaseModel
-from pydantic import root_validator
+from pydantic import model_validator
 
 from enmedd.chat.models import RetrievalDocs
 from enmedd.configs.constants import DocumentSource
@@ -26,7 +29,7 @@ class SourceTag(Tag):
 
 
 class TagResponse(BaseModel):
-    tags: list[SourceTag]
+    tags: List[SourceTag]
 
 
 class SimpleQueryRequest(BaseModel):
@@ -42,13 +45,13 @@ class UpdateChatSessionThreadRequest(BaseModel):
 class ChatSessionCreationRequest(BaseModel):
     # If not specified, use enMedD AI default assistant
     assistant_id: int = 0
-    description: str | None = None
-    teamspace_id: int | None = None
+    description: Optional[str] = None
+    teamspace_id: Optional[int] = None
 
 
 class HelperResponse(BaseModel):
-    values: dict[str, str]
-    details: list[str] | None = None
+    values: Dict[str, str]
+    details: Optional[List[str]] = None
 
 
 class CreateChatSessionID(BaseModel):
@@ -57,15 +60,14 @@ class CreateChatSessionID(BaseModel):
 
 class ChatFeedbackRequest(BaseModel):
     chat_message_id: int
-    is_positive: bool | None = None
-    feedback_text: str | None = None
-    predefined_feedback: str | None = None
+    is_positive: Optional[bool] = None
+    feedback_text: Optional[str] = None
+    predefined_feedback: Optional[str] = None
 
-    @root_validator
-    def check_is_positive_or_feedback_text(cls: BaseModel, values: dict) -> dict:
-        is_positive, feedback_text = values.get("is_positive"), values.get(
-            "feedback_text"
-        )
+    @model_validator(mode="before")
+    def check_is_positive_or_feedback_text(cls, values: Dict) -> Dict:
+        is_positive = values.get("is_positive")
+        feedback_text = values.get("feedback_text")
 
         if is_positive is None and feedback_text is None:
             raise ValueError("Empty feedback received.")
@@ -89,37 +91,36 @@ class CreateChatMessageRequest(ChunkContext):
 
     chat_session_id: int
     # This is the primary-key (unique identifier) for the previous message of the tree
-    parent_message_id: int | None
+    parent_message_id: Optional[int] = None
     # New message contents
     message: str
     # file's that we should attach to this message
-    file_descriptors: list[FileDescriptor]
+    file_descriptors: List[FileDescriptor]
     # If no prompt provided, uses the largest prompt of the chat session
     # but really this should be explicitly specified, only in the simplified APIs is this inferred
     # Use prompt_id 0 to use the system default prompt which is Answer-Question
-    prompt_id: int | None
+    prompt_id: Optional[int] = None
     # If search_doc_ids provided, then retrieval options are unused
-    search_doc_ids: list[int] | None
-    retrieval_options: RetrievalDetails | None
+    search_doc_ids: Optional[List[int]] = None
+    retrieval_options: Optional[RetrievalDetails] = None
     # allows the caller to specify the exact search query they want to use
     # will disable Query Rewording if specified
-    query_override: str | None = None
+    query_override: Optional[str] = None
 
     # allows the caller to override the Assistant / Prompt
-    llm_override: LLMOverride | None = None
-    prompt_override: PromptOverride | None = None
+    llm_override: Optional[LLMOverride] = None
+    prompt_override: Optional[PromptOverride] = None
 
-    # allow user to specify an alternate assistnat
-    alternate_assistant_id: int | None = None
+    # allow user to specify an alternate assistant
+    alternate_assistant_id: Optional[int] = None
 
     # used for seeded chats to kick off the generation of an AI answer
     use_existing_user_message: bool = False
 
-    @root_validator
-    def check_search_doc_ids_or_retrieval_options(cls: BaseModel, values: dict) -> dict:
-        search_doc_ids, retrieval_options = values.get("search_doc_ids"), values.get(
-            "retrieval_options"
-        )
+    @model_validator(mode="before")
+    def check_search_doc_ids_or_retrieval_options(cls, values: Dict) -> Dict:
+        search_doc_ids = values.get("search_doc_ids")
+        retrieval_options = values.get("retrieval_options")
 
         if search_doc_ids is None and retrieval_options is None:
             raise ValueError(
@@ -135,7 +136,7 @@ class ChatMessageIdentifier(BaseModel):
 
 class ChatRenameRequest(BaseModel):
     chat_session_id: int
-    name: str | None = None
+    name: Optional[str] = None
 
 
 class ChatSessionUpdateRequest(BaseModel):
@@ -152,13 +153,13 @@ class ChatSessionDetails(BaseModel):
     assistant_id: int
     time_created: str
     shared_status: ChatSessionSharedStatus
-    folder_id: int | None
-    current_alternate_model: str | None = None
-    groups: list[MinimalTeamspaceSnapshot] | None
+    folder_id: Optional[int] = None
+    current_alternate_model: Optional[str] = None
+    groups: Optional[List[MinimalTeamspaceSnapshot]] = None
 
 
 class ChatSessionsResponse(BaseModel):
-    sessions: list[ChatSessionDetails]
+    sessions: List[ChatSessionDetails]
 
 
 class SearchFeedbackRequest(BaseModel):
@@ -166,11 +167,12 @@ class SearchFeedbackRequest(BaseModel):
     document_id: str
     document_rank: int
     click: bool
-    search_feedback: SearchFeedbackType | None
+    search_feedback: Optional[SearchFeedbackType] = None
 
-    @root_validator
-    def check_click_or_search_feedback(cls: BaseModel, values: dict) -> dict:
-        click, feedback = values.get("click"), values.get("search_feedback")
+    @model_validator(mode="before")
+    def check_click_or_search_feedback(cls, values: Dict) -> Dict:
+        click = values.get("click")
+        feedback = values.get("search_feedback")
 
         if click is False and feedback is None:
             raise ValueError("Empty feedback received.")
@@ -180,20 +182,20 @@ class SearchFeedbackRequest(BaseModel):
 
 class ChatMessageDetail(BaseModel):
     message_id: int
-    parent_message: int | None
-    latest_child_message: int | None
+    parent_message: Optional[int] = None
+    latest_child_message: Optional[int] = None
     message: str
-    rephrased_query: str | None
-    context_docs: RetrievalDocs | None
+    rephrased_query: Optional[str] = None
+    context_docs: Optional[RetrievalDocs] = None
     message_type: MessageType
     time_sent: datetime
-    alternate_assistant_id: str | None
+    alternate_assistant_id: Optional[str] = None
     # Dict mapping citation number to db_doc_id
-    citations: dict[int, int] | None
-    files: list[FileDescriptor]
-    tool_calls: list[ToolCallFinalResult]
+    citations: Optional[Dict[int, int]] = None
+    files: List[FileDescriptor]
+    tool_calls: List[ToolCallFinalResult]
 
-    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+    def dict(self, *args: list, **kwargs: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore
         initial_dict["time_sent"] = self.time_sent.isoformat()
         return initial_dict
@@ -204,11 +206,11 @@ class ChatSessionDetailResponse(BaseModel):
     description: str
     assistant_id: int
     assistant_name: str
-    messages: list[ChatMessageDetail]
+    messages: List[ChatMessageDetail]
     time_created: datetime
     shared_status: ChatSessionSharedStatus
-    current_alternate_model: str | None
-    groups: list[MinimalTeamspaceSnapshot] | None
+    current_alternate_model: Optional[str] = None
+    groups: List[MinimalTeamspaceSnapshot] | None
 
 
 class QueryValidationResponse(BaseModel):
@@ -222,9 +224,9 @@ class AdminSearchRequest(BaseModel):
 
 
 class AdminSearchResponse(BaseModel):
-    documents: list[SearchDoc]
+    documents: List[SearchDoc]
 
 
 # TODO: replace the name here
 class EnmeddAnswer(BaseModel):
-    answer: str | None
+    answer: Optional[str] = None

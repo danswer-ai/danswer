@@ -22,37 +22,37 @@ class UserStatus(str, Enum):
 class UserRead(schemas.BaseUser[uuid.UUID]):
     role: UserRole
     created_at: datetime
-    chosen_assistants: Optional[List[int]]
-    full_name: Optional[str]
-    company_name: Optional[str]
-    company_email: Optional[EmailStr]
-    company_billing: Optional[str]
-    billing_email_address: Optional[EmailStr]
-    vat: Optional[str]
+    chosen_assistants: Optional[List[int]] = None
+    full_name: Optional[str] = None
+    company_name: Optional[str] = None
+    company_email: Optional[EmailStr] = None
+    company_billing: Optional[str] = None
+    billing_email_address: Optional[EmailStr] = None
+    vat: Optional[str] = None
     # TODO: create a default workspace for the users.
     # Adding workspace here will create async blocking I/O
 
 
 class UserCreate(schemas.BaseUserCreate):
     role: UserRole = UserRole.BASIC
-    chosen_assistants: Optional[List[int]]
-    full_name: Optional[str]
-    company_name: Optional[str]
-    company_email: Optional[EmailStr]
-    company_billing: Optional[str]
-    billing_email_address: Optional[EmailStr]
-    vat: Optional[str]
+    chosen_assistants: Optional[List[int]] = None
+    full_name: Optional[str] = None
+    company_name: Optional[str] = None
+    company_email: Optional[EmailStr] = None
+    company_billing: Optional[str] = None
+    billing_email_address: Optional[EmailStr] = None
+    vat: Optional[str] = None
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    role: Optional[UserRole]
-    chosen_assistants: Optional[List[int]]
-    full_name: Optional[str]
-    company_name: Optional[str]
-    company_email: Optional[EmailStr]
-    company_billing: Optional[str]
-    billing_email_address: Optional[EmailStr]
-    vat: Optional[str]
+    role: Optional[UserRole] = None
+    chosen_assistants: Optional[List[int]] = None
+    full_name: Optional[str] = None
+    company_name: Optional[str] = None
+    company_email: Optional[EmailStr] = None
+    company_billing: Optional[str] = None
+    billing_email_address: Optional[EmailStr] = None
+    vat: Optional[str] = None
 
 
 class ChangePassword(schemas.BaseUserUpdate):
