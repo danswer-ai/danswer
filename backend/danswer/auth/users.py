@@ -169,16 +169,13 @@ def verify_email_domain(email: str) -> None:
 
 
 def get_tenant_id_for_email(email: str) -> str:
-    print("GETTING TENANT ID FOR EMAIL")
     # Implement logic to get tenant_id from the mapping table
     with Session(get_sqlalchemy_engine()) as db_session:
-        print("SESSION OBTAINED")
         result = db_session.execute(
             select(UserTenantMapping.tenant_id).where(UserTenantMapping.email == email)
         )
         tenant_id = result.scalar_one_or_none()
     if tenant_id is None:
-        print("USER DOESN'T EXIST")
         raise exceptions.UserNotExists()
     return tenant_id
 
@@ -283,17 +280,15 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
-        print("oauth callback initiated")
         # Get tenant_id from mapping table
         try:
             tenant_id = get_tenant_id_for_email(account_email)
         except exceptions.UserNotExists:
             raise HTTPException(status_code=401, detail="User not found")
-        print("GETTING TENANT ID")
 
         if not tenant_id:
-            print("TENANT ID NOT FOUND")
             raise HTTPException(status_code=401, detail="User not found")
+
         token = None
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = current_tenant_id.set(tenant_id)

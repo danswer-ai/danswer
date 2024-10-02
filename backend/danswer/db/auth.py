@@ -51,7 +51,6 @@ class SQLAlchemyUserAdminDB(SQLAlchemyUserDatabase):
             create_dict["role"] = UserRole.ADMIN
         else:
             create_dict["role"] = UserRole.BASIC
-        print(f"Creating user with email: {create_dict['email']}")
         return await super().create(create_dict)
 
 

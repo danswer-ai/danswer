@@ -27,7 +27,6 @@ def check_index_swap(db_session: Session) -> None:
     search_settings = get_secondary_search_settings(db_session)
 
     if not search_settings:
-        print("No search settings found")
         return
 
     unique_cc_indexings = count_unique_cc_pairs_with_successful_index_attempts(
