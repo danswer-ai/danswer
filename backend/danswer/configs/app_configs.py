@@ -135,7 +135,7 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
     os.environ.get("POSTGRES_PASSWORD") or "password"
 )
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5433"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
 # defaults to False
@@ -390,3 +390,8 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 ENTERPRISE_EDITION_ENABLED = (
     os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )
+
+# Azure DALL-E Configurations
+AZURE_DALLE_API_BASE = os.environ.get("AZURE_DALLE_API_BASE", "")
+AZURE_DALLE_API_VERSION = os.environ.get("AZURE_DALLE_API_VERSION", "")
+AZURE_DALLE_API_KEY = os.environ.get("AZURE_DALLE_API_KEY", "")

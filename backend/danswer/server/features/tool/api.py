@@ -18,9 +18,12 @@ from danswer.db.tools import update_tool
 from danswer.server.features.tool.models import CustomToolCreate
 from danswer.server.features.tool.models import CustomToolUpdate
 from danswer.server.features.tool.models import ToolSnapshot
+from danswer.server.features.tool.models import ToolSnapshotWithUsability
 from danswer.tools.custom.openapi_parsing import MethodSpec
 from danswer.tools.custom.openapi_parsing import openapi_to_method_specs
 from danswer.tools.custom.openapi_parsing import validate_openapi_schema
+from danswer.tools.utils import can_call_image_tool
+from danswer.tools.utils import can_call_search_tool
 
 router = APIRouter(prefix="/tool")
 admin_router = APIRouter(prefix="/admin/tool")
@@ -125,6 +128,23 @@ def get_custom_tool(
 def list_tools(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_user),
-) -> list[ToolSnapshot]:
+) -> list[ToolSnapshotWithUsability]:
     tools = get_tools(db_session)
-    return [ToolSnapshot.from_model(tool) for tool in tools]
+    usable_tools = []
+
+    for tool in tools:
+        unusable_reason = None
+        usable = True
+        if tool.in_code_tool_id == "ImageGenerationTool":
+            if not can_call_image_tool(db_session=db_session):
+                unusable_reason = "You have not set an OpenAI provider or DALL-E key."
+                usable = False
+        if tool.in_code_tool_id == "SearchTool":
+            if not can_call_search_tool(db_session=db_session):
+                unusable_reason = "You have not indexed any connectors or files."
+                usable = False
+
+        usable_tools.append(
+            ToolSnapshotWithUsability.from_model(tool, usable, unusable_reason)
+        )
+    return usable_tools

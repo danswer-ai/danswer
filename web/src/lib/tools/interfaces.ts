@@ -15,6 +15,11 @@ export interface ToolSnapshot {
   in_code_tool_id: string | null;
 }
 
+export interface ToolSnapshotWithUsability extends ToolSnapshot {
+  usable: boolean;
+  unusable_reason: string | null;
+}
+
 export interface MethodSpec {
   /* Defines a single method that is part of a custom tool. Each method maps to a single 
   action that the LLM can choose to take. */

@@ -27,6 +27,28 @@ class ToolSnapshot(BaseModel):
         )
 
 
+class ToolSnapshotWithUsability(ToolSnapshot):
+    usable: bool
+    unusable_reason: str | None
+
+    @classmethod
+    def from_model(
+        cls, tool: Tool, usable: bool, unusable_reason: str | None
+    ) -> "ToolSnapshotWithUsability":
+        tool_snapshot = ToolSnapshot.from_model(tool)
+        return cls(
+            id=tool_snapshot.id,
+            name=tool_snapshot.name,
+            description=tool_snapshot.description,
+            definition=tool_snapshot.definition,
+            display_name=tool_snapshot.display_name,
+            in_code_tool_id=tool_snapshot.in_code_tool_id,
+            custom_headers=tool_snapshot.custom_headers,
+            usable=usable,
+            unusable_reason=unusable_reason,
+        )
+
+
 class Header(BaseModel):
     key: str
     value: str
