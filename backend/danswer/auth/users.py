@@ -371,11 +371,13 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
             try:
                 if not user.has_web_login:
-                    update_dict = {
-                        "is_verified": is_verified_by_default,
-                        "has_web_login": True,
-                    }
-                    await self.user_db.update(user, update_dict)
+                    await self.user_db.update(
+                        user,
+                        {
+                            "is_verified": is_verified_by_default,
+                            "has_web_login": True,
+                        },
+                    )
                     user.is_verified = is_verified_by_default
                     user.has_web_login = True
 
@@ -390,8 +392,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                     and user.oidc_expiry is not None
                     and not TRACK_EXTERNAL_IDP_EXPIRY
                 ):
-                    update_dict = {"oidc_expiry": None}
-                    await self.user_db.update(user, update_dict)
+                    await self.user_db.update(user, {"oidc_expiry": None})
                     user.oidc_expiry = None
 
             except Exception as e:
