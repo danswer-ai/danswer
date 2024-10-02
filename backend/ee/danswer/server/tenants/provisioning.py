@@ -86,13 +86,23 @@ def add_users_to_tenant(emails: list[str], tenant_id: str) -> None:
 
 
 def remove_users_from_tenant(emails: list[str], tenant_id: str) -> None:
-    print("removeing", emails, tenant_id)
     with get_session_with_tenant("public") as db_session:
         try:
-            for email in emails:
-                db_session.delete(UserTenantMapping(email=email, tenant_id=tenant_id))
+            mappings_to_delete = (
+                db_session.query(UserTenantMapping)
+                .filter(
+                    UserTenantMapping.email.in_(emails),
+                    UserTenantMapping.tenant_id == tenant_id,
+                )
+                .all()
+            )
+
+            for mapping in mappings_to_delete:
+                db_session.delete(mapping)
+
+            db_session.commit()
         except Exception as e:
             logger.exception(
                 f"Failed to remove users from tenant {tenant_id}: {str(e)}"
             )
-        db_session.commit()
+            db_session.rollback()

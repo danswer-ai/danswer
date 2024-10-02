@@ -85,7 +85,7 @@ def do_run_migrations(connection: Connection) -> None:
 
     if MULTI_TENANT and schema_name == "public":
         raise ValueError(
-            "Cannot run default migrations in public schema when multi-tenancy is enabled."
+            "Cannot run default migrations in public schema when multi-tenancy is enabled. "
             "Please specify a tenant-specific schema."
         )
 
