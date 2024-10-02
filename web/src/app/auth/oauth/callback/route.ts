@@ -18,7 +18,6 @@ export const GET = async (request: NextRequest) => {
   }
 
   if (!setCookieHeader) {
-    console.log("SETTING ");
     return NextResponse.redirect(new URL("/auth/error", getDomain(request)));
   }
 

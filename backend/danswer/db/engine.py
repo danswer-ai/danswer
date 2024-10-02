@@ -312,8 +312,7 @@ def get_session_with_tenant(
             cursor.execute(f'SET search_path TO "{tenant_id}"')
             # Optionally verify the search_path was set correctly
             cursor.execute("SHOW search_path")
-            result = cursor.fetchone()
-            print(f"Search path set to: {result[0]}")
+            cursor.fetchone()
 
         # Proceed to create a session using the connection
         with Session(bind=connection, expire_on_commit=False) as session:
@@ -324,24 +323,6 @@ def get_session_with_tenant(
                 if MULTI_TENANT:
                     with dbapi_connection.cursor() as cursor:
                         cursor.execute('SET search_path TO "$user", public')
-
-
-# def get_session_with_tenant(tenant_id: str | None = None) -> Session:
-#     """Generate a database session with the appropriate tenant schema set."""
-
-#     engine = get_sqlalchemy_engine()
-#     session = Session(engine, expire_on_commit=False)
-
-#     if MULTI_TENANT:
-#         if tenant_id is None:
-#             tenant_id = current_tenant_id.get()
-#         if not is_valid_schema_name(tenant_id):
-#             raise HTTPException(status_code=400, detail="Invalid tenant ID")
-#         # Set the search_path to the tenant's schema
-#         print(f"setting search path to {tenant_id}")
-#         session.execute(text(f'SET search_path = "{tenant_id}"'))
-
-#     return session
 
 
 def get_session_generator_with_tenant(

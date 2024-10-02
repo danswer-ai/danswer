@@ -53,8 +53,6 @@ def create_tenant(
             "message": f"Tenant {tenant_id} created successfully",
         }
     except Exception as e:
-        print(e)
-        print(type(e))
         logger.exception(f"Failed to create tenant {tenant_id}: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Failed to create tenant: {str(e)}"
