@@ -14,9 +14,10 @@ from uuid import uuid4
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
-from danswer.connectors.slack.connector import ChannelType
 from danswer.connectors.slack.connector import default_msg_filter
 from danswer.connectors.slack.connector import get_channel_messages
+from danswer.connectors.slack.utils import make_paginated_slack_api_call_w_retries
+from danswer.connectors.slack.utils import make_slack_api_call_w_retries
 
 
 def _get_slack_channel_id(channel: dict[str, Any]) -> str:
@@ -36,10 +37,15 @@ def _get_non_general_channels(
         channel_types.append("private_channel")
     if get_public:
         channel_types.append("public_channel")
-    conversations_results = slack_client.conversations_list(
-        exclude_archived=False, types=channel_types
-    )
-    conversations: list[ChannelType] = conversations_results.get("channels", [])
+
+    conversations: list[dict[str, Any]] = []
+    for result in make_paginated_slack_api_call_w_retries(
+        slack_client.conversations_list,
+        exclude_archived=False,
+        types=channel_types,
+    ):
+        conversations.extend(result["channels"])
+
     filtered_conversations = []
     for conversation in conversations:
         if conversation.get("is_general", False):
@@ -56,13 +62,20 @@ def _clear_slack_conversation_members(
     channel: dict[str, Any],
 ) -> None:
     channel_id = _get_slack_channel_id(channel)
-    members_results = slack_client.conversations_members(channel=channel_id)
-    member_ids: list[str] = members_results.get("members", [])
+    member_ids: list[str] = []
+    for result in make_paginated_slack_api_call_w_retries(
+        slack_client.conversations_members,
+        channel=channel_id,
+    ):
+        member_ids.extend(result["members"])
+
     for member_id in member_ids:
         if member_id == admin_user_id:
             continue
         try:
-            slack_client.conversations_kick(channel=channel_id, user=member_id)
+            make_slack_api_call_w_retries(
+                slack_client.conversations_kick, channel=channel_id, user=member_id
+            )
             print(f"Kicked member: {member_id}")
         except Exception as e:
             if "cant_kick_self" in str(e):
@@ -70,7 +83,9 @@ def _clear_slack_conversation_members(
             print(f"Error kicking member: {e}")
             print(member_id)
     try:
-        slack_client.conversations_unarchive(channel=channel_id)
+        make_slack_api_call_w_retries(
+            slack_client.conversations_unarchive, channel=channel_id
+        )
         channel["is_archived"] = False
     except Exception:
         # Channel is already unarchived
@@ -83,7 +98,11 @@ def _add_slack_conversation_members(
     channel_id = _get_slack_channel_id(channel)
     for user_id in member_ids:
         try:
-            slack_client.conversations_invite(channel=channel_id, users=user_id)
+            make_slack_api_call_w_retries(
+                slack_client.conversations_invite,
+                channel=channel_id,
+                users=user_id,
+            )
         except Exception as e:
             if "already_in_channel" in str(e):
                 continue
@@ -110,7 +129,11 @@ def _delete_slack_conversation_messages(
             try:
                 if not (ts := message.get("ts")):
                     raise ValueError("Message timestamp is missing")
-                slack_client.chat_delete(channel=channel_id, ts=ts)
+                make_slack_api_call_w_retries(
+                    slack_client.chat_delete,
+                    channel=channel_id,
+                    ts=ts,
+                )
             except Exception as e:
                 print(f"Error deleting message: {e}")
                 print(message)
@@ -128,25 +151,32 @@ def _build_slack_channel_from_name(
     if channel:
         # If channel is provided, we rename it
         channel_id = _get_slack_channel_id(channel)
-        channel_response = slack_client.conversations_rename(
-            channel=channel_id, name=channel_name
+        channel_response = make_slack_api_call_w_retries(
+            slack_client.conversations_rename,
+            channel=channel_id,
+            name=channel_name,
         )
     else:
         # Otherwise, we create a new channel
-        channel_response = slack_client.conversations_create(
-            name=channel_name, is_private=is_private
+        channel_response = make_slack_api_call_w_retries(
+            slack_client.conversations_create,
+            name=channel_name,
+            is_private=is_private,
         )
 
     try:
-        channel_response = slack_client.conversations_unarchive(
-            channel=channel_response["channel"]["id"]
+        channel_response = make_slack_api_call_w_retries(
+            slack_client.conversations_unarchive,
+            channel=channel_response["channel"]["id"],
         )
     except Exception:
         # Channel is already unarchived
         pass
     try:
-        channel_response = slack_client.conversations_invite(
-            channel=channel_response["channel"]["id"], users=[admin_user_id]
+        channel_response = make_slack_api_call_w_retries(
+            slack_client.conversations_invite,
+            channel=channel_response["channel"]["id"],
+            users=[admin_user_id],
         )
     except Exception:
         pass
@@ -204,7 +234,9 @@ class SlackManager:
 
     @staticmethod
     def build_slack_user_email_id_map(slack_client: WebClient) -> dict[str, str]:
-        users_results = slack_client.users_list()
+        users_results = make_slack_api_call_w_retries(
+            slack_client.users_list,
+        )
         users: list[dict[str, Any]] = users_results.get("members", [])
         user_email_id_map = {}
         for user in users:
@@ -236,7 +268,11 @@ class SlackManager:
         slack_client: WebClient, channel: dict[str, Any], message: str
     ) -> None:
         channel_id = _get_slack_channel_id(channel)
-        slack_client.chat_postMessage(channel=channel_id, text=message)
+        make_slack_api_call_w_retries(
+            slack_client.chat_postMessage,
+            channel=channel_id,
+            text=message,
+        )
 
     @staticmethod
     def remove_message_from_channel(
@@ -252,16 +288,24 @@ class SlackManager:
         test_id: str,
     ) -> None:
         channel_types = ["private_channel", "public_channel"]
-        conversations_response = slack_client.conversations_list(
-            exclude_archived=False, types=channel_types
-        )
-        conversations = conversations_response["channels"]
-        for channel in conversations:
+        channels: list[dict[str, Any]] = []
+        for result in make_paginated_slack_api_call_w_retries(
+            slack_client.conversations_list,
+            exclude_archived=False,
+            types=channel_types,
+        ):
+            channels.extend(result["channels"])
+
+        for channel in channels:
             if test_id not in channel.get("name", ""):
                 continue
             # "done" in the channel name indicates that this channel is free to be used for a new test
             new_name = f"done_{str(uuid4())}"
             try:
-                slack_client.conversations_rename(channel=channel["id"], name=new_name)
+                make_slack_api_call_w_retries(
+                    slack_client.conversations_rename,
+                    channel=channel["id"],
+                    name=new_name,
+                )
             except SlackApiError as e:
                 print(f"Error renaming channel {channel['id']}: {e}")
