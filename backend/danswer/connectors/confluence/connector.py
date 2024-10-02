@@ -549,7 +549,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 page_id, start=0, limit=500, expand=expand
             )
             for attachment in attachments_container["results"]:
-
                 if attachment["title"] not in files_in_used:
                     unused_attachments.append(attachment)
                     continue
