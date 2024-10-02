@@ -20,12 +20,16 @@ import { UserRole, User } from "@/lib/types";
 import { useUser } from "@/components/user/UserProvider";
 
 function PersonaTypeDisplay({ persona }: { persona: Persona }) {
-  if (persona.is_default_persona) {
+  if (persona.builtin_persona) {
     return <Text>Built-In</Text>;
   }
 
+  if (persona.is_default_persona) {
+    return <Text>Default</Text>;
+  }
+
   if (persona.is_public) {
-    return <Text>Global</Text>;
+    return <Text>Public</Text>;
   }
 
   if (persona.groups.length > 0 || persona.users.length > 0) {
