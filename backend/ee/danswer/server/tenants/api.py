@@ -1,12 +1,17 @@
+import stripe
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 
 from danswer.auth.users import control_plane_dep
+from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import MULTI_TENANT
+from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.engine import get_session_with_tenant
 from danswer.setup import setup_danswer
 from danswer.utils.logger import setup_logger
+from ee.danswer.configs.app_configs import STRIPE_PRICE_ID
+from ee.danswer.configs.app_configs import STRIPE_SECRET_KEY
 from ee.danswer.server.tenants.models import CreateTenantRequest
 from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.provisioning import ensure_schema_exists
@@ -16,6 +21,7 @@ from shared_configs.configs import current_tenant_id
 
 logger = setup_logger()
 router = APIRouter(prefix="/tenants")
+stripe.api_key = STRIPE_SECRET_KEY
 
 
 @router.post("/create")
@@ -53,10 +59,52 @@ def create_tenant(
             "message": f"Tenant {tenant_id} created successfully",
         }
     except Exception as e:
+        print("error occured")
+        print(type(e))
+        print(e)
         logger.exception(f"Failed to create tenant {tenant_id}: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Failed to create tenant: {str(e)}"
         )
     finally:
+        print("error occured")
         if token is not None:
             current_tenant_id.reset(token)
+
+
+@router.post("/create-checkout-session")
+async def create_checkout_session(user: None = Depends(current_admin_user)) -> dict:
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[
+                {
+                    "price": STRIPE_PRICE_ID,
+                    "quantity": 1,
+                }
+            ],
+            mode="subscription",
+            success_url=f"{WEB_DOMAIN}/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{WEB_DOMAIN}/cancel",
+            metadata={"tenant_id": str(current_tenant_id.get())},
+        )
+
+        # checkout_session = stripe.checkout.Session.create(
+        #     customer_email=tenant.creator_email,
+        #     line_items=[
+        #         {
+        #             "price": settings.STRIPE_PRICE,
+        #             "quantity": 1,
+        #         },
+        #     ],
+        #     mode="subscription",
+        #     success_url=success_url,
+        #     cancel_url=cancel_url,
+        #     metadata={"tenant_id": str(tenant.tenant_id)},
+        # )
+
+        return {"id": checkout_session.id}
+    except Exception as e:
+        print("Exception ")
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e))
