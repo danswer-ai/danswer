@@ -142,7 +142,7 @@ def create_chat_session(
     description: str,
     user_id: UUID | None,
     assistant_id: int | None = None,
-    teamspace_id: int | None = None,  # Include teamspace_id as a parameter
+    teamspace_id: int | None = None,
     llm_override: LLMOverride | None = None,
     prompt_override: PromptOverride | None = None,
     one_shot: bool = False,

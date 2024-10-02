@@ -319,6 +319,17 @@ class ChatSession__Teamspace(Base):
     )
 
 
+class ChatFolder__Teamspace(Base):
+    __tablename__ = "chat_folder__teamspace"
+
+    chat_folder_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_folder.id"), primary_key=True
+    )
+    teamspace_id: Mapped[int] = mapped_column(
+        ForeignKey("teamspace.id"), primary_key=True
+    )
+
+
 class Tool__Teamspace(Base):
     __tablename__ = "tool__teamspace"
 
@@ -868,6 +879,11 @@ class ChatFolder(Base):
     chat_sessions: Mapped[list["ChatSession"]] = relationship(
         "ChatSession", back_populates="folder"
     )
+    groups: Mapped[list["Teamspace"]] = relationship(
+        "Teamspace",
+        secondary=ChatFolder__Teamspace.__table__,
+        viewonly=True,
+    )
 
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, ChatFolder):
@@ -1346,6 +1362,11 @@ class Teamspace(Base):
     chat_sessions: Mapped[list[ChatSession]] = relationship(
         "ChatSession",
         secondary=ChatSession__Teamspace.__table__,
+        viewonly=True,
+    )
+    chat_folders: Mapped[list[ChatFolder]] = relationship(
+        "ChatFolder",
+        secondary=ChatFolder__Teamspace.__table__,
         viewonly=True,
     )
 

@@ -215,7 +215,7 @@ const FolderItem = ({
         </div>
       </BasicSelectable>
       {isExpanded && folders && (
-        <div className={"ml-2 pl-2 border-l border-border  bg-red-500"}>
+        <div className={"ml-2 pl-2 border-l border-border"}>
           {folders.map((chatSession) => (
             <ChatSessionDisplay
               key={chatSession.id}

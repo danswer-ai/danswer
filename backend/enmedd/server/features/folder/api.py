@@ -14,6 +14,7 @@ from enmedd.db.folder import get_user_folders
 from enmedd.db.folder import remove_chat_from_folder
 from enmedd.db.folder import rename_folder
 from enmedd.db.folder import update_folder_display_priority
+from enmedd.db.models import ChatFolder__Teamspace
 from enmedd.db.models import User
 from enmedd.server.features.folder.models import DeleteFolderOptions
 from enmedd.server.features.folder.models import FolderChatSessionRequest
@@ -78,13 +79,23 @@ def put_folder_display_priority(
 def create_folder_endpoint(
     request: FolderCreationRequest,
     user: User = Depends(current_user),
+    teamspace_id: int | None = None,
     db_session: Session = Depends(get_session),
 ) -> int:
-    return create_folder(
+    chat_folder = create_folder(
         user_id=user.id if user else None,
         folder_name=request.folder_name,
         db_session=db_session,
     )
+
+    if teamspace_id:
+        chat_folder_teamspace_relationship = ChatFolder__Teamspace(
+            chat_folder_id=chat_folder, teamspace_id=teamspace_id
+        )
+        db_session.add(chat_folder_teamspace_relationship)
+        db_session.commit()
+
+    return chat_folder
 
 
 @router.patch("/{folder_id}")

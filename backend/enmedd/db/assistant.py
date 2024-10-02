@@ -591,6 +591,39 @@ def get_assistants_by_ids(
     return assistants
 
 
+def get_assistants_by_teamspace_id(
+    teamspace_id: int,
+    user: User | None,
+    db_session: Session,
+    include_deleted: bool = False,
+) -> list[Assistant]:
+    stmt = (
+        select(Assistant)
+        .join(Assistant__Teamspace)
+        .where(Assistant__Teamspace.teamspace_id == teamspace_id)
+    )
+
+    or_conditions = []
+
+    if user is not None and user.role != UserRole.ADMIN:
+        or_conditions.extend(
+            [Assistant.user_id == user.id, Assistant.user_id.is_(None)]
+        )
+
+        or_conditions.append(Assistant.is_public.is_(True))
+
+    if or_conditions:
+        stmt = stmt.where(or_(*or_conditions))
+
+    if not include_deleted:
+        stmt = stmt.where(Assistant.deleted.is_(False))
+
+    result = db_session.execute(stmt)
+    assistants = result.scalars().all()
+
+    return assistants
+
+
 def get_prompt_by_name(
     prompt_name: str, user: User | None, db_session: Session
 ) -> Prompt | None:
