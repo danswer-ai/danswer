@@ -18,6 +18,7 @@ import {
 import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 import { SettingsContext } from "./settings/SettingsProvider";
 import { UserProfile } from "./UserProfile";
+import { useToast } from "@/hooks/use-toast";
 
 export function UserSettingsButton({
   user,
@@ -27,6 +28,7 @@ export function UserSettingsButton({
   defaultPage?: string;
 }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
+  const { toast } = useToast();
   const userInfoRef = useRef<HTMLDivElement>(null);
   const settings = useContext(SettingsContext);
   const router = useRouter();
@@ -34,7 +36,11 @@ export function UserSettingsButton({
   const handleLogout = () => {
     logout().then((isSuccess) => {
       if (!isSuccess) {
-        alert("Failed to logout");
+        toast({
+          title: "Logout Failed",
+          description: "There was an issue logging out. Please try again.",
+          variant: "destructive",
+        });
       }
       router.push("/auth/login");
     });

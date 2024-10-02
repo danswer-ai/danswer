@@ -36,6 +36,11 @@ export function WhitelabelingForm() {
     });
     if (response.ok) {
       router.refresh();
+      toast({
+        title: "Settings updated",
+        description: "The workspace settings have been successfully updated.",
+        variant: "success",
+      });
     } else {
       const errorMsg = (await response.json()).detail;
       toast({
@@ -78,13 +83,23 @@ export function WhitelabelingForm() {
             });
             if (!response.ok) {
               const errorMsg = (await response.json()).detail;
-              alert(`Failed to upload logo. ${errorMsg}`);
+              toast({
+                title: "Failed to upload logo",
+                description: `Error: ${errorMsg}`,
+                variant: "destructive",
+              });
               formikHelpers.setSubmitting(false);
               return;
             }
           }
           formikHelpers.setValues(values);
           await updateWorkspaces(values);
+
+          toast({
+            title: "Logo uploaded",
+            description: "The logo has been successfully uploaded.",
+            variant: "success",
+          });
         }}
       >
         {({ isSubmitting, values, setValues }) => (

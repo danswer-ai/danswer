@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { SuccessfulAssistantUpdateRedirectType } from "../enums";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export function DeleteAssistantButton({
   assistantId,
@@ -14,19 +15,29 @@ export function DeleteAssistantButton({
   redirectType: SuccessfulAssistantUpdateRedirectType;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
 
   return (
     <Button
       onClick={async () => {
         const response = await deleteAssistant(assistantId);
         if (response.ok) {
+          toast({
+            title: "Assistant deleted",
+            description: "The assistant has been successfully deleted.",
+            variant: "success",
+          });
           router.push(
             redirectType === SuccessfulAssistantUpdateRedirectType.ADMIN
               ? `/admin/assistants?u=${Date.now()}`
               : `/chat`
           );
         } else {
-          alert(`Failed to delete assistant - ${await response.text()}`);
+          toast({
+            title: "Failed to delete assistant",
+            description: `There was an issue deleting the assistant. Details: ${await response.text()}`,
+            variant: "destructive",
+          });
         }
       }}
       variant="destructive"
