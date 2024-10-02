@@ -73,7 +73,6 @@ export const CodeBlock = memo(function CodeBlock({
         </pre>
       );
     }
-    CodeContent.displayName = "CodeContent";
 
     return (
       <pre className="overflow-x-scroll" style={CODE_BLOCK_PADDING}>
@@ -90,10 +89,12 @@ export const CodeBlock = memo(function CodeBlock({
 
   return (
     <div className="overflow-x-hidden">
-      <div className="flex mx-3 py-2 text-xs">
-        {language}
-        {codeText && <CopyButton />}
-      </div>
+      {language && (
+        <div className="flex mx-3 py-2 text-xs">
+          {language}
+          {codeText && <CopyButton />}
+        </div>
+      )}
       <CodeContent />
     </div>
   );
