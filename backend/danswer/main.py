@@ -78,6 +78,7 @@ from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
 from danswer.setup import setup_danswer
+from danswer.setup import setup_multitenant_danswer
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import get_or_generate_uuid
 from danswer.utils.telemetry import optional_telemetry
@@ -163,9 +164,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # We cache this at the beginning so there is no delay in the first telemetry
         get_or_generate_uuid()
 
-        # If we are multi-tenant, we need to only set up initial public tables
-        with Session(engine) as db_session:
-            setup_danswer(db_session)
+    # If we are multi-tenant, we need to only set up initial public tables
+    with Session(engine) as db_session:
+        setup_danswer(db_session) if not MULTI_TENANT else setup_multitenant_danswer(
+            db_session
+        )
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield
