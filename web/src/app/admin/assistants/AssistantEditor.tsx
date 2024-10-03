@@ -165,7 +165,7 @@ export function AssistantEditor({
         existingPersona.num_chunks === 0
       );
     }
-  }, []);
+  }, [isUpdate, existingPrompt]);
 
   const defaultProvider = llmProviders.find(
     (llmProvider) => llmProvider.is_default_provider
