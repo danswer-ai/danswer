@@ -146,7 +146,7 @@ def _add_user__teamspace_relationships__no_commit(
     db_session: Session,
     teamspace_id: int,
     user_ids: list[UUID],
-    creator_id: Optional[UUID],
+    creator_id: Optional[UUID] = None,
 ) -> list[User__Teamspace]:
     """NOTE: does not commit the transaction."""
     if creator_id is None:

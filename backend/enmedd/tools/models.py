@@ -1,7 +1,11 @@
 from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
 
 from pydantic import BaseModel
-from pydantic import root_validator
+from pydantic import model_validator
 
 
 class ToolResponse(BaseModel):
@@ -15,14 +19,14 @@ class ToolCallKickoff(BaseModel):
 
 
 class ToolRunnerResponse(BaseModel):
-    tool_run_kickoff: ToolCallKickoff | None = None
-    tool_response: ToolResponse | None = None
-    tool_message_content: str | list[str | dict[str, Any]] | None = None
+    tool_run_kickoff: Optional[ToolCallKickoff] = None
+    tool_response: Optional[ToolResponse] = None
+    tool_message_content: Optional[Union[str, List[Union[str, Dict[str, Any]]]]] = None
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_tool_runner_response(
-        cls, values: dict[str, ToolResponse | str]
-    ) -> dict[str, ToolResponse | str]:
+        cls, values: Dict[str, Union[ToolResponse, str]]
+    ) -> Dict[str, Union[ToolResponse, str]]:
         fields = ["tool_response", "tool_message_content", "tool_run_kickoff"]
         provided = sum(1 for field in fields if values.get(field) is not None)
 
