@@ -12,3 +12,6 @@ torch==2.2.0
 transformers==4.39.2
 uvicorn==0.21.1
 voyageai==0.2.3
+python-dotenv==1.0.0
+h5py==3.9.0
+tensorflow==2.15.0
