@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -212,7 +213,15 @@ export default function AddConnector({
 
   return (
     <Formik
-      initialValues={createConnectorInitialValues(connector)}
+      initialValues={{
+        ...createConnectorInitialValues(connector),
+        ...Object.fromEntries(
+          connectorConfigs[connector].advanced_values.map((field) => [
+            field.name,
+            field.default || "",
+          ])
+        ),
+      }}
       validationSchema={createConnectorValidationSchema(connector)}
       onSubmit={async (values) => {
         const {
