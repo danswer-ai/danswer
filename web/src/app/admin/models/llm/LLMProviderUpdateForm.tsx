@@ -317,12 +317,22 @@ export function LLMProviderUpdateForm({
                     );
                     if (!response.ok) {
                       const errorMsg = (await response.json()).detail;
-                      alert(`Failed to delete provider: ${errorMsg}`);
+                      toast({
+                        title: "Failed to delete provider",
+                        description: `Error details: ${errorMsg}`,
+                        variant: "destructive",
+                      });
                       return;
                     }
 
                     mutate(LLM_PROVIDERS_ADMIN_URL);
                     onClose();
+                    toast({
+                      title: "Provider deleted",
+                      description:
+                        "The provider has been successfully deleted.",
+                      variant: "success",
+                    });
                   }}
                 >
                   <Trash size={16} /> Delete

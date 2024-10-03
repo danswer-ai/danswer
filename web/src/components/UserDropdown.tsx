@@ -11,6 +11,7 @@ import { FaBrain } from "react-icons/fa";
 import { LOGOUT_DISABLED } from "@/lib/constants";
 import { SettingsContext } from "./settings/SettingsProvider";
 import { LogOut, MessageSquare, Search, User, Wrench } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export function UserDropdown({
   user,
@@ -20,6 +21,7 @@ export function UserDropdown({
   hideChatAndSearch?: boolean;
 }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
+  const { toast } = useToast();
   const userInfoRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -32,7 +34,11 @@ export function UserDropdown({
   const handleLogout = () => {
     logout().then((isSuccess) => {
       if (!isSuccess) {
-        alert("Failed to logout");
+        toast({
+          title: "Logout Failed",
+          description: "There was an issue logging out. Please try again.",
+          variant: "destructive",
+        });
       }
       router.push("/auth/login");
     });

@@ -10,8 +10,10 @@ import { SubLabel, TextFormField } from "@/components/admin/connectors/Field";
 import { ImageUpload } from "./ImageUpload";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 
 export function WhitelabelingForm() {
+  const { toast } = useToast();
   const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -34,9 +36,18 @@ export function WhitelabelingForm() {
     });
     if (response.ok) {
       router.refresh();
+      toast({
+        title: "Settings updated",
+        description: "The workspace settings have been successfully updated.",
+        variant: "success",
+      });
     } else {
       const errorMsg = (await response.json()).detail;
-      alert(`Failed to update settings. ${errorMsg}`);
+      toast({
+        title: "Failed to update settings.",
+        description: errorMsg,
+        variant: "destructive",
+      });
     }
   }
 
@@ -72,13 +83,23 @@ export function WhitelabelingForm() {
             });
             if (!response.ok) {
               const errorMsg = (await response.json()).detail;
-              alert(`Failed to upload logo. ${errorMsg}`);
+              toast({
+                title: "Failed to upload logo",
+                description: `Error: ${errorMsg}`,
+                variant: "destructive",
+              });
               formikHelpers.setSubmitting(false);
               return;
             }
           }
           formikHelpers.setValues(values);
           await updateWorkspaces(values);
+
+          toast({
+            title: "Logo uploaded",
+            description: "The logo has been successfully uploaded.",
+            variant: "success",
+          });
         }}
       >
         {({ isSubmitting, values, setValues }) => (
@@ -112,13 +133,11 @@ export function WhitelabelingForm() {
                   <h3>Custom Logo</h3>
                   <SubLabel>Current Custom Logo: </SubLabel>
                 </div>
-                <Image
+                <img
                   src={"/api/workspace/logo?u=" + Date.now()}
                   alt="Logo"
                   style={{ objectFit: "contain" }}
                   className="w-32 h-32"
-                  width={128}
-                  height={128}
                 />
 
                 <Button

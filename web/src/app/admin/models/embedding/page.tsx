@@ -23,6 +23,7 @@ import { CustomModelForm } from "./CustomModelForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomModal } from "@/components/CustomModal";
 import { Package } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 function Main() {
   const [tentativeNewEmbeddingModel, setTentativeNewEmbeddingModel] =
@@ -30,6 +31,7 @@ function Main() {
   const [isCancelling, setIsCancelling] = useState<boolean>(false);
   const [showAddConnectorPopup, setShowAddConnectorPopup] =
     useState<boolean>(false);
+  const { toast } = useToast();
 
   const {
     data: currentEmeddingModel,
@@ -85,11 +87,21 @@ function Main() {
     if (response.ok) {
       setTentativeNewEmbeddingModel(null);
       mutate("/api/secondary-index/get-secondary-embedding-model");
+
+      toast({
+        title: "Embedding model updated",
+        description: "The embedding model has been successfully updated.",
+        variant: "success",
+      });
       if (!connectors || !connectors.length) {
         setShowAddConnectorPopup(true);
       }
     } else {
-      alert(`Failed to update embedding model - ${await response.text()}`);
+      toast({
+        title: "Failed to update embedding model",
+        description: `Error details: ${await response.text()}`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -100,10 +112,19 @@ function Main() {
     if (response.ok) {
       setTentativeNewEmbeddingModel(null);
       mutate("/api/secondary-index/get-secondary-embedding-model");
+
+      toast({
+        title: "Embedding model update cancelled",
+        description:
+          "The embedding model update has been successfully cancelled.",
+        variant: "success",
+      });
     } else {
-      alert(
-        `Failed to cancel embedding model update - ${await response.text()}`
-      );
+      toast({
+        title: "Failed to cancel embedding model update",
+        description: `Error details: ${await response.text()}`,
+        variant: "destructive",
+      });
     }
 
     setIsCancelling(false);

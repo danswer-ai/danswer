@@ -56,10 +56,6 @@ function findImageGenerationTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "ImageGenerationTool");
 }
 
-/* function Label({ children }: { children: string | JSX.Element }) {
-  return <div className="block font-medium text-base ">{children}</div>;
-} */
-
 function SubLabel({ children }: { children: string | JSX.Element }) {
   return <span className="text-sm text-subtle mb-2">{children}</span>;
 }
@@ -406,68 +402,69 @@ export function AssistantEditor({
           return (
             <Form>
               <div className="pb-6">
-                <HidableSection sectionTitle="Basics">
-                  <>
-                    <TextFormField
-                      name="name"
-                      label="Name"
-                      disabled={isUpdate}
-                      subtext="Users will be able to select this Assistant based on this name."
-                    />
+                <>
+                  <h2 className="font-bold text:lg md:text-xl my-auto mb-4">
+                    Basics
+                  </h2>
+                  <TextFormField
+                    name="name"
+                    label="Name"
+                    disabled={isUpdate}
+                    subtext="Users will be able to select this Assistant based on this name."
+                  />
 
-                    <TextFormField
-                      name="description"
-                      label="Description"
-                      subtext="Provide a short descriptions which gives users a hint as to what they should use this Assistant for."
-                    />
+                  <TextFormField
+                    name="description"
+                    label="Description"
+                    subtext="Provide a short descriptions which gives users a hint as to what they should use this Assistant for."
+                  />
 
-                    <TextFormField
-                      name="system_prompt"
-                      label="System Prompt"
-                      isTextArea={true}
-                      subtext={
-                        'Give general info about what the Assistant is about. For example, "You are an assistant for On-Call engineers. Your goal is to read the provided context documents and give recommendations as to how to resolve the issue."'
-                      }
-                      onChange={(e) => {
-                        setFieldValue("system_prompt", e.target.value);
-                        triggerFinalPromptUpdate(
-                          e.target.value,
-                          values.task_prompt,
-                          searchToolEnabled()
-                        );
-                      }}
-                      error={finalPromptError}
-                    />
+                  <TextFormField
+                    name="system_prompt"
+                    label="System Prompt"
+                    isTextArea={true}
+                    subtext={
+                      'Give general info about what the Assistant is about. For example, "You are an assistant for On-Call engineers. Your goal is to read the provided context documents and give recommendations as to how to resolve the issue."'
+                    }
+                    onChange={(e) => {
+                      setFieldValue("system_prompt", e.target.value);
+                      triggerFinalPromptUpdate(
+                        e.target.value,
+                        values.task_prompt,
+                        searchToolEnabled()
+                      );
+                    }}
+                    error={finalPromptError}
+                  />
 
-                    <TextFormField
-                      name="task_prompt"
-                      label="Task Prompt (Optional)"
-                      isTextArea={true}
-                      subtext={`Give specific instructions as to what to do with the user query. 
+                  <TextFormField
+                    name="task_prompt"
+                    label="Task Prompt (Optional)"
+                    isTextArea={true}
+                    subtext={`Give specific instructions as to what to do with the user query. 
                       For example, "Find any relevant sections from the provided documents that can 
                       help the user resolve their issue and explain how they are relevant."`}
-                      onChange={(e) => {
-                        setFieldValue("task_prompt", e.target.value);
-                        triggerFinalPromptUpdate(
-                          values.system_prompt,
-                          e.target.value,
-                          searchToolEnabled()
-                        );
-                      }}
-                      error={finalPromptError}
-                    />
+                    onChange={(e) => {
+                      setFieldValue("task_prompt", e.target.value);
+                      triggerFinalPromptUpdate(
+                        values.system_prompt,
+                        e.target.value,
+                        searchToolEnabled()
+                      );
+                    }}
+                    error={finalPromptError}
+                  />
 
-                    <Label>Final Prompt</Label>
+                  <Label>Final Prompt</Label>
 
-                    {finalPrompt ? (
-                      <pre className="text-sm mt-2 whitespace-pre-wrap">
-                        {finalPrompt}
-                      </pre>
-                    ) : (
-                      "-"
-                    )}
-                  </>
-                </HidableSection>
+                  {finalPrompt ? (
+                    <pre className="text-sm mt-2 whitespace-pre-wrap">
+                      {finalPrompt}
+                    </pre>
+                  ) : (
+                    "-"
+                  )}
+                </>
 
                 <Divider />
 
@@ -654,10 +651,7 @@ export function AssistantEditor({
 
                 {llmProviders.length > 0 && (
                   <>
-                    <HidableSection
-                      sectionTitle="[Advanced] Model Selection"
-                      defaultHidden
-                    >
+                    <HidableSection sectionTitle="[Advanced] Model Selection">
                       <>
                         <p className="text-sm">
                           Pick which LLM to use for this Assistant. If left as
@@ -742,10 +736,7 @@ export function AssistantEditor({
                   </>
                 )}
 
-                <HidableSection
-                  sectionTitle="[Advanced] Starter Messages"
-                  defaultHidden
-                >
+                <HidableSection sectionTitle="[Advanced] Starter Messages">
                   <>
                     <div className="pb-4">
                       <p className="text-sm">

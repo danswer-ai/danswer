@@ -1,3 +1,4 @@
+import { CustomTooltip } from "@/components/CustomTooltip";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { Teamspace } from "@/lib/types";
@@ -50,11 +51,17 @@ export const TeamspacesCard = ({
         <div className="pb-6">
           <h2 className="font-bold whitespace-normal break-all w-full">
             <span className="inline">{teamspace.name}</span>
-            <div
-              className={`inline-block ml-2 w-2.5 h-2.5 rounded-full ${
-                teamspace.is_up_to_date ? "bg-success" : "bg-secondary"
-              }`}
-            />
+            <CustomTooltip
+              trigger={
+                <div
+                  className={`inline-block ml-2 w-2.5 h-2.5 rounded-full ${
+                    teamspace.is_up_to_date ? "bg-success" : "bg-secondary"
+                  }`}
+                />
+              }
+            >
+              {teamspace.is_up_to_date ? "Updated" : "Outdated"}
+            </CustomTooltip>
           </h2>
           <span className="text-sm text-subtle">@mrquilbot</span>
         </div>
