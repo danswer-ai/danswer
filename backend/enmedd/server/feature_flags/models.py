@@ -11,6 +11,7 @@ class FeatureFlags(BaseModel):
     whitelabelling: bool = True
     share_chat: bool = False
     explore_assistants: bool = False
+    two_factor_auth: bool = True
 
     def check_validity(self) -> None:
         return
