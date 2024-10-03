@@ -220,9 +220,9 @@ def bulk_invite_users(
         for email in all_emails:
             send_user_email_invite(email, current_user)
 
-    invited_users = write_invited_users(all_emails)
+    number_of_invited_users = write_invited_users(all_emails)
     if not MULTI_TENANT:
-        return invited_users
+        return number_of_invited_users
     try:
         logger.info("Registering tenant users")
         register_tenant_users(current_tenant_id.get(), get_total_users(db_session))
@@ -233,7 +233,7 @@ def bulk_invite_users(
             except Exception as e:
                 logger.error(f"Error sending email invite to invited users: {e}")
 
-        return invited_users
+        return number_of_invited_users
     except Exception as e:
         print("exception is ")
         print(e)
@@ -257,7 +257,7 @@ def remove_invited_user(
 
     tenant_id = current_tenant_id.get()
     remove_users_from_tenant([user_email.user_email], tenant_id)
-    remaining_users = write_invited_users(remaining_users)
+    number_of_invited_users = write_invited_users(remaining_users)
 
     try:
         if MULTI_TENANT:
@@ -269,7 +269,7 @@ def remove_invited_user(
         )
         raise
 
-    return remaining_users
+    return number_of_invited_users
 
 
 @router.patch("/manage/admin/deactivate-user")

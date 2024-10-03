@@ -1,3 +1,5 @@
+from typing import cast
+
 import stripe
 from fastapi import APIRouter
 from fastapi import Depends
@@ -84,7 +86,7 @@ async def create_checkout_session(
         tenant_id = current_tenant_id.get()
         response = fetch_tenant_stripe_information(tenant_id)
         response.get("stripe_customer_id")
-        stripe_subscription_id = response.get("stripe_subscription_id")
+        stripe_subscription_id = cast(str, response.get("stripe_subscription_id"))
 
         # Modified code to update existing subscription
         subscription = stripe.Subscription.retrieve(stripe_subscription_id)
