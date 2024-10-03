@@ -13,6 +13,7 @@ from typing import cast
 import httpx
 import requests
 
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.chat_configs import DOC_TIME_DECAY
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.chat_configs import TITLE_CONTENT_RATIO
@@ -477,6 +478,66 @@ class VespaIndex(DocumentIndex):
             for index_name in index_names:
                 delete_vespa_docs(
                     document_ids=doc_ids, index_name=index_name, http_client=http_client
+                )
+
+    def delete_single(self, doc_id: str) -> None:
+        """Possibly faster overall than the delete method due to using a single
+        delete call with a selection query."""
+
+        # Vespa deletion is poorly documented ... luckily we found this
+        # https://docs.vespa.ai/en/operations/batch-delete.html#example
+
+        doc_id = replace_invalid_doc_id_characters(doc_id)
+
+        # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficial for
+        # indexing / updates / deletes since we have to make a large volume of requests.
+        index_names = [self.index_name]
+        if self.secondary_index_name:
+            index_names.append(self.secondary_index_name)
+
+        with httpx.Client(http2=True) as http_client:
+            for index_name in index_names:
+                params = httpx.QueryParams(
+                    {
+                        "selection": f"{index_name}.document_id=='{doc_id}'",
+                        "cluster": DOCUMENT_INDEX_NAME,
+                    }
+                )
+
+                total_chunks_deleted = 0
+                while True:
+                    try:
+                        resp = http_client.delete(
+                            f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}",
+                            params=params,
+                        )
+                        resp.raise_for_status()
+                    except httpx.HTTPStatusError as e:
+                        logger.error(
+                            f"Failed to delete chunk, details: {e.response.text}"
+                        )
+                        raise
+
+                    resp_data = resp.json()
+
+                    if "documentCount" in resp_data:
+                        chunks_deleted = resp_data["documentCount"]
+                        total_chunks_deleted += chunks_deleted
+
+                    # Check for continuation token to handle pagination
+                    if "continuation" not in resp_data:
+                        break  # Exit loop if no continuation token
+
+                    if not resp_data["continuation"]:
+                        break  # Exit loop if continuation token is empty
+
+                    params = params.set("continuation", resp_data["continuation"])
+
+                logger.debug(
+                    f"VespaIndex.delete_single: "
+                    f"index={index_name} "
+                    f"doc={doc_id} "
+                    f"chunks_deleted={total_chunks_deleted}"
                 )
 
     def id_based_retrieval(
