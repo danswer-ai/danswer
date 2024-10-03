@@ -5,6 +5,7 @@ from fastapi import HTTPException
 
 from danswer.auth.users import control_plane_dep
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import User
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.engine import get_session_with_tenant
@@ -12,11 +13,16 @@ from danswer.setup import setup_danswer
 from danswer.utils.logger import setup_logger
 from ee.danswer.configs.app_configs import STRIPE_PRICE_ID
 from ee.danswer.configs.app_configs import STRIPE_SECRET_KEY
+from ee.danswer.server.tenants.models import BillingInformation
+from ee.danswer.server.tenants.models import CheckoutSessionCreationRequest
+from ee.danswer.server.tenants.models import CheckoutSessionCreationResponse
 from ee.danswer.server.tenants.models import CreateTenantRequest
 from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
 from ee.danswer.server.tenants.provisioning import user_owns_a_tenant
+from ee.danswer.server.tenants.utils import fetch_billing_information
+from ee.danswer.server.tenants.utils import fetch_tenant_customer_id
 from shared_configs.configs import current_tenant_id
 
 logger = setup_logger()
@@ -31,6 +37,7 @@ def create_tenant(
     tenant_id = create_tenant_request.tenant_id
     email = create_tenant_request.initial_admin_email
     token = None
+
     if user_owns_a_tenant(email):
         raise HTTPException(
             status_code=409, detail="User already belongs to an organization"
@@ -51,7 +58,6 @@ def create_tenant(
         with get_session_with_tenant(tenant_id) as db_session:
             setup_danswer(db_session)
 
-        logger.info(f"Tenant {tenant_id} created successfully")
         add_users_to_tenant([email], tenant_id)
 
         return {
@@ -59,52 +65,64 @@ def create_tenant(
             "message": f"Tenant {tenant_id} created successfully",
         }
     except Exception as e:
-        print("error occured")
-        print(type(e))
-        print(e)
         logger.exception(f"Failed to create tenant {tenant_id}: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Failed to create tenant: {str(e)}"
         )
     finally:
-        print("error occured")
         if token is not None:
             current_tenant_id.reset(token)
 
 
 @router.post("/create-checkout-session")
-async def create_checkout_session(user: None = Depends(current_admin_user)) -> dict:
+async def create_checkout_session(
+    checkout_session_creation_request: CheckoutSessionCreationRequest,
+    _: User = Depends(current_admin_user),
+) -> CheckoutSessionCreationResponse:
     try:
+        tenant_id = current_tenant_id.get()
+        stripe_customer_id = fetch_tenant_customer_id(tenant_id)
+
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             line_items=[
                 {
                     "price": STRIPE_PRICE_ID,
-                    "quantity": 1,
+                    "quantity": checkout_session_creation_request.quantity,
                 }
             ],
             mode="subscription",
             success_url=f"{WEB_DOMAIN}/success?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{WEB_DOMAIN}/cancel",
-            metadata={"tenant_id": str(current_tenant_id.get())},
+            metadata={"tenant_id": str(tenant_id)},
+            customer=stripe_customer_id,
         )
 
-        # checkout_session = stripe.checkout.Session.create(
-        #     customer_email=tenant.creator_email,
-        #     line_items=[
-        #         {
-        #             "price": settings.STRIPE_PRICE,
-        #             "quantity": 1,
-        #         },
-        #     ],
-        #     mode="subscription",
-        #     success_url=success_url,
-        #     cancel_url=cancel_url,
-        #     metadata={"tenant_id": str(tenant.tenant_id)},
-        # )
-
-        return {"id": checkout_session.id}
+        return CheckoutSessionCreationResponse(id=checkout_session.id)
     except Exception as e:
-        print("Exception ")
-        print(e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/billing-information", response_model=BillingInformation)
+async def billing_information(
+    _: User = Depends(current_admin_user),
+) -> BillingInformation:
+    logger.info("Fetching billing information")
+    return fetch_billing_information(current_tenant_id.get())
+
+
+@router.post("/create-customer-portal-session")
+async def create_customer_portal_session(_: User = Depends(current_admin_user)) -> dict:
+    try:
+        # Fetch tenant_id and the current tenant's information
+        tenant_id = current_tenant_id.get()
+        stripe_customer_id = fetch_tenant_customer_id(tenant_id)
+
+        portal_session = stripe.billing_portal.Session.create(
+            customer=stripe_customer_id,
+            return_url=f"{WEB_DOMAIN}/dashboard",
+        )
+
+        return {"url": portal_session.url}
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

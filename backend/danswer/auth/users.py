@@ -1,3 +1,4 @@
+import json
 import smtplib
 import uuid
 from collections.abc import AsyncGenerator
@@ -11,6 +12,7 @@ from typing import Tuple
 import jwt
 import requests
 from email_validator import EmailNotValidError
+from email_validator import EmailUndeliverableError
 from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Depends
@@ -33,6 +35,7 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from requests import HTTPError
 from sqlalchemy import select
 from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
@@ -42,8 +45,8 @@ from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserUpdate
 from danswer.configs.app_configs import AUTH_TYPE
+from danswer.configs.app_configs import CONTROLPLANE_API_URL
 from danswer.configs.app_configs import DATA_PLANE_SECRET
-from danswer.configs.app_configs import DATAPLANE_API_URL
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import EXPECTED_API_KEY
@@ -131,7 +134,10 @@ def verify_email_is_invited(email: str) -> None:
     if not email:
         raise PermissionError("Email must be specified")
 
-    email_info = validate_email(email)  # can raise EmailNotValidError
+    try:
+        email_info = validate_email(email)
+    except EmailUndeliverableError:
+        raise PermissionError("Email is not valid")
 
     for email_whitelist in whitelist:
         try:
@@ -213,16 +219,35 @@ def register_tenant_users(tenant_id: str, number_of_users: int) -> None:
     Send a request to the control service to register the number of users for a tenant.
     """
     print("inviting")
-    url = f"{DATAPLANE_API_URL}/register-tenant-users"
+    url = f"{CONTROLPLANE_API_URL}/register-tenant-users"
     # TODO standardize auth
     # headers = {
     #     "Content-Type": "application/json",
     #     "X-API-KEY": CONTROL_PLANE_API_KEY
     # }
-
     payload = {"tenant_id": tenant_id, "number_of_users": number_of_users}
-    response = requests.post(url, json=payload)
-    response.raise_for_status()
+
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+    except HTTPError as e:
+        if e.response.status_code == 403:
+            # Try to extract the detailed error message
+            try:
+                error_detail = e.response.json().get("detail", str(e))
+            except json.JSONDecodeError:
+                error_detail = str(e)
+
+            # Raise a custom exception with the detailed error message
+            raise Exception(f"{error_detail}")
+
+        # For other HTTP errors, you might want to log them or handle differently
+        logger.error(f"Error registering tenant users: {str(e)}")
+        raise
+    except Exception as e:
+        # Handle any other exceptions (e.g., network errors)
+        logger.error(f"Unexpected error registering tenant users: {str(e)}")
+        raise
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):

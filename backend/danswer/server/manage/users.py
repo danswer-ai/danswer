@@ -3,6 +3,8 @@ from datetime import datetime
 from datetime import timezone
 
 import jwt
+from email_validator import EmailNotValidError
+from email_validator import EmailUndeliverableError
 from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Body
@@ -189,9 +191,16 @@ def bulk_invite_users(
     tenant_id = current_tenant_id.get()
 
     normalized_emails = []
-    for email in emails:
-        email_info = validate_email(email)  # can raise EmailNotValidError
-        normalized_emails.append(email_info.normalized)  # type: ignore
+    try:
+        for email in emails:
+            email_info = validate_email(email)
+            normalized_emails.append(email_info.normalized)  # type: ignore
+
+    except (EmailUndeliverableError, EmailNotValidError):
+        raise HTTPException(
+            status_code=400,
+            detail="One or more emails in the list are invalid",
+        )
 
     if MULTI_TENANT:
         try:
@@ -204,7 +213,9 @@ def bulk_invite_users(
                 )
             raise
 
-    all_emails = list(set(normalized_emails) | set(get_invited_users()))
+    initial_invited_users = get_invited_users()
+
+    all_emails = list(set(normalized_emails) | set(initial_invited_users))
     if MULTI_TENANT:
         for email in all_emails:
             send_user_email_invite(email, current_user)
@@ -213,6 +224,7 @@ def bulk_invite_users(
     if not MULTI_TENANT:
         return invited_users
     try:
+        logger.info("Registering tenant users")
         register_tenant_users(current_tenant_id.get(), get_total_users(db_session))
         if ENABLE_EMAIL_INVITES:
             try:
@@ -223,11 +235,14 @@ def bulk_invite_users(
 
         return invited_users
     except Exception as e:
-        logger.info("Failed to register tenant users")
-        logger.info("Now must remove users from tenant")
+        print("exception is ")
+        print(e)
+        logger.error(f"Failed to register tenant users: {str(e)}")
+        logger.info(
+            "Reverting changes: removing users from tenant and resetting invited users"
+        )
+        write_invited_users(initial_invited_users)  # Reset to original state
         remove_users_from_tenant(normalized_emails, tenant_id)
-        write_invited_users(get_invited_users())  # Reset to original state
-
         raise e
 
 
