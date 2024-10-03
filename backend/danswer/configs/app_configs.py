@@ -429,5 +429,6 @@ SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY", "")
 
 DATA_PLANE_SECRET = os.environ.get("DATA_PLANE_SECRET", "")
 EXPECTED_API_KEY = os.environ.get("EXPECTED_API_KEY", "")
+DATAPLANE_API_URL = os.environ.get("DATAPLANE_API_URL", "http://localhost:8082")
 
 ENABLE_EMAIL_INVITES = os.environ.get("ENABLE_EMAIL_INVITES", "").lower() == "true"

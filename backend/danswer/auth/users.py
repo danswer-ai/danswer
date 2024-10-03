@@ -9,6 +9,7 @@ from typing import Optional
 from typing import Tuple
 
 import jwt
+import requests
 from email_validator import EmailNotValidError
 from email_validator import validate_email
 from fastapi import APIRouter
@@ -42,6 +43,7 @@ from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserUpdate
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DATA_PLANE_SECRET
+from danswer.configs.app_configs import DATAPLANE_API_URL
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import EXPECTED_API_KEY
@@ -204,6 +206,38 @@ def send_user_verification_email(
         # https://support.google.com/accounts/answer/185833?sjid=8512343437447396151-NA
         s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
+
+
+def register_tenant_users(tenant_id: str, number_of_users: int) -> None:
+    """
+    Send a request to the control service to register the number of users for a tenant.
+    """
+    print("inviting")
+    url = f"{DATAPLANE_API_URL}/register-tenant-users"
+    # TODO standardize auth
+    # headers = {
+    #     "Content-Type": "application/json",
+    #     "X-API-KEY": CONTROL_PLANE_API_KEY
+    # }
+
+    payload = {"tenant_id": tenant_id, "number_of_users": number_of_users}
+
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=response.json().get("detail", "Unknown error occurred"),
+            )
+    except requests.RequestException as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to communicate with control service: {str(e)}",
+        )
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
