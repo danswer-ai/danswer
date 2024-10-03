@@ -1,9 +1,6 @@
 import re
-import smtplib
 from datetime import datetime
 from datetime import timezone
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 import jwt
 from email_validator import validate_email
@@ -33,14 +30,10 @@ from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
+from danswer.configs.app_configs import ENABLE_EMAIL_INVITES
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
-from danswer.configs.app_configs import SMTP_PASS
-from danswer.configs.app_configs import SMTP_PORT
-from danswer.configs.app_configs import SMTP_SERVER
-from danswer.configs.app_configs import SMTP_USER
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
-from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
 from danswer.db.engine import current_tenant_id
 from danswer.db.engine import get_session
@@ -62,6 +55,7 @@ from danswer.server.manage.models import UserRoleUpdateRequest
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
+from danswer.server.utils import send_user_email_invite
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
 from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
@@ -176,31 +170,6 @@ def list_all_users(
     )
 
 
-def send_user_email_invite(user_email: str, current_user: User) -> None:
-    msg = MIMEMultipart()
-    msg["Subject"] = "Invitation to Join Danswer Workspace"
-    msg["To"] = user_email
-    msg["From"] = current_user.email
-
-    email_body = f"""
-Hello,
-
-You have been invited to join a workspace on Danswer.
-
-To join the workspace, please do so at the following link:
-{WEB_DOMAIN}/auth/login
-
-Best regards,
-The Danswer Team"""
-
-    msg.attach(MIMEText(email_body, "plain"))
-
-    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp_server:
-        smtp_server.starttls()
-        smtp_server.login(SMTP_USER, SMTP_PASS)
-        smtp_server.send_message(msg)
-
-
 @router.put("/manage/admin/users")
 def bulk_invite_users(
     emails: list[str] = Body(..., embed=True),
@@ -231,9 +200,14 @@ def bulk_invite_users(
             raise
 
     all_emails = list(set(normalized_emails) | set(get_invited_users()))
-    if MULTI_TENANT:
-        for email in all_emails:
-            send_user_email_invite(email, current_user)
+
+    if MULTI_TENANT and ENABLE_EMAIL_INVITES:
+        try:
+            for email in all_emails:
+                send_user_email_invite(email, current_user)
+        except Exception as e:
+            logger.error(f"Error sending email invite to invited users: {e}")
+
     return write_invited_users(all_emails)
 
 
