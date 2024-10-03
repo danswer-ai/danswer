@@ -5,15 +5,15 @@ import redis
 from redis.client import Redis
 
 from danswer.configs.app_configs import REDIS_DB_NUMBER
+from danswer.configs.app_configs import REDIS_HEALTH_CHECK_INTERVAL
 from danswer.configs.app_configs import REDIS_HOST
 from danswer.configs.app_configs import REDIS_PASSWORD
+from danswer.configs.app_configs import REDIS_POOL_MAX_CONNECTIONS
 from danswer.configs.app_configs import REDIS_PORT
 from danswer.configs.app_configs import REDIS_SSL
 from danswer.configs.app_configs import REDIS_SSL_CA_CERTS
 from danswer.configs.app_configs import REDIS_SSL_CERT_REQS
-
-REDIS_POOL_MAX_CONNECTIONS = 128
-REDIS_HEALTH_CHECK_INTERVAL = 60
+from danswer.configs.constants import REDIS_SOCKET_KEEPALIVE_OPTIONS
 
 
 class RedisPool:
@@ -62,6 +62,7 @@ class RedisPool:
                 timeout=None,
                 health_check_interval=REDIS_HEALTH_CHECK_INTERVAL,
                 socket_keepalive=True,
+                socket_keepalive_options=REDIS_SOCKET_KEEPALIVE_OPTIONS,
                 connection_class=redis.SSLConnection,
                 ssl_ca_certs=ssl_ca_certs,
                 ssl_cert_reqs=ssl_cert_reqs,
@@ -76,6 +77,7 @@ class RedisPool:
             timeout=None,
             health_check_interval=REDIS_HEALTH_CHECK_INTERVAL,
             socket_keepalive=True,
+            socket_keepalive_options=REDIS_SOCKET_KEEPALIVE_OPTIONS,
         )
 
 

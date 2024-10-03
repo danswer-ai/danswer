@@ -11,6 +11,7 @@ from danswer.configs.app_configs import REDIS_SSL
 from danswer.configs.app_configs import REDIS_SSL_CA_CERTS
 from danswer.configs.app_configs import REDIS_SSL_CERT_REQS
 from danswer.configs.constants import DanswerCeleryPriority
+from danswer.configs.constants import REDIS_SOCKET_KEEPALIVE_OPTIONS
 
 CELERY_SEPARATOR = ":"
 
@@ -41,21 +42,6 @@ worker_prefetch_multiplier = 4
 broker_connection_retry_on_startup = True
 broker_pool_limit = CELERY_BROKER_POOL_LIMIT
 
-# if platform.system() == "Darwin":
-#     REDIS_SOCKET_KEEPALIVE_OPTIONS = {
-#         socket.TCP_KEEPALIVE: 60,
-#         socket.TCP_KEEPINTVL: 15,
-#         socket.TCP_KEEPCNT: 9
-#     }
-# elif platform.system() == "Linux":
-#     REDIS_SOCKET_KEEPALIVE_OPTIONS = {
-#         socket.TCP_KEEPIDLE: 60,
-#         socket.TCP_KEEPINTVL: 15,
-#         socket.TCP_KEEPCNT: 9
-#     }
-# else:
-#     pass
-
 # redis broker settings
 # https://docs.celeryq.dev/projects/kombu/en/stable/reference/kombu.transport.redis.html
 broker_transport_options = {
@@ -65,14 +51,17 @@ broker_transport_options = {
     "retry_on_timeout": True,
     "health_check_interval": REDIS_HEALTH_CHECK_INTERVAL,
     "socket_keepalive": True,
-    # "socket_keepalive_options": {socket.TCP}
+    "socket_keepalive_options": REDIS_SOCKET_KEEPALIVE_OPTIONS,
 }
 
 # redis backend settings
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-settings
+
+# there doesn't appear to be a way to set socket_keepalive_options on the redis result backend
 redis_socket_keepalive = True
 redis_retry_on_timeout = True
 redis_backend_health_check_interval = REDIS_HEALTH_CHECK_INTERVAL
+
 
 task_default_priority = DanswerCeleryPriority.MEDIUM
 task_acks_late = True
