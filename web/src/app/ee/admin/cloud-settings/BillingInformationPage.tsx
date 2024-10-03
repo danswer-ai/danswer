@@ -17,23 +17,30 @@ import {
   fetchCheckoutSession,
   fetchCustomerPortal,
   statusToDisplay,
+  useBillingInformation,
 } from "./utils";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import useSWR, { mutate } from "swr";
 
-export default function BillingInformationPage({
-  billingInformation,
-}: {
-  billingInformation: BillingInformation;
-}) {
+export default function BillingInformationPage() {
   const [seats, setSeats] = useState(1);
   const router = useRouter();
   const { popup, setPopup } = usePopup();
   const stripePromise = loadStripe(
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
   );
-  const searchParams = useSearchParams();
 
+  const {
+    data: billingInformation,
+    error,
+    isLoading,
+    refreshBillingInformation,
+  } = useBillingInformation();
+
+  if (error) {
+    console.error("Failed to fetch billing information:", error);
+  }
   useEffect(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.has("session_id")) {
@@ -50,12 +57,16 @@ export default function BillingInformationPage({
     }
   }, [setPopup]);
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   const handleUpgrade = async () => {
     try {
       const stripe = await stripePromise;
 
       if (!stripe) throw new Error("Stripe failed to load");
-      const response = await fetchCheckoutSession(stripe, seats);
+      const response = await fetchCheckoutSession(seats);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -64,17 +75,7 @@ export default function BillingInformationPage({
         );
       }
 
-      const { id: sessionId } = await response.json();
-
-      if (!sessionId) {
-        throw new Error("No session ID returned from the server");
-      }
-
-      const result = await stripe.redirectToCheckout({ sessionId });
-
-      if (result.error) {
-        throw new Error(result.error.message);
-      }
+      refreshBillingInformation();
     } catch (error) {
       console.error("Error creating checkout session:", error);
       setPopup({
@@ -184,6 +185,16 @@ export default function BillingInformationPage({
           </div>
         </div>
 
+        {!billingInformation.paymentMethodEnabled && (
+          <div className="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+            <p className="font-bold">Notice:</p>
+            <p>
+              You'll need to add a payment method before your trial ends to
+              continue using the service.
+            </p>
+          </div>
+        )}
+
         <div className="flex items-center space-x-4 mt-8">
           <input
             type="number"
@@ -218,16 +229,10 @@ export default function BillingInformationPage({
         <button
           onClick={handleManageSubscription}
           className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-medium shadow-sm text-sm flex items-center justify-center"
-          disabled={!billingInformation.paymentMethodEnabled}
         >
           <ArrowFatUp className="mr-2" size={16} />
           Manage Subscription
         </button>
-        {!billingInformation.paymentMethodEnabled && (
-          <p className="text-xs text-red-500 mt-2 font-medium text-center">
-            Payment method not enabled
-          </p>
-        )}
       </div>
     </div>
   );

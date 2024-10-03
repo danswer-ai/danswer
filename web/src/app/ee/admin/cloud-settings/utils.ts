@@ -1,6 +1,8 @@
 import { Stripe } from "@stripe/stripe-js";
+import { BillingInformation } from "./page";
+import useSWR, { mutate } from "swr";
 
-export const fetchCheckoutSession = async (stripe: Stripe, seats: number) => {
+export const fetchCheckoutSession = async (seats: number) => {
   return await fetch("/api/tenants/create-checkout-session", {
     method: "POST",
     headers: {
@@ -30,4 +32,16 @@ export const statusToDisplay = (status: string) => {
     case "incomplete":
       return "Incomplete";
   }
+};
+
+export const useBillingInformation = () => {
+  const url = "/api/tenants/billing-information";
+  const swrResponse = useSWR<BillingInformation>(url, (url: string) =>
+    fetch(url).then((res) => res.json())
+  );
+
+  return {
+    ...swrResponse,
+    refreshBillingInformation: () => mutate(url),
+  };
 };

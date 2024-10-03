@@ -22,7 +22,7 @@ from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
 from ee.danswer.server.tenants.provisioning import user_owns_a_tenant
 from ee.danswer.server.tenants.utils import fetch_billing_information
-from ee.danswer.server.tenants.utils import fetch_tenant_customer_id
+from ee.danswer.server.tenants.utils import fetch_tenant_stripe_information
 from shared_configs.configs import current_tenant_id
 
 logger = setup_logger()
@@ -80,26 +80,30 @@ async def create_checkout_session(
     _: User = Depends(current_admin_user),
 ) -> CheckoutSessionCreationResponse:
     try:
+        print("test")
         tenant_id = current_tenant_id.get()
-        stripe_customer_id = fetch_tenant_customer_id(tenant_id)
+        response = fetch_tenant_stripe_information(tenant_id)
+        response.get("stripe_customer_id")
+        stripe_subscription_id = response.get("stripe_subscription_id")
 
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            line_items=[
+        # Modified code to update existing subscription
+        subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+        updated_subscription = stripe.Subscription.modify(
+            stripe_subscription_id,
+            items=[
                 {
+                    "id": subscription["items"]["data"][0].id,
                     "price": STRIPE_PRICE_ID,
                     "quantity": checkout_session_creation_request.quantity,
                 }
             ],
-            mode="subscription",
-            success_url=f"{WEB_DOMAIN}/admin/cloud-settings?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{WEB_DOMAIN}/admin/cloud-settings",
             metadata={"tenant_id": str(tenant_id)},
-            customer=stripe_customer_id,
         )
 
-        return CheckoutSessionCreationResponse(id=checkout_session.id)
+        return CheckoutSessionCreationResponse(id=updated_subscription.id)
+        # return CheckoutSessionCreationResponse(id=checkout_session.id)
     except Exception as e:
+        logger.exception("Failed to create checkout session")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -114,15 +118,19 @@ async def billing_information(
 @router.post("/create-customer-portal-session")
 async def create_customer_portal_session(_: User = Depends(current_admin_user)) -> dict:
     try:
+        logger.info("test")
         # Fetch tenant_id and the current tenant's information
         tenant_id = current_tenant_id.get()
-        stripe_customer_id = fetch_tenant_customer_id(tenant_id)
-
+        stripe_info = fetch_tenant_stripe_information(tenant_id)
+        stripe_customer_id = stripe_info.get("stripe_customer_id")
+        logger.info(stripe_customer_id)
         portal_session = stripe.billing_portal.Session.create(
             customer=stripe_customer_id,
-            return_url=f"{WEB_DOMAIN}/dashboard",
+            return_url=f"{WEB_DOMAIN}/admin/cloud-settings",
         )
-
+        logger.info(portal_session)
         return {"url": portal_session.url}
     except Exception as e:
+        print("error")
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))

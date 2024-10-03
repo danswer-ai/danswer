@@ -7,12 +7,12 @@ from ee.danswer.server.tenants.models import BillingInformation
 logger = setup_logger()
 
 
-def fetch_tenant_customer_id(tenant_id: str) -> str:
+def fetch_tenant_stripe_information(tenant_id: str) -> dict:
     response = requests.get(
-        f"{CONTROLPLANE_API_URL}/tenant-customer-id?tenant_id={tenant_id}",
+        f"{CONTROLPLANE_API_URL}/tenant-stripe-information?tenant_id={tenant_id}",
     )
     response.raise_for_status()
-    return response.json().get("stripe_customer_id")
+    return response.json()
 
 
 def fetch_billing_information(tenant_id: str) -> BillingInformation:

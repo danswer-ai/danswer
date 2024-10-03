@@ -13,17 +13,13 @@ export interface BillingInformation {
 }
 
 export default async function page() {
-  const billingInformation: BillingInformation = await fetchSS(
-    "/tenants/billing-information"
-  ).then((res) => res.json());
-
   return (
     <div className="container max-w-4xl">
       <AdminPageTitle
         title="Cloud Settings"
         icon={<FaCloud size={32} className="my-auto" />}
       />
-      <BillingInformationPage billingInformation={billingInformation} />
+      <BillingInformationPage />
     </div>
   );
 }
