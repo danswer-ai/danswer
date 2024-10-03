@@ -157,6 +157,16 @@ class Deletable(abc.ABC):
     """
 
     @abc.abstractmethod
+    def delete_single(self, doc_id: str) -> None:
+        """
+        Given a single document id, hard delete it from the document index
+
+        Parameters:
+        - doc_id: document id as specified by the connector
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def delete(self, doc_ids: list[str]) -> None:
         """
         Given a list of document ids, hard delete them from the document index
