@@ -91,17 +91,65 @@ class DanswerConfluence(Confluence):
 def _replace_cql_time_filter(
     cql_query: str, start_time: datetime, end_time: datetime
 ) -> str:
-    # Remove existing updated filters
+    """
+    This function replaces the lastmodified filter in the CQL query with the start and end times.
+    This selects the more restrictive time range.
+    """
+    # Extract existing lastmodified >= and <= filters
+    existing_start_match = re.search(
+        r'lastmodified\s*>=\s*["\']?(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2})?)["\']?',
+        cql_query,
+        flags=re.IGNORECASE,
+    )
+    existing_end_match = re.search(
+        r'lastmodified\s*<=\s*["\']?(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2})?)["\']?',
+        cql_query,
+        flags=re.IGNORECASE,
+    )
+    print("start:", existing_start_match)
+    print("end:", existing_end_match)
+
+    # Remove all existing lastmodified and updated filters
     cql_query = re.sub(
-        r'\s*AND\s+updated\s*[<>=]+\s*["\']?[\d-]+(?:\s+[\d:]+)?["\']?',
+        r'\s*AND\s+(lastmodified|updated)\s*[<>=]+\s*["\']?[\d-]+(?:\s+[\d:]+)?["\']?',
         "",
         cql_query,
         flags=re.IGNORECASE,
     )
 
-    cql_query += f" and lastmodified >= '{start_time.strftime('%Y-%m-%d %H:%M')}'"
-    cql_query += f" and lastmodified <= '{end_time.strftime('%Y-%m-%d %H:%M')}'"
-    return cql_query
+    # Determine the start time to use
+    if existing_start_match:
+        existing_start_str = existing_start_match.group(1)
+        existing_start = datetime.strptime(
+            existing_start_str,
+            "%Y-%m-%d %H:%M" if " " in existing_start_str else "%Y-%m-%d",
+        )
+        existing_start = existing_start.replace(
+            tzinfo=timezone.utc
+        )  # Make offset-aware
+        start_time_to_use = max(start_time.astimezone(timezone.utc), existing_start)
+    else:
+        start_time_to_use = start_time.astimezone(timezone.utc)
+
+    # Determine the end time to use
+    if existing_end_match:
+        existing_end_str = existing_end_match.group(1)
+        existing_end = datetime.strptime(
+            existing_end_str,
+            "%Y-%m-%d %H:%M" if " " in existing_end_str else "%Y-%m-%d",
+        )
+        existing_end = existing_end.replace(tzinfo=timezone.utc)  # Make offset-aware
+        end_time_to_use = min(end_time.astimezone(timezone.utc), existing_end)
+    else:
+        end_time_to_use = end_time.astimezone(timezone.utc)
+
+    # Add new time filters
+    cql_query += (
+        f" and lastmodified >= '{start_time_to_use.strftime('%Y-%m-%d %H:%M')}'"
+    )
+    cql_query += f" and lastmodified <= '{end_time_to_use.strftime('%Y-%m-%d %H:%M')}'"
+
+    return cql_query.strip()
 
 
 @lru_cache()
