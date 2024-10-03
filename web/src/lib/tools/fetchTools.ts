@@ -8,7 +8,6 @@ export async function fetchToolsSS(): Promise<ToolSnapshot[] | null> {
       throw new Error(`Failed to fetch tools: ${await response.text()}`);
     }
     const tools: ToolSnapshot[] = await response.json();
-    console.log(tools);
     return tools;
   } catch (error) {
     console.error("Error fetching tools:", error);

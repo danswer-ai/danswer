@@ -129,12 +129,9 @@ def list_tools(
     _: User | None = Depends(current_user),
 ) -> list[ToolSnapshot]:
     tools = get_tools(db_session)
-    usable_tools = []
-    for tool in tools:
-        if (
-            tool.in_code_tool_id == ImageGenerationTool.name
-            and not is_image_generation_available(db_session=db_session)
-        ):
-            continue
-        usable_tools.append(ToolSnapshot.from_model(tool))
-    return usable_tools
+    return [
+        ToolSnapshot.from_model(tool)
+        for tool in tools
+        if tool.in_code_tool_id != ImageGenerationTool.name
+        or is_image_generation_available(db_session=db_session)
+    ]
