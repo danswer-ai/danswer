@@ -302,7 +302,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 self.user_db = tenant_user_db
                 self.database = tenant_user_db
 
-            logger.info(f"Starting OAuth callback process for email: {account_email}")
             oauth_account_dict = {
                 "oauth_name": oauth_name,
                 "access_token": access_token,
@@ -311,98 +310,80 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 "expires_at": expires_at,
                 "refresh_token": refresh_token,
             }
-            logger.debug(f"OAuth account dict created: {oauth_account_dict}")
 
             try:
-                logger.info(
-                    f"Attempting to get user by OAuth account: {oauth_name}, {account_id}"
-                )
+                # Attempt to get user by OAuth account
                 user = await self.get_by_oauth_account(oauth_name, account_id)
-                logger.info(f"User found by OAuth account: {user.id}")
+
             except exceptions.UserNotExists:
-                logger.info(
-                    f"User not found by OAuth account, attempting to get by email: {account_email}"
-                )
                 try:
+                    # Attempt to get user by email
                     user = await self.get_by_email(account_email)
-                    logger.info(f"User found by email: {user.id}")
                     if not associate_by_email:
-                        logger.warning(
-                            f"User already exists but associate_by_email is False: {account_email}"
-                        )
                         raise exceptions.UserAlreadyExists()
-                    logger.info(f"Adding OAuth account to existing user: {user.id}")
+
                     user = await self.user_db.add_oauth_account(
                         user, oauth_account_dict
                     )
-                    logger.info(f"OAuth account added to user: {user.id}")
+
+                    # If user not found by OAuth account or email, create a new user
                 except exceptions.UserNotExists:
-                    logger.info(
-                        f"User not found, creating new account for: {account_email}"
-                    )
                     password = self.password_helper.generate()
                     user_dict = {
                         "email": account_email,
                         "hashed_password": self.password_helper.hash(password),
                         "is_verified": is_verified_by_default,
                     }
-                    logger.debug(f"Creating new user with dict: {user_dict}")
+
                     user = await self.user_db.create(user_dict)
-                    logger.info(f"New user created: {user.id}")
                     user = await self.user_db.add_oauth_account(
                         user, oauth_account_dict
                     )
-                    logger.info(f"OAuth account added to new user: {user.id}")
                     await self.on_after_register(user, request)
+
             else:
-                logger.info(f"Updating OAuth account for existing user: {user.id}")
                 for existing_oauth_account in user.oauth_accounts:
                     if (
                         existing_oauth_account.account_id == account_id
                         and existing_oauth_account.oauth_name == oauth_name
                     ):
-                        logger.info(
-                            f"Updating OAuth account: {oauth_name}, {account_id}"
-                        )
                         user = await self.user_db.update_oauth_account(
                             user, existing_oauth_account, oauth_account_dict
                         )
-                        logger.info(f"OAuth account updated for user: {user.id}")
 
-            logger.info("OAuth callback completed")
+            # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
+            # re-authenticate that frequently, so by default this is disabled
 
-            try:
-                if not user.has_web_login:  # type: ignore
-                    await self.user_db.update(
-                        user,
-                        {
-                            "is_verified": is_verified_by_default,
-                            "has_web_login": True,
-                        },
-                    )
-                    user.is_verified = is_verified_by_default
-                    user.has_web_login = True  # type: ignore
+            if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
+                oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
+                await self.user_db.update(
+                    user, update_dict={"oidc_expiry": oidc_expiry}
+                )
 
-                if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
-                    oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
-                    await self.user_db.update(
-                        user, update_dict={"oidc_expiry": oidc_expiry}
-                    )
+            # Handle case where user has used product outside of web and is now creating an account through web
+            if not user.has_web_login:  # type: ignore
+                await self.user_db.update(
+                    user,
+                    {
+                        "is_verified": is_verified_by_default,
+                        "has_web_login": True,
+                    },
+                )
+                user.is_verified = is_verified_by_default
+                user.has_web_login = True  # type: ignore
 
-                if (
-                    hasattr(user, "oidc_expiry")
-                    and user.oidc_expiry is not None
-                    and not TRACK_EXTERNAL_IDP_EXPIRY
-                ):
-                    await self.user_db.update(user, {"oidc_expiry": None})
-                    user.oidc_expiry = None
+            # this is needed if an organization goes from `TRACK_EXTERNAL_IDP_EXPIRY=true` to `false`
+            # otherwise, the oidc expiry will always be old, and the user will never be able to login
+            if (
+                user.oidc_expiry is not None  # type: ignore
+                and not TRACK_EXTERNAL_IDP_EXPIRY
+            ):
+                await self.user_db.update(user, {"oidc_expiry": None})
+                user.oidc_expiry = None  # type: ignore
 
-            except Exception as e:
-                logger.exception(f"Error in oauth_callback: {str(e)}")
-            finally:
-                if token:
-                    current_tenant_id.reset(token)
-            logger.info("oauth callback compleed")
+            if token:
+                current_tenant_id.reset(token)
+
             return user
 
     async def on_after_register(

@@ -22,6 +22,7 @@ from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.app_configs import NUM_SECONDARY_INDEXING_WORKERS
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import POSTGRES_INDEXER_APP_NAME
+from danswer.configs.constants import TENANT_ID_PREFIX
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
 from danswer.db.engine import get_db_current_time
@@ -417,12 +418,12 @@ def get_all_tenant_ids() -> list[str] | list[None]:
             WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'public')"""
             )
         )
-
         tenant_ids = [row[0] for row in result]
+
     valid_tenants = [
         tenant
         for tenant in tenant_ids
-        if tenant is None or not tenant.startswith("pg_")
+        if tenant is None or not tenant.startswith(TENANT_ID_PREFIX)
     ]
 
     return valid_tenants
