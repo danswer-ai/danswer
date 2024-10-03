@@ -91,63 +91,17 @@ class DanswerConfluence(Confluence):
 def _replace_cql_time_filter(
     cql_query: str, start_time: datetime, end_time: datetime
 ) -> str:
-    """
-    This function replaces the lastmodified filter in the CQL query with the start and end times.
-    This selects the more restrictive time range.
-    """
-    # Extract existing lastmodified >= and <= filters
-    existing_start_match = re.search(
-        r'lastmodified\s*>=\s*["\']?(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2})?)["\']?',
-        cql_query,
-        flags=re.IGNORECASE,
-    )
-    existing_end_match = re.search(
-        r'lastmodified\s*<=\s*["\']?(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2})?)["\']?',
-        cql_query,
-        flags=re.IGNORECASE,
-    )
-
-    # Remove all existing lastmodified and updated filters
+    # Remove existing updated filters
     cql_query = re.sub(
-        r'\s*AND\s+(lastmodified|updated)\s*[<>=]+\s*["\']?[\d-]+(?:\s+[\d:]+)?["\']?',
+        r'\s*AND\s+updated\s*[<>=]+\s*["\']?[\d-]+(?:\s+[\d:]+)?["\']?',
         "",
         cql_query,
         flags=re.IGNORECASE,
     )
 
-    # Determine the start time to use
-    if existing_start_match:
-        existing_start_str = existing_start_match.group(1)
-        existing_start = datetime.strptime(
-            existing_start_str,
-            "%Y-%m-%d %H:%M" if " " in existing_start_str else "%Y-%m-%d",
-        )
-        existing_start = existing_start.replace(
-            tzinfo=timezone.utc
-        )  # Make offset-aware
-        start_time_to_use = max(start_time.astimezone(timezone.utc), existing_start)
-    else:
-        start_time_to_use = start_time.astimezone(timezone.utc)
-
-    # Determine the end time to use
-    if existing_end_match:
-        existing_end_str = existing_end_match.group(1)
-        existing_end = datetime.strptime(
-            existing_end_str,
-            "%Y-%m-%d %H:%M" if " " in existing_end_str else "%Y-%m-%d",
-        )
-        existing_end = existing_end.replace(tzinfo=timezone.utc)  # Make offset-aware
-        end_time_to_use = min(end_time.astimezone(timezone.utc), existing_end)
-    else:
-        end_time_to_use = end_time.astimezone(timezone.utc)
-
-    # Add new time filters
-    cql_query += (
-        f" and lastmodified >= '{start_time_to_use.strftime('%Y-%m-%d %H:%M')}'"
-    )
-    cql_query += f" and lastmodified <= '{end_time_to_use.strftime('%Y-%m-%d %H:%M')}'"
-
-    return cql_query.strip()
+    cql_query += f" and lastmodified >= '{start_time.strftime('%Y-%m-%d %H:%M')}'"
+    cql_query += f" and lastmodified <= '{end_time.strftime('%Y-%m-%d %H:%M')}'"
+    return cql_query
 
 
 @lru_cache()
@@ -400,16 +354,16 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         # Remove trailing slash from wiki_base if present
         self.wiki_base = wiki_base.rstrip("/")
         self.space = space
-        self.page_id = page_id
+        self.page_id = "" if cql_query else page_id
+        self.space_level_scan = bool(self.page_id)
 
         self.is_cloud = is_cloud
 
-        self.space_level_scan = False
         self.confluence_client: DanswerConfluence | None = None
 
-        if not page_id:
-            self.space_level_scan = True
-
+        # if a cql_query is provided, we will use it to fetch the pages
+        # if no cql_query is provided, we will use the space to fetch the pages
+        # if no space is provided, we will default to fetching all pages, regardless of space
         if cql_query:
             self.cql_query = cql_query
         elif self.space:

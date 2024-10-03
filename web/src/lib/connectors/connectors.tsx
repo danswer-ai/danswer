@@ -279,6 +279,16 @@ export const connectorConfigs: Record<
         description:
           "The Confluence space name to index (e.g. `KB`). If no space is specified, all available Confluence spaces will be indexed.",
       },
+      {
+        type: "checkbox",
+        query: "Is this a Confluence Cloud instance?",
+        label: "Is Cloud",
+        name: "is_cloud",
+        optional: false,
+        default: true,
+        description:
+          "Check if this is a Confluence Cloud instance, uncheck for Confluence Server/Data Center",
+      },
     ],
     advanced_values: [
       {
@@ -300,23 +310,13 @@ export const connectorConfigs: Record<
         optional: false,
       },
       {
-        type: "checkbox",
-        query: "Is this a Confluence Cloud instance?",
-        label: "Is Cloud",
-        name: "is_cloud",
-        optional: false,
-        default: true,
-        description:
-          "Check if this is a Confluence Cloud instance, uncheck for Confluence Server/Data Center",
-      },
-      {
         type: "text",
         query: "Enter the CQL query (optional):",
         label: "CQL Query",
         name: "cql_query",
         optional: true,
         description:
-          "Enter a CQL query to filter the results. For example, to find all pages with the label 'Important', enter 'label = Test'. IMPORTANT: We currently only support CQL queries that return objects of type 'page'. This means all CQL queries should only contain 'type=page'. We will still get all attachments and comments for the pages returned by the CQL query.",
+          "IMPORTANT: This will overwrite all other settings (besides Qiki Base URL). We currently only support CQL queries that return objects of type 'page'. This means all CQL queries must contain 'type=page' as the only type filter. We will still get all attachments and comments for the pages returned by the CQL query. See https://developer.atlassian.com/server/confluence/advanced-searching-using-cql/ for more details.",
       },
     ],
   },
