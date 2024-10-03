@@ -34,16 +34,16 @@ def compute_all_tool_tokens(tools: list[Tool], llm_tokenizer: BaseTokenizer) -> 
     return sum(compute_tool_tokens(tool, llm_tokenizer) for tool in tools)
 
 
-def can_call_image_tool(db_session: Session) -> bool:
+def is_image_generation_available(db_session: Session) -> bool:
     providers = db_session.query(LLMProvider).all()
     for provider in providers:
         if provider.name == "OpenAI":
             return True
 
-    return AZURE_DALLE_API_KEY is not None
+    return bool(AZURE_DALLE_API_KEY)
 
 
-def can_call_search_tool(db_session: Session) -> bool:
+def is_document_search_available(db_session: Session) -> bool:
     docs_exist = check_docs_exist(db_session)
     connectors_exist = check_connectors_exist(db_session)
     return docs_exist or connectors_exist

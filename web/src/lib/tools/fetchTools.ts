@@ -1,15 +1,13 @@
-import { ToolSnapshot, ToolSnapshotWithUsability } from "./interfaces";
+import { ToolSnapshot } from "./interfaces";
 import { fetchSS } from "../utilsSS";
 
-export async function fetchToolsSS(): Promise<
-  ToolSnapshotWithUsability[] | null
-> {
+export async function fetchToolsSS(): Promise<ToolSnapshot[] | null> {
   try {
     const response = await fetchSS("/tool");
     if (!response.ok) {
       throw new Error(`Failed to fetch tools: ${await response.text()}`);
     }
-    const tools: ToolSnapshotWithUsability[] = await response.json();
+    const tools: ToolSnapshot[] = await response.json();
     console.log(tools);
     return tools;
   } catch (error) {

@@ -27,10 +27,7 @@ import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelec
 import { Option } from "@/components/Dropdown";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { checkLLMSupportsImageOutput, destructureValue } from "@/lib/llm/utils";
-import {
-  ToolSnapshot,
-  ToolSnapshotWithUsability,
-} from "@/lib/tools/interfaces";
+import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 
 import {
@@ -48,7 +45,12 @@ import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
-import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
+import {
+  buildFinalPrompt,
+  createPersona,
+  providersContainImageGeneratingSupport,
+  updatePersona,
+} from "./lib";
 import { Popover } from "@/components/popover/Popover";
 import {
   CameraIcon,
@@ -99,7 +101,7 @@ export function AssistantEditor({
   defaultPublic: boolean;
   redirectType: SuccessfulPersonaUpdateRedirectType;
   llmProviders: FullLLMProvider[];
-  tools: ToolSnapshotWithUsability[];
+  tools: ToolSnapshot[];
   shouldAddAssistantToUserPreferences?: boolean;
   admin?: boolean;
 }) {
@@ -193,17 +195,20 @@ export function AssistantEditor({
     existingPersona?.tools.map((tool) => tool.id) || [];
 
   const searchTool = findSearchTool(tools);
+  const imageGenerationTool = findImageGenerationTool(tools);
   const internetSearchTool = findInternetSearchTool(tools);
 
-  const nonSearchTools = tools.filter(
+  const customTools = tools.filter(
     (tool) =>
       tool.in_code_tool_id !== searchTool?.in_code_tool_id &&
+      tool.in_code_tool_id !== imageGenerationTool?.in_code_tool_id &&
       tool.in_code_tool_id !== internetSearchTool?.in_code_tool_id
   );
 
   const availableTools = [
-    ...nonSearchTools,
+    ...customTools,
     ...(searchTool ? [searchTool] : []),
+    ...(imageGenerationTool ? [imageGenerationTool] : []),
     ...(internetSearchTool ? [internetSearchTool] : []),
   ];
   const enabledToolsMap: { [key: number]: boolean } = {};
@@ -766,6 +771,41 @@ export function AssistantEditor({
                 </div>
 
                 <div className="mt-4 flex flex-col gap-y-4  ml-1">
+                  {imageGenerationTool && (
+                    <TooltipProvider delayDuration={50}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`w-fit ${
+                              !currentLLMSupportsImageOutput
+                                ? "opacity-70 cursor-not-allowed"
+                                : ""
+                            }`}
+                          >
+                            <BooleanFormField
+                              removeIndent
+                              name={`enabled_tools_map.${imageGenerationTool.id}`}
+                              label="Image Generation Tool"
+                              onChange={() => {
+                                toggleToolInValues(imageGenerationTool.id);
+                              }}
+                              disabled={!currentLLMSupportsImageOutput}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        {!currentLLMSupportsImageOutput && (
+                          <TooltipContent side="top" align="center">
+                            <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                              To use Image Generation, select GPT-4o or another
+                              image compatible model as the default model for
+                              this Assistant.
+                            </p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+
                   {searchTool && (
                     <TooltipProvider delayDuration={50}>
                       <Tooltip>
@@ -939,41 +979,31 @@ export function AssistantEditor({
                     </>
                   )}
 
-                  {nonSearchTools.length > 0 && (
+                  {internetSearchTool && (
+                    <BooleanFormField
+                      removeIndent
+                      name={`enabled_tools_map.${internetSearchTool.id}`}
+                      label={internetSearchTool.display_name}
+                      onChange={() => {
+                        toggleToolInValues(internetSearchTool.id);
+                      }}
+                    />
+                  )}
+
+                  {customTools.length > 0 && (
                     <>
-                      {nonSearchTools.map((tool) => (
-                        <TooltipProvider key={tool.id} delayDuration={50}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div
-                                className={`w-fit ${
-                                  !tool.usable
-                                    ? "opacity-70 cursor-not-allowed"
-                                    : ""
-                                }`}
-                              >
-                                <BooleanFormField
-                                  removeIndent
-                                  alignTop={tool.description != null}
-                                  name={`enabled_tools_map.${tool.id}`}
-                                  label={tool.display_name}
-                                  subtext={tool.description}
-                                  onChange={() => {
-                                    toggleToolInValues(tool.id);
-                                  }}
-                                  disabled={!tool.usable}
-                                />
-                              </div>
-                            </TooltipTrigger>
-                            {!tool.usable && (
-                              <TooltipContent side="top" align="center">
-                                <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                                  {tool.unusable_reason}
-                                </p>
-                              </TooltipContent>
-                            )}
-                          </Tooltip>
-                        </TooltipProvider>
+                      {customTools.map((tool) => (
+                        <BooleanFormField
+                          removeIndent
+                          alignTop={tool.description != null}
+                          key={tool.id}
+                          name={`enabled_tools_map.${tool.id}`}
+                          label={tool.display_name}
+                          subtext={tool.description}
+                          onChange={() => {
+                            toggleToolInValues(tool.id);
+                          }}
+                        />
                       ))}
                     </>
                   )}
