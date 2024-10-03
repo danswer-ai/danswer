@@ -1,4 +1,5 @@
 # docs: https://docs.celeryq.dev/en/stable/userguide/configuration.html
+from danswer.configs.app_configs import CELERY_BROKER_POOL_LIMIT
 from danswer.configs.app_configs import CELERY_RESULT_EXPIRES
 from danswer.configs.app_configs import REDIS_DB_NUMBER_CELERY
 from danswer.configs.app_configs import REDIS_DB_NUMBER_CELERY_RESULT_BACKEND
@@ -37,6 +38,8 @@ result_backend = f"{REDIS_SCHEME}://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PO
 worker_prefetch_multiplier = 4
 
 broker_connection_retry_on_startup = True
+broker_pool_limit = CELERY_BROKER_POOL_LIMIT
+
 broker_transport_options = {
     "priority_steps": list(range(len(DanswerCeleryPriority))),
     "sep": CELERY_SEPARATOR,

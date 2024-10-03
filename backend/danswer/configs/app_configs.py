@@ -171,6 +171,10 @@ REDIS_SSL_CA_CERTS = os.getenv("REDIS_SSL_CA_CERTS", None)
 
 CELERY_RESULT_EXPIRES = int(os.environ.get("CELERY_RESULT_EXPIRES", 86400))  # seconds
 
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#broker-pool-limit
+# Setting to None may help when there is a proxy in the way closing idle connections
+CELERY_BROKER_POOL_LIMIT = int(os.environ.get("CELERY_BROKER_POOL_LIMIT", 10))
+
 #####
 # Connector Configs
 #####
