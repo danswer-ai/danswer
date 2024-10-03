@@ -221,12 +221,19 @@ def bulk_invite_users(
             except Exception as e:
                 logger.error(f"Error sending email invite to invited users: {e}")
 
+        value = register_tenant_users(
+            current_tenant_id.get(), get_total_users(db_session)
+        )
+        print(value)
         return invited_users
 
-    except HTTPException:
+    except Exception as e:
+        print("exception occured")
+        print("hi")
+        print(e)
         remove_users_from_tenant(normalized_emails, tenant_id)
         write_invited_users(get_invited_users())  # Reset to original state
-        raise
+        raise e
 
 
 @router.patch("/manage/admin/remove-invited-user")
@@ -241,6 +248,7 @@ def remove_invited_user(
     tenant_id = current_tenant_id.get()
     remove_users_from_tenant([user_email.user_email], tenant_id)
     remaining_users = write_invited_users(remaining_users)
+
     try:
         if MULTI_TENANT:
             register_tenant_users(current_tenant_id.get(), get_total_users(db_session))

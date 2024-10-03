@@ -221,23 +221,8 @@ def register_tenant_users(tenant_id: str, number_of_users: int) -> None:
     # }
 
     payload = {"tenant_id": tenant_id, "number_of_users": number_of_users}
-
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise HTTPException(
-                status_code=response.status_code,
-                detail=response.json().get("detail", "Unknown error occurred"),
-            )
-    except requests.RequestException as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to communicate with control service: {str(e)}",
-        )
+    response = requests.post(url, json=payload)
+    response.raise_for_status()
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
