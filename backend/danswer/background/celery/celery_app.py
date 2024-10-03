@@ -364,8 +364,6 @@ class HubPeriodicTask(bootsteps.StartStopStep):
 
             lock: redis.lock.Lock = worker.primary_worker_lock
 
-            task_logger.info("Reacquiring primary worker lock.")
-
             if lock.owned():
                 task_logger.debug("Reacquiring primary worker lock.")
                 lock.reacquire()
