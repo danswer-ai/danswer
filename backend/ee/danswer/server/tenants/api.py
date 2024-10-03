@@ -92,8 +92,8 @@ async def create_checkout_session(
                 }
             ],
             mode="subscription",
-            success_url=f"{WEB_DOMAIN}/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{WEB_DOMAIN}/cancel",
+            success_url=f"{WEB_DOMAIN}/admin/cloud-settings?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{WEB_DOMAIN}/admin/cloud-settings",
             metadata={"tenant_id": str(tenant_id)},
             customer=stripe_customer_id,
         )

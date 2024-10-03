@@ -1,6 +1,11 @@
 "use client";
 
-import { CreditCard, ArrowUp } from "@phosphor-icons/react";
+import {
+  CreditCard,
+  ArrowUp,
+  ArrowUpLeft,
+  ArrowFatUp,
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
@@ -13,6 +18,8 @@ import {
   fetchCustomerPortal,
   statusToDisplay,
 } from "./utils";
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function BillingInformationPage({
   billingInformation,
@@ -25,6 +32,23 @@ export default function BillingInformationPage({
   const stripePromise = loadStripe(
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
   );
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("session_id")) {
+      setPopup({
+        message:
+          "Congratulations! Your subscription has been updated successfully.",
+        type: "success",
+      });
+      // Remove the session_id from the URL
+      url.searchParams.delete("session_id");
+      window.history.replaceState({}, "", url.toString());
+      // You might want to refresh the billing information here
+      // by calling an API endpoint to get the latest data
+    }
+  }, [setPopup]);
 
   const handleUpgrade = async () => {
     try {
@@ -90,77 +114,117 @@ export default function BillingInformationPage({
 
   return (
     <div className="space-y-8">
-      {popup}
-      <div className="bg-background-100 rounded-lg p-6 border border-border-200">
-        <h2 className="text-2xl font-bold mb-4 text-text-900 flex items-center">
-          <CreditCard className="mr-3 text-blue-600" size={24} />
+      <div className="bg-gray-50 rounded-lg p-8 border border-gray-200">
+        {popup}
+
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+          <CreditCard className="mr-4 text-gray-600" size={24} />
           Billing Information
         </h2>
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-background-50 p-3 rounded-md">
-            <p className="text-sm font-medium text-text-600">Seats</p>
-            <p className="text-lg font-semibold text-text-900 bg-transparent border-none">
-              {billingInformation.seats}
-            </p>
+
+        <div className="space-y-4">
+          <div className="bg-white p-5 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-lg font-medium text-gray-700">Seats</p>
+                <p className="text-sm text-gray-500">
+                  Number of licensed users
+                </p>
+              </div>
+              <p className="text-xl font-semibold text-gray-900">
+                {billingInformation.seats}
+              </p>
+            </div>
           </div>
-          <div className="bg-background-50 p-3 rounded-md">
-            <p className="text-sm font-medium text-text-600">
-              Subscription Status
-            </p>
-            <p className="text-lg font-semibold text-text-900 bg-transparent border-none">
-              {statusToDisplay(billingInformation.subscriptionStatus)}
-            </p>
+
+          <div className="bg-white p-5 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-lg font-medium text-gray-700">
+                  Subscription Status
+                </p>
+                <p className="text-sm text-gray-500">
+                  Current state of your subscription
+                </p>
+              </div>
+              <p className="text-xl font-semibold text-gray-900">
+                {statusToDisplay(billingInformation.subscriptionStatus)}
+              </p>
+            </div>
           </div>
-          <div className="bg-background-50 p-3 rounded-md">
-            <p className="text-sm font-medium text-text-600">Billing Start</p>
-            <p className="text-lg font-semibold text-text-900 bg-transparent border-none">
-              {new Date(billingInformation.billingStart).toLocaleDateString()}
-            </p>
+
+          <div className="bg-white p-5 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-lg font-medium text-gray-700">
+                  Billing Start
+                </p>
+                <p className="text-sm text-gray-500">
+                  Start date of current billing cycle
+                </p>
+              </div>
+              <p className="text-xl font-semibold text-gray-900">
+                {new Date(billingInformation.billingStart).toLocaleDateString()}
+              </p>
+            </div>
           </div>
-          <div className="bg-background-50 p-3 rounded-md">
-            <p className="text-sm font-medium text-text-600">Billing End</p>
-            <p className="text-lg font-semibold text-text-900 bg-transparent border-none">
-              {new Date(billingInformation.billingEnd).toLocaleDateString()}
-            </p>
+
+          <div className="bg-white p-5 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-lg font-medium text-gray-700">Billing End</p>
+                <p className="text-sm text-gray-500">
+                  End date of current billing cycle
+                </p>
+              </div>
+              <p className="text-xl font-semibold text-gray-900">
+                {new Date(billingInformation.billingEnd).toLocaleDateString()}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
+
+        <div className="flex items-center space-x-4 mt-8">
           <input
             type="number"
             min="1"
             value={seats}
             onChange={(e) => setSeats(Number(e.target.value))}
-            className="border border-border-200 rounded-md px-3 py-2 w-24 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background-50 text-text-800"
+            className="border border-gray-300 rounded-md px-4 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-gray-500 bg-white text-gray-800 shadow-sm transition-all duration-300"
             placeholder="Seats"
           />
+
           <button
             onClick={handleUpgrade}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-medium"
+            className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-medium shadow-md text-lg"
           >
             Upgrade Seats
           </button>
         </div>
       </div>
 
-      <div className="bg-background-100 rounded-lg p-6 border border-border-200">
-        <h2 className="text-2xl font-bold mb-4 text-text-900 flex items-center">
-          <SettingsIcon className="mr-3 text-blue-600" size={24} />
-          Manage Subscription
-        </h2>
-        <p className="text-text-700 mb-6">
-          View your current plan, update payment methods, or change your
-          subscription.
-        </p>
+      <div className="bg-white p-5 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <p className="text-lg font-medium text-gray-700">
+              Manage Subscription
+            </p>
+            <p className="text-sm text-gray-500">
+              View your plan, update payment, or change subscription
+            </p>
+          </div>
+          <SettingsIcon className="text-gray-600" size={20} />
+        </div>
         <button
           onClick={handleManageSubscription}
-          className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 flex items-center justify-center font-medium w-full sm:w-auto"
+          className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-medium shadow-sm text-sm flex items-center justify-center"
           disabled={!billingInformation.paymentMethodEnabled}
         >
-          <FaExternalLinkAlt className="mr-2" size={16} />
+          <ArrowFatUp className="mr-2" size={16} />
           Manage Subscription
         </button>
         {!billingInformation.paymentMethodEnabled && (
-          <p className="text-sm text-red-500 mt-2 font-medium">
+          <p className="text-xs text-red-500 mt-2 font-medium text-center">
             Payment method not enabled
           </p>
         )}
