@@ -79,7 +79,12 @@ const RerankingDetailsForm = forwardRef<
       >
         {({ values, setFieldValue, resetForm }) => {
           const resetRerankingValues = () => {
-            setRerankingDetails(originalRerankingDetails);
+            setRerankingDetails({
+              rerank_api_key: "",
+              rerank_provider_type: null,
+              rerank_model_name: "",
+              rerank_api_url: null,
+            });
             resetForm();
           };
 
