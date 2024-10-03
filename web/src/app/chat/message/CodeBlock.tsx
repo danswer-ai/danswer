@@ -36,7 +36,7 @@ export const CodeBlock = memo(function CodeBlock({
     });
   }, [codeText]);
 
-  const CopyButton = memo(() => (
+  const CopyButton = () => (
     <div
       className="ml-auto cursor-pointer select-none"
       onMouseDown={handleCopy}
@@ -53,10 +53,9 @@ export const CodeBlock = memo(function CodeBlock({
         </div>
       )}
     </div>
-  ));
-  CopyButton.displayName = "CopyButton";
+  );
 
-  const CodeContent = memo(() => {
+  const CodeContent = () => {
     if (!language) {
       if (typeof children === "string") {
         return (
@@ -106,8 +105,7 @@ export const CodeBlock = memo(function CodeBlock({
         </code>
       </pre>
     );
-  });
-  CodeContent.displayName = "CodeContent";
+  };
 
   return (
     <div className="overflow-x-hidden">
