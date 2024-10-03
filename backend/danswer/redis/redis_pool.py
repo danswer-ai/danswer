@@ -61,6 +61,7 @@ class RedisPool:
                 max_connections=max_connections,
                 timeout=None,
                 health_check_interval=REDIS_HEALTH_CHECK_INTERVAL,
+                socket_keepalive=True,
                 connection_class=redis.SSLConnection,
                 ssl_ca_certs=ssl_ca_certs,
                 ssl_cert_reqs=ssl_cert_reqs,
@@ -74,6 +75,7 @@ class RedisPool:
             max_connections=max_connections,
             timeout=None,
             health_check_interval=REDIS_HEALTH_CHECK_INTERVAL,
+            socket_keepalive=True,
         )
 
 

@@ -64,13 +64,13 @@ broker_transport_options = {
     "queue_order_strategy": "priority",
     "retry_on_timeout": True,
     "health_check_interval": REDIS_HEALTH_CHECK_INTERVAL,
-    # "socket_keepalive": True,
+    "socket_keepalive": True,
     # "socket_keepalive_options": {socket.TCP}
 }
 
 # redis backend settings
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-settings
-# redis_socket_keepalive = True
+redis_socket_keepalive = True
 redis_retry_on_timeout = True
 redis_backend_health_check_interval = REDIS_HEALTH_CHECK_INTERVAL
 
