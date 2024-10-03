@@ -36,6 +36,7 @@ result_backend = f"{REDIS_SCHEME}://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PO
 # can stall other tasks.
 worker_prefetch_multiplier = 4
 
+broker_connection_retry_on_startup = True
 broker_transport_options = {
     "priority_steps": list(range(len(DanswerCeleryPriority))),
     "sep": CELERY_SEPARATOR,
