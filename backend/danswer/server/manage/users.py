@@ -221,18 +221,13 @@ def bulk_invite_users(
             except Exception as e:
                 logger.error(f"Error sending email invite to invited users: {e}")
 
-        value = register_tenant_users(
-            current_tenant_id.get(), get_total_users(db_session)
-        )
-        print(value)
         return invited_users
-
     except Exception as e:
-        print("exception occured")
-        print("hi")
-        print(e)
+        logger.info("Failed to register tenant users")
+        logger.info("Now must remove users from tenant")
         remove_users_from_tenant(normalized_emails, tenant_id)
         write_invited_users(get_invited_users())  # Reset to original state
+
         raise e
 
 
