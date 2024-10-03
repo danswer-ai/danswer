@@ -595,10 +595,10 @@ def stream_chat_message_objects(
                             ),
                             None,
                         )
-                        # if not openai_provider or not openai_provider.api_key:
-                        #     raise ValueError(
-                        #         "Image generation tool requires an OpenAI API key"
-                        #     )
+                        if not openai_provider or not openai_provider.api_key:
+                            raise ValueError(
+                                "Image generation tool requires an OpenAI API key"
+                            )
                         img_generation_llm_config = LLMConfig(
                             model_provider=openai_provider.provider,
                             model_name="dall-e-3",
