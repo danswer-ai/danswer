@@ -160,7 +160,7 @@ def handle_regular_answer(
                         detail="Slack bot does not support persona config",
                     )
 
-                elif new_message_request.persona_id:
+                elif new_message_request.persona_id is not None:
                     persona = cast(
                         Persona,
                         fetch_persona_by_id(

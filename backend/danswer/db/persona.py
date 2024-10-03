@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from datetime import datetime
 from functools import lru_cache
 from uuid import UUID
 
@@ -178,6 +179,7 @@ def create_update_persona(
     except ValueError as e:
         logger.exception("Failed to create persona")
         raise HTTPException(status_code=400, detail=str(e))
+
     return PersonaSnapshot.from_model(persona)
 
 
@@ -258,7 +260,7 @@ def get_personas(
     stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
 
     if not include_default:
-        stmt = stmt.where(Persona.default_persona.is_(False))
+        stmt = stmt.where(Persona.builtin_persona.is_(False))
     if not include_slack_bot_personas:
         stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
     if not include_deleted:
@@ -306,7 +308,7 @@ def mark_delete_persona_by_name(
 ) -> None:
     stmt = (
         update(Persona)
-        .where(Persona.name == persona_name, Persona.default_persona == is_default)
+        .where(Persona.name == persona_name, Persona.builtin_persona == is_default)
         .values(deleted=True)
     )
 
@@ -406,7 +408,6 @@ def upsert_persona(
     document_set_ids: list[int] | None = None,
     tool_ids: list[int] | None = None,
     persona_id: int | None = None,
-    default_persona: bool = False,
     commit: bool = True,
     icon_color: str | None = None,
     icon_shape: int | None = None,
@@ -414,6 +415,9 @@ def upsert_persona(
     display_priority: int | None = None,
     is_visible: bool = True,
     remove_image: bool | None = None,
+    search_start_date: datetime | None = None,
+    builtin_persona: bool = False,
+    is_default_persona: bool = False,
     chunks_above: int = CONTEXT_CHUNKS_ABOVE,
     chunks_below: int = CONTEXT_CHUNKS_BELOW,
 ) -> Persona:
@@ -454,8 +458,8 @@ def upsert_persona(
         validate_persona_tools(tools)
 
     if persona:
-        if not default_persona and persona.default_persona:
-            raise ValueError("Cannot update default persona with non-default.")
+        if not builtin_persona and persona.builtin_persona:
+            raise ValueError("Cannot update builtin persona with non-builtin.")
 
         # this checks if the user has permission to edit the persona
         persona = fetch_persona_by_id(
@@ -470,7 +474,7 @@ def upsert_persona(
         persona.llm_relevance_filter = llm_relevance_filter
         persona.llm_filter_extraction = llm_filter_extraction
         persona.recency_bias = recency_bias
-        persona.default_persona = default_persona
+        persona.builtin_persona = builtin_persona
         persona.llm_model_provider_override = llm_model_provider_override
         persona.llm_model_version_override = llm_model_version_override
         persona.starter_messages = starter_messages
@@ -482,6 +486,8 @@ def upsert_persona(
             persona.uploaded_image_id = uploaded_image_id
         persona.display_priority = display_priority
         persona.is_visible = is_visible
+        persona.search_start_date = search_start_date
+        persona.is_default_persona = is_default_persona
 
         # Do not delete any associations manually added unless
         # a new updated list is provided
@@ -509,7 +515,7 @@ def upsert_persona(
             llm_relevance_filter=llm_relevance_filter,
             llm_filter_extraction=llm_filter_extraction,
             recency_bias=recency_bias,
-            default_persona=default_persona,
+            builtin_persona=builtin_persona,
             prompts=prompts or [],
             document_sets=document_sets or [],
             llm_model_provider_override=llm_model_provider_override,
@@ -521,6 +527,8 @@ def upsert_persona(
             uploaded_image_id=uploaded_image_id,
             display_priority=display_priority,
             is_visible=is_visible,
+            search_start_date=search_start_date,
+            is_default_persona=is_default_persona,
         )
         db_session.add(persona)
 
@@ -550,7 +558,7 @@ def delete_old_default_personas(
     Need a more graceful fix later or those need to never have IDs"""
     stmt = (
         update(Persona)
-        .where(Persona.default_persona, Persona.id > 0)
+        .where(Persona.builtin_persona, Persona.id > 0)
         .values(deleted=True, name=func.concat(Persona.name, "_old"))
     )
 
@@ -669,9 +677,7 @@ def get_persona_by_id(
         result = db_session.execute(persona_stmt)
         persona = result.scalar_one_or_none()
         if persona is None:
-            raise ValueError(
-                f"Persona with ID {persona_id} does not exist or does not belong to user"
-            )
+            raise ValueError(f"Persona with ID {persona_id} does not exist")
         return persona
 
     # or check if user owns persona
@@ -734,7 +740,7 @@ def delete_persona_by_name(
     persona_name: str, db_session: Session, is_default: bool = True
 ) -> None:
     stmt = delete(Persona).where(
-        Persona.name == persona_name, Persona.default_persona == is_default
+        Persona.name == persona_name, Persona.builtin_persona == is_default
     )
 
     db_session.execute(stmt)

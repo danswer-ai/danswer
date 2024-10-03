@@ -34,7 +34,9 @@ POSTGRES_WEB_APP_NAME = "web"
 POSTGRES_INDEXER_APP_NAME = "indexer"
 POSTGRES_CELERY_APP_NAME = "celery"
 POSTGRES_CELERY_BEAT_APP_NAME = "celery_beat"
-POSTGRES_CELERY_WORKER_APP_NAME = "celery_worker"
+POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME = "celery_worker_primary"
+POSTGRES_CELERY_WORKER_LIGHT_APP_NAME = "celery_worker_light"
+POSTGRES_CELERY_WORKER_HEAVY_APP_NAME = "celery_worker_heavy"
 POSTGRES_PERMISSIONS_APP_NAME = "permissions"
 POSTGRES_UNKNOWN_APP_NAME = "unknown"
 
@@ -46,6 +48,7 @@ UNNAMED_KEY_PLACEHOLDER = "Unnamed"
 # Key-Value store keys
 KV_REINDEX_KEY = "needs_reindexing"
 KV_SEARCH_SETTINGS = "search_settings"
+KV_UNSTRUCTURED_API_KEY = "unstructured_api_key"
 KV_USER_STORE_KEY = "INVITED_USERS"
 KV_NO_AUTH_USER_PREFERENCES_KEY = "no_auth_user_preferences"
 KV_CRED_KEY = "credential_id_{}"
@@ -62,6 +65,7 @@ KV_ENTERPRISE_SETTINGS_KEY = "danswer_enterprise_settings"
 KV_CUSTOM_ANALYTICS_SCRIPT_KEY = "__custom_analytics_script__"
 
 CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT = 60
+CELERY_PRIMARY_WORKER_LOCK_TIMEOUT = 120
 
 
 class DocumentSource(str, Enum):
@@ -99,11 +103,13 @@ class DocumentSource(str, Enum):
     CLICKUP = "clickup"
     MEDIAWIKI = "mediawiki"
     WIKIPEDIA = "wikipedia"
+    ASANA = "asana"
     S3 = "s3"
     R2 = "r2"
     GOOGLE_CLOUD_STORAGE = "google_cloud_storage"
     OCI_STORAGE = "oci_storage"
     HIGHSPOT = "highspot"
+    XENFORO = "xenforo"
     NOT_APPLICABLE = "not_applicable"
 
 
@@ -132,6 +138,12 @@ class AuthType(str, Enum):
     GOOGLE_OAUTH = "google_oauth"
     OIDC = "oidc"
     SAML = "saml"
+
+
+class SessionType(str, Enum):
+    CHAT = "Chat"
+    SEARCH = "Search"
+    SLACK = "Slack"
 
 
 class QAFeedbackType(str, Enum):
@@ -180,8 +192,11 @@ class DanswerCeleryQueues:
 
 
 class DanswerRedisLocks:
+    PRIMARY_WORKER = "da_lock:primary_worker"
     CHECK_VESPA_SYNC_BEAT_LOCK = "da_lock:check_vespa_sync_beat"
     MONITOR_VESPA_SYNC_BEAT_LOCK = "da_lock:monitor_vespa_sync_beat"
+    CHECK_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:check_connector_deletion_beat"
+    MONITOR_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:monitor_connector_deletion_beat"
 
 
 class DanswerCeleryPriority(int, Enum):

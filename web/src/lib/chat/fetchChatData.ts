@@ -184,17 +184,10 @@ export async function fetchChatData(searchParams: {
 
   const hasAnyConnectors = ccPairs.length > 0;
   const shouldShowWelcomeModal =
+    !llmProviders.length &&
     !hasCompletedWelcomeFlowSS() &&
     !hasAnyConnectors &&
     (!user || user.role === "admin");
-
-  const shouldDisplaySourcesIncompleteModal =
-    hasAnyConnectors &&
-    !shouldShowWelcomeModal &&
-    !ccPairs.some(
-      (ccPair) => ccPair.has_successful_run && ccPair.docs_indexed > 0
-    ) &&
-    (!user || user.role == "admin");
 
   // if no connectors are setup, only show personas that are pure
   // passthrough and don't do any retrieval

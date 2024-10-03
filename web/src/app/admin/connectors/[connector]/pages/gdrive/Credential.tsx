@@ -222,36 +222,46 @@ export const DriveJsonUploadSection = ({
           Found existing app credentials with the following <b>Client ID:</b>
           <p className="italic mt-1">{appCredentialData.client_id}</p>
         </div>
-        <div className="mt-4 mb-1">
-          If you want to update these credentials, delete the existing
-          credentials through the button below, and then upload a new
-          credentials JSON.
-        </div>
-        <Button
-          onClick={async () => {
-            const response = await fetch(
-              "/api/manage/admin/connector/google-drive/app-credential",
-              {
-                method: "DELETE",
-              }
-            );
-            if (response.ok) {
-              mutate("/api/manage/admin/connector/google-drive/app-credential");
-              setPopup({
-                message: "Successfully deleted service account key",
-                type: "success",
-              });
-            } else {
-              const errorMsg = await response.text();
-              setPopup({
-                message: `Failed to delete app credential - ${errorMsg}`,
-                type: "error",
-              });
-            }
-          }}
-        >
-          Delete
-        </Button>
+        {isAdmin ? (
+          <>
+            <div className="mt-4 mb-1">
+              If you want to update these credentials, delete the existing
+              credentials through the button below, and then upload a new
+              credentials JSON.
+            </div>
+            <Button
+              onClick={async () => {
+                const response = await fetch(
+                  "/api/manage/admin/connector/google-drive/app-credential",
+                  {
+                    method: "DELETE",
+                  }
+                );
+                if (response.ok) {
+                  mutate(
+                    "/api/manage/admin/connector/google-drive/app-credential"
+                  );
+                  setPopup({
+                    message: "Successfully deleted app credentials",
+                    type: "success",
+                  });
+                } else {
+                  const errorMsg = await response.text();
+                  setPopup({
+                    message: `Failed to delete app credential - ${errorMsg}`,
+                    type: "error",
+                  });
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </>
+        ) : (
+          <div className="mt-4 mb-1">
+            To change these credentials, please contact an administrator.
+          </div>
+        )}
       </div>
     );
   }

@@ -72,8 +72,6 @@ function Main() {
     return <ErrorCallout errorTitle="Failed to fetch embedding model status" />;
   }
 
-  const currentModelName = currentEmeddingModel?.model_name;
-
   return (
     <div className="h-screen">
       {!futureEmbeddingModel ? (

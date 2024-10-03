@@ -17,6 +17,7 @@ from danswer.auth.users import get_display_email
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
+from danswer.configs.constants import SessionType
 from danswer.db.chat import get_chat_session_by_id
 from danswer.db.engine import get_session
 from danswer.db.models import ChatMessage
@@ -90,6 +91,7 @@ class ChatSessionMinimal(BaseModel):
     persona_name: str | None
     time_created: datetime
     feedback_type: QAFeedbackType | Literal["mixed"] | None
+    flow_type: SessionType
 
 
 class ChatSessionSnapshot(BaseModel):
@@ -99,6 +101,7 @@ class ChatSessionSnapshot(BaseModel):
     messages: list[MessageSnapshot]
     persona_name: str | None
     time_created: datetime
+    flow_type: SessionType
 
 
 class QuestionAnswerPairSnapshot(BaseModel):
@@ -114,6 +117,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
     persona_name: str | None
     user_email: str
     time_created: datetime
+    flow_type: SessionType
 
     @classmethod
     def from_chat_session_snapshot(
@@ -141,6 +145,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
                 persona_name=chat_session_snapshot.persona_name,
                 user_email=get_display_email(chat_session_snapshot.user_email),
                 time_created=user_message.time_created,
+                flow_type=chat_session_snapshot.flow_type,
             )
             for ind, (user_message, ai_message) in enumerate(message_pairs)
         ]
@@ -162,7 +167,18 @@ class QuestionAnswerPairSnapshot(BaseModel):
             "persona_name": self.persona_name,
             "user_email": self.user_email,
             "time_created": str(self.time_created),
+            "flow_type": self.flow_type,
         }
+
+
+def determine_flow_type(chat_session: ChatSession) -> SessionType:
+    return (
+        SessionType.SLACK
+        if chat_session.danswerbot_flow
+        else SessionType.SEARCH
+        if chat_session.one_shot
+        else SessionType.CHAT
+    )
 
 
 def fetch_and_process_chat_session_history_minimal(
@@ -226,6 +242,8 @@ def fetch_and_process_chat_session_history_minimal(
             if feedback_filter == QAFeedbackType.DISLIKE and not has_negative_feedback:
                 continue
 
+        flow_type = determine_flow_type(chat_session)
+
         minimal_sessions.append(
             ChatSessionMinimal(
                 id=chat_session.id,
@@ -240,6 +258,7 @@ def fetch_and_process_chat_session_history_minimal(
                 else None,
                 time_created=chat_session.time_created,
                 feedback_type=feedback_type,
+                flow_type=flow_type,
             )
         )
 
@@ -291,6 +310,8 @@ def snapshot_from_chat_session(
     except RuntimeError:
         return None
 
+    flow_type = determine_flow_type(chat_session)
+
     return ChatSessionSnapshot(
         id=chat_session.id,
         user_email=get_display_email(
@@ -304,6 +325,7 @@ def snapshot_from_chat_session(
         ],
         persona_name=chat_session.persona.name if chat_session.persona else None,
         time_created=chat_session.time_created,
+        flow_type=flow_type,
     )
 
 

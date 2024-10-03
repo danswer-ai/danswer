@@ -122,7 +122,7 @@ def load_personas_from_yaml(
                 prompt_ids=prompt_ids,
                 document_set_ids=doc_set_ids,
                 tool_ids=tool_ids,
-                default_persona=True,
+                builtin_persona=True,
                 is_public=True,
                 display_priority=existing_persona.display_priority
                 if existing_persona is not None

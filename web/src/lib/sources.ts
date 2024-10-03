@@ -33,10 +33,12 @@ import {
   MediaWikiIcon,
   WikipediaIcon,
   HighSpotIcon,
+  AsanaIcon,
   S3Icon,
   OCIStorageIcon,
   GoogleStorageIcon,
   ColorSlackIcon,
+  XenforoIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import {
@@ -231,6 +233,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     category: SourceCategory.Wiki,
     docs: "https://docs.danswer.dev/connectors/wikipedia",
   },
+  asana: {
+    icon: AsanaIcon,
+    displayName: "Asana",
+    category: SourceCategory.ProjectManagement,
+    docs: "https://docs.danswer.dev/connectors/asana",
+  },
   mediawiki: {
     icon: MediaWikiIcon,
     displayName: "MediaWiki",
@@ -278,6 +286,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "HighSpot",
     category: SourceCategory.Wiki,
     docs: "https://docs.danswer.dev/connectors/highspot",
+  },
+  xenforo: {
+    icon: XenforoIcon,
+    displayName: "Xenforo",
+    category: SourceCategory.Messaging,
   },
   ingestion_api: {
     icon: GlobeIcon,

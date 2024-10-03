@@ -24,6 +24,8 @@ class WellKnownLLMProviderDescriptor(BaseModel):
 
 OPENAI_PROVIDER_NAME = "openai"
 OPEN_AI_MODEL_NAMES = [
+    "o1-mini",
+    "o1-preview",
     "gpt-4",
     "gpt-4o",
     "gpt-4o-mini",

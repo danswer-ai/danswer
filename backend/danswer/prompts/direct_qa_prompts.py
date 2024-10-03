@@ -109,6 +109,9 @@ CITATIONS_PROMPT_FOR_TOOL_CALLING = f"""
 Refer to the provided context documents when responding to me.{DEFAULT_IGNORE_STATEMENT} \
 You should always get right to the point, and never use extraneous language.
 
+CHAT HISTORY:
+{{history_block}}
+
 {{task_prompt}}
 
 {QUESTION_PAT.upper()}

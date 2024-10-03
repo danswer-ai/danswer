@@ -23,6 +23,7 @@ import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { updateConnectorCredentialPairName } from "@/lib/connector";
 import DeletionErrorStatus from "./DeletionErrorStatus";
+import { useRouter } from "next/navigation";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -30,6 +31,7 @@ import DeletionErrorStatus from "./DeletionErrorStatus";
 const CONNECTOR_TYPES_THAT_CANT_REINDEX: ValidSources[] = ["file"];
 
 function Main({ ccPairId }: { ccPairId: number }) {
+  const router = useRouter(); // Initialize the router
   const {
     data: ccPair,
     isLoading,
@@ -40,16 +42,46 @@ function Main({ ccPairId }: { ccPairId: number }) {
     { refreshInterval: 5000 } // 5 seconds
   );
 
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [editableName, setEditableName] = useState(ccPair?.name || "");
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { popup, setPopup } = usePopup();
+
+  const finishConnectorDeletion = () => {
+    setPopup({
+      message: "Connector deleted successfully",
+      type: "success",
+    });
+    setTimeout(() => {
+      router.push("/admin/indexing/status");
+    }, 2000);
+  };
+
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    if (ccPair && !error) {
+      setHasLoadedOnce(true);
+    }
+
+    if (
+      (hasLoadedOnce && (error || !ccPair)) ||
+      (ccPair?.status === ConnectorCredentialPairStatus.DELETING &&
+        !ccPair.connector)
+    ) {
+      finishConnectorDeletion();
+    }
+  }, [isLoading, ccPair, error, hasLoadedOnce, router]);
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditableName(e.target.value);
   };
@@ -81,7 +113,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
     return <ThreeDotsLoader />;
   }
 
-  if (error || !ccPair) {
+  if (!ccPair || (!hasLoadedOnce && error)) {
     return (
       <ErrorCallout
         errorTitle={`Failed to fetch info on Connector with ID ${ccPairId}`}

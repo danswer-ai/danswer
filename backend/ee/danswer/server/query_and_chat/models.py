@@ -75,8 +75,6 @@ class ChatBasicResponse(BaseModel):
     answer: str | None = None
     answer_citationless: str | None = None
 
-    # TODO: deprecate `simple_search_docs`
-    simple_search_docs: list[SimpleDoc] | None = None
     top_documents: list[SavedSearchDoc] | None = None
 
     error_msg: str | None = None
@@ -85,3 +83,8 @@ class ChatBasicResponse(BaseModel):
     final_context_doc_indices: list[int] | None = None
     # this is a map of the citation number to the document id
     cited_documents: dict[int, str] | None = None
+
+    # FOR BACKWARDS COMPATIBILITY
+    # TODO: deprecate both of these
+    simple_search_docs: list[SimpleDoc] | None = None
+    llm_chunks_indices: list[int] | None = None

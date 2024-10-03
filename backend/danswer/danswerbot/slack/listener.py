@@ -49,7 +49,7 @@ from danswer.danswerbot.slack.utils import rephrase_slack_message
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.search_settings import get_current_search_settings
-from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.one_shot_answer.models import ThreadMessage
@@ -522,7 +522,7 @@ if __name__ == "__main__":
 
             # Let the handlers run in the background + re-check for token updates every 60 seconds
             Event().wait(timeout=60)
-        except ConfigNotFoundError:
+        except KvKeyNotFoundError:
             # try again every 30 seconds. This is needed since the user may add tokens
             # via the UI at any point in the programs lifecycle - if we just allow it to
             # fail, then the user will need to restart the containers after adding tokens
