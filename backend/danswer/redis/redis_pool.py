@@ -13,6 +13,7 @@ from danswer.configs.app_configs import REDIS_SSL_CA_CERTS
 from danswer.configs.app_configs import REDIS_SSL_CERT_REQS
 
 REDIS_POOL_MAX_CONNECTIONS = 128
+REDIS_HEALTH_CHECK_INTERVAL = 60
 
 
 class RedisPool:
@@ -59,6 +60,7 @@ class RedisPool:
                 password=password,
                 max_connections=max_connections,
                 timeout=None,
+                health_check_interval=REDIS_HEALTH_CHECK_INTERVAL,
                 connection_class=redis.SSLConnection,
                 ssl_ca_certs=ssl_ca_certs,
                 ssl_cert_reqs=ssl_cert_reqs,
@@ -71,6 +73,7 @@ class RedisPool:
             password=password,
             max_connections=max_connections,
             timeout=None,
+            health_check_interval=REDIS_HEALTH_CHECK_INTERVAL,
         )
 
 

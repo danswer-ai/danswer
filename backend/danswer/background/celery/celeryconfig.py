@@ -3,6 +3,7 @@ from danswer.configs.app_configs import CELERY_BROKER_POOL_LIMIT
 from danswer.configs.app_configs import CELERY_RESULT_EXPIRES
 from danswer.configs.app_configs import REDIS_DB_NUMBER_CELERY
 from danswer.configs.app_configs import REDIS_DB_NUMBER_CELERY_RESULT_BACKEND
+from danswer.configs.app_configs import REDIS_HEALTH_CHECK_INTERVAL
 from danswer.configs.app_configs import REDIS_HOST
 from danswer.configs.app_configs import REDIS_PASSWORD
 from danswer.configs.app_configs import REDIS_PORT
@@ -40,11 +41,38 @@ worker_prefetch_multiplier = 4
 broker_connection_retry_on_startup = True
 broker_pool_limit = CELERY_BROKER_POOL_LIMIT
 
+# if platform.system() == "Darwin":
+#     REDIS_SOCKET_KEEPALIVE_OPTIONS = {
+#         socket.TCP_KEEPALIVE: 60,
+#         socket.TCP_KEEPINTVL: 15,
+#         socket.TCP_KEEPCNT: 9
+#     }
+# elif platform.system() == "Linux":
+#     REDIS_SOCKET_KEEPALIVE_OPTIONS = {
+#         socket.TCP_KEEPIDLE: 60,
+#         socket.TCP_KEEPINTVL: 15,
+#         socket.TCP_KEEPCNT: 9
+#     }
+# else:
+#     pass
+
+# redis broker settings
+# https://docs.celeryq.dev/projects/kombu/en/stable/reference/kombu.transport.redis.html
 broker_transport_options = {
     "priority_steps": list(range(len(DanswerCeleryPriority))),
     "sep": CELERY_SEPARATOR,
     "queue_order_strategy": "priority",
+    "retry_on_timeout": True,
+    "health_check_interval": REDIS_HEALTH_CHECK_INTERVAL,
+    # "socket_keepalive": True,
+    # "socket_keepalive_options": {socket.TCP}
 }
+
+# redis backend settings
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-settings
+# redis_socket_keepalive = True
+redis_retry_on_timeout = True
+redis_backend_health_check_interval = REDIS_HEALTH_CHECK_INTERVAL
 
 task_default_priority = DanswerCeleryPriority.MEDIUM
 task_acks_late = True
