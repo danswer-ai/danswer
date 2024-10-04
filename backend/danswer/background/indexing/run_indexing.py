@@ -14,6 +14,7 @@ from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
 from danswer.connectors.connector_runner import ConnectorRunner
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import IndexAttemptMetadata
+from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.engine import get_sqlalchemy_engine
@@ -49,7 +50,7 @@ def _get_connector_runner(
     """
     NOTE: `start_time` and `end_time` are only used for poll connectors
 
-    Returns an interator of document batches and whether the returned documents
+    Returns an iterator of document batches and whether the returned documents
     are the complete list of existing documents of the connector. If the task
     of type LOAD_STATE, the list will be considered complete and otherwise incomplete.
     """
@@ -67,12 +68,17 @@ def _get_connector_runner(
         logger.exception(f"Unable to instantiate connector due to {e}")
         # since we failed to even instantiate the connector, we pause the CCPair since
         # it will never succeed
-        update_connector_credential_pair(
-            db_session=db_session,
-            connector_id=attempt.connector_credential_pair.connector.id,
-            credential_id=attempt.connector_credential_pair.credential.id,
-            status=ConnectorCredentialPairStatus.PAUSED,
+
+        cc_pair = get_connector_credential_pair_from_id(
+            attempt.connector_credential_pair.id, db_session
         )
+        if cc_pair and cc_pair.status == ConnectorCredentialPairStatus.ACTIVE:
+            update_connector_credential_pair(
+                db_session=db_session,
+                connector_id=attempt.connector_credential_pair.connector.id,
+                credential_id=attempt.connector_credential_pair.credential.id,
+                status=ConnectorCredentialPairStatus.PAUSED,
+            )
         raise e
 
     return ConnectorRunner(
