@@ -98,7 +98,7 @@ export const PendingInvites = ({ q }: { q: string }) => {
   const filteredUsers = finalInvited.filter(
     (user) =>
       user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.full_name!.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -152,7 +152,7 @@ export const PendingInvites = ({ q }: { q: string }) => {
                     {filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          <div className="flex gap-4">
+                          <div className="flex items-center gap-4">
                             <div className="border rounded-full w-10 h-10 flex items-center justify-center">
                               <UserIcon />
                             </div>
