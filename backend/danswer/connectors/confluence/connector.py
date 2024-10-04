@@ -106,8 +106,6 @@ def _replace_cql_time_filter(
         cql_query,
         flags=re.IGNORECASE,
     )
-    print("start:", existing_start_match)
-    print("end:", existing_end_match)
 
     # Remove all existing lastmodified and updated filters
     cql_query = re.sub(
@@ -403,7 +401,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self.wiki_base = wiki_base.rstrip("/")
         self.space = space
         self.page_id = "" if cql_query else page_id
-        self.space_level_scan = bool(self.page_id)
+        self.space_level_scan = bool(not self.page_id)
 
         self.is_cloud = is_cloud
 
