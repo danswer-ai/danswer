@@ -50,6 +50,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -157,14 +158,17 @@ export function ChatPage({
   // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
   const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
 
-  // Assistants
-  const { visibleAssistants, hiddenAssistants: _ } = classifyAssistants(
-    user,
-    availableAssistants
-  );
-  const finalAssistants = user
-    ? orderAssistantsForUser(visibleAssistants, user)
-    : visibleAssistants;
+  // Assistants in order
+  const { finalAssistants } = useMemo(() => {
+    const { visibleAssistants, hiddenAssistants: _ } = classifyAssistants(
+      user,
+      availableAssistants
+    );
+    const finalAssistants = user
+      ? orderAssistantsForUser(visibleAssistants, user)
+      : visibleAssistants;
+    return { finalAssistants };
+  }, [user, availableAssistants]);
 
   const existingChatSessionAssistantId = selectedChatSession?.persona_id;
   const [selectedAssistant, setSelectedAssistant] = useState<
@@ -755,7 +759,15 @@ export function ChatPage({
     setAboveHorizon(scrollDist.current > 500);
   };
 
-  scrollableDivRef?.current?.addEventListener("scroll", updateScrollTracking);
+  useEffect(() => {
+    const scrollableDiv = scrollableDivRef.current;
+    if (scrollableDiv) {
+      scrollableDiv.addEventListener("scroll", updateScrollTracking);
+      return () => {
+        scrollableDiv.removeEventListener("scroll", updateScrollTracking);
+      };
+    }
+  }, []);
 
   const handleInputResize = () => {
     setTimeout(() => {
@@ -1133,7 +1145,9 @@ export function ChatPage({
 
       await delay(50);
       while (!stack.isComplete || !stack.isEmpty()) {
-        await delay(0.5);
+        if (stack.isEmpty()) {
+          await delay(0.5);
+        }
 
         if (!stack.isEmpty() && !controller.signal.aborted) {
           const packet = stack.nextPacket();
@@ -2410,6 +2424,7 @@ export function ChatPage({
                               handleFileUpload={handleImageUpload}
                               textAreaRef={textAreaRef}
                               chatSessionId={chatSessionIdRef.current!}
+                              refreshUser={refreshUser}
                             />
 
                             {enterpriseSettings &&

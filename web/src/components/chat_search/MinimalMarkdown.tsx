@@ -1,4 +1,5 @@
 import { CodeBlock } from "@/app/chat/message/CodeBlock";
+import { extractCodeText } from "@/app/chat/message/codeUtils";
 import {
   MemoizedLink,
   MemoizedParagraph,
@@ -10,13 +11,11 @@ import remarkGfm from "remark-gfm";
 interface MinimalMarkdownProps {
   content: string;
   className?: string;
-  useCodeBlock?: boolean;
 }
 
 export const MinimalMarkdown: React.FC<MinimalMarkdownProps> = ({
   content,
   className = "",
-  useCodeBlock = false,
 }) => {
   return (
     <ReactMarkdown
@@ -24,11 +23,15 @@ export const MinimalMarkdown: React.FC<MinimalMarkdownProps> = ({
       components={{
         a: MemoizedLink,
         p: MemoizedParagraph,
-        code: useCodeBlock
-          ? (props) => (
-              <CodeBlock className="w-full" {...props} content={content} />
-            )
-          : (props) => <code {...props} />,
+        code: ({ node, inline, className, children, ...props }: any) => {
+          const codeText = extractCodeText(node, content, children);
+
+          return (
+            <CodeBlock className={className} codeText={codeText}>
+              {children}
+            </CodeBlock>
+          );
+        },
       }}
       remarkPlugins={[remarkGfm]}
     >

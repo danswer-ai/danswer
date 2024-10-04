@@ -148,7 +148,7 @@ def document_by_cc_pair_cleanup_task(
             if count == 1:
                 # count == 1 means this is the only remaining cc_pair reference to the doc
                 # delete it from vespa and the db
-                document_index.delete(doc_ids=[document_id])
+                document_index.delete_single(doc_id=document_id)
                 delete_documents_complete__no_commit(
                     db_session=db_session,
                     document_ids=[document_id],
