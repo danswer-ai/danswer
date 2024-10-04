@@ -3,6 +3,7 @@ import time
 from datetime import timedelta
 from typing import Any
 
+import httpx
 import redis
 from celery import bootsteps  # type: ignore
 from celery import Celery
@@ -30,6 +31,7 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_HEAVY_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_LIGHT_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
 from danswer.db.engine import SqlEngine
+from danswer.httpx.httpx_pool import HttpxPool
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
@@ -113,18 +115,28 @@ def on_beat_init(sender: Any, **kwargs: Any) -> None:
 
 @worker_init.connect
 def on_worker_init(sender: Any, **kwargs: Any) -> None:
+    EXTRA_CONCURRENCY = 8  # a few extra connections for side operations
+
     # decide some initial startup settings based on the celery worker's hostname
     # (set at the command line)
     hostname = sender.hostname
     if hostname.startswith("light"):
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_LIGHT_APP_NAME)
-        SqlEngine.init_engine(pool_size=sender.concurrency, max_overflow=8)
+        SqlEngine.init_engine(
+            pool_size=sender.concurrency, max_overflow=EXTRA_CONCURRENCY
+        )
     elif hostname.startswith("heavy"):
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_HEAVY_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
     else:
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
+
+    HttpxPool.init_client(
+        limits=httpx.Limits(
+            max_keepalive_connections=sender.concurrency + EXTRA_CONCURRENCY
+        )
+    )
 
     r = get_redis_client()
 
@@ -197,6 +209,86 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     # it is planned to use this lock to enforce singleton behavior on the primary
     # worker, since the primary worker does redis cleanup on startup, but this isn't
     # implemented yet.
+    lock = r.lock(
+        DanswerRedisLocks.PRIMARY_WORKER,
+        timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
+    )
+
+    logger.info("Primary worker lock: Acquire starting.")
+    acquired = lock.acquire(blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2)
+    if acquired:
+        logger.info("Primary worker lock: Acquire succeeded.")
+    else:
+        logger.error("Primary worker lock: Acquire failed!")
+        raise WorkerShutdown("Primary worker lock could not be acquired!")
+
+    sender.primary_worker_lock = lock
+
+    WAIT_INTERVAL = 5
+    WAIT_LIMIT = 60
+
+    time_start = time.monotonic()
+    logger.info("Redis: Readiness check starting.")
+    while True:
+        try:
+            if r.ping():
+                break
+        except Exception:
+            pass
+
+        time_elapsed = time.monotonic() - time_start
+        logger.info(
+            f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+        )
+        if time_elapsed > WAIT_LIMIT:
+            msg = (
+                f"Redis: Readiness check did not succeed within the timeout "
+                f"({WAIT_LIMIT} seconds). Exiting..."
+            )
+            logger.error(msg)
+            raise WorkerShutdown(msg)
+
+        time.sleep(WAIT_INTERVAL)
+
+    logger.info("Redis: Readiness check succeeded. Continuing...")
+
+    if not celery_is_worker_primary(sender):
+        logger.info("Running as a secondary celery worker.")
+        logger.info("Waiting for primary worker to be ready...")
+        time_start = time.monotonic()
+        while True:
+            if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
+                break
+
+            time.monotonic()
+            time_elapsed = time.monotonic() - time_start
+            logger.info(
+                f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+            )
+            if time_elapsed > WAIT_LIMIT:
+                msg = (
+                    f"Primary worker was not ready within the timeout. "
+                    f"({WAIT_LIMIT} seconds). Exiting..."
+                )
+                logger.error(msg)
+                raise WorkerShutdown(msg)
+
+            time.sleep(WAIT_INTERVAL)
+
+        logger.info("Wait for primary worker completed successfully. Continuing...")
+        return
+
+    logger.info("Running as the primary celery worker.")
+
+    # This is singleton work that should be done on startup exactly once
+    # by the primary worker
+    r = get_redis_client()
+
+    # For the moment, we're assuming that we are the only primary worker
+    # that should be running.
+    # TODO: maybe check for or clean up another zombie primary worker if we detect it
+    r.delete(DanswerRedisLocks.PRIMARY_WORKER)
+
     lock = r.lock(
         DanswerRedisLocks.PRIMARY_WORKER,
         timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,

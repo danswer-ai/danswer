@@ -7,6 +7,7 @@ from datetime import timezone
 from typing import Any
 from typing import cast
 
+import httpx
 import requests
 from retry import retry
 
@@ -149,6 +150,7 @@ def _get_chunks_via_visit_api(
     chunk_request: VespaChunkRequest,
     index_name: str,
     filters: IndexFilters,
+    http_client: httpx.Client,
     field_names: list[str] | None = None,
     get_large_chunks: bool = False,
 ) -> list[dict]:
@@ -181,21 +183,22 @@ def _get_chunks_via_visit_api(
         selection += f" and {index_name}.large_chunk_reference_ids == null"
 
     # Setting up the selection criteria in the query parameters
-    params = {
-        # NOTE: Document Selector Language doesn't allow `contains`, so we can't check
-        # for the ACL in the selection. Instead, we have to check as a postfilter
-        "selection": selection,
-        "continuation": None,
-        "wantedDocumentCount": 1_000,
-        "fieldSet": field_set,
-    }
+    params = httpx.QueryParams(
+        {
+            # NOTE: Document Selector Language doesn't allow `contains`, so we can't check
+            # for the ACL in the selection. Instead, we have to check as a postfilter
+            "selection": selection,
+            "wantedDocumentCount": 1_000,
+            "fieldSet": field_set,
+        }
+    )
 
     document_chunks: list[dict] = []
     while True:
-        response = requests.get(url, params=params)
+        response = http_client.get(url, params=params)
         try:
             response.raise_for_status()
-        except requests.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             request_info = f"Headers: {response.request.headers}\nPayload: {params}"
             response_info = f"Status Code: {response.status_code}\nResponse Content: {response.text}"
             error_base = f"Error occurred getting chunk by Document ID {chunk_request.document_id}"
@@ -205,7 +208,9 @@ def _get_chunks_via_visit_api(
                 f"{response_info}\n"
                 f"Exception: {e}"
             )
-            raise requests.HTTPError(error_base) from e
+            raise httpx.HTTPStatusError(
+                error_base, request=e.request, response=e.response
+            ) from e
 
         # Check if the response contains any documents
         response_data = response.json()
@@ -232,6 +237,7 @@ def _get_chunks_via_visit_api(
 def get_all_vespa_ids_for_document_id(
     document_id: str,
     index_name: str,
+    http_client: httpx.Client,
     filters: IndexFilters | None = None,
     get_large_chunks: bool = False,
 ) -> list[str]:
@@ -239,6 +245,7 @@ def get_all_vespa_ids_for_document_id(
         chunk_request=VespaChunkRequest(document_id=document_id),
         index_name=index_name,
         filters=filters or IndexFilters(access_control_list=None),
+        http_client=http_client,
         field_names=[DOCUMENT_ID],
         get_large_chunks=get_large_chunks,
     )
