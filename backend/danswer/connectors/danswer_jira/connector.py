@@ -12,6 +12,7 @@ from danswer.configs.app_configs import JIRA_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import JIRA_CONNECTOR_MAX_TICKET_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
+from danswer.connectors.danswer_jira.utils import CustomFieldExtractor
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -106,6 +107,7 @@ def fetch_jira_issues_batch(
     batch_size: int = INDEX_BATCH_SIZE,
     comment_email_blacklist: tuple[str, ...] = (),
     labels_to_skip: set[str] | None = None,
+    custom_fields: dict | None = None,
 ) -> tuple[list[Document], int]:
     doc_batch = []
 
@@ -186,6 +188,13 @@ def fetch_jira_issues_batch(
         if labels:
             metadata_dict["label"] = labels
 
+        # add custom fields
+        if custom_fields:
+            issue_custom_fields = CustomFieldExtractor.get_issue_custom_fields(
+                jira, custom_fields
+            )
+            metadata_dict = {**metadata_dict, **issue_custom_fields}
+
         doc_batch.append(
             Document(
                 id=page_url,
@@ -209,19 +218,36 @@ class JiraConnector(LoadConnector, PollConnector):
         batch_size: int = INDEX_BATCH_SIZE,
         # if a ticket has one of the labels specified in this list, we will just
         # skip it. This is generally used to avoid indexing extra sensitive
-        # tickets.
-        labels_to_skip: list[str] = JIRA_CONNECTOR_LABELS_TO_SKIP,
+        # tickets. If labels to skip not presented in UI, get it from .env
+        # basically added for the backward compatibility
+        labels_to_skip: list[str] = None or JIRA_CONNECTOR_LABELS_TO_SKIP,
+        include_custom_fields: bool = False,
     ) -> None:
         self.batch_size = batch_size
         self.jira_base, self.jira_project = extract_jira_project(jira_project_url)
         self.jira_client: JIRA | None = None
         self._comment_email_blacklist = comment_email_blacklist or []
-
         self.labels_to_skip = set(labels_to_skip)
+        self.include_custom_fields = include_custom_fields
 
     @property
     def comment_email_blacklist(self) -> tuple:
         return tuple(email.strip() for email in self._comment_email_blacklist)
+
+    @property
+    def custom_fields(self) -> dict | None:
+        if self.include_custom_fields:
+            try:
+                custom_fields = CustomFieldExtractor.get_all_custom_fields(
+                    self.jira_client
+                )
+            except Exception as e:
+                logger.warning(
+                    "Cannot get custom fields from jira because of error:" f"{e}"
+                )
+            else:
+                return custom_fields
+        return None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         api_token = credentials["jira_api_token"]
@@ -256,6 +282,7 @@ class JiraConnector(LoadConnector, PollConnector):
                 batch_size=self.batch_size,
                 comment_email_blacklist=self.comment_email_blacklist,
                 labels_to_skip=self.labels_to_skip,
+                custom_fields=self.custom_fields,
             )
 
             if doc_batch:
@@ -295,6 +322,7 @@ class JiraConnector(LoadConnector, PollConnector):
                 batch_size=self.batch_size,
                 comment_email_blacklist=self.comment_email_blacklist,
                 labels_to_skip=self.labels_to_skip,
+                custom_fields=self.custom_fields,
             )
 
             if doc_batch:

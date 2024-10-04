@@ -285,6 +285,15 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
         description:
           "Check if this is a Confluence Cloud instance, uncheck for Confluence Server/Data Center",
       },
+      {
+        type: "list",
+        query: "Labels to skip",
+        label: "Labels to skip",
+        name: "labels_to_skip",
+        optional: true,
+        description:
+          "Add labels for pages that should be skipped during indexing",
+      },
     ],
   },
   jira: {
@@ -299,6 +308,16 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
         optional: false,
       },
       {
+        type: "checkbox",
+        query: "Include custom fields in documents",
+        label: "Include custom fields",
+        name: "include_custom_fields",
+        description:
+          "Useful if there is important information in jira custom fields.",
+        default: false,
+        optional: true,
+      },
+      {
         type: "list",
         query: "Enter email addresses to blacklist from comments:",
         label: "Comment Email Blacklist",
@@ -306,6 +325,15 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
         description:
           "This is generally useful to ignore certain bots. Add user emails which comments should NOT be indexed.",
         optional: true,
+      },
+      {
+        type: "list",
+        query: "Labels to skip",
+        label: "Labels to skip",
+        name: "labels_to_skip",
+        optional: true,
+        description:
+          "Add labels for pages that should be skipped during indexing.",
       },
     ],
   },
@@ -991,11 +1019,14 @@ export interface ConfluenceConfig {
   page_id?: string;
   is_cloud?: boolean;
   index_recursively?: boolean;
+  labels_to_skip?: string[];
 }
 
 export interface JiraConfig {
   jira_project_url: string;
   comment_email_blacklist?: string[];
+  include_custom_fields: boolean;
+  labels_to_skip?: string[];
 }
 
 export interface SalesforceConfig {

@@ -293,8 +293,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
         # if a page has one of the labels specified in this list, we will just
         # skip it. This is generally used to avoid indexing extra sensitive
-        # pages.
-        labels_to_skip: list[str] = CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
+        # pages. Added default None to backward compatibility
+        labels_to_skip: list[str] = None or CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
     ) -> None:
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
@@ -488,6 +488,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         cls,
         confluence_client: Confluence,
         attachment: dict[str, Any],
+        labels_to_skip: set[str],
     ) -> str | None:
         """If it returns None, assume that we should skip this attachment."""
         if attachment["metadata"]["mediaType"] in [
@@ -517,6 +518,14 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 f"Failed to fetch {download_link} with invalid status code {response.status_code}"
             )
             return None
+
+        if labels_to_skip:
+            attachment_labels = [
+                label["name"] for label in attachment["metadata"]["labels"]["results"]
+            ]
+            label_intersection = labels_to_skip.intersection(attachment_labels)
+            if label_intersection and attachment_labels:
+                return None
 
         extracted_text = extract_file_text(
             io.BytesIO(response.content),
@@ -554,7 +563,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     continue
 
                 attachment_content = self._attachment_to_content(
-                    confluence_client, attachment
+                    confluence_client, attachment, self.labels_to_skip
                 )
                 if attachment_content:
                     files_attachment_content.append(attachment_content)
@@ -679,7 +688,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 self.wiki_base, attachment["_links"]["download"]
             )
             attachment_content = self._attachment_to_content(
-                self.confluence_client, attachment
+                self.confluence_client, attachment, self.labels_to_skip
             )
             if attachment_content is None:
                 continue
