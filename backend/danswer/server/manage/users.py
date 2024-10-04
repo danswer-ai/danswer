@@ -216,9 +216,6 @@ def bulk_invite_users(
     initial_invited_users = get_invited_users()
 
     all_emails = list(set(normalized_emails) | set(initial_invited_users))
-    if MULTI_TENANT:
-        for email in all_emails:
-            send_user_email_invite(email, current_user)
 
     number_of_invited_users = write_invited_users(all_emails)
     if not MULTI_TENANT:
