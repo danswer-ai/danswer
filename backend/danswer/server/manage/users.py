@@ -468,7 +468,6 @@ def get_current_token_creation(
 
 @router.get("/me")
 def verify_user_logged_in(
-    request: Request,
     user: User | None = Depends(optional_user),
     db_session: Session = Depends(get_session),
 ) -> UserInfo:
