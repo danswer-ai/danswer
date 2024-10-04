@@ -3,7 +3,6 @@ from typing import Optional
 
 import redis
 from redis.client import Redis
-from redis.connection import ConnectionPool
 
 from danswer.configs.app_configs import REDIS_DB_NUMBER
 from danswer.configs.app_configs import REDIS_HEALTH_CHECK_INTERVAL
@@ -20,7 +19,7 @@ from danswer.configs.constants import REDIS_SOCKET_KEEPALIVE_OPTIONS
 class RedisPool:
     _instance: Optional["RedisPool"] = None
     _lock: threading.Lock = threading.Lock()
-    _pool: ConnectionPool
+    _pool: redis.BlockingConnectionPool
 
     def __new__(cls) -> "RedisPool":
         if not cls._instance:
@@ -46,11 +45,15 @@ class RedisPool:
         ssl_ca_certs: str | None = REDIS_SSL_CA_CERTS,
         ssl_cert_reqs: str = REDIS_SSL_CERT_REQS,
         ssl: bool = False,
-    ) -> redis.ConnectionPool:
+    ) -> redis.BlockingConnectionPool:
+        """We use BlockingConnectionPool because it will block and wait for a connection
+        rather than error if max_connections is reached. This is far more deterministic
+        behavior and aligned with how we want to use Redis."""
+
         # Using ConnectionPool is not well documented.
         # Useful examples: https://github.com/redis/redis-py/issues/780
         if ssl:
-            return redis.ConnectionPool(
+            return redis.BlockingConnectionPool(
                 host=host,
                 port=port,
                 db=db,
@@ -65,7 +68,7 @@ class RedisPool:
                 ssl_cert_reqs=ssl_cert_reqs,
             )
 
-        return redis.ConnectionPool(
+        return redis.BlockingConnectionPool(
             host=host,
             port=port,
             db=db,
