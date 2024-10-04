@@ -164,12 +164,28 @@ REDIS_DB_NUMBER_CELERY_RESULT_BACKEND = int(
 )
 REDIS_DB_NUMBER_CELERY = int(os.environ.get("REDIS_DB_NUMBER_CELERY", 15))  # broker
 
+# will propagate to both our redis client as well as celery's redis client
+REDIS_HEALTH_CHECK_INTERVAL = int(os.environ.get("REDIS_HEALTH_CHECK_INTERVAL", 60))
+
+# our redis client only, not celery's
+REDIS_POOL_MAX_CONNECTIONS = int(os.environ.get("REDIS_POOL_MAX_CONNECTIONS", 128))
+
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-settings
 # should be one of "required", "optional", or "none"
 REDIS_SSL_CERT_REQS = os.getenv("REDIS_SSL_CERT_REQS", "none")
 REDIS_SSL_CA_CERTS = os.getenv("REDIS_SSL_CA_CERTS", None)
 
 CELERY_RESULT_EXPIRES = int(os.environ.get("CELERY_RESULT_EXPIRES", 86400))  # seconds
+
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#broker-pool-limit
+# Setting to None may help when there is a proxy in the way closing idle connections
+CELERY_BROKER_POOL_LIMIT_DEFAULT = 10
+try:
+    CELERY_BROKER_POOL_LIMIT = int(
+        os.environ.get("CELERY_BROKER_POOL_LIMIT", CELERY_BROKER_POOL_LIMIT_DEFAULT)
+    )
+except ValueError:
+    CELERY_BROKER_POOL_LIMIT = CELERY_BROKER_POOL_LIMIT_DEFAULT
 
 #####
 # Connector Configs
