@@ -38,6 +38,7 @@ import {
   GoogleStorageIcon,
   ColorSlackIcon,
   XenforoIcon,
+  DiscordIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import {
@@ -64,6 +65,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Web",
     category: SourceCategory.Other,
     docs: "https://docs.danswer.dev/connectors/web",
+  },
+  discord: {
+    icon: DiscordIcon,
+    displayName: "Discord",
+    category: SourceCategory.Messaging,
+    docs: "https://docs.danswer.dev/connectors/discord",
   },
   file: {
     icon: FileIcon,

@@ -1,5 +1,4 @@
 import asyncio
-import os
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -180,9 +179,11 @@ class DiscordConnector(LoadConnector, PollConnector):
 
 if __name__ == "__main__":
     connector = DiscordConnector(batch_size=16)
-    connector.load_credentials({"discord_token": os.environ["discord_token"]})
+    discord_token = "YOUR_DISCORD_TOKEN_HERE"
+
+    connector.load_credentials({"discord_token": discord_token})
     document_batches = connector.poll_source(
-        1197318454747873402, start=1705533366.652, end=1705533412.843
+        "1292260457616375829", start=1705533366.652, end=1705533412.843
     )
     print("Batch 1: ", next(document_batches))
     print("Batch 2: ", next(document_batches))

@@ -440,6 +440,9 @@ export const credentialDisplayNames: Record<string, string> = {
   // Axero
   base_url: "Axero Base URL",
   axero_api_token: "Axero API Token",
+
+  // Discord
+  discord_bot_token: "Discord Bot Token",
 };
 export function getDisplayNameForCredentialKey(key: string): string {
   return credentialDisplayNames[key] || key;
