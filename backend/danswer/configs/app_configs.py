@@ -406,3 +406,7 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 ENTERPRISE_EDITION_ENABLED = (
     os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )
+
+
+MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
+SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY", "")
