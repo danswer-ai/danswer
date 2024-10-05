@@ -430,26 +430,15 @@ def read_slack_thread(
     replies = cast(dict, response.data).get("messages", [])
     for reply in replies:
         if "user" in reply and "bot_id" not in reply:
-            message = remove_danswer_bot_tag(reply["text"], client=client)
+            message = reply["text"]
             user_sem_id = fetch_user_semantic_id_from_id(reply["user"], client)
             message_type = MessageType.USER
         else:
-            self_app_id = get_danswer_bot_app_id(client)
-
-            # Only include bot messages from Danswer, other bots are not taken in as context
-            if self_app_id != reply.get("user"):
-                continue
-
             blocks = reply["blocks"]
             if len(blocks) <= 1:
                 continue
 
-            # For the old flow, the useful block is the second one after the header block that says AI Answer
-            if reply["blocks"][0]["text"]["text"] == "AI Answer":
-                message = reply["blocks"][1]["text"]["text"]
-            else:
-                # for the new flow, the answer is the first block
-                message = reply["blocks"][0]["text"]["text"]
+            message = reply["blocks"][0]["text"]["text"]
 
             if message.startswith("_Filters"):
                 if len(blocks) <= 2:
@@ -459,6 +448,7 @@ def read_slack_thread(
             user_sem_id = "Assistant"
             message_type = MessageType.ASSISTANT
 
+        message = remove_danswer_bot_tag(message, client=client)
         thread_messages.append(
             ThreadMessage(message=message, sender=user_sem_id, role=message_type)
         )
