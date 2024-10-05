@@ -65,6 +65,8 @@ def ensure_schema_exists(tenant_id: str) -> bool:
             return False
 
 
+# For now, we're implementing a primitive mapping between users and tenants.
+# This function is only used to determine a user's relationship to a tenant upon creation (implying ownership).
 def user_owns_a_tenant(email: str) -> bool:
     with get_session_with_tenant("public") as db_session:
         result = (
