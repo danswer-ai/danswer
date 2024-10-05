@@ -1767,7 +1767,10 @@ export function ChatPage({
       <HealthCheckBanner />
 
       {showApiKeyModal && !shouldShowWelcomeModal && (
-        <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
+        <ApiKeyModal
+          hide={() => setShowApiKeyModal(false)}
+          setPopup={setPopup}
+        />
       )}
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 

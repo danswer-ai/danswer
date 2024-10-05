@@ -12,6 +12,8 @@ import { checkLlmProvider } from "./lib";
 import { User } from "@/lib/types";
 import { useProviderStatus } from "@/components/chat_search/ProviderContext";
 
+import { usePopup } from "@/components/admin/connectors/Popup";
+
 function setWelcomeFlowComplete() {
   Cookies.set(COMPLETED_WELCOME_FLOW_COOKIE, "true", { expires: 365 });
 }
@@ -28,6 +30,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
   const [providerOptions, setProviderOptions] = useState<
     WellKnownLLMProviderDescriptor[]
   >([]);
+  const { popup, setPopup } = usePopup();
 
   const { refreshProviderInfo } = useProviderStatus();
   const clientSetWelcomeFlowComplete = async () => {
@@ -48,34 +51,37 @@ export function _WelcomeModal({ user }: { user: User | null }) {
   }, []);
 
   return (
-    <Modal title={"Welcome to Danswer!"} width="w-full max-w-3xl">
-      <div>
-        <Text className="mb-4">
-          Danswer brings all your company&apos;s knowledge to your fingertips,
-          ready to be accessed instantly.
-        </Text>
-        <Text className="mb-4">
-          To get started, we need to set up an API key for the Language Model
-          (LLM) provider. This key allows Danswer to interact with the AI model,
-          enabling intelligent responses to your queries.
-        </Text>
+    <>
+      {popup}
+      <Modal title={"Welcome to Danswer!"} width="w-full max-w-3xl">
+        <div>
+          <Text className="mb-4">
+            Danswer brings all your company&apos;s knowledge to your fingertips,
+            ready to be accessed instantly.
+          </Text>
+          <Text className="mb-4">
+            To get started, we need to set up an API key for the Language Model
+            (LLM) provider. This key allows Danswer to interact with the AI
+            model, enabling intelligent responses to your queries.
+          </Text>
 
-        <div className="max-h-[900px] overflow-y-scroll">
-          <ApiKeyForm
-            hidePopup
-            onSuccess={() => {
-              router.refresh();
-              refreshProviderInfo();
-              setCanBegin(true);
-            }}
-            providerOptions={providerOptions}
-          />
+          <div className="max-h-[900px] overflow-y-scroll">
+            <ApiKeyForm
+              setPopup={setPopup}
+              onSuccess={() => {
+                router.refresh();
+                refreshProviderInfo();
+                setCanBegin(true);
+              }}
+              providerOptions={providerOptions}
+            />
+          </div>
+          <Divider />
+          <Button disabled={!canBegin} onClick={clientSetWelcomeFlowComplete}>
+            Get Started
+          </Button>
         </div>
-        <Divider />
-        <Button disabled={!canBegin} onClick={clientSetWelcomeFlowComplete}>
-          Get Started
-        </Button>
-      </div>
-    </Modal>
+      </Modal>
+    </>
   );
 }
