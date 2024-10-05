@@ -11,6 +11,7 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -22,9 +23,9 @@ logger = setup_logger()
 class FreshdeskConnector(PollConnector):
     def __init__(
         self,
-        api_key: str,
-        domain: str,
-        password: str,
+        api_key: str | None = None,
+        domain: str | None = None,
+        password: str | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.api_key = api_key
@@ -63,8 +64,12 @@ class FreshdeskConnector(PollConnector):
         return None
 
     def _process_tickets(
-        self, start: datetime, end: datetime
+        self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
+        assert self.api_key is not None
+        assert self.domain is not None
+        assert self.password is not None
+
         logger.info("Processing tickets")
         if any([self.api_key, self.domain, self.password]) is None:
             raise ConnectorMissingCredentialError("freshdesk")
@@ -113,29 +118,43 @@ class FreshdeskConnector(PollConnector):
                 sections = self.build_doc_sections_from_ticket(ticket)
 
                 created_at = datetime.fromisoformat(ticket["created_at"])
-                today = datetime.now()
-                if (today - created_at).days / 30.4375 <= 2:
-                    doc = Document(
-                        id=ticket["id"],
-                        sections=sections,
-                        source=DocumentSource.FRESHDESK,
-                        semantic_identifier=ticket["subject"],
-                        metadata={
-                            key: value
-                            for key, value in ticket.items()
-                            if isinstance(value, str)
-                            and key not in ["description", "description_text"]
-                        },
-                    )
 
-                    doc_batch.append(doc)
+                doc = Document(
+                    id=ticket["id"],
+                    sections=sections,
+                    source=DocumentSource.FRESHDESK,
+                    semantic_identifier=ticket["subject"],
+                    metadata={
+                        key: value
+                        for key, value in ticket.items()
+                        if isinstance(value, str)
+                        and key not in ["description", "description_text"]
+                    },
+                    doc_updated_at=created_at,
+                )
 
-                    if len(doc_batch) >= self.batch_size:
-                        yield doc_batch
-                        doc_batch = []
+                doc_batch.append(doc)
+
+                if len(doc_batch) >= self.batch_size:
+                    yield doc_batch
+                    doc_batch = []
 
             if doc_batch:
                 yield doc_batch
 
-    def poll_source(self, start: datetime, end: datetime) -> GenerateDocumentsOutput:
+    def poll_source(
+        self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
+    ) -> GenerateDocumentsOutput:
         yield from self._process_tickets(start, end)
+
+
+if __name__ == "__main__":
+    import os
+
+    connector = FreshdeskConnector(
+        api_key=os.environ.get("FRESHDESK_API_KEY"),
+        domain=os.environ.get("FRESHDESK_DOMAIN"),
+        password=os.environ.get("FRESHDESK_PASSWORD"),
+    )
+    for doc in connector.poll_source(start=None, end=None):
+        print(doc)
