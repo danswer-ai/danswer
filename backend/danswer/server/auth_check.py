@@ -4,7 +4,6 @@ from fastapi import FastAPI
 from fastapi.dependencies.models import Dependant
 from starlette.routing import BaseRoute
 
-from danswer.auth.users import control_plane_dep
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
@@ -99,7 +98,6 @@ def check_router_auth(
                     or depends_fn == current_curator_or_admin_user
                     or depends_fn == api_key_dep
                     or depends_fn == current_user_with_expired_token
-                    or depends_fn == control_plane_dep
                 ):
                     found_auth = True
                     break

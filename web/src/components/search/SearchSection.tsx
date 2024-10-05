@@ -14,7 +14,6 @@ import {
   ValidQuestionResponse,
   Relevance,
   SearchDanswerDocument,
-  SourceMetadata,
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
@@ -41,9 +40,6 @@ import { ApiKeyModal } from "../llm/ApiKeyModal";
 import { useSearchContext } from "../context/SearchContext";
 import { useUser } from "../user/UserProvider";
 import UnconfiguredProviderText from "../chat_search/UnconfiguredProviderText";
-import { DateRangePickerValue } from "@tremor/react";
-import { Tag } from "@/lib/types";
-import { isEqual } from "lodash";
 
 export type searchState =
   | "input"
@@ -374,36 +370,8 @@ export const SearchSection = ({
     setSearchAnswerExpanded(false);
   };
 
-  interface SearchDetails {
-    query: string;
-    sources: SourceMetadata[];
-    agentic: boolean;
-    documentSets: string[];
-    timeRange: DateRangePickerValue | null;
-    tags: Tag[];
-    persona: Persona;
-  }
-
-  const [previousSearch, setPreviousSearch] = useState<null | SearchDetails>(
-    null
-  );
+  const [previousSearch, setPreviousSearch] = useState<string>("");
   const [agenticResults, setAgenticResults] = useState<boolean | null>(null);
-  const currentSearch = (overrideMessage?: string): SearchDetails => {
-    return {
-      query: overrideMessage || query,
-      sources: filterManager.selectedSources,
-      agentic: agentic!,
-      documentSets: filterManager.selectedDocumentSets,
-      timeRange: filterManager.timeRange,
-      tags: filterManager.selectedTags,
-      persona: assistants.find(
-        (assistant) => assistant.id === selectedPersona
-      ) as Persona,
-    };
-  };
-  const isSearchChanged = () => {
-    return !isEqual(currentSearch(), previousSearch);
-  };
 
   let lastSearchCancellationToken = useRef<CancellationToken | null>(null);
   const onSearch = async ({
@@ -426,9 +394,7 @@ export const SearchSection = ({
 
     setIsFetching(true);
     setSearchResponse(initialSearchResponse);
-
-    setPreviousSearch(currentSearch(overrideMessage));
-
+    setPreviousSearch(overrideMessage || query);
     const searchFnArgs = {
       query: overrideMessage || query,
       sources: filterManager.selectedSources,
@@ -792,7 +758,7 @@ export const SearchSection = ({
                     />
 
                     <FullSearchBar
-                      disabled={!isSearchChanged()}
+                      disabled={previousSearch === query}
                       toggleAgentic={
                         disabledAgentic ? undefined : toggleAgentic
                       }
