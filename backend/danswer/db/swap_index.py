@@ -9,19 +9,18 @@ from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import (
     count_unique_cc_pairs_with_successful_index_attempts,
 )
+from danswer.db.models import SearchSettings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_search_settings_status
-from danswer.document_index.vespa.index import VespaIndex
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.utils.logger import setup_logger
-from shared_configs.configs import current_tenant_id
 
 
 logger = setup_logger()
 
 
-def check_index_swap(db_session: Session) -> None:
+def check_index_swap(db_session: Session) -> SearchSettings | None:
     """Get count of cc-pairs and count of successful index_attempts for the
     new model grouped by connector + credential, if it's the same, then assume
     new index is done building. If so, swap the indices and expire the old one."""
@@ -31,7 +30,7 @@ def check_index_swap(db_session: Session) -> None:
     search_settings = get_secondary_search_settings(db_session)
 
     if not search_settings:
-        return
+        return None
 
     unique_cc_indexings = count_unique_cc_pairs_with_successful_index_attempts(
         search_settings_id=search_settings.id, db_session=db_session
@@ -69,8 +68,5 @@ def check_index_swap(db_session: Session) -> None:
                 resync_cc_pair(cc_pair, db_session=db_session)
 
             if MULTI_TENANT:
-                # Delete all chunks for this tenant in the previous index
-                VespaIndex.expire_tenant_index(
-                    tenant_id=current_tenant_id,
-                    index_name=now_old_search_settings.index_name,
-                )
+                return now_old_search_settings
+    return None

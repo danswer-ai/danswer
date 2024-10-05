@@ -3,12 +3,14 @@ import io
 import os
 import re
 import time
+import urllib
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
 from typing import BinaryIO
 from typing import cast
+from typing import List
 
 import httpx  # type: ignore
 import requests  # type: ignore
@@ -637,10 +639,6 @@ class VespaIndex(DocumentIndex):
 
         return query_vespa(params)
 
-    @classmethod
-    def expire_tenant_index(self, tenant_id: str, index_name: str) -> None:
-        pass
-
     def admin_retrieval(
         self,
         query: str,
@@ -669,3 +667,158 @@ class VespaIndex(DocumentIndex):
         }
 
         return query_vespa(params)
+
+    @classmethod
+    def delete_entries_by_tenant_id(cls, tenant_id: str, index_name: str) -> None:
+        """
+        Deletes all entries in the specified index with the given tenant_id.
+
+        Parameters:
+            tenant_id (str): The tenant ID whose documents are to be deleted.
+            index_name (str): The name of the index from which to delete documents.
+        """
+        logger.info(
+            f"Deleting entries with tenant_id: {tenant_id} from index: {index_name}"
+        )
+
+        # Step 1: Retrieve all document IDs with the given tenant_id
+        document_ids = cls._get_all_document_ids_by_tenant_id(tenant_id, index_name)
+
+        if not document_ids:
+            logger.info(
+                f"No documents found with tenant_id: {tenant_id} in index: {index_name}"
+            )
+            return
+
+        # Step 2: Delete documents in batches
+        delete_requests = [
+            _VespaDeleteRequest(document_id=doc_id, index_name=index_name)
+            for doc_id in document_ids
+        ]
+
+        cls._apply_deletes_batched(delete_requests)
+
+    @classmethod
+    def _get_all_document_ids_by_tenant_id(
+        cls, tenant_id: str, index_name: str
+    ) -> List[str]:
+        """
+        Retrieves all document IDs with the specified tenant_id, handling pagination.
+
+        Parameters:
+            tenant_id (str): The tenant ID to search for.
+            index_name (str): The name of the index to search in.
+
+        Returns:
+            List[str]: A list of document IDs matching the tenant_id.
+        """
+        offset = 0
+        limit = 1000  # Vespa's maximum hits per query
+        document_ids = []
+
+        logger.debug(
+            f"Starting document ID retrieval for tenant_id: {tenant_id} in index: {index_name}"
+        )
+
+        while True:
+            # Construct the query to fetch document IDs
+            query_params = {
+                "yql": f'select id from sources * where tenant_id contains "{tenant_id}";',
+                "offset": str(offset),
+                "hits": str(limit),
+                "timeout": "10s",
+                "format": "json",
+                "summary": "id",
+            }
+
+            url = f"{VESPA_APPLICATION_ENDPOINT}/search/"
+
+            logger.debug(
+                f"Querying for document IDs with tenant_id: {tenant_id}, offset: {offset}"
+            )
+
+            with httpx.Client(http2=True) as http_client:
+                response = http_client.get(url, params=query_params)
+                response.raise_for_status()
+
+                search_result = response.json()
+                hits = search_result.get("root", {}).get("children", [])
+
+                if not hits:
+                    break
+
+                for hit in hits:
+                    doc_id = hit.get("id")
+                    if doc_id:
+                        document_ids.append(doc_id)
+
+                offset += limit  # Move to the next page
+
+        logger.debug(
+            f"Retrieved {len(document_ids)} document IDs for tenant_id: {tenant_id}"
+        )
+        return document_ids
+
+    @classmethod
+    def _apply_deletes_batched(
+        cls,
+        delete_requests: List["_VespaDeleteRequest"],
+        batch_size: int = BATCH_SIZE,
+    ) -> None:
+        """
+        Deletes documents in batches using multiple threads.
+
+        Parameters:
+            delete_requests (List[_VespaDeleteRequest]): The list of delete requests.
+            batch_size (int): The number of documents to delete in each batch.
+        """
+
+        def _delete_document(
+            delete_request: "_VespaDeleteRequest", http_client: httpx.Client
+        ) -> None:
+            logger.debug(f"Deleting document with ID {delete_request.document_id}")
+            response = http_client.delete(
+                delete_request.url,
+                headers={"Content-Type": "application/json"},
+            )
+            response.raise_for_status()
+
+        logger.debug(f"Starting batch deletion for {len(delete_requests)} documents")
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+            with httpx.Client(http2=True) as http_client:
+                for batch_start in range(0, len(delete_requests), batch_size):
+                    batch = delete_requests[batch_start : batch_start + batch_size]
+
+                    future_to_document_id = {
+                        executor.submit(
+                            _delete_document,
+                            delete_request,
+                            http_client,
+                        ): delete_request.document_id
+                        for delete_request in batch
+                    }
+
+                    for future in concurrent.futures.as_completed(
+                        future_to_document_id
+                    ):
+                        doc_id = future_to_document_id[future]
+                        try:
+                            future.result()
+                            logger.debug(f"Successfully deleted document: {doc_id}")
+                        except httpx.HTTPError as e:
+                            logger.error(f"Failed to delete document {doc_id}: {e}")
+                            # Optionally, implement retry logic or error handling here
+
+        logger.info("Batch deletion completed")
+
+
+class _VespaDeleteRequest:
+    def __init__(self, document_id: str, index_name: str) -> None:
+        self.document_id = document_id
+        # Encode the document ID to ensure it's safe for use in the URL
+        encoded_doc_id = urllib.parse.quote_plus(self.document_id)
+        self.url = (
+            f"{VESPA_APPLICATION_ENDPOINT}/document/v1/"
+            f"{index_name}/{index_name}/docid/{encoded_doc_id}"
+        )
