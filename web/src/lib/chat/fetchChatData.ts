@@ -184,7 +184,6 @@ export async function fetchChatData(searchParams: {
 
   const hasAnyConnectors = ccPairs.length > 0;
   const shouldShowWelcomeModal =
-    !llmProviders.length &&
     !hasCompletedWelcomeFlowSS() &&
     !hasAnyConnectors &&
     (!user || user.role === "admin");

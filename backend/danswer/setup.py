@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 
 from danswer.chat.load_yamls import load_chat_yamls
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import KV_SEARCH_SETTINGS
 from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
@@ -99,8 +98,7 @@ def setup_danswer(db_session: Session) -> None:
 
     # Does the user need to trigger a reindexing to bring the document index
     # into a good state, marked in the kv store
-    if not MULTI_TENANT:
-        mark_reindex_flag(db_session)
+    mark_reindex_flag(db_session)
 
     # ensure Vespa is setup correctly
     logger.notice("Verifying Document Index(s) is/are available.")
