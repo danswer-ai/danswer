@@ -26,6 +26,8 @@ from sqlalchemy.orm import sessionmaker
 from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
 from danswer.configs.app_configs import MULTI_TENANT
+from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
+from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
@@ -134,8 +136,8 @@ class SqlEngine:
 
     # Default parameters for engine creation
     DEFAULT_ENGINE_KWARGS = {
-        "pool_size": 40,
-        "max_overflow": 10,
+        "pool_size": 20,
+        "max_overflow": 5,
         "pool_pre_ping": POSTGRES_POOL_PRE_PING,
         "pool_recycle": POSTGRES_POOL_RECYCLE,
     }
@@ -201,10 +203,6 @@ def build_connection_string(
     return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}"
 
 
-def init_sqlalchemy_engine(app_name: str) -> None:
-    SqlEngine.set_app_name(app_name)
-
-
 def get_sqlalchemy_engine() -> Engine:
     return SqlEngine.get_engine()
 
@@ -222,8 +220,10 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
                     "application_name": SqlEngine.get_app_name() + "_async"
                 }
             },
-            pool_size=40,
-            max_overflow=10,
+            # async engine is only used by API server, so we can use those values
+            # here as well
+            pool_size=POSTGRES_API_SERVER_POOL_SIZE,
+            max_overflow=POSTGRES_API_SERVER_POOL_OVERFLOW,
             pool_pre_ping=POSTGRES_POOL_PRE_PING,
             pool_recycle=POSTGRES_POOL_RECYCLE,
         )

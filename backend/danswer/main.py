@@ -33,6 +33,8 @@ from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import LOG_ENDPOINT_LATENCY
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
+from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
+from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
@@ -49,8 +51,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.credentials import create_initial_public_credential
 from danswer.db.document import check_docs_exist
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.engine import init_sqlalchemy_engine
+from danswer.db.engine import SqlEngine
 from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
@@ -353,8 +354,12 @@ def setup_vespa(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
-    init_sqlalchemy_engine(POSTGRES_WEB_APP_NAME)
-    engine = get_sqlalchemy_engine()
+    SqlEngine.set_app_name(POSTGRES_WEB_APP_NAME)
+    SqlEngine.init_engine(
+        pool_size=POSTGRES_API_SERVER_POOL_SIZE,
+        max_overflow=POSTGRES_API_SERVER_POOL_OVERFLOW,
+    )
+    engine = SqlEngine.get_engine()
 
     verify_auth = fetch_versioned_implementation(
         "danswer.auth.users", "verify_auth_setting"
