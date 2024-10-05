@@ -10,18 +10,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { FaExternalLinkAlt } from "react-icons/fa";
-import { BillingInformation } from "./page";
 import { SettingsIcon } from "@/components/icons/icons";
 import {
-  fetchCheckoutSession,
+  updateSubscriptionQuantity,
   fetchCustomerPortal,
   statusToDisplay,
   useBillingInformation,
 } from "./utils";
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import useSWR, { mutate } from "swr";
 
 export default function BillingInformationPage() {
   const [seats, setSeats] = useState(1);
@@ -66,7 +62,7 @@ export default function BillingInformationPage() {
       const stripe = await stripePromise;
 
       if (!stripe) throw new Error("Stripe failed to load");
-      const response = await fetchCheckoutSession(seats);
+      const response = await updateSubscriptionQuantity(seats);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -75,7 +71,10 @@ export default function BillingInformationPage() {
         );
       }
 
-      refreshBillingInformation();
+      // Leave time for Stripe webhook to get processed
+      setTimeout(() => {
+        refreshBillingInformation();
+      }, 200);
     } catch (error) {
       console.error("Error creating checkout session:", error);
       setPopup({
@@ -112,6 +111,9 @@ export default function BillingInformationPage() {
       });
     }
   };
+  if (!billingInformation) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -194,24 +196,31 @@ export default function BillingInformationPage() {
             </p>
           </div>
         )}
+        {billingInformation.subscriptionStatus === "trialing" ? (
+          <div className="bg-white p-5 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md mt-8">
+            <p className="text-lg font-medium text-gray-700">
+              No cap on users during trial
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-4 mt-8">
+            <input
+              type="number"
+              min="1"
+              value={seats}
+              onChange={(e) => setSeats(Number(e.target.value))}
+              className="border border-gray-300 rounded-md px-4 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-gray-500 bg-white text-gray-800 shadow-sm transition-all duration-300"
+              placeholder="Seats"
+            />
 
-        <div className="flex items-center space-x-4 mt-8">
-          <input
-            type="number"
-            min="1"
-            value={seats}
-            onChange={(e) => setSeats(Number(e.target.value))}
-            className="border border-gray-300 rounded-md px-4 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-gray-500 bg-white text-gray-800 shadow-sm transition-all duration-300"
-            placeholder="Seats"
-          />
-
-          <button
-            onClick={handleUpgrade}
-            className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-medium shadow-md text-lg"
-          >
-            Upgrade Seats
-          </button>
-        </div>
+            <button
+              onClick={handleUpgrade}
+              className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-medium shadow-md text-lg"
+            >
+              Upgrade Seats
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-white p-5 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md">

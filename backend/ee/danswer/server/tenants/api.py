@@ -76,13 +76,12 @@ def create_tenant(
             current_tenant_id.reset(token)
 
 
-@router.post("/create-checkout-session")
-async def create_checkout_session(
+@router.post("/update-subscription-quantity")
+async def update_subscription_quantity(
     checkout_session_creation_request: CheckoutSessionCreationRequest,
     _: User = Depends(current_admin_user),
 ) -> CheckoutSessionCreationResponse:
     try:
-        print("test")
         tenant_id = current_tenant_id.get()
         response = fetch_tenant_stripe_information(tenant_id)
         response.get("stripe_customer_id")

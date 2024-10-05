@@ -1,8 +1,6 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import BillingInformationPage from "./BillingInformationPage";
-import { fetchSS } from "@/lib/utilsSS";
 import { FaCloud } from "react-icons/fa";
-import { loadStripe } from "@stripe/stripe-js";
 
 export interface BillingInformation {
   seats: number;

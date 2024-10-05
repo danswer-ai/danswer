@@ -1,9 +1,8 @@
-import { Stripe } from "@stripe/stripe-js";
 import { BillingInformation } from "./page";
 import useSWR, { mutate } from "swr";
 
-export const fetchCheckoutSession = async (seats: number) => {
-  return await fetch("/api/tenants/create-checkout-session", {
+export const updateSubscriptionQuantity = async (seats: number) => {
+  return await fetch("/api/tenants/update-subscription-quantity", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
