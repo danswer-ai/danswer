@@ -35,6 +35,10 @@ export interface ConfluenceCredentialJson {
   confluence_access_token: string;
 }
 
+export interface DiscordCredentialJson {
+  discord_bot_token: string;
+}
+
 export interface JiraCredentialJson {
   jira_user_email: string | null;
   jira_api_token: string;
@@ -209,6 +213,7 @@ export const credentialTemplates: Record<ValidSources, any> = {
     jira_user_email: null,
     jira_api_token: "",
   } as JiraCredentialJson,
+  discord: { discord_bot_token: "" } as DiscordCredentialJson,
   productboard: { productboard_access_token: "" } as ProductboardCredentialJson,
   slab: { slab_bot_token: "" } as SlabCredentialJson,
   notion: { notion_integration_token: "" } as NotionCredentialJson,

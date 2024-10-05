@@ -87,6 +87,7 @@ import cohereIcon from "../../../public/Cohere.svg";
 import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
 import xenforoIcon from "../../../public/Xenforo.svg";
+import discordIcon from "../../../public/Discord.png";
 import { FaRobot } from "react-icons/fa";
 
 export interface IconProps {
@@ -2847,6 +2848,20 @@ export const XenforoIcon = ({
       className={`w-[${size}px] h-[${size}px] ` + className}
     >
       <Image src={xenforoIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const DiscordIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={discordIcon} alt="Logo" width="96" height="96" />
     </div>
   );
 };
