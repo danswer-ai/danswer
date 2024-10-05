@@ -1,14 +1,9 @@
 "use client";
 
-import {
-  CreditCard,
-  ArrowUp,
-  ArrowUpLeft,
-  ArrowFatUp,
-} from "@phosphor-icons/react";
+import { CreditCard, ArrowFatUp } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loadStripe, Stripe } from "@stripe/stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsIcon } from "@/components/icons/icons";
 import {
@@ -20,7 +15,6 @@ import {
 import { useEffect } from "react";
 
 export default function BillingInformationPage() {
-  const [seats, setSeats] = useState(1);
   const router = useRouter();
   const { popup, setPopup } = usePopup();
   const stripePromise = loadStripe(
@@ -33,6 +27,16 @@ export default function BillingInformationPage() {
     isLoading,
     refreshBillingInformation,
   } = useBillingInformation();
+
+  const [seats, setSeats] = useState<number | undefined>(
+    billingInformation?.seats
+  );
+
+  useEffect(() => {
+    if (billingInformation?.seats) {
+      setSeats(billingInformation.seats);
+    }
+  }, [billingInformation?.seats]);
 
   if (error) {
     console.error("Failed to fetch billing information:", error);
@@ -101,7 +105,6 @@ export default function BillingInformationPage() {
         throw new Error("No portal URL returned from the server");
       }
 
-      // Redirect to the Stripe Customer Portal
       router.push(url);
     } catch (error) {
       console.error("Error creating customer portal session:", error);

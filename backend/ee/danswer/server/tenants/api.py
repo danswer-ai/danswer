@@ -125,13 +125,12 @@ async def billing_information(
     _: User = Depends(current_admin_user),
 ) -> BillingInformation:
     logger.info("Fetching billing information")
-    return fetch_billing_information(current_tenant_id.get())
+    return BillingInformation(**fetch_billing_information(current_tenant_id.get()))
 
 
 @router.post("/create-customer-portal-session")
 async def create_customer_portal_session(_: User = Depends(current_admin_user)) -> dict:
     try:
-        logger.info("test")
         # Fetch tenant_id and the current tenant's information
         tenant_id = current_tenant_id.get()
         stripe_info = fetch_tenant_stripe_information(tenant_id)
