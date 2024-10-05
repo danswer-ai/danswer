@@ -23,7 +23,7 @@ from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.engine import init_sqlalchemy_engine
+from danswer.db.engine import SqlEngine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
@@ -483,7 +483,9 @@ def update_loop(
 
 def update__main() -> None:
     set_is_ee_based_on_env_variable()
-    init_sqlalchemy_engine(POSTGRES_INDEXER_APP_NAME)
+
+    # initialize the Postgres connection pool
+    SqlEngine.set_app_name(POSTGRES_INDEXER_APP_NAME)
 
     logger.notice("Starting indexing service")
     update_loop()
