@@ -5,7 +5,7 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
-from danswer.db.engine import get_session_factory
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import KVStore
 from danswer.key_value_store.interface import JSON_ro
 from danswer.key_value_store.interface import KeyValueStore
@@ -26,12 +26,9 @@ class PgRedisKVStore(KeyValueStore):
 
     @contextmanager
     def get_session(self) -> Iterator[Session]:
-        factory = get_session_factory()
-        session: Session = factory()
-        try:
+        engine = get_sqlalchemy_engine()
+        with Session(engine, expire_on_commit=False) as session:
             yield session
-        finally:
-            session.close()
 
     def store(self, key: str, val: JSON_ro, encrypt: bool = False) -> None:
         # Not encrypted in Redis, but encrypted in Postgres
