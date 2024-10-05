@@ -4,12 +4,15 @@ import stripe
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 from danswer.auth.users import control_plane_dep
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import User
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.db.auth import get_total_users
+from danswer.db.engine import get_session
 from danswer.db.engine import get_session_with_tenant
 from danswer.setup import setup_danswer
 from danswer.utils.logger import setup_logger
@@ -79,8 +82,17 @@ def create_tenant(
 @router.post("/update-subscription-quantity")
 async def update_subscription_quantity(
     checkout_session_creation_request: CheckoutSessionCreationRequest,
+    db_session: Session = Depends(get_session),
     _: User = Depends(current_admin_user),
 ) -> CheckoutSessionCreationResponse:
+    current_seats = get_total_users(db_session)
+
+    if current_seats > checkout_session_creation_request.quantity:
+        raise HTTPException(
+            status_code=400,
+            detail="Too many users are active to downgrade to this quantity.",
+        )
+
     try:
         tenant_id = current_tenant_id.get()
         response = fetch_tenant_stripe_information(tenant_id)

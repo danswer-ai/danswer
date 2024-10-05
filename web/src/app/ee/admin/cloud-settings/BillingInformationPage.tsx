@@ -60,25 +60,25 @@ export default function BillingInformationPage() {
   const handleUpgrade = async () => {
     try {
       const stripe = await stripePromise;
-
       if (!stripe) throw new Error("Stripe failed to load");
-      const response = await updateSubscriptionQuantity(seats);
 
+      const response = await updateSubscriptionQuantity(seats);
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          `Failed to create checkout session: ${errorData.message || response.statusText}`
-        );
+        throw new Error(errorData.detail);
       }
 
-      // Leave time for Stripe webhook to get processed
-      setTimeout(() => {
-        refreshBillingInformation();
-      }, 200);
-    } catch (error) {
-      console.error("Error creating checkout session:", error);
+      // Allow time for Stripe webhook processing
+      setTimeout(refreshBillingInformation, 200);
       setPopup({
-        message: "Error creating checkout session",
+        message: "Subscription updated successfully",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      setPopup({
+        message:
+          error instanceof Error ? error.message : "An unknown error occurred",
         type: "error",
       });
     }
