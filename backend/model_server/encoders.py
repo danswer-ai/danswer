@@ -16,6 +16,7 @@ from sentence_transformers import SentenceTransformer  # type: ignore
 from vertexai.language_models import TextEmbeddingInput  # type: ignore
 from vertexai.language_models import TextEmbeddingModel  # type: ignore
 
+from danswer.configs.model_configs import CLIENT_EMBEDDING_TIMEOUT
 from danswer.utils.logger import setup_logger
 from model_server.constants import DEFAULT_COHERE_MODEL
 from model_server.constants import DEFAULT_OPENAI_MODEL
@@ -56,11 +57,11 @@ def _initialize_client(
     api_key: str, provider: EmbeddingProvider, model: str | None = None
 ) -> Any:
     if provider == EmbeddingProvider.OPENAI:
-        return openai.OpenAI(api_key=api_key)
+        return openai.OpenAI(api_key=api_key, timeout=CLIENT_EMBEDDING_TIMEOUT)
     elif provider == EmbeddingProvider.COHERE:
         return CohereClient(api_key=api_key)
     elif provider == EmbeddingProvider.VOYAGE:
-        return voyageai.Client(api_key=api_key)
+        return voyageai.Client(api_key=api_key, timeout=CLIENT_EMBEDDING_TIMEOUT)
     elif provider == EmbeddingProvider.GOOGLE:
         credentials = service_account.Credentials.from_service_account_info(
             json.loads(api_key)

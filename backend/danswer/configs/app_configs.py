@@ -401,6 +401,8 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
     os.environ.get("CUSTOM_ANSWER_VALIDITY_CONDITIONS", "[]")
 )
 
+VESPA_REQUEST_TIMEOUT = int(os.environ.get("VESPA_REQUEST_TIMEOUT", 0)) or None
+
 
 #####
 # Enterprise Edition Configs
