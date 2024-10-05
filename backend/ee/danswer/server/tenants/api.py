@@ -114,7 +114,6 @@ async def update_subscription_quantity(
         )
 
         return CheckoutSessionCreationResponse(id=updated_subscription.id)
-        # return CheckoutSessionCreationResponse(id=checkout_session.id)
     except Exception as e:
         logger.exception("Failed to create checkout session")
         raise HTTPException(status_code=500, detail=str(e))
