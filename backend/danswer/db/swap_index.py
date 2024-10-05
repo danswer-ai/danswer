@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
@@ -11,8 +12,11 @@ from danswer.db.index_attempt import (
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_search_settings_status
+from danswer.document_index.vespa.index import VespaIndex
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import current_tenant_id
+
 
 logger = setup_logger()
 
@@ -63,3 +67,10 @@ def check_index_swap(db_session: Session) -> None:
             # Recount aggregates
             for cc_pair in all_cc_pairs:
                 resync_cc_pair(cc_pair, db_session=db_session)
+
+            if MULTI_TENANT:
+                # Delete all chunks for this tenant in the previous index
+                VespaIndex.expire_tenant_index(
+                    tenant_id=current_tenant_id,
+                    index_name=now_old_search_settings.index_name,
+                )

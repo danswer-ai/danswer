@@ -151,6 +151,11 @@ def _mark_run_failed(
 """Main funcs"""
 
 
+def cleanup_vespa_index(tenant_id: str | None) -> None:
+    if not MULTI_TENANT:
+        return
+
+
 def create_indexing_jobs(
     existing_jobs: dict[int, Future | SimpleJob], tenant_id: str | None
 ) -> None:

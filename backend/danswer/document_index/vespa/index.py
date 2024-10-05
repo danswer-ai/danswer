@@ -637,6 +637,10 @@ class VespaIndex(DocumentIndex):
 
         return query_vespa(params)
 
+    @classmethod
+    def expire_tenant_index(self, tenant_id: str, index_name: str) -> None:
+        pass
+
     def admin_retrieval(
         self,
         query: str,
