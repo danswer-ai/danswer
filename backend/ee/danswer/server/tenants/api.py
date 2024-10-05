@@ -143,6 +143,4 @@ async def create_customer_portal_session(_: User = Depends(current_admin_user)) 
         logger.info(portal_session)
         return {"url": portal_session.url}
     except Exception as e:
-        print("error")
-        print(e)
         raise HTTPException(status_code=500, detail=str(e))

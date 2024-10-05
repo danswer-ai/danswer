@@ -218,13 +218,7 @@ def register_tenant_users(tenant_id: str, number_of_users: int) -> None:
     """
     Send a request to the control service to register the number of users for a tenant.
     """
-    print("inviting")
     url = f"{CONTROLPLANE_API_URL}/register-tenant-users"
-    # TODO standardize auth
-    # headers = {
-    #     "Content-Type": "application/json",
-    #     "X-API-KEY": CONTROL_PLANE_API_KEY
-    # }
     payload = {"tenant_id": tenant_id, "number_of_users": number_of_users}
 
     try:

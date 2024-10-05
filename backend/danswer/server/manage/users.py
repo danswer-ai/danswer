@@ -232,8 +232,6 @@ def bulk_invite_users(
 
         return number_of_invited_users
     except Exception as e:
-        print("exception is ")
-        print(e)
         logger.error(f"Failed to register tenant users: {str(e)}")
         logger.info(
             "Reverting changes: removing users from tenant and resetting invited users"

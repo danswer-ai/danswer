@@ -82,4 +82,3 @@ def send_user_email_invite(user_email: str, current_user: User) -> None:
         smtp_server.starttls()
         smtp_server.login(SMTP_USER, SMTP_PASS)
         smtp_server.send_message(msg)
-    print(f"Invitation email sent to {user_email}.")
