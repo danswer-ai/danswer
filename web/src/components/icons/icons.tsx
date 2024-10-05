@@ -52,6 +52,7 @@ import litellmIcon from "../../../public/LiteLLM.jpg";
 
 import awsWEBP from "../../../public/Amazon.webp";
 import azureIcon from "../../../public/Azure.png";
+import freshdeskIcon from "../../../public/Freshdesk.png";
 import asanaIcon from "../../../public/Asana.png";
 import anthropicSVG from "../../../public/Anthropic.svg";
 import nomicSVG from "../../../public/nomic.svg";
@@ -1256,6 +1257,20 @@ export const AWSIcon = ({
       className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
     >
       <Image src={awsWEBP} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const FreshdeskIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={freshdeskIcon} alt="Logo" width="96" height="96" />
     </div>
   );
 };

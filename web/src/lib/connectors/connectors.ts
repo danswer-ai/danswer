@@ -542,6 +542,10 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
       },
     ],
   },
+  freshdesk: {
+    description: "Configure Freshdesk connector",
+    values: [],
+  },
   clickup: {
     description: "Configure ClickUp connector",
     values: [

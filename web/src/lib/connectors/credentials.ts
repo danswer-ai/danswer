@@ -19,6 +19,12 @@ export interface GithubCredentialJson {
   github_access_token: string;
 }
 
+export interface FreshdeskCredentialJson {
+  freshdesk_api_key: string;
+  freshdesk_password: string;
+  freshdesk_domain: string;
+}
+
 export interface GitlabCredentialJson {
   gitlab_url: string;
   gitlab_access_token: string;
@@ -248,6 +254,11 @@ export const credentialTemplates: Record<ValidSources, any> = {
   asana: {
     asana_api_token_secret: "",
   } as AsanaCredentialJson,
+  freshdesk: {
+    freshdesk_api_key: "",
+    freshdesk_password: "",
+    freshdesk_domain: "",
+  } as FreshdeskCredentialJson,
   teams: {
     teams_client_id: "",
     teams_client_secret: "",
@@ -352,6 +363,11 @@ export const credentialDisplayNames: Record<string, string> = {
 
   // Zulip
   zuliprc_content: "Zuliprc Content",
+
+  // Freshdesk
+  freshdesk_api_key: "Freshdesk API Key",
+  freshdesk_password: "Freshdesk Password",
+  freshdesk_domain: "Freshdesk Domain",
 
   // Guru
   guru_user: "Guru User",

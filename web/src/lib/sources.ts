@@ -38,6 +38,7 @@ import {
   GoogleStorageIcon,
   ColorSlackIcon,
   XenforoIcon,
+  FreshdeskIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import {
@@ -59,6 +60,12 @@ type SourceMap = {
 };
 
 const SOURCE_METADATA_MAP: SourceMap = {
+  freshdesk: {
+    icon: FreshdeskIcon,
+    displayName: "Freshdesk",
+    category: SourceCategory.CustomerSupport,
+    docs: "https://docs.danswer.dev/connectors/freshdesk",
+  },
   web: {
     icon: GlobeIcon,
     displayName: "Web",

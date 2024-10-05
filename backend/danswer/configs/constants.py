@@ -74,6 +74,7 @@ CELERY_PRIMARY_WORKER_LOCK_TIMEOUT = 120
 class DocumentSource(str, Enum):
     # Special case, document passed in via Danswer APIs without specifying a source type
     INGESTION_API = "ingestion_api"
+    FRESHDESK = "freshdesk"
     SLACK = "slack"
     WEB = "web"
     GOOGLE_DRIVE = "google_drive"
