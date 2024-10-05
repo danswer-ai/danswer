@@ -230,7 +230,8 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
     return _ASYNC_ENGINE
 
 
-# Dependency to get the current tenant ID and set the context variable
+# Dependency to get the current tenant ID
+# If no token is present, uses the default schema for this use case
 def get_current_tenant_id(request: Request) -> str:
     """Dependency that extracts the tenant ID from the JWT token in the request and sets the context variable."""
     if not MULTI_TENANT:
