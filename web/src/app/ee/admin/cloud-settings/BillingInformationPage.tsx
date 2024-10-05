@@ -28,9 +28,7 @@ export default function BillingInformationPage() {
     refreshBillingInformation,
   } = useBillingInformation();
 
-  const [seats, setSeats] = useState<number | undefined>(
-    billingInformation?.seats
-  );
+  const [seats, setSeats] = useState<number>(1);
 
   useEffect(() => {
     if (billingInformation?.seats) {
@@ -194,7 +192,7 @@ export default function BillingInformationPage() {
           <div className="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
             <p className="font-bold">Notice:</p>
             <p>
-              You'll need to add a payment method before your trial ends to
+              You&apos;ll need to add a payment method before your trial ends to
               continue using the service.
             </p>
           </div>
