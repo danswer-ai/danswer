@@ -322,7 +322,11 @@ export function SelectorFormField({
 
   return (
     <div className="pb-4">
-      {label && <ShadcnLabel>{label}</ShadcnLabel>}
+      {label && (
+        <ShadcnLabel className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed">
+          {label}
+        </ShadcnLabel>
+      )}
       {subtext && <SubLabel>{subtext}</SubLabel>}
 
       <div>

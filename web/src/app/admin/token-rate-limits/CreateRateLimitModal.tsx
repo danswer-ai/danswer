@@ -65,7 +65,7 @@ export const CreateRateLimitModal = ({
   }, [shouldFetchTeamspaces]);
 
   return (
-    <div className="mt-4">
+    <div>
       <Formik
         initialValues={{
           enabled: true,

@@ -40,7 +40,7 @@ export const AddUserButton = () => {
         <Button onClick={() => setIsModalOpen(true)}>Invite People</Button>
       }
     >
-      <div className="flex flex-col gap-y-3 pt-4">
+      <div className="flex flex-col gap-y-3">
         <Label>
           Add the email addresses to import, separated by whitespaces.
         </Label>
