@@ -1,5 +1,4 @@
 import * as Yup from "yup";
-import { IsPublicGroupSelectorFormType } from "@/components/IsPublicGroupSelector";
 import { ConfigurableSources, ValidInputTypes, ValidSources } from "../types";
 import { AccessTypeGroupSelectorFormType } from "@/components/admin/connectors/AccessTypeGroupSelector";
 
@@ -542,6 +541,20 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
       },
     ],
   },
+  discord: {
+    description: "Configure Discord connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter the Discord channel ID",
+        label: "Channel ID",
+        name: "channel_id",
+        optional: false,
+        description: "The ID of the Discord channel to index.",
+      },
+    ],
+  },
+
   clickup: {
     description: "Configure ClickUp connector",
     values: [
