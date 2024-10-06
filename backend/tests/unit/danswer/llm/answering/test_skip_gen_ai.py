@@ -3,6 +3,7 @@ from typing import cast
 from unittest.mock import Mock
 
 import pytest
+from pytest_mock import MockerFixture
 
 from danswer.llm.answering.answer import Answer
 from danswer.one_shot_answer.answer_question import AnswerObjectIterator
@@ -113,14 +114,14 @@ class FinishedTestException(Exception):
 )
 @pytest.mark.skip(reason="not working")
 def test_run_qa_skip_gen_ai(
-    config: dict[str, Any], questions: list[dict[str, Any]], mocker
+    config: dict[str, Any], questions: list[dict[str, Any]], mocker: MockerFixture
 ) -> None:
     mocker.patch(
         "tests.regression.answer_quality.run_qa._initialize_files",
         return_value=("test", questions),
     )
 
-    def arg_checker(question_data: dict, config: dict, question_number: int):
+    def arg_checker(question_data: dict, config: dict, question_number: int) -> None:
         assert question_data == questions[0]
         raise FinishedTestException()
 
