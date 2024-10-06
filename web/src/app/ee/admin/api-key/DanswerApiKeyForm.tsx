@@ -28,18 +28,9 @@ export const DanswerApiKeyForm = ({
 
   return (
     <Modal onOutsideClick={onClose} width="w-2/6">
-      <div className="px-8 py-6 bg-background">
+      <>
         <h2 className="text-xl font-bold flex">
           {isUpdate ? "Update API Key" : "Create a new API Key"}
-          <div
-            onClick={onClose}
-            className="ml-auto hover:bg-hover p-1.5 rounded"
-          >
-            <XIcon
-              size={20}
-              className="my-auto flex flex-shrink-0 cursor-pointer"
-            />
-          </div>
         </h2>
 
         <Divider />
@@ -126,7 +117,7 @@ export const DanswerApiKeyForm = ({
             </Form>
           )}
         </Formik>
-      </div>
+      </>
     </Modal>
   );
 };

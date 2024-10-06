@@ -318,10 +318,11 @@ export function ToolEditor({ tool }: { tool?: ToolSnapshot }) {
       <Formik
         initialValues={{
           definition: prettifiedDefinition,
-          customHeaders: tool?.custom_headers?.map((header) => ({
-            key: header.key,
-            value: header.value,
-          })) ?? [{ key: "test", value: "value" }],
+          customHeaders:
+            tool?.custom_headers?.map((header) => ({
+              key: header.key,
+              value: header.value,
+            })) ?? [],
         }}
         validationSchema={ToolSchema}
         onSubmit={async (values: ToolFormValues) => {

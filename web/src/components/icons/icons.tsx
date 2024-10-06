@@ -1037,13 +1037,9 @@ export const GoogleDriveIcon = ({
 export const BookstackIcon = ({
   size = 16,
   className = defaultTailwindCSS,
-}: IconProps) => (
-  <LogoIcon
-    size={size}
-    className={`${className} text-[#0288D1]`}
-    src="/Bookstack.svg"
-  />
-);
+}: IconProps) => {
+  return <SiBookstack size={size} className={className + " text-[#0288D1]"} />;
+};
 
 export const ConfluenceIcon = ({
   size = 16,
@@ -1269,6 +1265,18 @@ export const WikipediaIcon = ({
 }: IconProps) => (
   <LogoIcon size={size} className={className} src={wikipediaIcon} />
 );
+
+export const XenforoIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <LogoIcon size={size} className={className} src={xenforoIcon} />
+);
+
+export const AsanaIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => <LogoIcon size={size} className={className} src={asanaIcon} />;
 
 /* 
 EE Icons

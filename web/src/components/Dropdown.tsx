@@ -224,7 +224,7 @@ export const CustomDropdown = ({
       {isOpen && (
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className={`absolute ${
+          className={`absolute  ${
             direction === "up" ? "bottom-full pb-2" : "pt-2"
           } w-full z-30 box-shadow`}
         >
