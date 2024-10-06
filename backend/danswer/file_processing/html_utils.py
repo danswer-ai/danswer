@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import IO
 
 import bs4
+import trafilatura
+from trafilatura.settings import use_config
 
 from danswer.configs.app_configs import HTML_BASED_CONNECTOR_TRANSFORM_LINKS_STRATEGY
 from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_CLASSES
@@ -45,6 +47,18 @@ def format_element_text(element_text: str, link_href: str | None) -> str:
         return element_text_no_newlines
 
     return f"[{element_text_no_newlines}]({link_href})"
+
+
+def parse_html_with_trafilatura(html_content: str) -> str:
+    """Parse HTML content using trafilatura."""
+    config = use_config()
+    config.set("DEFAULT", "include_links", "True")
+    config.set("DEFAULT", "include_tables", "True")
+    config.set("DEFAULT", "include_images", "True")
+    config.set("DEFAULT", "include_formatting", "True")
+
+    extracted_text = trafilatura.extract(html_content, config=config)
+    return strip_excessive_newlines_and_spaces(extracted_text) if extracted_text else ""
 
 
 def format_document_soup(
@@ -184,6 +198,10 @@ def web_html_cleanup(
             [tag.extract() for tag in soup.find_all(undesired_tag)]
 
     # 200B is ZeroWidthSpace which we don't care for
-    page_text = format_document_soup(soup).replace("\u200B", "")
+    try:
+        page_text = parse_html_with_trafilatura(soup).replace("\u200B", "")
+        return ParsedHTML(title=title, cleaned_text=page_text)
+    except Exception as e:
+        print(f"Error parsing HTML with trafilatura: {e}")
 
-    return ParsedHTML(title=title, cleaned_text=page_text)
+        # return ParsedHTML(title=title, cleaned_text=parse_html_basic(soup))
