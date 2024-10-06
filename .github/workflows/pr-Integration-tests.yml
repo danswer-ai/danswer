@@ -6,10 +6,13 @@ concurrency:
 on:
   merge_group:
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - 'release/**'
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
 jobs:
   integration-tests:
@@ -140,6 +143,7 @@ jobs:
             -e REDIS_HOST=cache \
             -e API_SERVER_HOST=api_server \
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
+            -e SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN} \
             -e TEST_WEB_HOSTNAME=test-runner \
             danswer/danswer-integration:test
         continue-on-error: true

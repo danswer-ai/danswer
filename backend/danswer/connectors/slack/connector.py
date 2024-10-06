@@ -205,12 +205,17 @@ _DISALLOWED_MSG_SUBTYPES = {
     "group_leave",
     "group_archive",
     "group_unarchive",
+    "channel_leave",
+    "channel_name",
+    "channel_join",
 }
 
 
-def _default_msg_filter(message: MessageType) -> bool:
+def default_msg_filter(message: MessageType) -> bool:
     # Don't keep messages from bots
     if message.get("bot_id") or message.get("app_id"):
+        if message.get("bot_profile", {}).get("name") == "DanswerConnector":
+            return False
         return True
 
     # Uninformative
@@ -261,7 +266,7 @@ def _get_all_docs(
     channel_name_regex_enabled: bool = False,
     oldest: str | None = None,
     latest: str | None = None,
-    msg_filter_func: Callable[[MessageType], bool] = _default_msg_filter,
+    msg_filter_func: Callable[[MessageType], bool] = default_msg_filter,
 ) -> Generator[Document, None, None]:
     """Get all documents in the workspace, channel by channel"""
     slack_cleaner = SlackTextCleaner(client=client)
@@ -320,7 +325,7 @@ def _get_all_doc_ids(
     client: WebClient,
     channels: list[str] | None = None,
     channel_name_regex_enabled: bool = False,
-    msg_filter_func: Callable[[MessageType], bool] = _default_msg_filter,
+    msg_filter_func: Callable[[MessageType], bool] = default_msg_filter,
 ) -> set[str]:
     """
     Get all document ids in the workspace, channel by channel

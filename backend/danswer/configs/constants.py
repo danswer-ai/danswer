@@ -1,3 +1,5 @@
+import platform
+import socket
 from enum import auto
 from enum import Enum
 
@@ -39,6 +41,7 @@ POSTGRES_CELERY_WORKER_LIGHT_APP_NAME = "celery_worker_light"
 POSTGRES_CELERY_WORKER_HEAVY_APP_NAME = "celery_worker_heavy"
 POSTGRES_PERMISSIONS_APP_NAME = "permissions"
 POSTGRES_UNKNOWN_APP_NAME = "unknown"
+POSTGRES_DEFAULT_SCHEMA = "public"
 
 # API Keys
 DANSWER_API_KEY_PREFIX = "API_KEY__"
@@ -203,3 +206,13 @@ class DanswerCeleryPriority(int, Enum):
     MEDIUM = auto()
     LOW = auto()
     LOWEST = auto()
+
+
+REDIS_SOCKET_KEEPALIVE_OPTIONS = {}
+REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPINTVL] = 15
+REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPCNT] = 3
+
+if platform.system() == "Darwin":
+    REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPALIVE] = 60  # type: ignore
+else:
+    REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPIDLE] = 60  # type: ignore

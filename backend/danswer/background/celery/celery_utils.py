@@ -20,12 +20,12 @@ from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.enums import TaskStatus
 from danswer.db.models import TaskQueueState
-from danswer.redis.redis_pool import RedisPool
+from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import DeletionAttemptSnapshot
 from danswer.utils.logger import setup_logger
 
+
 logger = setup_logger()
-redis_pool = RedisPool()
 
 
 # TODO: make this a member of RedisConnectorPruning
@@ -39,7 +39,7 @@ def cc_pair_is_pruning(cc_pair_id: int, db_session: Session) -> bool:
 
     rcp = RedisConnectorPruning(cc_pair.id)
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
     if r.exists(rcp.fence_key):
         return True
 
@@ -60,7 +60,7 @@ def _get_deletion_status(
 
     rcd = RedisConnectorDeletion(cc_pair.id)
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
     if not r.exists(rcd.fence_key):
         return None
 

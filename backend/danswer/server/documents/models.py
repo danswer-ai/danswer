@@ -268,14 +268,12 @@ class CCPairFullInfo(BaseModel):
         )
 
 
-# Temporarily unused, but can be put back in
-# once we store more pruning metadata in redis
-# class CCPairPruningTask(BaseModel):
-#     id: str
-#     name: str
-#     status: TaskStatus
-#     start_time: datetime | None
-#     register_time: datetime | None
+class CeleryTaskStatus(BaseModel):
+    id: str
+    name: str
+    status: TaskStatus
+    start_time: datetime | None
+    register_time: datetime | None
 
 
 class FailedConnectorIndexingStatus(BaseModel):

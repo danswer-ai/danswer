@@ -55,15 +55,18 @@ function Main() {
     <div className="container mx-auto p-4">
       <Card className="mb-8 max-w-2xl bg-white text-text shadow-lg rounded-lg">
         <h3 className="text-2xl text-text-800 font-bold mb-4 text-text border-b border-b-border pb-2">
-          Unstructured API Integration
+          Process with Unstructured API
         </h3>
 
         <div className="space-y-4">
           <p className="text-text-600">
-            Unstructured effortlessly extracts and transforms complex data from
-            difficult-to-use formats like HTML, PDF, CSV, PNG, PPTX, and more.
-            Enter an API key to enable this powerful document processing. If not
-            set, standard document processing will be used.
+            Unstructured extracts and transforms complex data from formats like
+            .pdf, .docx, .png, .pptx, etc. into clean text for Danswer to
+            ingest. Provide an API key to enable Unstructured document
+            processing.
+            <br />
+            <br /> <strong>Note:</strong> this will send documents to
+            Unstructured servers for processing.
           </p>
           <p className="text-text-600">
             Learn more about Unstructured{" "}

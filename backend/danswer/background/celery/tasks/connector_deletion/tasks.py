@@ -15,9 +15,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
-from danswer.redis.redis_pool import RedisPool
-
-redis_pool = RedisPool()
+from danswer.redis.redis_pool import get_redis_client
 
 
 @shared_task(
@@ -26,7 +24,7 @@ redis_pool = RedisPool()
     trail=False,
 )
 def check_for_connector_deletion_task() -> None:
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     lock_beat = r.lock(
         DanswerRedisLocks.CHECK_CONNECTOR_DELETION_BEAT_LOCK,

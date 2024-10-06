@@ -14,7 +14,7 @@ from danswer.db.document_set import fetch_document_sets_for_document
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
-from danswer.document_index.interfaces import UpdateRequest
+from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 
 
@@ -76,8 +76,7 @@ def document_by_cc_pair_cleanup_task(
                 doc_sets = fetch_document_sets_for_document(document_id, db_session)
                 update_doc_sets: set[str] = set(doc_sets)
 
-                update_request = UpdateRequest(
-                    document_ids=[document_id],
+                fields = VespaDocumentFields(
                     document_sets=update_doc_sets,
                     access=doc_access,
                     boost=doc.boost,
@@ -85,7 +84,7 @@ def document_by_cc_pair_cleanup_task(
                 )
 
                 # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
-                document_index.update_single(update_request=update_request)
+                document_index.update_single(document_id, fields=fields)
 
                 # there are still other cc_pair references to the doc, so just resync to Vespa
                 delete_document_by_connector_credential_pair__no_commit(

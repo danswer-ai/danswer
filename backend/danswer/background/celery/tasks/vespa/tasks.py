@@ -43,14 +43,12 @@ from danswer.db.models import UserGroup
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
-from danswer.redis.redis_pool import RedisPool
+from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import (
     fetch_versioned_implementation_with_fallback,
 )
 from danswer.utils.variable_functionality import noop_fallback
-
-redis_pool = RedisPool()
 
 
 # celery auto associates tasks created inside another task,
@@ -64,7 +62,7 @@ def check_for_vespa_sync_task() -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     lock_beat = r.lock(
         DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK,
@@ -475,7 +473,7 @@ def monitor_vespa_sync() -> None:
     This task lock timeout is CELERY_METADATA_SYNC_BEAT_LOCK_TIMEOUT seconds, so don't
     do anything too expensive in this function!
     """
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     lock_beat = r.lock(
         DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK,

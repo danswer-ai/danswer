@@ -8,6 +8,8 @@ import requests
 from danswer.connectors.models import InputType
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
+from danswer.db.enums import TaskStatus
+from danswer.server.documents.models import CeleryTaskStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
 from danswer.server.documents.models import DocumentSource
@@ -83,7 +85,7 @@ class CCPairManager:
             groups=groups,
             user_performing_action=user_performing_action,
         )
-        return _cc_pair_creator(
+        cc_pair = _cc_pair_creator(
             connector_id=connector.id,
             credential_id=credential.id,
             name=name,
@@ -91,6 +93,7 @@ class CCPairManager:
             groups=groups,
             user_performing_action=user_performing_action,
         )
+        return cc_pair
 
     @staticmethod
     def create(
@@ -101,7 +104,7 @@ class CCPairManager:
         groups: list[int] | None = None,
         user_performing_action: DATestUser | None = None,
     ) -> DATestCCPair:
-        return _cc_pair_creator(
+        cc_pair = _cc_pair_creator(
             connector_id=connector_id,
             credential_id=credential_id,
             name=name,
@@ -109,6 +112,7 @@ class CCPairManager:
             groups=groups,
             user_performing_action=user_performing_action,
         )
+        return cc_pair
 
     @staticmethod
     def pause_cc_pair(
@@ -202,8 +206,27 @@ class CCPairManager:
             raise ValueError(f"CC pair {cc_pair.id} not found")
 
     @staticmethod
+    def run_once(
+        cc_pair: DATestCCPair,
+        user_performing_action: DATestUser | None = None,
+    ) -> None:
+        body = {
+            "connector_id": cc_pair.connector_id,
+            "credential_ids": [cc_pair.credential_id],
+            "from_beginning": True,
+        }
+        result = requests.post(
+            url=f"{API_SERVER_URL}/manage/admin/connector/run-once",
+            json=body,
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        result.raise_for_status()
+
+    @staticmethod
     def wait_for_indexing(
-        cc_pair_test: DATestCCPair,
+        cc_pair: DATestCCPair,
         after: datetime,
         timeout: float = MAX_DELAY,
         user_performing_action: DATestUser | None = None,
@@ -211,14 +234,20 @@ class CCPairManager:
         """after: Wait for an indexing success time after this time"""
         start = time.monotonic()
         while True:
-            cc_pairs = CCPairManager.get_all(user_performing_action)
-            for cc_pair in cc_pairs:
-                if cc_pair.cc_pair_id != cc_pair_test.id:
+            fetched_cc_pairs = CCPairManager.get_all(user_performing_action)
+            for fetched_cc_pair in fetched_cc_pairs:
+                if fetched_cc_pair.cc_pair_id != cc_pair.id:
                     continue
 
-                if cc_pair.last_success and cc_pair.last_success > after:
-                    print(f"cc_pair {cc_pair_test.id} indexing complete.")
+                if (
+                    fetched_cc_pair.last_success
+                    and fetched_cc_pair.last_success > after
+                ):
+                    print(f"cc_pair {cc_pair.id} indexing complete.")
                     return
+                else:
+                    print("cc_pair found but not finished:")
+                    # print(fetched_cc_pair.__dict__)
 
             elapsed = time.monotonic() - start
             if elapsed > timeout:
@@ -261,15 +290,14 @@ class CCPairManager:
 
     @staticmethod
     def wait_for_prune(
-        cc_pair_test: DATestCCPair,
-        after: datetime,
+        cc_pair: DATestCCPair,
         timeout: float = MAX_DELAY,
         user_performing_action: DATestUser | None = None,
     ) -> None:
         """after: The task register time must be after this time."""
         start = time.monotonic()
         while True:
-            result = CCPairManager.is_pruning(cc_pair_test, user_performing_action)
+            result = CCPairManager.is_pruning(cc_pair, user_performing_action)
             if not result:
                 break
 
@@ -281,6 +309,65 @@ class CCPairManager:
 
             print(
                 f"Waiting for CC pruning to complete. elapsed={elapsed:.2f} timeout={timeout}"
+            )
+            time.sleep(5)
+
+    @staticmethod
+    def sync(
+        cc_pair: DATestCCPair,
+        user_performing_action: DATestUser | None = None,
+    ) -> None:
+        result = requests.post(
+            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/sync",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        result.raise_for_status()
+
+    @staticmethod
+    def get_sync_task(
+        cc_pair: DATestCCPair,
+        user_performing_action: DATestUser | None = None,
+    ) -> CeleryTaskStatus:
+        response = requests.get(
+            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/sync",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        return CeleryTaskStatus(**response.json())
+
+    @staticmethod
+    def wait_for_sync(
+        cc_pair: DATestCCPair,
+        after: datetime,
+        timeout: float = MAX_DELAY,
+        user_performing_action: DATestUser | None = None,
+    ) -> None:
+        """after: The task register time must be after this time."""
+        start = time.monotonic()
+        while True:
+            task = CCPairManager.get_sync_task(cc_pair, user_performing_action)
+            if not task:
+                raise ValueError("Sync task not found.")
+
+            if not task.register_time or task.register_time < after:
+                raise ValueError("Sync task register time is too early.")
+
+            if task.status == TaskStatus.SUCCESS:
+                # Sync succeeded
+                return
+
+            elapsed = time.monotonic() - start
+            if elapsed > timeout:
+                raise TimeoutError(
+                    f"CC pair syncing was not completed within {timeout} seconds"
+                )
+
+            print(
+                f"Waiting for CC syncing to complete. elapsed={elapsed:.2f} timeout={timeout}"
             )
             time.sleep(5)
 

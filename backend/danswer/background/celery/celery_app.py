@@ -31,7 +31,7 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_HEAVY_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_LIGHT_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
 from danswer.db.engine import SqlEngine
-from danswer.redis.redis_pool import RedisPool
+from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
@@ -40,8 +40,6 @@ logger = setup_logger()
 
 # use this within celery tasks to get celery task specific logging
 task_logger = get_task_logger(__name__)
-
-redis_pool = RedisPool()
 
 celery_app = Celery(__name__)
 celery_app.config_from_object(
@@ -80,13 +78,13 @@ def celery_task_postrun(
     if not task_id:
         return
 
+    r = get_redis_client()
+
     if task_id.startswith(RedisConnectorCredentialPair.PREFIX):
-        r = redis_pool.get_client()
         r.srem(RedisConnectorCredentialPair.get_taskset_key(), task_id)
         return
 
     if task_id.startswith(RedisDocumentSet.PREFIX):
-        r = redis_pool.get_client()
         document_set_id = RedisDocumentSet.get_id_from_task_id(task_id)
         if document_set_id is not None:
             rds = RedisDocumentSet(document_set_id)
@@ -94,7 +92,6 @@ def celery_task_postrun(
         return
 
     if task_id.startswith(RedisUserGroup.PREFIX):
-        r = redis_pool.get_client()
         usergroup_id = RedisUserGroup.get_id_from_task_id(task_id)
         if usergroup_id is not None:
             rug = RedisUserGroup(usergroup_id)
@@ -102,7 +99,6 @@ def celery_task_postrun(
         return
 
     if task_id.startswith(RedisConnectorDeletion.PREFIX):
-        r = redis_pool.get_client()
         cc_pair_id = RedisConnectorDeletion.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
             rcd = RedisConnectorDeletion(cc_pair_id)
@@ -110,7 +106,6 @@ def celery_task_postrun(
         return
 
     if task_id.startswith(RedisConnectorPruning.SUBTASK_PREFIX):
-        r = redis_pool.get_client()
         cc_pair_id = RedisConnectorPruning.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
             rcp = RedisConnectorPruning(cc_pair_id)
@@ -139,7 +134,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
@@ -199,7 +194,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
     # This is singleton work that should be done on startup exactly once
     # by the primary worker
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     # For the moment, we're assuming that we are the only primary worker
     # that should be running.
@@ -389,7 +384,7 @@ class HubPeriodicTask(bootsteps.StartStopStep):
             if not hasattr(worker, "primary_worker_lock"):
                 return
 
-            r = redis_pool.get_client()
+            r = get_redis_client()
 
             lock: redis.lock.Lock = worker.primary_worker_lock
 

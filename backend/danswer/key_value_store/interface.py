@@ -9,11 +9,11 @@ JSON_ro: TypeAlias = (
 )
 
 
-class ConfigNotFoundError(Exception):
+class KvKeyNotFoundError(Exception):
     pass
 
 
-class DynamicConfigStore:
+class KeyValueStore:
     @abc.abstractmethod
     def store(self, key: str, val: JSON_ro, encrypt: bool = False) -> None:
         raise NotImplementedError

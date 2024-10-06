@@ -27,9 +27,7 @@ from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
-from danswer.redis.redis_pool import RedisPool
-
-redis_pool = RedisPool()
+from danswer.redis.redis_pool import get_redis_client
 
 
 @shared_task(
@@ -37,7 +35,7 @@ redis_pool = RedisPool()
     soft_time_limit=JOB_TIMEOUT,
 )
 def check_for_prune_task_2() -> None:
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     lock_beat = r.lock(
         DanswerRedisLocks.CHECK_PRUNE_BEAT_LOCK,
@@ -160,7 +158,7 @@ def connector_pruning_generator_task(connector_id: int, credential_id: int) -> N
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list"""
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     with Session(get_sqlalchemy_engine()) as db_session:
         try:
