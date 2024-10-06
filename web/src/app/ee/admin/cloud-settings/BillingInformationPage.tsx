@@ -152,7 +152,7 @@ export default function BillingInformationPage() {
                 </p>
               </div>
               <p className="text-xl font-semibold text-gray-900">
-                {statusToDisplay(billingInformation.subscriptionStatus)}
+                {statusToDisplay(billingInformation.subscription_status)}
               </p>
             </div>
           </div>
@@ -168,7 +168,9 @@ export default function BillingInformationPage() {
                 </p>
               </div>
               <p className="text-xl font-semibold text-gray-900">
-                {new Date(billingInformation.billingStart).toLocaleDateString()}
+                {new Date(
+                  billingInformation.billing_start
+                ).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -182,13 +184,13 @@ export default function BillingInformationPage() {
                 </p>
               </div>
               <p className="text-xl font-semibold text-gray-900">
-                {new Date(billingInformation.billingEnd).toLocaleDateString()}
+                {new Date(billingInformation.billing_end).toLocaleDateString()}
               </p>
             </div>
           </div>
         </div>
 
-        {!billingInformation.paymentMethodEnabled && (
+        {!billingInformation.payment_method_enabled && (
           <div className="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
             <p className="font-bold">Notice:</p>
             <p>
@@ -197,7 +199,7 @@ export default function BillingInformationPage() {
             </p>
           </div>
         )}
-        {billingInformation.subscriptionStatus === "trialing" ? (
+        {billingInformation.subscription_status === "trialing" ? (
           <div className="bg-white p-5 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md mt-8">
             <p className="text-lg font-medium text-gray-700">
               No cap on users during trial

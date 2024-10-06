@@ -135,7 +135,7 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
     os.environ.get("POSTGRES_PASSWORD") or "password"
 )
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5433"
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
 POSTGRES_API_SERVER_POOL_SIZE = int(
@@ -423,12 +423,27 @@ AZURE_DALLE_API_BASE = os.environ.get("AZURE_DALLE_API_BASE")
 AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
 
 
+# Cloud configuration
+
+# Multi-tenancy configuration
 MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
-SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY", "")
-
-
-DATA_PLANE_SECRET = os.environ.get("DATA_PLANE_SECRET", "")
-EXPECTED_API_KEY = os.environ.get("EXPECTED_API_KEY", "")
-CONTROLPLANE_API_URL = os.environ.get("CONTROLPLANE_API_URL", "http://localhost:8082")
-
 ENABLE_EMAIL_INVITES = os.environ.get("ENABLE_EMAIL_INVITES", "").lower() == "true"
+
+# Security and authentication
+SECRET_JWT_KEY = os.environ.get(
+    "SECRET_JWT_KEY", ""
+)  # Used for encryption of the JWT token for user's tenant context
+DATA_PLANE_SECRET = os.environ.get(
+    "DATA_PLANE_SECRET", ""
+)  # Used for secure communication between the control and data plane
+EXPECTED_API_KEY = os.environ.get(
+    "EXPECTED_API_KEY", ""
+)  # Additional security check for the control plane API
+
+# API configuration
+CONTROL_PLANE_API_BASE_URL = os.environ.get(
+    "CONTROL_PLANE_API_BASE_URL", "http://localhost:8082"
+)
+
+# JWT configuration
+JWT_ALGORITHM = "HS256"

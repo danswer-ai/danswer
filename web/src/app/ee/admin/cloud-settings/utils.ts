@@ -28,8 +28,8 @@ export const statusToDisplay = (status: string) => {
       return "Active";
     case "canceled":
       return "Canceled";
-    case "incomplete":
-      return "Incomplete";
+    default:
+      return "Unknown";
   }
 };
 

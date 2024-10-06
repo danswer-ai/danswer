@@ -45,11 +45,9 @@ from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserUpdate
 from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.app_configs import CONTROLPLANE_API_URL
-from danswer.configs.app_configs import DATA_PLANE_SECRET
+from danswer.configs.app_configs import CONTROL_PLANE_API_BASE_URL
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
-from danswer.configs.app_configs import EXPECTED_API_KEY
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SECRET_JWT_KEY
@@ -218,7 +216,7 @@ def register_tenant_users(tenant_id: str, number_of_users: int) -> None:
     """
     Send a request to the control service to register the number of users for a tenant.
     """
-    url = f"{CONTROLPLANE_API_URL}/register-tenant-users"
+    url = f"{CONTROL_PLANE_API_BASE_URL}/register-tenant-users"
     payload = {"tenant_id": tenant_id, "number_of_users": number_of_users}
 
     try:
@@ -226,20 +224,16 @@ def register_tenant_users(tenant_id: str, number_of_users: int) -> None:
         response.raise_for_status()
     except HTTPError as e:
         if e.response.status_code == 403:
-            # Try to extract the detailed error message
             try:
                 error_detail = e.response.json().get("detail", str(e))
             except json.JSONDecodeError:
                 error_detail = str(e)
-
-            # Raise a custom exception with the detailed error message
             raise Exception(f"{error_detail}")
 
-        # For other HTTP errors, you might want to log them or handle differently
         logger.error(f"Error registering tenant users: {str(e)}")
         raise
+
     except Exception as e:
-        # Handle any other exceptions (e.g., network errors)
         logger.error(f"Unexpected error registering tenant users: {str(e)}")
         raise
 
@@ -690,28 +684,3 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
 def get_default_admin_user_emails_() -> list[str]:
     # No default seeding available for Danswer MIT
     return []
-
-
-async def control_plane_dep(request: Request) -> None:
-    api_key = request.headers.get("X-API-KEY")
-    if api_key != EXPECTED_API_KEY:
-        logger.warning("Invalid API key")
-        raise HTTPException(status_code=401, detail="Invalid API key")
-
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        logger.warning("Invalid authorization header")
-        raise HTTPException(status_code=401, detail="Invalid authorization header")
-
-    token = auth_header.split(" ")[1]
-    try:
-        payload = jwt.decode(token, DATA_PLANE_SECRET, algorithms=["HS256"])
-        if payload.get("scope") != "tenant:create":
-            logger.warning("Insufficient permissions")
-            raise HTTPException(status_code=403, detail="Insufficient permissions")
-    except jwt.ExpiredSignatureError:
-        logger.warning("Token has expired")
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.InvalidTokenError:
-        logger.warning("Invalid token")
-        raise HTTPException(status_code=401, detail="Invalid token")

@@ -12,10 +12,10 @@ class CreateTenantRequest(BaseModel):
 
 class BillingInformation(BaseModel):
     seats: int
-    subscriptionStatus: str
-    billingStart: str
-    billingEnd: str
-    paymentMethodEnabled: bool
+    subscription_status: str
+    billing_start: str
+    billing_end: str
+    payment_method_enabled: bool
 
 
 class CheckoutSessionCreationResponse(BaseModel):

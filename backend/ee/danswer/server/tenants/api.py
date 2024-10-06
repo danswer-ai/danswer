@@ -6,7 +6,6 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import control_plane_dep
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import User
 from danswer.configs.app_configs import MULTI_TENANT
@@ -18,6 +17,9 @@ from danswer.setup import setup_danswer
 from danswer.utils.logger import setup_logger
 from ee.danswer.configs.app_configs import STRIPE_PRICE_ID
 from ee.danswer.configs.app_configs import STRIPE_SECRET_KEY
+from ee.danswer.server.tenants.access import control_plane_dep
+from ee.danswer.server.tenants.billing import fetch_billing_information
+from ee.danswer.server.tenants.billing import fetch_tenant_stripe_information
 from ee.danswer.server.tenants.models import BillingInformation
 from ee.danswer.server.tenants.models import CheckoutSessionCreationRequest
 from ee.danswer.server.tenants.models import CheckoutSessionCreationResponse
@@ -26,8 +28,6 @@ from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
 from ee.danswer.server.tenants.provisioning import user_owns_a_tenant
-from ee.danswer.server.tenants.utils import fetch_billing_information
-from ee.danswer.server.tenants.utils import fetch_tenant_stripe_information
 from shared_configs.configs import current_tenant_id
 
 logger = setup_logger()
@@ -96,10 +96,8 @@ async def update_subscription_quantity(
     try:
         tenant_id = current_tenant_id.get()
         response = fetch_tenant_stripe_information(tenant_id)
-        response.get("stripe_customer_id")
         stripe_subscription_id = cast(str, response.get("stripe_subscription_id"))
 
-        # Modified code to update existing subscription
         subscription = stripe.Subscription.retrieve(stripe_subscription_id)
         updated_subscription = stripe.Subscription.modify(
             stripe_subscription_id,
@@ -130,7 +128,7 @@ async def billing_information(
 @router.post("/create-customer-portal-session")
 async def create_customer_portal_session(_: User = Depends(current_admin_user)) -> dict:
     try:
-        # Fetch tenant_id and the current tenant's information
+        # Fetch tenant_id and current tenant's information
         tenant_id = current_tenant_id.get()
         stripe_info = fetch_tenant_stripe_information(tenant_id)
         stripe_customer_id = stripe_info.get("stripe_customer_id")
