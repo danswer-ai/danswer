@@ -131,9 +131,8 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
             )
             return False
 
+        bot_tag_id = get_danswer_bot_app_id(client.web_client)
         if event_type == "message":
-            bot_tag_id = get_danswer_bot_app_id(client.web_client)
-
             is_dm = event.get("channel_type") == "im"
             is_tagged = bot_tag_id and bot_tag_id in msg
             is_danswer_bot_msg = bot_tag_id and bot_tag_id in event.get("user", "")
@@ -159,8 +158,10 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
                 slack_bot_config = get_slack_bot_config_for_channel(
                     channel_name=channel_name, db_session=db_session
                 )
-            if not slack_bot_config or not slack_bot_config.channel_config.get(
-                "respond_to_bots"
+            # If DanswerBot is not specifically tagged and the channel is not set to respond to bots, ignore the message
+            if (not bot_tag_id or bot_tag_id not in msg) and (
+                not slack_bot_config
+                or not slack_bot_config.channel_config.get("respond_to_bots")
             ):
                 channel_specific_logger.info("Ignoring message from bot")
                 return False
@@ -447,8 +448,9 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
                 return view_routing(req, client)
         elif req.type == "events_api" or req.type == "slash_commands":
             return process_message(req, client)
-    except Exception:
-        logger.exception("Failed to process slack event")
+    except Exception as e:
+        logger.exception(f"Failed to process slack event. Error: {e}")
+        logger.error(f"Slack request payload: {req.payload}")
 
 
 def _get_socket_client(slack_bot_tokens: SlackBotTokens) -> SocketModeClient:
