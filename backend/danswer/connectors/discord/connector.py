@@ -2,11 +2,18 @@ import asyncio
 from datetime import datetime
 from datetime import timezone
 from typing import Any
-from typing import cast
 from typing import List
 from typing import Optional
+from typing import Union
 
 import discord
+from discord import DMChannel
+from discord import GroupChannel
+from discord import PartialMessageable
+from discord import StageChannel
+from discord import TextChannel
+from discord import Thread
+from discord import VoiceChannel
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -18,172 +25,184 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
 
+
 logger = setup_logger()
 
 
-async def read_channel(
-    token: str,
-    channel_id: int,
-    limit: int = INDEX_BATCH_SIZE,
-    oldest: bool = True,
-    before: int = None,
-    after: int = None,
-) -> List:
-    messages = []
-
-    class Client(discord.Client):
-        async def on_ready(self) -> None:
-            try:
-                logger.info(f"{self.user} has connected to Discord!")
-                channel = client.get_channel(channel_id)
-                if type(channel) != discord.TextChannel:
-                    raise ValueError("The Channel ID provided is not a text channel")
-                threads = {}
-                for thread in channel.threads:
-                    threads[thread.id] = thread
-                if isinstance(before, str):
-                    before_msg = before
-                elif isinstance(before, datetime):
-                    before_msg = before
-                else:
-                    before_msg = None
-                if isinstance(after, str):
-                    after_msg = await channel.fetch_message(after)
-                elif isinstance(after, datetime):
-                    after_msg = after
-                else:
-                    after_msg = None
-                async for message in channel.history(
-                    limit=limit, oldest_first=oldest, before=before_msg, after=after_msg
-                ):
-                    if message.id in threads:
-                        thread = threads[message.id]
-                        curr_thread_messages = []
-                        async for thread_msg in thread.history(
-                            limit=limit, oldest_first=oldest
-                        ):
-                            section = Section(
-                                link=thread_msg.jump_url, text=thread_msg.content
-                            )
-                            curr_thread_messages.append(section)
-                        messages.append({"Thread": curr_thread_messages})
-                    else:
-                        document_to_append = Document(
-                            id=str(message.id),
-                            sections=[
-                                Section(link=message.jump_url, text=message.content)
-                            ],
-                            source=DocumentSource.DISCORD,
-                            semantic_identifier=message.jump_url,
-                            doc_updated_at=message.created_at,
-                            metadata={"channel_id": str(message.channel.id)},
-                        )
-                        messages.append({"Regular": document_to_append})
-            except Exception as exception:
-                logger.error("Error Exception: " + str(exception))
-            finally:
-                await self.close()
-
-    intents = discord.Intents.default()
-    intents.message_content = True
-    client = Client(intents=intents)
-    await client.start(token)
-    return messages
-
-
 class DiscordConnector(LoadConnector, PollConnector):
-    def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
+    def __init__(
+        self,
+        channel_ids: List[int],
+        discord_bot_token: Optional[str] = None,
+        batch_size: int = INDEX_BATCH_SIZE,
+    ) -> None:
         self.batch_size = batch_size
-        self.discord_token: str | None = None
+        self.discord_bot_token: Optional[str] = discord_bot_token
+        self.channel_ids = channel_ids
 
-    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        self.discord_token = cast(str, credentials["discord_token"])
+    def load_credentials(self, credentials: dict[str, Any]) -> Optional[dict[str, Any]]:
+        self.discord_bot_token = credentials.get("discord_bot_token")
+        if not self.discord_bot_token:
+            raise ValueError("Discord token is required in credentials")
         return None
 
-    def _execute_read_channel(
+    async def _fetch_messages(
         self,
         channel_id: int,
-        limit: Optional[int],
-        oldest: bool,
-        before: int,
-        after: int,
-    ) -> List:
-        return asyncio.get_event_loop().run_until_complete(
-            read_channel(
-                self.discord_token,
-                channel_id,
-                limit=limit,
-                oldest=True,
-                before=before,
-                after=after,
-            )
-        )
+        after: Optional[Union[datetime, discord.Message]] = None,
+        before: Optional[Union[datetime, discord.Message]] = None,
+        limit: Optional[int] = 100,
+    ) -> List[Document]:
+        intents = discord.Intents.default()
+        intents.message_content = True
 
-    def load_from_state(self, channel_id) -> GenerateDocumentsOutput:
-        has_more = True
-        messages = []
-        cursor = None
-        while has_more:
-            messages = self._execute_read_channel(
-                channel_id=channel_id,
-                limit=self.batch_size,
-                oldest=True,
-                before=None,
-                after=cursor,
+        client = discord.Client(intents=intents)
+        documents: List[Document] = []
+
+        @client.event
+        async def on_ready() -> None:
+            try:
+                channel = client.get_channel(channel_id)
+                print(f"Channel is {channel}")
+                if not isinstance(channel, TextChannel):
+                    logger.error(f"Channel ID {channel_id} is not a text channel.")
+                    await client.close()
+                    return
+
+                # Fetch messages
+                messages = []
+                async for message in channel.history(
+                    limit=limit, after=after, before=before, oldest_first=True
+                ):
+                    messages.append(message)
+
+                for message in messages:
+                    # Process regular messages
+                    doc = self._message_to_document(message)
+                    documents.append(doc)
+
+                    # Process thread messages if any
+                    if message.thread:
+                        thread = message.thread
+                        thread_messages = []
+                        async for thread_message in thread.history(
+                            limit=None, oldest_first=True
+                        ):
+                            thread_doc = self._message_to_document(thread_message)
+                            thread_messages.append(thread_doc)
+
+                        documents.extend(thread_messages)
+            except Exception as e:
+                logger.exception(f"Error fetching messages: {e}")
+            finally:
+                await client.close()
+
+        if self.discord_bot_token:
+            print("Starting client")
+            print(f"token is {self.discord_bot_token}")
+            await client.start(self.discord_bot_token)
+        else:
+            raise ValueError("Discord token is not set")
+        return documents
+
+    def _message_to_document(self, message: discord.Message) -> Document:
+        content = message.content
+        if not content.strip():
+            content = "[No text content]"
+
+        timestamp = message.created_at.replace(tzinfo=timezone.utc)
+        author_name = message.author.name
+        channel_name = self._get_channel_name(message.channel)
+
+        doc = Document(
+            id=str(message.id),
+            sections=[
+                Section(link=message.jump_url, text=content),
+            ],
+            source=DocumentSource.DISCORD,
+            semantic_identifier=f"Message in #{channel_name} by {author_name}",
+            doc_updated_at=timestamp,
+            metadata={
+                "author": author_name,
+                "channel": channel_name,
+                "message_id": str(message.id),
+                "channel_id": str(message.channel.id),
+            },
+        )
+        return doc
+
+    def _get_channel_name(
+        self,
+        channel: Union[
+            TextChannel
+            | VoiceChannel
+            | StageChannel
+            | Thread
+            | DMChannel
+            | PartialMessageable
+            | GroupChannel
+        ],
+    ) -> str:
+        if isinstance(channel, (TextChannel, VoiceChannel, StageChannel)):
+            return channel.name
+        elif isinstance(channel, DMChannel):
+            return "Direct Message"
+        elif isinstance(channel, GroupChannel):
+            return "Group Message"
+        else:
+            return "Unknown Channel"
+
+    def load_from_state(self) -> GenerateDocumentsOutput:
+        if not self.discord_bot_token:
+            raise ValueError(
+                "Discord token is not loaded. Call load_credentials first."
             )
-            if messages == []:
-                has_more = False
-                messages.append(messages)
-                print("Reached End of Channel")
-                yield messages
-            else:
-                if list(messages[-1].keys()) == ["Regular"]:
-                    cursor = messages[-1]["Regular"].id
-                    messages.append(messages)
-                    yield messages
-                elif list(messages[-1].keys()) == ["Thread"]:
-                    cursor = messages[-1]["Thread"].id
-                    messages.append(messages)
-                    yield messages
+
+        for channel_id in self.channel_ids:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            documents = loop.run_until_complete(
+                self._fetch_messages(channel_id=channel_id, limit=self.batch_size)
+            )
+            loop.close()
+            if documents:
+                yield documents
 
     def poll_source(
-        self, channel_id, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
+        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        end_time = datetime.fromtimestamp(end, tz=timezone.utc)
-        has_more = True
-        cursor = datetime.fromtimestamp(start, tz=timezone.utc)
-        messages = []
-        while has_more:
-            messages = self._execute_read_channel(
-                channel_id=channel_id,
-                limit=self.batch_size,
-                oldest=True,
-                before=end_time,
-                after=cursor,
+        if not self.discord_bot_token:
+            raise ValueError(
+                "Discord token is not loaded. Call load_credentials first."
             )
-            if messages == []:
-                has_more = False
-                messages.append(messages)
-                print("Reached End of Channel")
-                yield messages
-            else:
-                if list(messages[-1].keys()) == ["Regular"]:
-                    cursor = messages[-1]["Regular"].id
-                    messages.append(messages)
-                    yield messages
-                elif list(messages[-1].keys()) == ["Thread"]:
-                    cursor = messages[-1]["Thread"].id
-                    messages.append(messages)
-                    yield messages
+
+        start_time = datetime.fromtimestamp(start, tz=timezone.utc)
+        end_time = datetime.fromtimestamp(end, tz=timezone.utc)
+
+        for channel_id in self.channel_ids:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            documents = loop.run_until_complete(
+                self._fetch_messages(
+                    channel_id=channel_id,
+                    after=start_time,
+                    before=end_time,
+                    limit=None,  # No limit to get all messages in the time range
+                )
+            )
+            loop.close()
+
+            if documents:
+                yield documents
 
 
 if __name__ == "__main__":
-    connector = DiscordConnector(batch_size=16)
-    discord_token = "YOUR_DISCORD_TOKEN_HERE"
+    from os import environ
 
-    connector.load_credentials({"discord_token": discord_token})
-    document_batches = connector.poll_source(
-        "1292260457616375829", start=1705533366.652, end=1705533412.843
-    )
-    print("Batch 1: ", next(document_batches))
-    print("Batch 2: ", next(document_batches))
+    bot_token = environ.get("DISCORD_BOT_TOKEN")
+    channel_id = int(environ.get("DISCORD_CHANNEL_ID", "0"))
+    connector = DiscordConnector(channel_ids=[channel_id])
+    connector.load_credentials({"discord_bot_token": bot_token})
+
+    for doc in connector.load_from_state():
+        print(doc)
