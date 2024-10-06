@@ -13,7 +13,6 @@ import { Card } from "@tremor/react";
 import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { useRouter } from "next/navigation";
-import { UserGroup } from "@/lib/types";
 import { refreshDocumentSets } from "../hooks";
 
 function Main() {

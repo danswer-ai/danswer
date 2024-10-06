@@ -136,7 +136,7 @@ export default async function Home() {
   const storedSearchType = cookies().get("searchType")?.value as
     | string
     | undefined;
-  let searchTypeDefault: SearchType =
+  const searchTypeDefault: SearchType =
     storedSearchType !== undefined &&
     SearchType.hasOwnProperty(storedSearchType)
       ? (storedSearchType as SearchType)

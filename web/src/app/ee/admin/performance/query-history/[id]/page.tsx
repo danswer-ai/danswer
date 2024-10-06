@@ -30,7 +30,12 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
                   }
                 />
                 {document.link ? (
-                  <a href={document.link} target="_blank" className="text-link">
+                  <a
+                    href={document.link}
+                    target="_blank"
+                    className="text-link"
+                    rel="noreferrer"
+                  >
                     {document.semantic_identifier}
                   </a>
                 ) : (

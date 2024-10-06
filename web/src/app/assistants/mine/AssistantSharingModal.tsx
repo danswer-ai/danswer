@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { MinimalUserSnapshot, User } from "@/lib/types";
-import { Button, Divider, Text } from "@tremor/react";
+import { Button } from "@tremor/react";
 import { FiPlus, FiX } from "react-icons/fi";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { SearchMultiSelectDropdown } from "@/components/Dropdown";

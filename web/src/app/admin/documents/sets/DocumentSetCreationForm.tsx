@@ -177,7 +177,7 @@ export const DocumentSetCreationForm = ({
                               const ind = props.values.cc_pair_ids.indexOf(
                                 ccPair.cc_pair_id
                               );
-                              let isSelected = ind !== -1;
+                              const isSelected = ind !== -1;
                               return (
                                 <div
                                   key={`${ccPair.connector.id}-${ccPair.credential.id}`}
@@ -291,7 +291,7 @@ export const DocumentSetCreationForm = ({
                           const ind = props.values.cc_pair_ids.indexOf(
                             ccPair.cc_pair_id
                           );
-                          let isSelected = ind !== -1;
+                          const isSelected = ind !== -1;
                           return (
                             <div
                               key={`${ccPair.connector.id}-${ccPair.credential.id}`}

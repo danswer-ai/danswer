@@ -887,7 +887,7 @@ export function AssistantEditor({
                                               values.document_set_ids.indexOf(
                                                 documentSet.id
                                               );
-                                            let isSelected = ind !== -1;
+                                            const isSelected = ind !== -1;
                                             return (
                                               <DocumentSetSelectable
                                                 key={documentSet.id}

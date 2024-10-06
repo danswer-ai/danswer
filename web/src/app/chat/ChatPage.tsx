@@ -123,7 +123,7 @@ export function ChatPage({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  let {
+  const {
     chatSessions,
     availableSources,
     availableDocumentSets,
@@ -774,7 +774,7 @@ export function ChatPage({
   const handleInputResize = () => {
     setTimeout(() => {
       if (inputRef.current && lastMessageRef.current) {
-        let newHeight: number =
+        const newHeight: number =
           inputRef.current?.getBoundingClientRect().height!;
         const heightDifference = newHeight - previousHeight.current;
         if (
@@ -986,7 +986,7 @@ export function ChatPage({
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
     let currChatSessionId: number;
-    let isNewSession = chatSessionIdRef.current === null;
+    const isNewSession = chatSessionIdRef.current === null;
     const searchParamBasedChatSessionName =
       searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
 
@@ -1069,7 +1069,7 @@ export function ChatPage({
 
     let answer = "";
 
-    let stopReason: StreamStopReason | null = null;
+    const stopReason: StreamStopReason | null = null;
     let query: string | null = null;
     let retrievalType: RetrievalType =
       selectedDocuments.length > 0

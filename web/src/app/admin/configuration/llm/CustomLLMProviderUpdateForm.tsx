@@ -220,6 +220,7 @@ export function CustomLLMProviderUpdateForm({
                     target="_blank"
                     href="https://docs.litellm.ai/docs/providers"
                     className="text-link"
+                    rel="noreferrer"
                   >
                     https://docs.litellm.ai/docs/providers
                   </a>
@@ -373,6 +374,7 @@ export function CustomLLMProviderUpdateForm({
                     target="_blank"
                     href="https://models.litellm.ai/"
                     className="text-link"
+                    rel="noreferrer"
                   >
                     here
                   </a>

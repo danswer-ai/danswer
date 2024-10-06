@@ -1,29 +1,29 @@
 "use client";
 
-import { CCPairFullInfo, ConnectorCredentialPairStatus } from "./types";
-import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Button, Divider, Title } from "@tremor/react";
-import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
-import { AdvancedConfigDisplay, ConfigDisplay } from "./ConfigDisplay";
-import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
-import { DeletionButton } from "./DeletionButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { ReIndexButton } from "./ReIndexButton";
-import { ValidSources } from "@/lib/types";
-import useSWR, { mutate } from "swr";
-import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
-import CredentialSection from "@/components/credentials/CredentialSection";
-import { buildCCPairInfoUrl } from "./lib";
 import { SourceIcon } from "@/components/SourceIcon";
-import { credentialTemplates } from "@/lib/connectors/credentials";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
+import { CCPairStatus } from "@/components/Status";
 import { usePopup } from "@/components/admin/connectors/Popup";
+import CredentialSection from "@/components/credentials/CredentialSection";
+import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
 import { updateConnectorCredentialPairName } from "@/lib/connector";
-import DeletionErrorStatus from "./DeletionErrorStatus";
+import { credentialTemplates } from "@/lib/connectors/credentials";
+import { errorHandlingFetcher } from "@/lib/fetcher";
+import { ValidSources } from "@/lib/types";
+import { Button, Divider, Title } from "@tremor/react";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import useSWR, { mutate } from "swr";
+import { AdvancedConfigDisplay, ConfigDisplay } from "./ConfigDisplay";
+import { DeletionButton } from "./DeletionButton";
+import DeletionErrorStatus from "./DeletionErrorStatus";
+import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
+import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
+import { ReIndexButton } from "./ReIndexButton";
+import { buildCCPairInfoUrl } from "./lib";
+import { CCPairFullInfo, ConnectorCredentialPairStatus } from "./types";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not

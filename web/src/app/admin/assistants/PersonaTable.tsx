@@ -5,7 +5,7 @@ import { Persona } from "./interfaces";
 import { useRouter } from "next/navigation";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
 import {
@@ -15,8 +15,6 @@ import {
 } from "./lib";
 import { FiEdit2 } from "react-icons/fi";
 import { TrashIcon } from "@/components/icons/icons";
-import { getCurrentUser } from "@/lib/user";
-import { UserRole, User } from "@/lib/types";
 import { useUser } from "@/components/user/UserProvider";
 
 function PersonaTypeDisplay({ persona }: { persona: Persona }) {

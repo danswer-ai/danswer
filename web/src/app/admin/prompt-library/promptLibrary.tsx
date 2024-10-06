@@ -16,7 +16,6 @@ import { FilterDropdown } from "@/components/search/filtering/FilterDropdown";
 import { FiTag } from "react-icons/fi";
 import { PageSelector } from "@/components/PageSelector";
 import { InputPrompt } from "./interfaces";
-import { Modal } from "@/components/Modal";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 
 const CategoryBubble = ({

@@ -13,7 +13,7 @@ import {
 import * as Yup from "yup";
 import { MethodSpec, ToolSnapshot } from "@/lib/tools/interfaces";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { Button, Divider, Text } from "@tremor/react";
+import { Button, Divider } from "@tremor/react";
 import {
   createCustomTool,
   updateCustomTool,

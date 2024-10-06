@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Table,
   TableHead,
@@ -10,9 +10,8 @@ import {
   TableCell,
   Text,
 } from "@tremor/react";
-import { CCPairFullInfo } from "./types";
+import { CCPairFullInfo, PaginatedIndexAttempts } from "./types";
 import { IndexAttemptStatus } from "@/components/Status";
-import { useState } from "react";
 import { PageSelector } from "@/components/PageSelector";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { buildCCPairInfoUrl } from "./lib";
@@ -22,7 +21,6 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { InfoIcon, SearchIcon } from "@/components/icons/icons";
 import Link from "next/link";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
-import { PaginatedIndexAttempts } from "./types";
 import { useRouter } from "next/navigation";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 
