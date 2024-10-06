@@ -32,6 +32,7 @@ import {
   ZulipIcon,
   MediaWikiIcon,
   WikipediaIcon,
+  HighSpotIcon,
   AsanaIcon,
   S3Icon,
   OCIStorageIcon,
@@ -279,6 +280,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Google Storage",
     category: SourceCategory.Storage,
     docs: "https://docs.danswer.dev/connectors/google_storage",
+  },
+  highspot: {
+    icon: HighSpotIcon,
+    displayName: "HighSpot",
+    category: SourceCategory.Wiki,
+    docs: "https://docs.danswer.dev/connectors/highspot",
   },
   xenforo: {
     icon: XenforoIcon,

@@ -261,6 +261,7 @@ const validSources = [
   "xenforo",
   "oci_storage",
   "not_applicable",
+  "highspot",
   "ingestion_api",
 ] as const;
 
