@@ -416,3 +416,7 @@ ENTERPRISE_EDITION_ENABLED = (
 
 MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
 SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY", "")
+
+
+DATA_PLANE_SECRET = os.environ.get("DATA_PLANE_SECRET", "")
+EXPECTED_API_KEY = os.environ.get("EXPECTED_API_KEY", "")

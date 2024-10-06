@@ -117,7 +117,7 @@ def get_db_current_time(db_session: Session) -> datetime:
 
 
 # Regular expression to validate schema names to prevent SQL injection
-SCHEMA_NAME_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+SCHEMA_NAME_REGEX = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 def is_valid_schema_name(name: str) -> bool:
@@ -281,6 +281,7 @@ def get_session_with_tenant(tenant_id: str | None = None) -> Session:
         tenant_id = current_tenant_id.get()
 
     if not is_valid_schema_name(tenant_id):
+        logger.error(f"Invalid tenant ID: {tenant_id}")
         raise Exception("Invalid tenant ID")
 
     engine = SqlEngine.get_engine()
