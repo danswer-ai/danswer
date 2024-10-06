@@ -1,4 +1,6 @@
 import json
+import os 
+
 from typing import Any
 from typing import Optional
 
@@ -56,7 +58,7 @@ def _initialize_client(
     api_key: str, provider: EmbeddingProvider, model: str | None = None
 ) -> Any:
     if provider == EmbeddingProvider.OPENAI:
-        return openai.OpenAI(api_key=api_key)
+        return openai.OpenAI(api_key=api_key, timeout=httpx.Timeout(os.getenv("OPENAI_CLIENT_TIMEOUT", 10)))
     elif provider == EmbeddingProvider.COHERE:
         return CohereClient(api_key=api_key)
     elif provider == EmbeddingProvider.VOYAGE:
