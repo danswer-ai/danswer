@@ -106,7 +106,10 @@ def _vespa_hit_to_inference_chunk(
         # isn't present
         dynamic_summary=hit["fields"].get(CONTENT_SUMMARY, hit["fields"][CONTENT]),
     )
+
+    # Remove semantic_identifier from fields
     semantic_identifier = fields.get(SEMANTIC_IDENTIFIER, "")
+
     if not semantic_identifier:
         logger.error(
             f"Chunk with blurb: {fields.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"
@@ -130,7 +133,7 @@ def _vespa_hit_to_inference_chunk(
         document_id=fields[DOCUMENT_ID],
         source_type=fields[SOURCE_TYPE],
         title=fields.get(TITLE),
-        semantic_identifier=fields[SEMANTIC_IDENTIFIER],
+        semantic_identifier=fields.get(SEMANTIC_IDENTIFIER, ""),
         boost=fields.get(BOOST, 1),
         recency_bias=fields.get("matchfeatures", {}).get(RECENCY_BIAS, 1.0),
         score=None if null_score else hit.get("relevance", 0),
