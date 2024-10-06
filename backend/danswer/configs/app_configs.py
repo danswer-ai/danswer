@@ -404,6 +404,7 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 
 VESPA_REQUEST_TIMEOUT = int(os.environ.get("VESPA_REQUEST_TIMEOUT") or "0") or None
 
+SYSTEM_RECURSION_LIMIT = int(os.environ.get("SYSTEM_RECURSION_LIMIT") or "1000")
 
 #####
 # Enterprise Edition Configs

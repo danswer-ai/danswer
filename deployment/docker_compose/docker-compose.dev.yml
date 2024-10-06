@@ -75,6 +75,8 @@ services:
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
       - VESPA_REQUEST_TIMEOUT=${VESPA_REQUEST_TIMEOUT:-}
+      # We do not recommend changing this value
+      - SYSTEM_RECURSION_LIMIT=${SYSTEM_RECURSION_LIMIT:-}
       # Leave this on pretty please? Nothing sensitive is collected!
       # https://docs.danswer.dev/more/telemetry
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
