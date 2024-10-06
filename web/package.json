@@ -52,13 +52,6 @@
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.10",
-    "@typescript-eslint/eslint-plugin": "^7.2.0",
-    "@typescript-eslint/parser": "^7.2.0",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.1.0",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-react": "^7.37.1",
-    "eslint-plugin-unused-imports": "^4.1.4",
     "prettier": "2.8.8"
   }
 }
