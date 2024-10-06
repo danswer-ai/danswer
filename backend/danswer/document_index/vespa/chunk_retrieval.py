@@ -107,7 +107,6 @@ def _vespa_hit_to_inference_chunk(
         dynamic_summary=hit["fields"].get(CONTENT_SUMMARY, hit["fields"][CONTENT]),
     )
 
-    # Remove semantic_identifier from fields
     semantic_identifier = fields.get(SEMANTIC_IDENTIFIER, "")
 
     if not semantic_identifier:
