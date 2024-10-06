@@ -49,12 +49,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         setShouldHideContent(false);
       }
     }
-  }, [
-    user,
-    userGroups,
-    formikProps.setFieldValue,
-    formikProps.values.is_public,
-  ]);
+  }, [user, userGroups, formikProps, isPaidEnterpriseFeaturesEnabled]);
 
   if (isLoadingUser || userGroupsIsLoading) {
     return <div>Loading...</div>;

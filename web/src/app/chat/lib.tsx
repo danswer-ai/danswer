@@ -729,5 +729,5 @@ export async function useScrollonStream({
         });
       }
     }
-  }, [chatState]);
+  }, [chatState, distance, scrollDist, scrollableDivRef]);
 }

@@ -243,7 +243,8 @@ export function ChatPage({
         destructureValue(user?.preferences.default_model)
       );
     }
-  }, [liveAssistant]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveAssistant, llmProviders, user?.preferences.default_model]);
 
   const stopGenerating = () => {
     const currentSession = currentSessionId();
@@ -436,6 +437,7 @@ export function ChatPage({
     }
 
     initialSessionFetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingChatSessionId]);
 
   const [message, setMessage] = useState(
@@ -696,7 +698,7 @@ export function ChatPage({
         finalAssistants.find((persona) => persona.id === defaultAssistantId)
       );
     }
-  }, [defaultAssistantId]);
+  }, [defaultAssistantId, finalAssistants, messageHistory.length]);
 
   const [
     selectedDocuments,
@@ -1668,17 +1670,22 @@ export function ChatPage({
 
   useEffect(() => {
     initializeVisibleRange();
-  }, [router, messageHistory, chatSessionIdRef.current]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, messageHistory]);
 
   useLayoutEffect(() => {
+    const scrollableDiv = scrollableDivRef.current;
+
     const handleScroll = () => {
       updateVisibleRangeBasedOnScroll();
     };
-    scrollableDivRef.current?.addEventListener("scroll", handleScroll);
+
+    scrollableDiv?.addEventListener("scroll", handleScroll);
 
     return () => {
-      scrollableDivRef.current?.removeEventListener("scroll", handleScroll);
+      scrollableDiv?.removeEventListener("scroll", handleScroll);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messageHistory]);
 
   const currentVisibleRange = visibleRange.get(currentSessionId()) || {
@@ -1728,6 +1735,7 @@ export function ChatPage({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
   const [sharedChatSession, setSharedChatSession] =
     useState<ChatSession | null>();

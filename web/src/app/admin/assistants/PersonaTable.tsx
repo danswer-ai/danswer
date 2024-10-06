@@ -51,9 +51,9 @@ export function PersonasTable({
 
   const { isLoadingUser, isAdmin } = useUser();
 
-  const editablePersonaIds = new Set(
-    editablePersonas.map((p) => p.id.toString())
-  );
+  const editablePersonaIds = useMemo(() => {
+    return new Set(editablePersonas.map((p) => p.id.toString()));
+  }, [editablePersonas]);
 
   const sortedPersonas = useMemo(() => {
     const editable = editablePersonas.sort(personaComparator);

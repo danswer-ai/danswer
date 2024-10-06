@@ -272,7 +272,7 @@ export const AIMessage = ({
         );
       },
     }),
-    [messageId, content]
+    [finalContent]
   );
 
   const renderedMarkdown = useMemo(() => {
@@ -286,7 +286,7 @@ export const AIMessage = ({
         {finalContent as string}
       </ReactMarkdown>
     );
-  }, [finalContent]);
+  }, [finalContent, markdownComponents]);
 
   const includeMessageSwitcher =
     currentMessageInd !== undefined &&
@@ -670,7 +670,7 @@ export const HumanMessage = ({
     if (!isEditing) {
       setEditedContent(content);
     }
-  }, [content]);
+  }, [content, isEditing]);
 
   useEffect(() => {
     if (textareaRef.current) {

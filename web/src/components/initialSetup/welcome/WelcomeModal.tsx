@@ -48,7 +48,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
     }
 
     fetchProviderInfo();
-  }, []);
+  }, [user]);
 
   return (
     <>

@@ -98,7 +98,7 @@ export function ChatInputBar({
         MAX_INPUT_HEIGHT
       )}px`;
     }
-  }, [message]);
+  }, [message, textAreaRef]);
 
   const handlePaste = (event: React.ClipboardEvent) => {
     const items = event.clipboardData?.items;

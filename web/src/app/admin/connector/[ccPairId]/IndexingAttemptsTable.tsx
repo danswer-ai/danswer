@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   Table,
   TableHead,
@@ -61,47 +61,59 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   // we use it to avoid duplicate requests
   const ongoingRequestsRef = useRef<Set<number>>(new Set());
 
-  const batchRetrievalUrlBuilder = (batchNum: number) =>
-    `${buildCCPairInfoUrl(ccPair.id)}/index-attempts?page=${batchNum}&page_size=${BATCH_SIZE * NUM_IN_PAGE}`;
+  const batchRetrievalUrlBuilder = useCallback(
+    (batchNum: number) => {
+      return `${buildCCPairInfoUrl(ccPair.id)}/index-attempts?page=${batchNum}&page_size=${BATCH_SIZE * NUM_IN_PAGE}`;
+    },
+    [ccPair.id]
+  );
 
   // This fetches and caches the data for a given batch number
-  const fetchBatchData = async (batchNum: number) => {
-    if (ongoingRequestsRef.current.has(batchNum)) return;
-    ongoingRequestsRef.current.add(batchNum);
+  const fetchBatchData = useCallback(
+    async (batchNum: number) => {
+      if (ongoingRequestsRef.current.has(batchNum)) return;
+      ongoingRequestsRef.current.add(batchNum);
 
-    try {
-      const response = await fetch(batchRetrievalUrlBuilder(batchNum + 1));
-      if (!response.ok) {
-        throw new Error("Failed to fetch data");
-      }
-      const data = await response.json();
+      try {
+        const response = await fetch(batchRetrievalUrlBuilder(batchNum + 1));
+        if (!response.ok) {
+          throw new Error("Failed to fetch data");
+        }
+        const data = await response.json();
 
-      const newBatchData: PaginatedIndexAttempts[] = [];
-      for (let i = 0; i < BATCH_SIZE; i++) {
-        const startIndex = i * NUM_IN_PAGE;
-        const endIndex = startIndex + NUM_IN_PAGE;
-        const pageIndexAttempts = data.index_attempts.slice(
-          startIndex,
-          endIndex
+        const newBatchData: PaginatedIndexAttempts[] = [];
+        for (let i = 0; i < BATCH_SIZE; i++) {
+          const startIndex = i * NUM_IN_PAGE;
+          const endIndex = startIndex + NUM_IN_PAGE;
+          const pageIndexAttempts = data.index_attempts.slice(
+            startIndex,
+            endIndex
+          );
+          newBatchData.push({
+            ...data,
+            index_attempts: pageIndexAttempts,
+          });
+        }
+
+        setCachedBatches((prev) => ({
+          ...prev,
+          [batchNum]: newBatchData,
+        }));
+      } catch (error) {
+        setCurrentPageError(
+          error instanceof Error ? error : new Error("An error occurred")
         );
-        newBatchData.push({
-          ...data,
-          index_attempts: pageIndexAttempts,
-        });
+      } finally {
+        ongoingRequestsRef.current.delete(batchNum);
       }
-
-      setCachedBatches((prev) => ({
-        ...prev,
-        [batchNum]: newBatchData,
-      }));
-    } catch (error) {
-      setCurrentPageError(
-        error instanceof Error ? error : new Error("An error occurred")
-      );
-    } finally {
-      ongoingRequestsRef.current.delete(batchNum);
-    }
-  };
+    },
+    [
+      ongoingRequestsRef,
+      setCachedBatches,
+      setCurrentPageError,
+      batchRetrievalUrlBuilder,
+    ]
+  );
 
   // This fetches and caches the data for the current batch and the next and previous batches
   useEffect(() => {

@@ -68,7 +68,7 @@ export const EmbeddingFormProvider: React.FC<{
     if (stepFromUrl !== formStep) {
       setFormStep(stepFromUrl);
     }
-  }, [searchParams]);
+  }, [searchParams, formStep]);
 
   const contextValue: EmbeddingFormContextType = {
     formStep,

@@ -1,14 +1,10 @@
 import { useChatContext } from "@/components/context/ChatContext";
-import { getDisplayNameForModel, LlmOverrideManager } from "@/lib/hooks";
+import { LlmOverrideManager } from "@/lib/hooks";
 import React, { forwardRef, useCallback, useState } from "react";
 import { debounce } from "lodash";
 import { Text } from "@tremor/react";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import {
-  checkLLMSupportsImageInput,
-  destructureValue,
-  structureValue,
-} from "@/lib/llm/utils";
+import { destructureValue } from "@/lib/llm/utils";
 import { updateModelOverrideForChatSession } from "../../lib";
 import { GearIcon } from "@/components/icons/icons";
 import { LlmList } from "@/components/llm/LLMList";
@@ -44,12 +40,14 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     const [localTemperature, setLocalTemperature] = useState<number>(
       temperature || 0
     );
-
     const debouncedSetTemperature = useCallback(
-      debounce((value) => {
-        setTemperature(value);
-      }, 300),
-      []
+      (value: number) => {
+        const debouncedFunction = debounce((value: number) => {
+          setTemperature(value);
+        }, 300);
+        return debouncedFunction(value);
+      },
+      [setTemperature]
     );
 
     const handleTemperatureChange = (value: number) => {

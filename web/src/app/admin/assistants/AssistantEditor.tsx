@@ -131,7 +131,7 @@ export function AssistantEditor({
     if (defaultIconShape === null) {
       setDefaultIconShape(generateRandomIconShape().encodedGrid);
     }
-  }, []);
+  }, [defaultIconShape]);
 
   const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
 
@@ -165,7 +165,7 @@ export function AssistantEditor({
         existingPersona.num_chunks === 0
       );
     }
-  }, [isUpdate, existingPrompt]);
+  }, [isUpdate, existingPrompt, existingPersona?.num_chunks]);
 
   const defaultProvider = llmProviders.find(
     (llmProvider) => llmProvider.is_default_provider

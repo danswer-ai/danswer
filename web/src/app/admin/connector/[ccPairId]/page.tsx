@@ -18,7 +18,7 @@ import CredentialSection from "@/components/credentials/CredentialSection";
 import { buildCCPairInfoUrl } from "./lib";
 import { SourceIcon } from "@/components/SourceIcon";
 import { credentialTemplates } from "@/lib/connectors/credentials";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { updateConnectorCredentialPairName } from "@/lib/connector";
@@ -49,7 +49,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
 
   const { popup, setPopup } = usePopup();
 
-  const finishConnectorDeletion = () => {
+  const finishConnectorDeletion = useCallback(() => {
     setPopup({
       message: "Connector deleted successfully",
       type: "success",
@@ -57,7 +57,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
     setTimeout(() => {
       router.push("/admin/indexing/status");
     }, 2000);
-  };
+  }, [router, setPopup]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -80,7 +80,14 @@ function Main({ ccPairId }: { ccPairId: number }) {
     ) {
       finishConnectorDeletion();
     }
-  }, [isLoading, ccPair, error, hasLoadedOnce, router]);
+  }, [
+    isLoading,
+    ccPair,
+    error,
+    hasLoadedOnce,
+    router,
+    finishConnectorDeletion,
+  ]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditableName(e.target.value);
