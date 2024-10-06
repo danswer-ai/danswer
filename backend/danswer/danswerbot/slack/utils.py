@@ -431,7 +431,10 @@ def read_slack_thread(
     for reply in replies:
         if "user" in reply and "bot_id" not in reply:
             message = reply["text"]
-            user_sem_id = fetch_user_semantic_id_from_id(reply.get("user"), client)
+            user_sem_id = (
+                fetch_user_semantic_id_from_id(reply.get("user"), client)
+                or "Unknown User"
+            )
             message_type = MessageType.USER
         else:
             self_app_id = get_danswer_bot_app_id(client)
@@ -451,7 +454,8 @@ def read_slack_thread(
 
                 message = blocks[0].get("text", {}).get("text")
 
-                # If auto-detected filters are on, use the third block for the actual answer
+                # If auto-detected filters are on, use the second block for the actual answer
+                # The first block is the auto-detected filters
                 if message.startswith("_Filters"):
                     if len(blocks) < 2:
                         logger.warning(f"Only filter blocks found: {reply}")
