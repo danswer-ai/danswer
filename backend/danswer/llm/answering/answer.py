@@ -311,13 +311,13 @@ class Answer:
                     )
                 )
             yield tool_runner.tool_final_result()
+            if not self.skip_gen_ai_answer_generation:
+                prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
 
-            prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
-
-            yield from self._process_llm_stream(
-                prompt=prompt,
-                tools=[tool.tool_definition() for tool in self.tools],
-            )
+                yield from self._process_llm_stream(
+                    prompt=prompt,
+                    tools=[tool.tool_definition() for tool in self.tools],
+                )
 
             return
 
@@ -413,6 +413,10 @@ class Answer:
             logger.notice(f"Chosen tool: {chosen_tool_and_args}")
 
         if not chosen_tool_and_args:
+            if self.skip_gen_ai_answer_generation:
+                raise ValueError(
+                    "skip_gen_ai_answer_generation is True, but no tool was chosen; no answer will be generated"
+                )
             prompt_builder.update_system_prompt(
                 default_build_system_message(self.prompt_config)
             )
@@ -477,10 +481,10 @@ class Answer:
         final = tool_runner.tool_final_result()
 
         yield final
+        if not self.skip_gen_ai_answer_generation:
+            prompt = prompt_builder.build()
 
-        prompt = prompt_builder.build()
-
-        yield from self._process_llm_stream(prompt=prompt, tools=None)
+            yield from self._process_llm_stream(prompt=prompt, tools=None)
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
