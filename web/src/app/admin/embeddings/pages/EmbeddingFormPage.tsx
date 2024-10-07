@@ -25,9 +25,11 @@ import RerankingDetailsForm from "../RerankingFormPage";
 import { useEmbeddingFormContext } from "@/components/context/EmbeddingContext";
 import { Modal } from "@/components/Modal";
 
+import { useRouter } from "next/navigation";
 export default function EmbeddingForm() {
   const { formStep, nextFormStep, prevFormStep } = useEmbeddingFormContext();
   const { popup, setPopup } = usePopup();
+  const router = useRouter();
 
   const [advancedEmbeddingDetails, setAdvancedEmbeddingDetails] =
     useState<AdvancedSearchConfiguration>({
@@ -172,10 +174,6 @@ export default function EmbeddingForm() {
 
     const response = await updateSearchSettings(values);
     if (response.ok) {
-      setPopup({
-        message: "Updated search settings successfully",
-        type: "success",
-      });
       return true;
     } else {
       setPopup({ message: "Failed to update search settings", type: "error" });
@@ -184,14 +182,7 @@ export default function EmbeddingForm() {
   };
 
   const navigateToEmbeddingPage = (changedResource: string) => {
-    setPopup({
-      message: `Changed ${changedResource} successfully. Redirecting to embedding page`,
-      type: "success",
-    });
-
-    setTimeout(() => {
-      window.open("/admin/configuration/search", "_self");
-    }, 2000);
+    router.push("/admin/configuration/search?message=search-settings");
   };
 
   const onConfirm = async () => {

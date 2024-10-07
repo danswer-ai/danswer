@@ -19,7 +19,9 @@ export interface EmbeddingDetails {
   default_model_id?: number;
   name: string;
 }
+
 import { EmbeddingIcon } from "@/components/icons/icons";
+import { usePopupFromQuery } from "@/components/popup/PopupFromQuery";
 
 import Link from "next/link";
 import { SavedSearchSettings } from "../../embeddings/interfaces";
@@ -29,6 +31,12 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 function Main() {
   const settings = useContext(SettingsContext);
+  const { popup: searchSettingsPopup } = usePopupFromQuery({
+    "search-settings": {
+      message: `Changed search settings successfully`,
+      type: "success",
+    },
+  });
   const {
     data: currentEmeddingModel,
     isLoading: isLoadingCurrentModel,
@@ -74,6 +82,7 @@ function Main() {
 
   return (
     <div className="h-screen">
+      {searchSettingsPopup}
       {!futureEmbeddingModel ? (
         <>
           {settings?.settings.needs_reindexing && (
