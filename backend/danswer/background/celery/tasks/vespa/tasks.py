@@ -48,6 +48,7 @@ from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import (
     fetch_versioned_implementation_with_fallback,
 )
+from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import noop_fallback
 
 
@@ -87,21 +88,24 @@ def check_for_vespa_sync_task() -> None:
                 )
 
             # check if any user groups are not synced
-            try:
-                fetch_user_groups = fetch_versioned_implementation(
-                    "danswer.db.user_group", "fetch_user_groups"
-                )
-
-                user_groups = fetch_user_groups(
-                    db_session=db_session, only_up_to_date=False
-                )
-                for usergroup in user_groups:
-                    try_generate_user_group_sync_tasks(
-                        usergroup, db_session, r, lock_beat
+            if global_version.is_ee_version():
+                try:
+                    fetch_user_groups = fetch_versioned_implementation(
+                        "danswer.db.user_group", "fetch_user_groups"
                     )
-            except ModuleNotFoundError:
-                # Always exceptions on the MIT version, which is expected
-                pass
+
+                    user_groups = fetch_user_groups(
+                        db_session=db_session, only_up_to_date=False
+                    )
+                    for usergroup in user_groups:
+                        try_generate_user_group_sync_tasks(
+                            usergroup, db_session, r, lock_beat
+                        )
+                except ModuleNotFoundError:
+                    # Always exceptions on the MIT version, which is expected
+                    # We shouldn't actually get here if the ee version check works
+                    pass
+
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."

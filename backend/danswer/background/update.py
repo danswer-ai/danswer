@@ -353,7 +353,7 @@ def kickoff_indexing_jobs(
                     run_indexing_entrypoint,
                     attempt.id,
                     attempt.connector_credential_pair_id,
-                    global_version.get_is_ee_version(),
+                    global_version.is_ee_version(),
                     pure=False,
                 )
                 if not run:
@@ -364,7 +364,7 @@ def kickoff_indexing_jobs(
                     run_indexing_entrypoint,
                     attempt.id,
                     attempt.connector_credential_pair_id,
-                    global_version.get_is_ee_version(),
+                    global_version.is_ee_version(),
                     pure=False,
                 )
                 if not run:

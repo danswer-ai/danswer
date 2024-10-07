@@ -329,7 +329,7 @@ if __name__ == "__main__":
         f"Starting Danswer Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
     )
 
-    if global_version.get_is_ee_version():
+    if global_version.is_ee_version():
         logger.notice("Running Enterprise Edition")
 
     uvicorn.run(app, host=APP_HOST, port=APP_PORT)

@@ -21,6 +21,7 @@ from danswer.db.document import (
 )
 from danswer.db.document_set import construct_document_select_by_docset
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from danswer.utils.variable_functionality import global_version
 
 
 class RedisObjectHelper(ABC):
@@ -171,6 +172,9 @@ class RedisUserGroup(RedisObjectHelper):
         last_lock_time = time.monotonic()
 
         async_results = []
+
+        if not global_version.is_ee_version():
+            return 0
 
         try:
             construct_document_select_by_usergroup = fetch_versioned_implementation(
