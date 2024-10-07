@@ -43,10 +43,11 @@ def document_by_cc_pair_cleanup_task(
     connector / credential pair from the access list
     (6) delete all relevant entries from postgres
     """
-    task_logger.info(f"document_id={document_id}")
-
     try:
         with Session(get_sqlalchemy_engine()) as db_session:
+            action = "skip"
+            chunks_affected = 0
+
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
             document_index = get_default_document_index(
                 primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
@@ -56,12 +57,16 @@ def document_by_cc_pair_cleanup_task(
             if count == 1:
                 # count == 1 means this is the only remaining cc_pair reference to the doc
                 # delete it from vespa and the db
-                document_index.delete(doc_ids=[document_id])
+                action = "delete"
+
+                chunks_affected = document_index.delete_single(document_id)
                 delete_documents_complete__no_commit(
                     db_session=db_session,
                     document_ids=[document_id],
                 )
             elif count > 1:
+                action = "update"
+
                 # count > 1 means the document still has cc_pair references
                 doc = get_document(document_id, db_session)
                 if not doc:
@@ -84,7 +89,9 @@ def document_by_cc_pair_cleanup_task(
                 )
 
                 # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
-                document_index.update_single(document_id, fields=fields)
+                chunks_affected = document_index.update_single(
+                    document_id, fields=fields
+                )
 
                 # there are still other cc_pair references to the doc, so just resync to Vespa
                 delete_document_by_connector_credential_pair__no_commit(
@@ -100,6 +107,9 @@ def document_by_cc_pair_cleanup_task(
             else:
                 pass
 
+            task_logger.info(
+                f"document_id={document_id} refcount={count} action={action} chunks={chunks_affected}"
+            )
             db_session.commit()
     except SoftTimeLimitExceeded:
         task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")

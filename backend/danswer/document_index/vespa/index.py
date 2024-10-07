@@ -384,11 +384,13 @@ class VespaIndex(DocumentIndex):
             time.monotonic() - update_start,
         )
 
-    def update_single(self, doc_id: str, fields: VespaDocumentFields) -> None:
+    def update_single(self, doc_id: str, fields: VespaDocumentFields) -> int:
         """Note: if the document id does not exist, the update will be a no-op and the
         function will complete with no errors or exceptions.
         Handle other exceptions if you wish to implement retry behavior
         """
+
+        total_chunks_updated = 0
 
         # Handle Vespa character limitations
         # Mutating update_request but it's not used later anyway
@@ -411,7 +413,7 @@ class VespaIndex(DocumentIndex):
 
         if not update_dict["fields"]:
             logger.error("Update request received but nothing to update")
-            return
+            return 0
 
         index_names = [self.index_name]
         if self.secondary_index_name:
@@ -426,7 +428,6 @@ class VespaIndex(DocumentIndex):
                     }
                 )
 
-                total_chunks_updated = 0
                 while True:
                     try:
                         resp = http_client.put(
@@ -462,9 +463,10 @@ class VespaIndex(DocumentIndex):
                     f"VespaIndex.update_single: "
                     f"index={index_name} "
                     f"doc={normalized_doc_id} "
-                    f"chunks_deleted={total_chunks_updated}"
+                    f"chunks_updated={total_chunks_updated}"
                 )
-        return
+
+        return total_chunks_updated
 
     def delete(self, doc_ids: list[str]) -> None:
         logger.info(f"Deleting {len(doc_ids)} documents from Vespa")
@@ -484,9 +486,11 @@ class VespaIndex(DocumentIndex):
                 )
         return
 
-    def delete_single(self, doc_id: str) -> None:
+    def delete_single(self, doc_id: str) -> int:
         """Possibly faster overall than the delete method due to using a single
         delete call with a selection query."""
+
+        total_chunks_deleted = 0
 
         # Vespa deletion is poorly documented ... luckily we found this
         # https://docs.vespa.ai/en/operations/batch-delete.html#example
@@ -508,7 +512,6 @@ class VespaIndex(DocumentIndex):
                     }
                 )
 
-                total_chunks_deleted = 0
                 while True:
                     try:
                         resp = http_client.delete(
@@ -543,7 +546,8 @@ class VespaIndex(DocumentIndex):
                     f"doc={doc_id} "
                     f"chunks_deleted={total_chunks_deleted}"
                 )
-        return
+
+        return total_chunks_deleted
 
     def id_based_retrieval(
         self,
