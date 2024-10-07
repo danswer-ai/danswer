@@ -140,7 +140,8 @@ export const SearchSection = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [toggleAgentic]);
+
   const [isFetching, setIsFetching] = useState(false);
 
   // Search Type
@@ -522,7 +523,7 @@ export const SearchSection = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [router]);
+  }, [router, toggleSidebar]);
 
   useEffect(() => {
     if (settings?.isMobile) {

@@ -176,7 +176,7 @@ export function PersonasTable({
                 </div>
               </div>,
               <div key="edit" className="flex">
-                <div className="mx-auto my-auto">
+                <div className="mr-auto my-auto">
                   {!persona.is_default_persona && isEditable ? (
                     <div
                       className="hover:bg-hover rounded p-1 cursor-pointer"
