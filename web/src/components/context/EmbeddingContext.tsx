@@ -61,7 +61,6 @@ export const EmbeddingFormProvider: React.FC<{
     updatedSearchParams.set("step", formStep.toString());
     const newUrl = `${pathname}?${updatedSearchParams.toString()}`;
 
-    console.log("existingStep", existingStep);
     if (!existingStep) {
       router.replace(newUrl);
     } else if (newUrl !== pathname) {

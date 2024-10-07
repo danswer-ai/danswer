@@ -63,7 +63,6 @@ export const FormProvider: React.FC<{
 
     if (!existingStep) {
       router.replace(newUrl);
-      console.log("replacing", newUrl);
     } else if (newUrl !== pathname) {
       router.push(newUrl);
     }
