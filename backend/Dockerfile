@@ -101,7 +101,7 @@ COPY ./scripts/force_delete_connector_by_id.py /app/scripts/force_delete_connect
 # Put logo in assets
 COPY ./assets /app/assets
 
-ENV PYTHONPATH /app
+ENV PYTHONPATH=/app
 
 # Default command which does nothing
 # This container is used by api server and background which specify their own CMD
