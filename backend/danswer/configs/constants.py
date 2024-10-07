@@ -187,10 +187,9 @@ class PostgresAdvisoryLocks(Enum):
 
 
 class DanswerCeleryQueues:
-    VESPA_DOCSET_SYNC_GENERATOR = "vespa_docset_sync_generator"
-    VESPA_USERGROUP_SYNC_GENERATOR = "vespa_usergroup_sync_generator"
     VESPA_METADATA_SYNC = "vespa_metadata_sync"
     CONNECTOR_DELETION = "connector_deletion"
+    CONNECTOR_PRUNING = "connector_pruning"
 
 
 class DanswerRedisLocks:
@@ -198,7 +197,7 @@ class DanswerRedisLocks:
     CHECK_VESPA_SYNC_BEAT_LOCK = "da_lock:check_vespa_sync_beat"
     MONITOR_VESPA_SYNC_BEAT_LOCK = "da_lock:monitor_vespa_sync_beat"
     CHECK_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:check_connector_deletion_beat"
-    MONITOR_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:monitor_connector_deletion_beat"
+    CHECK_PRUNE_BEAT_LOCK = "da_lock:check_prune_beat"
 
 
 class DanswerCeleryPriority(int, Enum):
