@@ -1,44 +1,44 @@
-from typing import cast
-
 import stripe
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import User
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import WEB_DOMAIN
-from danswer.db.auth import get_total_users
-from danswer.db.engine import get_session
 from danswer.db.engine import get_session_with_tenant
+from danswer.server.settings.store import load_settings
+from danswer.server.settings.store import store_settings
 from danswer.setup import setup_danswer
 from danswer.utils.logger import setup_logger
-from ee.danswer.configs.app_configs import STRIPE_PRICE_ID
 from ee.danswer.configs.app_configs import STRIPE_SECRET_KEY
 from ee.danswer.server.tenants.access import control_plane_dep
 from ee.danswer.server.tenants.billing import fetch_billing_information
 from ee.danswer.server.tenants.billing import fetch_tenant_stripe_information
 from ee.danswer.server.tenants.models import BillingInformation
-from ee.danswer.server.tenants.models import CheckoutSessionCreationRequest
-from ee.danswer.server.tenants.models import CheckoutSessionCreationResponse
 from ee.danswer.server.tenants.models import CreateTenantRequest
+from ee.danswer.server.tenants.models import ProductGatingRequest
 from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
 from ee.danswer.server.tenants.provisioning import user_owns_a_tenant
 from shared_configs.configs import current_tenant_id
 
+
+stripe.api_key = STRIPE_SECRET_KEY
+
 logger = setup_logger()
 router = APIRouter(prefix="/tenants")
-stripe.api_key = STRIPE_SECRET_KEY
 
 
 @router.post("/create")
 def create_tenant(
     create_tenant_request: CreateTenantRequest, _: None = Depends(control_plane_dep)
 ) -> dict[str, str]:
+    if not MULTI_TENANT:
+        raise HTTPException(status_code=403, detail="Multi-tenancy is not enabled")
+
     tenant_id = create_tenant_request.tenant_id
     email = create_tenant_request.initial_admin_email
     token = None
@@ -49,17 +49,14 @@ def create_tenant(
         )
 
     try:
-        if not MULTI_TENANT:
-            raise HTTPException(status_code=403, detail="Multi-tenancy is not enabled")
-
         if not ensure_schema_exists(tenant_id):
             logger.info(f"Created schema for tenant {tenant_id}")
         else:
             logger.info(f"Schema already exists for tenant {tenant_id}")
 
-        run_alembic_migrations(tenant_id)
         token = current_tenant_id.set(tenant_id)
-        print("getting session", tenant_id)
+        run_alembic_migrations(tenant_id)
+
         with get_session_with_tenant(tenant_id) as db_session:
             setup_danswer(db_session)
 
@@ -79,42 +76,27 @@ def create_tenant(
             current_tenant_id.reset(token)
 
 
-@router.post("/update-subscription-quantity")
-async def update_subscription_quantity(
-    checkout_session_creation_request: CheckoutSessionCreationRequest,
-    db_session: Session = Depends(get_session),
-    _: User = Depends(current_admin_user),
-) -> CheckoutSessionCreationResponse:
-    current_seats = get_total_users(db_session)
+@router.post("/product-gating")
+def gate_product(
+    product_gating_request: ProductGatingRequest, _: None = Depends(control_plane_dep)
+) -> None:
+    """
+    Gating the product means that the product is not available to the tenant.
+    They will be directed to the billing page.
+    We gate the product when
+    1) User has ended free trial without adding payment method
+    2) User's card has declined
+    """
+    if not MULTI_TENANT:
+        raise HTTPException(status_code=403, detail="Multi-tenancy is not enabled")
+    token = current_tenant_id.set(current_tenant_id.get())
 
-    if current_seats > checkout_session_creation_request.quantity:
-        raise HTTPException(
-            status_code=400,
-            detail="Too many users are active to downgrade to this quantity.",
-        )
+    settings = load_settings()
+    settings.product_gated = product_gating_request.gate_product
+    store_settings(settings)
 
-    try:
-        tenant_id = current_tenant_id.get()
-        response = fetch_tenant_stripe_information(tenant_id)
-        stripe_subscription_id = cast(str, response.get("stripe_subscription_id"))
-
-        subscription = stripe.Subscription.retrieve(stripe_subscription_id)
-        updated_subscription = stripe.Subscription.modify(
-            stripe_subscription_id,
-            items=[
-                {
-                    "id": subscription["items"]["data"][0].id,
-                    "price": STRIPE_PRICE_ID,
-                    "quantity": checkout_session_creation_request.quantity,
-                }
-            ],
-            metadata={"tenant_id": str(tenant_id)},
-        )
-
-        return CheckoutSessionCreationResponse(id=updated_subscription.id)
-    except Exception as e:
-        logger.exception("Failed to create checkout session")
-        raise HTTPException(status_code=500, detail=str(e))
+    if token is not None:
+        current_tenant_id.reset(token)
 
 
 @router.get("/billing-information", response_model=BillingInformation)
@@ -140,4 +122,5 @@ async def create_customer_portal_session(_: User = Depends(current_admin_user)) 
         logger.info(portal_session)
         return {"url": portal_session.url}
     except Exception as e:
+        logger.exception("Failed to create customer portal session")
         raise HTTPException(status_code=500, detail=str(e))

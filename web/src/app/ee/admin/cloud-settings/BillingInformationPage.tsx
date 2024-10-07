@@ -59,33 +59,6 @@ export default function BillingInformationPage() {
     return <div>Loading...</div>;
   }
 
-  const handleUpgrade = async () => {
-    try {
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error("Stripe failed to load");
-
-      const response = await updateSubscriptionQuantity(seats);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail);
-      }
-
-      // Allow time for Stripe webhook processing
-      setTimeout(refreshBillingInformation, 200);
-      setPopup({
-        message: "Subscription updated successfully",
-        type: "success",
-      });
-    } catch (error) {
-      console.error("Error updating subscription:", error);
-      setPopup({
-        message:
-          error instanceof Error ? error.message : "An unknown error occurred",
-        type: "error",
-      });
-    }
-  };
-
   const handleManageSubscription = async () => {
     try {
       const response = await fetchCustomerPortal();
@@ -199,6 +172,7 @@ export default function BillingInformationPage() {
             </p>
           </div>
         )}
+
         {billingInformation.subscription_status === "trialing" ? (
           <div className="bg-white p-5 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md mt-8">
             <p className="text-lg font-medium text-gray-700">
@@ -207,21 +181,18 @@ export default function BillingInformationPage() {
           </div>
         ) : (
           <div className="flex items-center space-x-4 mt-8">
-            <input
-              type="number"
-              min="1"
-              value={seats}
-              onChange={(e) => setSeats(Number(e.target.value))}
-              className="border border-gray-300 rounded-md px-4 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-gray-500 bg-white text-gray-800 shadow-sm transition-all duration-300"
-              placeholder="Seats"
-            />
-
-            <button
-              onClick={handleUpgrade}
-              className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-medium shadow-md text-lg"
-            >
-              Upgrade Seats
-            </button>
+            <div className="flex items-center space-x-4">
+              <p className="text-lg font-medium text-gray-700">
+                Current Seats:
+              </p>
+              <p className="text-xl font-semibold text-gray-900">
+                {billingInformation.seats}
+              </p>
+            </div>
+            <p className="text-sm text-gray-500">
+              Seats automatically update based on adding, removing, or inviting
+              users.
+            </p>
           </div>
         )}
       </div>

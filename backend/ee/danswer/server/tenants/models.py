@@ -10,6 +10,11 @@ class CreateTenantRequest(BaseModel):
     initial_admin_email: str
 
 
+class ProductGatingRequest(BaseModel):
+    tenant_id: str
+    gate_product: bool
+
+
 class BillingInformation(BaseModel):
     seats: int
     subscription_status: str

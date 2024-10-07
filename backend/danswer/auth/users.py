@@ -1,4 +1,3 @@
-import json
 import smtplib
 import uuid
 from collections.abc import AsyncGenerator
@@ -10,7 +9,6 @@ from typing import Optional
 from typing import Tuple
 
 import jwt
-import requests
 from email_validator import EmailNotValidError
 from email_validator import EmailUndeliverableError
 from email_validator import validate_email
@@ -35,7 +33,6 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.openapi import OpenAPIResponseType
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
-from requests import HTTPError
 from sqlalchemy import select
 from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
@@ -45,7 +42,6 @@ from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserUpdate
 from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.app_configs import CONTROL_PLANE_API_BASE_URL
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import MULTI_TENANT
@@ -210,32 +206,6 @@ def send_user_verification_email(
         # https://support.google.com/accounts/answer/185833?sjid=8512343437447396151-NA
         s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
-
-
-def register_tenant_users(tenant_id: str, number_of_users: int) -> None:
-    """
-    Send a request to the control service to register the number of users for a tenant.
-    """
-    url = f"{CONTROL_PLANE_API_BASE_URL}/register-tenant-users"
-    payload = {"tenant_id": tenant_id, "number_of_users": number_of_users}
-
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-    except HTTPError as e:
-        if e.response.status_code == 403:
-            try:
-                error_detail = e.response.json().get("detail", str(e))
-            except json.JSONDecodeError:
-                error_detail = str(e)
-            raise Exception(f"{error_detail}")
-
-        logger.error(f"Error registering tenant users: {str(e)}")
-        raise
-
-    except Exception as e:
-        logger.error(f"Unexpected error registering tenant users: {str(e)}")
-        raise
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):

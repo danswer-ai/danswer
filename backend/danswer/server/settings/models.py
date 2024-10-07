@@ -38,6 +38,7 @@ class Settings(BaseModel):
     default_page: PageType = PageType.SEARCH
     maximum_chat_retention_days: int | None = None
     gpu_enabled: bool | None = None
+    product_gated: bool | None = None
 
     def check_validity(self) -> None:
         chat_page_enabled = self.chat_page_enabled

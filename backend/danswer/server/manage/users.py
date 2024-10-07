@@ -31,7 +31,6 @@ from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import optional_user
-from danswer.auth.users import register_tenant_users
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import ENABLE_EMAIL_INVITES
 from danswer.configs.app_configs import MULTI_TENANT
@@ -64,6 +63,7 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
 from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
 from ee.danswer.db.user_group import remove_curator_status__no_commit
+from ee.danswer.server.tenants.billing import register_tenant_users
 from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.provisioning import remove_users_from_tenant
 
@@ -216,8 +216,8 @@ def bulk_invite_users(
     initial_invited_users = get_invited_users()
 
     all_emails = list(set(normalized_emails) | set(initial_invited_users))
-
     number_of_invited_users = write_invited_users(all_emails)
+
     if not MULTI_TENANT:
         return number_of_invited_users
     try:
