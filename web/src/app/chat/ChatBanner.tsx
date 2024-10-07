@@ -22,11 +22,7 @@ export function ChatBanner() {
         const isWidthOverflowing = fullContentRect.width > contentRect.width;
         const isHeightOverflowing = fullContentRect.height > contentRect.height;
 
-        setIsOverflowing(
-          isWidthOverflowing ||
-            (isHeightOverflowing &&
-              fullContentRect.height - contentRect.height >= 0)
-        );
+        setIsOverflowing(isWidthOverflowing || isHeightOverflowing);
       }
     };
 
