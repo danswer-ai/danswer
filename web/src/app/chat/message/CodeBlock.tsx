@@ -55,32 +55,33 @@ export const CodeBlock = memo(function CodeBlock({
     </div>
   );
 
+  if (typeof children === "string") {
+    return (
+      <span
+        className={`
+          font-mono 
+          text-gray-800 
+          bg-gray-50 
+          border 
+          border-gray-300 
+          rounded 
+          align-bottom
+          px-1
+          py-[3px]
+          text-xs 
+          inline-block
+          whitespace-pre-wrap 
+          break-words 
+          ${className}
+        `}
+      >
+        {children}
+      </span>
+    );
+  }
+
   const CodeContent = () => {
     if (!language) {
-      if (typeof children === "string") {
-        return (
-          <code
-            className={`
-            font-mono 
-            text-gray-800 
-            bg-gray-50 
-            border 
-            border-gray-300 
-            rounded 
-            px-1
-            py-[3px]
-            text-xs 
-            whitespace-pre-wrap 
-            break-words 
-            overflow-hidden
-            mb-1
-            ${className}
-          `}
-          >
-            {children}
-          </code>
-        );
-      }
       return (
         <pre style={CODE_BLOCK_PADDING}>
           <code className={`text-sm ${className}`}>

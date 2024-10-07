@@ -114,6 +114,7 @@ export default function AddConnector({
 }) {
   const router = useRouter();
 
+  console.log(connector);
   // State for managing credentials and files
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
