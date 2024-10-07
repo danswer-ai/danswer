@@ -36,6 +36,7 @@ export function AssistantIcon({
         // Prioritization order: image, graph, defaults
         assistant.uploaded_image_id ? (
           <img
+            alt={assistant.name}
             className={`object-cover object-center rounded-sm overflow-hidden transition-opacity duration-300 opacity-100
               ${size === "large" ? "w-8 h-8" : "w-6 h-6"}`}
             src={buildImgUrl(assistant.uploaded_image_id)}

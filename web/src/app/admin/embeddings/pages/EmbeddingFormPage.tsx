@@ -165,7 +165,7 @@ export default function EmbeddingForm() {
   }
 
   const updateSearch = async () => {
-    let values: SavedSearchSettings = {
+    const values: SavedSearchSettings = {
       ...rerankingDetails,
       ...advancedEmbeddingDetails,
       provider_type:

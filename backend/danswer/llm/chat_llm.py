@@ -283,6 +283,7 @@ class DefaultMultiLLM(LLM):
                 _convert_message_to_dict(msg) if isinstance(msg, BaseMessage) else msg
                 for msg in prompt
             ]
+
         elif isinstance(prompt, str):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 

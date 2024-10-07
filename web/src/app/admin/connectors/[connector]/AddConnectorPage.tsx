@@ -1,6 +1,6 @@
 "use client";
 
-import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
+import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
@@ -29,6 +29,8 @@ import {
   defaultPruneFreqDays,
   defaultRefreshFreqMinutes,
   isLoadState,
+  Connector,
+  ConnectorBase,
 } from "@/lib/connectors/connectors";
 import { Modal } from "@/components/Modal";
 import GDriveMain from "./pages/gdrive/GoogleDrivePage";
@@ -47,7 +49,6 @@ export interface AdvancedConfig {
   pruneFreq: number;
   indexingStart: string;
 }
-import { Connector, ConnectorBase } from "@/lib/connectors/connectors";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 

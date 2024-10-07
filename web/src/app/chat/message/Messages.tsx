@@ -202,7 +202,7 @@ export const AIMessage = ({
 
   const selectedDocumentIds =
     selectedDocuments?.map((document) => document.document_id) || [];
-  let citedDocumentIds: string[] = [];
+  const citedDocumentIds: string[] = [];
 
   citedDocuments?.forEach((doc) => {
     citedDocumentIds.push(doc[1].document_id);
@@ -272,7 +272,7 @@ export const AIMessage = ({
         );
       },
     }),
-    [messageId, content]
+    [finalContent]
   );
 
   const renderedMarkdown = useMemo(() => {
@@ -286,7 +286,7 @@ export const AIMessage = ({
         {finalContent as string}
       </ReactMarkdown>
     );
-  }, [finalContent]);
+  }, [finalContent, markdownComponents]);
 
   const includeMessageSwitcher =
     currentMessageInd !== undefined &&
@@ -412,6 +412,7 @@ export const AIMessage = ({
                                     href={doc.link || undefined}
                                     target="_blank"
                                     className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
+                                    rel="noreferrer"
                                   >
                                     <Citation link={doc.link} index={ind + 1} />
                                     <p className="shrink truncate ellipsis break-all">
@@ -670,7 +671,7 @@ export const HumanMessage = ({
     if (!isEditing) {
       setEditedContent(content);
     }
-  }, [content]);
+  }, [content, isEditing]);
 
   useEffect(() => {
     if (textareaRef.current) {

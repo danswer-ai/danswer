@@ -1,15 +1,9 @@
 "use client";
 
-import React, {
-  Dispatch,
-  ReactNode,
-  SetStateAction,
-  useEffect,
-  useState,
-} from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { MinimalUserSnapshot, User } from "@/lib/types";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { Button, Divider, Text } from "@tremor/react";
+import { Button, Divider } from "@tremor/react";
 import {
   FiEdit2,
   FiList,
@@ -51,8 +45,8 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
+  useSortable,
 } from "@dnd-kit/sortable";
-import { useSortable } from "@dnd-kit/sortable";
 
 import { DragHandle } from "@/components/table/DragHandle";
 import {

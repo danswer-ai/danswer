@@ -1,11 +1,7 @@
 "use client";
 
-import useSWR from "swr";
-
 import { LoadingAnimation } from "@/components/Loading";
 import { NotebookIcon } from "@/components/icons/icons";
-import { errorHandlingFetcher } from "@/lib/fetcher";
-import { ConnectorIndexingStatus } from "@/lib/types";
 import { CCPairIndexingStatusTable } from "./CCPairIndexingStatusTable";
 import { AdminPageTitle } from "@/components/admin/Title";
 import Link from "next/link";

@@ -3,11 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
 import { useState, useEffect, useContext } from "react";
-import {
-  deleteChatSession,
-  getChatRetentionInfo,
-  renameChatSession,
-} from "../lib";
+import { getChatRetentionInfo, renameChatSession } from "../lib";
 import { BasicSelectable } from "@/components/BasicClickable";
 import Link from "next/link";
 import {

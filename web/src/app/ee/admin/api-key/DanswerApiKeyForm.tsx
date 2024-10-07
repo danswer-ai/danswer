@@ -6,7 +6,6 @@ import {
 } from "@/components/admin/connectors/Field";
 import { createApiKey, updateApiKey } from "./lib";
 import { Modal } from "@/components/Modal";
-import { XIcon } from "@/components/icons/icons";
 import { Button, Divider, Text } from "@tremor/react";
 import { UserRole } from "@/lib/types";
 import { APIKey } from "./types";

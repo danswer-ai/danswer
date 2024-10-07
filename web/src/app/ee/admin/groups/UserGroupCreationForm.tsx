@@ -3,12 +3,10 @@ import * as Yup from "yup";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { ConnectorIndexingStatus, User, UserGroup } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { createUserGroup } from "./lib";
 import { UserEditor } from "./UserEditor";
 import { ConnectorEditor } from "./ConnectorEditor";
 import { Modal } from "@/components/Modal";
-import { XIcon } from "@/components/icons/icons";
 import { Button, Divider } from "@tremor/react";
 
 interface UserGroupCreationFormProps {

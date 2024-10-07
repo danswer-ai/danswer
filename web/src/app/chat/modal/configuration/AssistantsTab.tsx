@@ -19,7 +19,6 @@ import { getFinalLLM } from "@/lib/llm/utils";
 import React, { useState } from "react";
 import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
 import { DraggableAssistantCard } from "@/components/assistants/AssistantCards";
-import { useRouter } from "next/navigation";
 
 export function AssistantsTab({
   selectedAssistant,

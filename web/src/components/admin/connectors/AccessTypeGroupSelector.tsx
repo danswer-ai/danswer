@@ -46,7 +46,14 @@ export function AccessTypeGroupSelector({}: {}) {
         setShouldHideContent(false);
       }
     }
-  }, [user, userGroups, access_type.value]);
+  }, [
+    user,
+    userGroups,
+    access_type.value,
+    access_type_helpers,
+    groups_helpers,
+    isPaidEnterpriseFeaturesEnabled,
+  ]);
 
   if (isLoadingUser || userGroupsIsLoading) {
     return <div>Loading...</div>;

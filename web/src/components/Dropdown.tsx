@@ -2,6 +2,7 @@ import {
   ChangeEvent,
   FC,
   forwardRef,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -411,14 +412,17 @@ export function ControlledPopup({
 }) {
   const filtersRef = useRef<HTMLDivElement>(null);
   // hides logout popup on any click outside
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      filtersRef.current &&
-      !filtersRef.current.contains(event.target as Node)
-    ) {
-      setIsOpen(false);
-    }
-  };
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (
+        filtersRef.current &&
+        !filtersRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    },
+    [filtersRef, setIsOpen]
+  );
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -426,7 +430,7 @@ export function ControlledPopup({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [handleClickOutside]);
 
   return (
     <div ref={filtersRef} className="relative">

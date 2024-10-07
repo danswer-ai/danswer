@@ -19,7 +19,7 @@ export const ConnectorEditor = ({
         .filter((ccPair) => !(ccPair.access_type === "public"))
         .map((ccPair) => {
           const ind = selectedCCPairIds.indexOf(ccPair.cc_pair_id);
-          let isSelected = ind !== -1;
+          const isSelected = ind !== -1;
           return (
             <div
               key={`${ccPair.connector.id}-${ccPair.credential.id}`}

@@ -4,7 +4,6 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { User } from "@/lib/types";
 import { Button } from "@tremor/react";
-import Link from "next/link";
 import { useState } from "react";
 import { FiList, FiMinus, FiPlus } from "react-icons/fi";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";

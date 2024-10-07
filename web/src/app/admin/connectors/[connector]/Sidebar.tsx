@@ -1,7 +1,7 @@
 import { useFormContext } from "@/components/context/FormContext";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 
-import { BackIcon, SettingsIcon } from "@/components/icons/icons";
+import { SettingsIcon } from "@/components/icons/icons";
 import { Logo } from "@/components/Logo";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { credentialTemplates } from "@/lib/connectors/credentials";

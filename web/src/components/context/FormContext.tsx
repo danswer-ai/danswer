@@ -73,7 +73,7 @@ export const FormProvider: React.FC<{
     if (stepFromUrl !== formStep) {
       setFormStep(stepFromUrl);
     }
-  }, [searchParams]);
+  }, [searchParams, formStep]);
 
   const contextValue: FormContextType = {
     formStep,
