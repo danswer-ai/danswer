@@ -19,6 +19,7 @@ from celery.utils.log import get_task_logger
 
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
+from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
@@ -102,6 +103,13 @@ def celery_task_postrun(
         if cc_pair_id is not None:
             rcd = RedisConnectorDeletion(cc_pair_id)
             r.srem(rcd.taskset_key, task_id)
+        return
+
+    if task_id.startswith(RedisConnectorPruning.SUBTASK_PREFIX):
+        cc_pair_id = RedisConnectorPruning.get_id_from_task_id(task_id)
+        if cc_pair_id is not None:
+            rcp = RedisConnectorPruning(cc_pair_id)
+            r.srem(rcp.taskset_key, task_id)
         return
 
 
@@ -236,6 +244,18 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     for key in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
         r.delete(key)
 
+    for key in r.scan_iter(RedisConnectorPruning.TASKSET_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisConnectorPruning.GENERATOR_COMPLETE_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisConnectorPruning.GENERATOR_PROGRESS_PREFIX + "*"):
+        r.delete(key)
+
+    for key in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
+        r.delete(key)
+
 
 @worker_ready.connect
 def on_worker_ready(sender: Any, **kwargs: Any) -> None:
@@ -330,7 +350,11 @@ def on_setup_logging(
 
 class HubPeriodicTask(bootsteps.StartStopStep):
     """Regularly reacquires the primary worker lock outside of the task queue.
-    Use the task_logger in this class to avoid double logging."""
+    Use the task_logger in this class to avoid double logging.
+
+    This cannot be done inside a regular beat task because it must run on schedule and
+    a queue of existing work would starve the task from running.
+    """
 
     # it's unclear to me whether using the hub's timer or the bootstep timer is better
     requires = {"celery.worker.components:Hub"}
@@ -405,6 +429,7 @@ celery_app.autodiscover_tasks(
         "danswer.background.celery.tasks.connector_deletion",
         "danswer.background.celery.tasks.periodic",
         "danswer.background.celery.tasks.pruning",
+        "danswer.background.celery.tasks.shared",
         "danswer.background.celery.tasks.vespa",
     ]
 )
@@ -425,7 +450,7 @@ celery_app.conf.beat_schedule.update(
             "task": "check_for_connector_deletion_task",
             # don't need to check too often, since we kick off a deletion initially
             # during the API call that actually marks the CC pair for deletion
-            "schedule": timedelta(minutes=1),
+            "schedule": timedelta(seconds=60),
             "options": {"priority": DanswerCeleryPriority.HIGH},
         },
     }
@@ -433,8 +458,8 @@ celery_app.conf.beat_schedule.update(
 celery_app.conf.beat_schedule.update(
     {
         "check-for-prune": {
-            "task": "check_for_prune_task",
-            "schedule": timedelta(seconds=5),
+            "task": "check_for_prune_task_2",
+            "schedule": timedelta(seconds=60),
             "options": {"priority": DanswerCeleryPriority.HIGH},
         },
     }

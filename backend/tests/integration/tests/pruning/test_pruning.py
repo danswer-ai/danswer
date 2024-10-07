@@ -105,12 +105,9 @@ def test_web_pruning(reset: None, vespa_client: vespa_fixture) -> None:
             logger.info("Removing courses.html.")
             os.remove(os.path.join(website_tgt, "courses.html"))
 
-            # store the time again as a reference for the pruning timestamps
-            now = datetime.now(timezone.utc)
-
             CCPairManager.prune(cc_pair_1, user_performing_action=admin_user)
             CCPairManager.wait_for_prune(
-                cc_pair_1, now, timeout=60, user_performing_action=admin_user
+                cc_pair_1, timeout=60, user_performing_action=admin_user
             )
 
             selected_cc_pair = CCPairManager.get_one(

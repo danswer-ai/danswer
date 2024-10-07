@@ -274,10 +274,10 @@ class CCPairManager:
         result.raise_for_status()
 
     @staticmethod
-    def get_prune_task(
+    def is_pruning(
         cc_pair: DATestCCPair,
         user_performing_action: DATestUser | None = None,
-    ) -> CeleryTaskStatus:
+    ) -> bool:
         response = requests.get(
             url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/prune",
             headers=user_performing_action.headers
@@ -285,28 +285,21 @@ class CCPairManager:
             else GENERAL_HEADERS,
         )
         response.raise_for_status()
-        return CeleryTaskStatus(**response.json())
+        response_bool = response.json()
+        return response_bool
 
     @staticmethod
     def wait_for_prune(
         cc_pair: DATestCCPair,
-        after: datetime,
         timeout: float = MAX_DELAY,
         user_performing_action: DATestUser | None = None,
     ) -> None:
         """after: The task register time must be after this time."""
         start = time.monotonic()
         while True:
-            task = CCPairManager.get_prune_task(cc_pair, user_performing_action)
-            if not task:
-                raise ValueError("Prune task not found.")
-
-            if not task.register_time or task.register_time < after:
-                raise ValueError("Prune task register time is too early.")
-
-            if task.status == TaskStatus.SUCCESS:
-                # Pruning succeeded
-                return
+            result = CCPairManager.is_pruning(cc_pair, user_performing_action)
+            if not result:
+                break
 
             elapsed = time.monotonic() - start
             if elapsed > timeout:
@@ -380,16 +373,31 @@ class CCPairManager:
 
     @staticmethod
     def wait_for_deletion_completion(
+        cc_pair_id: int | None = None,
         user_performing_action: DATestUser | None = None,
     ) -> None:
+        """if cc_pair_id is not specified, just waits until no connectors are in the deleting state.
+        if cc_pair_id is specified, checks to ensure the specific cc_pair_id is gone.
+        We had a bug where the connector was paused in the middle of deleting, so specifying the
+        cc_pair_id is good to do."""
         start = time.monotonic()
         while True:
-            fetched_cc_pairs = CCPairManager.get_all(user_performing_action)
-            if all(
-                cc_pair.cc_pair_status != ConnectorCredentialPairStatus.DELETING
-                for cc_pair in fetched_cc_pairs
-            ):
-                return
+            cc_pairs = CCPairManager.get_all(user_performing_action)
+            if cc_pair_id:
+                found = False
+                for cc_pair in cc_pairs:
+                    if cc_pair.cc_pair_id == cc_pair_id:
+                        found = True
+                        break
+
+                if not found:
+                    return
+            else:
+                if all(
+                    cc_pair.cc_pair_status != ConnectorCredentialPairStatus.DELETING
+                    for cc_pair in cc_pairs
+                ):
+                    return
 
             if time.monotonic() - start > MAX_DELAY:
                 raise TimeoutError(
