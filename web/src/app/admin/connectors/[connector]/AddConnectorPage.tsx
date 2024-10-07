@@ -41,7 +41,7 @@ import { Formik } from "formik";
 import { AccessTypeForm } from "@/components/admin/connectors/AccessTypeForm";
 import { AccessTypeGroupSelector } from "@/components/admin/connectors/AccessTypeGroupSelector";
 import NavigationRow from "./NavigationRow";
-
+import { useRouter } from "next/navigation";
 export interface AdvancedConfig {
   refreshFreq: number;
   pruneFreq: number;
@@ -111,6 +111,8 @@ export default function AddConnector({
 }: {
   connector: ConfigurableSources;
 }) {
+  const router = useRouter();
+
   // State for managing credentials and files
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
@@ -201,13 +203,7 @@ export default function AddConnector({
   };
 
   const onSuccess = () => {
-    setPopup({
-      message: "Connector created! Redirecting to connector home page",
-      type: "success",
-    });
-    setTimeout(() => {
-      window.open("/admin/indexing/status", "_self");
-    }, 1000);
+    router.push("/admin/indexing/status?message=connector-created");
   };
 
   return (

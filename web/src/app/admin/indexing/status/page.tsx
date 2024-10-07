@@ -11,8 +11,15 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import Link from "next/link";
 import { Button, Text } from "@tremor/react";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
+import { usePopupFromQuery } from "@/components/popup/PopupFromQuery";
 
 function Main() {
+  const { popup } = usePopupFromQuery({
+    "connector-created": {
+      message: "Connector created successfully",
+      type: "success",
+    },
+  });
   const {
     data: indexAttemptData,
     isLoading: indexAttemptIsLoading,
@@ -67,10 +74,13 @@ function Main() {
   });
 
   return (
-    <CCPairIndexingStatusTable
-      ccPairsIndexingStatuses={indexAttemptData}
-      editableCcPairsIndexingStatuses={editableIndexAttemptData}
-    />
+    <>
+      {popup}
+      <CCPairIndexingStatusTable
+        ccPairsIndexingStatuses={indexAttemptData}
+        editableCcPairsIndexingStatuses={editableIndexAttemptData}
+      />
+    </>
   );
 }
 

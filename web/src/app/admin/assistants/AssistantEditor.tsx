@@ -106,6 +106,7 @@ export function AssistantEditor({
   admin?: boolean;
 }) {
   const router = useRouter();
+
   const { popup, setPopup } = usePopup();
 
   const colorOptions = [
