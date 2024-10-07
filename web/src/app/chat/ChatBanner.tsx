@@ -71,7 +71,7 @@ export function ChatBanner() {
           <div className="absolute top-0 left-0 invisible flex justify-center max-w-full">
             <div
               ref={fullContentRef}
-              className={`overflow-hidden invisible${settings.enterpriseSettings.two_lines_for_chat_header ? "line-clamp-2" : "line-clamp-1"} text-center max-w-full`}
+              className={`overflow-hidden invisible ${settings.enterpriseSettings.two_lines_for_chat_header ? "line-clamp-2" : "line-clamp-1"} text-center max-w-full`}
             >
               <MinimalMarkdown
                 className="prose text-sm max-w-full"
