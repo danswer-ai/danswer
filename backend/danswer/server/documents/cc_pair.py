@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
-from danswer.background.celery.celery_utils import cc_pair_is_pruning
+from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.background.celery.tasks.pruning.tasks import (
     try_creating_prune_generator_task,
@@ -219,7 +219,8 @@ def get_cc_pair_latest_prune(
             detail="Connection not found for current user's permissions",
         )
 
-    return cc_pair_is_pruning(cc_pair.id, db_session)
+    rcp = RedisConnectorPruning(cc_pair.id)
+    return rcp.is_pruning(db_session, get_redis_client())
 
 
 @router.post("/admin/cc-pair/{cc_pair_id}/prune")
@@ -242,7 +243,9 @@ def prune_cc_pair(
             detail="Connection not found for current user's permissions",
         )
 
-    if cc_pair_is_pruning(cc_pair.id, db_session=db_session):
+    r = get_redis_client()
+    rcp = RedisConnectorPruning(cc_pair_id)
+    if rcp.is_pruning(db_session, r):
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail="Pruning task already in progress.",
@@ -254,9 +257,7 @@ def prune_cc_pair(
         f"credential_id={cc_pair.credential_id} "
         f"{cc_pair.connector.name} connector."
     )
-    tasks_created = try_creating_prune_generator_task(
-        cc_pair, db_session, get_redis_client()
-    )
+    tasks_created = try_creating_prune_generator_task(cc_pair, db_session, r)
     if not tasks_created:
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
