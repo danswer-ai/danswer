@@ -172,7 +172,7 @@ class Deletable(abc.ABC):
     """
 
     @abc.abstractmethod
-    def delete_single(self, doc_id: str) -> None:
+    def delete_single(self, doc_id: str) -> int:
         """
         Given a single document id, hard delete it from the document index
 
@@ -203,7 +203,7 @@ class Updatable(abc.ABC):
     """
 
     @abc.abstractmethod
-    def update_single(self, doc_id: str, fields: VespaDocumentFields) -> None:
+    def update_single(self, doc_id: str, fields: VespaDocumentFields) -> int:
         """
         Updates all chunks for a document with the specified fields.
         None values mean that the field does not need an update.
