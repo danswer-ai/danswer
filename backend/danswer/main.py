@@ -1,5 +1,4 @@
 import sys
-import time
 import traceback
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -32,9 +31,9 @@ from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import LOG_ENDPOINT_LATENCY
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
-from danswer.configs.app_configs import SYSTEM_RECURSION_LIMIT
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
+from danswer.configs.app_configs import SYSTEM_RECURSION_LIMIT
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
