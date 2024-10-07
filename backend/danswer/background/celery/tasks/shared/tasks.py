@@ -100,11 +100,6 @@ def document_by_cc_pair_cleanup_task(
             else:
                 pass
 
-            # update_docs_last_modified__no_commit(
-            #     db_session=db_session,
-            #     document_ids=[document_id],
-            # )
-
             db_session.commit()
     except SoftTimeLimitExceeded:
         task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
