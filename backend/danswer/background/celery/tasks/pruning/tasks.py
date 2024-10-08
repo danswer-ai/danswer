@@ -142,7 +142,9 @@ def try_creating_prune_generator_task(
     celery_app.send_task(
         "connector_pruning_generator_task",
         kwargs=dict(
-            connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id, tenant_id=tenant_id
+            connector_id=cc_pair.connector_id,
+            credential_id=cc_pair.credential_id,
+            tenant_id=tenant_id,
         ),
         queue=DanswerCeleryQueues.CONNECTOR_PRUNING,
         task_id=custom_task_id,
@@ -153,8 +155,11 @@ def try_creating_prune_generator_task(
     r.set(rcp.fence_key, 1)
     return 1
 
+
 @shared_task(name="connector_pruning_generator_task", soft_time_limit=JOB_TIMEOUT)
-def connector_pruning_generator_task(connector_id: int, credential_id: int, tenant_id: str | None) -> None:
+def connector_pruning_generator_task(
+    connector_id: int, credential_id: int, tenant_id: str | None
+) -> None:
     """connector pruning task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list"""
@@ -219,7 +224,9 @@ def connector_pruning_generator_task(connector_id: int, credential_id: int, tena
             task_logger.info(
                 f"RedisConnectorPruning.generate_tasks starting. cc_pair_id={cc_pair.id}"
             )
-            tasks_generated = rcp.generate_tasks(celery_app, db_session, r, None, tenant_id)
+            tasks_generated = rcp.generate_tasks(
+                celery_app, db_session, r, None, tenant_id
+            )
             if tasks_generated is None:
                 return None
 
