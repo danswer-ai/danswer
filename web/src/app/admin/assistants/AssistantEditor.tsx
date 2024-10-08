@@ -349,7 +349,7 @@ export function AssistantEditor({
 
           if (imageGenerationToolEnabled) {
             if (
-              // model most support image input for image generation
+              // model must support image input for image generation
               // to work
               !checkLLMSupportsImageInput(
                 values.llm_model_version_override || defaultModelName || ""
@@ -466,7 +466,9 @@ export function AssistantEditor({
               : false;
           }
 
-          const currentLLMSupportsImageInput = checkLLMSupportsImageInput(
+          // model must support image input for image generation
+          // to work
+          const currentLLMSupportsImageOutput = checkLLMSupportsImageInput(
             values.llm_model_version_override || defaultModelName || ""
           );
 
@@ -774,7 +776,7 @@ export function AssistantEditor({
                         <TooltipTrigger asChild>
                           <div
                             className={`w-fit ${
-                              !currentLLMSupportsImageInput
+                              !currentLLMSupportsImageOutput
                                 ? "opacity-70 cursor-not-allowed"
                                 : ""
                             }`}
@@ -786,11 +788,11 @@ export function AssistantEditor({
                               onChange={() => {
                                 toggleToolInValues(imageGenerationTool.id);
                               }}
-                              disabled={!currentLLMSupportsImageInput}
+                              disabled={!currentLLMSupportsImageOutput}
                             />
                           </div>
                         </TooltipTrigger>
-                        {!currentLLMSupportsImageInput && (
+                        {!currentLLMSupportsImageOutput && (
                           <TooltipContent side="top" align="center">
                             <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                               To use Image Generation, select GPT-4o or another
