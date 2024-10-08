@@ -429,7 +429,6 @@ def run_indexing_entrypoint(
         IndexAttemptSingleton.set_cc_and_index_id(
             index_attempt_id, connector_credential_pair_id
         )
-        print("ZZZZZZZ ten id", tenant_id)
         with get_session_with_tenant(tenant_id) as db_session:
             attempt = _prepare_index_attempt(db_session, index_attempt_id, tenant_id)
 
