@@ -16,10 +16,12 @@ class WellKnownLLMProviderDescriptor(BaseModel):
     api_base_required: bool
     api_version_required: bool
     custom_config_keys: list[CustomConfigKey] | None = None
+    single_model_supported: bool = False
 
     llm_names: list[str]
     default_model: str | None = None
     default_fast_model: str | None = None
+    deployment_name_required: bool = False
 
 
 OPENAI_PROVIDER_NAME = "openai"
@@ -108,6 +110,8 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
             api_version_required=True,
             custom_config_keys=[],
             llm_names=fetch_models_for_provider(AZURE_PROVIDER_NAME),
+            deployment_name_required=True,
+            single_model_supported=True,
         ),
         WellKnownLLMProviderDescriptor(
             name=BEDROCK_PROVIDER_NAME,
