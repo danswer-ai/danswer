@@ -196,7 +196,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     return (
       <Callout
         className="mt-4"
-        title="No Indexing Attempts Scheduled Yet"
+        title="No indexing attempts scheduled yet"
         icon={FiInfo}
         color="blue"
       >
