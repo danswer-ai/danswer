@@ -316,7 +316,9 @@ class Answer:
 
                 yield from self._process_llm_stream(
                     prompt=prompt,
-                    tools=[tool.tool_definition() for tool in self.tools],
+                    # as of now, we don't support multiple tool calls in sequence, which is why
+                    # we don't need to pass this in here
+                    # tools=[tool.tool_definition() for tool in self.tools],
                 )
 
             return
