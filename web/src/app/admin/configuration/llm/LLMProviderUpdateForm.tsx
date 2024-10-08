@@ -298,7 +298,7 @@ export function LLMProviderUpdateForm({
                   small={hideAdvanced}
                   name="deployment_name"
                   label="Deployment Name"
-                  placeholder="E.g. gpt-4-mycompanyname-1"
+                  placeholder="Deployment Name"
                 />
               )}
 

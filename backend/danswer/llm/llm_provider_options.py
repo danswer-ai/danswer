@@ -16,12 +16,13 @@ class WellKnownLLMProviderDescriptor(BaseModel):
     api_base_required: bool
     api_version_required: bool
     custom_config_keys: list[CustomConfigKey] | None = None
-    single_model_supported: bool = False
-
     llm_names: list[str]
     default_model: str | None = None
     default_fast_model: str | None = None
+    # set for providers like Azure, which require a deployment name.
     deployment_name_required: bool = False
+    # set for providers like Azure, which support a single model per deployment.
+    single_model_supported: bool = False
 
 
 OPENAI_PROVIDER_NAME = "openai"

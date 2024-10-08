@@ -201,6 +201,7 @@ export async function fetchChatData(searchParams: {
       provider.provider === "openai" ||
       provider.model_names.some((model) => checkLLMSupportsImageInput(model))
   );
+
   if (!hasImageCompatibleModel) {
     assistants = assistants.filter(
       (assistant) =>

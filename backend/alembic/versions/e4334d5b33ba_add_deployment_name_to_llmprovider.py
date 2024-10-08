@@ -1,7 +1,7 @@
 """add_deployment_name_to_llmprovider
 
 Revision ID: e4334d5b33ba
-Revises: 46b7a812670f
+Revises: ac5eaac849f9
 Create Date: 2024-10-04 09:52:34.896867
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "e4334d5b33ba"
-down_revision = "46b7a812670f"
+down_revision = "ac5eaac849f9"
 branch_labels = None
 depends_on = None
 
