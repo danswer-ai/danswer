@@ -2,17 +2,21 @@ import re
 from datetime import datetime
 from datetime import timezone
 
+import jwt
 from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Request
 from fastapi import status
+from psycopg2.errors import UniqueViolation
 from pydantic import BaseModel
 from sqlalchemy import Column
 from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy import update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
@@ -26,9 +30,12 @@ from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
+from danswer.configs.app_configs import ENABLE_EMAIL_INVITES
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
+from danswer.db.engine import current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
 from danswer.db.models import DocumentSet__User
@@ -48,10 +55,13 @@ from danswer.server.manage.models import UserRoleUpdateRequest
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
+from danswer.server.utils import send_user_email_invite
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
 from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
 from ee.danswer.db.user_group import remove_curator_status__no_commit
+from ee.danswer.server.tenants.provisioning import add_users_to_tenant
+from ee.danswer.server.tenants.provisioning import remove_users_from_tenant
 
 logger = setup_logger()
 
@@ -171,12 +181,33 @@ def bulk_invite_users(
         raise HTTPException(
             status_code=400, detail="Auth is disabled, cannot invite users"
         )
+    tenant_id = current_tenant_id.get()
 
     normalized_emails = []
     for email in emails:
         email_info = validate_email(email)  # can raise EmailNotValidError
         normalized_emails.append(email_info.normalized)  # type: ignore
+
+    if MULTI_TENANT:
+        try:
+            add_users_to_tenant(normalized_emails, tenant_id)
+        except IntegrityError as e:
+            if isinstance(e.orig, UniqueViolation):
+                raise HTTPException(
+                    status_code=400,
+                    detail="User has already been invited to a Danswer organization",
+                )
+            raise
+
     all_emails = list(set(normalized_emails) | set(get_invited_users()))
+
+    if MULTI_TENANT and ENABLE_EMAIL_INVITES:
+        try:
+            for email in all_emails:
+                send_user_email_invite(email, current_user)
+        except Exception as e:
+            logger.error(f"Error sending email invite to invited users: {e}")
+
     return write_invited_users(all_emails)
 
 
@@ -187,6 +218,10 @@ def remove_invited_user(
 ) -> int:
     user_emails = get_invited_users()
     remaining_users = [user for user in user_emails if user != user_email.user_email]
+
+    tenant_id = current_tenant_id.get()
+    remove_users_from_tenant([user_email.user_email], tenant_id)
+
     return write_invited_users(remaining_users)
 
 
@@ -330,6 +365,35 @@ async def get_user_role(user: User = Depends(current_user)) -> UserRoleResponse:
     return UserRoleResponse(role=user.role)
 
 
+def get_current_token_expiration_jwt(
+    user: User | None, request: Request
+) -> datetime | None:
+    if user is None:
+        return None
+
+    try:
+        # Get the JWT from the cookie
+        jwt_token = request.cookies.get("fastapiusersauth")
+        if not jwt_token:
+            logger.error("No JWT token found in cookies")
+            return None
+
+        # Decode the JWT
+        decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
+
+        # Get the 'exp' (expiration) claim from the token
+        exp = decoded_token.get("exp")
+        if exp:
+            return datetime.fromtimestamp(exp)
+        else:
+            logger.error("No 'exp' claim found in JWT")
+            return None
+
+    except Exception as e:
+        logger.error(f"Error decoding JWT: {e}")
+        return None
+
+
 def get_current_token_creation(
     user: User | None, db_session: Session
 ) -> datetime | None:
@@ -357,6 +421,7 @@ def get_current_token_creation(
 
 @router.get("/me")
 def verify_user_logged_in(
+    request: Request,
     user: User | None = Depends(optional_user),
     db_session: Session = Depends(get_session),
 ) -> UserInfo:
@@ -380,7 +445,9 @@ def verify_user_logged_in(
             detail="Access denied. User's OIDC token has expired.",
         )
 
-    token_created_at = get_current_token_creation(user, db_session)
+    token_created_at = (
+        None if MULTI_TENANT else get_current_token_creation(user, db_session)
+    )
     user_info = UserInfo.from_model(
         user,
         current_token_created_at=token_created_at,

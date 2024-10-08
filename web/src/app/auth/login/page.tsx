@@ -14,6 +14,7 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { LoginText } from "./LoginText";
 import { getSecondsUntilExpiration } from "@/lib/time";
+import AuthFlowContainer from "@/components/auth/AuthFlowContainer";
 
 const Page = async ({
   searchParams,
@@ -51,7 +52,6 @@ const Page = async ({
     if (authTypeMetadata?.requiresVerification && !currentUser.is_verified) {
       return redirect("/auth/waiting-on-verification");
     }
-
     return redirect("/");
   }
 
@@ -70,46 +70,44 @@ const Page = async ({
   }
 
   return (
-    <main>
+    <AuthFlowContainer>
       <div className="absolute top-10x w-full">
         <HealthCheckBanner />
       </div>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div>
-          <Logo height={64} width={64} className="mx-auto w-fit" />
-          {authUrl && authTypeMetadata && (
-            <>
-              <h2 className="text-center text-xl text-strong font-bold mt-6">
-                <LoginText />
-              </h2>
 
-              <SignInButton
-                authorizeUrl={authUrl}
-                authType={authTypeMetadata?.authType}
-              />
-            </>
-          )}
-          {authTypeMetadata?.authType === "basic" && (
-            <Card className="mt-4 w-96">
-              <div className="flex">
-                <Title className="mb-2 mx-auto font-bold">
-                  <LoginText />
-                </Title>
-              </div>
-              <EmailPasswordForm />
-              <div className="flex">
-                <Text className="mt-4 mx-auto">
-                  Don&apos;t have an account?{" "}
-                  <Link href="/auth/signup" className="text-link font-medium">
-                    Create an account
-                  </Link>
-                </Text>
-              </div>
-            </Card>
-          )}
-        </div>
+      <div>
+        {authUrl && authTypeMetadata && (
+          <>
+            <h2 className="text-center text-xl text-strong font-bold">
+              <LoginText />
+            </h2>
+
+            <SignInButton
+              authorizeUrl={authUrl}
+              authType={authTypeMetadata?.authType}
+            />
+          </>
+        )}
+        {authTypeMetadata?.authType === "basic" && (
+          <Card className="mt-4 w-96">
+            <div className="flex">
+              <Title className="mb-2 mx-auto font-bold">
+                <LoginText />
+              </Title>
+            </div>
+            <EmailPasswordForm />
+            <div className="flex">
+              <Text className="mt-4 mx-auto">
+                Don&apos;t have an account?{" "}
+                <Link href="/auth/signup" className="text-link font-medium">
+                  Create an account
+                </Link>
+              </Text>
+            </div>
+          </Card>
+        )}
       </div>
-    </main>
+    </AuthFlowContainer>
   );
 };
 

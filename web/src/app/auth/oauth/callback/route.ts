@@ -11,6 +11,12 @@ export const GET = async (request: NextRequest) => {
   const response = await fetch(url.toString());
   const setCookieHeader = response.headers.get("set-cookie");
 
+  if (response.status === 401) {
+    return NextResponse.redirect(
+      new URL("/auth/create-account", getDomain(request))
+    );
+  }
+
   if (!setCookieHeader) {
     return NextResponse.redirect(new URL("/auth/error", getDomain(request)));
   }
