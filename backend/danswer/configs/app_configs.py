@@ -419,8 +419,6 @@ AZURE_DALLE_API_KEY = os.environ.get("AZURE_DALLE_API_KEY")
 AZURE_DALLE_API_BASE = os.environ.get("AZURE_DALLE_API_BASE")
 AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
 
-AZURE_DEPLOYMENT_NAME = os.environ.get("AZURE_DEPLOYMENT_NAME")
-
 
 MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
 SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY", "")
