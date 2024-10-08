@@ -9,6 +9,7 @@ import {
   TableBody,
   TableCell,
   Text,
+  Callout,
 } from "@tremor/react";
 import { CCPairFullInfo, PaginatedIndexAttempts } from "./types";
 import { IndexAttemptStatus } from "@/components/Status";
@@ -23,6 +24,7 @@ import Link from "next/link";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { useRouter } from "next/navigation";
 import { Tooltip } from "@/components/tooltip/Tooltip";
+import { FiInfo } from "react-icons/fi";
 
 // This is the number of index attempts to display per page
 const NUM_IN_PAGE = 8;
@@ -61,7 +63,9 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
 
   const batchRetrievalUrlBuilder = useCallback(
     (batchNum: number) => {
-      return `${buildCCPairInfoUrl(ccPair.id)}/index-attempts?page=${batchNum}&page_size=${BATCH_SIZE * NUM_IN_PAGE}`;
+      return `${buildCCPairInfoUrl(
+        ccPair.id
+      )}/index-attempts?page=${batchNum}&page_size=${BATCH_SIZE * NUM_IN_PAGE}`;
     },
     [ccPair.id]
   );
@@ -124,9 +128,9 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
       setIsCurrentPageLoading(false);
     }
 
-    const nextBatchNum = Math.min(
-      batchNum + 1,
-      Math.ceil(totalPages / BATCH_SIZE) - 1
+    const nextBatchNum = Math.max(
+      Math.min(batchNum + 1, Math.ceil(totalPages / BATCH_SIZE) - 1),
+      0
     );
     if (!cachedBatches[nextBatchNum]) {
       fetchBatchData(nextBatchNum);
@@ -179,6 +183,26 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
         errorTitle={`Failed to fetch info on Connector with ID ${ccPair.id}`}
         errorMsg={currentPageError?.toString() || "Unknown error"}
       />
+    );
+  }
+
+  // if no indexing attempts have been scheduled yet, let the user know why
+  if (
+    Object.keys(cachedBatches).length === 0 ||
+    Object.values(cachedBatches).every((batch) =>
+      batch.every((page) => page.index_attempts.length === 0)
+    )
+  ) {
+    return (
+      <Callout
+        className="mt-4"
+        title="No indexing attempts scheduled yet"
+        icon={FiInfo}
+        color="blue"
+      >
+        Index attempts are scheduled in the background, and may take some time
+        to appear. Try refreshing the page in ~30 seconds!
+      </Callout>
     );
   }
 
