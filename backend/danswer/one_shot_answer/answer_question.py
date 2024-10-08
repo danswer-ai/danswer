@@ -190,12 +190,20 @@ def stream_answer_objects(
         max_tokens=max_document_tokens,
     )
 
+    answer_config = AnswerStyleConfig(
+        citation_config=CitationConfig() if use_citations else None,
+        quotes_config=QuotesConfig() if not use_citations else None,
+        document_pruning_config=document_pruning_config,
+    )
+
     search_tool = SearchTool(
         db_session=db_session,
         user=user,
-        evaluation_type=LLMEvaluationType.SKIP
-        if DISABLE_LLM_DOC_RELEVANCE
-        else query_req.evaluation_type,
+        evaluation_type=(
+            LLMEvaluationType.SKIP
+            if DISABLE_LLM_DOC_RELEVANCE
+            else query_req.evaluation_type
+        ),
         persona=persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,
@@ -206,12 +214,6 @@ def stream_answer_objects(
         chunks_above=query_req.chunks_above,
         chunks_below=query_req.chunks_below,
         full_doc=query_req.full_doc,
-    )
-
-    answer_config = AnswerStyleConfig(
-        citation_config=CitationConfig() if use_citations else None,
-        quotes_config=QuotesConfig() if not use_citations else None,
-        document_pruning_config=document_pruning_config,
     )
 
     answer = Answer(

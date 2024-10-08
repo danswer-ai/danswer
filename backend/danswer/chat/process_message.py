@@ -526,6 +526,12 @@ def stream_chat_message_objects(
             if not persona
             else PromptConfig.from_model(persona.prompts[0])
         )
+        answer_style_config = AnswerStyleConfig(
+            citation_config=CitationConfig(
+                all_docs_useful=selected_db_search_docs is not None
+            ),
+            document_pruning_config=document_pruning_config,
+        )
 
         # find out what tools to use
         search_tool: SearchTool | None = None
@@ -544,13 +550,16 @@ def stream_chat_message_objects(
                         llm=llm,
                         fast_llm=fast_llm,
                         pruning_config=document_pruning_config,
+                        answer_style_config=answer_style_config,
                         selected_sections=selected_sections,
                         chunks_above=new_msg_req.chunks_above,
                         chunks_below=new_msg_req.chunks_below,
                         full_doc=new_msg_req.full_doc,
-                        evaluation_type=LLMEvaluationType.BASIC
-                        if persona.llm_relevance_filter
-                        else LLMEvaluationType.SKIP,
+                        evaluation_type=(
+                            LLMEvaluationType.BASIC
+                            if persona.llm_relevance_filter
+                            else LLMEvaluationType.SKIP
+                        ),
                     )
                     tool_dict[db_tool_model.id] = [search_tool]
                 elif tool_cls.__name__ == ImageGenerationTool.__name__:
@@ -636,12 +645,7 @@ def stream_chat_message_objects(
             is_connected=is_connected,
             question=final_msg.message,
             latest_query_files=latest_query_files,
-            answer_style_config=AnswerStyleConfig(
-                citation_config=CitationConfig(
-                    all_docs_useful=selected_db_search_docs is not None
-                ),
-                document_pruning_config=document_pruning_config,
-            ),
+            answer_style_config=answer_style_config,
             prompt_config=prompt_config,
             llm=(
                 llm

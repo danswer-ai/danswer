@@ -4,7 +4,9 @@ from typing import Any
 
 from danswer.key_value_store.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
+from danswer.llm.answering.prompts.build import AnswerPromptBuilder
 from danswer.llm.interfaces import LLM
+from danswer.tools.message import ToolCallSummary
 from danswer.tools.models import ToolResponse
 
 
@@ -60,4 +62,17 @@ class Tool(abc.ABC):
         This is the "final summary" result of the tool.
         It is the result that will be stored in the database.
         """
+        raise NotImplementedError
+
+    """Some tools may want to modify the prompt based on the tool call summary and tool responses.
+    Default behavior is to continue with just the raw tool call request/result passed to the LLM."""
+
+    @abc.abstractmethod
+    def build_next_prompt(
+        self,
+        prompt_builder: AnswerPromptBuilder,
+        tool_call_summary: ToolCallSummary,
+        tool_responses: list[ToolResponse],
+        using_tool_calling_llm: bool,
+    ) -> AnswerPromptBuilder:
         raise NotImplementedError

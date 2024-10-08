@@ -203,6 +203,28 @@ def build_content_with_imgs(
     )
 
 
+def message_to_prompt_and_imgs(message: BaseMessage) -> tuple[str, list[str]]:
+    if isinstance(message.content, str):
+        return message.content, []
+
+    imgs = []
+    texts = []
+    for part in message.content:
+        if isinstance(part, dict):
+            if part.get("type") == "image_url":
+                img_url = part.get("image_url", {}).get("url")
+                if img_url:
+                    imgs.append(img_url)
+            elif part.get("type") == "text":
+                text = part.get("text")
+                if text:
+                    texts.append(text)
+        else:
+            texts.append(part)
+
+    return "".join(texts), imgs
+
+
 def dict_based_prompt_to_langchain_prompt(
     messages: list[dict[str, str]]
 ) -> list[BaseMessage]:

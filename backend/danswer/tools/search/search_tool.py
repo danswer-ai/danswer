@@ -17,11 +17,19 @@ from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.key_value_store.interface import JSON_ro
+from danswer.llm.answering.llm_response_handler import LLMCall
+from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import ContextualPruningConfig
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.prompts.build import AnswerPromptBuilder
+from danswer.llm.answering.prompts.citations_prompt import (
+    build_citations_system_message,
+)
+from danswer.llm.answering.prompts.citations_prompt import build_citations_user_message
 from danswer.llm.answering.prompts.citations_prompt import compute_max_llm_input_tokens
+from danswer.llm.answering.prompts.quotes_prompt import build_quotes_user_message
 from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
 from danswer.llm.answering.prune_and_merge import prune_sections
 from danswer.llm.interfaces import LLM
@@ -35,6 +43,7 @@ from danswer.search.models import SearchRequest
 from danswer.search.pipeline import SearchPipeline
 from danswer.secondary_llm_flows.choose_search import check_if_need_search
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
+from danswer.tools.message import ToolCallSummary
 from danswer.tools.search.search_utils import llm_doc_to_dict
 from danswer.tools.tool import Tool
 from danswer.tools.tool import ToolResponse
@@ -85,6 +94,7 @@ class SearchTool(Tool):
         llm: LLM,
         fast_llm: LLM,
         pruning_config: DocumentPruningConfig,
+        answer_style_config: AnswerStyleConfig,
         evaluation_type: LLMEvaluationType,
         # if specified, will not actually run a search and will instead return these
         # sections. Used when the user selects specific docs to talk to
@@ -136,6 +146,7 @@ class SearchTool(Tool):
 
         num_chunk_multiple = self.chunks_above + self.chunks_below + 1
 
+        self.answer_style_config = answer_style_config
         self.contextual_pruning_config = (
             ContextualPruningConfig.from_doc_pruning_config(
                 num_chunk_multiple=num_chunk_multiple, doc_pruning_config=pruning_config
@@ -353,4 +364,73 @@ class SearchTool(Tool):
         # NOTE: need to do this json.loads(doc.json()) stuff because there are some
         # subfields that are not serializable by default (datetime)
         # this forces pydantic to make them JSON serializable for us
-        return [json.loads(doc.json()) for doc in final_docs]
+        return [json.loads(doc.model_dump_json()) for doc in final_docs]
+
+    def build_next_prompt(
+        self,
+        prompt_builder: AnswerPromptBuilder,
+        tool_call_summary: ToolCallSummary,
+        tool_responses: list[ToolResponse],
+        using_tool_calling_llm: bool,
+    ) -> AnswerPromptBuilder:
+        if not using_tool_calling_llm:
+            final_context_docs_response = next(
+                response
+                for response in tool_responses
+                if response.id == FINAL_CONTEXT_DOCUMENTS_ID
+            )
+            final_context_documents = cast(
+                list[LlmDoc], final_context_docs_response.response
+            )
+        else:
+            # if using tool calling llm, then the final context documents are the tool responses
+            final_context_documents = []
+
+        if self.answer_style_config.citation_config:
+            prompt_builder.update_system_prompt(
+                build_citations_system_message(self.prompt_config)
+            )
+            prompt_builder.update_user_prompt(
+                build_citations_user_message(
+                    message=prompt_builder.user_message_and_token_cnt[0],
+                    prompt_config=self.prompt_config,
+                    context_docs=final_context_documents,
+                    all_doc_useful=(
+                        self.answer_style_config.citation_config.all_docs_useful
+                        if self.answer_style_config.citation_config
+                        else False
+                    ),
+                    history_message=prompt_builder.single_message_history or "",
+                )
+            )
+        elif self.answer_style_config.quotes_config:
+            prompt_builder.update_user_prompt(
+                build_quotes_user_message(
+                    message=prompt_builder.user_message_and_token_cnt[0],
+                    context_docs=final_context_documents,
+                    history_str=prompt_builder.single_message_history or "",
+                    prompt=self.prompt_config,
+                )
+            )
+
+        if using_tool_calling_llm:
+            prompt_builder.append_message(tool_call_summary.tool_call_request)
+            prompt_builder.append_message(tool_call_summary.tool_call_result)
+
+        return prompt_builder
+
+    """Other utility functions"""
+
+    @classmethod
+    def get_search_result(cls, llm_call: LLMCall) -> list[LlmDoc] | None:
+        if not llm_call.tool_call_info:
+            return None
+
+        for yield_item in llm_call.tool_call_info:
+            if (
+                isinstance(yield_item, ToolResponse)
+                and yield_item.id == FINAL_CONTEXT_DOCUMENTS_ID
+            ):
+                return cast(list[LlmDoc], yield_item.response)
+
+        return None
