@@ -1143,6 +1143,8 @@ class LLMProvider(Base):
         postgresql.ARRAY(String), nullable=True
     )
 
+    deployment_name: Mapped[str | None] = mapped_column(String, nullable=True)
+
     # should only be set for a single provider
     is_default_provider: Mapped[bool | None] = mapped_column(Boolean, unique=True)
     # EE only

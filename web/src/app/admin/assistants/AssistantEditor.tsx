@@ -192,15 +192,11 @@ export function AssistantEditor({
     modelOptionsByProvider.set(llmProvider.name, providerOptions);
   });
 
-  const providerSupportingImageGenerationExists =
-    providersContainImageGeneratingSupport(llmProviders);
-
   const personaCurrentToolIds =
     existingPersona?.tools.map((tool) => tool.id) || [];
+
   const searchTool = findSearchTool(tools);
-  const imageGenerationTool = providerSupportingImageGenerationExists
-    ? findImageGenerationTool(tools)
-    : undefined;
+  const imageGenerationTool = findImageGenerationTool(tools);
   const internetSearchTool = findInternetSearchTool(tools);
 
   const customTools = tools.filter(
@@ -997,7 +993,7 @@ export function AssistantEditor({
                           alignTop={tool.description != null}
                           key={tool.id}
                           name={`enabled_tools_map.${tool.id}`}
-                          label={tool.name}
+                          label={tool.display_name}
                           subtext={tool.description}
                           onChange={() => {
                             toggleToolInValues(tool.id);

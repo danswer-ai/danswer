@@ -67,6 +67,7 @@ export function CustomLLMProviderUpdateForm({
       : [],
     is_public: existingLlmProvider?.is_public ?? true,
     groups: existingLlmProvider?.groups ?? [],
+    deployment_name: existingLlmProvider?.deployment_name ?? null,
   };
 
   // Setup validation schema if required
@@ -83,6 +84,7 @@ export function CustomLLMProviderUpdateForm({
     // EE Only
     is_public: Yup.boolean().required(),
     groups: Yup.array().of(Yup.number()),
+    deployment_name: Yup.string().nullable(),
   });
 
   return (
@@ -208,6 +210,7 @@ export function CustomLLMProviderUpdateForm({
               label="Display Name"
               subtext="A name which you can use to identify this provider when selecting it in the UI."
               placeholder="Display Name"
+              disabled={existingLlmProvider ? true : false}
             />
 
             <TextFormField
@@ -244,6 +247,14 @@ export function CustomLLMProviderUpdateForm({
               placeholder="API Key"
               type="password"
             />
+
+            {existingLlmProvider?.deployment_name && (
+              <TextFormField
+                name="deployment_name"
+                label="[Optional] Deployment Name"
+                placeholder="Deployment Name"
+              />
+            )}
 
             <TextFormField
               name="api_base"
@@ -360,28 +371,30 @@ export function CustomLLMProviderUpdateForm({
 
             <Divider />
 
-            <TextArrayField
-              name="model_names"
-              label="Model Names"
-              values={formikProps.values}
-              subtext={
-                <>
-                  List the individual models that you want to make available as
-                  a part of this provider. At least one must be specified. For
-                  the best experience your [Provider Name]/[Model Name] should
-                  match one of the pairs listed{" "}
-                  <a
-                    target="_blank"
-                    href="https://models.litellm.ai/"
-                    className="text-link"
-                    rel="noreferrer"
-                  >
-                    here
-                  </a>
-                  .
-                </>
-              }
-            />
+            {!existingLlmProvider?.deployment_name && (
+              <TextArrayField
+                name="model_names"
+                label="Model Names"
+                values={formikProps.values}
+                subtext={
+                  <>
+                    List the individual models that you want to make available
+                    as a part of this provider. At least one must be specified.
+                    For the best experience your [Provider Name]/[Model Name]
+                    should match one of the pairs listed{" "}
+                    <a
+                      target="_blank"
+                      href="https://models.litellm.ai/"
+                      className="text-link"
+                      rel="noreferrer"
+                    >
+                      here
+                    </a>
+                    .
+                  </>
+                }
+              />
+            )}
 
             <Divider />
 
@@ -395,14 +408,16 @@ export function CustomLLMProviderUpdateForm({
               placeholder="E.g. gpt-4"
             />
 
-            <TextFormField
-              name="fast_default_model_name"
-              subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
+            {!existingLlmProvider?.deployment_name && (
+              <TextFormField
+                name="fast_default_model_name"
+                subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
                 for this provider. If not set, will use 
                 the Default Model configured above.`}
-              label="[Optional] Fast Model"
-              placeholder="E.g. gpt-4"
-            />
+                label="[Optional] Fast Model"
+                placeholder="E.g. gpt-4"
+              />
+            )}
 
             <Divider />
 

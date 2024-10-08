@@ -21,6 +21,8 @@ from danswer.server.features.tool.models import ToolSnapshot
 from danswer.tools.custom.openapi_parsing import MethodSpec
 from danswer.tools.custom.openapi_parsing import openapi_to_method_specs
 from danswer.tools.custom.openapi_parsing import validate_openapi_schema
+from danswer.tools.images.image_generation_tool import ImageGenerationTool
+from danswer.tools.utils import is_image_generation_available
 
 router = APIRouter(prefix="/tool")
 admin_router = APIRouter(prefix="/admin/tool")
@@ -127,4 +129,9 @@ def list_tools(
     _: User | None = Depends(current_user),
 ) -> list[ToolSnapshot]:
     tools = get_tools(db_session)
-    return [ToolSnapshot.from_model(tool) for tool in tools]
+    return [
+        ToolSnapshot.from_model(tool)
+        for tool in tools
+        if tool.in_code_tool_id != ImageGenerationTool.name
+        or is_image_generation_available(db_session=db_session)
+    ]

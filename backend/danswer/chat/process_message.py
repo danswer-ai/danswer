@@ -18,6 +18,10 @@ from danswer.chat.models import MessageResponseIDInfo
 from danswer.chat.models import MessageSpecificCitations
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
+from danswer.configs.app_configs import AZURE_DALLE_API_BASE
+from danswer.configs.app_configs import AZURE_DALLE_API_KEY
+from danswer.configs.app_configs import AZURE_DALLE_API_VERSION
+from danswer.configs.app_configs import AZURE_DALLE_DEPLOYMENT_NAME
 from danswer.configs.chat_configs import BING_API_KEY
 from danswer.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
 from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
@@ -560,7 +564,26 @@ def stream_chat_message_objects(
                         and llm.config.api_key
                         and llm.config.model_provider == "openai"
                     ):
-                        img_generation_llm_config = llm.config
+                        img_generation_llm_config = LLMConfig(
+                            model_provider=llm.config.model_provider,
+                            model_name="dall-e-3",
+                            temperature=GEN_AI_TEMPERATURE,
+                            api_key=llm.config.api_key,
+                            api_base=llm.config.api_base,
+                            api_version=llm.config.api_version,
+                        )
+                    elif (
+                        llm.config.model_provider == "azure"
+                        and AZURE_DALLE_API_KEY is not None
+                    ):
+                        img_generation_llm_config = LLMConfig(
+                            model_provider="azure",
+                            model_name=f"azure/{AZURE_DALLE_DEPLOYMENT_NAME}",
+                            temperature=GEN_AI_TEMPERATURE,
+                            api_key=AZURE_DALLE_API_KEY,
+                            api_base=AZURE_DALLE_API_BASE,
+                            api_version=AZURE_DALLE_API_VERSION,
+                        )
                     else:
                         llm_providers = fetch_existing_llm_providers(db_session)
                         openai_provider = next(
@@ -579,7 +602,7 @@ def stream_chat_message_objects(
                             )
                         img_generation_llm_config = LLMConfig(
                             model_provider=openai_provider.provider,
-                            model_name=openai_provider.default_model_name,
+                            model_name="dall-e-3",
                             temperature=GEN_AI_TEMPERATURE,
                             api_key=openai_provider.api_key,
                             api_base=openai_provider.api_base,
@@ -591,6 +614,7 @@ def stream_chat_message_objects(
                             api_base=img_generation_llm_config.api_base,
                             api_version=img_generation_llm_config.api_version,
                             additional_headers=litellm_additional_headers,
+                            model=img_generation_llm_config.model_name,
                         )
                     ]
                 elif tool_cls.__name__ == InternetSearchTool.__name__:

@@ -413,6 +413,12 @@ ENTERPRISE_EDITION_ENABLED = (
     os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )
 
+# Azure DALL-E Configurations
+AZURE_DALLE_API_VERSION = os.environ.get("AZURE_DALLE_API_VERSION")
+AZURE_DALLE_API_KEY = os.environ.get("AZURE_DALLE_API_KEY")
+AZURE_DALLE_API_BASE = os.environ.get("AZURE_DALLE_API_BASE")
+AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
+
 
 MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
 SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY", "")
