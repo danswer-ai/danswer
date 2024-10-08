@@ -21,7 +21,7 @@ from danswer.chat.models import StreamingError
 from danswer.configs.app_configs import AZURE_DALLE_API_BASE
 from danswer.configs.app_configs import AZURE_DALLE_API_KEY
 from danswer.configs.app_configs import AZURE_DALLE_API_VERSION
-from danswer.configs.app_configs import AZURE_DEPLOYMENT_NAME
+from danswer.configs.app_configs import AZURE_DALLE_DEPLOYMENT_NAME
 from danswer.configs.chat_configs import BING_API_KEY
 from danswer.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
 from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
@@ -578,7 +578,7 @@ def stream_chat_message_objects(
                     ):
                         img_generation_llm_config = LLMConfig(
                             model_provider="azure",
-                            model_name=f"azure/{AZURE_DEPLOYMENT_NAME}",
+                            model_name=f"azure/{AZURE_DALLE_DEPLOYMENT_NAME}",
                             temperature=GEN_AI_TEMPERATURE,
                             api_key=AZURE_DALLE_API_KEY,
                             api_base=AZURE_DALLE_API_BASE,
