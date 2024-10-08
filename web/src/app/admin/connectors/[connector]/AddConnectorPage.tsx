@@ -21,6 +21,8 @@ import CreateCredential from "@/components/credentials/actions/CreateCredential"
 import ModifyCredential from "@/components/credentials/actions/ModifyCredential";
 import { ConfigurableSources, ValidSources } from "@/lib/types";
 import { Credential, credentialTemplates } from "@/lib/connectors/credentials";
+
+import { CLOUD_ENABLED } from "@/lib/constants";
 import {
   ConnectionConfiguration,
   connectorConfigs,

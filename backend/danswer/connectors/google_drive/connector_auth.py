@@ -11,8 +11,11 @@ from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import ENTERPRISE_EDITION_ENABLED
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import KV_CLOUD_GOOGLE_DRIVE_CRED_KEY
+from danswer.configs.constants import KV_CLOUD_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
 from danswer.configs.constants import KV_CRED_KEY
 from danswer.configs.constants import KV_GOOGLE_DRIVE_CRED_KEY
 from danswer.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
@@ -142,7 +145,13 @@ def verify_csrf(credential_id: int, state: str) -> None:
 
 
 def get_auth_url(credential_id: int) -> str:
-    creds_str = str(get_kv_store().load(KV_GOOGLE_DRIVE_CRED_KEY))
+    creds_str = str(
+        get_kv_store().load(
+            KV_GOOGLE_DRIVE_CRED_KEY
+            if not MULTI_TENANT
+            else KV_CLOUD_GOOGLE_DRIVE_CRED_KEY
+        )
+    )
     credential_json = json.loads(creds_str)
     flow = InstalledAppFlow.from_client_config(
         credential_json,
@@ -202,28 +211,58 @@ def build_service_account_creds(
 
 
 def get_google_app_cred() -> GoogleAppCredentials:
-    creds_str = str(get_kv_store().load(KV_GOOGLE_DRIVE_CRED_KEY))
+    if MULTI_TENANT:
+        creds_str = str(get_kv_store().load(KV_CLOUD_GOOGLE_DRIVE_CRED_KEY))
+    else:
+        creds_str = str(get_kv_store().load(KV_GOOGLE_DRIVE_CRED_KEY))
     return GoogleAppCredentials(**json.loads(creds_str))
 
 
-def upsert_google_app_cred(app_credentials: GoogleAppCredentials) -> None:
-    get_kv_store().store(KV_GOOGLE_DRIVE_CRED_KEY, app_credentials.json(), encrypt=True)
+def upsert_google_app_cred(
+    app_credentials: GoogleAppCredentials, cloud_enabled: bool
+) -> None:
+    if cloud_enabled:
+        get_kv_store().store(
+            KV_CLOUD_GOOGLE_DRIVE_CRED_KEY, app_credentials.json(), encrypt=True
+        )
+    else:
+        get_kv_store().store(
+            KV_GOOGLE_DRIVE_CRED_KEY, app_credentials.json(), encrypt=True
+        )
 
 
 def delete_google_app_cred() -> None:
-    get_kv_store().delete(KV_GOOGLE_DRIVE_CRED_KEY)
+    if MULTI_TENANT:
+        get_kv_store().delete(KV_CLOUD_GOOGLE_DRIVE_CRED_KEY)
+    else:
+        get_kv_store().delete(KV_GOOGLE_DRIVE_CRED_KEY)
 
 
 def get_service_account_key() -> GoogleServiceAccountKey:
-    creds_str = str(get_kv_store().load(KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY))
+    if MULTI_TENANT:
+        creds_str = str(get_kv_store().load(KV_CLOUD_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY))
+    else:
+        creds_str = str(get_kv_store().load(KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY))
     return GoogleServiceAccountKey(**json.loads(creds_str))
 
 
 def upsert_service_account_key(service_account_key: GoogleServiceAccountKey) -> None:
-    get_kv_store().store(
-        KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY, service_account_key.json(), encrypt=True
-    )
+    if MULTI_TENANT:
+        get_kv_store().store(
+            KV_CLOUD_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY,
+            service_account_key.json(),
+            encrypt=True,
+        )
+    else:
+        get_kv_store().store(
+            KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY,
+            service_account_key.json(),
+            encrypt=True,
+        )
 
 
 def delete_service_account_key() -> None:
-    get_kv_store().delete(KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY)
+    if MULTI_TENANT:
+        get_kv_store().delete(KV_CLOUD_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY)
+    else:
+        get_kv_store().delete(KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY)

@@ -20,6 +20,7 @@ import {
 } from "@/lib/connectors/credentials";
 import { GoogleDriveConfig } from "@/lib/connectors/connectors";
 import { useUser } from "@/components/user/UserProvider";
+import { CLOUD_ENABLED } from "@/lib/constants";
 
 const GDriveMain = ({}: {}) => {
   const { isLoadingUser, isAdmin } = useUser();
@@ -29,7 +30,7 @@ const GDriveMain = ({}: {}) => {
     isLoading: isAppCredentialLoading,
     error: isAppCredentialError,
   } = useSWR<{ client_id: string }, FetchError>(
-    "/api/manage/admin/connector/google-drive/app-credential",
+    `/api/manage/admin/connector/google-drive/app-credential`,
     errorHandlingFetcher
   );
 
@@ -116,6 +117,26 @@ const GDriveMain = ({}: {}) => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "google_drive"
   );
+  if (CLOUD_ENABLED) {
+    return (
+      <>
+        <Title className="mb-2 mt-6 ml-auto mr-auto">
+          Authenticate with Google Drive
+        </Title>
+        <DriveOAuthSection
+          setPopup={setPopup}
+          refreshCredentials={refreshCredentials}
+          googleDrivePublicCredential={googleDrivePublicCredential}
+          googleDriveServiceAccountCredential={
+            googleDriveServiceAccountCredential
+          }
+          appCredentialData={appCredentialData}
+          serviceAccountKeyData={serviceAccountKeyData}
+          connectorExists={googleDriveConnectorIndexingStatuses.length > 0}
+        />
+      </>
+    );
+  }
 
   return (
     <>

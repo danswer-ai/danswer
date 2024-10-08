@@ -15,18 +15,16 @@ export const Button = ({
   fullWidth = false,
   className = "",
 }: Props) => {
+  const baseClasses =
+    "group relative py-2 px-4 text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500";
+  const widthClasses = fullWidth ? "w-full" : "";
+  const colorClasses = disabled
+    ? "bg-gray-400 cursor-not-allowed"
+    : "bg-red-600 hover:bg-red-700";
+
   return (
     <button
-      className={
-        "group relative " +
-        (fullWidth ? "w-full " : "") +
-        "py-1 px-2 border border-transparent text-sm " +
-        "font-medium rounded-md text-white " +
-        "focus:outline-none focus:ring-2 " +
-        "focus:ring-offset-2 focus:ring-red-500 mx-auto " +
-        (disabled ? "bg-gray-700 " : "bg-red-800 hover:bg-red-900 ") +
-        className
-      }
+      className={`${baseClasses} ${widthClasses} ${colorClasses} ${className}`}
       onClick={onClick}
       type={type}
       disabled={disabled}

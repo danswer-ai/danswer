@@ -17,6 +17,7 @@ from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
 from danswer.connectors.gmail.connector_auth import delete_gmail_service_account_key
@@ -160,10 +161,12 @@ def check_google_app_credentials_exist(
 
 @router.put("/admin/connector/google-drive/app-credential")
 def upsert_google_app_credentials(
-    app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
+    app_credentials: GoogleAppCredentials,
+    _: User = Depends(current_admin_user),
+    cloud_enabled: bool = Query(MULTI_TENANT, alias="cloud_enabled"),
 ) -> StatusResponse:
     try:
-        upsert_google_app_cred(app_credentials)
+        upsert_google_app_cred(app_credentials, cloud_enabled)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -849,6 +852,10 @@ def gmail_auth(
 def google_drive_auth(
     response: Response, credential_id: str, _: User = Depends(current_user)
 ) -> AuthUrl:
+    print("request for authorizaiton")
+    print(credential_id)
+    print(type(credential_id))
+    print(MULTI_TENANT)
     # set a cookie that we can read in the callback (used for `verify_csrf`)
     response.set_cookie(
         key=_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME,

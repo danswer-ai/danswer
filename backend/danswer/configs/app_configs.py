@@ -135,7 +135,7 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
     os.environ.get("POSTGRES_PASSWORD") or "password"
 )
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5433"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
 POSTGRES_API_SERVER_POOL_SIZE = int(
@@ -423,7 +423,8 @@ AZURE_DALLE_API_BASE = os.environ.get("AZURE_DALLE_API_BASE")
 AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
 
 
-MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
+MULTI_TENANT = True
+# os.environ.get("MULTI_TENANT", "").lower() == "true"
 SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY", "")
 
 
