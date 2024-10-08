@@ -26,7 +26,7 @@ import { getDisplayNameForModel } from "@/lib/hooks";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
-import { checkLLMSupportsImageOutput, destructureValue } from "@/lib/llm/utils";
+import { checkLLMSupportsImageInput, destructureValue } from "@/lib/llm/utils";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 
@@ -349,12 +349,9 @@ export function AssistantEditor({
 
           if (imageGenerationToolEnabled) {
             if (
-              !checkLLMSupportsImageOutput(
-                providerDisplayNameToProviderName.get(
-                  values.llm_model_provider_override || ""
-                ) ||
-                  defaultProviderName ||
-                  "",
+              // model must support image input for image generation
+              // to work
+              !checkLLMSupportsImageInput(
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -469,12 +466,9 @@ export function AssistantEditor({
               : false;
           }
 
-          const currentLLMSupportsImageOutput = checkLLMSupportsImageOutput(
-            providerDisplayNameToProviderName.get(
-              values.llm_model_provider_override || ""
-            ) ||
-              defaultProviderName ||
-              "",
+          // model must support image input for image generation
+          // to work
+          const currentLLMSupportsImageOutput = checkLLMSupportsImageInput(
             values.llm_model_version_override || defaultModelName || ""
           );
 
