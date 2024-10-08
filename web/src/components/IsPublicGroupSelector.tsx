@@ -49,7 +49,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         setShouldHideContent(false);
       }
     }
-  }, [user, userGroups, formikProps, isPaidEnterpriseFeaturesEnabled]);
+  }, [user, userGroups, isPaidEnterpriseFeaturesEnabled]);
 
   if (isLoadingUser || userGroupsIsLoading) {
     return <div>Loading...</div>;
