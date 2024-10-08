@@ -1,4 +1,6 @@
 # docs: https://docs.celeryq.dev/en/stable/userguide/configuration.html
+import urllib.parse
+
 from danswer.configs.app_configs import CELERY_BROKER_POOL_LIMIT
 from danswer.configs.app_configs import CELERY_RESULT_EXPIRES
 from danswer.configs.app_configs import REDIS_DB_NUMBER_CELERY
@@ -17,7 +19,7 @@ CELERY_SEPARATOR = ":"
 
 CELERY_PASSWORD_PART = ""
 if REDIS_PASSWORD:
-    CELERY_PASSWORD_PART = f":{REDIS_PASSWORD}@"
+    CELERY_PASSWORD_PART = ":" + urllib.parse.quote(REDIS_PASSWORD, safe="") + "@"
 
 REDIS_SCHEME = "redis"
 
