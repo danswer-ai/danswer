@@ -429,7 +429,7 @@ def get_all_tenant_ids() -> list[str] | list[None]:
     valid_tenants = [
         tenant
         for tenant in tenant_ids
-        if tenant is None or not tenant.startswith(TENANT_ID_PREFIX)
+        if tenant is None or tenant.startswith(TENANT_ID_PREFIX)
     ]
 
     return valid_tenants
@@ -440,25 +440,6 @@ def update_loop(
     num_workers: int = NUM_INDEXING_WORKERS,
     num_secondary_workers: int = NUM_SECONDARY_INDEXING_WORKERS,
 ) -> None:
-    with get_session_with_tenant(tenant_id="public") as db_session:
-        check_index_swap(db_session=db_session)
-        search_settings = get_current_search_settings(db_session)
-
-        # So that the first time users aren't surprised by really slow speed of first
-        # batch of documents indexed
-
-        if search_settings.provider_type is None:
-            logger.notice("Running a first inference to warm up embedding model")
-            embedding_model = EmbeddingModel.from_db_model(
-                search_settings=search_settings,
-                server_host=INDEXING_MODEL_SERVER_HOST,
-                server_port=MODEL_SERVER_PORT,
-            )
-
-            warm_up_bi_encoder(
-                embedding_model=embedding_model,
-            )
-
     client_primary: Client | SimpleJobClient
     client_secondary: Client | SimpleJobClient
     if DASK_JOB_CLIENT_ENABLED:

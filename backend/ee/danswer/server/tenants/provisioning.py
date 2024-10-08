@@ -69,6 +69,7 @@ def ensure_schema_exists(tenant_id: str) -> bool:
 # This function is only used to determine a user's relationship to a tenant upon creation (implying ownership).
 def user_owns_a_tenant(email: str) -> bool:
     with get_session_with_tenant("public") as db_session:
+        print("WIHTING HER")
         result = (
             db_session.query(UserTenantMapping)
             .filter(UserTenantMapping.email == email)

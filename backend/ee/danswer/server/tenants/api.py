@@ -41,7 +41,7 @@ def create_tenant(
 
         run_alembic_migrations(tenant_id)
         token = current_tenant_id.set(tenant_id)
-
+        print("getting session", tenant_id)
         with get_session_with_tenant(tenant_id) as db_session:
             setup_danswer(db_session)
 
@@ -53,6 +53,12 @@ def create_tenant(
             "message": f"Tenant {tenant_id} created successfully",
         }
     except Exception as e:
+        import traceback
+
+        print("Stack trace:")
+        traceback.print_exc()
+        print("ERROR")
+        print(e)
         logger.exception(f"Failed to create tenant {tenant_id}: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Failed to create tenant: {str(e)}"

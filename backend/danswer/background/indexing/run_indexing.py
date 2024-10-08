@@ -4,6 +4,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
@@ -377,12 +378,21 @@ def _run_indexing(
         )
 
 
-def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexAttempt:
+def _prepare_index_attempt(
+    db_session: Session, index_attempt_id: int, tenant_id: str | None
+) -> IndexAttempt:
     # make sure that the index attempt can't change in between checking the
     # status and marking it as in_progress. This setting will be discarded
     # after the next commit:
     # https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#setting-isolation-for-individual-transactions
     db_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})  # type: ignore
+    if tenant_id is not None:
+        # Explicitly set the search path for the given tenant
+        db_session.execute(text(f'SET search_path TO "{tenant_id}"'))
+        # Verify the search path was set correctly
+        result = db_session.execute(text("SHOW search_path"))
+        current_search_path = result.scalar()
+        logger.info(f"Current search path set to: {current_search_path}")
 
     attempt = get_index_attempt(
         db_session=db_session,
@@ -419,9 +429,9 @@ def run_indexing_entrypoint(
         IndexAttemptSingleton.set_cc_and_index_id(
             index_attempt_id, connector_credential_pair_id
         )
-
+        print("ZZZZZZZ ten id", tenant_id)
         with get_session_with_tenant(tenant_id) as db_session:
-            attempt = _prepare_index_attempt(db_session, index_attempt_id)
+            attempt = _prepare_index_attempt(db_session, index_attempt_id, tenant_id)
 
             logger.info(
                 f"Indexing starting for tenant {tenant_id}: "
