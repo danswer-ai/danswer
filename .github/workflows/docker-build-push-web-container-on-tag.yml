@@ -11,8 +11,11 @@ env:
   
 jobs:
   build:
-    runs-on: 
-      group: ${{ matrix.platform == 'linux/amd64' && 'amd64-image-builders' || 'arm64-image-builders' }}
+    runs-on:
+      - runs-on
+      - runner=${{ matrix.platform == 'linux/amd64' && '8cpu-linux-x64' || '8cpu-linux-arm64' }}
+      - run-id=${{ github.run_id }}
+      - tag=platform-${{ matrix.platform }}
     strategy:
       fail-fast: false
       matrix:
