@@ -26,7 +26,7 @@ import { getDisplayNameForModel } from "@/lib/hooks";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
-import { checkLLMSupportsImageOutput, destructureValue } from "@/lib/llm/utils";
+import { checkLLMSupportsImageInput, destructureValue } from "@/lib/llm/utils";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 
@@ -349,12 +349,9 @@ export function AssistantEditor({
 
           if (imageGenerationToolEnabled) {
             if (
-              !checkLLMSupportsImageOutput(
-                providerDisplayNameToProviderName.get(
-                  values.llm_model_provider_override || ""
-                ) ||
-                  defaultProviderName ||
-                  "",
+              // model most support image input for image generation
+              // to work
+              !checkLLMSupportsImageInput(
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -469,12 +466,7 @@ export function AssistantEditor({
               : false;
           }
 
-          const currentLLMSupportsImageOutput = checkLLMSupportsImageOutput(
-            providerDisplayNameToProviderName.get(
-              values.llm_model_provider_override || ""
-            ) ||
-              defaultProviderName ||
-              "",
+          const currentLLMSupportsImageInput = checkLLMSupportsImageInput(
             values.llm_model_version_override || defaultModelName || ""
           );
 
@@ -782,7 +774,7 @@ export function AssistantEditor({
                         <TooltipTrigger asChild>
                           <div
                             className={`w-fit ${
-                              !currentLLMSupportsImageOutput
+                              !currentLLMSupportsImageInput
                                 ? "opacity-70 cursor-not-allowed"
                                 : ""
                             }`}
@@ -794,11 +786,11 @@ export function AssistantEditor({
                               onChange={() => {
                                 toggleToolInValues(imageGenerationTool.id);
                               }}
-                              disabled={!currentLLMSupportsImageOutput}
+                              disabled={!currentLLMSupportsImageInput}
                             />
                           </div>
                         </TooltipTrigger>
-                        {!currentLLMSupportsImageOutput && (
+                        {!currentLLMSupportsImageInput && (
                           <TooltipContent side="top" align="center">
                             <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                               To use Image Generation, select GPT-4o or another
