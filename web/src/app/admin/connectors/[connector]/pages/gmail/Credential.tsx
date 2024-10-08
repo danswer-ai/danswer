@@ -6,7 +6,10 @@ import * as Yup from "yup";
 import { useRouter } from "next/navigation";
 import { adminDeleteCredential } from "@/lib/credential";
 import { setupGmailOAuth } from "@/lib/gmail";
-import { GMAIL_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
+import {
+  CLOUD_ENABLED,
+  GMAIL_AUTH_IS_ADMIN_COOKIE_NAME,
+} from "@/lib/constants";
 import Cookies from "js-cookie";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
@@ -424,8 +427,9 @@ export const GmailOAuthSection = ({
     return (
       <div className="text-sm mb-4">
         <p className="mb-2">
-          Next, you must provide credentials via OAuth. This gives us read
-          access to the docs you have access to in your gmail account.
+          {!CLOUD_ENABLED
+            ? "Next, you must provide credentials via OAuth. This gives us read access to the docs you have access to in your gmail account."
+            : "Please authenticate with Gmail. This gives us read access to the docs you have access to in your gmail account."}
         </p>
         <Button
           onClick={async () => {
