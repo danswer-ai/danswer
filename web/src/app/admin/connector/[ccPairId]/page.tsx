@@ -50,14 +50,8 @@ function Main({ ccPairId }: { ccPairId: number }) {
   const { popup, setPopup } = usePopup();
 
   const finishConnectorDeletion = useCallback(() => {
-    setPopup({
-      message: "Connector deleted successfully",
-      type: "success",
-    });
-    setTimeout(() => {
-      router.push("/admin/indexing/status");
-    }, 2000);
-  }, [router, setPopup]);
+    router.push("/admin/indexing/status?message=connector-deleted");
+  }, [router]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -80,14 +74,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
     ) {
       finishConnectorDeletion();
     }
-  }, [
-    isLoading,
-    ccPair,
-    error,
-    hasLoadedOnce,
-    router,
-    finishConnectorDeletion,
-  ]);
+  }, [isLoading, ccPair, error, hasLoadedOnce]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditableName(e.target.value);
