@@ -488,17 +488,10 @@ def get_database_strategy(
     )
 
 
-def get_auth_strategy() -> Strategy:
-    if MULTI_TENANT:
-        return get_jwt_strategy()
-    else:
-        return get_database_strategy()
-
-
 auth_backend = AuthenticationBackend(
     name="jwt" if MULTI_TENANT else "database",
     transport=cookie_transport,
-    get_strategy=get_auth_strategy,
+    get_strategy=get_jwt_strategy if MULTI_TENANT else get_database_strategy,
 )
 
 
