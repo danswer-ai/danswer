@@ -73,7 +73,7 @@ const MODEL_NAMES_SUPPORTING_IMAGE_INPUT = [
   "claude-3-opus-20240229",
   "claude-3-sonnet-20240229",
   "claude-3-haiku-20240307",
-  // claude names with AWS Bedrock Suffic
+  // claude names with AWS Bedrock Suffix
   "claude-3-opus-20240229-v1:0",
   "claude-3-sonnet-20240229-v1:0",
   "claude-3-haiku-20240307-v1:0",
