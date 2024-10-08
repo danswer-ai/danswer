@@ -491,8 +491,8 @@ def get_database_strategy(
 auth_backend = AuthenticationBackend(
     name="jwt" if MULTI_TENANT else "database",
     transport=cookie_transport,
-    get_strategy=get_jwt_strategy if MULTI_TENANT else get_database_strategy,
-)
+    get_strategy=get_jwt_strategy if MULTI_TENANT else get_database_strategy,  # type: ignore
+)  # type: ignore
 
 
 class FastAPIUserWithLogoutRouter(FastAPIUsers[models.UP, models.ID]):
