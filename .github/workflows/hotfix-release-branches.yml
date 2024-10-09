@@ -18,10 +18,14 @@ on:
         required: true
         default: 'release/.*'
       auto_merge:
-        description: 'Automatically merge the PRs if set to true'
-        required: false
+        description: 'Automatically merge the hotfix PRs'
+        required: true
+        type: choice
         default: 'true'
-        
+        options:
+          - true
+          - false
+          
 jobs:
   hotfix_release_branches:
     # See https://runs-on.com/runners/linux/
@@ -87,12 +91,25 @@ jobs:
             git checkout "$RELEASE_BRANCH"
 
             # Create the new hotfix branch
-            echo "Branching $RELEASE_BRANCH to $HOTFIX_BRANCH"
-            git checkout -b "$HOTFIX_BRANCH"
+            if git rev-parse --verify "$HOTFIX_BRANCH" >/dev/null 2>&1; then
+              echo "Hotfix branch $HOTFIX_BRANCH already exists. Skipping branch creation."
+            else
+              echo "Branching $RELEASE_BRANCH to $HOTFIX_BRANCH"
+              git checkout -b "$HOTFIX_BRANCH"
+            fi
+            
+            # Check if the hotfix commit is a merge commit
+            if git rev-list --merges -n 1 "$HOTFIX_COMMIT" >/dev/null 2>&1; then
+              # -m 1 uses the target branch as the base (which is what we want)
+              echo "Hotfix commit $HOTFIX_COMMIT is a merge commit, using -m 1 for cherry-pick"
+              CHERRY_PICK_CMD="git cherry-pick -m 1 $HOTFIX_COMMIT"
+            else
+              CHERRY_PICK_CMD="git cherry-pick $HOTFIX_COMMIT"
+            fi
 
-            # Cherry-pick the hotfix commit
-            echo "Cherry picking commit hash $HOTFIX_COMMIT onto $HOTFIX_BRANCH"
-            git cherry-pick "$HOTFIX_COMMIT"
+            # Perform the cherry-pick
+            echo "Executing: $CHERRY_PICK_CMD"
+            eval "$CHERRY_PICK_CMD"
 
             if [ $? -ne 0 ]; then
               echo "Cherry-pick failed for $HOTFIX_COMMIT on $HOTFIX_BRANCH. Aborting..."
