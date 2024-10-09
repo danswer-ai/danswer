@@ -1,3 +1,4 @@
+import sys
 import traceback
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -32,6 +33,7 @@ from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
+from danswer.configs.app_configs import SYSTEM_RECURSION_LIMIT
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
@@ -140,6 +142,11 @@ def include_router_with_global_prefix_prepended(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
+    # Set recursion limit
+    if SYSTEM_RECURSION_LIMIT is not None:
+        sys.setrecursionlimit(SYSTEM_RECURSION_LIMIT)
+        logger.notice(f"System recursion limit set to {SYSTEM_RECURSION_LIMIT}")
+
     SqlEngine.set_app_name(POSTGRES_WEB_APP_NAME)
     SqlEngine.init_engine(
         pool_size=POSTGRES_API_SERVER_POOL_SIZE,

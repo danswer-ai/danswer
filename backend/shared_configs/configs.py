@@ -60,6 +60,9 @@ DEV_LOGGING_ENABLED = os.environ.get("DEV_LOGGING_ENABLED", "").lower() == "true
 # notset, debug, info, notice, warning, error, or critical
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")
 
+# Only used for OpenAI
+OPENAI_EMBEDDING_TIMEOUT = int(os.environ.get("OPENAI_EMBEDDING_TIMEOUT", "600"))
+
 
 # Fields which should only be set on new search setting
 PRESERVED_SEARCH_FIELDS = [
