@@ -512,12 +512,12 @@ def seed_chat(
 
 def convert_to_jpeg(file: UploadFile) -> Tuple[io.BytesIO, str]:
     try:
-        img = Image.open(file.file)
-        if img.mode != "RGB":
-            img = img.convert("RGB")
-        jpeg_io = io.BytesIO()
-        img.save(jpeg_io, format="JPEG", quality=85)
-        jpeg_io.seek(0)
+        with Image.open(file.file) as img:
+            if img.mode != "RGB":
+                img = img.convert("RGB")
+            jpeg_io = io.BytesIO()
+            img.save(jpeg_io, format="JPEG", quality=85)
+            jpeg_io.seek(0)
         return jpeg_io, "image/jpeg"
     except Exception as e:
         raise HTTPException(
@@ -591,12 +591,12 @@ def upload_files_for_chat(
             file_content, new_content_type = convert_to_jpeg(file)
         elif file.content_type in document_content_types:
             file_type = ChatFileType.DOC
-            file_content = file.file
-            new_content_type = file.content_type
+            file_content = io.BytesIO(file.file.read())
+            new_content_type = file.content_type or ""
         else:
             file_type = ChatFileType.PLAIN_TEXT
-            file_content = file.file
-            new_content_type = file.content_type
+            file_content = io.BytesIO(file.file.read())
+            new_content_type = file.content_type or ""
 
         # store the file (now JPEG for images)
         file_id = str(uuid.uuid4())
