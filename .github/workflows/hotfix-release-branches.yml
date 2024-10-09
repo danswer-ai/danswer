@@ -72,12 +72,15 @@ jobs:
           # Set the branches as an output
           echo "branches=$BRANCHES_JOINED" >> $GITHUB_OUTPUT
 
+      # notes on all the vagaries of wiring up automated PR's
+      # https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
+      # we must use a custom token for GH_TOKEN to trigger the subsequent PR checks
       - name: Create and Merge Pull Requests to Matching Release Branches
         env:
           HOTFIX_COMMIT: ${{ github.event.inputs.hotfix_commit }}
           HOTFIX_SUFFIX: ${{ github.event.inputs.hotfix_suffix }}
           AUTO_MERGE: ${{ github.event.inputs.auto_merge }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RKUO_PERSONAL_ACCESS_TOKEN }}
         run: |
           # Get the branches from the previous step
           BRANCHES="${{ steps.get_release_branches.outputs.branches }}"
@@ -157,7 +160,7 @@ jobs:
               echo "Attempting to merge pull request #$PR_NUMBER"
 
               # Attempt to merge the PR
-              gh pr merge "$PR_NUMBER" --merge --delete-branch
+              gh pr merge "$PR_NUMBER" --merge --auto --delete-branch
 
               if [ $? -eq 0 ]; then
                 echo "Pull request #$PR_NUMBER merged successfully."
