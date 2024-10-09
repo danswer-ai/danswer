@@ -2,7 +2,7 @@
 # Given a hotfix branch, it will attempt to open a PR to all release branches and
 # by default auto merge them
 
-name: Open PRs from hotfix to release branches
+name: Hotfix release branches
 
 on:
   workflow_dispatch:
@@ -42,10 +42,15 @@ jobs:
             echo "No release branches found matching pattern '${{ github.event.inputs.release_branch_pattern }}'."
             exit 1
           fi
+          
           echo "Found release branches:"
           echo "$BRANCHES"
+          
+          # Join the branches into a single line separated by commas
+            BRANCHES_JOINED=$(echo "$BRANCHES" | tr '\n' ',' | sed 's/,$//')
+
           # Set the branches as an output
-          echo "branches=$BRANCHES" >> $GITHUB_OUTPUT
+          echo "branches=$BRANCHES_JOINED" >> $GITHUB_OUTPUT
 
       - name: Ensure Hotfix Branch Exists Locally
         run: |
@@ -60,7 +65,7 @@ jobs:
           BRANCHES="${{ steps.get_release_branches.outputs.branches }}"
 
           # Convert BRANCHES to an array
-          IFS=$'\n' read -rd '' -a BRANCH_ARRAY <<<"$BRANCHES"
+          IFS=$',' read -ra BRANCH_ARRAY <<< "$BRANCHES"
 
           # Loop through each release branch and create and merge a PR
           for RELEASE_BRANCH in $BRANCHES; do
@@ -88,7 +93,7 @@ jobs:
               echo "Attempting to merge pull request #$PR_NUMBER"
 
               # Attempt to merge the PR
-              gh pr merge "$PR_NUMBER" --merge --admin --yes
+              gh pr merge "$PR_NUMBER" --merge --yes
 
               if [ $? -eq 0 ]; then
                 echo "Pull request #$PR_NUMBER merged successfully."
