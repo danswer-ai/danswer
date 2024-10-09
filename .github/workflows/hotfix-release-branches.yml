@@ -139,10 +139,13 @@ jobs:
               continue
             fi
             
-            # Create a new PR
-            PR_URL=$(gh pr create --title "Merge $HOTFIX_BRANCH into $RELEASE_BRANCH" \
+            # Create a new PR and capture the output
+            PR_OUTPUT=$(gh pr create --title "Merge $HOTFIX_BRANCH into $RELEASE_BRANCH" \
               --body "Automated PR to merge \`$HOTFIX_BRANCH\` into \`$RELEASE_BRANCH\`." \
-              --head "$HOTFIX_BRANCH" --base "$RELEASE_BRANCH" --json url --jq '.url')
+              --head "$HOTFIX_BRANCH" --base "$RELEASE_BRANCH")
+
+            # Extract the URL from the output
+            PR_URL=$(echo "$PR_OUTPUT" | grep -Eo 'https://github.com/[^ ]+')
 
             echo "Pull request created: $PR_URL"
 
