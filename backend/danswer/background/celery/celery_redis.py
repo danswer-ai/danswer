@@ -21,6 +21,7 @@ from danswer.db.document import (
 )
 from danswer.db.document_set import construct_document_select_by_docset
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from danswer.utils.variable_functionality import global_version
 
 
 class RedisObjectHelper(ABC):
@@ -171,6 +172,9 @@ class RedisUserGroup(RedisObjectHelper):
         last_lock_time = time.monotonic()
 
         async_results = []
+
+        if not global_version.is_ee_version():
+            return 0
 
         try:
             construct_document_select_by_usergroup = fetch_versioned_implementation(
@@ -341,6 +345,125 @@ class RedisConnectorDeletion(RedisObjectHelper):
             async_results.append(result)
 
         return len(async_results)
+
+
+class RedisConnectorPruning(RedisObjectHelper):
+    """Celery will kick off a long running generator task to crawl the connector and
+    find any missing docs, which will each then get a new cleanup task. The progress of
+    those tasks will then be monitored to completion.
+
+    Example rough happy path order:
+    Check connectorpruning_fence_1
+    Send generator task with id connectorpruning+generator_1_{uuid}
+
+    generator runs connector with callbacks that increment connectorpruning_generator_progress_1
+    generator creates many subtasks with id connectorpruning+sub_1_{uuid}
+      in taskset connectorpruning_taskset_1
+    on completion, generator sets connectorpruning_generator_complete_1
+
+    celery postrun removes subtasks from taskset
+    monitor beat task cleans up when taskset reaches 0 items
+    """
+
+    PREFIX = "connectorpruning"
+    FENCE_PREFIX = PREFIX + "_fence"  # a fence for the entire pruning process
+    GENERATOR_TASK_PREFIX = PREFIX + "+generator"
+
+    TASKSET_PREFIX = PREFIX + "_taskset"  # stores a list of prune tasks id's
+    SUBTASK_PREFIX = PREFIX + "+sub"
+
+    GENERATOR_PROGRESS_PREFIX = (
+        PREFIX + "_generator_progress"
+    )  # a signal that contains generator progress
+    GENERATOR_COMPLETE_PREFIX = (
+        PREFIX + "_generator_complete"
+    )  # a signal that the generator has finished
+
+    def __init__(self, id: int) -> None:
+        """id: the cc_pair_id of the connector credential pair"""
+
+        super().__init__(id)
+        self.documents_to_prune: set[str] = set()
+
+    @property
+    def generator_task_id_prefix(self) -> str:
+        return f"{self.GENERATOR_TASK_PREFIX}_{self._id}"
+
+    @property
+    def generator_progress_key(self) -> str:
+        # example: connectorpruning_generator_progress_1
+        return f"{self.GENERATOR_PROGRESS_PREFIX}_{self._id}"
+
+    @property
+    def generator_complete_key(self) -> str:
+        # example: connectorpruning_generator_complete_1
+        return f"{self.GENERATOR_COMPLETE_PREFIX}_{self._id}"
+
+    @property
+    def subtask_id_prefix(self) -> str:
+        return f"{self.SUBTASK_PREFIX}_{self._id}"
+
+    def generate_tasks(
+        self,
+        celery_app: Celery,
+        db_session: Session,
+        redis_client: Redis,
+        lock: redis.lock.Lock | None,
+    ) -> int | None:
+        last_lock_time = time.monotonic()
+
+        async_results = []
+        cc_pair = get_connector_credential_pair_from_id(self._id, db_session)
+        if not cc_pair:
+            return None
+
+        for doc_id in self.documents_to_prune:
+            current_time = time.monotonic()
+            if lock and current_time - last_lock_time >= (
+                CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT / 4
+            ):
+                lock.reacquire()
+                last_lock_time = current_time
+
+            # celery's default task id format is "dd32ded3-00aa-4884-8b21-42f8332e7fac"
+            # the actual redis key is "celery-task-meta-dd32ded3-00aa-4884-8b21-42f8332e7fac"
+            # we prefix the task id so it's easier to keep track of who created the task
+            # aka "documentset_1_6dd32ded3-00aa-4884-8b21-42f8332e7fac"
+            custom_task_id = f"{self.subtask_id_prefix}_{uuid4()}"
+
+            # add to the tracking taskset in redis BEFORE creating the celery task.
+            # note that for the moment we are using a single taskset key, not differentiated by cc_pair id
+            redis_client.sadd(self.taskset_key, custom_task_id)
+
+            # Priority on sync's triggered by new indexing should be medium
+            result = celery_app.send_task(
+                "document_by_cc_pair_cleanup_task",
+                kwargs=dict(
+                    document_id=doc_id,
+                    connector_id=cc_pair.connector_id,
+                    credential_id=cc_pair.credential_id,
+                ),
+                queue=DanswerCeleryQueues.CONNECTOR_DELETION,
+                task_id=custom_task_id,
+                priority=DanswerCeleryPriority.MEDIUM,
+            )
+
+            async_results.append(result)
+
+        return len(async_results)
+
+    def is_pruning(self, db_session: Session, redis_client: Redis) -> bool:
+        """A single example of a helper method being refactored into the redis helper"""
+        cc_pair = get_connector_credential_pair_from_id(
+            cc_pair_id=self._id, db_session=db_session
+        )
+        if not cc_pair:
+            raise ValueError(f"cc_pair_id {self._id} does not exist.")
+
+        if redis_client.exists(self.fence_key):
+            return True
+
+        return False
 
 
 def celery_get_queue_length(queue: str, r: Redis) -> int:

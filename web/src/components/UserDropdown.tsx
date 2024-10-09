@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useContext, useEffect } from "react";
+import { useState, useRef, useContext, useEffect, useMemo } from "react";
 import { FiLogOut } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -67,8 +67,10 @@ export function UserDropdown({
   const router = useRouter();
 
   const combinedSettings = useContext(SettingsContext);
-  const customNavItems: NavigationItem[] =
-    combinedSettings?.enterpriseSettings?.custom_nav_items || [];
+  const customNavItems: NavigationItem[] = useMemo(
+    () => combinedSettings?.enterpriseSettings?.custom_nav_items || [],
+    [combinedSettings]
+  );
 
   useEffect(() => {
     const iconNames = customNavItems

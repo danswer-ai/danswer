@@ -1,12 +1,12 @@
 import redis
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
-from celery.utils.log import get_task_logger
 from redis import Redis
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
 
 from danswer.background.celery.celery_app import celery_app
+from danswer.background.celery.celery_app import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -14,15 +14,8 @@ from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.enums import IndexingStatus
-from danswer.db.index_attempt import get_last_attempt
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.search_settings import get_current_search_settings
 from danswer.redis.redis_pool import get_redis_client
-
-
-# use this within celery tasks to get celery task specific logging
-task_logger = get_task_logger(__name__)
 
 
 @shared_task(
@@ -89,21 +82,6 @@ def try_generate_document_cc_pair_cleanup_tasks(
 
     if cc_pair.status != ConnectorCredentialPairStatus.DELETING:
         return None
-
-    search_settings = get_current_search_settings(db_session)
-
-    last_indexing = get_last_attempt(
-        connector_id=cc_pair.connector_id,
-        credential_id=cc_pair.credential_id,
-        search_settings_id=search_settings.id,
-        db_session=db_session,
-    )
-    if last_indexing:
-        if (
-            last_indexing.status == IndexingStatus.IN_PROGRESS
-            or last_indexing.status == IndexingStatus.NOT_STARTED
-        ):
-            return None
 
     # add tasks to celery and build up the task set to monitor in redis
     r.delete(rcd.taskset_key)

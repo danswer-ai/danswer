@@ -10,14 +10,12 @@ import { GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
-import { Card } from "@tremor/react";
+import { Button as TremorButton } from "@tremor/react";
 import {
   Credential,
   GoogleDriveCredentialJson,
   GoogleDriveServiceAccountCredentialJson,
 } from "@/lib/connectors/credentials";
-
-import { Button as TremorButton } from "@tremor/react";
 
 type GoogleDriveCredentialJsonTypes = "authorized_user" | "service_account";
 
@@ -285,6 +283,7 @@ export const DriveJsonUploadSection = ({
           className="text-link"
           target="_blank"
           href="https://docs.danswer.dev/connectors/google_drive#authorization"
+          rel="noreferrer"
         >
           here
         </a>{" "}

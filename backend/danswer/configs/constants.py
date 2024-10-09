@@ -1,3 +1,5 @@
+import platform
+import socket
 from enum import auto
 from enum import Enum
 
@@ -39,6 +41,7 @@ POSTGRES_CELERY_WORKER_LIGHT_APP_NAME = "celery_worker_light"
 POSTGRES_CELERY_WORKER_HEAVY_APP_NAME = "celery_worker_heavy"
 POSTGRES_PERMISSIONS_APP_NAME = "permissions"
 POSTGRES_UNKNOWN_APP_NAME = "unknown"
+POSTGRES_DEFAULT_SCHEMA = "public"
 
 # API Keys
 DANSWER_API_KEY_PREFIX = "API_KEY__"
@@ -184,10 +187,9 @@ class PostgresAdvisoryLocks(Enum):
 
 
 class DanswerCeleryQueues:
-    VESPA_DOCSET_SYNC_GENERATOR = "vespa_docset_sync_generator"
-    VESPA_USERGROUP_SYNC_GENERATOR = "vespa_usergroup_sync_generator"
     VESPA_METADATA_SYNC = "vespa_metadata_sync"
     CONNECTOR_DELETION = "connector_deletion"
+    CONNECTOR_PRUNING = "connector_pruning"
 
 
 class DanswerRedisLocks:
@@ -195,7 +197,7 @@ class DanswerRedisLocks:
     CHECK_VESPA_SYNC_BEAT_LOCK = "da_lock:check_vespa_sync_beat"
     MONITOR_VESPA_SYNC_BEAT_LOCK = "da_lock:monitor_vespa_sync_beat"
     CHECK_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:check_connector_deletion_beat"
-    MONITOR_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:monitor_connector_deletion_beat"
+    CHECK_PRUNE_BEAT_LOCK = "da_lock:check_prune_beat"
 
 
 class DanswerCeleryPriority(int, Enum):
@@ -204,3 +206,13 @@ class DanswerCeleryPriority(int, Enum):
     MEDIUM = auto()
     LOW = auto()
     LOWEST = auto()
+
+
+REDIS_SOCKET_KEEPALIVE_OPTIONS = {}
+REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPINTVL] = 15
+REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPCNT] = 3
+
+if platform.system() == "Darwin":
+    REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPALIVE] = 60  # type: ignore
+else:
+    REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPIDLE] = 60  # type: ignore

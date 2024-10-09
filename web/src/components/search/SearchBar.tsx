@@ -178,10 +178,10 @@ export const FullSearchBar = ({
         suppressContentEditableWarning={true}
       />
       <div
-        className={`flex flex-nowrap overflow-y-hidden ${showingSidebar ? " 2xl:justify-between" : "2xl:justify-end"} justify-between 4xl:justify-end w-full max-w-full items-center space-x-3 py-3 px-4`}
+        className={`flex flex-nowrap ${showingSidebar ? " 2xl:justify-between" : "2xl:justify-end"} justify-between 4xl:justify-end w-full max-w-full items-center space-x-3 py-3 px-4`}
       >
         <div
-          className={`-my-1 overflow-x-scroll flex-grow 4xl:hidden ${!showingSidebar && "2xl:hidden"}`}
+          className={`-my-1 flex-grow 4xl:hidden ${!showingSidebar && "2xl:hidden"}`}
         >
           {(ccPairs.length > 0 || documentSets.length > 0) && (
             <HorizontalSourceSelector

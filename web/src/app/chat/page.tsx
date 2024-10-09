@@ -5,8 +5,6 @@ import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrap
 import { ChatProvider } from "@/components/context/ChatContext";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import WrappedChat from "./WrappedChat";
-import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
-import { orderAssistantsForUser } from "@/lib/assistants/utils";
 
 export default async function Page({
   searchParams,

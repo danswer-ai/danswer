@@ -1,7 +1,7 @@
 "use client";
 
 import { FiEdit, FiFolderPlus } from "react-icons/fi";
-import { ForwardedRef, forwardRef, useContext, useState } from "react";
+import React, { ForwardedRef, forwardRef, useContext, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
@@ -11,7 +11,6 @@ import { createFolder } from "../folders/FolderManagement";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
-import React from "react";
 import {
   AssistantsIconSkeleton,
   ClosedBookIcon,

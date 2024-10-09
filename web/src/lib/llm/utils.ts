@@ -68,15 +68,17 @@ const MODEL_NAMES_SUPPORTING_IMAGE_INPUT = [
   "gpt-4-vision-preview",
   "gpt-4-turbo",
   "gpt-4-1106-vision-preview",
-  "gpt-4o",
-  "gpt-4o-mini",
-  "gpt-4-vision-preview",
-  "gpt-4-turbo",
-  "gpt-4-1106-vision-preview",
+  // standard claude names
   "claude-3-5-sonnet-20240620",
   "claude-3-opus-20240229",
   "claude-3-sonnet-20240229",
   "claude-3-haiku-20240307",
+  // claude names with AWS Bedrock Suffix
+  "claude-3-opus-20240229-v1:0",
+  "claude-3-sonnet-20240229-v1:0",
+  "claude-3-haiku-20240307-v1:0",
+  "claude-3-5-sonnet-20240620-v1:0",
+  // claude names with full AWS Bedrock names
   "anthropic.claude-3-opus-20240229-v1:0",
   "anthropic.claude-3-sonnet-20240229-v1:0",
   "anthropic.claude-3-haiku-20240307-v1:0",
@@ -84,29 +86,24 @@ const MODEL_NAMES_SUPPORTING_IMAGE_INPUT = [
 ];
 
 export function checkLLMSupportsImageInput(model: string) {
-  return MODEL_NAMES_SUPPORTING_IMAGE_INPUT.some(
+  // Original exact match check
+  const exactMatch = MODEL_NAMES_SUPPORTING_IMAGE_INPUT.some(
     (modelName) => modelName === model
   );
-}
 
-const MODEL_PROVIDER_PAIRS_SUPPORTING_IMAGE_OUTPUT = [
-  ["openai", "gpt-4o"],
-  ["openai", "gpt-4o-mini"],
-  ["openai", "gpt-4-vision-preview"],
-  ["openai", "gpt-4-turbo"],
-  ["openai", "gpt-4-1106-vision-preview"],
-  ["azure", "gpt-4o"],
-  ["azure", "gpt-4o-mini"],
-  ["azure", "gpt-4-vision-preview"],
-  ["azure", "gpt-4-turbo"],
-  ["azure", "gpt-4-1106-vision-preview"],
-];
+  if (exactMatch) {
+    return true;
+  }
 
-export function checkLLMSupportsImageOutput(provider: string, model: string) {
-  return MODEL_PROVIDER_PAIRS_SUPPORTING_IMAGE_OUTPUT.some(
-    (modelProvider) =>
-      modelProvider[0] === provider && modelProvider[1] === model
-  );
+  // Additional check for the last part of the model name
+  const modelParts = model.split(/[/.]/);
+  const lastPart = modelParts[modelParts.length - 1];
+
+  return MODEL_NAMES_SUPPORTING_IMAGE_INPUT.some((modelName) => {
+    const modelNameParts = modelName.split(/[/.]/);
+    const modelNameLastPart = modelNameParts[modelNameParts.length - 1];
+    return modelNameLastPart === lastPart;
+  });
 }
 
 export const structureValue = (

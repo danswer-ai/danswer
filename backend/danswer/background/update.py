@@ -23,7 +23,7 @@ from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.engine import init_sqlalchemy_engine
+from danswer.db.engine import SqlEngine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
@@ -96,14 +96,20 @@ def _should_create_new_indexing(
             if last_index.status == IndexingStatus.IN_PROGRESS:
                 return False
         else:
-            if connector.id == 0:  # Ingestion API
+            if (
+                connector.id == 0 or connector.source == DocumentSource.INGESTION_API
+            ):  # Ingestion API
                 return False
         return True
 
     # If the connector is paused or is the ingestion API, don't index
     # NOTE: during an embedding model switch over, the following logic
     # is bypassed by the above check for a future model
-    if not cc_pair.status.is_active() or connector.id == 0:
+    if (
+        not cc_pair.status.is_active()
+        or connector.id == 0
+        or connector.source == DocumentSource.INGESTION_API
+    ):
         return False
 
     if not last_index:
@@ -347,7 +353,7 @@ def kickoff_indexing_jobs(
                     run_indexing_entrypoint,
                     attempt.id,
                     attempt.connector_credential_pair_id,
-                    global_version.get_is_ee_version(),
+                    global_version.is_ee_version(),
                     pure=False,
                 )
                 if not run:
@@ -358,7 +364,7 @@ def kickoff_indexing_jobs(
                     run_indexing_entrypoint,
                     attempt.id,
                     attempt.connector_credential_pair_id,
-                    global_version.get_is_ee_version(),
+                    global_version.is_ee_version(),
                     pure=False,
                 )
                 if not run:
@@ -477,7 +483,9 @@ def update_loop(
 
 def update__main() -> None:
     set_is_ee_based_on_env_variable()
-    init_sqlalchemy_engine(POSTGRES_INDEXER_APP_NAME)
+
+    # initialize the Postgres connection pool
+    SqlEngine.set_app_name(POSTGRES_INDEXER_APP_NAME)
 
     logger.notice("Starting indexing service")
     update_loop()

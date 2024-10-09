@@ -31,8 +31,8 @@ from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.features.persona.models import PromptTemplateResponse
 from danswer.server.models import DisplayPriorityRequest
+from danswer.tools.utils import is_image_generation_available
 from danswer.utils.logger import setup_logger
-
 
 logger = setup_logger()
 
@@ -225,6 +225,11 @@ def list_personas(
             db_session=db_session,
             get_editable=False,
             joinedload_all=True,
+        )
+        # If the persona has an image generation tool and it's not available, don't include it
+        if not (
+            any(tool.in_code_tool_id == "ImageGenerationTool" for tool in persona.tools)
+            and not is_image_generation_available(db_session=db_session)
         )
     ]
 

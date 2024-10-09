@@ -138,6 +138,12 @@ POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
+POSTGRES_API_SERVER_POOL_SIZE = int(
+    os.environ.get("POSTGRES_API_SERVER_POOL_SIZE") or 40
+)
+POSTGRES_API_SERVER_POOL_OVERFLOW = int(
+    os.environ.get("POSTGRES_API_SERVER_POOL_OVERFLOW") or 10
+)
 # defaults to False
 POSTGRES_POOL_PRE_PING = os.environ.get("POSTGRES_POOL_PRE_PING", "").lower() == "true"
 
@@ -164,12 +170,28 @@ REDIS_DB_NUMBER_CELERY_RESULT_BACKEND = int(
 )
 REDIS_DB_NUMBER_CELERY = int(os.environ.get("REDIS_DB_NUMBER_CELERY", 15))  # broker
 
+# will propagate to both our redis client as well as celery's redis client
+REDIS_HEALTH_CHECK_INTERVAL = int(os.environ.get("REDIS_HEALTH_CHECK_INTERVAL", 60))
+
+# our redis client only, not celery's
+REDIS_POOL_MAX_CONNECTIONS = int(os.environ.get("REDIS_POOL_MAX_CONNECTIONS", 128))
+
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-settings
 # should be one of "required", "optional", or "none"
 REDIS_SSL_CERT_REQS = os.getenv("REDIS_SSL_CERT_REQS", "none")
 REDIS_SSL_CA_CERTS = os.getenv("REDIS_SSL_CA_CERTS", None)
 
 CELERY_RESULT_EXPIRES = int(os.environ.get("CELERY_RESULT_EXPIRES", 86400))  # seconds
+
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#broker-pool-limit
+# Setting to None may help when there is a proxy in the way closing idle connections
+CELERY_BROKER_POOL_LIMIT_DEFAULT = 10
+try:
+    CELERY_BROKER_POOL_LIMIT = int(
+        os.environ.get("CELERY_BROKER_POOL_LIMIT", CELERY_BROKER_POOL_LIMIT_DEFAULT)
+    )
+except ValueError:
+    CELERY_BROKER_POOL_LIMIT = CELERY_BROKER_POOL_LIMIT_DEFAULT
 
 #####
 # Connector Configs
@@ -379,6 +401,9 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
     os.environ.get("CUSTOM_ANSWER_VALIDITY_CONDITIONS", "[]")
 )
 
+VESPA_REQUEST_TIMEOUT = int(os.environ.get("VESPA_REQUEST_TIMEOUT") or "5")
+
+SYSTEM_RECURSION_LIMIT = int(os.environ.get("SYSTEM_RECURSION_LIMIT") or "1000")
 
 #####
 # Enterprise Edition Configs
@@ -390,3 +415,17 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 ENTERPRISE_EDITION_ENABLED = (
     os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
 )
+
+# Azure DALL-E Configurations
+AZURE_DALLE_API_VERSION = os.environ.get("AZURE_DALLE_API_VERSION")
+AZURE_DALLE_API_KEY = os.environ.get("AZURE_DALLE_API_KEY")
+AZURE_DALLE_API_BASE = os.environ.get("AZURE_DALLE_API_BASE")
+AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
+
+
+MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
+SECRET_JWT_KEY = os.environ.get("SECRET_JWT_KEY", "")
+
+
+DATA_PLANE_SECRET = os.environ.get("DATA_PLANE_SECRET", "")
+EXPECTED_API_KEY = os.environ.get("EXPECTED_API_KEY", "")

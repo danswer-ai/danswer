@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -30,6 +29,8 @@ import {
   defaultPruneFreqDays,
   defaultRefreshFreqMinutes,
   isLoadState,
+  Connector,
+  ConnectorBase,
 } from "@/lib/connectors/connectors";
 import { Modal } from "@/components/Modal";
 import GDriveMain from "./pages/gdrive/GoogleDrivePage";
@@ -42,13 +43,12 @@ import { Formik } from "formik";
 import { AccessTypeForm } from "@/components/admin/connectors/AccessTypeForm";
 import { AccessTypeGroupSelector } from "@/components/admin/connectors/AccessTypeGroupSelector";
 import NavigationRow from "./NavigationRow";
-
+import { useRouter } from "next/navigation";
 export interface AdvancedConfig {
   refreshFreq: number;
   pruneFreq: number;
   indexingStart: string;
 }
-import { Connector, ConnectorBase } from "@/lib/connectors/connectors";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -112,6 +112,8 @@ export default function AddConnector({
 }: {
   connector: ConfigurableSources;
 }) {
+  const router = useRouter();
+
   // State for managing credentials and files
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
@@ -202,13 +204,7 @@ export default function AddConnector({
   };
 
   const onSuccess = () => {
-    setPopup({
-      message: "Connector created! Redirecting to connector home page",
-      type: "success",
-    });
-    setTimeout(() => {
-      window.open("/admin/indexing/status", "_self");
-    }, 1000);
+    router.push("/admin/indexing/status?message=connector-created");
   };
 
   return (

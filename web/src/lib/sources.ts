@@ -27,7 +27,6 @@ import {
   SharepointIcon,
   TeamsIcon,
   SlabIcon,
-  SlackIcon,
   ZendeskIcon,
   ZulipIcon,
   MediaWikiIcon,
@@ -357,11 +356,4 @@ export function getSourcesForPersona(persona: Persona): ValidSources[] {
     });
   });
   return personaSources;
-}
-
-function stripTrailingSlash(str: string) {
-  if (str.substr(-1) === "/") {
-    return str.substr(0, str.length - 1);
-  }
-  return str;
 }

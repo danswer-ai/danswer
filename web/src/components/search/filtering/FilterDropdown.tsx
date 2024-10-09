@@ -41,7 +41,8 @@ export function FilterDropdown({
               flex-col 
               ${dropdownWidth || width}
               max-h-96 
-              overflow-y-scroll 
+              overflow-y-scroll
+              overscroll-contain
               `}
           >
             {options.map((option, ind) => {

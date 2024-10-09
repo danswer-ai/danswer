@@ -63,13 +63,16 @@ export default function UpgradingPage({
     }
     setIsCancelling(false);
   };
-  const statusOrder: Record<ValidStatuses, number> = {
-    failed: 0,
-    completed_with_errors: 1,
-    not_started: 2,
-    in_progress: 3,
-    success: 4,
-  };
+  const statusOrder: Record<ValidStatuses, number> = useMemo(
+    () => ({
+      failed: 0,
+      completed_with_errors: 1,
+      not_started: 2,
+      in_progress: 3,
+      success: 4,
+    }),
+    []
+  );
 
   const sortedReindexingProgress = useMemo(() => {
     return [...(ongoingReIndexingStatus || [])].sort((a, b) => {
