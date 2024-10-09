@@ -45,6 +45,10 @@ jobs:
           git config user.name "Richard Kuo [bot]"
           git config user.email "rkuo[bot]@danswer.ai"
 
+      - name: Set up GH_TOKEN
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Fetch All Branches
         run: |
           git fetch --all --prune
