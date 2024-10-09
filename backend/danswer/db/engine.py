@@ -346,6 +346,57 @@ def get_session() -> Generator[Session, None, None]:
         raise HTTPException(status_code=401, detail="User must authenticate")
 
     engine = get_sqlalchemy_engine()
+    if tenant_id is None:
+        tenant_id = current_tenant_id.get()
+
+    if not is_valid_schema_name(tenant_id):
+        raise HTTPException(status_code=400, detail="Invalid tenant ID")
+
+    # Establish a raw connection without starting a transaction
+    with engine.connect() as connection:
+        # Access the raw DBAPI connection
+        dbapi_connection = connection.connection
+
+        # Execute SET search_path outside of any transaction
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute(f'SET search_path TO "{tenant_id}"')
+            # Optionally verify the search_path was set correctly
+            cursor.execute("SHOW search_path")
+            cursor.fetchone()
+        finally:
+            cursor.close()
+
+        # Proceed to create a session using the connection
+        with Session(bind=connection, expire_on_commit=False) as session:
+            try:
+                yield session
+            finally:
+                # Reset search_path to default after the session is used
+                if MULTI_TENANT:
+                    cursor = dbapi_connection.cursor()
+                    try:
+                        cursor.execute('SET search_path TO "$user", public')
+                    finally:
+                        cursor.close()
+
+
+def get_session_generator_with_tenant(
+    tenant_id: str | None = None,
+) -> Generator[Session, None, None]:
+    with get_session_with_tenant(tenant_id) as session:
+        yield session
+
+
+def get_session() -> Generator[Session, None, None]:
+    """Generate a database session with the appropriate tenant schema set."""
+    tenant_id = current_tenant_id.get()
+    if tenant_id == "public" and MULTI_TENANT:
+        raise HTTPException(status_code=401, detail="User must authenticate")
+
+    engine = get_sqlalchemy_engine()
+
+    tenant_id = current_tenant_id.get()
     with Session(engine, expire_on_commit=False) as session:
         if MULTI_TENANT:
             if not is_valid_schema_name(tenant_id):
