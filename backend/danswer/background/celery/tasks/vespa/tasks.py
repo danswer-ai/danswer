@@ -470,8 +470,8 @@ def monitor_ccpair_pruning_taskset(
     r.delete(rcp.fence_key)
 
 
-@shared_task(name="monitor_vespa_sync", soft_time_limit=300)
-def monitor_vespa_sync() -> None:
+@shared_task(name="monitor_vespa_sync", soft_time_limit=300, bind=True)
+def monitor_vespa_sync(self: Task) -> None:
     """This is a celery beat task that monitors and finalizes metadata sync tasksets.
     It scans for fence values and then gets the counts of any associated tasksets.
     If the count is 0, that means all tasks finished and we should clean up.
@@ -492,10 +492,17 @@ def monitor_vespa_sync() -> None:
             return
 
         # print current queue lengths
+        r_celery = self.app.broker_connection().channel().client
         n_celery = celery_get_queue_length("celery", r)
-        n_sync = celery_get_queue_length(DanswerCeleryQueues.VESPA_METADATA_SYNC, r)
-        n_deletion = celery_get_queue_length(DanswerCeleryQueues.CONNECTOR_DELETION, r)
-        n_pruning = celery_get_queue_length(DanswerCeleryQueues.CONNECTOR_PRUNING, r)
+        n_sync = celery_get_queue_length(
+            DanswerCeleryQueues.VESPA_METADATA_SYNC, r_celery
+        )
+        n_deletion = celery_get_queue_length(
+            DanswerCeleryQueues.CONNECTOR_DELETION, r_celery
+        )
+        n_pruning = celery_get_queue_length(
+            DanswerCeleryQueues.CONNECTOR_PRUNING, r_celery
+        )
 
         task_logger.info(
             f"Queue lengths: celery={n_celery} sync={n_sync} deletion={n_deletion} pruning={n_pruning}"
