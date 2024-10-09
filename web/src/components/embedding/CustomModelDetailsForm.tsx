@@ -1,4 +1,4 @@
-import { CloudEmbeddingModel, CloudEmbeddingProvider } from "./interfaces";
+import { CloudEmbeddingModel, EmbeddingProvider } from "./interfaces";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { TextFormField, BooleanFormField } from "../admin/connectors/Field";
@@ -15,7 +15,7 @@ export function CustomModelDetailsForm({
   setShowTentativeModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   currentValues: CloudEmbeddingModel | null;
   provider: EmbeddingDetails;
-  embeddingType: "azure" | "litellm";
+  embeddingType: EmbeddingProvider;
 }) {
   return (
     <div>
@@ -27,7 +27,7 @@ export function CustomModelDetailsForm({
             normalize: false,
             query_prefix: "",
             passage_prefix: "",
-            provider_type: embeddingType === "azure" ? "Azure" : "LiteLLM",
+            provider_type: EmbeddingProvider,
             api_key: "",
             enabled: true,
             api_url: provider.api_url,
@@ -64,13 +64,13 @@ export function CustomModelDetailsForm({
           <Form>
             <Text className="text-xl text-text-900 font-bold mb-4">
               Specify details for your{" "}
-              {embeddingType === "azure" ? "Azure" : "LiteLLM"} Provider&apos;s
-              model
+              {embeddingType === EmbeddingProvider.AZURE ? "Azure" : "LiteLLM"}{" "}
+              Provider&apos;s model
             </Text>
             <TextFormField
               name="model_name"
               label="Model Name:"
-              subtext={`The name of the ${embeddingType === "azure" ? "Azure" : "LiteLLM"} model`}
+              subtext={`The name of the ${embeddingType === EmbeddingProvider.AZURE ? "Azure" : "LiteLLM"} model`}
               placeholder="e.g. 'all-MiniLM-L6-v2'"
               autoCompleteDisabled={true}
             />
@@ -110,7 +110,9 @@ export function CustomModelDetailsForm({
               disabled={isSubmitting}
               className="w-64 mx-auto"
             >
-              Configure {embeddingType === "azure" ? "Azure" : "LiteLLM"} Model
+              Configure{" "}
+              {embeddingType === EmbeddingProvider.AZURE ? "Azure" : "LiteLLM"}{" "}
+              Model
             </Button>
           </Form>
         )}
