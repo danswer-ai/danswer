@@ -205,7 +205,7 @@ def web_html_cleanup(
     if PARSE_WITH_TRAFILATURA:
         page_text = parse_html_with_trafilatura(soup).replace("\u200B", "")
 
-        # This is necssary as our current pre-processing occasionally causes trafilatura to fail
+        # This is necessary as our current pre-processing occasionally causes trafilatura to fail
         if not page_text:
             logger.info("Trafilatura couldn't match HTML, falling back on bs4")
             page_text = format_document_soup(soup).replace("\u200B", "")
