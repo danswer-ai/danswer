@@ -153,6 +153,7 @@ export async function fetchChatData(searchParams: {
     console.log(`Failed to fetch assistants - ${assistantsFetchError}`);
   }
   // remove those marked as hidden by an admin
+
   assistants = assistants.filter((assistant) => assistant.is_visible);
 
   // sort them in priority order
