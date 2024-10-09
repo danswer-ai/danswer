@@ -10,6 +10,7 @@ import {
   EmbeddingModelDescriptor,
   EmbeddingProvider,
   LITELLM_CLOUD_PROVIDER,
+  AZURE_CLOUD_PROVIDER,
 } from "../../../../components/embedding/interfaces";
 import { EmbeddingDetails } from "../EmbeddingModelSelectionForm";
 import { FiExternalLink, FiInfo, FiTrash } from "react-icons/fi";
@@ -19,6 +20,7 @@ import { LiteLLMModelForm } from "@/components/embedding/LiteLLMModelForm";
 import { deleteSearchSettings } from "./utils";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
+import { AdvancedSearchConfiguration } from "../interfaces";
 
 export default function CloudEmbeddingPage({
   currentModel,
@@ -31,6 +33,8 @@ export default function CloudEmbeddingPage({
   setAlreadySelectedModel,
   setShowTentativeModel,
   setShowModelInQueue,
+  advancedEmbeddingDetails,
+  azureEnabled,
 }: {
   setShowModelInQueue: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   setShowTentativeModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
@@ -46,6 +50,8 @@ export default function CloudEmbeddingPage({
   setChangeCredentialsProvider: React.Dispatch<
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
+  advancedEmbeddingDetails: AdvancedSearchConfiguration;
+  azureEnabled: boolean;
 }) {
   function hasProviderTypeinArray(
     arr: Array<{ provider_type: string }>,
@@ -259,6 +265,97 @@ export default function CloudEmbeddingPage({
                   />
                 </Card>
               </>
+            )}
+          </div>
+        </div>
+
+        <Text className="mt-6">
+          You can also use Azure OpenAI models for embeddings. Azure requires
+          separate configuration for each model.
+        </Text>
+        <div key={AZURE_CLOUD_PROVIDER.provider_type} className="mt-4 w-full">
+          <div className="flex items-center mb-2">
+            {AZURE_CLOUD_PROVIDER.icon({ size: 40 })}
+            <h2 className="ml-2 mt-2 text-xl font-bold">
+              {AZURE_CLOUD_PROVIDER.provider_type}
+            </h2>
+            <HoverPopup
+              mainContent={
+                <FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />
+              }
+              popupContent={
+                <div className="text-sm text-text-800 w-52">
+                  <div className="my-auto">
+                    {AZURE_CLOUD_PROVIDER.description}
+                  </div>
+                </div>
+              }
+              style="dark"
+            />
+          </div>
+
+          <div className="w-full flex flex-col items-start">
+            {!azureEnabled ? (
+              <>
+                <button
+                  onClick={() => setShowTentativeProvider(AZURE_CLOUD_PROVIDER)}
+                  className="mb-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm cursor-pointer"
+                >
+                  Configure Azure OpenAI
+                </button>
+                <div className="mt-2 w-full max-w-4xl">
+                  <Card className="p-4 border border-gray-200 rounded-lg shadow-sm">
+                    <Text className="text-base font-medium mb-2">
+                      Configure Azure OpenAI for Embeddings
+                    </Text>
+                    <Text className="text-sm text-gray-600 mb-3">
+                      Click "Configure Azure OpenAI" to set up Azure OpenAI for
+                      embeddings.
+                    </Text>
+                    <div className="flex items-center text-sm text-gray-700">
+                      <FiInfo className="text-gray-400 mr-2" size={16} />
+                      <Text>
+                        You'll need: API version, base URL, API key, model name,
+                        and deployment name.
+                      </Text>
+                    </div>
+                  </Card>
+                </div>
+              </>
+            ) : (
+              <div className="mb-4 w-full">
+                <Text className="font-semibold mb-2">
+                  Currently Configured Azure Model:
+                </Text>
+                <div className="p-4 w-96 border rounded-lg transition-all duration-200 border-blue-500 bg-blue-50 shadow-md">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-lg">
+                      {advancedEmbeddingDetails.model_name}
+                    </h3>
+                    <div className="flex gap-x-2">
+                      <a
+                        href="https://learn.microsoft.com/en-us/azure/cognitive-services/openai/overview"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        <FiExternalLink size={18} />
+                      </a>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Azure OpenAI Embedding Model
+                  </p>
+                  <div className="mt-3">
+                    <button
+                      className="w-full p-2 rounded-lg text-sm bg-background-125 border border-border cursor-not-allowed"
+                      disabled
+                    >
+                      Selected Model
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>
