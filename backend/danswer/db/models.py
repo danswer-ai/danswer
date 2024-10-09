@@ -620,9 +620,6 @@ class SearchSettings(Base):
         Enum(IndexModelStatus, native_enum=False)
     )
     index_name: Mapped[str] = mapped_column(String)
-    provider_type: Mapped[EmbeddingProvider | None] = mapped_column(
-        ForeignKey("embedding_provider.provider_type"), nullable=True
-    )
 
     # Mini and Large Chunks (large chunk also checks for model max context)
     multipass_indexing: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -642,10 +639,13 @@ class SearchSettings(Base):
 
     num_rerank: Mapped[int] = mapped_column(Integer, default=NUM_POSTPROCESSED_RESULTS)
 
-    cloud_provider: Mapped["CloudEmbeddingProvider"] = relationship(
+    cloud_provider_id: Mapped[int | None] = mapped_column(
+        ForeignKey("embedding_provider.id"), nullable=True
+    )
+    cloud_provider: Mapped["CloudEmbeddingProvider | None"] = relationship(
         "CloudEmbeddingProvider",
         back_populates="search_settings",
-        foreign_keys=[provider_type],
+        foreign_keys=[cloud_provider_id],
     )
 
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
@@ -670,6 +670,14 @@ class SearchSettings(Base):
     def __repr__(self) -> str:
         return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}',\
           cloud_provider='{self.cloud_provider.provider_type if self.cloud_provider else 'None'}')>"
+
+    @property
+    def provider_type(self) -> EmbeddingProvider | None:
+        return (
+            self.cloud_provider.provider_type
+            if self.cloud_provider is not None
+            else None
+        )
 
     @property
     def api_version(self) -> str | None:
@@ -1172,8 +1180,9 @@ class LLMProvider(Base):
 class CloudEmbeddingProvider(Base):
     __tablename__ = "embedding_provider"
 
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     provider_type: Mapped[EmbeddingProvider] = mapped_column(
-        Enum(EmbeddingProvider), primary_key=True
+        Enum(EmbeddingProvider), unique=True
     )
     api_url: Mapped[str | None] = mapped_column(String, nullable=True)
     api_key: Mapped[str | None] = mapped_column(EncryptedString())
@@ -1183,11 +1192,11 @@ class CloudEmbeddingProvider(Base):
     search_settings: Mapped[list["SearchSettings"]] = relationship(
         "SearchSettings",
         back_populates="cloud_provider",
-        foreign_keys="SearchSettings.provider_type",
+        foreign_keys="SearchSettings.cloud_provider_id",
     )
 
     def __repr__(self) -> str:
-        return f"<EmbeddingProvider(type='{self.provider_type}')>"
+        return f"<EmbeddingProvider(id={self.id}, type='{self.provider_type}')>"
 
 
 class DocumentSet(Base):

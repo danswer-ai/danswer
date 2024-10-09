@@ -45,7 +45,7 @@ def create_search_settings(
         passage_prefix=search_settings.passage_prefix,
         status=status,
         index_name=search_settings.index_name,
-        provider_type=search_settings.provider_type,
+        cloud_provider_id=search_settings.cloud_provider_id,
         multipass_indexing=search_settings.multipass_indexing,
         multilingual_expansion=search_settings.multilingual_expansion,
         disable_rerank_for_streaming=search_settings.disable_rerank_for_streaming,
@@ -59,6 +59,16 @@ def create_search_settings(
     db_session.commit()
 
     return embedding_model
+
+
+def get_embedding_provider_from_provider_id(
+    db_session: Session, provider_id: int
+) -> CloudEmbeddingProvider | None:
+    query = select(CloudEmbeddingProvider).where(
+        CloudEmbeddingProvider.id == provider_id
+    )
+    provider = db_session.execute(query).scalars().first()
+    return provider if provider else None
 
 
 def get_embedding_provider_from_provider_type(
@@ -81,7 +91,7 @@ def get_current_db_embedding_provider(
 
     embedding_provider = fetch_embedding_provider(
         db_session=db_session,
-        provider_type=search_settings.provider_type,
+        provider_id=search_settings.cloud_provider_id,
     )
     if embedding_provider is None:
         raise RuntimeError("No embedding provider exists for this model.")

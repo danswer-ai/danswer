@@ -16,7 +16,7 @@ from danswer.db.models import User
 from danswer.db.search_settings import create_search_settings
 from danswer.db.search_settings import delete_search_settings
 from danswer.db.search_settings import get_current_search_settings
-from danswer.db.search_settings import get_embedding_provider_from_provider_type
+from danswer.db.search_settings import get_embedding_provider_from_provider_id
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_current_search_settings
 from danswer.db.search_settings import update_search_settings_status
@@ -50,9 +50,9 @@ def set_new_search_settings(
         logger.warning("Index name was specified by request, this is not suggested")
 
     # Validate cloud provider exists or create new LiteLLM provider
-    if search_settings_new.provider_type is not None:
-        cloud_provider = get_embedding_provider_from_provider_type(
-            db_session, provider_type=search_settings_new.provider_type
+    if search_settings_new.cloud_provider_id is not None:
+        cloud_provider = get_embedding_provider_from_provider_id(
+            db_session, provider_id=search_settings_new.cloud_provider_id
         )
 
         if cloud_provider is None:

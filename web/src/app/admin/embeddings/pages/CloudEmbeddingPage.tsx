@@ -65,14 +65,8 @@ export default function CloudEmbeddingPage({
   const providers: CloudEmbeddingProviderFull[] = AVAILABLE_CLOUD_PROVIDERS.map(
     (model) => ({
       ...model,
-      configured:
-        !newUnenabledProviders.includes(model.provider_type) &&
-        (newEnabledProviders.includes(model.provider_type) ||
-          (embeddingProviderDetails &&
-            hasProviderTypeinArray(
-              embeddingProviderDetails,
-              model.provider_type
-            ))!),
+      configured: (embeddingProviderDetails &&
+        hasProviderTypeinArray(embeddingProviderDetails, model.provider_type))!,
     })
   );
   const [liteLLMProvider, setLiteLLMProvider] = useState<

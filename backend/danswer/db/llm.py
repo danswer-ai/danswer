@@ -15,7 +15,6 @@ from danswer.server.manage.embedding.models import CloudEmbeddingProvider
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import FullLLMProvider
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
-from shared_configs.enums import EmbeddingProvider
 
 
 def update_group_llm_provider_relationships__no_commit(
@@ -53,9 +52,10 @@ def upsert_cloud_embedding_provider(
             setattr(existing_provider, key, value)
     else:
         new_provider = CloudEmbeddingProviderModel(**provider.model_dump())
-
         db_session.add(new_provider)
         existing_provider = new_provider
+
+    db_session.flush()  # This will assign an ID if it's a new record
     db_session.commit()
     db_session.refresh(existing_provider)
     return CloudEmbeddingProvider.from_request(existing_provider)
@@ -144,11 +144,11 @@ def fetch_existing_llm_providers(
 
 
 def fetch_embedding_provider(
-    db_session: Session, provider_type: EmbeddingProvider
+    db_session: Session, provider_id: int
 ) -> CloudEmbeddingProviderModel | None:
     return db_session.scalar(
         select(CloudEmbeddingProviderModel).where(
-            CloudEmbeddingProviderModel.provider_type == provider_type
+            CloudEmbeddingProviderModel.id == provider_id
         )
     )
 
@@ -173,17 +173,15 @@ def fetch_provider(db_session: Session, provider_name: str) -> FullLLMProvider |
     return FullLLMProvider.from_model(provider_model)
 
 
-def remove_embedding_provider(
-    db_session: Session, provider_type: EmbeddingProvider
-) -> None:
+def remove_embedding_provider(db_session: Session, provider_id: int) -> None:
     db_session.execute(
-        delete(SearchSettings).where(SearchSettings.provider_type == provider_type)
+        delete(SearchSettings).where(SearchSettings.cloud_provider_id == provider_id)
     )
 
     # Delete the embedding provider
     db_session.execute(
         delete(CloudEmbeddingProviderModel).where(
-            CloudEmbeddingProviderModel.provider_type == provider_type
+            CloudEmbeddingProviderModel.id == provider_id
         )
     )
 

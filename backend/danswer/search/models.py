@@ -75,6 +75,7 @@ class SavedSearchSettings(InferenceSettings, IndexingSetting):
             passage_prefix=search_settings.passage_prefix,
             provider_type=search_settings.provider_type,
             index_name=search_settings.index_name,
+            cloud_provider_id=search_settings.cloud_provider_id,
             multipass_indexing=search_settings.multipass_indexing,
             # Reranking Details
             rerank_model_name=search_settings.rerank_model_name,

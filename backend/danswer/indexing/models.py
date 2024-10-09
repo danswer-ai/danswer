@@ -6,7 +6,6 @@ from pydantic import Field
 from danswer.access.models import DocumentAccess
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
-from shared_configs.enums import EmbeddingProvider
 from shared_configs.model_server_models import Embedding
 
 if TYPE_CHECKING:
@@ -103,7 +102,7 @@ class EmbeddingModelDetail(BaseModel):
     query_prefix: str | None
     passage_prefix: str | None
     api_url: str | None = None
-    provider_type: EmbeddingProvider | None = None
+    cloud_provider_id: int | None = None
     api_key: str | None = None
 
     # This disables the "model_" protected namespace for pydantic
@@ -120,9 +119,9 @@ class EmbeddingModelDetail(BaseModel):
             normalize=search_settings.normalize,
             query_prefix=search_settings.query_prefix,
             passage_prefix=search_settings.passage_prefix,
-            provider_type=search_settings.provider_type,
             api_key=search_settings.api_key,
             api_url=search_settings.api_url,
+            cloud_provider_id=search_settings.cloud_provider_id,
         )
 
 
@@ -143,7 +142,6 @@ class IndexingSetting(EmbeddingModelDetail):
             normalize=search_settings.normalize,
             query_prefix=search_settings.query_prefix,
             passage_prefix=search_settings.passage_prefix,
-            provider_type=search_settings.provider_type,
             index_name=search_settings.index_name,
             multipass_indexing=search_settings.multipass_indexing,
         )
