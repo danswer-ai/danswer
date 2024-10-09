@@ -191,8 +191,6 @@ export function EmbeddingModelSelection({
           onConfirm={() => {
             updateSelectedProvider(showTentativeOpenProvider);
             setShowTentativeOpenProvider(null);
-            console.log("CONFIGRIMG");
-            console.log(showTentativeOpenProvider);
 
             if (
               showTentativeOpenProvider?.provider_type !==
@@ -217,11 +215,8 @@ export function EmbeddingModelSelection({
             if (showModelInQueue) {
               setShowTentativeModel(showModelInQueue);
             }
-            console.log(showTentativeProvider.provider_type);
-            console.log("HI");
 
             if (showTentativeProvider.provider_type == "Azure") {
-              console.log("UPDAING TO TRUE");
               updateAzureStatus(true);
             }
           }}
