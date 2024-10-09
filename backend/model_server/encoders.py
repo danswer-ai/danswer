@@ -164,9 +164,6 @@ class CloudEmbedding:
             api_version=self.client["api_version"],
         )
         embeddings = [embedding["embedding"] for embedding in response.data]
-        print(type(embeddings))
-        print(type(embeddings[0]))
-        print(type(embeddings[0][0]))
 
         return embeddings
 
@@ -210,8 +207,6 @@ class CloudEmbedding:
             elif self.provider == EmbeddingProvider.GOOGLE:
                 return self._embed_vertex(texts, model_name, embedding_type)
             else:
-                print("HI")
-                print(self.provider)
                 raise ValueError(f"Unsupported provider: {self.provider}")
         except Exception as e:
             raise HTTPException(
