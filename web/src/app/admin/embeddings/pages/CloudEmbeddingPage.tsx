@@ -260,7 +260,7 @@ export default function CloudEmbeddingPage({
                   }`}
                 >
                   <CustomModelDetailsForm
-                    embeddingType="litellm"
+                    embeddingType={EmbeddingProvider.LITELLM}
                     provider={liteLLMProvider}
                     currentValues={
                       currentModel.provider_type === EmbeddingProvider.LITELLM
@@ -381,7 +381,7 @@ export default function CloudEmbeddingPage({
               >
                 {azureProvider && (
                   <CustomModelDetailsForm
-                    embeddingType="azure"
+                    embeddingType={EmbeddingProvider.AZURE}
                     provider={azureProvider}
                     currentValues={
                       currentModel.provider_type === EmbeddingProvider.AZURE

@@ -245,14 +245,8 @@ export function ChangeCredentialsModal({
                  `}
                     value={modelName}
                     onChange={(e: any) => setModelName(e.target.value)}
-                    placeholder="Paste your API URL here"
+                    placeholder="Paste your model name here"
                   />
-
-                  {deletionError && (
-                    <Callout title="Error" color="red" className="mt-4">
-                      {deletionError}
-                    </Callout>
-                  )}
                 </>
               )}
 
