@@ -492,7 +492,7 @@ def monitor_vespa_sync(self: Task) -> None:
             return
 
         # print current queue lengths
-        r_celery = self.app.broker_connection().channel().client
+        r_celery = self.app.broker_connection().channel().client  # type: ignore
         n_celery = celery_get_queue_length("celery", r)
         n_sync = celery_get_queue_length(
             DanswerCeleryQueues.VESPA_METADATA_SYNC, r_celery
