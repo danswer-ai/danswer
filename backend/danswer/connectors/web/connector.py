@@ -299,11 +299,13 @@ class WebConnector(LoadConnector):
                     page_text, metadata = read_pdf_file(
                         file=io.BytesIO(response.content)
                     )
+                    document_title = response.headers.get("X-Danswer-Document-Title")
                     last_modified = response.headers.get("Last-Modified")
 
                     doc_batch.append(
                         Document(
                             id=current_url,
+                            title=document_title,
                             sections=[Section(link=current_url, text=page_text)],
                             source=DocumentSource.WEB,
                             semantic_identifier=current_url.split("/")[-1],
@@ -319,6 +321,7 @@ class WebConnector(LoadConnector):
 
                 page = context.new_page()
                 page_response = page.goto(current_url)
+                document_title = page_response.header_value("X-Danswer-Document-Title")
                 last_modified = (
                     page_response.header_value("Last-Modified")
                     if page_response
@@ -353,6 +356,7 @@ class WebConnector(LoadConnector):
                 doc_batch.append(
                     Document(
                         id=current_url,
+                        title=document_title,
                         sections=[
                             Section(link=current_url, text=parsed_html.cleaned_text)
                         ],
