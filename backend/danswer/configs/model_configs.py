@@ -26,9 +26,6 @@ NORMALIZE_EMBEDDINGS = (
     os.environ.get("NORMALIZE_EMBEDDINGS") or "true"
 ).lower() == "true"
 
-# Only used for OpenAI
-OPENAI_EMBEDDING_TIMEOUT = int(os.environ.get("OPENAI_EMBEDDING_TIMEOUT", "600"))
-
 # Old default model settings, which are needed for an automatic easy upgrade
 OLD_DEFAULT_DOCUMENT_ENCODER_MODEL = "thenlper/gte-small"
 OLD_DEFAULT_MODEL_DOC_EMBEDDING_DIM = 384
