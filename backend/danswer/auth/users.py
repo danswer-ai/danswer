@@ -169,6 +169,8 @@ def verify_email_domain(email: str) -> None:
 
 
 def get_tenant_id_for_email(email: str) -> str:
+    if not MULTI_TENANT:
+        return "public"
     # Implement logic to get tenant_id from the mapping table
     with Session(get_sqlalchemy_engine()) as db_session:
         result = db_session.execute(
@@ -418,6 +420,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         email = credentials.username
 
         # Get tenant_id from mapping table
+
         tenant_id = get_tenant_id_for_email(email)
         if not tenant_id:
             # User not found in mapping
