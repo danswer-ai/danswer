@@ -15,7 +15,7 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.natural_language_processing.utils import BaseTokenizer
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
-
+from shared_configs.configs import STRICT_CHUNK_TOKEN_LIMIT
 
 # Not supporting overlaps, we need a clean combination of chunks and it is unclear if overlaps
 # actually help quality at all
@@ -235,31 +235,43 @@ class Chunker:
                     link_offsets = {}
                     chunk_text = ""
 
-                # Use the chunk splitter to split the section
                 split_texts = self.chunk_splitter.split_text(section_text)
 
-                for split_text in split_texts:
+                for i, split_text in enumerate(split_texts):
                     split_token_count = len(self.tokenizer.tokenize(split_text))
-                    if split_token_count > content_token_limit:
-                        # Further split the oversized chunk
-                        smaller_chunks = self._split_oversized_chunk(
-                            split_text, content_token_limit
-                        )
-                        for i, small_chunk in enumerate(smaller_chunks):
+
+                    if STRICT_CHUNK_TOKEN_LIMIT:
+                        split_token_count = len(self.tokenizer.tokenize(split_text))
+                        if split_token_count > content_token_limit:
+                            # Further split the oversized chunk
+                            smaller_chunks = self._split_oversized_chunk(
+                                split_text, content_token_limit
+                            )
+                            for i, small_chunk in enumerate(smaller_chunks):
+                                chunks.append(
+                                    _create_chunk(
+                                        text=small_chunk,
+                                        links={0: section_link_text},
+                                        is_continuation=(i != 0),
+                                    )
+                                )
+                        else:
                             chunks.append(
                                 _create_chunk(
-                                    text=small_chunk,
+                                    text=split_text,
                                     links={0: section_link_text},
-                                    is_continuation=(i != 0),
                                 )
                             )
+
                     else:
                         chunks.append(
                             _create_chunk(
                                 text=split_text,
                                 links={0: section_link_text},
+                                is_continuation=(i != 0),
                             )
                         )
+
                 continue
 
             current_token_count = len(self.tokenizer.tokenize(chunk_text))
