@@ -28,6 +28,10 @@ from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.redis.redis_pool import get_redis_client
+from danswer.utils.logger import setup_logger
+
+
+logger = setup_logger()
 
 
 @shared_task(

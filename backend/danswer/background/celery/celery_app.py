@@ -71,7 +71,6 @@ def celery_task_postrun(
         return
 
     task_logger.debug(f"Task {task.name} (ID: {task_id}) completed with state: {state}")
-    # logger.debug(f"Result: {retval}")
 
     if state not in READY_STATES:
         return
@@ -443,7 +442,6 @@ celery_app.autodiscover_tasks(
 def schedule_tenant_tasks() -> None:
     tenants = get_all_tenant_ids()
     celery_app.conf.beat_schedule = {}
-
     for tenant_id in tenants:
         celery_app.conf.beat_schedule.update(
             {
@@ -470,8 +468,8 @@ def schedule_tenant_tasks() -> None:
         celery_app.conf.beat_schedule.update(
             {
                 "check-for-prune": {
-                    "task": "check_for_prune_task",
-                    "schedule": timedelta(seconds=60),
+                    "task": "check_for_prune_task_2",
+                    "schedule": timedelta(seconds=10),
                     "options": {"priority": DanswerCeleryPriority.HIGH},
                     "args": (tenant_id,),
                 },

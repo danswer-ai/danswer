@@ -65,6 +65,7 @@ from danswer.utils.variable_functionality import noop_fallback
 def check_for_vespa_sync_task(tenant_id: str | None) -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
+    task_logger.error(f"CHECKING FOR VESPA SYNC TASK FOR TENANT {tenant_id}")
 
     r = get_redis_client()
 
