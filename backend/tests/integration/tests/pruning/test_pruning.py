@@ -24,7 +24,7 @@ logger = setup_logger()
 @contextmanager
 def http_server_context(
     directory: str, port: int = 8000
-) -> Generator[http.server.HTTPServer, None, None]:
+) -> Generator[http.server.ThreadingHTTPServer, None, None]:
     # Create a handler that serves files from the specified directory
     def handler_class(
         *args: Any, **kwargs: Any
@@ -34,7 +34,7 @@ def http_server_context(
         )
 
     # Create an HTTPServer instance
-    httpd = http.server.HTTPServer(("0.0.0.0", port), handler_class)
+    httpd = http.server.ThreadingHTTPServer(("0.0.0.0", port), handler_class)
 
     # Define a thread that runs the server in the background
     server_thread = threading.Thread(target=httpd.serve_forever)
