@@ -16,7 +16,7 @@ import { EmbeddingDetails } from "../EmbeddingModelSelectionForm";
 import { FiExternalLink, FiInfo, FiTrash } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { CustomModelDetailsForm } from "@/components/embedding/LiteLLMModelForm";
+import { CustomModelDetailsForm } from "@/components/embedding/CustomModelDetailsForm";
 import { deleteSearchSettings } from "./utils";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
@@ -318,14 +318,14 @@ export default function CloudEmbeddingPage({
                     Configure Azure OpenAI for Embeddings
                   </Text>
                   <Text className="text-sm text-gray-600 mb-3">
-                    Click "Configure Azure OpenAI" to set up Azure OpenAI for
-                    embeddings.
+                    Click &quot;Configure Azure OpenAI&quot; to set up Azure
+                    OpenAI for embeddings.
                   </Text>
                   <div className="flex items-center text-sm text-gray-700">
                     <FiInfo className="text-gray-400 mr-2" size={16} />
                     <Text>
-                      You'll need: API version, base URL, API key, model name,
-                      and deployment name.
+                      You&apos;ll need: API version, base URL, API key, model
+                      name, and deployment name.
                     </Text>
                   </div>
                 </Card>
@@ -388,9 +388,6 @@ export default function CloudEmbeddingPage({
                         ? (currentModel as CloudEmbeddingModel)
                         : null
                     }
-                    // currentValues={
-                    //   currentModel.provider_type === 'litetllm' ? currentModel : null
-                    // }
                     setShowTentativeModel={setShowTentativeModel}
                   />
                 )}
