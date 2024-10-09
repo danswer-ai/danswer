@@ -316,7 +316,7 @@ export const connectorConfigs: Record<
         name: "cql_query",
         optional: true,
         description:
-          "IMPORTANT: This will overwrite all other settings (besides Qiki Base URL). We currently only support CQL queries that return objects of type 'page'. This means all CQL queries must contain 'type=page' as the only type filter. We will still get all attachments and comments for the pages returned by the CQL query. See https://developer.atlassian.com/server/confluence/advanced-searching-using-cql/ for more details.",
+          "IMPORTANT: This will overwrite all other selected connector settings (besides Wiki Base URL). We currently only support CQL queries that return objects of type 'page'. This means all CQL queries must contain 'type=page' as the only type filter. We will still get all attachments and comments for the pages returned by the CQL query. Any 'lastmodified' filters will be overwritten. See https://developer.atlassian.com/server/confluence/advanced-searching-using-cql/ for more details.",
       },
     ],
   },
