@@ -45,10 +45,6 @@ jobs:
           git config user.name "Richard Kuo [bot]"
           git config user.email "rkuo[bot]@danswer.ai"
 
-      - name: Set up GitHub CLI Token
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
       - name: Fetch All Branches
         run: |
           git fetch --all --prune
@@ -80,6 +76,7 @@ jobs:
           HOTFIX_COMMIT: ${{ github.event.inputs.hotfix_commit }}
           HOTFIX_SUFFIX: ${{ github.event.inputs.hotfix_suffix }}
           AUTO_MERGE: ${{ github.event.inputs.auto_merge }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Get the branches from the previous step
           BRANCHES="${{ steps.get_release_branches.outputs.branches }}"
