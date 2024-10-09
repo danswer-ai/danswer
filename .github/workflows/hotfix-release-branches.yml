@@ -7,8 +7,11 @@ name: Hotfix release branches
 on:
   workflow_dispatch:
     inputs:
-      hotfix_branch:
-        description: 'Hotfix branch name'
+      hotfix_commit:
+        description: 'Hotfix commit hash'
+        required: true
+      hotfix_suffix:
+        description: 'Hotfix branch suffix (e.g. hotfix/v0.8-{suffix})'
         required: true
       release_branch_pattern:
         description: 'Release branch pattern (regex)'
@@ -20,7 +23,7 @@ on:
         default: 'true'
         
 jobs:
-  hotfix_to_release:
+  hotfix_release_branches:
     # See https://runs-on.com/runners/linux/
     # use a lower powered instance since this just does i/o to docker hub
     runs-on: [runs-on,runner=2cpu-linux-x64,"run-id=${{ github.run_id }}"]
@@ -33,6 +36,10 @@ jobs:
       - name: Fetch All Branches
         run: |
           git fetch --all --prune
+
+      - name: Verify Hotfix Commit Exists
+        run: |
+          git rev-parse --verify "${{ github.event.inputs.hotfix_commit }}" || { echo "Commit not found: ${{ github.event.inputs.hotfix_commit }}"; exit 1; }
 
       - name: Get Release Branches
         id: get_release_branches
@@ -47,18 +54,15 @@ jobs:
           echo "$BRANCHES"
           
           # Join the branches into a single line separated by commas
-            BRANCHES_JOINED=$(echo "$BRANCHES" | tr '\n' ',' | sed 's/,$//')
+          BRANCHES_JOINED=$(echo "$BRANCHES" | tr '\n' ',' | sed 's/,$//')
 
           # Set the branches as an output
           echo "branches=$BRANCHES_JOINED" >> $GITHUB_OUTPUT
 
-      - name: Ensure Hotfix Branch Exists Locally
-        run: |
-          git fetch origin "${{ github.event.inputs.hotfix_branch }}":"${{ github.event.inputs.hotfix_branch }}" || true
-
       - name: Create and Merge Pull Requests to Matching Release Branches
         env:
-          HOTFIX_BRANCH: ${{ github.event.inputs.hotfix_branch }}
+          HOTFIX_COMMIT: ${{ github.event.inputs.hotfix_commit }}
+          HOTFIX_SUFFIX: ${{ github.event.inputs.hotfix_suffix }}
           AUTO_MERGE: ${{ github.event.inputs.auto_merge }}
         run: |
           # Get the branches from the previous step
@@ -68,9 +72,39 @@ jobs:
           IFS=$',' read -ra BRANCH_ARRAY <<< "$BRANCHES"
 
           # Loop through each release branch and create and merge a PR
-          for RELEASE_BRANCH in $BRANCHES; do
+          for RELEASE_BRANCH in "${BRANCH_ARRAY[@]}"; do
+            echo "Processing $RELEASE_BRANCH..."
+            
+            # Parse out the release version by removing "release/" from the branch name
+            RELEASE_VERSION=${RELEASE_BRANCH#release/}
+            echo "Release version parsed: $RELEASE_VERSION"
+            
+            HOTFIX_BRANCH="hotfix/${RELEASE_VERSION}-${HOTFIX_SUFFIX}"
             echo "Creating PR from $HOTFIX_BRANCH to $RELEASE_BRANCH"
 
+            # Checkout the release branch
+            echo "Checking out $RELEASE_BRANCH"
+            git checkout "$RELEASE_BRANCH"
+
+            # Create the new hotfix branch
+            echo "Branching $RELEASE_BRANCH to $HOTFIX_BRANCH"
+            git checkout -b "$HOTFIX_BRANCH"
+
+            # Cherry-pick the hotfix commit
+            echo "Cherry picking commit hash $HOTFIX_COMMIT onto $HOTFIX_BRANCH"
+            git cherry-pick "$HOTFIX_COMMIT"
+
+            if [ $? -ne 0 ]; then
+              echo "Cherry-pick failed for $HOTFIX_COMMIT on $HOTFIX_BRANCH. Aborting..."
+              git cherry-pick --abort
+              continue
+            fi
+
+            # Push the hotfix branch to the remote
+            echo "Pushing $HOTFIX_BRANCH..."
+            git push origin "$HOTFIX_BRANCH"
+            echo "Hotfix branch $HOTFIX_BRANCH created and pushed."
+            
             # Check if PR already exists
             EXISTING_PR=$(gh pr list --head "$HOTFIX_BRANCH" --base "$RELEASE_BRANCH" --state open --json number --jq '.[0].number')
 
@@ -98,8 +132,8 @@ jobs:
               if [ $? -eq 0 ]; then
                 echo "Pull request #$PR_NUMBER merged successfully."
               else
-                echo "Failed to merge pull request #$PR_NUMBER."
                 # Optionally, handle the error or continue
+                echo "Failed to merge pull request #$PR_NUMBER."
               fi
             fi
           done
