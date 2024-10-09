@@ -81,6 +81,6 @@ RUN pip install --no-cache-dir --upgrade \
         -r /tmp/dev-requirements.txt
 COPY ./tests/integration /app/tests/integration
 
-ENV PYTHONPATH /app
+ENV PYTHONPATH=/app
 
 CMD ["pytest", "-s", "/app/tests/integration"]
