@@ -85,7 +85,7 @@ export default function CloudEmbeddingPage({
     setAzureProvider(azureProvider);
   }, [embeddingProviderDetails]);
 
-  const isAzureConfigured = !!azureProvider;
+  const isAzureConfigured = azureProvider !== undefined;
 
   // Get details of the configured Azure provider
   const azureProviderDetails = embeddingProviderDetails?.find(
