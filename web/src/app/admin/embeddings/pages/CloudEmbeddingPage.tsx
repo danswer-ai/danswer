@@ -92,11 +92,6 @@ export default function CloudEmbeddingPage({
     (provider) => provider.provider_type.toLowerCase() === "azure"
   );
 
-  // Filter Azure models
-  // const azureModels = embeddingModelDetails?.filter(
-  //   (model) => model..toLowerCase() === 'azure'
-  // );
-
   return (
     <div>
       <Title className="mt-8">

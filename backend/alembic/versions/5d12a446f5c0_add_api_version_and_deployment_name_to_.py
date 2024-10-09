@@ -16,7 +16,7 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade() -> None:
     op.add_column(
         "embedding_provider", sa.Column("api_version", sa.String(), nullable=True)
     )
@@ -25,6 +25,6 @@ def upgrade():
     )
 
 
-def downgrade():
+def downgrade() -> None:
     op.drop_column("embedding_provider", "deployment_name")
     op.drop_column("embedding_provider", "api_version")
