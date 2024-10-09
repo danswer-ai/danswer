@@ -16,7 +16,6 @@ from sentence_transformers import SentenceTransformer  # type: ignore
 from vertexai.language_models import TextEmbeddingInput  # type: ignore
 from vertexai.language_models import TextEmbeddingModel  # type: ignore
 
-from danswer.configs.model_configs import OPENAI_EMBEDDING_TIMEOUT
 from danswer.utils.logger import setup_logger
 from model_server.constants import DEFAULT_COHERE_MODEL
 from model_server.constants import DEFAULT_OPENAI_MODEL
@@ -26,6 +25,7 @@ from model_server.constants import EmbeddingModelTextType
 from model_server.constants import EmbeddingProvider
 from model_server.utils import simple_log_function_time
 from shared_configs.configs import INDEXING_ONLY
+from shared_configs.configs import OPENAI_EMBEDDING_TIMEOUT
 from shared_configs.enums import EmbedTextType
 from shared_configs.enums import RerankerProvider
 from shared_configs.model_server_models import Embedding
