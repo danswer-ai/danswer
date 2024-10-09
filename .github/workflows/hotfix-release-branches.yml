@@ -45,7 +45,7 @@ jobs:
           git config user.name "Richard Kuo [bot]"
           git config user.email "rkuo[bot]@danswer.ai"
 
-      - name: Set up GH_TOKEN
+      - name: Set up GitHub CLI Token
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
