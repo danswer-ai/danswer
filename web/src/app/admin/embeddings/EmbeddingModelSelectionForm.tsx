@@ -27,6 +27,7 @@ import {
   EMBEDDING_MODELS_ADMIN_URL,
   EMBEDDING_PROVIDERS_ADMIN_URL,
 } from "../configuration/llm/constants";
+import { AdvancedSearchConfiguration } from "./interfaces";
 
 export interface EmbeddingDetails {
   api_key?: string;
@@ -36,11 +37,15 @@ export interface EmbeddingDetails {
 }
 
 export function EmbeddingModelSelection({
+  updateAzureStatus,
+  azureEnabled,
   selectedProvider,
   currentEmbeddingModel,
   updateSelectedProvider,
   modelTab,
   setModelTab,
+  updateCurrentModel,
+  advancedEmbeddingDetails,
 }: {
   modelTab: "open" | "cloud" | null;
   setModelTab: Dispatch<SetStateAction<"open" | "cloud" | null>>;
@@ -49,6 +54,13 @@ export function EmbeddingModelSelection({
   updateSelectedProvider: (
     model: CloudEmbeddingModel | HostedEmbeddingModel
   ) => void;
+  updateCurrentModel: (
+    newModel: string,
+    provider_type: EmbeddingProvider
+  ) => void;
+  advancedEmbeddingDetails: AdvancedSearchConfiguration;
+  updateAzureStatus: (enabled: boolean) => void;
+  azureEnabled: boolean;
 }) {
   // Cloud Provider based modals
   const [showTentativeProvider, setShowTentativeProvider] =
@@ -179,6 +191,15 @@ export function EmbeddingModelSelection({
           onConfirm={() => {
             updateSelectedProvider(showTentativeOpenProvider);
             setShowTentativeOpenProvider(null);
+            console.log("CONFIGRIMG");
+            console.log(showTentativeOpenProvider);
+
+            if (
+              showTentativeOpenProvider?.provider_type !==
+              EmbeddingProvider.AZURE
+            ) {
+              updateAzureStatus(false);
+            }
           }}
           onCancel={() => setShowTentativeOpenProvider(null)}
         />
@@ -186,13 +207,22 @@ export function EmbeddingModelSelection({
 
       {showTentativeProvider && (
         <ProviderCreationModal
+          updateCurrentModel={updateCurrentModel}
           isProxy={showTentativeProvider.provider_type == "LiteLLM"}
+          isAzure={showTentativeProvider.provider_type == "Azure"}
           selectedProvider={showTentativeProvider}
           onConfirm={() => {
             setShowTentativeProvider(showUnconfiguredProvider);
             clientsideAddProvider(showTentativeProvider);
             if (showModelInQueue) {
               setShowTentativeModel(showModelInQueue);
+            }
+            console.log(showTentativeProvider.provider_type);
+            console.log("HI");
+
+            if (showTentativeProvider.provider_type == "Azure") {
+              console.log("UPDAING TO TRUE");
+              updateAzureStatus(true);
             }
           }}
           onCancel={() => {
@@ -223,6 +253,9 @@ export function EmbeddingModelSelection({
             setShowModelInQueue(null);
             updateSelectedProvider(showTentativeModel);
             setShowTentativeModel(null);
+            if (showTentativeModel?.provider_type !== EmbeddingProvider.AZURE) {
+              updateAzureStatus(false);
+            }
           }}
           onCancel={() => {
             setShowModelInQueue(null);
@@ -291,6 +324,8 @@ export function EmbeddingModelSelection({
 
       {modelTab == "cloud" && (
         <CloudEmbeddingPage
+          azureEnabled={azureEnabled}
+          advancedEmbeddingDetails={advancedEmbeddingDetails}
           embeddingModelDetails={embeddingModelDetails}
           setShowModelInQueue={setShowModelInQueue}
           setShowTentativeModel={setShowTentativeModel}

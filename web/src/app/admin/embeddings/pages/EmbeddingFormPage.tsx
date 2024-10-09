@@ -31,6 +31,7 @@ export default function EmbeddingForm() {
   const { popup, setPopup } = usePopup();
   const router = useRouter();
 
+  const [azureEnabled, setAzureEnabled] = useState(false);
   const [advancedEmbeddingDetails, setAdvancedEmbeddingDetails] =
     useState<AdvancedSearchConfiguration>({
       model_name: "",
@@ -152,17 +153,19 @@ export default function EmbeddingForm() {
     }
   }, [currentEmbeddingModel]);
 
-  useEffect(() => {
-    if (currentEmbeddingModel) {
-      setSelectedProvider(currentEmbeddingModel);
-    }
-  }, [currentEmbeddingModel]);
   if (!selectedProvider) {
     return <ThreeDotsLoader />;
   }
   if (currentEmbeddingModelError || !currentEmbeddingModel) {
     return <ErrorCallout errorTitle="Failed to fetch embedding model status" />;
   }
+
+  const updateCurrentModel = (newModel: string) => {
+    setAdvancedEmbeddingDetails((values) => ({
+      ...values,
+      model_name: newModel,
+    }));
+  };
 
   const updateSearch = async () => {
     const values: SavedSearchSettings = {
@@ -311,11 +314,17 @@ export default function EmbeddingForm() {
             </Text>
             <Card>
               <EmbeddingModelSelection
+                azureEnabled={azureEnabled}
+                updateAzureStatus={(enabled: boolean) =>
+                  setAzureEnabled(enabled)
+                }
+                updateCurrentModel={updateCurrentModel}
                 setModelTab={setModelTab}
                 modelTab={modelTab}
                 selectedProvider={selectedProvider}
                 currentEmbeddingModel={currentEmbeddingModel}
                 updateSelectedProvider={updateSelectedProvider}
+                advancedEmbeddingDetails={advancedEmbeddingDetails}
               />
             </Card>
             <div className="mt-4 flex w-full justify-end">
