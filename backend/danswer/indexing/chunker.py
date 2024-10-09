@@ -160,7 +160,7 @@ class Chunker:
 
     def _split_oversized_chunk(self, text: str, content_token_limit: int) -> list[str]:
         """
-        Splits text into smaller chunks based on token count to ensure
+        Splits the text into smaller chunks based on token count to ensure
         no chunk exceeds the content_token_limit.
         """
         tokens = self.tokenizer.tokenize(text)
@@ -170,7 +170,8 @@ class Chunker:
         while start < total_tokens:
             end = min(start + content_token_limit, total_tokens)
             token_chunk = tokens[start:end]
-            chunk_text = self.tokenizer.decode(token_chunk)
+            # Join the tokens to reconstruct the text
+            chunk_text = " ".join(token_chunk)
             chunks.append(chunk_text)
             start = end
         return chunks
