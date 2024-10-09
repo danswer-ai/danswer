@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import IO
 
 import bs4
-import trafilatura
-from trafilatura.settings import use_config
+import trafilatura  # type: ignore
+from trafilatura.settings import use_config  # type: ignore
 
 from danswer.configs.app_configs import HTML_BASED_CONNECTOR_TRANSFORM_LINKS_STRATEGY
 from danswer.configs.app_configs import PARSE_WITH_TRAFILATURA
@@ -201,14 +201,21 @@ def web_html_cleanup(
         for undesired_tag in additional_element_types_to_discard:
             [tag.extract() for tag in soup.find_all(undesired_tag)]
 
-    # 200B is ZeroWidthSpace which we don't care for
-    if PARSE_WITH_TRAFILATURA:
-        page_text = parse_html_with_trafilatura(soup).replace("\u200B", "")
+    soup_string = str(soup)
+    page_text = ""
 
-        # This is necessary as our current pre-processing occasionally causes trafilatura to fail
-        if not page_text:
-            logger.info("Trafilatura couldn't match HTML, falling back on bs4")
-            page_text = format_document_soup(soup).replace("\u200B", "")
+    if PARSE_WITH_TRAFILATURA:
+        try:
+            page_text = parse_html_with_trafilatura(soup_string)
+            if not page_text:
+                raise ValueError("Empty content returned by trafilatura.")
+        except Exception as e:
+            logger.info(f"Trafilatura parsing failed: {e}. Falling back on bs4.")
+            page_text = format_document_soup(soup)
     else:
-        page_text = format_document_soup(soup).replace("\u200B", "")
-    return ParsedHTML(title=title, cleaned_text=page_text)
+        page_text = format_document_soup(soup)
+
+    # 200B is ZeroWidthSpace which we don't care for
+    cleaned_text = page_text.replace("\u200B", "")
+
+    return ParsedHTML(title=title, cleaned_text=cleaned_text)
