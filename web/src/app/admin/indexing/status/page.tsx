@@ -40,7 +40,6 @@ function Main() {
     );
   }
 
-  console.log(indexAttemptData);
   if (indexAttemptData.length === 0) {
     return (
       <Text>
