@@ -330,7 +330,6 @@ class Answer:
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
     ) -> Iterator[str | StreamStopInfo]:
-        print("prompt", prompt)
         for message in self.llm.stream(
             prompt=prompt, tools=tools, tool_choice=tool_choice
         ):

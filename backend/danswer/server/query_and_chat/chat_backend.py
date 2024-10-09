@@ -627,7 +627,7 @@ def upload_files_for_chat(
             # as we would always use this as the ID to attach to the
             # message
             file_info.append((text_file_id, file.filename, ChatFileType.PLAIN_TEXT))
-        elif file_type != ChatFileType.DOC:
+        else:
             file_info.append((file_id, file.filename, file_type))
 
     return {
