@@ -1,4 +1,6 @@
 import json
+import os 
+
 from collections.abc import Generator
 from datetime import datetime
 from typing import Any
@@ -105,7 +107,7 @@ class InternetSearchTool(Tool):
             "Content-Type": "application/json",
         }
         self.num_results = num_results
-        self.client = httpx.Client()
+        self.client = httpx.Client(timeout=httpx.Timeout(os.getenv("HTTPX_TIMEOUT", 10)))
 
     @property
     def name(self) -> str:
