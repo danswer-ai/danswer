@@ -147,17 +147,17 @@ jobs:
 
             # Extract the URL from the output
             PR_URL=$(echo "$PR_OUTPUT" | grep -Eo 'https://github.com/[^ ]+')
-
             echo "Pull request created: $PR_URL"
 
             # Extract PR number from URL
             PR_NUMBER=$(basename "$PR_URL")
+            echo "Pull request created: $PR_NUMBER"
 
             if [ "$AUTO_MERGE" == "true" ]; then
               echo "Attempting to merge pull request #$PR_NUMBER"
 
               # Attempt to merge the PR
-              gh pr merge "$PR_NUMBER" --merge --yes
+              gh pr merge "$PR_NUMBER" --merge --delete-branch
 
               if [ $? -eq 0 ]; then
                 echo "Pull request #$PR_NUMBER merged successfully."
