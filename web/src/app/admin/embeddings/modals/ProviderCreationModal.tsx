@@ -57,10 +57,9 @@ export function ProviderCreationModal({
         : useFileUpload
           ? Yup.string()
           : Yup.string().required("API Key is required"),
-    model_name:
-      isProxy || isAzure
-        ? Yup.string().required("Model name is required")
-        : Yup.string().nullable(),
+    model_name: isProxy
+      ? Yup.string().required("Model name is required")
+      : Yup.string().nullable(),
     api_url:
       isProxy || isAzure
         ? Yup.string().required("API URL is required")
@@ -110,9 +109,6 @@ export function ProviderCreationModal({
     try {
       const customConfig = Object.fromEntries(values.custom_config);
 
-      console.log({
-        values: values,
-      });
       const initialResponse = await fetch(
         "/api/admin/embedding/test-embedding",
         {
@@ -214,20 +210,21 @@ export function ProviderCreationModal({
 
               <div className="flex w-full flex-col gap-y-6">
                 {(isProxy || isAzure) && (
-                  <>
-                    <TextFormField
-                      name="api_url"
-                      label="API URL"
-                      placeholder="API URL"
-                      type="text"
-                    />
-                    <TextFormField
-                      name="model_name"
-                      label={`Model Name ${isProxy ? "(for testing)" : ""}`}
-                      placeholder="Model Name"
-                      type="text"
-                    />
-                  </>
+                  <TextFormField
+                    name="api_url"
+                    label="API URL"
+                    placeholder="API URL"
+                    type="text"
+                  />
+                )}
+
+                {isProxy && (
+                  <TextFormField
+                    name="model_name"
+                    label={`Model Name ${isProxy ? "(for testing)" : ""}`}
+                    placeholder="Model Name"
+                    type="text"
+                  />
                 )}
 
                 {isAzure && (

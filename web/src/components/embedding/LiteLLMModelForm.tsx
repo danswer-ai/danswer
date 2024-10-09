@@ -6,14 +6,16 @@ import { Dispatch, SetStateAction } from "react";
 import { Button, Text } from "@tremor/react";
 import { EmbeddingDetails } from "@/app/admin/embeddings/EmbeddingModelSelectionForm";
 
-export function LiteLLMModelForm({
+export function CustomModelDetailsForm({
   setShowTentativeModel,
   currentValues,
   provider,
+  embeddingType,
 }: {
   setShowTentativeModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   currentValues: CloudEmbeddingModel | null;
   provider: EmbeddingDetails;
+  embeddingType: "azure" | "litellm";
 }) {
   return (
     <div>
@@ -25,7 +27,7 @@ export function LiteLLMModelForm({
             normalize: false,
             query_prefix: "",
             passage_prefix: "",
-            provider_type: "LiteLLM",
+            provider_type: embeddingType === "azure" ? "Azure" : "LiteLLM",
             api_key: "",
             enabled: true,
             api_url: provider.api_url,
@@ -61,12 +63,13 @@ export function LiteLLMModelForm({
         {({ isSubmitting }) => (
           <Form>
             <Text className="text-xl text-text-900 font-bold mb-4">
-              Add a new model to LiteLLM proxy at {provider.api_url}
+              Specify details for your{" "}
+              {embeddingType === "azure" ? "Azure" : "LiteLLM"} Provider's model
             </Text>
             <TextFormField
               name="model_name"
               label="Model Name:"
-              subtext="The name of the LiteLLM model"
+              subtext={`The name of the ${embeddingType === "azure" ? "Azure" : "LiteLLM"} model`}
               placeholder="e.g. 'all-MiniLM-L6-v2'"
               autoCompleteDisabled={true}
             />
@@ -106,7 +109,7 @@ export function LiteLLMModelForm({
               disabled={isSubmitting}
               className="w-64 mx-auto"
             >
-              Configure LiteLLM Model
+              Configure {embeddingType === "azure" ? "Azure" : "LiteLLM"} Model
             </Button>
           </Form>
         )}

@@ -1,7 +1,7 @@
 """add api_version and deployment_name to search settings
 
 Revision ID: 5d12a446f5c0
-Revises: ac5eaac849f9
+Revises: 5d12a446f5c0
 Create Date: 2024-10-08 15:56:07.975636
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "5d12a446f5c0"
-down_revision = "ac5eaac849f9"
+down_revision = "e4334d5b33ba"
 branch_labels = None
 depends_on = None
 
