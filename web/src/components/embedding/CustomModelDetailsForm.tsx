@@ -64,7 +64,8 @@ export function CustomModelDetailsForm({
           <Form>
             <Text className="text-xl text-text-900 font-bold mb-4">
               Specify details for your{" "}
-              {embeddingType === "azure" ? "Azure" : "LiteLLM"} Provider's model
+              {embeddingType === "azure" ? "Azure" : "LiteLLM"} Provider&apos;s
+              model
             </Text>
             <TextFormField
               name="model_name"

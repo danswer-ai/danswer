@@ -1,7 +1,7 @@
 """add api_version and deployment_name to search settings
 
 Revision ID: 5d12a446f5c0
-Revises: 5d12a446f5c0
+Revises: e4334d5b33ba
 Create Date: 2024-10-08 15:56:07.975636
 
 """
