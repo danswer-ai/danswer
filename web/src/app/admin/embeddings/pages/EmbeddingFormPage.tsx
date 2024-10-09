@@ -31,7 +31,6 @@ export default function EmbeddingForm() {
   const { popup, setPopup } = usePopup();
   const router = useRouter();
 
-  const [azureEnabled, setAzureEnabled] = useState(false);
   const [advancedEmbeddingDetails, setAdvancedEmbeddingDetails] =
     useState<AdvancedSearchConfiguration>({
       model_name: "",
@@ -171,6 +170,7 @@ export default function EmbeddingForm() {
     const values: SavedSearchSettings = {
       ...rerankingDetails,
       ...advancedEmbeddingDetails,
+      ...selectedProvider,
       provider_type:
         selectedProvider.provider_type?.toLowerCase() as EmbeddingProvider | null,
     };
@@ -314,10 +314,6 @@ export default function EmbeddingForm() {
             </Text>
             <Card>
               <EmbeddingModelSelection
-                azureEnabled={azureEnabled}
-                updateAzureStatus={(enabled: boolean) =>
-                  setAzureEnabled(enabled)
-                }
                 updateCurrentModel={updateCurrentModel}
                 setModelTab={setModelTab}
                 modelTab={modelTab}

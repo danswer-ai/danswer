@@ -156,6 +156,17 @@ class CloudEmbedding:
         return response.embeddings
 
     def _embed_azure(self, texts: list[str], model: str | None) -> list[Embedding]:
+        print("EMBEDDING IWTH AZURE")
+        print("Azure Embedding Details:")
+        print(
+            {
+                "model": model,
+                "api_key": self.client["api_key"],
+                "api_base": self.client["api_url"],
+                "api_version": self.client["api_version"],
+                "deployment_name": self.client.get("deployment_name", "Not specified"),
+            }
+        )
         response = embedding(
             model=model,
             input=texts,
