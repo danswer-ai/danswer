@@ -42,6 +42,7 @@ from danswer.db.models import SearchSettings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
+from danswer.document_index.vespa.index import VespaIndex
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.utils.logger import setup_logger
@@ -484,7 +485,14 @@ def update_loop(
                         f"Processing {'index attempts' if tenant_id is None else f'tenant {tenant_id}'}"
                     )
                     with get_session_with_tenant(tenant_id) as db_session:
-                        check_index_swap(db_session=db_session)
+                        index_to_expire = check_index_swap(db_session=db_session)
+
+                        if index_to_expire and tenant_id and MULTI_TENANT:
+                            VespaIndex.delete_entries_by_tenant_id(
+                                tenant_id=tenant_id,
+                                index_name=index_to_expire.index_name,
+                            )
+
                         if not MULTI_TENANT:
                             search_settings = get_current_search_settings(db_session)
                             if search_settings.provider_type is None:

@@ -9,7 +9,14 @@ DANSWER_CHUNK_REPLACEMENT_PAT = "DANSWER_CHUNK_NAME"
 DOCUMENT_REPLACEMENT_PAT = "DOCUMENT_REPLACEMENT"
 SEARCH_THREAD_NUMBER_PAT = "SEARCH_THREAD_NUMBER"
 DATE_REPLACEMENT = "DATE_REPLACEMENT"
+SEARCH_THREAD_NUMBER_PAT = "SEARCH_THREAD_NUMBER"
+TENANT_ID_PAT = "TENANT_ID_REPLACEMENT"
 
+TENANT_ID_REPLACEMENT = """field tenant_id type string {
+            indexing: summary | attribute
+            rank: filter
+            attribute: fast-search
+        }"""
 # config server
 VESPA_CONFIG_SERVER_URL = f"http://{VESPA_CONFIG_SERVER_HOST}:{VESPA_TENANT_PORT}"
 VESPA_APPLICATION_ENDPOINT = f"{VESPA_CONFIG_SERVER_URL}/application/v2"
@@ -35,7 +42,7 @@ MAX_OR_CONDITIONS = 10
 VESPA_TIMEOUT = "3s"
 BATCH_SIZE = 128  # Specific to Vespa
 
-
+TENANT_ID = "tenant_id"
 DOCUMENT_ID = "document_id"
 CHUNK_ID = "chunk_id"
 BLURB = "blurb"
