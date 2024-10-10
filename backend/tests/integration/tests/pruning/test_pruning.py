@@ -45,6 +45,7 @@ def http_server_context(
     try:
         # Start the server in the background
         server_thread.start()
+        sleep(5)  # give it a few seconds to start
         yield httpd
     finally:
         # Shutdown the server and wait for the thread to finish
