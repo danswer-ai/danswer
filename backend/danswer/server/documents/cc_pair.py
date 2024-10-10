@@ -345,7 +345,7 @@ def sync_cc_pair(
 
     logger.info(f"Syncing the {cc_pair.connector.name} connector.")
     sync_external_doc_permissions_task.apply_async(
-        kwargs=dict(cc_pair_id=cc_pair_id),
+        kwargs=dict(cc_pair_id=cc_pair_id, tenant_id=current_tenant_id.get()),
     )
 
     return StatusResponse(
