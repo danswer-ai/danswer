@@ -13,7 +13,7 @@ from sqlalchemy.future import select
 
 from danswer.auth.schemas import UserRole
 from danswer.db.engine import get_async_session
-from danswer.db.engine import get_sqlalchemy_async_engine
+from danswer.db.engine import get_async_session_with_tenant
 from danswer.db.models import AccessToken
 from danswer.db.models import OAuthAccount
 from danswer.db.models import User
@@ -34,7 +34,7 @@ def get_default_admin_user_emails() -> list[str]:
 
 
 async def get_user_count() -> int:
-    async with AsyncSession(get_sqlalchemy_async_engine()) as asession:
+    async with get_async_session_with_tenant() as asession:
         stmt = select(func.count(User.id))
         result = await asession.execute(stmt)
         user_count = result.scalar()

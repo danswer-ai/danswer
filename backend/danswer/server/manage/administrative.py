@@ -20,6 +20,7 @@ from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
 )
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
+from danswer.db.engine import get_current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.feedback import fetch_docs_ranked_by_boost
@@ -146,6 +147,7 @@ def create_deletion_attempt_for_connector_id(
     connector_credential_pair_identifier: ConnectorCredentialPairIdentifier,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> None:
     connector_id = connector_credential_pair_identifier.connector_id
     credential_id = connector_credential_pair_identifier.credential_id
@@ -196,6 +198,7 @@ def create_deletion_attempt_for_connector_id(
     celery_app.send_task(
         "check_for_connector_deletion_task",
         priority=DanswerCeleryPriority.HIGH,
+        kwargs={"tenant_id": tenant_id},
     )
 
     if cc_pair.connector.source == DocumentSource.FILE:

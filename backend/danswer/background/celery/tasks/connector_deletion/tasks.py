@@ -23,7 +23,7 @@ from danswer.redis.redis_pool import get_redis_client
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
 )
-def check_for_connector_deletion_task() -> None:
+def check_for_connector_deletion_task(tenant_id: str | None) -> None:
     r = get_redis_client()
 
     lock_beat = r.lock(
@@ -40,7 +40,7 @@ def check_for_connector_deletion_task() -> None:
             cc_pairs = get_connector_credential_pairs(db_session)
             for cc_pair in cc_pairs:
                 try_generate_document_cc_pair_cleanup_tasks(
-                    cc_pair, db_session, r, lock_beat
+                    cc_pair, db_session, r, lock_beat, tenant_id
                 )
     except SoftTimeLimitExceeded:
         task_logger.info(
@@ -58,6 +58,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
     db_session: Session,
     r: Redis,
     lock_beat: redis.lock.Lock,
+    tenant_id: str | None,
 ) -> int | None:
     """Returns an int if syncing is needed. The int represents the number of sync tasks generated.
     Note that syncing can still be required even if the number of sync tasks generated is zero.
@@ -90,7 +91,9 @@ def try_generate_document_cc_pair_cleanup_tasks(
     task_logger.info(
         f"RedisConnectorDeletion.generate_tasks starting. cc_pair_id={cc_pair.id}"
     )
-    tasks_generated = rcd.generate_tasks(celery_app, db_session, r, lock_beat)
+    tasks_generated = rcd.generate_tasks(
+        celery_app, db_session, r, lock_beat, tenant_id
+    )
     if tasks_generated is None:
         return None
 

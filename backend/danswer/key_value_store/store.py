@@ -3,15 +3,21 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import cast
 
+from fastapi import HTTPException
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import is_valid_schema_name
 from danswer.db.models import KVStore
 from danswer.key_value_store.interface import JSON_ro
 from danswer.key_value_store.interface import KeyValueStore
 from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import current_tenant_id
+
 
 logger = setup_logger()
 
@@ -28,6 +34,16 @@ class PgRedisKVStore(KeyValueStore):
     def get_session(self) -> Iterator[Session]:
         engine = get_sqlalchemy_engine()
         with Session(engine, expire_on_commit=False) as session:
+            if MULTI_TENANT:
+                tenant_id = current_tenant_id.get()
+                if tenant_id == "public":
+                    raise HTTPException(
+                        status_code=401, detail="User must authenticate"
+                    )
+                if not is_valid_schema_name(tenant_id):
+                    raise HTTPException(status_code=400, detail="Invalid tenant ID")
+                # Set the search_path to the tenant's schema
+                session.execute(text(f'SET search_path = "{tenant_id}"'))
             yield session
 
     def store(self, key: str, val: JSON_ro, encrypt: bool = False) -> None:

@@ -22,6 +22,7 @@ from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
 )
 from danswer.db.document import get_document_counts_for_cc_pairs
+from danswer.db.engine import current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
@@ -257,7 +258,9 @@ def prune_cc_pair(
         f"credential_id={cc_pair.credential_id} "
         f"{cc_pair.connector.name} connector."
     )
-    tasks_created = try_creating_prune_generator_task(cc_pair, db_session, r)
+    tasks_created = try_creating_prune_generator_task(
+        cc_pair, db_session, r, current_tenant_id.get()
+    )
     if not tasks_created:
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -342,7 +345,7 @@ def sync_cc_pair(
 
     logger.info(f"Syncing the {cc_pair.connector.name} connector.")
     sync_external_doc_permissions_task.apply_async(
-        kwargs=dict(cc_pair_id=cc_pair_id),
+        kwargs=dict(cc_pair_id=cc_pair_id, tenant_id=current_tenant_id.get()),
     )
 
     return StatusResponse(

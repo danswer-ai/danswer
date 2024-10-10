@@ -1,3 +1,4 @@
+import contextvars
 import os
 from typing import List
 from urllib.parse import urlparse
@@ -109,3 +110,5 @@ if CORS_ALLOWED_ORIGIN_ENV:
 else:
     # If the environment variable is empty, allow all origins
     CORS_ALLOWED_ORIGIN = ["*"]
+
+current_tenant_id = contextvars.ContextVar("current_tenant_id", default="public")

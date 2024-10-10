@@ -1,7 +1,6 @@
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
-from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.celery_app import task_logger
@@ -11,7 +10,7 @@ from danswer.db.document import get_document
 from danswer.db.document import get_document_connector_count
 from danswer.db.document import mark_document_as_synced
 from danswer.db.document_set import fetch_document_sets_for_document
-from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import get_session_with_tenant
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaDocumentFields
@@ -26,7 +25,11 @@ from danswer.server.documents.models import ConnectorCredentialPairIdentifier
     max_retries=3,
 )
 def document_by_cc_pair_cleanup_task(
-    self: Task, document_id: str, connector_id: int, credential_id: int
+    self: Task,
+    document_id: str,
+    connector_id: int,
+    credential_id: int,
+    tenant_id: str | None,
 ) -> bool:
     """A lightweight subtask used to clean up document to cc pair relationships.
     Created by connection deletion and connector pruning parent tasks."""
@@ -44,7 +47,7 @@ def document_by_cc_pair_cleanup_task(
     (6) delete all relevant entries from postgres
     """
     try:
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             action = "skip"
             chunks_affected = 0
 
