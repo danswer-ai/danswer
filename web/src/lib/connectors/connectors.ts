@@ -118,6 +118,34 @@ export const connectorConfigs: Record<
     ],
     overrideDefaultFreq: 60 * 60 * 24,
   },
+
+  exchange: {
+    description: "Configure Exchange connector",
+    values: [
+      {
+        type: "number",
+        query: "Enter the maximum number of emails to fetch per poll:",
+        label: "Max Poll Size",
+        name: "exchange_max_poll_size",
+        optional: false,
+      },
+      {
+        type: "list",
+        query: "Enter the Exchange categories to include (optional):",
+        label: "Exchange Categories",
+        name: "exchange_categories",
+        optional: true,
+      },
+      {
+        type: "list",
+        query: "Enter the Exchange folders to include (optional):",
+        label: "Exchange Folders",
+        name: "exchange_folders",
+        optional: true,
+      },
+    ],
+  },
+
   github: {
     description: "Configure GitHub connector",
     values: [

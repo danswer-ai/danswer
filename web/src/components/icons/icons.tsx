@@ -85,6 +85,7 @@ import discourseIcon from "../../../public/Discourse.png";
 import clickupIcon from "../../../public/Clickup.svg";
 import cohereIcon from "../../../public/Cohere.svg";
 import voyageIcon from "../../../public/Voyage.png";
+import exchangeIcon from "../../../public/exchange.png";
 import googleIcon from "../../../public/Google.webp";
 import xenforoIcon from "../../../public/Xenforo.svg";
 import { FaRobot } from "react-icons/fa";
@@ -1086,6 +1087,20 @@ export const VoyageIcon = ({
 }: IconProps) => (
   <LogoIcon size={size} className={className} src={voyageIcon} />
 );
+
+export const ExchangeIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={exchangeIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
 
 export const GoogleIcon = ({
   size = 16,
