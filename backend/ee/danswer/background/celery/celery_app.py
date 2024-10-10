@@ -145,35 +145,46 @@ def autogenerate_usage_report_task(tenant_id: str | None) -> None:
 #####
 
 
-def schedule_tenant_tasks() -> None:
-    tenants = get_all_tenant_ids()
-    celery_app.conf.beat_schedule = {}
+tenant_ids = get_all_tenant_ids()
 
-    for tenant_id in tenants:
-        celery_app.conf.beat_schedule.update(
-            {
-                f"sync-external-doc-permissions-{tenant_id}": {
-                    "task": "check_sync_external_doc_permissions_task",
-                    "schedule": timedelta(seconds=5),  # TODO: optimize this
-                    "args": (tenant_id,),
-                },
-                f"sync-external-group-permissions-{tenant_id}": {
-                    "task": "check_sync_external_group_permissions_task",
-                    "schedule": timedelta(seconds=5),  # TODO: optimize this
-                    "args": (tenant_id,),
-                },
-                f"autogenerate-usage-report-{tenant_id}": {
-                    "task": "autogenerate_usage_report_task",
-                    "schedule": timedelta(days=30),  # TODO: change this to config flag
-                    "args": (tenant_id,),
-                },
-                f"check-ttl-management-{tenant_id}": {
-                    "task": "check_ttl_management_task",
-                    "schedule": timedelta(hours=1),
-                    "args": (tenant_id,),
-                },
-            }
-        )
+tasks_to_schedule = [
+    {
+        "name": "sync-external-doc-permissions",
+        "task": "check_sync_external_doc_permissions_task",
+        "schedule": timedelta(seconds=5),  # TODO: optimize this
+    },
+    {
+        "name": "sync-external-group-permissions",
+        "task": "check_sync_external_group_permissions_task",
+        "schedule": timedelta(seconds=5),  # TODO: optimize this
+    },
+    {
+        "name": "autogenerate_usage_report",
+        "task": "autogenerate_usage_report_task",
+        "schedule": timedelta(days=30),  # TODO: change this to config flag
+    },
+    {
+        "name": "check-ttl-management",
+        "task": "check_ttl_management_task",
+        "schedule": timedelta(hours=1),
+    },
+]
 
+# Build the celery beat schedule dynamically
+beat_schedule = {}
 
-schedule_tenant_tasks()
+for tenant_id in tenant_ids:
+    for task in tasks_to_schedule:
+        task_name = f"{task['name']}-{tenant_id}"  # Unique name for each scheduled task
+        beat_schedule[task_name] = {
+            "task": task["task"],
+            "schedule": task["schedule"],
+            "args": (tenant_id,),  # Must pass tenant_id as an argument
+        }
+
+# Include any existing beat schedules
+existing_beat_schedule = celery_app.conf.beat_schedule or {}
+beat_schedule.update(existing_beat_schedule)
+
+# Update the Celery app configuration
+celery_app.conf.beat_schedule = beat_schedule
