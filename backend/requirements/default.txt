@@ -25,7 +25,7 @@ httpx-oauth==0.15.1
 huggingface-hub==0.20.1
 jira==3.5.1
 jsonref==1.1.0
-langchain==0.1.17
+langchain==0.2.10
 langchain-core==0.1.50
 langchain-text-splitters==0.0.1
 litellm==1.48.7
