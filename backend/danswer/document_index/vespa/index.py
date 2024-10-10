@@ -16,8 +16,8 @@ from typing import List
 import httpx  # type: ignore
 import requests  # type: ignore
 
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import VESPA_REQUEST_TIMEOUT
 from danswer.configs.chat_configs import DOC_TIME_DECAY
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
@@ -237,7 +237,7 @@ class VespaIndex(DocumentIndex):
             SEARCH_THREAD_NUMBER_PAT, str(VESPA_SEARCHER_THREADS)
         )
 
-        kv_store = get_dynamic_config_store()
+        kv_store = get_kv_store()
 
         needs_reindexing = False
         try:
