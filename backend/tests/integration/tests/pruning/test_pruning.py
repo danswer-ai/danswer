@@ -24,7 +24,7 @@ logger = setup_logger()
 @contextmanager
 def http_server_context(
     directory: str, port: int = 8000
-) -> Generator[http.server.HTTPServer, None, None]:
+) -> Generator[http.server.ThreadingHTTPServer, None, None]:
     # Create a handler that serves files from the specified directory
     def handler_class(
         *args: Any, **kwargs: Any
@@ -34,7 +34,7 @@ def http_server_context(
         )
 
     # Create an HTTPServer instance
-    httpd = http.server.HTTPServer(("0.0.0.0", port), handler_class)
+    httpd = http.server.ThreadingHTTPServer(("0.0.0.0", port), handler_class)
 
     # Define a thread that runs the server in the background
     server_thread = threading.Thread(target=httpd.serve_forever)
@@ -45,6 +45,7 @@ def http_server_context(
     try:
         # Start the server in the background
         server_thread.start()
+        sleep(5)  # give it a few seconds to start
         yield httpd
     finally:
         # Shutdown the server and wait for the thread to finish
@@ -105,9 +106,10 @@ def test_web_pruning(reset: None, vespa_client: vespa_fixture) -> None:
             logger.info("Removing courses.html.")
             os.remove(os.path.join(website_tgt, "courses.html"))
 
+            now = datetime.now(timezone.utc)
             CCPairManager.prune(cc_pair_1, user_performing_action=admin_user)
             CCPairManager.wait_for_prune(
-                cc_pair_1, timeout=60, user_performing_action=admin_user
+                cc_pair_1, now, timeout=60, user_performing_action=admin_user
             )
 
             selected_cc_pair = CCPairManager.get_one(

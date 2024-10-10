@@ -195,8 +195,9 @@ def test_slack_prune(
     )
 
     # Prune the cc_pair
+    now = datetime.now(timezone.utc)
     CCPairManager.prune(cc_pair, user_performing_action=admin_user)
-    CCPairManager.wait_for_prune(cc_pair, user_performing_action=admin_user)
+    CCPairManager.wait_for_prune(cc_pair, now, user_performing_action=admin_user)
 
     # ----------------------------VERIFY THE CHANGES---------------------------
     # Ensure admin user can't see deleted messages
