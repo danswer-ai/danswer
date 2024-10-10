@@ -109,7 +109,7 @@ export const DriveJsonUpload = ({
           }
 
           if (credentialFileType === "service_account") {
-            const response = await fetch(
+            const initialResponse = await fetch(
               "/api/manage/admin/connector/google-drive/service-account-key",
               {
                 method: "PUT",
@@ -119,15 +119,31 @@ export const DriveJsonUpload = ({
                 body: credentialJsonStr,
               }
             );
-            if (response.ok) {
+            const followUpResponse = await fetch(
+              "/api/manage/admin/connector/google-drive/service-account-credential",
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: credentialJsonStr,
+              }
+            );
+            if (initialResponse.ok && followUpResponse.ok) {
               setPopup({
                 message: "Successfully uploaded app credentials",
                 type: "success",
               });
-            } else {
-              const errorMsg = await response.text();
+            } else if (initialResponse.ok) {
+              const errorMsg = await followUpResponse.text();
               setPopup({
                 message: `Failed to upload app credentials - ${errorMsg}`,
+                type: "error",
+              });
+            } else {
+              const errorMsg = await initialResponse.text();
+              setPopup({
+                message: `Failed to upload service account key - ${errorMsg}`,
                 type: "error",
               });
             }
@@ -302,7 +318,7 @@ export const DriveJsonUploadSection = ({
 interface DriveCredentialSectionProps {
   googleDrivePublicCredential?: Credential<GoogleDriveCredentialJson>;
   googleDriveServiceAccountCredential?: Credential<GoogleDriveServiceAccountCredentialJson>;
-  serviceAccountKeyData?: { service_account_email: string };
+  serviceAccountCredentialData?: { service_account_email: string };
   appCredentialData?: { client_id: string };
   setPopup: (popupSpec: PopupSpec | null) => void;
   refreshCredentials: () => void;
@@ -312,7 +328,7 @@ interface DriveCredentialSectionProps {
 export const DriveOAuthSection = ({
   googleDrivePublicCredential,
   googleDriveServiceAccountCredential,
-  serviceAccountKeyData,
+  serviceAccountCredentialData,
   appCredentialData,
   setPopup,
   refreshCredentials,
@@ -320,9 +336,13 @@ export const DriveOAuthSection = ({
 }: DriveCredentialSectionProps) => {
   const router = useRouter();
 
-  const existingCredential =
+  const candidateCredential =
     googleDrivePublicCredential || googleDriveServiceAccountCredential;
-  if (existingCredential) {
+
+  if (
+    candidateCredential &&
+    "google_drive_delegated_user" in candidateCredential.credential_json
+  ) {
     return (
       <>
         <p className="mb-2 text-sm">
@@ -338,7 +358,7 @@ export const DriveOAuthSection = ({
               });
               return;
             }
-            await adminDeleteCredential(existingCredential.id);
+            await adminDeleteCredential(candidateCredential.id);
             setPopup({
               message: "Successfully revoked access to Google Drive!",
               type: "success",
@@ -352,7 +372,7 @@ export const DriveOAuthSection = ({
     );
   }
 
-  if (serviceAccountKeyData?.service_account_email) {
+  if (serviceAccountCredentialData?.service_account_email) {
     return (
       <div>
         <p className="text-sm mb-6">
