@@ -438,63 +438,57 @@ celery_app.autodiscover_tasks(
 # Celery Beat (Periodic Tasks) Settings
 #####
 
+tenant_ids = get_all_tenant_ids()
 
-def schedule_tenant_tasks() -> None:
-    tenants = get_all_tenant_ids()
-    celery_app.conf.beat_schedule = {}
-    for tenant_id in tenants:
-        celery_app.conf.beat_schedule.update(
-            {
-                "check-for-vespa-sync": {
-                    "task": "check_for_vespa_sync_task",
-                    "schedule": timedelta(seconds=5),
-                    "options": {"priority": DanswerCeleryPriority.HIGH},
-                    "args": (tenant_id,),
-                },
-            }
-        )
-        celery_app.conf.beat_schedule.update(
-            {
-                "check-for-connector-deletion-task": {
-                    "task": "check_for_connector_deletion_task",
-                    # don't need to check too often, since we kick off a deletion initially
-                    # during the API call that actually marks the CC pair for deletion
-                    "schedule": timedelta(seconds=60),
-                    "options": {"priority": DanswerCeleryPriority.HIGH},
-                    "args": (tenant_id,),
-                },
-            }
-        )
-        celery_app.conf.beat_schedule.update(
-            {
-                "check-for-prune": {
-                    "task": "check_for_prune_task_2",
-                    "schedule": timedelta(seconds=10),
-                    "options": {"priority": DanswerCeleryPriority.HIGH},
-                    "args": (tenant_id,),
-                },
-            }
-        )
-        celery_app.conf.beat_schedule.update(
-            {
-                "kombu-message-cleanup": {
-                    "task": "kombu_message_cleanup_task",
-                    "schedule": timedelta(seconds=3600),
-                    "options": {"priority": DanswerCeleryPriority.LOWEST},
-                    "args": (tenant_id,),
-                },
-            }
-        )
-        celery_app.conf.beat_schedule.update(
-            {
-                "monitor-vespa-sync": {
-                    "task": "monitor_vespa_sync",
-                    "schedule": timedelta(seconds=5),
-                    "options": {"priority": DanswerCeleryPriority.HIGH},
-                    "args": (tenant_id,),
-                },
-            }
-        )
+tasks_to_schedule = [
+    {
+        "name": "check-for-vespa-sync",
+        "task": "check_for_vespa_sync_task",
+        "schedule": timedelta(seconds=5),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
+    },
+    {
+        "name": "check-for-connector-deletion",
+        "task": "check_for_connector_deletion_task",
+        "schedule": timedelta(seconds=60),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
+    },
+    {
+        "name": "check-for-prune",
+        "task": "check_for_prune_task_2",
+        "schedule": timedelta(seconds=10),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
+    },
+    {
+        "name": "kombu-message-cleanup",
+        "task": "kombu_message_cleanup_task",
+        "schedule": timedelta(seconds=3600),
+        "options": {"priority": DanswerCeleryPriority.LOWEST},
+    },
+    {
+        "name": "monitor-vespa-sync",
+        "task": "monitor_vespa_sync",
+        "schedule": timedelta(seconds=5),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
+    },
+]
 
+# Build the celery beat schedule dynamically
+beat_schedule = {}
 
-schedule_tenant_tasks()
+for tenant_id in tenant_ids:
+    for task in tasks_to_schedule:
+        task_name = f"{task['name']}-{tenant_id}"  # Unique name for each scheduled task
+        beat_schedule[task_name] = {
+            "task": task["task"],
+            "schedule": task["schedule"],
+            "options": task["options"],
+            "args": (tenant_id,),  # Must pass tenant_id as an argument
+        }
+
+# Include any existing beat schedules
+existing_beat_schedule = celery_app.conf.beat_schedule or {}
+beat_schedule.update(existing_beat_schedule)
+
+# Update the Celery app configuration once
+celery_app.conf.beat_schedule = beat_schedule
