@@ -68,7 +68,7 @@ export function AssistantsTab({
 
   return (
     <div className="py-4">
-      <h3 className="px-4 text-lg font-semibold">Change Assistant</h3>
+      <h3 className="px-4 text-lg font-semibold">Change Specialist</h3>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

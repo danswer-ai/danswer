@@ -27,8 +27,8 @@ spec:
     spec:
       containers:
       - name: web-server
-        image: danswer/danswer-web-server:latest
-        imagePullPolicy: IfNotPresent
+        image: public.ecr.aws/s0d3n4f3/buddy-danswer/web:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
         # There are some extra values since this is shared between services

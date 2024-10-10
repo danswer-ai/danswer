@@ -48,11 +48,11 @@ spec:
           name: db-storage
           subPath: postgres
   volumeClaimTemplates:
-  - metadata:
-      name: db-storage
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests:
-          # Adjust the storage request size as needed.
-          storage: 10Gi
+    - metadata:
+        name: db-storage
+      spec:
+        storageClassName: gp3-resize
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
