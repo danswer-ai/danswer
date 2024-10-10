@@ -110,9 +110,9 @@ def parse_html_page(text: str, confluence_client: Confluence) -> str:
 
 
 def _comment_dfs(
-    comments_str: str,
-    comment_pages: Collection[dict[str, Any]],
-    confluence_client: Confluence,
+        comments_str: str,
+        comment_pages: Collection[dict[str, Any]],
+        confluence_client: Confluence,
 ) -> str:
     get_page_child_by_type = make_confluence_call_handle_rate_limit(
         confluence_client.get_page_child_by_type
@@ -157,11 +157,11 @@ def _datetime_from_string(datetime_string: str) -> datetime:
 
 class RecursiveIndexer:
     def __init__(
-        self,
-        batch_size: int,
-        confluence_client: Confluence,
-        index_recursively: bool,
-        origin_page_id: str,
+            self,
+            batch_size: int,
+            confluence_client: Confluence,
+            index_recursively: bool,
+            origin_page_id: str,
     ) -> None:
         self.batch_size = 1
         # batch_size
@@ -179,7 +179,7 @@ class RecursiveIndexer:
         return self.pages[ind * size : (ind + 1) * size]
 
     def _fetch_origin_page(
-        self,
+            self,
     ) -> dict[str, Any]:
         get_page_by_id = make_confluence_call_handle_rate_limit(
             self.confluence_client.get_page_by_id
@@ -196,9 +196,9 @@ class RecursiveIndexer:
             return {}
 
     def recurse_children_pages(
-        self,
-        start_ind: int,
-        page_id: str,
+            self,
+            start_ind: int,
+            page_id: str,
     ) -> list[dict[str, Any]]:
         pages: list[dict[str, Any]] = []
         current_level_pages: list[dict[str, Any]] = []
@@ -207,7 +207,7 @@ class RecursiveIndexer:
         # Initial fetch of first level children
         index = start_ind
         while batch := self._fetch_single_depth_child_pages(
-            index, self.batch_size, page_id
+                index, self.batch_size, page_id
         ):
             current_level_pages.extend(batch)
             index += len(batch)
@@ -219,7 +219,7 @@ class RecursiveIndexer:
             for child in current_level_pages:
                 child_index = 0
                 while child_batch := self._fetch_single_depth_child_pages(
-                    child_index, self.batch_size, child["id"]
+                        child_index, self.batch_size, child["id"]
                 ):
                     next_level_pages.extend(child_batch)
                     child_index += len(child_batch)
@@ -237,7 +237,7 @@ class RecursiveIndexer:
         return pages
 
     def _fetch_single_depth_child_pages(
-        self, start_ind: int, batch_size: int, page_id: str
+            self, start_ind: int, batch_size: int, page_id: str
     ) -> list[dict[str, Any]]:
         child_pages: list[dict[str, Any]] = []
 
@@ -283,18 +283,19 @@ class RecursiveIndexer:
 
 class ConfluenceConnector(LoadConnector, PollConnector):
     def __init__(
-        self,
-        wiki_base: str,
-        space: str,
-        is_cloud: bool,
-        page_id: str = "",
-        index_recursively: bool = True,
-        batch_size: int = INDEX_BATCH_SIZE,
-        continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
-        # if a page has one of the labels specified in this list, we will just
-        # skip it. This is generally used to avoid indexing extra sensitive
-        # pages.
-        labels_to_skip: list[str] = CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
+            self,
+            wiki_base: str,
+            space: str,
+            is_cloud: bool,
+            page_id: str = "",
+            index_recursively: bool = True,
+            batch_size: int = INDEX_BATCH_SIZE,
+            continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
+            scan_linked_pages: bool = False,
+            # if a page has one of the labels specified in this list, we will just
+            # skip it. This is generally used to avoid indexing extra sensitive
+            # pages.
+            labels_to_skip: list[str] = CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
     ) -> None:
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
@@ -310,6 +311,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self.is_cloud = is_cloud
 
         self.space_level_scan = False
+        self.scan_linked_pages = scan_linked_pages
         self.confluence_client: Confluence | None = None
 
         if self.page_id is None or self.page_id == "":
@@ -317,7 +319,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         logger.info(
             f"wiki_base: {self.wiki_base}, space: {self.space}, page_id: {self.page_id},"
-            + f" space_level_scan: {self.space_level_scan}, index_recursively: {self.index_recursively}"
+            + f" space_level_scan: {self.space_level_scan}, index_recursively: {self.index_recursively}, scan_linked_pages: {self.scan_linked_pages}"
         )
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
@@ -332,10 +334,41 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         )
         return None
 
+    def _fetch_linked_pages(
+            self,
+            page_id: str
+    ) -> list[dict[str, Any]]:
+        linked_pages: list[dict[str, Any]] = []
+        get_page_by_id = make_confluence_call_handle_rate_limit(
+            self.confluence_client.get_page_by_id
+        )
+        get_page_by_title = make_confluence_call_handle_rate_limit(
+            self.confluence_client.get_page_by_title
+        )
+        try:
+            page = get_page_by_id(page_id, expand="body.storage.value,version")
+            soup = bs4.BeautifulSoup(page["body"]["storage"]["value"], "html.parser")
+            linked_page_elements = soup.findAll("ri:page")
+            for linked_page_element in linked_page_elements:
+                content_title = linked_page_element.get("ri:content-title")
+                space_key = linked_page_element.get("ri:space-key")
+                try:
+                    linked_page = get_page_by_title(
+                        space_key,
+                        content_title,
+                        expand="body.storage.value,version"
+                    )
+                    linked_pages.append(linked_page)
+                except Exception as e:
+                    logger.warning(f"Fetching linked pages for page {content_title} failed: {e}")
+            return linked_pages
+        except Exception as e:
+            logger.warning(f"Fetching linked pages for page {page_id} failed: {e}")
+
     def _fetch_pages(
-        self,
-        confluence_client: Confluence,
-        start_ind: int,
+            self,
+            confluence_client: Confluence,
+            start_ind: int,
     ) -> list[dict[str, Any]]:
         def _fetch_space(start_ind: int, batch_size: int) -> list[dict[str, Any]]:
             get_all_pages_from_space = make_confluence_call_handle_rate_limit(
@@ -414,9 +447,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 if self.space_level_scan
                 else _fetch_page(start_ind, self.batch_size)
             )
+
+            # Fetch linked pages
+            if self.scan_linked_pages:
+                print(f"Scanning linked pages for page {self.page_id}")
+                linked_pages = self._fetch_linked_pages(self.page_id)
+                pages.extend(linked_pages)
+
             return pages
 
         except Exception as e:
+            logger.error(f"Error encountered when fetching pages from Confluence {e}")
             if not self.continue_on_failure:
                 raise e
 
@@ -479,15 +520,15 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
     @classmethod
     def _attachment_to_download_link(
-        cls, confluence_client: Confluence, attachment: dict[str, Any]
+            cls, confluence_client: Confluence, attachment: dict[str, Any]
     ) -> str:
         return confluence_client.url + attachment["_links"]["download"]
 
     @classmethod
     def _attachment_to_content(
-        cls,
-        confluence_client: Confluence,
-        attachment: dict[str, Any],
+            cls,
+            confluence_client: Confluence,
+            attachment: dict[str, Any],
     ) -> str | None:
         """If it returns None, assume that we should skip this attachment."""
         if attachment["metadata"]["mediaType"] in [
@@ -534,7 +575,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         return extracted_text
 
     def _fetch_attachments(
-        self, confluence_client: Confluence, page_id: str, files_in_used: list[str]
+            self, confluence_client: Confluence, page_id: str, files_in_used: list[str]
     ) -> tuple[str, list[dict[str, Any]]]:
         unused_attachments: list = []
 
@@ -561,7 +602,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         except Exception as e:
             if isinstance(
-                e, HTTPError
+                    e, HTTPError
             ) and NO_PERMISSIONS_TO_VIEW_ATTACHMENTS_ERROR_STR in str(e):
                 logger.warning(
                     f"User does not have access to attachments on page '{page_id}'"
@@ -577,7 +618,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         return "\n".join(files_attachment_content), unused_attachments
 
     def _get_doc_batch(
-        self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
+            self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
     ) -> tuple[list[Document], list[dict[str, Any]], int]:
         doc_batch: list[Document] = []
         unused_attachments: list[dict[str, Any]] = []
@@ -654,10 +695,10 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         )
 
     def _get_attachment_batch(
-        self,
-        start_ind: int,
-        attachments: list[dict[str, Any]],
-        time_filter: Callable[[datetime], bool] | None = None,
+            self,
+            start_ind: int,
+            attachments: list[dict[str, Any]],
+            time_filter: Callable[[datetime], bool] | None = None,
     ) -> tuple[list[Document], int]:
         doc_batch: list[Document] = []
 
@@ -746,7 +787,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 break
 
     def poll_source(
-        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
+            self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         unused_attachments = []
 

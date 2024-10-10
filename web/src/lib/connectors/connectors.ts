@@ -277,6 +277,14 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
       },
       {
         type: "checkbox",
+        query: "Should index linked confluence pages?",
+        label:
+          "Index Linked Confluence Pages (if this is set, it would index the linked confluence pages too)",
+        name: "scan_linked_pages",
+        optional: false,
+      },
+      {
+        type: "checkbox",
         query: "Is this a Confluence Cloud instance?",
         label: "Is Cloud",
         name: "is_cloud",
@@ -991,6 +999,7 @@ export interface ConfluenceConfig {
   page_id?: string;
   is_cloud?: boolean;
   index_recursively?: boolean;
+  scan_linked_pages?: boolean;
 }
 
 export interface JiraConfig {
