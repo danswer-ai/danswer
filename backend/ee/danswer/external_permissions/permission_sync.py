@@ -44,7 +44,7 @@ def run_external_group_permission_sync(
         # update postgres
         db_session.commit()
     except Exception as e:
-        logger.error(f"Error updating document index: {e}")
+        logger.exception(f"Error Syncing Group Permissions: {e}")
         db_session.rollback()
 
 
@@ -108,5 +108,5 @@ def run_external_doc_permission_sync(
         # update postgres
         db_session.commit()
     except Exception as e:
-        logger.error(f"Error Syncing Permissions: {e}")
+        logger.exception(f"Error Syncing Document Permissions: {e}")
         db_session.rollback()
