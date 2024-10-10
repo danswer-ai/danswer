@@ -209,7 +209,7 @@ def read_pdf_file(
                 # can be discoverable by title.
                 return "", metadata
         elif pdf_reader.is_encrypted:
-            logger.warning("No Password available to to decrypt pdf, returning empty")
+            logger.warning("No Password available to decrypt pdf, returning empty")
             return "", metadata
 
         # Extract metadata from the PDF, removing leading '/' from keys if present
