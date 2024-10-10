@@ -86,6 +86,15 @@ export interface ConnectionConfiguration {
     | FileOption
     | ZipOption
   )[];
+  advanced_values: (
+    | BooleanOption
+    | ListOption
+    | TextOption
+    | NumberOption
+    | SelectOption
+    | FileOption
+    | ZipOption
+  )[];
   overrideDefaultFreq?: number;
 }
 
@@ -114,6 +123,17 @@ export const connectorConfigs: Record<
           { name: "single", value: "single" },
           { name: "sitemap", value: "sitemap" },
         ],
+      },
+    ],
+    advanced_values: [
+      {
+        type: "number",
+        query: "Enter the maximum depth to crawl:",
+        label: "Max Depth",
+        name: "max_depth",
+        optional: true,
+        description:
+          "The maximum depth to crawl from the base URL. Default is 2.",
       },
     ],
     overrideDefaultFreq: 60 * 60 * 24,
@@ -152,6 +172,7 @@ export const connectorConfigs: Record<
         optional: true,
       },
     ],
+    advanced_values: [],
   },
   gitlab: {
     description: "Configure GitLab connector",
@@ -187,6 +208,7 @@ export const connectorConfigs: Record<
         hidden: true,
       },
     ],
+    advanced_values: [],
   },
   google_drive: {
     description: "Configure Google Drive connector",
@@ -223,22 +245,21 @@ export const connectorConfigs: Record<
         default: false,
       },
     ],
+    advanced_values: [],
   },
   gmail: {
     description: "Configure Gmail connector",
     values: [],
+    advanced_values: [],
   },
   bookstack: {
     description: "Configure Bookstack connector",
     values: [],
+    advanced_values: [],
   },
   confluence: {
     description: "Configure Confluence connector",
-    subtext: `Specify the base URL of your Confluence instance, the space name, and optionally a specific page ID to index. If no page ID is provided, the entire space will be indexed.
-
-For example, entering "https://your-company.atlassian.net/wiki" as the Wiki Base URL, "KB" as the Space, and "164331" as the Page ID will index the specific page at https:///your-company.atlassian.net/wiki/spaces/KB/pages/164331/Page. If you leave the Page ID empty, it will index the entire KB space.
-
-Selecting the "Index Recursively" checkbox will index the specified page and all of its children.`,
+    subtext: `Specify the base URL of your Confluence instance, the space name, and optionally a specific page ID to index. If no page ID is provided, the entire space will be indexed. If no space is specified, all available Confluence spaces will be indexed.`,
     values: [
       {
         type: "text",
@@ -254,9 +275,22 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
         query: "Enter the space:",
         label: "Space",
         name: "space",
-        optional: false,
-        description: "The Confluence space name to index (e.g. `KB`)",
+        optional: true,
+        description:
+          "The Confluence space name to index (e.g. `KB`). If no space is specified, all available Confluence spaces will be indexed.",
       },
+      {
+        type: "checkbox",
+        query: "Is this a Confluence Cloud instance?",
+        label: "Is Cloud",
+        name: "is_cloud",
+        optional: false,
+        default: true,
+        description:
+          "Check if this is a Confluence Cloud instance, uncheck for Confluence Server/Data Center",
+      },
+    ],
+    advanced_values: [
       {
         type: "text",
         query: "Enter the page ID (optional):",
@@ -276,14 +310,13 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
         optional: false,
       },
       {
-        type: "checkbox",
-        query: "Is this a Confluence Cloud instance?",
-        label: "Is Cloud",
-        name: "is_cloud",
-        optional: false,
-        default: true,
+        type: "text",
+        query: "Enter the CQL query (optional):",
+        label: "CQL Query",
+        name: "cql_query",
+        optional: true,
         description:
-          "Check if this is a Confluence Cloud instance, uncheck for Confluence Server/Data Center",
+          "IMPORTANT: This will overwrite all other selected connector settings (besides Wiki Base URL). We currently only support CQL queries that return objects of type 'page'. This means all CQL queries must contain 'type=page' as the only type filter. We will still get all attachments and comments for the pages returned by the CQL query. Any 'lastmodified' filters will be overwritten. See https://developer.atlassian.com/server/confluence/advanced-searching-using-cql/ for more details.",
       },
     ],
   },
@@ -308,6 +341,7 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
         optional: true,
       },
     ],
+    advanced_values: [],
   },
   salesforce: {
     description: "Configure Salesforce connector",
@@ -323,6 +357,7 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
 Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of 'Opportunities').`,
       },
     ],
+    advanced_values: [],
   },
   sharepoint: {
     description: "Configure SharePoint connector",
@@ -339,6 +374,7 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
 `,
       },
     ],
+    advanced_values: [],
   },
   teams: {
     description: "Configure Teams connector",
@@ -352,6 +388,7 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
         description: `Specify 0 or more Teams to index. For example, specifying the Team 'Support' for the 'danswerai' Org will cause us to only index messages sent in channels belonging to the 'Support' Team. If no Teams are specified, all Teams in your organization will be indexed.`,
       },
     ],
+    advanced_values: [],
   },
   discourse: {
     description: "Configure Discourse connector",
@@ -371,6 +408,7 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
         optional: true,
       },
     ],
+    advanced_values: [],
   },
   axero: {
     description: "Configure Axero connector",
@@ -385,11 +423,13 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
           "Specify zero or more Spaces to index (by the Space IDs). If no Space IDs are specified, all Spaces will be indexed.",
       },
     ],
+    advanced_values: [],
     overrideDefaultFreq: 60 * 60 * 24,
   },
   productboard: {
     description: "Configure Productboard connector",
     values: [],
+    advanced_values: [],
   },
   slack: {
     description: "Configure Slack connector",
@@ -401,6 +441,8 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
         name: "workspace",
         optional: false,
       },
+    ],
+    advanced_values: [
       {
         type: "list",
         query: "Enter channels to include:",
@@ -434,10 +476,12 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         description: `Specify the base URL for your Slab team. This will look something like: https://danswer.slab.com/`,
       },
     ],
+    advanced_values: [],
   },
   guru: {
     description: "Configure Guru connector",
     values: [],
+    advanced_values: [],
   },
   gong: {
     description: "Configure Gong connector",
@@ -452,6 +496,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
           "Specify 0 or more workspaces to index. Provide the workspace ID or the EXACT workspace name from Gong. If no workspaces are specified, transcripts from all workspaces will be indexed.",
       },
     ],
+    advanced_values: [],
   },
   loopio: {
     description: "Configure Loopio connector",
@@ -466,6 +511,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         optional: true,
       },
     ],
+    advanced_values: [],
     overrideDefaultFreq: 60 * 60 * 24,
   },
   file: {
@@ -479,6 +525,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         optional: false,
       },
     ],
+    advanced_values: [],
   },
   zulip: {
     description: "Configure Zulip connector",
@@ -498,6 +545,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         optional: false,
       },
     ],
+    advanced_values: [],
   },
   notion: {
     description: "Configure Notion connector",
@@ -512,14 +560,17 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
           "If specified, will only index the specified page + all of its child pages. If left blank, will index all pages the integration has been given access to.",
       },
     ],
+    advanced_values: [],
   },
   requesttracker: {
     description: "Configure HubSpot connector",
     values: [],
+    advanced_values: [],
   },
   hubspot: {
     description: "Configure HubSpot connector",
     values: [],
+    advanced_values: [],
   },
   document360: {
     description: "Configure Document360 connector",
@@ -541,6 +592,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
           "Specify 0 or more categories to index. For instance, specifying the category 'Help' will cause us to only index all content within the 'Help' category. If no categories are specified, all categories in your workspace will be indexed.",
       },
     ],
+    advanced_values: [],
   },
   clickup: {
     description: "Configure ClickUp connector",
@@ -576,6 +628,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         optional: false,
       },
     ],
+    advanced_values: [],
   },
   google_sites: {
     description: "Configure Google Sites connector",
@@ -597,6 +650,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         optional: false,
       },
     ],
+    advanced_values: [],
   },
   zendesk: {
     description: "Configure Zendesk connector",
@@ -614,14 +668,17 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         default: "articles",
       },
     ],
+    advanced_values: [],
   },
   linear: {
-    description: "Configure Linear connector",
+    description: "Configure Dropbox connector",
     values: [],
+    advanced_values: [],
   },
   dropbox: {
     description: "Configure Dropbox connector",
     values: [],
+    advanced_values: [],
   },
   s3: {
     description: "Configure S3 connector",
@@ -649,6 +706,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         hidden: true,
       },
     ],
+    advanced_values: [],
     overrideDefaultFreq: 60 * 60 * 24,
   },
   r2: {
@@ -677,6 +735,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         hidden: true,
       },
     ],
+    advanced_values: [],
     overrideDefaultFreq: 60 * 60 * 24,
   },
   google_cloud_storage: {
@@ -706,6 +765,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         hidden: true,
       },
     ],
+    advanced_values: [],
     overrideDefaultFreq: 60 * 60 * 24,
   },
   oci_storage: {
@@ -734,6 +794,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         hidden: true,
       },
     ],
+    advanced_values: [],
   },
   wikipedia: {
     description: "Configure Wikipedia connector",
@@ -773,6 +834,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         optional: false,
       },
     ],
+    advanced_values: [],
   },
   xenforo: {
     description: "Configure Xenforo connector",
@@ -787,6 +849,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
           "The XenForo v2.2 forum URL to index. Can be board or thread.",
       },
     ],
+    advanced_values: [],
   },
   asana: {
     description: "Configure Asana connector",
@@ -819,6 +882,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
           "ID of a team to use for accessing team-visible tasks. This allows indexing of team-visible tasks in addition to public tasks. Leave empty if you don't want to use this feature.",
       },
     ],
+    advanced_values: [],
   },
   mediawiki: {
     description: "Configure MediaWiki connector",
@@ -866,6 +930,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         optional: true,
       },
     ],
+    advanced_values: [],
   },
 };
 export function createConnectorInitialValues(
@@ -987,10 +1052,11 @@ export interface BookstackConfig {}
 
 export interface ConfluenceConfig {
   wiki_base: string;
-  space: string;
+  space?: string;
   page_id?: string;
   is_cloud?: boolean;
   index_recursively?: boolean;
+  cql_query?: string;
 }
 
 export interface JiraConfig {
