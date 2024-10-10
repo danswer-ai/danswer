@@ -121,23 +121,22 @@ def _get_page_specific_restrictions(
     db_session: Session,
     page: dict[str, Any],
 ) -> ExternalAccess | None:
-    (
-        read_access_user_emails,
-        read_access_group_names,
-    ) = _extract_read_access_restrictions(restrictions=page.get("restrictions", {}))
+    user_emails, group_names = _extract_read_access_restrictions(
+        restrictions=page.get("restrictions", {})
+    )
 
     # If there are no restrictions found, then the page
     # inherits the space's restrictions so return None
-    is_space_public = read_access_user_emails == [] and read_access_group_names == []
+    is_space_public = user_emails == [] and group_names == []
     if is_space_public:
         return None
 
     batch_add_non_web_user_if_not_exists__no_commit(
-        db_session=db_session, emails=list(read_access_user_emails)
+        db_session=db_session, emails=list(user_emails)
     )
     return ExternalAccess(
-        external_user_emails=set(read_access_user_emails),
-        external_user_group_ids=set(read_access_group_names),
+        external_user_emails=set(user_emails),
+        external_user_group_ids=set(group_names),
         # there is no way for a page to be individually public if the space isn't public
         is_public=False,
     )
