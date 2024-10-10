@@ -106,6 +106,7 @@ import {
   orderAssistantsForUser,
 } from "@/lib/assistants/utils";
 import BlurBackground from "./shared_chat_search/BlurBackground";
+import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -139,7 +140,7 @@ export function ChatPage({
 
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
-  const { user, refreshUser, isLoadingUser } = useUser();
+  const { user, refreshUser, isAdmin, isLoadingUser } = useUser();
 
   const existingChatIdRaw = searchParams.get("chatId");
   const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
@@ -191,6 +192,7 @@ export function ChatPage({
   const search_param_temperature = searchParams.get(
     SEARCH_PARAM_NAMES.TEMPERATURE
   );
+
   const defaultTemperature = search_param_temperature
     ? parseFloat(search_param_temperature)
     : selectedAssistant?.tools.some(
@@ -224,6 +226,8 @@ export function ChatPage({
     selectedAssistant ||
     finalAssistants[0] ||
     availableAssistants[0];
+
+  const noAssistants = liveAssistant == null || liveAssistant == undefined;
 
   useEffect(() => {
     if (!loadedIdSessionRef.current && !currentPersonaId) {
@@ -1695,6 +1699,9 @@ export function ChatPage({
   };
 
   useEffect(() => {
+    if (noAssistants) {
+      return;
+    }
     const includes = checkAnyAssistantHasSearch(
       messageHistory,
       availableAssistants,
@@ -1704,6 +1711,9 @@ export function ChatPage({
   }, [messageHistory, availableAssistants, liveAssistant]);
 
   const [retrievalEnabled, setRetrievalEnabled] = useState(() => {
+    if (noAssistants) {
+      return false;
+    }
     return checkAnyAssistantHasSearch(
       messageHistory,
       availableAssistants,
@@ -1774,11 +1784,13 @@ export function ChatPage({
     <>
       <HealthCheckBanner />
 
-      {showApiKeyModal && !shouldShowWelcomeModal && (
+      {showApiKeyModal && !shouldShowWelcomeModal ? (
         <ApiKeyModal
           hide={() => setShowApiKeyModal(false)}
           setPopup={setPopup}
         />
+      ) : (
+        noAssistants && <NoAssistantModal isAdmin={isAdmin} />
       )}
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
