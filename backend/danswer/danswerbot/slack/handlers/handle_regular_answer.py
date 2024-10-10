@@ -5,7 +5,6 @@ from typing import cast
 from typing import Optional
 from typing import TypeVar
 
-from fastapi import HTTPException
 from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.models.blocks import DividerBlock
@@ -155,11 +154,7 @@ def handle_regular_answer(
         with Session(get_sqlalchemy_engine()) as db_session:
             if len(new_message_request.messages) > 1:
                 if new_message_request.persona_config:
-                    raise HTTPException(
-                        status_code=403,
-                        detail="Slack bot does not support persona config",
-                    )
-
+                    raise RuntimeError("Slack bot does not support persona config")
                 elif new_message_request.persona_id is not None:
                     persona = cast(
                         Persona,
@@ -169,6 +164,10 @@ def handle_regular_answer(
                             user=None,
                             get_editable=False,
                         ),
+                    )
+                else:
+                    raise RuntimeError(
+                        "No persona id provided, this should never happen."
                     )
 
                 llm, _ = get_llms_for_persona(persona)
