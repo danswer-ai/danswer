@@ -187,7 +187,6 @@ export function ChatPage({
           )
         : undefined
   );
-
   // Gather default temperature settings
   const search_param_temperature = searchParams.get(
     SEARCH_PARAM_NAMES.TEMPERATURE
@@ -694,11 +693,12 @@ export function ChatPage({
 
   useEffect(() => {
     if (messageHistory.length === 0 && chatSessionIdRef.current === null) {
+      // Select from available assistants so shared assistants appear.
       setSelectedAssistant(
-        finalAssistants.find((persona) => persona.id === defaultAssistantId)
+        availableAssistants.find((persona) => persona.id === defaultAssistantId)
       );
     }
-  }, [defaultAssistantId, finalAssistants, messageHistory.length]);
+  }, [defaultAssistantId, availableAssistants, messageHistory.length]);
 
   const [
     selectedDocuments,
