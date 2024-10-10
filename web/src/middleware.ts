@@ -12,6 +12,7 @@ const eePaths = [
   "/admin/whitelabeling/:path*",
   "/admin/performance/custom-analytics/:path*",
   "/admin/standard-answer/:path*",
+  "/admin/cloud-settings/:path*",
 ];
 
 // removes the "/:path*" from the end

@@ -6,6 +6,7 @@ export interface Settings {
   notifications: Notification[];
   needs_reindexing: boolean;
   gpu_enabled: boolean;
+  product_gated: boolean;
 }
 
 export interface Notification {

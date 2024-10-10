@@ -19,8 +19,6 @@ import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Logo } from "@/components/Logo";
 import { UserProvider } from "@/components/user/UserProvider";
 import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -102,6 +100,30 @@ export default async function RootLayout({
                   Slack
                 </a>
                 .
+              </p>
+            </Card>
+          </div>
+        </body>
+      </html>
+    );
+  }
+  if (combinedSettings?.settings?.product_gated) {
+    return (
+      <html lang="en" className={`${inter.variable} font-sans`}>
+        <Head>
+          <title>Product Gated | Danswer</title>
+        </Head>
+        <body className="bg-background text-default">
+          <div className="flex flex-col items-center justify-center min-h-screen">
+            <div className="mb-2 flex items-center max-w-[175px]">
+              <HeaderTitle>Danswer</HeaderTitle>
+              <Logo height={40} width={40} />
+            </div>
+            <Card className="p-8 max-w-md">
+              <h1 className="text-2xl font-bold mb-4 text-error">Error</h1>
+              <p className="text-text-500">
+                Your Danswer instance is currently gated. Please contact your
+                admin to request access.
               </p>
             </Card>
           </div>
