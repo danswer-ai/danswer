@@ -5,7 +5,7 @@ metadata:
 data: 
 
   # Auth Setting, also check the secrets file
-  AUTH_TYPE: "disabled"  # Change this for production uses unless Danswer is only accessible behind VPN
+  AUTH_TYPE: "basic"  # Change this for production uses unless Danswer is only accessible behind VPN
   ENCRYPTION_KEY_SECRET: ""  # This should not be specified directly in the yaml, this is just for reference
   SESSION_EXPIRE_TIME_SECONDS: "86400"  # 1 Day Default
   VALID_EMAIL_DOMAINS: ""  # Can be something like danswer.ai, as an extra double-check
@@ -72,7 +72,7 @@ data:
   # Logging
   # Optional Telemetry, please keep it on (nothing sensitive is collected)? <3
   # https://docs.danswer.dev/more/telemetry
-  DISABLE_TELEMETRY: ""
+  DISABLE_TELEMETRY: "true"
   LOG_LEVEL: ""
   LOG_ALL_MODEL_INTERACTIONS: ""
   LOG_DANSWER_MODEL_INTERACTIONS: ""
@@ -83,3 +83,5 @@ data:
   DOMAIN: "localhost"  # for nginx
   # Chat Configs
   HARD_DELETE_CHATS: ""
+  ENABLE_PAID_ENTERPRISE_EDITION_FEATURES: "true"
+  NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED: "true"

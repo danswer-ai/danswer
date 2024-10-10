@@ -55,8 +55,8 @@ spec:
   - metadata:
       name: vespa-volume
     spec:
+      storageClassName: gp3-resize
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          # Adjust the storage request size as needed.
-          storage: 50Gi
+          storage: 200Gi
