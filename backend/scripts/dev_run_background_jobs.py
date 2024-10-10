@@ -58,7 +58,7 @@ def run_jobs(exclude_indexing: bool) -> None:
         "-n",
         "heavy@%n",
         "-Q",
-        "connector_pruning,",
+        "connector_pruning",
     ]
 
     cmd_beat = [
