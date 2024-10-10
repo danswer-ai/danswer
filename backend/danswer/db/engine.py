@@ -299,6 +299,8 @@ def get_session(
 ) -> Generator[Session, None, None]:
     """Generate a database session with the appropriate tenant schema set."""
     engine = get_sqlalchemy_engine()
+
+    tenant_id = current_tenant_id.get()
     with Session(engine, expire_on_commit=False) as session:
         if MULTI_TENANT:
             if not is_valid_schema_name(tenant_id):
