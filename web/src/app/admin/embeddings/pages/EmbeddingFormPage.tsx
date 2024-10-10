@@ -152,11 +152,6 @@ export default function EmbeddingForm() {
     }
   }, [currentEmbeddingModel]);
 
-  useEffect(() => {
-    if (currentEmbeddingModel) {
-      setSelectedProvider(currentEmbeddingModel);
-    }
-  }, [currentEmbeddingModel]);
   if (!selectedProvider) {
     return <ThreeDotsLoader />;
   }
@@ -164,10 +159,18 @@ export default function EmbeddingForm() {
     return <ErrorCallout errorTitle="Failed to fetch embedding model status" />;
   }
 
+  const updateCurrentModel = (newModel: string) => {
+    setAdvancedEmbeddingDetails((values) => ({
+      ...values,
+      model_name: newModel,
+    }));
+  };
+
   const updateSearch = async () => {
     const values: SavedSearchSettings = {
       ...rerankingDetails,
       ...advancedEmbeddingDetails,
+      ...selectedProvider,
       provider_type:
         selectedProvider.provider_type?.toLowerCase() as EmbeddingProvider | null,
     };
@@ -311,11 +314,13 @@ export default function EmbeddingForm() {
             </Text>
             <Card>
               <EmbeddingModelSelection
+                updateCurrentModel={updateCurrentModel}
                 setModelTab={setModelTab}
                 modelTab={modelTab}
                 selectedProvider={selectedProvider}
                 currentEmbeddingModel={currentEmbeddingModel}
                 updateSelectedProvider={updateSelectedProvider}
+                advancedEmbeddingDetails={advancedEmbeddingDetails}
               />
             </Card>
             <div className="mt-4 flex w-full justify-end">
