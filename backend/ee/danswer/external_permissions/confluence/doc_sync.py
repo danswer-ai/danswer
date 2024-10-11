@@ -1,3 +1,7 @@
+"""
+Rules defined here:
+https://confluence.atlassian.com/conf85/check-who-can-view-a-page-1283360557.html
+"""
 from typing import Any
 
 from atlassian import Confluence  # type:ignore
@@ -18,32 +22,120 @@ from ee.danswer.external_permissions.confluence.confluence_sync_utils import (
     build_confluence_client,
 )
 
-
 logger = setup_logger()
 
+_VIEWSPACE_PERMISSION_TYPE = "VIEWSPACE"
+_USER_EMAIL_CACHE: dict[str, str | None] = {}
 _REQUEST_PAGINATION_LIMIT = 100
 
 
-def _extract_user_email(subjects: dict[str, Any]) -> str | None:
-    # If the subject is a user, then return the user's email
-    user = subjects.get("user", {})
-    result = user.get("results", [{}])[0]
-    return result.get("email")
+def _get_user_email_from_username__server(
+    confluence_client: Confluence, user_name: str
+) -> str | None:
+    global _USER_EMAIL_CACHE
+    if _USER_EMAIL_CACHE.get(user_name) is None:
+        try:
+            response = confluence_client.get_mobile_parameters(user_name)
+            email = response.get("email")
+        except Exception:
+            email = None
+        _USER_EMAIL_CACHE[user_name] = email
+    return _USER_EMAIL_CACHE[user_name]
 
 
-def _extract_group_name(subjects: dict[str, Any]) -> str | None:
-    # If the subject is a group, then return the group's name
-    group = subjects.get("group", {})
-    result = group.get("results", [{}])[0]
-    return result.get("name")
+def _get_server_space_permissions(
+    confluence_client: Confluence, permissions: list[dict[str, Any]]
+) -> ExternalAccess:
+    viewspace_permissions = []
+    for permission_category in permissions:
+        if permission_category.get("type") == _VIEWSPACE_PERMISSION_TYPE:
+            viewspace_permissions.extend(
+                permission_category.get("spacePermissions", [])
+            )
+
+    user_names = set()
+    group_names = set()
+    for permission in viewspace_permissions:
+        if user_name := permission.get("userName"):
+            user_names.add(user_name)
+        if group_name := permission.get("groupName"):
+            group_names.add(group_name)
+
+    user_emails = set()
+    for user_name in user_names:
+        user_email = _get_user_email_from_username__server(confluence_client, user_name)
+        if user_email:
+            user_emails.add(user_email)
+        else:
+            logger.warning(f"Email for user {user_name} not found in Confluence")
+
+    return ExternalAccess(
+        external_user_emails=user_emails,
+        external_user_group_ids=group_names,
+        # TODO: Check if the space is publicly accessible
+        # Currently, we assume the space is not public
+        # We need to check if anonymous access is turned on for the site and space
+        # This information is paywalled so it remains unimplemented
+        is_public=False,
+    )
 
 
-def _is_public_read_permission(permission: dict[str, Any]) -> bool:
-    # If the permission is a public read permission, then return True
-    operation = permission.get("operation", {})
-    operation_value = operation.get("operation")
-    anonymous_access = permission.get("anonymousAccess", False)
-    return operation_value == "read" and anonymous_access
+def _get_cloud_space_permissions(permissions: dict[str, Any]) -> ExternalAccess:
+    space_permissions = permissions.get("permissions", [])
+    user_emails = set()
+    # Confluence enforces that group names are unique
+    group_names = set()
+    is_externally_public = False
+    for permission in space_permissions:
+        subs = permission.get("subjects")
+        if subs:
+            # If there are subjects, then there are explicit users or groups with access
+            if email := subs.get("user", {}).get("results", [{}])[0].get("email"):
+                user_emails.add(email)
+            if group_name := subs.get("group", {}).get("results", [{}])[0].get("name"):
+                group_names.add(group_name)
+        else:
+            # If there are no subjects, then the permission is for everyone
+            if permission.get("operation", {}).get(
+                "operation"
+            ) == "read" and permission.get("anonymousAccess", False):
+                # If the permission specifies read access for anonymous users, then
+                # the space is publicly accessible
+                is_externally_public = True
+
+    return ExternalAccess(
+        external_user_emails=user_emails,
+        external_user_group_ids=group_names,
+        is_public=is_externally_public,
+    )
+
+
+def _get_space_permissions(
+    db_session: Session,
+    confluence_client: Confluence,
+    space_id: str,
+) -> ExternalAccess:
+    get_space_permissions = make_confluence_call_handle_rate_limit(
+        confluence_client.get_space_permissions
+    )
+
+    space_permissions_result = get_space_permissions(space_id)
+    logger.debug(f"space_permissions_result: {space_permissions_result}")
+
+    if isinstance(space_permissions_result, dict):
+        space_permissions = _get_cloud_space_permissions(space_permissions_result)
+    elif isinstance(space_permissions_result, list):
+        space_permissions = _get_server_space_permissions(
+            confluence_client, space_permissions_result
+        )
+    else:
+        space_permissions = None
+
+    batch_add_non_web_user_if_not_exists__no_commit(
+        db_session=db_session, emails=list(space_permissions.external_user_emails)
+    )
+
+    return space_permissions
 
 
 def _extract_read_access_restrictions(
@@ -73,48 +165,6 @@ def _extract_read_access_restrictions(
     ]
 
     return read_access_user_emails, read_access_group_names
-
-
-def _get_space_permissions(
-    db_session: Session,
-    confluence_client: Confluence,
-    space_id: str,
-) -> ExternalAccess:
-    get_space_permissions = make_confluence_call_handle_rate_limit(
-        confluence_client.get_space_permissions
-    )
-
-    space_permissions_result = get_space_permissions(space_id)
-    logger.debug(f"space_permissions_result: {space_permissions_result}")
-
-    space_permissions = space_permissions_result.get("permissions", [])
-    user_emails = set()
-    # Confluence enforces that group names are unique
-    group_names = set()
-    is_externally_public = False
-    for permission in space_permissions:
-        subjects = permission.get("subjects")
-        if subjects:
-            # If there are subjects, then there are explicit users or groups with access
-            if email := _extract_user_email(subjects):
-                user_emails.add(email)
-            if group_name := _extract_group_name(subjects):
-                group_names.add(group_name)
-        else:
-            # If there are no subjects, then the permission is for everyone
-            if _is_public_read_permission(permission):
-                # If the permission specifies read access for anonymous users, then
-                # the space is publicly accessible
-                is_externally_public = True
-
-    batch_add_non_web_user_if_not_exists__no_commit(
-        db_session=db_session, emails=list(user_emails)
-    )
-    return ExternalAccess(
-        external_user_emails=user_emails,
-        external_user_group_ids=group_names,
-        is_public=is_externally_public,
-    )
 
 
 def _get_page_specific_restrictions(
@@ -284,7 +334,9 @@ def confluence_doc_sync(
     space_permissions = _get_space_permissions(
         db_session=db_session,
         confluence_client=confluence_client,
+        # TODO: Make this work for no space key
         space_id=cc_pair.connector.connector_specific_config["space"],
+        # TODO: pull iscloud from this
     )
     fresh_doc_permissions = _fetch_all_page_restrictions_for_space(
         db_session=db_session,
