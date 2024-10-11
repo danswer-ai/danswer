@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from httpx_oauth.clients.google import GoogleOAuth2
 from sqlalchemy.orm import Session
+from starlette.middleware.sessions import SessionMiddleware
 
 from danswer import __version__
 from danswer.auth.schemas import UserCreate
@@ -312,6 +313,11 @@ def get_application() -> FastAPI:
     )
 
     application.add_exception_handler(ValueError, value_error_handler)
+
+    application.add_middleware(
+        SessionMiddleware,
+        secret_key=USER_AUTH_SECRET,
+    )
 
     application.add_middleware(
         CORSMiddleware,

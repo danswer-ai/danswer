@@ -9,6 +9,7 @@ export function SignInButton({
   authType: AuthType;
 }) {
   let button;
+
   if (authType === "google_oauth") {
     button = (
       <div className="mx-auto flex">

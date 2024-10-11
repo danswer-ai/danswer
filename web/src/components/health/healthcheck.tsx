@@ -6,8 +6,9 @@ import { Modal } from "../Modal";
 import { useCallback, useEffect, useState } from "react";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import { User } from "@/lib/types";
-import { mockedRefreshToken, refreshToken } from "./refreshUtils";
+import { refreshToken } from "./refreshUtils";
 import { CUSTOM_REFRESH_URL } from "@/lib/constants";
+import ClientSideSigninButton from "@/app/auth/login/ClientSideSigninButton";
 
 export const HealthCheckBanner = () => {
   const { error } = useSWR("/api/health", errorHandlingFetcher);
@@ -26,7 +27,7 @@ export const HealthCheckBanner = () => {
     if (updatedUser) {
       const seconds = getSecondsUntilExpiration(updatedUser);
       setSecondsUntilExpiration(seconds);
-      console.debug(`Updated seconds until expiration:! ${seconds}`);
+      console.log(`Updated seconds until expiration:! ${seconds}`);
     }
   }, [mutateUser]);
 
@@ -35,60 +36,58 @@ export const HealthCheckBanner = () => {
   }, [user, updateExpirationTime]);
 
   useEffect(() => {
-    if (CUSTOM_REFRESH_URL) {
-      const refreshUrl = CUSTOM_REFRESH_URL;
-      let refreshTimeoutId: NodeJS.Timeout;
-      let expireTimeoutId: NodeJS.Timeout;
+    const refreshUrl = CUSTOM_REFRESH_URL;
+    let refreshTimeoutId: NodeJS.Timeout;
+    let expireTimeoutId: NodeJS.Timeout;
 
-      const attemptTokenRefresh = async () => {
-        try {
-          // NOTE: This is a mocked refresh token for testing purposes.
-          // const refreshTokenData = mockedRefreshToken();
+    const attemptTokenRefresh = async () => {
+      if (!refreshUrl) {
+        console.log("No refresh URL, skipping refresh");
+        return;
+      }
+      try {
+        // NOTE: This is a mocked refresh token for testing purposes.
+        // const refreshTokenData = mockedRefreshToken();
 
-          const refreshTokenData = await refreshToken(refreshUrl);
+        const refreshTokenData = await refreshToken(refreshUrl);
 
-          const response = await fetch(
-            "/api/enterprise-settings/refresh-token",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(refreshTokenData),
-            }
-          );
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          await new Promise((resolve) => setTimeout(resolve, 4000));
-
-          await mutateUser(undefined, { revalidate: true });
-          updateExpirationTime();
-        } catch (error) {
-          console.error("Error refreshing token:", error);
+        const response = await fetch("/api/enterprise-settings/refresh-token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(refreshTokenData),
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      };
+        await new Promise((resolve) => setTimeout(resolve, 4000));
 
-      const scheduleRefreshAndExpire = () => {
-        if (secondsUntilExpiration !== null) {
-          const timeUntilRefresh = (secondsUntilExpiration + 0.5) * 1000;
-          refreshTimeoutId = setTimeout(attemptTokenRefresh, timeUntilRefresh);
+        await mutateUser(undefined, { revalidate: true });
+        updateExpirationTime();
+      } catch (error) {
+        console.error("Error refreshing token:", error);
+      }
+    };
 
-          const timeUntilExpire = (secondsUntilExpiration + 10) * 1000;
-          expireTimeoutId = setTimeout(() => {
-            console.debug("Session expired. Setting expired state to true.");
-            setExpired(true);
-          }, timeUntilExpire);
-        }
-      };
+    const scheduleRefreshAndExpire = () => {
+      if (secondsUntilExpiration !== null) {
+        const timeUntilRefresh = (secondsUntilExpiration + 0.5) * 1000;
+        refreshTimeoutId = setTimeout(attemptTokenRefresh, timeUntilRefresh);
+        const timeUntilExpire = (secondsUntilExpiration + 2) * 1000;
+        expireTimeoutId = setTimeout(() => {
+          console.debug("Session expired. Setting expired state to true.");
+          setExpired(true);
+        }, timeUntilExpire);
+      }
+    };
 
-      scheduleRefreshAndExpire();
+    scheduleRefreshAndExpire();
 
-      return () => {
-        clearTimeout(refreshTimeoutId);
-        clearTimeout(expireTimeoutId);
-      };
-    }
+    return () => {
+      clearTimeout(refreshTimeoutId);
+      clearTimeout(expireTimeoutId);
+    };
   }, [secondsUntilExpiration, user, mutateUser, updateExpirationTime]);
 
   if (!error && !expired) {
@@ -102,7 +101,7 @@ export const HealthCheckBanner = () => {
   if (error instanceof RedirectError || expired) {
     return (
       <Modal
-        width="w-1/4"
+        width="max-w-2xl"
         className="overflow-y-hidden flex flex-col"
         title="You've been logged out"
       >
@@ -110,12 +109,7 @@ export const HealthCheckBanner = () => {
           <p className="text-sm">
             Your session has expired. Please log in again to continue.
           </p>
-          <a
-            href="/auth/login"
-            className="w-full mt-4 mx-auto rounded-md text-text-200 py-2 bg-background-900 text-center hover:bg-emphasis animtate duration-300 transition-bg"
-          >
-            Log in
-          </a>
+          <ClientSideSigninButton />
         </div>
       </Modal>
     );

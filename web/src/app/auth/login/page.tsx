@@ -65,10 +65,6 @@ const Page = async ({
     }
   }
 
-  if (authTypeMetadata?.autoRedirect && authUrl && !autoRedirectDisabled) {
-    return redirect(authUrl);
-  }
-
   return (
     <AuthFlowContainer>
       <div className="absolute top-10x w-full">
@@ -88,6 +84,7 @@ const Page = async ({
             />
           </>
         )}
+
         {authTypeMetadata?.authType === "basic" && (
           <Card className="mt-4 w-96">
             <div className="flex">

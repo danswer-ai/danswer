@@ -11,13 +11,16 @@ export interface AuthTypeMetadata {
 }
 
 export const getAuthTypeMetadataSS = async (): Promise<AuthTypeMetadata> => {
+  console.log("Fetching auth type metadata");
   const res = await fetch(buildUrl("/auth/type"));
   if (!res.ok) {
     throw new Error("Failed to fetch data");
   }
+  console.log(res);
 
   const data: { auth_type: string; requires_verification: boolean } =
     await res.json();
+
   const authType = data.auth_type as AuthType;
 
   // for SAML / OIDC, we auto-redirect the user to the IdP when the user visits
