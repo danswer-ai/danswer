@@ -48,8 +48,8 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
+from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
 from shared_configs.configs import LOG_LEVEL
-from shared_configs.configs import MODEL_SERVER_PORT
 
 logger = setup_logger()
 
@@ -494,7 +494,7 @@ def update_loop(
                                 embedding_model = EmbeddingModel.from_db_model(
                                     search_settings=search_settings,
                                     server_host=INDEXING_MODEL_SERVER_HOST,
-                                    server_port=MODEL_SERVER_PORT,
+                                    server_port=INDEXING_MODEL_SERVER_PORT,
                                 )
                                 warm_up_bi_encoder(embedding_model=embedding_model)
                                 logger.notice("First inference complete.")
