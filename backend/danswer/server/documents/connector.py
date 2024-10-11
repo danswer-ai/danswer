@@ -125,6 +125,12 @@ def check_google_app_gmail_credentials_exist(
 def upsert_google_app_gmail_credentials(
     app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
+    if MULTI_TENANT:
+        raise HTTPException(
+            status_code=400,
+            detail="Modifying Google App Credentials is not supported in multi-tenant mode",
+        )
+
     try:
         upsert_google_app_gmail_cred(app_credentials)
     except ValueError as e:
@@ -163,10 +169,15 @@ def check_google_app_credentials_exist(
 def upsert_google_app_credentials(
     app_credentials: GoogleAppCredentials,
     _: User = Depends(current_admin_user),
-    cloud_enabled: bool = Query(MULTI_TENANT, alias="cloud_enabled"),
 ) -> StatusResponse:
+    if MULTI_TENANT:
+        raise HTTPException(
+            status_code=400,
+            detail="Modifying Google App Credentials is not supported in multi-tenant mode",
+        )
+
     try:
-        upsert_google_app_cred(app_credentials, cloud_enabled)
+        upsert_google_app_cred(app_credentials)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -205,6 +216,12 @@ def check_google_service_gmail_account_key_exist(
 def upsert_google_service_gmail_account_key(
     service_account_key: GoogleServiceAccountKey, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
+    if MULTI_TENANT:
+        raise HTTPException(
+            status_code=400,
+            detail="Modifying Google App Credentials is not supported in multi-tenant mode",
+        )
+
     try:
         upsert_gmail_service_account_key(service_account_key)
     except ValueError as e:
@@ -245,6 +262,12 @@ def check_google_service_account_key_exist(
 def upsert_google_service_account_key(
     service_account_key: GoogleServiceAccountKey, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
+    if MULTI_TENANT:
+        raise HTTPException(
+            status_code=400,
+            detail="Modifying Google App Credentials is not supported in multi-tenant mode",
+        )
+
     try:
         upsert_service_account_key(service_account_key)
     except ValueError as e:
@@ -278,6 +301,12 @@ def upsert_service_account_credential(
     """Special API which allows the creation of a credential for a service account.
     Combines the input with the saved service account key to create an entry in the
     `Credential` table."""
+    if MULTI_TENANT:
+        raise HTTPException(
+            status_code=400,
+            detail="Modifying Google App Credentials is not supported in multi-tenant mode",
+        )
+
     try:
         credential_base = build_service_account_creds(
             DocumentSource.GOOGLE_DRIVE,
@@ -304,6 +333,12 @@ def upsert_gmail_service_account_credential(
     """Special API which allows the creation of a credential for a service account.
     Combines the input with the saved service account key to create an entry in the
     `Credential` table."""
+    if MULTI_TENANT:
+        raise HTTPException(
+            status_code=400,
+            detail="Modifying Google App Credentials is not supported in multi-tenant mode",
+        )
+
     try:
         credential_base = build_service_account_creds(
             DocumentSource.GMAIL,
