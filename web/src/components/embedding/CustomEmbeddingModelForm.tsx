@@ -6,7 +6,7 @@ import { Dispatch, SetStateAction } from "react";
 import { Button, Text } from "@tremor/react";
 import { EmbeddingDetails } from "@/app/admin/embeddings/EmbeddingModelSelectionForm";
 
-export function CustomModelDetailsForm({
+export function CustomEmbeddingModelForm({
   setShowTentativeModel,
   currentValues,
   provider,
@@ -27,7 +27,7 @@ export function CustomModelDetailsForm({
             normalize: false,
             query_prefix: "",
             passage_prefix: "",
-            provider_type: EmbeddingProvider,
+            provider_type: embeddingType,
             api_key: "",
             enabled: true,
             api_url: provider.api_url,
@@ -57,10 +57,11 @@ export function CustomModelDetailsForm({
           max_tokens: Yup.number(),
         })}
         onSubmit={async (values) => {
+          console.log(values);
           setShowTentativeModel(values as CloudEmbeddingModel);
         }}
       >
-        {({ isSubmitting }) => (
+        {({ isSubmitting, submitForm, errors }) => (
           <Form>
             <Text className="text-xl text-text-900 font-bold mb-4">
               Specify details for your{" "}
@@ -107,11 +108,14 @@ export function CustomModelDetailsForm({
 
             <Button
               type="submit"
+              onClick={() => console.log(errors)}
               disabled={isSubmitting}
               className="w-64 mx-auto"
             >
-              Configure{" "}
-              {embeddingType === EmbeddingProvider.AZURE ? "Azure" : "LiteLLM"}{" "}
+              Configure
+              {embeddingType === EmbeddingProvider.AZURE
+                ? "Azure"
+                : "LiteLLM"}{" "}
               Model
             </Button>
           </Form>

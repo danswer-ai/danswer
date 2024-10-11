@@ -27,7 +27,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
 
   const authTypeMetadata = results[0] as AuthTypeMetadata | null;
   const user = results[1] as User | null;
-
+  console.log("authTypeMetadata", authTypeMetadata);
   const authDisabled = authTypeMetadata?.authType === "disabled";
   const requiresVerification = authTypeMetadata?.requiresVerification;
 

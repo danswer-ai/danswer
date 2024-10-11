@@ -16,7 +16,7 @@ import { EmbeddingDetails } from "../EmbeddingModelSelectionForm";
 import { FiExternalLink, FiInfo, FiTrash } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { CustomModelDetailsForm } from "@/components/embedding/CustomModelDetailsForm";
+import { CustomEmbeddingModelForm } from "@/components/embedding/CustomEmbeddingModelForm";
 import { deleteSearchSettings } from "./utils";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
@@ -259,7 +259,7 @@ export default function CloudEmbeddingPage({
                       : ""
                   }`}
                 >
-                  <CustomModelDetailsForm
+                  <CustomEmbeddingModelForm
                     embeddingType={EmbeddingProvider.LITELLM}
                     provider={liteLLMProvider}
                     currentValues={
@@ -304,7 +304,6 @@ export default function CloudEmbeddingPage({
 
         <div className="w-full flex flex-col items-start">
           {!isAzureConfigured ? (
-            // Configuration Prompt if Azure is not configured
             <>
               <button
                 onClick={() => setShowTentativeProvider(AZURE_CLOUD_PROVIDER)}
@@ -380,7 +379,7 @@ export default function CloudEmbeddingPage({
                 }`}
               >
                 {azureProvider && (
-                  <CustomModelDetailsForm
+                  <CustomEmbeddingModelForm
                     embeddingType={EmbeddingProvider.AZURE}
                     provider={azureProvider}
                     currentValues={
