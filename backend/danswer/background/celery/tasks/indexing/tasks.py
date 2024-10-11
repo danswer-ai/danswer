@@ -402,12 +402,6 @@ def connector_indexing_task(
                 lock.reacquire()
                 r.incrby(rci.generator_progress_key, amount)
 
-            # simulate a crash
-            import os
-            import signal
-
-            os.kill(os.getpid(), signal.SIGTRAP)
-
             run_indexing_entrypoint(
                 index_attempt_id=index_attempt_id,
                 connector_credential_pair_id=cc_pair_id,
