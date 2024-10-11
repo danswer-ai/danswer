@@ -1,5 +1,6 @@
 import time
 import traceback
+from collections.abc import Callable
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -89,6 +90,7 @@ def _get_connector_runner(
 def _run_indexing(
     db_session: Session,
     index_attempt: IndexAttempt,
+    progress_callback: Callable[[int], None] | None = None,
 ) -> None:
     """
     1. Get documents which are either new or updated from specified application
@@ -232,6 +234,8 @@ def _run_indexing(
                 logger.debug(f"Indexing batch of documents: {batch_description}")
 
                 index_attempt_md.batch_num = batch_num + 1  # use 1-index for this
+
+                # real work happens here!
                 new_docs, total_batch_chunks = indexing_pipeline(
                     document_batch=doc_batch,
                     index_attempt_metadata=index_attempt_md,
@@ -249,6 +253,9 @@ def _run_indexing(
                 # a long running transaction, the `time_updated` field will
                 # be inaccurate
                 db_session.commit()
+
+                if progress_callback:
+                    progress_callback(len(doc_batch))
 
                 # This new value is updated every batch, so UI can refresh per batch update
                 update_docs_indexed(
@@ -401,7 +408,10 @@ def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexA
 
 
 def run_indexing_entrypoint(
-    index_attempt_id: int, connector_credential_pair_id: int, is_ee: bool = False
+    index_attempt_id: int,
+    connector_credential_pair_id: int,
+    is_ee: bool = False,
+    progress_callback: Callable[[int], None] | None = None,
 ) -> None:
     """Entrypoint for indexing run when using dask distributed.
     Wraps the actual logic in a `try` block so that we can catch any exceptions
@@ -429,7 +439,7 @@ def run_indexing_entrypoint(
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
 
-            _run_indexing(db_session, attempt)
+            _run_indexing(db_session, attempt, progress_callback)
 
             logger.info(
                 f"Indexing finished: "

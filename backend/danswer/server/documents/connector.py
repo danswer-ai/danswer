@@ -16,6 +16,7 @@ from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
+from danswer.background.celery.tasks.indexing.tasks import try_creating_indexing_task
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
@@ -65,7 +66,6 @@ from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_counts_for_cc_pairs
 from danswer.db.engine import get_session
 from danswer.db.enums import AccessType
-from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_latest_index_attempts
@@ -76,6 +76,7 @@ from danswer.db.models import UserRole
 from danswer.db.search_settings import get_current_search_settings
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.file_store.file_store import get_default_file_store
+from danswer.redis.redis_pool import RedisPool
 from danswer.server.documents.models import AuthStatus
 from danswer.server.documents.models import AuthUrl
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
@@ -99,6 +100,8 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
+
+redis_pool = RedisPool()
 
 _GMAIL_CREDENTIAL_ID_COOKIE_NAME = "gmail_credential_id"
 _GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"
@@ -751,6 +754,8 @@ def connector_run_once(
     _: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[list[int]]:
+    """Used to trigger indexing on a set of cc_pairs associated with a
+    single connector."""
     connector_id = run_info.connector_id
     specified_credential_ids = run_info.credential_ids
 
@@ -803,16 +808,21 @@ def connector_run_once(
         if credential_id not in skipped_credentials
     ]
 
-    index_attempt_ids = [
-        create_index_attempt(
-            connector_credential_pair_id=connector_credential_pair.id,
-            search_settings_id=search_settings.id,
-            from_beginning=run_info.from_beginning,
-            db_session=db_session,
-        )
-        for connector_credential_pair in connector_credential_pairs
-        if connector_credential_pair is not None
-    ]
+    r = redis_pool.get_client()
+
+    index_attempt_ids = []
+    for cc_pair in connector_credential_pairs:
+        if cc_pair is not None:
+            attempt_id = try_creating_indexing_task(
+                cc_pair, search_settings, run_info.from_beginning, db_session, r
+            )
+            if attempt_id:
+                logger.info(
+                    f"try_creating_indexing_task succeeded: cc_pair={cc_pair.id} attempt_id={attempt_id}"
+                )
+                index_attempt_ids.append(attempt_id)
+            else:
+                logger.info(f"try_creating_indexing_task failed: cc_pair={cc_pair.id}")
 
     if not index_attempt_ids:
         raise HTTPException(
