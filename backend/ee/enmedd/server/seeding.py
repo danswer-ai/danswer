@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -20,10 +21,10 @@ _SEED_CONFIG_ENV_VAR_NAME = "ENV_SEED_CONFIGURATION"
 
 
 class SeedConfiguration(BaseModel):
-    llms: list[LLMProviderUpsertRequest] | None = None
-    admin_user_emails: list[str] | None = None
-    seeded_name: str | None = None
-    seeded_logo_path: str | None = None
+    llms: Optional[list[LLMProviderUpsertRequest]] = None
+    admin_user_emails: Optional[list[str]] = None
+    seeded_name: Optional[str] = None
+    seeded_logo_path: Optional[str] = None
 
 
 def _parse_env() -> SeedConfiguration | None:

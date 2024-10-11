@@ -109,5 +109,14 @@ $COMPOSE_CMD -f docker-compose.prod.yml run --name enmedd-stack --rm --entrypoin
     --force-renewal" certbot
 echo
 
-echo "### Rebuilding and reloading nginx ..."
+echo "### Renaming certificate directory if needed ..."
+$COMPOSE_CMD -f docker-compose.prod.yml run --name enmedd-stack --rm --entrypoint "\
+  sh -c 'for domain in $domains; do \
+    numbered_dir=\$(find /etc/letsencrypt/live -maxdepth 1 -type d -name \"\$domain-00*\" | sort -r | head -n1); \
+    if [ -n \"\$numbered_dir\" ]; then \
+      mv \"\$numbered_dir\" /etc/letsencrypt/live/\$domain; \
+    fi; \
+  done'" certbot
+
+echo "### Reloading nginx ..."
 $COMPOSE_CMD -f docker-compose.prod.yml -p enmedd-stack up --build --force-recreate -d

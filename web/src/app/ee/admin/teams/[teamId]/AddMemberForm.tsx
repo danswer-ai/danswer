@@ -43,7 +43,7 @@ export const AddMemberForm: React.FC<AddMemberFormProps> = ({
             toast({
               title: "Users Added Successfully!",
               description:
-                "The selected users have been successfully added to the group.",
+                "The selected users have been successfully added to the teamspace.",
               variant: "success",
             });
             onClose();
@@ -52,7 +52,7 @@ export const AddMemberForm: React.FC<AddMemberFormProps> = ({
             const errorMsg = responseJson.detail || responseJson.message;
             toast({
               title: "Operation Failed",
-              description: `Unable to add users to the group: ${errorMsg}. Please try again.`,
+              description: `Unable to add users to the teamspace: ${errorMsg}. Please try again.`,
               variant: "destructive",
             });
             onClose();

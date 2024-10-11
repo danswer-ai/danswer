@@ -127,3 +127,8 @@ class TeamspaceUpdate(BaseModel):
     cc_pair_ids: list[int]
     document_set_ids: Optional[List[int]] = []
     assistant_ids: Optional[List[int]] = []
+
+
+class SetCuratorRequest(BaseModel):
+    user_id: UUID
+    is_curator: bool

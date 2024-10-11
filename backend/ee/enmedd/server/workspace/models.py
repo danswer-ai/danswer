@@ -21,7 +21,7 @@ class Workspaces(BaseModel):
     custom_logo: Optional[str] = None
     custom_header_logo: Optional[str] = None
     custom_header_content: Optional[str] = None
-    groups: Optional[list[Teamspace]] = None
+    teamspace: Optional[list[Teamspace]] = None
 
     @classmethod
     def from_model(cls, workspace_model: WorkspaceModel) -> "Workspaces":
@@ -34,9 +34,9 @@ class Workspaces(BaseModel):
             custom_logo=workspace_model.custom_logo,
             custom_header_logo=workspace_model.custom_header_logo,
             custom_header_content=workspace_model.custom_header_content,
-            groups=[
+            teamspace=[
                 Teamspace.from_model(teamspace_model)
-                for teamspace_model in workspace_model.groups
+                for teamspace_model in workspace_model.teamspace
             ],
         )
 

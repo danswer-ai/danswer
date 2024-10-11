@@ -5,9 +5,6 @@ import json
 import os
 
 import requests
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 # TODO: replace the parameter names here
@@ -37,6 +34,7 @@ def process_question(enmedd_url: str, question: str, api_key: str | None) -> Non
         "message": question,
         "chat_session_id": chat_session_id,
         "parent_message_id": None,
+        "file_descriptors": [],
         # Default Question Answer prompt
         "prompt_id": 0,
         # Not specifying any specific docs to chat to, we want to run a search

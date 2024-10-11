@@ -119,6 +119,7 @@ const MainSection = () => {
             As a first step, please provide Application (client) ID, Directory
             (tenant) ID, and Client Secret. You can follow the guide{" "}
             <a
+              rel="noopener"
               target="_blank"
               href="https://docs.danswer.dev/connectors/teams"
               className="text-link"

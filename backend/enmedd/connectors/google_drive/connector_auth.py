@@ -10,8 +10,13 @@ from google.oauth2.service_account import Credentials as ServiceAccountCredentia
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
 from sqlalchemy.orm import Session
 
+from enmedd.configs.app_configs import ENTERPRISE_EDITION_ENABLED
 from enmedd.configs.app_configs import WEB_DOMAIN
-from enmedd.connectors.google_drive.constants import CRED_KEY
+from enmedd.configs.constants import DocumentSource
+from enmedd.configs.constants import KV_CRED_KEY
+from enmedd.configs.constants import KV_GOOGLE_DRIVE_CRED_KEY
+from enmedd.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
+from enmedd.connectors.google_drive.constants import BASE_SCOPES
 from enmedd.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
 )
@@ -19,9 +24,8 @@ from enmedd.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
 from enmedd.connectors.google_drive.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
-from enmedd.connectors.google_drive.constants import GOOGLE_DRIVE_CRED_KEY
-from enmedd.connectors.google_drive.constants import GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
-from enmedd.connectors.google_drive.constants import SCOPES
+from enmedd.connectors.google_drive.constants import FETCH_GROUPS_SCOPES
+from enmedd.connectors.google_drive.constants import FETCH_PERMISSIONS_SCOPES
 from enmedd.db.credentials import update_credential_json
 from enmedd.db.models import User
 from enmedd.dynamic_configs.factory import get_dynamic_config_store
@@ -33,15 +37,25 @@ from enmedd.utils.logger import setup_logger
 logger = setup_logger()
 
 
+def build_gdrive_scopes() -> list[str]:
+    base_scopes: list[str] = BASE_SCOPES
+    permissions_scopes: list[str] = FETCH_PERMISSIONS_SCOPES
+    groups_scopes: list[str] = FETCH_GROUPS_SCOPES
+
+    if ENTERPRISE_EDITION_ENABLED:
+        return base_scopes + permissions_scopes + groups_scopes
+    return base_scopes + permissions_scopes
+
+
 def _build_frontend_google_drive_redirect() -> str:
     return f"{WEB_DOMAIN}/admin/connectors/google-drive/auth/callback"
 
 
 def get_google_drive_creds_for_authorized_user(
-    token_json_str: str,
+    token_json_str: str, scopes: list[str] = build_gdrive_scopes()
 ) -> OAuthCredentials | None:
     creds_json = json.loads(token_json_str)
-    creds = OAuthCredentials.from_authorized_user_info(creds_json, SCOPES)
+    creds = OAuthCredentials.from_authorized_user_info(creds_json, scopes)
     if creds.valid:
         return creds
 
@@ -49,7 +63,7 @@ def get_google_drive_creds_for_authorized_user(
         try:
             creds.refresh(Request())
             if creds.valid:
-                logger.info("Refreshed Google Drive tokens.")
+                logger.notice("Refreshed Google Drive tokens.")
                 return creds
         except Exception as e:
             logger.exception(f"Failed to refresh google drive access token due to: {e}")
@@ -58,20 +72,69 @@ def get_google_drive_creds_for_authorized_user(
     return None
 
 
-def get_google_drive_creds_for_service_account(
-    service_account_key_json_str: str,
+def _get_google_drive_creds_for_service_account(
+    service_account_key_json_str: str, scopes: list[str] = build_gdrive_scopes()
 ) -> ServiceAccountCredentials | None:
     service_account_key = json.loads(service_account_key_json_str)
     creds = ServiceAccountCredentials.from_service_account_info(
-        service_account_key, scopes=SCOPES
+        service_account_key, scopes=scopes
     )
     if not creds.valid or not creds.expired:
         creds.refresh(Request())
     return creds if creds.valid else None
 
 
+def get_google_drive_creds(
+    credentials: dict[str, str], scopes: list[str] = build_gdrive_scopes()
+) -> tuple[ServiceAccountCredentials | OAuthCredentials, dict[str, str] | None]:
+    oauth_creds = None
+    service_creds = None
+    new_creds_dict = None
+    if DB_CREDENTIALS_DICT_TOKEN_KEY in credentials:
+        access_token_json_str = cast(str, credentials[DB_CREDENTIALS_DICT_TOKEN_KEY])
+        oauth_creds = get_google_drive_creds_for_authorized_user(
+            token_json_str=access_token_json_str, scopes=scopes
+        )
+
+        # tell caller to update token stored in DB if it has changed
+        # (e.g. the token has been refreshed)
+        new_creds_json_str = oauth_creds.to_json() if oauth_creds else ""
+        if new_creds_json_str != access_token_json_str:
+            new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
+
+    elif DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY in credentials:
+        service_account_key_json_str = credentials[
+            DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
+        ]
+        service_creds = _get_google_drive_creds_for_service_account(
+            service_account_key_json_str=service_account_key_json_str,
+            scopes=scopes,
+        )
+
+        # "Impersonate" a user if one is specified
+        delegated_user_email = cast(
+            str | None, credentials.get(DB_CREDENTIALS_DICT_DELEGATED_USER_KEY)
+        )
+        if delegated_user_email:
+            service_creds = (
+                service_creds.with_subject(delegated_user_email)
+                if service_creds
+                else None
+            )
+
+    creds: ServiceAccountCredentials | OAuthCredentials | None = (
+        oauth_creds or service_creds
+    )
+    if creds is None:
+        raise PermissionError(
+            "Unable to access Google Drive - unknown credential structure."
+        )
+
+    return creds, new_creds_dict
+
+
 def verify_csrf(credential_id: int, state: str) -> None:
-    csrf = get_dynamic_config_store().load(CRED_KEY.format(str(credential_id)))
+    csrf = get_dynamic_config_store().load(KV_CRED_KEY.format(str(credential_id)))
     if csrf != state:
         raise PermissionError(
             "State from Google Drive Connector callback does not match expected"
@@ -79,11 +142,11 @@ def verify_csrf(credential_id: int, state: str) -> None:
 
 
 def get_auth_url(credential_id: int) -> str:
-    creds_str = str(get_dynamic_config_store().load(GOOGLE_DRIVE_CRED_KEY))
+    creds_str = str(get_dynamic_config_store().load(KV_GOOGLE_DRIVE_CRED_KEY))
     credential_json = json.loads(creds_str)
     flow = InstalledAppFlow.from_client_config(
         credential_json,
-        scopes=SCOPES,
+        scopes=build_gdrive_scopes(),
         redirect_uri=_build_frontend_google_drive_redirect(),
     )
     auth_url, _ = flow.authorization_url(prompt="consent")
@@ -91,7 +154,9 @@ def get_auth_url(credential_id: int) -> str:
     parsed_url = cast(ParseResult, urlparse(auth_url))
     params = parse_qs(parsed_url.query)
 
-    get_dynamic_config_store().store(CRED_KEY.format(credential_id), params.get("state", [None])[0], encrypt=True)  # type: ignore
+    get_dynamic_config_store().store(
+        KV_CRED_KEY.format(credential_id), params.get("state", [None])[0], encrypt=True
+    )  # type: ignore
     return str(auth_url)
 
 
@@ -103,8 +168,8 @@ def update_credential_access_tokens(
 ) -> OAuthCredentials | None:
     app_credentials = get_google_app_cred()
     flow = InstalledAppFlow.from_client_config(
-        app_credentials.dict(),
-        scopes=SCOPES,
+        app_credentials.model_dump(),
+        scopes=build_gdrive_scopes(),
         redirect_uri=_build_frontend_google_drive_redirect(),
     )
     flow.fetch_token(code=auth_code)
@@ -118,6 +183,7 @@ def update_credential_access_tokens(
 
 
 def build_service_account_creds(
+    source: DocumentSource,
     delegated_user_email: str | None = None,
 ) -> CredentialBase:
     service_account_key = get_service_account_key()
@@ -131,34 +197,37 @@ def build_service_account_creds(
     return CredentialBase(
         credential_json=credential_dict,
         admin_public=True,
+        source=DocumentSource.GOOGLE_DRIVE,
     )
 
 
 def get_google_app_cred() -> GoogleAppCredentials:
-    creds_str = str(get_dynamic_config_store().load(GOOGLE_DRIVE_CRED_KEY))
+    creds_str = str(get_dynamic_config_store().load(KV_GOOGLE_DRIVE_CRED_KEY))
     return GoogleAppCredentials(**json.loads(creds_str))
 
 
 def upsert_google_app_cred(app_credentials: GoogleAppCredentials) -> None:
     get_dynamic_config_store().store(
-        GOOGLE_DRIVE_CRED_KEY, app_credentials.json(), encrypt=True
+        KV_GOOGLE_DRIVE_CRED_KEY, app_credentials.json(), encrypt=True
     )
 
 
 def delete_google_app_cred() -> None:
-    get_dynamic_config_store().delete(GOOGLE_DRIVE_CRED_KEY)
+    get_dynamic_config_store().delete(KV_GOOGLE_DRIVE_CRED_KEY)
 
 
 def get_service_account_key() -> GoogleServiceAccountKey:
-    creds_str = str(get_dynamic_config_store().load(GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY))
+    creds_str = str(
+        get_dynamic_config_store().load(KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY)
+    )
     return GoogleServiceAccountKey(**json.loads(creds_str))
 
 
 def upsert_service_account_key(service_account_key: GoogleServiceAccountKey) -> None:
     get_dynamic_config_store().store(
-        GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY, service_account_key.json(), encrypt=True
+        KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY, service_account_key.json(), encrypt=True
     )
 
 
 def delete_service_account_key() -> None:
-    get_dynamic_config_store().delete(GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY)
+    get_dynamic_config_store().delete(KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY)

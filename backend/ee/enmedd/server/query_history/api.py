@@ -4,6 +4,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from typing import Literal
+from typing import Optional
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -34,7 +35,7 @@ class AbridgedSearchDoc(BaseModel):
 
     document_id: str
     semantic_identifier: str
-    link: str | None
+    link: Optional[str] = None
 
 
 class MessageSnapshot(BaseModel):
@@ -42,7 +43,7 @@ class MessageSnapshot(BaseModel):
     message_type: MessageType
     documents: list[AbridgedSearchDoc]
     feedback_type: QAFeedbackType | None
-    feedback_text: str | None
+    feedback_text: Optional[str] = None
     time_created: datetime
 
     @classmethod
@@ -86,23 +87,23 @@ class MessageSnapshot(BaseModel):
 class ChatSessionMinimal(BaseModel):
     id: int
     user_email: str
-    name: str | None
+    name: Optional[str] = None
     first_user_message: str
     first_ai_message: str
     assistant_name: str
     time_created: datetime
     feedback_type: QAFeedbackType | Literal["mixed"] | None
-    groups: list[MinimalTeamspaceSnapshot] | None
+    teamspace: list[MinimalTeamspaceSnapshot] | None
 
 
 class ChatSessionSnapshot(BaseModel):
     id: int
     user_email: str
-    name: str | None
+    name: Optional[str] = None
     messages: list[MessageSnapshot]
     assistant_name: str
     time_created: datetime
-    groups: list[MinimalTeamspaceSnapshot] | None
+    teamspace: list[MinimalTeamspaceSnapshot] | None
 
 
 class QuestionAnswerPairSnapshot(BaseModel):
@@ -110,7 +111,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
     ai_response: str
     retrieved_documents: list[AbridgedSearchDoc]
     feedback_type: QAFeedbackType | None
-    feedback_text: str | None
+    feedback_text: Optional[str] = None
     assistant_name: str
     user_email: str
     time_created: datetime
@@ -372,7 +373,7 @@ def get_query_history_as_csv(
     # Create an in-memory text stream
     stream = io.StringIO()
     writer = csv.DictWriter(
-        stream, fieldnames=list(QuestionAnswerPairSnapshot.__fields__.keys())
+        stream, fieldnames=list(QuestionAnswerPairSnapshot.model_fields.keys())
     )
     writer.writeheader()
     for row in question_answer_pairs:

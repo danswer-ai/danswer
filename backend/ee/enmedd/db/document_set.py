@@ -73,7 +73,7 @@ def fetch_document_sets(
         .all()
     )
 
-    # Document sets via groups
+    # Document sets via teamspace
     # First, find the teamspaces the user belongs to
     teamspaces = (
         db_session.query(Teamspace)
@@ -82,21 +82,21 @@ def fetch_document_sets(
         .all()
     )
 
-    group_document_sets = []
-    for group in teamspaces:
-        group_document_sets.extend(
+    teamspace_document_sets = []
+    for teams in teamspaces:
+        teamspace_document_sets.extend(
             db_session.query(DocumentSet)
             .join(
                 DocumentSet__Teamspace,
                 DocumentSet.id == DocumentSet__Teamspace.document_set_id,
             )
-            .filter(DocumentSet__Teamspace.teamspace_id == group.id)
+            .filter(DocumentSet__Teamspace.teamspace_id == teams.id)
             .all()
         )
 
     # Combine and deduplicate document sets from all sources
     all_document_sets = list(
-        set(public_document_sets + shared_document_sets + group_document_sets)
+        set(public_document_sets + shared_document_sets + teamspace_document_sets)
     )
 
     document_set_with_cc_pairs: list[

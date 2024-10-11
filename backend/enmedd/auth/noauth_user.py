@@ -15,7 +15,7 @@ NO_AUTH_USER_PREFERENCES_KEY = "no_auth_user_preferences"
 def set_no_auth_user_preferences(
     store: DynamicConfigStore, preferences: UserPreferences
 ) -> None:
-    store.store(NO_AUTH_USER_PREFERENCES_KEY, preferences.dict())
+    store.store(NO_AUTH_USER_PREFERENCES_KEY, preferences.model_dump())
 
 
 def load_no_auth_user_preferences(store: DynamicConfigStore) -> UserPreferences:

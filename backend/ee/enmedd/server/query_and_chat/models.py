@@ -1,11 +1,25 @@
 from pydantic import BaseModel
+from pydantic import Field
 
+from ee.enmedd.server.manage.models import StandardAnswer
 from enmedd.configs.constants import DocumentSource
-from enmedd.db.enums import ChatSessionSharedStatus
+from enmedd.one_shot_answer.models import ThreadMessage
+from enmedd.search.enums import LLMEvaluationType
 from enmedd.search.enums import SearchType
 from enmedd.search.models import ChunkContext
+from enmedd.search.models import RerankingDetails
 from enmedd.search.models import RetrievalDetails
+from enmedd.search.models import SavedSearchDoc
 from enmedd.server.models import MinimalTeamspaceSnapshot
+
+
+class StandardAnswerRequest(BaseModel):
+    message: str
+    slack_bot_categories: list[str]
+
+
+class StandardAnswerResponse(BaseModel):
+    standard_answers: list[StandardAnswer] = Field(default_factory=list)
 
 
 class DocumentSearchRequest(ChunkContext):
@@ -13,9 +27,9 @@ class DocumentSearchRequest(ChunkContext):
     search_type: SearchType
     retrieval_options: RetrievalDetails
     recency_bias_multiplier: float = 1.0
-    # This is to forcibly skip (or run) the step, if None it uses the system defaults
-    skip_rerank: bool | None = None
-    skip_llm_chunk_filter: bool | None = None
+    evaluation_type: LLMEvaluationType
+    # None to use system defaults for reranking
+    rerank_settings: RerankingDetails | None = None
 
 
 class BasicCreateChatMessageRequest(ChunkContext):
@@ -35,29 +49,44 @@ class BasicCreateChatMessageRequest(ChunkContext):
     search_doc_ids: list[int] | None = None
 
 
+class BasicCreateChatMessageWithHistoryRequest(ChunkContext):
+    # Last element is the new query. All previous elements are historical context
+    messages: list[ThreadMessage]
+    prompt_id: int | None
+    persona_id: int
+    retrieval_options: RetrievalDetails | None = None
+    query_override: str | None = None
+    skip_rerank: bool | None = None
+    # If search_doc_ids provided, then retrieval options are unused
+    search_doc_ids: list[int] | None = None
+
+
 class SimpleDoc(BaseModel):
+    id: str
     semantic_identifier: str
     link: str | None
     blurb: str
     match_highlights: list[str]
     source_type: DocumentSource
+    metadata: dict | None
 
 
 class ChatBasicResponse(BaseModel):
     # This is built piece by piece, any of these can be None as the flow could break
     answer: str | None = None
     answer_citationless: str | None = None
-    simple_search_docs: list[SimpleDoc] | None = None
+
+    top_documents: list[SavedSearchDoc] | None = None
+
     error_msg: str | None = None
     message_id: int | None = None
+    llm_selected_doc_indices: list[int] | None = None
+    final_context_doc_indices: list[int] | None = None
+    # this is a map of the citation number to the document id
+    cited_documents: dict[int, str] | None = None
 
-
-class ChatSessionDetails(BaseModel):
-    id: int
-    description: str
-    assistant_id: int
-    time_created: str
-    shared_status: ChatSessionSharedStatus
-    folder_id: int | None
-    current_alternate_model: str | None = None
+    # FOR BACKWARDS COMPATIBILITY
+    # TODO: deprecate both of these
+    simple_search_docs: list[SimpleDoc] | None = None
+    llm_chunks_indices: list[int] | None = None
     groups: list[MinimalTeamspaceSnapshot] | None

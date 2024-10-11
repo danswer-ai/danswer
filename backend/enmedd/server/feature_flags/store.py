@@ -21,7 +21,7 @@ def load_feature_flags() -> FeatureFlags:
         )
     except ConfigNotFoundError:
         feature_flag = FeatureFlags()
-        dynamic_config_store.store(_FEATURE_FLAG_KEY, feature_flag.dict())
+        dynamic_config_store.store(_FEATURE_FLAG_KEY, feature_flag.model_dump())
 
     return feature_flag
 
@@ -30,4 +30,4 @@ def store_feature_flags(
     feature_flag: FeatureFlags, _: User | None = Depends(current_admin_user)
 ) -> None:
     logger.info("Updating feature flag values")
-    get_dynamic_config_store().store(_FEATURE_FLAG_KEY, feature_flag.dict())
+    get_dynamic_config_store().store(_FEATURE_FLAG_KEY, feature_flag.model_dump())

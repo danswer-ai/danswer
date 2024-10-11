@@ -1,27 +1,84 @@
 from collections.abc import Sequence
 from operator import and_
-from typing import Optional
 from uuid import UUID
 
+from fastapi import HTTPException
+from sqlalchemy import delete
 from sqlalchemy import func
+from sqlalchemy import Select
 from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
+from ee.enmedd.server.teamspace.models import SetCuratorRequest
 from ee.enmedd.server.teamspace.models import TeamspaceCreate
 from ee.enmedd.server.teamspace.models import TeamspaceUpdate
 from enmedd.auth.schemas import UserRole
+from enmedd.db.connector_credential_pair import get_connector_credential_pair_from_id
+from enmedd.db.enums import ConnectorCredentialPairStatus
 from enmedd.db.models import Assistant__Teamspace
 from enmedd.db.models import ConnectorCredentialPair
+from enmedd.db.models import Credential__Teamspace
 from enmedd.db.models import Document
 from enmedd.db.models import DocumentByConnectorCredentialPair
 from enmedd.db.models import DocumentSet__Teamspace
+from enmedd.db.models import LLMProvider__Teamspace
 from enmedd.db.models import Teamspace
 from enmedd.db.models import Teamspace__ConnectorCredentialPair
 from enmedd.db.models import TokenRateLimit__Teamspace
 from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
 from enmedd.db.models import Workspace__Teamspace
-from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
+from enmedd.db.users import fetch_user_by_id
+from enmedd.utils.logger import setup_logger
+
+logger = setup_logger()
+
+# TODO: organize; segregate all the utils / helper functions from the main db-interacting
+
+
+def validate_user_creation_permissions(
+    db_session: Session,
+    user: User | None,
+    target_group_ids: list[int] | None,
+    object_is_public: bool | None,
+) -> None:
+    """
+    All admin actions are allowed.
+    Prevents non-admins from creating/editing:
+    - public objects
+    - objects with no groups
+    - objects that belong to a group they don't curate
+    """
+    if not user or user.role == UserRole.ADMIN:
+        return
+
+    if object_is_public:
+        detail = "User does not have permission to create public credentials"
+        logger.error(detail)
+        raise HTTPException(
+            status_code=400,
+            detail=detail,
+        )
+    if not target_group_ids:
+        detail = "Curators must specify 1+ groups"
+        logger.error(detail)
+        raise HTTPException(
+            status_code=400,
+            detail=detail,
+        )
+    user_curated_groups = fetch_teamspaces_for_user(
+        db_session=db_session, user_id=user.id, only_curator_groups=True
+    )
+    user_curated_group_ids = set([group.id for group in user_curated_groups])
+    target_group_ids_set = set(target_group_ids)
+    if not target_group_ids_set.issubset(user_curated_group_ids):
+        detail = "Curators cannot control groups they don't curate"
+        logger.error(detail)
+        raise HTTPException(
+            status_code=400,
+            detail=detail,
+        )
 
 
 def fetch_teamspace(db_session: Session, teamspace_id: int) -> Teamspace | None:
@@ -30,16 +87,31 @@ def fetch_teamspace(db_session: Session, teamspace_id: int) -> Teamspace | None:
 
 
 def fetch_teamspaces(
-    db_session: Session, only_current: bool = True
+    db_session: Session, only_up_to_date: bool = True
 ) -> Sequence[Teamspace]:
+    """
+    Fetches teamspaces from the database.
+
+    This function retrieves a sequence of `Teamspace` objects from the database.
+    If `only_up_to_date` is set to `True`, it filters the teamspaces to return only those
+    that are marked as up-to-date (`is_up_to_date` is `True`).
+
+    Args:
+        db_session (Session): The SQLAlchemy session used to query the database.
+        only_up_to_date (bool, optional): Flag to determine whether to filter the results
+            to include only up to date teamspaces. Defaults to `True`.
+
+    Returns:
+        Sequence[Teamspace]: A sequence of `Teamspace` objects matching the query criteria.
+    """
     stmt = select(Teamspace)
-    if only_current:
+    if only_up_to_date:
         stmt = stmt.where(Teamspace.is_up_to_date == True)  # noqa: E712
     return db_session.scalars(stmt).all()
 
 
 def fetch_teamspaces_for_user(
-    db_session: Session, user_id: UUID
+    db_session: Session, user_id: UUID, only_curator_groups: bool = False
 ) -> Sequence[Teamspace]:
     stmt = (
         select(Teamspace)
@@ -47,7 +119,45 @@ def fetch_teamspaces_for_user(
         .join(User, User.id == User__Teamspace.user_id)  # type: ignore
         .where(User.id == user_id)  # type: ignore
     )
+    if only_curator_groups:
+        stmt = stmt.where(User__Teamspace.is_curator == True)  # noqa: E712
     return db_session.scalars(stmt).all()
+
+
+def construct_document_select_by_teamspace(
+    teamspace_id: int,
+) -> Select:
+    """This returns a statement that should be executed using
+    .yield_per() to minimize overhead. The primary consumers of this function
+    are background processing task generators."""
+    stmt = (
+        select(Document)
+        .join(
+            DocumentByConnectorCredentialPair,
+            Document.id == DocumentByConnectorCredentialPair.id,
+        )
+        .join(
+            ConnectorCredentialPair,
+            and_(
+                DocumentByConnectorCredentialPair.connector_id
+                == ConnectorCredentialPair.connector_id,
+                DocumentByConnectorCredentialPair.credential_id
+                == ConnectorCredentialPair.credential_id,
+            ),
+        )
+        .join(
+            Teamspace__ConnectorCredentialPair,
+            Teamspace__ConnectorCredentialPair.cc_pair_id == ConnectorCredentialPair.id,
+        )
+        .join(
+            Teamspace,
+            Teamspace__ConnectorCredentialPair.teamspace_id == Teamspace.id,
+        )
+        .where(Teamspace.id == teamspace_id)
+        .order_by(Document.id)
+    )
+    stmt = stmt.distinct()
+    return stmt
 
 
 def fetch_documents_for_teamspace_paginated(
@@ -94,8 +204,7 @@ def fetch_documents_for_teamspace_paginated(
 def fetch_teamspaces_for_documents(
     db_session: Session,
     document_ids: list[str],
-    cc_pair_to_delete: ConnectorCredentialPairIdentifier | None = None,
-) -> Sequence[tuple[int, list[str]]]:
+) -> Sequence[tuple[str, list[str]]]:
     stmt = (
         select(Document.id, func.array_agg(Teamspace.name))
         .join(
@@ -118,18 +227,11 @@ def fetch_teamspaces_for_documents(
         .join(Document, Document.id == DocumentByConnectorCredentialPair.id)
         .where(Document.id.in_(document_ids))
         .where(Teamspace__ConnectorCredentialPair.is_current == True)  # noqa: E712
+        # don't include CC pairs that are being deleted
+        # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
+        .where(ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING)
         .group_by(Document.id)
     )
-
-    # pretend that the specified cc pair doesn't exist
-    if cc_pair_to_delete is not None:
-        stmt = stmt.where(
-            and_(
-                ConnectorCredentialPair.connector_id != cc_pair_to_delete.connector_id,
-                ConnectorCredentialPair.credential_id
-                != cc_pair_to_delete.credential_id,
-            )
-        )
 
     return db_session.execute(stmt).all()  # type: ignore
 
@@ -143,24 +245,11 @@ def _check_teamspace_is_modifiable(teamspace: Teamspace) -> None:
 
 
 def _add_user__teamspace_relationships__no_commit(
-    db_session: Session,
-    teamspace_id: int,
-    user_ids: list[UUID],
-    creator_id: Optional[UUID] = None,
+    db_session: Session, teamspace_id: int, user_ids: list[UUID]
 ) -> list[User__Teamspace]:
     """NOTE: does not commit the transaction."""
-    if creator_id is None:
-        return []
-
-    # if creator_id not in user_ids:
-    #     user_ids.append(creator_id)
-
     relationships = [
-        User__Teamspace(
-            user_id=user_id,
-            teamspace_id=teamspace_id,
-            role=UserRole.ADMIN if user_id == creator_id else UserRole.BASIC,
-        )
+        User__Teamspace(user_id=user_id, teamspace_id=teamspace_id)
         for user_id in user_ids
     ]
     db_session.add_all(relationships)
@@ -179,6 +268,144 @@ def _add_teamspace__cc_pair_relationships__no_commit(
     ]
     db_session.add_all(relationships)
     return relationships
+
+
+def _cleanup_user__teamspace_relationships__no_commit(
+    db_session: Session,
+    teamspace_id: int,
+    user_ids: list[UUID] | None = None,
+) -> None:
+    """NOTE: does not commit the transaction."""
+    where_clause = User__Teamspace.teamspace_id == teamspace_id
+    if user_ids:
+        where_clause &= User__Teamspace.user_id.in_(user_ids)
+
+    user__teamspace_relationships = db_session.scalars(
+        select(User__Teamspace).where(where_clause)
+    ).all()
+    for user__teamspace_relationship in user__teamspace_relationships:
+        db_session.delete(user__teamspace_relationship)
+
+
+def _cleanup_credential__teamspace_relationships__no_commit(
+    db_session: Session,
+    teamspace_id: int,
+) -> None:
+    """NOTE: does not commit the transaction."""
+    db_session.query(Credential__Teamspace).filter(
+        Credential__Teamspace.teamspace_id == teamspace_id
+    ).delete(synchronize_session=False)
+
+
+def _cleanup_llm_provider__teamspace_relationships__no_commit(
+    db_session: Session, teamspace_id: int
+) -> None:
+    """NOTE: does not commit the transaction."""
+    db_session.query(LLMProvider__Teamspace).filter(
+        LLMProvider__Teamspace.teamspace_id == teamspace_id
+    ).delete(synchronize_session=False)
+
+
+def _mark_teamspace__cc_pair_relationships_outdated__no_commit(
+    db_session: Session, teamspace_id: int
+) -> None:
+    """NOTE: does not commit the transaction."""
+    teamspace__cc_pair_relationships = db_session.scalars(
+        select(Teamspace__ConnectorCredentialPair).where(
+            Teamspace__ConnectorCredentialPair.teamspace_id == teamspace_id
+        )
+    )
+    for teamspace__cc_pair_relationship in teamspace__cc_pair_relationships:
+        teamspace__cc_pair_relationship.is_current = False
+
+
+def _validate_curator_status__no_commit(
+    db_session: Session,
+    users: list[User],
+) -> None:
+    for user in users:
+        # Check if the user is a curator in any of their groups
+        curator_relationships = (
+            db_session.query(User__Teamspace)
+            .filter(
+                User__Teamspace.user_id == user.id,
+                User__Teamspace.is_curator == True,  # noqa: E712
+            )
+            .all()
+        )
+
+        if curator_relationships:
+            user.role = UserRole.CURATOR
+        elif user.role == UserRole.CURATOR:
+            user.role = UserRole.BASIC
+        db_session.add(user)
+
+
+def remove_curator_status__no_commit(db_session: Session, user: User) -> None:
+    stmt = (
+        update(User__Teamspace)
+        .where(User__Teamspace.user_id == user.id)
+        .values(is_curator=False)
+    )
+    db_session.execute(stmt)
+    _validate_curator_status__no_commit(db_session, [user])
+
+
+def update_user_curator_relationship(
+    db_session: Session,
+    teamspace_id: int,
+    set_curator_request: SetCuratorRequest,
+) -> None:
+    user = fetch_user_by_id(db_session, set_curator_request.user_id)
+    if not user:
+        raise ValueError(f"User with id '{set_curator_request.user_id}' not found")
+    requested_teamspace = fetch_teamspaces_for_user(
+        db_session=db_session,
+        user_id=set_curator_request.user_id,
+        only_curator_groups=False,
+    )
+
+    group_ids = [group.id for group in requested_teamspace]
+    if teamspace_id not in group_ids:
+        raise ValueError(f"user is not in group '{teamspace_id}'")
+
+    relationship_to_update = (
+        db_session.query(User__Teamspace)
+        .filter(
+            User__Teamspace.teamspace_id == teamspace_id,
+            User__Teamspace.user_id == set_curator_request.user_id,
+        )
+        .first()
+    )
+
+    if relationship_to_update:
+        relationship_to_update.is_curator = set_curator_request.is_curator
+    else:
+        relationship_to_update = User__Teamspace(
+            teamspace_id=teamspace_id,
+            user_id=set_curator_request.user_id,
+            is_curator=True,
+        )
+        db_session.add(relationship_to_update)
+
+    _validate_curator_status__no_commit(db_session, [user])
+    db_session.commit()
+
+
+def _cleanup_teamspace__cc_pair_relationships__no_commit(
+    db_session: Session, teamspace_id: int, outdated_only: bool
+) -> None:
+    """NOTE: does not commit the transaction."""
+    stmt = select(Teamspace__ConnectorCredentialPair).where(
+        Teamspace__ConnectorCredentialPair.teamspace_id == teamspace_id
+    )
+    if outdated_only:
+        stmt = stmt.where(
+            Teamspace__ConnectorCredentialPair.is_current == False  # noqa: E712
+        )
+    teamspace__cc_pair_relationships = db_session.scalars(stmt)
+    for teamspace__cc_pair_relationship in teamspace__cc_pair_relationships:
+        db_session.delete(teamspace__cc_pair_relationship)
 
 
 def _add_teamspace__document_set_relationships__no_commit(
@@ -254,30 +481,6 @@ def insert_teamspace(
     return db_teamspace
 
 
-def _cleanup_user__teamspace_relationships__no_commit(
-    db_session: Session, teamspace_id: int
-) -> None:
-    """NOTE: does not commit the transaction."""
-    user__teamspace_relationships = db_session.scalars(
-        select(User__Teamspace).where(User__Teamspace.teamspace_id == teamspace_id)
-    ).all()
-    for user__teamspace_relationship in user__teamspace_relationships:
-        db_session.delete(user__teamspace_relationship)
-
-
-def _mark_teamspace__cc_pair_relationships_outdated__no_commit(
-    db_session: Session, teamspace_id: int
-) -> None:
-    """NOTE: does not commit the transaction."""
-    teamspace__cc_pair_relationships = db_session.scalars(
-        select(Teamspace__ConnectorCredentialPair).where(
-            Teamspace__ConnectorCredentialPair.teamspace_id == teamspace_id
-        )
-    )
-    for teamspace__cc_pair_relationship in teamspace__cc_pair_relationships:
-        teamspace__cc_pair_relationship.is_current = False
-
-
 def _mark_teamspace__document_set_relationships_outdated__no_commit(
     db_session: Session, teamspace_id: int
 ) -> None:
@@ -305,8 +508,15 @@ def _mark_teamspace__assistant_relationships_outdated__no_commit(
 
 
 def update_teamspace(
-    db_session: Session, teamspace_id: int, teamspace: TeamspaceUpdate
+    db_session: Session,
+    user: User | None,
+    teamspace_id: int,
+    teamspace_update: TeamspaceUpdate,
 ) -> Teamspace:
+    """If successful, this can set db_teamspace.is_up_to_date = False.
+    That will be processed by check_for_vespa_teamspace_sync_task and trigger
+    a long running background sync to Vespa.
+    """
     stmt = select(Teamspace).where(Teamspace.id == teamspace_id)
     db_teamspace = db_session.scalar(stmt)
     if db_teamspace is None:
@@ -314,28 +524,42 @@ def update_teamspace(
 
     _check_teamspace_is_modifiable(db_teamspace)
 
-    cc_pairs_updated = set([cc_pair.id for cc_pair in db_teamspace.cc_pairs]) != set(
-        teamspace.cc_pair_ids
-    )
-    document_set_updated = set(
-        [document_set.id for document_set in db_teamspace.document_sets]
-    ) != set(teamspace.document_set_ids)
-    assistant_updated = set(
-        [assistant.id for assistant in db_teamspace.assistants]
-    ) != set(teamspace.assistant_ids)
-    users_updated = set([user.id for user in db_teamspace.users]) != set(
-        teamspace.user_ids
-    )
+    current_user_ids = set([user.id for user in db_teamspace.users])
+    updated_user_ids = set(teamspace_update.user_ids)
+    added_user_ids = list(updated_user_ids - current_user_ids)
+    removed_user_ids = list(current_user_ids - updated_user_ids)
 
-    if users_updated:
+    # LEAVING THIS HERE FOR NOW FOR GIVING DIFFERENT ROLES
+    # ACCESS TO DIFFERENT PERMISSIONS
+    # if (removed_user_ids or added_user_ids) and (
+    #     not user or user.role != UserRole.ADMIN
+    # ):
+    #     raise ValueError("Only admins can add or remove users from teamspaces")
+
+    if removed_user_ids:
         _cleanup_user__teamspace_relationships__no_commit(
-            db_session=db_session, teamspace_id=teamspace_id
+            db_session=db_session,
+            teamspace_id=teamspace_id,
+            user_ids=removed_user_ids,
         )
+
+    if added_user_ids:
         _add_user__teamspace_relationships__no_commit(
             db_session=db_session,
             teamspace_id=teamspace_id,
-            user_ids=teamspace.user_ids,
+            user_ids=added_user_ids,
         )
+
+    cc_pairs_updated = set([cc_pair.id for cc_pair in db_teamspace.cc_pairs]) != set(
+        teamspace_update.cc_pair_ids
+    )
+    document_set_updated = set(
+        [document_set.id for document_set in db_teamspace.document_sets]
+    ) != set(teamspace_update.document_set_ids)
+    assistant_updated = set(
+        [assistant.id for assistant in db_teamspace.assistants]
+    ) != set(teamspace_update.assistant_ids)
+
     if cc_pairs_updated:
         _mark_teamspace__cc_pair_relationships_outdated__no_commit(
             db_session=db_session, teamspace_id=teamspace_id
@@ -343,8 +567,13 @@ def update_teamspace(
         _add_teamspace__cc_pair_relationships__no_commit(
             db_session=db_session,
             teamspace_id=db_teamspace.id,
-            cc_pair_ids=teamspace.cc_pair_ids,
+            cc_pair_ids=teamspace_update.cc_pair_ids,
         )
+
+    # only needs to sync with Vespa if the cc_pairs have been updated
+    if cc_pairs_updated:
+        db_teamspace.is_up_to_date = False
+
     if document_set_updated:
         _mark_teamspace__document_set_relationships_outdated__no_commit(
             db_session=db_session, teamspace_id=teamspace_id
@@ -352,7 +581,7 @@ def update_teamspace(
         _add_teamspace__document_set_relationships__no_commit(
             db_session=db_session,
             teamspace_id=db_teamspace.id,
-            document_set_id=teamspace.document_set_ids,
+            document_set_id=teamspace_update.document_set_ids,
         )
     if assistant_updated:
         _mark_teamspace__assistant_relationships_outdated__no_commit(
@@ -361,13 +590,14 @@ def update_teamspace(
         _add_teamspace__assistant_relationships__no_commit(
             db_session=db_session,
             teamspace_id=db_teamspace.id,
-            assistant_id=teamspace.assistant_ids,
+            assistant_id=teamspace_update.assistant_ids,
         )
 
-    # only needs to sync with Vespa if the cc_pairs have been updated
-    if cc_pairs_updated:
-        db_teamspace.is_up_to_date = False
-
+    removed_users = db_session.scalars(
+        select(User).where(User.id.in_(removed_user_ids))  # type: ignore
+    ).unique()
+    # TODO: remove this
+    _validate_curator_status__no_commit(db_session, list(removed_users))
     db_session.commit()
     return db_teamspace
 
@@ -395,6 +625,9 @@ def prepare_teamspace_for_deletion(db_session: Session, teamspace_id: int) -> No
 
     _check_teamspace_is_modifiable(db_teamspace)
 
+    _cleanup_credential__teamspace_relationships__no_commit(
+        db_session=db_session, teamspace_id=teamspace_id
+    )
     _cleanup_user__teamspace_relationships__no_commit(
         db_session=db_session, teamspace_id=teamspace_id
     )
@@ -426,6 +659,17 @@ def _cleanup_teamspace__cc_pair_relationships__no_commit(
         db_session.delete(teamspace__cc_pair_relationship)
 
 
+def _cleanup_document_set__teamspace_relationships__no_commit(
+    db_session: Session, teamspace_id: int
+) -> None:
+    """NOTE: does not commit the transaction."""
+    db_session.execute(
+        delete(DocumentSet__Teamspace).where(
+            DocumentSet__Teamspace.teamspace_id == teamspace_id
+        )
+    )
+
+
 def mark_teamspace_as_synced(db_session: Session, teamspace: Teamspace) -> None:
     # cleanup outdated relationships
     _cleanup_teamspace__cc_pair_relationships__no_commit(
@@ -436,6 +680,11 @@ def mark_teamspace_as_synced(db_session: Session, teamspace: Teamspace) -> None:
 
 
 def delete_teamspace(db_session: Session, teamspace: Teamspace) -> None:
+    # TODO: add cleaning up of chat sessions, folders, and assistants. if not, just add cascade delete
+
+    _cleanup_llm_provider__teamspace_relationships__no_commit(
+        db_session=db_session, teamspace_id=teamspace.id
+    )
     _cleanup_user__teamspace_relationships__no_commit(
         db_session=db_session, teamspace_id=teamspace.id
     )
@@ -444,9 +693,34 @@ def delete_teamspace(db_session: Session, teamspace: Teamspace) -> None:
         teamspace_id=teamspace.id,
         outdated_only=False,
     )
+    _cleanup_document_set__teamspace_relationships__no_commit(
+        db_session=db_session, teamspace_id=teamspace.id
+    )
 
     # need to flush so that we don't get a foreign key error when deleting the teamspace row
     db_session.flush()
 
     db_session.delete(teamspace)
     db_session.commit()
+
+
+def delete_teamspace_cc_pair_relationship__no_commit(
+    cc_pair_id: int, db_session: Session
+) -> None:
+    """Deletes all rows from Teamspace__ConnectorCredentialPair where the
+    connector_credential_pair_id matches the given cc_pair_id.
+
+    Should be used very carefully (only for connectors that are being deleted)."""
+    cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+    if not cc_pair:
+        raise ValueError(f"Connector Credential Pair '{cc_pair_id}' does not exist")
+
+    if cc_pair.status != ConnectorCredentialPairStatus.DELETING:
+        raise ValueError(
+            f"Connector Credential Pair '{cc_pair_id}' is not in the DELETING state"
+        )
+
+    delete_stmt = delete(Teamspace__ConnectorCredentialPair).where(
+        Teamspace__ConnectorCredentialPair.cc_pair_id == cc_pair_id,
+    )
+    db_session.execute(delete_stmt)

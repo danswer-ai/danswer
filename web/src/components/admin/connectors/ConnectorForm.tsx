@@ -102,7 +102,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   const { mutate } = useSWRConfig();
   const { toast } = useToast();
 
-  // only show this option for EE, since groups are not supported in CE
+  // only show this option for EE, since teamspace are not supported in CE
   const showNonPublicOption = usePaidEnterpriseFeaturesEnabled();
 
   const shouldHaveNameInput = credentialId !== undefined && !ccPairNameBuilder;

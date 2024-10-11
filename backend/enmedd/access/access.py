@@ -1,41 +1,92 @@
 from sqlalchemy.orm import Session
 
 from enmedd.access.models import DocumentAccess
-from enmedd.access.utils import prefix_user
+from enmedd.access.utils import prefix_user_email
 from enmedd.configs.constants import PUBLIC_DOC_PAT
-from enmedd.db.document import get_acccess_info_for_documents
+from enmedd.db.document import get_access_info_for_document
+from enmedd.db.document import get_access_info_for_documents
 from enmedd.db.models import User
-from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
 from enmedd.utils.variable_functionality import fetch_versioned_implementation
+
+
+def _get_access_for_document(
+    document_id: str,
+    db_session: Session,
+) -> DocumentAccess:
+    info = get_access_info_for_document(
+        db_session=db_session,
+        document_id=document_id,
+    )
+
+    return DocumentAccess.build(
+        user_emails=info[1] if info and info[1] else [],
+        teamspaces=[],
+        external_user_emails=[],
+        external_teamspace_ids=[],
+        is_public=info[2] if info else False,
+    )
+
+
+def get_access_for_document(
+    document_id: str,
+    db_session: Session,
+) -> DocumentAccess:
+    versioned_get_access_for_document_fn = fetch_versioned_implementation(
+        "enmedd.access.access", "_get_access_for_document"
+    )
+    return versioned_get_access_for_document_fn(document_id, db_session)  # type: ignore
+
+
+def get_null_document_access() -> DocumentAccess:
+    return DocumentAccess(
+        user_emails=set(),
+        teamspaces=set(),
+        is_public=False,
+        external_user_emails=set(),
+        external_teamspace_ids=set(),
+    )
 
 
 def _get_access_for_documents(
     document_ids: list[str],
     db_session: Session,
-    cc_pair_to_delete: ConnectorCredentialPairIdentifier | None = None,
 ) -> dict[str, DocumentAccess]:
-    document_access_info = get_acccess_info_for_documents(
+    document_access_info = get_access_info_for_documents(
         db_session=db_session,
         document_ids=document_ids,
-        cc_pair_to_delete=cc_pair_to_delete,
     )
-    return {
-        document_id: DocumentAccess.build(user_ids, [], is_public)
-        for document_id, user_ids, is_public in document_access_info
+    doc_access = {
+        document_id: DocumentAccess(
+            user_emails=set([email for email in user_emails if email]),
+            # MIT version will wipe all teamspaces and external teamspaces on update
+            teamspaces=set(),
+            is_public=is_public,
+            external_user_emails=set(),
+            external_teamspace_ids=set(),
+        )
+        for document_id, user_emails, is_public in document_access_info
     }
+
+    # Sometimes the document has not be indexed by the indexing job yet, in those cases
+    # the document does not exist and so we use least permissive. Specifically the EE version
+    # checks the MIT version permissions and creates a superset. This ensures that this flow
+    # does not fail even if the Document has not yet been indexed.
+    for doc_id in document_ids:
+        if doc_id not in doc_access:
+            doc_access[doc_id] = get_null_document_access()
+    return doc_access
 
 
 def get_access_for_documents(
     document_ids: list[str],
     db_session: Session,
-    cc_pair_to_delete: ConnectorCredentialPairIdentifier | None = None,
 ) -> dict[str, DocumentAccess]:
     """Fetches all access information for the given documents."""
     versioned_get_access_for_documents_fn = fetch_versioned_implementation(
         "enmedd.access.access", "_get_access_for_documents"
     )
     return versioned_get_access_for_documents_fn(
-        document_ids, db_session, cc_pair_to_delete
+        document_ids, db_session
     )  # type: ignore
 
 
@@ -46,7 +97,7 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
     matches one entry in the returned set.
     """
     if user:
-        return {prefix_user(str(user.id)), PUBLIC_DOC_PAT}
+        return {prefix_user_email(user.email), PUBLIC_DOC_PAT}
     return {PUBLIC_DOC_PAT}
 
 

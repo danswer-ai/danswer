@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from ee.enmedd.db.teamspace import fetch_teamspaces_for_documents
 from ee.enmedd.db.teamspace import fetch_teamspaces_for_user
 from enmedd.access.access import (
-    _get_access_for_documents as get_access_for_documents_without_groups,
+    _get_access_for_documents as get_access_for_documents_without_teamspace,
 )
-from enmedd.access.access import _get_acl_for_user as get_acl_for_user_without_groups
+from enmedd.access.access import _get_acl_for_user as get_acl_for_user_without_teamspace
 from enmedd.access.models import DocumentAccess
 from enmedd.access.utils import prefix_teamspace
 from enmedd.db.models import User
@@ -17,7 +17,7 @@ def _get_access_for_documents(
     db_session: Session,
     cc_pair_to_delete: ConnectorCredentialPairIdentifier | None,
 ) -> dict[str, DocumentAccess]:
-    non_ee_access_dict = get_access_for_documents_without_groups(
+    non_ee_access_dict = get_access_for_documents_without_teamspace(
         document_ids=document_ids,
         db_session=db_session,
         cc_pair_to_delete=cc_pair_to_delete,
@@ -51,5 +51,5 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
     DO NOT REMOVE."""
     teamspaces = fetch_teamspaces_for_user(db_session, user.id) if user else []
     return set([prefix_teamspace(teamspace.name) for teamspace in teamspaces]).union(
-        get_acl_for_user_without_groups(user, db_session)
+        get_acl_for_user_without_teamspace(user, db_session)
     )

@@ -74,7 +74,7 @@ def stream_query_answerability(
             QueryValidationResponse(
                 reasoning="Query Answerability Evaluation feature is turned off",
                 answerable=True,
-            ).dict()
+            ).model_dump()
         )
         return
 
@@ -85,7 +85,7 @@ def stream_query_answerability(
             QueryValidationResponse(
                 reasoning="Generative AI is turned off - skipping check",
                 answerable=True,
-            ).dict()
+            ).model_dump()
         )
         return
     messages = get_query_validation_messages(user_query)
@@ -106,25 +106,31 @@ def stream_query_answerability(
                 reason_ind = model_output.find(THOUGHT_PAT.upper())
                 remaining = model_output[reason_ind + len(THOUGHT_PAT.upper()) :]
                 if remaining:
-                    yield get_json_line(AnswerPiece(answer_piece=remaining).dict())
+                    yield get_json_line(
+                        AnswerPiece(answer_piece=remaining).model_dump()
+                    )
                 continue
 
             if reasoning_pat_found:
                 hold_answerable = hold_answerable + token
                 if hold_answerable == ANSWERABLE_PAT.upper()[: len(hold_answerable)]:
                     continue
-                yield get_json_line(AnswerPiece(answer_piece=hold_answerable).dict())
+                yield get_json_line(
+                    AnswerPiece(answer_piece=hold_answerable).model_dump()
+                )
                 hold_answerable = ""
 
         reasoning = extract_answerability_reasoning(model_output)
         answerable = extract_answerability_bool(model_output)
 
         yield get_json_line(
-            QueryValidationResponse(reasoning=reasoning, answerable=answerable).dict()
+            QueryValidationResponse(
+                reasoning=reasoning, answerable=answerable
+            ).model_dump()
         )
     except Exception as e:
         # exception is logged in the answer_question method, no need to re-log
         error = StreamingError(error=str(e))
-        yield get_json_line(error.dict())
+        yield get_json_line(error.model_dump())
         logger.exception("Failed to validate Query")
     return

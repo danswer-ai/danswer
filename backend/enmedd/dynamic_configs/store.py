@@ -5,17 +5,14 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import cast
 
-from dotenv import load_dotenv
 from filelock import FileLock
 from sqlalchemy.orm import Session
 
-from enmedd.db.engine import SessionFactory
+from enmedd.db.engine import get_session_factory
 from enmedd.db.models import KVStore
 from enmedd.dynamic_configs.interface import ConfigNotFoundError
 from enmedd.dynamic_configs.interface import DynamicConfigStore
 from enmedd.dynamic_configs.interface import JSON_ro
-
-load_dotenv()
 
 
 FILE_LOCK_TIMEOUT = 10
@@ -59,7 +56,8 @@ class FileSystemBackedDynamicConfigStore(DynamicConfigStore):
 class PostgresBackedDynamicConfigStore(DynamicConfigStore):
     @contextmanager
     def get_session(self) -> Iterator[Session]:
-        session: Session = SessionFactory()
+        factory = get_session_factory()
+        session: Session = factory()
         try:
             yield session
         finally:

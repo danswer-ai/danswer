@@ -5,7 +5,6 @@ from typing import Any
 from typing import cast
 
 import litellm  # type: ignore
-from dotenv import load_dotenv
 from httpx import RemoteProtocolError
 from langchain.schema.language_model import LanguageModelInput
 from langchain_core.messages import AIMessage
@@ -24,18 +23,13 @@ from langchain_core.messages.tool import ToolCallChunk
 from langchain_core.messages.tool import ToolMessage
 
 from enmedd.configs.app_configs import LOG_ALL_MODEL_INTERACTIONS
+from enmedd.configs.app_configs import LOG_DANSWER_MODEL_INTERACTIONS
 from enmedd.configs.model_configs import DISABLE_LITELLM_STREAMING
-from enmedd.configs.model_configs import GEN_AI_API_ENDPOINT
-from enmedd.configs.model_configs import GEN_AI_API_VERSION
-from enmedd.configs.model_configs import GEN_AI_LLM_PROVIDER_TYPE
-from enmedd.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from enmedd.configs.model_configs import GEN_AI_TEMPERATURE
 from enmedd.llm.interfaces import LLM
 from enmedd.llm.interfaces import LLMConfig
 from enmedd.llm.interfaces import ToolChoiceOptions
 from enmedd.utils.logger import setup_logger
-
-load_dotenv()
 
 
 logger = setup_logger()
@@ -44,6 +38,8 @@ logger = setup_logger()
 # parameters like frequency and presence, just ignore them
 litellm.drop_params = True
 litellm.telemetry = False
+
+litellm.set_verbose = LOG_ALL_MODEL_INTERACTIONS
 
 
 def _base_msg_to_role(msg: BaseMessage) -> str:
@@ -62,13 +58,13 @@ def _convert_litellm_message_to_langchain_message(
     litellm_message: litellm.Message,
 ) -> BaseMessage:
     # Extracting the basic attributes from the litellm message
-    content = litellm_message.content
+    content = litellm_message.content or ""
     role = litellm_message.role
 
     # Handling function calls and tool calls if present
     tool_calls = (
         cast(
-            list[litellm.utils.ChatCompletionMessageToolCall],
+            list[litellm.ChatCompletionMessageToolCall],
             litellm_message.tool_calls,
         )
         if hasattr(litellm_message, "tool_calls")
@@ -87,7 +83,7 @@ def _convert_litellm_message_to_langchain_message(
                     "args": json.loads(tool_call.function.arguments),
                     "id": tool_call.id,
                 }
-                for tool_call in tool_calls
+                for tool_call in (tool_calls if tool_calls else [])
             ],
         )
     elif role == "system":
@@ -142,7 +138,9 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
 
 
 def _convert_delta_to_message_chunk(
-    _dict: dict[str, Any], curr_msg: BaseMessage | None
+    _dict: dict[str, Any],
+    curr_msg: BaseMessage | None,
+    stop_reason: str | None = None,
 ) -> BaseMessageChunk:
     """Adapted from langchain_community.chat_models.litellm._convert_delta_to_message_chunk"""
     role = _dict.get("role") or (_base_msg_to_role(curr_msg) if curr_msg else None)
@@ -167,12 +165,23 @@ def _convert_delta_to_message_chunk(
                 args=tool_call.function.arguments,
                 index=0,  # only support a single tool call atm
             )
+
             return AIMessageChunk(
                 content=content,
-                additional_kwargs=additional_kwargs,
                 tool_call_chunks=[tool_call_chunk],
+                additional_kwargs={
+                    "usage_metadata": {"stop": stop_reason},
+                    **additional_kwargs,
+                },
             )
-        return AIMessageChunk(content=content, additional_kwargs=additional_kwargs)
+
+        return AIMessageChunk(
+            content=content,
+            additional_kwargs={
+                "usage_metadata": {"stop": stop_reason},
+                **additional_kwargs,
+            },
+        )
     elif role == "system":
         return SystemMessageChunk(content=content)
     elif role == "function":
@@ -193,10 +202,10 @@ class DefaultMultiLLM(LLM):
         timeout: int,
         model_provider: str,
         model_name: str,
-        api_base: str | None = GEN_AI_API_ENDPOINT,
-        api_version: str | None = GEN_AI_API_VERSION,
-        max_output_tokens: int | None = GEN_AI_MAX_OUTPUT_TOKENS,
-        custom_llm_provider: str | None = GEN_AI_LLM_PROVIDER_TYPE,
+        api_base: str | None = None,
+        api_version: str | None = None,
+        max_output_tokens: int | None = None,
+        custom_llm_provider: str | None = None,
         temperature: float = GEN_AI_TEMPERATURE,
         custom_config: dict[str, str] | None = None,
         extra_headers: dict[str, str] | None = None,
@@ -321,7 +330,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
     ) -> BaseMessage:
-        if LOG_ALL_MODEL_INTERACTIONS:
+        if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
 
         response = cast(
@@ -339,7 +348,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
     ) -> Iterator[BaseMessage]:
-        if LOG_ALL_MODEL_INTERACTIONS:
+        if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
 
         if DISABLE_LITELLM_STREAMING:
@@ -375,7 +384,7 @@ class DefaultMultiLLM(LLM):
                 "The AI model failed partway through generation, please try again."
             )
 
-        if LOG_ALL_MODEL_INTERACTIONS and output:
+        if LOG_DANSWER_MODEL_INTERACTIONS and output:
             content = output.content or ""
             if isinstance(output, AIMessage):
                 if content:

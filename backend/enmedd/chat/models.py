@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from datetime import datetime
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
@@ -9,6 +10,7 @@ from enmedd.search.enums import QueryFlow
 from enmedd.search.enums import SearchType
 from enmedd.search.models import RetrievalDocs
 from enmedd.search.models import SearchResponse
+from enmedd.tools.custom.base_tool_types import ToolResultType
 
 
 class LlmDoc(BaseModel):
@@ -34,20 +36,55 @@ class QADocsResponse(RetrievalDocs):
     applied_time_cutoff: datetime | None
     recency_bias_multiplier: float
 
-    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
-        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+    def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().model_dump(mode="json", *args, **kwargs)  # type: ignore
         initial_dict["applied_time_cutoff"] = (
             self.applied_time_cutoff.isoformat() if self.applied_time_cutoff else None
         )
+
         return initial_dict
 
 
-# Second chunk of info for streaming QA
+class StreamStopReason(Enum):
+    CONTEXT_LENGTH = "context_length"
+    CANCELLED = "cancelled"
+
+
+class StreamStopInfo(BaseModel):
+    stop_reason: StreamStopReason
+
+    def model_dump(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        data = super().model_dump(mode="json", *args, **kwargs)  # type: ignore
+        data["stop_reason"] = self.stop_reason.name
+        return data
+
+
 class LLMRelevanceFilterResponse(BaseModel):
-    relevant_chunk_indices: list[int]
+    llm_selected_doc_indices: list[int]
 
 
-# TODO: replace all the class names into enmedd
+class FinalUsedContextDocsResponse(BaseModel):
+    final_context_docs: list[LlmDoc]
+
+
+class RelevanceAnalysis(BaseModel):
+    relevant: bool
+    content: str | None = None
+
+
+class SectionRelevancePiece(RelevanceAnalysis):
+    """LLM analysis mapped to an Inference Section"""
+
+    document_id: str
+    chunk_id: int  # ID of the center chunk for a given inference section
+
+
+class DocumentRelevance(BaseModel):
+    """Contains all relevance information for a given search"""
+
+    relevance_summaries: dict[str, RelevanceAnalysis]
+
+
 class AnswerPiece(BaseModel):
     # A small piece of a complete answer. Used for streaming back answers.
     answer_piece: str | None  # if None, specifies the end of an Answer
@@ -60,8 +97,24 @@ class CitationInfo(BaseModel):
     document_id: str
 
 
+class AllCitations(BaseModel):
+    citations: list[CitationInfo]
+
+
+# This is a mapping of the citation number to the document index within
+# the result search doc set
+class MessageSpecificCitations(BaseModel):
+    citation_map: dict[int, int]
+
+
+class MessageResponseIDInfo(BaseModel):
+    user_message_id: int | None
+    reserved_assistant_message_id: int
+
+
 class StreamingError(BaseModel):
     error: str
+    stack_trace: str | None = None
 
 
 class EnmeddQuote(BaseModel):
@@ -99,7 +152,7 @@ class QAResponse(SearchResponse, EnmeddAnswer):
     predicted_flow: QueryFlow
     predicted_search: SearchType
     eval_res_valid: bool | None = None
-    llm_chunks_indices: list[int] | None = None
+    llm_selected_doc_indices: list[int] | None = None
     error_msg: str | None = None
 
 
@@ -108,7 +161,7 @@ class ImageGenerationDisplay(BaseModel):
 
 
 class CustomToolResponse(BaseModel):
-    response: dict
+    response: ToolResultType
     tool_name: str
 
 
@@ -120,6 +173,7 @@ AnswerQuestionPossibleReturn = (
     | ImageGenerationDisplay
     | CustomToolResponse
     | StreamingError
+    | StreamStopInfo
 )
 
 

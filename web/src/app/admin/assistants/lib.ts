@@ -14,7 +14,7 @@ interface AssistantCreationRequest {
   llm_model_version_override: string | null;
   starter_messages: StarterMessage[] | null;
   users?: string[];
-  groups: number[];
+  teamspace: number[];
   tool_ids: number[]; // Added tool_ids to the interface
 }
 
@@ -34,7 +34,7 @@ interface AssistantUpdateRequest {
   llm_model_version_override: string | null;
   starter_messages: StarterMessage[] | null;
   users?: string[];
-  groups: number[];
+  teamspace: number[];
   tool_ids: number[]; // Added tool_ids to the interface
 }
 
@@ -107,7 +107,7 @@ function buildAssistantAPIBody(
     num_chunks,
     llm_relevance_filter,
     is_public,
-    groups,
+    teamspace,
     users,
     tool_ids, // Added tool_ids to the destructuring
   } = creationRequest;
@@ -126,7 +126,7 @@ function buildAssistantAPIBody(
     llm_model_version_override: creationRequest.llm_model_version_override,
     starter_messages: creationRequest.starter_messages,
     users,
-    groups,
+    teamspace,
     tool_ids, // Added tool_ids to the return object
   };
 }

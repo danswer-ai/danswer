@@ -3,12 +3,14 @@ from collections.abc import Callable
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
 from sqlalchemy.orm import Session
 
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
 from enmedd.db.engine import get_session
 from enmedd.db.llm import fetch_existing_llm_providers
+from enmedd.db.llm import fetch_provider
 from enmedd.db.llm import remove_llm_provider
 from enmedd.db.llm import update_default_provider
 from enmedd.db.llm import upsert_llm_provider
@@ -17,6 +19,7 @@ from enmedd.llm.factory import get_default_llms
 from enmedd.llm.factory import get_llm
 from enmedd.llm.llm_provider_options import fetch_available_well_known_llms
 from enmedd.llm.llm_provider_options import WellKnownLLMProviderDescriptor
+from enmedd.llm.utils import litellm_exception_to_error_msg
 from enmedd.llm.utils import test_llm
 from enmedd.server.manage.llm.models import FullLLMProvider
 from enmedd.server.manage.llm.models import LLMProviderDescriptor
@@ -77,7 +80,10 @@ def test_llm_configuration(
     )
 
     if error:
-        raise HTTPException(status_code=400, detail=error)
+        client_error_msg = litellm_exception_to_error_msg(
+            error, llm, fallback_to_error_msg=True
+        )
+        raise HTTPException(status_code=400, detail=client_error_msg)
 
 
 @admin_router.post("/test/default")
@@ -118,10 +124,31 @@ def list_llm_providers(
 @admin_router.put("/provider")
 def put_llm_provider(
     llm_provider: LLMProviderUpsertRequest,
+    is_creation: bool = Query(
+        False,
+        description="True if updating an existing provider, False if creating a new one",
+    ),
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> FullLLMProvider:
-    return upsert_llm_provider(db_session, llm_provider)
+    # validate request (e.g. if we're intending to create but the name already exists we should throw an error)
+    # NOTE: may involve duplicate fetching to Postgres, but we're assuming SQLAlchemy is smart enough to cache
+    # the result
+    existing_provider = fetch_provider(db_session, llm_provider.name)
+    if existing_provider and is_creation:
+        raise HTTPException(
+            status_code=400,
+            detail=f"LLM Provider with name {llm_provider.name} already exists",
+        )
+
+    try:
+        return upsert_llm_provider(
+            llm_provider=llm_provider,
+            db_session=db_session,
+        )
+    except ValueError as e:
+        logger.exception("Failed to upsert LLM Provider")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @admin_router.delete("/provider/{provider_id}")
@@ -139,7 +166,7 @@ def set_provider_as_default(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    update_default_provider(db_session, provider_id)
+    update_default_provider(provider_id=provider_id, db_session=db_session)
 
 
 """Endpoints for all"""
@@ -147,10 +174,10 @@ def set_provider_as_default(
 
 @basic_router.get("/provider")
 def list_llm_provider_basics(
-    _: User | None = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> list[LLMProviderDescriptor]:
     return [
         LLMProviderDescriptor.from_model(llm_provider_model)
-        for llm_provider_model in fetch_existing_llm_providers(db_session)
+        for llm_provider_model in fetch_existing_llm_providers(db_session, user)
     ]

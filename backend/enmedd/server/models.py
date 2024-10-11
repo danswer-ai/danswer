@@ -6,7 +6,6 @@ from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic import EmailStr
-from pydantic.generics import GenericModel
 
 from enmedd.auth.schemas import UserRole
 from enmedd.auth.schemas import UserStatus
@@ -15,7 +14,7 @@ from enmedd.auth.schemas import UserStatus
 DataT = TypeVar("DataT")
 
 
-class StatusResponse(GenericModel, Generic[DataT]):
+class StatusResponse(BaseModel, Generic[DataT]):
     success: bool
     message: Optional[str] = None
     data: Optional[DataT] = None

@@ -1,5 +1,7 @@
+from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import func
+from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -106,18 +108,34 @@ def create_or_add_document_tag_list(
     return all_tags
 
 
-def get_tags_by_value_prefix_for_source_types(
+def find_tags(
+    tag_key_prefix: str | None,
     tag_value_prefix: str | None,
     sources: list[DocumentSource] | None,
+    limit: int | None,
     db_session: Session,
+    # if set, both tag_key_prefix and tag_value_prefix must be a match
+    require_both_to_match: bool = False,
 ) -> list[Tag]:
     query = select(Tag)
 
-    if tag_value_prefix:
-        query = query.where(Tag.tag_value.startswith(tag_value_prefix))
+    if tag_key_prefix or tag_value_prefix:
+        conditions = []
+        if tag_key_prefix:
+            conditions.append(Tag.tag_key.ilike(f"{tag_key_prefix}%"))
+        if tag_value_prefix:
+            conditions.append(Tag.tag_value.ilike(f"{tag_value_prefix}%"))
+
+        final_prefix_condition = (
+            and_(*conditions) if require_both_to_match else or_(*conditions)
+        )
+        query = query.where(final_prefix_condition)
 
     if sources:
         query = query.where(Tag.source.in_(sources))
+
+    if limit:
+        query = query.limit(limit)
 
     result = db_session.execute(query)
 

@@ -3,24 +3,30 @@ import time
 from collections.abc import Generator
 from collections.abc import Sequence
 from datetime import datetime
-from uuid import UUID
+from datetime import timezone
 
 from sqlalchemy import and_
 from sqlalchemy import delete
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import or_
+from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine.util import TransactionalContext
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import null
 
 from enmedd.configs.constants import DEFAULT_BOOST
+from enmedd.db.enums import AccessType
+from enmedd.db.enums import ConnectorCredentialPairStatus
 from enmedd.db.feedback import delete_document_feedback_for_documents__no_commit
 from enmedd.db.models import ConnectorCredentialPair
 from enmedd.db.models import Credential
 from enmedd.db.models import Document as DbDocument
 from enmedd.db.models import DocumentByConnectorCredentialPair
+from enmedd.db.models import User
 from enmedd.db.tag import delete_document_tags_for_documents__no_commit
 from enmedd.db.utils import model_to_dict
 from enmedd.document_index.interfaces import DocumentMetadata
@@ -28,6 +34,74 @@ from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
 from enmedd.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+def check_docs_exist(db_session: Session) -> bool:
+    stmt = select(exists(DbDocument))
+    result = db_session.execute(stmt)
+    return result.scalar() or False
+
+
+def count_documents_by_needs_sync(session: Session) -> int:
+    """Get the count of all documents where:
+    1. last_modified is newer than last_synced
+    2. last_synced is null (meaning we've never synced)
+
+    This function executes the query and returns the count of
+    documents matching the criteria."""
+
+    count = (
+        session.query(func.count())
+        .select_from(DbDocument)
+        .filter(
+            or_(
+                DbDocument.last_modified > DbDocument.last_synced,
+                DbDocument.last_synced.is_(None),
+            )
+        )
+        .scalar()
+    )
+
+    return count
+
+
+def construct_document_select_for_connector_credential_pair_by_needs_sync(
+    connector_id: int, credential_id: int
+) -> Select:
+    initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
+        and_(
+            DocumentByConnectorCredentialPair.connector_id == connector_id,
+            DocumentByConnectorCredentialPair.credential_id == credential_id,
+        )
+    )
+
+    stmt = (
+        select(DbDocument)
+        .where(
+            DbDocument.id.in_(initial_doc_ids_stmt),
+            or_(
+                DbDocument.last_modified
+                > DbDocument.last_synced,  # last_modified is newer than last_synced
+                DbDocument.last_synced.is_(None),  # never synced
+            ),
+        )
+        .distinct()
+    )
+
+    return stmt
+
+
+def construct_document_select_for_connector_credential_pair(
+    connector_id: int, credential_id: int | None = None
+) -> Select:
+    initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
+        and_(
+            DocumentByConnectorCredentialPair.connector_id == connector_id,
+            DocumentByConnectorCredentialPair.credential_id == credential_id,
+        )
+    )
+    stmt = select(DbDocument).where(DbDocument.id.in_(initial_doc_ids_stmt)).distinct()
+    return stmt
 
 
 def get_documents_for_connector_credential_pair(
@@ -54,7 +128,18 @@ def get_documents_by_ids(
     return list(documents)
 
 
-def get_document_connector_cnts(
+def get_document_connector_count(
+    db_session: Session,
+    document_id: str,
+) -> int:
+    results = get_document_connector_counts(db_session, [document_id])
+    if not results or len(results) == 0:
+        return 0
+
+    return results[0][1]
+
+
+def get_document_connector_counts(
     db_session: Session,
     document_ids: list[str],
 ) -> Sequence[tuple[str, int]]:
@@ -69,7 +154,7 @@ def get_document_connector_cnts(
     return db_session.execute(stmt).all()  # type: ignore
 
 
-def get_document_cnts_for_cc_pairs(
+def get_document_counts_for_cc_pairs(
     db_session: Session, cc_pair_identifiers: list[ConnectorCredentialPairIdentifier]
 ) -> Sequence[tuple[int, int, int]]:
     stmt = (
@@ -100,36 +185,47 @@ def get_document_cnts_for_cc_pairs(
     return db_session.execute(stmt).all()  # type: ignore
 
 
-def get_acccess_info_for_documents(
+def get_access_info_for_document(
+    db_session: Session,
+    document_id: str,
+) -> tuple[str, list[str | None], bool] | None:
+    """Gets access info for a single document by calling the get_access_info_for_documents function
+    and passing a list with a single document ID.
+    Args:
+        db_session (Session): The database session to use.
+        document_id (str): The document ID to fetch access info for.
+    Returns:
+        Optional[Tuple[str, List[str | None], bool]]: A tuple containing the document ID, a list of user emails,
+        and a boolean indicating if the document is globally public, or None if no results are found.
+    """
+    results = get_access_info_for_documents(db_session, [document_id])
+    if not results:
+        return None
+
+    return results[0]
+
+
+def get_access_info_for_documents(
     db_session: Session,
     document_ids: list[str],
-    cc_pair_to_delete: ConnectorCredentialPairIdentifier | None = None,
-) -> Sequence[tuple[str, list[UUID | None], bool]]:
+) -> Sequence[tuple[str, list[str | None], bool]]:
     """Gets back all relevant access info for the given documents. This includes
     the user_ids for cc pairs that the document is associated with + whether any
     of the associated cc pairs are intending to make the document globally public.
-
-    If `cc_pair_to_delete` is specified, gets the above access info as if that
-    pair had been deleted. This is needed since we want to delete from the Vespa
-    before deleting from Postgres to ensure that the state of Postgres never "loses"
-    documents that still exist in Vespa.
+    Returns the list where each element contains:
+    - Document ID (which is also the ID of the DocumentByConnectorCredentialPair)
+    - List of emails of enmedd users with direct access to the doc (includes a "None" element if
+      the connector was set up by an admin when auth was off
+    - bool for whether the document is public (the document later can also be marked public by
+      automatic permission sync step)
     """
     stmt = select(
         DocumentByConnectorCredentialPair.id,
-        func.array_agg(Credential.user_id).label("user_ids"),
-        func.bool_or(ConnectorCredentialPair.is_public).label("public_doc"),
+        func.array_agg(func.coalesce(User.email, null())).label("user_emails"),
+        func.bool_or(ConnectorCredentialPair.access_type == AccessType.PUBLIC).label(
+            "public_doc"
+        ),
     ).where(DocumentByConnectorCredentialPair.id.in_(document_ids))
-
-    # pretend that the specified cc pair doesn't exist
-    if cc_pair_to_delete:
-        stmt = stmt.where(
-            and_(
-                DocumentByConnectorCredentialPair.connector_id
-                != cc_pair_to_delete.connector_id,
-                DocumentByConnectorCredentialPair.credential_id
-                != cc_pair_to_delete.credential_id,
-            )
-        )
 
     stmt = (
         stmt.join(
@@ -145,6 +241,16 @@ def get_acccess_info_for_documents(
                 == ConnectorCredentialPair.credential_id,
             ),
         )
+        .outerjoin(
+            User,
+            and_(
+                Credential.user_id == User.id,
+                ConnectorCredentialPair.access_type != AccessType.SYNC,
+            ),
+        )
+        # don't include CC pairs that are being deleted
+        # NOTE: CC pairs can never go from DELETING to any other state -> it's safe to ignore them
+        .where(ConnectorCredentialPair.status != ConnectorCredentialPairStatus.DELETING)
         .group_by(DocumentByConnectorCredentialPair.id)
     )
     return db_session.execute(stmt).all()  # type: ignore
@@ -179,6 +285,7 @@ def upsert_documents(
                     semantic_id=doc.semantic_identifier,
                     link=doc.first_link,
                     doc_updated_at=None,  # this is intentional
+                    last_modified=datetime.now(timezone.utc),
                     primary_owners=doc.primary_owners,
                     secondary_owners=doc.secondary_owners,
                 )
@@ -186,9 +293,19 @@ def upsert_documents(
             for doc in seen_documents.values()
         ]
     )
-    # for now, there are no columns to update. If more metadata is added, then this
-    # needs to change to an `on_conflict_do_update`
-    on_conflict_stmt = insert_stmt.on_conflict_do_nothing()
+
+    on_conflict_stmt = insert_stmt.on_conflict_do_update(
+        index_elements=["id"],  # Conflict target
+        set_={
+            "from_ingestion_api": insert_stmt.excluded.from_ingestion_api,
+            "boost": insert_stmt.excluded.boost,
+            "hidden": insert_stmt.excluded.hidden,
+            "semantic_id": insert_stmt.excluded.semantic_id,
+            "link": insert_stmt.excluded.link,
+            "primary_owners": insert_stmt.excluded.primary_owners,
+            "secondary_owners": insert_stmt.excluded.secondary_owners,
+        },
+    )
     db_session.execute(on_conflict_stmt)
     db_session.commit()
 
@@ -220,7 +337,7 @@ def upsert_document_by_connector_credential_pair(
     db_session.commit()
 
 
-def update_docs_updated_at(
+def update_docs_updated_at__no_commit(
     ids_to_new_updated_at: dict[str, datetime],
     db_session: Session,
 ) -> None:
@@ -232,6 +349,28 @@ def update_docs_updated_at(
     for document in documents_to_update:
         document.doc_updated_at = ids_to_new_updated_at[document.id]
 
+
+def update_docs_last_modified__no_commit(
+    document_ids: list[str],
+    db_session: Session,
+) -> None:
+    documents_to_update = (
+        db_session.query(DbDocument).filter(DbDocument.id.in_(document_ids)).all()
+    )
+
+    now = datetime.now(timezone.utc)
+    for doc in documents_to_update:
+        doc.last_modified = now
+
+
+def mark_document_as_synced(document_id: str, db_session: Session) -> None:
+    stmt = select(DbDocument).where(DbDocument.id == document_id)
+    doc = db_session.scalar(stmt)
+    if doc is None:
+        raise ValueError(f"No document with ID: {document_id}")
+
+    # update last_synced
+    doc.last_synced = datetime.now(timezone.utc)
     db_session.commit()
 
 
@@ -248,10 +387,33 @@ def upsert_documents_complete(
 
 def delete_document_by_connector_credential_pair__no_commit(
     db_session: Session,
+    document_id: str,
+    connector_credential_pair_identifier: ConnectorCredentialPairIdentifier
+    | None = None,
+) -> None:
+    """Deletes a single document by cc pair relationship entry.
+    Foreign key rows are left in place.
+    The implicit assumption is that the document itself still has other cc_pair
+    references and needs to continue existing.
+    """
+    delete_documents_by_connector_credential_pair__no_commit(
+        db_session=db_session,
+        document_ids=[document_id],
+        connector_credential_pair_identifier=connector_credential_pair_identifier,
+    )
+
+
+def delete_documents_by_connector_credential_pair__no_commit(
+    db_session: Session,
     document_ids: list[str],
     connector_credential_pair_identifier: ConnectorCredentialPairIdentifier
     | None = None,
 ) -> None:
+    """This deletes just the document by cc pair entries for a particular cc pair.
+    Foreign key rows are left in place.
+    The implicit assumption is that the document itself still has other cc_pair
+    references and needs to continue existing.
+    """
     stmt = delete(DocumentByConnectorCredentialPair).where(
         DocumentByConnectorCredentialPair.id.in_(document_ids)
     )
@@ -274,8 +436,9 @@ def delete_documents__no_commit(db_session: Session, document_ids: list[str]) ->
 def delete_documents_complete__no_commit(
     db_session: Session, document_ids: list[str]
 ) -> None:
+    """This completely deletes the documents from the db, including all foreign key relationships"""
     logger.info(f"Deleting {len(document_ids)} documents from the DB")
-    delete_document_by_connector_credential_pair__no_commit(db_session, document_ids)
+    delete_documents_by_connector_credential_pair__no_commit(db_session, document_ids)
     delete_document_feedback_for_documents__no_commit(
         document_ids=document_ids, db_session=db_session
     )
@@ -311,7 +474,7 @@ def acquire_document_locks(db_session: Session, document_ids: list[str]) -> bool
 
 
 _NUM_LOCK_ATTEMPTS = 10
-_LOCK_RETRY_DELAY = 30
+_LOCK_RETRY_DELAY = 10
 
 
 @contextlib.contextmanager
@@ -323,7 +486,7 @@ def prepare_to_modify_documents(
     called ahead of any modification to Vespa. Locks should be released by the
     caller as soon as updates are complete by finishing the transaction.
 
-    NOTE: only one commit is allowed within the context manager returned by this funtion.
+    NOTE: only one commit is allowed within the context manager returned by this function.
     Multiple commits will result in a sqlalchemy.exc.InvalidRequestError.
     NOTE: this function will commit any existing transaction.
     """
@@ -341,7 +504,9 @@ def prepare_to_modify_documents(
                     yield transaction
                     break
         except OperationalError as e:
-            logger.info(f"Failed to acquire locks for documents, retrying. Error: {e}")
+            logger.warning(
+                f"Failed to acquire locks for documents, retrying. Error: {e}"
+            )
 
         time.sleep(retry_delay)
 
@@ -383,3 +548,12 @@ def get_documents_by_cc_pair(
         .filter(ConnectorCredentialPair.id == cc_pair_id)
         .all()
     )
+
+
+def get_document(
+    document_id: str,
+    db_session: Session,
+) -> DbDocument | None:
+    stmt = select(DbDocument).where(DbDocument.id == document_id)
+    doc: DbDocument | None = db_session.execute(stmt).scalar_one_or_none()
+    return doc

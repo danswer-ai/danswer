@@ -34,7 +34,7 @@ class CreateAssistantRequest(BaseModel):
     starter_messages: list[StarterMessage] | None = None
     # For Private Assistants, who should be able to access these
     users: list[UUID] | None = None
-    groups: list[int] | None = None
+    teamspace: list[int] | None = None
 
 
 class AssistantSnapshot(BaseModel):
@@ -56,7 +56,7 @@ class AssistantSnapshot(BaseModel):
     tools: list[ToolSnapshot]
     document_sets: list[DocumentSet]
     users: list[MinimalUserSnapshot]
-    groups: list[MinimalTeamspaceSnapshot]
+    teamspace: list[MinimalTeamspaceSnapshot]
 
     @classmethod
     def from_model(
@@ -98,7 +98,7 @@ class AssistantSnapshot(BaseModel):
                 MinimalUserSnapshot(id=user.id, email=user.email)
                 for user in assistant.users
             ],
-            groups=[
+            teamspace=[
                 MinimalTeamspaceSnapshot(
                     id=teamspace.id,
                     name=teamspace.name,
@@ -109,7 +109,7 @@ class AssistantSnapshot(BaseModel):
                         for workspace in teamspace.workspace
                     ],
                 )
-                for teamspace in assistant.groups
+                for teamspace in assistant.teamspace
             ],
         )
 

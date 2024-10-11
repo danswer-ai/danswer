@@ -5,6 +5,13 @@ from ee.enmedd.configs.app_configs import OPENID_CONFIG_URL
 from ee.enmedd.server.analytics.api import router as analytics_router
 from ee.enmedd.server.api_key.api import router as api_key_router
 from ee.enmedd.server.auth_check import check_ee_router_auth
+from ee.enmedd.server.enterprise_settings.api import (
+    admin_router as enterprise_settings_admin_router,
+)
+from ee.enmedd.server.enterprise_settings.api import (
+    basic_router as enterprise_settings_router,
+)
+from ee.enmedd.server.manage.standard_answer import router as standard_answer_router
 from ee.enmedd.server.query_and_chat.chat_backend import (
     router as chat_router,
 )
@@ -86,6 +93,7 @@ def get_application() -> FastAPI:
     # EE only backend APIs
     include_router_with_global_prefix_prepended(application, query_router)
     include_router_with_global_prefix_prepended(application, chat_router)
+    include_router_with_global_prefix_prepended(application, standard_answer_router)
     # Enterprise-only global settings
     include_router_with_global_prefix_prepended(application, workspaces_admin_router)
     # Token rate limit settings
@@ -94,6 +102,12 @@ def get_application() -> FastAPI:
     )
     include_router_with_global_prefix_prepended(application, workspaces_router)
     include_router_with_global_prefix_prepended(application, usage_export_router)
+    # Enterprise-only global settings
+    # TODO: clean this up: modify
+    include_router_with_global_prefix_prepended(
+        application, enterprise_settings_admin_router
+    )
+    include_router_with_global_prefix_prepended(application, enterprise_settings_router)
 
     # Ensure all routes have auth enabled or are explicitly marked as public
     check_ee_router_auth(application)

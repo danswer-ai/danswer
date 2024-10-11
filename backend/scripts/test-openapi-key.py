@@ -2,6 +2,8 @@ from openai import OpenAI
 
 
 VALID_MODEL_LIST = [
+    "gpt-4o-mini",
+    "gpt-4o",
     "gpt-4-1106-preview",
     "gpt-4-vision-preview",
     "gpt-4",
@@ -48,9 +50,9 @@ if __name__ == "__main__":
             temperature=2,
         )
         print(response.choices[0].message.content)
-        print("Success! Feel free to use this API key for enMedD AI.")
+        print("Success! Feel free to use this API key for Danswer.")
     except Exception:
         print(
-            "Failed, provided API key is invalid for enMedD AI, please address the error from OpenAI."
+            "Failed, provided API key is invalid for Danswer, please address the error from OpenAI."
         )
         raise

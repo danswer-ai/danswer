@@ -41,7 +41,7 @@ def _check_token_rate_limits(user: User | None) -> None:
         run_functions_tuples_in_parallel(
             [
                 (_user_is_rate_limited, (user.id,)),
-                (_user_is_rate_limited_by_group, (user.id,)),
+                (_user_is_rate_limited_by_teamspace, (user.id,)),
                 (_user_is_rate_limited_by_global, ()),
             ]
         )
@@ -93,12 +93,12 @@ Teamspace rate limits
 """
 
 
-def _user_is_rate_limited_by_group(user_id: UUID) -> None:
+def _user_is_rate_limited_by_teamspace(user_id: UUID) -> None:
     with get_session_context_manager() as db_session:
         group_rate_limits = _fetch_all_teamspace_rate_limits(user_id, db_session)
 
         if group_rate_limits:
-            # Group cutoff time is the same for all groups.
+            # Group cutoff time is the same for all teamspace.
             # This could be optimized to only fetch the maximum cutoff time for
             # a specific group, but seems unnecessary for now.
             group_cutoff_time = _get_cutoff_time(
@@ -121,7 +121,7 @@ def _user_is_rate_limited_by_group(user_id: UUID) -> None:
             if not has_at_least_one_untriggered_limit:
                 raise HTTPException(
                     status_code=429,
-                    detail="Token budget exceeded for user's groups. Try again later.",
+                    detail="Token budget exceeded for user's teamspace. Try again later.",
                 )
 
 

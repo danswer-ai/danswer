@@ -37,5 +37,5 @@ export interface Assistant {
   starter_messages: StarterMessage[] | null;
   default_assistant: boolean;
   users: MinimalUserSnapshot[];
-  groups: number[];
+  teamspace: number[];
 }

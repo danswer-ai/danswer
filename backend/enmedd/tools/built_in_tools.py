@@ -1,5 +1,5 @@
 from typing import Type
-from typing import TypedDict
+from typing_extensions import TypedDict  # noreorder
 
 from sqlalchemy import not_
 from sqlalchemy import or_

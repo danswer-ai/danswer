@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -16,23 +17,31 @@ INDEXING_MODEL_SERVER_PORT = int(
     os.environ.get("INDEXING_MODEL_SERVER_PORT") or MODEL_SERVER_PORT
 )
 
-# Use Danswer custom Deep Learning Models
-INTENT_MODEL_VERSION = "danswer/intent-model"
-INTENT_MODEL_CONTEXT_SIZE = 256
+# Danswer custom Deep Learning Models
+CONNECTOR_CLASSIFIER_MODEL_REPO = "Danswer/filter-extraction-model"
+CONNECTOR_CLASSIFIER_MODEL_TAG = "1.0.0"
+INTENT_MODEL_VERSION = "danswer/hybrid-intent-token-classifier"
+INTENT_MODEL_TAG = "v1.0.3"
+
 
 # Bi-Encoder, other details
 DOC_EMBEDDING_CONTEXT_SIZE = 512
 
-# Cross Encoder Settings
-ENABLE_RERANKING_ASYNC_FLOW = (
-    os.environ.get("ENABLE_RERANKING_ASYNC_FLOW", "").lower() == "true"
+# Used to distinguish alternative indices
+ALT_INDEX_SUFFIX = "__danswer_alt_index"
+
+# Used for loading defaults for automatic deployments and dev flows
+# For local, use: mixedbread-ai/mxbai-rerank-xsmall-v1
+DEFAULT_CROSS_ENCODER_MODEL_NAME = (
+    os.environ.get("DEFAULT_CROSS_ENCODER_MODEL_NAME") or None
 )
-ENABLE_RERANKING_REAL_TIME_FLOW = (
-    os.environ.get("ENABLE_RERANKING_REAL_TIME_FLOW", "").lower() == "true"
+DEFAULT_CROSS_ENCODER_API_KEY = os.environ.get("DEFAULT_CROSS_ENCODER_API_KEY") or None
+DEFAULT_CROSS_ENCODER_PROVIDER_TYPE = (
+    os.environ.get("DEFAULT_CROSS_ENCODER_PROVIDER_TYPE") or None
 )
-# Only using one cross-encoder for now
-CROSS_ENCODER_MODEL_ENSEMBLE = ["mixedbread-ai/mxbai-rerank-xsmall-v1"]
-CROSS_EMBED_CONTEXT_SIZE = 512
+DISABLE_RERANK_FOR_STREAMING = (
+    os.environ.get("DISABLE_RERANK_FOR_STREAMING", "").lower() == "true"
+)
 
 # This controls the minimum number of pytorch "threads" to allocate to the embedding
 # model. If torch finds more threads on its own, this value is not used.
@@ -42,5 +51,42 @@ MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
 # or intent classification
 INDEXING_ONLY = os.environ.get("INDEXING_ONLY", "").lower() == "true"
 
-# notset, debug, info, warning, error, or critical
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")
+# The process needs to have this for the log file to write to
+# otherwise, it will not create additional log files
+LOG_FILE_NAME = os.environ.get("LOG_FILE_NAME") or "enmedd"
+
+# Enable generating persistent log files for local dev environments
+DEV_LOGGING_ENABLED = os.environ.get("DEV_LOGGING_ENABLED", "").lower() == "true"
+# notset, debug, info, notice, warning, error, or critical
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")
+
+
+# Fields which should only be set on new search setting
+PRESERVED_SEARCH_FIELDS = [
+    "id",
+    "provider_type",
+    "api_key",
+    "model_name",
+    "api_url",
+    "index_name",
+    "multipass_indexing",
+    "model_dim",
+    "normalize",
+    "passage_prefix",
+    "query_prefix",
+]
+
+
+# CORS
+def validate_cors_origin(origin: str) -> None:
+    parsed = urlparse(origin)
+    if parsed.scheme not in ["http", "https"] or not parsed.netloc:
+        raise ValueError(f"Invalid CORS origin: '{origin}'")
+
+
+CORS_ALLOWED_ORIGIN = os.environ.get("CORS_ALLOWED_ORIGIN", "*").split(",") or ["*"]
+
+# Validate non-wildcard origins
+for origin in CORS_ALLOWED_ORIGIN:
+    if origin != "*" and (stripped_origin := origin.strip()):
+        validate_cors_origin(stripped_origin)

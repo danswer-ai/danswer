@@ -122,7 +122,7 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
               toast({
                 title: "Users Added Successfully!",
                 description:
-                  "The selected users have been successfully added to the group.",
+                  "The selected users have been successfully added to the teamspace.",
                 variant: "success",
               });
               onClose();

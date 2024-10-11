@@ -199,7 +199,7 @@ export function AssistantEditor({
     //   ? assistantCurrentToolIds.includes(imageGenerationTool.id)
     //   : false,
     // EE Only
-    groups: existingAssistant?.groups ?? [],
+    teamspace: existingAssistant?.teamspace ?? [],
   };
 
   return (
@@ -230,7 +230,7 @@ export function AssistantEditor({
               })
             ),
             // EE Only
-            groups: Yup.array().of(Yup.number()),
+            teamspace: Yup.array().of(Yup.number()),
           })
           .test(
             "system-prompt-or-task-prompt",
@@ -309,8 +309,8 @@ export function AssistantEditor({
           // to tell the backend to not fetch any documents
           const numChunks = searchToolEnabled ? values.num_chunks || 10 : 0;
 
-          // don't set groups if marked as public
-          const groups = values.is_public ? [] : values.groups;
+          // don't set teamspace if marked as public
+          const teamspace = values.is_public ? [] : values.teamspace;
 
           let promptResponse;
           let assistantResponse;
@@ -322,7 +322,7 @@ export function AssistantEditor({
               num_chunks: numChunks,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
-              groups,
+              teamspace,
               tool_ids: enabledTools,
             });
           } else {
@@ -331,7 +331,7 @@ export function AssistantEditor({
               num_chunks: numChunks,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
-              groups,
+              teamspace,
               tool_ids: enabledTools,
             });
           }
@@ -886,9 +886,8 @@ export function AssistantEditor({
                                 </p>
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {teamspaces.map((teamspace) => {
-                                    const isSelected = values.groups.includes(
-                                      teamspace.id
-                                    );
+                                    const isSelected =
+                                      values.teamspace.includes(teamspace.id);
                                     return (
                                       <Bubble
                                         key={teamspace.id}
@@ -896,14 +895,14 @@ export function AssistantEditor({
                                         onClick={() => {
                                           if (isSelected) {
                                             setFieldValue(
-                                              "groups",
-                                              values.groups.filter(
+                                              "teamspace",
+                                              values.teamspace.filter(
                                                 (id) => id !== teamspace.id
                                               )
                                             );
                                           } else {
-                                            setFieldValue("groups", [
-                                              ...values.groups,
+                                            setFieldValue("teamspace", [
+                                              ...values.teamspace,
                                               teamspace.id,
                                             ]);
                                           }

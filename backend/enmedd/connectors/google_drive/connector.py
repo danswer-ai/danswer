@@ -6,7 +6,6 @@ from datetime import timezone
 from enum import Enum
 from itertools import chain
 from typing import Any
-from typing import cast
 
 from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
@@ -21,19 +20,13 @@ from enmedd.configs.app_configs import INDEX_BATCH_SIZE
 from enmedd.configs.constants import DocumentSource
 from enmedd.configs.constants import IGNORE_FOR_QA
 from enmedd.connectors.cross_connector_utils.retry_wrapper import retry_builder
-from enmedd.connectors.google_drive.connector_auth import (
-    get_google_drive_creds_for_authorized_user,
-)
-from enmedd.connectors.google_drive.connector_auth import (
-    get_google_drive_creds_for_service_account,
-)
+from enmedd.connectors.google_drive.connector_auth import get_google_drive_creds
 from enmedd.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
 )
 from enmedd.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from enmedd.connectors.google_drive.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
 from enmedd.connectors.interfaces import GenerateDocumentsOutput
 from enmedd.connectors.interfaces import LoadConnector
 from enmedd.connectors.interfaces import PollConnector
@@ -41,8 +34,8 @@ from enmedd.connectors.interfaces import SecondsSinceUnixEpoch
 from enmedd.connectors.models import Document
 from enmedd.connectors.models import Section
 from enmedd.file_processing.extract_file_text import docx_to_text
-from enmedd.file_processing.extract_file_text import pdf_to_text
 from enmedd.file_processing.extract_file_text import pptx_to_text
+from enmedd.file_processing.extract_file_text import read_pdf_file
 from enmedd.utils.batching import batch_generator
 from enmedd.utils.logger import setup_logger
 
@@ -62,6 +55,8 @@ class GDriveMimeType(str, Enum):
     POWERPOINT = (
         "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     )
+    PLAIN_TEXT = "text/plain"
+    MARKDOWN = "text/markdown"
 
 
 GoogleDriveFileType = dict[str, Any]
@@ -267,7 +262,7 @@ def get_all_files_batched(
     yield from batch_generator(
         items=found_files,
         batch_size=batch_size,
-        pre_batch_yield=lambda batch_files: logger.info(
+        pre_batch_yield=lambda batch_files: logger.debug(
             f"Parseable Documents in batch: {[file['name'] for file in batch_files]}"
         ),
     )
@@ -306,34 +301,40 @@ def get_all_files_batched(
 
 def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
     mime_type = file["mimeType"]
+
     if mime_type not in set(item.value for item in GDriveMimeType):
         # Unsupported file types can still have a title, finding this way is still useful
         return UNSUPPORTED_FILE_TYPE_CONTENT
 
-    if mime_type == GDriveMimeType.DOC.value:
+    if mime_type in [
+        GDriveMimeType.DOC.value,
+        GDriveMimeType.PPT.value,
+        GDriveMimeType.SPREADSHEET.value,
+    ]:
+        export_mime_type = (
+            "text/plain"
+            if mime_type != GDriveMimeType.SPREADSHEET.value
+            else "text/csv"
+        )
         return (
             service.files()
-            .export(fileId=file["id"], mimeType="text/plain")
+            .export(fileId=file["id"], mimeType=export_mime_type)
             .execute()
             .decode("utf-8")
         )
-    elif mime_type == GDriveMimeType.SPREADSHEET.value:
-        return (
-            service.files()
-            .export(fileId=file["id"], mimeType="text/csv")
-            .execute()
-            .decode("utf-8")
-        )
+    elif mime_type in [
+        GDriveMimeType.PLAIN_TEXT.value,
+        GDriveMimeType.MARKDOWN.value,
+    ]:
+        return service.files().get_media(fileId=file["id"]).execute().decode("utf-8")
     elif mime_type == GDriveMimeType.WORD_DOC.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return docx_to_text(file=io.BytesIO(response))
     elif mime_type == GDriveMimeType.PDF.value:
         response = service.files().get_media(fileId=file["id"]).execute()
-        return pdf_to_text(file=io.BytesIO(response))
+        text, _ = read_pdf_file(file=io.BytesIO(response))
+        return text
     elif mime_type == GDriveMimeType.POWERPOINT.value:
-        response = service.files().get_media(fileId=file["id"]).execute()
-        return pptx_to_text(file=io.BytesIO(response))
-    elif mime_type == GDriveMimeType.PPT.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return pptx_to_text(file=io.BytesIO(response))
 
@@ -397,44 +398,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         (1) A credential which holds a token acquired via a user going thorough
         the Google OAuth flow.
         (2) A credential which holds a service account key JSON file, which
-        can then be used to imassistantte any user in the workspace.
+        can then be used to impersonate any user in the workspace.
         """
-        creds: OAuthCredentials | ServiceAccountCredentials | None = None
-        new_creds_dict = None
-        if DB_CREDENTIALS_DICT_TOKEN_KEY in credentials:
-            access_token_json_str = cast(
-                str, credentials[DB_CREDENTIALS_DICT_TOKEN_KEY]
-            )
-            creds = get_google_drive_creds_for_authorized_user(
-                token_json_str=access_token_json_str
-            )
-
-            # tell caller to update token stored in DB if it has changed
-            # (e.g. the token has been refreshed)
-            new_creds_json_str = creds.to_json() if creds else ""
-            if new_creds_json_str != access_token_json_str:
-                new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
-
-        if DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY in credentials:
-            service_account_key_json_str = credentials[
-                DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
-            ]
-            creds = get_google_drive_creds_for_service_account(
-                service_account_key_json_str=service_account_key_json_str
-            )
-
-            # "Imassistantte" a user if one is specified
-            delegated_user_email = cast(
-                str | None, credentials.get(DB_CREDENTIALS_DICT_DELEGATED_USER_KEY)
-            )
-            if delegated_user_email:
-                creds = creds.with_subject(delegated_user_email) if creds else None  # type: ignore
-
-        if creds is None:
-            raise PermissionError(
-                "Unable to access Google Drive - unknown credential structure."
-            )
-
+        creds, new_creds_dict = get_google_drive_creds(credentials)
         self.creds = creds
         return new_creds_dict
 
@@ -501,6 +467,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                                 file["modifiedTime"]
                             ).astimezone(timezone.utc),
                             metadata={} if text_contents else {IGNORE_FOR_QA: "True"},
+                            additional_info=file.get("id"),
                         )
                     )
                 except Exception as e:

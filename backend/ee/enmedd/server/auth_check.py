@@ -9,6 +9,10 @@ EE_PUBLIC_ENDPOINT_SPECS = PUBLIC_ENDPOINT_SPECS + [
     ("/workspace", {"GET"}),
     ("/workspace/logo", {"GET"}),
     ("/workspace/custom-analytics-script", {"GET"}),
+    ("/enterprise-settings", {"GET"}),
+    ("/enterprise-settings/logo", {"GET"}),
+    ("/enterprise-settings/logotype", {"GET"}),
+    ("/enterprise-settings/custom-analytics-script", {"GET"}),
     # oidc
     ("/auth/oidc/authorize", {"GET"}),
     ("/auth/oidc/callback", {"GET"}),

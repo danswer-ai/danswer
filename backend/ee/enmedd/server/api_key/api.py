@@ -13,6 +13,7 @@ from enmedd.auth.users import current_admin_user
 from enmedd.db.engine import get_session
 from enmedd.db.models import User
 
+
 router = APIRouter(prefix="/admin/api-key")
 
 

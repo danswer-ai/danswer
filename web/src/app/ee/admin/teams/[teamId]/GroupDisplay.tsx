@@ -103,7 +103,7 @@ export const GroupDisplay = ({
                                   toast({
                                     title: "User Removed Successfully!",
                                     description:
-                                      "The user has been successfully removed from the group.",
+                                      "The user has been successfully removed from the teams.",
                                     variant: "success",
                                   });
                                 } else {
@@ -112,7 +112,7 @@ export const GroupDisplay = ({
                                     responseJson.detail || responseJson.message;
                                   toast({
                                     title: "Removal Failed",
-                                    description: `Unable to remove user from the group: ${errorMsg}. Please try again.`,
+                                    description: `Unable to remove user from the teams: ${errorMsg}. Please try again.`,
                                     variant: "destructive",
                                   });
                                 }
@@ -129,7 +129,7 @@ export const GroupDisplay = ({
             </CardContent>
           </Card>
         ) : (
-          <div className="text-sm">No users in this group...</div>
+          <div className="text-sm">No users in this teamspace...</div>
         )}
       </div>
 
@@ -206,7 +206,7 @@ export const GroupDisplay = ({
                                   toast({
                                     title: "Connector Removed Successfully!",
                                     description:
-                                      "The connector has been successfully removed from the group.",
+                                      "The connector has been successfully removed from the teamspace.",
                                     variant: "success",
                                   });
                                 } else {
@@ -215,7 +215,7 @@ export const GroupDisplay = ({
                                     responseJson.detail || responseJson.message;
                                   toast({
                                     title: "Removal Failed",
-                                    description: `Unable to remove connector from the group: ${errorMsg}. Please try again.`,
+                                    description: `Unable to remove connector from the teamspace: ${errorMsg}. Please try again.`,
                                     variant: "destructive",
                                   });
                                 }
@@ -232,7 +232,7 @@ export const GroupDisplay = ({
             </CardContent>
           </Card>
         ) : (
-          <div className="text-sm">No connectors in this group...</div>
+          <div className="text-sm">No connectors in this teamspace...</div>
         )}
       </div>
 
@@ -280,7 +280,7 @@ export const GroupDisplay = ({
           </div>
         ) : (
           <>
-            <p className="text-sm">No document sets in this group...</p>
+            <p className="text-sm">No document sets in this teamspace...</p>
           </>
         )}
       </div>
@@ -305,7 +305,7 @@ export const GroupDisplay = ({
           </div>
         ) : (
           <>
-            <p className="text-sm">No Assistants in this group...</p>
+            <p className="text-sm">No Assistants in this teamspace...</p>
           </>
         )}
       </div>

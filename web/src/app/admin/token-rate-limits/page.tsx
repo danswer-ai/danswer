@@ -30,9 +30,9 @@ const USER_DESCRIPTION =
   "User rate limits apply to individual users. When a user reaches a limit, they will \
   be temporarily blocked from spending tokens.";
 const TEAMSPACE_DESCRIPTION =
-  "Teamspace rate limits apply to all users in a group. When a group reaches a limit, \
-  all users in the group will be temporarily blocked from spending tokens, regardless \
-  of their individual limits. If a user is in multiple groups, the most lenient limit \
+  "Teamspace rate limits apply to all users in a teamspace. When a teamspace reaches a limit, \
+  all users in the teamspace will be temporarily blocked from spending tokens, regardless \
+  of their individual limits. If a user is in multiple teamspaces, the most lenient limit \
   will apply.";
 
 const handleCreateTokenRateLimit = async (
@@ -128,7 +128,7 @@ function Main() {
               too many tokens.
             </li>
             <li>
-              Set rate limits for user groups to control token spend for your
+              Set rate limits for teamspace to control token spend for your
               teams.
             </li>
           </>

@@ -19,7 +19,7 @@ class DocumentSetCreationRequest(BaseModel):
     is_public: bool
     # For Private Document Sets, who should be able to access these
     users: Optional[List[UUID]] = None
-    groups: Optional[List[int]] = None
+    teamspace: Optional[List[int]] = None
 
 
 class DocumentSetUpdateRequest(BaseModel):
@@ -29,7 +29,7 @@ class DocumentSetUpdateRequest(BaseModel):
     is_public: bool
     # For Private Document Sets, who should be able to access these
     users: List[UUID]
-    groups: List[int]
+    teamspace: List[int]
 
 
 class CheckDocSetPublicRequest(BaseModel):
@@ -54,7 +54,7 @@ class DocumentSet(BaseModel):
     is_public: bool
     # For Private Document Sets, who should be able to access these
     users: List[UUID]
-    groups: Optional[List[MinimalTeamspaceSnapshot]] = None
+    teamspace: Optional[List[MinimalTeamspaceSnapshot]] = None
 
     @classmethod
     def from_model(cls, document_set_model: DocumentSetDBModel) -> "DocumentSet":
@@ -78,19 +78,19 @@ class DocumentSet(BaseModel):
                     credential=CredentialSnapshot.from_credential_db_model(
                         cc_pair.credential
                     ),
-                    groups=[
+                    teamspace=[
                         MinimalTeamspaceSnapshot(
-                            id=group.id,
-                            name=group.name,
+                            id=teams.id,
+                            name=teams.name,
                             workspace=[
                                 MinimalWorkspaceSnapshot(
                                     id=workspace.id,
                                     workspace_name=workspace.workspace_name,
                                 )
-                                for workspace in group.workspace
+                                for workspace in teams.workspace
                             ],
                         )
-                        for group in cc_pair.groups
+                        for teams in cc_pair.teamspace
                     ],
                 )
                 for cc_pair in document_set_model.connector_credential_pairs
@@ -98,7 +98,7 @@ class DocumentSet(BaseModel):
             is_up_to_date=document_set_model.is_up_to_date,
             is_public=document_set_model.is_public,
             users=[user.id for user in document_set_model.users],
-            groups=[
+            teamspace=[
                 MinimalTeamspaceSnapshot(
                     id=teamspace.id,
                     name=teamspace.name,
@@ -109,6 +109,6 @@ class DocumentSet(BaseModel):
                         for workspace in teamspace.workspace
                     ],
                 )
-                for teamspace in document_set_model.groups
+                for teamspace in document_set_model.teamspace
             ],
         )

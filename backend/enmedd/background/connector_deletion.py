@@ -21,7 +21,7 @@ from enmedd.db.connector_credential_pair import (
 )
 from enmedd.db.document import delete_document_by_connector_credential_pair__no_commit
 from enmedd.db.document import delete_documents_complete__no_commit
-from enmedd.db.document import get_document_connector_cnts
+from enmedd.db.document import get_document_connector_counts
 from enmedd.db.document import get_documents_for_connector_credential_pair
 from enmedd.db.document import prepare_to_modify_documents
 from enmedd.db.document_set import get_document_sets_by_ids
@@ -57,7 +57,7 @@ def delete_connector_credential_pair_batch(
         with prepare_to_modify_documents(
             db_session=db_session, document_ids=document_ids
         ):
-            document_connector_cnts = get_document_connector_cnts(
+            document_connector_cnts = get_document_connector_counts(
                 db_session=db_session, document_ids=document_ids
             )
 

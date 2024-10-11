@@ -3,12 +3,14 @@ from datetime import timedelta
 from sqlalchemy.orm import Session
 
 from ee.enmedd.background.celery_utils import should_perform_chat_ttl_check
-from ee.enmedd.background.celery_utils import should_sync_teamspaces
+from ee.enmedd.background.celery_utils import should_perform_external_permissions_check
 from ee.enmedd.background.task_name_builders import name_chat_ttl_task
-from ee.enmedd.background.task_name_builders import name_teamspace_sync_task
-from ee.enmedd.db.teamspace import fetch_teamspaces
+from ee.enmedd.background.task_name_builders import name_sync_external_permissions_task
+from ee.enmedd.db.connector_credential_pair import get_all_auto_sync_cc_pairs
+from ee.enmedd.external_permissions.permission_sync import (
+    run_permission_sync_entrypoint,
+)
 from ee.enmedd.server.reporting.usage_export_generation import create_new_usage_report
-from ee.enmedd.teamspaces.sync import sync_teamspaces
 from enmedd.background.celery.celery_app import celery_app
 from enmedd.background.task_utils import build_celery_task_wrapper
 from enmedd.configs.app_configs import JOB_TIMEOUT
@@ -24,15 +26,11 @@ logger = setup_logger()
 global_version.set_ee()
 
 
-@build_celery_task_wrapper(name_teamspace_sync_task)
+@build_celery_task_wrapper(name_sync_external_permissions_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def sync_teamspace_task(teamspace_id: int) -> None:
+def sync_external_permissions_task(cc_pair_id: int) -> None:
     with Session(get_sqlalchemy_engine()) as db_session:
-        # actual sync logic
-        try:
-            sync_teamspaces(teamspace_id=teamspace_id, db_session=db_session)
-        except Exception as e:
-            logger.exception(f"Failed to sync teamspace - {e}")
+        run_permission_sync_entrypoint(db_session=db_session, cc_pair_id=cc_pair_id)
 
 
 @build_celery_task_wrapper(name_chat_ttl_task)
@@ -45,6 +43,21 @@ def perform_ttl_management_task(retention_limit_days: int) -> None:
 #####
 # Periodic Tasks
 #####
+@celery_app.task(
+    name="check_sync_external_permissions_task",
+    soft_time_limit=JOB_TIMEOUT,
+)
+def check_sync_external_permissions_task() -> None:
+    """Runs periodically to sync external permissions"""
+    with Session(get_sqlalchemy_engine()) as db_session:
+        cc_pairs = get_all_auto_sync_cc_pairs(db_session)
+        for cc_pair in cc_pairs:
+            if should_perform_external_permissions_check(
+                cc_pair=cc_pair, db_session=db_session
+            ):
+                sync_external_permissions_task.apply_async(
+                    kwargs=dict(cc_pair_id=cc_pair.id),
+                )
 
 
 @celery_app.task(
@@ -61,24 +74,6 @@ def check_ttl_management_task() -> None:
             perform_ttl_management_task.apply_async(
                 kwargs=dict(retention_limit_days=retention_limit_days),
             )
-
-
-@celery_app.task(
-    name="check_for_teamspaces_sync_task",
-    soft_time_limit=JOB_TIMEOUT,
-)
-def check_for_teamspaces_sync_task() -> None:
-    """Runs periodically to check if any teamspaces are out of sync
-    Creates a task to sync the teamspace if needed"""
-    with Session(get_sqlalchemy_engine()) as db_session:
-        # check if any document sets are not synced
-        teamspaces = fetch_teamspaces(db_session=db_session, only_current=False)
-        for teamspace in teamspaces:
-            if should_sync_teamspaces(teamspace, db_session):
-                logger.info(f"Teamspace {teamspace.id} is not synced. Syncing now!")
-                sync_teamspace_task.apply_async(
-                    kwargs=dict(teamspace_id=teamspace.id),
-                )
 
 
 @celery_app.task(
@@ -99,9 +94,9 @@ def autogenerate_usage_report_task() -> None:
 # Celery Beat (Periodic Tasks) Settings
 #####
 celery_app.conf.beat_schedule = {
-    "check-for-teamspace-sync": {
-        "task": "check_for_teamspaces_sync_task",
-        "schedule": timedelta(seconds=5),
+    "sync-external-permissions": {
+        "task": "check_sync_external_permissions_task",
+        "schedule": timedelta(seconds=60),  # TODO: optimize this
     },
     "autogenerate_usage_report": {
         "task": "autogenerate_usage_report_task",

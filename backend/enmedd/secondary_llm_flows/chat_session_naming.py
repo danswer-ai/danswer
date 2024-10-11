@@ -1,8 +1,8 @@
 from enmedd.chat.chat_utils import combine_message_chain
 from enmedd.configs.chat_configs import LANGUAGE_CHAT_NAMING_HINT
-from enmedd.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from enmedd.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from enmedd.db.models import ChatMessage
+from enmedd.db.search_settings import get_multilingual_expansion
 from enmedd.llm.interfaces import LLM
 from enmedd.llm.utils import dict_based_prompt_to_langchain_prompt
 from enmedd.llm.utils import message_to_string
@@ -22,7 +22,7 @@ def get_renamed_conversation_name(
 
     language_hint = (
         f"\n{LANGUAGE_CHAT_NAMING_HINT.strip()}"
-        if bool(MULTILINGUAL_QUERY_EXPANSION)
+        if bool(get_multilingual_expansion())
         else ""
     )
 

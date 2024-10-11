@@ -18,14 +18,14 @@ class PydanticType(TypeDecorator):
         self.pydantic_model = pydantic_model
 
     def process_bind_param(
-        self, dialect: Any, value: Optional[BaseModel] = None
+        self, value: Optional[BaseModel], dialect: Any
     ) -> Optional[dict]:
         if value is not None:
             return json.loads(value.json())
         return None
 
     def process_result_value(
-        self, dialect: Any, value: Optional[dict] = None
+        self, value: Optional[dict], dialect: Any
     ) -> Optional[BaseModel]:
         if value is not None:
             return self.pydantic_model.parse_obj(value)

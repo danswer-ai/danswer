@@ -6,11 +6,11 @@ from fastapi import Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-import enmedd.db.models as db_models
 from ee.enmedd.db.analytics import fetch_per_user_query_analytics
 from ee.enmedd.db.analytics import fetch_query_analytics
 from enmedd.auth.users import current_admin_user
 from enmedd.db.engine import get_session
+from enmedd.db.models import User
 
 router = APIRouter(prefix="/analytics")
 
@@ -26,7 +26,7 @@ class QueryAnalyticsResponse(BaseModel):
 def get_query_analytics(
     start: datetime.datetime | None = None,
     end: datetime.datetime | None = None,
-    _: db_models.User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[QueryAnalyticsResponse]:
     daily_query_usage_info = fetch_query_analytics(
@@ -57,7 +57,7 @@ class UserAnalyticsResponse(BaseModel):
 def get_user_analytics(
     start: datetime.datetime | None = None,
     end: datetime.datetime | None = None,
-    _: db_models.User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[UserAnalyticsResponse]:
     daily_query_usage_info_per_user = fetch_per_user_query_analytics(

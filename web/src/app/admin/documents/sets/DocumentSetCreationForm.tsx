@@ -59,7 +59,7 @@ export const DocumentSetCreationForm = ({
             : ([] as number[]),
           is_public: existingDocumentSet ? existingDocumentSet.is_public : true,
           users: existingDocumentSet ? existingDocumentSet.users : [],
-          groups: existingDocumentSet ? existingDocumentSet.groups : [],
+          teamspace: existingDocumentSet ? existingDocumentSet.teamspace : [],
         }}
         validationSchema={Yup.object().shape({
           name: Yup.string().required("Please enter a name for the set"),
@@ -72,10 +72,10 @@ export const DocumentSetCreationForm = ({
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
-          // If the document set is public, then we don't want to send any groups
+          // If the document set is public, then we don't want to send any teamspace
           const processedValues = {
             ...values,
-            groups: values.is_public ? [] : values.groups,
+            teamspace: values.is_public ? [] : values.teamspace,
           };
 
           let response;
@@ -210,11 +210,11 @@ export const DocumentSetCreationForm = ({
                       visible to all users.
                     </p>
                     <FieldArray
-                      name="groups"
+                      name="teamspace"
                       render={(arrayHelpers: ArrayHelpers) => (
                         <div className="flex gap-2 flex-wrap">
                           {teamspaces.map((teamspace) => {
-                            const ind = values.groups.indexOf(teamspace.id);
+                            const ind = values.teamspace.indexOf(teamspace.id);
                             let isSelected = ind !== -1;
                             return (
                               <Badge

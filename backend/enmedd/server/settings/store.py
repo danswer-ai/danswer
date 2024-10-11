@@ -14,10 +14,10 @@ def load_settings() -> Settings:
         settings = Settings(**cast(dict, dynamic_config_store.load(_SETTINGS_KEY)))
     except ConfigNotFoundError:
         settings = Settings()
-        dynamic_config_store.store(_SETTINGS_KEY, settings.dict())
+        dynamic_config_store.store(_SETTINGS_KEY, settings.model_dump())
 
     return settings
 
 
 def store_settings(settings: Settings) -> None:
-    get_dynamic_config_store().store(_SETTINGS_KEY, settings.dict())
+    get_dynamic_config_store().store(_SETTINGS_KEY, settings.model_dump())
