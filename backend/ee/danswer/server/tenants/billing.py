@@ -47,6 +47,8 @@ def register_tenant_users(tenant_id: str, number_of_users: int) -> stripe.Subscr
     """
     Send a request to the control service to register the number of users for a tenant.
     """
+    if not STRIPE_PRICE_ID:
+        raise Exception("STRIPE_PRICE_ID is not set")
 
     tenant_id = current_tenant_id.get()
     response = fetch_tenant_stripe_information(tenant_id)
