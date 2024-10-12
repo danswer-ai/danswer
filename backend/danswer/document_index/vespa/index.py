@@ -186,13 +186,14 @@ class VespaIndex(DocumentIndex):
 
         with open(schema_file, "r") as schema_f:
             schema_template = schema_f.read()
+        schema_template = schema_template.replace(TENANT_ID_PAT, "")
+
         schema = schema_template.replace(
             DANSWER_CHUNK_REPLACEMENT_PAT, self.index_name
         ).replace(VESPA_DIM_REPLACEMENT_PAT, str(index_embedding_dim))
-        schema = schema.replace(TENANT_ID_PAT, "")
 
         schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
-
+        schema = schema.replace(TENANT_ID_PAT, "")
         zip_dict[f"schemas/{schema_names[0]}.sd"] = schema.encode("utf-8")
 
         if self.secondary_index_name:
