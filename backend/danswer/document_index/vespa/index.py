@@ -216,6 +216,9 @@ class VespaIndex(DocumentIndex):
         indices: list[str],
         embedding_dims: list[int],
     ) -> None:
+        if not MULTI_TENANT:
+            raise ValueError("Multi-tenant is not enabled")
+
         deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
         logger.info(f"Deploying Vespa application package to {deploy_url}")
 
