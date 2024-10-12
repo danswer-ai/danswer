@@ -1,3 +1,9 @@
+export enum GatingType {
+  FULL = "full",
+  PARTIAL = "partial",
+  NONE = "none",
+}
+
 export interface Settings {
   chat_page_enabled: boolean;
   search_page_enabled: boolean;
@@ -6,7 +12,7 @@ export interface Settings {
   notifications: Notification[];
   needs_reindexing: boolean;
   gpu_enabled: boolean;
-  product_gated: boolean;
+  product_gating: GatingType;
 }
 
 export interface Notification {

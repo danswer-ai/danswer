@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from danswer.server.settings.models import GatingType
+
 
 class CheckoutSessionCreationRequest(BaseModel):
     quantity: int
@@ -12,7 +14,7 @@ class CreateTenantRequest(BaseModel):
 
 class ProductGatingRequest(BaseModel):
     tenant_id: str
-    gate_product: bool
+    product_gating: GatingType
 
 
 class BillingInformation(BaseModel):

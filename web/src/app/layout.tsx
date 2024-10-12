@@ -13,7 +13,7 @@ import { Metadata } from "next";
 import { buildClientUrl } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
 import Head from "next/head";
-import { EnterpriseSettings } from "./admin/settings/interfaces";
+import { EnterpriseSettings, GatingType } from "./admin/settings/interfaces";
 import { Card } from "@tremor/react";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Logo } from "@/components/Logo";
@@ -54,6 +54,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const combinedSettings = await fetchSettingsSS();
+
+  const productGating = GatingType.PARTIAL;
 
   if (!combinedSettings) {
     return (
@@ -107,11 +109,11 @@ export default async function RootLayout({
       </html>
     );
   }
-  if (combinedSettings?.settings?.product_gated) {
+  if (productGating === GatingType.FULL) {
     return (
       <html lang="en" className={`${inter.variable} font-sans`}>
         <Head>
-          <title>Product Gated | Danswer</title>
+          <title>Access Restricted | Danswer</title>
         </Head>
         <body className="bg-background text-default">
           <div className="flex flex-col items-center justify-center min-h-screen">
@@ -120,10 +122,21 @@ export default async function RootLayout({
               <Logo height={40} width={40} />
             </div>
             <Card className="p-8 max-w-md">
-              <h1 className="text-2xl font-bold mb-4 text-error">Error</h1>
+              <h1 className="text-2xl font-bold mb-4 text-error">
+                Access Restricted
+              </h1>
+              <p className="text-text-500 mb-4">
+                We regret to inform you that your access to Danswer has been
+                temporarily suspended due to a lapse in your subscription.
+              </p>
+              <p className="text-text-500 mb-4">
+                To reinstate your access and continue benefiting from Danswer's
+                powerful features, please update your payment information.
+              </p>
               <p className="text-text-500">
-                Your Danswer instance is currently gated. Please contact your
-                admin to request access.
+                If you're an admin, you can resolve this by visiting the billing
+                section. For other users, please reach out to your administrator
+                to address this matter.
               </p>
             </Card>
           </div>
@@ -159,6 +172,20 @@ export default async function RootLayout({
             process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
           }`}
         >
+          {productGating === GatingType.PARTIAL && (
+            <div className="fixed top-0 left-0 right-0 z-50 bg-warning-100 text-warning-900 p-2 text-center">
+              <p className="text-sm font-medium">
+                Your account is pending payment!{" "}
+                <a
+                  href="/admin/cloud-settings"
+                  className="font-bold underline hover:text-warning-700 transition-colors"
+                >
+                  Update your billing information
+                </a>{" "}
+                or access will be suspended soon.
+              </p>
+            </div>
+          )}
           <UserProvider>
             <ProviderContextProvider>
               <SettingsProvider settings={combinedSettings}>

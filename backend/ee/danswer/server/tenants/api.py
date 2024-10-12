@@ -87,12 +87,10 @@ def gate_product(
     1) User has ended free trial without adding payment method
     2) User's card has declined
     """
-    if not MULTI_TENANT:
-        raise HTTPException(status_code=403, detail="Multi-tenancy is not enabled")
     token = current_tenant_id.set(current_tenant_id.get())
 
     settings = load_settings()
-    settings.product_gated = product_gating_request.gate_product
+    settings.product_gating = product_gating_request.product_gating
     store_settings(settings)
 
     if token is not None:

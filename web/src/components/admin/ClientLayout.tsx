@@ -31,16 +31,17 @@ import { usePathname } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { useContext } from "react";
 import { Cloud } from "@phosphor-icons/react";
-import { CLOUD_ENABLED } from "@/lib/constants";
 
 export function ClientLayout({
   user,
   children,
   enableEnterprise,
+  enableCloud,
 }: {
   user: User | null;
   children: React.ReactNode;
   enableEnterprise: boolean;
+  enableCloud: boolean;
 }) {
   const isCurator =
     user?.role === UserRole.CURATOR || user?.role === UserRole.GLOBAL_CURATOR;
@@ -392,7 +393,7 @@ export function ClientLayout({
                               },
                             ]
                           : []),
-                        ...(CLOUD_ENABLED
+                        ...(enableCloud
                           ? [
                               {
                                 name: (
