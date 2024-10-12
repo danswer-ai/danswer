@@ -19,7 +19,6 @@ def get_litellm_additional_request_headers(
             lowercase_key = key.lower()
             if lowercase_key in headers:
                 pass_through_headers[lowercase_key] = headers[lowercase_key]
-
     return pass_through_headers
 
 
