@@ -55,7 +55,8 @@ export default async function RootLayout({
 }) {
   const combinedSettings = await fetchSettingsSS();
 
-  const productGating = GatingType.PARTIAL;
+  const productGating =
+    combinedSettings?.settings.product_gating ?? GatingType.NONE;
 
   if (!combinedSettings) {
     return (
@@ -130,13 +131,14 @@ export default async function RootLayout({
                 temporarily suspended due to a lapse in your subscription.
               </p>
               <p className="text-text-500 mb-4">
-                To reinstate your access and continue benefiting from Danswer's
-                powerful features, please update your payment information.
+                To reinstate your access and continue benefiting from
+                Danswer&apos;s powerful features, please update your payment
+                information.
               </p>
               <p className="text-text-500">
-                If you're an admin, you can resolve this by visiting the billing
-                section. For other users, please reach out to your administrator
-                to address this matter.
+                If you&apos;re an admin, you can resolve this by visiting the
+                billing section. For other users, please reach out to your
+                administrator to address this matter.
               </p>
             </Card>
           </div>
