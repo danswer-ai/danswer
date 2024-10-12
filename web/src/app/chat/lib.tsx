@@ -641,9 +641,11 @@ export async function useScrollonStream({
   endDivRef,
   distance,
   debounceNumber,
+  waitForScrollRef,
 }: {
   chatState: ChatState;
   scrollableDivRef: RefObject<HTMLDivElement>;
+  waitForScrollRef: RefObject<boolean>;
   scrollDist: MutableRefObject<number>;
   endDivRef: RefObject<HTMLDivElement>;
   distance: number;

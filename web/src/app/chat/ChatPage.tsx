@@ -777,7 +777,11 @@ export function ChatPage({
 
   const handleInputResize = () => {
     setTimeout(() => {
-      if (inputRef.current && lastMessageRef.current) {
+      if (
+        inputRef.current &&
+        lastMessageRef.current &&
+        !waitForScrollRef.current
+      ) {
         const newHeight: number =
           inputRef.current?.getBoundingClientRect().height!;
         const heightDifference = newHeight - previousHeight.current;
@@ -806,8 +810,11 @@ export function ChatPage({
   };
 
   const clientScrollToBottom = (fast?: boolean) => {
+    waitForScrollRef.current = true;
+
     setTimeout(() => {
       if (!endDivRef.current || !scrollableDivRef.current) {
+        console.error("endDivRef or scrollableDivRef not found");
         return;
       }
 
@@ -818,6 +825,7 @@ export function ChatPage({
 
       // Check if all messages are currently rendered
       if (currentVisibleRange.end < messageHistory.length) {
+        console.log("Updating visible range");
         // Update visible range to include the last messages
         updateCurrentVisibleRange({
           start: Math.max(
@@ -835,8 +843,9 @@ export function ChatPage({
             behavior: fast ? "auto" : "smooth",
           });
           setHasPerformedInitialScroll(true);
-        }, 0);
+        }, 100);
       } else {
+        console.log("All messages are already rendered, scrolling immediately");
         // If all messages are already rendered, scroll immediately
         endDivRef.current.scrollIntoView({
           behavior: fast ? "auto" : "smooth",
@@ -844,6 +853,11 @@ export function ChatPage({
         setHasPerformedInitialScroll(true);
       }
     }, 50);
+
+    // Reset waitForScrollRef after 1.5 seconds
+    setTimeout(() => {
+      waitForScrollRef.current = false;
+    }, 1500);
   };
 
   const distance = 500; // distance that should "engage" the scroll
@@ -1553,6 +1567,7 @@ export function ChatPage({
     toggle(false);
   };
 
+  const waitForScrollRef = useRef(false);
   const sidebarElementRef = useRef<HTMLDivElement>(null);
 
   useSidebarVisibility({
@@ -1571,6 +1586,7 @@ export function ChatPage({
     endDivRef,
     distance,
     debounceNumber,
+    waitForScrollRef,
   });
 
   // Virtualization + Scrolling related effects and functions
