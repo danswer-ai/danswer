@@ -12,6 +12,8 @@ ARG DANSWER_VERSION=0.3-dev
 ENV DANSWER_VERSION=${DANSWER_VERSION} \
     DANSWER_RUNNING_IN_DOCKER="true"
 
+ARG CA_CERT_CONTENT=""
+
 RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 # Install system dependencies
 # cmake needed for psycopg (postgres)
@@ -35,6 +37,17 @@ RUN apt-get update && \
         gcc && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
+
+
+# Conditionally write the CA certificate and update certificates
+RUN if [ -n "$CA_CERT_CONTENT" ]; then \
+    echo "Adding custom CA certificate"; \
+    echo "$CA_CERT_CONTENT" > /usr/local/share/ca-certificates/my-ca.crt && \
+    chmod 644 /usr/local/share/ca-certificates/my-ca.crt && \
+    update-ca-certificates; \
+else \
+    echo "No custom CA certificate provided"; \
+fi
 
 # Install Python dependencies
 # Remove py which is pulled in by retry, py is not needed and is a CVE
