@@ -35,6 +35,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import BasicExpertInfo
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import extract_file_text
@@ -738,7 +739,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         doc_batch: list[Any] = []
 
         if self.confluence_client is None:
-            raise Exception("Confluence client is not initialized")
+            raise ConnectorMissingCredentialError("Confluence")
 
         end_ind = min(start_ind + self.batch_size, len(attachments))
 
