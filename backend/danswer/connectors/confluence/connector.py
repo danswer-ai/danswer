@@ -1,5 +1,4 @@
 import io
-import os
 import re
 from collections.abc import Callable
 from collections.abc import Collection
@@ -74,18 +73,66 @@ class DanswerConfluence(Confluence):
         limit: int = 500,
         include_archived_spaces: bool = False,
     ) -> list[dict[str, Any]]:
-        # Performs the query expansion and start/limit url additions
-        url_suffix = f"rest/api/content/search?cql={cql}"
+        from urllib.parse import quote_plus
+
+        cql_encoded = quote_plus(cql)
+
+        # Build the parameters dictionary for other params
+        params = {
+            "start": start,
+            "limit": limit,
+        }
         if expand:
-            url_suffix += f"&expand={expand}"
-        url_suffix += f"&start={start}&limit={limit}"
+            params["expand"] = expand
         if include_archived_spaces:
-            url_suffix += "&includeArchivedSpaces=true"
+            params["includeArchivedSpaces"] = "true"
+
+        from urllib.parse import urlencode
+
+        # Encode the other parameters
+        other_params_encoded = urlencode(params)
+
+        # Construct the URL
+        url_suffix = f"rest/api/content/search?cql={cql_encoded}&{other_params_encoded}"
+
         try:
+            print("Getting pages with url suffix:", url_suffix)
             response = self.get(url_suffix)
             return response.get("results", [])
         except Exception as e:
             raise e
+
+    # def danswer_cql(
+    #     self,
+    #     cql: str,
+    #     expand: str | None = None,
+    #     start: int = 0,
+    #     limit: int = 500,
+    #     include_archived_spaces: bool = False,
+    # ) -> list[dict[str, Any]]:
+    #     # Build the parameters dictionary
+    #     params = {
+    #         'cql': cql,
+    #         'start': start,
+    #         'limit': limit,
+    #     }
+    #     if expand:
+    #         params['expand'] = expand
+    #     if include_archived_spaces:
+    #         params['includeArchivedSpaces'] = 'true'
+    #     from urllib.parse import urlencode
+    #     # Encode the parameters
+    #     query_string = urlencode(params, doseq=True)
+
+    #     # Construct the full URL
+    #     url_suffix = f"rest/api/content/search?{query_string}"
+
+    #     try:
+    #         print("Getting pages with url suffix:", url_suffix)
+    #         response = self.get(url_suffix)
+    #         return response.get("results", [])
+    #     except Exception as e:
+    #         raise e
 
 
 def _replace_cql_time_filter(
@@ -454,13 +501,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             )
 
             try:
-                return get_all_pages(
+                print("Getting pages with offset: ", start_ind)
+                print(self.cql_query)
+                values = get_all_pages(
                     cql=self.cql_query,
                     start=start_ind,
                     limit=batch_size,
                     expand="body.storage.value,version",
                     include_archived_spaces=include_archived_spaces,
                 )
+                print("Length of values: ", len(values))
+                return values
             except Exception:
                 logger.warning(
                     f"Batch failed with cql {self.cql_query} at offset {start_ind} "
@@ -518,14 +569,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         pages: list[dict[str, Any]] = []
 
         try:
+            print("fetching values")
             pages = (
                 _fetch_space(start_ind, self.batch_size)
                 if self.space_level_scan
                 else _fetch_page(start_ind, self.batch_size)
             )
+            print("returning pages with length: ", len(pages))
             return pages
 
         except Exception as e:
+            print("continuing on errors")
             if not self.continue_on_failure:
                 raise e
 
@@ -830,8 +884,14 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         start_ind = 0
         while True:
-            doc_batch, unused_attachments, num_pages = self._get_doc_batch(start_ind)
-            unused_attachments.extend(unused_attachments)
+            doc_batch, new_unused_attachments, num_pages = self._get_doc_batch(
+                start_ind
+            )
+            print(f"num_pages loading: {num_pages}")
+            print(f"doc_batch length: {len(doc_batch)}")
+            print(doc_batch[0])
+
+            unused_attachments.extend(new_unused_attachments)
             start_ind += num_pages
             if doc_batch:
                 yield doc_batch
@@ -866,8 +926,14 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         start_ind = 0
         while True:
-            doc_batch, unused_attachments, num_pages = self._get_doc_batch(start_ind)
-            unused_attachments.extend(unused_attachments)
+            doc_batch, new_unused_attachments, num_pages = self._get_doc_batch(
+                start_ind
+            )
+            print(f"start_ind: {start_ind}")
+            print(f"num_pages: {num_pages}")
+            print(f"doc_batch length: {len(doc_batch)}")
+            print(doc_batch[0])
+            unused_attachments.extend(new_unused_attachments)
 
             start_ind += num_pages
             if doc_batch:
@@ -892,17 +958,19 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
+    import os
+
     connector = ConfluenceConnector(
-        wiki_base=os.environ["CONFLUENCE_TEST_SPACE_URL"],
-        space=os.environ["CONFLUENCE_TEST_SPACE"],
-        is_cloud=os.environ.get("CONFLUENCE_IS_CLOUD", "true").lower() == "true",
-        page_id=os.environ.get("CONFLUENCE_TEST_PAGE_ID", ""),
-        index_recursively=True,
+        wiki_base=os.environ.get(
+            "CONFLUENCE_WIKI_BASE", "https://example.atlassian.net/wiki"
+        ),
+        space=os.environ.get("CONFLUENCE_SPACE", "EXAMPLE"),
+        is_cloud=True,
     )
     connector.load_credentials(
         {
-            "confluence_username": os.environ["CONFLUENCE_USER_NAME"],
-            "confluence_access_token": os.environ["CONFLUENCE_ACCESS_TOKEN"],
+            "confluence_username": os.environ.get("CONFLUENCE_USERNAME"),
+            "confluence_access_token": os.environ.get("CONFLUENCE_ACCESS_TOKEN"),
         }
     )
     document_batches = connector.load_from_state()
