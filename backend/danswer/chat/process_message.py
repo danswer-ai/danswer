@@ -276,6 +276,7 @@ def stream_chat_message_objects(
     # on the `new_msg_req.message`. Currently, requires a state where the last message is a
     use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
+    tool_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
     enforce_chat_session_id_for_search_docs: bool = True,
 ) -> ChatPacketStream:
@@ -862,6 +863,7 @@ def stream_chat_message(
     user: User | None,
     use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
+    tool_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
 ) -> Iterator[str]:
     with get_session_context_manager() as db_session:
@@ -871,6 +873,7 @@ def stream_chat_message(
             db_session=db_session,
             use_existing_user_message=use_existing_user_message,
             litellm_additional_headers=litellm_additional_headers,
+            tool_additional_headers=tool_additional_headers,
             is_connected=is_connected,
         )
         for obj in objects:
