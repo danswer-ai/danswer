@@ -443,6 +443,8 @@ def update_loop(
     num_secondary_workers: int = NUM_SECONDARY_INDEXING_WORKERS,
 ) -> None:
     if not MULTI_TENANT:
+        # We can use this function as we are certain only the public schema exists
+        # (explicitly for the non-`MULTI_TENANT` case)
         engine = get_sqlalchemy_engine()
         with Session(engine) as db_session:
             check_index_swap(db_session=db_session)
