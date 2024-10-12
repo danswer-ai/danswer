@@ -85,8 +85,6 @@ def get_application() -> FastAPI:
 
     # RBAC / group access control
     include_router_with_global_prefix_prepended(application, user_group_router)
-    # Tenant management
-    include_router_with_global_prefix_prepended(application, tenants_router)
     # Analytics endpoints
     include_router_with_global_prefix_prepended(application, analytics_router)
     include_router_with_global_prefix_prepended(application, query_history_router)
@@ -106,6 +104,10 @@ def get_application() -> FastAPI:
     )
     include_router_with_global_prefix_prepended(application, enterprise_settings_router)
     include_router_with_global_prefix_prepended(application, usage_export_router)
+
+    if MULTI_TENANT:
+        # Tenant management
+        include_router_with_global_prefix_prepended(application, tenants_router)
 
     # Ensure all routes have auth enabled or are explicitly marked as public
     check_ee_router_auth(application)
