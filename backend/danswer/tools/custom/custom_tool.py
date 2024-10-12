@@ -55,12 +55,9 @@ class CustomTool(Tool):
 
         self._name = self._method_spec.name
         self._description = self._method_spec.summary
-        self.headers = (
-            {header["key"]: header["value"] for header in custom_headers}
-            if custom_headers
-            else {}
-        )
-        self.headers.update(tool_additional_headers or {})
+        self.headers = {
+            header["key"]: header["value"] for header in (custom_headers or [])
+        } | (tool_additional_headers or {})
 
     @property
     def name(self) -> str:

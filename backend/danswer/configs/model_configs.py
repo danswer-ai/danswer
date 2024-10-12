@@ -121,6 +121,8 @@ if _LITELLM_PASS_THROUGH_HEADERS_RAW:
         )
 
 
+# List of headers to pass through to tool calls (e.g., API requests made by tools)
+# This allows for dynamic configuration of tool behavior based on incoming request headers
 TOOL_PASS_THROUGH_HEADERS: list[str] | None = None
 _TOOL_PASS_THROUGH_HEADERS_RAW = os.environ.get("TOOL_PASS_THROUGH_HEADERS")
 if _TOOL_PASS_THROUGH_HEADERS_RAW:

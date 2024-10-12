@@ -71,7 +71,7 @@ from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
-from danswer.tools.headers import get_tool_additional_request_headers
+from danswer.tools.headers import get_tool_headers
 from danswer.utils.logger import setup_logger
 
 
@@ -334,9 +334,7 @@ def handle_new_chat_message(
                 litellm_additional_headers=get_litellm_additional_request_headers(
                     request.headers
                 ),
-                tool_additional_headers=get_tool_additional_request_headers(
-                    request.headers
-                ),
+                tool_additional_headers=get_tool_headers(request.headers),
                 is_connected=is_disconnected_func,
             ):
                 yield json.dumps(packet) if isinstance(packet, dict) else packet
