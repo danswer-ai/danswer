@@ -120,6 +120,16 @@ class NotionConnector(LoadConnector, PollConnector):
                     f"with the Danswer integration. Exact exception:\n\n{e}"
                 )
                 return None
+            if res.status_code == 400 and res.json().get("code") == "validation_error":
+                # Happens on a deleted block with a specific block_type that does not support children
+                # The api then returns a 400 instead of 404
+                # Typical error message is 'Suggested blocks are not supported via the API.'
+                logger.error(
+                    f"Unable to access block with ID '{block_id}'. "
+                    f"This is a validation_error with message '{res.json().get("message")}'.] "
+                    f"Exact exception:\n\n{e}"
+                )
+                return None
             logger.exception(f"Error fetching blocks - {res.json()}")
             raise e
         return res.json()
