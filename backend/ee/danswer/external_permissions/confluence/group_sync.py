@@ -80,7 +80,8 @@ def confluence_group_sync(
     cc_pair: ConnectorCredentialPair,
 ) -> None:
     confluence_client = build_confluence_client(
-        cc_pair.connector.connector_specific_config, cc_pair.credential.credential_json
+        connector_specific_config=cc_pair.connector.connector_specific_config,
+        credentials_json=cc_pair.credential.credential_json,
     )
 
     danswer_groups: list[ExternalUserGroup] = []

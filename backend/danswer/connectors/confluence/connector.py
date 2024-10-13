@@ -1,6 +1,5 @@
 import io
 import os
-import re
 from collections.abc import Callable
 from collections.abc import Collection
 from datetime import datetime
@@ -86,68 +85,6 @@ class DanswerConfluence(Confluence):
             return response.get("results", [])
         except Exception as e:
             raise e
-
-
-def _replace_cql_time_filter(
-    cql_query: str, start_time: datetime, end_time: datetime
-) -> str:
-    """
-    This function replaces the lastmodified filter in the CQL query with the start and end times.
-    This selects the more restrictive time range.
-    """
-    # Extract existing lastmodified >= and <= filters
-    existing_start_match = re.search(
-        r'lastmodified\s*>=\s*["\']?(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2})?)["\']?',
-        cql_query,
-        flags=re.IGNORECASE,
-    )
-    existing_end_match = re.search(
-        r'lastmodified\s*<=\s*["\']?(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2})?)["\']?',
-        cql_query,
-        flags=re.IGNORECASE,
-    )
-
-    # Remove all existing lastmodified and updated filters
-    cql_query = re.sub(
-        r'\s*AND\s+(lastmodified|updated)\s*[<>=]+\s*["\']?[\d-]+(?:\s+[\d:]+)?["\']?',
-        "",
-        cql_query,
-        flags=re.IGNORECASE,
-    )
-
-    # Determine the start time to use
-    if existing_start_match:
-        existing_start_str = existing_start_match.group(1)
-        existing_start = datetime.strptime(
-            existing_start_str,
-            "%Y-%m-%d %H:%M" if " " in existing_start_str else "%Y-%m-%d",
-        )
-        existing_start = existing_start.replace(
-            tzinfo=timezone.utc
-        )  # Make offset-aware
-        start_time_to_use = max(start_time.astimezone(timezone.utc), existing_start)
-    else:
-        start_time_to_use = start_time.astimezone(timezone.utc)
-
-    # Determine the end time to use
-    if existing_end_match:
-        existing_end_str = existing_end_match.group(1)
-        existing_end = datetime.strptime(
-            existing_end_str,
-            "%Y-%m-%d %H:%M" if " " in existing_end_str else "%Y-%m-%d",
-        )
-        existing_end = existing_end.replace(tzinfo=timezone.utc)  # Make offset-aware
-        end_time_to_use = min(end_time.astimezone(timezone.utc), existing_end)
-    else:
-        end_time_to_use = end_time.astimezone(timezone.utc)
-
-    # Add new time filters
-    cql_query += (
-        f" and lastmodified >= '{start_time_to_use.strftime('%Y-%m-%d %H:%M')}'"
-    )
-    cql_query += f" and lastmodified <= '{end_time_to_use.strftime('%Y-%m-%d %H:%M')}'"
-
-    return cql_query.strip()
 
 
 @lru_cache()
@@ -280,7 +217,7 @@ class RecursiveIndexer:
         )
         try:
             origin_page = get_page_by_id(
-                self.origin_page_id, expand="body.storage.value,version"
+                self.origin_page_id, expand="body.storage.value,version,space"
             )
             return origin_page
         except Exception as e:
@@ -345,7 +282,7 @@ class RecursiveIndexer:
                 type="page",
                 start=start_ind,
                 limit=batch_size,
-                expand="body.storage.value,version",
+                expand="body.storage.value,version,space",
             )
 
             child_pages.extend(child_page)
@@ -365,7 +302,7 @@ class RecursiveIndexer:
                         type="page",
                         start=ind,
                         limit=1,
-                        expand="body.storage.value,version",
+                        expand="body.storage.value,version,space",
                     )
                     child_pages.extend(child_page)
                 except Exception as e:
@@ -399,7 +336,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         # Remove trailing slash from wiki_base if present
         self.wiki_base = wiki_base.rstrip("/")
-        self.space = space
         self.page_id = "" if cql_query else page_id
         self.space_level_scan = bool(not self.page_id)
 
@@ -409,16 +345,16 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         # if a cql_query is provided, we will use it to fetch the pages
         # if no cql_query is provided, we will use the space to fetch the pages
-        # if no space is provided, we will default to fetching all pages, regardless of space
+        # if no space and no cql_query is provided, we will default to fetching all pages, regardless of space
         if cql_query:
             self.cql_query = cql_query
-        elif self.space:
-            self.cql_query = f"type=page and space={self.space}"
+        elif space:
+            self.cql_query = f"type=page and space={space}"
         else:
             self.cql_query = "type=page"
 
         logger.info(
-            f"wiki_base: {self.wiki_base}, space: {self.space}, page_id: {self.page_id},"
+            f"wiki_base: {self.wiki_base}, space: {space}, page_id: {self.page_id},"
             + f" space_level_scan: {self.space_level_scan}, index_recursively: {self.index_recursively},"
             + f" cql_query: {self.cql_query}"
         )
@@ -458,7 +394,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     cql=self.cql_query,
                     start=start_ind,
                     limit=batch_size,
-                    expand="body.storage.value,version",
+                    expand="body.storage.value,version,space",
                     include_archived_spaces=include_archived_spaces,
                 )
             except Exception:
@@ -477,7 +413,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                                 cql=self.cql_query,
                                 start=start_ind + i,
                                 limit=1,
-                                expand="body.storage.value,version",
+                                expand="body.storage.value,version,space",
                                 include_archived_spaces=include_archived_spaces,
                             )
                         )
@@ -741,7 +677,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             page_text += "\n" + attachment_text if attachment_text else ""
             comments_text = self._fetch_comments(self.confluence_client, page_id)
             page_text += comments_text
-            doc_metadata: dict[str, str | list[str]] = {"Wiki Space Name": self.space}
+            doc_metadata: dict[str, str | list[str]] = {
+                "Wiki Space Name": page["space"]["name"]
+            }
             if not CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING and page_labels:
                 doc_metadata["labels"] = page_labels
 
@@ -825,9 +763,15 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         return doc_batch, end_ind - start_ind
 
-    def load_from_state(self) -> GenerateDocumentsOutput:
-        unused_attachments: list[dict[str, Any]] = []
+    def _handle_batch_retrieval(
+        self,
+        start: SecondsSinceUnixEpoch | None = None,
+        end: SecondsSinceUnixEpoch | None = None,
+    ) -> GenerateDocumentsOutput:
+        start_time = datetime.fromtimestamp(start, tz=timezone.utc) if start else None
+        end_time = datetime.fromtimestamp(end, tz=timezone.utc) if end else None
 
+        unused_attachments: list[dict[str, Any]] = []
         start_ind = 0
         while True:
             doc_batch, unused_attachments, num_pages = self._get_doc_batch(start_ind)
@@ -842,7 +786,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         start_ind = 0
         while True:
             attachment_batch, num_attachments = self._get_attachment_batch(
-                start_ind, unused_attachments
+                start_ind=start_ind,
+                attachments=unused_attachments,
+                time_filter=lambda t: start_time <= t <= end_time
+                if start_time and end_time
+                else None,
             )
             start_ind += num_attachments
             if attachment_batch:
@@ -850,45 +798,14 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
             if num_attachments < self.batch_size:
                 break
+
+    def load_from_state(self) -> GenerateDocumentsOutput:
+        return self._handle_batch_retrieval()
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        unused_attachments: list[dict[str, Any]] = []
-
-        if self.confluence_client is None:
-            raise ConnectorMissingCredentialError("Confluence")
-
-        start_time = datetime.fromtimestamp(start, tz=timezone.utc)
-        end_time = datetime.fromtimestamp(end, tz=timezone.utc)
-
-        self.cql_query = _replace_cql_time_filter(self.cql_query, start_time, end_time)
-
-        start_ind = 0
-        while True:
-            doc_batch, unused_attachments, num_pages = self._get_doc_batch(start_ind)
-            unused_attachments.extend(unused_attachments)
-
-            start_ind += num_pages
-            if doc_batch:
-                yield doc_batch
-
-            if num_pages < self.batch_size:
-                break
-
-        start_ind = 0
-        while True:
-            attachment_batch, num_attachments = self._get_attachment_batch(
-                start_ind,
-                unused_attachments,
-                time_filter=lambda t: start_time <= t <= end_time,
-            )
-            start_ind += num_attachments
-            if attachment_batch:
-                yield attachment_batch
-
-            if num_attachments < self.batch_size:
-                break
+        return self._handle_batch_retrieval(start=start, end=end)
 
 
 if __name__ == "__main__":
