@@ -109,7 +109,7 @@ def _convert_message_to_dict(message: BaseMessage) -> dict:
                         "arguments": json.dumps(tool_call["args"]),
                     },
                     "type": "function",
-                    "index": 0,  # only support a single tool call atm
+                    "index": tool_call.get("index", 0),
                 }
                 for tool_call in message.tool_calls
             ]
@@ -164,7 +164,7 @@ def _convert_delta_to_message_chunk(
                 name=tool_name,
                 id=tool_call.id,
                 args=tool_call.function.arguments,
-                index=idx,  # only support a single tool call atm
+                index=idx,
             )
 
             return AIMessageChunk(
