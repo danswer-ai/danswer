@@ -64,6 +64,7 @@ from danswer.db.credentials import delete_google_drive_service_account_credentia
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_counts_for_cc_pairs
+from danswer.db.engine import get_current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.enums import AccessType
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
@@ -751,6 +752,7 @@ def connector_run_once(
     run_info: RunConnectorRequest,
     _: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> StatusResponse[list[int]]:
     """Used to trigger indexing on a set of cc_pairs associated with a
     single connector."""
@@ -813,7 +815,12 @@ def connector_run_once(
     for cc_pair in connector_credential_pairs:
         if cc_pair is not None:
             attempt_id = try_creating_indexing_task(
-                cc_pair, search_settings, run_info.from_beginning, db_session, r
+                cc_pair,
+                search_settings,
+                run_info.from_beginning,
+                db_session,
+                r,
+                tenant_id,
             )
             if attempt_id:
                 logger.info(
