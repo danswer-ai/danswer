@@ -218,7 +218,7 @@ services:
       - NEXT_PUBLIC_CUSTOM_REFRESH_URL=${NEXT_PUBLIC_CUSTOM_REFRESH_URL:-}
 
   inference_model_server:
-    image: danswer/danswer-model-server:${IMAGE_TAG:-latest}
+    image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-model-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
