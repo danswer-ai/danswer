@@ -149,14 +149,14 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
                 return False
 
         if event.get("bot_profile"):
-            channel_name, _ = get_channel_name_from_id(
+            channel_name, is_dm = get_channel_name_from_id(
                 client=client.web_client, channel_id=channel
             )
 
             engine = get_sqlalchemy_engine()
             with Session(engine) as db_session:
                 slack_bot_config = get_slack_bot_config_for_channel(
-                    channel_name=channel_name, db_session=db_session
+                    channel_name=channel_name, db_session=db_session, is_dm=is_dm,
                 )
             # If DanswerBot is not specifically tagged and the channel is not set to respond to bots, ignore the message
             if (not bot_tag_id or bot_tag_id not in msg) and (
@@ -360,7 +360,7 @@ def process_message(
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
         slack_bot_config = get_slack_bot_config_for_channel(
-            channel_name=channel_name, db_session=db_session
+            channel_name=channel_name, db_session=db_session, is_dm=is_dm,
         )
 
         # Be careful about this default, don't want to accidentally spam every channel
