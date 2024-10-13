@@ -263,13 +263,12 @@ class RecursiveIndexer:
                     limit=self.batch_size,
                     expand="",
                 )
-                child_pages = child_pages_response.get("results", [])
-                if not child_pages:
+                if not child_pages_response:
                     break
-                for child_page in child_pages:
+                for child_page in child_pages_response:
                     child_page_id = child_page["id"]
                     queue.append(child_page_id)
-                start += len(child_pages)
+                start += len(child_pages_response)
 
         return pages
 
