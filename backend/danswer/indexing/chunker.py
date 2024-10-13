@@ -27,6 +27,7 @@ CHUNK_OVERLAP = 0
 MAX_METADATA_PERCENTAGE = 0.25
 CHUNK_MIN_CONTENT = 256
 
+
 logger = setup_logger()
 
 

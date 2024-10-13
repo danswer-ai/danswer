@@ -3,6 +3,7 @@ import io
 import uuid
 from collections.abc import Callable
 from collections.abc import Generator
+from typing import Tuple
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -11,6 +12,7 @@ from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
 from fastapi.responses import StreamingResponse
+from PIL import Image
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -70,6 +72,7 @@ from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
 from danswer.utils.logger import setup_logger
+
 
 logger = setup_logger()
 
@@ -508,6 +511,21 @@ def seed_chat(
 """File upload"""
 
 
+def convert_to_jpeg(file: UploadFile) -> Tuple[io.BytesIO, str]:
+    try:
+        with Image.open(file.file) as img:
+            if img.mode != "RGB":
+                img = img.convert("RGB")
+            jpeg_io = io.BytesIO()
+            img.save(jpeg_io, format="JPEG", quality=85)
+            jpeg_io.seek(0)
+        return jpeg_io, "image/jpeg"
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Failed to convert image: {str(e)}"
+        )
+
+
 @router.post("/file")
 def upload_files_for_chat(
     files: list[UploadFile],
@@ -570,19 +588,25 @@ def upload_files_for_chat(
     for file in files:
         if file.content_type in image_content_types:
             file_type = ChatFileType.IMAGE
+            # Convert image to JPEG
+            file_content, new_content_type = convert_to_jpeg(file)
         elif file.content_type in document_content_types:
             file_type = ChatFileType.DOC
+            file_content = io.BytesIO(file.file.read())
+            new_content_type = file.content_type or ""
         else:
             file_type = ChatFileType.PLAIN_TEXT
+            file_content = io.BytesIO(file.file.read())
+            new_content_type = file.content_type or ""
 
-        # store the raw file
+        # store the file (now JPEG for images)
         file_id = str(uuid.uuid4())
         file_store.save_file(
             file_name=file_id,
-            content=file.file,
+            content=file_content,
             display_name=file.filename,
             file_origin=FileOrigin.CHAT_UPLOAD,
-            file_type=file.content_type or file_type.value,
+            file_type=new_content_type or file_type.value,
         )
 
         # if the file is a doc, extract text and store that so we don't need

@@ -28,6 +28,7 @@ from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
+from danswer.background.update import get_all_tenant_ids
 from danswer.configs.constants import CELERY_PRIMARY_WORKER_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerRedisLocks
@@ -37,13 +38,12 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_INDEXING_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_INDEXING_CHILD_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_LIGHT_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
-from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import SqlEngine
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.swap_index import check_index_swap
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
-from danswer.redis.redis_pool import RedisPool
+from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
@@ -55,8 +55,6 @@ logger = setup_logger()
 
 # use this within celery tasks to get celery task specific logging
 task_logger = get_task_logger(__name__)
-
-redis_pool = RedisPool()
 
 celery_app = Celery(__name__)
 celery_app.config_from_object(
@@ -109,13 +107,13 @@ def on_task_postrun(
     if not task_id:
         return
 
+    r = get_redis_client()
+
     if task_id.startswith(RedisConnectorCredentialPair.PREFIX):
-        r = redis_pool.get_client()
         r.srem(RedisConnectorCredentialPair.get_taskset_key(), task_id)
         return
 
     if task_id.startswith(RedisDocumentSet.PREFIX):
-        r = redis_pool.get_client()
         document_set_id = RedisDocumentSet.get_id_from_task_id(task_id)
         if document_set_id is not None:
             rds = RedisDocumentSet(int(document_set_id))
@@ -123,7 +121,6 @@ def on_task_postrun(
         return
 
     if task_id.startswith(RedisUserGroup.PREFIX):
-        r = redis_pool.get_client()
         usergroup_id = RedisUserGroup.get_id_from_task_id(task_id)
         if usergroup_id is not None:
             rug = RedisUserGroup(int(usergroup_id))
@@ -131,7 +128,6 @@ def on_task_postrun(
         return
 
     if task_id.startswith(RedisConnectorDeletion.PREFIX):
-        r = redis_pool.get_client()
         cc_pair_id = RedisConnectorDeletion.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
             rcd = RedisConnectorDeletion(int(cc_pair_id))
@@ -139,7 +135,6 @@ def on_task_postrun(
         return
 
     if task_id.startswith(RedisConnectorPruning.SUBTASK_PREFIX):
-        r = redis_pool.get_client()
         cc_pair_id = RedisConnectorPruning.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
             rcp = RedisConnectorPruning(int(cc_pair_id))
@@ -181,7 +176,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
 
     # TODO: why is this necessary for the indexer to do?
-    engine = get_sqlalchemy_engine()
+    engine = SqlEngine.get_engine()
     with Session(engine) as db_session:
         check_index_swap(db_session=db_session)
         search_settings = get_current_search_settings(db_session)
@@ -202,7 +197,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
             )
             logger.notice("First inference complete.")
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
@@ -262,7 +257,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
     # This is singleton work that should be done on startup exactly once
     # by the primary worker
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     # For the moment, we're assuming that we are the only primary worker
     # that should be running.
@@ -341,10 +336,11 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
 @worker_process_init.connect
 def on_worker_process_init(sender: Any, **kwargs: Any) -> None:
-    """This only runs inside child processes when the worker is in pool=prefork mode."""
+    """This only runs inside child processes when the worker is in pool=prefork mode.
+    This may be unnecessary since"""
     logger.info("worker_process_init signal received.")
     SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_INDEXING_CHILD_APP_NAME)
-    SqlEngine.init_engine(pool_size=8, max_overflow=0)
+    SqlEngine.init_engine(pool_size=5, max_overflow=0)
 
     # https://stackoverflow.com/questions/43944787/sqlalchemy-celery-with-scoped-session-error
     SqlEngine.get_engine().dispose(close=False)
@@ -501,7 +497,7 @@ class HubPeriodicTask(bootsteps.StartStopStep):
             if not hasattr(worker, "primary_worker_lock"):
                 return
 
-            r = redis_pool.get_client()
+            r = get_redis_client()
 
             lock: redis.lock.Lock = worker.primary_worker_lock
 
@@ -555,57 +551,64 @@ celery_app.autodiscover_tasks(
 #####
 # Celery Beat (Periodic Tasks) Settings
 #####
-celery_app.conf.beat_schedule = {
-    "check-for-vespa-sync": {
+
+tenant_ids = get_all_tenant_ids()
+
+tasks_to_schedule = [
+    {
+        "name": "check-for-vespa-sync",
         "task": "check_for_vespa_sync_task",
         "schedule": timedelta(seconds=5),
         "options": {"priority": DanswerCeleryPriority.HIGH},
     },
-}
-celery_app.conf.beat_schedule.update(
     {
-        "check-for-connector-deletion-task": {
-            "task": "check_for_connector_deletion_task",
-            # don't need to check too often, since we kick off a deletion initially
-            # during the API call that actually marks the CC pair for deletion
-            "schedule": timedelta(seconds=60),
-            "options": {"priority": DanswerCeleryPriority.HIGH},
-        },
-    }
-)
-celery_app.conf.beat_schedule.update(
+        "name": "check-for-connector-deletion",
+        "task": "check_for_connector_deletion_task",
+        "schedule": timedelta(seconds=60),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
+    },
     {
-        "check-for-indexing": {
-            "task": "check_for_indexing",
-            "schedule": timedelta(seconds=15),
-            "options": {"priority": DanswerCeleryPriority.HIGH},
-        },
-    }
-)
-celery_app.conf.beat_schedule.update(
+        "name": "check-for-indexing",
+        "task": "check_for_indexing",
+        "schedule": timedelta(seconds=15),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
+    },
     {
-        "check-for-prune": {
-            "task": "check_for_pruning",
-            "schedule": timedelta(seconds=60),
-            "options": {"priority": DanswerCeleryPriority.HIGH},
-        },
-    }
-)
-celery_app.conf.beat_schedule.update(
+        "name": "check-for-prune",
+        "task": "check_for_pruning",
+        "schedule": timedelta(seconds=10),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
+    },
     {
-        "kombu-message-cleanup": {
-            "task": "kombu_message_cleanup_task",
-            "schedule": timedelta(seconds=3600),
-            "options": {"priority": DanswerCeleryPriority.LOWEST},
-        },
-    }
-)
-celery_app.conf.beat_schedule.update(
+        "name": "kombu-message-cleanup",
+        "task": "kombu_message_cleanup_task",
+        "schedule": timedelta(seconds=3600),
+        "options": {"priority": DanswerCeleryPriority.LOWEST},
+    },
     {
-        "monitor-vespa-sync": {
-            "task": "monitor_vespa_sync",
-            "schedule": timedelta(seconds=5),
-            "options": {"priority": DanswerCeleryPriority.HIGH},
-        },
-    }
-)
+        "name": "monitor-vespa-sync",
+        "task": "monitor_vespa_sync",
+        "schedule": timedelta(seconds=5),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
+    },
+]
+
+# Build the celery beat schedule dynamically
+beat_schedule = {}
+
+for tenant_id in tenant_ids:
+    for task in tasks_to_schedule:
+        task_name = f"{task['name']}-{tenant_id}"  # Unique name for each scheduled task
+        beat_schedule[task_name] = {
+            "task": task["task"],
+            "schedule": task["schedule"],
+            "options": task["options"],
+            "args": (tenant_id,),  # Must pass tenant_id as an argument
+        }
+
+# Include any existing beat schedules
+existing_beat_schedule = celery_app.conf.beat_schedule or {}
+beat_schedule.update(existing_beat_schedule)
+
+# Update the Celery app configuration once
+celery_app.conf.beat_schedule = beat_schedule

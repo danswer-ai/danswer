@@ -276,7 +276,7 @@ export function buildFinalPrompt(
   taskPrompt: string,
   retrievalDisabled: boolean
 ) {
-  let queryString = Object.entries({
+  const queryString = Object.entries({
     system_prompt: systemPrompt,
     task_prompt: taskPrompt,
     retrieval_disabled: retrievalDisabled,

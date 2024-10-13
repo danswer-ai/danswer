@@ -4,7 +4,6 @@ from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.celery_app import task_logger
@@ -14,10 +13,10 @@ from danswer.db.document import get_document
 from danswer.db.document import get_document_connector_count
 from danswer.db.document import mark_document_as_synced
 from danswer.db.document_set import fetch_document_sets_for_document
-from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import get_session_with_tenant
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
-from danswer.document_index.interfaces import UpdateRequest
+from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 
 
@@ -37,7 +36,11 @@ class RedisFenceData(BaseModel):
     max_retries=3,
 )
 def document_by_cc_pair_cleanup_task(
-    self: Task, document_id: str, connector_id: int, credential_id: int
+    self: Task,
+    document_id: str,
+    connector_id: int,
+    credential_id: int,
+    tenant_id: str | None,
 ) -> bool:
     """A lightweight subtask used to clean up document to cc pair relationships.
     Created by connection deletion and connector pruning parent tasks."""
@@ -57,7 +60,10 @@ def document_by_cc_pair_cleanup_task(
     task_logger.info(f"document_id={document_id}")
 
     try:
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
+            action = "skip"
+            chunks_affected = 0
+
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
             document_index = get_default_document_index(
                 primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
@@ -67,12 +73,16 @@ def document_by_cc_pair_cleanup_task(
             if count == 1:
                 # count == 1 means this is the only remaining cc_pair reference to the doc
                 # delete it from vespa and the db
-                document_index.delete(doc_ids=[document_id])
+                action = "delete"
+
+                chunks_affected = document_index.delete_single(document_id)
                 delete_documents_complete__no_commit(
                     db_session=db_session,
                     document_ids=[document_id],
                 )
             elif count > 1:
+                action = "update"
+
                 # count > 1 means the document still has cc_pair references
                 doc = get_document(document_id, db_session)
                 if not doc:
@@ -87,8 +97,7 @@ def document_by_cc_pair_cleanup_task(
                 doc_sets = fetch_document_sets_for_document(document_id, db_session)
                 update_doc_sets: set[str] = set(doc_sets)
 
-                update_request = UpdateRequest(
-                    document_ids=[document_id],
+                fields = VespaDocumentFields(
                     document_sets=update_doc_sets,
                     access=doc_access,
                     boost=doc.boost,
@@ -96,7 +105,9 @@ def document_by_cc_pair_cleanup_task(
                 )
 
                 # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
-                document_index.update_single(update_request=update_request)
+                chunks_affected = document_index.update_single(
+                    document_id, fields=fields
+                )
 
                 # there are still other cc_pair references to the doc, so just resync to Vespa
                 delete_document_by_connector_credential_pair__no_commit(
@@ -112,14 +123,18 @@ def document_by_cc_pair_cleanup_task(
             else:
                 pass
 
-            # update_docs_last_modified__no_commit(
-            #     db_session=db_session,
-            #     document_ids=[document_id],
-            # )
-
+            task_logger.info(
+                f"tenant_id={tenant_id} "
+                f"document_id={document_id} "
+                f"refcount={count} "
+                f"action={action} "
+                f"chunks={chunks_affected}"
+            )
             db_session.commit()
     except SoftTimeLimitExceeded:
-        task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
+        task_logger.info(
+            f"SoftTimeLimitExceeded exception. tenant_id={tenant_id} doc_id={document_id}"
+        )
     except Exception as e:
         task_logger.exception("Unexpected exception")
 

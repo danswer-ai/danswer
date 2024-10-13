@@ -28,6 +28,7 @@ import {
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
 import { NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN } from "../constants";
+import { checkLLMSupportsImageInput } from "../llm/utils";
 
 interface FetchChatDataResult {
   user: User | null;
@@ -152,6 +153,7 @@ export async function fetchChatData(searchParams: {
     console.log(`Failed to fetch assistants - ${assistantsFetchError}`);
   }
   // remove those marked as hidden by an admin
+
   assistants = assistants.filter((assistant) => assistant.is_visible);
 
   // sort them in priority order
@@ -195,10 +197,13 @@ export async function fetchChatData(searchParams: {
     assistants = assistants.filter((assistant) => assistant.num_chunks === 0);
   }
 
-  const hasOpenAIProvider = llmProviders.some(
-    (provider) => provider.provider === "openai"
+  const hasImageCompatibleModel = llmProviders.some(
+    (provider) =>
+      provider.provider === "openai" ||
+      provider.model_names.some((model) => checkLLMSupportsImageInput(model))
   );
-  if (!hasOpenAIProvider) {
+
+  if (!hasImageCompatibleModel) {
     assistants = assistants.filter(
       (assistant) =>
         !assistant.tools.some(

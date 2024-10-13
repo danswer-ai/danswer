@@ -21,6 +21,7 @@ from danswer.db.document import (
 )
 from danswer.db.document_set import construct_document_select_by_docset
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from danswer.utils.variable_functionality import global_version
 
 
 class RedisObjectHelper(ABC):
@@ -98,6 +99,7 @@ class RedisObjectHelper(ABC):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock,
+        tenant_id: str | None,
     ) -> int | None:
         pass
 
@@ -116,6 +118,7 @@ class RedisDocumentSet(RedisObjectHelper):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock,
+        tenant_id: str | None,
     ) -> int | None:
         last_lock_time = time.monotonic()
 
@@ -140,7 +143,7 @@ class RedisDocumentSet(RedisObjectHelper):
 
             result = celery_app.send_task(
                 "vespa_metadata_sync_task",
-                kwargs=dict(document_id=doc.id),
+                kwargs=dict(document_id=doc.id, tenant_id=tenant_id),
                 queue=DanswerCeleryQueues.VESPA_METADATA_SYNC,
                 task_id=custom_task_id,
                 priority=DanswerCeleryPriority.LOW,
@@ -165,10 +168,14 @@ class RedisUserGroup(RedisObjectHelper):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock,
+        tenant_id: str | None,
     ) -> int | None:
         last_lock_time = time.monotonic()
 
         async_results = []
+
+        if not global_version.is_ee_version():
+            return 0
 
         try:
             construct_document_select_by_usergroup = fetch_versioned_implementation(
@@ -198,7 +205,7 @@ class RedisUserGroup(RedisObjectHelper):
 
             result = celery_app.send_task(
                 "vespa_metadata_sync_task",
-                kwargs=dict(document_id=doc.id),
+                kwargs=dict(document_id=doc.id, tenant_id=tenant_id),
                 queue=DanswerCeleryQueues.VESPA_METADATA_SYNC,
                 task_id=custom_task_id,
                 priority=DanswerCeleryPriority.LOW,
@@ -244,6 +251,7 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock,
+        tenant_id: str | None,
     ) -> int | None:
         last_lock_time = time.monotonic()
 
@@ -278,7 +286,7 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
             # Priority on sync's triggered by new indexing should be medium
             result = celery_app.send_task(
                 "vespa_metadata_sync_task",
-                kwargs=dict(document_id=doc.id),
+                kwargs=dict(document_id=doc.id, tenant_id=tenant_id),
                 queue=DanswerCeleryQueues.VESPA_METADATA_SYNC,
                 task_id=custom_task_id,
                 priority=DanswerCeleryPriority.MEDIUM,
@@ -303,6 +311,7 @@ class RedisConnectorDeletion(RedisObjectHelper):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock,
+        tenant_id: str | None,
     ) -> int | None:
         last_lock_time = time.monotonic()
 
@@ -339,6 +348,7 @@ class RedisConnectorDeletion(RedisObjectHelper):
                     document_id=doc.id,
                     connector_id=cc_pair.connector_id,
                     credential_id=cc_pair.credential_id,
+                    tenant_id=tenant_id,
                 ),
                 queue=DanswerCeleryQueues.CONNECTOR_DELETION,
                 task_id=custom_task_id,
@@ -410,6 +420,7 @@ class RedisConnectorPruning(RedisObjectHelper):
         db_session: Session,
         redis_client: Redis,
         lock: redis.lock.Lock | None,
+        tenant_id: str | None,
     ) -> int | None:
         last_lock_time = time.monotonic()
 
@@ -443,6 +454,7 @@ class RedisConnectorPruning(RedisObjectHelper):
                     document_id=doc_id,
                     connector_id=cc_pair.connector_id,
                     credential_id=cc_pair.credential_id,
+                    tenant_id=tenant_id,
                 ),
                 queue=DanswerCeleryQueues.CONNECTOR_DELETION,
                 task_id=custom_task_id,
@@ -511,6 +523,19 @@ class RedisConnectorIndexing(RedisObjectHelper):
         lock: redis.lock.Lock | None,
     ) -> int | None:
         return None
+
+    def is_pruning(self, db_session: Session, redis_client: Redis) -> bool:
+        """A single example of a helper method being refactored into the redis helper"""
+        cc_pair = get_connector_credential_pair_from_id(
+            cc_pair_id=self._id, db_session=db_session
+        )
+        if not cc_pair:
+            raise ValueError(f"cc_pair_id {self._id} does not exist.")
+
+        if redis_client.exists(self.fence_key):
+            return True
+
+        return False
 
 
 def celery_get_queue_length(queue: str, r: Redis) -> int:

@@ -1,4 +1,4 @@
-import { Popup } from "../admin/connectors/Popup";
+import { PopupSpec } from "../admin/connectors/Popup";
 import { useState } from "react";
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@tremor/react";
 import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
@@ -8,17 +8,12 @@ import { CustomLLMProviderUpdateForm } from "@/app/admin/configuration/llm/Custo
 export const ApiKeyForm = ({
   onSuccess,
   providerOptions,
-  hidePopup,
+  setPopup,
 }: {
   onSuccess: () => void;
   providerOptions: WellKnownLLMProviderDescriptor[];
-  hidePopup?: boolean;
+  setPopup: (popup: PopupSpec) => void;
 }) => {
-  const [popup, setPopup] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
-
   const defaultProvider = providerOptions[0]?.name;
   const providerNameToIndexMap = new Map<string, number>();
   providerOptions.forEach((provider, index) => {
@@ -35,10 +30,6 @@ export const ApiKeyForm = ({
 
   return (
     <div>
-      {!hidePopup && popup && (
-        <Popup message={popup.message} type={popup.type} />
-      )}
-
       <TabGroup
         index={providerNameToIndexMap.get(providerName) || 0}
         onIndexChange={(index) =>

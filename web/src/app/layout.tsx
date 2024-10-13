@@ -6,12 +6,11 @@ import {
 } from "@/components/settings/lib";
 import {
   CUSTOM_ANALYTICS_ENABLED,
-  EE_ENABLED,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
 } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 import { Metadata } from "next";
-import { buildClientUrl, fetchSS } from "@/lib/utilsSS";
+import { buildClientUrl } from "@/lib/utilsSS";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 import { EnterpriseSettings } from "./admin/settings/interfaces";
@@ -20,6 +19,8 @@ import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Logo } from "@/components/Logo";
 import { UserProvider } from "@/components/user/UserProvider";
 import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -57,8 +58,6 @@ export default async function RootLayout({
   const combinedSettings = await fetchSettingsSS();
 
   if (!combinedSettings) {
-    // Just display a simple full page error if fetching fails.
-
     return (
       <html lang="en" className={`${inter.variable} font-sans`}>
         <Head>

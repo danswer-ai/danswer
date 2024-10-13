@@ -4,16 +4,9 @@ import {
   Filters,
   StreamStopInfo,
 } from "@/lib/search/interfaces";
-import { handleSSEStream, handleStream } from "@/lib/search/streamingUtils";
+import { handleSSEStream } from "@/lib/search/streamingUtils";
 import { ChatState, FeedbackType } from "./types";
-import {
-  Dispatch,
-  MutableRefObject,
-  RefObject,
-  SetStateAction,
-  useEffect,
-  useRef,
-} from "react";
+import { MutableRefObject, RefObject, useEffect, useRef } from "react";
 import {
   BackendMessage,
   ChatSession,
@@ -664,7 +657,7 @@ export async function useScrollonStream({
 
   useEffect(() => {
     if (chatState != "input" && scrollableDivRef && scrollableDivRef.current) {
-      let newHeight: number = scrollableDivRef.current?.scrollTop!;
+      const newHeight: number = scrollableDivRef.current?.scrollTop!;
       const heightDifference = newHeight - previousScroll.current;
       previousScroll.current = newHeight;
 
@@ -729,5 +722,5 @@ export async function useScrollonStream({
         });
       }
     }
-  }, [chatState]);
+  }, [chatState, distance, scrollDist, scrollableDivRef]);
 }

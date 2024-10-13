@@ -20,6 +20,7 @@ from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
 )
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
+from danswer.db.engine import get_current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.feedback import fetch_docs_ranked_by_boost
@@ -29,9 +30,9 @@ from danswer.db.index_attempt import cancel_indexing_attempts_for_ccpair
 from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.file_store.file_store import get_default_file_store
+from danswer.key_value_store.factory import get_kv_store
+from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.llm.factory import get_default_llms
 from danswer.llm.utils import test_llm
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
@@ -114,7 +115,7 @@ def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     # Only validate every so often
-    kv_store = get_dynamic_config_store()
+    kv_store = get_kv_store()
     curr_time = datetime.now(tz=timezone.utc)
     try:
         last_check = datetime.fromtimestamp(
@@ -123,7 +124,7 @@ def validate_existing_genai_api_key(
         check_freq_sec = timedelta(seconds=GENERATIVE_MODEL_ACCESS_CHECK_FREQ)
         if curr_time - last_check < check_freq_sec:
             return
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         # First time checking the key, nothing unusual
         pass
 
@@ -146,6 +147,7 @@ def create_deletion_attempt_for_connector_id(
     connector_credential_pair_identifier: ConnectorCredentialPairIdentifier,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> None:
     connector_id = connector_credential_pair_identifier.connector_id
     credential_id = connector_credential_pair_identifier.credential_id
@@ -196,6 +198,7 @@ def create_deletion_attempt_for_connector_id(
     celery_app.send_task(
         "check_for_connector_deletion_task",
         priority=DanswerCeleryPriority.HIGH,
+        kwargs={"tenant_id": tenant_id},
     )
 
     if cc_pair.connector.source == DocumentSource.FILE:

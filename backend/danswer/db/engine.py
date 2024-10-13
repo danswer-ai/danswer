@@ -1,12 +1,18 @@
 import contextlib
+import re
 import threading
 import time
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
+from contextlib import asynccontextmanager
+from contextlib import contextmanager
 from datetime import datetime
 from typing import Any
 from typing import ContextManager
 
+import jwt
+from fastapi import HTTPException
+from fastapi import Request
 from sqlalchemy import event
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
@@ -19,6 +25,9 @@ from sqlalchemy.orm import sessionmaker
 
 from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
+from danswer.configs.app_configs import MULTI_TENANT
+from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
+from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
@@ -26,8 +35,11 @@ from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
 from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
+from danswer.configs.app_configs import SECRET_JWT_KEY
+from danswer.configs.constants import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import current_tenant_id
 
 logger = setup_logger()
 
@@ -37,10 +49,9 @@ ASYNC_DB_API = "asyncpg"
 # global so we don't create more than one engine per process
 # outside of being best practice, this is needed so we can properly pool
 # connections and not create a new pool on every request
+
 _ASYNC_ENGINE: AsyncEngine | None = None
-
 SessionFactory: sessionmaker[Session] | None = None
-
 
 if LOG_POSTGRES_LATENCY:
     # Function to log before query execution
@@ -105,10 +116,19 @@ def get_db_current_time(db_session: Session) -> datetime:
     return result
 
 
+# Regular expression to validate schema names to prevent SQL injection
+SCHEMA_NAME_REGEX = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+
+def is_valid_schema_name(name: str) -> bool:
+    return SCHEMA_NAME_REGEX.match(name) is not None
+
+
 class SqlEngine:
-    """Class to manage a global sql alchemy engine (needed for proper resource control)
+    """Class to manage a global SQLAlchemy engine (needed for proper resource control).
     Will eventually subsume most of the standalone functions in this file.
-    Sync only for now"""
+    Sync only for now.
+    """
 
     _engine: Engine | None = None
     _lock: threading.Lock = threading.Lock()
@@ -116,8 +136,8 @@ class SqlEngine:
 
     # Default parameters for engine creation
     DEFAULT_ENGINE_KWARGS = {
-        "pool_size": 40,
-        "max_overflow": 10,
+        "pool_size": 20,
+        "max_overflow": 5,
         "pool_pre_ping": POSTGRES_POOL_PRE_PING,
         "pool_recycle": POSTGRES_POOL_RECYCLE,
     }
@@ -137,16 +157,18 @@ class SqlEngine:
     @classmethod
     def init_engine(cls, **engine_kwargs: Any) -> None:
         """Allow the caller to init the engine with extra params. Different clients
-        such as the API server and different celery workers and tasks
-        need different settings."""
+        such as the API server and different Celery workers and tasks
+        need different settings.
+        """
         with cls._lock:
             if not cls._engine:
                 cls._engine = cls._init_engine(**engine_kwargs)
 
     @classmethod
     def get_engine(cls) -> Engine:
-        """Gets the sql alchemy engine. Will init a default engine if init hasn't
-        already been called. You probably want to init first!"""
+        """Gets the SQLAlchemy engine. Will init a default engine if init hasn't
+        already been called. You probably want to init first!
+        """
         if not cls._engine:
             with cls._lock:
                 if not cls._engine:
@@ -178,12 +200,7 @@ def build_connection_string(
 ) -> str:
     if app_name:
         return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}?application_name={app_name}"
-
     return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}"
-
-
-def init_sqlalchemy_engine(app_name: str) -> None:
-    SqlEngine.set_app_name(app_name)
 
 
 def get_sqlalchemy_engine() -> Engine:
@@ -193,7 +210,7 @@ def get_sqlalchemy_engine() -> Engine:
 def get_sqlalchemy_async_engine() -> AsyncEngine:
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:
-        # underlying asyncpg cannot accept application_name directly in the connection string
+        # Underlying asyncpg cannot accept application_name directly in the connection string
         # https://github.com/MagicStack/asyncpg/issues/798
         connection_string = build_connection_string()
         _ASYNC_ENGINE = create_async_engine(
@@ -203,31 +220,165 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
                     "application_name": SqlEngine.get_app_name() + "_async"
                 }
             },
-            pool_size=40,
-            max_overflow=10,
+            # async engine is only used by API server, so we can use those values
+            # here as well
+            pool_size=POSTGRES_API_SERVER_POOL_SIZE,
+            max_overflow=POSTGRES_API_SERVER_POOL_OVERFLOW,
             pool_pre_ping=POSTGRES_POOL_PRE_PING,
             pool_recycle=POSTGRES_POOL_RECYCLE,
         )
     return _ASYNC_ENGINE
 
 
-def get_session_context_manager() -> ContextManager[Session]:
-    return contextlib.contextmanager(get_session)()
+# Dependency to get the current tenant ID
+# If no token is present, uses the default schema for this use case
+def get_current_tenant_id(request: Request) -> str:
+    """Dependency that extracts the tenant ID from the JWT token in the request and sets the context variable."""
+    if not MULTI_TENANT:
+        tenant_id = POSTGRES_DEFAULT_SCHEMA
+        current_tenant_id.set(tenant_id)
+        return tenant_id
+
+    token = request.cookies.get("tenant_details")
+    if not token:
+        current_value = current_tenant_id.get()
+        # If no token is present, use the default schema or handle accordingly
+        return current_value
+
+    try:
+        payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
+        tenant_id = payload.get("tenant_id")
+        if not tenant_id:
+            return current_tenant_id.get()
+        if not is_valid_schema_name(tenant_id):
+            raise HTTPException(status_code=400, detail="Invalid tenant ID format")
+        current_tenant_id.set(tenant_id)
+
+        return tenant_id
+    except jwt.InvalidTokenError:
+        return current_tenant_id.get()
+    except Exception as e:
+        logger.error(f"Unexpected error in get_current_tenant_id: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@asynccontextmanager
+async def get_async_session_with_tenant(
+    tenant_id: str | None = None,
+) -> AsyncGenerator[AsyncSession, None]:
+    if tenant_id is None:
+        tenant_id = current_tenant_id.get()
+
+    if not is_valid_schema_name(tenant_id):
+        logger.error(f"Invalid tenant ID: {tenant_id}")
+        raise Exception("Invalid tenant ID")
+
+    engine = get_sqlalchemy_async_engine()
+    async_session_factory = sessionmaker(
+        bind=engine, expire_on_commit=False, class_=AsyncSession
+    )  # type: ignore
+
+    async with async_session_factory() as session:
+        try:
+            # Set the search_path to the tenant's schema
+            await session.execute(text(f'SET search_path = "{tenant_id}"'))
+        except Exception as e:
+            logger.error(f"Error setting search_path: {str(e)}")
+            # You can choose to re-raise the exception or handle it
+            # Here, we'll re-raise to prevent proceeding with an incorrect session
+            raise
+        else:
+            yield session
+
+
+@contextmanager
+def get_session_with_tenant(
+    tenant_id: str | None = None,
+) -> Generator[Session, None, None]:
+    """Generate a database session with the appropriate tenant schema set."""
+    engine = get_sqlalchemy_engine()
+    if tenant_id is None:
+        tenant_id = current_tenant_id.get()
+
+    if not is_valid_schema_name(tenant_id):
+        raise HTTPException(status_code=400, detail="Invalid tenant ID")
+
+    # Establish a raw connection without starting a transaction
+    with engine.connect() as connection:
+        # Access the raw DBAPI connection
+        dbapi_connection = connection.connection
+
+        # Execute SET search_path outside of any transaction
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute(f'SET search_path TO "{tenant_id}"')
+            # Optionally verify the search_path was set correctly
+            cursor.execute("SHOW search_path")
+            cursor.fetchone()
+        finally:
+            cursor.close()
+
+        # Proceed to create a session using the connection
+        with Session(bind=connection, expire_on_commit=False) as session:
+            try:
+                yield session
+            finally:
+                # Reset search_path to default after the session is used
+                if MULTI_TENANT:
+                    cursor = dbapi_connection.cursor()
+                    try:
+                        cursor.execute('SET search_path TO "$user", public')
+                    finally:
+                        cursor.close()
+
+
+def get_session_generator_with_tenant(
+    tenant_id: str | None = None,
+) -> Generator[Session, None, None]:
+    with get_session_with_tenant(tenant_id) as session:
+        yield session
 
 
 def get_session() -> Generator[Session, None, None]:
-    # The line below was added to monitor the latency caused by Postgres connections
-    # during API calls.
-    # with tracer.trace("db.get_session"):
-    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
+    """Generate a database session with the appropriate tenant schema set."""
+    tenant_id = current_tenant_id.get()
+    if tenant_id == "public" and MULTI_TENANT:
+        raise HTTPException(status_code=401, detail="User must authenticate")
+
+    engine = get_sqlalchemy_engine()
+    with Session(engine, expire_on_commit=False) as session:
+        if MULTI_TENANT:
+            if not is_valid_schema_name(tenant_id):
+                raise HTTPException(status_code=400, detail="Invalid tenant ID")
+            # Set the search_path to the tenant's schema
+            session.execute(text(f'SET search_path = "{tenant_id}"'))
         yield session
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSession(
-        get_sqlalchemy_async_engine(), expire_on_commit=False
-    ) as async_session:
+    """Generate an async database session with the appropriate tenant schema set."""
+    tenant_id = current_tenant_id.get()
+    engine = get_sqlalchemy_async_engine()
+    async with AsyncSession(engine, expire_on_commit=False) as async_session:
+        if MULTI_TENANT:
+            if not is_valid_schema_name(tenant_id):
+                raise HTTPException(status_code=400, detail="Invalid tenant ID")
+            # Set the search_path to the tenant's schema
+            await async_session.execute(text(f'SET search_path = "{tenant_id}"'))
         yield async_session
+
+
+def get_session_context_manager() -> ContextManager[Session]:
+    """Context manager for database sessions."""
+    return contextlib.contextmanager(get_session_generator_with_tenant)()
+
+
+def get_session_factory() -> sessionmaker[Session]:
+    """Get a session factory."""
+    global SessionFactory
+    if SessionFactory is None:
+        SessionFactory = sessionmaker(bind=get_sqlalchemy_engine())
+    return SessionFactory
 
 
 async def warm_up_connections(
@@ -251,10 +402,3 @@ async def warm_up_connections(
         await async_conn.execute(text("SELECT 1"))
     for async_conn in async_connections:
         await async_conn.close()
-
-
-def get_session_factory() -> sessionmaker[Session]:
-    global SessionFactory
-    if SessionFactory is None:
-        SessionFactory = sessionmaker(bind=get_sqlalchemy_engine())
-    return SessionFactory

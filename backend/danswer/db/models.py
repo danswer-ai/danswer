@@ -50,7 +50,7 @@ from danswer.db.enums import IndexingStatus
 from danswer.db.enums import IndexModelStatus
 from danswer.db.enums import TaskStatus
 from danswer.db.pydantic_type import PydanticType
-from danswer.dynamic_configs.interface import JSON_ro
+from danswer.key_value_store.interface import JSON_ro
 from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
@@ -1143,6 +1143,8 @@ class LLMProvider(Base):
         postgresql.ARRAY(String), nullable=True
     )
 
+    deployment_name: Mapped[str | None] = mapped_column(String, nullable=True)
+
     # should only be set for a single provider
     is_default_provider: Mapped[bool | None] = mapped_column(Boolean, unique=True)
     # EE only
@@ -1761,3 +1763,23 @@ class UsageReport(Base):
 
     requestor = relationship("User")
     file = relationship("PGFileStore")
+
+
+"""
+Multi-tenancy related tables
+"""
+
+
+class PublicBase(DeclarativeBase):
+    __abstract__ = True
+
+
+class UserTenantMapping(Base):
+    __tablename__ = "user_tenant_mapping"
+    __table_args__ = (
+        UniqueConstraint("email", "tenant_id", name="uq_user_tenant"),
+        {"schema": "public"},
+    )
+
+    email: Mapped[str] = mapped_column(String, nullable=False, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String, nullable=False)

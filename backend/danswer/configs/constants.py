@@ -1,3 +1,5 @@
+import platform
+import socket
 from enum import auto
 from enum import Enum
 
@@ -29,6 +31,9 @@ DISABLED_GEN_AI_MSG = (
     "You can still use Danswer as a search engine."
 )
 
+# Prefix used for all tenant ids
+TENANT_ID_PREFIX = "tenant_"
+
 # Postgres connection constants for application_name
 POSTGRES_WEB_APP_NAME = "web"
 POSTGRES_INDEXER_APP_NAME = "indexer"
@@ -41,6 +46,7 @@ POSTGRES_CELERY_WORKER_INDEXING_APP_NAME = "celery_worker_indexing"
 POSTGRES_CELERY_WORKER_INDEXING_CHILD_APP_NAME = "celery_worker_indexing_child"
 POSTGRES_PERMISSIONS_APP_NAME = "permissions"
 POSTGRES_UNKNOWN_APP_NAME = "unknown"
+POSTGRES_DEFAULT_SCHEMA = "public"
 
 # API Keys
 DANSWER_API_KEY_PREFIX = "API_KEY__"
@@ -220,3 +226,13 @@ class DanswerCeleryPriority(int, Enum):
     MEDIUM = auto()
     LOW = auto()
     LOWEST = auto()
+
+
+REDIS_SOCKET_KEEPALIVE_OPTIONS = {}
+REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPINTVL] = 15
+REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPCNT] = 3
+
+if platform.system() == "Darwin":
+    REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPALIVE] = 60  # type: ignore
+else:
+    REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPIDLE] = 60  # type: ignore

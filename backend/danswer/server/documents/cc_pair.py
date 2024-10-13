@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
-from danswer.background.celery.celery_utils import cc_pair_is_pruning
+from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.background.celery.tasks.pruning.tasks import (
     try_creating_prune_generator_task,
@@ -22,6 +22,7 @@ from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
 )
 from danswer.db.document import get_document_counts_for_cc_pairs
+from danswer.db.engine import current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
@@ -31,20 +32,24 @@ from danswer.db.index_attempt import count_index_attempts_for_connector
 from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_paginated_index_attempts_for_cc_pair_id
 from danswer.db.models import User
-from danswer.redis.redis_pool import RedisPool
+from danswer.db.tasks import check_task_is_live_and_not_timed_out
+from danswer.db.tasks import get_latest_task
+from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import CCStatusUpdateRequest
+from danswer.server.documents.models import CeleryTaskStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
 from danswer.server.documents.models import PaginatedIndexAttempts
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
+from ee.danswer.background.task_name_builders import (
+    name_sync_external_doc_permissions_task,
+)
 from ee.danswer.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
 router = APIRouter(prefix="/manage")
-
-redis_pool = RedisPool()
 
 
 @router.get("/admin/cc-pair/{cc_pair_id}/index-attempts")
@@ -215,7 +220,8 @@ def get_cc_pair_latest_prune(
             detail="Connection not found for current user's permissions",
         )
 
-    return cc_pair_is_pruning(cc_pair.id, db_session)
+    rcp = RedisConnectorPruning(cc_pair.id)
+    return rcp.is_pruning(db_session, get_redis_client())
 
 
 @router.post("/admin/cc-pair/{cc_pair_id}/prune")
@@ -238,7 +244,9 @@ def prune_cc_pair(
             detail="Connection not found for current user's permissions",
         )
 
-    if cc_pair_is_pruning(cc_pair.id, db_session=db_session):
+    r = get_redis_client()
+    rcp = RedisConnectorPruning(cc_pair_id)
+    if rcp.is_pruning(db_session, r):
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail="Pruning task already in progress.",
@@ -251,7 +259,7 @@ def prune_cc_pair(
         f"{cc_pair.connector.name} connector."
     )
     tasks_created = try_creating_prune_generator_task(
-        cc_pair, db_session, redis_pool.get_client()
+        cc_pair, db_session, r, current_tenant_id.get()
     )
     if not tasks_created:
         raise HTTPException(
@@ -262,6 +270,87 @@ def prune_cc_pair(
     return StatusResponse(
         success=True,
         message="Successfully created the pruning task.",
+    )
+
+
+@router.get("/admin/cc-pair/{cc_pair_id}/sync")
+def get_cc_pair_latest_sync(
+    cc_pair_id: int,
+    user: User = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> CeleryTaskStatus:
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id,
+        db_session=db_session,
+        user=user,
+        get_editable=False,
+    )
+    if not cc_pair:
+        raise HTTPException(
+            status_code=400,
+            detail="Connection not found for current user's permissions",
+        )
+
+    # look up the last sync task for this connector (if it exists)
+    sync_task_name = name_sync_external_doc_permissions_task(cc_pair_id=cc_pair_id)
+    last_sync_task = get_latest_task(sync_task_name, db_session)
+    if not last_sync_task:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="No sync task found.",
+        )
+
+    return CeleryTaskStatus(
+        id=last_sync_task.task_id,
+        name=last_sync_task.task_name,
+        status=last_sync_task.status,
+        start_time=last_sync_task.start_time,
+        register_time=last_sync_task.register_time,
+    )
+
+
+@router.post("/admin/cc-pair/{cc_pair_id}/sync")
+def sync_cc_pair(
+    cc_pair_id: int,
+    user: User = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[list[int]]:
+    # avoiding circular refs
+    from ee.danswer.background.celery.celery_app import (
+        sync_external_doc_permissions_task,
+    )
+
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id,
+        db_session=db_session,
+        user=user,
+        get_editable=False,
+    )
+    if not cc_pair:
+        raise HTTPException(
+            status_code=400,
+            detail="Connection not found for current user's permissions",
+        )
+
+    sync_task_name = name_sync_external_doc_permissions_task(cc_pair_id=cc_pair_id)
+    last_sync_task = get_latest_task(sync_task_name, db_session)
+
+    if last_sync_task and check_task_is_live_and_not_timed_out(
+        last_sync_task, db_session
+    ):
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail="Sync task already in progress.",
+        )
+
+    logger.info(f"Syncing the {cc_pair.connector.name} connector.")
+    sync_external_doc_permissions_task.apply_async(
+        kwargs=dict(cc_pair_id=cc_pair_id, tenant_id=current_tenant_id.get()),
+    )
+
+    return StatusResponse(
+        success=True,
+        message="Successfully created the sync task.",
     )
 
 

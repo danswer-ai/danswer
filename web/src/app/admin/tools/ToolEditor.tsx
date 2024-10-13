@@ -13,7 +13,7 @@ import {
 import * as Yup from "yup";
 import { MethodSpec, ToolSnapshot } from "@/lib/tools/interfaces";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { Button, Divider, Text } from "@tremor/react";
+import { Button, Divider } from "@tremor/react";
 import {
   createCustomTool,
   updateCustomTool,
@@ -64,28 +64,31 @@ function ToolForm({
   const [definitionError, setDefinitionError] = definitionErrorState;
   const [methodSpecs, setMethodSpecs] = methodSpecsState;
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-
   const debouncedValidateDefinition = useCallback(
-    debounce(async (definition: string) => {
-      try {
-        const parsedDefinition = parseJsonWithTrailingCommas(definition);
-        const response = await validateToolDefinition({
-          definition: parsedDefinition,
-        });
-        if (response.error) {
+    (definition: string) => {
+      const validateDefinition = async () => {
+        try {
+          const parsedDefinition = parseJsonWithTrailingCommas(definition);
+          const response = await validateToolDefinition({
+            definition: parsedDefinition,
+          });
+          if (response.error) {
+            setMethodSpecs(null);
+            setDefinitionError(response.error);
+          } else {
+            setMethodSpecs(response.data);
+            setDefinitionError(null);
+          }
+        } catch (error) {
+          console.log(error);
           setMethodSpecs(null);
-          setDefinitionError(response.error);
-        } else {
-          setMethodSpecs(response.data);
-          setDefinitionError(null);
+          setDefinitionError("Invalid JSON format");
         }
-      } catch (error) {
-        console.log(error);
-        setMethodSpecs(null);
-        setDefinitionError("Invalid JSON format");
-      }
-    }, 300),
-    []
+      };
+
+      debounce(validateDefinition, 300)();
+    },
+    [setMethodSpecs, setDefinitionError]
   );
 
   useEffect(() => {
@@ -318,10 +321,11 @@ export function ToolEditor({ tool }: { tool?: ToolSnapshot }) {
       <Formik
         initialValues={{
           definition: prettifiedDefinition,
-          customHeaders: tool?.custom_headers?.map((header) => ({
-            key: header.key,
-            value: header.value,
-          })) ?? [{ key: "test", value: "value" }],
+          customHeaders:
+            tool?.custom_headers?.map((header) => ({
+              key: header.key,
+              value: header.value,
+            })) ?? [],
         }}
         validationSchema={ToolSchema}
         onSubmit={async (values: ToolFormValues) => {

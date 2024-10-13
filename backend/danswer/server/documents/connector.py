@@ -74,9 +74,9 @@ from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.db.models import UserRole
 from danswer.db.search_settings import get_current_search_settings
-from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.file_store.file_store import get_default_file_store
-from danswer.redis.redis_pool import RedisPool
+from danswer.key_value_store.interface import KvKeyNotFoundError
+from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import AuthStatus
 from danswer.server.documents.models import AuthUrl
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
@@ -101,8 +101,6 @@ from ee.danswer.db.user_group import validate_user_creation_permissions
 
 logger = setup_logger()
 
-redis_pool = RedisPool()
-
 _GMAIL_CREDENTIAL_ID_COOKIE_NAME = "gmail_credential_id"
 _GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"
 
@@ -119,7 +117,7 @@ def check_google_app_gmail_credentials_exist(
 ) -> dict[str, str]:
     try:
         return {"client_id": get_google_app_gmail_cred().web.client_id}
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
 
@@ -143,7 +141,7 @@ def delete_google_app_gmail_credentials(
 ) -> StatusResponse:
     try:
         delete_google_app_gmail_cred()
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return StatusResponse(
@@ -157,7 +155,7 @@ def check_google_app_credentials_exist(
 ) -> dict[str, str]:
     try:
         return {"client_id": get_google_app_cred().web.client_id}
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
 
@@ -181,7 +179,7 @@ def delete_google_app_credentials(
 ) -> StatusResponse:
     try:
         delete_google_app_cred()
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return StatusResponse(
@@ -195,7 +193,7 @@ def check_google_service_gmail_account_key_exist(
 ) -> dict[str, str]:
     try:
         return {"service_account_email": get_gmail_service_account_key().client_email}
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         raise HTTPException(
             status_code=404, detail="Google Service Account Key not found"
         )
@@ -221,7 +219,7 @@ def delete_google_service_gmail_account_key(
 ) -> StatusResponse:
     try:
         delete_gmail_service_account_key()
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return StatusResponse(
@@ -235,7 +233,7 @@ def check_google_service_account_key_exist(
 ) -> dict[str, str]:
     try:
         return {"service_account_email": get_service_account_key().client_email}
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         raise HTTPException(
             status_code=404, detail="Google Service Account Key not found"
         )
@@ -261,7 +259,7 @@ def delete_google_service_account_key(
 ) -> StatusResponse:
     try:
         delete_service_account_key()
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return StatusResponse(
@@ -283,7 +281,7 @@ def upsert_service_account_credential(
             DocumentSource.GOOGLE_DRIVE,
             delegated_user_email=service_account_credential_request.google_drive_delegated_user,
         )
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     # first delete all existing service account credentials
@@ -309,7 +307,7 @@ def upsert_gmail_service_account_credential(
             DocumentSource.GMAIL,
             delegated_user_email=service_account_credential_request.gmail_delegated_user,
         )
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     # first delete all existing service account credentials
@@ -786,6 +784,7 @@ def connector_run_once(
             detail="Connector has no valid credentials, cannot create index attempts.",
         )
 
+    # Prevents index attempts for cc pairs that already have an index attempt currently running
     skipped_credentials = [
         credential_id
         for credential_id in credential_ids
@@ -795,20 +794,20 @@ def connector_run_once(
                 credential_id=credential_id,
             ),
             only_current=True,
-            disinclude_finished=True,
             db_session=db_session,
+            disinclude_finished=True,
         )
     ]
 
     search_settings = get_current_search_settings(db_session)
 
     connector_credential_pairs = [
-        get_connector_credential_pair(run_info.connector_id, credential_id, db_session)
+        get_connector_credential_pair(connector_id, credential_id, db_session)
         for credential_id in credential_ids
         if credential_id not in skipped_credentials
     ]
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     index_attempt_ids = []
     for cc_pair in connector_credential_pairs:

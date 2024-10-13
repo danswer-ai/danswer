@@ -34,7 +34,8 @@ import {
 } from "@/lib/constants";
 import WrappedSearch from "./WrappedSearch";
 import { SearchProvider } from "@/components/context/SearchContext";
-import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
+import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
+import { LLMProviderDescriptor } from "../admin/configuration/llm/interfaces";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -49,8 +50,8 @@ export default async function Home() {
     fetchSS("/manage/document-set"),
     fetchAssistantsSS(),
     fetchSS("/query/valid-tags"),
-    fetchSS("/search-settings/get-all-search-settings"),
     fetchSS("/query/user-searches"),
+    fetchLLMProvidersSS(),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -62,8 +63,9 @@ export default async function Home() {
     | AuthTypeMetadata
     | FullEmbeddingModelResponse
     | FetchAssistantsResponse
+    | LLMProviderDescriptor[]
     | null
-  )[] = [null, null, null, null, null, null];
+  )[] = [null, null, null, null, null, null, null, null];
   try {
     results = await Promise.all(tasks);
   } catch (e) {
@@ -76,8 +78,8 @@ export default async function Home() {
   const [initialAssistantsList, assistantsFetchError] =
     results[4] as FetchAssistantsResponse;
   const tagsResponse = results[5] as Response | null;
-  const embeddingModelResponse = results[6] as Response | null;
-  const queryResponse = results[7] as Response | null;
+  const queryResponse = results[6] as Response | null;
+  const llmProviders = (results[7] || []) as LLMProviderDescriptor[];
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -130,28 +132,20 @@ export default async function Home() {
     console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
   }
 
-  const embeddingModelVersionInfo =
-    embeddingModelResponse && embeddingModelResponse.ok
-      ? ((await embeddingModelResponse.json()) as FullEmbeddingModelResponse)
-      : null;
-
-  const currentEmbeddingModelName =
-    embeddingModelVersionInfo?.current_model_name;
-  const nextEmbeddingModelName =
-    embeddingModelVersionInfo?.secondary_model_name;
-
   // needs to be done in a non-client side component due to nextjs
   const storedSearchType = cookies().get("searchType")?.value as
     | string
     | undefined;
-  let searchTypeDefault: SearchType =
+  const searchTypeDefault: SearchType =
     storedSearchType !== undefined &&
     SearchType.hasOwnProperty(storedSearchType)
       ? (storedSearchType as SearchType)
       : SearchType.SEMANTIC; // default to semantic
 
   const hasAnyConnectors = ccPairs.length > 0;
+
   const shouldShowWelcomeModal =
+    !llmProviders.length &&
     !hasCompletedWelcomeFlowSS() &&
     !hasAnyConnectors &&
     (!user || user.role === "admin");

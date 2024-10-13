@@ -73,7 +73,7 @@ export const SearchResultsDisplay = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [performSweep, agenticResults]);
 
   if (!searchResponse) {
     return null;

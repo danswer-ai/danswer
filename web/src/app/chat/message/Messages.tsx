@@ -54,6 +54,7 @@ import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
 import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
+import { extractCodeText } from "./codeUtils";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -201,7 +202,7 @@ export const AIMessage = ({
 
   const selectedDocumentIds =
     selectedDocuments?.map((document) => document.document_id) || [];
-  let citedDocumentIds: string[] = [];
+  const citedDocumentIds: string[] = [];
 
   citedDocuments?.forEach((doc) => {
     citedDocumentIds.push(doc[1].document_id);
@@ -252,6 +253,40 @@ export const AIMessage = ({
   const uniqueSources: ValidSources[] = Array.from(
     new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
+
+  const markdownComponents = useMemo(
+    () => ({
+      a: MemoizedLink,
+      p: MemoizedParagraph,
+      code: ({ node, inline, className, children, ...props }: any) => {
+        const codeText = extractCodeText(
+          node,
+          finalContent as string,
+          children
+        );
+
+        return (
+          <CodeBlock className={className} codeText={codeText}>
+            {children}
+          </CodeBlock>
+        );
+      },
+    }),
+    [finalContent]
+  );
+
+  const renderedMarkdown = useMemo(() => {
+    return (
+      <ReactMarkdown
+        className="prose max-w-full text-base"
+        components={markdownComponents}
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+      >
+        {finalContent as string}
+      </ReactMarkdown>
+    );
+  }, [finalContent, markdownComponents]);
 
   const includeMessageSwitcher =
     currentMessageInd !== undefined &&
@@ -352,27 +387,7 @@ export const AIMessage = ({
 
                         {typeof content === "string" ? (
                           <div className="overflow-x-visible max-w-content-max">
-                            <ReactMarkdown
-                              key={messageId}
-                              className="prose max-w-full text-base"
-                              components={{
-                                a: MemoizedLink,
-                                p: MemoizedParagraph,
-                                code: (props) => (
-                                  <CodeBlock
-                                    className="w-full"
-                                    {...props}
-                                    content={content as string}
-                                  />
-                                ),
-                              }}
-                              remarkPlugins={[remarkGfm]}
-                              rehypePlugins={[
-                                [rehypePrism, { ignoreMissing: true }],
-                              ]}
-                            >
-                              {finalContent as string}
-                            </ReactMarkdown>
+                            {renderedMarkdown}
                           </div>
                         ) : (
                           content
@@ -397,6 +412,7 @@ export const AIMessage = ({
                                     href={doc.link || undefined}
                                     target="_blank"
                                     className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
+                                    rel="noreferrer"
                                   >
                                     <Citation link={doc.link} index={ind + 1} />
                                     <p className="shrink truncate ellipsis break-all">
@@ -655,7 +671,7 @@ export const HumanMessage = ({
     if (!isEditing) {
       setEditedContent(content);
     }
-  }, [content]);
+  }, [content, isEditing]);
 
   useEffect(() => {
     if (textareaRef.current) {

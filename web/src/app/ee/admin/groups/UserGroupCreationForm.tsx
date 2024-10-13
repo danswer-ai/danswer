@@ -3,12 +3,10 @@ import * as Yup from "yup";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { ConnectorIndexingStatus, User, UserGroup } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { createUserGroup } from "./lib";
 import { UserEditor } from "./UserEditor";
 import { ConnectorEditor } from "./ConnectorEditor";
 import { Modal } from "@/components/Modal";
-import { XIcon } from "@/components/icons/icons";
 import { Button, Divider } from "@tremor/react";
 
 interface UserGroupCreationFormProps {
@@ -35,18 +33,9 @@ export const UserGroupCreationForm = ({
 
   return (
     <Modal className="w-fit" onOutsideClick={onClose}>
-      <div className="px-8 py-6 bg-background">
+      <>
         <h2 className="text-xl font-bold flex">
           {isUpdate ? "Update a User Group" : "Create a new User Group"}
-          <div
-            onClick={onClose}
-            className="ml-auto hover:bg-hover p-1.5 rounded"
-          >
-            <XIcon
-              size={20}
-              className="my-auto flex flex-shrink-0 cursor-pointer"
-            />
-          </div>
         </h2>
 
         <Divider />
@@ -89,7 +78,7 @@ export const UserGroupCreationForm = ({
         >
           {({ isSubmitting, values, setFieldValue }) => (
             <Form>
-              <div className="p-4">
+              <div className="py-4">
                 <TextFormField
                   name="name"
                   label="Name:"
@@ -150,7 +139,7 @@ export const UserGroupCreationForm = ({
             </Form>
           )}
         </Formik>
-      </div>
+      </>
     </Modal>
   );
 };

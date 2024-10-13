@@ -50,9 +50,7 @@ class LLMProviderManager:
         )
         llm_response.raise_for_status()
         response_data = llm_response.json()
-        import json
 
-        print(json.dumps(response_data, indent=4))
         result_llm = DATestLLMProvider(
             id=response_data["id"],
             name=response_data["name"],

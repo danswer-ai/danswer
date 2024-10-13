@@ -27,7 +27,7 @@ from danswer.configs.constants import DocumentSource
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.engine import get_db_current_time
-from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.enums import IndexingStatus
 from danswer.db.enums import IndexModelStatus
@@ -40,23 +40,21 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import SearchSettings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
-from danswer.redis.redis_pool import RedisPool
+from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 
 logger = setup_logger()
-
-redis_pool = RedisPool()
 
 
 @shared_task(
     name="check_for_indexing",
     soft_time_limit=300,
 )
-def check_for_indexing() -> int | None:
+def check_for_indexing(tenant_id: str | None) -> int | None:
     tasks_created = 0
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     lock_beat = r.lock(
         DanswerRedisLocks.CHECK_INDEXING_BEAT_LOCK,
@@ -68,7 +66,7 @@ def check_for_indexing() -> int | None:
         if not lock_beat.acquire(blocking=False):
             return None
 
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             # Get the primary search settings
             primary_search_settings = get_current_search_settings(db_session)
             search_settings = [primary_search_settings]
@@ -101,7 +99,12 @@ def check_for_indexing() -> int | None:
                         continue
 
                     attempt_id = try_creating_indexing_task(
-                        cc_pair, search_settings_instance, False, db_session, r
+                        cc_pair,
+                        search_settings_instance,
+                        False,
+                        db_session,
+                        r,
+                        tenant_id,
                     )
                     if attempt_id:
                         task_logger.info(
@@ -210,6 +213,7 @@ def try_creating_indexing_task(
     reindex: bool,
     db_session: Session,
     r: Redis,
+    tenant_id: str | None,
 ) -> int | None:
     """Checks for any conditions that should block the indexing task from being
     created, then creates the task.
@@ -263,6 +267,7 @@ def try_creating_indexing_task(
                 index_attempt_id=index_attempt_id,
                 cc_pair_id=cc_pair.id,
                 search_settings_id=search_settings.id,
+                tenant_id=tenant_id,
             ),
             queue=DanswerCeleryQueues.CONNECTOR_INDEXING,
             task_id=custom_task_id,
@@ -292,7 +297,10 @@ def try_creating_indexing_task(
 
 @shared_task(name="connector_indexing_proxy_task", acks_late=False, track_started=True)
 def connector_indexing_proxy_task(
-    index_attempt_id: int, cc_pair_id: int, search_settings_id: int
+    index_attempt_id: int,
+    cc_pair_id: int,
+    search_settings_id: int,
+    tenant_id: str | None,
 ) -> None:
     """celery tasks are forked, but forking is unstable.  This proxies work to a spawned task."""
 
@@ -303,6 +311,7 @@ def connector_indexing_proxy_task(
         index_attempt_id,
         cc_pair_id,
         search_settings_id,
+        tenant_id,
         pure=False,
     )
 
@@ -311,7 +320,7 @@ def connector_indexing_proxy_task(
 
     while True:
         sleep(10)
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             index_attempt = get_index_attempt(
                 db_session=db_session, index_attempt_id=index_attempt_id
             )
@@ -334,7 +343,10 @@ def connector_indexing_proxy_task(
 
 
 def connector_indexing_task(
-    index_attempt_id: int, cc_pair_id: int, search_settings_id: int
+    index_attempt_id: int,
+    cc_pair_id: int,
+    search_settings_id: int,
+    tenant_id: str | None,
 ) -> int | None:
     """Indexing task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
@@ -352,7 +364,7 @@ def connector_indexing_task(
     attempt = None
     n_final_progress = 0
 
-    r = redis_pool.get_client()
+    r = get_redis_client()
 
     rci = RedisConnectorIndexing(cc_pair_id, search_settings_id)
 
@@ -370,7 +382,7 @@ def connector_indexing_task(
         return None
 
     try:
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             attempt = get_index_attempt(db_session, index_attempt_id)
             if not attempt:
                 raise ValueError(
@@ -403,8 +415,9 @@ def connector_indexing_task(
                 r.incrby(rci.generator_progress_key, amount)
 
             run_indexing_entrypoint(
-                index_attempt_id=index_attempt_id,
-                connector_credential_pair_id=cc_pair_id,
+                index_attempt_id,
+                tenant_id,
+                cc_pair_id,
                 is_ee=global_version.get_is_ee_version(),
                 progress_callback=redis_increment_callback,
             )
@@ -423,6 +436,7 @@ def connector_indexing_task(
         if attempt:
             mark_attempt_failed(attempt, db_session, failure_reason=str(e))
 
+        r.delete(rci.generator_lock_key)
         r.delete(rci.generator_progress_key)
         r.delete(rci.taskset_key)
         r.delete(rci.fence_key)

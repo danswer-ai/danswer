@@ -63,6 +63,7 @@ export function ChatInputBar({
   alternativeAssistant,
   chatSessionId,
   inputPrompts,
+  refreshUser,
 }: {
   showConfigureAPIKey: () => void;
   openModelSettings: () => void;
@@ -86,6 +87,7 @@ export function ChatInputBar({
   handleFileUpload: (files: File[]) => void;
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   chatSessionId?: number;
+  refreshUser: () => void;
 }) {
   useEffect(() => {
     const textarea = textAreaRef.current;
@@ -96,7 +98,7 @@ export function ChatInputBar({
         MAX_INPUT_HEIGHT
       )}px`;
     }
-  }, [message]);
+  }, [message, textAreaRef]);
 
   const handlePaste = (event: React.ClipboardEvent) => {
     const items = event.clipboardData?.items;
@@ -532,6 +534,7 @@ export function ChatInputBar({
                       setSelectedAssistant(assistant);
                       close();
                     }}
+                    refreshUser={refreshUser}
                   />
                 )}
                 flexPriority="shrink"
