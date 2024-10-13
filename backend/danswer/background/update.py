@@ -25,11 +25,13 @@ from danswer.configs.constants import POSTGRES_INDEXER_APP_NAME
 from danswer.configs.constants import TENANT_ID_PREFIX
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
+from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import SqlEngine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
+from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.db.index_attempt import get_last_attempt_for_cc_pair
 from danswer.db.index_attempt import get_not_started_index_attempts
@@ -45,6 +47,7 @@ from danswer.db.swap_index import check_index_swap
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
+from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
@@ -155,6 +158,64 @@ def _mark_run_failed(
     )
 
 
+def _should_full_reindex(db_session: Session, cc_pair: ConnectorCredentialPair) -> bool:
+    """
+    Determines whether a full reindex is needed for a given ConnectorCredentialPair.
+
+    A full reindex is required in the following cases:
+    1. There are no documents currently indexed for the given connector and credential pair.
+    2. No successful indexing attempts ever indexed any docs.
+
+    Parameters:
+    ----------
+    db_session : Session
+        The database session to use for querying the document counts and indexing attempts.
+    cc_pair : ConnectorCredentialPair
+        The connector credential pair for which to determine if a full reindex is needed.
+
+    Returns:
+    -------
+    bool
+        True if a full reindex should be performed, False otherwise.
+    """
+    # do full reindex if the row count of docs for the cc_pair is zero
+    cc_pair_identifier = ConnectorCredentialPairIdentifier(
+        connector_id=cc_pair.connector_id,
+        credential_id=cc_pair.credential_id,
+    )
+
+    document_count_info = get_document_cnts_for_cc_pairs(
+        db_session=db_session, cc_pair_identifiers=[cc_pair_identifier]
+    )
+
+    if len(document_count_info) > 0:
+        if (
+            document_count_info[0][2] == 0
+        ):  # tuple is (connector_id, credential_id, doc_count)
+            return True
+    else:
+        logger.warning(
+            f"get_document_cnts_for_cc_pairs returned no info! cc_pair={cc_pair.id}"
+        )
+
+    # do full reindex if no successful attempt ever indexed any docs
+    attempts = get_index_attempts_for_cc_pair(
+        db_session=db_session, cc_pair_identifier=cc_pair_identifier, only_current=True
+    )
+    for attempt in attempts:
+        if attempt.status != IndexingStatus.SUCCESS:
+            # only count successful attempts
+            continue
+
+        if attempt.total_docs_indexed is None:
+            continue
+
+        if attempt.total_docs_indexed > 0:
+            return False
+
+    return True
+
+
 """Main funcs"""
 
 
@@ -214,8 +275,12 @@ def create_indexing_jobs(
                 ):
                     continue
 
+                full_reindex = _should_full_reindex(db_session, cc_pair)
                 create_index_attempt(
-                    cc_pair.id, search_settings_instance.id, db_session
+                    cc_pair.id,
+                    search_settings_instance.id,
+                    db_session,
+                    from_beginning=full_reindex,
                 )
 
 

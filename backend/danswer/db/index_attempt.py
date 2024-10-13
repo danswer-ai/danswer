@@ -254,14 +254,14 @@ def count_index_attempts_for_connector(
     db_session: Session,
     connector_id: int,
     only_current: bool = True,
-    disinclude_finished: bool = False,
+    include_finished: bool = True,
 ) -> int:
     stmt = (
         select(IndexAttempt)
         .join(ConnectorCredentialPair)
         .where(ConnectorCredentialPair.connector_id == connector_id)
     )
-    if disinclude_finished:
+    if not include_finished:
         stmt = stmt.where(
             IndexAttempt.status.in_(
                 [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]
