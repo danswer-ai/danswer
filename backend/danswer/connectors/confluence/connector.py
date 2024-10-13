@@ -788,7 +788,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             attachment_batch, num_attachments = self._get_attachment_batch(
                 start_ind=start_ind,
                 attachments=unused_attachments,
-                time_filter=lambda t: start_time <= t <= end_time
+                time_filter=(lambda t: start_time <= t <= end_time)
                 if start_time and end_time
                 else None,
             )
