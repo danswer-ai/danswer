@@ -312,6 +312,7 @@ def connector_indexing_proxy_task(
         cc_pair_id,
         search_settings_id,
         tenant_id,
+        global_version.is_ee_version(),
         pure=False,
     )
 
@@ -347,6 +348,7 @@ def connector_indexing_task(
     cc_pair_id: int,
     search_settings_id: int,
     tenant_id: str | None,
+    is_ee: bool,
 ) -> int | None:
     """Indexing task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
@@ -418,7 +420,7 @@ def connector_indexing_task(
                 index_attempt_id,
                 tenant_id,
                 cc_pair_id,
-                is_ee=global_version.get_is_ee_version(),
+                is_ee,
                 progress_callback=redis_increment_callback,
             )
 

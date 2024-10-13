@@ -465,6 +465,19 @@ class RedisConnectorPruning(RedisObjectHelper):
 
         return len(async_results)
 
+    def is_pruning(self, db_session: Session, redis_client: Redis) -> bool:
+        """A single example of a helper method being refactored into the redis helper"""
+        cc_pair = get_connector_credential_pair_from_id(
+            cc_pair_id=self._id, db_session=db_session
+        )
+        if not cc_pair:
+            raise ValueError(f"cc_pair_id {self._id} does not exist.")
+
+        if redis_client.exists(self.fence_key):
+            return True
+
+        return False
+
 
 class RedisConnectorIndexing(RedisObjectHelper):
     """Celery will kick off a long running indexing task to crawl the connector and
