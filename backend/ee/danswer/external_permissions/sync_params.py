@@ -43,9 +43,8 @@ GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, SyncFuncType] = {
 # If nothing is specified here, we run the doc_sync every time the celery beat runs
 PERMISSION_SYNC_PERIODS: dict[DocumentSource, int] = {
     # Polling is not supported so we fetch all doc permissions every 5 minutes
-    # DocumentSource.CONFLUENCE: 5 * 60,
-    DocumentSource.SLACK: 5
-    * 60,
+    DocumentSource.CONFLUENCE: 5 * 60,
+    DocumentSource.SLACK: 5 * 60,
 }
 
 
