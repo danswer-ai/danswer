@@ -45,7 +45,8 @@ class FamilyFileGeneratorInMemory(generate_family_file.FamilyFileGenerator):
 
         if any(x not in generate_family_file.NAME_CHARACTERS for x in name):
             raise ValueError(
-                f'ERROR: Name of family "{name}" must be ASCII letters and digits [a-zA-Z0-9]',
+                'ERROR: Name of family "{}" must be ASCII letters and digits [a-zA-Z0-9]',
+                name,
             )
 
         if isinstance(dointerwiki, bool):
