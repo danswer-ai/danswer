@@ -462,8 +462,26 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                             for permission in file["permissions"]
                         ):
                             continue
+                    try:
+                        text_contents = extract_text(file, service) or ""
+                    except HttpError as e:
+                        reason = (
+                            e.error_details[0]["reason"]
+                            if e.error_details
+                            else e.reason
+                        )
+                        message = (
+                            e.error_details[0]["message"]
+                            if e.error_details
+                            else e.reason
+                        )
+                        if e.status_code == 403 and reason == "cannotExportFile":
+                            logger.warning(
+                                f"Could not export file '{file['name']}' due to '{message}', skipping..."
+                            )
+                            continue
 
-                    text_contents = extract_text(file, service) or ""
+                        raise
 
                     doc_batch.append(
                         Document(
