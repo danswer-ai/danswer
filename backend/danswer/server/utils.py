@@ -3,6 +3,7 @@ import smtplib
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from textwrap import dedent
 from typing import Any
 
 from danswer.configs.app_configs import SMTP_PASS
@@ -58,22 +59,25 @@ def mask_credential_dict(credential_dict: dict[str, Any]) -> dict[str, str]:
 def send_user_email_invite(user_email: str, current_user: User) -> None:
     msg = MIMEMultipart()
     msg["Subject"] = "Invitation to Join Danswer Workspace"
-    msg["To"] = user_email
     msg["From"] = current_user.email
+    msg["To"] = user_email
 
-    email_body = f"""
-Hello,
+    email_body = dedent(
+        f"""\
+        Hello,
 
-You have been invited to join a workspace on Danswer.
+        You have been invited to join a workspace on Danswer.
 
-To join the workspace, please do so at the following link:
-{WEB_DOMAIN}/auth/login
+        To join the workspace, please visit the following link:
 
-Best regards,
-The Danswer Team"""
+        {WEB_DOMAIN}/auth/login
+
+        Best regards,
+        The Danswer Team
+    """
+    )
 
     msg.attach(MIMEText(email_body, "plain"))
-
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp_server:
         smtp_server.starttls()
         smtp_server.login(SMTP_USER, SMTP_PASS)

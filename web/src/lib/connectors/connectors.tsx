@@ -125,17 +125,7 @@ export const connectorConfigs: Record<
         ],
       },
     ],
-    advanced_values: [
-      {
-        type: "number",
-        query: "Enter the maximum depth to crawl:",
-        label: "Max Depth",
-        name: "max_depth",
-        optional: true,
-        description:
-          "The maximum depth to crawl from the base URL. Default is 2.",
-      },
-    ],
+    advanced_values: [],
     overrideDefaultFreq: 60 * 60 * 24,
   },
   github: {

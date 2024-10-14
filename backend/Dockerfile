@@ -92,6 +92,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY ./danswer /app/danswer
 COPY ./shared_configs /app/shared_configs
 COPY ./alembic /app/alembic
+COPY ./alembic_tenants /app/alembic_tenants
 COPY ./alembic.ini /app/alembic.ini
 COPY supervisord.conf /usr/etc/supervisord.conf
 
