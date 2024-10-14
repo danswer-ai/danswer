@@ -448,6 +448,7 @@ def update_loop(
         engine = get_sqlalchemy_engine()
         with Session(engine) as db_session:
             check_index_swap(db_session=db_session)
+
             search_settings = get_current_search_settings(db_session)
 
             # So that the first time users aren't surprised by really slow speed of first
