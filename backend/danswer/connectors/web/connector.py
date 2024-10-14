@@ -307,7 +307,6 @@ class WebConnector(LoadConnector):
                     doc_batch.append(
                         Document(
                             id=current_url,
-                            title=document_title or current_url.split("/")[-1],
                             sections=[Section(link=current_url, text=page_text)],
                             source=DocumentSource.WEB,
                             semantic_identifier=current_url.split("/")[-1],
@@ -362,7 +361,6 @@ class WebConnector(LoadConnector):
                 doc_batch.append(
                     Document(
                         id=current_url,
-                        title=document_title or parsed_html.title or current_url,
                         sections=[
                             Section(link=current_url, text=parsed_html.cleaned_text)
                         ],
