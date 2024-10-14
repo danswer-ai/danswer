@@ -106,7 +106,7 @@ export const HealthCheckBanner = () => {
         title="You've been logged out"
       >
         <div className="flex flex-col gap-y-4">
-          <p className="text-sm">
+          <p className="text-sm text-center">
             Your session has expired. Please log in again to continue.
           </p>
           <ClientSideSigninButton />

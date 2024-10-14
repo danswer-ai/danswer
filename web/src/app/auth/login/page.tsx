@@ -64,7 +64,7 @@ const Page = async ({
       console.log(`Some fetch failed for the login page - ${e}`);
     }
   }
-
+  console.log(authUrl);
   return (
     <AuthFlowContainer>
       <div className="absolute top-10x w-full">

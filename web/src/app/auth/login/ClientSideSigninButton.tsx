@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { SignInButton } from "./SignInButton";
-import { LoginText } from "./LoginText";
 import { AuthTypeMetadata } from "@/lib/userSS";
+import { AuthType } from "@/lib/constants";
 
 const getOIDCAuthUrl = async (): Promise<string> => {
   const res = await fetch("/api/auth/oidc/authorize");
@@ -44,21 +44,33 @@ const getAuthUrl = async (authType: string): Promise<string> => {
       throw new Error(`Unsupported auth type: ${authType}`);
   }
 };
-const currentUrl = window.location.href;
 
 const ClientSideSigninButton = () => {
   const [authUrl, setAuthUrl] = useState<string | null>(null);
   const [authTypeMetadata, setAuthTypeMetadata] =
     useState<AuthTypeMetadata | null>(null);
+  const [currentUrl, setCurrentUrl] = useState<string>("");
 
   useEffect(() => {
     const fetchAuthData = async () => {
       try {
-        // const authTypeMetadataResponse = await fetch("/api/auth/metadata");
-        // const authTypeMetadataData = await authTypeMetadataResponse.json();
-        // setAuthTypeMetadata(authTypeMetadataData);
+        // Fetch the auth type metadata
+        const authTypeMetadataResponse = await fetch("/api/auth/type");
+        if (!authTypeMetadataResponse.ok) {
+          throw new Error("Failed to fetch auth type metadata");
+        }
+        const authTypeMetadataJson = await authTypeMetadataResponse.json();
+        const authTypeMetadataData: AuthTypeMetadata = {
+          authType: authTypeMetadataJson.auth_type as AuthType,
+          autoRedirect: false, // Default value, adjust if needed
+          requiresVerification: authTypeMetadataJson.requires_verification,
+        };
 
-        const authUrlResponse = await getAuthUrl("oidc");
+        setAuthTypeMetadata(authTypeMetadataData);
+
+        // Fetch the auth URL based on the auth type
+        const authUrlResponse = await getAuthUrl(authTypeMetadataData.authType);
+        console.log(authUrlResponse);
         setAuthUrl(authUrlResponse);
       } catch (error) {
         console.error("Error fetching auth data:", error);
@@ -66,21 +78,20 @@ const ClientSideSigninButton = () => {
     };
 
     fetchAuthData();
+
+    // Set the current URL safely on the client side
+    setCurrentUrl(window.location.href);
   }, []);
 
-  if (!authUrl) {
-    return <p>No auth URL</p>;
+  if (!authUrl || !currentUrl || !authTypeMetadata) {
+    return <p>Loading...</p>;
   }
-  console.log(
-    "currentUrl",
-    `${authUrl}?next=${encodeURIComponent(currentUrl)}`
-  );
 
   return (
     <div className="flex flex-col items-center space-y-4">
       <SignInButton
-        authorizeUrl={`${authUrl}?next=${encodeURIComponent(currentUrl)}`}
-        authType={"oidc"}
+        authorizeUrl={authUrl}
+        authType={authTypeMetadata.authType}
       />
     </div>
   );
