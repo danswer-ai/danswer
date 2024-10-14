@@ -64,7 +64,10 @@ const Page = async ({
       console.log(`Some fetch failed for the login page - ${e}`);
     }
   }
-  console.log(authUrl);
+
+  if (authTypeMetadata?.autoRedirect && authUrl && !autoRedirectDisabled) {
+    return redirect(authUrl);
+  }
   return (
     <AuthFlowContainer>
       <div className="absolute top-10x w-full">

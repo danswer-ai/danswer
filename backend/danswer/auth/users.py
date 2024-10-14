@@ -356,8 +356,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
             # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
             # re-authenticate that frequently, so by default this is disabled
-            print("TRACK_EXTERNAL_IDP_EXPIRY", TRACK_EXTERNAL_IDP_EXPIRY)
-            print("Expires at", expires_at)
             if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
                 import time
 

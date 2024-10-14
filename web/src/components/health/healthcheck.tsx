@@ -100,11 +100,7 @@ export const HealthCheckBanner = () => {
 
   if (error instanceof RedirectError || expired) {
     return (
-      <Modal
-        width="max-w-2xl"
-        className="overflow-y-hidden flex flex-col"
-        title="You've been logged out"
-      >
+      <Modal width="max-w-2xl" className="overflow-y-hidden flex flex-col">
         <div className="flex flex-col gap-y-4">
           <p className="text-sm text-center">
             Your session has expired. Please log in again to continue.
