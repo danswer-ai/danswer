@@ -5,6 +5,7 @@ from typing import Any
 from typing import cast
 from typing import TypeVar
 
+from redis.exceptions import ConnectionError
 from requests import HTTPError
 
 from danswer.connectors.interfaces import BaseConnector
@@ -40,7 +41,10 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
 
         NEXT_RETRY_KEY = BaseConnector.REDIS_KEY_PREFIX + "confluence_next_retry"
 
+        # for testing purposes, rate limiting is written to fall back to a simpler
+        # rate limiting approach when redis is not available
         r = get_redis_client()
+
         for attempt in range(max_retries):
             try:
                 # if multiple connectors are waiting for the next attempt, there could be an issue
@@ -48,15 +52,19 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
                 # That's not ideal ... but coming up with a mechanism for queueing
                 # all of these connectors is a bigger problem that we want to take on
                 # right now
-                next_attempt = r.get(NEXT_RETRY_KEY)
-                if next_attempt is None:
-                    next_attempt = 0
-                else:
-                    next_attempt = int(cast(int, next_attempt))
+                try:
+                    next_attempt = r.get(NEXT_RETRY_KEY)
+                    if next_attempt is None:
+                        next_attempt = 0
+                    else:
+                        next_attempt = int(cast(int, next_attempt))
 
-                # TODO: all connectors need to be interruptible moving forward
-                while time.monotonic() < next_attempt:
-                    time.sleep(1)
+                    # TODO: all connectors need to be interruptible moving forward
+                    while time.monotonic() < next_attempt:
+                        time.sleep(1)
+                except ConnectionError:
+                    pass
+
                 return confluence_call(*args, **kwargs)
             except HTTPError as e:
                 # Check if the response or headers are None to avoid potential AttributeError
@@ -86,13 +94,25 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
                         logger.warning(
                             f"Rate limit hit. Retrying after {retry_after} seconds..."
                         )
-                        r.set(NEXT_RETRY_KEY, math.ceil(time.monotonic() + retry_after))
+                        try:
+                            r.set(
+                                NEXT_RETRY_KEY,
+                                math.ceil(time.monotonic() + retry_after),
+                            )
+                        except ConnectionError:
+                            pass
                     else:
                         logger.warning(
                             "Rate limit hit. Retrying with exponential backoff..."
                         )
                         delay = min(starting_delay * (backoff**attempt), max_delay)
-                        r.set(NEXT_RETRY_KEY, math.ceil(time.monotonic() + delay))
+                        delay_until = math.ceil(time.monotonic() + delay)
+
+                        try:
+                            r.set(NEXT_RETRY_KEY, delay_until)
+                        except ConnectionError:
+                            while time.monotonic() < delay_until:
+                                time.sleep(1)
                 else:
                     # re-raise, let caller handle
                     raise
@@ -101,7 +121,12 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
                 # Users reported it to be intermittent, so just retry
                 logger.warning(f"Confluence Internal Error, retrying... {e}")
                 delay = min(starting_delay * (backoff**attempt), max_delay)
-                r.set(NEXT_RETRY_KEY, math.ceil(time.monotonic() + delay))
+                delay_until = math.ceil(time.monotonic() + delay)
+                try:
+                    r.set(NEXT_RETRY_KEY, delay_until)
+                except ConnectionError:
+                    while time.monotonic() < delay_until:
+                        time.sleep(1)
 
                 if attempt == max_retries - 1:
                     raise e
