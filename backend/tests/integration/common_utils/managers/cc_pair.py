@@ -248,18 +248,15 @@ class CCPairManager:
                 ):
                     print(f"cc_pair {cc_pair.id} indexing complete.")
                     return
-                else:
-                    print("cc_pair found but not finished:")
-                    # print(fetched_cc_pair.__dict__)
 
             elapsed = time.monotonic() - start
             if elapsed > timeout:
                 raise TimeoutError(
-                    f"CC pair indexing was not completed within {timeout} seconds"
+                    f"CC pair {cc_pair.id} indexing was not completed within {timeout} seconds"
                 )
 
             print(
-                f"Waiting for CC indexing to complete. elapsed={elapsed:.2f} timeout={timeout}"
+                f"Waiting for cc_pair {cc_pair.id} indexing to complete. elapsed={elapsed:.2f} timeout={timeout}"
             )
             time.sleep(5)
 

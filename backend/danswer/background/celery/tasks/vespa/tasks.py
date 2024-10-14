@@ -639,6 +639,9 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
         # print current queue lengths
         r_celery = self.app.broker_connection().channel().client  # type: ignore
         n_celery = celery_get_queue_length("celery", r)
+        n_indexing = celery_get_queue_length(
+            DanswerCeleryQueues.CONNECTOR_INDEXING, r_celery
+        )
         n_sync = celery_get_queue_length(
             DanswerCeleryQueues.VESPA_METADATA_SYNC, r_celery
         )
@@ -650,7 +653,11 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
         )
 
         task_logger.info(
-            f"Queue lengths: celery={n_celery} sync={n_sync} deletion={n_deletion} pruning={n_pruning}"
+            f"Queue lengths: celery={n_celery} "
+            f"indexing={n_indexing} "
+            f"sync={n_sync} "
+            f"deletion={n_deletion} "
+            f"pruning={n_pruning}"
         )
 
         lock_beat.reacquire()
