@@ -171,31 +171,31 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     elif hostname.startswith("indexing"):
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_INDEXING_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
+
+        # TODO: why is this necessary for the indexer to do?
+        engine = SqlEngine.get_engine()
+        with Session(engine) as db_session:
+            check_index_swap(db_session=db_session)
+            search_settings = get_current_search_settings(db_session)
+
+            # So that the first time users aren't surprised by really slow speed of first
+            # batch of documents indexed
+
+            if search_settings.provider_type is None:
+                logger.notice("Running a first inference to warm up embedding model")
+                embedding_model = EmbeddingModel.from_db_model(
+                    search_settings=search_settings,
+                    server_host=INDEXING_MODEL_SERVER_HOST,
+                    server_port=MODEL_SERVER_PORT,
+                )
+
+                warm_up_bi_encoder(
+                    embedding_model=embedding_model,
+                )
+                logger.notice("First inference complete.")
     else:
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
-
-    # TODO: why is this necessary for the indexer to do?
-    engine = SqlEngine.get_engine()
-    with Session(engine) as db_session:
-        check_index_swap(db_session=db_session)
-        search_settings = get_current_search_settings(db_session)
-
-        # So that the first time users aren't surprised by really slow speed of first
-        # batch of documents indexed
-
-        if search_settings.provider_type is None:
-            logger.notice("Running a first inference to warm up embedding model")
-            embedding_model = EmbeddingModel.from_db_model(
-                search_settings=search_settings,
-                server_host=INDEXING_MODEL_SERVER_HOST,
-                server_port=MODEL_SERVER_PORT,
-            )
-
-            warm_up_bi_encoder(
-                embedding_model=embedding_model,
-            )
-            logger.notice("First inference complete.")
 
     r = get_redis_client()
 
