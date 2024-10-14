@@ -46,6 +46,7 @@ def test_chunk_document(embedder: DefaultIndexingEmbedder) -> None:
     chunker = Chunker(
         tokenizer=embedder.embedding_model.tokenizer,
         enable_multipass=False,
+        enable_contextual_rag=False,
     )
     chunks = chunker.chunk([document])
 
@@ -74,6 +75,7 @@ def test_chunker_heartbeat(
     chunker = Chunker(
         tokenizer=embedder.embedding_model.tokenizer,
         enable_multipass=False,
+        enable_contextual_rag=False,
         heartbeat=mock_heartbeat,
     )
 
