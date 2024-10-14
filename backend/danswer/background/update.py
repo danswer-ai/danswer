@@ -29,10 +29,10 @@ from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import SqlEngine
 from danswer.db.index_attempt import create_index_attempt
+from danswer.db.index_attempt import get_all_index_attempts_by_status
+from danswer.db.index_attempt import get_in_progress_index_attempts
 from danswer.db.index_attempt import get_index_attempt
-from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.db.index_attempt import get_last_attempt_for_cc_pair
-from danswer.db.index_attempt import get_not_started_index_attempts
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexAttempt
@@ -266,7 +266,7 @@ def cleanup_indexing_jobs(
         try:
             connectors = fetch_connectors(db_session)
             for connector in connectors:
-                in_progress_indexing_attempts = get_inprogress_index_attempts(
+                in_progress_indexing_attempts = get_in_progress_index_attempts(
                     connector.id, db_session
                 )
 
@@ -318,7 +318,9 @@ def kickoff_indexing_jobs(
         # we must process attempts in a FIFO manner to prevent connector starvation
         new_indexing_attempts = [
             (attempt, attempt.search_settings)
-            for attempt in get_not_started_index_attempts(db_session)
+            for attempt in get_all_index_attempts_by_status(
+                IndexingStatus.NOT_STARTED, db_session
+            )
             if attempt.id not in existing_jobs
         ]
 

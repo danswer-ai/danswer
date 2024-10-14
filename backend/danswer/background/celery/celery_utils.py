@@ -124,10 +124,7 @@ def celery_is_worker_primary(worker: Any) -> bool:
     for the celery worker, which can be done either in celeryconfig.py or on the
     command line with '--hostname'."""
     hostname = worker.hostname
-    if hostname.startswith("light"):
-        return False
+    if hostname.startswith("primary"):
+        return True
 
-    if hostname.startswith("heavy"):
-        return False
-
-    return True
+    return False

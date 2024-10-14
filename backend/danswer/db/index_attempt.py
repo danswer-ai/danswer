@@ -1,4 +1,6 @@
 from collections.abc import Sequence
+from datetime import datetime
+from datetime import timezone
 
 from sqlalchemy import and_
 from sqlalchemy import delete
@@ -66,7 +68,7 @@ def create_index_attempt(
     return new_attempt.id
 
 
-def get_inprogress_index_attempts(
+def get_in_progress_index_attempts(
     connector_id: int | None,
     db_session: Session,
 ) -> list[IndexAttempt]:
@@ -81,13 +83,15 @@ def get_inprogress_index_attempts(
     return list(incomplete_attempts.all())
 
 
-def get_not_started_index_attempts(db_session: Session) -> list[IndexAttempt]:
+def get_all_index_attempts_by_status(
+    status: IndexingStatus, db_session: Session
+) -> list[IndexAttempt]:
     """This eagerly loads the connector and credential so that the db_session can be expired
     before running long-living indexing jobs, which causes increasing memory usage.
 
     Results are ordered by time_created (oldest to newest)."""
     stmt = select(IndexAttempt)
-    stmt = stmt.where(IndexAttempt.status == IndexingStatus.NOT_STARTED)
+    stmt = stmt.where(IndexAttempt.status == status)
     stmt = stmt.order_by(IndexAttempt.time_created)
     stmt = stmt.options(
         joinedload(IndexAttempt.connector_credential_pair).joinedload(
@@ -134,6 +138,8 @@ def mark_attempt_failed(
     failure_reason: str = "Unknown",
     full_exception_trace: str | None = None,
 ) -> None:
+    if not index_attempt.time_started:
+        index_attempt.time_started = datetime.now(timezone.utc)
     index_attempt.status = IndexingStatus.FAILED
     index_attempt.error_msg = failure_reason
     index_attempt.full_exception_trace = full_exception_trace
