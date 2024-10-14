@@ -6,7 +6,6 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
-from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.configs.app_configs import MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE
 from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
     rate_limit_builder,
@@ -17,7 +16,6 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import Document
 from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.enums import TaskStatus
 from danswer.db.models import TaskQueueState
 from danswer.redis.redis_pool import get_redis_client
@@ -26,24 +24,6 @@ from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
-
-
-# TODO: make this a member of RedisConnectorPruning
-def cc_pair_is_pruning(cc_pair_id: int, db_session: Session) -> bool:
-    #
-    cc_pair = get_connector_credential_pair_from_id(
-        cc_pair_id=cc_pair_id, db_session=db_session
-    )
-    if not cc_pair:
-        raise ValueError(f"cc_pair_id {cc_pair_id} does not exist.")
-
-    rcp = RedisConnectorPruning(cc_pair.id)
-
-    r = get_redis_client()
-    if r.exists(rcp.fence_key):
-        return True
-
-    return False
 
 
 def _get_deletion_status(
