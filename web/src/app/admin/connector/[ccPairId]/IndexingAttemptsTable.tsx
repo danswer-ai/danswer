@@ -163,7 +163,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   // This updates the page number and manages the URL
   const updatePage = (newPage: number) => {
     setPage(newPage);
-    router.push(`/admin/connector/${ccPair.id}?page=${newPage}`, {
+    router.replace(`/admin/connector/${ccPair.id}?page=${newPage}`, {
       scroll: false,
     });
     window.scrollTo({

@@ -74,7 +74,7 @@ We also have built-in support for deployment on Kubernetes. Files for that can b
 * Organizational understanding and ability to locate and suggest experts from your team.
 
 
-## Other Noteable Benefits of Danswer
+## Other Notable Benefits of Danswer
 * User Authentication with document level access management.
 * Best in class Hybrid Search across all sources (BM-25 + prefix aware embedding models).
 * Admin Dashboard to configure connectors, document-sets, access, etc.

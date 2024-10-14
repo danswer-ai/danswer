@@ -30,6 +30,7 @@ from danswer.db.search_settings import update_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
+from danswer.document_index.vespa.index import VespaIndex
 from danswer.indexing.models import IndexingSetting
 from danswer.key_value_store.factory import get_kv_store
 from danswer.key_value_store.interface import KvKeyNotFoundError
@@ -46,8 +47,11 @@ from danswer.tools.built_in_tools import load_builtin_tools
 from danswer.tools.built_in_tools import refresh_built_in_tools_cache
 from danswer.utils.gpu_utils import gpu_status_request
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import ALT_INDEX_SUFFIX
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.configs import SUPPORTED_EMBEDDING_MODELS
+from shared_configs.model_server_models import SupportedEmbeddingModel
 
 logger = setup_logger()
 
@@ -303,3 +307,37 @@ def update_default_multipass_indexing(db_session: Session) -> None:
         logger.debug(
             "Existing docs or connectors found. Skipping multipass indexing update."
         )
+
+
+def setup_multitenant_danswer() -> None:
+    setup_vespa_multitenant(SUPPORTED_EMBEDDING_MODELS)
+
+
+def setup_vespa_multitenant(supported_indices: list[SupportedEmbeddingModel]) -> bool:
+    WAIT_SECONDS = 5
+    VESPA_ATTEMPTS = 5
+    for x in range(VESPA_ATTEMPTS):
+        try:
+            logger.notice(f"Setting up Vespa (attempt {x+1}/{VESPA_ATTEMPTS})...")
+            VespaIndex.register_multitenant_indices(
+                indices=[index.index_name for index in supported_indices]
+                + [
+                    f"{index.index_name}{ALT_INDEX_SUFFIX}"
+                    for index in supported_indices
+                ],
+                embedding_dims=[index.dim for index in supported_indices]
+                + [index.dim for index in supported_indices],
+            )
+
+            logger.notice("Vespa setup complete.")
+            return True
+        except Exception:
+            logger.notice(
+                f"Vespa setup did not succeed. The Vespa service may not be ready yet. Retrying in {WAIT_SECONDS} seconds."
+            )
+            time.sleep(WAIT_SECONDS)
+
+    logger.error(
+        f"Vespa setup did not succeed. Attempt limit reached. ({VESPA_ATTEMPTS})"
+    )
+    return False

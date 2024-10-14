@@ -64,3 +64,9 @@ class IntentRequest(BaseModel):
 class IntentResponse(BaseModel):
     is_keyword: bool
     keywords: list[str]
+
+
+class SupportedEmbeddingModel(BaseModel):
+    name: str
+    dim: int
+    index_name: str

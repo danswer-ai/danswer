@@ -140,7 +140,9 @@ function Main({ ccPairId }: { ccPairId: number }) {
   return (
     <>
       {popup}
-      <BackButton />
+      <BackButton
+        behaviorOverride={() => router.push("/admin/indexing/status")}
+      />
       <div className="pb-1 flex mt-1">
         <div className="mr-2 my-auto">
           <SourceIcon iconSize={24} sourceType={ccPair.connector.source} />
