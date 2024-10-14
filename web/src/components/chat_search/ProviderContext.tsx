@@ -37,7 +37,6 @@ export function ProviderContextProvider({
   const fetchProviderInfo = useCallback(async () => {
     const { providers, options, defaultCheckSuccessful } =
       await checkLlmProvider(user);
-
     setValidProviderExists(providers.length > 0 && defaultCheckSuccessful);
     setProviderOptions(options);
   }, [user, setValidProviderExists, setProviderOptions]);
