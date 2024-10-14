@@ -7,7 +7,7 @@ from typing import TypeVar
 
 from requests import HTTPError
 
-from danswer.connectors.confluence.connector import ConfluenceConnector
+from danswer.connectors.interfaces import BaseConnector
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 
@@ -38,7 +38,7 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
         # max_retry_after is used when we do get a "Retry-After" header
         max_retry_after = 300  # should we really cap the maximum retry delay?
 
-        NEXT_RETRY_KEY = ConfluenceConnector.REDIS_KEY_PREFIX + "confluence_next_retry"
+        NEXT_RETRY_KEY = BaseConnector.REDIS_KEY_PREFIX + "confluence_next_retry"
 
         r = get_redis_client()
         for attempt in range(max_retries):
