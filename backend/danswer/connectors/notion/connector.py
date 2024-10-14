@@ -29,6 +29,9 @@ logger = setup_logger()
 _NOTION_CALL_TIMEOUT = 30  # 30 seconds
 
 
+# TODO: Tables need to be ingested, Pages need to have their metadata ingested
+
+
 @dataclass
 class NotionPage:
     """Represents a Notion Page object"""
