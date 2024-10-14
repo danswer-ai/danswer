@@ -1,3 +1,4 @@
+import math
 import time
 from collections.abc import Callable
 from typing import Any
@@ -6,6 +7,8 @@ from typing import TypeVar
 
 from requests import HTTPError
 
+from danswer.connectors.confluence.connector import ConfluenceConnector
+from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -21,15 +24,39 @@ class ConfluenceRateLimitError(Exception):
     pass
 
 
+# https://developer.atlassian.com/cloud/confluence/rate-limiting/
 def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
     def wrapped_call(*args: list[Any], **kwargs: Any) -> Any:
         max_retries = 5
         starting_delay = 5
         backoff = 2
-        max_delay = 600
 
+        # max_delay is used when the server doesn't hand back "Retry-After"
+        # and we have to decide the retry delay ourselves
+        max_delay = 30  # Atlassian uses max_delay = 30 in their examples
+
+        # max_retry_after is used when we do get a "Retry-After" header
+        max_retry_after = 300  # should we really cap the maximum retry delay?
+
+        NEXT_RETRY_KEY = ConfluenceConnector.REDIS_KEY_PREFIX + "confluence_next_retry"
+
+        r = get_redis_client()
         for attempt in range(max_retries):
             try:
+                # if multiple connectors are waiting for the next attempt, there could be an issue
+                # where many connectors are "released" onto the server at the same time.
+                # That's not ideal ... but coming up with a mechanism for queueing
+                # all of these connectors is a bigger problem that we want to take on
+                # right now
+                next_attempt = r.get(NEXT_RETRY_KEY)
+                if next_attempt is None:
+                    next_attempt = 0
+                else:
+                    next_attempt = int(cast(int, next_attempt))
+
+                # TODO: all connectors need to be interruptible moving forward
+                while time.monotonic() < next_attempt:
+                    time.sleep(1)
                 return confluence_call(*args, **kwargs)
             except HTTPError as e:
                 # Check if the response or headers are None to avoid potential AttributeError
@@ -50,7 +77,7 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
                             pass
 
                     if retry_after is not None:
-                        if retry_after > 600:
+                        if retry_after > max_retry_after:
                             logger.warning(
                                 f"Clamping retry_after from {retry_after} to {max_delay} seconds..."
                             )
@@ -59,13 +86,13 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
                         logger.warning(
                             f"Rate limit hit. Retrying after {retry_after} seconds..."
                         )
-                        time.sleep(retry_after)
+                        r.set(NEXT_RETRY_KEY, math.ceil(time.monotonic() + retry_after))
                     else:
                         logger.warning(
                             "Rate limit hit. Retrying with exponential backoff..."
                         )
                         delay = min(starting_delay * (backoff**attempt), max_delay)
-                        time.sleep(delay)
+                        r.set(NEXT_RETRY_KEY, math.ceil(time.monotonic() + delay))
                 else:
                     # re-raise, let caller handle
                     raise
@@ -74,7 +101,7 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
                 # Users reported it to be intermittent, so just retry
                 logger.warning(f"Confluence Internal Error, retrying... {e}")
                 delay = min(starting_delay * (backoff**attempt), max_delay)
-                time.sleep(delay)
+                r.set(NEXT_RETRY_KEY, math.ceil(time.monotonic() + delay))
 
                 if attempt == max_retries - 1:
                     raise e

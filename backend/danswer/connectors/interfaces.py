@@ -11,6 +11,8 @@ GenerateDocumentsOutput = Iterator[list[Document]]
 
 
 class BaseConnector(abc.ABC):
+    REDIS_KEY_PREFIX = "da_connector_data:"
+
     @abc.abstractmethod
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         raise NotImplementedError
