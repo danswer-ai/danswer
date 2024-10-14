@@ -11,6 +11,7 @@ import { SharedChatDisplay } from "./SharedChatDisplay";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { fetchAssistantsSS } from "@/lib/assistants/fetchAssistantsSS";
 import FunctionalHeader from "@/components/chat_search/Header";
+import { fetchAssistantSS } from "@/lib/assistants/fetchAssistantSS";
 
 async function getSharedChat(chatId: string) {
   const response = await fetchSS(
@@ -43,7 +44,16 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   const authTypeMetadata = results[0] as AuthTypeMetadata | null;
   const user = results[1] as User | null;
   const chatSession = results[2] as BackendChatSession | null;
-  const [availableAssistants, _] = results[3] as [Persona[], string | null];
+  const availableAssistants = results[3] as Persona[] | null;
+
+  let persona: Persona | null = null;
+  if (chatSession && chatSession.persona_id) {
+    try {
+      persona = await fetchAssistantSS(chatSession.persona_id);
+    } catch (e) {
+      console.log(`Failed to fetch persona - ${e}`);
+    }
+  }
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -53,6 +63,9 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   if (user && !user.is_verified && authTypeMetadata?.requiresVerification) {
     return redirect("/auth/waiting-on-verification");
   }
+  if (!persona) {
+    persona = availableAssistants?.[0] ?? null;
+  }
 
   return (
     <div>
@@ -61,10 +74,7 @@ export default async function Page({ params }: { params: { chatId: string } }) {
       </div>
 
       <div className="flex relative bg-background text-default overflow-hidden pt-16 h-screen">
-        <SharedChatDisplay
-          chatSession={chatSession}
-          availableAssistants={availableAssistants}
-        />
+        <SharedChatDisplay chatSession={chatSession} persona={persona!} />
       </div>
     </div>
   );

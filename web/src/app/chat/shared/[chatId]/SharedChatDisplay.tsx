@@ -2,7 +2,7 @@
 import Prism from "prismjs";
 
 import { humanReadableFormat } from "@/lib/time";
-import { BackendChatSession } from "../../interfaces";
+import { BackendChatSession, SharedChatSession } from "../../interfaces";
 import {
   buildLatestMessageChain,
   getCitedDocumentsFromMessage,
@@ -11,10 +11,10 @@ import {
 import { AIMessage, HumanMessage } from "../../message/Messages";
 import { Button, Callout, Divider } from "@tremor/react";
 import { useRouter } from "next/navigation";
-import { Persona } from "@/app/admin/assistants/interfaces";
 import { useContext, useEffect, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
+import { Persona } from "@/app/admin/assistants/interfaces";
 
 function BackToDanswerButton() {
   const router = useRouter();
@@ -34,10 +34,10 @@ function BackToDanswerButton() {
 
 export function SharedChatDisplay({
   chatSession,
-  availableAssistants,
+  persona,
 }: {
   chatSession: BackendChatSession | null;
-  availableAssistants: Persona[];
+  persona: Persona;
 }) {
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
@@ -56,9 +56,6 @@ export function SharedChatDisplay({
       </div>
     );
   }
-  const currentPersona = availableAssistants.find(
-    (persona) => persona.id === chatSession.persona_id
-  );
 
   const messages = buildLatestMessageChain(
     processRawChatHistory(chatSession.messages)
@@ -96,7 +93,7 @@ export function SharedChatDisplay({
                     return (
                       <AIMessage
                         shared
-                        currentPersona={currentPersona!}
+                        currentPersona={persona}
                         key={message.messageId}
                         messageId={message.messageId}
                         content={message.message}
