@@ -280,6 +280,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None,
         tool_choice: ToolChoiceOptions | None,
         stream: bool,
+        max_tokens: int | None = None,
     ) -> litellm.ModelResponse | litellm.CustomStreamWrapper:
         if isinstance(prompt, list):
             prompt = [
@@ -304,6 +305,7 @@ class DefaultMultiLLM(LLM):
                 messages=prompt,
                 tools=tools,
                 tool_choice=tool_choice if tools else None,
+                max_output_tokens=max_tokens,
                 # streaming choice
                 stream=stream,
                 # model params
@@ -336,12 +338,14 @@ class DefaultMultiLLM(LLM):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
+        max_tokens: int | None = None,
     ) -> BaseMessage:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
 
         response = cast(
-            litellm.ModelResponse, self._completion(prompt, tools, tool_choice, False)
+            litellm.ModelResponse,
+            self._completion(prompt, tools, tool_choice, False, max_tokens),
         )
         choice = response.choices[0]
         if hasattr(choice, "message"):
@@ -354,6 +358,7 @@ class DefaultMultiLLM(LLM):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
+        max_tokens: int | None = None,
     ) -> Iterator[BaseMessage]:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
@@ -365,7 +370,7 @@ class DefaultMultiLLM(LLM):
         output = None
         response = cast(
             litellm.CustomStreamWrapper,
-            self._completion(prompt, tools, tool_choice, True),
+            self._completion(prompt, tools, tool_choice, True, max_tokens),
         )
         try:
             for part in response:

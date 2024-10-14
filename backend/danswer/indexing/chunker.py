@@ -12,6 +12,7 @@ from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
 from danswer.connectors.models import Document
 from danswer.indexing.indexing_heartbeat import Heartbeat
 from danswer.indexing.models import DocAwareChunk
+from danswer.llm.interfaces import LLM
 from danswer.natural_language_processing.utils import BaseTokenizer
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
@@ -26,7 +27,26 @@ CHUNK_OVERLAP = 0
 # could be another 128 tokens leaving 256 for the actual contents
 MAX_METADATA_PERCENTAGE = 0.25
 CHUNK_MIN_CONTENT = 256
+MAX_CONTEXT_TOKENS = 40
 
+
+# TODO: store this in prompts file
+CONTEXTUAL_RAG_PROMPT = """<document>
+{document}
+</document>
+Here is the chunk we want to situate within the whole document
+<chunk>
+{{chunk}}
+</chunk>
+Please give a short succinct context to situate this chunk within the overall document
+for the purposes of improving search retrieval of the chunk. Answer only with the succinct
+context and nothing else. """
+
+DOCUMENT_SUMMARY_PROMPT = """<document>
+{document}
+</document>
+Please give a short succinct summary of the entire document. Answer only with the succinct
+summary and nothing else. """
 
 logger = setup_logger()
 
@@ -85,6 +105,8 @@ def _combine_chunks(chunks: list[DocAwareChunk], index: int) -> DocAwareChunk:
         metadata_suffix_keyword=chunks[0].metadata_suffix_keyword,
         large_chunk_reference_ids=[chunks[0].chunk_id],
         mini_chunk_texts=None,
+        chunk_context="",
+        doc_summary=chunks[0].doc_summary,
     )
 
     offset = 0
@@ -118,8 +140,10 @@ class Chunker:
     def __init__(
         self,
         tokenizer: BaseTokenizer,
+        llm: LLM | None = None,
         enable_multipass: bool = False,
         enable_large_chunks: bool = False,
+        enable_contextual_rag: bool = False,
         blurb_size: int = BLURB_SIZE,
         include_metadata: bool = not SKIP_METADATA_IN_CHUNK,
         chunk_token_limit: int = DOC_EMBEDDING_CONTEXT_SIZE,
@@ -129,11 +153,16 @@ class Chunker:
     ) -> None:
         from llama_index.text_splitter import SentenceSplitter
 
+        if llm is None and enable_contextual_rag:
+            raise ValueError("LLM must be provided for contextual RAG")
+
         self.include_metadata = include_metadata
         self.chunk_token_limit = chunk_token_limit
         self.enable_multipass = enable_multipass
         self.enable_large_chunks = enable_large_chunks
+        self.enable_contextual_rag = enable_contextual_rag
         self.tokenizer = tokenizer
+        self.llm = llm
         self.heartbeat = heartbeat
 
         self.blurb_splitter = SentenceSplitter(
@@ -201,12 +230,22 @@ class Chunker:
         chunks: list[DocAwareChunk] = []
         link_offsets: dict[int, str] = {}
         chunk_text = ""
+        summary = ""
+        if self.enable_contextual_rag:
+            doc_prompt = CONTEXTUAL_RAG_PROMPT.format(document=document.get_content())
+            summary_prompt = DOCUMENT_SUMMARY_PROMPT.format(
+                document=document.get_content()
+            )
+            summary = self.llm.invoke(summary_prompt, max_tokens=MAX_CONTEXT_TOKENS)
 
         def _create_chunk(
             text: str,
             links: dict[int, str],
             is_continuation: bool = False,
         ) -> DocAwareChunk:
+            if self.enable_contextual_rag:
+                context_prompt = doc_prompt.format(chunk=text)
+                context = self.llm.invoke(context_prompt, max_tokens=MAX_CONTEXT_TOKENS)
             return DocAwareChunk(
                 source_document=document,
                 chunk_id=len(chunks),
@@ -218,6 +257,8 @@ class Chunker:
                 metadata_suffix_semantic=metadata_suffix_semantic,
                 metadata_suffix_keyword=metadata_suffix_keyword,
                 mini_chunk_texts=self._get_mini_chunk_texts(text),
+                chunk_context=context,
+                doc_summary=summary,
             )
 
         for section in document.sections:
@@ -332,7 +373,11 @@ class Chunker:
             metadata_suffix_semantic = ""
             metadata_tokens = 0
 
-        content_token_limit = self.chunk_token_limit - title_tokens - metadata_tokens
+        context_size = MAX_CONTEXT_TOKENS if self.enable_contextual_rag else 0
+
+        content_token_limit = (
+            self.chunk_token_limit - title_tokens - metadata_tokens - context_size * 2
+        )
         # If there is not enough context remaining then just index the chunk with no prefix/suffix
         if content_token_limit <= CHUNK_MIN_CONTENT:
             content_token_limit = self.chunk_token_limit
@@ -349,6 +394,15 @@ class Chunker:
 
         if self.enable_multipass and self.enable_large_chunks:
             large_chunks = generate_large_chunks(normal_chunks)
+            if self.enable_contextual_rag:
+                doc_prompt = CONTEXTUAL_RAG_PROMPT.format(
+                    document=document.get_content()
+                )
+                for large_chunk in large_chunks:
+                    large_chunk.chunk_context = self.llm.invoke(
+                        doc_prompt.format(chunk=large_chunk.content),
+                        max_tokens=MAX_CONTEXT_TOKENS,
+                    )
             normal_chunks.extend(large_chunks)
 
         return normal_chunks
