@@ -599,15 +599,22 @@ export const AIMessage = ({
                             />
                           </CustomTooltip>
                           {regenerate && (
-                            <RegenerateOption
-                              selectedAssistant={currentPersona!}
-                              onDropdownVisibleChange={
-                                setIsRegenerateDropdownVisible
-                              }
-                              regenerate={regenerate}
-                              overriddenModel={overriddenModel}
-                              onHoverChange={setIsRegenerateHovered}
-                            />
+                            <CustomTooltip
+                              hide={isRegenerateDropdownVisible}
+                              showTick
+                              line
+                              content="Regenerate!"
+                            >
+                              <RegenerateOption
+                                selectedAssistant={currentPersona!}
+                                onDropdownVisibleChange={
+                                  setIsRegenerateDropdownVisible
+                                }
+                                regenerate={regenerate}
+                                overriddenModel={overriddenModel}
+                                onHoverChange={setIsRegenerateHovered}
+                              />
+                            </CustomTooltip>
                           )}
                         </TooltipGroup>
                       </div>
