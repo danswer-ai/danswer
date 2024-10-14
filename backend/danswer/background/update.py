@@ -27,6 +27,7 @@ from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_session_with_tenant
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import SqlEngine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
@@ -441,6 +442,30 @@ def update_loop(
     num_workers: int = NUM_INDEXING_WORKERS,
     num_secondary_workers: int = NUM_SECONDARY_INDEXING_WORKERS,
 ) -> None:
+    if not MULTI_TENANT:
+        # We can use this function as we are certain only the public schema exists
+        # (explicitly for the non-`MULTI_TENANT` case)
+        engine = get_sqlalchemy_engine()
+        with Session(engine) as db_session:
+            check_index_swap(db_session=db_session)
+
+            search_settings = get_current_search_settings(db_session)
+
+            # So that the first time users aren't surprised by really slow speed of first
+            # batch of documents indexed
+            if search_settings.provider_type is None:
+                logger.notice("Running a first inference to warm up embedding model")
+                embedding_model = EmbeddingModel.from_db_model(
+                    search_settings=search_settings,
+                    server_host=INDEXING_MODEL_SERVER_HOST,
+                    server_port=INDEXING_MODEL_SERVER_PORT,
+                )
+
+                warm_up_bi_encoder(
+                    embedding_model=embedding_model,
+                )
+                logger.notice("First inference complete.")
+
     client_primary: Client | SimpleJobClient
     client_secondary: Client | SimpleJobClient
     if DASK_JOB_CLIENT_ENABLED:
