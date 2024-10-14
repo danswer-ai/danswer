@@ -73,6 +73,7 @@ from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.index_attempt import get_latest_index_attempts_by_status
 from danswer.db.models import IndexingStatus
+from danswer.db.models import SearchSettings
 from danswer.db.models import User
 from danswer.db.models import UserRole
 from danswer.db.search_settings import get_current_search_settings
@@ -537,6 +538,7 @@ def get_connector_indexing_status(
             relationship.user_group_id
         )
 
+    search_settings: SearchSettings | None = None
     if not secondary_index:
         search_settings = get_current_search_settings(db_session)
     else:
@@ -553,7 +555,11 @@ def get_connector_indexing_status(
             # This may happen if background deletion is happening
             continue
 
-        rci = RedisConnectorIndexing(cc_pair.id, search_settings.id)
+        in_progress = False
+        if search_settings:
+            rci = RedisConnectorIndexing(cc_pair.id, search_settings.id)
+            if r.exists(rci.fence_key):
+                in_progress = True
 
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(
             (connector.id, credential.id)
@@ -608,7 +614,7 @@ def get_connector_indexing_status(
                     allow_scheduled=True,
                 )
                 is None,
-                in_progress=True if r.exists(rci.fence_key) else False,
+                in_progress=in_progress,
             )
         )
 
