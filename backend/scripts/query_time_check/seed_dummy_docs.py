@@ -94,7 +94,7 @@ def generate_dummy_chunk(
         ),
         document_sets={document_set for document_set in document_set_names},
         boost=random.randint(-1, 1),
-        # tenant_id="public",
+        tenant_id="public",
     )
 
 

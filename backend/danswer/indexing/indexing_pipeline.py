@@ -327,7 +327,7 @@ def index_doc_batch(
                     if chunk.source_document.id in ctx.id_to_db_doc_map
                     else DEFAULT_BOOST
                 ),
-                # tenant_id=tenant_id,
+                tenant_id=tenant_id,
             )
             for chunk in chunks_with_embeddings
         ]
