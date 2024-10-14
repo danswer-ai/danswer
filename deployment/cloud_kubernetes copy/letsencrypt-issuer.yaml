@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-issuer
+  namespace: danswer
+spec:
+  acme:
+    email: pablo@danswer.ai
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-account-key
+    solvers:
+    - http01:
+        ingress:
+          ingressClassName: nginx
+l

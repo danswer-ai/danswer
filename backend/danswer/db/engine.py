@@ -35,7 +35,7 @@ from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
 from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
-from danswer.configs.app_configs import SECRET_JWT_KEY
+from shared_configs.configs import SECRET_JWT_KEY
 from danswer.configs.constants import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.utils.logger import setup_logger

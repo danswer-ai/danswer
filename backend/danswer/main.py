@@ -34,7 +34,7 @@ from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
-from danswer.configs.app_configs import SYSTEM_RECURSION_LIMIT
+from shared_configs.configs import SYSTEM_RECURSION_LIMIT
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType

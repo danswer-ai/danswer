@@ -5,10 +5,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any
 
-from danswer.configs.app_configs import SMTP_PASS
-from danswer.configs.app_configs import SMTP_PORT
-from danswer.configs.app_configs import SMTP_SERVER
-from danswer.configs.app_configs import SMTP_USER
+from shared_configs.configs import SMTP_PASS
+from shared_configs.configs import SMTP_PORT
+from shared_configs.configs import SMTP_SERVER
+from shared_configs.configs import SMTP_USER
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.models import User
 

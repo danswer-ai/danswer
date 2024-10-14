@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: beta-danswer-ai-cert
+  namespace: danswer
+spec:
+  secretName: beta-danswer-ai-tls
+  dnsNames:
+  - beta.danswer.ai
+  issuerRef:
+    name: letsencrypt-issuer
+    kind: Issuer
+  commonName: beta.danswer.ai

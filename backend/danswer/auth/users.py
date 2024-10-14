@@ -47,12 +47,12 @@ from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import EXPECTED_API_KEY
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
-from danswer.configs.app_configs import SECRET_JWT_KEY
+from shared_configs.configs import SECRET_JWT_KEY
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
-from danswer.configs.app_configs import SMTP_PASS
-from danswer.configs.app_configs import SMTP_PORT
-from danswer.configs.app_configs import SMTP_SERVER
-from danswer.configs.app_configs import SMTP_USER
+from shared_configs.configs import SMTP_PASS
+from shared_configs.configs import SMTP_PORT
+from shared_configs.configs import SMTP_SERVER
+from shared_configs.configs import SMTP_USER
 from danswer.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS

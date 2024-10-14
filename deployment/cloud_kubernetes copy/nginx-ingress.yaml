@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  namespace: danswer
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/issuer: letsencrypt-issuer
+spec:
+  tls:
+  - hosts:
+    - beta.danswer.ai
+    secretName: beta-danswer-ai-tls
+  rules:
+  - host: beta.danswer.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-service
+            port:
+              number: 80
