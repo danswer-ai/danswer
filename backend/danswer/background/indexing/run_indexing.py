@@ -200,7 +200,7 @@ def _run_indexing(
                 # index being built. We want to populate it even for paused connectors
                 # Often paused connectors are sources that aren't updated frequently but the
                 # contents still need to be initially pulled.
-                db_session.refresh(db_connector)
+                db_session.refresh(db_cc_pair)
                 if (
                     (
                         db_cc_pair.status == ConnectorCredentialPairStatus.PAUSED
