@@ -100,7 +100,7 @@ def test_get_doc_from_page(site: pywikibot.Site) -> None:
     assert doc.metadata == {
         "categories": [category.title() for category in test_page.categories()]
     }
-    assert doc.id == test_page.pageid
+    assert doc.id == f"MEDIAWIKI_{test_page.pageid}_{test_page.full_url()}"
 
 
 def test_mediawiki_connector_recurse_depth() -> None:
