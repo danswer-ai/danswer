@@ -3,6 +3,8 @@ Rules defined here:
 https://confluence.atlassian.com/conf85/check-who-can-view-a-page-1283360557.html
 """
 from typing import Any
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
 from sqlalchemy.orm import Session
 
@@ -18,34 +20,28 @@ from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.document import upsert_document_external_perms__no_commit
-from ee.danswer.external_permissions.confluence.confluence_sync_utils import (
+from ee.danswer.external_permissions.confluence.sync_utils import (
     build_confluence_client,
+)
+from ee.danswer.external_permissions.confluence.sync_utils import (
+    get_user_email_from_username__server,
 )
 
 logger = setup_logger()
 
 _VIEWSPACE_PERMISSION_TYPE = "VIEWSPACE"
-_USER_EMAIL_CACHE: dict[str, str | None] = {}
 _REQUEST_PAGINATION_LIMIT = 100
 
 
-def _get_user_email_from_username__server(
-    confluence_client: DanswerConfluence, user_name: str
-) -> str | None:
-    global _USER_EMAIL_CACHE
-    if _USER_EMAIL_CACHE.get(user_name) is None:
-        try:
-            response = confluence_client.get_mobile_parameters(user_name)
-            email = response.get("email")
-        except Exception:
-            email = None
-        _USER_EMAIL_CACHE[user_name] = email
-    return _USER_EMAIL_CACHE[user_name]
-
-
 def _get_server_space_permissions(
-    confluence_client: DanswerConfluence, permissions: list[dict[str, Any]]
+    confluence_client: DanswerConfluence, space_key: str
 ) -> ExternalAccess:
+    get_space_permissions = make_confluence_call_handle_rate_limit(
+        confluence_client.get_space_permissions
+    )
+
+    permissions = get_space_permissions(space_key)
+
     viewspace_permissions = []
     for permission_category in permissions:
         if permission_category.get("type") == _VIEWSPACE_PERMISSION_TYPE:
@@ -63,7 +59,7 @@ def _get_server_space_permissions(
 
     user_emails = set()
     for user_name in user_names:
-        user_email = _get_user_email_from_username__server(confluence_client, user_name)
+        user_email = get_user_email_from_username__server(confluence_client, user_name)
         if user_email:
             user_emails.add(user_email)
         else:
@@ -80,10 +76,18 @@ def _get_server_space_permissions(
     )
 
 
-def _get_cloud_space_permissions(permissions: dict[str, Any]) -> ExternalAccess:
-    space_permissions = permissions.get("permissions", [])
+def _get_cloud_space_permissions(
+    confluence_client: DanswerConfluence, space_key: str
+) -> ExternalAccess:
+    get_space_permissions = make_confluence_call_handle_rate_limit(
+        confluence_client.get_space
+    )
+    space_permissions_result = get_space_permissions(
+        space_key=space_key, expand="permissions"
+    )
+    space_permissions = space_permissions_result.get("permissions", [])
+
     user_emails = set()
-    # Confluence enforces that group names are unique
     group_names = set()
     is_externally_public = False
     for permission in space_permissions:
@@ -111,9 +115,7 @@ def _get_cloud_space_permissions(permissions: dict[str, Any]) -> ExternalAccess:
 
 
 def _get_space_permissions(
-    db_session: Session,
     confluence_client: DanswerConfluence,
-    cql_query: str,
     is_cloud: bool,
 ) -> dict[str, ExternalAccess]:
     # Gets all the spaces in the Confluence instance
@@ -127,31 +129,22 @@ def _get_space_permissions(
         for space in spaces_batch.get("results", []):
             all_space_keys.append(space.get("key"))
 
-        if len(spaces_batch) < _REQUEST_PAGINATION_LIMIT:
+        if len(spaces_batch.get("results", [])) < _REQUEST_PAGINATION_LIMIT:
             break
 
-        start += len(spaces_batch)
+        start += len(spaces_batch.get("results", []))
 
     # Gets the permissions for each space
     space_permissions_by_space_key: dict[str, ExternalAccess] = {}
     for space_key in all_space_keys:
-        get_space_permissions = make_confluence_call_handle_rate_limit(
-            confluence_client.get_space_permissions
-        )
-
-        space_permissions_result = get_space_permissions(space_key)
-        logger.debug(f"space_permissions_result: {space_permissions_result}")
-
         if is_cloud:
-            space_permissions = _get_cloud_space_permissions(space_permissions_result)
+            space_permissions = _get_cloud_space_permissions(
+                confluence_client=confluence_client, space_key=space_key
+            )
         else:
             space_permissions = _get_server_space_permissions(
-                confluence_client, space_permissions_result
+                confluence_client=confluence_client, space_key=space_key
             )
-
-        batch_add_non_web_user_if_not_exists__no_commit(
-            db_session=db_session, emails=list(space_permissions.external_user_emails)
-        )
 
         # Stores the permissions for each space
         space_permissions_by_space_key[space_key] = space_permissions
@@ -189,7 +182,6 @@ def _extract_read_access_restrictions(
 
 
 def _get_page_specific_restrictions(
-    db_session: Session,
     page: dict[str, Any],
 ) -> ExternalAccess | None:
     user_emails, group_names = _extract_read_access_restrictions(
@@ -202,9 +194,6 @@ def _get_page_specific_restrictions(
     if is_space_public:
         return None
 
-    batch_add_non_web_user_if_not_exists__no_commit(
-        db_session=db_session, emails=list(user_emails)
-    )
     return ExternalAccess(
         external_user_emails=set(user_emails),
         external_user_group_ids=set(group_names),
@@ -271,27 +260,29 @@ def _fetch_all_pages_paginated(
     ]
     expansion_string = ",".join(expansion_strings)
 
-    all_pages = []
-    start = 0
+    all_pages: list[dict[str, Any]] = []
+    cursor = None
     while True:
-        pages_dict = get_all_pages(
+        response = get_all_pages(
             cql=cql_query,
-            start=start,
-            limit=_REQUEST_PAGINATION_LIMIT,
             expand=expansion_string,
+            cursor=cursor,
+            limit=_REQUEST_PAGINATION_LIMIT,
         )
-        all_pages.extend(pages_dict)
 
-        response_size = len(pages_dict)
-        if response_size < _REQUEST_PAGINATION_LIMIT:
+        all_pages.extend(response.get("results", []))
+
+        # Handle pagination
+        next_cursor = response.get("_links", {}).get("next", "")
+        cursor = parse_qs(urlparse(next_cursor).query).get("cursor", [None])[0]
+
+        if not cursor:
             break
-        start += response_size
 
     return all_pages
 
 
 def _fetch_all_page_restrictions_for_space(
-    db_session: Session,
     confluence_client: DanswerConfluence,
     cql_query: str,
     space_permissions_by_space_key: dict[str, ExternalAccess],
@@ -330,13 +321,16 @@ def _fetch_all_page_restrictions_for_space(
 
         # Get the page's specific restrictions
         page_permissions = _get_page_specific_restrictions(
-            db_session=db_session,
             page=page,
         )
+
         if not page_permissions:
-            # If there are no page specific restrictions, then
+            # If there are no page specific restrictions,
             # the page inherits the space's restrictions
-            page_permissions = space_permissions_by_space_key[page["space"]["key"]]
+            page_permissions = space_permissions_by_space_key.get(page["space"]["key"])
+            if not page_permissions:
+                # If nothing is in the dict, then the space has not been indexed, so we move on
+                continue
 
         # Apply the page's specific restrictions to the page and its attachments
         for document_id in document_ids:
@@ -354,7 +348,7 @@ def _build_cql_query_from_connector_config(
 
     space_id = cc_pair.connector.connector_specific_config.get("space")
     if space_id:
-        return f"type=page and space={space_id}"
+        return f"type=page and space='{space_id}'"
     return "type=page"
 
 
@@ -377,19 +371,17 @@ def confluence_doc_sync(
     is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
 
     space_permissions_by_space_key = _get_space_permissions(
-        db_session=db_session,
         confluence_client=confluence_client,
-        cql_query=cql_query,
         is_cloud=is_cloud,
     )
 
     permissions_by_doc_id = _fetch_all_page_restrictions_for_space(
-        db_session=db_session,
         confluence_client=confluence_client,
         cql_query=cql_query,
         space_permissions_by_space_key=space_permissions_by_space_key,
     )
 
+    all_emails = set()
     for doc_id, page_specific_access in permissions_by_doc_id.items():
         upsert_document_external_perms__no_commit(
             db_session=db_session,
@@ -397,3 +389,6 @@ def confluence_doc_sync(
             external_access=page_specific_access,
             source_type=cc_pair.connector.source,
         )
+        all_emails.update(page_specific_access.external_user_emails)
+
+    batch_add_non_web_user_if_not_exists__no_commit(db_session, list(all_emails))
