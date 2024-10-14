@@ -481,6 +481,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                         ERRORS_TO_CONTINUE_ON = [
                             "cannotExportFile",
                             "exportSizeLimitExceeded",
+                            "cannotDownloadFile",
                         ]
                         if e.status_code == 403 and reason in ERRORS_TO_CONTINUE_ON:
                             logger.warning(
