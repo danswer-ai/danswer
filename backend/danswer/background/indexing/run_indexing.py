@@ -99,6 +99,9 @@ def _run_indexing(
     1. Get documents which are either new or updated from specified application
     2. Embed and index these documents into the chosen datastore (vespa)
     3. Updates Postgres to record the indexed documents + the outcome of this run
+
+    TODO: do not change index attempt statuses here ... instead, set signals in redis
+    and allow the monitor function to clean them up
     """
     start_time = time.time()
 

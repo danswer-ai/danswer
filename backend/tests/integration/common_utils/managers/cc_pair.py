@@ -239,6 +239,9 @@ class CCPairManager:
                 if fetched_cc_pair.cc_pair_id != cc_pair.id:
                     continue
 
+                if fetched_cc_pair.in_progress:
+                    continue
+
                 if (
                     fetched_cc_pair.last_success
                     and fetched_cc_pair.last_success > after

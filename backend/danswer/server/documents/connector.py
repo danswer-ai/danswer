@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
+from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.background.celery.tasks.indexing.tasks import try_creating_indexing_task
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
@@ -482,6 +483,8 @@ def get_connector_indexing_status(
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
+    r = get_redis_client()
+
     # NOTE: If the connector is deleting behind the scenes,
     # accessing cc_pairs can be inconsistent and members like
     # connector or credential may be None.
@@ -544,6 +547,8 @@ def get_connector_indexing_status(
             # This may happen if background deletion is happening
             continue
 
+        rci = RedisConnectorIndexing(connector.id, credential.id)
+
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(
             (connector.id, credential.id)
         )
@@ -597,6 +602,7 @@ def get_connector_indexing_status(
                     allow_scheduled=True,
                 )
                 is None,
+                in_progress=True if r.exists(rci.fence_key) else False,
             )
         )
 
@@ -756,6 +762,9 @@ def connector_run_once(
 ) -> StatusResponse[list[int]]:
     """Used to trigger indexing on a set of cc_pairs associated with a
     single connector."""
+
+    r = get_redis_client()
+
     connector_id = run_info.connector_id
     specified_credential_ids = run_info.credential_ids
 
@@ -808,8 +817,6 @@ def connector_run_once(
         for credential_id in credential_ids
         if credential_id not in skipped_credentials
     ]
-
-    r = get_redis_client()
 
     index_attempt_ids = []
     for cc_pair in connector_credential_pairs:
