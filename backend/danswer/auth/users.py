@@ -246,7 +246,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 raise exceptions.UserAlreadyExists()
         return user
 
-    # seems like you ca maintain a session parameter
     async def on_after_login(
         self,
         user: User,
@@ -357,11 +356,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
             # re-authenticate that frequently, so by default this is disabled
             if expires_at and TRACK_EXTERNAL_IDP_EXPIRY:
-                import time
-
-                # Set expires_at to 10 seconds from now
-                expires_at = int(time.time()) + 10
-
                 oidc_expiry = datetime.fromtimestamp(expires_at, tz=timezone.utc)
                 await self.user_db.update(
                     user, update_dict={"oidc_expiry": oidc_expiry}

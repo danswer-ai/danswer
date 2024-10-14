@@ -27,7 +27,6 @@ export const HealthCheckBanner = () => {
     if (updatedUser) {
       const seconds = getSecondsUntilExpiration(updatedUser);
       setSecondsUntilExpiration(seconds);
-      console.log(`Updated seconds until expiration:! ${seconds}`);
     }
   }, [mutateUser]);
 
@@ -42,7 +41,7 @@ export const HealthCheckBanner = () => {
 
     const attemptTokenRefresh = async () => {
       if (!refreshUrl) {
-        console.log("No refresh URL, skipping refresh");
+        console.debug("No refresh URL, skipping refresh");
         return;
       }
       try {

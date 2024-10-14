@@ -70,7 +70,6 @@ const ClientSideSigninButton = () => {
 
         // Fetch the auth URL based on the auth type
         const authUrlResponse = await getAuthUrl(authTypeMetadataData.authType);
-        console.log(authUrlResponse);
         setAuthUrl(authUrlResponse);
       } catch (error) {
         console.error("Error fetching auth data:", error);
