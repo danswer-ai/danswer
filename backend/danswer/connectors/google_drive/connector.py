@@ -475,7 +475,15 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                             if e.error_details
                             else e.reason
                         )
-                        if e.status_code == 403 and reason == "cannotExportFile":
+
+                        # these errors don't represent a failure in the connector, but simply files
+                        # that can't / shouldn't be indexed
+                        ERRORS_TO_CONTINUE_ON = [
+                            "cannotExportFile",
+                            "exportSizeLimitExceeded",
+                            "cannotDownloadFile",
+                        ]
+                        if e.status_code == 403 and reason in ERRORS_TO_CONTINUE_ON:
                             logger.warning(
                                 f"Could not export file '{file['name']}' due to '{message}', skipping..."
                             )
