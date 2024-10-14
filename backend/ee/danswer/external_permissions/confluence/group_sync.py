@@ -12,8 +12,11 @@ from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.external_perm import ExternalUserGroup
 from ee.danswer.db.external_perm import replace_user__ext_group_for_cc_pair__no_commit
-from ee.danswer.external_permissions.confluence.confluence_sync_utils import (
+from ee.danswer.external_permissions.confluence.sync_utils import (
     build_confluence_client,
+)
+from ee.danswer.external_permissions.confluence.sync_utils import (
+    get_user_email_from_username__server,
 )
 
 
@@ -50,11 +53,12 @@ def _get_confluence_group_names_paginated(
 def _get_group_members_email_paginated(
     confluence_client: Confluence,
     group_name: str,
-) -> list[str]:
+    is_cloud: bool,
+) -> set[str]:
     get_group_members = make_confluence_call_handle_rate_limit(
         confluence_client.get_group_members
     )
-    group_member_emails: list[str] = []
+    group_member_emails: set[str] = set()
     start = 0
     while True:
         try:
@@ -66,12 +70,22 @@ def _get_group_members_email_paginated(
                 return group_member_emails
             raise e
 
-        group_member_emails.extend(
-            [member.get("email") for member in members if member.get("email")]
-        )
+        for member in members:
+            if is_cloud:
+                email = member.get("email")
+            elif user_name := member.get("username"):
+                email = get_user_email_from_username__server(
+                    confluence_client, user_name
+                )
+
+            if email:
+                group_member_emails.add(email)
+
         if len(members) < _PAGE_SIZE:
             break
+
         start += _PAGE_SIZE
+
     return group_member_emails
 
 
@@ -80,22 +94,25 @@ def confluence_group_sync(
     cc_pair: ConnectorCredentialPair,
 ) -> None:
     confluence_client = build_confluence_client(
-        cc_pair.connector.connector_specific_config, cc_pair.credential.credential_json
+        connector_specific_config=cc_pair.connector.connector_specific_config,
+        credentials_json=cc_pair.credential.credential_json,
     )
 
     danswer_groups: list[ExternalUserGroup] = []
+    is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
     # Confluence enforces that group names are unique
     for group_name in _get_confluence_group_names_paginated(confluence_client):
         group_member_emails = _get_group_members_email_paginated(
-            confluence_client, group_name
+            confluence_client, group_name, is_cloud
         )
         group_members = batch_add_non_web_user_if_not_exists__no_commit(
-            db_session=db_session, emails=group_member_emails
+            db_session=db_session, emails=list(group_member_emails)
         )
         if group_members:
             danswer_groups.append(
                 ExternalUserGroup(
-                    id=group_name, user_ids=[user.id for user in group_members]
+                    id=group_name,
+                    user_ids=[user.id for user in group_members],
                 )
             )
 
