@@ -2,7 +2,7 @@
 import Prism from "prismjs";
 
 import { humanReadableFormat } from "@/lib/time";
-import { BackendChatSession, SharedChatSession } from "../../interfaces";
+import { BackendChatSession } from "../../interfaces";
 import {
   buildLatestMessageChain,
   getCitedDocumentsFromMessage,
@@ -98,7 +98,6 @@ export function SharedChatDisplay({
                         messageId={message.messageId}
                         content={message.message}
                         files={message.files || []}
-                        personaName={chatSession.persona_name}
                         citedDocuments={getCitedDocumentsFromMessage(message)}
                         isComplete
                       />

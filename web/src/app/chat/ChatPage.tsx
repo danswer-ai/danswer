@@ -2185,7 +2185,6 @@ export function ChatPage({
                                       query={
                                         messageHistory[i]?.query || undefined
                                       }
-                                      personaName={liveAssistant.name}
                                       citedDocuments={getCitedDocumentsFromMessage(
                                         message
                                       )}
@@ -2247,9 +2246,6 @@ export function ChatPage({
                                             }
                                           : undefined
                                       }
-                                      isCurrentlyShowingRetrieved={
-                                        isShowingRetrieved
-                                      }
                                       handleShowRetrieved={(messageNumber) => {
                                         if (isShowingRetrieved) {
                                           setSelectedMessageForDocDisplay(null);
@@ -2299,7 +2295,6 @@ export function ChatPage({
                                     <AIMessage
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
-                                      personaName={liveAssistant.name}
                                       content={
                                         <p className="text-red-700 text-sm my-auto">
                                           {message.message}
@@ -2347,7 +2342,6 @@ export function ChatPage({
                                     alternativeAssistant
                                   }
                                   messageId={null}
-                                  personaName={liveAssistant.name}
                                   content={
                                     <div
                                       key={"Generating"}
@@ -2367,7 +2361,6 @@ export function ChatPage({
                                 <AIMessage
                                   currentPersona={liveAssistant}
                                   messageId={-1}
-                                  personaName={liveAssistant.name}
                                   content={
                                     <p className="text-red-700 text-sm my-auto">
                                       {loadingError}

@@ -124,13 +124,11 @@ export const AIMessage = ({
   files,
   selectedDocuments,
   query,
-  personaName,
   citedDocuments,
   toolCall,
   isComplete,
   hasDocs,
   handleFeedback,
-  isCurrentlyShowingRetrieved,
   handleShowRetrieved,
   handleSearchQueryEdit,
   handleForceSearch,
@@ -153,13 +151,11 @@ export const AIMessage = ({
   content: string | JSX.Element;
   files?: FileDescriptor[];
   query?: string;
-  personaName?: string;
   citedDocuments?: [string, DanswerDocument][] | null;
   toolCall?: ToolCallMetadata;
   isComplete?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;
-  isCurrentlyShowingRetrieved?: boolean;
   handleShowRetrieved?: (messageNumber: number | null) => void;
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
